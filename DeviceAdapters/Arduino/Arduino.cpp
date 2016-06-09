@@ -183,6 +183,11 @@ int CArduinoHub::GetControllerVersion(int& version)
 
 }
 
+bool CArduinoHub::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
 {
    if (initialized_)

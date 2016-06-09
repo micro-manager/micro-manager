@@ -94,7 +94,8 @@ public:
 //  int GetRelativePositionSteps(long& steps);
   int SetOrigin();
   int GetLimits(double& min, double& max);
-  	MM::DeviceDetectionStatus DetectDevice(void);
+  bool SupportsDeviceDetection(void);
+  MM::DeviceDetectionStatus DetectDevice(void);
 	int GetVersion(std::string& version);
    // action interface
    // ----------------

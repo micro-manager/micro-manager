@@ -393,6 +393,12 @@ DeviceInstance::AcqAfterStack()
    ThrowIfError(pImpl_->AcqAfterStack());
 }
 
+bool
+DeviceInstance::SupportsDeviceDetection()
+{
+    return pImpl_->SupportsDeviceDetection();
+}
+
 MM::DeviceDetectionStatus
 DeviceInstance::DetectDevice()
 { return pImpl_->DetectDevice(); }

@@ -72,6 +72,7 @@ public:
   
    void GetName(char* pszName) const;
    bool Busy();
+   bool SupportsDeviceDetection(void);
    MM::DeviceDetectionStatus DetectDevice(void);
 
    // action interface
