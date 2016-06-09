@@ -570,12 +570,14 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    public void setROI() {
       ImagePlus curImage = WindowManager.getCurrentImage();
       if (curImage == null) {
+         logs().showError("There is no open image window.");
          return;
       }
 
       Roi roi = curImage.getRoi();
       if (roi == null) {
          // Nothing to be done.
+         logs().showError("There is no selection in the image window.\nUse the ImageJ rectangle tool to draw the ROI.");
          return;
       }
       if (roi.getType() == Roi.RECTANGLE) {
