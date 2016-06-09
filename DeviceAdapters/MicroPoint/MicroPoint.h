@@ -43,8 +43,6 @@ public:
    void GetName(char* pszName) const;
    bool Busy();
 
-   MM::DeviceDetectionStatus DetectDevice(void);
-
    // Galvo API
    int PointAndFire(double x, double y, double pulseTime_us);
    int SetSpotInterval(double pulseTime_us);

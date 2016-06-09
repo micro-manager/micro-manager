@@ -48,10 +48,6 @@ public:
    void GetName(char* pszName) const;
    bool Busy();
 
-   // so far, only the RappScanner attempts to get the controller status on initialization, so
-   // that's where the device detection is going for now
-   MM::DeviceDetectionStatus DetectDevice(void);
-
    // Galvo API
    int PointAndFire(double x, double y, double pulseTime_us);
    int SetSpotInterval(double pulseTime_us);
