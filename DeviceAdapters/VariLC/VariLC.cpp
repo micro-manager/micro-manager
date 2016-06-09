@@ -160,6 +160,11 @@ void VariLC::GetName(char* name) const
 }
 
 
+bool VariLC::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus VariLC::DetectDevice(void)
 {
    // all conditions must be satisfied...

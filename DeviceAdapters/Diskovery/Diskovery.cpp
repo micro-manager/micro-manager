@@ -243,6 +243,11 @@ bool DiskoveryHub::Busy()
    return false;
 }
 
+bool DiskoveryHub::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus DiskoveryHub::DetectDevice(void )
 {
    char answerTO[MM::MaxStrLength];

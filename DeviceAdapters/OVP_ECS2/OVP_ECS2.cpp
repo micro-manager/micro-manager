@@ -529,6 +529,11 @@ int ECS::QueryCommandVerify(Message command, Message responsePrefix, size_t expe
    return DEVICE_OK;
 }
 
+bool ECS::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus ECS::DetectDevice()
 {
    if (initialized_)

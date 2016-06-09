@@ -119,6 +119,7 @@ class Hub :   public CGenericBase<Hub>	 // public HubBase<Hub>
       int OnPort (MM::PropertyBase* pProp, MM::ActionType eAct);
 
       // device discovery
+      bool SupportsDeviceDetection(void);
       MM::DeviceDetectionStatus DetectDevice(void);
 		int OnEncmode(MM::PropertyBase* pProp, MM::ActionType eAct);
 		int OnEnctime(MM::PropertyBase* pProp, MM::ActionType eAct);

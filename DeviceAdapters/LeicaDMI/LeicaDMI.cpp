@@ -213,6 +213,11 @@ LeicaScope::~LeicaScope()
 }
 
 
+bool LeicaScope::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus LeicaScope::DetectDevice()
 {
    MM::Device* pS = GetCoreCallback()->GetDevice(this, g_ScopeInterface.port_.c_str());

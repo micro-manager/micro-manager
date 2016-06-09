@@ -96,6 +96,7 @@ public:
 
    // so far, only the XYStage attempts to get the controller status on initialization, so
    // that's where the device detection is going for now
+   bool SupportsDeviceDetection(void);
    MM::DeviceDetectionStatus DetectDevice(void);
 
    // XYStage API
@@ -179,6 +180,7 @@ public:
   
    void GetName(char* pszName) const;
    bool Busy();
+   bool SupportsDeviceDetection(void);
    MM::DeviceDetectionStatus DetectDevice(void);
 
    // Stage API
@@ -302,6 +304,7 @@ public:
    int Initialize();
    int Shutdown();
 
+   bool SupportsDeviceDetection(void);
    MM::DeviceDetectionStatus DetectDevice(void);
 
    // AutoFocus API
@@ -393,6 +396,7 @@ public:
 
    int Initialize();
    int Shutdown();
+   bool SupportsDeviceDetection(void);
    MM::DeviceDetectionStatus DetectDevice(void);
 
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -418,6 +422,7 @@ public:
    int Initialize();
    int Shutdown();
 
+   bool SupportsDeviceDetection(void);
    MM::DeviceDetectionStatus DetectDevice(void);
 
    void GetName (char* pszName) const;
