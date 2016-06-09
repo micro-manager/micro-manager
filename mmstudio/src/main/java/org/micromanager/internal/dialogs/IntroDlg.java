@@ -466,7 +466,7 @@ public class IntroDlg extends JDialog {
          keys = new HashSet<String>(Arrays.asList(root.keys()));
       }
       catch (BackingStoreException e) {
-         ReportingUtils.logError(e, "Error accessing old user preferences");
+         // No old user preferences found.
          return null;
       }
       // The actual config file names are stored with procedurally-generated

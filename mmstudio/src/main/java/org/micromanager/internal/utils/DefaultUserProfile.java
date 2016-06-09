@@ -905,7 +905,7 @@ public class DefaultUserProfile implements UserProfile {
          return root.node("micromanager");
       }
       catch (BackingStoreException e) {
-         ReportingUtils.logError(e, "Error accessing old user preferences");
+         // No old preferences found.
          return null;
       }
    }
