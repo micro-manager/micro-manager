@@ -139,12 +139,6 @@ void RappScanner::GetName(char* Name) const
    CDeviceUtils::CopyLimitedString(Name, g_RappScannerName);
 }
 
-
-MM::DeviceDetectionStatus RappScanner::DetectDevice(void)
-{   
-   return MM::Misconfigured;
-}
-
 int RappScanner::Initialize()
 {
    UGA_ = new obsROE_Device();

@@ -117,12 +117,6 @@ void MicroPoint::GetName(char* Name) const
    CDeviceUtils::CopyLimitedString(Name, g_MicroPointScannerName);
 }
 
-
-MM::DeviceDetectionStatus MicroPoint::DetectDevice(void)
-{   
-   return MM::Misconfigured;
-}
-
 int MicroPoint::WriteBytes(unsigned char* buf, int numBytes)
 {
    int ret = WriteToComPort(port_.c_str(), buf, numBytes);
