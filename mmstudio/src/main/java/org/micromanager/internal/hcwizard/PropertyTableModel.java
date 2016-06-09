@@ -20,7 +20,7 @@
 //
 // CVS:          $Id: PropertyTableModel.java 6462 2011-02-09 22:43:55Z arthur $
 //
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 import java.util.ArrayList;
 

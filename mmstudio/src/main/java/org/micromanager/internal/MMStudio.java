@@ -93,8 +93,8 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.UserProfile;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.PropertiesChangedEvent;
-import org.micromanager.internal.conf2.MMConfigFileException;
-import org.micromanager.internal.conf2.MicroscopeModel;
+import org.micromanager.internal.hcwizard.MMConfigFileException;
+import org.micromanager.internal.hcwizard.MicroscopeModel;
 
 import org.micromanager.data.internal.DefaultDataManager;
 
@@ -691,11 +691,15 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    }
 
    /**
-    * Returns singleton instance of MainFrame. You should ideally not need
-    * to use this function.
+    * Returns singleton instance of MainFrame.
     * @return singleton instance of the mainFrame
     */
    public static MainFrame getFrame() {
+      return frame_;
+   }
+
+   @Override
+   public JFrame getMainWindow() {
       return frame_;
    }
 

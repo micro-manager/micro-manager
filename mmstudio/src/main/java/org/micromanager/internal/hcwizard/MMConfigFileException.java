@@ -20,7 +20,7 @@
 //
 // CVS:          $Id: MMConfigFileException.java 1281 2008-06-04 20:59:50Z nenad $
 //
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 /**
  * Configuration file I/O errors. 

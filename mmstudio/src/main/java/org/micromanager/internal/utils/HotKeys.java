@@ -31,6 +31,7 @@ public class HotKeys {
    public static final LinkedHashMap<Integer, HotKeyAction> keys_ =
            new LinkedHashMap<Integer, HotKeyAction>();
 
+   // HACK HACK HACK TODO: there should be a cleaner way to disable hotkeys!
    public  static boolean active_ = true;
 
    public void loadSettings() {

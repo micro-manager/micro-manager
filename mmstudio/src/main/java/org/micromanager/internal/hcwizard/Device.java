@@ -21,7 +21,7 @@
 // CVS:          $Id: Device.java 7596 2011-08-17 00:06:28Z nenad $
 //
 
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -118,7 +118,7 @@ import org.micromanager.internal.utils.ReportingUtils;
       } else if (type_ == DeviceType.AutoFocusDevice) {
          devType = "Autofocus";
       } else if (type_ == DeviceType.HubDevice) {
-         devType = "Motorized scope or Hub";
+         devType = "Motorized Microscope or Hub";
       } else if (type_ == DeviceType.GenericDevice) {
          devType = "Generic Device";
       } else if (type_ == DeviceType.AnyType) {

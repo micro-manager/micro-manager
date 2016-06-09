@@ -30,6 +30,7 @@ import ij.gui.ImageWindow;
 
 import java.awt.AWTEvent;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.AWTEventListener;
@@ -591,5 +592,18 @@ public class GUIUtils {
              }
           }
        };
+   }
+
+   /**
+    * Center the provided JFrame within the screen contained by the provided
+    * other frame.
+    */
+   public static void centerFrameWithFrame(JFrame child, JFrame source) {
+      GraphicsConfiguration config = getGraphicsConfigurationContaining(
+            source.getLocation().x, source.getLocation().y);
+      Dimension size = child.getSize();
+      Rectangle bounds = config.getBounds();
+      child.setLocation(bounds.x + bounds.width / 2 - size.width / 2,
+            bounds.y + bounds.height / 2 - size.height / 2);
    }
 }

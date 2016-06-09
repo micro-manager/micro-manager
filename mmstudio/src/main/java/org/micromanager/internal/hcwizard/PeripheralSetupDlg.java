@@ -1,4 +1,4 @@
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;

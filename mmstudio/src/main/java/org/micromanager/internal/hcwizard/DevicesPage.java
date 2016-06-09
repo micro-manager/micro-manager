@@ -20,7 +20,7 @@
 //
 // CVS:          $Id: DevicesPage.java 7557 2011-08-04 20:31:15Z nenad $
 //
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 import java.awt.Component;
 import java.awt.Cursor;
@@ -44,6 +44,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTree;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -56,6 +57,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import mmcorej.MMCoreJ;
 
+import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -64,19 +67,17 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class DevicesPage extends PagePanel implements ListSelectionListener, MouseListener, TreeSelectionListener {
    private static final long serialVersionUID = 1L;
+   public static final String WEBSITE_ROOT = "https://micro-manager.org/wiki/";
 
    private JTable deviceTable_;
    private JScrollPane installedScrollPane_;
-   private static final String HELP_FILE_NAME = "conf_devices_page.html";
    private JButton editButton;
    private JButton removeButton;
    private JButton peripheralsButton;
    private boolean listByLib_;
    private TreeWContextMenu theTree_;
    private JScrollPane availableScrollPane_;
-   final String documentationURLroot_;
    String libraryDocumentationName_;
-   private JComboBox hubsCombo_;
 
 private JComboBox byLibCombo_;
 
@@ -89,7 +90,7 @@ private JComboBox byLibCombo_;
 
       public final String[] COLUMN_NAMES = new String[] {
             "Name",
-            "Adapter/Library",
+            "Adapter/Module",
             "Description",
             "Status"
       };
@@ -225,27 +226,27 @@ private JComboBox byLibCombo_;
    public DevicesPage() {
       super();
       title_ = "Add or remove devices";
-      helpText_ = "The list of selected devices is displayed above. " +
-      "You can add or remove devices to/from this list.\n" +
-      "The first column shows the device's assigned name for this particular configuration. " +
-      "In subsequent steps devices will be referred to by their assigned names.\n\n" +
-      "You can edit device names by double-clicking in the first column. Device name must be unique and should not contain any special characters.";
-      
       listByLib_ = true;
 
-      setLayout(null);
-      setHelpFileName(HELP_FILE_NAME);
-      documentationURLroot_ = "https://micro-manager.org/wiki/";
+      setLayout(new MigLayout("fill, flowx"));
+
+      JTextArea help = new JTextArea(
+            "Select devices from the \"Available Devices\" list to include in this configuration.");
+      help.setWrapStyleWord(true);
+      help.setLineWrap(true);
+      help.setEditable(false);
+      add(help, "spanx, growx, wrap");
+      JLabel lblNewLabel = new JLabel("Installed Devices:");
+      lblNewLabel.setFont(new Font("Arial", Font.BOLD, 11));
+      add(lblNewLabel, "wrap");
 
       installedScrollPane_ = new JScrollPane();
-      installedScrollPane_.setBounds(10, 21, 431, 241);
-      add(installedScrollPane_);
-
+      add(installedScrollPane_, "growy, width 430");
       deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       installedScrollPane_.setViewportView(deviceTable_);
       deviceTable_.getSelectionModel().addListSelectionListener(this);
-      
+
       deviceTable_.addMouseListener(new MouseAdapter() {
          public void mouseClicked(MouseEvent e) {
             if (e.getClickCount() == 2) {
@@ -253,37 +254,15 @@ private JComboBox byLibCombo_;
             }
          }});
 
-      final JButton addButton = new JButton();
-      addButton.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            addDevice();
-         }
-      });
-      addButton.setText("Add...");
-      addButton.setBounds(451, 291, 99, 23);
-      add(addButton);
-
-      removeButton = new JButton();
-      removeButton.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            removeDevice();
-         }
-      });
-      removeButton.setText("Remove");
-      removeButton.setBounds(451, 72, 99, 23);
-      add(removeButton);
-      removeButton.setEnabled(false);
-      
       editButton = new JButton("Edit...");
       editButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             editDevice();
          }
       });
-      editButton.setBounds(451, 21, 99, 23);
-      add(editButton);
+      add(editButton, "split, flowy, aligny top, width 115!");
       editButton.setEnabled(false);
-      
+
       peripheralsButton = new JButton("Peripherals...");
       peripheralsButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
@@ -291,23 +270,46 @@ private JComboBox byLibCombo_;
          }
       });
       peripheralsButton.setEnabled(false);
-      peripheralsButton.setBounds(451, 46, 99, 23);
-      add(peripheralsButton);
-      
-      JLabel lblNewLabel = new JLabel("Installed Devices:");
-      lblNewLabel.setFont(new Font("Tahoma", Font.BOLD, 11));
-      lblNewLabel.setBounds(10, 0, 431, 14);
-      add(lblNewLabel);
-      
-      JLabel lblNewLabel_1 = new JLabel("Available Devices:");
-      lblNewLabel_1.setFont(new Font("Tahoma", Font.BOLD, 11));
-      lblNewLabel_1.setBounds(10, 273, 128, 14);
-      add(lblNewLabel_1);
-      
-      availableScrollPane_ = new JScrollPane((Component) null);
-      availableScrollPane_.setBounds(10, 299, 431, 250);
-      add(availableScrollPane_);
-      
+      add(peripheralsButton, "width 115!");
+
+      removeButton = new JButton("Remove");
+      removeButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            removeDevice();
+         }
+      });
+      removeButton.setEnabled(false);
+      add(removeButton, "width 115!, wrap");
+
+      JLabel availDevices = new JLabel("Available Devices:");
+      availDevices.setFont(new Font("Arial", Font.BOLD, 11));
+      add(availDevices, "split, spanx");
+
+      byLibCombo_ = new JComboBox(new String[] {
+         "List by Module", "List by Type"});
+      byLibCombo_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            if (byLibCombo_.getSelectedIndex() == 0)
+               listByLib_ = true;
+            else {
+               listByLib_ = false;
+            }
+            buildTree();
+         }
+      });
+      add(byLibCombo_, "wrap");
+
+      availableScrollPane_ = new JScrollPane();
+      add(availableScrollPane_, "growy, width 430");
+
+      final JButton addButton = new JButton("Add...");
+      addButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            addDevice();
+         }
+      });
+      add(addButton, "split, flowy, aligny top, width 115!");
+
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
@@ -315,37 +317,8 @@ private JComboBox byLibCombo_;
          }
       });
       helpButton.setBounds(451, 319, 99, 23);
-      add(helpButton);
-      
-      byLibCombo_ = new JComboBox();
-      byLibCombo_.addActionListener(new ActionListener() {
-      	public void actionPerformed(ActionEvent arg0) {
-      		if (byLibCombo_.getSelectedIndex() == 0)
-      			listByLib_ = true;
-      		else {
-      			listByLib_ = false;
-      			hubsCombo_.setSelectedIndex(1); // force show-all
-      		}
-      		buildTree();
-      	}
-      });
-      byLibCombo_.setModel(new DefaultComboBoxModel(new String[] {"list by vendor", "list by type"}));
-      byLibCombo_.setBounds(146, 270, 146, 20);
-      add(byLibCombo_);
-      
-      hubsCombo_ = new JComboBox();
-      hubsCombo_.addActionListener(new ActionListener() {
-      	public void actionPerformed(ActionEvent e) {
-      		buildTree();
-      	}
-      });
-      hubsCombo_.setModel(new DefaultComboBoxModel(new String[] {"compact view", "show all"}));
-      hubsCombo_.setBounds(302, 270, 139, 20);
-      add(hubsCombo_);
-      //
-
+      add(helpButton, "width 115!");
    }
-   
 
    protected void editPeripherals() {
       int selRow = deviceTable_.getSelectedRow();
@@ -388,7 +361,6 @@ private JComboBox byLibCombo_;
                String props[] = sel[i].getPreInitProperties();
                if (props.length > 0) {
                   DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
-                  dlgProps.setVisible(true);
                   if (!sel[i].isInitialized()) {
                      core_.unloadDevice(sel[i].getName());
                      model_.removeDevice(sel[i].getName());
@@ -423,7 +395,6 @@ private JComboBox byLibCombo_;
          e.printStackTrace();
       }
       DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
-      dlg.setVisible(true);
       model_.setModified(true);
       
       if (!dev.isInitialized()) {
@@ -606,20 +577,10 @@ private JComboBox byLibCombo_;
 
             Object[] userData = node.getUserDataArray();
             if (null == userData) {
-               // if a folder has one child go ahead and add the children
-               if (1 == node.getLeafCount()) {
-                  node = (DeviceTreeNode) node.getChildAt(0);
-                  userData = node.getUserDataArray();
-                  if (null == userData)
-                     return false;
-               }
-            }
-
-            // get selected device
-            if (userData == null) {
-               JOptionPane.showMessageDialog(this, "Multiple devices available in this node!\nPlease expand the node and select a specific device to add.");
+               // Adding a folder; invalid operation, so do nothing.
                return false;
             }
+
             String adapterName = userData[1].toString();
             String lib = userData[0].toString();
             String descr = userData[2].toString();
@@ -647,7 +608,6 @@ private JComboBox byLibCombo_;
 
             // open device setup dialog
             DeviceSetupDlg dlg = new DeviceSetupDlg(model_, core_, dev);
-            dlg.setVisible(true);
 
             if (!dev.isInitialized()) {
                // user canceled or things did not work out
@@ -697,7 +657,6 @@ private JComboBox byLibCombo_;
                         String props[] = sel[i].getPreInitProperties();
                         if (props.length > 0) {
                            DeviceSetupDlg dlgProps = new DeviceSetupDlg(model_, core_, sel[i]);
-                           dlgProps.setVisible(true);
                            if (!sel[i].isInitialized()) {
                               core_.unloadDevice(sel[i].getName());
                               model_.removeDevice(sel[i].getName());
@@ -732,21 +691,17 @@ private JComboBox byLibCombo_;
    }
    
    private void buildTreeByType(MicroscopeModel model) {
-      Device devices_[] = null;
-      if (hubsCombo_.getSelectedIndex() == 1)
-         devices_ = model.getAvailableDeviceList();
-      else
-         devices_ = model.getAvailableDevicesCompact();
+      Device devices[] = model.getAvailableDevicesCompact();
 
       // organize devices by type
       Hashtable<String, Vector<Device>> nodes = new Hashtable<String, Vector<Device>>();
-      for (int i = 0; i < devices_.length; i++) {
-         if (nodes.containsKey(devices_[i].getTypeAsString()))
-            nodes.get(devices_[i].getTypeAsString()).add(devices_[i]);
+      for (int i = 0; i < devices.length; i++) {
+         if (nodes.containsKey(devices[i].getTypeAsString()))
+            nodes.get(devices[i].getTypeAsString()).add(devices[i]);
          else {
             Vector<Device> v = new Vector<Device>();
-            v.add(devices_[i]);
-            nodes.put(devices_[i].getTypeAsString(), v);
+            v.add(devices[i]);
+            nodes.put(devices[i].getTypeAsString(), v);
          }
       }
 
@@ -778,26 +733,22 @@ private JComboBox byLibCombo_;
    }
 
    private void buildTreeByLib(MicroscopeModel model) {
-      Device devices_[] = null;
-      if (hubsCombo_.getSelectedIndex() == 1)
-         devices_ = model.getAvailableDeviceList();
-      else
-         devices_ = model.getAvailableDevicesCompact();
+      Device devices[] = model.getAvailableDevicesCompact();
 
       String thisLibrary = "";
       DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by " + "\u00B5" + "Manager");
       DeviceTreeNode node = null;
-      for (int idd = 0; idd < devices_.length; ++idd) {
+      for (int idd = 0; idd < devices.length; ++idd) {
          // assume that the first library doesn't have an empty name! (of
          // course!)
-         if (0 != thisLibrary.compareTo(devices_[idd].getLibrary())) {
+         if (0 != thisLibrary.compareTo(devices[idd].getLibrary())) {
             // create a new node of devices for this library
-            node = new DeviceTreeNode(devices_[idd].getLibrary(), true);
+            node = new DeviceTreeNode(devices[idd].getLibrary(), true);
             root.add(node);
-            thisLibrary = devices_[idd].getLibrary(); // remember which library
+            thisLibrary = devices[idd].getLibrary(); // remember which library
                                                       // we are processing
          }
-         Object[] userObject = { devices_[idd].getLibrary(), devices_[idd].getAdapterName(), devices_[idd].getDescription(), new Boolean(devices_[idd].isHub()) };
+         Object[] userObject = { devices[idd].getLibrary(), devices[idd].getAdapterName(), devices[idd].getDescription(), new Boolean(devices[idd].isHub()) };
          DeviceTreeNode aLeaf = new DeviceTreeNode("", true);
          aLeaf.setUserObject(userObject);
          node.add(aLeaf);
@@ -822,7 +773,7 @@ private JComboBox byLibCombo_;
 
    private void displayDocumentation() {
       try {
-         ij.plugin.BrowserLauncher.openURL(documentationURLroot_ + libraryDocumentationName_);
+         ij.plugin.BrowserLauncher.openURL(WEBSITE_ROOT + libraryDocumentationName_);
       } catch (IOException e1) {
          ReportingUtils.showError(e1);
       }

@@ -20,7 +20,7 @@
 //
 // CVS:          $Id: RolesPage.java 7141 2011-05-04 17:01:07Z karlh $
 //
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,10 +33,12 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.internal.utils.GUIUtils;
@@ -60,20 +62,18 @@ public class RolesPage extends PagePanel {
    public RolesPage() {
       super();
       title_ = "Select default devices and choose auto-shutter setting";
-      helpText_ = "Default device roles must be defined so that GUI can send adequate commands to them.\n" +
-      "This is especially important for systems with multiple cameras, shutters or stages." +
-      " The GUI needs to know which ones are going to be treated as default.\n\n" +
-      "These roles can be changed on-the-fly thorugh configuration presets (in one of the subsequent steps).";
-      setLayout(null);
-      
-      final JLabel cameraLabel = new JLabel();
-      cameraLabel.setText("Default camera");
-      cameraLabel.setBounds(21, 11, 120, 24);
-      add(cameraLabel);
+      setLayout(new MigLayout("fill"));
 
+      JTextArea help = new JTextArea(
+            "Select the default device, where available, to use for certain important roles.");
+      help.setWrapStyleWord(true);
+      help.setLineWrap(true);
+      help.setEditable(false);
+      add(help, "growx, span, wrap");
+
+      add(new JLabel("Default Camera: "), "split");
       cameraComboBox_ = new JComboBox();
       cameraComboBox_.setAutoscrolls(true);
-      cameraComboBox_.setBounds(20, 35, 120, 22);
       cameraComboBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             try {
@@ -83,15 +83,10 @@ public class RolesPage extends PagePanel {
             }
          }
       });
-      add(cameraComboBox_);
-            
-      final JLabel cameraLabel_1 = new JLabel();
-      cameraLabel_1.setText("Default shutter");
-      cameraLabel_1.setBounds(22, 69, 120, 24);
-      add(cameraLabel_1);
+      add(cameraComboBox_, "wrap");
 
+      add(new JLabel("Default Shutter: "), "split");
       shutterComboBox_ = new JComboBox();
-      shutterComboBox_.setBounds(21, 93, 120, 22);
       shutterComboBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             try {
@@ -101,15 +96,10 @@ public class RolesPage extends PagePanel {
             }
          }
       });
-      add(shutterComboBox_);
+      add(shutterComboBox_, "wrap");
 
-      final JLabel cameraLabel_2 = new JLabel();
-      cameraLabel_2.setText("Default focus stage");
-      cameraLabel_2.setBounds(23, 128, 150, 24);
-      add(cameraLabel_2);
-
+      add(new JLabel("Default Focus Stage: "), "split");
       focusComboBox_ = new JComboBox();
-      focusComboBox_.setBounds(22, 152, 120, 22);
       focusComboBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             try {
@@ -119,9 +109,9 @@ public class RolesPage extends PagePanel {
             }
          }
       });
-      add(focusComboBox_);
+      add(focusComboBox_, "wrap");
 
-      autoshutterCheckBox_ = new JCheckBox();
+      autoshutterCheckBox_ = new JCheckBox("Use Autoshutter By Default");
       autoshutterCheckBox_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             try {
@@ -136,14 +126,11 @@ public class RolesPage extends PagePanel {
             }
          }
       });
-      autoshutterCheckBox_.setText("Auto-shutter");
-      autoshutterCheckBox_.setBounds(21, 192, 141, 23);
-      add(autoshutterCheckBox_);
+      add(autoshutterCheckBox_, "wrap");
 
-      focusDirectionPanel_ = new JPanel(new MigLayout());
+      focusDirectionPanel_ = new JPanel(new MigLayout("fill"));
       JScrollPane scrollPane = new JScrollPane(focusDirectionPanel_);
-      scrollPane.setBounds(21, 232, 512, 300);
-      add(scrollPane);
+      add(scrollPane, "push, spanx, wrap");
    }
 
    public boolean enterPage(boolean next) {
@@ -267,7 +254,8 @@ public class RolesPage extends PagePanel {
                   core_.setFocusDirection(stageLabel, i);
                }
             });
-            focusDirectionPanel_.add(new JLabel(stageLabel + ":"));
+            focusDirectionPanel_.add(new JLabel(stageLabel + ":"),
+                  "split, span");
             focusDirectionPanel_.add(comboBox, "wrap");
          }
       }
