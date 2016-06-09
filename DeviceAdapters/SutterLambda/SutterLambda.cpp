@@ -1042,6 +1042,11 @@ int Shutter::Shutdown()
 }
 
 
+bool Shutter::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus Shutter::DetectDevice(void)
 {
    MM::DeviceDetectionStatus result = MM::Misconfigured;

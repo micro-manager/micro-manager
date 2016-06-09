@@ -421,6 +421,11 @@ void XYStage::GetName(char* Name) const
 }
 
 
+bool XYStage::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus XYStage::DetectDevice(void)
 {
 
@@ -1920,6 +1925,11 @@ ZStage::~ZStage()
 void ZStage::GetName(char* Name) const
 {
    CDeviceUtils::CopyLimitedString(Name, g_ZStageDeviceName);
+}
+
+bool ZStage::SupportsDeviceDetection(void)
+{
+   return true;
 }
 
 MM::DeviceDetectionStatus ZStage::DetectDevice(void)
@@ -3659,6 +3669,11 @@ CRISP::~CRISP()
    initialized_ = false;
 }
 
+bool CRISP::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus CRISP::DetectDevice(void)
 {
    return ASICheckSerialPort(*this,*GetCoreCallback(), port_, answerTimeoutMs_);
@@ -4745,6 +4760,11 @@ StateDevice::~StateDevice()
    Shutdown();
 }
 
+bool StateDevice::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus StateDevice::DetectDevice(void)
 {
    return ASICheckSerialPort(*this,*GetCoreCallback(), port_, answerTimeoutMs_);
@@ -4971,6 +4991,11 @@ void LED::GetName(char* Name) const
    CDeviceUtils::CopyLimitedString(Name, g_LEDName);
 }
 
+
+bool LED::SupportsDeviceDetection(void)
+{
+   return true;
+}
 
 MM::DeviceDetectionStatus LED::DetectDevice(void)
 {

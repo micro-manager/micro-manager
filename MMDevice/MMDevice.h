@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 66
+#define DEVICE_INTERFACE_VERSION 67
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -333,6 +333,7 @@ namespace MM {
       virtual int AcqAfterStack() = 0;
 
       //device discovery API
+      virtual bool SupportsDeviceDetection(void) = 0;
       virtual MM::DeviceDetectionStatus DetectDevice(void) = 0;
 
       // hub-peripheral relationship

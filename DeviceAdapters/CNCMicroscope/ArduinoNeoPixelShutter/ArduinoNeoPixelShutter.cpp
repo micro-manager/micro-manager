@@ -138,6 +138,11 @@ int CArduinoNeoPixelHub::GetControllerVersion(int& version)
 
 }
 
+bool CArduinoNeoPixelHub::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus CArduinoNeoPixelHub::DetectDevice(void)
 {
    if (initialized_)

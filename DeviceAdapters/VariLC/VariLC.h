@@ -51,6 +51,7 @@ class VariLC : public CGenericBase<VariLC>
       bool Initialized() {return initialized_;};
 	  
 	  // device discovery
+      bool SupportsDeviceDetection(void);
       MM::DeviceDetectionStatus DetectDevice(void);
 
       // action interface

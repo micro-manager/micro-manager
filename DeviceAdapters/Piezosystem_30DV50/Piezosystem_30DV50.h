@@ -122,7 +122,8 @@ public:
    void GetName(char* pszName) const;
    bool Busy();
 	int GetVersion(std::string& version);
-	MM::DeviceDetectionStatus DetectDevice(void);
+	bool SupportsDeviceDetection(void);
+    MM::DeviceDetectionStatus DetectDevice(void);
    // Stage API
    // ---------
   int SetPositionUm(double pos);
@@ -401,6 +402,7 @@ public:
    int GetOpen(bool& open);
    int Fire(double deltaT);
 
+	bool SupportsDeviceDetection(void);
 	MM::DeviceDetectionStatus DetectDevice(void);
 	int GetStatus(int& stat);
 	int GetVersion(std::string& version);

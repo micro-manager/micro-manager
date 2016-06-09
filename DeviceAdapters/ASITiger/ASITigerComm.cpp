@@ -83,6 +83,11 @@ int CTigerCommHub::Initialize()
    return DEVICE_OK;
 }
 
+bool CTigerCommHub::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus CTigerCommHub::DetectDevice()   // looks for hub, not child devices
 {
    if (initialized_)

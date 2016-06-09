@@ -79,6 +79,7 @@ class RAMPSHub : public HubBase<RAMPSHub>
   int SendCommand(std::string command, std::string terminator="\r");
   int ReadResponse(std::string& returnString, float timeout=300.);
   int SetAnswerTimeoutMs(double timout);
+  bool SupportsDeviceDetection(void);
   MM::DeviceDetectionStatus DetectDevice(void);
   int PurgeComPortH();
   int WriteToComPortH(const unsigned char* command, unsigned len);

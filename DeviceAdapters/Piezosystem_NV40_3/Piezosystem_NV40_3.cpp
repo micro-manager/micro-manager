@@ -346,6 +346,12 @@ int Hub::Initialize()
 
    return DEVICE_OK;
 }
+
+bool Hub::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus Hub::DetectDevice(void)
 {
    // all conditions must be satisfied...
