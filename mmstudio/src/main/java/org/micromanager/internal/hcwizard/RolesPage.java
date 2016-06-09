@@ -254,7 +254,8 @@ public class RolesPage extends PagePanel {
                   core_.setFocusDirection(stageLabel, i);
                }
             });
-            focusDirectionPanel_.add(new JLabel(stageLabel + ":"));
+            focusDirectionPanel_.add(new JLabel(stageLabel + ":"),
+                  "split, span");
             focusDirectionPanel_.add(comboBox, "wrap");
          }
       }
