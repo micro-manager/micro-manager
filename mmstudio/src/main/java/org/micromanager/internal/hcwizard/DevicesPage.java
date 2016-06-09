@@ -90,7 +90,7 @@ private JComboBox byLibCombo_;
 
       public final String[] COLUMN_NAMES = new String[] {
             "Name",
-            "Adapter/Library",
+            "Adapter/Module",
             "Description",
             "Status"
       };
@@ -286,7 +286,7 @@ private JComboBox byLibCombo_;
       add(availDevices, "split, spanx");
 
       byLibCombo_ = new JComboBox(new String[] {
-         "List by Adapter", "List by Type"});
+         "List by Module", "List by Type"});
       byLibCombo_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             if (byLibCombo_.getSelectedIndex() == 0)
