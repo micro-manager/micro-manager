@@ -23,7 +23,7 @@ import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 
 import org.micromanager.events.internal.MouseMovesStageEvent;
-import org.micromanager.internal.hcwizard.ConfiguratorDlg2;
+import org.micromanager.internal.hcwizard.ConfigWizard;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
@@ -168,26 +168,26 @@ public class ConfigMenu {
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
          // run Configurator
-         ConfiguratorDlg2 cfg2 = null;
+         ConfigWizard cfg = null;
          MainFrame frame = MMStudio.getFrame();
          try {
             frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            cfg2 = new ConfiguratorDlg2(core_, studio_.getSysConfigFile());
+            cfg = new ConfigWizard(core_, studio_.getSysConfigFile());
          } finally {
             frame.setCursor(Cursor.getDefaultCursor());
             waiter.setVisible(false);
          }
 
-         if (cfg2 == null)
+         if (cfg == null)
          {
             ReportingUtils.showError("Failed to launch Hardware Configuration Wizard");
             return;
          }
-         cfg2.setVisible(true);
+         cfg.setVisible(true);
          GUIUtils.preventDisplayAdapterChangeExceptions();
 
          // re-initialize the system with the new configuration file
-         studio_.setSysConfigFile(cfg2.getFileName());
+         studio_.setSysConfigFile(cfg.getFileName());
 
          GUIUtils.preventDisplayAdapterChangeExceptions();
          studio_.live().setSuspended(false);

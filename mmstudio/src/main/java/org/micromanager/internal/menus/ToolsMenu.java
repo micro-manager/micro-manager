@@ -20,7 +20,6 @@ import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 
 import org.micromanager.events.internal.MouseMovesStageEvent;
-import org.micromanager.internal.hcwizard.ConfiguratorDlg2;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
