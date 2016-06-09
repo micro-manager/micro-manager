@@ -691,7 +691,7 @@ private JComboBox byLibCombo_;
    }
    
    private void buildTreeByType(MicroscopeModel model) {
-      Device devices[] = model.getAvailableDeviceList();
+      Device devices[] = model.getAvailableDevicesCompact();
 
       // organize devices by type
       Hashtable<String, Vector<Device>> nodes = new Hashtable<String, Vector<Device>>();
@@ -733,7 +733,7 @@ private JComboBox byLibCombo_;
    }
 
    private void buildTreeByLib(MicroscopeModel model) {
-      Device devices[] = model.getAvailableDeviceList();
+      Device devices[] = model.getAvailableDevicesCompact();
 
       String thisLibrary = "";
       DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by " + "\u00B5" + "Manager");
