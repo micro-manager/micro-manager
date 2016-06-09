@@ -201,6 +201,11 @@ Stage::~Stage()
    Shutdown();
 }
 
+bool Stage::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus Stage::DetectDevice(void)
 {
    // all conditions must be satisfied...

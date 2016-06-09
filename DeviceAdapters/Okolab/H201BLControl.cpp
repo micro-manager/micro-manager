@@ -354,6 +354,10 @@ int H201BLControl::SetSetPoint(double sp)
  return DEVICE_OK;                                                         
 } 
 
+bool H201BLControl::SupportsDeviceDetection(void)
+{
+   return true;
+}
 
 /*
  *  Test serial communication between OSC and device 

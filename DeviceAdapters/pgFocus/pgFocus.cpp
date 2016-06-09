@@ -181,6 +181,11 @@ int pgFocusHub::Initialize()
    return DEVICE_OK;
 }
 
+bool pgFocusHub::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus pgFocusHub::DetectDevice(void)
 {
 	// Code modified from Nico's Arduino Device Adapter

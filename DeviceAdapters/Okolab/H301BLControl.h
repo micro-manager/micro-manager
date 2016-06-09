@@ -32,6 +32,7 @@ class H301BLControl: public OkolabDevice , public CGenericBase<H301BLControl>
 
 	void GetName(char* pszName) const;
     bool Busy();
+    bool SupportsDeviceDetection(void);
     MM::DeviceDetectionStatus DetectDevice(void);
 
 	// internal API 

@@ -20,7 +20,7 @@
 //
 // CVS:          $Id: FinishPage.java 7241 2011-05-17 23:38:43Z karlh $
 //
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 import java.awt.Container;
 import java.awt.Cursor;
@@ -33,7 +33,11 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
+import net.miginfocom.swing.MigLayout;
+
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
@@ -58,50 +62,44 @@ public class FinishPage extends PagePanel {
     public FinishPage() {
         super();
         title_ = "Save configuration and exit";
-        setHelpFileName("conf_finish_page.html");
-        setLayout(null);
+        setLayout(new MigLayout("fillx"));
 
-        final JLabel configurationWillBeLabel = new JLabel();
-        configurationWillBeLabel.setText("Configuration file:");
-        configurationWillBeLabel.setBounds(14, 11, 123, 21);
-        add(configurationWillBeLabel);
+        JTextArea help = new JTextArea(
+              "All done! Choose where to save your config file.");
+        help.setWrapStyleWord(true);
+        help.setLineWrap(true);
+        help.setEditable(false);
+        add(help, "spanx, growx, wrap");
+
+        final JLabel configurationWillBeLabel = new JLabel("Filename:");
+        add(configurationWillBeLabel, "span, wrap");
 
         fileNameField_ = new JTextField();
-        fileNameField_.setBounds(12, 30, 429, 24);
-        add(fileNameField_);
+        add(fileNameField_, "split, width 400");
 
-        browseButton_ = new JButton();
+        browseButton_ = new JButton("Browse...");
         browseButton_.addActionListener(new ActionListener() {
-
             public void actionPerformed(final ActionEvent e) {
                 browseConfigurationFile();
             }
         });
-        browseButton_.setText("Browse...");
-        browseButton_.setBounds(450, 31, 100, 23);
-        add(browseButton_);
+        add(browseButton_, "wrap");
 
-        sendCheck_ = new JCheckBox();
-        sendCheck_.setBounds(10, 100, 360, 33);
+        sendCheck_ = new JCheckBox("Send configuration to micro-manager.org");
         sendCheck_.setFont(new Font("", Font.PLAIN, 12));
         sendCheck_.addActionListener(new ActionListener() {
-
             public void actionPerformed(ActionEvent arg0) {
               model_.setSendConfiguration(sendCheck_.isSelected());
             }
         });
 
-        sendCheck_.setText("Send configuration to Micro-manager.org");
-        add(sendCheck_);
+        add(sendCheck_, "wrap");
 
-        final JLabel sendConfigExplain = new JLabel();
+        final JLabel sendConfigExplain = new JLabel(
+              "Sending us your configuration file will help us study how \u00b5Manager is used.");
         sendConfigExplain.setAutoscrolls(true);
-        sendConfigExplain.setText("Providing the configuration data will assist securing further project funding.");
-        sendConfigExplain.setBounds(14, 127, 500, 21);
         sendConfigExplain.setFont(sendCheck_.getFont());
-        add(sendConfigExplain);
-        
-        //
+        add(sendConfigExplain, "wrap");
     }
 
     public boolean enterPage(boolean next) {

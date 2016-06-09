@@ -110,12 +110,7 @@ public class StatusDisplay extends JFrame {
       add(contents);
       pack();
       // Put us centered, on the same display as the main window.
-      JFrame mainFrame = ((MMStudio) studio_).getFrame();
-      GraphicsConfiguration config = GUIUtils.getGraphicsConfigurationContaining(mainFrame.getLocation().x, mainFrame.getLocation().y);
-      Dimension size = getSize();
-      Rectangle bounds = config.getBounds();
-      setLocation(bounds.x + bounds.width / 2 - size.width / 2,
-            bounds.y + bounds.height / 2 - size.height / 2);
+      GUIUtils.centerFrameWithFrame(this, studio_.compat().getMainWindow());
       setVisible(true);
    }
 

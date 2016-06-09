@@ -269,6 +269,7 @@ class Hub :  public HubBase<Hub>  //public CGenericBase<Hub>
 	  int OnBright (MM::PropertyBase* pProp, MM::ActionType eAct);
 
       // device discovery
+      bool SupportsDeviceDetection(void);
       MM::DeviceDetectionStatus DetectDevice(void);
 
    private:      

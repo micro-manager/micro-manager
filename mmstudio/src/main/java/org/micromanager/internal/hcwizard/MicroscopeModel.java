@@ -20,7 +20,7 @@
 //
 // CVS:          $Id: MicroscopeModel.java 7631 2011-08-28 02:44:53Z nenad $
 //
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -256,14 +256,6 @@ public class MicroscopeModel {
 
    }
 
-   public Device[] getAvailableDeviceList() {
-      return availableDevices_;
-   }
-
-   public Device[] getAvailableHubs() {
-      return availableHubs_;
-   }
-
    /**
     * Creates a list of devices that are either hubs or don't belong to hubs
     */
@@ -276,12 +268,14 @@ public class MicroscopeModel {
                include = false; // exclude devices that belong to hubs
             }
          }
-         
          if (include)
             compactList.add(availableDevices_[i]);
       }
-
       return compactList.toArray(new Device[compactList.size()]);
+   }
+
+   public Device[] getAvailableHubs() {
+      return availableHubs_;
    }
 
    public Device[] getAvailableSerialPorts() {

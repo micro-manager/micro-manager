@@ -411,6 +411,11 @@ int RAMPSHub::ReadResponse(std::string &returnString, float timeout)
 }
 
 
+bool RAMPSHub::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus RAMPSHub::DetectDevice(void)
 {
   if (initialized_)

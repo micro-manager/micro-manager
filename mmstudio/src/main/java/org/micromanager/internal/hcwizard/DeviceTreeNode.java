@@ -1,4 +1,4 @@
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -20,9 +20,9 @@ class DeviceTreeNode extends DefaultMutableTreeNode {
             Object[] userData = (Object[]) uo;
             if (2 < userData.length) {
                if (showLib_)
-                  ret = ((Boolean)userData[3] ? "*" : "") + userData[1].toString() + " | " + userData[2].toString();
+                  ret = ((Boolean)userData[3] ? "*" : "") + userData[1].toString() + ": " + userData[2].toString();
                else
-                  ret = ((Boolean)userData[3] ? "*" : "") + userData[0].toString() + " | " + userData[2].toString();
+                  ret = ((Boolean)userData[3] ? "*" : "") + userData[0].toString() + ": " + userData[2].toString();
             }
          } else {
             ret = uo.toString();

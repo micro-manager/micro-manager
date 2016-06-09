@@ -20,7 +20,7 @@
 //
 // CVS:          $Id: Label.java 2 2007-02-27 23:33:17Z nenad $
 //
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
 /**
  * Label data for state devices

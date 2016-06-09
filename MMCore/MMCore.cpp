@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 2, MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 3, MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -7106,6 +7106,18 @@ void CMMCore::updateAllowedChannelGroups()
 ///////////////////////////////////////////////////////////////////////////////
 //  Automatic device and serial port discovery methods
 //
+
+/**
+ * Return whether or not the device supports automatic device detection
+ * (i.e. whether or not detectDevice() may be safely called).
+ */
+bool CMMCore::supportsDeviceDetection(char* label)
+{
+   boost::shared_ptr<DeviceInstance> pDevice =
+      deviceManager_->GetDevice(label);
+   mm::DeviceModuleLockGuard guard(pDevice);
+   return pDevice->SupportsDeviceDetection();
+}
 
 /**
  * Tries to communicate to a device through a given serial port

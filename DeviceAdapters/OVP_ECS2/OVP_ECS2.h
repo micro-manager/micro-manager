@@ -107,6 +107,7 @@ public:
 
    void GetName(char* pszName) const;
    bool Busy();
+   bool SupportsDeviceDetection(void);
    MM::DeviceDetectionStatus DetectDevice();
 
    // Incubation "API" (copied from another adapter, no Micro-manager API yet)

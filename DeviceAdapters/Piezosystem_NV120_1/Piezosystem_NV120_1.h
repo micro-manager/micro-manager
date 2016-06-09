@@ -108,7 +108,8 @@ public:
 //  int GetRelativePositionSteps(long& steps);
   int SetOrigin();
   int GetLimits(double& min, double& max);
-  	MM::DeviceDetectionStatus DetectDevice(void);
+  bool SupportsDeviceDetection(void);
+  MM::DeviceDetectionStatus DetectDevice(void);
 	int GetDevice(std::string& dev);
 	int GetActorname(std::string& name);
 	int GetAxisname(std::string& name);

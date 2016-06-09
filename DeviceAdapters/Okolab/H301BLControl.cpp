@@ -357,6 +357,11 @@ int H301BLControl::SetSetPoint(double sp)
 } 
 
 
+bool H301BLControl::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 /*
  *  Test serial communication between OSC and device 
  */

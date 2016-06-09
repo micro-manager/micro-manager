@@ -207,6 +207,11 @@ bool Hub::Busy()
    return false;
 }
 
+bool Hub::SupportsDeviceDetection(void)
+{
+   return true;
+}
+
 MM::DeviceDetectionStatus Hub::DetectDevice(void)
 {
    // all conditions must be satisfied...

@@ -605,6 +605,7 @@ public:
 
    /** \name Device discovery. */
    ///@{
+   bool supportsDeviceDetection(char* deviceLabel);
    MM::DeviceDetectionStatus detectDevice(char* deviceLabel);
    ///@}
 

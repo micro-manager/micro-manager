@@ -20,21 +20,28 @@
 //
 // CVS:          $Id: DelayPage.java 3761 2010-01-14 02:38:08Z arthur $
 //
-package org.micromanager.internal.conf2;
+package org.micromanager.internal.hcwizard;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.CellEditor;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
-import org.micromanager.internal.conf2.DevicesPage.DeviceTable_TableModel;
+import net.miginfocom.swing.MigLayout;
+
+import org.micromanager.internal.hcwizard.DevicesPage.DeviceTable_TableModel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -54,10 +61,10 @@ public class DelayPage extends PagePanel {
             "Adapter",
             "Delay [ms]"
       };
-      
+
       MicroscopeModel model_;
       ArrayList<Device> devices_;
-      
+
       public DelayTableModel(MicroscopeModel model) {
          devices_ = new ArrayList<Device>();
          Device allDevices[] = model.getDevices();
@@ -67,7 +74,7 @@ public class DelayPage extends PagePanel {
          }
          model_ = model;
       }
-      
+
       public void setMicroscopeModel(MicroscopeModel mod) {
          Device allDevices[] = mod.getDevices();
          for (int i=0; i<allDevices.length; i++) {
@@ -76,7 +83,7 @@ public class DelayPage extends PagePanel {
          }
          model_ = mod;
       }
-      
+
       public int getRowCount() {
          return devices_.size();
       }
@@ -86,9 +93,8 @@ public class DelayPage extends PagePanel {
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
-      
+
       public Object getValueAt(int rowIndex, int columnIndex) {
-         
          if (columnIndex == 0)
             return devices_.get(rowIndex).getName();
          else if (columnIndex == 1)
@@ -96,6 +102,11 @@ public class DelayPage extends PagePanel {
          else
             return new Double(devices_.get(rowIndex).getDelay());
       }
+
+      public Device getDevice(int rowIndex) {
+         return devices_.get(rowIndex);
+      }
+
       public void setValueAt(Object value, int row, int col) {
          if (col == 2) {
             try {
@@ -106,14 +117,14 @@ public class DelayPage extends PagePanel {
             }
          }
       }
-     
+
       public boolean isCellEditable(int nRow, int nCol) {
          if(nCol == 2)
             return true;
          else
             return false;
       }
-      
+
       public void refresh() {
          Device allDevices[] = model_.getDevices();
          for (int i=0; i<allDevices.length; i++) {
@@ -124,7 +135,7 @@ public class DelayPage extends PagePanel {
       }
    }
 
-   
+
    private JTable deviceTable_;
    /**
     * Create the panel
@@ -132,27 +143,44 @@ public class DelayPage extends PagePanel {
    public DelayPage() {
       super();
       title_ = "Set delays for devices without synchronization capabilities";
-      helpText_ = "Some devices can't signal when they are done with the command, so that we have to guess by manually setting the delay. " +
-      "This means that the device will signal to be busy for the specified delay time after extecuting each command." +
-      " Devices that may require setting the delay manually are mostly shutters or filter wheels. " +
-      "\n\nIf device has normal synchronization capabilities, or you are not sure about it, leave this parameter at 0.";
-      setHelpFileName("conf_delays_page.html");
-      setLayout(null);
+      setLayout(new MigLayout("fill"));
 
+      JTextArea help = new JTextArea(
+            "Set how long to wait for the device to act before \u00b5Manager will move on (for example, waiting for a shutter to open before an image is snapped). Many devices will determine this automatically; refer to the help for more information.");
+      help.setWrapStyleWord(true);
+      help.setLineWrap(true);
+      help.setEditable(false);
+      add(help, "spanx, growx, wrap");
       final JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setBounds(22, 21, 517, 337);
-      add(scrollPane);
+      add(scrollPane, "grow");
 
       deviceTable_ = new DaytimeNighttime.Table();
       deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      InputMap im = deviceTable_.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      im.put( KeyStroke.getKeyStroke( KeyEvent.VK_ENTER, 0 ), "none" );
+      InputMap im = deviceTable_.getInputMap(
+            JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none");
       scrollPane.setViewportView(deviceTable_);
-      GUIUtils.setClickCountToStartEditing(deviceTable_,1);
+      GUIUtils.setClickCountToStartEditing(deviceTable_, 1);
       GUIUtils.stopEditingOnLosingFocus(deviceTable_);
+
+      JButton helpButton = new JButton("Help");
+      helpButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DelayTableModel model = (DelayTableModel) deviceTable_.getModel();
+            String library = model.getDevice(deviceTable_.getSelectedRow()).getLibrary();
+            try {
+               ij.plugin.BrowserLauncher.openURL(
+                  DevicesPage.WEBSITE_ROOT + library);
+            } catch (IOException e1) {
+               ReportingUtils.showError(e1);
+            }
+         }
+      });
+      add(helpButton, "aligny top, wrap");
    }
 
-   public boolean enterPage(boolean next) {      
+   public boolean enterPage(boolean next) {
       rebuildTable();
       return true;
   }
@@ -164,7 +192,6 @@ public class DelayPage extends PagePanel {
       }
       // apply delays to hardware
       try {
-
          model_.applyDelaysToHardware(core_);
       } catch (Exception e) {
          ReportingUtils.logError(e);
@@ -173,7 +200,7 @@ public class DelayPage extends PagePanel {
       }
       return true;
    }
-   
+
    private void rebuildTable() {
       TableModel tm = deviceTable_.getModel();
       DelayTableModel tmd;
@@ -187,7 +214,7 @@ public class DelayPage extends PagePanel {
       tmd.fireTableStructureChanged();
       tmd.fireTableDataChanged();
    }
-   
+
    public void refresh() {
       rebuildTable();
    }
@@ -197,5 +224,4 @@ public class DelayPage extends PagePanel {
 
    public void saveSettings() {
    }
-
 }
