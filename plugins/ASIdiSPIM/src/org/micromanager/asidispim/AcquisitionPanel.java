@@ -72,6 +72,9 @@ import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
@@ -1542,57 +1545,64 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // do this before getting snapshot of sliceTiming_ in acqSettings
       recalculateSliceTiming(!minSlicePeriodCB_.isSelected());
       
-      AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
+      AcquisitionSettings acqSettingsOrig = getCurrentAcquisitionSettings();
       
       // if a test acquisition then only run single timpoint, no autofocus
       if (testAcq) {
-         acqSettings.useTimepoints = false;
-         acqSettings.numTimepoints = 1;
-         acqSettings.useAutofocus = false;
+         acqSettingsOrig.useTimepoints = false;
+         acqSettingsOrig.numTimepoints = 1;
+         acqSettingsOrig.useAutofocus = false;
          // if called from the setup panels then the side will be specified
          //   so we can do an appropriate single-sided acquisition
          // if called from the acquisition panel then NONE will be specified
          //   and run according to existing settings
          if (testAcqSide != Devices.Sides.NONE) {
-            acqSettings.numSides = 1;
-            acqSettings.firstSideIsA = (testAcqSide == Devices.Sides.A);
+            acqSettingsOrig.numSides = 1;
+            acqSettingsOrig.firstSideIsA = (testAcqSide == Devices.Sides.A);
          }
          
          // work around limitation of not being able to use PLogic per-volume switching with single side
          // => do per-volume switching instead (only difference should be extra time to switch)
-         if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.VOLUME_HW
-               && acqSettings.numSides < 2) {
-            acqSettings.channelMode = MultichannelModes.Keys.VOLUME;
+         if (acqSettingsOrig.useChannels && acqSettingsOrig.channelMode == MultichannelModes.Keys.VOLUME_HW
+               && acqSettingsOrig.numSides < 2) {
+            acqSettingsOrig.channelMode = MultichannelModes.Keys.VOLUME;
          }
          
       }
       
-      double volumeDuration = computeActualVolumeDuration(acqSettings);
+      double volumeDuration = computeActualVolumeDuration(acqSettingsOrig);
       double timepointDuration = computeTimepointDuration();
-      long timepointIntervalMs = Math.round(acqSettings.timepointInterval*1000);
+      long timepointIntervalMs = Math.round(acqSettingsOrig.timepointInterval*1000);
       
       // use hardware timing if < 1 second between timepoints
       // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
       // cannot do this in getCurrentAcquisitionSettings because of mutually recursive
       // call with computeActualVolumeDuration()
-      if ( acqSettings.numTimepoints > 1
+      if ( acqSettingsOrig.numTimepoints > 1
             && timepointIntervalMs < (timepointDuration + 750)
-            && !acqSettings.isStageScanning) {
-         acqSettings.hardwareTimepoints = true;
+            && !acqSettingsOrig.isStageScanning) {
+         acqSettingsOrig.hardwareTimepoints = true;
       }
       
-      if (acqSettings.useMultiPositions) {
-         if (acqSettings.hardwareTimepoints
-               || ((acqSettings.numTimepoints > 1) 
+      if (acqSettingsOrig.useMultiPositions) {
+         if (acqSettingsOrig.hardwareTimepoints
+               || ((acqSettingsOrig.numTimepoints > 1) 
                      && (timepointIntervalMs < timepointDuration*1.2))) {
             // change to not hardwareTimepoints and warn user
             // but allow acquisition to continue
-            acqSettings.hardwareTimepoints = false;
+            acqSettingsOrig.hardwareTimepoints = false;
             MyDialogUtils.showError("Timepoint interval may not be sufficient "
                   + "depending on actual time required to change positions. "
                   + "Proceed at your own risk.");
          }
       }
+      
+      // now acqSettings should be read-only
+      final AcquisitionSettings acqSettings = acqSettingsOrig;
+      
+      // generate string for log file
+      Gson gson = new GsonBuilder().setPrettyPrinting().create();
+      final String acqSettingsJSON = gson.toJson(acqSettings); 
       
       // get MM device names for first/second cameras to acquire
       String firstCamera, secondCamera;
@@ -1629,7 +1639,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       int nrChannels = acqSettings.numChannels;
       
       // set up channels
-      int nrChannelsSoftware = nrChannels;  // how many times we trigger the controller
+      int nrChannelsSoftware = nrChannels;  // how many times we trigger the controller per stack
       int nrSlicesSoftware = nrSlices;
       String originalChannelConfig = "";
       boolean changeChannelPerVolumeSoftware = false;
@@ -1738,6 +1748,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (acqSettings.hardwareTimepoints) {
          if (acqSettings.useChannels && channelMode == MultichannelModes.Keys.VOLUME_HW) {
             // both hardware time points and volume channel switching use SPIMNumRepeats property
+            // TODO this seems a severe limitation, maybe this could be changed in the future via firmware change
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with hardware channel switching volume-by-volume.");
             return false;
@@ -1938,7 +1949,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // flag that we are actually running acquisition now
             acquisitionRunning_.set(true);
             
-            ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName);
+            ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName + " with following settings: " + acqSettingsJSON);
             
             if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                // swap nrFrames and nrSlices
@@ -2037,6 +2048,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
             gui_.setAcquisitionProperty(acqName, "Position_SPIM_Head",
                   positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
+            gui_.setAcquisitionProperty(acqName, "SPIMAcqSettings", acqSettingsJSON);            
                       
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
@@ -2092,7 +2104,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             } catch (Exception e) {
                ReportingUtils.logError("error waiting for system");
             }
-            
+
             // Loop over all the times we trigger the controller's acquisition
             //  (although if multi-channel with volume switching is selected there
             //   is inner loop to trigger once per channel)
@@ -2190,7 +2202,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   if (acqSettings.hardwareTimepoints) {
                      nrSlicesSoftware *= acqSettings.numTimepoints;
                   }
-
+                  
                   // loop over all the times we trigger the controller
                   // usually just once, but will be the number of channels if we have
                   //  multiple channels and aren't using PLogic to change between them
