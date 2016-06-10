@@ -90,13 +90,13 @@ CPeCon2000HubDevice::~CPeCon2000HubDevice()
 
 int CPeCon2000HubDevice::Initialize()
 {
-   if(MM::CanCommunicate == DetectDevice())
+   if(PdlEnumReset() != PdlErrorSuccess)
    {
-      return DEVICE_OK;
+      return DEVICE_ERR;
    } 
    else 
    {
-      return DEVICE_ERR;
+      return DEVICE_OK;
    }
 }
 
@@ -105,47 +105,32 @@ int CPeCon2000HubDevice::Shutdown()
    return DEVICE_OK;
 }
 
-
-MM::DeviceDetectionStatus CPeCon2000HubDevice::DetectDevice(void)
-{
-
-   if(PdlEnumReset() != PdlErrorSuccess)
-   {
-      return MM::CanNotCommunicate;
-   }
-   
-	return MM::CanCommunicate;
-}
-
-
 int CPeCon2000HubDevice::DetectInstalledDevices(void)
 {
    PdlDeviceInfo info;
 
-   if(MM::CanCommunicate == DetectDevice())
+   if(PdlEnumReset() != PdlErrorSuccess)
    {
-      if(PdlEnumReset() != PdlErrorSuccess)
-      {
-         return DEVICE_ERR;
-      }
-
-      while (PdlEnumNext(&info) == PdlErrorSuccess)
-      {
-         LogMessage(string("Found PeCon Series 2000 Device - Name: ") + string(info.name) + string(" Serial: ") + string(info.serial), false);
-
-         MM::Device *pDev = new CPeCon2000Device(string(g_PeCon2000DeviceName) + string(":") + string(info.serial));
-
-         if(pDev)
-         {
-            AddInstalledDevice(pDev);
-         }
-      }
-
-      if(PdlEnumReset() != PdlErrorSuccess)
-      {
-         return DEVICE_ERR;
-      }
+      return DEVICE_ERR;
    }
+   
+   while (PdlEnumNext(&info) == PdlErrorSuccess)
+   {
+       LogMessage(string("Found PeCon Series 2000 Device - Name: ") + string(info.name) + string(" Serial: ") + string(info.serial), false);
+
+       MM::Device *pDev = new CPeCon2000Device(string(g_PeCon2000DeviceName) + string(":") + string(info.serial));
+
+       if(pDev)
+       {
+         AddInstalledDevice(pDev);
+       }
+   }
+
+   if(PdlEnumReset() != PdlErrorSuccess)
+   {
+      return DEVICE_ERR;
+   }
+
    return DEVICE_OK;
 }
 
