@@ -19,13 +19,21 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.internal.dialogs;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+import mmcorej.DeviceType;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;
+
+import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.PropertyItem;
@@ -39,6 +47,7 @@ public class GroupEditor extends ConfigDialog {
     * 
     */
    private static final long serialVersionUID = 8281144157746745260L;
+   private static final String DISPLAY_SHUTTER_WARNING = "Warn user before saving a config group that includes shutter state.";
 
    public GroupEditor(String groupName, String presetName, Studio gui, CMMCore core, boolean newItem) {
       super(groupName, presetName, gui, core, newItem);
@@ -61,6 +70,69 @@ public class GroupEditor extends ConfigDialog {
    public void okChosen() {
       String newName = nameField_.getText();
 
+      // Examine the group, checking for shutter state properties.
+      ArrayList<PropertyItem> shutters = new ArrayList<PropertyItem>();
+      for (PropertyItem item : data_.getPropList()) {
+         try {
+            if (item.confInclude && item.name.contentEquals("State") &&
+                  core_.getDeviceType(item.device) == DeviceType.ShutterDevice) {
+               if (item.allowed.length != 2) {
+                  // Has more than two allowed values, ergo doesn't reflect
+                  // the shutter openness.
+                  continue;
+               }
+               if ((item.allowed[0].contentEquals("0") &&
+                     item.allowed[1].contentEquals("1")) ||
+                   (item.allowed[0].contentEquals("1") &&
+                     item.allowed[1].contentEquals("0"))) {
+                  shutters.add(item);
+               }
+            }
+         }
+         catch (Exception e) {
+            gui_.logs().logError(e, "Error getting information on device/property " + item.device + "/" + item.name);
+         }
+      }
+      // Warn user about including shutter state in config groups.
+      if (shutters.size() > 0 && gui_.profile().getBoolean(
+               GroupEditor.class, DISPLAY_SHUTTER_WARNING, true)) {
+         JPanel contents = new JPanel(new MigLayout("fill, flowy"));
+         // NB I would prefer to use a JTextArea here, and use its automatic
+         // line wrapping, but that causes a NullPointerException when laying
+         // out the dialog, for unknown reasons.
+         JLabel warning = new JLabel(
+            "<html>It looks like this config group contains a property that<br>" +
+            "controls whether or not a shutter is open. If you intend<br>" +
+            "to use this config group to control the current channel,<br>" +
+            "you should be aware that including shutter state properties<br>" +
+            "can lead to bad interactions with the autoshutter system.<br>" +
+            "If you want to use different shutters for different channel<br>" +
+            "presets, you should use the Core-Shutter property.<br><br>" +
+            "Would you like to remove the shutter state property from<br>" +
+            "this config group?</html>");
+         contents.add(warning, "growx");
+
+         JCheckBox neverAgain = new JCheckBox(
+               "Do not show me this warning again.");
+         contents.add(neverAgain);
+         String[] buttons = new String[] {"Keep", "Remove", "Cancel"};
+         int selection = JOptionPane.showOptionDialog(this,
+               contents, "Shutter State in Config Group",
+               JOptionPane.WARNING_MESSAGE, 0, null,
+               buttons, buttons[0]);
+         gui_.profile().setBoolean(GroupEditor.class, DISPLAY_SHUTTER_WARNING,
+               !neverAgain.isSelected());
+         if (selection == 2) {
+            // User cancelled.
+            return;
+         }
+         else if (selection == 1) {
+            for (PropertyItem shutter : shutters) {
+               shutter.confInclude = false;
+            }
+         }
+         // Otherwise user elected to keep it.
+      }
       if (writeGroup(initName_, newName)) {
          groupName_ = newName;
          this.dispose();
