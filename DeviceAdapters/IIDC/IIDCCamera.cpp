@@ -509,6 +509,92 @@ Camera::SetImageROI(unsigned left, unsigned top, unsigned width, unsigned height
 
 
 void
+Camera::GetFormat7PacketSizeLimits(uint32_t& unitBytes, uint32_t& maxBytes,
+      unsigned format7NegativeDeltaUnits)
+{
+   boost::shared_ptr<VideoMode> mode = GetVideoMode();
+   if (mode->IsFormat7())
+   {
+      uint32_t unitPacketSize, maxPacketSize;
+      dc1394error_t err;
+      err = dc1394_format7_get_packet_parameters(libdc1394camera_, mode->GetLibDC1394Mode(),
+            &unitPacketSize, &maxPacketSize);
+      if (err != DC1394_SUCCESS)
+         throw Error("Cannot get packet size parameters");
+
+      uint32_t busMaxPacketSize = 1024 * GetIsoSpeed() / 100;
+      maxPacketSize = std::min(maxPacketSize, busMaxPacketSize);
+
+      // Largest multiple of unitPacketSize that does not exceed maxPacketSize
+      maxPacketSize = maxPacketSize - (maxPacketSize % unitPacketSize);
+
+      /*
+       * There are cases where corrupted images get returned at the maximum
+       * packet size. I do not know if this is dependent on the camera, 1394
+       * interface, driver/kernel, libdc1394 version, or some combination of
+       * the above.
+       * For example, the AVT Guppy PRO F031B exhibited this issue on OpenSUSE
+       * 12.3, Rosewill RC-506E, 1394B S800, Format_7, Mode_0, Y16, full frame
+       * (max packet size 8192, unit size 4); setting the packet size to 8188
+       * resulted in correct images.
+       * So provide for limiting the maximum.
+       */
+      for (int i = 0; i < format7NegativeDeltaUnits; ++i)
+      {
+         if (maxPacketSize > unitPacketSize)
+            maxPacketSize -= unitPacketSize;
+      }
+
+      unitBytes = unitPacketSize;
+      maxBytes = maxPacketSize;
+   }
+   else // Not in Format_7
+   {
+      maxBytes = unitBytes = 0;
+   }
+}
+
+
+void
+Camera::SetFormat7PacketSize(uint32_t bytes, unsigned format7NegativeDeltaUnits)
+{
+   uint32_t unitPacketSize, maxPacketSize;
+   GetFormat7PacketSizeLimits(unitPacketSize, maxPacketSize,
+         format7NegativeDeltaUnits);
+
+   // Force to an allowed value
+   bytes -= (bytes % unitPacketSize);
+   bytes = std::min(bytes, maxPacketSize);
+   bytes = std::max(bytes, unitPacketSize);
+
+   dc1394_log_debug("[mm] Setting packet size to %s",
+         boost::lexical_cast<std::string>(bytes).c_str());
+   boost::shared_ptr<VideoMode> mode = GetVideoMode();
+   dc1394error_t err;
+   err = dc1394_format7_set_packet_size(libdc1394camera_, mode->GetLibDC1394Mode(), bytes);
+   if (err != DC1394_SUCCESS)
+      throw Error("Cannot set IEEE 1394 packet size");
+}
+
+
+uint32_t
+Camera::GetFormat7PacketSize()
+{
+   boost::shared_ptr<VideoMode> mode = GetVideoMode();
+   if (!mode->IsFormat7())
+      return 0;
+
+   uint32_t packetSize;
+   dc1394error_t err;
+   err = dc1394_format7_get_packet_size(libdc1394camera_, mode->GetLibDC1394Mode(),
+         &packetSize);
+   if (err != DC1394_SUCCESS)
+      throw Error(err, "Cannot get IEEE 1394 packet size");
+   return packetSize;
+}
+
+
+void
 Camera::SetMaxFramerate(unsigned format7NegativeDeltaUnits)
 {
    /*
@@ -523,56 +609,20 @@ Camera::SetMaxFramerate(unsigned format7NegativeDeltaUnits)
    {
       uint32_t packetSize;
 
-      uint32_t busMaxPacketSize = 1024 * GetIsoSpeed() / 100;
-      dc1394_log_debug("[mm] Bus max packet size is %s",
-            boost::lexical_cast<std::string>(busMaxPacketSize).c_str());
-
       uint32_t unitPacketSize, maxPacketSize;
-      dc1394error_t err;
-      err = dc1394_format7_get_packet_parameters(libdc1394camera_, mode->GetLibDC1394Mode(),
-            &unitPacketSize, &maxPacketSize);
-      if (err != DC1394_SUCCESS)
-         throw Error("Cannot get packet size parameters");
-      dc1394_log_debug("[mm] Max packet size is %s",
-            boost::lexical_cast<std::string>(maxPacketSize).c_str());
-      dc1394_log_debug("[mm] Unit packet size is %s",
-            boost::lexical_cast<std::string>(unitPacketSize).c_str());
+      GetFormat7PacketSizeLimits(unitPacketSize, maxPacketSize,
+            format7NegativeDeltaUnits);
 
       uint32_t recommendedSize;
-      err = dc1394_format7_get_recommended_packet_size(libdc1394camera_, mode->GetLibDC1394Mode(), &recommendedSize);
-      if (err == DC1394_SUCCESS && recommendedSize > 0 && recommendedSize <= busMaxPacketSize)
-      {
-         dc1394_log_debug("[mm] Recommended packet size is %s",
-               boost::lexical_cast<std::string>(recommendedSize).c_str());
+      dc1394error_t err;
+      err = dc1394_format7_get_recommended_packet_size(libdc1394camera_,
+            mode->GetLibDC1394Mode(), &recommendedSize);
+      if (err == DC1394_SUCCESS && recommendedSize > 0 && recommendedSize <= maxPacketSize)
          packetSize = recommendedSize;
-      }
       else
-      {
-         dc1394_log_debug("[mm] Recommended packet size is not available");
-         maxPacketSize = std::min(maxPacketSize, busMaxPacketSize);
+         packetSize = maxPacketSize;
 
-         // Largest multiple of unitPacketSize that does not exceed maxPacketSize
-         packetSize = maxPacketSize - (maxPacketSize % unitPacketSize);
-      }
-
-      /*
-       * There are cases where corrupted images get returned at the maximum
-       * packet size. I do not know if this is dependent on the camera, 1394
-       * interface, driver/kernel, libdc1394 version, or some combination of
-       * the above.
-       * For example, the AVT Guppy PRO F031B exhibited this issue on OpenSUSE
-       * 12.3, Rosewill RC-506E, 1394B S800, Format_7, Mode_0, Y16, full frame
-       * (max packet size 8192, unit size 4); setting the packet size to 8188
-       * resulted in correct images.
-       */
-      packetSize -= unitPacketSize * format7NegativeDeltaUnits;
-
-      dc1394_log_debug("[mm] Setting packet size to %s",
-            boost::lexical_cast<std::string>(packetSize).c_str());
-
-      err = dc1394_format7_set_packet_size(libdc1394camera_, mode->GetLibDC1394Mode(), packetSize);
-      if (err != DC1394_SUCCESS)
-         throw Error("Cannot set IEEE 1394 packet size");
+      SetFormat7PacketSize(packetSize, format7NegativeDeltaUnits);
    }
    else
    {
@@ -623,10 +673,7 @@ Camera::GetFramerate()
          return 1.0f / interval;
 
       // Camera cannot report framerate; estimate it from packet payload size
-      uint32_t packetSize;
-      err = dc1394_format7_get_packet_size(libdc1394camera_, mode->GetLibDC1394Mode(), &packetSize);
-      if (err != DC1394_SUCCESS)
-         throw Error(err, "Cannot get IEEE 1394 packet size");
+      uint32_t packetSize = GetFormat7PacketSize();
 
       uint32_t width, height;
       err = dc1394_format7_get_image_size(libdc1394camera_, mode->GetLibDC1394Mode(), &width, &height);

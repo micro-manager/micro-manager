@@ -102,6 +102,7 @@ const char* const MMIIDC_Property_IsoSpeed = "Transmission speed (Mbps)";
 const char* const MMIIDC_Property_RightShift16BitSamples = "Right-shift 16-bit samples";
 const char* const MMIIDC_Property_Format7PacketSizeNegativeDelta = "Limit Format_7 packet size";
 const char* const MMIIDC_Property_VideoMode = "Video mode";
+const char* const MMIIDC_Property_Format7PacketSize = "Format_7 packet size";
 const char* const MMIIDC_Property_MaxFramerate = "Maximum framerate (fps)";
 const char* const MMIIDC_Property_ExposureMs = MM::g_Keyword_Exposure;
 const char* const MMIIDC_Property_Binning = MM::g_Keyword_Binning;
@@ -518,6 +519,8 @@ MMIIDCCamera::Initialize()
       if (err != DEVICE_OK)
          return err;
 
+      // We do not support binning the usual way. Format_7 video modes usually
+      // provide binning, but in a vendor-specific way.
       err = CreateIntegerProperty(MMIIDC_Property_Binning, 1, false);
       if (err != DEVICE_OK)
          return err;
@@ -526,8 +529,6 @@ MMIIDCCamera::Initialize()
       err = CreateIntegerProperty(MMIIDC_Property_TimeoutMs, 10000, false);
       if (err != DEVICE_OK)
          return err;
-
-      // TODO More properties
    }
    CATCH_AND_RETURN_ERROR
 
@@ -970,6 +971,44 @@ MMIIDCCamera::OnFormat7PacketSizeNegativeDelta(MM::PropertyBase*, MM::ActionType
 
 
 int
+MMIIDCCamera::OnFormat7PacketSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   try
+   {
+      if (eAct == MM::BeforeGet)
+      {
+         uint32_t packetSize;
+         if (currentVideoMode_->IsFormat7())
+            packetSize = iidcCamera_->GetFormat7PacketSize();
+         else
+            packetSize = cachedPacketSize_;
+         pProp->Set(static_cast<long>(packetSize));
+      }
+      else if (eAct == MM::AfterSet)
+      {
+         long v;
+         pProp->Get(v);
+         uint32_t packetSize = static_cast<uint32_t>(std::max(0L, v));
+         if (currentVideoMode_->IsFormat7())
+         {
+            cachedPacketSize_ = packetSize;
+            UpdateFramerate();
+            pProp->Set(static_cast<long>(cachedPacketSize_));
+         }
+         else
+         {
+            // Forbid changing, since we don't have a good way of validating the value
+            pProp->Set(static_cast<long>(cachedPacketSize_));
+            return AdHocErrorCode("Packet size cannot be changed when not in a Format_7 video mode");
+         }
+      }
+   }
+   CATCH_AND_RETURN_ERROR
+   return DEVICE_OK;
+}
+
+
+int
 MMIIDCCamera::OnVideoMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    try
@@ -1288,11 +1327,14 @@ MMIIDCCamera::InitializeVideoModeDependentState()
 {
    cachedBitsPerSample_ = iidcCamera_->GetBitsPerSample();
 
+   // Always turn off "frame rate prioritized control"; as scientific imaging
+   // software, it is more important to us that the exposure ("shutter") be
+   // predictable
    boost::shared_ptr<IIDC::FrameRateFeature> prioritizedFramerate = iidcCamera_->GetFrameRateFeature();
    if (prioritizedFramerate->IsPresent() && prioritizedFramerate->IsSwitchable())
       prioritizedFramerate->SetOnOff(false);
 
-   iidcCamera_->SetMaxFramerate();
+   iidcCamera_->SetMaxFramerate(0);
    cachedFramerate_ = iidcCamera_->GetFramerate();
    LogMessage("IIDC Framerate now set to " +
          boost::lexical_cast<std::string>(cachedFramerate_) + " (fps)");
@@ -1300,6 +1342,14 @@ MMIIDCCamera::InitializeVideoModeDependentState()
    int err;
    err = CreateFloatProperty(MMIIDC_Property_MaxFramerate, cachedFramerate_, true,
          new CPropertyAction(this, &MMIIDCCamera::OnMaximumFramerate));
+   if (err != DEVICE_OK)
+      return err;
+
+   // For packet size, 8192 will be clipped to the maximum allowed when we
+   // switch to Format_7
+   cachedPacketSize_ = 8192;
+   err = CreateIntegerProperty(MMIIDC_Property_Format7PacketSize, cachedPacketSize_,
+         false, new CPropertyAction(this, &MMIIDCCamera::OnFormat7PacketSize));
    if (err != DEVICE_OK)
       return err;
 
@@ -1442,7 +1492,16 @@ MMIIDCCamera::UpdateFramerate()
    if (err != DEVICE_OK)
       return err;
 
-   iidcCamera_->SetMaxFramerate(static_cast<unsigned>(-format7PacketSizeDelta));
+   if (currentVideoMode_->IsFormat7())
+   {
+      iidcCamera_->SetFormat7PacketSize(cachedPacketSize_,
+            static_cast<unsigned>(-format7PacketSizeDelta));
+      cachedPacketSize_ = iidcCamera_->GetFormat7PacketSize();
+   }
+   else
+   {
+      iidcCamera_->SetMaxFramerate(static_cast<unsigned>(-format7PacketSizeDelta));
+   }
    cachedFramerate_ = iidcCamera_->GetFramerate();
    LogMessage("IIDC Framerate now set to " +
          boost::lexical_cast<std::string>(cachedFramerate_) + " (fps)");

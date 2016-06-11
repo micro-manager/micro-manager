@@ -52,6 +52,7 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
    // Cached settings and properties
    unsigned cachedBitsPerSample_; // Depends on video mode
    double cachedFramerate_; // Depends on video mode and Format_7 packet size
+   uint32_t cachedPacketSize_;
    double cachedExposure_; // User settable but may also depend on video mode
 
    boost::mutex sampleProcessingMutex_;
@@ -138,6 +139,7 @@ private:
    int OnMaximumFramerate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRightShift16BitSamples(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFormat7PacketSizeNegativeDelta(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFormat7PacketSize(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVideoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -155,7 +157,10 @@ private:
    int InitializeVideoModeDependentState();
    int InitializeFeatureProperties();
 
+   // Set the framerate appropriately after parameters affecting possible frame
+   // rate have changed
    int UpdateFramerate();
+   // Update properties that might be affected after a video mode switch
    int VideoModeDidChange();
 
    void SetExposureImpl(double exposure);

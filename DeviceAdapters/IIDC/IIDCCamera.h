@@ -143,13 +143,30 @@ public:
    void SetImageROI(unsigned left, unsigned top, unsigned width, unsigned height);
 
    /*
+    * Get the allowed packet sizes for Format_7. Only valid when camera is
+    * currently in a Format_7 video mode; otherwize returns (0, 0).
+    */
+   void GetFormat7PacketSizeLimits(uint32_t& unitBytes, uint32_t& maxBytes,
+         unsigned format7NegativeDeltaUnits);
+
+   /*
+    * Set the Format_7 packet size, which affects the frame rate. The value is
+    * silently clipped and/or rounded down to obtain an allowed packet size.
+    * The resulting frame rate (maximum) can be queried via GetFramerate().
+    * No-op if camera is not currently in a Format_7 video mode.
+    */
+   void SetFormat7PacketSize(uint32_t bytes,
+         unsigned format7NegativeDeltaUnits);
+   uint32_t GetFormat7PacketSize();
+
+   /*
     * Set the framerate to the maximum possible given the current format, video
     * mode, and (for Format_7) color coding and ROI.
     *
     * The format7NegativeDeltaUnits parameter is an advanced setting that might
     * prevent corrupted images in some cases.
     */
-   void SetMaxFramerate(unsigned format7NegativeDeltaUnits = 0);
+   void SetMaxFramerate(unsigned format7NegativeDeltaUnits);
 
    /*
     * Get the current framerate (assuming that the FRAME_RATE feature is off).
