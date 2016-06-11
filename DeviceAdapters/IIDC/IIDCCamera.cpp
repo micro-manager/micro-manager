@@ -521,8 +521,11 @@ Camera::SetMaxFramerate(unsigned format7NegativeDeltaUnits)
    boost::shared_ptr<VideoMode> mode = GetVideoMode();
    if (mode->IsFormat7())
    {
-      uint32_t busMaxPacketSize = 1024 * GetIsoSpeed() / 100;
       uint32_t packetSize;
+
+      uint32_t busMaxPacketSize = 1024 * GetIsoSpeed() / 100;
+      dc1394_log_debug("[mm] Bus max packet size is %s",
+            boost::lexical_cast<std::string>(busMaxPacketSize).c_str());
 
       uint32_t unitPacketSize, maxPacketSize;
       dc1394error_t err;
@@ -530,15 +533,22 @@ Camera::SetMaxFramerate(unsigned format7NegativeDeltaUnits)
             &unitPacketSize, &maxPacketSize);
       if (err != DC1394_SUCCESS)
          throw Error("Cannot get packet size parameters");
+      dc1394_log_debug("[mm] Max packet size is %s",
+            boost::lexical_cast<std::string>(maxPacketSize).c_str());
+      dc1394_log_debug("[mm] Unit packet size is %s",
+            boost::lexical_cast<std::string>(unitPacketSize).c_str());
 
       uint32_t recommendedSize;
       err = dc1394_format7_get_recommended_packet_size(libdc1394camera_, mode->GetLibDC1394Mode(), &recommendedSize);
       if (err == DC1394_SUCCESS && recommendedSize > 0 && recommendedSize <= busMaxPacketSize)
       {
+         dc1394_log_debug("[mm] Recommended packet size is %s",
+               boost::lexical_cast<std::string>(recommendedSize).c_str());
          packetSize = recommendedSize;
       }
       else
       {
+         dc1394_log_debug("[mm] Recommended packet size is not available");
          maxPacketSize = std::min(maxPacketSize, busMaxPacketSize);
 
          // Largest multiple of unitPacketSize that does not exceed maxPacketSize
@@ -556,6 +566,9 @@ Camera::SetMaxFramerate(unsigned format7NegativeDeltaUnits)
        * resulted in correct images.
        */
       packetSize -= unitPacketSize * format7NegativeDeltaUnits;
+
+      dc1394_log_debug("[mm] Setting packet size to %s",
+            boost::lexical_cast<std::string>(packetSize).c_str());
 
       err = dc1394_format7_set_packet_size(libdc1394camera_, mode->GetLibDC1394Mode(), packetSize);
       if (err != DC1394_SUCCESS)
