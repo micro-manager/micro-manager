@@ -586,15 +586,17 @@ MMIIDCCamera::SnapImage()
    if (err != DEVICE_OK)
       return err;
 
+   ResetTimebase();
+
    try
    {
       if (iidcCamera_->IsOneShotCapable())
          iidcCamera_->StartOneShotCapture(3, timeoutMs,
-               boost::bind(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4),
+               boost::bind(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4, _5),
                boost::function<void ()>());
       else
          iidcCamera_->StartContinuousCapture(3, 1, timeoutMs,
-               boost::bind(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4),
+               boost::bind(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4, _5),
                boost::function<void ()>());
       iidcCamera_->WaitForCapture();
    }
@@ -863,19 +865,21 @@ MMIIDCCamera::StartSequenceAcquisition(long count, double /*intervalMs*/, bool s
    if (err != DEVICE_OK)
       return err;
 
+   ResetTimebase();
+
    try
    {
       if (iidcCamera_->IsMultiShotCapable() && count < 65536)
       {
          iidcCamera_->StartMultiShotCapture(16, static_cast<uint16_t>(count), timeoutMs,
-               boost::bind(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4),
+               boost::bind(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4, _5),
                boost::bind(&MMIIDCCamera::SequenceFinishCallback, this));
       }
       else
       {
          size_t nrFrames = (count == LONG_MAX) ? static_cast<size_t>(count) : 0;
          iidcCamera_->StartContinuousCapture(16, nrFrames, timeoutMs,
-               boost::bind(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4),
+               boost::bind(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4, _5),
                boost::bind(&MMIIDCCamera::SequenceFinishCallback, this));
       }
    }
@@ -1669,7 +1673,8 @@ MMIIDCCamera::ProcessImage(const void* source, bool ownResultBuffer,
       size_t sourceWidth, size_t sourceHeight,
       size_t destLeft, size_t destTop,
       size_t destWidth, size_t destHeight,
-      boost::function<void (const void*, size_t)> resultCallback)
+      uint32_t timestampUs,
+      boost::function<void (const void*, size_t, uint32_t)> resultCallback)
 {
    // This function implements a fixed processing pipeline that minimizes
    // unnecessary copying of the pixels.
@@ -1887,55 +1892,74 @@ MMIIDCCamera::ProcessImage(const void* source, bool ownResultBuffer,
       pixels = destination;
    }
 
-   resultCallback(pixels, destBytesPerPixel);
+   resultCallback(pixels, destBytesPerPixel, timestampUs);
 }
 
 
 void
 MMIIDCCamera::SnapCallback(const void* pixels, size_t width, size_t height,
-   IIDC::PixelFormat format)
+   IIDC::PixelFormat format, uint32_t timestampUs)
 {
    // Request that the callback be passed an owned pixel buffer
    ProcessImage(pixels, true, format, width, height,
          softROILeft_, softROITop_, roiWidth_, roiHeight_,
+         timestampUs,
          boost::bind(&MMIIDCCamera::ProcessedSnapCallback,
-            this, _1, roiWidth_, roiHeight_, _2));
+            this, _1, roiWidth_, roiHeight_, _2, _3));
 }
 
 
 void
 MMIIDCCamera::SequenceCallback(const void* pixels, size_t width, size_t height,
-   IIDC::PixelFormat format)
+   IIDC::PixelFormat format, uint32_t timestampUs)
 {
    // Request that the callback be passed an unowned pixel buffer, since the
    // pixels will be copied to the Core
    ProcessImage(pixels, false, format, width, height,
          softROILeft_, softROITop_, roiWidth_, roiHeight_,
+         timestampUs,
          boost::bind(&MMIIDCCamera::ProcessedSequenceCallback,
-            this, _1, roiWidth_, roiHeight_, _2));
+            this, _1, roiWidth_, roiHeight_, _2, _3));
 }
 
 
 void
 MMIIDCCamera::ProcessedSnapCallback(const void* pixels,
-      size_t width, size_t height, size_t bytesPerPixel)
+      size_t width, size_t height, size_t bytesPerPixel,
+      uint32_t /*timestampUs*/)
 {
    // We own pixels and must delete
    snappedPixels_.reset(static_cast<const unsigned char*>(pixels));
    snappedWidth_ = width;
    snappedHeight_ = height;
    snappedBytesPerPixel_ = bytesPerPixel;
+   // We don't yet have a mechanism to pass metadata (such as the timestamp) to
+   // the Core for snapped images.
 }
 
 
 void
 MMIIDCCamera::ProcessedSequenceCallback(const void* pixels,
-      size_t width, size_t height, size_t bytesPerPixel)
+      size_t width, size_t height, size_t bytesPerPixel,
+      uint32_t timestampUs)
 {
+   Metadata md;
+
    char label[MM::MaxStrLength];
    GetLabel(label);
-   Metadata md;
    md.put("Camera", label);
+
+#ifndef _WIN32
+   // The Windows CMU backend does not provide a valid timestamp (the field
+   // contains garbage), so we skip it.
+   // Linux and OS X backends provide the 1394 bus timestamp, which is probably
+   // pretty accurate.
+   double timestampMs = ComputeRelativeTimestampMs(timestampUs);
+
+   md.put(MM::g_Keyword_Elapsed_Time_ms,
+         CDeviceUtils::ConvertToString(timestampMs));
+#endif
+
    std::string serializedMD(md.Serialize());
 
    const unsigned char* bytes = reinterpret_cast<const unsigned char*>(pixels);
@@ -1965,6 +1989,32 @@ void
 MMIIDCCamera::SequenceFinishCallback()
 {
    GetCoreCallback()->AcqFinished(this, DEVICE_OK);
+}
+
+
+void
+MMIIDCCamera::ResetTimebase()
+{
+   boost::lock_guard<boost::mutex> lock(timebaseMutex_);
+   timebaseUs_ = 0;
+}
+
+
+double
+MMIIDCCamera::ComputeRelativeTimestampMs(uint32_t rawTimeStampUs)
+{
+   // We do not have any easy way to record the equivalent timestamp before
+   // starting the capture. Instead, we will use the timestamp of the first
+   // frame coming to us as the timebase.
+   {
+      boost::lock_guard<boost::mutex> lock(timebaseMutex_);
+      if (timebaseUs_ == 0)
+         std::swap(timebaseUs_, rawTimeStampUs);
+      else
+         rawTimeStampUs -= timebaseUs_;
+   }
+
+   return rawTimeStampUs / 1000.0;
 }
 
 

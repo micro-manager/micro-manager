@@ -59,6 +59,9 @@ class MMIIDCCamera : public CCameraBase<MMIIDCCamera>
 
    bool stopOnOverflow_; // Set by StartSequenceAcquisition(), read by SequenceCallback()
 
+   boost::mutex timebaseMutex_;
+   uint32_t timebaseUs_; // 0 at start of sequence acquisition; timestamp of first frame
+
    int nextAdHocErrorCode_;
 
    /*
@@ -159,22 +162,31 @@ private:
    double GetExposureUncached();
    std::pair<double, double> GetExposureLimits();
 
+   // Note: in the next bunch of functions, the uint32_t timestampUs is
+   // currently the only pass-through metadata. If anything more is added (such
+   // as other fields of dc1394video_frame_t), we should change this into an
+   // object (with unique_ptr semantics).
+
    void ProcessImage(const void* source, bool ownResultBuffer,
          IIDC::PixelFormat sourceFormat,
          size_t sourceWidth, size_t sourceHeight,
          size_t destLeft, size_t destTop,
          size_t destWidth, size_t destHeight,
-         boost::function<void (const void*, size_t)> resultCallback);
+         uint32_t timestampUs,
+         boost::function<void (const void*, size_t, uint32_t)> resultCallback);
 
    void SnapCallback(const void* pixels, size_t width, size_t height,
-         IIDC::PixelFormat format);
+         IIDC::PixelFormat format, uint32_t timestampUs);
    void SequenceCallback(const void* pixels, size_t width, size_t height,
-         IIDC::PixelFormat format);
+         IIDC::PixelFormat format, uint32_t timestampUs);
    void ProcessedSnapCallback(const void* pixels, size_t width, size_t height,
-         size_t bytesPerPixel);
+         size_t bytesPerPixel, uint32_t timestampUs);
    void ProcessedSequenceCallback(const void* pixels, size_t width, size_t height,
-         size_t bytesPerPixel);
+         size_t bytesPerPixel, uint32_t timestampUs);
    void SequenceFinishCallback();
+
+   void ResetTimebase();
+   double ComputeRelativeTimestampMs(uint32_t rawTimeStampUs);
 
    int AdHocErrorCode(const std::string& message);
 

@@ -776,7 +776,8 @@ void
 Camera::HandleCapturedFrame(dc1394video_frame_t* frame)
 {
    PixelFormat pf = PixelFormatForLibDC1394ColorCoding(frame->color_coding);
-   captureFrameCallback_(frame->image, frame->size[0], frame->size[1], pf);
+   captureFrameCallback_(frame->image, frame->size[0], frame->size[1], pf,
+         frame->timestamp);
 }
 
 

@@ -81,9 +81,11 @@ public:
    /*
     * Callable type for per-frame callback. The void* parameter (pixel buffer)
     * is read-only and only valid for the duration of the call.
-    * The two size_t parameters are width and height.
+    * The two size_t parameters are width and height. The final uint32_t is the
+    * frame timestamp in microseconds (invalid with Windows CMU backend)
     */
-   typedef boost::function<void (const void*, size_t, size_t, PixelFormat)> FrameCallbackFunction;
+   typedef boost::function<void (const void*, size_t, size_t, PixelFormat, uint32_t)>
+      FrameCallbackFunction;
    typedef boost::function<void ()> FinishCallbackFunction;
 
 private:
