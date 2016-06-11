@@ -522,11 +522,11 @@ Camera::GetFormat7PacketSizeLimits(uint32_t& unitBytes, uint32_t& maxBytes,
       if (err != DC1394_SUCCESS)
          throw Error("Cannot get packet size parameters");
 
-      uint32_t busMaxPacketSize = 1024 * GetIsoSpeed() / 100;
-      maxPacketSize = std::min(maxPacketSize, busMaxPacketSize);
+      // Just in case
+      maxPacketSize -= maxPacketSize % unitPacketSize;
 
-      // Largest multiple of unitPacketSize that does not exceed maxPacketSize
-      maxPacketSize = maxPacketSize - (maxPacketSize % unitPacketSize);
+      uint32_t busMaxPacketSize = 1024 * GetIsoSpeed() / 100;
+      busMaxPacketSize -= busMaxPacketSize % unitPacketSize;
 
       /*
        * There are cases where corrupted images get returned at the maximum
@@ -539,11 +539,13 @@ Camera::GetFormat7PacketSizeLimits(uint32_t& unitBytes, uint32_t& maxBytes,
        * resulted in correct images.
        * So provide for limiting the maximum.
        */
-      for (int i = 0; i < format7NegativeDeltaUnits; ++i)
+      for (unsigned i = 0; i < format7NegativeDeltaUnits; ++i)
       {
-         if (maxPacketSize > unitPacketSize)
-            maxPacketSize -= unitPacketSize;
+         if (busMaxPacketSize > unitPacketSize)
+            busMaxPacketSize -= unitPacketSize;
       }
+
+      maxPacketSize = std::min(maxPacketSize, busMaxPacketSize);
 
       unitBytes = unitPacketSize;
       maxBytes = maxPacketSize;
