@@ -103,6 +103,11 @@ const char* const MMIIDC_Property_RightShift16BitSamples = "Right-shift 16-bit s
 const char* const MMIIDC_Property_Format7PacketSizeNegativeDelta = "Limit Format_7 packet size";
 const char* const MMIIDC_Property_VideoMode = "Video mode";
 const char* const MMIIDC_Property_Format7PacketSize = "Format_7 packet size";
+const char* const MMIIDC_Property_Format7PacketSizeMode = "Format_7 packet size mode";
+const char* const MMIIDC_Property_Format7PacketSizeMode_UseMax =
+   "Set to max when parameters change";
+const char* const MMIIDC_Property_Format7PacketSizeMode_KeepSetting =
+   "Keep last-set value when possible";
 const char* const MMIIDC_Property_MaxFramerate = "Maximum framerate (fps)";
 const char* const MMIIDC_Property_ExposureMs = MM::g_Keyword_Exposure;
 const char* const MMIIDC_Property_Binning = MM::g_Keyword_Binning;
@@ -992,7 +997,7 @@ MMIIDCCamera::OnFormat7PacketSize(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (currentVideoMode_->IsFormat7())
          {
             cachedPacketSize_ = packetSize;
-            UpdateFramerate();
+            UpdateFramerate(true);
             pProp->Set(static_cast<long>(cachedPacketSize_));
          }
          else
@@ -1353,6 +1358,13 @@ MMIIDCCamera::InitializeVideoModeDependentState()
    if (err != DEVICE_OK)
       return err;
 
+   err = CreateStringProperty(MMIIDC_Property_Format7PacketSizeMode,
+         MMIIDC_Property_Format7PacketSizeMode_UseMax, false);
+   AddAllowedValue(MMIIDC_Property_Format7PacketSizeMode,
+         MMIIDC_Property_Format7PacketSizeMode_UseMax);
+   AddAllowedValue(MMIIDC_Property_Format7PacketSizeMode,
+         MMIIDC_Property_Format7PacketSizeMode_KeepSetting);
+
    boost::shared_ptr<IIDC::ShutterFeature> shutter = iidcCamera_->GetShutterFeature();
    if (!shutter->IsPresent() || !shutter->HasManualMode())
    {
@@ -1484,7 +1496,7 @@ MMIIDCCamera::InitializeFeatureProperties()
 
 
 int
-MMIIDCCamera::UpdateFramerate()
+MMIIDCCamera::UpdateFramerate(bool forceKeepPacketSize)
 {
    int err;
    long format7PacketSizeDelta;
@@ -1492,21 +1504,35 @@ MMIIDCCamera::UpdateFramerate()
    if (err != DEVICE_OK)
       return err;
 
-   if (currentVideoMode_->IsFormat7())
+   char packetSizeMode[MM::MaxStrLength];
+   err = GetProperty(MMIIDC_Property_Format7PacketSizeMode, packetSizeMode);
+   if (err != DEVICE_OK)
+      return err;
+   if (packetSizeMode == std::string(MMIIDC_Property_Format7PacketSizeMode_KeepSetting))
+      forceKeepPacketSize = true;
+
+   if (currentVideoMode_->IsFormat7() && forceKeepPacketSize)
    {
       iidcCamera_->SetFormat7PacketSize(cachedPacketSize_,
             static_cast<unsigned>(-format7PacketSizeDelta));
-      cachedPacketSize_ = iidcCamera_->GetFormat7PacketSize();
    }
    else
    {
       iidcCamera_->SetMaxFramerate(static_cast<unsigned>(-format7PacketSizeDelta));
    }
    cachedFramerate_ = iidcCamera_->GetFramerate();
+   if (currentVideoMode_->IsFormat7())
+      cachedPacketSize_ = iidcCamera_->GetFormat7PacketSize();
+
    LogMessage("IIDC Framerate now set to " +
          boost::lexical_cast<std::string>(cachedFramerate_) + " (fps)");
    err = OnPropertyChanged(MMIIDC_Property_MaxFramerate,
          boost::lexical_cast<std::string>(cachedFramerate_).c_str());
+   if (err != DEVICE_OK)
+      return err;
+
+   err = OnPropertyChanged(MMIIDC_Property_Format7PacketSize,
+         boost::lexical_cast<std::string>(cachedPacketSize_).c_str());
    if (err != DEVICE_OK)
       return err;
 

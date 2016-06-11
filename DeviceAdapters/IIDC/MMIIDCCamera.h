@@ -140,6 +140,7 @@ private:
    int OnRightShift16BitSamples(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFormat7PacketSizeNegativeDelta(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFormat7PacketSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFormat7PacketSizeMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVideoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -159,7 +160,7 @@ private:
 
    // Set the framerate appropriately after parameters affecting possible frame
    // rate have changed
-   int UpdateFramerate();
+   int UpdateFramerate(bool forceKeepPacketSize = false);
    // Update properties that might be affected after a video mode switch
    int VideoModeDidChange();
 
