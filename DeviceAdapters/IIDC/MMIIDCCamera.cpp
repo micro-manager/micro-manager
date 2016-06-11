@@ -955,10 +955,14 @@ MMIIDCCamera::OnRightShift16BitSamples(MM::PropertyBase* pProp, MM::ActionType e
 int
 MMIIDCCamera::OnFormat7PacketSizeNegativeDelta(MM::PropertyBase*, MM::ActionType eAct)
 {
+   // This property can be used to disallow setting the Format_7 packet size
+   // too close to the allowed maximum (which, I have found, can result in
+   // corrupted images in some Linux environments -- although it is not clear
+   // how common).
    try
    {
       if (eAct == MM::AfterSet)
-         VideoModeDidChange();
+         UpdateFramerate();
    }
    CATCH_AND_RETURN_ERROR
    return DEVICE_OK;
