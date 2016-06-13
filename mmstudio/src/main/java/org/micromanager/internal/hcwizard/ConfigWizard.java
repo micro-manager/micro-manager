@@ -151,7 +151,6 @@ public class ConfigWizard extends MMDialog {
       });
 
       add(nextButton_, "wrap");
-      getRootPane().setDefaultButton(nextButton_);
 
       // Create microscope model used by pages.
       microModel_ = new MicroscopeModel();

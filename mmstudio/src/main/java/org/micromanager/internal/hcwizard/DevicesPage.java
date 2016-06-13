@@ -27,6 +27,8 @@ import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -190,7 +192,16 @@ private JComboBox byLibCombo_;
                         e.getY());
                }
             }
+         });
 
+         // Add the selected device when the Enter key is pressed.
+         addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyReleased(KeyEvent e) {
+               if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                  addDevice();
+               }
+            }
          });
 
       }
