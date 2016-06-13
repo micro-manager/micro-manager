@@ -383,6 +383,9 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       return isPanelEnabled();
    }
    
+   /**
+    * @return 1 if channels are not enabled, otherwise the number of channels from the list that are enabled
+    */
    // could in theory do this from preferences but so much easier to do using multiChanelPanel_ object
    public int getNumChannels() {
       if (isPanelEnabled()) {
