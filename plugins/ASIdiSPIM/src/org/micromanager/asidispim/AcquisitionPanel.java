@@ -1634,9 +1634,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && sideActiveA)
             || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && sideActiveB);
       
-      int nrSides = acqSettings.numSides;
-      int nrSlices = acqSettings.numSlices;
-      int nrChannels = acqSettings.numChannels;
+      final int nrSides = acqSettings.numSides;
+      final int nrSlices = acqSettings.numSlices;
+      final int nrChannels = acqSettings.numChannels;
       
       // set up channels
       int nrChannelsSoftware = nrChannels;  // how many times we trigger the controller per stack
@@ -2277,11 +2277,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
 
                         // grab all the images from the cameras, put them into the acquisition
-                        int[] frNumber = new int[nrChannels*2];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
+                        int[] frNumber = new int[2*nrChannels];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
                         int[] cameraFrNumber = new int[2];       // keep track of how many frames we have received from the camera
-                        int[] tpNumber = new int[nrChannels*2];  // keep track of which timepoint we are on for hardware timepoints
-                        boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
-                        boolean skipNextImage = false;  // hardware timepoints with overlap mode sometimes have to drop spurious image
+                        int[] tpNumber = new int[2*nrChannels];  // keep track of which timepoint we are on for hardware timepoints
+                        boolean skipNextImage = false;  // hardware timepoints have to drop spurious images with overlap mode
+                        final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
+                        final boolean skipPerSide = acqSettings.useChannels && (acqSettings.numChannels > 1)
+                              && (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW); 
                         boolean done = false;
                         long timeout2;  // how long to wait between images before timing out
                         timeout2 = Math.max(2000, Math.round(5*sliceDuration));
@@ -2301,32 +2303,33 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     continue;  // goes to next iteration of this loop without doing anything else
                                  }
 
-                                 // figure out which channel index the acquisition is using
+                                 // figure out which channel index this frame belongs to
+                                 // "channel index" is channel of MM acquisition
+                                 // channel indexes will go from 0 to (nrSides * nrChannels - 1)
+                                 // if double-sided then second camera gets odd channel indexes (1, 3, etc.)
+                                 //    and adjacent pairs will be same color (e.g. 0 and 1 will be from first color, 2 and 3 from second, etc.)
                                  String camera = (String) timg.tags.get("Camera");
                                  int cameraIndex = camera.equals(firstCamera) ? 0: 1;
-                                 int channelIndex;
+                                 int channelIndex_tmp;
                                  switch (acqSettings.channelMode) {
                                  case NONE:
                                  case VOLUME:
-                                    channelIndex = channelNum;
+                                    channelIndex_tmp = channelNum;
                                     break;
                                  case VOLUME_HW:
-                                    channelIndex = cameraFrNumber[cameraIndex] / nrSlices;  // want quotient only
+                                    channelIndex_tmp = cameraFrNumber[cameraIndex] / nrSlices;  // want quotient only
                                     break;
                                  case SLICE_HW:
-                                    channelIndex = cameraFrNumber[cameraIndex] % nrChannels;  // want modulo arithmetic
+                                    channelIndex_tmp = cameraFrNumber[cameraIndex] % nrChannels;  // want modulo arithmetic
                                     break;
                                  default:
                                     // should never get here
                                     throw new Exception("Undefined channel mode");
                                  }
-
-                                 // 2nd camera always gets odd channel index 
-                                 // second side always comes after first side
                                  if (twoSided) {
-                                    channelIndex *= 2;
+                                    channelIndex_tmp *= 2;
                                  }
-                                 channelIndex += cameraIndex;
+                                 final int channelIndex = channelIndex_tmp + cameraIndex;
                                  
                                  int actualTimePoint = timePoint;
                                  if (acqSettings.hardwareTimepoints) {
@@ -2352,19 +2355,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  // if hardware timepoints then we only send one trigger and
                                  //   manually keep track of which channel/timepoint comes next
                                  if (acqSettings.hardwareTimepoints
-                                       && frNumber[channelIndex] >= nrSlices) {
+                                       && frNumber[channelIndex] >= nrSlices) {  // only do this if we are done with the slices in this MM channel
 
-                                    // we just finished filling one channel with all its slices so go to next timepoint for this channel
+                                    // we just finished filling one MM channel with all its slices so go to next timepoint for this channel
                                     frNumber[channelIndex] = 0;
                                     tpNumber[channelIndex]++;
 
                                     // see if we are supposed to skip next image
                                     if (checkForSkips) {
-                                       if (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {  // one extra image per side
-                                          if (channelIndex == nrChannels) {  // only skip at end of each side which is when we are done with final channel (assume channels are sequential)
+                                       if (skipPerSide) {  // one extra image per side, only happens with per-slice HW switching
+                                          if ((channelIndex == (nrChannels - 1))  // final channel index is last one of side
+                                                || (twoSided && (channelIndex == (nrChannels - 2)))) {  // 2nd-to-last channel index for two-sided is also last one of side 
                                              skipNextImage = true;
                                           }
-                                       } else {  // one extra image per channel
+                                       } else {  // one extra image per MM channel (color and side), this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected)
                                           skipNextImage = true;
                                        }
                                     }
