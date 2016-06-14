@@ -366,6 +366,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArduinoNeoPixel", "DeviceAd
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MarzhauserLStepOld", "DeviceAdapters\MarzhauserLStepOld\MarzhauserLStepOld.vcxproj", "{6F16F25A-6B06-4AB7-9B87-95311D8A4E2E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NIMultiAnalog", "DeviceAdapters\NIMultiAnalog\NIMultiAnalog.vcxproj", "{6D3C96B1-886E-4415-88BF-F5376A17222A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1803,6 +1805,14 @@ Global
 		{6F16F25A-6B06-4AB7-9B87-95311D8A4E2E}.Release|Win32.Build.0 = Release|Win32
 		{6F16F25A-6B06-4AB7-9B87-95311D8A4E2E}.Release|x64.ActiveCfg = Release|x64
 		{6F16F25A-6B06-4AB7-9B87-95311D8A4E2E}.Release|x64.Build.0 = Release|x64
+		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Debug|Win32.Build.0 = Debug|Win32
+		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Debug|x64.ActiveCfg = Debug|x64
+		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Debug|x64.Build.0 = Debug|x64
+		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Release|Win32.ActiveCfg = Release|Win32
+		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Release|Win32.Build.0 = Release|Win32
+		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Release|x64.ActiveCfg = Release|x64
+		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
