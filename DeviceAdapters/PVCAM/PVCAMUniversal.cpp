@@ -4036,7 +4036,9 @@ int Universal::ResizeImageBufferSingle()
          return nRet; // Message logged in the failing method
 
       // Reflect all changes that occured in this function in the Device/Property window
-      this->GetCoreCallback()->OnPropertiesChanged(this);
+      // LW: 2016-06-14 Removing this because it is causing hangs with Single Snap in Dual Camera setup
+      //     Some UI properties may not be properly updated though. Review this code should issues arise.
+      //this->GetCoreCallback()->OnPropertiesChanged(this);
    }
    catch (const std::bad_alloc& e)
    {
