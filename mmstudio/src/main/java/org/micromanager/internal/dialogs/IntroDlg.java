@@ -376,7 +376,7 @@ public class IntroDlg extends JDialog {
       if (doesExist) {
          cfgFileDropperDown_.setSelectedItem(path);
       }
-      else if (path.equals("")) {
+      else if (path != null && path.equals("")) {
          cfgFileDropperDown_.setSelectedItem("(none)");
       }
       else {
