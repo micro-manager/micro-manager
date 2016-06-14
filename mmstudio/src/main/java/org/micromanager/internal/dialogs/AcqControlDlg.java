@@ -52,6 +52,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.MMStudio;
@@ -1049,7 +1050,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       }
       for (String config : acqEng_.getChannelConfigs()) {
          if (channel.equals(config)) {
-            setChannelExposure(acqEng_.getChannelGroup(), channel, exposure);
+            storeChannelExposure(acqEng_.getChannelGroup(), channel, exposure);
             model_.setChannelExposureTime(channelGroup, channel, exposure);
          }
       }
@@ -1061,11 +1062,28 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       if (!channel.equals("")) {
          String channelGroup = event.getChannelGroup();
          double exposure = event.getNewExposureTime();
-         // Man, who named these methods? :) Note difference between
-         // setChannelExposure and setChannelExposureTime.
-         setChannelExposure(channelGroup, channel, exposure);
+         storeChannelExposure(channelGroup, channel, exposure);
          if (getShouldSyncExposure()) {
             setChannelExposureTime(channelGroup, channel, exposure);
+         }
+      }
+   }
+
+   @Subscribe
+   public void onGUIRefresh(GUIRefreshEvent event) {
+      // The current active channel may have changed, necessitating a refresh
+      // of the main exposure time.
+      if (getShouldSyncExposure()) {
+         try {
+            String channelGroup = studio_.core().getChannelGroup();
+            String channel = studio_.core().getCurrentConfig(channelGroup);
+            double exposure = getChannelExposureTime(
+                  channelGroup, channel, 10.0);
+            studio_.compat().setChannelExposureTime(channelGroup, channel,
+                  exposure);
+         }
+         catch (Exception e) {
+            studio_.logs().logError(e, "Error getting channel exposure time");
          }
       }
    }
@@ -2063,7 +2081,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             defaultVal);
    }
 
-   public static void setChannelExposure(String channelGroup,
+   public static void storeChannelExposure(String channelGroup,
          String channel, double exposure) {
       DefaultUserProfile.getInstance().setDouble(AcqControlDlg.class,
             "Exposure_" + channelGroup + "_" + channel, exposure);

@@ -120,7 +120,7 @@ public class ChannelTableModel extends AbstractTableModel implements TableModelL
                acqEng_.getChannelGroup(), channel.config, 10.0);
       } else if (col == 2) {
          channel.exposure = ((Double) value);
-         AcqControlDlg.setChannelExposure(acqEng_.getChannelGroup(),
+         AcqControlDlg.storeChannelExposure(acqEng_.getChannelGroup(),
                channel.config, channel.exposure);
          if (AcqControlDlg.getShouldSyncExposure()) {
             studio_.compat().setChannelExposureTime(acqEng_.getChannelGroup(), 

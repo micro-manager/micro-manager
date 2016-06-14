@@ -1383,7 +1383,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    public void setChannelExposureTime(String channelGroup, String channel,
            double exposure) {
       try {
-         AcqControlDlg.setChannelExposure(channelGroup, channel, exposure);
+         AcqControlDlg.storeChannelExposure(channelGroup, channel, exposure);
          if (channelGroup != null && channelGroup.equals(core_.getChannelGroup())) {
             if (channel != null && !channel.equals("") && 
                     channel.equals(core_.getCurrentConfigFromCache(channelGroup))) {
