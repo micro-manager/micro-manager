@@ -350,6 +350,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       rsa.setRows(1);
       rsa.read(in, null);
       rsa.setCaretPosition(0);
+      in.close();
    }
    
    /**
