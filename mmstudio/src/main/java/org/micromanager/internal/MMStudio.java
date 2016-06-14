@@ -415,6 +415,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
             return;
          }
          sysConfigFile_ = introDlg.getConfigFile();
+         frame_.setUserName(introDlg.getUserName());
       }
 
       IJVersionCheckDlg.execute();

@@ -490,6 +490,10 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       return subPanel;
    }
 
+   public void setUserName(String name) {
+      profileName_.setText("Profile: " + name);
+   }
+
    private JPanel createUtilityButtons() {
       JPanel subPanel = new JPanel(new MigLayout("flowx, insets 1, gap 0"));
       // ROI
