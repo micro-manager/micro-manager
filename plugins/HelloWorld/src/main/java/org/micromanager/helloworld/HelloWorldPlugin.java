@@ -21,55 +21,57 @@ import javax.swing.JOptionPane;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MenuPlugin;
+import org.micromanager.Studio;
 
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
-public class HelloWorldPlugin implements MMPlugin {
-   public static final String menuName = "Hello World";
-   public static final String tooltipDescription =
-      "Displays a simple dialog";
-
-   // Provides access to the Micro-Manager Java API (for GUI control and high-
-   // level functions).
-   private ScriptInterface app_;
-   // Provides access to the Micro-Manager Core API (for direct hardware
-   // control)
-   private CMMCore core_;
+@Plugin(type = MenuPlugin.class)
+public class HelloWorldPlugin implements SciJavaPlugin, MenuPlugin {
+   // Provides access to the MicroManager API.
+   private Studio studio_;
 
    @Override
-   public void setApp(ScriptInterface app) {
-      app_ = app;
-      core_ = app.getMMCore();
+   public void setContext(Studio studio) {
+      studio_ = studio;
    }
 
+   /**
+    * This method is called when the plugin's menu option is selected.
+    */
    @Override
-   public void dispose() {
-      // We do nothing here as the only object we create, our dialog, should
-      // be dismissed by the user.
-   }
-
-   @Override
-   public void show() {
+   public void onPluginSelected() {
       JOptionPane.showMessageDialog(null, "Hello, world!", "Hello world!",
             JOptionPane.PLAIN_MESSAGE);
    }
-   
+
+   /**
+    * This method determines which sub-menu of the Plugins menu we are placed
+    * into.
+    */
    @Override
-   public String getInfo () {
+   public String getSubMenu() {
+      return "Developer Tools";
+      // Indicates that we should show up in the root Plugins menu.
+//      return "";
+   }
+
+   @Override
+   public String getName() {
+      return "Hello, World!";
+   }
+
+   @Override
+   public String getHelpText() {
       return "Displays a simple greeting.";
    }
 
    @Override
-   public String getDescription() {
-      return tooltipDescription;
-   }
-   
-   @Override
    public String getVersion() {
       return "1.0";
    }
-   
+
    @Override
    public String getCopyright() {
       return "University of California, 2015";
