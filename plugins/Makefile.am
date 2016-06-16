@@ -8,7 +8,6 @@ nobase_mmplugin_DATA = \
 	ASIdiSPIM.jar \
 	AutoLase.jar \
 	Big.jar \
-	ClojureEditor.jar \
 	CRISP.jar \
 	CRISPv2.jar \
 	FrameCombiner.jar \
