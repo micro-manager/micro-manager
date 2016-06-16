@@ -82,20 +82,21 @@ public class IntroDlg extends JDialog {
    private static final String DEMO_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
 
    private static final int MAX_RECENT_CONFIGS = 6;
+   private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
 
    private Studio studio_;
    private IntroPlugin plugin_ = null;
 
    private final JTextArea welcomeTextArea_;
    private boolean okFlag_ = true;
-   
+
    ArrayList<String> mruCFGFileList_;
 
    private JComboBox cfgFileDropperDown_;
    private JComboBox profileSelect_;
-   
-   public static String DISCLAIMER_TEXT = 
-      
+   private JButton deleteButton_;
+
+   public static String DISCLAIMER_TEXT =
       "This software is distributed free of charge in the hope that it will be useful, " +
       "but WITHOUT ANY WARRANTY; without even the implied warranty " +
       "of merchantability or fitness for a particular purpose. In no event shall the copyright owner or contributors " +
@@ -125,8 +126,7 @@ public class IntroDlg extends JDialog {
          }
       }
 
-      Font textFont = new Font("Arial", Font.PLAIN, 10);
-      setFont(textFont);
+      setFont(DEFAULT_FONT);
       setTitle("Micro-Manager Startup");
       setName("Intro");
       setResizable(false);
@@ -154,10 +154,11 @@ public class IntroDlg extends JDialog {
       contentsPanel.add(microscopeManagerLabel, "gapleft 5");
 
       final JLabel versionLabel = new JLabel();
-      versionLabel.setFont(textFont);
+      versionLabel.setFont(DEFAULT_FONT);
       versionLabel.setText("MMStudio Version " + versionStr);
       contentsPanel.add(versionLabel, "gapleft 5");
 
+      createProfileDropdown();
       if (!DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
          addProfileDropdown(contentsPanel);
       }
@@ -178,13 +179,13 @@ public class IntroDlg extends JDialog {
             SUPPORT_TEXT + "\n\n" + CITATION_TEXT);
 
       welcomeTextArea_.setLineWrap(true);
-      welcomeTextArea_.setFont(textFont);
+      welcomeTextArea_.setFont(DEFAULT_FONT);
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
       contentsPanel.add(welcomeTextArea_, "growx, gapleft 5, gapright 5");
 
       final JButton okButton = new JButton();
-      okButton.setFont(textFont);
+      okButton.setFont(DEFAULT_FONT);
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -197,7 +198,7 @@ public class IntroDlg extends JDialog {
       okButton.requestFocusInWindow();
 
       final JButton cancelButton = new JButton();
-      cancelButton.setFont(textFont);
+      cancelButton.setFont(DEFAULT_FONT);
       cancelButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -229,12 +230,12 @@ public class IntroDlg extends JDialog {
 
    private void addConfigFileSelect(JPanel contentsPanel) {
       final JLabel loadConfigurationLabel = new JLabel();
-      loadConfigurationLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+      loadConfigurationLabel.setFont(DEFAULT_FONT);
       loadConfigurationLabel.setText("Configuration file:");
       contentsPanel.add(loadConfigurationLabel, "gapleft 5");
 
       cfgFileDropperDown_ = new JComboBox();
-      cfgFileDropperDown_.setFont(new Font("Arial", Font.PLAIN, 10));
+      cfgFileDropperDown_.setFont(DEFAULT_FONT);
       contentsPanel.add(cfgFileDropperDown_, "split 2, flowx, width 320!");
 
       final JButton browseButton = new JButton();
@@ -248,12 +249,7 @@ public class IntroDlg extends JDialog {
       contentsPanel.add(browseButton);
    }
 
-   private void addProfileDropdown(JPanel contentsPanel) {
-      JLabel userProfileLabel = new JLabel("User profile:");
-      Font stdFont = new Font("Arial", Font.PLAIN, 10);
-      userProfileLabel.setFont(stdFont);
-      contentsPanel.add(userProfileLabel, "gapleft 5");
-
+   private void createProfileDropdown() {
       final DefaultUserProfile profile = DefaultUserProfile.getInstance();
       Set<String> profiles = profile.getProfileNames();
       final ArrayList<String> profilesAsList = new ArrayList<String>(profiles);
@@ -264,34 +260,11 @@ public class IntroDlg extends JDialog {
 
       profileSelect_ = new JComboBox();
       profileSelect_.setToolTipText("The profile contains saved settings like window positions and acquisition parameters.");
-      profileSelect_.setFont(stdFont);
+      profileSelect_.setFont(DEFAULT_FONT);
       for (String profileName : profilesAsList) {
          profileSelect_.addItem(profileName);
       }
       profileSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
-      contentsPanel.add(profileSelect_, "split 2, flowx, width 320!");
-
-      final JButton deleteButton = new JButton("Delete");
-      deleteButton.setFont(stdFont);
-      deleteButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            String curName = (String) profileSelect_.getSelectedItem();
-            if (JOptionPane.showConfirmDialog(null,
-                  "Are you sure you want to delete the \"" + curName +
-                  "\" profile?", "Confirm Profile Deletion",
-                  JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
-               // User backed out.
-               return;
-            }
-            DefaultUserProfile.getInstance().deleteProfile(curName);
-            profileSelect_.removeItem(curName);
-            profileSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
-         }
-      });
-      deleteButton.setEnabled(false);
-      contentsPanel.add(deleteButton);
-
       profileSelect_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -321,12 +294,41 @@ public class IntroDlg extends JDialog {
             // Set the current active profile.
             profile.setCurrentProfile(profileName);
             // Enable/disable the "delete profile" button.
-            deleteButton.setEnabled(!(profileName.equals(USERNAME_NEW) ||
+            deleteButton_.setEnabled(!(profileName.equals(USERNAME_NEW) ||
                      profileName.equals(DefaultUserProfile.DEFAULT_USER)));
             // Update the list of hardware config files.
             setConfigFile(null);
          }
       });
+   }
+
+   private void addProfileDropdown(JPanel contentsPanel) {
+      JLabel userProfileLabel = new JLabel("User profile:");
+      userProfileLabel.setFont(DEFAULT_FONT);
+      contentsPanel.add(userProfileLabel, "gapleft 5");
+
+      contentsPanel.add(profileSelect_, "split 2, flowx, width 320!");
+
+      deleteButton_ = new JButton("Delete");
+      deleteButton_.setFont(DEFAULT_FONT);
+      deleteButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            String curName = (String) profileSelect_.getSelectedItem();
+            if (JOptionPane.showConfirmDialog(null,
+                  "Are you sure you want to delete the \"" + curName +
+                  "\" profile?", "Confirm Profile Deletion",
+                  JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION) {
+               // User backed out.
+               return;
+            }
+            DefaultUserProfile.getInstance().deleteProfile(curName);
+            profileSelect_.removeItem(curName);
+            profileSelect_.setSelectedItem(DefaultUserProfile.DEFAULT_USER);
+         }
+      });
+      deleteButton_.setEnabled(false);
+      contentsPanel.add(deleteButton_);
    }
 
    public boolean okChosen() {
@@ -384,28 +386,27 @@ public class IntroDlg extends JDialog {
          cfgFileDropperDown_.setSelectedItem(recentlyUsed[recentlyUsed.length - 1]);
       }
    }
-      
+
    public String getConfigFile() {
       if (cfgFileDropperDown_ == null) {
          // Prompting for config files is disabled.
          return "";
       }
-       String tvalue = cfgFileDropperDown_.getSelectedItem().toString();
-       String nvalue = "(none)";
-       if( nvalue.equals(tvalue))
-           tvalue = "";
-
-      return tvalue;
+      String config = cfgFileDropperDown_.getSelectedItem().toString();
+      if(config.contentEquals("(none)")) {
+         return "";
+      }
+      return config;
    }
 
    public String getUserName() {
       return (String) profileSelect_.getSelectedItem();
    }
-   
+
    public String getScriptFile() {
       return "";
    }
-   
+
    // User wants to use a file browser to select a hardware config file.
    protected void loadConfigFile() {
       File f = FileDialogs.openFile(this, "Choose a config file", FileDialogs.MM_CONFIG_FILE);
