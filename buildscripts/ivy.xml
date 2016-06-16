@@ -39,7 +39,6 @@
 		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.49h"/>
 
 		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
-		<dependency org="" name="clooj" rev="0.2.7"/>
 		<dependency org="" name="iconloader" rev="GIT"/>
 		<dependency org="" name="TSFProto" rev="SVN"/><!-- dependency on protobuf-java will not be resolved -->
 
