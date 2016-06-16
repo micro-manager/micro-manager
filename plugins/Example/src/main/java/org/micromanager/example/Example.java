@@ -33,11 +33,14 @@
 package org.micromanager.example;
 
 import mmcorej.CMMCore;
-import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
-public class Example implements MMPlugin {
+@Plugin(type = MenuPlugin.class)
+public class Example implements SciJavaPlugin, MenuPlugin {
    public static String menuName = "Example";
    public static String tooltipDescription = "This Micro-Manager plugin does nothing. "
 		   +"Its only purpose is to be an example for developers wishing to write their own plugin.";
@@ -46,34 +49,30 @@ public class Example implements MMPlugin {
    private ExampleFrame myFrame_;
 
    @Override
-   public void setApp(Studio app) {
+   public void setContext(Studio app) {
       gui_ = app;                                        
       core_ = app.getCMMCore();
+   }
+
+   @Override
+   public void onPluginSelected() {
       if (myFrame_ == null)
          myFrame_ = new ExampleFrame(gui_);
       myFrame_.setVisible(true);
    }
 
    @Override
-   public void dispose() {
-      // nothing todo:
+   public String getSubMenu() {
+      return "Developer Tools";
    }
 
    @Override
-   public void show() {
-      myFrame_.setVisible(true);
-   }
-
-   public void configurationChanged() {
-   }
-
-   @Override
-   public String getInfo () {
+   public String getName() {
       return "Example plugin";
    }
 
    @Override
-   public String getDescription() {
+   public String getHelpText() {
       return tooltipDescription;
    }
    
