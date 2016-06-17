@@ -497,9 +497,10 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    @Override
    public void setExposure(final double exposureTime) {
       // Avoid redundantly setting the exposure time.
+      boolean shouldSetInCore = true;
       try {
          if (core_ != null && core_.getExposure() == exposureTime) {
-            return;
+            shouldSetInCore = false;
          }
       }
       catch (Exception e) {
@@ -513,7 +514,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
             // Just give up.
             return;
          }
-         if (!core_.getCameraDevice().equals("")) {
+         if (!core_.getCameraDevice().equals("") && shouldSetInCore) {
             live().setSuspended(true);
             try {
                core_.setExposure(exposureTime);
