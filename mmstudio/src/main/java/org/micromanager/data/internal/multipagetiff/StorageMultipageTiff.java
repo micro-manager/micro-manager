@@ -142,6 +142,10 @@ public final class StorageMultipageTiff implements Storage {
          // it, so we can detect e.g. permissions errors that would cause
          // problems later.
          File dirFile = new File(directory_);
+         if (dirFile.exists()) {
+            // No overwriting existing datastores.
+            throw new IOException("Data at " + dirFile + " already exists");
+         }
          dirFile.mkdirs();
          if (!dirFile.canWrite()) {
             throw new IOException("Insufficient permission to write to " + dirFile);
