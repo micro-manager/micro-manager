@@ -92,6 +92,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private boolean isSuspended_ = false;
    private boolean shouldStopGrabberThread_ = false;
    private boolean shouldForceReset_ = false;
+   private boolean amStartingSequenceAcquisition_ = false;
    private Thread grabberThread_;
    private ArrayList<Long> displayUpdateTimes_;
    // Maps channel index to the last image we have received for that channel.
@@ -149,6 +150,20 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    }
 
    private void startLiveMode() {
+      if (amStartingSequenceAcquisition_) {
+         // HACK: if startContinuousSequenceAcquisition results in a core
+         // callback, then we can end up trying to start live mode when we're
+         // already "in" startLiveMode somewhere above us in the call stack.
+         // That is extremely prone to causing deadlocks between the image
+         // grabber thread (which needs the Core camera lock) and our thread
+         // (which already has the lock, due to
+         // startContinuousSequenceAcquisition) -- and our thread is about to
+         // join the grabber thread when stopLiveMode is called in a few lines.
+         // Hence we use this sentinel value to check if we are actually
+         // supposed to be starting live mode.
+         studio_.logs().logDebugMessage("Skipping startLiveMode as startContinuousSequenceAcquisition is in process");
+         return;
+      }
       // First, ensure that any extant grabber thread is dead.
       stopLiveMode();
       shouldStopGrabberThread_ = false;
@@ -165,7 +180,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // startSequenceAcquisition. Thus if we start the grabber thread first,
       // in certain circumstances we can get a deadlock.
       try {
+         amStartingSequenceAcquisition_ = true;
          core_.startContinuousSequenceAcquisition(0);
+         amStartingSequenceAcquisition_ = false;
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Couldn't start live mode sequence acquisition");
@@ -177,6 +194,14 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    }
 
    private void stopLiveMode() {
+      if (amStartingSequenceAcquisition_) {
+         // HACK: if startContinuousSequenceAcquisition results in a core
+         // callback, then we can end up trying to start live mode when we're
+         // already "in" startLiveMode somewhere above us in the call stack.
+         // See similar comment/block in startLiveMode(), above.
+         studio_.logs().logDebugMessage("Skipping stopLiveMode as startContinuousSequenceAcquisition is in process");
+         return;
+      }
       // Kill the grabber thread before we stop the sequence acquisition, to
       // ensure we don't try to grab images while stopping the acquisition.
       if (grabberThread_ != null) {
