@@ -109,4 +109,11 @@ public interface LogManager {
     * @param parent - frame in which to show dialog, or null for caller
     */
    public void showError(String msg, Component parent);
+
+   /**
+    * Log a message to the core log, only if debug logging is currently
+    * enabled.
+    * @param message Message to be logged.
+    */
+   public void logDebugMessage(String message);
 }

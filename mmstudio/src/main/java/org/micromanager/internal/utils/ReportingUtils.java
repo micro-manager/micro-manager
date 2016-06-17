@@ -111,6 +111,11 @@ public class ReportingUtils {
       public void showError(String msg, Component parent) {
          ReportingUtils.showError(msg, parent);
       }
+
+      @Override
+      public void logDebugMessage(String message) {
+         ReportingUtils.logDebugMessage(message);
+      }
    }
 
    private static final Wrapper staticWrapper_;
