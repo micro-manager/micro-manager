@@ -46,11 +46,30 @@ public class MyNumberUtils {
       return Precision.equals(f1, f2, 100);
    }
    
+   /**
+    * 
+    * @param f
+    * @param place number of places after decimal point, between 0 and 9
+    * @return
+    */
    public static float roundFloatToPlace(float f, int place) {
       if (place < 0) throw new IllegalArgumentException();
       if (place > 9) throw new IllegalArgumentException();
       long factor = (long) Math.pow(10, place);
       return ((float) Math.round(f * factor)) / factor;
+   }
+   
+   /**
+    * 
+    * @param f
+    * @param place number of places after decimal point, between 0 and 9
+    * @return
+    */
+   public static double roundDoubleToPlace(double d, int place) {
+      if (place < 0) throw new IllegalArgumentException();
+      if (place > 9) throw new IllegalArgumentException();
+      long factor = (long) Math.pow(10, place);
+      return ((double) Math.round(d * factor)) / factor;
    }
    
    /**

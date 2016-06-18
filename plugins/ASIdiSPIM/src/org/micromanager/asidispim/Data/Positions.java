@@ -29,6 +29,7 @@ import mmcorej.CMMCore;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
+import org.micromanager.asidispim.Utils.MyNumberUtils;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -404,7 +405,7 @@ public class Positions {
    
    public static String posToDisplayStringUm(Double pos) {
       if (pos != null) {
-         return NumberUtils.doubleToDisplayString(pos)
+         return NumberUtils.doubleToDisplayString(MyNumberUtils.roundDoubleToPlace(pos, 1))
                + " \u00B5"+"m";
       }
       return "";

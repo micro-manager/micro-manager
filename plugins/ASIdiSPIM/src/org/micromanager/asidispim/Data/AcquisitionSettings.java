@@ -50,7 +50,7 @@ public class AcquisitionSettings {
    // if true, use multiple positions
    public boolean useMultiPositions;
    
-   // if true, use channels
+   // if true, use channels is enabled (but may only have single channel)
    public boolean useChannels;
    
    // MultiChannel mode
