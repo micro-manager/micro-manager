@@ -241,12 +241,8 @@ private JComboBox byLibCombo_;
 
       setLayout(new MigLayout("fill, flowx"));
 
-      JTextArea help = new JTextArea(
-            "Select devices from the \"Available Devices\" list to include in this configuration.");
-      help.setWrapStyleWord(true);
-      help.setLineWrap(true);
-      help.setEditable(false);
-      add(help, "spanx, growx, wrap");
+      add(createHelpText("Select devices from the \"Available Devices\" list to include in this configuration."),
+               "spanx, growx, wrap");
       JLabel lblNewLabel = new JLabel("Installed Devices:");
       lblNewLabel.setFont(new Font("Arial", Font.BOLD, 11));
       add(lblNewLabel, "wrap");

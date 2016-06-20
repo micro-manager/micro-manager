@@ -61,11 +61,8 @@ public class IntroPage extends PagePanel {
 
       setLayout(new MigLayout("fillx, flowy"));
 
-      JTextArea help = new JTextArea(
+      JTextArea help = createHelpText(
                "This wizard will walk you through setting up \u00b5Manager to control the hardware in your system.");
-      help.setWrapStyleWord(true);
-      help.setLineWrap(true);
-      help.setEditable(false);
       add(help, "growx");
 
       createNewRadioButton_ = new JRadioButton("Create new configuration");

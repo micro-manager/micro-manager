@@ -24,9 +24,11 @@
 package org.micromanager.internal.hcwizard;
 
 import java.awt.Dialog;
+import java.awt.Font;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 
 import mmcorej.CMMCore;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -36,13 +38,14 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public abstract class PagePanel extends JPanel{
    private static final long serialVersionUID = -4598248516499305300L;
+   private static final Font HELP_FONT = new Font("Arial", Font.PLAIN, 14);
    protected MicroscopeModel model_;
    protected CMMCore core_;
    protected String title_;
    protected Dialog parent_;
-   
+
    protected static final String CFG_PATH = "cfg_path";
-   
+
    public PagePanel() {
       super();
       title_ = new String();
@@ -52,35 +55,44 @@ public abstract class PagePanel extends JPanel{
       model_ = model;
       core_ = core;
    }
-   
+
    public void setTitle(String txt) {
       title_ = txt;
    }
-   
+
    public String getTitle() {
       return title_;
    }
-   
+
    public void setParentDialog(Dialog p) {
       this.parent_ = p;
    }
 
    public abstract boolean enterPage(boolean next);
-   
+
    public abstract boolean exitPage(boolean next);
-   
+
    public abstract void loadSettings();
-   
+
    public abstract void saveSettings();
 
-   
+
    protected void handleError(String txt) {
-      JOptionPane.showMessageDialog(this, txt);           
+      JOptionPane.showMessageDialog(this, txt);
    }
+
    protected void handleException(Exception e) {
       ReportingUtils.showError(e);
    }
 
-   public abstract void refresh();
+   protected static JTextArea createHelpText(String text) {
+      JTextArea help = new JTextArea(text);
+      help.setWrapStyleWord(true);
+      help.setLineWrap(true);
+      help.setEditable(false);
+      help.setFont(HELP_FONT);
+      return help;
+   }
 
+   public abstract void refresh();
 }

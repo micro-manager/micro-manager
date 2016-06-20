@@ -64,11 +64,8 @@ public class RolesPage extends PagePanel {
       title_ = "Select default devices and choose auto-shutter setting";
       setLayout(new MigLayout("fill"));
 
-      JTextArea help = new JTextArea(
+      JTextArea help = createHelpText(
             "Select the default device, where available, to use for certain important roles.");
-      help.setWrapStyleWord(true);
-      help.setLineWrap(true);
-      help.setEditable(false);
       add(help, "growx, span, wrap");
 
       add(new JLabel("Default Camera: "), "split");

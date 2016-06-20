@@ -64,11 +64,8 @@ public class FinishPage extends PagePanel {
         title_ = "Save configuration and exit";
         setLayout(new MigLayout("fillx"));
 
-        JTextArea help = new JTextArea(
+        JTextArea help = createHelpText(
               "All done! Choose where to save your config file.");
-        help.setWrapStyleWord(true);
-        help.setLineWrap(true);
-        help.setEditable(false);
         add(help, "spanx, growx, wrap");
 
         final JLabel configurationWillBeLabel = new JLabel("Filename:");

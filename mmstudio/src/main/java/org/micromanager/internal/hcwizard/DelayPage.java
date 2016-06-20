@@ -145,11 +145,8 @@ public class DelayPage extends PagePanel {
       title_ = "Set delays for devices without synchronization capabilities";
       setLayout(new MigLayout("fill"));
 
-      JTextArea help = new JTextArea(
+      JTextArea help = createHelpText(
             "Set how long to wait for the device to act before \u00b5Manager will move on (for example, waiting for a shutter to open before an image is snapped). Many devices will determine this automatically; refer to the help for more information.");
-      help.setWrapStyleWord(true);
-      help.setLineWrap(true);
-      help.setEditable(false);
       add(help, "spanx, growx, wrap");
       final JScrollPane scrollPane = new JScrollPane();
       add(scrollPane, "grow");
