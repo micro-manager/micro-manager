@@ -94,10 +94,7 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
       // Java will complain that the button might not have been initialized,
       // and thus we aren't allowed to try to modify it.
       // Make the button mostly fill its cell.
-      final JButton result = new JButton("Live",
-            studio_.live().getIsLiveModeOn() ?
-            IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
-            IconLoader.getIcon("/org/micromanager/icons/camera_go.png")) {
+      final JButton result = new JButton("Live") {
          @Override
          public Dimension getPreferredSize() {
             if (config.getBoolean("isBig", false)) {
@@ -144,6 +141,9 @@ public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
             }
          }
       };
+      result.setIcon(studio_.live().getIsLiveModeOn() ?
+            IconLoader.getIcon("/org/micromanager/icons/cancel.png") :
+            IconLoader.getIcon("/org/micromanager/icons/camera_go.png"));
       result.addHierarchyListener(wrapper);
       studio_.events().registerForEvents(wrapper);
       return result;
