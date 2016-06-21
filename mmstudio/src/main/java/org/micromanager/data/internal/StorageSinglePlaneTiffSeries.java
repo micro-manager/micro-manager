@@ -375,7 +375,10 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       for (File file : directory.listFiles()) {
          Matcher matcher = FILENAME_PATTERN_14.matcher(file.getName());
          if (matcher.matches()) {
-            orderedChannelNames_.add(matcher.group(2));
+            String channel = matcher.group(2);
+            if (!orderedChannelNames_.contains(channel)) {
+               orderedChannelNames_.add(channel);
+            }
          }
       }
       Collections.sort(orderedChannelNames_);
