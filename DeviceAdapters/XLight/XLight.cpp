@@ -409,7 +409,6 @@ int Emission::Shutdown() {
 ///////////////////////////////////////////////////////////////////////////////
 
 int Emission::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
-    int delay = 75;
     if (eAct == MM::BeforeGet) {
         // return pos as we know it
         pProp->Set(pos_);
@@ -422,7 +421,7 @@ int Emission::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
             pos = 0;
         else if (pos > 7)
             pos = 7;
-        int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos, delay);
+        int ret = g_hub.SetEmissionWheelPosition(*this, *GetCoreCallback(), pos);
         if (ret == DEVICE_OK) {
             pos_ = pos;
             pProp->Set(pos_);
