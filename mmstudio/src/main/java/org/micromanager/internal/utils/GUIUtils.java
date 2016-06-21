@@ -29,6 +29,7 @@ import ij.WindowManager;
 import ij.gui.ImageWindow;
 
 import java.awt.AWTEvent;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -46,6 +47,7 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.Window;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -595,15 +597,32 @@ public class GUIUtils {
    }
 
    /**
-    * Center the provided JFrame within the screen contained by the provided
-    * other frame.
+    * Center the provided Window within the screen contained by the provided
+    * other window.
     */
-   public static void centerFrameWithFrame(JFrame child, JFrame source) {
+   public static void centerFrameWithFrame(Window child, Window source) {
       GraphicsConfiguration config = getGraphicsConfigurationContaining(
             source.getLocation().x, source.getLocation().y);
       Dimension size = child.getSize();
       Rectangle bounds = config.getBounds();
       child.setLocation(bounds.x + bounds.width / 2 - size.width / 2,
             bounds.y + bounds.height / 2 - size.height / 2);
+   }
+
+   /**
+    * Create an undecorated window centered on the specified parent with the
+    * specified text.
+    */
+   public static JDialog createBareMessageDialog(Window parent,
+         String message) {
+      JDialog result = new JDialog();
+      result.setUndecorated(true);
+      JPanel contents = new JPanel();
+      contents.add(new JLabel(message));
+      contents.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+      result.add(contents);
+      result.pack();
+      centerFrameWithFrame(result, parent);
+      return result;
    }
 }

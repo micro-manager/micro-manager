@@ -40,6 +40,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -62,6 +63,7 @@ import mmcorej.MMCoreJ;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -80,8 +82,8 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
    private TreeWContextMenu theTree_;
    private JScrollPane availableScrollPane_;
    String libraryDocumentationName_;
-
-private JComboBox byLibCombo_;
+   private JComboBox byLibCombo_;
+   private boolean amLoadingPage_ = false;
 
    ///////////////////////////////////////////////////////////
    /**
@@ -457,31 +459,80 @@ private JComboBox byLibCombo_;
       rebuildDevicesTable();
    }
    
-	public boolean enterPage(boolean fromNextPage) {
+   public boolean enterPage(final boolean fromNextPage) {
       Cursor oldCur = getCursor();
       setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-		try {
+      amLoadingPage_ = true;
+      monitorEnteringPage();
+      try {
          // double check that list of device libraries is valid before continuing.
          core_.getDeviceAdapterNames();
-			model_.removeDuplicateComPorts();
-			rebuildDevicesTable();
-			if (fromNextPage) {
-			   // do nothing for now
-			} else {
-			   model_.loadModel(core_);
+         model_.removeDuplicateComPorts();
+         rebuildDevicesTable();
+         if (fromNextPage) {
+            // do nothing for now
+         } else {
+            model_.loadModel(core_);
             model_.initializeModel(core_);
-			}
-	      buildTree();
-			return true;
-		} catch (Exception e2) {
-			ReportingUtils.showError(e2);
-			setCursor(Cursor.getDefaultCursor());
-		} finally {
+         }
+         buildTree();
+         return true;
+      } catch (Exception e2) {
+         ReportingUtils.showError(e2);
+         setCursor(Cursor.getDefaultCursor());
+      } finally {
          setCursor(oldCur);
+         amLoadingPage_ = false;
       }
-      
-		return false;
-	}
+      return false;
+   }
+
+   // Displays a pop-up dialog telling the user to wait while the page loads,
+   // after a 500ms delay since sometimes this page loads quickly. Creates a
+   // new thread to wait the 500ms, of course.
+   // This is really ugly: because the wait dialog must be modal to appear on
+   // top of the config wizard dialog (which is also modal), as soon as we call
+   // setVisible(), we block -- so the action to dismiss the wait dialog must
+   // be on a *second* separate thread.
+   private void monitorEnteringPage() {
+      final JDialog waiter = GUIUtils.createBareMessageDialog(parent_,
+         "Loading devices, please wait...");
+      waiter.setAlwaysOnTop(true);
+      waiter.setModal(true);
+      Thread showThread = new Thread(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               Thread.sleep(500);
+            }
+            catch (InterruptedException e) {
+               // This should never happen.
+               ReportingUtils.logError(e, "Interrupted waiting to show wait dialog");
+            }
+            if (amLoadingPage_) {
+               waiter.setVisible(true);
+               waiter.toFront(); // This blocks this thread.
+            }
+         }
+      });
+      Thread hideThread = new Thread(new Runnable() {
+         @Override
+         public void run() {
+            while (amLoadingPage_) {
+               try {
+                  Thread.sleep(100);
+               }
+               catch (InterruptedException e) {
+                  // This should be impossible.
+                  ReportingUtils.logError(e, "Interrupted while waiting to hide wait dialog");
+               }
+            }
+            waiter.dispose();
+         }
+      });
+      hideThread.start();
+      showThread.start();
+   }
 
     public boolean exitPage(boolean toNextPage) {
        Device devs[] = model_.getDevices();

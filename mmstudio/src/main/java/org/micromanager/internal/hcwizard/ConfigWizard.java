@@ -54,9 +54,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
-import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
+import javax.swing.SwingUtilities;
 import javax.swing.text.DefaultCaret;
+import javax.swing.WindowConstants;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -187,7 +188,18 @@ public class ConfigWizard extends MMDialog {
       microModel_.setModified(false);
    }
 
-   private void setPage(int i) {
+   private void setPage(final int i) {
+      // Only invoke from off the EDT, so that pages may do heavy work without
+      // hanging the UI.
+      if (SwingUtilities.isEventDispatchThread()) {
+         new Thread(new Runnable() {
+            @Override
+            public void run() {
+               setPage(i);
+            }
+         }).start();
+         return;
+      }
       // try to exit the current page
       if (i > 0) {
          if (!pages_[curPage_].exitPage(curPage_ < i ? true : false)) {

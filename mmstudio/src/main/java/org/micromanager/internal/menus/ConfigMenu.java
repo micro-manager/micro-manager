@@ -1,6 +1,5 @@
 package org.micromanager.internal.menus;
 
-import java.awt.Color;
 import java.awt.Cursor;
 import java.io.File;
 import java.util.ArrayList;
@@ -8,16 +7,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 
-import javax.swing.BorderFactory;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
@@ -152,15 +148,9 @@ public class ConfigMenu {
          studio_.live().setSuspended(true);
 
          // Show a "please wait" dialog.
-         JFrame waiter = new JFrame();
-         waiter.setUndecorated(true);
-         JPanel contents = new JPanel();
-         contents.add(new JLabel("Loading Wizard; please wait..."));
-         contents.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-         waiter.add(contents);
-         waiter.pack();
-         GUIUtils.centerFrameWithFrame(waiter,
-               studio_.compat().getMainWindow());
+         JDialog waiter = GUIUtils.createBareMessageDialog(
+               studio_.compat().getMainWindow(),
+               "Loading Wizard; please wait...");
          waiter.setVisible(true);
 
          // unload all devices before starting configurator
@@ -176,6 +166,7 @@ public class ConfigMenu {
          } finally {
             frame.setCursor(Cursor.getDefaultCursor());
             waiter.setVisible(false);
+            waiter.dispose();
          }
 
          if (cfg == null)
