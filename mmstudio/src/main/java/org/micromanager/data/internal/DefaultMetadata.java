@@ -326,7 +326,9 @@ public class DefaultMetadata implements Metadata {
             .camera(camera_)
             .receivedTime(receivedTime_)
             .ROI(ROI_)
-            .pixelAspect(pixelAspect_);
+            .pixelAspect(pixelAspect_)
+            .scopeData(scopeData_)
+            .userData(userData_);
    }
 
    @Override
