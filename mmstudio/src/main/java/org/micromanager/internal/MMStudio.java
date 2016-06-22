@@ -514,6 +514,22 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
             // Just give up.
             return;
          }
+         // Do this prior to updating the Core, so that if the Core posts a
+         // callback resulting in a GUI refresh, we don't have the old
+         // exposure time override the new one (since GUI refreshes result in
+         // resetting the exposure to the old, stored-in-profile exposure time).
+         String channelGroup = "";
+         String channel = "";
+         try {
+            channelGroup = core_.getChannelGroup();
+            channel = core_.getCurrentConfigFromCache(channelGroup);
+            AcqControlDlg.storeChannelExposure(
+                  channelGroup, channel, exposureTime);
+         }
+         catch (Exception e) {
+            studio_.logs().logError("Unable to determine channel group");
+         }
+
          if (!core_.getCameraDevice().equals("") && shouldSetInCore) {
             live().setSuspended(true);
             try {
@@ -530,8 +546,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          double exposure;
          try {
             exposure = core_.getExposure();
-            String channelGroup = core_.getChannelGroup();
-            String channel = core_.getCurrentConfigFromCache(channelGroup);
             events().post(new ChannelExposureEvent(exposure,
                      channelGroup, channel, true));
          }
