@@ -207,6 +207,8 @@ public interface DataManager {
     * @param coords Coordinates defining the position of the Image within a
     *        larger dataset.
     * @param metadata Image metadata.
+    * @throws IllegalArgumentException if the pixels array has length less than
+    *         width * height.
     * @return A new Image based on the input parameters.
     */
    public Image createImage(Object pixels, int width, int height,
