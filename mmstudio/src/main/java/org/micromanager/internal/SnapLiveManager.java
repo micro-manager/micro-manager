@@ -86,10 +86,6 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private Object liveModeLock_ = new Object();
    private int numCameraChannels_ = 0;
    private double exposureMs_ = 0;
-   // Suspended means that we *would* be running except we temporarily need
-   // to halt for the duration of some action (e.g. changing the exposure
-   // time). See setSuspended().
-   private boolean isSuspended_ = false;
    private boolean shouldStopGrabberThread_ = false;
    private boolean shouldForceReset_ = false;
    private boolean amStartingSequenceAcquisition_ = false;
@@ -97,6 +93,12 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private ArrayList<Long> displayUpdateTimes_;
    // Maps channel index to the last image we have received for that channel.
    private final HashMap<Integer, DefaultImage> channelToLastImage_;
+
+   // As a (significant) convenience to our clients, we allow live mode to be
+   // "suspended" and unsuspended, which amounts to briefly turning live mode
+   // off if it is on, and then later turning it back on if it was on when
+   // suspended. This gets unexpectedly complicated See setSuspended().
+   private int suspendCount_ = 0;
 
    public SnapLiveManager(Studio studio, CMMCore core) {
       studio_ = studio;
@@ -114,7 +116,9 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
             return;
          }
          isLiveOn_ = isOn;
-         if (isLiveOn_) {
+         // Only actually start live mode now if we aren't currently
+         // suspended.
+         if (isLiveOn_ && suspendCount_ == 0) {
             startLiveMode();
          }
          else {
@@ -132,19 +136,26 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * the exposure time), then clients can blindly call setSuspended(true)
     * to stop it and then setSuspended(false) to resume-only-if-necessary.
     * Note that this function will not notify listeners.
+    * We need to handle the case where we get nested calls to setSuspended,
+    * hence the reference count. And if we *are* suspended and someone tries
+    * to start live mode (even though it wasn't running when we started the
+    * suspension), then we should automatically start live mode when the
+    * suspension ends. Thus, isLiveOn_ tracks the "nominal" state of live mode,
+    * irrespective of whether or not it is currently suspended. When
+    * suspendCount_ hits zero, we match up the actual state of live mode with
+    * the nominal state.
     */
    @Override
    public void setSuspended(boolean shouldSuspend) {
       synchronized(liveModeLock_) {
-         if (shouldSuspend && isLiveOn_) {
+         if (suspendCount_ == 0 && shouldSuspend && isLiveOn_) {
             // Need to stop now.
             stopLiveMode();
-            isSuspended_ = true;
          }
-         else if (!shouldSuspend && isSuspended_) {
+         suspendCount_ += shouldSuspend ? 1 : -1;
+         if (suspendCount_ == 0 && isLiveOn_) {
             // Need to resume now.
             startLiveMode();
-            isSuspended_ = false;
          }
       }
    }
