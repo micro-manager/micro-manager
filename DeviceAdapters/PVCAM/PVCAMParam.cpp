@@ -174,7 +174,7 @@ int PvUniversalParam::Set(std::string aValue)
 
 int PvUniversalParam::Set(long aValue)
 {
-   return Set((double)aValue);
+    return Set((double)aValue);
 }
 
 int PvUniversalParam::Set(double aValue)
@@ -305,47 +305,47 @@ double PvUniversalParam::GetMin()
 
 int PvUniversalParam::initialize()
 {
-   plGetParam( ATTR_CURRENT, mValue );
+    plGetParam( ATTR_CURRENT, mValue );
 
-   if ( mType == TYPE_ENUM )
-   {
-       mEnumStrings.clear();
-       mEnumValues.clear();
-       
-       uns32 count;
-       int32 enumValue;
-       if (pl_get_param( mCamera->Handle(), mId, ATTR_COUNT, (void_ptr)&count) != PV_OK)
-       {
-           mCamera->LogCamError(__LINE__, "PvUniversalParam::initialize() pl_get_param ATTR_COUNT");
-           return DEVICE_ERR;
-       }
-       for ( uns32 i = 0; i < count; i++ )
-       {
-           uns32 enumStrLen;
-           if ( pl_enum_str_length( mCamera->Handle(), mId, i, &enumStrLen ) != PV_OK )
-           {
-               mCamera->LogCamError(__LINE__, "PvUniversalParam::initialize() pl_enum_str_length");
-               return DEVICE_ERR;
-           }
-           char* enumStrBuf = new char[enumStrLen+1];
-           enumStrBuf[enumStrLen] = '\0';
-           if (pl_get_enum_param( mCamera->Handle(), mId, i, &enumValue, enumStrBuf, enumStrLen) != PV_OK )
-           {
-               mCamera->LogCamError(__LINE__, "PvUniversalParam::initialize() pl_get_enum_param");
-               return DEVICE_ERR;
-           }
-           mEnumStrings.push_back(std::string( enumStrBuf ));
-           mEnumValues.push_back(enumValue);
-           delete[] enumStrBuf;
-       }
-   }
-   else
-   {
-       plGetParam( ATTR_MIN, mValueMin );
-       plGetParam( ATTR_MAX, mValueMax );
-   }
+    if ( mType == TYPE_ENUM )
+    {
+        mEnumStrings.clear();
+        mEnumValues.clear();
 
-   return DEVICE_OK;
+        uns32 count;
+        int32 enumValue;
+        if (pl_get_param( mCamera->Handle(), mId, ATTR_COUNT, (void_ptr)&count) != PV_OK)
+        {
+            mCamera->LogCamError(__LINE__, "PvUniversalParam::initialize() pl_get_param ATTR_COUNT");
+            return DEVICE_ERR;
+        }
+        for ( uns32 i = 0; i < count; i++ )
+        {
+            uns32 enumStrLen;
+            if ( pl_enum_str_length( mCamera->Handle(), mId, i, &enumStrLen ) != PV_OK )
+            {
+                mCamera->LogCamError(__LINE__, "PvUniversalParam::initialize() pl_enum_str_length");
+                return DEVICE_ERR;
+            }
+            char* enumStrBuf = new char[enumStrLen+1];
+            enumStrBuf[enumStrLen] = '\0';
+            if (pl_get_enum_param( mCamera->Handle(), mId, i, &enumValue, enumStrBuf, enumStrLen) != PV_OK )
+            {
+                mCamera->LogCamError(__LINE__, "PvUniversalParam::initialize() pl_get_enum_param");
+                return DEVICE_ERR;
+            }
+            mEnumStrings.push_back(std::string( enumStrBuf ));
+            mEnumValues.push_back(enumValue);
+            delete[] enumStrBuf;
+        }
+    }
+    else
+    {
+        plGetParam( ATTR_MIN, mValueMin );
+        plGetParam( ATTR_MAX, mValueMax );
+    }
+
+    return DEVICE_OK;
 }
 
 // PRIVATE

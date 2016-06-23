@@ -55,7 +55,6 @@ class Universal;
 class NotificationThread : public MMDeviceThreadBase
 {
 public:
-
     NotificationThread(Universal* pCamera);
     ~NotificationThread(void);
 
@@ -85,14 +84,10 @@ public:
     bool PushNotification( const NotificationEntry& entry );
     bool PushNotification( const NotificationEntry&& entry );
 
-
-public:
-
-    // From MMDeviceThreadBase
+public: // From MMDeviceThreadBase
     int svc();
 
 private:
-
     void requestStop();
     bool waitNextNotification( NotificationEntry& e );
 

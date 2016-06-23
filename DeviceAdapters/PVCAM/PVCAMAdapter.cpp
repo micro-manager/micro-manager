@@ -60,30 +60,30 @@ const char* g_ReadoutPort_HighCap = "HighCap";
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_DeviceUniversal_1, MM::CameraDevice, "Universal PVCAM interface - camera slot 1");
-   RegisterDevice(g_DeviceUniversal_2, MM::CameraDevice, "Universal PVCAM interface - camera slot 2");
-   RegisterDevice(g_DeviceUniversal_3, MM::CameraDevice, "Universal PVCAM interface - camera slot 3");
-   RegisterDevice(g_DeviceUniversal_4, MM::CameraDevice, "Universal PVCAM interface - camera slot 4");
+    RegisterDevice(g_DeviceUniversal_1, MM::CameraDevice, "Universal PVCAM interface - camera slot 1");
+    RegisterDevice(g_DeviceUniversal_2, MM::CameraDevice, "Universal PVCAM interface - camera slot 2");
+    RegisterDevice(g_DeviceUniversal_3, MM::CameraDevice, "Universal PVCAM interface - camera slot 3");
+    RegisterDevice(g_DeviceUniversal_4, MM::CameraDevice, "Universal PVCAM interface - camera slot 4");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
-   delete pDevice;
+    delete pDevice;
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-   if (deviceName == 0)
-      return 0;
-   
-   if (strcmp(deviceName, g_DeviceUniversal_1) == 0)
-      return new Universal(0);
-   else if (strcmp(deviceName, g_DeviceUniversal_2) == 0)
-      return new Universal(1);
-   else if (strcmp(deviceName, g_DeviceUniversal_3) == 0)
-      return new Universal(2);
-   else if (strcmp(deviceName, g_DeviceUniversal_4) == 0)
-      return new Universal(3);
-   
-   return 0;
+    if (deviceName == 0)
+        return 0;
+
+    if (strcmp(deviceName, g_DeviceUniversal_1) == 0)
+        return new Universal(0);
+    else if (strcmp(deviceName, g_DeviceUniversal_2) == 0)
+        return new Universal(1);
+    else if (strcmp(deviceName, g_DeviceUniversal_3) == 0)
+        return new Universal(2);
+    else if (strcmp(deviceName, g_DeviceUniversal_4) == 0)
+        return new Universal(3);
+
+    return 0;
 }

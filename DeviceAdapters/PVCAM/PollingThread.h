@@ -5,24 +5,24 @@
 
 class Universal;
 
-/***
- * Acquisition thread used for polling acquisition only.
- */
+/**
+* Acquisition thread used for polling acquisition only.
+*/
 class PollingThread : public MMDeviceThreadBase
 {
-   public:
-      PollingThread(Universal* camera) : 
-         stop_(true), camera_(camera) {}
+public:
+    PollingThread(Universal* camera) :
+      stop_(true), camera_(camera) {}
       virtual ~PollingThread() {}
       int svc (void);
 
       void setStop(bool stop) {stop_ = stop;}
       bool getStop() {return stop_;}
       void Start() {stop_ = false; activate();}
-    
-   private:
-      bool stop_;
-      Universal* camera_;
+
+private:
+    bool stop_;
+    Universal* camera_;
 };
 
 #endif // _POLLINGTHREAD_H_
