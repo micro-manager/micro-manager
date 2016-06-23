@@ -2061,16 +2061,23 @@ MMIIDCCamera::ProcessedSequenceCallback(const void* pixels,
    int err;
    err = GetCoreCallback()->InsertImage(this, bytes, uWidth, uHeight, uBytesPerPixel,
          serializedMD.c_str());
-   if (!stopOnOverflow_ && err == DEVICE_BUFFER_OVERFLOW)
+   if (err == DEVICE_BUFFER_OVERFLOW)
    {
-      GetCoreCallback()->ClearImageBuffer(this);
-      err = GetCoreCallback()->InsertImage(this, bytes, uWidth, uHeight, uBytesPerPixel,
-            serializedMD.c_str(), false);
+      if (!stopOnOverflow_)
+      {
+         GetCoreCallback()->ClearImageBuffer(this);
+         err = GetCoreCallback()->InsertImage(this, bytes, uWidth, uHeight, uBytesPerPixel,
+               serializedMD.c_str(), false);
+      }
+      else
+      {
+         BOOST_THROW_EXCEPTION(Error("Sequence buffer overflow"));
+      }
    }
    if (err != DEVICE_OK)
       BOOST_THROW_EXCEPTION(Error("Unknown error (" +
                boost::lexical_cast<std::string>(err) +
-               ") while placing image in circular buffer"));
+               ") while placing image in sequence buffer"));
 }
 
 

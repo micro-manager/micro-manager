@@ -3,7 +3,7 @@
 #include <cstddef> // ptrdiff_t
 
 PvCircularBuffer::PvCircularBuffer() :
-    pBuffer_(0), size_(0), frameSize_(0), frameCount_(0), latestFrameIdx_(-1), pFrameInfoArray_(0)
+pBuffer_(0), size_(0), frameSize_(0), frameCount_(0), latestFrameIdx_(-1), pFrameInfoArray_(0)
 {
 }
 

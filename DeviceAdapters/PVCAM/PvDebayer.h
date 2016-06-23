@@ -28,7 +28,7 @@
 
 #include "ImgBuffer.h"
 
-/* 
+/**
 * RGB scales resulting from White 
 * Balance algorithm plugin
 */
@@ -53,55 +53,53 @@ typedef struct
 
 
 /**
- * Utility class to build color image from the Bayer grayscale image
- * Based on the Debayer_Image plugin for ImageJ, by Jennifer West, University of Manitoba
- */
+* Utility class to build color image from the Bayer grayscale image
+* Based on the Debayer_Image plugin for ImageJ, by Jennifer West, University of Manitoba
+*/
 class PvDebayer
 {
 public:
-   PvDebayer();
-   ~PvDebayer();
+    PvDebayer();
+    ~PvDebayer();
 
-   int Process(ImgBuffer& out, const ImgBuffer& in, int bitDepth);
-   int Process(ImgBuffer& out, const unsigned char* in, int width, int height, int bitDepth);
-   int Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth);
+    int Process(ImgBuffer& out, const ImgBuffer& in, int bitDepth);
+    int Process(ImgBuffer& out, const unsigned char* in, int width, int height, int bitDepth);
+    int Process(ImgBuffer& out, const unsigned short* in, int width, int height, int bitDepth);
 
-   const std::vector<std::string> GetOrders() const {return orders;}
-   const std::vector<std::string> GetAlgorithms() const {return algorithms;}
+    const std::vector<std::string> GetOrders() const {return orders;}
+    const std::vector<std::string> GetAlgorithms() const {return algorithms;}
 
-   void SetOrderIndex(int idx) {orderIndex = idx;}
-   void SetAlgorithmIndex(int idx) {algoIndex = idx;}
-   void SetRGBScales(RGBscales rgbscl) {rgbScales = rgbscl;}
+    void SetOrderIndex(int idx) {orderIndex = idx;}
+    void SetAlgorithmIndex(int idx) {algoIndex = idx;}
+    void SetRGBScales(RGBscales rgbscl) {rgbScales = rgbscl;}
 
 private:
-   template <typename T>
-   int ProcessT(ImgBuffer& out, const T* in, int width, int height, int bitDepth);
-   template<typename T>
-   void ReplicateDecode(const T* input, int* out, int width, int height, int bitDepth, int rowOrder);
-   template <typename T>
-   void BilinearDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder);
-   template <typename T>
-   void SmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder);
-   template <typename T>
-   void AdaptiveSmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder);
-   template<typename T>
-   int Convert(const T* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm);
-   unsigned short GetPixel(const unsigned short* v, int x, int y, int width, int height);
-   void SetPixel(std::vector<unsigned short>& v, unsigned short val, int x, int y, int width, int height);
-   unsigned short GetPixel(const unsigned char* v, int x, int y, int width, int height);
+    template <typename T>
+    int ProcessT(ImgBuffer& out, const T* in, int width, int height, int bitDepth);
+    template<typename T>
+    void ReplicateDecode(const T* input, int* out, int width, int height, int bitDepth, int rowOrder);
+    template <typename T>
+    void BilinearDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder);
+    template <typename T>
+    void SmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder);
+    template <typename T>
+    void AdaptiveSmoothDecode(const T* input, int* output, int width, int height, int bitDepth, int rowOrder);
+    template<typename T>
+    int Convert(const T* input, int* output, int width, int height, int bitDepth, int rowOrder, int algorithm);
+    unsigned short GetPixel(const unsigned short* v, int x, int y, int width, int height);
+    void SetPixel(std::vector<unsigned short>& v, unsigned short val, int x, int y, int width, int height);
+    unsigned short GetPixel(const unsigned char* v, int x, int y, int width, int height);
 
-   std::vector<unsigned short> r; // red scratch buffer
-   std::vector<unsigned short> g; // green scratch buffer
-   std::vector<unsigned short> b; // blue scratch buffer
+    std::vector<unsigned short> r; // red scratch buffer
+    std::vector<unsigned short> g; // green scratch buffer
+    std::vector<unsigned short> b; // blue scratch buffer
 
-   std::vector<std::string> orders;
-   std::vector<std::string> algorithms;
+    std::vector<std::string> orders;
+    std::vector<std::string> algorithms;
 
-   int orderIndex;
-   int algoIndex;
-   RGBscales rgbScales; 
-
-
+    int orderIndex;
+    int algoIndex;
+    RGBscales rgbScales;
 };
 
 #endif // !defined(_DEBAYER_)
