@@ -215,16 +215,15 @@ public class PipelineTableModel extends AbstractTableModel {
       String[] serializedConfigs = studio.profile().getStringArray(
             PipelineTableModel.class, SAVED_PIPELINE,
             new String[] {});
-      boolean didDisplay = false;
+      boolean didUpdate = false;
       for (String configString : serializedConfigs) {
          ConfiguratorWrapper config = ConfiguratorWrapper.fromString(
                configString, studio);
          if (config.getIsEnabled()) {
-            config.getConfigurator().showGUI();
-            didDisplay = true;
+            didUpdate = true;
          }
          pipelineConfigs_.add(config);
       }
-      return didDisplay;
+      return didUpdate;
    }
 }
