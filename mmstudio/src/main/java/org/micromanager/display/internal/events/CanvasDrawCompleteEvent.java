@@ -20,9 +20,21 @@
 
 package org.micromanager.display.internal.events;
 
+import java.awt.Graphics;
 
 /**
  * This class is used to signify when the canvas has completed performing a
- * pant event.
+ * paint event. It provides access to the Graphics object used to perform the
+ * draw, primarily so that the ExportMovieDlg can recognize when the draw
+ * actions it requested have been completed.
  */
-public class CanvasDrawCompleteEvent {}
+public class CanvasDrawCompleteEvent {
+   private Graphics g_;
+   public CanvasDrawCompleteEvent(Graphics g) {
+      g_ = g;
+   }
+
+   public Graphics getGraphics() {
+      return g_;
+   }
+}

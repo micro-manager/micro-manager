@@ -37,7 +37,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.awt.Rectangle;
 import java.io.File;
@@ -286,6 +286,9 @@ public class ExportMovieDlg extends JDialog {
       private boolean isSingleShot_;
       private int jpegQuality_;
 
+      private BufferedImage currentImage_ = null;
+      private Graphics currentGraphics_ = null;
+
       public Exporter(DefaultDisplayWindow display, File outputDir,
             String prefix, String mode, AtomicBoolean drawFlag,
             AtomicBoolean doneFlag, boolean isSingleShot, int jpegQuality) {
@@ -299,34 +302,47 @@ public class ExportMovieDlg extends JDialog {
          jpegQuality_ = jpegQuality;
       }
 
+      /**
+       * This method gets called twice for each image we export: once for the
+       * display responding to our request to set the image coordinates, and
+       * then once for the display painting to our provided Graphics object.
+       */
       @Subscribe
       public void onDrawComplete(CanvasDrawCompleteEvent event) {
-         // We now know that the correct image is visible on the canvas, so
-         // have it paint that image to our own Graphics object. This is
-         // inefficient (having to paint the same image twice), but
-         // unfortunately there's no way (so far as I'm aware) to get an Image
-         // from a component except by painting.
-         // HACK: the getCanvas() and paintImageWithGraphics methods aren't
-         // exposed in DisplayWindow; hence why we need display_ to be
-         // DefaultDisplayWindow.
-         Dimension canvasSize = display_.getCanvas().getSize();
-         BufferedImage image = new BufferedImage(canvasSize.width,
-               canvasSize.height, BufferedImage.TYPE_INT_RGB);
-         display_.paintImageWithGraphics(image.getGraphics());
-         if (mode_.equals(FORMAT_IMAGEJ)) {
-            if (stack_ == null) {
-               // Create the ImageJ stack object to add images to.
-               stack_ = new ImageStack(image.getWidth(), image.getHeight());
-            }
-            addToStack(stack_, image);
+         if (event.getGraphics() != currentGraphics_) {
+            // We now know that the correct image is visible on the canvas, so
+            // have it paint that image to our own Graphics object. This is
+            // inefficient (having to paint the same image twice), but
+            // unfortunately there's no way (so far as I'm aware) to get an
+            // Image from a component except by painting.
+            // HACK: the getCanvas() and paintImageWithGraphics methods aren't
+            // exposed in DisplayWindow; hence why we need display_ to be
+            // DefaultDisplayWindow.
+            Dimension canvasSize = display_.getCanvas().getSize();
+            currentImage_ = new BufferedImage(canvasSize.width,
+                  canvasSize.height, BufferedImage.TYPE_INT_RGB);
+            currentGraphics_ = currentImage_.getGraphics();
+            display_.paintImageWithGraphics(currentGraphics_);
          }
          else {
-            // Save the image to disk in appropriate format.
-            exportImage(outputDir_, mode_, image, sequenceNum_++);
-         }
-         drawFlag_.set(false);
-         if (isSingleShot_) {
-            doneFlag_.set(true);
+            // Display just finished painting to currentGraphics_, so export
+            // now.
+            if (mode_.equals(FORMAT_IMAGEJ)) {
+               if (stack_ == null) {
+                  // Create the ImageJ stack object to add images to.
+                  stack_ = new ImageStack(currentImage_.getWidth(),
+                        currentImage_.getHeight());
+               }
+               addToStack(stack_, currentImage_);
+            }
+            else {
+               // Save the image to disk in appropriate format.
+               exportImage(outputDir_, mode_, currentImage_, sequenceNum_++);
+            }
+            drawFlag_.set(false);
+            if (isSingleShot_) {
+               doneFlag_.set(true);
+            }
          }
       }
 

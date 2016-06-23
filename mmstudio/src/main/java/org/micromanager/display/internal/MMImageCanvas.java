@@ -32,7 +32,6 @@ import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.Graphics;
-import java.awt.image.BufferedImage;
 import java.awt.Rectangle;
 
 
@@ -53,7 +52,6 @@ import org.micromanager.display.internal.events.MouseMovedEvent;
 public class MMImageCanvas extends ImageCanvas {
    private ImagePlus ijImage_;
    private DefaultDisplayWindow display_;
-   private BufferedImage bufferedImage_;
 
    public MMImageCanvas(ImagePlus ijImage, DefaultDisplayWindow display) {
       super(ijImage);
@@ -147,15 +145,10 @@ public class MMImageCanvas extends ImageCanvas {
     *   active channel
     * - post a CanvasDrawEvent so that other objects may add their own
     *   embellishments
-    * - render to a BufferedImage (and then render from that to our actual
-    *   normal image), so that a copy of the drawn image (with overlays, etc.)
-    *   is available when we post a CanvasDrawCompleteEvent. Effectively we're
-    *   doing manual double-buffering.
     */
    @Override
    public void paint(Graphics g) {
       paintToGraphics(g);
-      display_.postEvent(new CanvasDrawCompleteEvent());
    }
 
    /**
@@ -195,6 +188,7 @@ public class MMImageCanvas extends ImageCanvas {
       }
 
       display_.postEvent(new CanvasDrawEvent(g, this));
+      display_.postEvent(new CanvasDrawCompleteEvent(g));
    }
 
    /**
