@@ -27,6 +27,7 @@ import javax.swing.JPanel;
 
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMScriptException;
 
 
@@ -416,6 +417,7 @@ public class PlatePanel extends JPanel {
       double wellOffsetX = (plate_.getWellSpacingX() - plate_.getWellSizeX()) / 2.0 * drawingParams_.xFactor;
       double wellOffsetY = (plate_.getWellSpacingY() - plate_.getWellSizeY()) / 2.0 * drawingParams_.yFactor;
 
+      g.setColor(Color.BLACK);
       for (int i=0; i<wells_.length; i++) {
          WellBox wb = wellBoxes_[i];
          wb.label = wells_[i].getLabel();
@@ -499,6 +501,7 @@ public class PlatePanel extends JPanel {
       labelBoxY.width = xMargin_;
       labelBoxY.x = 0;
 
+      g.setColor(DaytimeNighttime.getEnabledTextColor());
       for (int i=0; i<plate_.getNumColumns(); i++) {
          labelBoxX.x = (int)(i*wellX + 0.5 + xMargin_ + xOffset);
          TextLayout tl = new TextLayout(plate_.getColumnLabel(i+1), f, frc);
