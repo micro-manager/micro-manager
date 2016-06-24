@@ -21,10 +21,7 @@
 //
 // BASED ON:      ASILED.c and others
 //
-#ifdef WIN32
-#define snprintf _snprintf 
-#pragma warning(disable: 4355)
-#endif
+
 
 #include "ASIPmt.h"
 #include "ASITiger.h"

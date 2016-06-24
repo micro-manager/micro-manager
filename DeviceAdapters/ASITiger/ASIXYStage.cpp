@@ -22,10 +22,6 @@
 // BASED ON:      ASIStage.cpp and others
 //
 
-#ifdef WIN32
-#define snprintf _snprintf 
-#pragma warning(disable: 4355)
-#endif
 
 #include "ASIXYStage.h"
 #include "ASITiger.h"
@@ -360,7 +356,7 @@ int CXYStage::Initialize()
 
       pAct = new CPropertyAction (this, &CXYStage::OnScanSettlingTime);
       CreateProperty(g_ScanSettlingTimePropertyName, "1", MM::Float, false, pAct);
-      SetPropertyLimits(g_ScanSettlingTimePropertyName, 0., 500.);  // limits are arbitrary really, just give a reasonable range
+      SetPropertyLimits(g_ScanSettlingTimePropertyName, 0., 5000.);  // limits are arbitrary really, just give a reasonable range
       UpdateProperty(g_ScanSettlingTimePropertyName);
 
    }
