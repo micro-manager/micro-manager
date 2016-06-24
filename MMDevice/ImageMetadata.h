@@ -425,9 +425,9 @@ public:
 
    std::string readLine(std::istringstream &iss)
    {
-		char str[MM::MaxStrLength];
-		iss.getline(str, MM::MaxStrLength);
-		return std::string(str);
+      std::string ret;
+      std::getline(iss, ret);
+      return ret;
    }
 
    bool Restore(const char* stream)
