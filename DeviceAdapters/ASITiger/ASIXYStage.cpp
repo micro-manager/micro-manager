@@ -105,11 +105,11 @@ int CXYStage::Initialize()
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
    // max motor speed - read only property
-   double maxSpeedX = getMaxSpeed(axisLetterX_, hub_);
+   double maxSpeedX = getMaxSpeed(axisLetterX_);
    command.str("");
    command << maxSpeedX;
    CreateProperty(g_MaxMotorSpeedXPropertyName, command.str().c_str(), MM::Float, true);
-   double maxSpeedY = getMaxSpeed(axisLetterY_, hub_);
+   double maxSpeedY = getMaxSpeed(axisLetterY_);
    command.str("");
    command << maxSpeedY;
    CreateProperty(g_MaxMotorSpeedYPropertyName, command.str().c_str(), MM::Float, true);
@@ -365,7 +365,7 @@ int CXYStage::Initialize()
    return DEVICE_OK;
 }
 
-double CXYStage::getMaxSpeed(string axisLetter, ASIHub *hub_)
+double CXYStage::getMaxSpeed(string axisLetter)
 {
    double maxSpeed;
    ostringstream command;

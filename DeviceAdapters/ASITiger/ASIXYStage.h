@@ -146,7 +146,7 @@ private:
 
    // private helper functions
    int OnSaveJoystickSettings();
-   double getMaxSpeed(string axisLetter, ASIHub *hub_);
+   double getMaxSpeed(string axisLetter);
 };
 
 #endif //_ASIXYStage_H_
