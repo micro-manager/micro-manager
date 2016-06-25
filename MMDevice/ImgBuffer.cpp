@@ -234,8 +234,8 @@ bool FrameBuffer::SetImage(unsigned channel, unsigned slice, const ImgBuffer& im
    else
    {
       // create a new buffer
-      ImgBuffer* img = InsertNewImage(channel, slice);
-      *img = imgBuf;
+      ImgBuffer* img2 = InsertNewImage(channel, slice);
+      *img2 = imgBuf;
    }
 
    return true;
@@ -267,8 +267,8 @@ bool FrameBuffer::SetPixels(unsigned channel, unsigned slice, const unsigned cha
    else
    {
       // create a new buffer
-      ImgBuffer* img = InsertNewImage(channel, slice);
-      img->SetPixels(pixels);
+      ImgBuffer* img2 = InsertNewImage(channel, slice);
+      img2->SetPixels(pixels);
    }
 
    return true;

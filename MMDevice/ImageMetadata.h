@@ -467,7 +467,7 @@ public:
             as.SetReadOnly(atoi(readLine(is).c_str()) == 1 ? true : false);
 
             long sizea = atol(readLine(is).c_str());
-            for (long i=0; i<sizea; i++)
+            for (long j=0; j<sizea; j++)
             {
                as.AddValue(readLine(is).c_str());
             }
