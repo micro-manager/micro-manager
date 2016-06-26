@@ -70,6 +70,7 @@ private:
    float driverVersionNum_;
    std::string firmwareVersion_;
    bool sequenceOn_;
+   bool sequenceIsRunning_;
    long maxSequenceSize_;
 };
 
