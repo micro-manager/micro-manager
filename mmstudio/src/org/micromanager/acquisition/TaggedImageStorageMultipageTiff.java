@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -162,25 +163,12 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
       progressBar.setVisible(true);
       for (File f : dir.listFiles()) {
          if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
-            try {
-               //this is where fixing dataset code occurs
-               reader = new MultipageTiffReader(f);
-               Set<String> labels = reader.getIndexKeys();
-               for (String label : labels) {
-                  tiffReadersByLabel_.put(label, reader);
-                  int frameIndex = Integer.parseInt(label.split("_")[2]);
-                  lastFrameOpenedDataSet_ = Math.max(frameIndex, lastFrameOpenedDataSet_);
-               }
-            } catch (IOException ex) {
-               ReportingUtils.showError("Couldn't open file: " + f.toString());
-            }
+            reader = loadFile(f);
          }
          numRead++;
          progressBar.setProgress(numRead);
       }
       progressBar.setVisible(false);
-      //reset this static variable to false so the prompt is delivered if a new data set is opened
-      MultipageTiffReader.fixIndexMapWithoutPrompt_ = false;
 
       if (reader != null) {
          setSummaryMetadata(reader.getSummaryMetadata(), true);
@@ -189,7 +177,42 @@ public final class TaggedImageStorageMultipageTiff implements TaggedImageStorage
 
       progressBar.setProgress(1);
       progressBar.setVisible(false);
+   }
 
+   private MultipageTiffReader loadFile(File f) {
+      MultipageTiffReader reader = null;
+      try {
+         try {
+            reader = new MultipageTiffReader(f);
+         }
+         catch (InvalidIndexMapException e) {
+            // Prompt to repair it.
+            int choice = JOptionPane.showConfirmDialog(null,
+                  "This file cannot be opened bcause it appears to have \n" +
+                  "been improperly saved. Would you like Micro-Manger to attempt " +
+                  "to fix it?",
+                  "Micro-Manager", JOptionPane.YES_NO_OPTION);
+            if (choice != JOptionPane.YES_OPTION) {
+               return null;
+            }
+            // Attempt to repair it. This constructor automatically invokes
+            // the fixIndexMap method (and is the only constructor that
+            // opens files in read/write mode).
+            reader = new MultipageTiffReader(f, true);
+            reader.close();
+            // Open the file normally.
+            reader = new MultipageTiffReader(f);
+         }
+         Set<String> labels = reader.getIndexKeys();
+         for (String label : labels) {
+            tiffReadersByLabel_.put(label, reader);
+            int frameIndex = Integer.parseInt(label.split("_")[2]);
+            lastFrameOpenedDataSet_ = Math.max(frameIndex, lastFrameOpenedDataSet_);
+         }
+      } catch (IOException ex) {
+         ReportingUtils.showError("Couldn't open file: " + f.toString());
+      }
+      return reader;
    }
 
    @Override

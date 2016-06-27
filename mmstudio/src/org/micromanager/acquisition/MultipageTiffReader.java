@@ -68,7 +68,6 @@ public class MultipageTiffReader {
    private int byteDepth_ = 0;;
    private boolean rgb_;
    private boolean writingFinished_;
-   public static boolean fixIndexMapWithoutPrompt_ = false;
    
    private HashMap<String,Long> indexMap_;
    
@@ -97,11 +96,11 @@ public class MultipageTiffReader {
     * @param file File to be opened
     * @throws java.io.IOException
     */
-   public MultipageTiffReader(File file) throws IOException {
+   public MultipageTiffReader(File file) throws IOException, InvalidIndexMapException {
       displayAndComments_ = new JSONObject();
       file_ = file;
       try {
-         createFileChannel();
+         createFileChannel(false);
       } catch (Exception ex) {
          ReportingUtils.showError("Can't successfully open file: " +  file_.getName());
       }
@@ -110,18 +109,11 @@ public class MultipageTiffReader {
       summaryMetadata_ = readSummaryMD();
       try {
          readIndexMap();
-      } catch (IOException e) {
-         try {
-            fixIndexMap(firstIFD, file.getName());
-         } catch (JSONException ex) {
-            ReportingUtils.showError("Fixing of dataset unsuccessful for file: " + file_.getName());
-         }
-      } catch (MMException e) {
-         try {
-            fixIndexMap(firstIFD, file.getName());
-         } catch (JSONException ex) {
-            ReportingUtils.showError("Fixing of dataset unsuccessful for file: " + file_.getName());
-         }
+      }
+      catch (IOException e) {
+         // Convert IOException to InvalidIndexMapException so we can catch it
+         // separately.
+         throw new InvalidIndexMapException(e);
       }
       try {
          displayAndComments_.put("Channels", readDisplaySettings());
@@ -134,7 +126,33 @@ public class MultipageTiffReader {
          getRGBAndByteDepth(summaryMetadata_);
       }
    }
-   
+
+   /**
+    * HACK: this version is only used when fixing index maps. The boolean
+    * parameter is used solely to differentiate it from the constructor that
+    * does not fix index maps.
+    * Ideally said fixing would be done without needing to create a new
+    * MultipageTiffReader object, but that would require disentangling the
+    * file reading code that does some setup before fixIndexMap() is called.
+    */
+   public MultipageTiffReader(File file, boolean shouldFixIndexMap) throws IOException {
+      if (!shouldFixIndexMap) {
+         throw new IllegalArgumentException("Don't call this method unless you're fixing index maps!");
+      }
+      file_ = file;
+      try {
+         createFileChannel(true);
+      }
+      catch (Exception ex) {
+         ReportingUtils.showError("Can't successfully open file: " +  file_.getName());
+      }
+      writingFinished_ = true;
+      long firstIFD = readHeader();
+      summaryMetadata_ = readSummaryMD();
+
+      fixIndexMap(firstIFD, file.getName());
+   }
+
    public static boolean isMMMultipageTiff(String directory) throws IOException {
       File dir = new File(directory);
       File[] children = dir.listFiles();
@@ -354,11 +372,11 @@ public class MultipageTiffReader {
       return unsignInt(buffer1.getInt(4));     
    }
 
-   private void readIndexMap() throws IOException, MMException {
+   private void readIndexMap() throws IOException, InvalidIndexMapException {
       long offset = readOffsetHeaderAndOffset(MultipageTiffWriter.INDEX_MAP_OFFSET_HEADER, 8);
       ByteBuffer header = readIntoBuffer(offset, 8);
       if (header.getInt(0) != MultipageTiffWriter.INDEX_MAP_HEADER) {
-         throw new MMException("Error reading index map header");
+         throw new InvalidIndexMapException();
       }
       int numMappings = header.getInt(4);
       indexMap_ = new HashMap<String, Long>();
@@ -514,8 +532,8 @@ public class MultipageTiffReader {
       }
    }
    
-   private void createFileChannel() throws FileNotFoundException, IOException {      
-      raFile_ = new RandomAccessFile(file_,"rw");
+   private void createFileChannel(boolean isReadWrite) throws FileNotFoundException, IOException {      
+      raFile_ = new RandomAccessFile(file_, isReadWrite ? "rw" : "r");
       fileChannel_ = raFile_.getChannel();
    }
    
@@ -542,16 +560,7 @@ public class MultipageTiffReader {
    // terminates before properly closing, thereby preventing the multipage tiff
    // writer from putting in the index map, comments, channels, and OME XML in
    // the ImageDescription tag location 
-   private void fixIndexMap(long firstIFD, String fileName) throws IOException, JSONException {  
-      if (!fixIndexMapWithoutPrompt_) {
-         ReportingUtils.showError("Can't read index map in file: " + file_.getName());
-         int choice = JOptionPane.showConfirmDialog(null, "This file cannot be opened bcause it appears to have \n"
-                 + "been improperly saved.  Would you like Micro-Manger to attempt to fix it?", "Micro-Manager", JOptionPane.YES_NO_OPTION);
-         if (choice == JOptionPane.NO_OPTION) {
-            return;
-         }
-      }
-      fixIndexMapWithoutPrompt_ = true;
+   private void fixIndexMap(long firstIFD, String fileName) throws IOException {
       long filePosition = firstIFD;
       indexMap_ = new HashMap<String, Long>();
       long progBarMax = (fileChannel_.size() / 2L);
@@ -621,7 +630,7 @@ public class MultipageTiffReader {
       fileChannel_.close();
       raFile_.close();
       //reopen
-      createFileChannel();
+      createFileChannel(false);
    }
    
    private int writeDisplaySettings(JSONArray settings, long filePosition) throws IOException {
