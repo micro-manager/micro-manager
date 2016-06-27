@@ -83,10 +83,12 @@ public class ScrollerPanel extends JPanel {
       JLabel maxLabel_;
       JScrollBar scrollbar_;
       ScrollbarLockIcon.LockedState lockState_;
-      // The cached index is the index we last recorded for the
-      // scrollbar.
+      // The cached index is the index we last recorded for the scrollbar.
+      // Caching it allows us to avoid redundant GUI updates.
       int cachedIndex_;
-      
+      // The animated index is the index we last recorded when animating.
+      int animatedIndex_;
+
       public AxisState(JButton posButton, JScrollBar scrollbar, JLabel maxLabel) {
          isAnimated_ = false;
          posButton_ = posButton;
@@ -94,6 +96,7 @@ public class ScrollerPanel extends JPanel {
          maxLabel_ = maxLabel;
          lockState_ = ScrollbarLockIcon.LockedState.UNLOCKED;
          cachedIndex_ = 0;
+         animatedIndex_ = 0;
       }
    }
 
@@ -472,18 +475,23 @@ public class ScrollerPanel extends JPanel {
          if (snapbackTimer_ != null) {
             snapbackTimer_.cancel();
          }
-         if (axisToSavedPosition_.size() > 0) {
+         // Snap back either if we have a locked axis, or if an axis is
+         // animated.
+         boolean shouldSnap = false;
+         for (String axis : axisToState_.keySet()) {
+            AxisState state = axisToState_.get(axis);
+            if (state.isAnimated_ ||
+                  state.lockState_ != ScrollbarLockIcon.LockedState.UNLOCKED) {
+               shouldSnap = true;
+               break;
+            }
+         }
+         if (shouldSnap) {
             snapbackTimer_ = new Timer("Scroller panel snapback");
             TimerTask task = new TimerTask() {
                @Override
                public void run() {
-                  shouldPostEvents_ = false;
-                  for (String axis : axisToSavedPosition_.keySet()) {
-                     int pos = axisToSavedPosition_.get(axis);
-                     axisToState_.get(axis).scrollbar_.setValue(pos);
-                  }
-                  shouldPostEvents_ = true;
-                  postDrawEvent();
+                  snapBack();
                }
             };
             snapbackTimer_.schedule(task, 500);
@@ -492,6 +500,23 @@ public class ScrollerPanel extends JPanel {
       catch (Exception e) {
          ReportingUtils.logError(e, "Error in onNewImage for ScrollerPanel");
       }
+   }
+
+   // This method is only called by the snapback timer.
+   private void snapBack() {
+      shouldPostEvents_ = false;
+      for (String axis : axisToState_.keySet()) {
+         AxisState state = axisToState_.get(axis);
+         // This position is used for animated axes.
+         int pos = state.animatedIndex_;
+         if (axisToSavedPosition_.containsKey(axis)) {
+            // This position is used for locked axes.
+            pos = axisToSavedPosition_.get(axis);
+         }
+         state.scrollbar_.setValue(pos);
+      }
+      shouldPostEvents_ = true;
+      postDrawEvent();
    }
 
    /**
@@ -625,12 +650,14 @@ public class ScrollerPanel extends JPanel {
 
    /**
     * Push the relevant scrollbar forward, wrapping around when it hits the
-    * end.
+    * end. Only used for animating.
     */
    private void advancePosition(String axis, int offset) {
-      JScrollBar scrollbar = axisToState_.get(axis).scrollbar_;
-      int target = (scrollbar.getValue() + offset) % scrollbar.getMaximum();
+      AxisState state = axisToState_.get(axis);
+      JScrollBar scrollbar = state.scrollbar_;
+      int target = (state.animatedIndex_ + offset) % scrollbar.getMaximum();
       scrollbar.setValue(target);
+      state.animatedIndex_ = target;
    }
 
    @Subscribe
