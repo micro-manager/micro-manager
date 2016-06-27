@@ -16,7 +16,7 @@
 #include <list>
 #include <algorithm>
 
-#include "lib/pdl2000.h"
+#include "pdl2000.h"
 
 
 inline std::string formatVersion(DWORD version)
