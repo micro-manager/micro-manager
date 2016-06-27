@@ -83,8 +83,6 @@ public class ScrollerPanel extends JPanel {
       JLabel maxLabel_;
       JScrollBar scrollbar_;
       ScrollbarLockIcon.LockedState lockState_;
-      // The saved index is the index we need to snap back to later.
-      int savedIndex_;
       // The cached index is the index we last recorded for the
       // scrollbar.
       int cachedIndex_;
@@ -95,7 +93,6 @@ public class ScrollerPanel extends JPanel {
          scrollbar_ = scrollbar;
          maxLabel_ = maxLabel;
          lockState_ = ScrollbarLockIcon.LockedState.UNLOCKED;
-         savedIndex_ = 0;
          cachedIndex_ = 0;
       }
    }
