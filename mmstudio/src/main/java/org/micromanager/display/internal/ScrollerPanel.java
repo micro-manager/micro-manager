@@ -252,6 +252,14 @@ public class ScrollerPanel extends JPanel {
       scrollbar.addAdjustmentListener(new AdjustmentListener() {
          @Override
          public void adjustmentValueChanged(AdjustmentEvent e) {
+            // HACK: if the axis is currently locked and we believe this
+            // action is a direct result of user input (instead of from
+            // automatically setting the scrollbar to reflect the current
+            // displayed image), then we should update the saved position.
+            if (axisToSavedPosition_.containsKey(axis) &&
+               e.getValueIsAdjusting()) {
+               axisToSavedPosition_.put(axis, scrollbar.getValue());
+               }
             setPosition(axis, scrollbar.getValue());
          }
       });
