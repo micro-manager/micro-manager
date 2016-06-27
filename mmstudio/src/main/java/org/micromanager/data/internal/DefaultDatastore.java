@@ -349,12 +349,12 @@ public class DefaultDatastore implements Datastore {
       }
       chooser.setSelectedFile(
             new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET)));
-      chooser.showSaveDialog(window);
-      File file = chooser.getSelectedFile();
-      if (file == null) {
+      int option = chooser.showSaveDialog(window);
+      if (option != JFileChooser.APPROVE_OPTION) {
          // User cancelled.
          return false;
       }
+      File file = chooser.getSelectedFile();
       FileDialogs.storePath(FileDialogs.MM_DATA_SET, file);
 
       // Determine the mode the user selected.
