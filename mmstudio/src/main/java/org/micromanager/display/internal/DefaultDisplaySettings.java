@@ -852,7 +852,7 @@ public class DefaultDisplaySettings implements DisplaySettings {
          }
       }
       catch (FileNotFoundException e) {
-         ReportingUtils.logError("No display settings found at " + path);
+         // Then we'll just make do with defaults.
       }
       catch (IOException e) {
          ReportingUtils.logError(e, "Error while reading display settings file");

@@ -379,6 +379,9 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    /**
     * For temporary backwards compatibility, generate a new SummaryMetadata
     * from a provided JSON object.
+    * NOTE: JSONExceptions in this method are all ignored as they just
+    * indicate that a particular field is missing, and all fields are
+    * optional.
     */
    public static SummaryMetadata legacyFromJSON(JSONObject tags) {
       if (tags == null) {
@@ -394,58 +397,42 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       try {
          builder.prefix(tags.getString("Prefix"));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field prefix");
-      }
+      catch (JSONException e) {}
 
       try {
          builder.userName(tags.getString("UserName"));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field userName");
-      }
+      catch (JSONException e) {}
 
       try {
          builder.profileName(tags.getString("ProfileName"));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field profileName");
-      }
+      catch (JSONException e) {}
 
       try {
          builder.microManagerVersion(tags.getString("MicroManagerVersion"));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field microManagerVersion");
-      }
+      catch (JSONException e) {}
 
       try {
          builder.metadataVersion(tags.getString("MetadataVersion"));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field metadataVersion");
-      }
+      catch (JSONException e) {}
 
       try {
          builder.computerName(tags.getString("ComputerName"));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field computerName");
-      }
+      catch (JSONException e) {}
 
       try {
          builder.directory(tags.getString("Directory"));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field directory");
-      }
+      catch (JSONException e) {}
 
       try {
          builder.channelGroup(tags.getString("ChannelGroup"));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field channelGroup");
-      }
+      catch (JSONException e) {}
 
       try {
          JSONArray names = tags.getJSONArray("ChNames");
@@ -455,16 +442,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          }
          builder.channelNames(namesArr);
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field channelNames");
-      }
+      catch (JSONException e) {}
 
       try {
          builder.zStepUm(MDUtils.getZStepUm(tags));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field zStepUm");
-      }
+      catch (JSONException e) {}
 
       try {
          if (tags.has("WaitInterval")) {
@@ -474,18 +457,15 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             builder.waitInterval(tags.getDouble("Interval_ms"));
          }
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field waitInterval");
-      }
+      catch (JSONException e) {}
 
       try {
          builder.customIntervalsMs(new Double[] {NumberUtils.displayStringToDouble(tags.getString("CustomIntervals_ms"))});
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field customIntervalsMs");
-      }
+      catch (JSONException e) {}
       catch (java.text.ParseException e) {
-         ReportingUtils.logDebugMessage("Failed to parse input string for customIntervalsMs");
+         // Likely an array instead of a number, in which case the below logic
+         // kicks in.
       }
 
       if (builder.customIntervalsMs_ == null) {
@@ -498,9 +478,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             }
             builder.customIntervalsMs(customIntervals);
          }
-         catch (JSONException e) {
-            ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field customIntervalsMs");
-         }
+         catch (JSONException e) {}
       }
 
       try {
@@ -511,9 +489,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          }
          builder.axisOrder(axisOrder);
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field axisOrder");
-      }
+      catch (JSONException e) {}
 
       // TODO: this is pretty horrible with all the try/catches, but we want
       // the lack of one dimension to not stop us from getting the others.
@@ -523,27 +499,19 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       try {
          dimsBuilder.time(MDUtils.getNumFrames(tags));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Failed to extract intended time axis length: " + e);
-      }
+      catch (JSONException e) {}
       try {
          dimsBuilder.z(MDUtils.getNumSlices(tags));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Failed to extract intended z axis length: " + e);
-      }
+      catch (JSONException e) {}
       try {
          dimsBuilder.channel(MDUtils.getNumChannels(tags));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Failed to extract intended channel axis length: " + e);
-      }
+      catch (JSONException e) {}
       try {
          dimsBuilder.stagePosition(MDUtils.getNumPositions(tags));
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("Failed to extract intended position axis length: " + e);
-      }
+      catch (JSONException e) {}
       builder.intendedDimensions(dimsBuilder.build());
 
       if (tags.has("IntendedDimensions")) {
@@ -557,9 +525,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             }
             builder.intendedDimensions(dimsBuilder.build());
          }
-         catch (JSONException e) {
-            ReportingUtils.logDebugMessage("Failed to extract intended dimensions: " + e);
-         }
+         catch (JSONException e) {}
       }
 
       try {
@@ -570,9 +536,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             builder.startDate(tags.getString("Time"));
          }
       }
-      catch (JSONException e) {
-         ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field startDate");
-      }
+      catch (JSONException e) {}
 
       if (tags.has("StagePositions")) {
          try {
@@ -583,9 +547,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             }
             builder.stagePositions(stagePositions);
          }
-         catch (JSONException e) {
-            ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field stagePositions");
-         }
+         catch (JSONException e) {}
       }
       else if (tags.has("InitialPositionList")) {
          // Legacy 1.4 format for the same information.
@@ -597,18 +559,14 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             }
             builder.stagePositions(stagePositions);
          }
-         catch (JSONException e) {
-            ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field InitialPositionList");
-         }
+         catch (JSONException e) {}
       }
       if (tags.has("UserData")) {
          try {
             builder.userData(
                   DefaultPropertyMap.fromJSON(tags.getJSONObject("UserData")));
          }
-         catch (JSONException e) {
-            ReportingUtils.logDebugMessage("SummaryMetadata failed to extract field userData: " + e);
-         }
+         catch (JSONException e) {}
       }
 
       return builder.build();

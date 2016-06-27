@@ -292,7 +292,6 @@ public class MultipageTiffReader {
             // These older versions of the metadata don't have a separate
             // location for scope data or user data, so we just stuff all
             // unused tags into the userData section.
-            ReportingUtils.logDebugMessage("Importing \"flat\" miscellaneous metadata into the userData structure");
             metadata = metadata.copy().userData(
                   MDUtils.extractUserData(tagged.tags, blockedKeys)).build();
          }
