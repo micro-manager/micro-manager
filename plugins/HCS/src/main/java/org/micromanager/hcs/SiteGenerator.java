@@ -65,6 +65,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private JTextField columnsField_;
    private JTextField rowsField_;
    private JComboBox plateIDCombo_;
+   private boolean shouldIgnoreFormatEvent_ = false;
    private static final long serialVersionUID = 1L;
    private SBSPlate plate_;
    private PlatePanel platePanel_;
@@ -266,6 +267,11 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       plateIDCombo_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
+            if (shouldIgnoreFormatEvent_) {
+               // Ignore this event, as it occurred due to software setting
+               // the display, rather than due to the user selecting an option.
+               return;
+            }
             plate_.initialize((String) plateIDCombo_.getSelectedItem());
             updateXySpacing();
             PositionList sites = generateSites();
@@ -725,11 +731,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    }
 
    public void loadCustom(File target) {
-      try {
-         plate_.load(target.getAbsolutePath());
-      } catch (HCSException e) {
-         app_.logs().logError(e);
-      }
+      plate_.initialize(target.getAbsolutePath());
       PositionList sites = generateSites();
       try {
          platePanel_.refreshImagingSites(sites);
@@ -738,6 +740,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             app_.logs().logError(e1);
          }
       }
+      shouldIgnoreFormatEvent_ = true;
+      plateIDCombo_.setSelectedItem(SBSPlate.LOAD_CUSTOM);
+      shouldIgnoreFormatEvent_ = false;
       platePanel_.repaint();
    }
 }

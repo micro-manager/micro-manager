@@ -88,6 +88,9 @@ public class SBSPlate {
       'P','Q','R','S','T',
       'U','V','W','X','Y','Z' };
 
+   private String prevMode_ = "";
+   private boolean wasLastModeCustom_ = false;
+
    public SBSPlate() {
       // initialize as 96-well plate
       wellMap_ = new HashMap<String, Well>();
@@ -100,6 +103,24 @@ public class SBSPlate {
    }
 
    public final void initialize(String id) {
+      // Skip it if we've already loaded it, or if we're being asked to load
+      // a custom plate when we've already loaded a custom plate. This last is
+      // a hack to get around the fact that we often call
+      // initialize(LOAD_CUSTOM) while reseting the GUI.
+      if (id.contentEquals(prevMode_) ||
+            (id.contentEquals(LOAD_CUSTOM) && wasLastModeCustom_)) {
+         // Already in the desired mode; just (re)generate wells.
+         // TODO: do we even need to do this much, or is it safe to just
+         // return immediately?
+         try {
+            generateWells();
+         } catch (HCSException e) {
+            ReportingUtils.logError(e);
+         }
+         return;
+      }
+      prevMode_ = id;
+      wasLastModeCustom_ = false;
       /* // SDS definition, does not seem to be adhered to
          // replaced with definition below
         if (id.equals(SBS_24_WELL)){
@@ -212,6 +233,7 @@ public class SBSPlate {
          wellSizeY_ = 75000.0;
          circular_ = false;
       } else if (id.equals(LOAD_CUSTOM)) {
+         wasLastModeCustom_ = true;
          File file = FileDialogs.openFile(null,
                "Please select the file to load from", PLATE_FILE);
          if (file != null) {
@@ -223,7 +245,20 @@ public class SBSPlate {
             }
          }
       }
-      
+      else if ((new File(id)).exists()) {
+         // Assume it's a custom file and load it.
+         wasLastModeCustom_ = true;
+         try {
+            load(id);
+         }
+         catch (Exception e) {
+            ReportingUtils.showError(e, "There was an error loading the file");
+         }
+      }
+      else {
+         ReportingUtils.logError("Unrecognized plate mode " + id);
+      }
+
       try {
          generateWells();
       } catch (HCSException e) {
@@ -247,7 +282,7 @@ public class SBSPlate {
       } catch (IOException e) {
          throw new HCSException(e);
       }
-
+      wasLastModeCustom_ = true;
    }
 
    public void save(String path) throws HCSException {     
