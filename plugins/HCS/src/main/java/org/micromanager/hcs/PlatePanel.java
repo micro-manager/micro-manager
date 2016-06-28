@@ -287,9 +287,9 @@ public class PlatePanel extends JPanel {
       // Don't allow one-dimensional selection rectangles.
       selRect.width = Math.max(1, selRect.width);
       selRect.height = Math.max(1, selRect.height);
-      for (WellBox wellBoxes_1 : wellBoxes_) {
-         if (wellBoxes_1.wellRect.intersects(selRect)) {
-            wellBoxes_1.selected = true;
+      for (WellBox wellBox : wellBoxes_) {
+         if (wellBox.wellRect.intersects(selRect)) {
+            wellBox.selected = !wellBox.selected;
          }
       }
       repaint();
@@ -628,13 +628,6 @@ public class PlatePanel extends JPanel {
       wellBoxes_[index].draw(g);
    }
    
-   void toggleWell(int row, int col) {
-      int index = wellMap_.get(getWellKey(row, col));
-      wellBoxes_[index].selected = !wellBoxes_[index].selected;
-      Graphics2D g = (Graphics2D) getGraphics();
-      wellBoxes_[index].draw(g);
-   }
-
    void clearSelection() {
       for (WellBox wellBoxes_1 : wellBoxes_) {
          wellBoxes_1.selected = false;
