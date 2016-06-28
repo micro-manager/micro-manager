@@ -56,15 +56,17 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
          comp = lab_;
       }
 
-      if (disable_) {
-         comp.setEnabled(false); // Disable preset values that aren't checked.
-      }
-
       if (item_.readOnly) {
          comp.setBackground(DaytimeNighttime.getDisabledBackgroundColor());
          comp.setForeground(DaytimeNighttime.getDisabledTextColor());
       } else {
          comp.setBackground(DaytimeNighttime.getBackgroundColor());
+         comp.setForeground(DaytimeNighttime.getEnabledTextColor());
+      }
+
+      if (disable_) {
+         comp.setEnabled(false);
+         // For legibility's sake, we always use the "enabled" color.
          comp.setForeground(DaytimeNighttime.getEnabledTextColor());
       }
 
