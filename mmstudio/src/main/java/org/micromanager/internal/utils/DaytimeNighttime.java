@@ -143,7 +143,7 @@ public class DaytimeNighttime {
       disabledTextColor_.put(CompatibilityInterface.DAY,
             new ColorUIResource(100, 100, 100));
       disabledTextColor_.put(CompatibilityInterface.NIGHT,
-            new ColorUIResource(60, 60, 60));
+            new ColorUIResource(120, 120, 120));
    }
 
    public static void setMode(String mode) {
