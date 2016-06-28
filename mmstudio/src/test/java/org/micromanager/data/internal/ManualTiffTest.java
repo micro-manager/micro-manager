@@ -251,13 +251,14 @@ public class ManualTiffTest {
          Assert.fail("Couldn't create comments annotation: " + e);
       }
       File tempDir = Files.createTempDir();
-      store.save(Datastore.SaveMode.MULTIPAGE_TIFF, tempDir.getPath());
-      store.setSavePath(tempDir.toString());
+      String path = tempDir.getPath() + "/test";
+      store.save(Datastore.SaveMode.MULTIPAGE_TIFF, path);
+      store.setSavePath(path);
       store = null;
 
-      System.out.println("Loading data from " + tempDir.getPath());
+      System.out.println("Loading data from " + path);
       try {
-         Datastore loadedStore = manager.loadData(tempDir.getPath(), true);
+         Datastore loadedStore = manager.loadData(path, true);
          testSummary(ALPHA2_PATH, loadedStore.getSummaryMetadata());
          info.test(loadedStore);
          testComments(loadedStore);
