@@ -130,7 +130,7 @@
 		</copy>
 		<mkdir dir="${test.reportdir}"/>
         <junit fork="true" haltonfailure="true" printsummary="true"
-            maxmemory="256m">
+            maxmemory="256m" failureproperty="mm.build.test.failed">
 			<sysproperty key="java.awt.headless" value="true"/>
 			<classpath refid="project.test.classpath"/>
 			<formatter type="plain"/>
@@ -145,6 +145,8 @@
 				</fileset>
 			</batchtest>
 		</junit>
+		<!-- Wait until we have finished all tests before failing -->
+		<fail if="mm.build.test.failed"/>
 	</target>
 
 	<target name="test" depends="jar,test-only" description="Run unit tests"/>
