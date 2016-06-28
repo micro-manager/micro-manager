@@ -83,7 +83,7 @@ public final class StorageMultipageTiff implements Storage {
 
    private DefaultDatastore store_;
    private DefaultSummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
-   private String summaryMetadataString_ = null;
+   private String summaryMetadataString_ = summaryMetadata_.toJSON().toString();
    private boolean amInWriteMode_;
    private int lastFrameOpenedDataSet_ = -1;
    private String directory_;
