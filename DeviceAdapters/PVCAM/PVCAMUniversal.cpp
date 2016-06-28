@@ -3616,12 +3616,21 @@ int Universal::initializePostProcessing()
 
 int Universal::initializeSpeedTable()
 {
-    uns32 portCount = 0; // Total number of readout ports
-    int32 spdCount = 0;  // Number of speed choices for each port
+    uns32 portCount = 0;  // Total number of readout ports
+    uns32 portCurIdx = 0; // Current PORT selected by the camera, we will restore it
+    int32 spdCount = 0;   // Number of speed choices for each port
+    int16 spdCurIdx = 0;  // Current SPEED selected by the camera, we will restore it
     camSpdTable_.clear();
     camSpdTableReverse_.clear();
 
     if (pl_get_param(hPVCAM_, PARAM_READOUT_PORT, ATTR_COUNT, (void_ptr)&portCount) != PV_OK)
+        return LogCamError(__LINE__, "pl_get_param PARAM_READOUT_PORT ATTR_COUNT" );
+
+    // Read the current camera port and speed, we will want to restore the camera to this
+    // configuration once we read out the entire speed table
+    if (pl_get_param(hPVCAM_, PARAM_READOUT_PORT, ATTR_CURRENT, (void_ptr)&portCurIdx) != PV_OK)
+        return LogCamError(__LINE__, "pl_get_param PARAM_READOUT_PORT ATTR_CURRENT" );
+    if (pl_get_param(hPVCAM_, PARAM_SPDTAB_INDEX, ATTR_CURRENT, (void_ptr)&spdCurIdx) != PV_OK)
         return LogCamError(__LINE__, "pl_get_param PARAM_READOUT_PORT ATTR_COUNT" );
 
     // Iterate through each port and fill in the speed table
@@ -3633,11 +3642,18 @@ int Universal::initializeSpeedTable()
         if (pl_get_param(hPVCAM_, PARAM_SPDTAB_INDEX, ATTR_COUNT, (void_ptr)&spdCount) != PV_OK)
             return LogCamError(__LINE__, "pl_get_param PARAM_SPDTAB_INDEX ATTR_COUNT" );
 
+        // Read the "default" speed for every port, we will select this one if port changes.
+        // Please note we don't read the ATTR_DEFAULT as this one is not properly reported (PVCAM 3.1.9.1)
+        int16 portDefaultSpdIdx = 0;
+        if (pl_get_param(hPVCAM_, PARAM_SPDTAB_INDEX, ATTR_CURRENT, (void_ptr)&portDefaultSpdIdx) != PV_OK)
+            return LogCamError(__LINE__, "pl_get_param PARAM_SPDTAB_INDEX ATTR_CURRENT" );
+
         for (int16 spdIndex = 0; spdIndex < spdCount; spdIndex++)
         {
             SpdTabEntry spdEntry;
             spdEntry.portIndex = portIndex;
             spdEntry.spdIndex = spdIndex;
+            spdEntry.portDefaultSpdIdx = portDefaultSpdIdx;
 
             if (pl_set_param(hPVCAM_, PARAM_SPDTAB_INDEX, (void_ptr)&spdEntry.spdIndex) != PV_OK)
                 return LogCamError(__LINE__, "pl_set_param PARAM_SPDTAB_INDEX" );
@@ -3784,17 +3800,20 @@ int Universal::initializeSpeedTable()
             camSpdTableReverse_[portIndex][tmp.str()] = spdEntry;
         }
     }
+
     // Since we have iterated through all the ports/speeds/gains we should reset the cam to default state
-    if (pl_set_param(hPVCAM_, PARAM_READOUT_PORT, (void_ptr)&camSpdTable_[0][0].portIndex) != PV_OK)
+    const SpdTabEntry& spdDef = camSpdTable_[portCurIdx][spdCurIdx];
+
+    if (pl_set_param(hPVCAM_, PARAM_READOUT_PORT, (void_ptr)&spdDef.portIndex) != PV_OK)
         return LogCamError(__LINE__, "pl_set_param PARAM_READOUT_PORT" );
-    if (pl_set_param(hPVCAM_, PARAM_SPDTAB_INDEX, (void_ptr)&camSpdTable_[0][0].spdIndex) != PV_OK)
+    if (pl_set_param(hPVCAM_, PARAM_SPDTAB_INDEX, (void_ptr)&spdDef.spdIndex) != PV_OK)
         return LogCamError(__LINE__, "pl_set_param PARAM_SPDTAB_INDEX" );
-    if (camSpdTable_[0][0].gainAvail)
+    if (spdDef.gainAvail)
     {
-        if (pl_set_param(hPVCAM_, PARAM_GAIN_INDEX, (void_ptr)&camSpdTable_[0][0].gainDef) != PV_OK)
+        if (pl_set_param(hPVCAM_, PARAM_GAIN_INDEX, (void_ptr)&spdDef.gainDef) != PV_OK)
             return LogCamError(__LINE__, "pl_set_param PARAM_GAIN_INDEX" );
     }
-    camCurrentSpeed_ = camSpdTable_[0][0];
+    camCurrentSpeed_ = spdDef;
 
     return DEVICE_OK;
 }
@@ -4554,11 +4573,12 @@ int Universal::portChanged()
     // Set the allowed readout rates
     SetAllowedValues( g_ReadoutRate, spdChoices );
 
-    // Set the current speed to first avalable rate, this will cause the speedChanged() call.
+    // Set the current speed to the default rate, this will cause the speedChanged() call.
     // TODO: This needs to be revisited. When SetProperty is called on a read-only property
     // the handler is not called at all. If we have port options that have just single speed
     // and thus we make that property read-only this call will not work properly.
-    SetProperty( g_ReadoutRate, spdChoices[0].c_str()); 
+    const int16 defSpdIdx = camSpdTable_[curPort][0].portDefaultSpdIdx;
+    SetProperty( g_ReadoutRate, spdChoices[defSpdIdx].c_str()); 
 
     return DEVICE_OK;
 }

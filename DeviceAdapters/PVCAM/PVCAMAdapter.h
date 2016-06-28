@@ -119,9 +119,10 @@ typedef struct
     int16   gainDef;       // Default gain for this speed
     std::map<std::string, int16> gainNameMap; // Gain names (i.e., "name:index" map)
     std::map<int16, std::string> gainNameMapReverse; // Reverse lookup map
-    int16 spdIndex;        // Speed index 
-    uns32 portIndex;       // Port index
-    std::string spdString; // A string that describes this choice in GUI
+    int16 spdIndex;           // Speed index 
+    uns32 portIndex;          // Port index
+    int16 portDefaultSpdIdx;  // Default speed index for given port (applied when port changes)
+    std::string spdString;    // A string that describes this choice in GUI
     int32       colorMask;    // Sensor color mask (PARAM_COLOR_MODE) 
     std::string colorMaskStr; // Sensor color mask description (retrieved from PVCAM)
 } SpdTabEntry;
