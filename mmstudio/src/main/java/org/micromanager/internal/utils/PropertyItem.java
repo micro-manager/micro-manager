@@ -165,5 +165,9 @@ public class PropertyItem {
 	   return type == PropertyType.Undef;
    }
 
-  
+   @Override
+   public String toString() {
+      return String.format("<PropertyItem %s-%s (%s)%s>",
+            device, name, value, readOnly ? " (read-only)" : "");
+   }
 }
