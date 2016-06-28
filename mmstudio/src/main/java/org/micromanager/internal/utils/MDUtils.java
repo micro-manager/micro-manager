@@ -860,26 +860,31 @@ public class MDUtils {
     */
    public static PropertyMap extractUserData(JSONObject tags,
          Set<String> ignoredKeys) {
+      // HACK: we handle two use cases here. In one, the user data is
+      // segregated into a separate component of the tags. In the other, the
+      // user data is "flat" in the tags. The latter occurs for images fresh
+      // from the core, the former for images loaded from files.
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
-      if (!tags.has("userData")) {
-         return builder.build();
-      }
-      try {
-         JSONObject userData = tags.getJSONObject("userData");
-         for (String key : getKeys(userData)) {
-            if ((ignoredKeys == null || !ignoredKeys.contains(key)) &&
-                  !RESERVED_KEYS.contains(key)) {
-               try {
-                  putProperty(builder, key, userData.get(key));
-               }
-               catch (JSONException e) {
-                  ReportingUtils.logError(e, "Error extracting user-data property with key " + key);
-               }
-            }
+      JSONObject source = tags;
+      if (tags.has("userData")) {
+         try {
+            source = tags.getJSONObject("userData");
+         }
+         catch (JSONException e) {
+            // This should never happen with well-formatted JSON.
+            ReportingUtils.logError("Unable to separate user data sub-component from tags: " + e);
          }
       }
-      catch (JSONException e) {
-         ReportingUtils.logError("Unable to extract user data from JSON: " + e);
+      for (String key : getKeys(source)) {
+         if ((ignoredKeys == null || !ignoredKeys.contains(key)) &&
+               !RESERVED_KEYS.contains(key)) {
+            try {
+               putProperty(builder, key, source.get(key));
+            }
+            catch (JSONException e) {
+               ReportingUtils.logError(e, "Error extracting user-data property with key " + key);
+            }
+         }
       }
       return builder.build();
    }
