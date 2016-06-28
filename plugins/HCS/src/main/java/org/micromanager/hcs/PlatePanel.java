@@ -227,7 +227,6 @@ public class PlatePanel extends JPanel {
    protected void onMouseClicked(MouseEvent e) throws HCSException {
       Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
-      
       if (mode_ == Tool.MOVE) {
          if (app_ == null)
             return;
@@ -256,7 +255,6 @@ public class PlatePanel extends JPanel {
       } else {
          int row = plate_.getWellRow(pt.y);
          int col = plate_.getWellColumn(pt.x);
-         
          if (row < 0 || col < 0 || row >= plate_.getNumRows() || col >= plate_.getNumColumns()) {
             // clicked outside of the active area
             if (!e.isControlDown()) {
@@ -264,12 +262,11 @@ public class PlatePanel extends JPanel {
             }
             return;
          }
-         
+
          // clicked on one of the wells
-         if (e.isControlDown()) {
-            // add to the selection
-            toggleWell(row, col);
-         } else {
+         // Don't toggle selection when control is down, because the
+         // mouseReleased handler does that for us.
+         if (!e.isControlDown()) {
             // new selection
             clearSelection();
             selectWell(row, col, true);                 
