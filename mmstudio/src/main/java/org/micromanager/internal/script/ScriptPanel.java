@@ -1160,9 +1160,10 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    }  
 
    public void setParentGUI(Studio parent) {
-      parentGUI_ = parent;      
+      parentGUI_ = parent;
       insertScriptingObject("mm", parent);
-   } 
+      insertScriptingObject("mmc", parent.core());
+   }
 
    private void runImmediatePane() 
    {
