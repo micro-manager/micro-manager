@@ -1468,58 +1468,45 @@ public class MicroscopeModel {
       }
    }
 
-   public boolean loadModel(CMMCore c) {
-      boolean status = true;
-      try {
-         StrVector ld = c.getLoadedDevices();
-         // first load com ports
-         Device ports[] = getAvailableSerialPorts();
+   public void loadModel(CMMCore c) throws Exception {
+      StrVector ld = c.getLoadedDevices();
+      // first load com ports
+      Device ports[] = getAvailableSerialPorts();
 
-         // load all com ports
-         for (int i = 0; i < ports.length; i++) {
-            c.loadDevice(ports[i].getName(), ports[i].getLibrary(),
-                  ports[i].getAdapterName());
-         }
-
-         // load devices
-         Device devs[] = getDevices();
-         for (int i = 0; i < devs.length; i++) {
-            if (!devs[i].isCore()) {
-               c.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
-               c.setParentLabel(devs[i].getName(), devs[i].getParentHub());
-            }
-         }
-         
-         // find if any of the ports are being used
-         for (int i=0; i<devs.length; i++) {
-            for (int j=0; j<devs[i].getNumberOfProperties(); j++) {
-               PropertyItem pi = devs[i].getProperty(j);
-               for (int k=0; k<ports.length; k++) {
-                  if (pi.value.contentEquals(ports[k].getName()))
-                     comPortInUse_.put(ports[k].getName(), ports[k]);
-               }
-            }
-         }
-
-         loadDeviceDataFromHardware(c);
-         removeDuplicateComPorts();
-
-         for (Device dev : devs) {
-            if (dev.isStage()) {
-               c.setFocusDirection(dev.getName(), dev.getFocusDirection());
-            }
-         }
-
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-         try {
-            c.unloadAllDevices();
-         } catch (Exception ex) {
-            ReportingUtils.logError(e.getMessage());
-         }
-         status = false;
+      // load all com ports
+      for (int i = 0; i < ports.length; i++) {
+         c.loadDevice(ports[i].getName(), ports[i].getLibrary(),
+               ports[i].getAdapterName());
       }
-      return status;
+
+      // load devices
+      Device devs[] = getDevices();
+      for (int i = 0; i < devs.length; i++) {
+         if (!devs[i].isCore()) {
+            c.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
+            c.setParentLabel(devs[i].getName(), devs[i].getParentHub());
+         }
+      }
+      
+      // find if any of the ports are being used
+      for (int i=0; i<devs.length; i++) {
+         for (int j=0; j<devs[i].getNumberOfProperties(); j++) {
+            PropertyItem pi = devs[i].getProperty(j);
+            for (int k=0; k<ports.length; k++) {
+               if (pi.value.contentEquals(ports[k].getName()))
+                  comPortInUse_.put(ports[k].getName(), ports[k]);
+            }
+         }
+      }
+
+      loadDeviceDataFromHardware(c);
+      removeDuplicateComPorts();
+
+      for (Device dev : devs) {
+         if (dev.isStage()) {
+            c.setFocusDirection(dev.getName(), dev.getFocusDirection());
+         }
+      }
    }
 
    /**

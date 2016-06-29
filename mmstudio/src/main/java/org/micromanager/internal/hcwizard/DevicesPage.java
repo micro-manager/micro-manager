@@ -477,8 +477,18 @@ public class DevicesPage extends PagePanel implements ListSelectionListener, Mou
          }
          buildTree();
          return true;
-      } catch (Exception e2) {
-         ReportingUtils.showError(e2);
+      } catch (Exception e) {
+         // Hide the loading dialog *first*, or else the error dialog can't be
+         // interacted with.
+         amLoadingPage_ = false;
+         ReportingUtils.showError(e);
+         // Clean up from loading the model.
+         try {
+            core_.unloadAllDevices();
+         }
+         catch (Exception e2) {
+            ReportingUtils.logError(e2, "Error unloading devices");
+         }
          setCursor(Cursor.getDefaultCursor());
       } finally {
          setCursor(oldCur);
