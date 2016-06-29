@@ -75,8 +75,6 @@ import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 
-import mmcorej.CMMCore;
-
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -355,11 +353,10 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    
    /**
     * Create the dialog
-    * @param core - MMCore object
     * @param gui - MM script-interface implementation
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public ScriptPanel(CMMCore core, MMStudio gui) {
+   public ScriptPanel(MMStudio gui) {
       super("script panel");
       gui_ = gui;
       final MMFrame scriptPanelFrame = this;

@@ -815,7 +815,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    }
 
    private void createScriptPanel() {
-      scriptPanel_ = new ScriptPanel(core_, studio_);
+      scriptPanel_ = new ScriptPanel(studio_);
       scriptPanel_.setParentGUI(studio_);
    }
 
