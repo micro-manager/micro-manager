@@ -281,6 +281,10 @@ public class PlatePanel extends JPanel {
       drawSelRect(e.getPoint());   }
 
    protected void onMouseReleased(MouseEvent e) {
+      if (mode_ == Tool.MOVE) {
+         // Don't make any changes to the selection.
+         return;
+      }
       drawSelRect(previous_);
       Rectangle selRect = new Rectangle(anchor_.x, anchor_.y, 
               e.getX()- anchor_.x, e.getY() - anchor_.y);
