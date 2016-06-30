@@ -542,7 +542,9 @@ public class CRISPFrame extends MMFrame {
           String[] valLines = vals.split("\r\n");
           for (String valLine : valLines) {
              String[] tokens = valLine.split("\\s+");
-             data.add(Float.parseFloat(tokens[2]), Integer.parseInt(tokens[3]));
+             if (tokens.length == 4) { 
+               data.add(Float.parseFloat(tokens[2]), Integer.parseInt(tokens[3]));
+             }
           }
 
           String na = core_.getProperty(CRISP_, "Objective NA");
