@@ -285,15 +285,12 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
          camera = studio_.core().getCameraDevice();
       }
       int ijType = -1;
-      String pixelType = null;
       if (image.getNumComponents() == 1) {
          if (image.getBytesPerPixel() == 1) {
             ijType = ImagePlus.GRAY8;
-            pixelType = "GRAY8";
          }
          else if (image.getBytesPerPixel() == 2) {
             ijType = ImagePlus.GRAY16;
-            pixelType = "GRAY16";
          }
          else {
             throw new IllegalArgumentException("Unrecognized pixel type");
@@ -302,7 +299,6 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
       else {
          if (image.getBytesPerPixel() == 4) {
             ijType = ImagePlus.COLOR_RGB;
-            pixelType = "RGB32";
          }
          else {
             throw new IllegalArgumentException("Unrecognized pixel type");
@@ -313,7 +309,6 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
       Metadata.MetadataBuilder result = image.getMetadata().copy()
          .camera(camera)
          .ijType(ijType)
-         .pixelType(pixelType)
          .receivedTime(formatter_.format(new Date()))
          .pixelSizeUm(mmstudio.getCachedPixelSizeUm())
          .uuid(UUID.randomUUID())
