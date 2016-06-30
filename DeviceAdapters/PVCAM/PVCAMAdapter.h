@@ -191,16 +191,16 @@ public: // MMCamera API
     void SetExposure(double dExp);
     int IsExposureSequenceable(bool& isSequenceable) const;
     unsigned GetNumberOfComponents() const;
+
     int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize);
     int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize);
     int ClearROI();
-    /* TODO
     bool SupportsMultiROI();
     bool IsMultiROISet();
     int GetMultiROICount(unsigned& count);
     int SetMultiROI(const unsigned* xs, const unsigned* ys, const unsigned* widths, const unsigned* heights, unsigned numROIs);
     int GetMultiROI(unsigned* xs, unsigned* ys, unsigned* widths, unsigned* heights, unsigned* length);
-    */
+
     bool IsCapturing();
 
 #ifndef linux
@@ -527,6 +527,11 @@ private:
     */
     int postProcessSingleFrame(unsigned char** pOutBuf, unsigned char* pInBuf, size_t inBufSz);
 
+    /**
+    * Internally aborts the ongoing acquisition. This method is lock free.
+    */
+    int abortAcquisitionInternal();
+
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
     /**
     * Sends the S.M.A.R.T streaming configuration to the camera.
@@ -567,8 +572,9 @@ private:
     *  PARAM_READOUT_TIME - camera calculated readout time.
     *  PARAM_TEMP_SETPOINT - depends on PARAM_PMODE that is applied during setup.
     *  PARAM_FRAME_BUFFER_SIZE - Frame buffer size depends on setup() arguments.
+    * @param frameSize Size of a single frame in bytes as reported by pl_exp_setup() calls.
     */
-    int postExpSetupInit();
+    int postExpSetupInit(unsigned int frameSize);
     /**
     * Calculates and sets the circular buffer count limits based on frame
     * size and hardcoded limits.
@@ -625,7 +631,6 @@ private: // Static
     PvCameraModel   cameraModel_;
     char            deviceLabel_[MM::MaxStrLength]; // Cached device label used when inserting metadata
 
-    bool            circBufSizeAuto_;
     int             circBufFrameCount_; // number of frames to allocate the buffer for
     bool            circBufFrameRecoveryEnabled_; // True if we perform recovery from lost callbacks
 
@@ -724,6 +729,7 @@ private: // Static
     PvEnumParam*      prmColorMode_;
     PvParam<ulong64>* prmFrameBufSize_;
 
+    PvParam<uns16>*   prmRoiCount_;
     PvParam<rs_bool>* prmMetadataEnabled_;
     PvParam<rs_bool>* prmCentroidsEnabled_;
     PvParam<uns16>*   prmCentroidsRadius_;

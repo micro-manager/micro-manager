@@ -212,7 +212,6 @@ Universal::Universal(short cameraId) :
     hPVCAM_(0),
     cameraId_(cameraId),
     cameraModel_(PvCameraModel_Generic),
-    circBufSizeAuto_(true),
     circBufFrameCount_(CIRC_BUF_FRAME_CNT_DEF), // Sizes larger than 3 caused image tearing in ICX-674. Reason unknown.
     circBufFrameRecoveryEnabled_(true),
     stopOnOverflow_(true),
@@ -264,6 +263,7 @@ Universal::Universal(short cameraId) :
     prmReadoutPort_(0),
     prmColorMode_(0),
     prmFrameBufSize_(0),
+    prmRoiCount_(0),
     prmMetadataEnabled_(0),
     prmCentroidsEnabled_(0),
     prmCentroidsRadius_(0),
@@ -341,6 +341,7 @@ Universal::~Universal()
     delete prmReadoutPort_;
     delete prmColorMode_;
     delete prmFrameBufSize_;
+    delete prmRoiCount_;
     delete prmMetadataEnabled_;
     delete prmCentroidsEnabled_;
     delete prmCentroidsRadius_;
@@ -532,6 +533,9 @@ int Universal::Initialize()
 #ifdef PVCAM_3_0_12_SUPPORTED
     /// PARAM_FRAME_BUFFER_SIZE, no UI property but we use it later in the code
     prmFrameBufSize_ = new PvParam<ulong64>( "PARAM_FRAME_BUFFER_SIZE", PARAM_FRAME_BUFFER_SIZE, this, true );
+
+    /// MULTI-ROI SUPPORT CHECK
+    prmRoiCount_ = new PvParam<uns16>("PARAM_ROI_COUNT", PARAM_ROI_COUNT, this, true);
 
     /// EMBEDDED FRAME METADATA FEATURE
     acqCfgNew_.FrameMetadataEnabled = false; // Disabled by default
@@ -936,9 +940,10 @@ int Universal::Initialize()
         return LogCamError(__LINE__, "pl_exp_init_seq");
 
     // Circular buffer auto/manual switch
+    acqCfgNew_.CircBufSizeAuto = true;
     pAct = new CPropertyAction(this, &Universal::OnCircBufferSizeAuto);
     nRet = CreateProperty( g_Keyword_CircBufSizeAuto,
-        circBufSizeAuto_ ? g_Keyword_ON : g_Keyword_OFF, MM::String, false, pAct);
+        acqCfgNew_.CircBufSizeAuto ? g_Keyword_ON : g_Keyword_OFF, MM::String, false, pAct);
     AddAllowedValue(g_Keyword_CircBufSizeAuto, g_Keyword_ON);
     AddAllowedValue(g_Keyword_CircBufSizeAuto, g_Keyword_OFF);
 
@@ -947,13 +952,13 @@ int Universal::Initialize()
     // may help in some cases (e.g. lowering it down to 3 helped to resolve ICX-674 image tearing issues)
     pAct = new CPropertyAction(this, &Universal::OnCircBufferFrameCount);
     nRet = CreateProperty( g_Keyword_CircBufFrameCnt,
-        CDeviceUtils::ConvertToString(CIRC_BUF_FRAME_CNT_DEF), MM::Integer, circBufSizeAuto_, pAct);
+        CDeviceUtils::ConvertToString(CIRC_BUF_FRAME_CNT_DEF), MM::Integer, acqCfgNew_.CircBufSizeAuto, pAct);
     // If we are in auto mode the property has no limits because the value is read only and adjusted
     // automatically by internal algorithm or PVCAM. In manual mode we just set the initial range that
     // is later dynamically adjusted by actual frame size.
     // Note: passing 0, 0 will disable the limit checking but for some reason returns an error so
     // we don't check the error code for SetPropertyLimits() here. See also: updateCircBufRange()
-    if (circBufSizeAuto_)
+    if (acqCfgNew_.CircBufSizeAuto)
         SetPropertyLimits( g_Keyword_CircBufFrameCnt, 0, 0);
     else
         SetPropertyLimits( g_Keyword_CircBufFrameCnt, CIRC_BUF_FRAME_CNT_MIN, CIRC_BUF_FRAME_CNT_MAX );
@@ -1070,7 +1075,11 @@ int Universal::Initialize()
     AddAllowedValue(g_Keyword_CircBufEnabled, g_Keyword_OFF);
 
     // Initialize the acquisition configuration
-    acqCfgNew_.Roi = PvRoi(0, 0, camSerSize_, camParSize_);
+    unsigned int maxRois = 1;
+    if (prmRoiCount_ && prmRoiCount_->IsAvailable())
+        maxRois = prmRoiCount_->Max();
+    acqCfgNew_.Rois.SetCapacity(maxRois);
+    acqCfgNew_.Rois.Add(PvRoi(0, 0, camSerSize_, camParSize_));
 
     // Make sure our configs are synchronized
     acqCfgCur_ = acqCfgNew_;
@@ -1276,33 +1285,39 @@ const unsigned int* Universal::GetImageBufferAsRGB32()
 
 unsigned Universal::GetImageWidth() const
 {
-    return acqCfgCur_.Roi.ImageRgnWidth();
+    const unsigned int width = acqCfgCur_.Rois.ImpliedRoi().ImageRgnWidth();
+    return width;
 }
 
 unsigned Universal::GetImageHeight() const 
 {
-    return acqCfgCur_.Roi.ImageRgnHeight();
+    const unsigned int height = acqCfgCur_.Rois.ImpliedRoi().ImageRgnHeight();
+    return height;
 }
 
 unsigned Universal::GetImageBytesPerPixel() const
 {
-    return acqCfgCur_.ColorProcessingEnabled ? 4 : 2;
+    const unsigned int bpp = acqCfgCur_.ColorProcessingEnabled ? 4 : 2;
+    return bpp;
 }
 
 long Universal::GetImageBufferSize() const
 {
     const int bytesPerPixel = acqCfgCur_.ColorProcessingEnabled ? 4 : 2;
-    return acqCfgCur_.Roi.ImageRgnWidth() * acqCfgCur_.Roi.ImageRgnHeight() * bytesPerPixel;
+    const long bufferSize = acqCfgCur_.Rois.ImpliedRoi().ImageRgnWidth() * acqCfgCur_.Rois.ImpliedRoi().ImageRgnHeight() * bytesPerPixel;
+    return bufferSize;
 }
 
 unsigned Universal::GetBitDepth() const
 {
-    return acqCfgCur_.ColorProcessingEnabled ? 8 : (unsigned)camCurrentSpeed_.bitDepth;
+    const unsigned int bitDepth = acqCfgCur_.ColorProcessingEnabled ? 8 : (unsigned)camCurrentSpeed_.bitDepth;
+    return bitDepth;
 }
 
 int Universal::GetBinning() const 
 {
-    return acqCfgCur_.Roi.BinX();
+    const int bin = acqCfgCur_.Rois.BinX();
+    return bin;
 }
 
 int Universal::SetBinning(int binSize) 
@@ -1357,12 +1372,15 @@ int Universal::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
     // We keep the ROI definition in sensor coordinates however the coordinates given by uM are
     // related to the actual image the ROI was drawn on. We need to take the current binning
     // into account.
-    const PvRoi& curRoi = acqCfgCur_.Roi;
-    acqCfgNew_.Roi.SetSensorRgn(
-        static_cast<uns16>(x * curRoi.BinX()),
-        static_cast<uns16>(y * curRoi.BinY()),
-        static_cast<uns16>(xSize * curRoi.BinX()),
-        static_cast<uns16>(ySize * curRoi.BinY()));
+
+    // Calling this function for camera with multi ROI support should clear
+    // all the multi ROI definitions and revert to single ROI operation.
+    const uns16 bx = acqCfgCur_.Rois.BinX();
+    const uns16 by = acqCfgCur_.Rois.BinY();
+    acqCfgNew_.Rois.Clear();
+    acqCfgNew_.Rois.Add(PvRoi(
+        static_cast<uns16>(x * bx), static_cast<uns16>(y * by),
+        static_cast<uns16>(xSize * bx), static_cast<uns16>(ySize * by), bx, by));
     nRet = applyAcqConfig();
 
     return nRet;
@@ -1372,11 +1390,12 @@ int Universal::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize
 {
     START_METHOD("Universal::GetROI");
 
-    const PvRoi& roi = acqCfgCur_.Roi;
-    x = roi.ImageRgnX();
-    y = roi.ImageRgnY();
-    xSize = roi.ImageRgnWidth();
-    ySize = roi.ImageRgnHeight();
+    const PvRoi& curRoi = acqCfgCur_.Rois.At(0);
+
+    x = curRoi.ImageRgnX();
+    y = curRoi.ImageRgnY();
+    xSize = curRoi.ImageRgnWidth();
+    ySize = curRoi.ImageRgnHeight();
 
     return DEVICE_OK;
 }
@@ -1387,10 +1406,78 @@ int Universal::ClearROI()
 
     int nRet = DEVICE_OK;
 
-    acqCfgNew_.Roi.SetSensorRgn(0, 0, camSerSize_, camParSize_);
+    // Clear the ROI only, keep the binning.
+    const uns16 bx = acqCfgCur_.Rois.BinX();
+    const uns16 by = acqCfgCur_.Rois.BinY();
+
+    acqCfgNew_.Rois.Clear();
+    acqCfgNew_.Rois.Add(PvRoi(0, 0, camSerSize_, camParSize_, bx, by));
     nRet = applyAcqConfig();
 
     return nRet;
+}
+
+bool Universal::SupportsMultiROI()
+{
+    const bool supported = (prmRoiCount_ != 0 && prmRoiCount_->IsAvailable() && prmRoiCount_->Max() > 1);
+    return supported;
+}
+
+bool Universal::IsMultiROISet()
+{
+    const bool isSet = (acqCfgCur_.Rois.Count() > 1);
+    return isSet;
+}
+
+int Universal::GetMultiROICount(unsigned& count)
+{
+    count = static_cast<unsigned>(acqCfgCur_.Rois.Count());
+    return DEVICE_OK;
+}
+
+int Universal::SetMultiROI(const unsigned* xs, const unsigned* ys, const unsigned* widths, const unsigned* heights, unsigned numROIs)
+{
+    int nRet = DEVICE_OK;
+
+    // Get the current binning
+    const uns16 bx = acqCfgCur_.Rois.BinX();
+    const uns16 by = acqCfgCur_.Rois.BinY();
+
+    acqCfgNew_.Rois.Clear();
+    for (unsigned int i = 0; i < numROIs; ++i)
+    {
+        const PvRoi roi(
+            static_cast<uns16>(xs[i] * bx), static_cast<uns16>(ys[i] * by),
+            static_cast<uns16>(widths[i] * bx), static_cast<uns16>(heights[i] * by),
+            bx, by);
+        acqCfgNew_.Rois.Add(roi);
+    }
+
+    nRet = applyAcqConfig();
+    return nRet;
+}
+
+int Universal::GetMultiROI(unsigned* xs, unsigned* ys, unsigned* widths, unsigned* heights, unsigned* length)
+{
+    const unsigned roiCount = acqCfgCur_.Rois.Count();
+    if (roiCount > *length)
+    {
+       // This should never happen.
+       return DEVICE_INTERNAL_INCONSISTENCY;
+    }
+
+    for (unsigned int i = 0; i < roiCount; ++i)
+    {
+        const PvRoi& roi = acqCfgCur_.Rois.At(i);
+        xs[i] = roi.ImageRgnX();
+        ys[i] = roi.ImageRgnY();
+        widths[i] = roi.ImageRgnWidth();
+        heights[i] = roi.ImageRgnHeight();
+    }
+
+    *length = roiCount;
+
+    return DEVICE_OK;
 }
 
 bool Universal::IsCapturing()
@@ -1461,6 +1548,9 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
     imagesRecovered_ = 0;
     lastPvFrameNr_   = 0;
 
+    // initially start with the exposure time as the actual interval estimate
+    SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(exposure_)); 
+
     // Cache the current device label so we don't have to copy it for every frame
     GetLabel(deviceLabel_); 
     eofEvent_.Reset(); // Reset the EOF event, we will wait for it to become signalled
@@ -1484,8 +1574,9 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
     }
     startTime_ = GetCurrentMMTime();
 
-    // initially start with the exposure time as the actual interval estimate
-    SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(exposure_)); 
+    // Once we call start_cont() we don't want to spend much time in this function because
+    // the callbacks will start coming pretty fast. Do not waste time here, what can be done
+    // before start_cont() should be done there.
 
     if ( !acqCfgCur_.CallbacksEnabled && acqCfgCur_.CircBufEnabled )
     {
@@ -1502,48 +1593,18 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
 
 int Universal::StopSequenceAcquisition()
 {
-    MMThreadGuard acqGuard(&acqLock_);
-    START_METHOD("Universal::StopSequenceAcquisition");
-    // call function of the base class, which does useful work
     int nRet = DEVICE_OK;
-
-    // removed redundant calls to pl_exp_stop_cont &
-    //  pl_exp_finish_seq because they get called automatically when the thread exits.
-    if(isAcquiring_)
     {
-        if (acqCfgCur_.CircBufEnabled)
-        {
-            if ( acqCfgCur_.CallbacksEnabled )
-            {
-                g_pvcamLock.Lock();
-                if (!pl_exp_stop_cont( hPVCAM_, CCS_CLEAR ))
-                {
-                    nRet = DEVICE_ERR;
-                    LogCamError( __LINE__, "pl_exp_stop_cont() failed" );
-                }
-                g_pvcamLock.Unlock();
-                sequenceModeReady_ = false;
-                // Inform the core that the acquisition has finished
-                // (this also closes the shutter if used)
-                GetCoreCallback()->AcqFinished(this, nRet );
-            }
-            else
-            {
-                pollingThd_->setStop(true);
-                pollingThd_->wait();
-            }
-        }
-        else
-        {
-            acqThd_->Pause();
-        }
-        isAcquiring_ = false;
-        eofEvent_.Set();
-    }
+        MMThreadGuard acqGuard(&acqLock_);
+        START_METHOD("Universal::StopSequenceAcquisition");
 
+        nRet = abortAcquisitionInternal();
+    }
     // LW: Give the camera some time to stop acquiring. This reduces occasional
     //     crashes/hangs when frequently starting/stopping with some fast cameras.
-    CDeviceUtils::SleepMs( 50 );
+    //     Please note this has to be called after the acqLock is unlocked, otherwise
+    //     the PVCAM callback will be kept holding and no flush will occur.
+    CDeviceUtils::SleepMs(100);
 
     return nRet;
 }
@@ -1632,7 +1693,7 @@ int Universal::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
         if (index < 0)
             return DEVICE_CAN_NOT_SET_PROPERTY;
 
-        acqCfgNew_.Roi.SetBinning(
+        acqCfgNew_.Rois.SetBinning(
             static_cast<uns16>(binningValuesX_[index]),
             static_cast<uns16>(binningValuesY_[index]));
         nRet = applyAcqConfig();
@@ -1651,7 +1712,7 @@ int Universal::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     else if (eAct == MM::BeforeGet)
     {
         std::stringstream ss;
-        ss << acqCfgCur_.Roi.BinX() << "x" << acqCfgCur_.Roi.BinY();
+        ss << acqCfgCur_.Rois.BinX() << "x" << acqCfgCur_.Rois.BinY();
         pProp->Set(ss.str().c_str());
     }
     return nRet;
@@ -1674,13 +1735,13 @@ int Universal::OnBinningX(MM::PropertyBase* pProp, MM::ActionType eAct)
         }
         else
         {
-            acqCfgNew_.Roi.SetBinningX(static_cast<uns16>(binX));
+            acqCfgNew_.Rois.SetBinningX(static_cast<uns16>(binX));
             nRet = applyAcqConfig();
         }
     }
     else if (eAct == MM::BeforeGet)
     {
-        pProp->Set((long)acqCfgNew_.Roi.BinX());
+        pProp->Set((long)acqCfgNew_.Rois.BinX());
     }
     return nRet;
 }
@@ -1702,13 +1763,13 @@ int Universal::OnBinningY(MM::PropertyBase* pProp, MM::ActionType eAct)
         }
         else
         {
-            acqCfgNew_.Roi.SetBinningY(static_cast<uns16>(binY));
+            acqCfgNew_.Rois.SetBinningY(static_cast<uns16>(binY));
             nRet = applyAcqConfig();
         }
     }
     else if (eAct == MM::BeforeGet)
     {
-        pProp->Set((long)acqCfgNew_.Roi.BinY());
+        pProp->Set((long)acqCfgNew_.Rois.BinY());
     }
     return nRet;
 }
@@ -1724,7 +1785,7 @@ int Universal::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
     }
     else if (eAct == MM::AfterSet)
     {
-        double oldExposure = exposure_;
+        const double oldExposure = exposure_;
         pProp->Get(exposure_);
 
         // we need to make sure to reconfigure the acquisition when exposure time changes.
@@ -2069,26 +2130,14 @@ int Universal::OnCircBufferSizeAuto(MM::PropertyBase* pProp, MM::ActionType eAct
     {
         string choice;
         pProp->Get(choice);
-        circBufSizeAuto_ = (choice == g_Keyword_ON) ? true : false;
-
-        if (IsCapturing())
-        {
-            StopSequenceAcquisition();
-        }
-        else
-        {
-            // Do not update at live mode, the value gets updated in ResizeImageBufferContinuous
-            const unsigned int size = acqCfgCur_.Roi.ImageRgnWidth() * acqCfgCur_.Roi.ImageRgnHeight() * 2;
-            ret = updateCircBufRange(size);
-        }
-
-        sequenceModeReady_ = false;
+        acqCfgNew_.CircBufSizeAuto = (choice == g_Keyword_ON) ? true : false;
+        ret = applyAcqConfig();
     }
     else if (eAct == MM::BeforeGet)
     {
         const bool bReadOnly = !acqCfgCur_.CircBufEnabled;
         static_cast<MM::Property*>(pProp)->SetReadOnly(bReadOnly);
-        pProp->Set(circBufSizeAuto_ ? g_Keyword_ON : g_Keyword_OFF);
+        pProp->Set(acqCfgCur_.CircBufSizeAuto ? g_Keyword_ON : g_Keyword_OFF);
     }
     return ret;
 }
@@ -2110,7 +2159,7 @@ int Universal::OnCircBufferFrameCount(MM::PropertyBase* pProp, MM::ActionType eA
     }
     else if (eAct == MM::BeforeGet)
     {
-        const bool bReadOnly = circBufSizeAuto_ | !acqCfgCur_.CircBufEnabled;
+        const bool bReadOnly = acqCfgCur_.CircBufSizeAuto | !acqCfgCur_.CircBufEnabled;
         static_cast<MM::Property*>(pProp)->SetReadOnly(bReadOnly);
         pProp->Set(static_cast<long>(circBufFrameCount_));
     }
@@ -3084,32 +3133,15 @@ int Universal::PushImageToMmCore(const unsigned char* pPixBuffer, Metadata* pMd 
     int nRet = DEVICE_ERR;
     MM::Core* pCore = GetCoreCallback();
     // This method inserts a new image into the circular buffer (residing in MMCore)
-    nRet = pCore->InsertMultiChannel(this,
-        pPixBuffer,
-        1,
-        GetImageWidth(),
-        GetImageHeight(),
-        GetImageBytesPerPixel(),
-#ifdef _DEBUG
-        NULL); // Inserting the md causes crash in debug builds
-#else
-        pMd);
-#endif
+    nRet = pCore->InsertImage(this, pPixBuffer, GetImageWidth(), GetImageHeight(),
+        GetImageBytesPerPixel(), pMd->Serialize().c_str());
+
     if (!stopOnOverflow_ && nRet == DEVICE_BUFFER_OVERFLOW)
     {
         // do not stop on overflow - just reset the buffer
         pCore->ClearImageBuffer(this);
-        nRet = pCore->InsertMultiChannel(this,
-            pPixBuffer,
-            1,
-            GetImageWidth(),
-            GetImageHeight(),
-            GetImageBytesPerPixel(),
-#ifdef _DEBUG
-            NULL); // Inserting the md causes crash in debug builds
-#else
-            pMd);
-#endif
+        nRet = pCore->InsertImage(this, pPixBuffer, GetImageWidth(), GetImageHeight(),
+            GetImageBytesPerPixel(), pMd->Serialize().c_str(), false);
     }
 
     return nRet;
@@ -3246,7 +3278,7 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
     {
         if ( imagesInserted_ >= imagesToAcquire_ || ret != DEVICE_OK )
         {
-            StopSequenceAcquisition();
+            abortAcquisitionInternal();
         }
     }
 
@@ -3826,7 +3858,6 @@ int Universal::resizeImageBufferContinuous()
 
     try
     {
-        uns32 frameSize = 0;
         int16 pvExposureMode = 0;
         uns32 pvExposure = 0;
         nRet = getPvcamExposureSetupConfig( pvExposureMode, pvExposure );
@@ -3840,8 +3871,10 @@ int Universal::resizeImageBufferContinuous()
         }
 #endif
         g_pvcamLock.Lock();
-        rgn_type roi = acqCfgCur_.Roi.ToRgnType();
-        if (!pl_exp_setup_cont(hPVCAM_, 1, &roi, pvExposureMode, pvExposure, &frameSize, CIRC_OVERWRITE)) 
+        const rgn_type* rgnArr = acqCfgCur_.Rois.ToRgnArray();
+        const uns16     rgnTot = static_cast<uns16>(acqCfgCur_.Rois.Count());
+        uns32           frameSize = 0;
+        if (!pl_exp_setup_cont(hPVCAM_, rgnTot, rgnArr, pvExposureMode, pvExposure, &frameSize, CIRC_OVERWRITE)) 
         {
             const int16 pvErr = pl_error_code();
             g_pvcamLock.Unlock();
@@ -3853,7 +3886,7 @@ int Universal::resizeImageBufferContinuous()
         }
         g_pvcamLock.Unlock();
 
-        nRet = postExpSetupInit();
+        nRet = postExpSetupInit(frameSize);
         if (nRet != DEVICE_OK)
             return nRet; // Message logged in the failing method
 
@@ -3862,7 +3895,7 @@ int Universal::resizeImageBufferContinuous()
             return nRet; // Message logged in the failing method
 
         // set up a circular buffer for specified number of frames
-        if (circBufSizeAuto_)
+        if (acqCfgCur_.CircBufSizeAuto)
         {
             if (prmFrameBufSize_ && prmFrameBufSize_->IsAvailable())
             {
@@ -3881,14 +3914,6 @@ int Universal::resizeImageBufferContinuous()
             }
         }
 
-        // This will update the CircularBufferFrameCount property in the Device/Property
-        // browser. We need to call this because we need to reflect the change in circBufFrameCount_.
-        // Also, if we are in manual buffer size mode and binning/ROI is changed during live the
-        // circular buffer limits may get adjusted and this needs to be reflected as well.
-        nRet = updateCircBufRange(frameSize);
-        if (nRet != DEVICE_OK)
-            return nRet;
-
         const ulong64 bufferSize = circBufFrameCount_ * static_cast<ulong64>(frameSize);
 
         // PVCAM API does not support buffers larger that 4GB
@@ -3899,7 +3924,7 @@ int Universal::resizeImageBufferContinuous()
         // we dynamically update the slider range the check here is needed because in some
         // corner cases (like switching binning and not clicking the "Refresh" button) the
         // UI temporarily allows the user to set the incorrect value.
-        if (!circBufSizeAuto_ && bufferSize > CIRC_BUF_SIZE_MAX_USER)
+        if (!acqCfgCur_.CircBufSizeAuto && bufferSize > CIRC_BUF_SIZE_MAX_USER)
             return LogMMError(ERR_BUFFER_TOO_LARGE, __LINE__);
 
         circBuf_.Resize(frameSize, circBufFrameCount_);
@@ -3939,7 +3964,6 @@ int Universal::resizeImageBufferSingle()
 
     try
     {
-        uns32 frameSize = 0;
         int16 pvExposureMode = 0;
         uns32 pvExposure = 0;
         nRet = getPvcamExposureSetupConfig( pvExposureMode, pvExposure );
@@ -3958,8 +3982,11 @@ int Universal::resizeImageBufferSingle()
             SetProperty(g_Keyword_SmartStreamingEnable, g_Keyword_No);
         }
 #endif
-        rgn_type roi = acqCfgCur_.Roi.ToRgnType();
-        if (!pl_exp_setup_seq(hPVCAM_, 1, 1, &roi, pvExposureMode, pvExposure, &frameSize))
+        const rgn_type* rgnArr = acqCfgCur_.Rois.ToRgnArray();
+        const uns16     rgnTot = static_cast<uns16>(acqCfgCur_.Rois.Count());
+        const uns32     expTot = 1;
+        uns32           expSize = 0;
+        if (!pl_exp_setup_seq(hPVCAM_, expTot, rgnTot, rgnArr, pvExposureMode, pvExposure, &expSize))
         {
             const int16 pvErr = pl_error_code();
             g_pvcamLock.Unlock();
@@ -3971,7 +3998,9 @@ int Universal::resizeImageBufferSingle()
         }
         g_pvcamLock.Unlock();
 
-        nRet = postExpSetupInit();
+        const uns32 frameSize = expSize / expTot;
+
+        nRet = postExpSetupInit(frameSize);
         if (nRet != DEVICE_OK)
             return nRet; // Message logged in the failing method
 
@@ -4032,12 +4061,12 @@ int Universal::resizeImageProcessingBuffers()
 #ifdef PVCAM_3_0_12_SUPPORTED
     // In case of metadata-enabled acquisition we may need temporary processing
     // buffer. This one should be allocated only if needed and freed otherwise.
-    if (acqCfgNew_.FrameMetadataEnabled && acqCfgNew_.RoiCount > 1)
+    if (acqCfgCur_.FrameMetadataEnabled && acqCfgCur_.RoiCount > 1)
     {
         // Metadata-enabled frames with single ROI don't need black-filling,
         // we can use the data of the single ROI directly.
         // With more ROIs we need blackfilling into separate buffer
-        const size_t imgDataSz = acqCfgCur_.Roi.ImageRgnWidth() * acqCfgCur_.Roi.ImageRgnHeight() * sizeof(uns16);
+        const size_t imgDataSz = acqCfgCur_.Rois.ImpliedRoi().ImageRgnWidth() * acqCfgCur_.Rois.ImpliedRoi().ImageRgnHeight() * sizeof(uns16);
         if (metaBlackFilledBufSz_ != imgDataSz)
         {
             delete[] metaBlackFilledBuf_;
@@ -4059,13 +4088,13 @@ int Universal::resizeImageProcessingBuffers()
 
     // In case of frame metadata enabled we may need to update the helper
     // structure for decoding.
-    if (acqCfgNew_.FrameMetadataEnabled)
+    if (acqCfgCur_.FrameMetadataEnabled)
     {
         // Allocate the helper structure if needed
-        const uns16 roiCount = static_cast<uns16>(acqCfgNew_.RoiCount);
+        const uns16 roiCount = static_cast<uns16>(acqCfgCur_.RoiCount);
         if (metaFrameStruct_)
         {
-            if (metaFrameStruct_->roiCapacity < acqCfgNew_.RoiCount)
+            if (metaFrameStruct_->roiCapacity < acqCfgCur_.RoiCount)
             {
                 // We need to reallocate the structure for more ROIs
                 if (pl_md_release_frame_struct(metaFrameStruct_) != PV_OK)
@@ -4101,9 +4130,9 @@ int Universal::resizeImageProcessingBuffers()
 #endif
 
     // In case of RGB acquisition we need yet another buffer for demosaicing
-    if (acqCfgNew_.ColorProcessingEnabled)
+    if (acqCfgCur_.ColorProcessingEnabled)
     {
-        const PvRoi& roi = acqCfgNew_.Roi;
+        const PvRoi& roi = acqCfgCur_.Rois.ImpliedRoi();
         if (rgbImgBuf_)
         {
             // Reallocate the rgb image buffer only if really needed
@@ -4335,9 +4364,18 @@ int Universal::postProcessSingleFrame(unsigned char** pOutBuf, unsigned char* pI
         if (acqCfgCur_.RoiCount > 1)
         {
             // If there are more ROIs we need to black-fill...
-            const PvRoi& roi = acqCfgCur_.Roi;
-            const uns16 offX = metaFrameStruct_->impliedRoi.s1 - roi.SensorRgnX();
-            const uns16 offY = metaFrameStruct_->impliedRoi.p1 - roi.SensorRgnY();
+            const PvRoi& roi = acqCfgCur_.Rois.ImpliedRoi();
+            
+            const uns16 bx = acqCfgCur_.Rois.BinX();
+            const uns16 by = acqCfgCur_.Rois.BinY();
+            // HACK! When binning is applied the PVCAM (3.1.9.1) does not reflect that
+            // in the implied ROI (it keeps reporting binning 1). The recompose function
+            // then fails. So we simply "fix" it ourselves.
+            metaFrameStruct_->impliedRoi.sbin = bx;
+            metaFrameStruct_->impliedRoi.pbin = by;
+            // HACK-END
+            uns16 offX = 0;
+            uns16 offY = 0;
             const uns16 recW = roi.ImageRgnWidth();
             const uns16 recH = roi.ImageRgnHeight();
             // If we are running centroids we should blackfill the destination frame
@@ -4345,6 +4383,12 @@ int Universal::postProcessSingleFrame(unsigned char** pOutBuf, unsigned char* pI
             // may contain centroids on different positions.
             if (acqCfgCur_.CentroidsEnabled)
             {
+                // With centroids we also need to shift the ROis to their sensor
+                // positions (beause with centroids we use full frame for display, not
+                // the implied ROI that can change with every frame)
+                offX = metaFrameStruct_->impliedRoi.s1 - roi.SensorRgnX();
+                offY = metaFrameStruct_->impliedRoi.p1 - roi.SensorRgnY();
+
                 memset(metaBlackFilledBuf_, 0, metaBlackFilledBufSz_);
             }
             if (pl_md_frame_recompose(metaBlackFilledBuf_, offX, offY, recW, recH, metaFrameStruct_) != PV_OK)
@@ -4382,6 +4426,47 @@ int Universal::postProcessSingleFrame(unsigned char** pOutBuf, unsigned char* pI
 
     *pOutBuf = pixBuffer;
     return DEVICE_OK;
+}
+
+int Universal::abortAcquisitionInternal()
+{
+    START_METHOD("Universal::abortAcquisitionInternal");
+    int nRet = DEVICE_OK;
+
+    // removed redundant calls to pl_exp_stop_cont &
+    //  pl_exp_finish_seq because they get called automatically when the thread exits.
+    if(isAcquiring_)
+    {
+        if (acqCfgCur_.CircBufEnabled)
+        {
+            if (acqCfgCur_.CallbacksEnabled)
+            {
+                g_pvcamLock.Lock();
+                if (!pl_exp_stop_cont( hPVCAM_, CCS_CLEAR ))
+                {
+                    nRet = DEVICE_ERR;
+                    LogCamError( __LINE__, "pl_exp_stop_cont() failed" );
+                }
+                g_pvcamLock.Unlock();
+                sequenceModeReady_ = false;
+                // Inform the core that the acquisition has finished
+                // (this also closes the shutter if used)
+                GetCoreCallback()->AcqFinished(this, nRet);
+            }
+            else
+            {
+                pollingThd_->setStop(true);
+                pollingThd_->wait();
+            }
+        }
+        else
+        {
+            acqThd_->Pause();
+        }
+        isAcquiring_ = false;
+        eofEvent_.Set();
+    }
+    return nRet;
 }
 
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
@@ -4612,12 +4697,18 @@ int Universal::speedChanged()
     return DEVICE_OK;
 }
 
-int Universal::postExpSetupInit()
+int Universal::postExpSetupInit(unsigned int frameSize)
 {
     int nRet = DEVICE_OK;
 
     if (prmTempSetpoint_->IsAvailable())
         nRet = prmTempSetpoint_->Update();
+
+    // This will update the CircularBufferFrameCount property in the Device/Property
+    // browser. We need to call this because we need to reflect the change in circBufFrameCount_.
+    // Also, if we are in manual buffer size mode and binning/ROI is changed during live the
+    // circular buffer limits may get adjusted and this needs to be reflected as well.
+    nRet = updateCircBufRange(frameSize);
 
     return nRet;
 }
@@ -4626,7 +4717,7 @@ int Universal::updateCircBufRange(unsigned int frameSize)
 {
     int nRet = DEVICE_OK;
 
-    if (circBufSizeAuto_)
+    if (acqCfgCur_.CircBufSizeAuto)
     {
         // In auto mode the property is read-only and has no limits. There is a little catch though,
         // to disable the "slider" when the property is made read-only we need to call 
@@ -4657,7 +4748,9 @@ int Universal::updateCircBufRange(unsigned int frameSize)
     // Unfortunately we need to call the OnPropert*ies*Changed because this seems to
     // be the only way that correctly updates the property range in the UI. The 
     // OnPropert*y*Changed updates the value only.
-    nRet = OnPropertiesChanged();
+    // LW: 2016-06-20 Commenting out because the call to OnPropertiesChanged now causes
+    //     an immediate call of StartSequenceAcquisition() -> results in hang of Live mode.
+    //nRet = GetCoreCallback()->OnPropertiesChanged(this);
 
     return nRet;
 }
@@ -4697,14 +4790,14 @@ int Universal::selectDebayerAlgMask(int xRoiPos, int yRoiPos, int32 pvcamColorMo
 
 int Universal::applyAcqConfig()
 {
+    int nRet = DEVICE_OK;
+
     // If we are capturing do not do anything, this function will be called
-    // again once the acquisition is restarted
+    // again once the acquisition is restarted.
     if (isAcquiring_)
     {
         return DEVICE_OK;
     }
-
-    int nRet = DEVICE_OK;
 
     // If we are not acquiring, we can configure the camera right away
 
@@ -4724,8 +4817,8 @@ int Universal::applyAcqConfig()
         bufferResizeRequired = true;
     }
 
-    const PvRoi& newRoi = acqCfgNew_.Roi;
-    const PvRoi& curRoi = acqCfgCur_.Roi;
+          PvRoiCollection& newRois = acqCfgNew_.Rois;
+    const PvRoiCollection& curRois = acqCfgCur_.Rois;
 
     // NOTE: Some features do not work when turned on together. E.g. Centroids may
     // not work with Binning, or something else may not work when ROI is selected.
@@ -4735,7 +4828,7 @@ int Universal::applyAcqConfig()
     // ROI that was drawn on a different image. Or drawn on an image acquired with 1x1 binning but
     // the current configuration uses 2x2 binning. We cannot easily detect that because uM
     // won't tell us what binning we should use when applying ROI.
-    if (!newRoi.IsValid(camSerSize_, camParSize_))
+    if (!newRois.IsValid(camSerSize_, camParSize_))
     {
         acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
         LogCamError( __LINE__, "Universal::applyAcqConfig() ROI definition is invalid for current camera configuration" );
@@ -4743,19 +4836,33 @@ int Universal::applyAcqConfig()
     }
 
     // VALIDATE Centroids (PrimeEnhance), so far it works with 1x1 binning only
-    if (acqCfgNew_.CentroidsEnabled && acqCfgNew_.Roi.BinX() > 1 && acqCfgNew_.Roi.BinY() > 1)
+    if (acqCfgNew_.CentroidsEnabled && acqCfgNew_.Rois.BinX() > 1 && acqCfgNew_.Rois.BinY() > 1)
     {
         acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
         LogCamError( __LINE__, "Universal::applyAcqConfig() Centroids (PrimeEnhance) is not supported with binning." );
         return ERR_BINNING_INVALID;
     }
+    // Centroids also do not work with user defined Multiple ROIs
+    if (acqCfgNew_.CentroidsEnabled && acqCfgNew_.Rois.Count() > 1)
+    {
+        acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+        LogCamError( __LINE__, "Universal::applyAcqConfig() Centroids (PrimeEnhance) is not supported with multiple ROIs." );
+        return ERR_ROI_DEFINITION_INVALID;
+    }
 
     // Change in ROI or binning requires buffer reallocation
-    if (!newRoi.Equals(curRoi))
+    if (!newRois.Equals(curRois))
     {
+        // If binning has changed adjust the coordinates to the binning factor
+        newRois.AdjustCoords();
         configChanged = true;
         bufferResizeRequired = true;
     }
+
+    // Multi-ROIs require metadata
+    if (acqCfgNew_.Rois.Count() > 1)
+        if (!acqCfgCur_.FrameMetadataEnabled)
+            acqCfgNew_.FrameMetadataEnabled = true;
 
     // Centroids require frame metadata so we need to check this first and
     // enable the metadata automatically if needed, the setting will be sent
@@ -4788,8 +4895,6 @@ int Universal::applyAcqConfig()
             acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
             return nRet; // Error logged in SetAndApply()
         }
-        // Update the ROI count
-        acqCfgNew_.RoiCount = acqCfgNew_.CentroidsEnabled ? acqCfgNew_.CentroidsCount : 1;
     }
     if (acqCfgNew_.CentroidsRadius != acqCfgCur_.CentroidsRadius)
     {
@@ -4810,10 +4915,13 @@ int Universal::applyAcqConfig()
             acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
             return nRet; // Error logged in SetAndApply()
         }
-        // Update the generic ROI count so the md_frame structure can be reinitialized if needed
-        if (acqCfgCur_.CentroidsEnabled)
-            acqCfgNew_.RoiCount = acqCfgNew_.CentroidsCount;
     }
+
+    // Update the "output" ROI count so the md_frame structure can be reinitialized if needed
+    if (acqCfgNew_.CentroidsEnabled)
+        acqCfgNew_.RoiCount = acqCfgNew_.CentroidsCount;
+    else
+        acqCfgNew_.RoiCount = static_cast<int>(acqCfgNew_.Rois.Count());
 
     // Fan speed setpoint
     if (acqCfgNew_.FanSpeedSetpoint != acqCfgCur_.FanSpeedSetpoint)
@@ -4830,14 +4938,17 @@ int Universal::applyAcqConfig()
     // Debayering algorithm selection
     if (acqCfgNew_.DebayerAlgMaskAuto && acqCfgNew_.ColorProcessingEnabled)
     {
-        const int xPos = acqCfgNew_.Roi.SensorRgnX();
-        const int yPos = acqCfgNew_.Roi.SensorRgnY();
+        // TODO: We need to have per-roi mask selection :(
+        const int xPos = acqCfgNew_.Rois.At(0).SensorRgnX();
+        const int yPos = acqCfgNew_.Rois.At(0).SensorRgnY();
         acqCfgNew_.DebayerAlgMask = selectDebayerAlgMask(xPos, yPos, camCurrentSpeed_.colorMask);
         // Config changes only if the current and previous mask actually differs (see below)
     }
     if (acqCfgNew_.DebayerAlgMask != acqCfgCur_.DebayerAlgMask)
     {
         configChanged = true;
+        // TODO: With Multi-ROI we need to debayer each ROI individually and with individual mask,
+        //       remove this and set the OrderIndex for every ROI.
         debayer_.SetOrderIndex(acqCfgNew_.DebayerAlgMask);
     }
     if (acqCfgNew_.DebayerAlgInterpolation != acqCfgCur_.DebayerAlgInterpolation)
@@ -4889,6 +5000,11 @@ int Universal::applyAcqConfig()
     }
 
     if (acqCfgNew_.CircBufEnabled != acqCfgCur_.CircBufEnabled)
+    {
+        configChanged = true;
+        bufferResizeRequired = true;
+    }
+    if (acqCfgNew_.CircBufSizeAuto != acqCfgCur_.CircBufSizeAuto)
     {
         configChanged = true;
         bufferResizeRequired = true;
@@ -4954,6 +5070,9 @@ int Universal::applyAcqConfig()
     }
 
     // Update the Device/Property browser UI
+    // LW: 2016-06-20 We may need to comment this out as well because the call to
+    // OnPropertiesChanged often causes an immediate call to StartSequenceAcquisition()
+    // which in turn results in hang of Live mode. (happens in uM 2.0, not 1.4)
     if (configChanged)
         nRet = this->GetCoreCallback()->OnPropertiesChanged(this);
 
