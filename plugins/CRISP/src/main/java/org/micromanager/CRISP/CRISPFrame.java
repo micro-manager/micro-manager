@@ -396,12 +396,16 @@ public class CRISPFrame extends MMFrame {
     }//GEN-LAST:event_LockButton_ActionPerformed
 
     private void CalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CalibrateButton_ActionPerformed
-      try {
-         core_.setProperty(CRISP_, "CRISP State", "loG_cal");
-
-         String state = "";
-         int counter = 0;
-         while (!state.equals("loG_cal") && counter < 50) {
+       try {
+          core_.setProperty(CRISP_, "CRISP State", "loG_cal");
+          // HACK: The controller appears to be unresponsive for ~1.5 s after  
+          // setting the loG_cal state.  Either the user can set the serial port 
+          // timeout to something higher than 2000ms, or we can wait here 
+          Thread.sleep(2000);
+          
+          String state = "";
+          int counter = 0;
+          while (!state.equals("loG_cal") && counter < 50) {
             state = core_.getProperty(CRISP_, "CRISP State");
             Thread.sleep(100);
          }
@@ -459,10 +463,9 @@ public class CRISPFrame extends MMFrame {
             state = core_.getProperty(CRISP_, "CRISP State");
             Thread.sleep(100);
          }
-         // ReportingUtils.showMessage("Calibration failed. Focus, make sure that the NA variable is set correctly and try again.");
-
       } catch (Exception ex) {
-         ReportingUtils.showMessage("Calibration failed. Focus, make sure that the NA variable is set correctly and try again.");
+         ReportingUtils.showMessage("Calibration failed. Focus, make sure that the NA variable is set correctly and try again." + 
+               "\nYou can also try increasing the serial port timeout in the HCW."); 
       }
     }//GEN-LAST:event_CalibrateButton_ActionPerformed
 
