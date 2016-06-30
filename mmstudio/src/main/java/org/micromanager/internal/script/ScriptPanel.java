@@ -293,7 +293,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       cons_ = new JConsole();
 
       beanshellREPLint_ = new Interpreter(cons_);
-      initializeInterpreter();
 
       new Thread(beanshellREPLint_, "BeanShell interpreter").start();
    }
@@ -337,6 +336,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       // This command allows variables to be inspected in the command-line
       // (e.g., typing "x;" causes the value of x to be returned):
       beanshellREPLint_.setShowResults(true);
+
+      insertScriptingObject("mm", gui_);
+      insertScriptingObject("mmc", gui_.core());
    }
 
    public JConsole getREPLCons() {
@@ -747,8 +749,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       // Load the shortcut table based on saved preferences
       getScriptsFromPrefs();
 
-      insertScriptingObject("mm", gui_);
-      insertScriptingObject("mmc", gui_.core());
+      initializeInterpreter();
    }
 
    protected void stopScript(boolean shouldInterrupt) {
