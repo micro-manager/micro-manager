@@ -4350,7 +4350,12 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
          int index = 0;
          focusCurveData_[index] = "";
          bool done = false;
-         while (ret == DEVICE_OK && !done && index < SIZE_OF_FC_ARRAY)
+         // the GetSerialAnswer call will likely take more than 500ms, the likely timeout for the port set by the user
+         // instead, wait for a total of ??? seconds
+         MM::MMTime startTime = GetCurrentMMTime();
+         MM::MMTime wait(10,0);
+         bool cont = true;
+         while (cont && !done && index < SIZE_OF_FC_ARRAY)
          {
             ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
             if (answer == "end")
@@ -4365,6 +4370,8 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
                      focusCurveData_[index] = "";
                }
             }
+            
+            cont = (GetCurrentMMTime() - startTime) < wait;
          }
       }
      
