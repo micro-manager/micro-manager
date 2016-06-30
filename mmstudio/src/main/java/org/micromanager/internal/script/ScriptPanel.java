@@ -114,7 +114,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    private List<String> immediatePaneHistory_ = new ArrayList<String>(HISTORYSIZE);
    private int immediatePaneHistoryIndex_ = 0;
    private static ScriptingEngine interp_;
-   private Studio parentGUI_;
    private JTextPane messagePane_;
    private StyleContext sc_;
    private Interpreter beanshellREPLint_;
@@ -745,6 +744,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       
       // Load the shortcut table based on saved preferences
       getScriptsFromPrefs();
+
+      insertScriptingObject("mm", gui_);
+      insertScriptingObject("mmc", gui_.core());
    }
 
    protected void stopScript(boolean shouldInterrupt) {
@@ -1156,12 +1158,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       }
    }  
 
-   public void setParentGUI(Studio parent) {
-      parentGUI_ = parent;
-      insertScriptingObject("mm", parent);
-      insertScriptingObject("mmc", parent.core());
-   }
-
    private void runImmediatePane() 
    {
       try {
@@ -1265,18 +1261,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       } catch (EvalError e) {
            ReportingUtils.showError(e, this);
       }
-   }
-
-   public void ClearOutput() {
-      clearOutput();
-   }
-   
-   public void clear() {
-      clearOutput();
-   }
-
-   public void updateGUI () {
-      parentGUI_.compat().refreshGUI();
    }
 
    public void getScriptsFromPrefs ()
