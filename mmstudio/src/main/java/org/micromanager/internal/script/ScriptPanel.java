@@ -749,7 +749,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       // Load the shortcut table based on saved preferences
       getScriptsFromPrefs();
 
-      initializeInterpreter();
+      resetInterpreter();
    }
 
    protected void stopScript(boolean shouldInterrupt) {
@@ -1469,5 +1469,24 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
                "Script interrupted by the user!");
       }
       clearOutput();
+   }
+
+   @Override
+   public void resetInterpreter()
+         throws ScriptController.ScriptStoppedException {
+      if (stopRequestPending()) {
+         throw new ScriptController.ScriptStoppedException(
+               "Script interrupted by the user!");
+      }
+      try {
+         beanshellREPLint_.eval("clear();");
+      }
+      catch (EvalError e) {
+         message("Reset of BeanShell interpreter failed");
+      }
+      // Apparently clear() also erases bsh.console, which we need
+      beanshellREPLint_.setConsole(cons_);
+
+      initializeInterpreter();
    }
 }

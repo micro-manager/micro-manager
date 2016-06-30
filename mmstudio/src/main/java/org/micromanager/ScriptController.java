@@ -59,4 +59,11 @@ public interface ScriptController {
     *         stop execution.
     */
    public void clearMessageWindow() throws ScriptStoppedException;
+
+   /**
+    * Clears all methods and variables defined in the script interpreter.
+    * @throws ScriptStoppedException if the script panel has been requested to
+    *         stop execution.
+    */
+   public void resetInterpreter() throws ScriptStoppedException;
 }
