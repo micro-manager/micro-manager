@@ -546,7 +546,9 @@ public class CRISPFrame extends javax.swing.JFrame {
           String[] valLines = vals.split("\r\n");
           for (int i=0; i < valLines.length; i++) {
              String[] tokens = valLines[i].split("\\s+");
-             data.add(Float.parseFloat(tokens[2]), Integer.parseInt(tokens[3]));
+             if (tokens.length == 4) {
+               data.add(Float.parseFloat(tokens[2]), Integer.parseInt(tokens[3]));
+             }
           }
 
           String na = core_.getProperty(CRISP_, "Objective NA");
