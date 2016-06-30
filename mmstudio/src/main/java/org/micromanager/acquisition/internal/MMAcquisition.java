@@ -112,7 +112,6 @@ public class MMAcquisition {
    protected int bitDepth_ = 8;    
    protected int multiCamNumCh_ = 1;
    private boolean initialized_ = false;
-   private long startTimeMs_;
    private final String comment_ = "";
    private String rootDirectory_;
    private Studio studio_;
@@ -377,7 +376,6 @@ public class MMAcquisition {
          summaryMetadata.put("UserName", System.getProperty("user.name"));
          summaryMetadata.put("UUID", UUID.randomUUID());
          summaryMetadata.put("Width", width_);
-         startTimeMs_ = System.currentTimeMillis();
          try {
             pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
          }
