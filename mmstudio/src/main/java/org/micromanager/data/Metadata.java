@@ -62,17 +62,13 @@ public interface Metadata {
       MetadataBuilder exposureMs(Double exposureMs);
       MetadataBuilder ijType(Integer ijType);
       MetadataBuilder imageNumber(Long imageNumber);
-      MetadataBuilder initialPositionList(MultiStagePosition initialPositionList);
       MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
       MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
       MetadataBuilder pixelAspect(Double pixelAspect);
       MetadataBuilder pixelSizeUm(Double pixelSizeUm);
-      MetadataBuilder pixelType(String pixelType);
       MetadataBuilder positionName(String positionName);
       MetadataBuilder receivedTime(String receivedTime);
       MetadataBuilder ROI(Rectangle ROI);
-      MetadataBuilder source(String source);
-      MetadataBuilder startTimeMs(Double startTimeMs);
       MetadataBuilder scopeData(PropertyMap scopeData);
       MetadataBuilder userData(PropertyMap userData);
       /**
@@ -122,12 +118,6 @@ public interface Metadata {
     * @return Sample pixel size in microns 
     */
    Double getPixelSizeUm();
-   
-   /** 
-    * TODO: what is this? 
-    * @return 
-    */
-   Double getStartTimeMs();
    
    /** 
     * The X stage position of the sample for this image 
@@ -191,14 +181,6 @@ public interface Metadata {
    PropertyMap getUserData();
    
    /** 
-    * List of stage positions at the start of the acquisition (e.g. not taking
-    * into account changes caused by autofocus). TODO: should be part of
-    * SummaryMetadata?
-    * @return stage positions at the start of the acquisition
-    */
-   MultiStagePosition getInitialPositionList();
-   
-   /** 
     * The ROI of the camera when acquiring this image 
     * @return Camera ROI
     */
@@ -209,12 +191,6 @@ public interface Metadata {
     * @return Camera name
     */
    String getCamera();
-   
-   /** 
-    * Seems to be a string version of the "IjType" field (TODO: remove?) 
-    * @return string version of the "IjType" field
-    */
-   String getPixelType();
    
    /** 
     * Any name attached to the stage position at which this image was
@@ -232,12 +208,6 @@ public interface Metadata {
     * @return Time at which this image was received by Micro-Manager
     */
    String getReceivedTime();
-   
-   /** 
-    * TODO: what is this? 
-    * @return ???
-    */
-   String getSource();
    
    /**
     * A unique identifier for this specific image. Micro-Manager uses this

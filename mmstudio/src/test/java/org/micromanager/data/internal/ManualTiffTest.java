@@ -102,20 +102,16 @@ public class ManualTiffTest {
       DefaultCoords.Builder imageCoords = new DefaultCoords.Builder();
       imageCoords.channel(0).stagePosition(0).time(0).z(0);
       DefaultMetadata.Builder imageMetadata = new DefaultMetadata.Builder();
-      imageMetadata.binning(1).bitDepth(16).pixelType("GRAY16")
+      imageMetadata.binning(1).bitDepth(16)
          .positionName("Pos0").pixelSizeUm(1.0)
          .camera("My camera")
          .elapsedTimeMs(4334.3443)
          .exposureMs(new Double(8888)).ijType(-5)
          .imageNumber(new Long(9999))
-         .initialPositionList(
-               new MultiStagePosition("a third xy stage", 98, 76, "a third z stage", 54))
          .keepShutterOpenChannels(false).keepShutterOpenSlices(true)
          .pixelAspect(.001).pixelSizeUm(new Double(55555555))
-         .pixelType("GRAY16").positionName("Pos0")
-         .receivedTime("1920-01-01 12:34:56")
-         .ROI(new Rectangle(0, 0, 512, 512)).source("A keyboard")
-         .startTimeMs(new Double(1928))
+         .positionName("Pos0").receivedTime("1920-01-01 12:34:56")
+         .ROI(new Rectangle(0, 0, 512, 512))
          // NB these are not exhaustive, because I can only take so much
          // data entry. We do not fail the test if the data we look at has
          // more information than what we look for, only for missing data

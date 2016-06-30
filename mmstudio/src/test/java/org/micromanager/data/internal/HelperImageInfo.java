@@ -84,17 +84,13 @@ public class HelperImageInfo {
       Assert.assertEquals(metadata_.getExposureMs(), metadata.getExposureMs());
       Assert.assertEquals(metadata_.getIjType(), metadata.getIjType());
       Assert.assertEquals(metadata_.getImageNumber(), metadata.getImageNumber());
-      Assert.assertEquals(metadata_.getInitialPositionList(), metadata.getInitialPositionList());
       Assert.assertEquals(metadata_.getKeepShutterOpenChannels(), metadata.getKeepShutterOpenChannels());
       Assert.assertEquals(metadata_.getKeepShutterOpenSlices(), metadata.getKeepShutterOpenSlices());
       Assert.assertEquals(metadata_.getPixelAspect(), metadata.getPixelAspect());
       Assert.assertEquals(metadata_.getPixelSizeUm(), metadata.getPixelSizeUm());
-      Assert.assertEquals(metadata_.getPixelType(), metadata.getPixelType());
       Assert.assertEquals(metadata_.getPositionName(), metadata.getPositionName());
       Assert.assertEquals(metadata_.getReceivedTime(), metadata.getReceivedTime());
       Assert.assertEquals(metadata_.getROI(), metadata.getROI());
-      Assert.assertEquals(metadata_.getSource(), metadata.getSource());
-      Assert.assertEquals(metadata_.getStartTimeMs(), metadata.getStartTimeMs());
       Assert.assertEquals(metadata_.getScopeData(), metadata.getScopeData());
       Assert.assertEquals(metadata_.getUserData(), metadata.getUserData());
       Assert.assertEquals(metadata_.getUUID(), metadata.getUUID());

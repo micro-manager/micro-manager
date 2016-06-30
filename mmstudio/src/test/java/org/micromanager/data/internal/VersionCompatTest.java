@@ -372,8 +372,7 @@ public class VersionCompatTest {
 
       // Test image metadata and pixel hashes.
       // TODO: our test file does not test the sequence number
-      // (ImageNumber), initial position list,
-      // keepShutterOpen[Channels|Slices], pixelAspect, startTimeMs,
+      // (ImageNumber), keepShutterOpen[Channels|Slices], pixelAspect,
       // ijType (not set in 1.4)
       for (Coords coords : store.getUnorderedImageCoords()) {
          Image image = store.getImage(coords);
@@ -405,8 +404,6 @@ public class VersionCompatTest {
                metadata.getExposureMs(), .00001);
          Assert.assertEquals("pixelSizeUm for " + coords,
                metadata.getPixelSizeUm(), 1.0, .00001);
-         Assert.assertEquals("pixelType for " + coords,
-               metadata.getPixelType(), "GRAY16");
          Assert.assertEquals("positionName for " + coords,
                metadata.getPositionName(),
                String.format("1-Pos_%03d_%03d", column, row));
@@ -414,8 +411,6 @@ public class VersionCompatTest {
                metadata.getReceivedTime(), imageReceivedTimes_.get(coords));
          Assert.assertEquals("ROI for " + coords, metadata.getROI(),
                new Rectangle(0, 0, 64, 64));
-         Assert.assertEquals("source for " + coords, metadata.getSource(),
-               "Camera");
          Assert.assertEquals("uuid for " + coords, metadata.getUUID(),
                imageUUIDs_.get(coords));
 

@@ -840,8 +840,6 @@ public class MDUtils {
       RESERVED_KEYS.add("Slice");
       RESERVED_KEYS.add("SliceIndex");
       RESERVED_KEYS.add("SlicePosition");
-      RESERVED_KEYS.add("Source");
-      RESERVED_KEYS.add("startTimeMs");
       RESERVED_KEYS.add("Summary");
       RESERVED_KEYS.add("Time");
       RESERVED_KEYS.add("userData");

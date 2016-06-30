@@ -28,7 +28,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.micromanager.data.Metadata;
-import org.micromanager.MultiStagePosition;
 
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -49,19 +48,14 @@ public class DefaultMetadata implements Metadata {
     */
    public static class Builder implements Metadata.MetadataBuilder {
       private UUID uuid_ = null;
-      private String source_ = null;
       
-      private MultiStagePosition initialPositionList_ = null;
-
       private Boolean keepShutterOpenSlices_ = null;
       private Boolean keepShutterOpenChannels_ = null;
 
-      private String pixelType_ = null;
       private Integer bitDepth_ = null;
       private Integer ijType_ = null;
       private Double exposureMs_ = null;
       private Double elapsedTimeMs_ = null;
-      private Double startTimeMs_ = null;
       private Integer binning_ = null;
       
       private Long imageNumber_ = null;
@@ -98,18 +92,6 @@ public class DefaultMetadata implements Metadata {
       }
 
       @Override
-      public MetadataBuilder source(String source) {
-         source_ = source;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder initialPositionList(MultiStagePosition initialPositionList) {
-         initialPositionList_ = initialPositionList;
-         return this;
-      }
-
-      @Override
       public MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices) {
          keepShutterOpenSlices_ = keepShutterOpenSlices;
          return this;
@@ -118,12 +100,6 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels) {
          keepShutterOpenChannels_ = keepShutterOpenChannels;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder pixelType(String pixelType) {
-         pixelType_ = pixelType;
          return this;
       }
 
@@ -148,12 +124,6 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder elapsedTimeMs(Double elapsedTimeMs) {
          elapsedTimeMs_ = elapsedTimeMs;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder startTimeMs(Double startTimeMs) {
-         startTimeMs_ = startTimeMs;
          return this;
       }
 
@@ -237,19 +207,14 @@ public class DefaultMetadata implements Metadata {
    }
 
    private UUID uuid_ = null;
-   private String source_ = null;
    
-   private MultiStagePosition initialPositionList_ = null;
-
    private Boolean keepShutterOpenSlices_ = null;
    private Boolean keepShutterOpenChannels_ = null;
 
-   private String pixelType_ = null;
    private Integer bitDepth_ = null;
    private Integer ijType_ = null;
    private Double exposureMs_ = null;
    private Double elapsedTimeMs_ = null;
-   private Double startTimeMs_ = null;
    private Integer binning_ = null;
    
    private Long imageNumber_ = null;
@@ -270,19 +235,14 @@ public class DefaultMetadata implements Metadata {
 
    public DefaultMetadata(Builder builder) {
       uuid_ = builder.uuid_;
-      source_ = builder.source_;
-      
-      initialPositionList_ = builder.initialPositionList_;
 
       keepShutterOpenSlices_ = builder.keepShutterOpenSlices_;
       keepShutterOpenChannels_ = builder.keepShutterOpenChannels_;
 
-      pixelType_ = builder.pixelType_;
       bitDepth_ = builder.bitDepth_;
       ijType_ = builder.ijType_;
       exposureMs_ = builder.exposureMs_;
       elapsedTimeMs_ = builder.elapsedTimeMs_;
-      startTimeMs_ = builder.startTimeMs_;
       binning_ = builder.binning_;
       
       imageNumber_ = builder.imageNumber_;
@@ -306,16 +266,12 @@ public class DefaultMetadata implements Metadata {
    public MetadataBuilder copy() {
       return new Builder()
             .uuid(uuid_)
-            .source(source_)
-            .initialPositionList(initialPositionList_)
             .keepShutterOpenSlices(keepShutterOpenSlices_)
             .keepShutterOpenChannels(keepShutterOpenChannels_)
-            .pixelType(pixelType_)
             .bitDepth(bitDepth_)
             .ijType(ijType_)
             .exposureMs(exposureMs_)
             .elapsedTimeMs(elapsedTimeMs_)
-            .startTimeMs(startTimeMs_)
             .binning(binning_)
             .imageNumber(imageNumber_)
             .positionName(positionName_)
@@ -337,16 +293,6 @@ public class DefaultMetadata implements Metadata {
    }
 
    @Override
-   public String getSource() {
-      return source_;
-   }
-
-   @Override
-   public MultiStagePosition getInitialPositionList() {
-      return MultiStagePosition.newInstance(initialPositionList_);
-   }
-
-   @Override
    public Boolean getKeepShutterOpenSlices() {
       return keepShutterOpenSlices_;
    }
@@ -354,11 +300,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public Boolean getKeepShutterOpenChannels() {
       return keepShutterOpenChannels_;
-   }
-
-   @Override
-   public String getPixelType() {
-      return pixelType_;
    }
 
    @Override
@@ -379,11 +320,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public Double getElapsedTimeMs() {
       return elapsedTimeMs_;
-   }
-
-   @Override
-   public Double getStartTimeMs() {
-      return startTimeMs_;
    }
 
    @Override
@@ -484,10 +420,6 @@ public class DefaultMetadata implements Metadata {
          if (getImageNumber() != null) {
             MDUtils.setSequenceNumber(result, getImageNumber());
          }
-         if (initialPositionList_ != null) {
-            result.put("initialPositionList",
-                  DefaultSummaryMetadata.MultiStagePositionToJSON(initialPositionList_));
-         }
          if (getKeepShutterOpenChannels() != null) {
             result.put("keepShutterOpenChannels", getKeepShutterOpenChannels());
          }
@@ -500,9 +432,6 @@ public class DefaultMetadata implements Metadata {
          if (getPixelSizeUm() != null) {
             MDUtils.setPixelSizeUm(result, getPixelSizeUm());
          }
-         if (getPixelType() != null) {
-            MDUtils.setPixelTypeFromString(result, getPixelType());
-         }
          if (getPositionName() != null) {
             MDUtils.setPositionName(result, getPositionName());
          }
@@ -511,12 +440,6 @@ public class DefaultMetadata implements Metadata {
          }
          if (ROI_ != null) {
             MDUtils.setROI(result, getROI());
-         }
-         if (getSource() != null) {
-            result.put("Source", getSource());
-         }
-         if (getStartTimeMs() != null) {
-            result.put("startTimeMs", getStartTimeMs());
          }
          if (getUUID() != null) {
             MDUtils.setUUID(result, getUUID());
@@ -620,13 +543,6 @@ public class DefaultMetadata implements Metadata {
       catch (JSONException e) {}
 
       try {
-         builder.initialPositionList(
-               DefaultSummaryMetadata.MultiStagePositionFromJSON(
-                  tags.getJSONObject("initialPositionList")));
-      }
-      catch (JSONException e) {}
-
-      try {
          builder.keepShutterOpenChannels(tags.getBoolean("keepShutterOpenChannels"));
       }
       catch (JSONException e) {}
@@ -645,11 +561,6 @@ public class DefaultMetadata implements Metadata {
          builder.pixelSizeUm(MDUtils.getPixelSizeUm(tags));
       }
       catch (JSONException e) {}
-
-      try {
-         builder.pixelType(MDUtils.getPixelType(tags));
-      }
-      catch (Exception e) {} // JSONException and MMScriptException
 
       try {
          builder.positionName(MDUtils.getPositionName(tags));
@@ -671,16 +582,6 @@ public class DefaultMetadata implements Metadata {
          builder.ROI(MDUtils.getROI(tags));
       }
       catch (Exception e) {} // JSONException or MMScriptException
-
-      try {
-         builder.source(tags.getString("Source"));
-      }
-      catch (JSONException e) {}
-
-      try {
-         builder.startTimeMs(tags.getDouble("startTimeMs"));
-      }
-      catch (JSONException e) {}
 
       try {
          builder.uuid(MDUtils.getUUID(tags));
