@@ -388,7 +388,7 @@ public class CRISPFrame extends MMFrame {
           try {
              core_.enableContinuousFocus(false);
           } catch (Exception ex) {
-             ReportingUtils.displayNonBlockingMessage("Failed to lock");
+             ReportingUtils.displayNonBlockingMessage("Failed to unlock");
           }
 
           LockButton_.setSelected(false);
@@ -401,7 +401,9 @@ public class CRISPFrame extends MMFrame {
           // HACK: The controller appears to be unresponsive for ~1.5 s after  
           // setting the loG_cal state.  Either the user can set the serial port 
           // timeout to something higher than 2000ms, or we can wait here 
+          setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
           Thread.sleep(2000);
+          setCursor(Cursor.getDefaultCursor());
           
           String state = "";
           int counter = 0;
