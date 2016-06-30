@@ -292,10 +292,14 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       // Create console and REPL interpreter:
       cons_ = new JConsole();
 
-      // TODO Some of the following might belong in BeanShellEngine.
-      
       beanshellREPLint_ = new Interpreter(cons_);
+      initializeInterpreter();
 
+      new Thread(beanshellREPLint_, "BeanShell interpreter").start();
+   }
+
+   // Add methods and variables to the interpreter
+   private void initializeInterpreter() {
       File tmpFile = null;
       try {
          java.io.InputStream input = getClass().
@@ -329,14 +333,12 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             ReportingUtils.showError(e, this);
          }
       }
-      
+
       // This command allows variables to be inspected in the command-line
       // (e.g., typing "x;" causes the value of x to be returned):
       beanshellREPLint_.setShowResults(true);
-
-      new Thread(beanshellREPLint_, "BeanShell interpreter").start();
    }
-   
+
    public JConsole getREPLCons() {
       return cons_;
    }
