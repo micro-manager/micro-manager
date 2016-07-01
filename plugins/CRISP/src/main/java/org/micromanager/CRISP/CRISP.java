@@ -33,7 +33,7 @@ public class CRISP implements MenuPlugin, SciJavaPlugin {
    public void onPluginSelected() {
       if (myFrame_ == null) {
          try {
-            myFrame_ = new CRISPFrame(gui_);
+            myFrame_ = new CRISPFrame(gui_, this);
          } catch (Exception e) {
             gui_.logs().logError(e);
             return;
@@ -42,6 +42,9 @@ public class CRISP implements MenuPlugin, SciJavaPlugin {
       myFrame_.setVisible(true);
    }
 
+   public void tellFrameClosed() {
+      myFrame_ = null;
+   }
    
     @Override
    public String getName() {
