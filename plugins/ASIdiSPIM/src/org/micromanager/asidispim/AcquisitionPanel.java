@@ -285,7 +285,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (!ASIdiSPIM.oSPIM) {
       } else {
          props_.setPropValue(Devices.Keys.PLUGIN,
-               Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.B.toString());
+               Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.A.toString());
       }
       firstSide_ = pu.makeDropDownBox(ab, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.A.toString());

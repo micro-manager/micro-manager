@@ -115,39 +115,40 @@ public class DevicesPanel extends ListeningJPanel {
       add (label);
       final JComboBox boxScannerA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
             Devices.Keys.GALVOA, maxSelectorWidth);
-      if (!ASIdiSPIM.oSPIM) {
-         add(boxScannerA_);
-      } else {
-         boxScannerA_.setSelectedIndex(0);  // clear setting
-         add(new JLabel(""));
-      }
+      add(boxScannerA_);
+
       final JComboBox boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
             Devices.Keys.GALVOB, maxSelectorWidth);
-      add(boxScannerB_, "wrap");
+      if (!ASIdiSPIM.oSPIM) {
+         add(boxScannerB_, "wrap");
+      } else {
+         boxScannerB_.setSelectedIndex(0);  // clear setting
+         add(new JLabel(""), "wrap");
+      }
       
       add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":"));
       final JComboBox boxPiezoA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
             Devices.Keys.PIEZOA, maxSelectorWidth);
-      if (!ASIdiSPIM.oSPIM) {
-         add(boxPiezoA_);
-      } else {
-         boxPiezoA_.setSelectedIndex(0);  // clear setting
-         add(new JLabel(""));
-      }
+      add(boxPiezoA_);
       final JComboBox boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
             Devices.Keys.PIEZOB, maxSelectorWidth);
+      if (!ASIdiSPIM.oSPIM) {
       add(boxPiezoB_, "wrap");
+      } else {
+         boxPiezoB_.setSelectedIndex(0);  // clear setting
+         add(new JLabel(""), "wrap");
+      }
 
       add(new JLabel("Camera:"));
       final JComboBox boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA, maxSelectorWidth);
-      if (!ASIdiSPIM.oSPIM) {
-         add(boxCameraA_);
-      } else {
-         boxCameraA_.setSelectedIndex(0);  // clear setting
-         add(new JLabel(""));
-      }
+      add(boxCameraA_);
       final JComboBox boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, maxSelectorWidth);
+      if (!ASIdiSPIM.oSPIM) {
       add(boxCameraB_, "wrap");
+      } else {
+         boxCameraB_.setSelectedIndex(0);  // clear setting
+         add(new JLabel(""), "wrap");
+      }
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
 

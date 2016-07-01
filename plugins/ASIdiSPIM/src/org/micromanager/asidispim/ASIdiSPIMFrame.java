@@ -160,17 +160,16 @@ public class ASIdiSPIMFrame extends MMFrame
       
       acquisitionPanel_ = new AcquisitionPanel(gui_, devices_, props_, cameras_, 
             prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
-      // TODO change default single path for oSPIM to be path A
+      setupPanelA_ = new SetupPanel(gui_, devices_, props_, joystick_,
+            Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
+            autofocus_);
       if (!ASIdiSPIM.oSPIM) {
-         setupPanelA_ = new SetupPanel(gui_, devices_, props_, joystick_, 
-               Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
+         setupPanelB_ = new SetupPanel(gui_, devices_, props_, joystick_,
+               Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_,
                autofocus_);
       } else {
-         setupPanelA_ = null;
+         setupPanelB_ = null;
       }
-      setupPanelB_ = new SetupPanel(gui_, devices_, props_, joystick_,
-            Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_,
-            autofocus_);
       navigationPanel_ = new NavigationPanel(gui_, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
 
@@ -191,10 +190,10 @@ public class ASIdiSPIMFrame extends MMFrame
          tabbedPane_.setTabPlacement(JTabbedPane.LEFT);
       }
       tabbedPane_.addLTab(navigationPanel_);  // tabIndex = 0
+      tabbedPane_.addLTab(setupPanelA_);      // tabIndex = 1
       if (!ASIdiSPIM.oSPIM) {
-         tabbedPane_.addLTab(setupPanelA_);      // tabIndex = 1
+         tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
       }
-      tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
       tabbedPane_.addLTab(acquisitionPanel_); // tabIndex = 3
       tabbedPane_.addLTab(dataAnalysisPanel_);// tabIndex = 4
       tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
@@ -219,19 +218,19 @@ public class ASIdiSPIMFrame extends MMFrame
       // tabbedPane_.addLTab(testingPanel);
 
       // attach position updaters
+      stagePosUpdater_.addPanel(setupPanelA_);
       if (!ASIdiSPIM.oSPIM) {
-         stagePosUpdater_.addPanel(setupPanelA_);
+         stagePosUpdater_.addPanel(setupPanelB_);
       }
-      stagePosUpdater_.addPanel(setupPanelB_);
       stagePosUpdater_.addPanel(navigationPanel_);
       stagePosUpdater_.addPanel(statusSubPanel_);
       
       piezoSleepPreventer_ = new PiezoSleepPreventer(gui_, devices_, props_);
 
       // attach live mode listeners
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
       if (!ASIdiSPIM.oSPIM) {
-         MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
+         MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
       }
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
       MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
@@ -410,10 +409,10 @@ public class ASIdiSPIMFrame extends MMFrame
    private void saveSettings() {
       // save selections as needed
       devices_.saveSettings();
+      setupPanelA_.saveSettings();
       if (!ASIdiSPIM.oSPIM) {
-         setupPanelA_.saveSettings();
+         setupPanelB_.saveSettings();
       }
-      setupPanelB_.saveSettings();
       navigationPanel_.saveSettings();
       acquisitionPanel_.saveSettings();
       settingsPanel_.saveSettings();
@@ -426,10 +425,10 @@ public class ASIdiSPIMFrame extends MMFrame
    private void windowClosing() {
       // TODO force user to cancel any ongoing acquisition before closing
       acquisitionPanel_.windowClosing();
+      setupPanelA_.windowClosing();
       if (!ASIdiSPIM.oSPIM) {
-         setupPanelA_.windowClosing();
+         setupPanelB_.windowClosing();
       }
-      setupPanelB_.windowClosing();
    }
    
    @Override
