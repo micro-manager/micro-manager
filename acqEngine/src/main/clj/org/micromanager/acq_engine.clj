@@ -952,7 +952,6 @@
       "KeepShutterOpenSlices" (:keep-shutter-open-slices settings)
       "MicroManagerVersion" (if gui (.getVersion gui) "N/A")
       "MetadataVersion" (DefaultSummaryMetadata/METADATA_VERSION)
-      "PixelAspect" 1.0
       "PixelSize_um" (core getPixelSizeUm)
       "PixelType" (get-pixel-type)
       "Positions" (max 1 (count (:positions settings)))

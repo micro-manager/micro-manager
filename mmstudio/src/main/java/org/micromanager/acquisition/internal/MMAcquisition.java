@@ -365,7 +365,6 @@ public class MMAcquisition {
          summaryMetadata.put("NumComponents", 1);
          summaryMetadata.put("Positions", numPositions_);
          summaryMetadata.put("Source", "Micro-Manager");
-         summaryMetadata.put("PixelAspect", 1.0);
          summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());
          summaryMetadata.put("PixelType", (core.getNumberOfComponents() == 1 ? "GRAY" : "RGB") + (8 * byteDepth_));
          summaryMetadata.put("Slices", numSlices_);
