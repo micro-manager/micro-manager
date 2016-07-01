@@ -22,10 +22,6 @@
 // BASED ON:      ASIStage.cpp and others
 //
 
-#ifdef WIN32
-#define snprintf _snprintf 
-#pragma warning(disable: 4355)
-#endif
 
 #include "ASIXYStage.h"
 #include "ASITiger.h"
@@ -109,11 +105,11 @@ int CXYStage::Initialize()
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
 
    // max motor speed - read only property
-   double maxSpeedX = getMaxSpeed(axisLetterX_, hub_);
+   double maxSpeedX = getMaxSpeed(axisLetterX_);
    command.str("");
    command << maxSpeedX;
    CreateProperty(g_MaxMotorSpeedXPropertyName, command.str().c_str(), MM::Float, true);
-   double maxSpeedY = getMaxSpeed(axisLetterY_, hub_);
+   double maxSpeedY = getMaxSpeed(axisLetterY_);
    command.str("");
    command << maxSpeedY;
    CreateProperty(g_MaxMotorSpeedYPropertyName, command.str().c_str(), MM::Float, true);
@@ -360,7 +356,7 @@ int CXYStage::Initialize()
 
       pAct = new CPropertyAction (this, &CXYStage::OnScanSettlingTime);
       CreateProperty(g_ScanSettlingTimePropertyName, "1", MM::Float, false, pAct);
-      SetPropertyLimits(g_ScanSettlingTimePropertyName, 0., 500.);  // limits are arbitrary really, just give a reasonable range
+      SetPropertyLimits(g_ScanSettlingTimePropertyName, 0., 5000.);  // limits are arbitrary really, just give a reasonable range
       UpdateProperty(g_ScanSettlingTimePropertyName);
 
    }
@@ -369,7 +365,7 @@ int CXYStage::Initialize()
    return DEVICE_OK;
 }
 
-double CXYStage::getMaxSpeed(string axisLetter, ASIHub *hub_)
+double CXYStage::getMaxSpeed(string axisLetter)
 {
    double maxSpeed;
    ostringstream command;

@@ -7,7 +7,7 @@ using namespace MM;
 
 TEST(FloatPropertyTruncationTests, SetValueIsTruncatedTo4Digits)
 {
-   FloatProperty fp;
+   FloatProperty fp("TestProp");
    double v;
 
    ASSERT_TRUE(fp.Set(0.00004));
@@ -30,7 +30,7 @@ TEST(FloatPropertyTruncationTests, SetValueIsTruncatedTo4Digits)
 
 TEST(FloatPropertyTruncationTests, LowerLimitIsTruncatedUp)
 {
-   FloatProperty fp;
+   FloatProperty fp("TestProp");
 
    ASSERT_TRUE(fp.SetLimits(0.0, 1000.0));
    ASSERT_DOUBLE_EQ(0.0, fp.GetLowerLimit());
@@ -50,7 +50,7 @@ TEST(FloatPropertyTruncationTests, LowerLimitIsTruncatedUp)
 
 TEST(FloatPropertyTruncationTests, UpperLimitIsTruncatedDown)
 {
-   FloatProperty fp;
+   FloatProperty fp("TestProp");
 
    ASSERT_TRUE(fp.SetLimits(-1000.0, 0.0));
    ASSERT_DOUBLE_EQ(0.0, fp.GetUpperLimit());

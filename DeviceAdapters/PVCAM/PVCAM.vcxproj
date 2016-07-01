@@ -173,6 +173,7 @@
     <ClCompile Include="PVCAMParam.cpp" />
     <ClCompile Include="PVCAMUniversal.cpp" />
     <ClCompile Include="PvFrameInfo.cpp" />
+    <ClCompile Include="PvRoiCollection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AcqConfig.h" />
@@ -189,6 +190,7 @@
     <ClInclude Include="PVCAMParam.h" />
     <ClInclude Include="PvFrameInfo.h" />
     <ClInclude Include="PvRoi.h" />
+    <ClInclude Include="PvRoiCollection.h" />
     <ClInclude Include="Version.h" />
   </ItemGroup>
   <ItemGroup>

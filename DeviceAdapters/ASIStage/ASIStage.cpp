@@ -28,7 +28,6 @@
 //
 
 #ifdef WIN32
-#define snprintf _snprintf 
 #pragma warning(disable: 4355)
 #endif
 
@@ -3876,6 +3875,9 @@ int CRISP::GetFocusState(std::string& focusState)
       case 'F': focusState = g_CRISP_F; break;
       case 'N': focusState = g_CRISP_N; break;
       case 'E': focusState = g_CRISP_E; break;
+      // TODO: Sometimes the controller spits out extra information when the state is 'G'
+      // Figure out what that information is, and how to handle it best.  At the moment
+      // it causes problems since it will be read by the next command!
       case 'G': focusState = g_CRISP_G; break;
       case 'f': focusState = g_CRISP_f; break;
       case 'C': focusState = g_CRISP_C; break;
@@ -4351,7 +4353,12 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
          int index = 0;
          focusCurveData_[index] = "";
          bool done = false;
-         while (ret == DEVICE_OK && !done && index < SIZE_OF_FC_ARRAY)
+         // the GetSerialAnswer call will likely take more than 500ms, the likely timeout for the port set by the user
+         // instead, wait for a total of ??? seconds
+         MM::MMTime startTime = GetCurrentMMTime();
+         MM::MMTime wait(10,0);
+         bool cont = true;
+         while (cont && !done && index < SIZE_OF_FC_ARRAY)
          {
             ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
             if (answer == "end")
@@ -4366,6 +4373,8 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
                      focusCurveData_[index] = "";
                }
             }
+            
+            cont = (GetCurrentMMTime() - startTime) < wait;
          }
       }
      
@@ -4400,6 +4409,9 @@ int CRISP::OnSNR(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
+      // HACK: there are still occasionally intervening messages from the controller
+      ClearPort();
+
       std::string command = "EXTRA Y?";
       std::string answer;
       int ret = QueryCommand(command.c_str(), answer);

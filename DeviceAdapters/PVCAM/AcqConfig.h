@@ -1,7 +1,7 @@
 #ifndef _ACQCONFIG_H_
 #define _ACQCONFIG_H_
 
-#include "PvRoi.h"
+#include "PvRoiCollection.h"
 
 #include <map>
 
@@ -46,7 +46,7 @@ public:
     */
     int CentroidsCount;
     /**
-    * Total number of ROIs for the current acquisition. This could be either
+    * Total number of "output" ROIs for the current acquisition. This could be either
     * the Centroids Count or number of user defined ROIs (1 or more if supported)
     */
     int RoiCount;
@@ -55,9 +55,9 @@ public:
     */
     int FanSpeedSetpoint;
     /**
-    * Region of interest.
+    * Regions of interest. Array of input ROIs that will be sent to the camera.
     */
-    PvRoi Roi;
+    PvRoiCollection Rois;
     /**
     * Color on or off.
     */
@@ -93,7 +93,10 @@ public:
     * Whether to use circular buffer for live acquisition or not
     */
     bool CircBufEnabled;
-
+    /**
+    * Whether to use adjust the circular size automatically based on acquisition configuration
+    */
+    bool CircBufSizeAuto;
     /**
     * True if PVCAM callbacks are active, false to use polling
     */
