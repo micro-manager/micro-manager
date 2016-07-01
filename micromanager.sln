@@ -368,6 +368,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MarzhauserLStepOld", "Devic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NIMultiAnalog", "DeviceAdapters\NIMultiAnalog\NIMultiAnalog.vcxproj", "{6D3C96B1-886E-4415-88BF-F5376A17222A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PeCon2000", "DeviceAdapters\PeCon2000\PeCon2000.vcxproj", "{63DEA291-B595-447A-8C7F-D32AFDA11DFD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1813,6 +1815,14 @@ Global
 		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Release|Win32.Build.0 = Release|Win32
 		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Release|x64.ActiveCfg = Release|x64
 		{6D3C96B1-886E-4415-88BF-F5376A17222A}.Release|x64.Build.0 = Release|x64
+		{63DEA291-B595-447A-8C7F-D32AFDA11DFD}.Debug|Win32.ActiveCfg = Debug|Win32
+		{63DEA291-B595-447A-8C7F-D32AFDA11DFD}.Debug|Win32.Build.0 = Debug|Win32
+		{63DEA291-B595-447A-8C7F-D32AFDA11DFD}.Debug|x64.ActiveCfg = Debug|x64
+		{63DEA291-B595-447A-8C7F-D32AFDA11DFD}.Debug|x64.Build.0 = Debug|x64
+		{63DEA291-B595-447A-8C7F-D32AFDA11DFD}.Release|Win32.ActiveCfg = Release|Win32
+		{63DEA291-B595-447A-8C7F-D32AFDA11DFD}.Release|Win32.Build.0 = Release|Win32
+		{63DEA291-B595-447A-8C7F-D32AFDA11DFD}.Release|x64.ActiveCfg = Release|x64
+		{63DEA291-B595-447A-8C7F-D32AFDA11DFD}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

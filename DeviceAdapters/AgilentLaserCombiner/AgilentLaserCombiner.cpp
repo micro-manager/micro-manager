@@ -250,6 +250,7 @@ LCShutter::LCShutter() :
    state_(0),
    name_(g_DeviceNameLCShutter),
    sequenceOn_(true),
+   sequenceIsRunning_(false),
    maxSequenceSize_(255)
 {
    InitializeDefaultErrorMessages();
@@ -558,15 +559,22 @@ int LCShutter::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::StartSequence)
    {
+      // TODO: what is we think that a sequence is already running?
       unsigned char mode = 0;  // modes > 0 also run DA outputs
-      return LaserBoardStartSequence(mode);;
+      int ret = LaserBoardStartSequence(mode);
+      if (ret != DEVICE_OK)
+         return ret;
+      sequenceIsRunning_ = true;
    }
    else if (eAct == MM::StopSequence)
    {
+      if (!sequenceIsRunning_) 
+         return DEVICE_OK;
       unsigned int nr;
       int ret =  LaserBoardStopSequence(&nr);
       if (ret != DEVICE_OK)
          return ret;
+      sequenceIsRunning_ = false;
       std::ostringstream os;
       os << "MLC Sequence ran for " << nr << " of states";
       LogMessage(os.str().c_str(), false);
