@@ -12,8 +12,8 @@ import org.scijava.plugin.SciJavaPlugin;
  */
 @Plugin(type = MenuPlugin.class)
 public class CRISP implements MenuPlugin, SciJavaPlugin {
-   public static final String menuName = "ASI CRISP Control";
-   public static final String tooltipDescription =
+   public static final String MENUNAME = "ASI CRISP Control";
+   public static final String TOOLTIPDESCRIPTION =
       "Control the ASI CRISP Autofocus System";
    @SuppressWarnings("unused")
    private Studio gui_;
@@ -50,7 +50,7 @@ public class CRISP implements MenuPlugin, SciJavaPlugin {
 
     @Override
    public String getHelpText() {
-      return tooltipDescription;
+      return TOOLTIPDESCRIPTION;
    }
 
     @Override
@@ -60,6 +60,6 @@ public class CRISP implements MenuPlugin, SciJavaPlugin {
 
     @Override
    public String getCopyright() {
-      return "University of California, 20111";
+      return "University of California, 2011-2016";
    }
 }
