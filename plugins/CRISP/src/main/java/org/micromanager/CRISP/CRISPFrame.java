@@ -88,8 +88,15 @@ public class CRISPFrame extends MMFrame {
 
     /** 
      * Creates new form CRISPFrame
+     * TODO: Add status line that can be refreshed with Refresh button
+     * TODO: Evaluate adding a thread that updates the status continuously
+     * TODO: Figure out why the MM lock autofocus button causes an error in the CRISP
+     * TODO: Add an explanation whenever the D or N state occurs, suggest to
+     *   increase gain and LED intensity
+     * TODO: write help pages that describe use of the CRISP and this plugin
      * 
      * @param gui MM scriptInterface
+     * @param parent Holds on to plugin code to tell it when this frame closes
      */
     public CRISPFrame(Studio gui, CRISP parent)  {
        gui_ = gui;
@@ -122,10 +129,10 @@ public class CRISPFrame extends MMFrame {
             }
        }
 
-      // if (!found) {
-      //    gui_.logs().showError("This plugin needs the ASI CRISP Autofcous");
-      //    throw new IllegalArgumentException("This plugin needs at least one camera");
-      // }
+       if (!found) {
+          gui_.logs().showError("This plugin needs the ASI CRISP Autofcous");
+          throw new IllegalArgumentException("This plugin needs at least one camera");
+       }
 
       initComponents();
 
