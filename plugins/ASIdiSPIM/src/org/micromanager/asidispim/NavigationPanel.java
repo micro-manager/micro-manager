@@ -309,7 +309,6 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
       
       if (!ASIdiSPIM.oSPIM) {
          navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Directions.X) + ":"));
-         galvoBxPositionLabel_ = new JLabel("");
          navPanel.add(galvoBxPositionLabel_);
          navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOB, Directions.X, positions_));
          JFormattedTextField deltaCField = pu.makeFloatEntryField(panelName_, "DeltaC", 0.2, 3);
