@@ -60,7 +60,6 @@ public interface Metadata {
       MetadataBuilder camera(String camera);
       MetadataBuilder elapsedTimeMs(Double elapsedTimeMs);
       MetadataBuilder exposureMs(Double exposureMs);
-      MetadataBuilder ijType(Integer ijType);
       MetadataBuilder imageNumber(Long imageNumber);
       MetadataBuilder pixelAspect(Double pixelAspect);
       MetadataBuilder pixelSizeUm(Double pixelSizeUm);
@@ -144,12 +143,6 @@ public interface Metadata {
     * @return Number of bits used to represent each pixel
      */
    Integer getBitDepth();
-   
-   /** 
-    * The ImageJ pixel type, e.g. ImagePlus.GRAY8, ImagePlus.RGB32 
-    * @return ImageJ pixel type
-    */
-   Integer getIjType();
    
    /** 
     * The sequence number of this image, for sequence acquisitions 

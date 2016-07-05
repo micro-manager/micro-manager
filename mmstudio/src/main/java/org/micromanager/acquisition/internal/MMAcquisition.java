@@ -346,19 +346,6 @@ public class MMAcquisition {
          summaryMetadata.put("Depth", core.getBytesPerPixel());
          summaryMetadata.put("Frames", numFrames_);
          summaryMetadata.put("Height", height_);
-         int ijType = -1;
-         if (byteDepth_ == 1) {
-            ijType = ImagePlus.GRAY8;
-         } else if (byteDepth_ == 2) {
-            ijType = ImagePlus.GRAY16;
-         } else if (byteDepth_ == 8) {
-            ijType = 64;
-         } else if (byteDepth_ == 4 && core.getNumberOfComponents() == 1) {
-            ijType = ImagePlus.GRAY32;
-         } else if (byteDepth_ == 4 && core.getNumberOfComponents() == 4) {
-            ijType = ImagePlus.COLOR_RGB;
-         }
-         summaryMetadata.put("IJType", ijType);
          summaryMetadata.put("MetadataVersion",
                DefaultSummaryMetadata.METADATA_VERSION);
          summaryMetadata.put("MicroManagerVersion", MMStudio.getInstance().getVersion());
@@ -366,7 +353,6 @@ public class MMAcquisition {
          summaryMetadata.put("Positions", numPositions_);
          summaryMetadata.put("Source", "Micro-Manager");
          summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());
-         summaryMetadata.put("PixelType", (core.getNumberOfComponents() == 1 ? "GRAY" : "RGB") + (8 * byteDepth_));
          summaryMetadata.put("Slices", numSlices_);
          summaryMetadata.put("SlicesFirst", false);
          summaryMetadata.put("StartTime", MDUtils.getCurrentTime());
@@ -436,20 +422,6 @@ public class MMAcquisition {
     */
    public boolean getShow() {
       return show_;
-   }
-
-   private static String getPixelType(int depth) {
-      switch (depth) {
-         case 1:
-            return "GRAY8";
-         case 2:
-            return "GRAY16";
-         case 4:
-            return "RGB32";
-         case 8:
-            return "RGB64";
-      }
-      return null;
    }
 
    private static Storage getAppropriateStorage(DefaultDatastore store,

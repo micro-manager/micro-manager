@@ -549,24 +549,22 @@ public final class StorageMultipageTiff implements Storage {
             .metadataVersion(DefaultSummaryMetadata.METADATA_VERSION).build();
       }
       JSONObject summaryJSON = summary.toJSON();
-      if (summaryJSON != null) {
-         summaryMetadataString_ = summaryJSON.toString();
-         TreeMap<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
-         coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
-         if (showProgress && !GraphicsEnvironment.isHeadless()) {
-            ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
-            progressBar.setProgress(0);
-            progressBar.setVisible(true);
-            int i = 1;
-            for (Coords coords : oldImageMap.keySet()) {
-               coordsToReader_.put(coords, oldImageMap.get(coords));
-               progressBar.setProgress(i);
-               i++;
-            }
-            progressBar.setVisible(false);
-         } else {
-            coordsToReader_.putAll(oldImageMap);
+      summaryMetadataString_ = summaryJSON.toString();
+      TreeMap<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
+      coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
+      if (showProgress && !GraphicsEnvironment.isHeadless()) {
+         ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
+         progressBar.setProgress(0);
+         progressBar.setVisible(true);
+         int i = 1;
+         for (Coords coords : oldImageMap.keySet()) {
+            coordsToReader_.put(coords, oldImageMap.get(coords));
+            progressBar.setProgress(i);
+            i++;
          }
+         progressBar.setVisible(false);
+      } else {
+         coordsToReader_.putAll(oldImageMap);
       }
    }
 

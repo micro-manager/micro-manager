@@ -495,6 +495,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          // Augment the JSON with image property info.
          imageJSON.put("Width", image.getWidth());
          imageJSON.put("Height", image.getHeight());
+         MDUtils.setPixelType(imageJSON, image.getImageJPixelType());
          imp.setProperty("Info", imageJSON.toString(2));
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
@@ -536,8 +537,13 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       if (time != null && summary.getStartDate() == null) {
          summary = summary.copy().startDate(time.split(" ")[0]).build();
       }
-      writeJSONMetadata(pos, ((DefaultSummaryMetadata) summary).toJSON(),
-            "Summary");
+      JSONObject json = ((DefaultSummaryMetadata) summary).toJSON();
+      // Augment the JSON with pixel type information, for backwards
+      // compatibility.
+      json.put("IJType", image.getImageJPixelType());
+      json.put("PixelType",
+            (image.getNumComponents() == 1 ? "GRAY" : "RGB") + (8 * image.getBytesPerPixel()));
+      writeJSONMetadata(pos, json, "Summary");
    }
 
    private void closeMetadataStreams() {

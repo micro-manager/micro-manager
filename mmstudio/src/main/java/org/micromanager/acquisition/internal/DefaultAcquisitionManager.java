@@ -284,31 +284,10 @@ public class DefaultAcquisitionManager implements AcquisitionManager {
       if (camera == null) {
          camera = studio_.core().getCameraDevice();
       }
-      int ijType = -1;
-      if (image.getNumComponents() == 1) {
-         if (image.getBytesPerPixel() == 1) {
-            ijType = ImagePlus.GRAY8;
-         }
-         else if (image.getBytesPerPixel() == 2) {
-            ijType = ImagePlus.GRAY16;
-         }
-         else {
-            throw new IllegalArgumentException("Unrecognized pixel type");
-         }
-      }
-      else {
-         if (image.getBytesPerPixel() == 4) {
-            ijType = ImagePlus.COLOR_RGB;
-         }
-         else {
-            throw new IllegalArgumentException("Unrecognized pixel type");
-         }
-      }
 
       MMStudio mmstudio = (MMStudio) studio_;
       Metadata.MetadataBuilder result = image.getMetadata().copy()
          .camera(camera)
-         .ijType(ijType)
          .receivedTime(formatter_.format(new Date()))
          .pixelSizeUm(mmstudio.getCachedPixelSizeUm())
          .uuid(UUID.randomUUID())

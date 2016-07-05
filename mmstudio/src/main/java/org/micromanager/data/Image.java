@@ -118,6 +118,13 @@ public interface Image {
    public long getComponentIntensityAt(int x, int y, int component);
 
    /**
+    * Returns the ImageJ pixel type indicator, e.g. ij.ImagePlus.GRAY16 or
+    * ij.ImagePlus.COLOR_RGB, etc.
+    * @return ImageJ pixel type.
+    */
+   public int getImageJPixelType();
+
+   /**
     * Generate a string describing the value(s) of the pixel at the specified
     * location. The string will be a plain number for single-component images,
     * and an "[A/B/C]"-formatted string for multi-component images.

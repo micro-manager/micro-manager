@@ -193,10 +193,11 @@ public interface AcquisitionManager {
     * current state of the program and the provided Image. The Image's Metadata
     * will be used as a base, with the following fields overwritten based on
     * the image properties and current hardware state, if possible: binning,
-    * bitDepth, camera, ijType, pixelType, receivedTime (to the current time),
-    * uuid, xPositionUm, yPositionUm, zPositionUm. Note that stage positions
-    * are based on cached values, and may be inaccurate if the cache has not
-    * been refreshed since the last time the stage moved.
+    * bitDepth, camera, pixelType, receivedTime (to the current time), uuid,
+    * xPositionUm, yPositionUm, zPositionUm. Note that stage positions are
+    * based on cached values, and may be inaccurate if the cache has not been
+    * refreshed since the last time the stage moved.
+    *
     * Additionally, if the includeHardwareState boolean is set to true, then
     * the current state of the system state cache (i.e. Micro-Manager's
     * understanding of all device property values) will be included in the

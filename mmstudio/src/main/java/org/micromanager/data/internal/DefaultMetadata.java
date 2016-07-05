@@ -50,7 +50,6 @@ public class DefaultMetadata implements Metadata {
       private UUID uuid_ = null;
       
       private Integer bitDepth_ = null;
-      private Integer ijType_ = null;
       private Double exposureMs_ = null;
       private Double elapsedTimeMs_ = null;
       private Integer binning_ = null;
@@ -91,12 +90,6 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder bitDepth(Integer bitDepth) {
          bitDepth_ = bitDepth;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder ijType(Integer ijType) {
-         ijType_ = ijType;
          return this;
       }
 
@@ -194,7 +187,6 @@ public class DefaultMetadata implements Metadata {
    private UUID uuid_ = null;
    
    private Integer bitDepth_ = null;
-   private Integer ijType_ = null;
    private Double exposureMs_ = null;
    private Double elapsedTimeMs_ = null;
    private Integer binning_ = null;
@@ -219,7 +211,6 @@ public class DefaultMetadata implements Metadata {
       uuid_ = builder.uuid_;
 
       bitDepth_ = builder.bitDepth_;
-      ijType_ = builder.ijType_;
       exposureMs_ = builder.exposureMs_;
       elapsedTimeMs_ = builder.elapsedTimeMs_;
       binning_ = builder.binning_;
@@ -246,7 +237,6 @@ public class DefaultMetadata implements Metadata {
       return new Builder()
             .uuid(uuid_)
             .bitDepth(bitDepth_)
-            .ijType(ijType_)
             .exposureMs(exposureMs_)
             .elapsedTimeMs(elapsedTimeMs_)
             .binning(binning_)
@@ -272,11 +262,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public Integer getBitDepth() {
       return bitDepth_;
-   }
-
-   @Override
-   public Integer getIjType() {
-      return ijType_;
    }
 
    @Override
@@ -380,9 +365,6 @@ public class DefaultMetadata implements Metadata {
          }
          if (getExposureMs() != null) {
             MDUtils.setExposureMs(result, getExposureMs());
-         }
-         if (getIjType() != null) {
-            result.put("IJType", getIjType());
          }
          if (getImageNumber() != null) {
             MDUtils.setSequenceNumber(result, getImageNumber());
@@ -490,11 +472,6 @@ public class DefaultMetadata implements Metadata {
 
       try {
          builder.exposureMs(MDUtils.getExposureMs(tags));
-      }
-      catch (JSONException e) {}
-
-      try {
-         builder.ijType(tags.getInt("IJType"));
       }
       catch (JSONException e) {}
 
