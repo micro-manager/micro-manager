@@ -68,6 +68,8 @@ public interface SummaryMetadata {
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
       SummaryMetadataBuilder axisOrder(String[] axisOrder);
       SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions);
+      SummaryMetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
+      SummaryMetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
 
       SummaryMetadataBuilder startDate(String startDate);
       SummaryMetadataBuilder stagePositions(MultiStagePosition[] stagePositions);
@@ -189,6 +191,20 @@ public interface SummaryMetadata {
     * @return expected number of images along each axis that were to be collected
     */
    public Coords getIntendedDimensions();
+
+   /**
+    * For acquisitions with more than one Z slice, whether or not the shutter
+    * was left open in between each slice.
+    * @return whether shutter was left open between Z slices.
+    */
+   public Boolean getKeepShutterOpenSlices();
+
+   /**
+    * For acquisitions with more than one channel, whether or not the shutter
+    * was left open in between each channel.
+    * @return whether shutter was left open between channels.
+    */
+   public Boolean getKeepShutterOpenChannels();
 
    /**
     * The date and time at which the acquisition started

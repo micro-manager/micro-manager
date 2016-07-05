@@ -62,8 +62,6 @@ public interface Metadata {
       MetadataBuilder exposureMs(Double exposureMs);
       MetadataBuilder ijType(Integer ijType);
       MetadataBuilder imageNumber(Long imageNumber);
-      MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
-      MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
       MetadataBuilder pixelAspect(Double pixelAspect);
       MetadataBuilder pixelSizeUm(Double pixelSizeUm);
       MetadataBuilder positionName(String positionName);
@@ -88,9 +86,6 @@ public interface Metadata {
     */
    MetadataBuilder copy();
 
-   Boolean getKeepShutterOpenChannels();
-   Boolean getKeepShutterOpenSlices();
-   
    /** 
     * The time at which Micro-Manager received this image, in milliseconds.
     * There can be substantial jitter in this value; as a rule of thumb it
@@ -107,8 +102,8 @@ public interface Metadata {
    Double getExposureMs();
    
    /** 
-    * The aspect ratio of the pixels in this image.
-    * TODO: is this X/Y or Y/X?
+    * The aspect ratio of the pixels in this image, as a Y/X ratio (e.g.
+    * 2.0 means that the pixels are twice as tall as they are wide).
     * @return  Pixels aspect ratio
     */
    Double getPixelAspect();

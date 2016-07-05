@@ -107,6 +107,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       private Coords intendedDimensions_ = null;
       private String startDate_ = null;
       private MultiStagePosition[] stagePositions_ = null;
+      private Boolean keepShutterOpenSlices_ = null;
+      private Boolean keepShutterOpenChannels_ = null;
 
       private PropertyMap userData_ = null;
 
@@ -212,6 +214,18 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       }
 
       @Override
+      public SummaryMetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices) {
+         keepShutterOpenSlices_ = keepShutterOpenSlices;
+         return this;
+      }
+
+      @Override
+      public SummaryMetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels) {
+         keepShutterOpenChannels_ = keepShutterOpenChannels;
+         return this;
+      }
+
+      @Override
       public SummaryMetadataBuilder userData(PropertyMap userData) {
          userData_ = userData;
          return this;
@@ -235,6 +249,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    private Coords intendedDimensions_ = null;
    private String startDate_ = null;
    private MultiStagePosition[] stagePositions_ = null;
+   private Boolean keepShutterOpenSlices_ = null;
+   private Boolean keepShutterOpenChannels_ = null;
 
    private PropertyMap userData_ = null;
 
@@ -256,6 +272,8 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
       intendedDimensions_ = builder.intendedDimensions_;
       startDate_ = builder.startDate_;
       stagePositions_ = builder.stagePositions_;
+      keepShutterOpenSlices_ = builder.keepShutterOpenSlices_;
+      keepShutterOpenChannels_ = builder.keepShutterOpenChannels_;
 
       userData_ = builder.userData_;
    }
@@ -350,6 +368,16 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    @Override
+   public Boolean getKeepShutterOpenSlices() {
+      return keepShutterOpenSlices_;
+   }
+
+   @Override
+   public Boolean getKeepShutterOpenChannels() {
+      return keepShutterOpenChannels_;
+   }
+
+   @Override
    public PropertyMap getUserData() {
       return userData_;
    }
@@ -373,12 +401,13 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
             .intendedDimensions(intendedDimensions_)
             .startDate(startDate_)
             .stagePositions(stagePositions_)
+            .keepShutterOpenSlices(keepShutterOpenSlices_)
+            .keepShutterOpenChannels(keepShutterOpenChannels_)
             .userData(userData_);
    }
 
    /**
-    * For temporary backwards compatibility, generate a new SummaryMetadata
-    * from a provided JSON object.
+    * Deserialize a JSON representation of the summary metadata.
     * NOTE: JSONExceptions in this method are all ignored as they just
     * indicate that a particular field is missing, and all fields are
     * optional.
@@ -561,6 +590,16 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
          }
          catch (JSONException e) {}
       }
+
+      try {
+         builder.keepShutterOpenSlices(tags.getBoolean("KeepShutterOpenSlices"));
+      }
+      catch (JSONException e) {}
+      try {
+         builder.keepShutterOpenChannels(tags.getBoolean("KeepShutterOpenChannels"));
+      }
+      catch (JSONException e) {}
+
       if (tags.has("UserData")) {
          try {
             builder.userData(
@@ -573,7 +612,7 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
    }
 
    /**
-    * For backwards compatibility, convert to a JSON representation.
+    * Convert to a JSON representation for serialization.
     */
    public JSONObject toJSON() {
       try {
@@ -634,6 +673,12 @@ public class DefaultSummaryMetadata implements SummaryMetadata {
                positions.put(MultiStagePositionToJSON(stagePositions_[i]));
             }
             result.put("StagePositions", positions);
+         }
+         if (keepShutterOpenSlices_ != null) {
+            result.put("KeepShutterOpenSlices", keepShutterOpenSlices_);
+         }
+         if (keepShutterOpenChannels_ != null) {
+            result.put("KeepShutterOpenChannels", keepShutterOpenChannels_);
          }
          if (userData_ != null) {
             result.put("UserData", ((DefaultPropertyMap) userData_).toJSON());

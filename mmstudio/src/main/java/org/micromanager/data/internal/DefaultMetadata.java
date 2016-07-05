@@ -49,9 +49,6 @@ public class DefaultMetadata implements Metadata {
    public static class Builder implements Metadata.MetadataBuilder {
       private UUID uuid_ = null;
       
-      private Boolean keepShutterOpenSlices_ = null;
-      private Boolean keepShutterOpenChannels_ = null;
-
       private Integer bitDepth_ = null;
       private Integer ijType_ = null;
       private Double exposureMs_ = null;
@@ -88,18 +85,6 @@ public class DefaultMetadata implements Metadata {
       @Override
       public MetadataBuilder uuid(UUID uuid) {
          uuid_ = uuid;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices) {
-         keepShutterOpenSlices_ = keepShutterOpenSlices;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels) {
-         keepShutterOpenChannels_ = keepShutterOpenChannels;
          return this;
       }
 
@@ -208,9 +193,6 @@ public class DefaultMetadata implements Metadata {
 
    private UUID uuid_ = null;
    
-   private Boolean keepShutterOpenSlices_ = null;
-   private Boolean keepShutterOpenChannels_ = null;
-
    private Integer bitDepth_ = null;
    private Integer ijType_ = null;
    private Double exposureMs_ = null;
@@ -235,9 +217,6 @@ public class DefaultMetadata implements Metadata {
 
    public DefaultMetadata(Builder builder) {
       uuid_ = builder.uuid_;
-
-      keepShutterOpenSlices_ = builder.keepShutterOpenSlices_;
-      keepShutterOpenChannels_ = builder.keepShutterOpenChannels_;
 
       bitDepth_ = builder.bitDepth_;
       ijType_ = builder.ijType_;
@@ -266,8 +245,6 @@ public class DefaultMetadata implements Metadata {
    public MetadataBuilder copy() {
       return new Builder()
             .uuid(uuid_)
-            .keepShutterOpenSlices(keepShutterOpenSlices_)
-            .keepShutterOpenChannels(keepShutterOpenChannels_)
             .bitDepth(bitDepth_)
             .ijType(ijType_)
             .exposureMs(exposureMs_)
@@ -290,16 +267,6 @@ public class DefaultMetadata implements Metadata {
    @Override
    public UUID getUUID() {
       return uuid_;
-   }
-
-   @Override
-   public Boolean getKeepShutterOpenSlices() {
-      return keepShutterOpenSlices_;
-   }
-
-   @Override
-   public Boolean getKeepShutterOpenChannels() {
-      return keepShutterOpenChannels_;
    }
 
    @Override
@@ -420,12 +387,6 @@ public class DefaultMetadata implements Metadata {
          if (getImageNumber() != null) {
             MDUtils.setSequenceNumber(result, getImageNumber());
          }
-         if (getKeepShutterOpenChannels() != null) {
-            result.put("keepShutterOpenChannels", getKeepShutterOpenChannels());
-         }
-         if (getKeepShutterOpenSlices() != null) {
-            result.put("keepShutterOpenSlices", getKeepShutterOpenSlices());
-         }
          if (getPixelAspect() != null) {
             result.put("pixelAspect", getPixelAspect());
          }
@@ -539,16 +500,6 @@ public class DefaultMetadata implements Metadata {
 
       try {
          builder.imageNumber(MDUtils.getSequenceNumber(tags));
-      }
-      catch (JSONException e) {}
-
-      try {
-         builder.keepShutterOpenChannels(tags.getBoolean("keepShutterOpenChannels"));
-      }
-      catch (JSONException e) {}
-
-      try {
-         builder.keepShutterOpenSlices(tags.getBoolean("keepShutterOpenSlices"));
       }
       catch (JSONException e) {}
 
