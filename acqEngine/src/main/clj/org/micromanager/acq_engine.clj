@@ -140,7 +140,6 @@
        "SliceIndex" (:slice-index event)
        "SlicePosition" (:slice event)
        "Summary" (state :summary-metadata)
-       "Source" (state :source)
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
        "WaitInterval" (:wait-time-ms event)
@@ -680,7 +679,6 @@
            :binning (core getProperty (core getCameraDevice) "Binning")
            :bit-depth (core getImageBitDepth)
            :pixel-size-um (core getPixelSizeUm)
-           :source (core getCameraDevice)
            :pixel-type (get-pixel-type)
            )))
 
