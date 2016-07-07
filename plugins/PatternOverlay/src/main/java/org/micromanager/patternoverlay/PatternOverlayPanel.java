@@ -32,7 +32,6 @@ public class PatternOverlayPanel extends OverlayPanel {
    private static final String OVERLAY_COLOR = "color of overlay";
 
    private final JComboBox overlaySelector_;
-   private final JToggleButton displayToggle_;
    private final JSlider sizeSlider_;
    private final JComboBox colorSelector_;
 
@@ -49,38 +48,22 @@ public class PatternOverlayPanel extends OverlayPanel {
          @Override
          public void actionPerformed(ActionEvent e) {
             String selection = (String) overlaySelector_.getSelectedItem();
-            displayToggle_.setText("Show " + selection);
-            if (displayToggle_.isSelected()) {
-               redraw();
-            }
             studio.profile().setString(PatternOverlayPanel.class,
                OVERLAY_MODE, selection);
+            redraw();
          }
       });
 
       add(new JLabel("Type:"));
       add(overlaySelector_, "wrap");
 
-      displayToggle_ = new JToggleButton();
-      displayToggle_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            redraw();
-            studio.profile().setBoolean(PatternOverlayPanel.class,
-               IS_DISPLAYED, displayToggle_.isSelected());
-         }
-      });
-      add(displayToggle_, "span 2, wrap, growx");
-
       sizeSlider_ = new JSlider();
       sizeSlider_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
-            if (displayToggle_.isSelected()) {
-               redraw();
-            }
             studio.profile().setInt(PatternOverlayPanel.class, OVERLAY_SIZE,
                sizeSlider_.getValue());
+            redraw();
          }
       });
       add(new JLabel("Size:"));
@@ -90,11 +73,9 @@ public class PatternOverlayPanel extends OverlayPanel {
       colorSelector_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (displayToggle_.isSelected()) {
-               redraw();
-            }
             studio.profile().setString(PatternOverlayPanel.class,
                OVERLAY_COLOR, (String) colorSelector_.getSelectedItem());
+            redraw();
          }
       });
       add(new JLabel("Color:"));
@@ -104,8 +85,6 @@ public class PatternOverlayPanel extends OverlayPanel {
       overlaySelector_.setSelectedItem(studio.profile().getString(
                PatternOverlayPanel.class, OVERLAY_MODE,
                OverlayOptions.OPTIONS[0]));
-      displayToggle_.setSelected(studio.profile().getBoolean(
-               PatternOverlayPanel.class, IS_DISPLAYED, false));
       sizeSlider_.setValue(studio.profile().getInt(
                PatternOverlayPanel.class, OVERLAY_SIZE, 50));
       colorSelector_.setSelectedItem(studio.profile().getString(
@@ -116,12 +95,10 @@ public class PatternOverlayPanel extends OverlayPanel {
    @Override
    public void drawOverlay(Graphics g, DisplayWindow display, Image image,
          ImageCanvas canvas) {
-      if (displayToggle_.isSelected()) {
-         OverlayOptions.drawOverlay(g, display, image, canvas,
-               (String) overlaySelector_.getSelectedItem(),
-               sizeSlider_.getValue(),
-               (String) colorSelector_.getSelectedItem());
-      }
+      OverlayOptions.drawOverlay(g, display, image, canvas,
+            (String) overlaySelector_.getSelectedItem(),
+            sizeSlider_.getValue(),
+            (String) colorSelector_.getSelectedItem());
    }
 
 }
