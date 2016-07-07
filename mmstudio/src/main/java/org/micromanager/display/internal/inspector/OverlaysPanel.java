@@ -27,11 +27,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.border.TitledBorder;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
@@ -54,11 +56,13 @@ import org.micromanager.display.internal.events.CanvasDrawEvent;
 class OverlaysPanel extends InspectorPanel {
    private static final String NO_OVERLAY = "   ";
    private final ArrayList<OverlayPanel> overlays_;
+   private final HashMap<OverlayPanel, Boolean> overlayToEnabled_;
    private DisplayWindow display_;
    private Inspector inspector_;
    
    public OverlaysPanel() {
       overlays_ = new ArrayList<OverlayPanel>();
+      overlayToEnabled_ = new HashMap<OverlayPanel, Boolean>();
       setLayout(new MigLayout("flowy"));
       // Provide a button that, when clicked, shows a popup menu of overlays
       // that can be added.
@@ -107,8 +111,10 @@ class OverlaysPanel extends InspectorPanel {
       final OverlayPanel panel = DefaultDisplayManager.getInstance().createOverlayPanel(title);
       panel.setDisplay(display_);
       overlays_.add(panel);
+      overlayToEnabled_.put(panel, true);
 
-      final JPanel container = new JPanel(new MigLayout("flowy, insets 0"));
+      final JPanel container = new JPanel(
+            new MigLayout("fillx, flowx, insets 0"));
       // TODO: add move up/down buttons to change order in which overlays are
       // drawn (and iconify buttons while we're at it)
       JButton closeButton = new JButton("Remove", new ImageIcon(
@@ -125,9 +131,21 @@ class OverlaysPanel extends InspectorPanel {
          }
       });
       container.add(closeButton, "gap 0");
-      container.add(panel);
+
+      final JCheckBox enabledBox = new JCheckBox("Enabled");
+      enabledBox.setSelected(true);
+      enabledBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            overlayToEnabled_.put(panel, enabledBox.isSelected());
+            panel.redraw();
+         }
+      });
+      container.add(enabledBox, "gapleft push, wrap");
+
+      container.add(panel, "growx, span, wrap");
       container.setBorder(new TitledBorder(title));
-      add(container);
+      add(container, "growx");
       if (inspector_ != null) {
          inspector_.relayout();
       }
@@ -143,8 +161,10 @@ class OverlaysPanel extends InspectorPanel {
       }
       Image image = images.get(0);
       for (OverlayPanel overlay : overlays_) {
-         overlay.drawOverlay(event.getGraphics(), display_, image,
-               event.getCanvas());
+         if (overlayToEnabled_.get(overlay)) {
+            overlay.drawOverlay(event.getGraphics(), display_, image,
+                  event.getCanvas());
+         }
       }
    }
 
