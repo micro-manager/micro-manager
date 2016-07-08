@@ -28,9 +28,11 @@ import org.micromanager.Studio;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-// The Projector plugin provides a user interface for calibration and control
-// of SLM- and Galvo-based phototargeting devices. Phototargeting can be
-// ad-hoc or planned as part of a multi-dimensional acquisition.
+/**
+ * The Projector plugin provides a user interface for calibration and control
+ * of SLM- and Galvo-based phototargeting devices. Phototargeting can be
+ * ad-hoc or planned as part of a multi-dimensional acquisition.
+*/
 @Plugin(type = MenuPlugin.class)
 public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Projector";
@@ -41,7 +43,10 @@ public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
    private Studio app_;
    private CMMCore core_;
 
-  // Show the ImageJ Roi Manager and return a reference to it.   
+  /** Shows the ImageJ Roi Manager and return a reference to it. 
+   * 
+   * @return instance of the ImageJ RoiManager
+   */  
    public static RoiManager showRoiManager() {
       IJ.run("ROI Manager...");
       final RoiManager roiManager = RoiManager.getInstance();
@@ -67,17 +72,28 @@ public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
       core_ = app_.getCMMCore();
    }
 
-   // Instantiate the ProjectorControlForm window if necessary, and show it
-   // if it's not visible.
+   /**
+    * Instantiate the ProjectorControlForm window if necessary, and show it.
+   */
    @Override
    public void onPluginSelected() {
+      getControlForm();
+   }
+      
+   /**
+    * Give plugins and scripts a way to access the singleton instance
+    * of the ProjectorControlForm
+    * @return singleton instance of ProjectorControlForm or null if it was not 
+    *         present and it was not created due to lack of equipment.
+   */
+   public ProjectorControlForm getControlForm() {
       if (core_.getSLMDevice().length()==0 && core_.getGalvoDevice().length()==0) {
          app_.logs().showMessage("Please load an SLM (Spatial Light Modulator) " +
                "or a Galvo-based phototargeting device " +
                "before using the Projector plugin.");
-         return;
+         return null;
       }
-      ProjectorControlForm.showSingleton(core_, app_);
+      return ProjectorControlForm.showSingleton(core_, app_);
    }
 
    public void configurationChanged() {
@@ -106,6 +122,6 @@ public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getCopyright() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return "Copyright Regents of the University of California, 2010-2016";
    }
 }
