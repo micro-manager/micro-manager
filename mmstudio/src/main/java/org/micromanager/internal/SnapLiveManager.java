@@ -196,7 +196,11 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          amStartingSequenceAcquisition_ = false;
       }
       catch (Exception e) {
-         ReportingUtils.logError(e, "Couldn't start live mode sequence acquisition");
+         ReportingUtils.showError(e, "Couldn't start live mode sequence acquisition");
+         // Give up on starting live mode.
+         amStartingSequenceAcquisition_ = false;
+         setLiveMode(false);
+         return;
       }
       grabberThread_.start();
       if (display_ != null) {
