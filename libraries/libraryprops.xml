@@ -1,0 +1,33 @@
+<project name="mm.libraryprops">
+	<include file="../buildscripts/buildprops.xml"/>
+
+	<property name="product" value="${ant.project.name}"/>
+
+	<!-- Relative path of library directory -->
+	<!-- Should be set with the value attribute (not location), since this
+	     is a path relative to the root of the library directory tree -->
+	<property name="library.path" value=""/>
+
+	<if>
+		<isset property="mm.platform.is.windows"/>
+		<then>
+			<property name="scratchdir" location="${mm.java.library.intdir}/genclass-tmp/${ant.project.name}"/>
+			<property name="intdir" location="${mm.java.library.intdir}/${ant.project.name}"/>
+			<property name="library.outdir" location="${mm.java.library.outdir}"/>
+			<property name="library.installdir" location="${mm.java.library.installdir}"/>
+			<property name="outdir" location="${library.outdir}/${library.path}"/>
+			<property name="installdir" location="${library.installdir}/${library.path}"/>
+		</then>
+		<else>
+			<property name="library.intdir" location="./build"/>
+			<property name="scratchdir" location="${library.intdir}/genclass-tmp/${ant.project.name}"/>
+			<property name="intdir" location="${library.intdir}/${ant.project.name}"/>
+			<property name="library.outdir" location="."/>
+			<property name="outdir" location="${library.outdir}/${library.path}"/>
+			<!-- install is not used on Unix -->
+		</else>
+	</if>
+
+	<!-- Additional classpath items for library; empty by default -->
+	<path id="library.classpath"/>
+</project>

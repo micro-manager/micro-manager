@@ -14,6 +14,7 @@
 			<subant target="@{target}" inheritall="true">
 				<property name="mm.java.installdir" value="${mm.java.installdir}"/>
 				<property name="mm.java.plugin.installdir" value="${mm.java.plugin.installdir}"/>
+				<property name="mm.java.library.installdir" value="${mm.java.library.installdir}"/>
 				<property name="mm.java.autofocus.installdir" value="${mm.java.autofocus.installdir}"/>
 				<filelist dir="${mm.basedir}">
 					<!-- Note: Order matters -->
@@ -21,6 +22,7 @@
 					<file name="mmstudio/build.xml"/>
 					<file name="acqEngine/build.xml"/>
 					<file name="plugins/build.xml"/>
+					<file name="libraries/build.xml"/>
 					<file name="autofocus/build.xml"/>
 				</filelist>
 			</subant>
