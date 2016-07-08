@@ -29,12 +29,16 @@ import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = OverlayPlugin.class)
 public class TimestampPlugin implements OverlayPlugin, SciJavaPlugin {
+   private Studio studio_;
+
    @Override
-   public void setContext(Studio studio) {}
+   public void setContext(Studio studio) {
+      studio_ = studio;
+   }
 
    @Override
    public OverlayPanelFactory createFactory() {
-      return new TimestampFactory();
+      return new TimestampFactory(studio_);
    }
 
    @Override

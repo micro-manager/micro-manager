@@ -42,9 +42,8 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
-import org.micromanager.PropertyMap;
+import org.micromanager.Studio;
 
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -71,6 +70,8 @@ public class ScaleBarPanel extends OverlayPanel {
          "Blue", "Cyan", "Green"
    };
 
+   private Studio studio_;
+
    private final JCheckBox shouldDrawText_;
    private final JCheckBox isBarFilled_;
    private final JComboBox color_;
@@ -84,7 +85,9 @@ public class ScaleBarPanel extends OverlayPanel {
    private boolean haveLoggedError_ = false;
    private boolean shouldIgnoreEvents_ = false;
 
-   public ScaleBarPanel() {
+   public ScaleBarPanel(Studio studio) {
+      studio_ = studio;
+
       ActionListener changeListener = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent event) {
@@ -151,57 +154,57 @@ public class ScaleBarPanel extends OverlayPanel {
    }
 
    /**
-    * Record our current settings in the DisplaySettings.
+    * Record our current settings in the user profile.
     */
    private void saveSettings() {
-      PropertyMap userData = display_.getDisplaySettings().getUserData();
-      PropertyMap.PropertyMapBuilder builder;
-      if (userData != null) {
-         builder = userData.copy();
-      }
-      else {
-         builder = MMStudio.getInstance().data().getPropertyMapBuilder();
-      }
-      builder.putInt(COLOR, color_.getSelectedIndex());
-      builder.putBoolean(DRAW_TEXT, shouldDrawText_.isSelected());
-      builder.putString(FONT_SIZE, fontSize_.getText());
-      builder.putString(X_OFFSET, xOffset_.getText());
-      builder.putString(Y_OFFSET, yOffset_.getText());
-      builder.putBoolean(IS_FILLED, isBarFilled_.isSelected());
-      builder.putString(BAR_WIDTH, barWidth_.getText());
-      builder.putInt(POSITION, position_.getSelectedIndex());
-      builder.putString(SIZE, scaleSize_.getText());
-      DisplaySettings newSettings = display_.getDisplaySettings().copy().userData(builder.build()).build();
-      display_.setDisplaySettings(newSettings);
+      studio_.profile().setInt(ScaleBarPanel.class,
+            COLOR, color_.getSelectedIndex());
+      studio_.profile().setBoolean(ScaleBarPanel.class,
+            DRAW_TEXT, shouldDrawText_.isSelected());
+      studio_.profile().setString(ScaleBarPanel.class,
+            FONT_SIZE, fontSize_.getText());
+      studio_.profile().setString(ScaleBarPanel.class,
+            X_OFFSET, xOffset_.getText());
+      studio_.profile().setString(ScaleBarPanel.class,
+            Y_OFFSET, yOffset_.getText());
+      studio_.profile().setBoolean(ScaleBarPanel.class,
+            IS_FILLED, isBarFilled_.isSelected());
+      studio_.profile().setString(ScaleBarPanel.class,
+            BAR_WIDTH, barWidth_.getText());
+      studio_.profile().setInt(ScaleBarPanel.class,
+            POSITION, position_.getSelectedIndex());
+      studio_.profile().setString(ScaleBarPanel.class,
+            SIZE, scaleSize_.getText());
    }
 
-   // Update our controls to reflect the settings stored in the DisplaySettings
-   // TODO: since we don't save settings *to* the DisplaySettings when the user
-   // adjusts them, that means that every time setDisplay() is called, the
-   // controls are reset.
+   // Update our controls to reflect the settings stored in the profile.
    @Override
    public void setDisplay(DisplayWindow display) {
       super.setDisplay(display);
       if (display == null) {
          return;
       }
-      PropertyMap userData = display.getDisplaySettings().getUserData();
-      if (userData == null) {
-         // Start with blank data.
-         userData = MMStudio.getInstance().data().getPropertyMapBuilder().build();
-      }
 
       // Don't cause redraws while we're busy resetting our values.
       shouldIgnoreEvents_ = true;
-      color_.setSelectedIndex(userData.getInt(COLOR, 0));
-      shouldDrawText_.setSelected(userData.getBoolean(DRAW_TEXT, true));
-      fontSize_.setText(userData.getString(FONT_SIZE, "14"));
-      xOffset_.setText(userData.getString(X_OFFSET, "15"));
-      yOffset_.setText(userData.getString(Y_OFFSET, "15"));
-      isBarFilled_.setSelected(userData.getBoolean(IS_FILLED, true));
-      barWidth_.setText(userData.getString(BAR_WIDTH, "5"));
-      position_.setSelectedIndex(userData.getInt(POSITION, 0));
-      scaleSize_.setText(userData.getString(SIZE, "100"));
+      color_.setSelectedIndex(studio_.profile().getInt(
+               ScaleBarPanel.class, COLOR, 0));
+      shouldDrawText_.setSelected(studio_.profile().getBoolean(
+               ScaleBarPanel.class, DRAW_TEXT, true));
+      fontSize_.setText(studio_.profile().getString(
+               ScaleBarPanel.class, FONT_SIZE, "14"));
+      xOffset_.setText(studio_.profile().getString(
+               ScaleBarPanel.class, X_OFFSET, "15"));
+      yOffset_.setText(studio_.profile().getString(
+               ScaleBarPanel.class, Y_OFFSET, "15"));
+      isBarFilled_.setSelected(studio_.profile().getBoolean(
+               ScaleBarPanel.class, IS_FILLED, true));
+      barWidth_.setText(studio_.profile().getString(
+               ScaleBarPanel.class, BAR_WIDTH, "5"));
+      position_.setSelectedIndex(studio_.profile().getInt(
+               ScaleBarPanel.class, POSITION, 0));
+      scaleSize_.setText(studio_.profile().getString(
+               ScaleBarPanel.class, SIZE, "100"));
       shouldIgnoreEvents_ = false;
       redraw();
    }

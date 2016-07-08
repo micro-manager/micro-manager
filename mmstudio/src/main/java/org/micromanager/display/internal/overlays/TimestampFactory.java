@@ -22,10 +22,16 @@ package org.micromanager.display.internal.overlays;
 
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
+import org.micromanager.Studio;
 
 public class TimestampFactory implements OverlayPanelFactory {
+   private Studio studio_;
+   public TimestampFactory(Studio studio) {
+      studio_ = studio;
+   }
+
    @Override
    public OverlayPanel createOverlayPanel() {
-      return new TimestampPanel();
+      return new TimestampPanel(studio_);
    }
 }

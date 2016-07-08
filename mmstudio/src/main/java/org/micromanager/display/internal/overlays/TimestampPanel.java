@@ -51,6 +51,7 @@ import org.micromanager.data.Metadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.OverlayPanel;
+import org.micromanager.Studio;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -59,14 +60,26 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public class TimestampPanel extends OverlayPanel {
 
+   // Position options
    private static final String UPPER_LEFT = "Upper left";
    private static final String UPPER_RIGHT = "Upper right";
    private static final String LOWER_LEFT = "Lower left";
    private static final String LOWER_RIGHT = "Lower right";
 
+   // Options for which timestamp to display
    private static final String ABSOLUTE_TIME = "Absolute";
    private static final String RELATIVE_TIME = "Relative to Start";
 
+   // Keys for storing values in the profile.
+   private static final String IS_MULTI_CHANNEL = "is multi-channel";
+   private static final String INCLUDE_BACKGROUND = "draw on background";
+   private static final String X_OFFSET = "x offset";
+   private static final String Y_OFFSET = "y offset";
+   private static final String POSITION_INDEX = "position";
+   private static final String COLOR_INDEX = "color";
+   private static final String FORMAT_INDEX = "format";
+
+   private Studio studio_;
    private final JCheckBox amMultiChannel_;
    private final JCheckBox shouldDrawBackground_;
    private final JTextField xOffset_;
@@ -75,12 +88,14 @@ public class TimestampPanel extends OverlayPanel {
    private final JComboBox color_;
    private final JComboBox format_;
 
-   public TimestampPanel() {
+   public TimestampPanel(Studio studio) {
+      studio_ = studio;
       setLayout(new MigLayout("flowx"));
 
       ActionListener redrawListener = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
+            saveSettings();
             redraw();
          }
       };
@@ -131,6 +146,50 @@ public class TimestampPanel extends OverlayPanel {
          }
       });
       add(yOffset_, "wrap");
+   }
+
+   @Override
+   public void setDisplay(DisplayWindow display) {
+      super.setDisplay(display);
+      if (display == null) {
+         return;
+      }
+      position_.setSelectedIndex(studio_.profile().getInt(
+               TimestampPanel.class, POSITION_INDEX, 0));
+      format_.setSelectedIndex(studio_.profile().getInt(
+               TimestampPanel.class, FORMAT_INDEX, 0));
+      shouldDrawBackground_.setSelected(
+            studio_.profile().getBoolean(
+               TimestampPanel.class, INCLUDE_BACKGROUND, false));
+      amMultiChannel_.setSelected(
+            studio_.profile().getBoolean(
+               TimestampPanel.class, IS_MULTI_CHANNEL, false));
+      color_.setSelectedIndex(studio_.profile().getInt(
+               TimestampPanel.class, COLOR_INDEX, 0));
+      xOffset_.setText(studio_.profile().getString(
+               TimestampPanel.class, X_OFFSET, "0"));
+      yOffset_.setText(studio_.profile().getString(
+               TimestampPanel.class, Y_OFFSET, "0"));
+   }
+
+   /**
+    * Record our settings in the profile.
+    */
+   private void saveSettings() {
+      studio_.profile().setBoolean(TimestampPanel.class,
+            IS_MULTI_CHANNEL, amMultiChannel_.isSelected());
+      studio_.profile().setBoolean(TimestampPanel.class,
+            INCLUDE_BACKGROUND, shouldDrawBackground_.isSelected());
+      studio_.profile().setString(TimestampPanel.class,
+            X_OFFSET, xOffset_.getText());
+      studio_.profile().setString(TimestampPanel.class,
+            Y_OFFSET, yOffset_.getText());
+      studio_.profile().setInt(TimestampPanel.class,
+            POSITION_INDEX, position_.getSelectedIndex());
+      studio_.profile().setInt(TimestampPanel.class,
+            COLOR_INDEX, color_.getSelectedIndex());
+      studio_.profile().setInt(TimestampPanel.class,
+            FORMAT_INDEX, format_.getSelectedIndex());
    }
 
    /**
