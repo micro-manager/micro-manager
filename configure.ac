@@ -368,6 +368,7 @@ AC_CONFIG_FILES(m4_strip([
    mmstudio/Makefile
    acqEngine/Makefile
    plugins/Makefile
+   libraries/Makefile
    autofocus/Makefile
    scripts/Makefile
    systemtest/Makefile

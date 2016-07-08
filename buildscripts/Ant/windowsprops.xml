@@ -87,7 +87,7 @@
 	<property name="mm.java.library.srcdir" location="${mm.basedir}/libraries"/>
 	<property name="mm.java.library.intdir" location="${mm.java.intdir}/libraries"/>
 	<property name="mm.java.library.outdir" location="${mm.java.outdir}/libraries"/>
-	<property name="mm.java.library.installdir" location="${mm.installdir}/mmlibraries"/>
+	<property name="mm.java.library.installdir" location="${mm.java.installdir}"/>
 
 	<!-- Java artifacts -->
 	<property name="mm.java.lib.AntExtensions" location="${mm.java.outdir}/AntExtensions.jar"/>
