@@ -131,14 +131,9 @@ double RAMPSZStage::GetStepSize() const {
 int RAMPSZStage::SetPositionSteps(long steps)
 {
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
-  std::string status = pHub->GetState();
-  if (status == "Running") {
+  if (pHub->Busy()) {
       return ERR_STAGE_MOVING;
   }
-  /*
-  double newPosZ = steps * stepSize_um_;
-  double difZ = newPosZ - posZ_um_;
-  */
 
   posZ_um_ = steps * stepSize_um_;
 
@@ -149,6 +144,16 @@ int RAMPSZStage::SetPositionSteps(long steps)
   if (ret != DEVICE_OK)
     return ret;
 
+  
+  std::string answer;
+  ret = pHub->ReadResponse(answer, 1000);
+  if (ret != DEVICE_OK) {
+	  LogMessage("Error sending Z move.");
+	  return ret;
+  }
+  if (answer != "ok") {
+	  LogMessage("Failed to get ok response to Z move.");
+  }
   ret = OnStagePositionChanged(posZ_um_);
   if (ret != DEVICE_OK)
     return ret;

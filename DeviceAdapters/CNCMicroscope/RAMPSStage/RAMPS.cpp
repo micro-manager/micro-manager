@@ -169,18 +169,18 @@ int RAMPSHub::Initialize()
   PurgeComPortH();
 
   // Write current location as origin
-  ret = SendCommand("M206 X0 Y0 Z0");
+  ret = SendCommand("G28 X0 Y0");
   if (ret != DEVICE_OK) {
-    LogMessage("Set Origin Send Command failed");
+    LogMessage("Homing command failed.");
     return ret;
   }
   ret = ReadResponse(answer);
   if (ret != DEVICE_OK) {
-    LogMessage("error getting controller version.");
+    LogMessage("error getting response to homing command.");
     return ret;
   }
   if (answer != "ok") {
-    LogMessage("expected ok.");
+    LogMessage("Homing command: expected ok.");
     return DEVICE_ERR;
   }
 
@@ -246,6 +246,12 @@ bool RAMPSHub::Busy() {
     status_ = "Busy";
     return true;
   }
+  if (answer != "ok") {
+    LogMessage(std::string("busy expected OK, didn't get it."));
+    LogMessage(answer);
+    return ret;
+  }
+
   sent_busy_ = false;
   status_ = "Idle";
   return false;

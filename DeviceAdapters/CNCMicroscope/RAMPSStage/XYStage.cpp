@@ -119,17 +119,9 @@ int RAMPSXYStage::SetPositionSteps(long x, long y)
 {
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
   std::string status = pHub->GetState();
-  if (status == "Running") {
+  if (pHub->Busy()) {
       return ERR_STAGE_MOVING;
   }
-
-  /*
-  double newPosX = x * stepSize_um_;
-  double newPosY = y * stepSize_um_;
-  double difX = newPosX - posX_um_;
-  double difY = newPosY - posY_um_;
-  double distance = sqrt( (difX * difX) + (difY * difY) );
-  */
 
   posX_um_ = x * stepSize_um_;
   posY_um_ = y * stepSize_um_;
@@ -142,6 +134,15 @@ int RAMPSXYStage::SetPositionSteps(long x, long y)
   if (ret != DEVICE_OK)
     return ret;
 
+  std::string answer;
+  ret = pHub->ReadResponse(answer, 1000);
+  if (ret != DEVICE_OK) {
+	  LogMessage("Error sending XY move.");
+	  return ret;
+  }
+  if (answer != "ok") {
+	  LogMessage("Failed to get ok response to XY move.");
+  }
   ret = OnXYStagePositionChanged(posX_um_, posY_um_);
   if (ret != DEVICE_OK)
     return ret;
