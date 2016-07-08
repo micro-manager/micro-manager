@@ -24,7 +24,7 @@
 // which generates nice HTML documentation side-by-side with the
 // source code.
 
-package org.micromanager.projector;
+package org.micromanager.projector.internal;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -276,7 +276,7 @@ public class MosaicSequencingFrame extends MMFrame {
    // clones of that ROI, with offsets specified.
    private void generateRoiGrid() {
       Roi selectedRoi = IJ.getImage().getRoi();
-      RoiManager roiManager = ProjectorPlugin.showRoiManager();
+      RoiManager roiManager = Utils.showRoiManager();
       if (selectedRoi == null && roiManager.getCount() > 0) {
          int firstSelectedRoi = Math.max(0, roiManager.getSelectedIndex());
          selectedRoi = roiManager.getRoisAsArray()[firstSelectedRoi];
@@ -701,7 +701,7 @@ public class MosaicSequencingFrame extends MMFrame {
          }
          sequenceLoopCountTextField_.setText(String.valueOf(jsonData.getInt("SequenceRepeats")));
          Roi[] rois = roisFromJSON(jsonData.getJSONArray("Rois"));
-         RoiManager roiManager = ProjectorPlugin.showRoiManager();
+         RoiManager roiManager = Utils.showRoiManager();
          roiManager.runCommand("reset");
          for (Roi roi:rois) {
             roiManager.addRoi(roi);
@@ -808,7 +808,7 @@ public class MosaicSequencingFrame extends MMFrame {
       GUIUtils.stopEditingOnLosingFocus(sequenceTable_);
 
       keepTimeSlotIndicesUpToDate(sequenceTableModel_);
-      ProjectorPlugin.showRoiManager();
+      Utils.showRoiManager();
       setupRoiListTable();
    }
 

@@ -22,7 +22,7 @@ nobase_mmplugin_DATA = \
 	pgFocus.jar \
 	PipelineSaver.jar \
 	PixelCalibrator.jar \
-	Projector.jar \
+	ProjectorPlugin.jar \
 	Recall.jar \
 	SequenceBufferMonitor.jar \
 	SlideExplorer.jar \

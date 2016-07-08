@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-package org.micromanager.projector;
+package org.micromanager.projector.internal;
 
 public interface OnStateListener {
    public void stateChanged(boolean onState);

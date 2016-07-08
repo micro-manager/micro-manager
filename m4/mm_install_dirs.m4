@@ -29,6 +29,7 @@ AM_COND_IF([INSTALL_AS_IMAGEJ_PLUGIN],
    mmdatadir="\$(imagejdir)"
    jardir="\$(imagejdir)/plugins/Micro-Manager"
    mmplugindir="\$(imagejdir)/mmplugins"
+   mmlibrarydir="\$(jardir)"
    mmautofocusdir="\$(imagejdir)/mmautofocus"
    mmscriptdir="\$(imagejdir)/scripts"
    launcherdir="\$(imagejdir)"
@@ -41,6 +42,7 @@ AM_COND_IF([INSTALL_AS_IMAGEJ_PLUGIN],
    mmdatadir="\$(pkgdatadir)"
    jardir="\$(pkgdatadir)/jars"
    mmplugindir="\$(pkgdatadir)/mmplugins"
+   mmlibrarydir="\$(jardir)"
    mmautofocusdir="\$(pkgdatadir)/mmautofocus"
    mmscriptdir="\$(pkgdatadir)/scripts"
    launcherdir="\$(bindir)"
@@ -55,6 +57,8 @@ AC_SUBST([mmdatadir])
 AC_SUBST([jardir])
 # Plugin JARs
 AC_SUBST([mmplugindir])
+# Library JARs
+AC_SUBST([mmlibrarydir])
 # Autofocus plugin JARs
 AC_SUBST([mmautofocusdir])
 # Beanshell scripts
