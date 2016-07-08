@@ -34,7 +34,7 @@ endif
 if BUILD_JAVA_APP
 
 ANTEXTENSIONS = buildscripts/AntExtensions
-JAVA_APP_DIRS = mmstudio acqEngine autofocus plugins libraries scripts
+JAVA_APP_DIRS = mmstudio acqEngine libraries autofocus plugins scripts
 SYSTEMTEST_DIR = systemtest
 
 if INSTALL_AS_IMAGEJ_PLUGIN

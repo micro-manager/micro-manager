@@ -367,9 +367,9 @@ AC_CONFIG_FILES(m4_strip([
    MMCorePy_wrap/Makefile
    mmstudio/Makefile
    acqEngine/Makefile
-   plugins/Makefile
    libraries/Makefile
    autofocus/Makefile
+   plugins/Makefile
    scripts/Makefile
    systemtest/Makefile
    systemtest/SequenceTests/Makefile
