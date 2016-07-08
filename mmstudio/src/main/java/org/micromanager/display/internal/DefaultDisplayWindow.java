@@ -736,7 +736,11 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
     */
    @Override
    public void requestRedraw() {
-      setDisplayedImageTo(stack_.getCurrentImageCoords());
+      // This method can in rare situations be called even after the display
+      // has been closed; of course in that case we can't redraw.
+      if (!getIsClosed()) {
+         setDisplayedImageTo(stack_.getCurrentImageCoords());
+      }
    }
 
    @Override
