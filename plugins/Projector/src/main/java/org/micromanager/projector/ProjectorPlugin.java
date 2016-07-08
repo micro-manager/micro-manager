@@ -16,17 +16,14 @@
 
 package org.micromanager.projector;
 
-import ij.IJ;
-import ij.plugin.frame.RoiManager;
-import java.awt.Checkbox;
-import java.awt.Panel;
-import java.awt.event.ItemEvent;
 import mmcorej.CMMCore;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
+
+import org.micromanager.projector.internal.ProjectorControlForm;
 
 // The Projector plugin provides a user interface for calibration and control
 // of SLM- and Galvo-based phototargeting devices. Phototargeting can be
@@ -41,19 +38,6 @@ public class ProjectorPlugin implements MenuPlugin, SciJavaPlugin {
    private Studio app_;
    private CMMCore core_;
 
-  // Show the ImageJ Roi Manager and return a reference to it.   
-   public static RoiManager showRoiManager() {
-      IJ.run("ROI Manager...");
-      final RoiManager roiManager = RoiManager.getInstance();
-      // "Get the "Show All" checkbox and make sure it is checked.
-      Checkbox checkbox = (Checkbox) ((Panel) roiManager.getComponent(1)).getComponent(9);
-      checkbox.setState(true);
-      // Simulated click of the "Show All" checkbox to force ImageJ
-      // to show all of the ROIs.
-      roiManager.itemStateChanged(new ItemEvent(checkbox, 0, null, ItemEvent.SELECTED));
-      return roiManager;
-   }
-   
    public void dispose() {
       ProjectorControlForm pcf = ProjectorControlForm.getSingleton();
       if (pcf != null) {

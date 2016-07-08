@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.projector;
+package org.micromanager.projector.internal;
 
 // This file is written in call stack order: methods declared later in the
 // file call methods earlier in the file, with the exception of generated
@@ -2076,7 +2076,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }//GEN-LAST:event_mainTabbedPaneStateChanged
 
    private void roiManagerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roiManagerButtonActionPerformed
-      ProjectorPlugin.showRoiManager();
+      Utils.showRoiManager();
    }//GEN-LAST:event_roiManagerButtonActionPerformed
 
    private void useInMDAcheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useInMDAcheckBoxActionPerformed
