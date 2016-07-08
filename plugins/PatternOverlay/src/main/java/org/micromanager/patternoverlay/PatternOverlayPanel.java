@@ -8,6 +8,7 @@ import java.awt.Graphics;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
@@ -30,10 +31,12 @@ public class PatternOverlayPanel extends OverlayPanel {
    private static final String IS_DISPLAYED = "is the overlay displayed";
    private static final String OVERLAY_SIZE = "size of overlay";
    private static final String OVERLAY_COLOR = "color of overlay";
+   private static final String DRAW_SIZE = "draw size";
 
    private final JComboBox overlaySelector_;
    private final JSlider sizeSlider_;
    private final JComboBox colorSelector_;
+   private final JCheckBox shouldDrawSize_;
 
    /**
     * NOTE: we store our settings in the profile rather than the display
@@ -81,6 +84,17 @@ public class PatternOverlayPanel extends OverlayPanel {
       add(new JLabel("Color:"));
       add(colorSelector_, "wrap");
 
+      shouldDrawSize_ = new JCheckBox("Show pattern size");
+      shouldDrawSize_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            studio.profile().setBoolean(PatternOverlayPanel.class,
+               DRAW_SIZE, shouldDrawSize_.isSelected());
+            redraw();
+         }
+      });
+      add(shouldDrawSize_, "wrap");
+
       // Load initial settings from the profile.
       overlaySelector_.setSelectedItem(studio.profile().getString(
                PatternOverlayPanel.class, OVERLAY_MODE,
@@ -90,6 +104,8 @@ public class PatternOverlayPanel extends OverlayPanel {
       colorSelector_.setSelectedItem(studio.profile().getString(
                PatternOverlayPanel.class, OVERLAY_COLOR,
                OverlayOptions.COLOR_NAMES[0]));
+      shouldDrawSize_.setSelected(studio.profile().getBoolean(
+               PatternOverlayPanel.class, DRAW_SIZE, true));
    }
 
    @Override
@@ -98,7 +114,8 @@ public class PatternOverlayPanel extends OverlayPanel {
       OverlayOptions.drawOverlay(g, display, image, canvas,
             (String) overlaySelector_.getSelectedItem(),
             sizeSlider_.getValue(),
-            (String) colorSelector_.getSelectedItem());
+            (String) colorSelector_.getSelectedItem(),
+            shouldDrawSize_.isSelected());
    }
 
 }
