@@ -95,7 +95,7 @@
 	<property name="mm.java.lib.mmstudio" location="${mm.java.outdir}/MMJ_.jar"/>
 	<property name="mm.java.lib.acq-engine" location="${mm.java.outdir}/MMAcqEngine.jar"/>
 
-	<property name="mm.java.mmlibraries" location="${mm.java.outdir}/libraries"/>
+	<property name="mm.java.mmlibraries" location="${mm.java.outdir}"/>
 
 	<!-- Other directories -->
 	<property name="mm.scripts.srcdir" location="${mm.basedir}/scripts"/>
