@@ -59,7 +59,6 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
    private MMStudio studio_;
    // TODO: assign this name to the viewer window once the api has that ability
    private final String ACQ_NAME = "Live Replay";
-   private int multiChannelCameraNrCh_;
    private Datastore store_;
    
   
@@ -71,20 +70,24 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public void onPluginSelected() {
-      store_ = studio_.data().createRAMDatastore();
-      studio_.getDisplayManager().createDisplay(store_);
-      studio_.getDisplayManager().manage(store_);
-
       int remaining = core_.getRemainingImageCount();
+      int numCameraChannels = (int) core_.getNumberOfCameraChannels();
       if (remaining < 1) {
          studio_.logs().showMessage("There are no Images in the Micro-Manager buffer");
          return;
       }
-      
-      multiChannelCameraNrCh_ = (int) core_.getNumberOfCameraChannels();
+      if (numCameraChannels <= 0) {
+         studio_.logs().showMessage("No core channels detected");
+         return;
+      }
+
+      store_ = studio_.data().createRAMDatastore();
+      studio_.getDisplayManager().createDisplay(store_);
+      studio_.getDisplayManager().manage(store_);
+
       String camera = core_.getCameraDevice();
 
-      if (multiChannelCameraNrCh_ == 1) {
+      if (numCameraChannels == 1) {
          int frameCounter = 0;
          for (int i = 0; i < remaining; i++) {
             try {
@@ -103,8 +106,8 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
                studio_.logs().logError(e);
             }
          }
-      } else if (multiChannelCameraNrCh_ > 1) {
-         int[] frameCounters = new int[multiChannelCameraNrCh_];
+      } else {
+         int[] frameCounters = new int[numCameraChannels];
          for (int i = 0; i < remaining; i++) {
             try {
                TaggedImage tImg = core_.popNextTaggedImage();
