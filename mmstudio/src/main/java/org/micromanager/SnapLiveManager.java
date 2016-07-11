@@ -34,14 +34,20 @@ import org.micromanager.display.DisplayWindow;
  */
 public interface SnapLiveManager {
    /**
-    * Perform a snap and display the results, if desired. Returns the snapped
-    * image(s).
+    * Perform a snap and display the results, if desired. Returns the raw
+    * snapped image(s).
     * If live mode is currently on, then instead of performing a snap, the
     * most recent images from live mode will be returned immediately.
     * Otherwise, this method will call AcquisitionManager.snap() to perform the
     * snap.
     * @param shouldDisplay If true, then the snapped images will be added to
-    *        the Datastore and displayed.
+    *        the Snap/Live display's Datastore and displayed. Note that the
+    *        displayed images will be run through the current application data
+    *        processing pipeline (if any) prior to display. Consequently, there
+    *        is no guarantee that a Snap/Live display window will be open after
+    *        calling snap(), even if shouldDisplay is set to true. If you want
+    *        to know when the display is visible, call
+    *        getDislay().waitUntilVisible() after calling snap().
     * @return A list of acquired Images from the snap.
     */
    public List<Image> snap(boolean shouldDisplay);
