@@ -28,6 +28,7 @@ import org.scijava.plugin.SciJavaPlugin;
 @Plugin(type = MenuPlugin.class)
 public class SequenceBufferMonitor implements MenuPlugin, SciJavaPlugin {
    private Studio studio_;
+   private SequenceBufferMonitorFrame frame_ = null;
 
    @Override
    public void setContext(Studio studio) {
@@ -41,9 +42,11 @@ public class SequenceBufferMonitor implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public void onPluginSelected() {
-      SequenceBufferMonitorFrame frame = new SequenceBufferMonitorFrame(studio_);
-      frame.setVisible(true);
-      frame.start();
+      if (frame_ == null) {
+         frame_ = new SequenceBufferMonitorFrame(studio_);
+      }
+      frame_.setVisible(true);
+      frame_.start();
    }
 
    @Override
