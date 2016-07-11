@@ -307,6 +307,12 @@ public interface DisplayManager {
    public boolean promptToSave(Datastore store, DisplayWindow display);
 
    /**
+    * Provide an ImagceExporter for generating image sequences.
+    * @return an ImageExporter instance.
+    */
+   public ImageExporter createExporter();
+
+   /**
     * Given a Datastore, close any open DisplayWindows for that Datastore.
     * If the Datastore is managed, then the user may receive a prompt to
     * save their data, which they have the option to cancel.
