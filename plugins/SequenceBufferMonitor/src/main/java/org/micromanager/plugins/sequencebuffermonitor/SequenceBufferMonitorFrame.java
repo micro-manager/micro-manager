@@ -35,6 +35,7 @@ class SequenceBufferMonitorFrame extends MMFrame {
 
    SequenceBufferMonitorFrame(org.micromanager.Studio app) {
       super("Sequence Buffer Monitor");
+      setTitle("Sequence Buffer Monitor");
 
       app_ = app;
 
