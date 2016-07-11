@@ -39,6 +39,7 @@ public class TrackerPlugin implements MenuPlugin, SciJavaPlugin {
    static private final String INFO = "Not available";
 
    private Studio app_ = null;
+   private TrackerControl frame_;
 
    @Override
    public String getName() {
@@ -52,7 +53,10 @@ public class TrackerPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public void onPluginSelected() {
-      new TrackerControl(app_).setVisible(true);
+      if (frame_ == null) {
+         frame_ = new TrackerControl(app_);
+      }
+      frame_.setVisible(true);
    }
 
    @Override
