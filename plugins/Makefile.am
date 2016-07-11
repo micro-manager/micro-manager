@@ -7,7 +7,6 @@ nobase_mmplugin_DATA = \
 	AcquireMultipleRegions.jar \
 	ASIdiSPIM.jar \
 	AutoLase.jar \
-	Big.jar \
 	CRISP.jar \
 	CRISPv2.jar \
 	FrameCombiner.jar \
