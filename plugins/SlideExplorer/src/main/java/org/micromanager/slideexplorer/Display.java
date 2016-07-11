@@ -8,6 +8,8 @@ import ij.process.ImageProcessor;
 
 import ij.process.ImageStatistics;
 import java.awt.Dimension;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.Point;
 import java.awt.Rectangle;
 
@@ -31,6 +33,7 @@ public class Display {
     private RoiManager roiManager_;
     private Coordinates coords_;
 	private boolean contrastAutoAdjusted_ = false;
+   private boolean windowExists_ = true;
 
 	public Display(Hub hub, int imageType, int width, int height) {
 		hub_ = hub;
@@ -44,6 +47,12 @@ public class Display {
 		cvs_ = new Canvas(this, imgp_);
 
 		win_ = new Window(imgp_, (ImageCanvas) cvs_, this);
+      win_.addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            windowExists_ = false;
+         }
+      });
 		imgCount_=0;
 		win_.setVisible(true);
 
@@ -266,4 +275,11 @@ public class Display {
     	roiManager_.close();
     }
 
+    public boolean setVisible(boolean isVisible) {
+        if (windowExists_) {
+            win_.setVisible(isVisible);
+            return true;
+        }
+        return false;
+    }
 }

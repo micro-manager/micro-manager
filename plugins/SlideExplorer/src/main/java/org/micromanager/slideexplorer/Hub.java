@@ -484,6 +484,10 @@ public class Hub {
    void snap() {
       app_.live().snap(true);
    }
+
+   public boolean setVisible(boolean isVisible) {
+      return display_.setVisible(isVisible);
+   }
 /*
    public class AcqControlDlgMosaic extends AcqControlDlg {
 

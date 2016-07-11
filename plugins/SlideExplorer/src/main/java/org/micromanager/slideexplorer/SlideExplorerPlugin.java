@@ -64,10 +64,17 @@ public class SlideExplorerPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
 	public void onPluginSelected() {
-      ReportingUtils.showMessage("Warning: the Slide Explorer plugin can move the XY-stage\n" +
-              "long distances. Please be careful not to pan far from the slide\n" +
-              "and make sure the objectives don't hit any other hardware.\n" +
-              "Use at your own risk! ");
-		hub_ = new Hub(app_);
+      if (hub_ == null) {
+         ReportingUtils.showMessage(
+               "Warning: the Slide Explorer plugin can move the XY-stage\n" +
+               "long distances. Please be careful not to pan far from the\n" +
+               "slide and make sure the objectives don't hit any other\n" +
+               "hardware. Use at your own risk!");
+         hub_ = new Hub(app_);
+      }
+      else if (!hub_.setVisible(true)) {
+         // Display was destroyed; recreate it.
+         hub_ = new Hub(app_);
+      }
 	}
 }
