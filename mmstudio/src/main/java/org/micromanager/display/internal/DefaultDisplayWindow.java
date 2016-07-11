@@ -1054,6 +1054,22 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    }
 
    @Override
+   public void waitUntilVisible() throws IllegalThreadStateException {
+      if (SwingUtilities.isEventDispatchThread()) {
+         throw new IllegalThreadStateException("Do not call this method from the Event Dispatch Thread");
+      }
+      while (!haveCreatedGUI_) {
+         try {
+            Thread.sleep(100);
+         }
+         catch (InterruptedException e) {
+            // Just exit now.
+            return;
+         }
+      }
+   }
+
+   @Override
    public void registerForEvents(Object obj) {
       displayBus_.register(obj);
    }

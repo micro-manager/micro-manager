@@ -154,6 +154,15 @@ public interface DisplayWindow extends DataViewer {
    public Window getAsWindow();
 
    /**
+    * Block the calling thread until the DisplayWindow is visible. Returns
+    * immediately if it already is.
+    * @throws IllegalThreadStateException if this method is called from the
+    *         Event Dispatch Thread (EDT), as the DisplayWindow needs that
+    *         thread to be unblocked if it is to ever become visible.
+    */
+   public void waitUntilVisible() throws IllegalThreadStateException;
+
+   /**
     * Add a custom extra string to the title of this display. The usual format
     * for the window title is "#num: name (magnification) (saved status)".
     * If you call this method, then the name will be replaced by your custom
