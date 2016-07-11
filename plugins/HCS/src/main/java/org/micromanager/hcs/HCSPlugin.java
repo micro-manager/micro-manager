@@ -38,7 +38,6 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    @Override
    public void setContext(Studio studio) {
       studio_ = studio;
-      frame_ = new SiteGenerator(studio_);
    }
 
    @Override
@@ -48,6 +47,9 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public void onPluginSelected() {
+      if (frame_ == null) {
+         frame_ = new SiteGenerator(studio_);
+      }
       frame_.setVisible(true);
    }
 
