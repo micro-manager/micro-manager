@@ -13,7 +13,7 @@ public class BeanshellEngine implements ScriptingEngine {
    boolean error_ = false;
    EvalThread evalThd_;
    boolean stop_ = false;
-   private ScriptPanel panel_;
+   private final ScriptPanel panel_;
    private Interpreter interp_old_;
 
    public class EvalThread extends Thread {
@@ -136,11 +136,13 @@ public class BeanshellEngine implements ScriptingEngine {
          Throwable t = ((TargetError)e).getTarget();
          return "Line " + line + ": run-time error : " + (t != null ? t.getMessage() : e.getErrorText());       
       } else if (e instanceof ParseException) {
-         return "Line " + line + ": syntax error : " + e.getErrorText();         
+         return "Line " + line + ": syntax error : " + e.getErrorText();  
+      } else if (e instanceof EvalError) {
+         return "Line " + line + ": evaluation error : " + e.getMessage();
       } else {
          Throwable t = e.getCause();
          return "Line " + line + ": general error : " + (t != null ? t.getMessage() : e.getErrorText());
       }
-      
    }
+   
 }
