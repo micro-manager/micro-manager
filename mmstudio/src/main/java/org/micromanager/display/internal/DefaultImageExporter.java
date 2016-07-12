@@ -95,7 +95,9 @@ public class DefaultImageExporter implements ImageExporter {
        * Recursively propagate a display through the list.
        */
       public void setDisplay(DisplayWindow display) {
-         store_ = display.getDatastore();
+         if (display != null) {
+            store_ = display.getDatastore();
+         }
          if (child_ != null) {
             child_.setDisplay(display);
          }
