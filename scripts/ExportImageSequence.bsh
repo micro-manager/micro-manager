@@ -1,0 +1,42 @@
+// This script demonstrates how to use the ImageExporter API, for
+// generating sequences of "images as rendered" (including histogram
+// scaling, overlays, etc.).
+// Before running this script, open the file you want to export.
+
+import org.micromanager.data.Coords;
+import org.micromanager.display.ImageExporter;
+
+exporter = mm.displays().createExporter();
+
+// Select display to pull images from
+display = mm.displays().getCurrentWindow();
+exporter.setDisplay(display);
+
+// Options are OUTPUT_JPG, OUTPUT_PNG, OUTPUT_IMAGEJ.
+exporter.setOutputFormat(ImageExporter.OutputFormat.OUTPUT_PNG);
+
+// Directory and file prefix. Directory must already exist!
+// Not required if using OUTPUT_IMAGEJ mode.
+exporter.setSaveInfo("/Users/chriswei/Documents/image_export", "test");
+
+// Set quality of image. Only relevant for OUTPUT_JPG; values range from 1-10
+exporter.setOutputQuality(1);
+
+// Select images to output. Args are coordinate axis, first index inclusive,
+// last index non-inclusive. Valid axes include Coords.Z, Coords.CHANNEL,
+// Coords.TIME, and Coords.STAGE_POSITION. 
+// First loop() call is the outer loop, last is the innermost.
+
+// Export the entire range of an axis:
+exporter.loop(Coords.TIME, 0, display.getDatastore().getAxisLength(Coords.TIME));
+// Export a specific range (the first 5 Z positions)
+exporter.loop(Coords.Z, 0, 5);
+
+// Reset the loops so new ones can be set.
+// exporter.resetLoops();
+
+// Perform export.
+exporter.export();
+
+// Wait for exporting to complete.
+exporter.waitForExport();

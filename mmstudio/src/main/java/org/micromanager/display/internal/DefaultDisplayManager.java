@@ -44,6 +44,7 @@ import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.HistogramData;
+import org.micromanager.display.ImageExporter;
 import org.micromanager.display.NewHistogramsEvent;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
@@ -436,6 +437,11 @@ public final class DefaultDisplayManager implements DisplayManager {
          }
       }
       return true;
+   }
+
+   @Override
+   public ImageExporter createExporter() {
+      return new DefaultImageExporter();
    }
 
    @Override
