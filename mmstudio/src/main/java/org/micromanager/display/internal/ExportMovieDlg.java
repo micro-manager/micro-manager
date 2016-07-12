@@ -73,6 +73,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.ImageExporter;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -227,177 +228,22 @@ public class ExportMovieDlg extends JDialog {
       }
 
       /**
-       * Iterate over our specified axis, while running any inner loop(s),
-       * drawing the image at each new coordinate set. Use the provided
-       * base coordinates to cover for any coords we aren't iterating over.
-       * @param drawFlag True when drawing, false when drawing is done and
-       *        the next image can be requested. See the "exporter" object.
-       * @param doneFlag True when all images are done drawing. Signals that
-       *        exporting is done and cleanup can begin.
+       * Apply our configuration to the provided ImageExporter, and recurse
+       * if appropriate to any contained AxisPanel.
        */
-      public void runLoop(Coords coords, AtomicBoolean drawFlag) {
+      public void configureExporter(ImageExporter exporter) {
          // Correct for the 1-indexed GUI values, since coords are 0-indexed.
          int minVal = (Integer) (minSpinner_.getValue()) - 1;
          int maxVal = (Integer) (maxSpinner_.getValue()) - 1;
-         for (int i = minVal; i <= maxVal; ++i) {
-            Coords newCoords = coords.copy().index(getAxis(), i).build();
-            if (child_ == null) {
-               drawFlag.set(true);
-               display_.setDisplayedImageTo(newCoords);
-               // Wait until drawing is done.
-               while (drawFlag.get()) {
-                  try {
-                     Thread.sleep(10);
-                  }
-                  catch (InterruptedException e) {
-                     ReportingUtils.logError("Interrupted while waiting for drawing to complete.");
-                     return;
-                  }
-               }
-            }
-            else {
-               // Recurse.
-               child_.runLoop(newCoords, drawFlag);
-            }
+         exporter.loop(getAxis(), minVal, maxVal);
+         if (child_ != null) {
+            child_.configureExporter(exporter);
          }
       }
 
       @Override
       public String toString() {
          return "<AxisPanel for axis " + getAxis() + ">";
-      }
-   }
-
-   /**
-    * This object will get notifications of when the display is done
-    * drawing, so the drawn images can be exported and the above thread
-    * can be re-started (since AxisPanel.runLoop pauses itself after every
-    * call to DisplayWindow.setDisplayedImageTo()).
-    */
-   private static class Exporter {
-      private DefaultDisplayWindow display_;
-      private int sequenceNum_ = 0;
-      private ImageStack stack_;
-      private File outputDir_;
-      private String prefix_;
-      private String mode_;
-      private AtomicBoolean drawFlag_;
-      private AtomicBoolean doneFlag_;
-      private boolean isSingleShot_;
-      private int jpegQuality_;
-
-      private BufferedImage currentImage_ = null;
-      private Graphics currentGraphics_ = null;
-
-      public Exporter(DefaultDisplayWindow display, File outputDir,
-            String prefix, String mode, AtomicBoolean drawFlag,
-            AtomicBoolean doneFlag, boolean isSingleShot, int jpegQuality) {
-         display_ = display;
-         outputDir_ = outputDir;
-         prefix_ = prefix;
-         mode_ = mode;
-         drawFlag_ = drawFlag;
-         doneFlag_ = doneFlag;
-         isSingleShot_ = isSingleShot;
-         jpegQuality_ = jpegQuality;
-      }
-
-      /**
-       * This method gets called twice for each image we export: once for the
-       * display responding to our request to set the image coordinates, and
-       * then once for the display painting to our provided Graphics object.
-       */
-      @Subscribe
-      public void onDrawComplete(CanvasDrawCompleteEvent event) {
-         if (event.getGraphics() != currentGraphics_) {
-            // We now know that the correct image is visible on the canvas, so
-            // have it paint that image to our own Graphics object. This is
-            // inefficient (having to paint the same image twice), but
-            // unfortunately there's no way (so far as I'm aware) to get an
-            // Image from a component except by painting.
-            // HACK: the getCanvas() and paintImageWithGraphics methods aren't
-            // exposed in DisplayWindow; hence why we need display_ to be
-            // DefaultDisplayWindow.
-            Dimension canvasSize = display_.getCanvas().getSize();
-            currentImage_ = new BufferedImage(canvasSize.width,
-                  canvasSize.height, BufferedImage.TYPE_INT_RGB);
-            currentGraphics_ = currentImage_.getGraphics();
-            display_.paintImageWithGraphics(currentGraphics_);
-         }
-         else {
-            // Display just finished painting to currentGraphics_, so export
-            // now.
-            if (mode_.equals(FORMAT_IMAGEJ)) {
-               if (stack_ == null) {
-                  // Create the ImageJ stack object to add images to.
-                  stack_ = new ImageStack(currentImage_.getWidth(),
-                        currentImage_.getHeight());
-               }
-               addToStack(stack_, currentImage_);
-            }
-            else {
-               // Save the image to disk in appropriate format.
-               exportImage(outputDir_, mode_, currentImage_, sequenceNum_++);
-            }
-            drawFlag_.set(false);
-            if (isSingleShot_) {
-               doneFlag_.set(true);
-            }
-         }
-      }
-
-      /**
-       * Save a single image to disk at the provided directory, with a filename
-       * based on the provided sequence number, in the specified mode.
-       */
-      private void exportImage(File outputDir, String mode, BufferedImage image,
-            int sequenceNum) {
-         String filename = String.format("%s_%010d", prefix_, sequenceNum);
-         if (isSingleShot_) {
-            // No need to append sequence numbers.
-            filename = prefix_;
-         }
-         if (mode.equals(FORMAT_PNG)) {
-            File file = new File(outputDir, filename + ".png");
-            try {
-               ImageIO.write(image, "png", file);
-            }
-            catch (IOException e) {
-               ReportingUtils.logError(e, "Error writing exported PNG image");
-            }
-         }
-         else if (mode.equals(FORMAT_JPEG)) {
-            File file = new File(outputDir, filename + ".jpg");
-            // Set the compression quality.
-            float quality = jpegQuality_ / ((float) 10.0);
-            ImageWriter writer = ImageIO.getImageWritersByFormatName(
-                  "jpeg").next();
-            ImageWriteParam param = writer.getDefaultWriteParam();
-            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-            param.setCompressionQuality(quality);
-            try {
-               ImageOutputStream stream = ImageIO.createImageOutputStream(file);
-               writer.setOutput(stream);
-               writer.write(image);
-               stream.close();
-            }
-            catch (IOException e) {
-               ReportingUtils.logError(e, "Error writing exported JPEG image");
-            }
-            writer.dispose();
-         }
-      }
-
-      /**
-       * Append the provided image onto the end of the given ImageJ ImageStack.
-       */
-      private void addToStack(ImageStack stack, BufferedImage image) {
-         ColorProcessor processor = new ColorProcessor(image);
-         stack.addSlice(processor);
-      }
-
-      public ImageStack getStack() {
-         return stack_;
       }
    }
 
@@ -508,15 +354,22 @@ public class ExportMovieDlg extends JDialog {
       setVisible(true);
    }
 
-   /**
-    * Export images according to the user's setup. Iterate over each axis,
-    * setting the displayed image to the desired coordinates, drawing it,
-    * saving the drawn image to disk, and then moving on.
-    */
    private void export() {
-      File outputDir = null;
+      ImageExporter exporter = new DefaultImageExporter();
+
+      // Set output format.
       String mode = (String) outputFormatSelector_.getSelectedItem();
-      setDefaultExportFormat(mode);
+      ImageExporter.OutputFormat format = ImageExporter.OutputFormat.OUTPUT_PNG;
+      if (mode.contentEquals(FORMAT_JPEG)) {
+         format = ImageExporter.OutputFormat.OUTPUT_JPG;
+      }
+      else if (mode.contentEquals(FORMAT_IMAGEJ)) {
+         format = ImageExporter.OutputFormat.OUTPUT_IMAGEJ;
+      }
+      exporter.setOutputFormat(format);
+
+      // Get save path if relevant.
+      File outputDir;
       if (!mode.equals(FORMAT_IMAGEJ)) {
          // Prompt the user for a directory to save to.
          JFileChooser chooser = new JFileChooser();
@@ -550,69 +403,32 @@ public class ExportMovieDlg extends JDialog {
                ReportingUtils.showError("Unable to find directory at " + outputDir);
             }
          }
-      }
-
-      // This thread will handle telling the display window to display new
-      // images.
-      Thread loopThread;
-      final AtomicBoolean drawFlag = new AtomicBoolean(false);
-      final AtomicBoolean doneFlag = new AtomicBoolean(false);
-      final boolean isSingleShot;
-      if (axisPanels_.size() == 0) {
-         // Only one image to draw.
-         isSingleShot = true;
-         loopThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-               display_.requestRedraw();
-            }
-         }, "Image export thread");
-      }
-      else {
-         isSingleShot = false;
-         loopThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-               Coords baseCoords = display_.getDisplayedImages().get(0).getCoords();
-               axisPanels_.get(0).runLoop(baseCoords, drawFlag);
-               doneFlag.set(true);
-            }
-         }, "Image export thread");
-      }
-
-      String prefix = prefixText_.getText();
-      setDefaultPrefix(prefix);
-      final Exporter exporter = new Exporter((DefaultDisplayWindow) display_,
-            outputDir, prefix, mode, drawFlag, doneFlag, isSingleShot,
-            ((Integer) jpegQualitySpinner_.getValue()));
-      display_.registerForEvents(exporter);
-
-      // Create a thread to wait for the process to finish, and unsubscribe
-      // the exporter at that time.
-      Thread unsubscriber = new Thread(new Runnable() {
-         @Override
-         public void run() {
-            while (!doneFlag.get()) {
-               try {
-                  Thread.sleep(100);
-               }
-               catch (InterruptedException e) {
-                  ReportingUtils.logError("Interrupted while waiting for export to complete.");
-                  return;
-               }
-            }
-            display_.unregisterForEvents(exporter);
-            if (exporter.getStack() != null) {
-               // Show the ImageJ stack.
-               ImagePlus plus = new ImagePlus(
-                  "MM export results", exporter.getStack());
-               plus.show();
-            }
+         try {
+            exporter.setSaveInfo(outputDir.getAbsolutePath(),
+                  prefixText_.getText());
          }
-      });
+         catch (IOException e) {
+            // This should be impossible -- it indicates the directory does not
+            // exist.
+            ReportingUtils.showError(e, "Unable to save to that directory");
+            return;
+         }
+      }
 
-      unsubscriber.start();
-      loopThread.start();
+      exporter.setOutputQuality((Integer) jpegQualitySpinner_.getValue());
+      axisPanels_.get(0).configureExporter(exporter);
+      exporter.setDisplay(display_);
+
+      setDefaultExportFormat(mode);
+      setDefaultPrefix(prefixText_.getText());
+
+      try {
+         exporter.export();
+      }
+      catch (IOException e) {
+         ReportingUtils.showError("Can't export to the selected directory as it would overwrite an existing file. Please choose a different directory.");
+         return;
+      }
       dispose();
    }
 
