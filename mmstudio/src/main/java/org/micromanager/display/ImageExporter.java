@@ -30,7 +30,7 @@ import java.io.IOException;
 public interface ImageExporter {
    /**
     * Set the display to use for image exporting. The same ImageExporter may
-    * be re-used for exporting multiple images.
+    * be re-used for multiple displays, if desired.
     * @param display Display to use for exporting images.
     */
    public void setDisplay(DisplayWindow display);
@@ -91,14 +91,15 @@ public interface ImageExporter {
     * Only one export is allowed to run at a time; if a second export is
     * started, it will block until the first has finished. Otherwise, this
     * method will return immediately. If you want to wait for exporting to
-    * finish, call the waitForCompletion() method.
+    * finish, call the waitForExport() method.
     *
     * NOTE: the exporter will silently ignore the following "configuration
     * errors":
     * - Setting a save path when using the OUTPUT_IMAGEJ format
-    * - Loops over axes that do not exist in the display's datastore
-    * - Loops that have invalid start/end boundary conditions (e.g. starting
-    *   or ending index is greater than largest index in the datastore).
+    * - Loops over axes that are not used by any images in the display's
+    *   datastore
+    * - Loops that have invalid start/end boundary conditions (starting or
+    *   ending index is greater than largest index in the datastore).
     * In the latter two cases, image coordinates that do not refer to a valid
     * image will be ignored (for example, trying to access a Z coordinate of 1
     * in a dataset that is two-dimensional). It is therefore possible that this
