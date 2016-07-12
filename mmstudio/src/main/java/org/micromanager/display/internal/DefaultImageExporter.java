@@ -237,8 +237,7 @@ public class DefaultImageExporter implements ImageExporter {
    }
 
    /**
-    * Save a single image to disk at the provided directory, with a filename
-    * based on the provided sequence number, in the specified mode.
+    * Save a single image to disk.
     */
    private void exportImage(BufferedImage image, int sequenceNum) {
       String filename = getOutputFilename(isSingleShot_ ? -1 : sequenceNum);
@@ -286,7 +285,7 @@ public class DefaultImageExporter implements ImageExporter {
    /**
     * Run sanity checks prior to exporting images. Determine how many images
     * will be exported. Ensure that each image will not overwrite any existing
-    * file. Return the image list.
+    * file. Return the list of image coordinates to be exported.
     */
    private ArrayList<Coords> prepAndSanityCheck()
       throws IOException, IllegalArgumentException {
