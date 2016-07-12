@@ -223,7 +223,7 @@ public interface ASIdiSPIMInterface {
    /**
     * @param numTimepoints sets the number of time points.  Works even if time
     *   point have been disabled, though in that case the number is meaningless.
-    *   If numTimepoints is not between 1 and 32000 then ASIdiSPIMException is thrown.
+    *   If numTimepoints is not between 1 and 100000 then ASIdiSPIMException is thrown.
     */
    public void setTimepointsNumber(int numTimepoints) throws ASIdiSPIMException;
    
