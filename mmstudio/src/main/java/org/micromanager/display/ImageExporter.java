@@ -35,9 +35,22 @@ public interface ImageExporter {
     */
    public void setDisplay(DisplayWindow display);
 
+   /**
+    * Allowed export formats.
+    */
    public enum OutputFormat {
+      /**
+       * Output as a sequence of Portable Network Graphics (PNG) files.
+       */
       OUTPUT_PNG,
+      /**
+       * Output as a sequence of Joint Photographic Experts Group (JPEG) files.
+       */
       OUTPUT_JPG,
+      /**
+       * Output as an ImageJ stack, which will open in a new window; this
+       * "format" does not create any files on disk.
+       */
       OUTPUT_IMAGEJ
    }
 
