@@ -22,8 +22,6 @@ package org.micromanager.display;
 
 import java.io.IOException;
 
-import org.micromanager.data.Datastore;
-
 /**
  * ImageExporters are used to generate linear sequences of images-as-rendered
  * by a DisplayWindow. Thus they include the current image scaling, any
