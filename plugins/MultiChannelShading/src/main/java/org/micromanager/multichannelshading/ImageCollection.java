@@ -221,8 +221,11 @@ public class ImageCollection {
       if (binning == 1 && (roi == null || roi.width == 0)) {
          return BASEIMAGE;
       }
-      String key = binning + "-" + roi.x + "-" + roi.y + "-" + roi.width + "-"
+      String key = "" + binning;
+      if (roi != null) {
+         key = binning + "-" + roi.x + "-" + roi.y + "-" + roi.width + "-"
               + roi.height;
+      }
       return key;
    }
 

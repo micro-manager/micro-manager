@@ -184,16 +184,15 @@ public class ShadingProcessor extends Processor {
          try {
             Configuration config = studio_.getCMMCore().getConfigData(
                     channelGroup_, preset);
-            boolean presetMatch = false;
+            boolean presetMatch = true;
             for (int i = 0; i < config.size(); i++) {
                PropertySetting ps = config.getSetting(i);
                String key = ps.getKey();
                String value = ps.getPropertyValue();
                if (scopeData.containsKey(key)
                        && scopeData.getPropertyType(key) == String.class) {
-                  String tagValue = scopeData.getString(key);
-                  if (value.equals(tagValue)) {
-                     presetMatch = true;
+                  if (!value.equals(scopeData.getString(key))) {
+                     presetMatch = false;
                      break;
                   }
                }
