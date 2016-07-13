@@ -85,8 +85,13 @@ public class DaytimeNighttime {
    };
 
    // Keys that we have to specify manually; nothing will be appended to them.
+   private static final String[] MANUAL_TEXT_COLOR_KEYS = new String[] {
+      "Tree.textForeground"
+   };
+
+   // As above, but for background color.
    private static final String[] MANUAL_BACKGROUND_COLOR_KEYS = new String[] {
-         "ComboBox.buttonBackground",
+         "ComboBox.buttonBackground", "Tree.textBackground",
    };
 
    // background color of the UI
@@ -170,6 +175,9 @@ public class DaytimeNighttime {
       }
       for (String key : LIGHTER_BACKGROUND_COLOR_KEYS) {
          UIManager.put(key + ".background", lightBackground_.get(mode));
+      }
+      for (String key : MANUAL_TEXT_COLOR_KEYS) {
+         UIManager.put(key, enabledTextColor_.get(mode));
       }
       for (String key : MANUAL_BACKGROUND_COLOR_KEYS) {
          UIManager.put(key, background_.get(mode));
