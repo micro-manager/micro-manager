@@ -33,4 +33,16 @@ public class MagellanTaggedImage {
       this.tags = tags;
    }
    
+   public boolean is8Bit() {
+      return this.pix instanceof byte[];
+   }
+   
+   public byte[] get8BitData() {
+      return (byte[]) this.pix;
+   }
+   
+   public short[] get16BitData() {
+      return (short[]) this.pix;
+   }
+   
 }

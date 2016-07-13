@@ -68,7 +68,7 @@ public class MultiResMultipageTiffStorage {
    private String uniqueAcqName_;
    private int byteDepth_;
    private TreeMap<Integer, Integer> backgroundPix_ = new TreeMap<Integer, Integer>(); //map of channel index to background pixel value
-   private final boolean estimateBackground_;
+   private boolean estimateBackground_;
    private double pixelSizeXY_, pixelSizeZ_;
    private AffineTransform affine_;
    private BDVXMLWriter bdvXML_;
@@ -78,7 +78,7 @@ public class MultiResMultipageTiffStorage {
     * Constructor to load existing storage from disk
     * dir --top level saving directory
     */
-   public MultiResMultipageTiffStorage(String dir) throws IOException {
+   public MultiResMultipageTiffStorage(String dir)  throws IOException {
       directory_ = dir;
       finished_ = true;
       estimateBackground_ = false;
@@ -105,10 +105,12 @@ public class MultiResMultipageTiffStorage {
          if (MD.isExploreAcq(summaryMD_) ) {
             TreeMap<Integer, XYStagePosition> positions = new TreeMap<Integer, XYStagePosition>();
             for (String key : fullResStorage_.imageKeys()) {
-               int[] indices = MD.getIndices(key);
+               // array with entires channelIndex, sliceIndex, frameIndex, positionIndex
+               int[] indices = MD.getIndices(key); 
                int posIndex = indices[3];
                if (!positions.containsKey(posIndex) ) {
-                  JSONObject md = fullResStorage_.getImageTags(indices[0], indices[1], indices[2], indices[3]);
+                  //read rowIndex, colIndex, stageX, stageY from per image metadata
+                  JSONObject md = fullResStorage_.getImageTags(indices[0], indices[1], indices[2], indices[3]);                  
                   positions.put(posIndex, new XYStagePosition(new Point2D.Double(MD.getStageX(md),MD.getStageY(md)), 
                           MD.getGridRow(md), MD.getGridCol(md)));
                }
@@ -654,6 +656,14 @@ public class MultiResMultipageTiffStorage {
       } catch (IOException ex) {
          Log.log(ex.toString());
       } 
+   }
+   
+   public MagellanTaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex, int resLevel) {
+      if (resLevel == 0) {
+         return fullResStorage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
+      } else {
+         return lowResStorages_.get(resLevel).getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
+      }
    }
 
    public MagellanTaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {

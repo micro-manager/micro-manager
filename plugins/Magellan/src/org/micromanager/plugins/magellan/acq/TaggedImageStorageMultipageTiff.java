@@ -51,11 +51,11 @@ public final class TaggedImageStorageMultipageTiff   {
    private JSONObject displayAndComments_;
    private boolean newDataSet_;
    private String directory_;
-   final private boolean separateMetadataFile_;
+   private boolean separateMetadataFile_;
    private boolean splitByXYPosition_ = true;
    private volatile boolean finished_ = false;
    private int numChannels_;
-   private final boolean fastStorageMode_;
+   private boolean fastStorageMode_;
    private int lastAcquiredPosition_ = 0;
    private ThreadPoolExecutor writingExecutor_;
    private int maxSliceIndex_ = 0, maxFrameIndex_ = 0, maxChannelIndex_ = 0, minSliceIndex_ = 0;
@@ -71,7 +71,7 @@ public final class TaggedImageStorageMultipageTiff   {
    private HashMap<Integer, FileSet> fileSets_;
    
    //Map of image labels to file 
-   private TreeMap<String, MultipageTiffReader> tiffReadersByLabel_;
+   private HashMap<String, MultipageTiffReader> tiffReadersByLabel_;
 
    /*
     * Constructor that doesn't make reference to MMStudio so it can be used independently of MM GUI
@@ -83,13 +83,12 @@ public final class TaggedImageStorageMultipageTiff   {
 
       newDataSet_ = newDataSet;
       directory_ = dir;
-      tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator());
+      tiffReadersByLabel_ = new HashMap<String, MultipageTiffReader>();
       setSummaryMetadata(summaryMetadata);
 
       if (!newDataSet_) {       
          openExistingDataSet();
-      }    
-      
+      }       
    }
    
    /**
@@ -105,7 +104,7 @@ public final class TaggedImageStorageMultipageTiff   {
             return MultipageTiffReader.readSummaryMD(f.getAbsolutePath());
          }
       }
-      throw new IIOException("Couldn't find a vlid TIFF to read metadata from");
+      throw new IOException("Couldn't find a vlid TIFF to read metadata from");
    }
    
    private void processSummaryMD() {
@@ -131,14 +130,6 @@ public final class TaggedImageStorageMultipageTiff   {
       return writingExecutor_;
    }
    
-   boolean slicesFirst() {
-      return ((ImageLabelComparator) tiffReadersByLabel_.comparator()).getSlicesFirst();
-   }
-   
-   boolean timeFirst() {
-      return ((ImageLabelComparator) tiffReadersByLabel_.comparator()).getTimeFirst();
-   }
-
    private void openExistingDataSet() {
       //Need to throw error if file not found
       MultipageTiffReader reader = null;
@@ -376,8 +367,8 @@ public final class TaggedImageStorageMultipageTiff   {
          // try {
             boolean slicesFirst = summaryMetadata_.optBoolean("SlicesFirst", true);
             boolean timeFirst = false;
-            TreeMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
-            tiffReadersByLabel_ = new TreeMap<String, MultipageTiffReader>(new ImageLabelComparator(slicesFirst, timeFirst));
+            HashMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
+            tiffReadersByLabel_ = new HashMap<String, MultipageTiffReader>();
             if (showProgress) {
                ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
                progressBar.setProgress(0);

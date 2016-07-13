@@ -46,15 +46,15 @@ public class PositionManager {
    private static final String MULTI_RES_NODE_KEY = "MultiResPositionNode";
    
    
-   private final AffineTransform affine_;
+   private AffineTransform affine_;
    private JSONArray positionList_; //all access to positionlist in synchronized methods for thread safety
    private int minRow_, maxRow_, minCol_, maxCol_; //For the lowest resolution level
-   private final String xyStageName_;
+   private  String xyStageName_;
    //Map of Res level to set of nodes
    private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
-   private final int displayTileWidth_, displayTileHeight_;
-   private final int fullTileWidth_, fullTileHeight_;
-   private final int overlapX_, overlapY_;
+   private int displayTileWidth_, displayTileHeight_;
+   private int fullTileWidth_, fullTileHeight_;
+   private int overlapX_, overlapY_;
    
     public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
            int fullTileWidth, int fullTileHeight, int overlapX, int overlapY, JSONArray initialPosList) {
@@ -81,20 +81,20 @@ public class PositionManager {
    
    public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
            int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
-      try {
-         xyStageName_ = summaryMD.getString("Core-XYStage");
-      } catch (JSONException ex) {
-         throw new RuntimeException("No XY stage name in summary metadata");
-      }
-      affine_ = transform;
-      positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
-      readRowsAndColsFromPositionList(summaryMD);
-      displayTileWidth_ = displayTileWidth;
-      displayTileHeight_ = displayTileHeight;
-      fullTileWidth_ = fullTileWidth;
-      fullTileHeight_ = fullTileHeight;
-      overlapX_ = overlapX; 
-      overlapY_ = overlapY;
+//      try {
+//         xyStageName_ = summaryMD.getString("Core-XYStage");
+//      } catch (JSONException ex) {
+//         throw new RuntimeException("No XY stage name in summary metadata");
+//      }
+//      affine_ = transform;
+//      positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
+//      readRowsAndColsFromPositionList(summaryMD);
+//      displayTileWidth_ = displayTileWidth;
+//      displayTileHeight_ = displayTileHeight;
+//      fullTileWidth_ = fullTileWidth;
+//      fullTileHeight_ = fullTileHeight;
+//      overlapX_ = overlapX; 
+//      overlapY_ = overlapY;
    }
    
    public synchronized String getSerializedPositionList() {

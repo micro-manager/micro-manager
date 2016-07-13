@@ -841,7 +841,7 @@ public class MultipageTiffWriter {
       if (numFrames_ > 1 || numSlices_ > 1 || numChannels_ > 1) {
          sb.append("hyperstack=true\n");
       }
-      if (numChannels_ > 1 && numSlices_ > 1 && masterMPTiffStorage_.slicesFirst()) {
+      if (numChannels_ > 1 && numSlices_ > 1) {
          sb.append("order=zct\n");
       }
       //cm so calibration unit is consistent with units used in Tiff tags
