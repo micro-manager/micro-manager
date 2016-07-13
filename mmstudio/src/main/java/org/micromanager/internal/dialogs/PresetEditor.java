@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -41,7 +41,7 @@ public class PresetEditor extends ConfigDialog {
       initName_ = presetName_;
       TITLE = "Preset editor for the \"" + groupName + "\" configuration group";
       showUnused_ = false;
-      showFlagsPanelVisible = false;
+      showFlagsPanelVisible_ = false;
       scrollPaneTop_ = 70;
       numColumns_=2;
       data_ = new PropertyTableData(core_,groupName_,presetName_,1,2, true);
