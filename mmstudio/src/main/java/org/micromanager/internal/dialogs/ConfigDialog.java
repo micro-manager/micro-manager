@@ -23,6 +23,35 @@
 
 package org.micromanager.internal.dialogs;
 
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.Font;
+
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
+import javax.swing.SpringLayout;
+import javax.swing.SwingConstants;
+
+import javax.swing.border.BevelBorder;
+import javax.swing.table.TableColumn;
+
+import mmcorej.CMMCore;
+import mmcorej.Configuration;
+
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.ShowFlags;
 import org.micromanager.internal.utils.PropertyUsageCellRenderer;
@@ -34,14 +63,7 @@ import org.micromanager.internal.utils.PropertyUsageCellEditor;
 import org.micromanager.internal.utils.ShowFlagsPanel;
 import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.PropertyValueCellRenderer;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import javax.swing.table.TableColumn;
-import mmcorej.CMMCore;
-import mmcorej.Configuration;
+
 import org.micromanager.Studio;
 
 /*
