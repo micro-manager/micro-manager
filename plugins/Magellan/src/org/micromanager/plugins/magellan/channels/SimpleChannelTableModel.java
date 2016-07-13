@@ -28,6 +28,7 @@ import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import mmcorej.CMMCore;
 import org.micromanager.api.events.ExposureChangedEvent;
 import org.micromanager.plugins.magellan.demo.DemoModeImageData;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  *
@@ -167,11 +168,11 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       } else if (columnIndex == 1) {       
          //cant edit channel name
       } else if (columnIndex == 2) {
-         channels_.get(row).exposure_ = Double.parseDouble((String) value);
+         channels_.get(row).exposure_ = NumberUtils.parseDouble((String) value);
          //same for all other channels of the same camera_
          if (numCamChannels > 1) {
             for (int i = (row - row % numCamChannels); i < (row / numCamChannels + 1) * numCamChannels; i++) {
-               channels_.get(i).exposure_ = Double.parseDouble((String) value);
+               channels_.get(i).exposure_ = NumberUtils.parseDouble((String) value);
             }
             fireTableDataChanged();
          }

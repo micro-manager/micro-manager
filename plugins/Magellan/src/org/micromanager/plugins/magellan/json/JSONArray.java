@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  * A JSONArray is an ordered sequence of values. Its external text form is a
@@ -207,7 +208,7 @@ public class JSONArray {
         Object o = get(index);
         try {
             return o instanceof Number ?
-                    ((Number)o).doubleValue() : Double.parseDouble((String)o);
+                    ((Number)o).doubleValue() : NumberUtils.parseDouble((String)o);
         } catch (Exception e) {
             throw new JSONException("JSONArray[" + index +
                 "] is not a number.");

@@ -19,6 +19,7 @@ package org.micromanager.plugins.magellan.surfacesandregions;
 
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  *
@@ -65,7 +66,7 @@ class SurfaceTableModel extends AbstractTableModel  {
             Log.log("Surface name already taken",true);
          }
       } else if (col == 1) {
-         manager_.getSurface(row).setXYPadding(Double.parseDouble((String) value));
+         manager_.getSurface(row).setXYPadding(NumberUtils.parseDouble((String) value));
       }  
    }
    

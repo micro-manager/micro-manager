@@ -81,20 +81,20 @@ public class PositionManager {
    
    public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
            int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
-//      try {
-//         xyStageName_ = summaryMD.getString("Core-XYStage");
-//      } catch (JSONException ex) {
-//         throw new RuntimeException("No XY stage name in summary metadata");
-//      }
-//      affine_ = transform;
-//      positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
-//      readRowsAndColsFromPositionList(summaryMD);
-//      displayTileWidth_ = displayTileWidth;
-//      displayTileHeight_ = displayTileHeight;
-//      fullTileWidth_ = fullTileWidth;
-//      fullTileHeight_ = fullTileHeight;
-//      overlapX_ = overlapX; 
-//      overlapY_ = overlapY;
+      try {
+         xyStageName_ = summaryMD.getString("Core-XYStage");
+      } catch (JSONException ex) {
+         throw new RuntimeException("No XY stage name in summary metadata");
+      }
+      affine_ = transform;
+      positionNodes_ = new TreeMap<Integer,TreeSet<MultiResPositionNode>>();
+      readRowsAndColsFromPositionList(summaryMD);
+      displayTileWidth_ = displayTileWidth;
+      displayTileHeight_ = displayTileHeight;
+      fullTileWidth_ = fullTileWidth;
+      fullTileHeight_ = fullTileHeight;
+      overlapX_ = overlapX; 
+      overlapY_ = overlapY;
    }
    
    public synchronized String getSerializedPositionList() {

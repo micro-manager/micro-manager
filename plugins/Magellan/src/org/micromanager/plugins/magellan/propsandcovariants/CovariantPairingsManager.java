@@ -34,6 +34,7 @@ import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 import org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
 import org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
 
@@ -217,10 +218,10 @@ public class CovariantPairingsManager {
         for (int i = 1; i < lines.length; i++) {
             String[] vals = lines[i].split(",");
             CovariantValue iVal = independent.getType() == CovariantType.STRING ? new CovariantValue(vals[0])
-                    : independent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[0]))
+                    : independent.getType() == CovariantType.DOUBLE ? new CovariantValue(NumberUtils.parseDouble(vals[0]))
                     : new CovariantValue(Integer.parseInt(vals[0]));
             CovariantValue dVal = dependent.getType() == CovariantType.STRING ? new CovariantValue(vals[1])
-                    : dependent.getType() == CovariantType.DOUBLE ? new CovariantValue(Double.parseDouble(vals[1]))
+                    : dependent.getType() == CovariantType.DOUBLE ? new CovariantValue(NumberUtils.parseDouble(vals[1]))
                     : new CovariantValue(Integer.parseInt(vals[1]));
             pairing.addValuePair(iVal, dVal);
             reversePairing.addValuePair(dVal, iVal);

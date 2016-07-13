@@ -34,6 +34,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
 import org.micromanager.plugins.magellan.propsandcovariants.SurfaceData;
 
@@ -328,7 +329,7 @@ public class SurfaceManager {
          }
          for (int i = 1; i < lines.length; i++) {
             String[] xyz = lines[i].split("\t");
-            surface.addPoint(Double.parseDouble(xyz[0]), Double.parseDouble(xyz[1]), Double.parseDouble(xyz[2]));
+            surface.addPoint(NumberUtils.parseDouble(xyz[0]), NumberUtils.parseDouble(xyz[1]), NumberUtils.parseDouble(xyz[2]));
          }
       }
       updateSurfaceTableAndCombos();

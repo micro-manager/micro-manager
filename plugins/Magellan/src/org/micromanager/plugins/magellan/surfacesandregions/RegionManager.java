@@ -32,6 +32,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.micromanager.plugins.magellan.gui.GUI;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
 
 /**
@@ -256,7 +257,7 @@ public class RegionManager {
          String xy = fields[1];
          int rows = Integer.parseInt(fields[2]);
          int cols = Integer.parseInt(fields[3]);
-         Point2D.Double center = new Point2D.Double(Double.parseDouble(fields[4]), Double.parseDouble(fields[5]));
+         Point2D.Double center = new Point2D.Double(NumberUtils.parseDouble(fields[4]), NumberUtils.parseDouble(fields[5]));
          
          //if there's already one with this name, replace its points
          //so that other parts of the software with references to it stay working

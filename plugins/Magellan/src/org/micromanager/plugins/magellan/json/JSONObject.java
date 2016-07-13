@@ -29,6 +29,7 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  * A JSONObject is an unordered collection of name/value pairs. Its
@@ -324,7 +325,7 @@ public class JSONObject {
         Object o = get(key);
         try {
             return o instanceof Number ?
-                    ((Number)o).doubleValue() : Double.parseDouble((String)o);
+                    ((Number)o).doubleValue() : NumberUtils.parseDouble((String)o);
         } catch (Exception e) {
             throw new JSONException("JSONObject[" + quote(key) +
                 "] is not a number.");

@@ -27,6 +27,8 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class NumberUtils {
 	private static final NumberFormat format_;
@@ -94,7 +96,7 @@ public class NumberUtils {
 		return coreIntegerFormat_.parse((String) numberString).intValue();
 	}
 
-   public static long coreStringToLong(Object numberString) throws ParseException {
+        public static long coreStringToLong(Object numberString) throws ParseException {
 		return coreIntegerFormat_.parse((String) numberString).longValue();
 	}
 
@@ -121,6 +123,13 @@ public class NumberUtils {
 		return intToDisplayString(coreStringToInt(numberInt));
 	}
 
-
+        public static double parseDouble(String s) {
+           try {
+              return DecimalFormat.getNumberInstance().parse(s).doubleValue();
+           } catch (ParseException ex) {
+              Log.log(ex);
+              throw new RuntimeException();
+           }
+        }
 
 }
