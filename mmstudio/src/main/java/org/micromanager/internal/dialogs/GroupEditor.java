@@ -43,9 +43,6 @@ import org.micromanager.internal.utils.SortFunctionObjects;
 
 public class GroupEditor extends ConfigDialog {
 
-   /**
-    * 
-    */
    private static final long serialVersionUID = 8281144157746745260L;
    private static final String DISPLAY_SHUTTER_WARNING = "Warn user before saving a config group that includes shutter state.";
 
@@ -56,7 +53,7 @@ public class GroupEditor extends ConfigDialog {
       initName_ = groupName_;
       TITLE = "Group Editor";
       showUnused_ = true;
-      showFlagsPanelVisible = true;
+      showFlagsPanelVisible_ = true;
       scrollPaneTop_ = 140;
       numColumns_ = 3;
       data_ = new PropertyTableData(core_, groupName_, presetName_, 2, 1, false);

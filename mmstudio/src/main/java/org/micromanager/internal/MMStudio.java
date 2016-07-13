@@ -789,11 +789,9 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          propertyBrowser_.dispose();
       }
 
-      propertyBrowser_ = new PropertyEditor();
-      propertyBrowser_.setGui(studio_);
+      propertyBrowser_ = new PropertyEditor(studio_);
       propertyBrowser_.setVisible(true);
       propertyBrowser_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-      propertyBrowser_.setCore(core_);
    }
 
    public void createCalibrationListDlg() {

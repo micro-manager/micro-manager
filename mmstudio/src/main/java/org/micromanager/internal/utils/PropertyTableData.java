@@ -286,10 +286,17 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       for (PropertyItem item : propList_) {
          // select which devices to display
 
-         showDevice = showDevice(flags, item.device);;
+         showDevice = showDevice(flags, item.device);
 
          if (showUnused_ == false && item.confInclude == false) {
             showDevice = false;
+         }
+
+         if (showDevice && !flags.searchFilter_.isEmpty()) {
+            // Check the device/property name against the search filter.
+            String name = String.format("%s-%s", item.device, item.name);
+            showDevice = name.toLowerCase().contains(
+                  flags.searchFilter_.toLowerCase());
          }
 
          if (showDevice) {
