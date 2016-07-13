@@ -233,7 +233,7 @@ public abstract class ConfigDialog extends MMDialog {
          } catch (Exception e) {
             ReportingUtils.showError(e);
          }
-         add(showFlagsPanel_);
+         add(showFlagsPanel_, "growx");
       }
 
       okButton_ = new JButton("OK");

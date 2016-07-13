@@ -26,7 +26,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -58,7 +61,7 @@ public class ShowFlagsPanel extends JPanel {
       initialCfg_ = initialCfg;
       setBorder(BorderFactory.createTitledBorder("Show"));
       // We need very little vertical space between components.
-      setLayout(new MigLayout("insets 0, gap -3"));
+      setLayout(new MigLayout("fill, insets 0, gap -3"));
       createComponents();
       initializeComponents();
    }
@@ -119,6 +122,28 @@ public class ShowFlagsPanel extends JPanel {
          }
       });
       add(showOtherCheckBox_, "wrap");
+
+      add(new JLabel("Filter by name:"), "gaptop 1, gapbottom 1, wrap");
+      searchFilterText_ = new JTextField();
+      searchFilterText_.getDocument().addDocumentListener(
+            new DocumentListener() {
+         @Override
+         public void changedUpdate(DocumentEvent e) {
+            updateSearchFilter();
+         }
+         public void insertUpdate(DocumentEvent e) {
+            updateSearchFilter();
+         }
+         public void removeUpdate(DocumentEvent e) {
+            updateSearchFilter();
+         }
+      });
+      add(searchFilterText_, "growx, wrap");
+   }
+
+   private void updateSearchFilter() {
+      flags_.searchFilter_ = searchFilterText_.getText();
+      data_.updateRowVisibility(flags_);
    }
 
    protected void initializeComponents() {
