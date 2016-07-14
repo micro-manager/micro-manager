@@ -257,49 +257,4 @@ public class ImageCollection {
       return newIp;         
    }
    
-   /*
-   public static Rectangle TagToRectangle(String search) throws MMException {
-      String[] parts = search.split("-");
-      // The Andor Zyla adds negative offsets to the ROI
-      // these need to be caught and corrected here, or we will not 
-      // generate the corect image.  
-      // Once this is fixed in the Zyla, this code can go away
-      if (parts.length > 4) {
-         String[] realParts = new String[4];
-         int counter = 0;
-         int lowest = 0;
-         for (int i = 0; i < parts.length; i++) {
-            if ("".equals(parts[i])) {
-               i++;
-               realParts[counter] = "-" + parts[i];
-               int val = Integer.valueOf(realParts[counter]);
-               if (val < lowest) {
-                  lowest = val;
-               }
-            } else {
-               realParts[counter] = parts[i];
-            }
-            counter++;
-         }
-         for (int i=0; i < realParts.length; i++) {
-            realParts[i] = Integer.toString( 
-                    Integer.valueOf(realParts[i]) - lowest);
-         }
-         parts = realParts;
-      }
-      
-      if (parts.length < 4) {
-         throw new MMException("This String does not represent a Rectangle");
-      }
-      try {
-         Rectangle result = new Rectangle(Integer.parseInt(parts[0]),  
-              Integer.parseInt(parts[1]), Integer.parseInt(parts[2]),
-              Integer.parseInt(parts[3]) );
-         return result;
-      } catch (NumberFormatException ex) {
-         throw new MMException("This String does not represent a Rectangle");
-      }
-      
-   }
-   */
 }
