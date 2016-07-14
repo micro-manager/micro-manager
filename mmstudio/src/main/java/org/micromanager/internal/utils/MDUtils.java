@@ -539,7 +539,13 @@ public class MDUtils {
    public static Rectangle getROI(JSONObject tags)
       throws IllegalArgumentException, JSONException {
       String roiString = tags.getString("ROI");
-      String[] xywh = roiString.split("-");
+      String[] xywh = roiString.split("_");
+      // We switched in July 2016 to using "_" as separator from "-"
+      // For backwards compatability, check with the old separator is the 
+      // new one does not work as expected
+      if (xywh.length != 4) {
+         xywh = roiString.split("-");
+      }
       if (xywh.length != 4) {
          throw new IllegalArgumentException("Invalid ROI tag");
       }
@@ -552,7 +558,7 @@ public class MDUtils {
    }
 
    public static void setROI(JSONObject tags, Rectangle r) throws JSONException {
-      String roiString = String.format("%d-%d-%d-%d", 
+      String roiString = String.format("%d_%d_%d_%d", 
             (int) r.getX(), (int) r.getY(), 
             (int) r.getWidth(), (int) r.getHeight());
       tags.put("ROI", roiString);
