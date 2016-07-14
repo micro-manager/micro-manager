@@ -1,24 +1,24 @@
 ///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     mmstudio
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
-
-//AUTHOR:       Nenad Amodaj, nenad@amodaj.com, March 8, 2007
-//              Nico Stuurman, nico@cmp.ucsf.edu June 23, 2009
-
-//COPYRIGHT:    University of California, San Francisco, 2007, 2008, 2009, 2014
-
-//LICENSE:      This file is distributed under the BSD license.
-//License text is included with the source distribution.
-
-//This file is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty
-//of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-//IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-
-//CVS:          $Id$
+//
+// AUTHOR:       Nenad Amodaj, nenad@amodaj.com, March 8, 2007
+//               Nico Stuurman, nico@cmp.ucsf.edu June 23, 2009
+//
+// COPYRIGHT:    University of California, San Francisco, 2007, 2008, 2009, 2014
+//
+// LICENSE:      This file is distributed under the BSD license.
+// License text is included with the source distribution.
+//
+// This file is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty
+// of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 
 package org.micromanager.internal.positionlist;
 
@@ -133,7 +133,6 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
     * @param gui - Studio
     * @param posList - Position list to be displayed in this dialog
     * @param acd - MDA window
-    * @param opts - MicroManager Options
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public PositionListDlg(CMMCore core, Studio gui,
@@ -156,7 +155,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       setLayout(new MigLayout("flowy, filly, insets 8", "[grow][]", 
               "[top]"));
       setMinimumSize(new Dimension(275, 365));
-      loadAndRestorePosition(100, 100, 362, 595);
+      super.loadAndRestorePosition(100, 100, 362, 595);
 
       arialSmallFont_ = new Font("Arial", Font.PLAIN, 10);
 
@@ -652,7 +651,7 @@ public class PositionListDlg extends MMDialog implements MouseListener, ChangeLi
       MultiStagePosition selMsp = null;
       if (shouldOverwrite) {
          selMsp = ptm.getPositionList().getPosition(posTable_.getSelectedRow() -1);
-      };
+      }
 
       if (selMsp == null) {
          msp.setLabel(ptm.getPositionList().generateLabel());
