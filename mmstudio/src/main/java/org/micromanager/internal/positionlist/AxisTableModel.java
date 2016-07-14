@@ -1,3 +1,22 @@
+///////////////////////////////////////////////////////////////////////////////
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// COPYRIGHT:    University of California, San Francisco
+//
+// LICENSE:      This file is distributed under the BSD license.
+// License text is included with the source distribution.
+//
+// This file is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty
+// of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+// IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.EventBus;
@@ -13,9 +32,9 @@ import org.micromanager.internal.utils.DefaultUserProfile;
 class AxisTableModel extends AbstractTableModel {
    private static final long serialVersionUID = 1L;
    private boolean isEditable_ = true;
-   private AxisList axisList_;
-   private JTable axisTable_;
-   private EventBus bus_;
+   private final AxisList axisList_;
+   private final JTable axisTable_;
+   private final EventBus bus_;
    public final String[] COLUMN_NAMES = new String[] {
          "Use",
          "Stage name"
@@ -25,6 +44,11 @@ class AxisTableModel extends AbstractTableModel {
       axisList_ = list;
       axisTable_ = table;
       bus_ = bus;
+      // restore the usage settings from our previous session
+      for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
+         axisList_.get(i).setUse(DefaultUserProfile.getInstance().getBoolean(
+               AxisTableModel.class, axisList_.get(i).getAxisName(), true ) );
+      }
    }
 
    @Override
@@ -51,18 +75,16 @@ class AxisTableModel extends AbstractTableModel {
       }
       return null;
    }
+   
    @Override
    public Class<?> getColumnClass(int c) {
       return getValueAt(0, c).getClass();
    }
+   
    public void setEditable(boolean state) {
       isEditable_ = state;
-      if (state) {
-         for (int i=0; i < getRowCount(); i++) {
-            
-         }
-      }
    }
+   
    @Override
    public boolean isCellEditable(int rowIndex, int columnIndex) {
       if (columnIndex == 0) {
@@ -70,10 +92,12 @@ class AxisTableModel extends AbstractTableModel {
       }
       return false;
    }
+   
    @Override
    public void setValueAt(Object value, int rowIndex, int columnIndex) {
-      if (columnIndex == 0) { // I.e. action was in the column with checkboxes
+      if (columnIndex == 0) { // i.e. action was in the column with checkboxes
          axisList_.get(rowIndex).setUse((Boolean) value);
+         // store new choice to profile
          DefaultUserProfile.getInstance().setBoolean(
                AxisTableModel.class, axisList_.get(rowIndex).getAxisName(), 
                (Boolean) value); 
