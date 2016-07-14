@@ -219,10 +219,23 @@ public class SliderPanel extends JPanel {
    @Override
    public void setBackground(Color bg) {
       super.setBackground(bg);
-      if (slider_ != null)
+      if (slider_ != null) {
          slider_.setBackground(bg);
-      if (textField_ != null)
+      }
+      if (textField_ != null) {
          textField_.setBackground(bg);
+      }
+   }
+
+   @Override
+   public void setForeground(Color bg) {
+      super.setForeground(bg);
+      if (slider_ != null) {
+         slider_.setForeground(bg);
+      }
+      if (textField_ != null) {
+         textField_.setForeground(bg);
+      }
    }
 
    @Override
