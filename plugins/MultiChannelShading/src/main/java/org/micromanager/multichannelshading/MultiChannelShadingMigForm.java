@@ -31,12 +31,10 @@ import java.awt.event.FocusListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -50,7 +48,6 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.MMException;
 
 /**
  *
@@ -77,7 +74,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
      
     /**
      * Creates new form MultiChannelShadingForm
-     * @param processor
+     * @param settings
      * @param studio
      */
    @SuppressWarnings("LeakingThisInConstructor")
@@ -101,9 +98,9 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       
       mcsPluginWindow = this;
       this.setLayout(new MigLayout("flowx, fill, insets 8"));
-      this.setTitle(MultiChannelShading.menuName);
+      this.setTitle(MultiChannelShading.MENUNAME);
 
-      loadAndRestorePosition(100, 100, 375, 275);
+      super.loadAndRestorePosition(100, 100, 375, 275);
       
       JLabel channelGroupLabel = new JLabel("Channel Group:");
       channelGroupLabel.setFont(arialSmallFont_);
@@ -334,7 +331,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
          studio_.profile().setString(MultiChannelShadingMigForm.class,
                  DARKFIELDFILENAME, backgroundFileName_);
          studio_.data().notifyPipelineChanged();
-      } catch (MMException ex) {
+      } catch (ShadingException ex) {
          studio_.logs().showError(ex, "Failed to set background image");
          return "";
       }

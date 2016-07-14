@@ -18,24 +18,22 @@
 //               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.multichannelshading;
 
-import ij.ImagePlus;
 import ij.process.ImageProcessor;
+
 import java.awt.Rectangle;
-import java.util.Iterator;
+
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
-import mmcorej.TaggedImage;
-import org.micromanager.data.Coords;
+
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.MMException;
 
 /**
  *
@@ -58,7 +56,7 @@ public class ShadingProcessor extends Processor {
       if (backgroundFile != null && !backgroundFile.equals("")) {
          try {
             imageCollection_.setBackground(backgroundFile);
-         } catch (MMException e) {
+         } catch (ShadingException e) {
             studio_.logs().logError(e, "Unable to set background file to " + backgroundFile);
          }
       }
@@ -92,14 +90,18 @@ public class ShadingProcessor extends Processor {
       // subtract background
       Integer binning = metadata.getBinning();
       if (binning == null) {
+         studio_.logs().logError("MultiShadingPlugin: Image metadata did not contain Binning information.");
          // Assume binning is 1
          binning = 1;
       }
       Rectangle rect = metadata.getROI();
+      if (rect == null) {
+         studio_.logs().logError("MultiShadingPlugin: Image metadata did not list ROI.");
+      }
       ImagePlusInfo background = null;
       try {
          background = imageCollection_.getBackground(binning, rect);
-      } catch (MMException e) {
+      } catch (ShadingException e) {
          studio_.logs().logError(e, "Error getting background for bin mode " + binning + " and rect " + rect);
       }
       if (background != null) {
@@ -110,7 +112,7 @@ public class ShadingProcessor extends Processor {
             if (userData != null) {
                userData = userData.copy().putBoolean("Background-corrected", true).build();
             }
-         } catch (MMException e) {
+         } catch (ShadingException e) {
             studio_.logs().logError(e, "Unable to subtract background");
          }
          bgSubtracted = studio_.data().ij().createImage(ip, image.getCoords(),
@@ -210,4 +212,5 @@ public class ShadingProcessor extends Processor {
    public ImageCollection getImageCollection() {
       return imageCollection_;
    }
+   
 }

@@ -46,7 +46,7 @@ public class ShadingTable extends JTable {
 
    private final Studio gui_;
 
-   private static final String buttonCellLayoutConstraints =
+   private static final String BUTTONCELLLAYOUTCONSTRAINTS =
          "insets 0, align center, center";
 
    private class LoadFileButtonCellRenderer implements TableCellRenderer {
@@ -57,7 +57,7 @@ public class ShadingTable extends JTable {
          button_ = form.mcsButton(form.getButtonDimension(), 
                  form.getButtonFont());
          button_.setText("...");
-         panel_.setLayout(new MigLayout(buttonCellLayoutConstraints));
+         panel_.setLayout(new MigLayout(BUTTONCELLLAYOUTCONSTRAINTS));
          panel_.add(button_,"gapx push");
       }
 
@@ -90,7 +90,7 @@ public class ShadingTable extends JTable {
                  form_.getButtonFont());
          button_.setText("...");
          row_ = -1;
-         panel_.setLayout(new MigLayout(buttonCellLayoutConstraints));
+         panel_.setLayout(new MigLayout(BUTTONCELLLAYOUTCONSTRAINTS));
          panel_.add(button_, "gapx push");
          button_.addActionListener(this);
       }
