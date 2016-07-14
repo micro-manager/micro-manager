@@ -36,11 +36,11 @@ import org.scijava.plugin.SciJavaPlugin;
  */
 @Plugin(type = ProcessorPlugin.class)
 public class MultiChannelShading implements ProcessorPlugin, SciJavaPlugin {
-   public static final String menuName = "Flat-Field Correction";
-   public static final String tooltipDescription =
+   public static final String MENUNAME = "Flat-Field Correction";
+   public static final String TOOLTIPDESCRIPTION =
       "Apply dark subtraction and flat-field correction";
 
-   public static String versionNumber = "0.2";
+   public static final String VERSIONNUMBER = "0.3";
 
    private Studio studio_;
 
@@ -49,31 +49,33 @@ public class MultiChannelShading implements ProcessorPlugin, SciJavaPlugin {
       studio_ = studio;
    }
 
+   @Override
    public ProcessorConfigurator createConfigurator(PropertyMap settings) {
       return new MultiChannelShadingMigForm(settings, studio_);
    }
 
+   @Override
    public ProcessorFactory createFactory(PropertyMap settings) {
       return new MultiChannelShadingFactory(studio_, settings);
    }
 
    @Override
    public String getName() {
-      return menuName;
+      return MENUNAME;
    }
 
    @Override
    public String getHelpText() {
-      return tooltipDescription;
+      return TOOLTIPDESCRIPTION;
    }
 
    @Override
    public String getVersion() {
-      return versionNumber;
+      return VERSIONNUMBER;
    }
 
    @Override
    public String getCopyright() {
-      return "University of California, 2014";
+      return "University of California, 2014-2016";
    }   
 }

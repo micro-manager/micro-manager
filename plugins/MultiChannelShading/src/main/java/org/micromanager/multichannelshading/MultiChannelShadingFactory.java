@@ -22,23 +22,19 @@ package org.micromanager.multichannelshading;
 
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorFactory;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.FileDialogs;
-import org.micromanager.internal.utils.MMDialog;
-import org.micromanager.internal.utils.MMException;
 
 /**
  *
  * @author Chris Weisiger
  */
 public class MultiChannelShadingFactory implements ProcessorFactory {
-   private Studio studio_;
-   private String channelGroup_;
-   private String[] presets_;
-   private String backgroundFile_;
-   private String[] files_;
+   private final Studio studio_;
+   private final String channelGroup_;
+   private final String[] presets_;
+   private final String backgroundFile_;
+   private final String[] files_;
 
    public MultiChannelShadingFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;

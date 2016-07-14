@@ -30,9 +30,6 @@ import java.awt.Rectangle;
 import java.util.HashMap;
 import org.micromanager.Studio;
 
-import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.MMException;
-
 /**
  * Utility class for Shading plugin that holds the background and flatfield
  * images.  The images are stored as ImagePlusInfo objects.
@@ -57,13 +54,13 @@ public class ImageCollection {
       presetFiles_ = new HashMap<String, String>();
    }
    
-   public void setBackground(String file) throws MMException {
+   public void setBackground(String file) throws ShadingException {
       background_.clear();
       if (!file.equals("")) {
          ij.io.Opener opener = new ij.io.Opener();
          ImagePlus ip = opener.openImage(file);
          if (ip == null) {
-            throw new MMException("Failed to open file: " + file);
+            throw new ShadingException("Failed to open file: " + file);
          }
          ImagePlusInfo bg = new ImagePlusInfo(ip); 
          background_.put(BASEIMAGE, bg);
@@ -81,7 +78,7 @@ public class ImageCollection {
    }
    
    public ImagePlusInfo getBackground(int binning, Rectangle roi) 
-           throws MMException {
+           throws ShadingException {
       String key = makeKey(binning, roi);
       if (background_.containsKey(key)) {
          return background_.get(key);
@@ -104,22 +101,22 @@ public class ImageCollection {
     * Then, the average pixel value will be calculated
     * A normalized image will be calculated by dividing the mean through the 
     * pixel value.  Therefore, use these flatfield images by multiplying  
-    * background corrected images, rather than by divding through them.  THis 
-    * is for performance reasons.
-    * @param preset
-    * @param file
-    * @throws MMException 
+    * background corrected images, rather than by dividing.  This behavior
+    * improves performance.
+    * @param preset Configuration preset to be associated with this image
+    * @param file Path to TIFF file with flatfield image
+    * @throws ShadingException 
     */
-   public void addFlatField(String preset, String file) throws MMException {
+   public void addFlatField(String preset, String file) throws ShadingException {
       ij.io.Opener opener = new ij.io.Opener();
       ImagePlus ip = opener.openImage(file);
       if (ip == null) {
-         throw new MMException(
+         throw new ShadingException(
                  "Failed to open flatfield file: " + file);
       }
       if (ip.getType() != ImagePlus.GRAY8 && ip.getType() != ImagePlus.GRAY16
               && ip.getType() != ImagePlus.GRAY32 ) {
-         throw new MMException(
+         throw new ShadingException(
                  "This plugin only works with gray scale flatfield images of 1 or 2 byte size");
       }
       ImagePlusInfo bg = getBackground();
@@ -173,7 +170,7 @@ public class ImageCollection {
          newFlatField.put(BASEIMAGE, flatField);
          newFlatField.put(makeKey(1, fp.getRoi()), flatField);
          flatFields_.put(preset, newFlatField);
-      } catch (MMException ex) {
+      } catch (ShadingException ex) {
          gui_.logs().logError("Shading plugin, addFlatField in ImageCollection: " + 
                  ex.getMessage());
       }
@@ -200,7 +197,7 @@ public class ImageCollection {
    }
 
    public ImagePlusInfo getFlatField(String preset, int binning, Rectangle roi)
-           throws MMException {
+           throws ShadingException {
       String key = makeKey(binning, roi);
       if (flatFields_.get(preset).containsKey(key)) {
          return flatFields_.get(preset).get(key);
@@ -242,9 +239,9 @@ public class ImageCollection {
     * @throws org.micromanager.internal.utils.MMException 
     */
    private ImagePlusInfo makeDerivedImage(ImagePlusInfo ipi, int binning, Rectangle roi)
-           throws MMException {
+           throws ShadingException {
       if (ipi.getBinning() != 1) {
-         throw new MMException("This is not an unbinned image.  " +
+         throw new ShadingException("This is not an unbinned image.  " +
                  "Can not derive binned images from this one");
       }
       ImageProcessor resultProcessor;
@@ -256,52 +253,8 @@ public class ImageCollection {
       resultProcessor.setRoi(roi);
       ImagePlusInfo newIp = new ImagePlusInfo(new ImagePlus("", resultProcessor.crop()), 
               binning, roi);
-      //newIp.setProcessor(resultProcessor.duplicate());
       
       return newIp;         
    }
    
-   public static Rectangle TagToRectangle(String search) throws MMException {
-      String[] parts = search.split("-");
-      // The Andor Zyla adds negative offsets to the ROI
-      // these need to be caught and corrected here, or we will not 
-      // generate the corect image.  
-      // Once this is fixed in the Zyla, this code can go away
-      if (parts.length > 4) {
-         String[] realParts = new String[4];
-         int counter = 0;
-         int lowest = 0;
-         for (int i = 0; i < parts.length; i++) {
-            if ("".equals(parts[i])) {
-               i++;
-               realParts[counter] = "-" + parts[i];
-               int val = Integer.valueOf(realParts[counter]);
-               if (val < lowest) {
-                  lowest = val;
-               }
-            } else {
-               realParts[counter] = parts[i];
-            }
-            counter++;
-         }
-         for (int i=0; i < realParts.length; i++) {
-            realParts[i] = Integer.toString( 
-                    Integer.valueOf(realParts[i]) - lowest);
-         }
-         parts = realParts;
-      }
-      
-      if (parts.length < 4) {
-         throw new MMException("This String does not represent a Rectangle");
-      }
-      try {
-         Rectangle result = new Rectangle(Integer.parseInt(parts[0]),  
-              Integer.parseInt(parts[1]), Integer.parseInt(parts[2]),
-              Integer.parseInt(parts[3]) );
-         return result;
-      } catch (NumberFormatException ex) {
-         throw new MMException("This String does not represent a Rectangle");
-      }
-      
-   }
 }

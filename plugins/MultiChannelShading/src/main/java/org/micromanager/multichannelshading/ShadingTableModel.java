@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.MMException;
 
 /**
  *
@@ -147,7 +146,7 @@ public class ShadingTableModel extends AbstractTableModel {
             }
          }
 
-      } catch (MMException ex) {
+      } catch (ShadingException ex) {
          gui_.logs().showError(ex);
       }
       fireTableDataChanged();
@@ -258,7 +257,7 @@ public class ShadingTableModel extends AbstractTableModel {
          if (preset != null) {
             try {
                imageCollection_.addFlatField(preset, fileList_.get(row));
-            } catch (MMException ex) {
+            } catch (ShadingException ex) {
                gui_.logs().showError(ex);
             }
             gui_.profile().setString(this.getClass(), preset, fileList_.get(row));
