@@ -167,24 +167,6 @@ int RAMPSHub::Initialize()
   CreateProperty(g_versionProp, sversion.str().c_str(), MM::String, true, pAct);
 
   PurgeComPortH();
-
-  // Write current location as origin
-  ret = SendCommand("G28 X0 Y0");
-  if (ret != DEVICE_OK) {
-    LogMessage("Homing command failed.");
-    return ret;
-  }
-  ret = ReadResponse(answer);
-  if (ret != DEVICE_OK) {
-    LogMessage("error getting response to homing command.");
-    return ret;
-  }
-  if (answer != "ok") {
-    LogMessage("Homing command: expected ok.");
-    return DEVICE_ERR;
-  }
-
-  PurgeComPortH();
   SetVelocity(velocity_x_, velocity_y_, velocity_z_);
   PurgeComPortH();
   SetAcceleration(acceleration_x_, acceleration_y_, acceleration_z_);
@@ -241,7 +223,7 @@ bool RAMPSHub::Busy() {
   }
 
   std::string answer;
-  int ret = ReadResponse(answer, 50);
+  int ret = ReadResponse(answer, 30000);
   if (ret != DEVICE_OK) {
     status_ = "Busy";
     return true;
@@ -794,4 +776,3 @@ int RAMPSHub::OnAccelerationZ(MM::PropertyBase* pProp, MM::ActionType eAct)
 
   return DEVICE_OK;
 }
-

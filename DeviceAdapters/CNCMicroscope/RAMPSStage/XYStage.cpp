@@ -167,10 +167,56 @@ int RAMPSXYStage::SetRelativePositionSteps(long x, long y)
   return this->SetPositionSteps(xSteps+x, ySteps+y);
 }
 
-int RAMPSXYStage::Home() { return DEVICE_OK; }
-int RAMPSXYStage::Stop() { return DEVICE_OK; }
+int RAMPSXYStage::Home() {
+  RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
+  pHub->PurgeComPortH();
+  int ret = pHub->SendCommand("G28 X0 Y0");
+  if (ret != DEVICE_OK) {
+    LogMessage("Homing command failed.");
+    return ret;
+  }
+  std::string answer;
+  ret = pHub->ReadResponse(answer, 50000);
+  if (ret != DEVICE_OK) {
+    LogMessage("error getting response to homing command.");
+    return ret;
+  }
+  if (answer != "ok") {
+    LogMessage("Homing command: expected ok.");
+    return DEVICE_ERR;
+  }
+  return DEVICE_OK;
+}
 
-int RAMPSXYStage::SetOrigin() { return DEVICE_OK; }
+int RAMPSXYStage::SetOrigin() {
+  return SetAdapterOriginUm(0,0);
+}
+
+int RAMPSXYStage::SetAdapterOriginUm(double x, double y) {
+  RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
+  pHub->PurgeComPortH();
+  std::string xval = std::to_string((long double) x);
+  std::string yval = std::to_string((long double) y);
+  std::string command = "G92 X" + xval + " " + yval;  
+  int ret = pHub->SendCommand(command);
+  if (ret != DEVICE_OK) {
+    LogMessage("Origin command failed.");
+    return ret;
+  }
+  std::string answer;
+  ret = pHub->ReadResponse(answer);
+  if (ret != DEVICE_OK) {
+    LogMessage("error getting response to origin command.");
+    return ret;
+  }
+  if (answer != "ok") {
+    LogMessage("Origin command: expected ok.");
+    return DEVICE_ERR;
+  }
+  return DEVICE_OK;
+}
+
+int RAMPSXYStage::Stop() { return DEVICE_OK; }
 
 int RAMPSXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
 {
