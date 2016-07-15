@@ -198,6 +198,10 @@ public class MultiResMultipageTiffStorage {
       affine_ = AffineUtils.stringToTransform(MD.getAffineTransformString(summaryMD_));
    }
    
+   public int getByteDepth() {
+      return byteDepth_;
+   }
+   
    public String getUniqueAcqName() {
       return uniqueAcqName_;
    }
@@ -297,6 +301,32 @@ public class MultiResMultipageTiffStorage {
       }
       Arrays.sort(pixVals);
       backgroundPix_.put(channel, pixVals[(int) (pixVals.length * BACKGROUND_PIXEL_PERCENTILE)]);
+   }
+   
+   /**
+    * Method for reading 3D volumes for compatibility with TeraFly
+    * @return 
+    */
+   public MagellanTaggedImage loadSubvolume(int channel, int frame, int resIndex,
+           int xStart, int yStart, int zStart, int width, int height, int depth) {
+      JSONObject metadata = null;
+      if (byteDepth_ == 1) {
+         byte[] pix = new byte[width*height*depth];
+         for (int z = zStart; z < zStart + depth; z++ ) {
+            MagellanTaggedImage image = getImageForDisplay(channel, z, frame, resIndex, xStart, yStart, width, height);
+            metadata = image.tags;
+            System.arraycopy(image.pix, 0, pix, (z-zStart)*(width*height), width*height);
+         }
+         return new MagellanTaggedImage(pix, metadata);
+      } else {
+         short[] pix = new short[width*height*depth];
+         for (int z = zStart; z < zStart + depth; z++ ) {
+            MagellanTaggedImage image = getImageForDisplay(channel, z, frame, resIndex, xStart, yStart, width, height);
+            metadata = image.tags;
+            System.arraycopy(image.pix, 0, pix, (z-zStart)*(width*height), width*height);
+         }
+         return new MagellanTaggedImage(pix, metadata);
+      }
    }
 
    /**
@@ -758,6 +788,10 @@ public class MultiResMultipageTiffStorage {
    
    public int getMinSliceIndexOpenedDataset() {
       return fullResStorage_.getMinSliceIndexOpenedDataset();
+   }
+   
+   public int getMaxSliceIndexOpenedDataset() {
+      return fullResStorage_.getMaxSliceIndexOpenedDataset();
    }
 
    public long getDataSetSize() {
