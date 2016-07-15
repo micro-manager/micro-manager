@@ -250,6 +250,16 @@ public class ImageCollection {
       } else {
          resultProcessor = ipi.getProcessor().duplicate();
       }
+      // HACK/Fix: The Andor Zyla often returns an ROI with roi.x ==-1 pr roi.y == -1
+      // That creates problems because the image after setRoi will be one pixel
+      // to small (i.e., the image should always have the correct height and width
+      // This can be removed once ROIs can be trusted to have all number >= 0
+      if (roi.x < 0) {
+         roi.x = 0;
+      }
+      if (roi.y < 0) {
+         roi.y = 0;
+      }
       resultProcessor.setRoi(roi);
       ImagePlusInfo newIp = new ImagePlusInfo(new ImagePlus("", resultProcessor.crop()), 
               binning, roi);
