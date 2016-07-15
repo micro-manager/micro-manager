@@ -18,6 +18,9 @@ limitations under the License.
 
 #include "RAMPS.h"
 #include "XYStage.h"
+
+#include <boost/lexical_cast.hpp>
+
 const char* g_StepSizeProp = "Step Size";
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -195,8 +198,8 @@ int RAMPSXYStage::SetOrigin() {
 int RAMPSXYStage::SetAdapterOriginUm(double x, double y) {
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
   pHub->PurgeComPortH();
-  std::string xval = std::to_string((long double) x);
-  std::string yval = std::to_string((long double) y);
+  std::string xval = boost::lexical_cast<std::string>((long double) x);
+  std::string yval = boost::lexical_cast<std::string>((long double) y);
   std::string command = "G92 X" + xval + " " + yval;  
   int ret = pHub->SendCommand(command);
   if (ret != DEVICE_OK) {

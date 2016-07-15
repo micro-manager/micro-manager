@@ -26,6 +26,8 @@ using namespace std;
 #include "MMDevice.h"
 #include "DeviceBase.h"
 
+#include <boost/lexical_cast.hpp>
+
 extern const char* g_ZStageDeviceName;
 extern const char* g_Keyword_LoadSample;
 
@@ -202,7 +204,7 @@ int RAMPSZStage::SetOrigin() {
 int RAMPSZStage::SetAdapterOriginUm(double z) {
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
   pHub->PurgeComPortH();
-  std::string xval = std::to_string((long double) z);
+  std::string xval = boost::lexical_cast<std::string>((long double) z);
   std::string command = "G92 Z" + xval;
   int ret = pHub->SendCommand(command);
   if (ret != DEVICE_OK) {
