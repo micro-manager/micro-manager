@@ -560,7 +560,19 @@ public class MDUtils {
    public static Rectangle getROI(JSONObject tags)
       throws IllegalArgumentException, JSONException {
       String roiString = tags.getString("ROI");
-      String[] xywh = roiString.split("-");
+
+      // roiString is a '-'-separated sequence of 4 integers (an unfortunate
+      // choice when the integers are negative). Although all 4 parameters are
+      // positive, negative numbers have been observed in the wild, and the
+      // best thing to do here is to preserve their value.
+
+      // First change the separater to comma while preserving minus sign
+      roiString = roiString.replaceAll("-", "_");
+      roiString = roiString.replaceAll("__", ",-");
+      roiString = roiString.replaceFirst("^_", "-");
+      roiString = roiString.replaceAll("_", ",");
+
+      String[] xywh = roiString.split(",");
       if (xywh.length != 4) {
          throw new IllegalArgumentException("Invalid ROI tag");
       }
