@@ -633,7 +633,7 @@
       int [] xSize = new int[1];
       int [] ySize = new int[1];
       getROI(x, y, xSize, ySize);
-      roi += x[0] + "-" + y[0] + "-" + xSize[0] + "-" + ySize[0];
+      roi += x[0] + "_" + y[0] + "_" + xSize[0] + "_" + ySize[0];
       return roi;
    }
 
