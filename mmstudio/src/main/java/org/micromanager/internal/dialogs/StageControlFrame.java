@@ -54,8 +54,10 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
+import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.TextUtils;
 
 /**
  *
@@ -67,14 +69,13 @@ public class StageControlFrame extends MMFrame {
 
    private final HashMap<String, Double> smallMovementZ_ = new HashMap<String, Double>();
    private final HashMap<String, Double> mediumMovementZ_ = new HashMap<String, Double>();
-   private final NumberFormat nf_;
    private String currentZDrive_ = "";
    private boolean initialized_ = false;
 
    private final int frameXPos_ = 100;
    private final int frameYPos_ = 100;
 
-   private final ExecutorService zStageExecutor_;
+   private final ExecutorService stageMotionExecutor_;
 
    private static final String FRAMEXPOS = "FRAMEXPOS";
    private static final String FRAMEYPOS = "FRAMEYPOS";
@@ -121,8 +122,7 @@ public class StageControlFrame extends MMFrame {
    public StageControlFrame(Studio gui) {
       studio_ = gui;
       core_ = studio_.getCMMCore();
-      nf_ = NumberFormat.getInstance();
-      zStageExecutor_ = Executors.newFixedThreadPool(1);
+      stageMotionExecutor_ = Executors.newFixedThreadPool(2);
 
       // Read values from PREFS
       double pixelSize = core_.getPixelSizeUm();
@@ -151,7 +151,7 @@ public class StageControlFrame extends MMFrame {
     */
    public final void initialize() {
       for (int i = 0; i < 3; ++i) {
-         xyStepTexts_[i].setText(nf_.format(xyStepSizes_[i]));
+         xyStepTexts_[i].setText(TextUtils.FMT2.format(xyStepSizes_[i]));
       }
 
       StrVector zDrives = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
@@ -200,6 +200,14 @@ public class StageControlFrame extends MMFrame {
 
       initialized_ = true;
 
+      if (xyDrives.size() != 0) {
+         try {
+            getXYPosLabelFromCore();
+         }
+         catch (Exception e) {
+            studio_.logs().logError(e, "Unable to get XY stage position");
+         }
+      }
       // guarantee that the z-position shown is correct:
       if (zDriveFound) {
          updateZDriveInfo();
@@ -207,15 +215,15 @@ public class StageControlFrame extends MMFrame {
    }
 
    private void updateZMovements() {
-      zStepTexts_[0].setText(nf_.format(smallMovementZ_.get(currentZDrive_)));
-      zStepTexts_[1].setText(nf_.format(mediumMovementZ_.get(currentZDrive_)));
+      zStepTexts_[0].setText(TextUtils.FMT2.format(smallMovementZ_.get(currentZDrive_)));
+      zStepTexts_[1].setText(TextUtils.FMT2.format(mediumMovementZ_.get(currentZDrive_)));
    }
 
    private void initComponents() {
       setTitle("Stage Control");
       setLocationByPlatform(true);
       setResizable(false);
-      setLayout(new MigLayout("fill, insets 2, gap 2"));
+      setLayout(new MigLayout("fill, insets 5, gap 2"));
       addWindowListener(new WindowAdapter() {
          public void windowClosing(WindowEvent evt) {
             for (int i = 0; i < 3; ++i) {
@@ -229,7 +237,7 @@ public class StageControlFrame extends MMFrame {
       add(xyPanel_, "hidemode 2");
 
       zPanel_ = createZPanel();
-      add(zPanel_, "hidemode 2");
+      add(zPanel_, "gapleft 20, hidemode 2");
 
       errorPanel_ = createErrorPanel();
       add(errorPanel_, "grow, hidemode 2");
@@ -310,9 +318,9 @@ public class StageControlFrame extends MMFrame {
             constraint = "split, span";
          }
          else if (i == 6) {
-            // Fourth horizontal button; add the XY position label first.
-            xyPositionLabel_ = new JLabel();
-            result.add(xyPositionLabel_, "width 50!");
+            // Fourth horizontal button (start of the "right" buttons); add
+            // a gap to the left.
+            constraint = "gapleft 50";
          }
          else if (i == 8) {
             // Last horizontal button.
@@ -320,6 +328,10 @@ public class StageControlFrame extends MMFrame {
          }
          result.add(button, constraint);
       }
+      // Add the XY position label in the upper-left.
+      xyPositionLabel_ = new JLabel("", JLabel.LEFT);
+      result.add(xyPositionLabel_,
+            "pos 5 20, width 120!, height 50:, alignx left");
 
       // Now the controls for setting the step size.
       String[] labels = new String[] {"1 pixel", "0.1 field", "1 field"};
@@ -359,8 +371,7 @@ public class StageControlFrame extends MMFrame {
                double[] sizes = new double[] {pixelSize, viewSize / 10,
                   viewSize};
                double stepSize = sizes[index];
-               nf_.setMaximumFractionDigits(2);
-               xyStepTexts_[index].setText(nf_.format(stepSize));
+               xyStepTexts_[index].setText(TextUtils.FMT2.format(stepSize));
                xyStepSizes_[index] = stepSize;
             }
          });
@@ -426,7 +437,7 @@ public class StageControlFrame extends MMFrame {
          size = studio_.profile().getDouble(StageControlFrame.class,
                SMALLMOVEMENTZ, 1.0);
       }
-      zStepTexts_[0].setText(nf_.format(size));
+      zStepTexts_[0].setText(TextUtils.FMT2.format(size));
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
             "span, split 3, flowx");
       result.add(zStepTexts_[0], "width 50");
@@ -437,7 +448,7 @@ public class StageControlFrame extends MMFrame {
          size = studio_.profile().getDouble(StageControlFrame.class,
                MEDIUMMOVEMENTZ, 10.0);
       }
-      zStepTexts_[1].setText(nf_.format(size));
+      zStepTexts_[1].setText(TextUtils.FMT2.format(size));
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
       result.add(zStepTexts_[1], "width 50");
@@ -521,7 +532,7 @@ public class StageControlFrame extends MMFrame {
          // Remember step sizes for this new drive.
          updateZMovements();
          try {
-            updateZPosLabel();
+            getZPosLabelFromCore();
          }
          catch (Exception ex) {
             studio_.logs().logError(ex, "Failed to pull position from core for Z drive " + currentZDrive_);
@@ -532,7 +543,8 @@ public class StageControlFrame extends MMFrame {
    private void setRelativeXYStagePosition(double x, double y) {
       try {
          if (!core_.deviceBusy(core_.getXYStageDevice())) {
-            core_.setRelativeXYPosition(core_.getXYStageDevice(), x, y);
+            StageThread st = new StageThread(core_.getXYStageDevice(), x, y);
+            stageMotionExecutor_.execute(st);
          }
       }
       catch(Exception e) {
@@ -544,23 +556,31 @@ public class StageControlFrame extends MMFrame {
       try {
          if (!core_.deviceBusy(currentZDrive_)) {
             StageThread st = new StageThread(currentZDrive_, z);
-            zStageExecutor_.execute(st);
+            stageMotionExecutor_.execute(st);
          }
       } catch (Exception ex) {
          studio_.logs().showError(ex);
       }
    }
 
-   private void updateXYPosLabel() throws Exception {
+   private void getXYPosLabelFromCore() throws Exception {
       Point2D.Double pos = core_.getXYStagePosition(core_.getXYStageDevice());
-      xyPositionLabel_.setText(String.format(
-               "<html>X: %s\u00b5m<br>Y: %s\u00b5m</html>",
-               nf_.format(pos.x), nf_.format(pos.y)));
+      setXYPosLabel(pos.x, pos.y);
    }
 
-   private void updateZPosLabel() throws Exception {
+   private void setXYPosLabel(double x, double y) {
+      xyPositionLabel_.setText(String.format(
+               "<html>X: %s \u00b5m<br>Y: %s \u00b5m</html>",
+               TextUtils.FMT2.format(x), TextUtils.FMT2.format(y)));
+   }
+
+   private void getZPosLabelFromCore() throws Exception {
       double zPos = core_.getPosition(currentZDrive_);
-      zPositionLabel_.setText(nf_.format(zPos) + " \u00B5m" );
+      setZPosLabel(zPos);
+   }
+
+   private void setZPosLabel(double z) {
+      zPositionLabel_.setText(TextUtils.FMT2.format(z) + " \u00B5m" );
    }
 
    @Subscribe
@@ -570,26 +590,56 @@ public class StageControlFrame extends MMFrame {
 
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
-      if (event.getDeviceName().equals(currentZDrive_)) {
-         zPositionLabel_.setText(nf_.format(event.getPos()) + " \u00B5m" );
+      if (event.getDeviceName().contentEquals(currentZDrive_)) {
+         setZPosLabel(event.getPos());
+      }
+   }
+
+   @Subscribe
+   public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
+      if (event.getDeviceName().contentEquals(core_.getXYStageDevice())) {
+         setXYPosLabel(event.getXPos(), event.getYPos());
       }
    }
 
    private class StageThread implements Runnable {
-      final String drive_;
+      final String device_;
+      final boolean isXYStage_;
+      final double x_;
+      final double y_;
       final double z_;
-      public StageThread (String drive, double z) {
-         drive_ = drive;
+      public StageThread(String device, double z) {
+         device_ = device;
          z_ = z;
+         x_ = y_ = 0;
+         isXYStage_ = false;
+      }
+
+      public StageThread(String device, double x, double y) {
+         device_ = device;
+         x_ = x;
+         y_ = y;
+         z_ = 0;
+         isXYStage_ = true;
       }
 
       @Override
       public void run() {
          try {
-            core_.waitForDevice(drive_);
-            core_.setRelativePosition(drive_, z_);
-            core_.waitForDevice(drive_);
-            updateZPosLabel();
+            core_.waitForDevice(device_);
+            if (isXYStage_) {
+               core_.setRelativeXYPosition(device_, x_, y_);
+            }
+            else {
+               core_.setRelativePosition(device_, z_);
+            }
+            core_.waitForDevice(device_);
+            if (isXYStage_) {
+               getXYPosLabelFromCore();
+            }
+            else {
+               getZPosLabelFromCore();
+            }
          } catch (Exception ex) {
             studio_.logs().logError(ex);
          }
