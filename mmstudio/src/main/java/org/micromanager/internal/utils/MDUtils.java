@@ -36,7 +36,7 @@ import org.micromanager.PropertyMap;
  * track which bits of code are relying on which tags. 
  */
 public class MDUtils {
-   private final static SimpleDateFormat imageDateFormat_ =
+   private final static SimpleDateFormat IMAGEDATEFORMAT =
            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 
    /**
@@ -105,7 +105,28 @@ public class MDUtils {
    }
 
    public static int getBinning(JSONObject map) throws JSONException {
-      return map.getInt("Binning");
+      // Some cameras return binning in the form "2", whereas others return 
+      // it as "2x2".  Micro-Manager only works with equal binning in x and y.
+      // Try to translate both into a single value.
+      try {
+         return map.getInt("Binning");
+      } catch (JSONException jex) { 
+         // either there is no binning key or it was not an int }
+      }
+      String val = map.getString("Binning");
+      if (val.contains("x")) {
+         // HACK: assume the binning parameter is e.g. "1x1" or "2x2" and
+         // just take the first number.
+         try {
+            return Integer.parseInt(val.split("x", 2)[0]);
+         } catch (NumberFormatException e) {
+            // we only throw JSONExceptions:
+            throw new JSONException("Failed to deduce binning");
+         }
+      } else {
+         throw new JSONException("Unrecognized binning String");
+      }
+      
    }
 
    public static void setBinning(JSONObject map, int binning) throws JSONException {
@@ -519,7 +540,7 @@ public class MDUtils {
    }
 
    public static String getTime(Date time) {
-      return imageDateFormat_.format(time);
+      return IMAGEDATEFORMAT.format(time);
    }
 
    public static String getCurrentTime() {
@@ -756,6 +777,8 @@ public class MDUtils {
     * Given a JSONObject that is a TaggedImage's tags, extract all the
     * properties that start with the name of a device adapter, and convert the
     * lot into a PropertyMap.
+    * @param tags TaggedImage's tags
+    * @return PropertyMap with all properties that start with the name of a device adapter
     */
    public static PropertyMap extractScopeData(JSONObject tags) {
       DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
@@ -854,7 +877,9 @@ public class MDUtils {
     * Given a JSONObject that is a TaggedImage's tags, and a set of strings of
     * keys we are to ignore, import all non-Metadata, non-ignored keys into
     * a new PropertyMap.
+    * @param tags TaggedImage's tags
     * @param ignoredKeys Keys of properties we don't care about. May be null.
+    * @return Resulting Property Map
     */
    public static PropertyMap extractUserData(JSONObject tags,
          Set<String> ignoredKeys) {
