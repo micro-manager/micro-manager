@@ -134,6 +134,11 @@ public class BeanshellEngine implements ScriptingEngine {
    private String formatBeanshellError(EvalError e, int line) {
       if (e instanceof TargetError) {
          Throwable t = ((TargetError)e).getTarget();
+         if (t instanceof NullPointerException) {
+            // Null Pointer Exceptions do not seem to have much more information
+            // However, do make clear to the user that this is a npe
+            return "Line " + line + ": Null Pointer Exception"; 
+         }
          return "Line " + line + ": run-time error : " + (t != null ? t.getMessage() : e.getErrorText());       
       } else if (e instanceof ParseException) {
          return "Line " + line + ": syntax error : " + e.getErrorText();  
