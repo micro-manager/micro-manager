@@ -203,6 +203,7 @@ inspect(obj) {
    }
 
    Vector getFieldRow(obj, cls, field) {
+      value = "null";
       try {
          v = eval("obj." + field.getName());
          value = (v != null ? v.toString() : "null");
