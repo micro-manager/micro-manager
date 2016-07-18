@@ -76,4 +76,14 @@ public class TextUtils {
       }
       return name;
    }
+
+   /**
+    * Given an input string (presumably formatted by one of our formatters),
+    * remove the leading negative sign if the numerals are all zero. E.g. turns
+    * "-0.0" into "0.0".
+    * See http://stackoverflow.com/questions/11929096/negative-sign-in-case-of-zero-in-java
+    */
+   public static String removeNegativeZero(String input) {
+      return input.replaceAll("^-(?=0(.0*)?$)", "");
+   }
 }

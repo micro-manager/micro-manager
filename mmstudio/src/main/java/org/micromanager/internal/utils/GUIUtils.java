@@ -62,7 +62,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.text.JTextComponent;
-import org.micromanager.internal.MMStudio;
 
 
 
