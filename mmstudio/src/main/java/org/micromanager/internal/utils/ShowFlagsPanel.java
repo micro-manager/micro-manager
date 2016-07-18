@@ -155,6 +155,7 @@ public class ShowFlagsPanel extends JPanel {
          showShuttersCheckBox_.setSelected(flags_.shutters_);
          showStateDevicesCheckBox_.setSelected(flags_.state_);
          showOtherCheckBox_.setSelected(flags_.other_);
+         searchFilterText_.setText(flags_.searchFilter_);
 
          // get properties contained in the current config
 
