@@ -151,7 +151,8 @@ public class StageControlFrame extends MMFrame {
     */
    public final void initialize() {
       for (int i = 0; i < 3; ++i) {
-         xyStepTexts_[i].setText(TextUtils.FMT2.format(xyStepSizes_[i]));
+         xyStepTexts_[i].setText(TextUtils.removeNegativeZero(
+               TextUtils.FMT3.format(xyStepSizes_[i])));
       }
 
       StrVector zDrives = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
@@ -163,9 +164,7 @@ public class StageControlFrame extends MMFrame {
 
       boolean zDriveFound = false;
       if (!zDrives.isEmpty()) {
-         if (zDrives.size() == 1) {
-            zDriveSelect_.setVisible(false);
-         }
+         zDriveSelect_.setVisible(zDrives.size() > 1);
 
          if (zDriveSelect_.getItemCount() != 0) {
             zDriveSelect_.removeAllItems();
@@ -215,8 +214,10 @@ public class StageControlFrame extends MMFrame {
    }
 
    private void updateZMovements() {
-      zStepTexts_[0].setText(TextUtils.FMT2.format(smallMovementZ_.get(currentZDrive_)));
-      zStepTexts_[1].setText(TextUtils.FMT2.format(mediumMovementZ_.get(currentZDrive_)));
+      zStepTexts_[0].setText(TextUtils.removeNegativeZero(
+            TextUtils.FMT3.format(smallMovementZ_.get(currentZDrive_))));
+      zStepTexts_[1].setText(TextUtils.removeNegativeZero(
+            TextUtils.FMT3.format(mediumMovementZ_.get(currentZDrive_))));
    }
 
    private void initComponents() {
@@ -236,8 +237,11 @@ public class StageControlFrame extends MMFrame {
       xyPanel_ = createXYPanel();
       add(xyPanel_, "hidemode 2");
 
+      // Vertically align Z panel with XY panel. createZPanel() also makes
+      // several assumptions about the layout of the XY panel so that its
+      // components are nicely vertically aligned.
       zPanel_ = createZPanel();
-      add(zPanel_, "gapleft 20, hidemode 2");
+      add(zPanel_, "aligny top, gapleft 20, hidemode 2");
 
       errorPanel_ = createErrorPanel();
       add(errorPanel_, "grow, hidemode 2");
@@ -246,7 +250,7 @@ public class StageControlFrame extends MMFrame {
    }
 
    private JPanel createXYPanel() {
-      JPanel result = new JPanel(new MigLayout("insets 0, gap 2, fill"));
+      JPanel result = new JPanel(new MigLayout("insets 0, gap 0"));
       result.add(new JLabel("XY Stage", JLabel.CENTER),
             "span, alignx center, wrap");
 
@@ -320,7 +324,7 @@ public class StageControlFrame extends MMFrame {
          else if (i == 6) {
             // Fourth horizontal button (start of the "right" buttons); add
             // a gap to the left.
-            constraint = "gapleft 50";
+            constraint = "gapleft 30";
          }
          else if (i == 8) {
             // Last horizontal button.
@@ -331,7 +335,10 @@ public class StageControlFrame extends MMFrame {
       // Add the XY position label in the upper-left.
       xyPositionLabel_ = new JLabel("", JLabel.LEFT);
       result.add(xyPositionLabel_,
-            "pos 5 20, width 120!, height 50:, alignx left");
+            "pos 5 20, width 120!, alignx left");
+
+      // Gap between the chevrons and the step size controls.
+      result.add(new JLabel(), "height 20!, wrap");
 
       // Now the controls for setting the step size.
       String[] labels = new String[] {"1 pixel", "0.1 field", "1 field"};
@@ -339,7 +346,8 @@ public class StageControlFrame extends MMFrame {
          JLabel indicator = new JLabel(IconLoader.getIcon(
                   "/org/micromanager/icons/stagecontrol/arrowhead-" +
                   stepSizes[i] + "r.png"));
-         result.add(indicator, "split, span");
+         // HACK: make it smaller so the gap between rows is smaller.
+         result.add(indicator, "height 20!, split, span");
          // This copy can be referred to in the action listener.
          final int index = i;
          xyStepTexts_[i].addActionListener(new ActionListener() {
@@ -347,7 +355,7 @@ public class StageControlFrame extends MMFrame {
             public void actionPerformed(ActionEvent e) {
                double stepSize = 0.0;
                try {
-                  stepSize = Integer.parseInt(xyStepTexts_[index].getText());
+                  stepSize = Double.parseDouble(xyStepTexts_[index].getText());
                }
                catch (NumberFormatException ex) {
                   // Give up.
@@ -357,7 +365,8 @@ public class StageControlFrame extends MMFrame {
             }
          });
          addFocusActionListener(xyStepTexts_[i]);
-         result.add(xyStepTexts_[i], "width 50");
+         // See above HACK note.
+         result.add(xyStepTexts_[i], "height 20!, width 80");
 
          result.add(new JLabel("\u00b5m"));
 
@@ -371,7 +380,8 @@ public class StageControlFrame extends MMFrame {
                double[] sizes = new double[] {pixelSize, viewSize / 10,
                   viewSize};
                double stepSize = sizes[index];
-               xyStepTexts_[index].setText(TextUtils.FMT2.format(stepSize));
+               xyStepTexts_[index].setText(TextUtils.removeNegativeZero(
+                     TextUtils.FMT3.format(stepSize)));
                xyStepSizes_[index] = stepSize;
             }
          });
@@ -380,8 +390,14 @@ public class StageControlFrame extends MMFrame {
       return result;
    }
 
+   /**
+    * NOTE: this method makes assumptions about the layout of the XY panel.
+    * In particular, it is assumed that each chevron button is 30px tall,
+    * that the step size controls are 20px tall, and that there is a 20px gap
+    * between the chevrons and the step size controls.
+    */
    private JPanel createZPanel() {
-      JPanel result = new JPanel(new MigLayout("insets 0, gap 2, fill, flowy"));
+      JPanel result = new JPanel(new MigLayout("insets 0, gap 0, flowy"));
       result.add(new JLabel("Z Stage", JLabel.CENTER), "growx, alignx center");
       zDriveSelect_ = new JComboBox();
       zDriveSelect_.addActionListener(new ActionListener() {
@@ -390,7 +406,10 @@ public class StageControlFrame extends MMFrame {
             updateZDriveInfo();
          }
       });
-      result.add(zDriveSelect_, "hidemode 2, growx");
+      // HACK: this defined height for the combobox matches the height of one
+      // of the chevron buttons, and helps to align components between the XY
+      // and Z panels.
+      result.add(zDriveSelect_, "height 30!, hidemode 0, growx");
 
       // Create buttons for stepping up/down.
       // Icon name prefix: double, single, single, double
@@ -426,29 +445,41 @@ public class StageControlFrame extends MMFrame {
          result.add(button, "alignx center, growx");
          if (i == 1) {
             // Stick the Z position text in the middle.
+            // HACK: As above HACK, this height matches the height of the
+            // chevron buttons in the XY panel.
             zPositionLabel_ = new JLabel("", JLabel.CENTER);
-            result.add(zPositionLabel_, "width 100:, alignx center, growx");
+            result.add(zPositionLabel_,
+                  "height 30!, width 100:, alignx center, growx");
          }
       }
 
+      // Spacer to vertically align stepsize controls with the XY panel.
+      // Encompasses one chevron (height 30) and the gap the XY panel has
+      // (height 20).
+      result.add(new JLabel(), "height 50!");
+
       // Create the controls for setting the step size.
+      // These heights again must match those of the corresponding stepsize
+      // controls in the XY panel.
       Double size = smallMovementZ_.get(currentZDrive_);
       if (size == null) {
          size = studio_.profile().getDouble(StageControlFrame.class,
                SMALLMOVEMENTZ, 1.0);
       }
-      zStepTexts_[0].setText(TextUtils.FMT2.format(size));
+      zStepTexts_[0].setText(TextUtils.removeNegativeZero(
+            TextUtils.FMT3.format(size)));
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
-            "span, split 3, flowx");
-      result.add(zStepTexts_[0], "width 50");
-      result.add(new JLabel("\u00b5m"));
+            "height 20!, span, split 3, flowx");
+      result.add(zStepTexts_[0], "height 20!, width 50");
+      result.add(new JLabel("\u00b5m"), "height 20!");
 
       size = smallMovementZ_.get(currentZDrive_);
       if (size == null) {
          size = studio_.profile().getDouble(StageControlFrame.class,
                MEDIUMMOVEMENTZ, 10.0);
       }
-      zStepTexts_[1].setText(TextUtils.FMT2.format(size));
+      zStepTexts_[1].setText(TextUtils.removeNegativeZero(
+            TextUtils.FMT3.format(size)));
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
       result.add(zStepTexts_[1], "width 50");
@@ -571,7 +602,8 @@ public class StageControlFrame extends MMFrame {
    private void setXYPosLabel(double x, double y) {
       xyPositionLabel_.setText(String.format(
                "<html>X: %s \u00b5m<br>Y: %s \u00b5m</html>",
-               TextUtils.FMT2.format(x), TextUtils.FMT2.format(y)));
+               TextUtils.removeNegativeZero(TextUtils.FMT3.format(x)),
+               TextUtils.removeNegativeZero(TextUtils.FMT3.format(y))));
    }
 
    private void getZPosLabelFromCore() throws Exception {
@@ -580,7 +612,8 @@ public class StageControlFrame extends MMFrame {
    }
 
    private void setZPosLabel(double z) {
-      zPositionLabel_.setText(TextUtils.FMT2.format(z) + " \u00B5m" );
+      zPositionLabel_.setText(TextUtils.removeNegativeZero(
+            TextUtils.FMT3.format(z)) + " \u00B5m" );
    }
 
    @Subscribe
