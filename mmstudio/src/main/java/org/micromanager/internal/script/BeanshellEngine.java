@@ -39,7 +39,8 @@ public class BeanshellEngine implements ScriptingEngine {
             // special handling of the parse errors beacuse beanshell error object
             // has bugs and does not return line numbers
             String msg = e.getMessage();
-            String lineNumberTxt = msg.substring(20, msg.indexOf(','));
+            String lineNumberTxt = msg.substring(0, msg.indexOf(','));
+            lineNumberTxt = lineNumberTxt.substring(lineNumberTxt.lastIndexOf(' ') + 1);
             panel_.displayError("Parse error: " + msg, Integer.parseInt(lineNumberTxt));
          } catch (EvalError e) {
             int lineNo = e.getErrorLineNumber(); 
