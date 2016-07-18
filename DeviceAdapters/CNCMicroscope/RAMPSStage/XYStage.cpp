@@ -200,7 +200,7 @@ int RAMPSXYStage::SetAdapterOriginUm(double x, double y) {
   pHub->PurgeComPortH();
   std::string xval = boost::lexical_cast<std::string>((long double) x);
   std::string yval = boost::lexical_cast<std::string>((long double) y);
-  std::string command = "G92 X" + xval + " " + yval;  
+  std::string command = "G92 X" + xval + " Y" + yval;  
   int ret = pHub->SendCommand(command);
   if (ret != DEVICE_OK) {
     LogMessage("Origin command failed.");
