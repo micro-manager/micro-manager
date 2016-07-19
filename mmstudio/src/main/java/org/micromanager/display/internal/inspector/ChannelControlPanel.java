@@ -66,7 +66,6 @@ import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.HistogramRequestEvent;
-import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
 import org.micromanager.display.internal.link.LinkButton;
@@ -156,8 +155,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       // different behaviors at various points.
       hasChannelAxis_ = store_.getAxisLength(Coords.CHANNEL) > 0;
 
-      // Must be registered for events before we start modifying images, since
-      // that relies on LUTUpdateEvent.
       store.registerForEvents(this);
       display.registerForEvents(this);
       // We can't create our GUI until we have histogram data to use, so
@@ -706,16 +703,6 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
          histogram_.setOverlayText(null);
       }
       redraw();
-   }
-
-   @Subscribe
-   public void onLUTUpdate(LUTUpdateEvent event) {
-      try {
-         updateHistogram();
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Error updating LUT");
-      }
    }
 
    @Override

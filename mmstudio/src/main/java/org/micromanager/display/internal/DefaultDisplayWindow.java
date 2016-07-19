@@ -91,7 +91,6 @@ import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
-import org.micromanager.display.internal.events.LUTUpdateEvent;
 import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
@@ -709,14 +708,6 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       catch (Exception e) {
          studio_.logs().logError(e, "Error processing layout-changed event");
       }
-   }
-
-   /**
-    * We need to refresh the LUT(s) for our display.
-    */
-   @Subscribe
-   public void onLUTUpdate(LUTUpdateEvent event) {
-      LUTMaster.updateDisplayLUTs(this);
    }
 
    /**
