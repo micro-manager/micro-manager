@@ -114,8 +114,15 @@ public class DefaultDataManager implements DataManager {
    @Override
    public Datastore createSinglePlaneTIFFSeriesDatastore(String directory) {
       DefaultDatastore result = new DefaultDatastore();
-      result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
-            true));
+      try {
+         result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
+               true));
+      }
+      catch (IOException e) {
+         // This should be impossible, as the Storage only throws an exception
+         // when loading an existing dataset.
+         ReportingUtils.logError(e, "Unable to create new singleplane storage at " + directory);
+      }
       return result;
    }
 

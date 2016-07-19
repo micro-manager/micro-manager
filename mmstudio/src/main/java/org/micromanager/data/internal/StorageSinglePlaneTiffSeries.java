@@ -86,9 +86,10 @@ public class StorageSinglePlaneTiffSeries implements Storage {
    private HashMap<Integer, String> positionIndexToName_;
    private ArrayList<String> orderedChannelNames_;
    private Coords maxIndices_;
+   private boolean isMultiPosition_;
 
    public StorageSinglePlaneTiffSeries(DefaultDatastore store,
-         String directory, boolean newDataSet) {
+         String directory, boolean newDataSet) throws IOException {
       store_ = store;
       dir_ = directory;
       store_.setSavePath(dir_);
@@ -102,6 +103,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       orderedChannelNames_ = new ArrayList<String>();
       maxIndices_ = new DefaultCoords.Builder().build();
       amLoading_ = false;
+      isMultiPosition_ = true;
 
       // Note: this will throw an error if there is no existing data set
       if (!isDatasetWritable_) {
@@ -127,7 +129,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       // stuff to disk should not run; we only need to update our internal
       // records.
       String positionPrefix = "";
-      if (image.getMetadata() != null &&
+      if (isMultiPosition_ && image.getMetadata() != null &&
             image.getMetadata().getPositionName() != null) {
          // File is in a subdirectory.
          positionPrefix = image.getMetadata().getPositionName() + "/";
@@ -152,7 +154,7 @@ public class StorageSinglePlaneTiffSeries implements Storage {
             }
          }
          String posName = image.getMetadata().getPositionName();
-         if (posName != null && posName.length() > 0 && 
+         if (posName != null && posName.length() > 0 &&
                !posName.contentEquals("null")) {
             // Create a directory to hold images for this stage position.
             String dirName = dir_ + "/" + posName;
@@ -371,7 +373,10 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          // Assume we're already done.
          return;
       }
-      File directory = new File(dir_ + "/" + position);
+      // Only add on the position name if our dataset is split across
+      // positions.
+      File directory = new File(dir_ +
+            (isMultiPosition_ ? ("/" + position) : ""));
       for (File file : directory.listFiles()) {
          Matcher matcher = FILENAME_PATTERN_14.matcher(file.getName());
          if (matcher.matches()) {
@@ -559,12 +564,14 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       }
    }
 
-   private void openExistingDataSet() {
+   private void openExistingDataSet() throws IOException {
       amLoading_ = true;
-      File metadataFile = new File(dir_ + "/metadata.txt");
       ArrayList<String> positions = new ArrayList<String>();
-      if (metadataFile.exists()) {
+      if (new File(dir_ + "/metadata.txt").exists()) {
+         // Our base directory is a valid "position", i.e. there are no
+         // positions in this dataset.
          positions.add("");
+         isMultiPosition_ = false;
       }
       else {
          // Generate a list of position names by assuming all directories
@@ -576,6 +583,12 @@ public class StorageSinglePlaneTiffSeries implements Storage {
                positions.add(f.getName());
             }
          }
+         isMultiPosition_ = true;
+      }
+      if (positions.size() == 0) {
+         // Couldn't find either a metadata.txt or any position directories in
+         // our directory. We've been handed a bad directory.
+         throw new IOException("Unable to find dataset at " + dir_);
       }
 
       for (int positionIndex = 0; positionIndex < positions.size();
