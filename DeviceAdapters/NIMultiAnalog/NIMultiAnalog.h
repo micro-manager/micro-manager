@@ -103,6 +103,8 @@ public: // Interface for individual ports
    virtual int IsSequencingEnabled(bool& flag) const;
    virtual int GetSequenceMaxLength(long& maxLength) const;
 
+   virtual bool IsDeviceRunningSequence() const;
+
 private:
    int AddPortToSequencing(const std::string& port,
       const std::vector<double> sequence);
@@ -120,6 +122,9 @@ private:
 
    int StartSequencingTask();
    int StopTask();
+
+   int StartAllPerPortTasks();
+   int StopAllPerPortTasks();
 
 private:
    // Action handlers
