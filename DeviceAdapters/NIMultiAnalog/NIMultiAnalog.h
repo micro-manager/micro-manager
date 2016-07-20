@@ -131,7 +131,6 @@ private:
 
    std::string niDeviceName_;
    std::string niTriggerPort_;
-   std::vector<std::string> niAnalogOutputPorts_;
 
    double minVolts_; // Min possible for device
    double maxVolts_; // Max possible for device
