@@ -145,37 +145,6 @@ public interface CompatibilityInterface {
    public boolean getHideMDADisplayOption();
 
    /**
-    * One of the allowed inputs to setBackgroundStyle(), to set the program
-    * to a bright, high-contrast "daytime" mode.
-    */
-   public static final String DAY = "Day";
-   /**
-    * One of the allowed inputs to setBackgroundStyle(), to set the program
-    * to a dark, low-contrast "nighttime" mode.
-    */
-   public static final String NIGHT = "Night";
-   /**
-    * A list compiling all of the possible inputs to setBackgroundStyle().
-    */
-   public static final String[] BACKGROUND_OPTIONS = new String[] {
-      DAY, NIGHT
-   };
-
-   /**
-    * Sets the background color of the GUI to the selected mode. Will throw an
-    * IllegalArgumentException if the provided input is not an item from
-    * BACKGROUND_OPTIONS.
-    * @param backgroundType One of the values from the BACKGROUND_OPTIONS list.
-    */
-   public void setBackgroundStyle(String backgroundType);
-
-   /**
-    * @return the current Micro-Manager background style, which will be one
-    * of ScriptInterface.DAY or ScriptInterface.NIGHT.
-    */
-   public String getBackgroundStyle();
-
-   /**
     * lets the GUI know that the current configuration has been changed.  Activates
     * the save button it status is true
     * @param status 

@@ -61,6 +61,7 @@ import mmcorej.StrVector;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
 import org.micromanager.Album;
+import org.micromanager.ApplicationSkin;
 import org.micromanager.AutofocusManager;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.CompatibilityInterface;
@@ -262,7 +263,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          startupScriptFile_ = "";
       }
 
-      setBackgroundStyle(DaytimeNighttime.getBackgroundMode());
+      DaytimeNighttime.getInstance().loadStoredSkin();
 
       RegistrationDlg.showIfNecessary();
 
@@ -1413,19 +1414,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       frame_.enableRoiButtons(enabled);
    }
 
-   /*
-    * Changes background color of this window and all other MM windows
-    */
-   @Override
-   public final void setBackgroundStyle(String backgroundType) {
-      DaytimeNighttime.setMode(backgroundType);
-   }
-
-   @Override
-   public String getBackgroundStyle() {
-      return DaytimeNighttime.getBackgroundMode();
-   }
-
    @Override
    public void setPositionList(PositionList pl) {
       // use serialization to clone the PositionList object
@@ -1664,6 +1652,16 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    @Override
    public PositionListManager getPositionListManager() {
       return positions();
+   }
+
+   @Override
+   public ApplicationSkin skin() {
+      return DaytimeNighttime.getInstance();
+   }
+
+   @Override
+   public ApplicationSkin getApplicationSkin() {
+      return skin();
    }
 
    @Override

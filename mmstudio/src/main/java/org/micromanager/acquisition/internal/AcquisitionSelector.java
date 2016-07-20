@@ -133,7 +133,7 @@ public class AcquisitionSelector {
          setIcon(label.getIcon());
          setFont(label.getFont());
          // TODO this color is wrong in daytime mode.
-         setBackground(isSelected ? DaytimeNighttime.getLightBackgroundColor() : DaytimeNighttime.getBackgroundColor());
+         setBackground(isSelected ? DaytimeNighttime.getInstance().getLightBackgroundColor() : DaytimeNighttime.getInstance().getBackgroundColor());
          return this;
       }
    }

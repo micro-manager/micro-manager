@@ -1000,9 +1000,9 @@ public class CalibrationEditor extends MMDialog {
          lab.setHorizontalAlignment(JLabel.LEFT);
          lab.setOpaque(true);
          if (item_.readOnly) {
-            lab.setBackground(DaytimeNighttime.getDisabledBackgroundColor());
+            lab.setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
          } else {
-            lab.setBackground(DaytimeNighttime.getBackgroundColor());
+            lab.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
          }
          
          if (hasFocus) {

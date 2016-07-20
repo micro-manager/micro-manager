@@ -22,7 +22,7 @@ import java.awt.Window;
 import java.io.File;
 import javax.swing.JFileChooser;
 
-import org.micromanager.CompatibilityInterface;
+import org.micromanager.ApplicationSkin.SkinMode;
 
 public class FileDialogs {
 
@@ -149,7 +149,7 @@ public class FileDialogs {
          // the "night" UI. So we temporarily force the "Daytime" look and
          // feel, without redrawing the entire program UI, just for as long as
          // it takes us to create this chooser.
-         DaytimeNighttime.suspendToMode(CompatibilityInterface.DAY);
+         DaytimeNighttime.getInstance().suspendToMode(SkinMode.DAY);
          JFileChooser fc = new JFileChooser();
          if (startFile != null) {
             if ((!load && suggestFileName) || startFile.isDirectory()) {
@@ -158,7 +158,7 @@ public class FileDialogs {
                fc.setSelectedFile(startFile.getParentFile());
             }
          }
-         DaytimeNighttime.resume();
+         DaytimeNighttime.getInstance().resume();
          fc.setDialogTitle(title);
          if (selectDirectories) {
             fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
