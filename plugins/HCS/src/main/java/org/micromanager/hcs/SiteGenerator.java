@@ -26,8 +26,6 @@ import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.TextUtils;
 
-import com.swtdesigner.SwingResourceManager;
-
 import javax.swing.border.LineBorder;
 
 import java.awt.Color;
@@ -38,7 +36,6 @@ import net.miginfocom.swing.MigLayout;
 
 import mmcorej.CMMCore;
 
-import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
 
 import java.awt.Dimension;
@@ -83,14 +80,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private final String SITE_OVERLAP    = "site_overlap"; //in µm
    private final String SITE_ROWS       = "site_rows";
    private final String SITE_COLS       = "site_cols";
-   private final String LOCK_ASPECT = "lock_aspect";
-   private final String POINTER_MOVE = "Move";
-   private final String POINTER_SELECT = "Select";
-   private final String ROOT_DIR = "root";
-   private final String PLATE_DIR = "plate";
-   public static final String menuName = "HCS Site Generator";
-   public static final String tooltipDescription =
-           "Generate position list for multi-well plates";
+
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
@@ -159,12 +149,13 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
     */
    /**
     *
+    * @param app Micro-Manager api
     */
    public SiteGenerator(Studio app) {
       super();
       app_ = app;
-      setMinimumSize(new Dimension(815, 600));
-      addWindowListener(new WindowAdapter() {
+      super.setMinimumSize(new Dimension(815, 600));
+      super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(final WindowEvent e) {
             saveSettings();
@@ -173,7 +164,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       JPanel contentsPanel = new JPanel(
             new MigLayout("fill, flowx, insets 0, gap 0"));
-      add(contentsPanel);
+      super.add(contentsPanel);
       plate_ = new SBSPlate();
 
       xyStagePos_ = new Point2D.Double(0.0, 0.0);
@@ -185,8 +176,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       threePtList_ = null;
       focusPlane_ = null;
 
-      setTitle("HCS Site Generator " + HCSPlugin.VERSION_INFO);
-      loadAndRestorePosition(100, 100, 1000, 640);
+      super.setTitle("HCS Site Generator " + HCSPlugin.VERSION_INFO);
+      super.loadAndRestorePosition(100, 100, 1000, 640);
 
       platePanel_ = new PlatePanel(plate_, null, this, app);
       contentsPanel.add(platePanel_, "grow, push");
