@@ -69,6 +69,9 @@ private:
 };
 
 
+class MultiAnalogOutPort;
+
+
 // A hub-peripheral device set for driving multiple analog output ports,
 // possibly with hardware-triggered sequencing using a shared trigger input.
 class MultiAnalogOutHub : public HubBase<MultiAnalogOutHub>,
@@ -89,6 +92,9 @@ public:
 
 public: // Interface for individual ports
    virtual int GetVoltageLimits(double& minVolts, double& maxVolts);
+
+   virtual int RegisterPort(const std::string& port, MultiAnalogOutPort* ptr);
+   virtual int UnregisterPort(const std::string& port);
 
    virtual int StartSequenceForPort(const std::string& port,
       const std::vector<double> sequence);
@@ -142,6 +148,11 @@ private:
    // Invariant: physicalChannels_.size() == channelSequences_.size()
    std::vector<std::string> physicalChannels_; // Invariant: all unique
    std::vector< std::vector<double> > channelSequences_;
+
+   // All ports (physical channels) managed by this hub
+   // Invariant: allPorts_.size() == portPtrs_.size()
+   std::vector<std::string> allPorts_;
+   std::vector< MultiAnalogOutPort* > portPtrs_;
 };
 
 

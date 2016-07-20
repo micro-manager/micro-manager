@@ -183,6 +183,14 @@ int MultiAnalogOutHub::Shutdown()
    physicalChannels_.clear();
    channelSequences_.clear();
 
+   if (!allPorts_.empty())
+   {
+      err = NewErrorCode("Shutting down NIMultiAnalog hub before all ports; "
+            "this may lead to crashes");
+   }
+   allPorts_.clear();
+   portPtrs_.clear();
+
    initialized_ = false;
    return err;
 }
@@ -217,6 +225,34 @@ int MultiAnalogOutHub::GetVoltageLimits(double& minVolts, double& maxVolts)
 {
    minVolts = minVolts_;
    maxVolts = maxVolts_;
+   return DEVICE_OK;
+}
+
+
+int MultiAnalogOutHub::RegisterPort(const std::string& port, MultiAnalogOutPort* ptr)
+{
+   // Just in case
+   UnregisterPort(port);
+
+   allPorts_.push_back(port);
+   portPtrs_.push_back(ptr);
+   return DEVICE_OK;
+}
+
+
+int MultiAnalogOutHub::UnregisterPort(const std::string& port)
+{
+   // TODO We should check here that port is not currently involved in sequence
+
+   size_t n = allPorts_.size();
+   for (size_t i = 0; i < n; ++i)
+   {
+      if (allPorts_[i] == port) {
+         allPorts_.erase(allPorts_.begin() + i);
+         portPtrs_.erase(portPtrs_.begin() + i);
+         break;
+      }
+   }
    return DEVICE_OK;
 }
 
@@ -728,6 +764,10 @@ int MultiAnalogOutPort::Initialize()
    if (err != DEVICE_OK)
       return err;
 
+   err = GetAOHub()->RegisterPort(niPort_, this);
+   if (err != DEVICE_OK)
+      return TranslateHubError(err);
+
    return DEVICE_OK;
 }
 
@@ -737,13 +777,18 @@ int MultiAnalogOutPort::Shutdown()
    if (!initialized_)
       return DEVICE_OK;
 
-   int err = StopTask();
+   int err0 = DEVICE_OK;
+   if (sequenceRunning_)
+      err0 = StopDASequence();
+
+   int err1 = StopTask();
+   int err2 = TranslateHubError(GetAOHub()->UnregisterPort(niPort_));
 
    unsentSequence_.clear();
    sentSequence_.clear();
 
    initialized_ = false;
-   return err;
+   return err0 || err1 || err2;
 }
 
 
