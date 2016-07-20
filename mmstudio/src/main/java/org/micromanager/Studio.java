@@ -252,16 +252,16 @@ public interface Studio {
    public ShutterManager getShutterManager();
 
    /**
-    * Provides access to the application skin API for determining colors for
-    * various GUI components.
-    * @return ApplicationSkin instance.
+    * Provides access to the application API for controlling and updating the
+    * GUI.
+    * @return Application instance.
     */
-   public ApplicationSkin skin();
+   public Application app();
 
    /**
-    * Provides access to the application skin API for determining colors for
-    * various GUI components. Identical to skin() except in name.
-    * @return ApplicationSkin instance.
+    * Provides access to the application API for controlling and updating the
+    * GUI. Identical to app() except in name.
+    * @return Application instance.
     */
-   public ApplicationSkin getApplicationSkin();
+   public Application getApplication();
 }

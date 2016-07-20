@@ -39,8 +39,8 @@ import org.micromanager.data.Datastore;
  * module allows you to change the skin programmatically, and provides manual
  * access to certain color information for when you have a GUI element that
  * does not automatically respect the current skin.
- * This interface can be accessed via the Studio by calling Studio.getSkin() or
- * Studio.skin().
+ * This interface can be accessed via the Application by calling
+ * Application.getSkin() or Application.skin().
  */
 public interface ApplicationSkin {
    /**

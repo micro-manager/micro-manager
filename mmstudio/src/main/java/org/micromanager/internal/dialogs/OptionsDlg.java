@@ -341,7 +341,7 @@ public class OptionsDlg extends MMDialog {
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
-      parent_.skin().setSkin(SkinMode.fromString(background));
+      parent_.app().skin().setSkin(SkinMode.fromString(background));
    }
 
    private void closeRequested() {
@@ -362,7 +362,7 @@ public class OptionsDlg extends MMDialog {
       MMStudio.setCoreLogLifetimeDays(deleteLogDays);
 
       ScriptPanel.setStartupScript(startupScriptFile_.getText());
-      parent_.compat().makeActive();
+      parent_.app().makeActive();
       dispose();
    }
 

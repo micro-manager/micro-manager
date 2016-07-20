@@ -149,7 +149,7 @@ public class ConfigMenu {
 
          // Show a "please wait" dialog.
          JDialog waiter = GUIUtils.createBareMessageDialog(
-               studio_.compat().getMainWindow(),
+               studio_.app().getMainWindow(),
                "Loading Wizard; please wait...");
          waiter.setVisible(true);
 

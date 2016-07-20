@@ -38,6 +38,7 @@ import javax.swing.SwingConstants;
 import mmcorej.CMMCore;
 
 import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.GroupEditor;
 import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -161,7 +162,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          removePreset();
       if (e.getSource() == editPresetButton_)
          editPreset();
-      studio_.compat().refreshGUI();
+      studio_.app().refreshGUI();
    }
 
    @SuppressWarnings("ResultOfObjectAllocationIgnored")
@@ -179,7 +180,7 @@ public final class ConfigPadButtonPanel extends JPanel {
          if (result == JOptionPane.OK_OPTION) {
             try {
                core_.deleteConfigGroup(groupName);
-               studio_.compat().setConfigChanged(true);
+               ((MMStudio) studio_).setConfigChanged(true);
             } catch (Exception e) {
                handleException(e);
             }

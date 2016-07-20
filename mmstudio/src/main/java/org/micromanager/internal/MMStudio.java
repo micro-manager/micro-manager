@@ -61,6 +61,7 @@ import mmcorej.StrVector;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
 import org.micromanager.Album;
+import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.AutofocusManager;
 import org.micromanager.AutofocusPlugin;
@@ -144,7 +145,7 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements Studio, CompatibilityInterface, PositionListManager {
+public class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
 
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String OPEN_ACQ_DIR = "openDataDir";
@@ -1319,7 +1320,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    /**
     * Inserts version info for various components in the Corelog
     */
-   @Override
    public void logStartupProperties() {
       core_.logMessage("User: " + System.getProperty("user.name"));
       String hostname;
@@ -1354,8 +1354,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       posListDlg_.setVisible(true);
    }
 
-   
-   @Override
    public void setConfigChanged(boolean status) {
       configChanged_ = status;
       frame_.setConfigSaveButtonStatus(configChanged_);
@@ -1408,8 +1406,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
                  + channelGroup + ", channel: " + channel + ", exposure: " + exposure);
       }
    }
-     
-   @Override
+
    public void enableRoiButtons(final boolean enabled) {
       frame_.enableRoiButtons(enabled);
    }
@@ -1652,6 +1649,16 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    @Override
    public PositionListManager getPositionListManager() {
       return positions();
+   }
+
+   @Override
+   public Application app() {
+      return this;
+   }
+
+   @Override
+   public Application getApplication() {
+      return app();
    }
 
    @Override

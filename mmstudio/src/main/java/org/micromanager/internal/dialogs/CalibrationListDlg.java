@@ -31,6 +31,7 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.Calibration;
 import org.micromanager.internal.utils.CalibrationList;
 import org.micromanager.internal.utils.DaytimeNighttime;
@@ -98,8 +99,8 @@ public class CalibrationListDlg extends MMDialog {
                double val = Double.parseDouble(value.toString());
                core_.setPixelSizeUm(cal.getLabel(), val);
                cal.setPixelSizeUm(val);
-               parentGUI_.compat().setConfigChanged(true);
-               parentGUI_.compat().refreshGUI();
+               ((MMStudio) parentGUI_).setConfigChanged(true);
+               parentGUI_.app().refreshGUI();
             } catch (Exception e) {                                                              
                handleException(e);                                                               
             }  
@@ -275,8 +276,8 @@ public class CalibrationListDlg extends MMDialog {
          calibrationList_.getCalibrationsFromCore();
          CalTableModel ptm = (CalTableModel)calTable_.getModel();
          ptm.fireTableDataChanged();
-         parentGUI_.compat().setConfigChanged(true);
-         parentGUI_.compat().refreshGUI();
+         ((MMStudio) parentGUI_).setConfigChanged(true);
+         parentGUI_.app().refreshGUI();
       }
    }
 
@@ -292,15 +293,15 @@ public class CalibrationListDlg extends MMDialog {
       if (editPreset(label, size)) {
          calibrationList_.getCalibrationsFromCore();
          ptm.fireTableDataChanged();
-         parentGUI_.compat().setConfigChanged(true);
-         parentGUI_.compat().refreshGUI();
+         ((MMStudio) parentGUI_).setConfigChanged(true);
+         parentGUI_.app().refreshGUI();
       }
    }
 
    public void updateCalibrations() {
       refreshCalibrations();
-      parentGUI_.compat().setConfigChanged(true);
-      parentGUI_.compat().refreshGUI();
+      ((MMStudio) parentGUI_).setConfigChanged(true);
+      parentGUI_.app().refreshGUI();
    }
    
    public void refreshCalibrations() {
@@ -331,8 +332,8 @@ public class CalibrationListDlg extends MMDialog {
          }
          calibrationList_.getCalibrationsFromCore();
          ptm.fireTableDataChanged();
-         parentGUI_.compat().refreshGUI();
-         parentGUI_.compat().setConfigChanged(true);
+         parentGUI_.app().refreshGUI();
+         ((MMStudio) parentGUI_).setConfigChanged(true);
       }
    }
 
@@ -351,8 +352,8 @@ public class CalibrationListDlg extends MMDialog {
          calibrationList_.getCalibrationsFromCore();
          CalTableModel ptm = (CalTableModel)calTable_.getModel();
          ptm.fireTableDataChanged();
-         parentGUI_.compat().refreshGUI();
-         parentGUI_.compat().setConfigChanged(true);
+         parentGUI_.app().refreshGUI();
+         ((MMStudio) parentGUI_).setConfigChanged(true);
       }
    }
 
@@ -367,7 +368,7 @@ public class CalibrationListDlg extends MMDialog {
          dlg.setCore(core_);
          dlg.setVisible(true);
          if (dlg.isChanged()) {
-            parentGUI_.compat().setConfigChanged(true);
+            ((MMStudio) parentGUI_).setConfigChanged(true);
          }
          return dlg.isChanged();
       }

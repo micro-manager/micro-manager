@@ -127,7 +127,7 @@ public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
             try {
                studio_.core().setConfig(group, preset);
                studio_.core().waitForConfig(group, preset);
-               studio_.compat().refreshGUI();
+               studio_.app().refreshGUI();
             }
             catch (Exception e) {
                studio_.logs().showError(e, "Error setting config group " +
