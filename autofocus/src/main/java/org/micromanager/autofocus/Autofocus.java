@@ -144,7 +144,7 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
       verbose_ = arg.compareTo("silent") != 0;
 
       if (arg.compareTo("options") == 0){
-         app_.compat().showAutofocusDialog();
+         app_.app().showAutofocusDialog();
       }
 
       if (core_ == null) {

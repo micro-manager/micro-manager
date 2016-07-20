@@ -162,7 +162,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
       }
 
       if (arg.compareTo("options") == 0) {
-         app_.compat().showAutofocusDialog();
+         app_.app().showAutofocusDialog();
       }
 
       if (core_ == null) {

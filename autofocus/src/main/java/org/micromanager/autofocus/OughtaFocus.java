@@ -200,7 +200,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
 
       // avoid wasting time on setting roi if it is the same
       if (cropFactor < 1.0) {
-         studio_.compat().setROI(newROI);
+         studio_.app().setROI(newROI);
          core.waitForDevice(core.getCameraDevice());
       }
       double oldExposure = core.getExposure();
@@ -209,7 +209,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       double z = runAutofocusAlgorithm();
 
       if (cropFactor < 1.0) {
-         studio_.compat().setROI(oldROI);
+         studio_.app().setROI(oldROI);
          core.waitForDevice(core.getCameraDevice());
       }
       if (oldState != null) {
