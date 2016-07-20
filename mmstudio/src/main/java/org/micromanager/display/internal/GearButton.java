@@ -45,7 +45,7 @@ public class GearButton extends JButton {
    public GearButton(final DisplayWindow display) {
       setToolTipText("Access additional commands");
       menu_ = new JPopupMenu();
-      JMenuItem openInspector = new JMenuItem("Open New Inspector Window");
+      JMenuItem openInspector = new JMenuItem("New Inspector Window");
       openInspector.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -54,7 +54,7 @@ public class GearButton extends JButton {
       });
       menu_.add(openInspector);
 
-      JMenuItem duplicate = new JMenuItem("Duplicate This Window");
+      JMenuItem duplicate = new JMenuItem("New Window For This Data");
       duplicate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
