@@ -193,12 +193,15 @@ private:
    // Post-init property action handlers
    int OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+public: // Interface for hub to access
+   virtual double GetNonSequencedVoltage();
+   virtual int StartOnDemandTask(double voltage);
+   virtual int StopTask();
+
 private:
    MultiAnalogOutHub* GetAOHub() const
    { return static_cast<MultiAnalogOutHub*>(GetParentHub()); }
    int TranslateHubError(int err);
-   int StartOnDemandTask(double voltage);
-   int StopTask();
 
 private:
    const std::string niPort_;

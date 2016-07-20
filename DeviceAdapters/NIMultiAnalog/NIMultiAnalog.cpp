@@ -801,6 +801,9 @@ void MultiAnalogOutPort::GetName(char* name) const
 
 int MultiAnalogOutPort::SetGateOpen(bool open)
 {
+   if (sequenceRunning_)
+      return ERR_SEQUENCE_RUNNING;
+
    if (open && !gateOpen_)
    {
       int err = StartOnDemandTask(gatedVoltage_);
@@ -828,6 +831,9 @@ int MultiAnalogOutPort::GetGateOpen(bool& open)
 
 int MultiAnalogOutPort::SetSignal(double volts)
 {
+   if (sequenceRunning_)
+      return ERR_SEQUENCE_RUNNING;
+
    if (volts < minVolts_ || volts > maxVolts_)
       return ERR_VOLTAGE_OUT_OF_RANGE;
 
@@ -992,22 +998,14 @@ int MultiAnalogOutPort::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-int MultiAnalogOutPort::TranslateHubError(int err)
+double MultiAnalogOutPort::GetNonSequencedVoltage()
 {
-   if (err == DEVICE_OK)
-      return DEVICE_OK;
-   char buf[MM::MaxStrLength];
-   if (GetAOHub()->GetErrorText(err, buf))
-      return NewErrorCode(buf);
-   return NewErrorCode("Unknown hub error");
+   return gateOpen_ ? gatedVoltage_ : 0.0;
 }
 
 
 int MultiAnalogOutPort::StartOnDemandTask(double voltage)
 {
-   if (sequenceRunning_)
-      return ERR_SEQUENCE_RUNNING;
-
    if (task_)
    {
       int err = StopTask();
@@ -1015,7 +1013,8 @@ int MultiAnalogOutPort::StartOnDemandTask(double voltage)
          return err;
    }
 
-   LogMessage("Starting on-demand task", true);
+   LogMessage(("Starting on-demand task for voltage: " +
+         boost::lexical_cast<std::string>(voltage) + " V").c_str(), true);
 
    int32 nierr = DAQmxCreateTask(NULL, &task_);
    if (nierr != 0)
@@ -1086,4 +1085,15 @@ int MultiAnalogOutPort::StopTask()
    LogMessage("Stopped task", true);
 
    return DEVICE_OK;
+}
+
+
+int MultiAnalogOutPort::TranslateHubError(int err)
+{
+   if (err == DEVICE_OK)
+      return DEVICE_OK;
+   char buf[MM::MaxStrLength];
+   if (GetAOHub()->GetErrorText(err, buf))
+      return NewErrorCode(buf);
+   return NewErrorCode("Unknown hub error");
 }
