@@ -30,4 +30,4 @@ for (int i =0; i < nrGridPoints; i++) {
 	}
 }
 
-mm.compat().setPositionList(pl);
+mm.positions().setPositionList(pl);

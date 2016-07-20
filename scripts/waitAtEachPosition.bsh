@@ -6,7 +6,7 @@
 import ij.gui.GenericDialog;
 
 
-mm.compat().clearRunnables();
+mm.acquisitions().clearRunnables();
 
 runnable = new Runnable() {
    int count = 0;
@@ -20,4 +20,4 @@ runnable = new Runnable() {
 // Run the runnable on all frames and positions,
 // -1 --> attach to all planes along given dimension
 
-mm.compat().attachRunnable(-1, -1, 0, 0, runnable); // f, p, c, s 
+mm.acquisitions().attachRunnable(-1, -1, 0, 0, runnable); // f, p, c, s 
