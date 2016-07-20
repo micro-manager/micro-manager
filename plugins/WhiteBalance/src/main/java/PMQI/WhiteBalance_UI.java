@@ -844,7 +844,7 @@ public class WhiteBalance_UI extends javax.swing.JFrame {
         //disable color mode in MM before the WB algorithm
         try {
             core_.setProperty(CameraLabel, "Color", "OFF");
-            gui_.compat().refreshGUI();
+            gui_.app().refreshGUI();
             WBexposure = FindExposureForWB();
         } catch (Exception ex) {
             Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
@@ -871,14 +871,14 @@ public class WhiteBalance_UI extends javax.swing.JFrame {
                 core_.setProperty(CameraLabel, GREEN_SCALE_LABEL, GreenScale);
                 core_.setProperty(CameraLabel, BLUE_SCALE_LABEL, BlueScale);
                 core_.setProperty(CameraLabel, "Color", "ON");
-                gui_.compat().refreshGUI();
+                gui_.app().refreshGUI();
                 gui_.live().snap(true);
             } else {
                 core_.setProperty(CameraLabel, RED_SCALE_LABEL, 1.0);
                 core_.setProperty(CameraLabel, GREEN_SCALE_LABEL, 1.0);
                 core_.setProperty(CameraLabel, BLUE_SCALE_LABEL, 1.0);
                 core_.setProperty(CameraLabel, "Color", "ON");
-                gui_.compat().refreshGUI();
+                gui_.app().refreshGUI();
             }
         } catch (Exception ex) {
             Logger.getLogger(WhiteBalance_UI.class.getName()).log(Level.SEVERE, null, ex);
