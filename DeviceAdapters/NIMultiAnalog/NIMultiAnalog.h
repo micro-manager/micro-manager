@@ -87,21 +87,21 @@ public:
 
    virtual int DetectInstalledDevices();
 
-public:
+public: // Interface for individual ports
    virtual int GetVoltageLimits(double& minVolts, double& maxVolts);
 
    virtual int StartSequenceForPort(const std::string& port,
       const std::vector<double> sequence);
    virtual int StopSequenceForPort(const std::string& port);
 
-   virtual int AddPortToSequencing(const std::string& port,
-      const std::vector<double> sequence);
-   virtual void RemovePortFromSequencing(const std::string& port);
-
    virtual int IsSequencingEnabled(bool& flag) const;
    virtual int GetSequenceMaxLength(long& maxLength) const;
 
 private:
+   int AddPortToSequencing(const std::string& port,
+      const std::vector<double> sequence);
+   void RemovePortFromSequencing(const std::string& port);
+
    int GetVoltageRangeForDevice(const std::string& device,
       double& minVolts, double& maxVolts);
    std::vector<std::string> GetTriggerPortsForDevice(

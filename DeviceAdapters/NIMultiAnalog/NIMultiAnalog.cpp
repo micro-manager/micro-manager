@@ -254,6 +254,20 @@ int MultiAnalogOutHub::StopSequenceForPort(const std::string& port)
 }
 
 
+int MultiAnalogOutHub::IsSequencingEnabled(bool& flag) const
+{
+   flag = sequencingEnabled_;
+   return DEVICE_OK;
+}
+
+
+int MultiAnalogOutHub::GetSequenceMaxLength(long& maxLength) const
+{
+   maxLength = static_cast<long>(maxSequenceLength_);
+   return DEVICE_OK;
+}
+
+
 int MultiAnalogOutHub::AddPortToSequencing(const std::string& port,
    const std::vector<double> sequence)
 {
@@ -280,20 +294,6 @@ void MultiAnalogOutHub::RemovePortFromSequencing(const std::string& port)
          break;
       }
    }
-}
-
-
-int MultiAnalogOutHub::IsSequencingEnabled(bool& flag) const
-{
-   flag = sequencingEnabled_;
-   return DEVICE_OK;
-}
-
-
-int MultiAnalogOutHub::GetSequenceMaxLength(long& maxLength) const
-{
-   maxLength = static_cast<long>(maxSequenceLength_);
-   return DEVICE_OK;
 }
 
 
