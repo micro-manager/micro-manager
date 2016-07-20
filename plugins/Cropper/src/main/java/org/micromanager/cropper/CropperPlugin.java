@@ -36,7 +36,7 @@ public class CropperPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getSubMenu() {
-      return "";
+      return "Image";
    }
 
    @Override

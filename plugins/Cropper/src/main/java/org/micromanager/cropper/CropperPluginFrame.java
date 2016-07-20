@@ -21,15 +21,29 @@
 
 package org.micromanager.cropper;
 
-import java.awt.Dimension;
-import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import javax.swing.JButton;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Coords.CoordsBuilder;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMDialog;
 
@@ -39,24 +53,21 @@ import org.micromanager.internal.utils.MMDialog;
  */
 public class CropperPluginFrame extends MMDialog {
    private final Studio studio_;
-   private final Font font_;
-   private final Dimension buttonSize_;
    private final DisplayWindow ourWindow_;
    private final Datastore ourStore_;
    
    public CropperPluginFrame (Studio studio, DisplayWindow window) {
       studio_ = studio;
+      final CropperPluginFrame cpFrame = this;
       
-      this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-      this.addWindowListener(new WindowAdapter() {
+      super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
-            dispose();
+            cpFrame.dispose();
          }
       }
       );
-      font_ = new Font("Arial", Font.PLAIN, 12);
-      buttonSize_ = new Dimension(70, 21);
       
       ourWindow_ = window;
       ourStore_ = ourWindow_.getDatastore();
@@ -68,19 +79,144 @@ public class CropperPluginFrame extends MMDialog {
          return;
       }
       
-      this.setLayout(new MigLayout("flowx, fill, insets 8"));
-      this.setTitle(CropperPlugin.MENUNAME);
+      super.setLayout(new MigLayout("flowx, fill, insets 8"));
+      super.setTitle(CropperPlugin.MENUNAME);
 
       super.loadAndRestorePosition(100, 100, 375, 275);
       
       List<String> axes = ourStore_.getAxes();
+      final Map<String, Integer> mins = new HashMap<String, Integer>();
+      final Map<String, Integer> maxes = new HashMap<String, Integer>();
       
-      for (String axis : axes) {
-         
+      super.add(new JLabel(" "));
+      super.add(new JLabel("min"));
+      super.add(new JLabel("max"), "wrap");
+      
+      for (final String axis : axes) {
+         if (ourStore_.getAxisLength(axis) > 1) {
+            mins.put(axis, 1);
+            maxes.put(axis, ourStore_.getAxisLength(axis));
+            
+            super.add(new JLabel(axis));
+            SpinnerNumberModel model = new SpinnerNumberModel((int) 1, (int) 1,
+                    (int) ourStore_.getAxisLength(axis), (int) 1);
+            final JSpinner minSpinner = new JSpinner(model);
+            JFormattedTextField field = (JFormattedTextField) 
+                    minSpinner.getEditor().getComponent(0);
+            DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
+            formatter.setCommitsOnValidEdit(true);
+            minSpinner.addChangeListener(new ChangeListener(){
+               @Override
+               public void stateChanged(ChangeEvent ce) {
+                  // check to stay below max
+                  if ( (Integer) minSpinner.getValue() >= maxes.get(axis)) {
+                     minSpinner.setValue(maxes.get(axis) - 1);
+                  }
+                  mins.put(axis, (Integer) minSpinner.getValue());
+                  Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                  coord = coord.copy().index(axis, 
+                          (Integer) minSpinner.getValue() - 1).build();
+                  ourWindow_.setDisplayedImageTo(coord);
+               }
+            });
+            super.add(minSpinner, "wmin 60");
+
+            model = new SpinnerNumberModel((int) ourStore_.getAxisLength(axis), (int) 1,
+                    (int) ourStore_.getAxisLength(axis), (int) 1);
+            final JSpinner maxSpinner = new JSpinner(model);
+            field = (JFormattedTextField) 
+                    maxSpinner.getEditor().getComponent(0);
+            formatter = (DefaultFormatter) field.getFormatter();
+            formatter.setCommitsOnValidEdit(true);
+            maxSpinner.addChangeListener(new ChangeListener(){
+               @Override
+               public void stateChanged(ChangeEvent ce) {
+                  // check to stay above min
+                  if ( (Integer) maxSpinner.getValue() <= mins.get(axis)) {
+                     maxSpinner.setValue(mins.get(axis) + 1);
+                  }
+                  maxes.put(axis, (Integer) maxSpinner.getValue());
+                  Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                  coord = coord.copy().index(axis, 
+                          (Integer) maxSpinner.getValue() - 1).build();
+                  ourWindow_.setDisplayedImageTo(coord);
+               }
+            });
+            super.add(maxSpinner, "wmin 60, wrap");
+         }
       }
       
+      JButton OKButton = new JButton("OK");
+      OKButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            crop(ourWindow_, mins, maxes);
+            cpFrame.dispose();
+         }
+      });
+      super.add(OKButton, "span 3, split 2, tag ok, wmin button");
+      
+      JButton CancelButton = new JButton("Cancel");
+      CancelButton.addActionListener(new ActionListener(){
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            cpFrame.dispose();
+         }
+      });
+      super.add(CancelButton, "tag cancel, wrap");
       
       
+      super.pack();
+      super.setVisible(true);
+      
+      
+   }
+   
+   /**
+    * Performs the actual creation of a new image with reduced content
+    * 
+    * @param theWindow - original window to be copied
+    * @param mins - Map with new (or unchanged) minima for the given axis
+    * @param maxes - Map with new (or unchanged) maxima for the given axis
+    */
+   public void crop(final DisplayWindow theWindow, 
+           final Map<String, Integer> mins,
+           final Map<String, Integer> maxes) {
+      
+      // TODO: provide options for disk-backed datastores
+      Datastore newStore = studio_.data().createRAMDatastore();
+      Datastore oldStore = theWindow.getDatastore();
+      Coords oldSizeCoord = oldStore.getMaxIndices();
+      CoordsBuilder newCoordsBuilder = oldSizeCoord.copy();
+      SummaryMetadata metadata = oldStore.getSummaryMetadata();
+      String[] channelNames = metadata.getChannelNames();
+      Map<String, Integer> lengths = new HashMap<String, Integer>();
+      if (mins.containsKey(Coords.CHANNEL) ) {
+         int min = mins.get(Coords.CHANNEL);
+         int max = maxes.get(Coords.CHANNEL); 
+         if (min > 1 || max < channelNames.length) {
+            List<String> chNameList = new ArrayList<String>();
+            for (int index = min-1; index < max - 1; index++) {
+               chNameList.add(channelNames[index]);
+            }
+            channelNames = chNameList.toArray(channelNames);
+         }
+      }
+      lengths.put(Coords.CHANNEL, channelNames.length);
+      String[] axes = {Coords.STAGE_POSITION, Coords.TIME, Coords.Z};
+      for (String axis : axes) {
+         if (mins.containsKey(axis)) {
+               int min = mins.get(axis);
+               int max = maxes.get(axis); 
+               lengths.put(axis, max - min + 1);
+         } else {
+            lengths.put(axis, oldSizeCoord.getIndex(axis));
+         }
+      }
+      
+      metadata = metadata.copy().channelNames(channelNames).build();
+      
+      //metadata.copy().intendedDimensions(oldSizeCoord)
    }
    
 }
