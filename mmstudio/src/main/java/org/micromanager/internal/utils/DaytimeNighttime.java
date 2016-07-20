@@ -260,6 +260,7 @@ public class DaytimeNighttime implements ApplicationSkin {
     * Return the current background color.
     * @return current background color
     */
+   @Override
    public Color getBackgroundColor() {
       return background_.get(getSkin());
    }
@@ -268,6 +269,7 @@ public class DaytimeNighttime implements ApplicationSkin {
     * Return the current "lighter" background color.
     * @return light background color
     */
+   @Override
    public Color getLightBackgroundColor() {
       return lightBackground_.get(getSkin());
    }
@@ -276,6 +278,7 @@ public class DaytimeNighttime implements ApplicationSkin {
     * Return a proper "disabled" background color based on the current mode.
     * @return "disabled" background color based on the current mode
     */
+   @Override
    public Color getDisabledBackgroundColor() {
       return disabledBackground_.get(getSkin());
    }
@@ -284,6 +287,7 @@ public class DaytimeNighttime implements ApplicationSkin {
     * Return the current color for enabled text.
     * @return current color for enabled text
     */
+   @Override
    public Color getEnabledTextColor() {
       return enabledTextColor_.get(getSkin());
    }
@@ -292,6 +296,7 @@ public class DaytimeNighttime implements ApplicationSkin {
     * Return the current color for disabled text.
     * @return current color for disabled text.
     */
+   @Override
    public Color getDisabledTextColor() {
       return disabledTextColor_.get(getSkin());
    }

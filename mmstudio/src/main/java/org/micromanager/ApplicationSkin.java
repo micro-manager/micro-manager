@@ -23,6 +23,7 @@
 package org.micromanager;
 
 
+import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.awt.Rectangle;
 import javax.swing.JFrame;
@@ -32,8 +33,14 @@ import org.micromanager.data.Datastore;
 
 /**
  * Provides access to methods dealing with the "skin" or "look and feel" of the
- * user interface. This interface can be accessed via the Studio by
- * calling Studio.getSkin() or Studio.skin().
+ * user interface. In the majority of situations, you should not need to worry
+ * about what skin the GUI is using; it is set by the user and automatically
+ * applies to most GUI elements without any special effort on your part. This
+ * module allows you to change the skin programmatically, and provides manual
+ * access to certain color information for when you have a GUI element that
+ * does not automatically respect the current skin.
+ * This interface can be accessed via the Studio by calling Studio.getSkin() or
+ * Studio.skin().
  */
 public interface ApplicationSkin {
    /**
@@ -73,4 +80,35 @@ public interface ApplicationSkin {
     * @return the current Micro-Manager skin.
     */
    public SkinMode getSkin();
+
+   /**
+    * Return the current background color for normal GUI elements.
+    * @return current background color
+    */
+   public Color getBackgroundColor();
+
+   /**
+    * Return the current "lighter" background color for highlighted or
+    * otherwise differentiated GUI elements.
+    * @return light background color
+    */
+   public Color getLightBackgroundColor();
+
+   /**
+    * Return the current "disabled" background color.
+    * @return "disabled" background color
+    */
+   public Color getDisabledBackgroundColor();
+
+   /**
+    * Return the current color for enabled text.
+    * @return current color for enabled text
+    */
+   public Color getEnabledTextColor();
+
+   /**
+    * Return the current color for disabled text.
+    * @return current color for disabled text.
+    */
+   public Color getDisabledTextColor();
 }
