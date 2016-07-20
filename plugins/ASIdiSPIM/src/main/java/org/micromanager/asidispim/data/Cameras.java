@@ -153,7 +153,7 @@ public class Cameras {
             }
             currentCameraKey_ = key;
             core_.setCameraDevice(mmDevice);
-            gui_.compat().refreshGUIFromCache();
+            gui_.app().refreshGUIFromCache();
             if (liveEnabled) {
                enableLiveMode(true);
             }

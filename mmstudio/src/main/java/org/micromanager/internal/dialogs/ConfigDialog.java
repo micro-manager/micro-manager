@@ -290,7 +290,7 @@ public abstract class ConfigDialog extends MMDialog {
    public void dispose() {
       super.dispose();
       savePosition();
-      gui_.compat().refreshGUI();
+      gui_.app().refreshGUI();
    }
 
    public void update() {

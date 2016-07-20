@@ -101,7 +101,7 @@ public class RegistrationDlg extends JDialog {
       // DaytimeNighttime returns here gets overridden as soon as setVisible()
       // is called, for unknown reasons.
       welcomeTextArea_.setBackground(new Color(
-            DaytimeNighttime.getDisabledBackgroundColor().getRGB()));
+            DaytimeNighttime.getInstance().getDisabledBackgroundColor().getRGB()));
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
       welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 12));

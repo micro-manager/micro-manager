@@ -28,8 +28,8 @@ class FirstRowRenderer extends JLabel implements TableCellRenderer {
       setText((String) text);
       // HACK: use the "disabled" color for this row to differentiate it from
       // other rows.
-      setBackground(DaytimeNighttime.getDisabledBackgroundColor());
-      setForeground(DaytimeNighttime.getEnabledTextColor());
+      setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
+      setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
       return this;
    }
 }

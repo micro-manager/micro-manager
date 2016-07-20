@@ -27,7 +27,6 @@ import javax.swing.JPanel;
 
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMScriptException;
 
 
@@ -502,7 +501,7 @@ public class PlatePanel extends JPanel {
       labelBoxY.width = xMargin_;
       labelBoxY.x = 0;
 
-      g.setColor(DaytimeNighttime.getEnabledTextColor());
+      g.setColor(app_.app().skin().getEnabledTextColor());
       for (int i=0; i<plate_.getNumColumns(); i++) {
          labelBoxX.x = (int)(i*wellX + 0.5 + xMargin_ + xOffset);
          TextLayout tl = new TextLayout(plate_.getColumnLabel(i+1), f, frc);

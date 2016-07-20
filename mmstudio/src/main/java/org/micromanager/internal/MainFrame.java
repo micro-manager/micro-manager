@@ -141,6 +141,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
    private AbstractButton setRoiButton_;
    private AbstractButton clearRoiButton_;
+   private AbstractButton centerQuadButton_;
 
    @SuppressWarnings("LeakingThisInConstructor")
    public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager,
@@ -366,7 +367,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          new Runnable() {
             @Override
             public void run() {
-               studio_.saveConfigPresets();
+               studio_.promptToSaveConfigPresets();
             }
          });
       subPanel.add(saveConfigButton_,
@@ -509,7 +510,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             }
          });
       roiPanel.add(setRoiButton_, SMALLBUTTON_SIZE);
-      JButton centerQuadButton = createButton(null, "center_quad.png",
+      centerQuadButton_ = createButton(null, "center_quad.png",
          "Set Region Of Interest to center quad of camera",
          new Runnable() {
             @Override
@@ -517,7 +518,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
                studio_.setCenterQuad();
             }
          });
-      roiPanel.add(centerQuadButton, SMALLBUTTON_SIZE);
+      roiPanel.add(centerQuadButton_, SMALLBUTTON_SIZE);
 
       clearRoiButton_ = createButton(null, "arrow_out.png",
          "Reset Region of Interest to full frame",
@@ -572,7 +573,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             new Runnable() {
                @Override
                public void run() {
-                  studio_.compat().showPositionList();
+                  studio_.app().showPositionList();
                }
             });
       stagePanel.add(listButton, SMALLBUTTON_SIZE);
@@ -845,6 +846,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
            public void run() {
                setRoiButton_.setEnabled(enabled);
                clearRoiButton_.setEnabled(enabled);
+               centerQuadButton_.setEnabled(enabled);
            }
        });
    }

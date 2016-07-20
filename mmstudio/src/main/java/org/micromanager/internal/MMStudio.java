@@ -61,6 +61,8 @@ import mmcorej.StrVector;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
 import org.micromanager.Album;
+import org.micromanager.Application;
+import org.micromanager.ApplicationSkin;
 import org.micromanager.AutofocusManager;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.CompatibilityInterface;
@@ -143,7 +145,7 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements Studio, CompatibilityInterface, PositionListManager {
+public class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
 
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String OPEN_ACQ_DIR = "openDataDir";
@@ -262,7 +264,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          startupScriptFile_ = "";
       }
 
-      setBackgroundStyle(DaytimeNighttime.getBackgroundMode());
+      DaytimeNighttime.getInstance().loadStoredSkin();
 
       RegistrationDlg.showIfNecessary();
 
@@ -555,7 +557,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       } // End synchronization check
    }
 
-   @Override
    public boolean getHideMDADisplayOption() {
       return AcqControlDlg.getShouldHideMDADisplay();
    }
@@ -721,22 +722,34 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       return frame_;
    }
 
-   @Override
-   public void saveConfigPresets() {
+   public void promptToSaveConfigPresets() {
+      File f = FileDialogs.save(frame_,
+            "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
+      if (f != null) {
+         try {
+            saveConfigPresets(f.getAbsolutePath(), true);
+         }
+         catch (IOException e) {
+            // This should be impossible as we set shouldOverwrite to true.
+            logs().logError(e, "Error saving config presets");
+         }
+      }
+   }
+
+   public void saveConfigPresets(String path, boolean allowOverwrite) throws IOException {
+      if (!allowOverwrite && new File(path).exists()) {
+         throw new IOException("Cannot overwrite existing file at " + path);
+      }
       MicroscopeModel model = new MicroscopeModel();
       try {
          model.loadFromFile(sysConfigFile_);
          model.createSetupConfigsFromHardware(core_);
          model.createResolutionsFromHardware(core_);
-         File f = FileDialogs.save(frame_,
-               "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
-         if (f != null) {
-            model.saveToFile(f.getAbsolutePath());
-            sysConfigFile_ = f.getAbsolutePath();
-            configChanged_ = false;
-            frame_.setConfigSaveButtonStatus(configChanged_);
-            frame_.setConfigText(sysConfigFile_);
-         }
+         model.saveToFile(path);
+         sysConfigFile_ = path;
+         configChanged_ = false;
+         frame_.setConfigSaveButtonStatus(configChanged_);
+         frame_.setConfigText(sysConfigFile_);
       } catch (MMConfigFileException e) {
          ReportingUtils.showError(e);
       }
@@ -1046,7 +1059,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
                null, options, options[0]);
          if (n == JOptionPane.YES_OPTION) {
-            saveConfigPresets();
+            promptToSaveConfigPresets();
             // if the configChanged_ flag did not become false, the user 
             // must have cancelled the configuration saving and we should cancel
             // quitting as well
@@ -1318,7 +1331,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    /**
     * Inserts version info for various components in the Corelog
     */
-   @Override
    public void logStartupProperties() {
       core_.logMessage("User: " + System.getProperty("user.name"));
       String hostname;
@@ -1353,8 +1365,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       posListDlg_.setVisible(true);
    }
 
-   
-   @Override
    public void setConfigChanged(boolean status) {
       configChanged_ = status;
       frame_.setConfigSaveButtonStatus(configChanged_);
@@ -1407,23 +1417,9 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
                  + channelGroup + ", channel: " + channel + ", exposure: " + exposure);
       }
    }
-     
-   @Override
+
    public void enableRoiButtons(final boolean enabled) {
       frame_.enableRoiButtons(enabled);
-   }
-
-   /*
-    * Changes background color of this window and all other MM windows
-    */
-   @Override
-   public final void setBackgroundStyle(String backgroundType) {
-      DaytimeNighttime.setMode(backgroundType);
-   }
-
-   @Override
-   public String getBackgroundStyle() {
-      return DaytimeNighttime.getBackgroundMode();
    }
 
    @Override
@@ -1664,6 +1660,26 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    @Override
    public PositionListManager getPositionListManager() {
       return positions();
+   }
+
+   @Override
+   public Application app() {
+      return this;
+   }
+
+   @Override
+   public Application getApplication() {
+      return app();
+   }
+
+   @Override
+   public ApplicationSkin skin() {
+      return DaytimeNighttime.getInstance();
+   }
+
+   @Override
+   public ApplicationSkin getApplicationSkin() {
+      return skin();
    }
 
    @Override

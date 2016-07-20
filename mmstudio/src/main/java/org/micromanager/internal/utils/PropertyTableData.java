@@ -175,7 +175,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             setValueInCore(item, value);
             core_.updateSystemStateCache();
             refresh(true);
-            gui_.compat().refreshGUIFromCache();
+            gui_.app().refreshGUIFromCache();
          }
       } else if (col == PropertyUsedColumn_) {
          item.confInclude = ((Boolean) value).booleanValue();

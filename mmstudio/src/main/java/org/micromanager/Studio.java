@@ -250,4 +250,18 @@ public interface Studio {
     * @return ShutterManager instance.
     */
    public ShutterManager getShutterManager();
+
+   /**
+    * Provides access to the application API for controlling and updating the
+    * GUI.
+    * @return Application instance.
+    */
+   public Application app();
+
+   /**
+    * Provides access to the application API for controlling and updating the
+    * GUI. Identical to app() except in name.
+    * @return Application instance.
+    */
+   public Application getApplication();
 }

@@ -245,7 +245,7 @@ public class PropertyEditor extends MMFrame {
          }
          core_.updateSystemStateCache();
          refresh(true);
-         studio_.compat().refreshGUIFromCache();
+         studio_.app().refreshGUIFromCache();
          fireTableCellUpdated(row, col);
       }
 

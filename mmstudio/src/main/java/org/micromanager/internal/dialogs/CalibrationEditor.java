@@ -630,7 +630,7 @@ public class CalibrationEditor extends MMDialog {
                refresh();
 
                if (parentGUI_ != null)
-                  parentGUI_.compat().refreshGUI();              
+                  parentGUI_.app().refreshGUI();
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
                ReportingUtils.showError(e);
@@ -1000,9 +1000,9 @@ public class CalibrationEditor extends MMDialog {
          lab.setHorizontalAlignment(JLabel.LEFT);
          lab.setOpaque(true);
          if (item_.readOnly) {
-            lab.setBackground(DaytimeNighttime.getDisabledBackgroundColor());
+            lab.setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
          } else {
-            lab.setBackground(DaytimeNighttime.getBackgroundColor());
+            lab.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
          }
          
          if (hasFocus) {

@@ -67,8 +67,8 @@ public class StatePresetCellRenderer implements TableCellRenderer {
             comp.setForeground(Color.BLACK);
         } else {
             // HACK: manually set day/night colors. 
-            comp.setBackground(DaytimeNighttime.getBackgroundColor());
-            comp.setForeground(DaytimeNighttime.getEnabledTextColor());
+            comp.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
+            comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
         }
 
         return comp;
