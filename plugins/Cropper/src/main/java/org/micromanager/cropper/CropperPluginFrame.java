@@ -226,15 +226,21 @@ public class CropperPluginFrame extends MMDialog {
          for (Coords oldCoord : unorderedImageCoords) {
             boolean copy = true;
             for (String axis : oldCoord.getAxes()) {
-               if (oldCoord.getIndex(axis) < (mins.get(axis) -1) )
-                  copy = false;
-               if (oldCoord.getIndex(axis) >= maxes.get(axis) ) 
-                  copy = false;
+               if (mins.containsKey(axis) && maxes.containsKey(axis)) {
+                  if (oldCoord.getIndex(axis) < (mins.get(axis) - 1)) {
+                     copy = false;
+                  }
+                  if (oldCoord.getIndex(axis) >= maxes.get(axis)) {
+                     copy = false;
+                  }
+               }
             }
             if (copy) {
                CoordsBuilder newCoordBuilder = oldCoord.copy();
                for (String axis : oldCoord.getAxes()) {
-                  newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins.get(axis));
+                  if (mins.containsKey(axis)) {
+                     newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins.get(axis));
+                  }
                }
                Image img = oldStore.getImage(oldCoord);
                Image newImgShallow = img.copyAtCoords(newCoordBuilder.build());
@@ -247,6 +253,10 @@ public class CropperPluginFrame extends MMDialog {
       } catch (DatastoreRewriteException ex) {
          // TODO
       }
+      
+      newStore.freeze();
+      studio_.displays().createDisplay(newStore);
+      studio_.displays().manage(newStore);
    }
    
 }
