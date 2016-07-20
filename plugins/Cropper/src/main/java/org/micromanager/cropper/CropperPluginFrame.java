@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -43,6 +45,9 @@ import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMDialog;
@@ -163,8 +168,7 @@ public class CropperPluginFrame extends MMDialog {
             cpFrame.dispose();
          }
       });
-      super.add(CancelButton, "tag cancel, wrap");
-      
+      super.add(CancelButton, "tag cancel, wrap");     
       
       super.pack();
       super.setVisible(true);
@@ -190,7 +194,6 @@ public class CropperPluginFrame extends MMDialog {
       CoordsBuilder newCoordsBuilder = oldSizeCoord.copy();
       SummaryMetadata metadata = oldStore.getSummaryMetadata();
       String[] channelNames = metadata.getChannelNames();
-      Map<String, Integer> lengths = new HashMap<String, Integer>();
       if (mins.containsKey(Coords.CHANNEL) ) {
          int min = mins.get(Coords.CHANNEL);
          int max = maxes.get(Coords.CHANNEL); 
@@ -202,21 +205,48 @@ public class CropperPluginFrame extends MMDialog {
             channelNames = chNameList.toArray(channelNames);
          }
       }
-      lengths.put(Coords.CHANNEL, channelNames.length);
+      newCoordsBuilder.channel(channelNames.length);
       String[] axes = {Coords.STAGE_POSITION, Coords.TIME, Coords.Z};
       for (String axis : axes) {
          if (mins.containsKey(axis)) {
-               int min = mins.get(axis);
-               int max = maxes.get(axis); 
-               lengths.put(axis, max - min + 1);
-         } else {
-            lengths.put(axis, oldSizeCoord.getIndex(axis));
+            int min = mins.get(axis);
+            int max = maxes.get(axis);
+            newCoordsBuilder.index(axis, max - min + 1);
          }
       }
-      
-      metadata = metadata.copy().channelNames(channelNames).build();
-      
-      //metadata.copy().intendedDimensions(oldSizeCoord)
+
+      metadata = metadata.copy()
+              .channelNames(channelNames)
+              .intendedDimensions(newCoordsBuilder.build())
+              .build();
+      try {
+         newStore.setSummaryMetadata(metadata);
+
+         Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
+         for (Coords oldCoord : unorderedImageCoords) {
+            boolean copy = true;
+            for (String axis : oldCoord.getAxes()) {
+               if (oldCoord.getIndex(axis) < (mins.get(axis) -1) )
+                  copy = false;
+               if (oldCoord.getIndex(axis) >= maxes.get(axis) ) 
+                  copy = false;
+            }
+            if (copy) {
+               CoordsBuilder newCoordBuilder = oldCoord.copy();
+               for (String axis : oldCoord.getAxes()) {
+                  newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins.get(axis));
+               }
+               Image img = oldStore.getImage(oldCoord);
+               Image newImgShallow = img.copyAtCoords(newCoordBuilder.build());
+               newStore.putImage(newImgShallow);
+            }
+         }
+
+      } catch (DatastoreFrozenException ex) {
+         // TODO
+      } catch (DatastoreRewriteException ex) {
+         // TODO
+      }
    }
    
 }
