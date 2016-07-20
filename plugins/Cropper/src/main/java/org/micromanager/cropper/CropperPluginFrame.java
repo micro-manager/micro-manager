@@ -29,8 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -90,6 +88,10 @@ public class CropperPluginFrame extends MMDialog {
       super.loadAndRestorePosition(100, 100, 375, 275);
       
       List<String> axes = ourStore_.getAxes();
+      // Note: MM uses 0-based indices in the code, but 1-based indices
+      // for the UI.  To avoid confusion, this storage of the desired
+      // limits for each axis is 0-based, and translation to 1-based is made
+      // in the UI code
       final Map<String, Integer> mins = new HashMap<String, Integer>();
       final Map<String, Integer> maxes = new HashMap<String, Integer>();
       
@@ -105,6 +107,7 @@ public class CropperPluginFrame extends MMDialog {
             super.add(new JLabel(axis));
             SpinnerNumberModel model = new SpinnerNumberModel((int) 1, (int) 1,
                     (int) ourStore_.getAxisLength(axis), (int) 1);
+            mins.put(axis, 0);
             final JSpinner minSpinner = new JSpinner(model);
             JFormattedTextField field = (JFormattedTextField) 
                     minSpinner.getEditor().getComponent(0);
@@ -113,21 +116,21 @@ public class CropperPluginFrame extends MMDialog {
             minSpinner.addChangeListener(new ChangeListener(){
                @Override
                public void stateChanged(ChangeEvent ce) {
-                  // check to stay below max
-                  if ( (Integer) minSpinner.getValue() >= maxes.get(axis)) {
-                     minSpinner.setValue(maxes.get(axis) - 1);
+                  // check to stay below max, this could be annoying at times
+                  if ( (Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
+                     minSpinner.setValue(maxes.get(axis) + 1);
                   }
-                  mins.put(axis, (Integer) minSpinner.getValue());
+                  mins.put(axis, (Integer) minSpinner.getValue() - 1);
                   Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                  coord = coord.copy().index(axis, 
-                          (Integer) minSpinner.getValue() - 1).build();
+                  coord = coord.copy().index(axis, mins.get(axis)).build();
                   ourWindow_.setDisplayedImageTo(coord);
                }
             });
             super.add(minSpinner, "wmin 60");
 
-            model = new SpinnerNumberModel((int) ourStore_.getAxisLength(axis), (int) 1,
-                    (int) ourStore_.getAxisLength(axis), (int) 1);
+            model = new SpinnerNumberModel((int) ourStore_.getAxisLength(axis),
+                    (int) 1,(int) ourStore_.getAxisLength(axis), (int) 1);
+            maxes.put(axis, ourStore_.getAxisLength(axis) - 1);
             final JSpinner maxSpinner = new JSpinner(model);
             field = (JFormattedTextField) 
                     maxSpinner.getEditor().getComponent(0);
@@ -137,13 +140,12 @@ public class CropperPluginFrame extends MMDialog {
                @Override
                public void stateChanged(ChangeEvent ce) {
                   // check to stay above min
-                  if ( (Integer) maxSpinner.getValue() <= mins.get(axis)) {
+                  if ( (Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
                      maxSpinner.setValue(mins.get(axis) + 1);
                   }
-                  maxes.put(axis, (Integer) maxSpinner.getValue());
+                  maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
                   Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                  coord = coord.copy().index(axis, 
-                          (Integer) maxSpinner.getValue() - 1).build();
+                  coord = coord.copy().index(axis, maxes.get(axis)).build();
                   ourWindow_.setDisplayedImageTo(coord);
                }
             });
@@ -191,33 +193,31 @@ public class CropperPluginFrame extends MMDialog {
       Datastore newStore = studio_.data().createRAMDatastore();
       Datastore oldStore = theWindow.getDatastore();
       Coords oldSizeCoord = oldStore.getMaxIndices();
-      CoordsBuilder newCoordsBuilder = oldSizeCoord.copy();
+      CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copy();
       SummaryMetadata metadata = oldStore.getSummaryMetadata();
       String[] channelNames = metadata.getChannelNames();
-      if (mins.containsKey(Coords.CHANNEL) ) {
+      if (mins.containsKey(Coords.CHANNEL)) {
          int min = mins.get(Coords.CHANNEL);
-         int max = maxes.get(Coords.CHANNEL); 
-         if (min > 1 || max < channelNames.length) {
-            List<String> chNameList = new ArrayList<String>();
-            for (int index = min-1; index < max - 1; index++) {
-               chNameList.add(channelNames[index]);
-            }
-            channelNames = chNameList.toArray(channelNames);
+         int max = maxes.get(Coords.CHANNEL);
+         List<String> chNameList = new ArrayList<String>();
+         for (int index = min; index < max; index++) {
+            chNameList.add(channelNames[index]);
          }
+         channelNames = chNameList.toArray(channelNames);
       }
-      newCoordsBuilder.channel(channelNames.length);
+      newSizeCoordsBuilder.channel(channelNames.length);
       String[] axes = {Coords.STAGE_POSITION, Coords.TIME, Coords.Z};
       for (String axis : axes) {
          if (mins.containsKey(axis)) {
             int min = mins.get(axis);
             int max = maxes.get(axis);
-            newCoordsBuilder.index(axis, max - min + 1);
+            newSizeCoordsBuilder.index(axis, max - min);
          }
       }
 
       metadata = metadata.copy()
               .channelNames(channelNames)
-              .intendedDimensions(newCoordsBuilder.build())
+              .intendedDimensions(newSizeCoordsBuilder.build())
               .build();
       try {
          newStore.setSummaryMetadata(metadata);
@@ -227,10 +227,10 @@ public class CropperPluginFrame extends MMDialog {
             boolean copy = true;
             for (String axis : oldCoord.getAxes()) {
                if (mins.containsKey(axis) && maxes.containsKey(axis)) {
-                  if (oldCoord.getIndex(axis) < (mins.get(axis) - 1)) {
+                  if (oldCoord.getIndex(axis) < (mins.get(axis))) {
                      copy = false;
                   }
-                  if (oldCoord.getIndex(axis) >= maxes.get(axis)) {
+                  if (oldCoord.getIndex(axis) > maxes.get(axis)) {
                      copy = false;
                   }
                }
@@ -239,7 +239,7 @@ public class CropperPluginFrame extends MMDialog {
                CoordsBuilder newCoordBuilder = oldCoord.copy();
                for (String axis : oldCoord.getAxes()) {
                   if (mins.containsKey(axis)) {
-                     newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins.get(axis));
+                     newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins.get(axis) );
                   }
                }
                Image img = oldStore.getImage(oldCoord);
