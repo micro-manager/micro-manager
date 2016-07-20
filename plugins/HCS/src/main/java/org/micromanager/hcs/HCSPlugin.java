@@ -1,21 +1,28 @@
-/**
- * SequenceBufferMonitor plugin
- *
- * Display Core sequence buffer usage in real time.
- *
- * AUTHOR:       Mark Tsuchida
- * COPYRIGHT:    University of California, San Francisco, 2014
- * LICENSE:      This file is distributed under the BSD license.
- *               License text is included with the source distribution.
- *
- *               This file is distributed in the hope that it will be useful,
- *               but WITHOUT ANY WARRANTY; without even the implied warranty
- *               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- *
- *               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- *               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:           HCSPlugin.java
+//PROJECT:        Micro-Manager
+//SUBSYSTEM:      high content screening
+//-----------------------------------------------------------------------------
+//
+//AUTHOR:         Nenad Amodaj, nenad@amodaj.com, June 3, 2008
+//                Mark Tsuchida
+//                Nico Stuurman
+//
+//COPYRIGHT:      100X Imaging Inc, www.100ximaging.com, 2008
+//                Regents of the University of California, 2014-2016
+//
+//LICENSE:        This file is distributed under the BSD license.
+//                License text is included with the source distribution.
+//
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+
 
 package org.micromanager.hcs;
 
