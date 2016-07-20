@@ -25,6 +25,8 @@ package org.micromanager;
 
 import java.awt.geom.AffineTransform;
 import java.awt.Rectangle;
+import java.io.IOException;
+
 import javax.swing.JFrame;
 
 import org.micromanager.data.Datastore;
@@ -86,10 +88,16 @@ public interface Application {
            double defaultExp);
 
    /**
-    * Pop up a dialog prompting the user to save their config file, which has
-    * presumably been updated to include new config groups and/or presets.
+    * Save the current state of the config file to the specified path. If you
+    * have generated new config groups and/or presets, they will be included
+    * in the new file.
+    * @param path Path to save the file to.
+    * @param allowOverwrite If true, any existing file at the specified path
+    *        will be overwritten.
+    * @throws IOException If shouldOverwrite is false and there is already a
+    *         file at the chosen path.
     */
-   public void saveConfigPresets();
+   public void saveConfigPresets(String path, boolean allowOverwrite) throws IOException;
 
    /**
     * Pop up the dialog used to configure the autofocus settings for the
@@ -115,12 +123,6 @@ public interface Application {
     * Move the main Micro-Manager window to the top of the user interface.
     */
    public void makeActive();
-
-   /**
-    * Returns true if user has chosen to hide MDA window when it runs.
-    * @return true if user has chosen to hide MDA window
-    */
-   public boolean getHideMDADisplayOption();
 
    /**
     * Provide access to the main window of the program. This is largely

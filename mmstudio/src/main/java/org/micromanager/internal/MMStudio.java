@@ -557,7 +557,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       } // End synchronization check
    }
 
-   @Override
    public boolean getHideMDADisplayOption() {
       return AcqControlDlg.getShouldHideMDADisplay();
    }
@@ -723,22 +722,34 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       return frame_;
    }
 
-   @Override
-   public void saveConfigPresets() {
+   public void promptToSaveConfigPresets() {
+      File f = FileDialogs.save(frame_,
+            "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
+      if (f != null) {
+         try {
+            saveConfigPresets(f.getAbsolutePath(), true);
+         }
+         catch (IOException e) {
+            // This should be impossible as we set shouldOverwrite to true.
+            logs().logError(e, "Error saving config presets");
+         }
+      }
+   }
+
+   public void saveConfigPresets(String path, boolean allowOverwrite) throws IOException {
+      if (!allowOverwrite && new File(path).exists()) {
+         throw new IOException("Cannot overwrite existing file at " + path);
+      }
       MicroscopeModel model = new MicroscopeModel();
       try {
          model.loadFromFile(sysConfigFile_);
          model.createSetupConfigsFromHardware(core_);
          model.createResolutionsFromHardware(core_);
-         File f = FileDialogs.save(frame_,
-               "Save the configuration file", FileDialogs.MM_CONFIG_FILE);
-         if (f != null) {
-            model.saveToFile(f.getAbsolutePath());
-            sysConfigFile_ = f.getAbsolutePath();
-            configChanged_ = false;
-            frame_.setConfigSaveButtonStatus(configChanged_);
-            frame_.setConfigText(sysConfigFile_);
-         }
+         model.saveToFile(path);
+         sysConfigFile_ = path;
+         configChanged_ = false;
+         frame_.setConfigSaveButtonStatus(configChanged_);
+         frame_.setConfigText(sysConfigFile_);
       } catch (MMConfigFileException e) {
          ReportingUtils.showError(e);
       }
@@ -1048,7 +1059,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
                JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
                null, options, options[0]);
          if (n == JOptionPane.YES_OPTION) {
-            saveConfigPresets();
+            promptToSaveConfigPresets();
             // if the configChanged_ flag did not become false, the user 
             // must have cancelled the configuration saving and we should cancel
             // quitting as well

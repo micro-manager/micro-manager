@@ -107,7 +107,7 @@ public class ConfigMenu {
               new Runnable() {
                  @Override
                  public void run() {
-                    studio_.saveConfigPresets();
+                    studio_.promptToSaveConfigPresets();
                     studio_.updateChannelCombos();
                  }
               });
@@ -140,7 +140,7 @@ public class ConfigMenu {
                   JOptionPane.QUESTION_MESSAGE, null, options,
                   options[0]);
             if (n == JOptionPane.YES_OPTION) {
-               studio_.saveConfigPresets();
+               studio_.promptToSaveConfigPresets();
             }
             studio_.setConfigChanged(false);
          }

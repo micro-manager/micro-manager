@@ -367,7 +367,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
          new Runnable() {
             @Override
             public void run() {
-               studio_.saveConfigPresets();
+               studio_.promptToSaveConfigPresets();
             }
          });
       subPanel.add(saveConfigButton_,
