@@ -461,7 +461,8 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
     */
    private DisplaySettings.DisplaySettingsBuilder updateContrastSettings(
          DisplaySettings.DisplaySettingsBuilder builder, int component,
-         Integer minVal, Integer maxVal, Double gamma, boolean shouldPost) {
+         Integer minVal, Integer maxVal, Double gamma, boolean shouldPost,
+         boolean shouldDisableAutostretch) {
       int numComponents = lastHistograms_.length;
       DisplaySettings settings = display_.getDisplaySettings();
       Integer[] mins = new Integer[numComponents];
@@ -488,7 +489,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                mins, maxes, gammas, isEnabledButton_.isSelected());
       builder.safeUpdateContrastSettings(contrast, channelIndex_);
       if (shouldPost) {
-         builder.shouldAutostretch(false);
+         if (shouldDisableAutostretch) {
+            builder.shouldAutostretch(false);
+         }
          DisplaySettings newSettings = builder.build();
          postContrastEvent(newSettings);
          display_.setDisplaySettings(newSettings);
@@ -525,7 +528,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       if (curMin != min || curMax != max) {
          // New values are different from old ones.
          builder = updateContrastSettings(builder,
-               curComponent_, min, max, null, false);
+               curComponent_, min, max, null, false, true);
          didChange = true;
       }
       if (didChange) {
@@ -621,7 +624,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
       DisplaySettings.DisplaySettingsBuilder builder =
          display_.getDisplaySettings().copy();
       updateContrastSettings(display_.getDisplaySettings().copy(),
-            curComponent_, null, null, null, true);
+            curComponent_, null, null, null, true, false);
    }
 
    private HistogramCanvas makeHistogramCanvas() {
@@ -717,7 +720,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                lastHistograms_[curComponent_].getMinIgnoringOutliers());
       max = Math.max(max, limit + 1);
       updateContrastSettings(display_.getDisplaySettings().copy(),
-            curComponent_, null, max, null, true);
+            curComponent_, null, max, null, true, true);
    }
 
    @Override
@@ -732,7 +735,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                lastHistograms_[curComponent_].getMinIgnoringOutliers());
       min = Math.min(min, limit - 1);
       updateContrastSettings(display_.getDisplaySettings().copy(),
-            curComponent_, min, null, null, true);
+            curComponent_, min, null, null, true, true);
    }
 
    @Override
@@ -750,7 +753,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
    @Override
    public void onGammaCurve(double gamma) {
       updateContrastSettings(display_.getDisplaySettings().copy(),
-            curComponent_, null, null, gamma, true);
+            curComponent_, null, null, gamma, true, true);
    }
 
    /**
