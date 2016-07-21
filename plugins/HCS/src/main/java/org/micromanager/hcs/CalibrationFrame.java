@@ -6,7 +6,7 @@
 //
 //AUTHOR:         Nico Stuurman
 //
-//COPYRIGHT:      Regents of the University of California, 2014-2016
+//COPYRIGHT:      Regents of the University of California, 2016
 //
 //LICENSE:        This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -30,8 +30,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -129,20 +127,34 @@ public class CalibrationFrame extends JFrame {
       });
       contents.add(cancelButton, "span 4, split 2, tag cancel");
       
+      // OK Button, this is where all the action happens
       JButton OKButton = new JButton ("OK");
       OKButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             int rowNr = rowNumbers.get( (String) rowSpinner.getValue());
             int colNr = (Integer) columnSpinner.getValue();
-            // TODO: check for edges and be smart about it
-            boolean useEdges = true;
+            // check for edges and be smart about it
+            boolean allEdges = true;
+            boolean anyEdge = false;
             for (JLabel edgeLabel : edgeLabels) {
                if (edgeLabel.getText().equals(NOTSET)) {
-                  useEdges = false;
+                  allEdges = false;
+               } else {
+                  anyEdge = true;
                }
             }
-            if (useEdges) {
+            // if the user sets some but not all edges we have a problem:
+            if (anyEdge && !allEdges) {
+               // unset all edges and inform the user
+               for (JLabel edgeLabel : edgeLabels) {
+                  edgeLabel.setText(NOTSET);
+               }
+               studio.logs().showMessage("Either set all edges or none");
+               return;
+            }
+            // when we have all edges, move the stage to the center
+            if (allEdges) {
                double leftX = edges[0].x;
                double rightX = edges[2].x;
                double topY = edges[1].y;
@@ -158,7 +170,7 @@ public class CalibrationFrame extends JFrame {
                           "is larger than the the well-to well distance for this plate.  Aborting");
                   return;
                }
-               // Dangerous parts: move the stage to the middle
+               // Dangerous parts: move the stage to the middle, should the user be warned?
                double middleX = (rightX + leftX) / 2.0;
                double middleY = (topY + bottomY) / 2.0;
                try {
@@ -203,9 +215,10 @@ public class CalibrationFrame extends JFrame {
       public void actionPerformed(ActionEvent e) {
          try {
             Point2D.Double xyStagePosition = studio_.getCMMCore().getXYStagePosition();
-            label_.setText("" + xyStagePosition.x + ", " + xyStagePosition.y);
             pos_.x = xyStagePosition.x;
             pos_.y = xyStagePosition.y;
+            label_.setText("" + pos_.x + ", " + pos_.y);
+
          } catch (Exception ex) {
             studio_.logs().showError(ex, "Failed to get XYStage position");
          }
