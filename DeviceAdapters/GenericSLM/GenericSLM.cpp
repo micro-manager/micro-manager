@@ -23,7 +23,6 @@
 //
 
 
-
 #ifdef WIN32
    #include <windows.h>
    #define snprintf _snprintf 
@@ -98,11 +97,13 @@ GenericSLM::GenericSLM(const char* name) :
    monochromeColorNum_(0),
    inversionStr_("Off"),
    monochromeColorStr_("White"),
-   chosenDisplayIndex_(-1)
+   chosenDisplayIndex_(-1),
+   ddObject_(NULL)
 {
    assert(strlen(name) < (unsigned int) MM::MaxStrLength);
 
    InitializeDefaultErrorMessages();
+   SetErrorText(ERR_DIRECT_DRAW, "Error invoking Direct Draw function");
 
    displays_ = getMonitorInfo();
 
@@ -308,12 +309,15 @@ BITMAPINFO * GenericSLM::createBitmapInfo()
 }
 
 
-void GenericSLM::BlitBitmap() {
-   WaitForScreenRefresh();
-   BitBlt(windc_, 0, 0, GetWidth(), GetHeight(), memdc_, 0, 0, colorInvert_ ? NOTSRCCOPY : SRCCOPY);   
+int GenericSLM::BlitBitmap() {
+   int ret = WaitForScreenRefresh();
+   if (ret != DEVICE_OK)
+	   return ret;
+   BitBlt(windc_, 0, 0, GetWidth(), GetHeight(), memdc_, 0, 0, colorInvert_ ? NOTSRCCOPY : SRCCOPY); 
+   return DEVICE_OK;
 }
 
-void GenericSLM::WaitForScreenRefresh()
+int GenericSLM::WaitForScreenRefresh()
 {
    if (ddObject_ == NULL)
    {
@@ -321,11 +325,16 @@ void GenericSLM::WaitForScreenRefresh()
       DIRECTDRAWCREATE ddcreate = (DIRECTDRAWCREATE) GetProcAddress(hLibDDraw, "DirectDrawCreate");
 
       if (ddcreate) {
-          /*HRESULT hr =*/ ddcreate(NULL, &ddObject_, NULL);
-
+          HRESULT hr = ddcreate(NULL, &ddObject_, NULL);
+		  if (hr != DD_OK) {
+			 this->LogMessage("DirectDraw call in WaitForScreenRefresh function failed");
+			 ddObject_ = NULL;
+			 return ERR_DIRECT_DRAW;
+		  }
       }
    }
    ddObject_->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, NULL);
+   return DEVICE_OK;
 }
 
 
@@ -442,9 +451,7 @@ int GenericSLM::DisplayImage()
    {
       inversionStr_ = invert_ ? "On" : "Off" ;
 
-      BlitBitmap();
-
-      return DEVICE_OK;
+      return BlitBitmap();
    }
    else
    {

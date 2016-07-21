@@ -38,6 +38,11 @@ using namespace std;
 vector<MonitorDevice> displays_;
 RECT viewBounds;
 
+//////////////////////////////////////////////////////////////////////////////
+// Error codes
+//
+#define ERR_DIRECT_DRAW 12000
+
 class GenericSLMWindowsGUIThread : public MMDeviceThreadBase
 {
    public:
@@ -158,9 +163,9 @@ private:
    HDC windc_;
    long bmWidthBytes_;
 
-   void BlitBitmap();
+   int BlitBitmap();
 
-   void WaitForScreenRefresh();
+   int WaitForScreenRefresh();
    IDirectDraw * ddObject_;
 
    WinClass * winClass_;
