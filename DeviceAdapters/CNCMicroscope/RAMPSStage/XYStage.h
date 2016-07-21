@@ -54,6 +54,7 @@ class RAMPSXYStage : public CXYStageBase<RAMPSXYStage>
    * to values different from the system used by the stage controller
    */
   virtual int SetOrigin();
+  virtual int SetAdapterOriginUm(double x, double y);
 
   virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
 
