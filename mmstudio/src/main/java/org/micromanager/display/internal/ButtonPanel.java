@@ -39,8 +39,10 @@ import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.FullScreenEvent;
+import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.Studio;
 
 
 /**
@@ -60,7 +62,7 @@ public class ButtonPanel extends JPanel {
    private final JButton fullButton_;
 
    public ButtonPanel(final DisplayWindow display,
-         ControlsFactory controlsFactory) {
+         ControlsFactory controlsFactory, Studio studio) {
       setLayout(new MigLayout("insets 0"));
       // Add user-supplied custom controls, if any.
       List<Component> customControls = new ArrayList<Component>();
@@ -111,7 +113,7 @@ public class ButtonPanel extends JPanel {
 
       add(new SaveButton(display.getDatastore(), display));
 
-      add(new GearButton(display));
+      add(new GearButton(display, studio));
       display.registerForEvents(this);
    }
 

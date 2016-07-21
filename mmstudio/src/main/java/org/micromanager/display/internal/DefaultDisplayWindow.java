@@ -425,7 +425,7 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
       }
       controlsPanel_.add(hyperstackControls_,
             "align center, span, growx, wrap");
-      controlsPanel_.add(new ButtonPanel(this, controlsFactory_));
+      controlsPanel_.add(new ButtonPanel(this, controlsFactory_, studio_));
 
       contentsPanel_.add(controlsPanel_, "align center, wrap, growx, growy 0");
 

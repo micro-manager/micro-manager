@@ -35,6 +35,7 @@ import org.json.JSONObject;
 import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.InspectorPlugin;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.IntroPlugin;
@@ -48,48 +49,9 @@ import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.SortedMenu;
 
 public class DefaultPluginManager implements PluginManager {
-
-   /**
-    * Simple extension of JMenu whose menu items remained alphabetically
-    * ordered.
-    */
-   private static class SortedMenu extends JMenu {
-      private HashSet<JMenuItem> unsortedItems_;
-      public SortedMenu(String title) {
-         super(title);
-         unsortedItems_ = new HashSet<JMenuItem>();
-      }
-
-      // Allow users to bypass the sorted nature
-      public JMenuItem addUnsorted(JMenuItem item) {
-         unsortedItems_.add(item);
-         return super.add(item);
-      }
-
-      @Override
-      public JMenuItem add(JMenuItem item) {
-         // Find the insertion point.
-         for (int i = 0; i < getItemCount(); ++i) {
-            JMenuItem curItem = getItem(i);
-            if (unsortedItems_.contains(curItem)) {
-               // Skip this item because it's outside the sorted logic.
-               continue;
-            }
-            if (curItem == null) {
-               // Separator.
-               continue;
-            }
-            if (item.getText().compareTo(curItem.getText()) < 0) {
-               insert(item, i);
-               return item;
-            }
-         }
-         // Add it at the end instead.
-         return super.add(item);
-      }
-   }
 
    // List of the types of plugins we allow.
    private static final ArrayList<Class> VALID_CLASSES = new ArrayList<Class>();
@@ -103,6 +65,7 @@ public class DefaultPluginManager implements PluginManager {
       VALID_CLASSES.add(MenuPlugin.class);
       VALID_CLASSES.add(QuickAccessPlugin.class);
       VALID_CLASSES.add(MMPlugin.class);
+      VALID_CLASSES.add(DisplayGearMenuPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
@@ -356,6 +319,15 @@ public class DefaultPluginManager implements PluginManager {
       HashMap<String, AcquisitionDialogPlugin> result = new HashMap<String, AcquisitionDialogPlugin>();
       for (MMPlugin plugin : pluginTypeToPlugins_.get(AcquisitionDialogPlugin.class)) {
          result.put(plugin.getClass().getName(), (AcquisitionDialogPlugin) plugin);
+      }
+      return result;
+   }
+
+   @Override
+   public HashMap<String, DisplayGearMenuPlugin> getDisplayGearMenuPlugins() {
+      HashMap<String, DisplayGearMenuPlugin> result = new HashMap<String, DisplayGearMenuPlugin>();
+      for (MMPlugin plugin : pluginTypeToPlugins_.get(DisplayGearMenuPlugin.class)) {
+         result.put(plugin.getClass().getName(), (DisplayGearMenuPlugin) plugin);
       }
       return result;
    }
