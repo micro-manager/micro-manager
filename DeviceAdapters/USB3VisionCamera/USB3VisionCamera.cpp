@@ -11,8 +11,8 @@
 // largely copied from the GigECamera adapter by David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
-#include "usb3VisionCamera.h"
-#include "usb3VisionCameraNodes.h"
+#include "GenICam.h"
+#include "GenICamNodes.h"
 #include <cstdio>
 #include <string>
 #include <math.h>
@@ -27,8 +27,8 @@
 double g_IntensityFactor_ = 1.0;
 
 // External names used used by the rest of the system
-// to load particular device from the "usb3VisionCamera.dll" library
-const char* g_CameraDeviceName = "USB3Vision camera adapter";
+// to load particular device from the "GenICam.dll" library
+const char* g_CameraDeviceName = "GenICam USB3 GigE camera adapter";
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -37,7 +37,7 @@ const char* g_CameraDeviceName = "USB3Vision camera adapter";
 
 MODULE_API void InitializeModuleData()
 {
-	RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "usb3Vision camera");
+	RegisterDevice(g_CameraDeviceName, MM::CameraDevice, "GenICam camera");
 }
 
 
@@ -50,7 +50,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	if (strcmp(deviceName, g_CameraDeviceName) == 0)
 	{
 		// create camera
-		return new CUSB3VisionCamera();
+		return new CGenICam();
 	}
 	// ...supplied name not recognized
 	return 0;
@@ -64,11 +64,11 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// CUSB3VisionCamera implementation
+// CGenICam implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
-* CUSB3VisionCamera constructor.
+* CGenICam constructor.
 * Setup default all variables and create device properties required to exist
 * before intialization. In this case, no such properties were required. All
 * properties will be created in the Initialize() method.
@@ -77,8 +77,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 * the constructor. We should do as little as possible in the constructor and
 * perform most of the initialization in the Initialize() method.
 */
-CUSB3VisionCamera::CUSB3VisionCamera() :
-CCameraBase<CUSB3VisionCamera> (),
+CGenICam::CGenICam() :
+CCameraBase<CGenICam> (),
 readoutUs_(0.0),
 scanMode_(1),
 bitDepth_(8),
@@ -106,13 +106,13 @@ bufferSizeBytes( 0 )
 
 
 /**
-* CUSB3VisionCamera destructor.
+* CGenICam destructor.
 * If this device used as intended within the Micro-Manager system,
 * Shutdown() will be always called before the destructor. But in any case
 * we need to make sure that all resources are properly released even if
 * Shutdown() was not called.
 */
-CUSB3VisionCamera::~CUSB3VisionCamera()
+CGenICam::~CGenICam()
 {
 	if( nodes != NULL )
 		delete nodes;
@@ -130,7 +130,7 @@ CUSB3VisionCamera::~CUSB3VisionCamera()
 * Such pre-initialization properties are created in the constructor.
 * (This device does not have any pre-initialization properties)
 */
-int CUSB3VisionCamera::Initialize()
+int CGenICam::Initialize()
 {
 	if (cameraInitialized)
 		return DEVICE_OK;
@@ -141,7 +141,7 @@ int CUSB3VisionCamera::Initialize()
 	retval = J_Factory_Open(cstr2cjai(""), &hFactory);
 	if( retval != J_ST_SUCCESS )
 	{
-		LogMessage( "JAI USB3Vision factory failed", false );
+		LogMessage( "JAI factory failed", false );
 		return DEVICE_NATIVE_MODULE_FAILED;
 	}
 
@@ -159,7 +159,7 @@ int CUSB3VisionCamera::Initialize()
 	retval = J_Factory_GetInfo(FAC_INFO_VERSION, str2jai(sVersion), &size);
 	if( retval != J_ST_SUCCESS )
 	{
-		LogMessage( "JAI USB3Vision factory (info) failed", false );
+		LogMessage( "JAI factory (info) failed", false );
 		return DEVICE_NATIVE_MODULE_FAILED;
 	}
 	LogMessage( (std::string) "Using JAI Factory v." + sVersion, true );
@@ -231,7 +231,7 @@ int CUSB3VisionCamera::Initialize()
 			selectedCamera = correctedCameras[0];
 
 		// available cameras
-		pAct = new CPropertyAction (this, &CUSB3VisionCamera::OnCameraChoice);
+		pAct = new CPropertyAction (this, &CGenICam::OnCameraChoice);
 		nRet = CreateProperty(g_Keyword_Camera_Choice, selectedCamera.c_str(), MM::String, false, pAct);
 		if (nRet != DEVICE_OK)
 			return nRet;
@@ -261,11 +261,11 @@ int CUSB3VisionCamera::Initialize()
 	
 	struct Logger
 	{
-		CUSB3VisionCamera* d;
-		Logger( CUSB3VisionCamera* d ) : d( d ) {}
+		CGenICam* d;
+		Logger( CGenICam* d ) : d( d ) {}
 		void operator()( const std::string& msg ) { d->LogMessage( msg, true ); }
 	} logger(this);
-	this->nodes = new USB3VisionCameraNodes( hCamera, logger );
+	this->nodes = new GenICamNodes( hCamera, logger );
 
 	// make sure the exposure mode is set to "Timed", if possible.
 	// not an error if we can't set this, since it's only a recommended parameter.
@@ -359,20 +359,20 @@ int CUSB3VisionCamera::Initialize()
 			return nRet;
 	}
 
-	// USB3 Vision spec version
+	// GenICam spec version
 	int64_t v;
-	if( nodes->get( v, U3V_VERSION_MAJOR ) )
+	if( nodes->get( v, GenICam_VERSION_MAJOR ) )
 	{
-		nRet = CreateProperty( "USB Vision Major Version Number", boost::lexical_cast<std::string>( v ).c_str(), MM::Integer, 
-								!nodes->isWritable( U3V_VERSION_MAJOR ) );
+		nRet = CreateProperty( "GenICam Major Version Number", boost::lexical_cast<std::string>( v ).c_str(), MM::Integer, 
+								!nodes->isWritable( GenICam_VERSION_MAJOR ) );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
 	
-	if( nodes->get( v, U3V_VERSION_MINOR ) )
+	if( nodes->get( v, GenICam_VERSION_MINOR ) )
 	{
-		nRet = CreateProperty( "USB Vision Minor Version Number", boost::lexical_cast<std::string>( v ).c_str(), MM::Integer, 
-								!nodes->isWritable( U3V_VERSION_MINOR ) );
+		nRet = CreateProperty( "GenICam Minor Version Number", boost::lexical_cast<std::string>( v ).c_str(), MM::Integer, 
+								!nodes->isWritable( GenICam_VERSION_MINOR ) );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
@@ -385,7 +385,7 @@ int CUSB3VisionCamera::Initialize()
 		int64_t low, high;
 		if( nodes->getMin( WIDTH, low ) && nodes->getMax( WIDTH, high ) )
 		{
-			pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnImageWidth );
+			pAct = new CPropertyAction( this, &CGenICam::OnImageWidth );
 			nRet = CreateProperty( g_Keyword_Image_Width, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( WIDTH ), pAct );
 			if( nRet != DEVICE_OK )
 				return nRet;
@@ -406,7 +406,7 @@ int CUSB3VisionCamera::Initialize()
 		int64_t low, high;
 		if( nodes->getMin( HEIGHT, low ) && nodes->getMax( HEIGHT, high ) )
 		{
-			pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnImageHeight );
+			pAct = new CPropertyAction( this, &CGenICam::OnImageHeight );
 			nRet = CreateProperty( g_Keyword_Image_Height, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( HEIGHT ), pAct );
 			if( nRet != DEVICE_OK )
 				return nRet;
@@ -426,7 +426,7 @@ int CUSB3VisionCamera::Initialize()
 	if( nodes->isAvailable( WIDTH_MAX ) )
 	{
 		nodes->get( dim, WIDTH_MAX );
-		pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnImageWidthMax );
+		pAct = new CPropertyAction( this, &CGenICam::OnImageWidthMax );
 		nRet = CreateProperty( g_Keyword_Image_Width_Max, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( WIDTH_MAX ), pAct );
 		if( nRet != DEVICE_OK )
 			return nRet;
@@ -435,7 +435,7 @@ int CUSB3VisionCamera::Initialize()
 	if( nodes->isAvailable( HEIGHT_MAX ) )
 	{
 		nodes->get( dim, HEIGHT_MAX );
-		pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnImageHeightMax );
+		pAct = new CPropertyAction( this, &CGenICam::OnImageHeightMax );
 		nRet = CreateProperty( g_Keyword_Image_Height_Max, CDeviceUtils::ConvertToString( (long) dim ), MM::Integer, !nodes->isWritable( HEIGHT_MAX ), pAct );
 		if( nRet != DEVICE_OK )
 			return nRet;
@@ -483,7 +483,7 @@ int CUSB3VisionCamera::Initialize()
 		pixelTypeValues.push_back( displayName );
 	}
 
-	pAct = new CPropertyAction (this, &CUSB3VisionCamera::OnPixelType);
+	pAct = new CPropertyAction (this, &CGenICam::OnPixelType);
 	std::string px, dn;
 	nodes->get( px, PIXEL_FORMAT );
 	std::map<std::string, std::string>::iterator it = pixelFormatMap.find( px );
@@ -515,7 +515,7 @@ int CUSB3VisionCamera::Initialize()
 	}
 // ------------------------------
 
-	pAct = new CPropertyAction (this, &CUSB3VisionCamera::onAcquisitionMode);
+	pAct = new CPropertyAction (this, &CGenICam::onAcquisitionMode);
 	std::string px1, dn1;
 	nodes->get( px1, ACQUISITION_MODE );
 	it = acqModeMap.find( px1 );
@@ -539,7 +539,7 @@ int CUSB3VisionCamera::Initialize()
 	{
 		useExposureTime = true;
 		LogMessage( "Using ExposureTime (double) for Exposure", true );
-		pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnExposure );
+		pAct = new CPropertyAction( this, &CGenICam::OnExposure );
 		double e;
 		nodes->get( e, EXPOSURE_TIME );
 		nRet = CreateProperty( MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString( e / 1000.0 ), MM::Float, !nodes->isWritable( EXPOSURE_TIME ), pAct );
@@ -551,7 +551,7 @@ int CUSB3VisionCamera::Initialize()
 	{
 		useExposureTimeAbs = true;
 		// LogMessage( "Using ExposureTimeAbs (double) for Exposure", true );
-		pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnExposure );
+		pAct = new CPropertyAction( this, &CGenICam::OnExposure );
 		double e;
 		nodes->get( e, EXPOSURE_TIME_ABS );
 		nRet = CreateProperty( MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString( (double) e / 1000.0 ), MM::Float, !nodes->isWritable( EXPOSURE_TIME_ABS ), pAct );
@@ -566,7 +566,7 @@ int CUSB3VisionCamera::Initialize()
 		{
 			useExposureTimeAbsInt = true;
 			// LogMessage( "Using ExposureTimeAbs (int) for Exposure", true );
-			pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnExposure );
+			pAct = new CPropertyAction( this, &CGenICam::OnExposure );
 			int64_t e;
 			nodes->get( e, EXPOSURE_TIME_ABS_INT );
 			// create this as a float variable since GenICam has units of us
@@ -585,7 +585,7 @@ int CUSB3VisionCamera::Initialize()
 	double gainLow, gainHigh;
 	if( nodes->isAvailable( GAIN ) && nodes->getMin( GAIN, gainLow ) && nodes->getMax( GAIN, gainHigh ) )
 	{
-		pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnGain );
+		pAct = new CPropertyAction( this, &CGenICam::OnGain );
 		double d = 0;
 		nodes->get( d, GAIN );
 		nRet = CreateProperty( MM::g_Keyword_Gain,  CDeviceUtils::ConvertToString( d ), MM::Float, !nodes->isWritable( GAIN ), pAct );
@@ -598,7 +598,7 @@ int CUSB3VisionCamera::Initialize()
 		int64_t gainLow, gainHigh;
 		if( nodes->getMin( GAIN_RAW, gainLow ) && nodes->getMax( GAIN_RAW, gainHigh ) )
 		{
-			pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnGain );
+			pAct = new CPropertyAction( this, &CGenICam::OnGain );
 			int64_t d = 0;
 			nodes->get( d, GAIN_RAW );
 			nRet = CreateProperty( MM::g_Keyword_Gain,  CDeviceUtils::ConvertToString( (long) d ), MM::Integer, !nodes->isWritable( GAIN_RAW ), pAct );
@@ -614,7 +614,7 @@ int CUSB3VisionCamera::Initialize()
 		double low, high;
 		if ( nodes->getMin( TEMPERATURE, low ) && nodes->getMax( TEMPERATURE, high ) )
 		{
-			pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnTemperature );
+			pAct = new CPropertyAction( this, &CGenICam::OnTemperature );
 			double d = 0;
 			nodes->get( d, TEMPERATURE );
 			nRet = CreateProperty( MM::g_Keyword_CCDTemperature, CDeviceUtils::ConvertToString( d ), MM::Float, !nodes->isWritable( TEMPERATURE ), pAct );
@@ -628,7 +628,7 @@ int CUSB3VisionCamera::Initialize()
 	double framerateLow, framerateHigh;
 	if( nodes->isAvailable( ACQUISITION_FRAME_RATE ) && nodes->getMin( ACQUISITION_FRAME_RATE, framerateLow ) && nodes->getMax( ACQUISITION_FRAME_RATE, framerateHigh ) )
 	{
-		pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnFrameRate );
+		pAct = new CPropertyAction( this, &CGenICam::OnFrameRate );
 		double d = 0;
 		nodes->get( d, ACQUISITION_FRAME_RATE );
 		nRet = CreateProperty( g_Keyword_Frame_Rate, boost::lexical_cast<std::string>( d ).c_str(), MM::Float, 
@@ -670,7 +670,7 @@ int CUSB3VisionCamera::Initialize()
 * After Shutdown() we should be allowed to call Initialize() again to load the device
 * without causing problems.
 */
-int CUSB3VisionCamera::Shutdown()
+int CGenICam::Shutdown()
 {
 	int retval = DEVICE_OK;
 	if( cameraOpened )
@@ -698,23 +698,23 @@ int CUSB3VisionCamera::Shutdown()
 * the pixel buffer on its own. In other words, the buffer can change only if
 * appropriate properties are set (such as binning, pixel type, etc.)
 */
-const unsigned char* CUSB3VisionCamera::GetImageBuffer()
+const unsigned char* CGenICam::GetImageBuffer()
 {
 	while (GetCurrentMMTime() - readoutStartTime_ < MM::MMTime(readoutUs_)) {CDeviceUtils::SleepMs(5);}
 	return img_.GetPixels();
 }
 
-unsigned CUSB3VisionCamera::GetBitDepth() const
+unsigned CGenICam::GetBitDepth() const
 {
 	return color_ ? 8 : bitDepth_;
 }
 
-unsigned int CUSB3VisionCamera::GetNumberOfComponents() const
+unsigned int CGenICam::GetNumberOfComponents() const
 {
 	return color_ ? 4 : 1;
 }
 
- int CUSB3VisionCamera::GetComponentName(unsigned comp, char* name)
+ int CGenICam::GetComponentName(unsigned comp, char* name)
  {
 	if ( comp > 4 )
 	{
@@ -743,7 +743,7 @@ unsigned int CUSB3VisionCamera::GetNumberOfComponents() const
 * @param xSize - width
 * @param ySize - height
 */
-int CUSB3VisionCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
+int CGenICam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
 	if (xSize == 0 && ySize == 0)
 	{
@@ -767,7 +767,7 @@ int CUSB3VisionCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned y
 * Returns the actual dimensions of the current ROI.
 * Required by the MM::Camera API.
 */
-int CUSB3VisionCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
+int CGenICam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
 	x = roiX_;
 	y = roiY_;
@@ -783,7 +783,7 @@ int CUSB3VisionCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigne
 * Resets the Region of Interest to full frame.
 * Required by the MM::Camera API.
 */
-int CUSB3VisionCamera::ClearROI()
+int CGenICam::ClearROI()
 {
 	ResizeImageBuffer();
 	roiX_ = 0;
@@ -797,7 +797,7 @@ int CUSB3VisionCamera::ClearROI()
 * Returns the current exposure setting in milliseconds.
 * Required by the MM::Camera API.
 */
-double CUSB3VisionCamera::GetExposure() const
+double CGenICam::GetExposure() const
 {
 	char buf[MM::MaxStrLength];
 	int ret = GetProperty(MM::g_Keyword_Exposure, buf);
@@ -811,7 +811,7 @@ double CUSB3VisionCamera::GetExposure() const
 * Returns the current binning factor.
 * Required by the MM::Camera API.
 */
-int CUSB3VisionCamera::GetBinning() const
+int CGenICam::GetBinning() const
 {
 	char buf[MM::MaxStrLength];
 	int ret = GetProperty(MM::g_Keyword_Binning, buf);
@@ -824,17 +824,17 @@ int CUSB3VisionCamera::GetBinning() const
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Private CUSB3VisionCamera methods
+// Private CGenICam methods
 ///////////////////////////////////////////////////////////////////////////////
 
-int CUSB3VisionCamera::SetUpBinningProperties()
+int CGenICam::SetUpBinningProperties()
 {
 	// note that the GenICam spec separates vertical and horizontal binning and does
 	// not provide a single, unified binning property.  the various OnBinning methods
 	// will do their best to provide this illusion of a unified binning when possible.
 
 	// We always provide the Binning property, regardless of support for non-unity binnings.
-	CPropertyAction *pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnBinning );
+	CPropertyAction *pAct = new CPropertyAction( this, &CGenICam::OnBinning );
 	int nRet = CreateProperty( MM::g_Keyword_Binning, "1", MM::Integer, false, pAct );
 	if (DEVICE_OK != nRet)
 		return nRet;
@@ -847,7 +847,7 @@ int CUSB3VisionCamera::SetUpBinningProperties()
 		nodes->getMax( BINNING_VERTICAL, max ) && nodes->getIncrement( BINNING_VERTICAL, inc ) )
 	{
 		nodes->get( bin, BINNING_VERTICAL );
-		pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnBinningV );
+		pAct = new CPropertyAction( this, &CGenICam::OnBinningV );
 		nRet = CreateProperty( g_Keyword_Binning_Vertical, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_VERTICAL ), pAct );
 		if (DEVICE_OK != nRet)
 			return nRet;
@@ -865,7 +865,7 @@ int CUSB3VisionCamera::SetUpBinningProperties()
 		nodes->getMax( BINNING_HORIZONTAL, max ) && nodes->getIncrement( BINNING_HORIZONTAL, inc ) )
 	{
 		nodes->get( bin, BINNING_HORIZONTAL );
-		pAct = new CPropertyAction( this, &CUSB3VisionCamera::OnBinningH );
+		pAct = new CPropertyAction( this, &CGenICam::OnBinningH );
 		nRet = CreateProperty( g_Keyword_Binning_Horizontal, CDeviceUtils::ConvertToString( (long) bin ), MM::Integer, !nodes->isWritable( BINNING_HORIZONTAL ), pAct );
 		if (DEVICE_OK != nRet)
 			return nRet;
@@ -900,7 +900,7 @@ int CUSB3VisionCamera::SetUpBinningProperties()
 /**
 * Sync internal image buffer size to the chosen property values.
 */
-int CUSB3VisionCamera::ResizeImageBuffer()
+int CGenICam::ResizeImageBuffer()
 {
 	int64_t h, w;
 	nodes->get( w, WIDTH );
@@ -928,7 +928,7 @@ int CUSB3VisionCamera::ResizeImageBuffer()
 
 	return DEVICE_OK;
 }
-int CUSB3VisionCamera::testIfPixelFormatResultsInColorImage(uint32_t &byteDepth)
+int CGenICam::testIfPixelFormatResultsInColorImage(uint32_t &byteDepth)
 {
 	J_STATUS_TYPE retval;
 
@@ -975,7 +975,7 @@ int CUSB3VisionCamera::testIfPixelFormatResultsInColorImage(uint32_t &byteDepth)
 
 	return DEVICE_OK;
 }
-void CUSB3VisionCamera::EnumerateAllNodesToLog()
+void CGenICam::EnumerateAllNodesToLog()
 {
 	uint32_t nNodes;
 	J_STATUS_TYPE retval;
@@ -1014,7 +1014,7 @@ void CUSB3VisionCamera::EnumerateAllNodesToLog()
 }
 
 
-void CUSB3VisionCamera::EnumerateAllFeaturesToLog()
+void CGenICam::EnumerateAllFeaturesToLog()
 {
    LogMessage( "Listing all feature nodes, hierarchically", true );
    EnumerateAllFeaturesToLog( cstr2jai( J_ROOT_NODE ), 0 );
@@ -1022,7 +1022,7 @@ void CUSB3VisionCamera::EnumerateAllFeaturesToLog()
 }
 
 
-void CUSB3VisionCamera::EnumerateAllFeaturesToLog( int8_t* parentNodeName, int indentCount )
+void CGenICam::EnumerateAllFeaturesToLog( int8_t* parentNodeName, int indentCount )
 {
    // Not all GenICam nodes are controllable features. A typical camera may
    // have thousands of nodes, and we are usually only interested in the
@@ -1113,7 +1113,7 @@ void CUSB3VisionCamera::EnumerateAllFeaturesToLog( int8_t* parentNodeName, int i
 }
 
 
-std::string CUSB3VisionCamera::StringForNodeType( J_NODE_TYPE nodeType )
+std::string CGenICam::StringForNodeType( J_NODE_TYPE nodeType )
 {
    switch ( nodeType )
    {
@@ -1152,7 +1152,7 @@ std::string CUSB3VisionCamera::StringForNodeType( J_NODE_TYPE nodeType )
 }
 
 
-std::string CUSB3VisionCamera::StringForAccessMode( J_NODE_ACCESSMODE accessMode )
+std::string CGenICam::StringForAccessMode( J_NODE_ACCESSMODE accessMode )
 {
    switch ( accessMode )
    {

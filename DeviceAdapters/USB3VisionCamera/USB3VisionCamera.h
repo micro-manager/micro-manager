@@ -10,8 +10,8 @@
 // AUTHOR:        David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
-#ifndef _USB3VISIONCAMERA_H_
-#define _USB3VISIONCAMERA_H_
+#ifndef _GENICAM_H_
+#define _GENICAM_H_
 
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
@@ -23,7 +23,7 @@
 
 #include "JAISDK.h"
 
-#include "USB3VisionCameraNodes.h"
+#include "GenICamNodes.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -66,13 +66,13 @@ extern const char* g_CameraDeviceName;
 #define LARGEST_PIXEL_IN_BYTES 6
 
 //////////////////////////////////////////////////////////////////////////////
-// CUSB3VisionCamera class
+// CGenICam class
 //////////////////////////////////////////////////////////////////////////////
-class CUSB3VisionCamera : public CCameraBase<CUSB3VisionCamera>
+class CGenICam : public CCameraBase<CGenICam>
 {
 public:
-	CUSB3VisionCamera();
-	~CUSB3VisionCamera();
+	CGenICam();
+	~CGenICam();
 
 	////////////////
 	// MMDevice API
