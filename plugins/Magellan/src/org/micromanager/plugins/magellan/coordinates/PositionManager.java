@@ -46,18 +46,21 @@ public class PositionManager {
    private static final String MULTI_RES_NODE_KEY = "MultiResPositionNode";
    
    
-   private final AffineTransform affine_;
+   private AffineTransform affine_;
    private JSONArray positionList_; //all access to positionlist in synchronized methods for thread safety
    private int minRow_, maxRow_, minCol_, maxCol_; //For the lowest resolution level
-   private final String xyStageName_;
+   private  String xyStageName_;
    //Map of Res level to set of nodes
    private TreeMap<Integer,TreeSet<MultiResPositionNode>> positionNodes_; 
-   private final int displayTileWidth_, displayTileHeight_;
-   private final int fullTileWidth_, fullTileHeight_;
-   private final int overlapX_, overlapY_;
+   private int displayTileWidth_, displayTileHeight_;
+   private int fullTileWidth_, fullTileHeight_;
+   private int overlapX_, overlapY_;
    
+   /**
+    * constructor to read data from disk
+    */
     public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
-           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY, JSONArray initialPosList) {
+           int fullTileWidth, int fullTileHeight, int overlapX, int overlapY, JSONArray initialPosList, int maxResLevel) {
       try {
          xyStageName_ = summaryMD.getString("Core-XYStage");
       } catch (JSONException ex) {
@@ -70,7 +73,7 @@ public class PositionManager {
        maxRow_ = 0;
        positionList_ = initialPosList;
        updateMinAndMaxRowsAndCols();
-       updateLowerResolutionNodes(); //make sure nodes created for all preexisiting positions
+       updateLowerResolutionNodes(maxResLevel); //make sure nodes created for all preexisiting positions
        displayTileWidth_ = displayTileWidth;
        displayTileHeight_ = displayTileHeight;
       fullTileWidth_ = fullTileWidth;
@@ -79,6 +82,9 @@ public class PositionManager {
       overlapY_ = overlapY;
    }
    
+    /**
+     * constructor that reads initial position list
+     */
    public PositionManager(AffineTransform transform, JSONObject summaryMD, int displayTileWidth, int displayTileHeight,
            int fullTileWidth, int fullTileHeight, int overlapX, int overlapY) {
       try {

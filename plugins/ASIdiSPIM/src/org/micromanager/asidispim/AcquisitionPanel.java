@@ -527,7 +527,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       useTimepointsCB_.addChangeListener(recalculateTimeLapseDisplay);
 
       timepointPanel_.add(new JLabel("Number:"));
-      numTimepoints_ = pu.makeSpinnerInteger(1, 32000,
+      numTimepoints_ = pu.makeSpinnerInteger(1, 100000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_ACQUISITIONS, 1);
       numTimepoints_.addChangeListener(recalculateTimeLapseDisplay);
@@ -2255,8 +2255,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         // Do not actually grab first image here, just make sure it is there
                         long start = System.currentTimeMillis();
                         long now = start;
-                        long timeout;  // wait 5 seconds for first image to come
-                        timeout = Math.max(5000, Math.round(1.2*volumeDuration));
+                        final long timeout = Math.max(3000, Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide));
                         while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
                               && !cancelAcquisition_.get()) {
                            now = System.currentTimeMillis();
@@ -2281,8 +2280,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         final boolean skipPerSide = acqSettings.useChannels && (acqSettings.numChannels > 1)
                               && (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW); 
                         boolean done = false;
-                        long timeout2;  // how long to wait between images before timing out
-                        timeout2 = Math.max(2000, Math.round(5*sliceDuration));
+                        final long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
                         start = System.currentTimeMillis();
                         long last = start;
                         try {
@@ -2826,7 +2824,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
 
    public void setNumberOfTimepoints(int numTimepoints) throws ASIdiSPIMException {
-      if (MyNumberUtils.outsideRange(numTimepoints, 1, 32000)) {
+      if (MyNumberUtils.outsideRange(numTimepoints, 1, 100000)) {
          throw new ASIdiSPIMException("illegal value for number of time points");
       }
       numTimepoints_.setValue(numTimepoints);

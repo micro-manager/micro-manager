@@ -37,6 +37,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -47,6 +50,7 @@ import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  *
@@ -144,24 +148,25 @@ public class SubImageControls extends Panel {
    }
 
    private void zTopTextFieldAction() {
-      //check if new position is outside bounds of current z range
-      //and if so expand sliders as needed
-      double val = Double.parseDouble(zTopTextField_.getText());
-      int newSliderindex = (int) Math.round((val - zOrigin_) / zStep_);
-      expandZLimitsIfNeeded(newSliderindex, zBottomScrollbar_.getValue());
-      //now that scollbar expanded, set value
-      zTopScrollbar_.setValue(newSliderindex);
-      updateZTopAndBottom();
+         //check if new position is outside bounds of current z range
+         //and if so expand sliders as needed
+         double val = NumberUtils.parseDouble(zTopTextField_.getText());
+         int newSliderindex = (int) Math.round((val - zOrigin_) / zStep_);
+         expandZLimitsIfNeeded(newSliderindex, zBottomScrollbar_.getValue());
+         //now that scollbar expanded, set value
+         zTopScrollbar_.setValue(newSliderindex);
+         updateZTopAndBottom();
    }
 
    private void zBottomTextFieldAction() {
-      //check if new position is outside bounds of current z range
-      //and if so expand sliders as needed
-      double val = Double.parseDouble(zBottomTextField_.getText());
-      int newSliderindex = (int) Math.round((val - zOrigin_) / zStep_);
-      expandZLimitsIfNeeded(zTopScrollbar_.getValue(), newSliderindex);
-      zBottomScrollbar_.setValue(newSliderindex);
-      updateZTopAndBottom();
+         //check if new position is outside bounds of current z range
+         //and if so expand sliders as needed
+         double val = NumberUtils.parseDouble(zBottomTextField_.getText());
+         int newSliderindex = (int) Math.round((val - zOrigin_) / zStep_);
+         expandZLimitsIfNeeded(zTopScrollbar_.getValue(), newSliderindex);
+         zBottomScrollbar_.setValue(newSliderindex);
+         updateZTopAndBottom();
+
    }
 
    private void zTopSliderAdjustment() {

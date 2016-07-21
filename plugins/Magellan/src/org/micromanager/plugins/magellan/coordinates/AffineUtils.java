@@ -27,6 +27,7 @@ import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.MMStudio;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 
 public class AffineUtils {
 
@@ -42,7 +43,7 @@ public class AffineUtils {
       double[] mat = new double[4];
       String[] vals = s.split("_");
       for (int i = 0; i < 4; i++) {
-         mat[i] = Double.parseDouble(vals[i]);
+         mat[i] = NumberUtils.parseDouble(vals[i]);
       }
       return new AffineTransform(mat);
    }

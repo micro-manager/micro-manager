@@ -87,6 +87,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import org.micromanager.plugins.magellan.acq.AcqDurationEstimator;
+import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.JavaUtils;

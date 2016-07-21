@@ -17,6 +17,9 @@
 
 package org.micromanager.plugins.magellan.acq;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.process.ByteProcessor;
 import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import org.micromanager.plugins.magellan.coordinates.PositionManager;
 import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
@@ -68,7 +71,7 @@ public class MultiResMultipageTiffStorage {
    private String uniqueAcqName_;
    private int byteDepth_;
    private TreeMap<Integer, Integer> backgroundPix_ = new TreeMap<Integer, Integer>(); //map of channel index to background pixel value
-   private final boolean estimateBackground_;
+   private boolean estimateBackground_;
    private double pixelSizeXY_, pixelSizeZ_;
    private AffineTransform affine_;
    private BDVXMLWriter bdvXML_;
@@ -78,7 +81,7 @@ public class MultiResMultipageTiffStorage {
     * Constructor to load existing storage from disk
     * dir --top level saving directory
     */
-   public MultiResMultipageTiffStorage(String dir) throws IOException {
+   public MultiResMultipageTiffStorage(String dir)  throws IOException {
       directory_ = dir;
       finished_ = true;
       estimateBackground_ = false;
@@ -102,26 +105,25 @@ public class MultiResMultipageTiffStorage {
          
       //create position manager
       try {
-         if (MD.isExploreAcq(summaryMD_) ) {
-            TreeMap<Integer, XYStagePosition> positions = new TreeMap<Integer, XYStagePosition>();
-            for (String key : fullResStorage_.imageKeys()) {
-               int[] indices = MD.getIndices(key);
-               int posIndex = indices[3];
-               if (!positions.containsKey(posIndex) ) {
-                  JSONObject md = fullResStorage_.getImageTags(indices[0], indices[1], indices[2], indices[3]);
-                  positions.put(posIndex, new XYStagePosition(new Point2D.Double(MD.getStageX(md),MD.getStageY(md)), 
-                          MD.getGridRow(md), MD.getGridCol(md)));
-               }
-            }          
-            JSONArray pList = new JSONArray();
-            for (XYStagePosition xyPos : positions.values()) {
-               pList.put(xyPos.getMMPosition(MD.getCoreXY(summaryMD_)));
+         TreeMap<Integer, XYStagePosition> positions = new TreeMap<Integer, XYStagePosition>();
+         for (String key : fullResStorage_.imageKeys()) {
+            // array with entires channelIndex, sliceIndex, frameIndex, positionIndex
+            int[] indices = MD.getIndices(key);
+            int posIndex = indices[3];
+            if (!positions.containsKey(posIndex)) {
+               //read rowIndex, colIndex, stageX, stageY from per image metadata
+               JSONObject md = fullResStorage_.getImageTags(indices[0], indices[1], indices[2], indices[3]);
+               positions.put(posIndex, new XYStagePosition(new Point2D.Double(MD.getStageX(md), MD.getStageY(md)),
+                       MD.getGridRow(md), MD.getGridCol(md)));
             }
-            posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_, tileWidth_, tileHeight_, xOverlap_, xOverlap_, pList);
-         } else {
-            posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_,
-                    fullResTileWidthIncludingOverlap_, fullResTileHeightIncludingOverlap_, xOverlap_, yOverlap_);
          }
+         JSONArray pList = new JSONArray();
+         for (XYStagePosition xyPos : positions.values()) {
+            pList.put(xyPos.getMMPosition(MD.getCoreXY(summaryMD_)));
+         }
+         posManager_ = new PositionManager(affine_, summaryMD_, tileWidth_, tileHeight_, tileWidth_, tileHeight_,
+                 xOverlap_, xOverlap_, pList, lowResStorages_.size());
+
       } catch (Exception e) {
          Log.log("Couldn't create position manager", true);
       }
@@ -194,6 +196,10 @@ public class MultiResMultipageTiffStorage {
       pixelSizeZ_ = MD.getZStepUm(summaryMD_);
       pixelSizeXY_ = MD.getPixelSizeUm(summaryMD_);
       affine_ = AffineUtils.stringToTransform(MD.getAffineTransformString(summaryMD_));
+   }
+   
+   public int getByteDepth() {
+      return byteDepth_;
    }
    
    public String getUniqueAcqName() {
@@ -295,6 +301,32 @@ public class MultiResMultipageTiffStorage {
       }
       Arrays.sort(pixVals);
       backgroundPix_.put(channel, pixVals[(int) (pixVals.length * BACKGROUND_PIXEL_PERCENTILE)]);
+   }
+   
+   /**
+    * Method for reading 3D volumes for compatibility with TeraFly
+    * @return 
+    */
+   public MagellanTaggedImage loadSubvolume(int channel, int frame, int resIndex,
+           int xStart, int yStart, int zStart, int width, int height, int depth) {
+      JSONObject metadata = null;
+      if (byteDepth_ == 1) {
+         byte[] pix = new byte[width*height*depth];
+         for (int z = zStart; z < zStart + depth; z++ ) {
+            MagellanTaggedImage image = getImageForDisplay(channel, z, frame, resIndex, xStart, yStart, width, height);
+            metadata = image.tags;
+            System.arraycopy(image.pix, 0, pix, (z-zStart)*(width*height), width*height);
+         }
+         return new MagellanTaggedImage(pix, metadata);
+      } else {
+         short[] pix = new short[width*height*depth];
+         for (int z = zStart; z < zStart + depth; z++ ) {
+            MagellanTaggedImage image = getImageForDisplay(channel, z, frame, resIndex, xStart, yStart, width, height);
+            metadata = image.tags;
+            System.arraycopy(image.pix, 0, pix, (z-zStart)*(width*height), width*height);
+         }
+         return new MagellanTaggedImage(pix, metadata);
+      }
    }
 
    /**
@@ -655,6 +687,14 @@ public class MultiResMultipageTiffStorage {
          Log.log(ex.toString());
       } 
    }
+   
+   public MagellanTaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex, int resLevel) {
+      if (resLevel == 0) {
+         return fullResStorage_.getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
+      } else {
+         return lowResStorages_.get(resLevel).getImage(channelIndex, sliceIndex, frameIndex, positionIndex);
+      }
+   }
 
    public MagellanTaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex, int positionIndex) {
       //return a single tile from the full res image
@@ -748,6 +788,10 @@ public class MultiResMultipageTiffStorage {
    
    public int getMinSliceIndexOpenedDataset() {
       return fullResStorage_.getMinSliceIndexOpenedDataset();
+   }
+   
+   public int getMaxSliceIndexOpenedDataset() {
+      return fullResStorage_.getMaxSliceIndexOpenedDataset();
    }
 
    public long getDataSetSize() {

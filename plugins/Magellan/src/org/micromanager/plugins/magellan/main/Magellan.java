@@ -20,9 +20,6 @@ package org.micromanager.plugins.magellan.main;
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.prefs.BackingStoreException;
 import org.micromanager.plugins.magellan.gui.GUI;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;

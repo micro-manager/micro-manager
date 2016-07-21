@@ -35,6 +35,7 @@ import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.border.LineBorder;
 import org.micromanager.plugins.magellan.misc.MMFrame;
+import org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  * XY Graph window.
@@ -78,10 +79,10 @@ public class GraphFrame extends MMFrame {
       if (fldXMin.getText().length() > 0 && fldYMin.getText().length() > 0 && 
           fldXMax.getText().length() > 0 && fldYMax.getText().length() > 0 )
       {      
-         bounds.xMin = Double.parseDouble(fldXMin.getText());
-         bounds.xMax = Double.parseDouble(fldXMax.getText());
-         bounds.yMin = Double.parseDouble(fldYMin.getText());
-         bounds.yMax = Double.parseDouble(fldYMax.getText());
+         bounds.xMin = NumberUtils.parseDouble(fldXMin.getText());
+         bounds.xMax = NumberUtils.parseDouble(fldXMax.getText());
+         bounds.yMin = NumberUtils.parseDouble(fldYMin.getText());
+         bounds.yMax = NumberUtils.parseDouble(fldYMax.getText());
       }
       panel_.setBounds(bounds);
       panel_.repaint();
@@ -96,8 +97,8 @@ public class GraphFrame extends MMFrame {
 	      {      
 	         bounds.xMin = xmin;
 	         bounds.xMax = xmax;
-	         bounds.yMin = Double.parseDouble(fldYMin.getText());
-	         bounds.yMax = Double.parseDouble(fldYMax.getText());
+	         bounds.yMin = NumberUtils.parseDouble(fldYMin.getText());
+	         bounds.yMax = NumberUtils.parseDouble(fldYMax.getText());
 	       }
 	      panel_.setBounds(bounds);
 	      panel_.repaint();

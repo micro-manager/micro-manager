@@ -26,6 +26,8 @@ using namespace std;
 #include "MMDevice.h"
 #include "DeviceBase.h"
 
+#include <boost/lexical_cast.hpp>
+
 extern const char* g_ZStageDeviceName;
 extern const char* g_Keyword_LoadSample;
 
@@ -131,14 +133,9 @@ double RAMPSZStage::GetStepSize() const {
 int RAMPSZStage::SetPositionSteps(long steps)
 {
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
-  std::string status = pHub->GetState();
-  if (status == "Running") {
+  if (pHub->Busy()) {
       return ERR_STAGE_MOVING;
   }
-  /*
-  double newPosZ = steps * stepSize_um_;
-  double difZ = newPosZ - posZ_um_;
-  */
 
   posZ_um_ = steps * stepSize_um_;
 
@@ -149,6 +146,16 @@ int RAMPSZStage::SetPositionSteps(long steps)
   if (ret != DEVICE_OK)
     return ret;
 
+  
+  std::string answer;
+  ret = pHub->ReadResponse(answer, 1000);
+  if (ret != DEVICE_OK) {
+	  LogMessage("Error sending Z move.");
+	  return ret;
+  }
+  if (answer != "ok") {
+	  LogMessage("Failed to get ok response to Z move.");
+  }
   ret = OnStagePositionChanged(posZ_um_);
   if (ret != DEVICE_OK)
     return ret;
@@ -169,15 +176,51 @@ int RAMPSZStage::GetPositionSteps(long& steps)
   return DEVICE_OK;
 }
 
-int RAMPSZStage::SetOrigin()
-{
-  // const char* cmd ="HPZP0" ;
-  // int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmd);
-  // if (ret != DEVICE_OK)
-  //    return ret;
+int RAMPSZStage::Home() {
+  RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
+  pHub->PurgeComPortH();
+  int ret = pHub->SendCommand("G28 Z0");
+  if (ret != DEVICE_OK) {
+    LogMessage("Homing command failed.");
+    return ret;
+  }
+  std::string answer;
+  ret = pHub->ReadResponse(answer, 50000);
+  if (ret != DEVICE_OK) {
+    LogMessage("error getting response to homing command.");
+    return ret;
+  }
+  if (answer != "ok") {
+    LogMessage("Homing command: expected ok.");
+    return DEVICE_ERR;
+  }
+  return DEVICE_OK;
+}
 
-  // TODO(dek): run gcode to set origin to current location (G28.3 ?)
+int RAMPSZStage::SetOrigin() {
+	return SetAdapterOriginUm(0);
+}
 
+int RAMPSZStage::SetAdapterOriginUm(double z) {
+  RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
+  pHub->PurgeComPortH();
+  std::string xval = boost::lexical_cast<std::string>((long double) z);
+  std::string command = "G92 Z" + xval;
+  int ret = pHub->SendCommand(command);
+  if (ret != DEVICE_OK) {
+    LogMessage("Origin command failed.");
+    return ret;
+  }
+  std::string answer;
+  ret = pHub->ReadResponse(answer);
+  if (ret != DEVICE_OK) {
+    LogMessage("error getting response to origin command.");
+    return ret;
+  }
+  if (answer != "ok") {
+    LogMessage("origin command: expected ok.");
+    return DEVICE_ERR;
+  }
   return DEVICE_OK;
 }
 
