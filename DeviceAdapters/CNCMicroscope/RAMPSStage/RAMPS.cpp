@@ -167,24 +167,6 @@ int RAMPSHub::Initialize()
   CreateProperty(g_versionProp, sversion.str().c_str(), MM::String, true, pAct);
 
   PurgeComPortH();
-
-  // Write current location as origin
-  ret = SendCommand("M206 X0 Y0 Z0");
-  if (ret != DEVICE_OK) {
-    LogMessage("Set Origin Send Command failed");
-    return ret;
-  }
-  ret = ReadResponse(answer);
-  if (ret != DEVICE_OK) {
-    LogMessage("error getting controller version.");
-    return ret;
-  }
-  if (answer != "ok") {
-    LogMessage("expected ok.");
-    return DEVICE_ERR;
-  }
-
-  PurgeComPortH();
   SetVelocity(velocity_x_, velocity_y_, velocity_z_);
   PurgeComPortH();
   SetAcceleration(acceleration_x_, acceleration_y_, acceleration_z_);
@@ -241,11 +223,17 @@ bool RAMPSHub::Busy() {
   }
 
   std::string answer;
-  int ret = ReadResponse(answer, 50);
+  int ret = ReadResponse(answer, 30000);
   if (ret != DEVICE_OK) {
     status_ = "Busy";
     return true;
   }
+  if (answer != "ok") {
+    LogMessage(std::string("busy expected OK, didn't get it."));
+    LogMessage(answer);
+    return ret;
+  }
+
   sent_busy_ = false;
   status_ = "Idle";
   return false;
@@ -788,4 +776,3 @@ int RAMPSHub::OnAccelerationZ(MM::PropertyBase* pProp, MM::ActionType eAct)
 
   return DEVICE_OK;
 }
-

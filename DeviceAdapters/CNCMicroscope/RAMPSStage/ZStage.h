@@ -61,7 +61,9 @@ class RAMPSZStage : public CStageBase<RAMPSZStage>
   virtual double GetStepSize() const;
   virtual int SetPositionSteps(long steps) ;
   virtual int GetPositionSteps(long& steps);
+  virtual int Home();
   virtual int SetOrigin();
+  virtual int SetAdapterOriginUm(double z);
   virtual int GetLimits(double& lower, double& upper);
 
   bool IsContinuousFocusDrive() const;

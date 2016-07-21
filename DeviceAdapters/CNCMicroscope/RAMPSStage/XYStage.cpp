@@ -18,6 +18,9 @@ limitations under the License.
 
 #include "RAMPS.h"
 #include "XYStage.h"
+
+#include <boost/lexical_cast.hpp>
+
 const char* g_StepSizeProp = "Step Size";
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -119,17 +122,9 @@ int RAMPSXYStage::SetPositionSteps(long x, long y)
 {
   RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
   std::string status = pHub->GetState();
-  if (status == "Running") {
+  if (pHub->Busy()) {
       return ERR_STAGE_MOVING;
   }
-
-  /*
-  double newPosX = x * stepSize_um_;
-  double newPosY = y * stepSize_um_;
-  double difX = newPosX - posX_um_;
-  double difY = newPosY - posY_um_;
-  double distance = sqrt( (difX * difX) + (difY * difY) );
-  */
 
   posX_um_ = x * stepSize_um_;
   posY_um_ = y * stepSize_um_;
@@ -142,6 +137,15 @@ int RAMPSXYStage::SetPositionSteps(long x, long y)
   if (ret != DEVICE_OK)
     return ret;
 
+  std::string answer;
+  ret = pHub->ReadResponse(answer, 1000);
+  if (ret != DEVICE_OK) {
+	  LogMessage("Error sending XY move.");
+	  return ret;
+  }
+  if (answer != "ok") {
+	  LogMessage("Failed to get ok response to XY move.");
+  }
   ret = OnXYStagePositionChanged(posX_um_, posY_um_);
   if (ret != DEVICE_OK)
     return ret;
@@ -166,10 +170,56 @@ int RAMPSXYStage::SetRelativePositionSteps(long x, long y)
   return this->SetPositionSteps(xSteps+x, ySteps+y);
 }
 
-int RAMPSXYStage::Home() { return DEVICE_OK; }
-int RAMPSXYStage::Stop() { return DEVICE_OK; }
+int RAMPSXYStage::Home() {
+  RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
+  pHub->PurgeComPortH();
+  int ret = pHub->SendCommand("G28 X0 Y0");
+  if (ret != DEVICE_OK) {
+    LogMessage("Homing command failed.");
+    return ret;
+  }
+  std::string answer;
+  ret = pHub->ReadResponse(answer, 50000);
+  if (ret != DEVICE_OK) {
+    LogMessage("error getting response to homing command.");
+    return ret;
+  }
+  if (answer != "ok") {
+    LogMessage("Homing command: expected ok.");
+    return DEVICE_ERR;
+  }
+  return DEVICE_OK;
+}
 
-int RAMPSXYStage::SetOrigin() { return DEVICE_OK; }
+int RAMPSXYStage::SetOrigin() {
+  return SetAdapterOriginUm(0,0);
+}
+
+int RAMPSXYStage::SetAdapterOriginUm(double x, double y) {
+  RAMPSHub* pHub = static_cast<RAMPSHub*>(GetParentHub());
+  pHub->PurgeComPortH();
+  std::string xval = boost::lexical_cast<std::string>((long double) x);
+  std::string yval = boost::lexical_cast<std::string>((long double) y);
+  std::string command = "G92 X" + xval + " Y" + yval;  
+  int ret = pHub->SendCommand(command);
+  if (ret != DEVICE_OK) {
+    LogMessage("Origin command failed.");
+    return ret;
+  }
+  std::string answer;
+  ret = pHub->ReadResponse(answer);
+  if (ret != DEVICE_OK) {
+    LogMessage("error getting response to origin command.");
+    return ret;
+  }
+  if (answer != "ok") {
+    LogMessage("Origin command: expected ok.");
+    return DEVICE_ERR;
+  }
+  return DEVICE_OK;
+}
+
+int RAMPSXYStage::Stop() { return DEVICE_OK; }
 
 int RAMPSXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
 {
