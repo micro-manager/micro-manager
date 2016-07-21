@@ -107,6 +107,8 @@ public class CalibrationFrame extends JFrame {
       JButton bottomButton = new JButton("Bottom");
       bottomButton.addActionListener(new EdgeListener(studio, bottomLabel, edges[3]));
       
+      final JLabel[] edgeLabels = {leftLabel, topLabel, rightLabel, bottomLabel};
+      
       contents.add(topButton, "span 4, center, wrap");
       contents.add(topLabel, "span 4, center, wrap");
       contents.add(leftButton, "center");
@@ -134,6 +136,39 @@ public class CalibrationFrame extends JFrame {
             int rowNr = rowNumbers.get( (String) rowSpinner.getValue());
             int colNr = (Integer) columnSpinner.getValue();
             // TODO: check for edges and be smart about it
+            boolean useEdges = true;
+            for (JLabel edgeLabel : edgeLabels) {
+               if (edgeLabel.getText().equals(NOTSET)) {
+                  useEdges = false;
+               }
+            }
+            if (useEdges) {
+               double leftX = edges[0].x;
+               double rightX = edges[2].x;
+               double topY = edges[1].y;
+               double bottomY = edges[3].y;
+               // Sanity checks:
+               if (Math.abs(rightX - leftX) > plate.getWellSpacingX()) {
+                  studio.logs().showError("The distance between the right and left edge \n" +
+                          "is larger than the the well-to well distance for this plate.  Aborting");
+                  return;
+               }
+               if (Math.abs(topY - bottomY) > plate.getWellSpacingY()) {
+                  studio.logs().showError("The distance between the bottom and top edge \n" +
+                          "is larger than the the well-to well distance for this plate.  Aborting");
+                  return;
+               }
+               // Dangerous parts: move the stage to the middle
+               double middleX = (rightX + leftX) / 2.0;
+               double middleY = (topY + bottomY) / 2.0;
+               try {
+                  studio.getCMMCore().setXYPosition(middleX, middleY);
+               } catch (Exception ex) {
+                  studio.logs().showError(ex, "Failed to reset the stage's coordinates");
+                  dispose();
+                  return;
+               }
+            }     
             try {
                studio.getCMMCore().setAdapterOriginXY(
                        plate.getFirstWellX() + (rowNr - 1) * plate.getWellSpacingX(), 
@@ -145,6 +180,7 @@ public class CalibrationFrame extends JFrame {
             dispose();
          }
       });
+      
       contents.add(OKButton, "tag ok, wrap");
             
       super.add(contents);
