@@ -667,6 +667,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       if (app_ == null) {
          return;
       }
+      new CalibrationFrame(app_, plate_, this);
+      /*
       int ret = JOptionPane.showConfirmDialog(this, "Manually position the XY stage over the center of the well A01 and press OK",
               "XYStage origin setup", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
       if (ret == JOptionPane.OK_OPTION) {
@@ -681,9 +683,10 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             displayError(e.getMessage());
          }
       }
+      */
    }
 
-   private void regenerate() {
+   public void regenerate() {
       WellPositionList[] selectedWells = platePanel_.getSelectedWellPositions();
       updateXySpacing();
       PositionList sites = generateSites();
