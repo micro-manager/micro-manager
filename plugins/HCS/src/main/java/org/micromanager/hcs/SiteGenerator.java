@@ -89,6 +89,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
    private double xSpacing_ = 0.0;
    private double ySpacing_ = 0.0;
+   
+   private CalibrationFrame calFrame_ = null;
 
 
    private void updateXySpacing() {
@@ -667,7 +669,11 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       if (app_ == null) {
          return;
       }
-      new CalibrationFrame(app_, plate_, this);
+      if (calFrame_ != null) {
+         calFrame_.setVisible(true);
+      } else {
+         calFrame_ = new CalibrationFrame(app_, plate_, this);
+      }
       /*
       int ret = JOptionPane.showConfirmDialog(this, "Manually position the XY stage over the center of the well A01 and press OK",
               "XYStage origin setup", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
