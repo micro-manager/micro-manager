@@ -33,12 +33,14 @@ import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerListModel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import mmcorej.DeviceType;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -157,9 +159,9 @@ public class CalibrationFrame extends JFrame {
             }
             // when we have all edges, move the stage to the center
             if (allEdges) {
-               double leftX = edges[0].x;
+               double leftX = edges[1].x;
                double rightX = edges[2].x;
-               double topY = edges[1].y;
+               double topY = edges[0].y;
                double bottomY = edges[3].y;
                // Sanity checks:
                if (Math.abs(rightX - leftX) > plate.getWellSpacingX()) {
@@ -177,6 +179,7 @@ public class CalibrationFrame extends JFrame {
                double middleY = (topY + bottomY) / 2.0;
                try {
                   studio.getCMMCore().setXYPosition(middleX, middleY);
+                  studio.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice);
                } catch (Exception ex) {
                   studio.logs().showError(ex, "Failed to reset the stage's coordinates");
                   dispose();
@@ -188,6 +191,9 @@ public class CalibrationFrame extends JFrame {
                        plate.getFirstWellX() + (rowNr - 1) * plate.getWellSpacingX(), 
                        plate.getFirstWellY() + (colNr - 1) * plate.getWellSpacingY() );
                siteGenerator.regenerate();
+               Point2D.Double pt = studio.getCMMCore().getXYStagePosition();
+               JOptionPane.showMessageDialog(ourFrame, 
+                       "XY Stage set at position: " + pt.x + "," + pt.y);
             } catch (Exception ex) {
                studio.logs().showError(ex, "Failed to reset the stage's coordinates");
             }
