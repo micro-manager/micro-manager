@@ -216,6 +216,10 @@ public class CanvasUpdateQueue {
          }
          if (isComposite) {
             for (Coords c : channelToCoords.values()) {
+               if (!settings.getSafeIsVisible(c.getChannel(), true)) {
+                  // Channel isn't visible, so no need to do anything with it.
+                  continue;
+               }
                if (store_.hasImage(c)) {
                   Image image = store_.getImage(c);
                   // HACK: in rare cases (like, running DemoCamera live mode at
