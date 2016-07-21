@@ -23,6 +23,8 @@
 package org.micromanager.hcs;
 
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
@@ -48,7 +50,11 @@ import org.micromanager.Studio;
 
 
 /**
- *
+ * Displays a dialog that lets the user select the well that the objective
+ * is currently positioned on.
+ * The user can either define the current position as the center of that well
+ * or select the 4 edges and let the application calculate the center.
+ * 
  * @author Nico Stuurman
  */
 public class CalibrationFrame extends JFrame {
@@ -62,6 +68,17 @@ public class CalibrationFrame extends JFrame {
       
       JPanel contents = new JPanel(
             new MigLayout("align, center, fillx, gap 10"));
+      
+      JLabel warningLabel1 = new JLabel("Wrong calibrations can result in damaged equipment! ");
+      JLabel warningLabel2 = new JLabel("Always make sure the calibration is correct!");
+      Font warningFont = new Font(warningLabel1.getFont().getName(), Font.PLAIN, 16);
+      warningLabel1.setFont(warningFont);
+      warningLabel2.setFont(warningFont);
+      warningLabel1.setForeground(Color.red);
+      warningLabel2.setForeground(Color.red);
+      contents.add(warningLabel1, "span 4, center, wrap");
+      contents.add(warningLabel2, "span 4, center, wrap");
+      contents.add (new JSeparator(), "span 4, grow, wrap");
       
       final List<String> rows = new ArrayList<String>();
       final Map<String, Integer> rowNumbers = new HashMap<String, Integer>();
@@ -86,6 +103,8 @@ public class CalibrationFrame extends JFrame {
       
       contents.add(new JLabel("Or mark the top, right, bottom, and left edge " + 
               "of the selected well and press OK"), "span 4, wrap");
+      contents.add(new JLabel("Use live mode and a Pattern Overlay to position " +
+              " edges in the center of the image."), "span 4, wrap");
       
       final Point2D.Double[] edges = new Point2D.Double[4];
       for (int i = 0; i < 4; i++) {
@@ -188,8 +207,8 @@ public class CalibrationFrame extends JFrame {
             }     
             try {
                studio.getCMMCore().setAdapterOriginXY(
-                       plate.getFirstWellX() + (rowNr - 1) * plate.getWellSpacingX(), 
-                       plate.getFirstWellY() + (colNr - 1) * plate.getWellSpacingY() );
+                       plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(), 
+                       plate.getFirstWellY() + (rowNr  - 1) * plate.getWellSpacingY() );
                siteGenerator.regenerate();
                Point2D.Double pt = studio.getCMMCore().getXYStagePosition();
                JOptionPane.showMessageDialog(ourFrame, 
