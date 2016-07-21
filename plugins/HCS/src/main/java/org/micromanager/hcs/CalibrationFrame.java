@@ -55,6 +55,7 @@ public class CalibrationFrame extends JFrame {
    public CalibrationFrame(final Studio studio, final SBSPlate plate, 
            final SiteGenerator siteGenerator) {
       
+      final JFrame ourFrame = this;
       super.setTitle("Calibrate XY Stage");
       
       JPanel contents = new JPanel(
@@ -122,7 +123,8 @@ public class CalibrationFrame extends JFrame {
       cancelButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            dispose();
+            cleanup (edgeLabels);
+            ourFrame.dispose();
          }
       });
       contents.add(cancelButton, "span 4, split 2, tag cancel");
@@ -189,6 +191,7 @@ public class CalibrationFrame extends JFrame {
             } catch (Exception ex) {
                studio.logs().showError(ex, "Failed to reset the stage's coordinates");
             }
+            cleanup (edgeLabels);
             dispose();
          }
       });
@@ -223,7 +226,12 @@ public class CalibrationFrame extends JFrame {
             studio_.logs().showError(ex, "Failed to get XYStage position");
          }
       }
-      
+   }
+   
+   private void cleanup (JLabel[] edges) {
+      for (JLabel edge : edges) {
+         edge.setText(NOTSET);
+      }
    }
    
 }
