@@ -204,6 +204,16 @@ public class CanvasUpdateQueue {
             // The display may have gone away while we were waiting.
             return;
          }
+         // HACK: in composite view mode with autostretch turned on, we need
+         // to manually update every image. Otherwise, only the image indicated
+         // by the axis scrollbars will have its histogram updated.
+         DisplaySettings settings = display_.getDisplaySettings();
+         if (isComposite && settings.getShouldAutostretch() != null &&
+               settings.getShouldAutostretch()) {
+            for (int c = 0; c < store_.getAxisLength(Coords.CHANNEL); ++c) {
+               channelToCoords.put(c, lastCoords.copy().channel(c).build());
+            }
+         }
          if (isComposite) {
             for (Coords c : channelToCoords.values()) {
                if (store_.hasImage(c)) {
