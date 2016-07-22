@@ -146,8 +146,8 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
    private void loadSettingValue() {
       processorAlgoBox_.setSelectedItem(settings_.getString(
               "processorAlgo", getProcessorAglo()));
-      numerOfImagesToProcessField_.setText(settings_.getString(
-              "numerOfImagesToProcess", Integer.toString(getNumerOfImagesToProcess())));
+      numerOfImagesToProcessField_.setText(Integer.toString(settings_.getInt(
+              "numerOfImagesToProcess", getNumerOfImagesToProcess())));
       enableDuringAcquisitionBox_.setSelected(
               settings_.getBoolean("enableDuringAcquisition",
                       getEnableDuringAcquisition()));
