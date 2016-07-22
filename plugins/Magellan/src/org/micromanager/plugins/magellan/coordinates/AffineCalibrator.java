@@ -26,23 +26,20 @@ import ij3d.image3d.FHTImage3D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.RealMatrix;
-import org.micromanager.MMStudio;
-import org.micromanager.plugins.magellan.acq.TaggedImageStorageMultipageTiff;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 import org.micromanager.plugins.magellan.misc.ProgressBar;
-import org.micromanager.utils.MMScriptException;
 
 
 /**
@@ -55,6 +52,7 @@ public class AffineCalibrator {
    private CountDownLatch nextImageLatch_ = new CountDownLatch(1);
    private AffineGUI affineGui_ ;
    private volatile boolean abort_ =false;
+   private Datastore datastore_;
    
    public AffineCalibrator(AffineGUI ag) {
       affineGui_ = ag;
@@ -81,12 +79,10 @@ public class AffineCalibrator {
       abort_ = true;
       readyForNextImage();
       //close window
-      String albumName = Magellan.getScriptInterface().getCurrentAlbum();
-      try {
-         Magellan.getScriptInterface().closeAcquisitionWindow(albumName);
-      } catch (MMScriptException ex) {
-         Log.log("Cpuldn't close album");
+      if (datastore_ != null) {
+         datastore_.close();
       }
+      datastore_ = null;
    }
    
    public void computeAffine() throws Exception {
@@ -99,9 +95,9 @@ public class AffineCalibrator {
       CMMCore core = Magellan.getCore();
       String xyStage = core.getXYStageDevice();
       Point2D.Double[] stagePositions = new Point2D.Double[3], pixPositions = new Point2D.Double[3];
-
+      
       stagePositions[0] = new Point2D.Double(core.getXPosition(xyStage) ,core.getYPosition(xyStage) );
-      TaggedImage img0 = snapAndAdd();
+      Image img0 = snapAndAdd(0);
       nextImageLatch_ = new CountDownLatch(1);
       Log.log("Move stage to new position with same features visible, and press Capture");
       nextImageLatch_.await();
@@ -110,7 +106,7 @@ public class AffineCalibrator {
       }
       
       stagePositions[1] = new Point2D.Double(core.getXPosition(xyStage), core.getYPosition(xyStage));
-      TaggedImage img1 = snapAndAdd();
+      Image img1 = snapAndAdd(1);
       nextImageLatch_ = new CountDownLatch(1);
       Log.log("Move stage to new position with same features visible, and press Capture");
       nextImageLatch_.await();
@@ -119,7 +115,7 @@ public class AffineCalibrator {
       }
       
       stagePositions[2] = new Point2D.Double(core.getXPosition(xyStage), core.getYPosition(xyStage));
-      TaggedImage img2 = snapAndAdd();
+      Image img2 = snapAndAdd(2);
 
       //use Xcorr to calculate pixel coordinates
       ProgressBar progressBar = new ProgressBar("Computing affine transform (may take several minutes)", 0, 3);
@@ -149,20 +145,20 @@ public class AffineCalibrator {
       }
    }
 
-   private Point2D.Double crossCorrelate(TaggedImage img1, TaggedImage img2) throws Exception {    
+   private Point2D.Double crossCorrelate(Image img1, Image img2) throws Exception {    
       //double the width of iamges used for xCorr to support offsets bigger than half the iage size
-       int width = 2 *img1.tags.getInt("Width");
-       int height = 2 * img1.tags.getInt("Height");
+       int width = 2 *img1.getWidth();
+       int height = 2 * img1.getHeight();
        ImageStack stack1 = new ImageStack(width, height);
        ImageStack stack2 = new ImageStack(width, height);
-       boolean eightBit = img1.pix instanceof byte[];
+       boolean eightBit = img1.getBytesPerPixel() == 1;
        Object newPix1, newPix2, sortedPix1, sortedPix2;
       if (eightBit) {
          newPix1 = new byte[width * height];
          newPix2 = new byte[width * height];
          //fill with background pix value to not throw things off
-         sortedPix1 = Arrays.copyOf((byte[]) img1.pix, (width / 2) * (height / 2));
-         sortedPix2 = Arrays.copyOf((byte[]) img2.pix, (width / 2) * (height / 2));
+         sortedPix1 = Arrays.copyOf((byte[]) img1.getRawPixels(), (width / 2) * (height / 2));
+         sortedPix2 = Arrays.copyOf((byte[]) img2.getRawPixels(), (width / 2) * (height / 2));
          Arrays.sort((byte[]) sortedPix1);
          Arrays.sort((byte[]) sortedPix2);
          Arrays.fill((byte[]) newPix1, ((byte[]) sortedPix1)[(int) (((byte[]) sortedPix1).length * 0.1)]);
@@ -171,8 +167,8 @@ public class AffineCalibrator {
          newPix1 = new short[width * height];
          newPix2 = new short[width * height];
          //fill with background pix value to not throw things off
-         sortedPix1 = Arrays.copyOf((short[]) img1.pix, (width / 2) * (height / 2));
-         sortedPix2 = Arrays.copyOf((short[]) img2.pix, (width / 2) * (height / 2));
+         sortedPix1 = Arrays.copyOf((short[]) img1.getRawPixels(), (width / 2) * (height / 2));
+         sortedPix2 = Arrays.copyOf((short[]) img2.getRawPixels(), (width / 2) * (height / 2));
          Arrays.sort((short[]) sortedPix1);
          Arrays.sort((short[]) sortedPix2);
          Arrays.fill((short[]) newPix1, ((short[]) sortedPix1)[(int) (((short[]) sortedPix1).length * 0.1)]);
@@ -180,8 +176,8 @@ public class AffineCalibrator {
       }
 
       for (int y = 0; y < height / 2; y++) {
-         System.arraycopy(img1.pix, y*(width/2), newPix1, (y+height/4)*width + width/4, width/2);
-           System.arraycopy(img2.pix, y*(width/2), newPix2, (y+height/4)*width + width/4, width/2);
+         System.arraycopy(img1.getRawPixels(), y*(width/2), newPix1, (y+height/4)*width + width/4, width/2);
+           System.arraycopy(img2.getRawPixels(), y*(width/2), newPix2, (y+height/4)*width + width/4, width/2);
        }
        stack1.addSlice(null, newPix1);
        stack2.addSlice(null, newPix2);
@@ -217,14 +213,23 @@ public class AffineCalibrator {
     * @return pixels
     * @throws Exception 
     */
-   private TaggedImage snapAndAdd() throws Exception {
-      boolean liveOn = Magellan.getScriptInterface().isLiveModeOn();
-      Magellan.getScriptInterface().enableLiveMode(false);
-      Magellan.getCore().snapImage();  
-      TaggedImage image = Magellan.getCore().getTaggedImage();
-      Magellan.getScriptInterface().addToAlbum(image);
-      Magellan.getScriptInterface().enableLiveMode(liveOn);
-      return image;
+   private Image snapAndAdd(int index) throws Exception {
+      boolean liveOn = Magellan.getStudio().live().getIsLiveModeOn();
+      if (liveOn) {
+         Magellan.getStudio().live().setSuspended(true);
+      }
+      List<Image> images = Magellan.getStudio().live().snap(false);
+      if (datastore_ == null) {
+         datastore_ = Magellan.getStudio().displays().show(images.get(0));
+      } else {
+         Coords.CoordsBuilder builder = Magellan.getStudio().data().getCoordsBuilder();
+         builder.time(index); 
+         datastore_.putImage(images.get(0).copyAtCoords(builder.build()));
+      }
+      if (liveOn) {
+          Magellan.getStudio().live().setSuspended(false);
+      }
+      return images.get(0);
    }
 
    //see http://stackoverflow.com/questions/22954239/given-three-points-compute-affine-transformation

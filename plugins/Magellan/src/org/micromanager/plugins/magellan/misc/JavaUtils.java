@@ -444,6 +444,19 @@ public class JavaUtils {
       }
       System.err.println("End all stack traces. =============");
    }
+   
+    public static Runnable makeURLRunnable(final String url) {
+       return new Runnable() {
+          @Override
+          public void run() {
+             try {
+                ij.plugin.BrowserLauncher.openURL(url);
+             } catch (IOException e1) {
+                Log.log(e1);
+             }
+          }
+       };
+    }
 
 
 }

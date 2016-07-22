@@ -101,8 +101,8 @@ public class PropertyAndGroupUtils {
    private static ArrayList<SinglePropertyOrGroup> readConfigGroups() {
       ArrayList<SinglePropertyOrGroup> groups = new ArrayList<SinglePropertyOrGroup>();
       CMMCore core = Magellan.getCore();
-      boolean liveMode = Magellan.getScriptInterface().isLiveModeOn();
-         Magellan.getScriptInterface().enableLiveMode(false);
+      boolean liveMode = Magellan.getStudio().live().getIsLiveModeOn();
+         Magellan.getStudio().live().setLiveMode(liveMode);
                   
          StrVector groupNames = core.getAvailableConfigGroups();   
       for (String group : groupNames) {
@@ -110,8 +110,8 @@ public class PropertyAndGroupUtils {
          pg.readGroupValuesFromConfig(group);
          groups.add(pg);
       }
-      Magellan.getScriptInterface().enableLiveMode(liveMode);
-      return groups;
+   Magellan.getStudio().live().setLiveMode(liveMode);
+   return groups;
    }
 
    private static ArrayList<SinglePropertyOrGroup> readAllProperties(boolean includeReadOnly) {
@@ -119,8 +119,8 @@ public class PropertyAndGroupUtils {
       ArrayList<SinglePropertyOrGroup> props = new ArrayList<SinglePropertyOrGroup>();
       try {
          StrVector devices = core.getLoadedDevices();
-         boolean liveMode = Magellan.getScriptInterface().isLiveModeOn();
-         Magellan.getScriptInterface().enableLiveMode(false);
+      boolean liveMode = Magellan.getStudio().live().getIsLiveModeOn();
+         Magellan.getStudio().live().setLiveMode(liveMode);
 
          for (int i = 0; i < devices.size(); i++) {
             StrVector properties = core.getDevicePropertyNames(devices.get(i));
@@ -132,7 +132,7 @@ public class PropertyAndGroupUtils {
                }
             }
          }
-         Magellan.getScriptInterface().enableLiveMode(liveMode);
+       Magellan.getStudio().live().setLiveMode(liveMode);
       } catch (Exception e) {
          Log.log("Problem reading properties from core");
       }
