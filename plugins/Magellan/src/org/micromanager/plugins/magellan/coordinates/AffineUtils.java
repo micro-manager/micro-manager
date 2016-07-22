@@ -23,9 +23,7 @@ package org.micromanager.plugins.magellan.coordinates;
 import java.awt.geom.AffineTransform;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
-import org.micromanager.plugins.magellan.misc.JavaUtils;
-import org.micromanager.MMStudio;
-import org.micromanager.plugins.magellan.main.Magellan;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.NumberUtils;
 

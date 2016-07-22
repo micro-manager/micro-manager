@@ -66,7 +66,7 @@ public class DeviceControlTableModel extends AbstractTableModel   {
          SinglePropertyOrGroup item = storedGroupsAndProps_.get(row);
          setValueInCore(item, value);
          core_.updateSystemStateCache();
-         Magellan.getScriptInterface().refreshGUIFromCache();
+         Magellan.getStudio().getCompatibilityInterface().refreshGUIFromCache();
          fireTableCellUpdated(row, col);
       }
    }

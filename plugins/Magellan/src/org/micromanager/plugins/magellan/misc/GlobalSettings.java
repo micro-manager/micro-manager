@@ -29,7 +29,8 @@ import java.util.ArrayList;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
-import org.micromanager.MMStudio;
+import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import org.micromanager.plugins.magellan.main.Magellan;
 
@@ -59,10 +60,10 @@ public class GlobalSettings {
 
       //Demo mode 
       try {
-         String s = Magellan.getConfigFileName();
+         String s = ((MMStudio)Magellan.getStudio()).getSysConfigFile();
          if (s.endsWith("MagellanDemo.cfg")) {
             //generate a dummy affine transformation for current pixel size config
-            String psConfig = MMStudio.getInstance().getCore().getCurrentPixelSizeConfig();
+            String psConfig = Magellan.getCore().getCurrentPixelSizeConfig();
             AffineTransform demoTransform = new AffineTransform(new double[]{1, 0, 0, 1});
             AffineUtils.storeAffineTransform(psConfig, demoTransform);
             //Set stage to the middle of the demo sample

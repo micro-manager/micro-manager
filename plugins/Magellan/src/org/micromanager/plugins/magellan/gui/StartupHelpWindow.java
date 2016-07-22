@@ -23,11 +23,10 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.util.prefs.Preferences;
 import javax.swing.SwingUtilities;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
-import org.micromanager.MMStudio;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
-import org.micromanager.utils.GUIUtils;
 
 /**
  *
@@ -55,7 +54,7 @@ public class StartupHelpWindow extends javax.swing.JFrame {
          @Override
          public void mousePressed(MouseEvent e) {
             if (stepIndex_ == 2) {
-               new Thread(GUIUtils.makeURLRunnable("https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Pixel_Size_Calibration")).start();
+               new Thread(JavaUtils.makeURLRunnable("https://micro-manager.org/wiki/Micro-Manager_Configuration_Guide#Pixel_Size_Calibration")).start();
             }
          }
       });

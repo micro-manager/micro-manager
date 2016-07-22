@@ -26,7 +26,7 @@ import javax.swing.table.AbstractTableModel;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import mmcorej.CMMCore;
-import org.micromanager.api.events.ExposureChangedEvent;
+import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.plugins.magellan.demo.DemoModeImageData;
 import org.micromanager.plugins.magellan.misc.NumberUtils;
 
@@ -53,18 +53,18 @@ public class SimpleChannelTableModel extends AbstractTableModel implements Table
       exploreTable_ = true;
       core_ = Magellan.getCore();   
       channels_ = channels;
-      Magellan.getScriptInterface().registerForEvents(this);
+      Magellan.getStudio().getEventManager().registerForEvents(this);
    }
 
    public SimpleChannelTableModel() {
       exploreTable_ = false;
       core_ = Magellan.getCore();
       refreshChannels();
-      Magellan.getScriptInterface().registerForEvents(this);
+      Magellan.getStudio().getEventManager().registerForEvents(this);
    }
    
    public void shutdown() {
-      Magellan.getScriptInterface().unregisterForEvents(this);
+      Magellan.getStudio().getEventManager().unregisterForEvents(this);
    }
    
    public boolean anyChannelsActive() {

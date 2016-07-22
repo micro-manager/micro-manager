@@ -20,21 +20,17 @@ package org.micromanager.plugins.magellan.main;
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.prefs.BackingStoreException;
 import org.micromanager.plugins.magellan.gui.GUI;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
-import org.micromanager.MMStudio;
-import org.micromanager.api.MMPlugin;
-import org.micromanager.api.ScriptInterface;
+import org.micromanager.MenuPlugin;
+import org.micromanager.Studio;
+import org.scijava.plugin.Plugin;
+import org.scijava.plugin.SciJavaPlugin;
 
-/**
- *
- * @author Henry
- */
-public class Magellan implements MMPlugin{
+
+@Plugin(type = MenuPlugin.class)
+public class Magellan implements MenuPlugin, SciJavaPlugin{
 
    private static final String VERSION = "1.02";
            
@@ -42,41 +38,58 @@ public class Magellan implements MMPlugin{
    public static final String tooltipDescription = "High throughout, automated micrscopy for spatiotemporal exploration";
 
    private static Preferences prefs_;
-   private static ScriptInterface mmAPI_;
+   private static Studio mmAPI_;
    private static GUI gui_;
    
    public Magellan() {
-      if (gui_ == null) {
-         prefs_ = Preferences.userNodeForPackage(Magellan.class);
-         gui_ = new GUI(prefs_, VERSION);
-      }
+ 
    }
    
    public static Preferences getPrefs() {
       return prefs_;
    }
    
+   public static Studio getStudio() {
+      return mmAPI_;
+   }
+   
+//   public static String getConfigFileName() {
+//      try {
+//         return mmAPI_.getInstance().getSysConfigFile();
+//      } catch (Exception e) {
+//         //since this is not an API method
+//         return "";
+//      }    
+//   }
+
    @Override
-   public void dispose() {
+   public String getSubMenu() {
+      return "Plugins";
    }
 
    @Override
-   public void setApp(ScriptInterface si) {
-      
+   public void onPluginSelected() {
+      if (gui_ == null) {
+         prefs_ = Preferences.userNodeForPackage(Magellan.class);
+         gui_ = new GUI(prefs_, VERSION);
+      } else {
+         gui_.setVisible(true);
+      }
    }
 
    @Override
-   public void show() {      
-      gui_.setVisible(true);
+   public void setContext(Studio studio) {
+      mmAPI_ = studio;
+       
    }
 
    @Override
-   public String getDescription() {
-      return "Explore samples in space and time";
+   public String getName() {
+      return "Micro-Magellan";
    }
 
    @Override
-   public String getInfo() {
+   public String getHelpText() {
       return "";
    }
 
@@ -87,25 +100,10 @@ public class Magellan implements MMPlugin{
 
    @Override
    public String getCopyright() {
-      return "Henry Pinkard UCSF 2014";
+      return "Copyright Henry Pinkard 2014-2016";
    }
    
-   //methods for communicating with MM APIs
    public static CMMCore getCore() {
-      return MMStudio.getInstance().getCore();
+      return mmAPI_.core();
    }
-   
-   public static ScriptInterface getScriptInterface() {
-      return (ScriptInterface) MMStudio.getInstance();
-   }
-   
-   public static String getConfigFileName() {
-      try {
-         return MMStudio.getInstance().getSysConfigFile();
-      } catch (Exception e) {
-         //since this is not an API method
-         return "";
-      }    
-   }
-   
 }
