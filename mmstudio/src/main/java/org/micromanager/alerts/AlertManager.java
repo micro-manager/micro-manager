@@ -32,7 +32,8 @@ public interface AlertManager {
     * Create a one-time alert that displays some text for the user.  A new
     * dialog will be created each time this method is called; calling it
     * repeatedly will therefore rapidly hit the message limit (the point where
-    * new dialogs are not shown until old ones have been disposed of).
+    * new dialogs are not shown until old ones have been disposed of by the
+    * user).
     * @param text Text to display to the user.
     * @return Newly-created Alert
     */
@@ -43,7 +44,8 @@ public interface AlertManager {
     * owner Object. If there is already a text alert for the owner, and that
     * alert is still usable (per its isUsable() method), then the new text will
     * be added as an additional line in the alert. If the owner is null, then
-    * this method is equivalent to calling showTextAlert.
+    * this method is equivalent to calling the showTextAlert() method that
+    * takes no owner parameter.
     * @param text Text to display to the user.
     * @param owner Owner of this alert; multiple alerts from the same owner
     *        will be combined together.
