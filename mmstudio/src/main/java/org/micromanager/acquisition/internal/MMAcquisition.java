@@ -46,6 +46,8 @@ import java.util.regex.Pattern;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 
 import mmcorej.CMMCore;
@@ -55,9 +57,11 @@ import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.internal.MMStudio;
 
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Storage;
@@ -76,6 +80,8 @@ import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
+
+import org.micromanager.alerts.Alert;
 
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
@@ -123,6 +129,11 @@ public class MMAcquisition {
    private final boolean show_;
    private JSONObject summary_ = new JSONObject();
    private final String NOTINITIALIZED = "Acquisition was not initialized";
+
+   private int imagesReceived_ = 0;
+   private int imagesExpected_ = 0;
+   private JLabel progressLabel_ = new JLabel();
+   private Alert alert_;
 
    public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
          boolean diskCached, AcquisitionEngine eng, boolean show) {
@@ -176,14 +187,27 @@ public class MMAcquisition {
       catch (PipelineErrorException e) {
          ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
       }
+      // Calculate expected images from dimensionality in summary metadata.
+      if (store_.getSummaryMetadata().getIntendedDimensions() != null) {
+         Coords dims = store_.getSummaryMetadata().getIntendedDimensions();
+         imagesExpected_ = 1;
+         for (String axis : dims.getAxes()) {
+            imagesExpected_ *= dims.getIndex(axis);
+         }
+         progressLabel_.setText("Received 0 of " + imagesExpected_ + " images");
+      }
       if (show_) {
          display_ = studio_.displays().createDisplay(
                store_, makeControlsFactory());
          display_.registerForEvents(this);
+         JPanel alertContents = new JPanel();
+         alertContents.add(progressLabel_);
+         alert_ = studio_.alerts().showAlert(alertContents, this);
       }
+      store_.registerForEvents(this);
       DefaultEventManager.getInstance().registerForEvents(this);
   }
-   
+
    private String createAcqDirectory(String root, String prefix) throws Exception {
       File rootDir = JavaUtils.createDirectory(root);
       int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
@@ -412,8 +436,29 @@ public class MMAcquisition {
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
       store_.freeze();
       DefaultEventManager.getInstance().unregisterForEvents(this);
+      new Thread(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               Thread.sleep(5000);
+            }
+            catch (InterruptedException e) {
+               // This should never happen.
+               studio_.logs().logError("Interrupted while waiting to dismiss alert");
+            }
+            studio_.alerts().dismissAlert(MMAcquisition.this);
+         }
+      }).start();
    }
-   
+
+   @Subscribe
+   public void onNewImage(NewImageEvent event) {
+      imagesReceived_++;
+      progressLabel_.setText(String.format("Received %d of %d images",
+               imagesReceived_, imagesExpected_));
+      alert_.pack();
+   }
+
    /**
     * Returns show flag, indicating whether this acquisition was opened with
     * a request to show the image in a window

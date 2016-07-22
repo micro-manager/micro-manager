@@ -95,6 +95,9 @@ import org.micromanager.internal.hcwizard.MicroscopeModel;
 
 import org.micromanager.data.internal.DefaultDataManager;
 
+import org.micromanager.alerts.AlertManager;
+import org.micromanager.alerts.internal.DefaultAlertManager;
+
 import org.micromanager.internal.diagnostics.EDTHangLogger;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
@@ -1672,6 +1675,16 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    @Override
    public ApplicationSkin getApplicationSkin() {
       return skin();
+   }
+
+   @Override
+   public AlertManager alerts() {
+      return DefaultAlertManager.getInstance();
+   }
+
+   @Override
+   public AlertManager getAlertManager() {
+      return alerts();
    }
 
    @Override
