@@ -59,7 +59,6 @@ import mmcorej.MMCoreJ;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
 import org.micromanager.Album;
-import org.micromanager.AlertManager;
 import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.AutofocusManager;
