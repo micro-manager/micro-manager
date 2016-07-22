@@ -24,8 +24,6 @@ public class FrameCombinerFactory implements ProcessorFactory {
       return new FrameCombiner(studio_,
               settings_.getString("processorAlgo", FrameCombinerPlugin.PROCESSOR_ALGO_MEAN),
               settings_.getInt("numerOfImagesToProcess", 10),
-              settings_.getBoolean("enableDuringAcquisition", true),
-              settings_.getBoolean("enableDuringLive", true),
               settings_.getString("channelsToAvoid", ""));
    }
 }

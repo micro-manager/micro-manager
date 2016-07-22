@@ -14,8 +14,6 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
 
    private static final String PROCESSOR_ALGO = "Algorithm to apply on stack images";
    private static final String NUMBER_TO_PROCESS = "Number of images to process";
-   private static final String ENABLE_MDA = "Whether or not enable the plugin during acquisition";
-   private static final String ENABLE_LIVE = "Whether or not enable the plugin during live";
    private static final String CHANNEL_TO_AVOID = "Avoid Channel(s) (eg. 1,2 or 1-5)";
 
    private final Studio studio_;
@@ -36,7 +34,6 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
    private void initComponents() {
 
       jPanel1 = new javax.swing.JPanel();
-      enableDuringAcquisitionBox_ = new javax.swing.JCheckBox();
       NumberFormat format = NumberFormat.getInstance();
       NumberFormatter formatter = new NumberFormatter(format);
       formatter.setValueClass(Integer.class);
@@ -49,14 +46,10 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
       jLabel2 = new javax.swing.JLabel();
       processorAlgoBox_ = new javax.swing.JComboBox();
       channelsToAvoidField_ = new javax.swing.JFormattedTextField();
-      enableDuringLiveBox_ = new javax.swing.JCheckBox();
       jLabel3 = new javax.swing.JLabel();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("FrameCombiner Processor Configuration");
-
-      enableDuringAcquisitionBox_.setText("Enable during acquisition");
-      enableDuringAcquisitionBox_.setName(""); // NOI18N
 
       numerOfImagesToProcessField_.setName("_"); // NOI18N
 
@@ -71,9 +64,6 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
       processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MIN);
 
       channelsToAvoidField_.setName("_"); // NOI18N
-
-      enableDuringLiveBox_.setText("Enable during live mode");
-      enableDuringLiveBox_.setName(""); // NOI18N
 
       jLabel3.setText("<html>Avoid Channel(s) (zero-based)<br/><p style=\"text-align: center;\">eg. 1,2 or 1-5 (no space)</p></html>");
 
@@ -90,12 +80,8 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
             .addGap(18, 18, 18)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addComponent(enableDuringLiveBox_)
-                  .addGap(0, 0, Short.MAX_VALUE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addComponent(numerOfImagesToProcessField_)
-                     .addComponent(enableDuringAcquisitionBox_)
                      .addComponent(channelsToAvoidField_))
                   .addContainerGap(24, Short.MAX_VALUE))
                .addGroup(jPanel1Layout.createSequentialGroup()
@@ -118,10 +104,7 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
                .addComponent(channelsToAvoidField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(enableDuringAcquisitionBox_)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(enableDuringLiveBox_)
-            .addGap(68, 68, 68))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
       );
 
       javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -148,12 +131,6 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
               "processorAlgo", getProcessorAglo()));
       numerOfImagesToProcessField_.setText(Integer.toString(settings_.getInt(
               "numerOfImagesToProcess", getNumerOfImagesToProcess())));
-      enableDuringAcquisitionBox_.setSelected(
-              settings_.getBoolean("enableDuringAcquisition",
-                      getEnableDuringAcquisition()));
-      enableDuringLiveBox_.setSelected(
-              settings_.getBoolean("enableDuringLive",
-                      getEnableDuringLive()));
       channelsToAvoidField_.setText(settings_.getString(
               "channelsToAvoidField", getChannelsToAvoid()));
    }
@@ -175,15 +152,11 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
       // Save preferences now.
       setProcessorAglo((String) processorAlgoBox_.getSelectedItem());
       setNumerOfImagesToProcess(Integer.parseInt(numerOfImagesToProcessField_.getText()));
-      setEnableDuringAcquisition(enableDuringAcquisitionBox_.isSelected());
-      setEnableDuringLive(enableDuringLiveBox_.isSelected());
       setChannelsToAvoid(channelsToAvoidField_.getText());
 
       PropertyMap.PropertyMapBuilder builder = studio_.data().getPropertyMapBuilder();
       builder.putString("processorAlgo", (String) processorAlgoBox_.getSelectedItem());
       builder.putInt("numerOfImagesToProcess", Integer.parseInt(numerOfImagesToProcessField_.getText()));
-      builder.putBoolean("enableDuringAcquisition", enableDuringAcquisitionBox_.isSelected());
-      builder.putBoolean("enableDuringLive", enableDuringLiveBox_.isSelected());
       builder.putString("channelsToAvoid", channelsToAvoidField_.getText());
       return builder.build();
    }
@@ -208,26 +181,6 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
               NUMBER_TO_PROCESS, numerOfImagesToProcess);
    }
 
-   private boolean getEnableDuringAcquisition() {
-      return studio_.profile().getBoolean(FrameCombinerConfigurator.class,
-              ENABLE_MDA, true);
-   }
-
-   private void setEnableDuringAcquisition(boolean enableDuringAcquisition) {
-      studio_.profile().setBoolean(FrameCombinerConfigurator.class,
-              ENABLE_MDA, enableDuringAcquisition);
-   }
-
-   private boolean getEnableDuringLive() {
-      return studio_.profile().getBoolean(FrameCombinerConfigurator.class,
-              ENABLE_LIVE, true);
-   }
-
-   private void setEnableDuringLive(boolean enableDuringLive) {
-      studio_.profile().getBoolean(FrameCombinerConfigurator.class,
-              ENABLE_LIVE, true);
-   }
-   
    private String getChannelsToAvoid() {
       return studio_.profile().getString(FrameCombinerConfigurator.class,
               CHANNEL_TO_AVOID, "");
@@ -240,8 +193,6 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JFormattedTextField channelsToAvoidField_;
-   private javax.swing.JCheckBox enableDuringAcquisitionBox_;
-   private javax.swing.JCheckBox enableDuringLiveBox_;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;

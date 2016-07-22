@@ -24,8 +24,6 @@ public class FrameCombiner extends Processor {
 
    private final String processorAlgo_;
    private final int numerOfImagesToProcess_;
-   private final boolean enableDuringAcquisition_;
-   private final boolean enableDuringLive_;
    private final List<Integer> channelsToAvoid_;
 
    private boolean imageNotProcessedFirstTime_ = true;
@@ -36,16 +34,13 @@ public class FrameCombiner extends Processor {
    private HashMap<Coords, SingleCombinationProcessor> singleAquisitions_;
 
    public FrameCombiner(Studio studio, String processorAlgo,
-           int numerOfImagesToProcess, boolean enableDuringAcquisition,
-           boolean enableDuringLive, String channelsToAvoidString) {
+           int numerOfImagesToProcess, String channelsToAvoidString) {
 
       studio_ = studio;
       log_ = studio_.logs();
 
       processorAlgo_ = processorAlgo;
       numerOfImagesToProcess_ = numerOfImagesToProcess;
-      enableDuringAcquisition_ = enableDuringAcquisition;
-      enableDuringLive_ = enableDuringLive;
 
       // Check whether channelsToAvoidString is correctly formated
       if (!channelsToAvoidString.isEmpty() && !isValidIntRangeInput(channelsToAvoidString)) {
@@ -67,7 +62,7 @@ public class FrameCombiner extends Processor {
    @Override
    public void processImage(Image image, ProcessorContext context) {
 
-      if (!isProcessorEnable() || !imageGoodToProcess(image)) {
+      if (!imageGoodToProcess(image)) {
          context.outputImage(image);
          return;
       }
@@ -112,16 +107,6 @@ public class FrameCombiner extends Processor {
       } else {
          return summary;
       }
-   }
-
-   public final boolean isProcessorEnable() {
-      if (studio_.acquisitions().isAcquisitionRunning() && !enableDuringAcquisition_) {
-         return false;
-      } else if (studio_.live().getIsLiveModeOn() && !enableDuringLive_) {
-         return false;
-      }
-
-      return true;
    }
 
    /**
