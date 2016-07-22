@@ -396,7 +396,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          store_ = new DefaultRewritableDatastore();
          store_.setStorage(new StorageRAM(store_));
          // Use a synchronous pipeline for live mode.
-         pipeline_ = studio_.data().copyApplicationPipeline(store_, true);
+         pipeline_ = studio_.data().copyLivePipeline(store_, true);
       }
    }
 

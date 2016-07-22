@@ -30,9 +30,10 @@ import org.micromanager.Studio;
 // only redrawing the row(s) that are modified.
 public class PipelineTableModel extends AbstractTableModel {
    static final int ENABLED_COLUMN = 0;
-   static final int NAME_COLUMN = 1;
-   static final int CONFIGURE_COLUMN = 2;
-   private static final int NUM_COLUMNS = 3;
+   static final int ENABLED_LIVE_COLUMN = 1;
+   static final int NAME_COLUMN = 2;
+   static final int CONFIGURE_COLUMN = 3;
+   private static final int NUM_COLUMNS = 4;
    private static final String SAVED_PIPELINE = "saved pipeline configuration";
 
    private ArrayList<ConfiguratorWrapper> pipelineConfigs_;
@@ -83,9 +84,11 @@ public class PipelineTableModel extends AbstractTableModel {
 
    /**
     * Provide a list of factories for all enabled processors.
+    * @param isLiveMode if true, select configurators enabled for live, if
+    *        false, select generally-enabled configurators.
     */
-   public List<ProcessorFactory> getPipelineFactories() {
-      List<ConfiguratorWrapper> configs = getEnabledConfigurators();
+   public List<ProcessorFactory> getPipelineFactories(boolean isLiveMode) {
+      List<ConfiguratorWrapper> configs = getEnabledConfigurators(isLiveMode);
       ArrayList<ProcessorFactory> result = new ArrayList<ProcessorFactory>();
       for (ConfiguratorWrapper config : configs) {
          PropertyMap settings = config.getConfigurator().getSettings();
@@ -107,10 +110,11 @@ public class PipelineTableModel extends AbstractTableModel {
       return result;
    }
 
-   public ArrayList<ConfiguratorWrapper> getEnabledConfigurators() {
+   public ArrayList<ConfiguratorWrapper> getEnabledConfigurators(boolean isLiveMode) {
       ArrayList<ConfiguratorWrapper> result = new ArrayList<ConfiguratorWrapper>();
       for (ConfiguratorWrapper config : pipelineConfigs_) {
-         if (config.getIsEnabled()) {
+         if ((isLiveMode && config.getIsEnabledInLive()) ||
+               (!isLiveMode && config.getIsEnabled())) {
             result.add(config);
          }
       }
@@ -131,6 +135,7 @@ public class PipelineTableModel extends AbstractTableModel {
    public Class<?> getColumnClass(int column) {
       switch (column) {
          case ENABLED_COLUMN:
+         case ENABLED_LIVE_COLUMN:
             return Boolean.class;
          case NAME_COLUMN:
             return String.class;
@@ -145,6 +150,8 @@ public class PipelineTableModel extends AbstractTableModel {
       switch (column) {
          case ENABLED_COLUMN:
             return "Enabled";
+         case ENABLED_LIVE_COLUMN:
+            return "Snap/Live";
          case NAME_COLUMN:
             return "Processor";
          case CONFIGURE_COLUMN:
@@ -156,11 +163,15 @@ public class PipelineTableModel extends AbstractTableModel {
    @Override
    public boolean isCellEditable(int row, int column) {
       switch (column) {
-         case ENABLED_COLUMN: return true;
-         case NAME_COLUMN: return false;
-         case CONFIGURE_COLUMN: return true;
+         case ENABLED_COLUMN:
+         case ENABLED_LIVE_COLUMN:
+         case CONFIGURE_COLUMN:
+            return true;
+         case NAME_COLUMN:
+            return false;
+         default:
+            return false;
       }
-      return false;
    }
 
    @Override
@@ -168,6 +179,8 @@ public class PipelineTableModel extends AbstractTableModel {
       switch (column) {
          case ENABLED_COLUMN:
             return pipelineConfigs_.get(row).getIsEnabled();
+         case ENABLED_LIVE_COLUMN:
+            return pipelineConfigs_.get(row).getIsEnabledInLive();
          case NAME_COLUMN:
             return pipelineConfigs_.get(row).getName();
          case CONFIGURE_COLUMN:
@@ -179,8 +192,11 @@ public class PipelineTableModel extends AbstractTableModel {
    @Override
    public void setValueAt(Object value, int row, int column) {
       if (column == ENABLED_COLUMN) {
-         boolean enabled = (Boolean) value;
-         pipelineConfigs_.get(row).setIsEnabled(enabled);
+         pipelineConfigs_.get(row).setIsEnabled((Boolean) value);
+         fireTableDataChanged();
+      }
+      else if (column == ENABLED_LIVE_COLUMN) {
+         pipelineConfigs_.get(row).setIsEnabledInLive((Boolean) value);
          fireTableDataChanged();
       }
    }

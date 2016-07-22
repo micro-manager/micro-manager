@@ -101,8 +101,8 @@ final public class PipelineFrame extends MMFrame
       pipelineScrollPane_ = new JScrollPane(pipelineTable_,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-      pipelineScrollPane_.setPreferredSize(new Dimension(320, 80));
-      pipelineScrollPane_.setMinimumSize(new Dimension(320,
+      pipelineScrollPane_.setPreferredSize(new Dimension(370, 80));
+      pipelineScrollPane_.setMinimumSize(new Dimension(370,
             pipelineTable_.getRowHeight()));
       add(pipelineScrollPane_, "growx, growy");
 
@@ -166,10 +166,11 @@ final public class PipelineFrame extends MMFrame
       add(explanationLabel);
 
       replayButton_ = new JButton("Process Old Data");
+      replayButton_.setToolTipText("Apply the current enabled processors to an existing dataset.");
       replayButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (getTableModel().getEnabledConfigurators().size() == 0) {
+            if (getTableModel().getEnabledConfigurators(false).size() == 0) {
                studio_.logs().showError("Please set up a pipeline first.");
                return;
             }
@@ -237,8 +238,13 @@ final public class PipelineFrame extends MMFrame
     */
    @Subscribe
    public void onStartupComplete(StartupCompleteEvent event) {
-      if (getTableModel().restorePipelineFromProfile(studio_)) {
-         setVisible(true);
+      try {
+         if (getTableModel().restorePipelineFromProfile(studio_)) {
+            setVisible(true);
+         }
+      }
+      catch (Exception e) {
+         studio_.logs().logError(e, "Failed to reload pipeline");
       }
    }
 
@@ -334,7 +340,14 @@ final public class PipelineFrame extends MMFrame
     * configurators and their settings.
     */
    public List<ProcessorFactory> getPipelineFactories() {
-      return getTableModel().getPipelineFactories();
+      // We want the processors that are generally enabled, not the ones that
+      // are only enabled in Live.
+      return getTableModel().getPipelineFactories(false);
+   }
+
+   public List<ProcessorFactory> getLivePipelineFactories() {
+      // We want the processor that are only enabled in Live.
+      return getTableModel().getPipelineFactories(true);
    }
 
    /**

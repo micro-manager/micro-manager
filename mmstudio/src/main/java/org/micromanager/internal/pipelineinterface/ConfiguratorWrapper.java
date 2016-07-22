@@ -37,6 +37,7 @@ public class ConfiguratorWrapper {
    private ProcessorConfigurator configurator_;
    private String name_;
    private boolean isEnabled_;
+   private boolean isEnabledInLive_;
 
    public ConfiguratorWrapper(ProcessorPlugin plugin,
          ProcessorConfigurator configurator, String name) {
@@ -44,6 +45,7 @@ public class ConfiguratorWrapper {
       configurator_ = configurator;
       name_ = name;
       isEnabled_ = true;
+      isEnabledInLive_ = true;
    }
 
    public ProcessorPlugin getPlugin() {
@@ -62,8 +64,16 @@ public class ConfiguratorWrapper {
       return isEnabled_;
    }
 
+   public boolean getIsEnabledInLive() {
+      return isEnabledInLive_;
+   }
+
    public void setIsEnabled(boolean isEnabled) {
       isEnabled_ = isEnabled;
+   }
+
+   public void setIsEnabledInLive(boolean isEnabled) {
+      isEnabledInLive_ = isEnabled;
    }
 
    /**
@@ -75,6 +85,7 @@ public class ConfiguratorWrapper {
          JSONObject json = new JSONObject();
          json.put("name", name_);
          json.put("isEnabled", isEnabled_);
+         json.put("isEnabledInLive", isEnabledInLive_);
          json.put("pluginName", plugin_.getClass().getName());
          json.put("configSettings", configurator_.getSettings().toString());
          return json.toString();
@@ -99,6 +110,13 @@ public class ConfiguratorWrapper {
          ConfiguratorWrapper result = new ConfiguratorWrapper(plugin,
                configurator, json.getString("name"));
          result.setIsEnabled(json.getBoolean("isEnabled"));
+         // This flag was added later.
+         if (json.has("isEnabledInLive")) {
+            result.setIsEnabledInLive(json.getBoolean("isEnabledInLive"));
+         }
+         else {
+            result.setIsEnabledInLive(result.getIsEnabled());
+         }
          return result;
       }
       catch (JSONException e) {

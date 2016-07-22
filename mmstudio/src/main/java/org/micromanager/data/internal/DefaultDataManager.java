@@ -301,6 +301,13 @@ public class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public Pipeline copyLivePipeline(Datastore store, boolean isSynchronous) {
+      return createPipeline(
+            MMStudio.getInstance().getPipelineFrame().getLivePipelineFactories(),
+            store, isSynchronous);
+   }
+
+   @Override
    public List<ProcessorConfigurator> getApplicationPipelineConfigurators() {
       return MMStudio.getInstance().getPipelineFrame().getPipelineConfigurators();
    }
