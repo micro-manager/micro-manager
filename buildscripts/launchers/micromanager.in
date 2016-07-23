@@ -42,4 +42,4 @@ echo "class path = $CLASSPATH" 1>&2
    -Dorg.micromanager.autofocus.path="@mmautofocusdir@" \
    -Dorg.micromanager.default.config.file="@mmdatadir@/MMConfig_demo.cfg" \
    -Dorg.micromanager.corelog.dir=/tmp \
-   org.micromanager.MMStudio
+   org.micromanager.internal.MMStudio

@@ -11,9 +11,7 @@ tags
 /SecretDeviceAdapters/
 
 # Visual Studio
-*.VC.db
 *.ncb
-*.opendb
 *.opensdf
 *.sdf
 *.suo

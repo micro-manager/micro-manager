@@ -4,6 +4,9 @@
 		<pathelement location="${mm.java.lib.mmcorej}"/>
 		<pathelement location="${mm.java.lib.mmstudio}"/>
 		<path refid="plugin.classpath"/>
+		<fileset dir="${mm.java.mmlibraries}">
+		  <include name="*.jar"/>
+		</fileset>
 	</path>
 
 	<path id="project.linked.jars">

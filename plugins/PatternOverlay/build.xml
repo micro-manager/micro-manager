@@ -1,8 +1,5 @@
 <project name="PatternOverlay" default="jar">
-	<property name="plugin.path" value="Acquisition_Tools"/>
-
 	<import file="../javapluginbuild.xml"/>
-
 	<target name="copy-files" depends="mm.javabuild.copy-files">
 		<copy todir="${intdir}">
 			<fileset dir="${srcdir}" includes="**/*.png"/>

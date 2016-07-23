@@ -66,5 +66,7 @@
 		<key>VMOptions</key>
 		<string>-Xmx768m</string>
 	</dict>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 </dict>
 </plist>

@@ -105,7 +105,7 @@
 			     deleting a .class file), the build tree needs to
 			     be cleaned (or another source file should be
 			     touched). -->
-			<!-- The outofdate task is provided by from ant-contrib -->
+			<!-- The outofdate task is provided by ant-contrib -->
 			<outofdate property="clj.classes.outofdate">
 				<sourcefiles>
 					<fileset dir="@{srcdir}"/>

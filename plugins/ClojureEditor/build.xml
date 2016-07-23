@@ -1,4 +1,0 @@
-<project name="ClojureEditor" default="jar">
-	<property name="plugin.path" value="Developer_Tools"/>
-	<import file="../javapluginbuild.xml"/>
-</project>

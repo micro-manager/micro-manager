@@ -1,0 +1,37 @@
+<project name="mm.libraries" basedir="." default="jar">
+	<include file="../buildscripts/buildprops.xml"/>
+	<macrodef name="run-all">
+		<attribute name="target"/>
+		<attribute name="failonerror" default="true"/>
+		<sequential>
+			<subant target="@{target}" failonerror="@{failonerror}">
+				<fileset dir="." includes="*/build.xml"/>
+			</subant>
+		</sequential>
+	</macrodef>
+
+
+	<target name="compile">
+		<run-all target="compile" failonerror="${mm.build.failonerror}"/>
+	</target>
+
+	<target name="copy-files">
+		<run-all target="copy-files" failonerror="${mm.build.failonerror}"/>
+	</target>
+
+	<target name="jar">
+		<run-all target="jar" failonerror="${mm.build.failonerror}"/>
+	</target>
+
+	<target name="install-only">
+		<run-all target="install-only" failonerror="${mm.build.failonerror}"/>
+	</target>
+
+	<target name="install">
+		<run-all target="install" failonerror="${mm.build.failonerror}"/>
+	</target>
+
+	<target name="clean">
+		<run-all target="clean"/>
+	</target>
+</project>

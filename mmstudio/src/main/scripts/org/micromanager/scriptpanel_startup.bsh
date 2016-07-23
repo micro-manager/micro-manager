@@ -1,0 +1,241 @@
+// ScriptPanel BeanShell startup script for Micro-Manager.
+//
+// Authors: Arthur Edelstein, 2009; Mark Tsuchida, 2014.
+//
+// Copyright (c) 2009-2014 University of California, San Francisco
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+//   * Redistributions of source code must retain the above copyright notice,
+//     this list of conditions and the following disclaimer.
+//   * Redistributions in binary form must reproduce the above copyright
+//     notice, this list of conditions and the following disclaimer in the
+//     documentation and/or other materials provided with the distribution.
+//   * Neither the name of the University of California nor the names of its
+//     contributors may be used to endorse or promote products derived from
+//     this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
+
+class dummyClassToForceBeanshellToUseAHashtableInItsNamespaceMethodsList {}
+
+setAccessibility(false);
+
+
+//
+// Open Javadoc in browser
+//
+
+void doc(o) {
+   getClassName(o, namespace) {
+      Class cls = null;
+      if (o instanceof Class) {
+         cls = o;
+      }
+      else if (o instanceof bsh.ClassIdentifier) {
+         cls = namespace.identifierToClass(o);
+      }
+      else if (o instanceof String) {
+         cls = namespace.getClass((String) o);
+      }
+      else {
+         cls = o.getClass();
+      }
+      if (cls != null) {
+         return cls.getName();
+      }
+      return null;
+   }
+
+   boolean isJavaAPIClass(className) {
+      String[] javaAPIPackages = {
+         "java", "javax", "org.ietf", "org.omg", "org.w3c", "org.xml"
+      };
+      for (pkg : javaAPIPackages) {
+         if (className.startsWith(pkg + ".")) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   String getJavadocRoot(className) {
+      if (isJavaAPIClass(className)) {
+         return "http://docs.oracle.com/javase/6/docs/api/";
+      }
+      else if (className.startsWith("ij.")) {
+         return "http://rsb.info.nih.gov/ij/developer/api/";
+      }
+      else if (className.startsWith("bsh.")) {
+         return "http://www.beanshell.org/javadoc/";
+      }
+      else if (className.startsWith("org.micromanager.")) {
+         return "http://valelab.ucsf.edu/~MM/doc/mmstudio/";
+      }
+      else if (className.startsWith("mmcorej.")) {
+         return "http://valelab.ucsf.edu/~MM/doc/mmcorej/";
+      }
+      else if (className.startsWith("org.jdesktop.swingx.")) {
+         return "http://download.java.net/javadesktop/swinglabs/releases/0.8/docs/api/";
+      }
+      return null;
+   }
+
+   String getJavadocURL(className) {
+      root = getJavadocRoot(className);
+      if (root == null) {
+         return null;
+      }
+      return root + className.replace(".", "/") + ".html";
+   }
+
+   String className = getClassName(o, this.caller.namespace);
+   if (className == null) {
+      print("Cannot find class for " + o.toString());
+      return;
+   }
+   String url = getJavadocURL(className);
+   if (url != null) {
+      print("Opening Javadoc for " + className);
+      print(url);
+      ij.plugin.BrowserLauncher.openURL(url);
+   }
+   else {
+      print("Don't know how to find Javadoc for " + className);
+   }
+}
+
+
+//
+// Object inspector
+//
+
+inspect(obj) {
+   object_ = obj;
+   frame_ = new javax.swing.JFrame("Inspector for instance of class " +
+         object_.getClass().getName());
+   methodsModel_ = new javax.swing.table.DefaultTableModel();
+   fieldsModel_ = new javax.swing.table.DefaultTableModel();
+
+   void makeUI() {
+      tabbedPane = new javax.swing.JTabbedPane();
+
+      methodsTable = new org.jdesktop.swingx.JXTable();
+      methodsTable.setModel(methodsModel_);
+      tabbedPane.addTab("Methods", new javax.swing.JScrollPane(methodsTable));
+
+      fieldsTable = new org.jdesktop.swingx.JXTable();
+      fieldsTable.setModel(fieldsModel_);
+      tabbedPane.addTab("Fields", new javax.swing.JScrollPane(fieldsTable));
+
+      frame_.add(tabbedPane);
+      frame_.pack();
+      frame_.setBounds(100, 100, 900, 700);
+      frame_.show();
+   }
+
+   void update() {
+      // If we add a "Refresh" button, it would be nice to preserve the JXTable
+      // sorting and column reordring. This is not currently done.
+      methodsModel_.setDataVector(getMethodsData(object_), getMethodsCols());
+      fieldsModel_.setDataVector(getFieldsData(object_), getFieldsCols());
+   }
+
+   Vector getMethodsCols() {
+      cols = new Vector();
+      cols.add("Name");
+      cols.add("Return Type");
+      cols.add("Parameter Types");
+      cols.add("Declared in");
+      return cols;
+   }
+
+   Vector getMethodRow(obj, cls, method) {
+      sb = new StringBuilder();
+      for (paramType : method.getParameterTypes()) {
+         if (sb.length() > 0) {
+            sb.append(", ");
+         }
+         sb.append(paramType);
+      }
+      paramTypes = sb.toString();
+
+      row = new Vector();
+      row.add(method.getName());
+      row.add(method.getReturnType());
+      row.add(paramTypes);
+      row.add(cls.getName());
+      return row;
+   }
+
+   Vector getMethodsData(obj) {
+      rows = new Vector();
+      for (cls = obj.getClass(); cls != null; cls = cls.getSuperclass()) {
+         methods = cls.getDeclaredMethods();
+         for (method : methods) {
+            // TODO We do not currently hide or provide any indication of
+            // overridden methods in superclasses.
+            rows.add(getMethodRow(obj, cls, method));
+         }
+      }
+      return rows;
+   }
+
+   Vector getFieldsCols() {
+      cols = new Vector();
+      cols.add("Name");
+      cols.add("Value");
+      cols.add("Type");
+      cols.add("Declared in");
+      return cols;
+   }
+
+   Vector getFieldRow(obj, cls, field) {
+      value = "null";
+      try {
+         v = eval("obj." + field.getName());
+         value = (v != null ? v.toString() : "null");
+      }
+      catch (Exception e) {
+         value = "<inaccessible>";
+      }
+
+      row = new Vector();
+      row.add(field.getName());
+      row.add(value);
+      row.add(field.getType());
+      row.add(cls.getName());
+      return row;
+   }
+
+   Vector getFieldsData(obj) {
+      rows = new Vector();
+      for (cls = obj.getClass(); cls != null; cls = cls.getSuperclass()) {
+         fields = cls.getDeclaredFields();
+         for (field : fields) {
+            rows.add(getFieldRow(obj, cls, field));
+         }
+      }
+      return rows;
+   }
+
+   print("Starting inspector...");
+   update();
+   makeUI();
+
+   // Although not normally needed, it might be handy for testing if we return
+   // this object.
+   return this;
+}

@@ -1,0 +1,23 @@
+// Wait 2 seconds before each new position
+// Nico Stuurman, UCSF, Oct. 2014.
+// nico@cmp.ucsf.edu
+
+
+import ij.gui.GenericDialog;
+
+
+mm.acquisitions().clearRunnables();
+
+runnable = new Runnable() {
+   int count = 0;
+   public void run() {
+       mmc.sleep(2000);
+       mm.scripter().message("Waited 2 seconds, nr: " + count);
+       count++;
+   }
+};
+
+// Run the runnable on all frames and positions,
+// -1 --> attach to all planes along given dimension
+
+mm.acquisitions().attachRunnable(-1, -1, 0, 0, runnable); // f, p, c, s 

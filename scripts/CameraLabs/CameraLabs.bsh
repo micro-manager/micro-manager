@@ -1,0 +1,93 @@
+/*
+ * This script will take a number of exposures with increasing 
+ * exposure time.  It is useful, for instance, when measuring 
+ * the photon conversion factor of your camera.
+ * See https://micro-manager.org/wiki/Measuring_camera_specifications
+ * for more information.
+ *
+ * Edit the first three variable (nrExpsures, startExposure, and 
+ * finalExposure) to your liking.
+ *
+ * Nico Stuurman, 2/4/2010
+ */
+
+import org.micromanager.data.Coords;
+import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
+import org.micromanager.display.DisplayWindow;
+
+// final (maximum exposure in ms)
+double finalExposure = 640;
+// Number of data points desired
+int nrExposures = 50;
+// Initial exposure in ms
+double startExposure = 0.0025;
+
+// Place where data will be saved
+acqRoot = System.getProperty("user.home") + "/Data";
+// data set name
+acqName = "ecf";
+
+
+// DO NOT EDIT BELOW THIS LINE
+double minimumExposure = 0.0025;
+startExposure = Math.max(startExposure, minimumExposure);
+
+// sanity check: startExposure must be less than finalExposure.
+if (finalExposure < startExposure) {
+   tmp = startExpsore;
+   startExposure = finalExposure;
+   finalExposure = tmp;
+}
+
+double calculateFactor(int nrExp, double startExp, double endExp) {
+   double estimate = 1.0;
+   boolean success = false;
+   increment = 0.001;
+   if (nrExp < 5) {
+      increment = 0.1;
+   }
+   else if (nrExp < 15) {
+      increment = 0.01;  
+   }
+   while (!success) {
+      exp = startExp;
+      for (i = 1; i < nrExp; i++) {
+         exp = estimate * exp;
+      }
+      if (exp >= endExp) {
+         success = true;
+      }
+      else {
+         estimate += increment;
+      }
+   }
+
+   exp = startExp;
+   for (i=1; i<nrExp; i++) {
+      exp = estimate * exp;
+   }
+
+   return estimate;
+}
+
+factor = calculateFactor(nrExposures, startExposure, finalExposure);
+
+Datastore store = mm.data().createRAMDatastore();
+DisplayWindow display = mm.displays().createDisplay(store);
+Coords.CoordsBuilder builder = mm.data().getCoordsBuilder();
+builder.stagePosition(0).time(0).z(0).channel(0);
+double exposure = startExposure;
+for (int i = 0; i < nrExposures; ++i) {
+   mmc.setExposure(exposure);
+   Image image = mm.live().snap(false).get(0);
+   image = image.copyAtCoords(builder.time(i * 2).build());
+   image = mm.live().snap(false).get(0);
+   image = image.copyAtCoords(builder.time(i * 2 + 1).build());
+   store.putImage(image);
+   exposure = factor * exposure;
+}
+
+store.save(Datastore.SaveMode.MULTIPAGE_TIFF, acqRoot + "/" + acqName);
+
+ 

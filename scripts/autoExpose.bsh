@@ -1,0 +1,117 @@
+/*
+ * Micro-Manager script that automatically determines the optimum exposure time
+ *
+ * An image is taken with the current exposure time.  The value of the brighest 
+ * pixel (ignoring 'cutoff_' fraction of the bright pixels) will be determined. 
+ * When the pixel is too bright exposure will be reduced 'tooBright_' fold and
+ * the test will be performed again
+ * When the bright pixel is less than 'lowFraction_' of the maximum, try again.
+ *
+ * Nico Stuurman, 9/1//2008.  Copyright UCSF
+ */
+
+
+
+import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import ij.ImagePlus;
+import ij.process.ImageStatistics;
+import ij.measure.Measurements;
+import java.lang.Math;
+import javax.swing.JOptionPane;
+
+
+
+// Percentage of pixels that will be ignored in analysis of bright pixels
+double cutoff_ = 0.002;
+// Exposure will be reduced tooBright_ fold when the image was too bright
+double tooBright_ = 5;
+// Aim for the brightest pixel to be this fraction of the dynamic range
+double aim_ = 0.85;
+// When brightest pixel is higher than this fraction of the dynamic range, 
+// consider the image to be saturated
+double saturated_ = 0.95;
+// When the bright pixel is less than 'lowFraction_' of the maximum, try again.
+double lowFraction_ = 0.5;
+// Highest allowed exposure: to avoid extreme exposures, do not go higher than this:
+double maxExposure_ = 10000;
+
+
+boolean testExposure () {
+   double exposure = mmc.getExposure();
+   if (exposure < 1) {
+      exposure = 1;
+      mmc.setExposure(exposure);
+   }
+   image = mm.live().snap(false).get(0);
+   int width = image.getWidth();
+   int height = image.getHeight();
+
+   int nrPixels = width * height;
+
+   ImageProcessor ip;
+
+   pixels = image.getRawPixels();
+   if (pixels instanceof byte[]) {
+      ip = new ByteProcessor(width, height);
+      ip.setPixels((byte[]) pixels);
+   }
+	else if (pixels instanceof short[]) {
+      ip = new ShortProcessor(width, height);
+      ip.setPixels((short[]) pixels);
+ 	}
+ 	else {
+       return false;
+ 	}
+
+	ImagePlus imp = new ImagePlus("tmp", ip);
+
+	ImageStatistics stats = imp.getStatistics(ij.measure.Measurements.MIN_MAX);
+
+    if (img instanceof byte[]) {
+       int[] hist = stats.histogram;
+       int j=255; 
+       int pixelsFound = 0;
+       while (pixelsFound < (nrPixels * cutoff_)) {
+          pixelsFound += hist[j];
+          j--;
+       }
+       maxValue = j;
+    } else {
+		maxValue = stats.max;
+	}
+	double maxValueD = (double) maxValue;
+	double nrBits = image.getMetadata().getBitDepth();
+	double maxPossible = java.lang.Math.pow (2.0, nrBits);
+
+	if (maxValueD > (saturated_ * maxPossible) ) {
+      nextExposure = 1/tooBright_ * exposure;
+      mmc.setExposure(nextExposure);
+		gui.message ("Saturated image, cutting down on Exposure");
+		return false;
+	}
+
+	double nextExposure = aim_ * maxPossible / maxValueD * exposure;
+	mm.scripter().message("Max pixel Value: " + maxValue + " Max Possible: " + maxPossible + " Best Exposure: " + nextExposure);
+
+	if (nextExposure > maxExposure_) {
+		JOptionPane.showMessageDialog(null, "Sample too dim, exposure higher than " + maxExposure_/1000 + " sec. needed");
+		return true;
+	}
+
+   mmc.setExposure(nextExposure);
+
+   if (maxValueD/maxPossible > lowFraction_)
+		return true;
+	else
+		return false;
+}
+
+
+boolean finished = false;
+while (!finished)
+	finished = testExposure();
+mm.refreshGUI();
+mm.live().snap(true);
+
