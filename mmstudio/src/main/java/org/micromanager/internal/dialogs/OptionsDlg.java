@@ -38,7 +38,6 @@ import javax.swing.WindowConstants;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.ApplicationSkin;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.Studio;
@@ -80,15 +79,15 @@ public class OptionsDlg extends MMDialog {
       parent_ = parent;
       core_ = core;
 
-      setResizable(false);
-      setModal(true);
-      setAlwaysOnTop(true);
-      setTitle("Micro-Manager Options");
+      super.setResizable(false);
+      super.setModal(true);
+      super.setAlwaysOnTop(true);
+      super.setTitle("Micro-Manager Options");
       
-      loadAndRestorePosition(100, 100);     
+      super.loadAndRestorePosition(100, 100);     
 
-      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-      addWindowListener(new WindowAdapter() {
+      super.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+      super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(final WindowEvent e) {
             closeRequested();
@@ -296,58 +295,58 @@ public class OptionsDlg extends MMDialog {
       });
 
 
-      setLayout(new net.miginfocom.swing.MigLayout(
+      super.setLayout(new net.miginfocom.swing.MigLayout(
                "fill, insets dialog",
                "[fill]"));
 
-      add(new JLabel("Display Background:"), "split 2, gapright push");
-      add(comboDisplayBackground_, "wrap");
+      super.add(new JLabel("Display Background:"), "split 2, gapright push");
+      super.add(comboDisplayBackground_, "wrap");
 
-      add(new JSeparator(), "wrap");
+      super.add(new JSeparator(), "wrap");
 
-      add(new JLabel("Sequence Buffer Size:"), "split 3, gapright push");
-      add(bufSizeField_, "gapright related");
-      add(new JLabel("MB"), "wrap");
+      super.add(new JLabel("Sequence Buffer Size:"), "split 3, gapright push");
+      super.add(bufSizeField_, "gapright related");
+      super.add(new JLabel("MB"), "wrap");
 
-      add(new JSeparator(), "wrap");
+      super.add(new JSeparator(), "wrap");
 
-      add(metadataFileWithMultipageTiffCheckBox, "wrap");
-      add(separateFilesForPositionsMPTiffCheckBox, "wrap");
+      super.add(metadataFileWithMultipageTiffCheckBox, "wrap");
+      super.add(separateFilesForPositionsMPTiffCheckBox, "wrap");
 
-      add(new JSeparator(), "wrap");
+      super.add(new JSeparator(), "wrap");
 
-      add(askForConfigFileCheckBox, "wrap");
-      add(alwaysUseDefaultProfileCheckBox, "wrap");
+      super.add(askForConfigFileCheckBox, "wrap");
+      super.add(alwaysUseDefaultProfileCheckBox, "wrap");
 
-      add(new JLabel("Startup Script:"), "split 2, grow 0, gapright related");
-      add(startupScriptFile_, "wrap");
+      super.add(new JLabel("Startup Script:"), "split 2, grow 0, gapright related");
+      super.add(startupScriptFile_, "wrap");
 
-      add(closeOnExitCheckBox, "wrap");
+      super.add(closeOnExitCheckBox, "wrap");
 
-      add(new JSeparator(), "wrap");
+      super.add(new JSeparator(), "wrap");
 
-      add(debugLogEnabledCheckBox, "wrap");
+      super.add(debugLogEnabledCheckBox, "wrap");
 
-      add(deleteLogCheckBox, "split 3, gapright related");
-      add(logDeleteDaysField_, "gapright related");
-      add(new JLabel("days"), "gapright push, wrap");
+      super.add(deleteLogCheckBox, "split 3, gapright related");
+      super.add(logDeleteDaysField_, "gapright related");
+      super.add(new JLabel("days"), "gapright push, wrap");
 
-      add(deleteLogFilesButton,
+      super.add(deleteLogFilesButton,
             "split 3, gapleft push, gapright push, wrap");
 
-      add(new JSeparator(), "wrap");
+      super.add(new JSeparator(), "wrap");
 
-      add(syncExposureMainAndMDA, "wrap");
-      add(hideMDAdisplay, "wrap");
-      add(inspectorOnTop, "wrap");
+      super.add(syncExposureMainAndMDA, "wrap");
+      super.add(hideMDAdisplay, "wrap");
+      super.add(inspectorOnTop, "wrap");
 
-      add(new JSeparator(), "wrap");
+      super.add(new JSeparator(), "wrap");
 
-      add(clearPreferencesButton,
+      super.add(clearPreferencesButton,
             "split 2, sizegroup bottomBtns, gapright unrelated");
-      add(closeButton, "sizegroup bottomBtns");
+      super.add(closeButton, "sizegroup bottomBtns");
 
-      pack();
+      super.pack();
    }
 
    private void changeBackground() {

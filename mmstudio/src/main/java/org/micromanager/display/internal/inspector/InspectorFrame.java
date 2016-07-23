@@ -29,7 +29,6 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -44,9 +43,7 @@ import java.io.File;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Stack;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -122,14 +119,14 @@ public class InspectorFrame extends MMFrame implements Inspector {
     * the panel itself.
     */
    private class WrapperPanel extends JPanel {
-      private JPanel header_;
+      private final JPanel header_;
       private InspectorPanel panel_;
       private boolean shouldOverrideSize_ = false;
       private Dimension overrideSize_ = null;
-      private String title_;
+      private final String title_;
       public WrapperPanel(String title, InspectorPanel panel) {
          super(new MigLayout("flowy, insets 0, fill"));
-         setBorder(BorderFactory.createRaisedBevelBorder());
+         super.setBorder(BorderFactory.createRaisedBevelBorder());
          panel_ = panel;
          title_ = title;
 
@@ -185,8 +182,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
                refillContents();
             }
          });
-         add(header_, "growx, pushy 0");
-         add(panel_, "grow, gap 0, hidemode 2, pushy 100");
+         super.add(header_, "growx, pushy 0");
+         super.add(panel_, "grow, gap 0, hidemode 2, pushy 100");
          // HACK: the specific panel with the "Contrast" title is automatically
          // visible.
          if (title.contentEquals(CONTRAST_TITLE)) {
@@ -270,6 +267,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    /**
     * This method simply makes certain that newly-created inspector windows
     * are created on the EDT.
+    * @param viewer - viewer that wants an inspector attached
     */
    public static void createInspector(final DataViewer viewer) {
       if (!SwingUtilities.isEventDispatchThread()) {
@@ -298,7 +296,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    // Maps InspectorPanels to the WrapperPanels that contain them in our UI.
    private ArrayList<WrapperPanel> wrapperPanels_;
    private final JPanel contents_;
-   private JScrollPane scroller_;
+   private final JScrollPane scroller_;
    private JComboBox displayChooser_;
    private JButton raiseButton_;
    private final JLabel curDisplayTitle_;
@@ -307,11 +305,11 @@ public class InspectorFrame extends MMFrame implements Inspector {
       super();
       haveCreatedInspector_ = true;
       wrapperPanels_ = new ArrayList<WrapperPanel>();
-      setTitle("Image Inspector");
+      super.setTitle("Image Inspector");
       if (alwaysOnTop_)
          setAlwaysOnTop(true);
       // Use a small title bar.
-      getRootPane().putClientProperty("Window.style", "small");
+      super.getRootPane().putClientProperty("Window.style", "small");
 
       // Initialize all of our components; they'll be inserted into our frame
       // in refillContents().
@@ -372,8 +370,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
       scroller_ = new JScrollPane(contents_,
             ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      add(scroller_);
-      setVisible(true);
+      super.add(scroller_);
+      super.setVisible(true);
 
       // Hard-coded initial panels.
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
@@ -396,14 +394,14 @@ public class InspectorFrame extends MMFrame implements Inspector {
       // We want to be in the upper-right corner of the primary display.
       GraphicsConfiguration config = GUIUtils.getGraphicsConfigurationContaining(1, 1);
       // Allocate enough width that the histograms look decent.
-      setMinimumSize(new Dimension(400, 50));
+      super.setMinimumSize(new Dimension(400, 50));
       // HACK: don't know our width; just choose a vaguely-correct offset.
-      loadAndRestorePosition(config.getBounds().width - 450, 0);
-      setSize(new Dimension(getDefaultWidth(), getHeight()));
+      super.loadAndRestorePosition(config.getBounds().width - 450, 0);
+      super.setSize(new Dimension(getDefaultWidth(), super.getHeight()));
 
       DefaultEventManager.getInstance().registerForEvents(this);
       // Cleanup when window closes.
-      addWindowListener(new WindowAdapter() {
+      super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent event) {
             cleanup();
@@ -411,7 +409,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       });
       // Save the size when the user resizes the window, and the
       // position when the user moves it.
-      addComponentListener(new ComponentAdapter() {
+      super.addComponentListener(new ComponentAdapter() {
          @Override
          public void componentResized(ComponentEvent e) {
             setDefaultWidth((int) getSize().getWidth());
@@ -465,7 +463,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
     * @param title Title of the panel
     * @param panel Inspector Panel to be added
     */
-   private final void addPanel(String title, final InspectorPanel panel) {
+   private void addPanel(String title, final InspectorPanel panel) {
       panel.setInspector(this);
       wrapperPanels_.add(new WrapperPanel(title, panel));
    }
