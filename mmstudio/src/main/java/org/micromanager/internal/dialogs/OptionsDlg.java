@@ -277,6 +277,7 @@ public class OptionsDlg extends MMDialog {
       
       final JCheckBox inspectorOnTop = new JCheckBox();
       inspectorOnTop.setText("Inspector Window always on top");
+      inspectorOnTop.setToolTipText("This choice applies to all new Inspector Windows (existing ones will not change behavior)");
       inspectorOnTop.setSelected(InspectorFrame.getShouldBeAlwaysOnTop());
       inspectorOnTop.addActionListener(new ActionListener() {
          @Override
