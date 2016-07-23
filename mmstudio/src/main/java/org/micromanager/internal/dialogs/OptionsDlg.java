@@ -42,6 +42,7 @@ import org.micromanager.ApplicationSkin;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.Studio;
+import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.script.ScriptPanel;
@@ -274,6 +275,16 @@ public class OptionsDlg extends MMDialog {
             AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
          }
       });
+      
+      final JCheckBox inspectorOnTop = new JCheckBox();
+      inspectorOnTop.setText("Inspector Window always on top");
+      inspectorOnTop.setSelected(InspectorFrame.getShouldBeAlwaysOnTop());
+      inspectorOnTop.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            InspectorFrame.setShouldBeAlwaysOnTop(inspectorOnTop.isSelected());
+         }
+      });
 
       final JButton closeButton = new JButton();
       closeButton.setText("Close");
@@ -328,6 +339,7 @@ public class OptionsDlg extends MMDialog {
 
       add(syncExposureMainAndMDA, "wrap");
       add(hideMDAdisplay, "wrap");
+      add(inspectorOnTop, "wrap");
 
       add(new JSeparator(), "wrap");
 
