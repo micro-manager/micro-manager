@@ -58,7 +58,7 @@ import org.micromanager.Studio;
  * @author Nico Stuurman
  */
 public class CalibrationFrame extends JFrame {
-   private final String NOTSET = "Not Set";
+   private final String NOTSET = "Not Set Yet";
    
    public CalibrationFrame(final Studio studio, final SBSPlate plate, 
            final SiteGenerator siteGenerator) {
@@ -67,10 +67,10 @@ public class CalibrationFrame extends JFrame {
       super.setTitle("Calibrate XY Stage");
       
       JPanel contents = new JPanel(
-            new MigLayout("align, center, fillx, gap 10"));
+            new MigLayout("align, center, fillx, gap 12"));
       
       JLabel warningLabel1 = new JLabel("Wrong calibrations can result in damaged equipment! ");
-      JLabel warningLabel2 = new JLabel("Always make sure the calibration is correct!");
+      JLabel warningLabel2 = new JLabel("Always check that the calibration is correct!");
       Font warningFont = new Font(warningLabel1.getFont().getName(), Font.PLAIN, 16);
       warningLabel1.setFont(warningFont);
       warningLabel2.setFont(warningFont);
@@ -88,16 +88,16 @@ public class CalibrationFrame extends JFrame {
       }
       SpinnerModel model = new SpinnerListModel(rows);
       final JSpinner rowSpinner = new JSpinner(model);
-      contents.add(new JLabel("row:"), "grow, gap 40");
-      contents.add(rowSpinner, "width 50");
+      contents.add(new JLabel("row:"), "span 2, split 2, gap 60");
+      contents.add(rowSpinner, "width 50, center, pushx, gap 5");
       
       model = new SpinnerNumberModel((int) 1, (int) 1, plate.getNumColumns(), (int) 1);
       final JSpinner columnSpinner = new JSpinner(model);
-      contents.add(new JLabel("column"), "grow, gap 40");
-      contents.add(columnSpinner, "width 50, wrap");
+      contents.add(new JLabel("column:"), "span 2, split 2, gap 60");
+      contents.add(columnSpinner, "width 50, center, pushx, gap 5, wrap");
       
       contents.add(new JLabel("Either position the XY stage at the center of " + 
-              "the selected well and press OK"), "span 4, wrap");
+              "the selected well and press OK."), "span 4, wrap");
         
       contents.add(new JSeparator(), "span4, grow, wrap");
       
@@ -131,10 +131,10 @@ public class CalibrationFrame extends JFrame {
       
       contents.add(topButton, "span 4, center, wrap");
       contents.add(topLabel, "span 4, center, wrap");
-      contents.add(leftButton, "center");
-      contents.add(rightButton, "center, skip 2, wrap");
-      contents.add(leftLabel, "center");
-      contents.add(rightLabel, "center, skip 2, wrap");
+      contents.add(leftButton, "span 2, center");
+      contents.add(rightButton, "span 2, center, wrap");
+      contents.add(leftLabel, "span 2, center");
+      contents.add(rightLabel, "span 2, center, wrap");
       contents.add(bottomLabel, "span 4, center, wrap");
       contents.add(bottomButton, "span 4, center, wrap");
         
@@ -226,6 +226,7 @@ public class CalibrationFrame extends JFrame {
       super.add(contents);
       super.pack();
       super.setLocationRelativeTo(siteGenerator);
+      super.setResizable(false);
       super.setVisible(true);
       
    }
