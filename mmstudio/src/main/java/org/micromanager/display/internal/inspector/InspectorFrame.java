@@ -86,7 +86,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  * consists of a set of expandable panels in a vertical configuration.
  */
 public class InspectorFrame extends MMFrame implements Inspector {
-
+   
+   
    /**
     * This class is used to represent entries in the dropdown menu the user
     * uses to select which DataViewer the InspectorFrame is controlling.
@@ -249,8 +250,11 @@ public class InspectorFrame extends MMFrame implements Inspector {
 
    private static final String TOPMOST_DISPLAY = "Topmost Window";
    private static final String CONTRAST_TITLE = "Histograms and Settings";
-   private static final String WINDOW_WIDTH = "width of the inspector frame";
-
+   private static final String WINDOW_WIDTH = "width of the inspector frame"; 
+   private static final String ALWAYS_ON_TOP = "Always on top";
+   private static boolean alwaysOnTop_ = DefaultUserProfile.getInstance().getBoolean(
+           InspectorFrame.class, ALWAYS_ON_TOP, true);
+   
    // This boolean is used to create a new Inspector frame only on the first
    // time that we create a new DisplayWindow in any given session of the
    // program.
@@ -279,6 +283,16 @@ public class InspectorFrame extends MMFrame implements Inspector {
       }
       new InspectorFrame(viewer);
    }
+   
+   public static void setShouldBeAlwaysOnTop(boolean state) {
+      alwaysOnTop_ = state;
+      DefaultUserProfile.getInstance().setBoolean(
+              InspectorFrame.class, ALWAYS_ON_TOP, state);    
+   }
+   
+   public static boolean getShouldBeAlwaysOnTop() {
+      return alwaysOnTop_;
+   }
 
    private DataViewer display_;
    // Maps InspectorPanels to the WrapperPanels that contain them in our UI.
@@ -294,7 +308,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
       haveCreatedInspector_ = true;
       wrapperPanels_ = new ArrayList<WrapperPanel>();
       setTitle("Image Inspector");
-      setAlwaysOnTop(true);
+      if (alwaysOnTop_)
+         setAlwaysOnTop(true);
       // Use a small title bar.
       getRootPane().putClientProperty("Window.style", "small");
 
