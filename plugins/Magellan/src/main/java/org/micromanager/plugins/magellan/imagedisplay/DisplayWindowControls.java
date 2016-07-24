@@ -3,14 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.plugins.magellan.imagedisplay;
+package main.java.org.micromanager.plugins.magellan.imagedisplay;
 
-import org.micromanager.plugins.magellan.acq.Acquisition;
-import org.micromanager.plugins.magellan.acq.ExploreAcquisition;
-import org.micromanager.plugins.magellan.channels.SimpleChannelTableModel;
+import main.java.org.micromanager.plugins.magellan.acq.Acquisition;
+import main.java.org.micromanager.plugins.magellan.acq.ExploreAcquisition;
+import main.java.org.micromanager.plugins.magellan.channels.SimpleChannelTableModel;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import org.micromanager.plugins.magellan.gui.GUI;
+import main.java.org.micromanager.plugins.magellan.gui.GUI;
 import java.awt.Color;
 import java.awt.Panel;
 import java.awt.event.MouseEvent;
@@ -25,13 +25,13 @@ import javax.swing.PopupFactory;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import org.micromanager.plugins.magellan.json.JSONObject;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.MD;
-import org.micromanager.plugins.magellan.surfacesandregions.MultiPosRegion;
-import org.micromanager.plugins.magellan.surfacesandregions.RegionManager;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceRegionComboBoxModel;
+import main.java.org.micromanager.plugins.magellan.json.JSONObject;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.MD;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.MultiPosRegion;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.RegionManager;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceRegionComboBoxModel;
 
 /**
  *
@@ -267,9 +267,9 @@ public class DisplayWindowControls extends Panel {
                .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(jLabel3)
-               .addComponent(zPosLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addComponent(zPosLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(jLabel3))
             .addGap(44, 44, 44))
       );
 
@@ -465,7 +465,7 @@ public class DisplayWindowControls extends Panel {
 
       tabbedPane_.addTab("Explore", explorePanel_);
 
-      showInFolderButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/plugins/magellan/icons/folder.png"))); // NOI18N
+      showInFolderButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/main/resources/org/micromanager/folder.png"))); // NOI18N
       showInFolderButton_.setToolTipText("Show in folder");
       showInFolderButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -473,7 +473,7 @@ public class DisplayWindowControls extends Panel {
          }
       });
 
-      abortButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/plugins/magellan/icons/abort.png"))); // NOI18N
+      abortButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/main/resources/org/micromanager/abort.png"))); // NOI18N
       abortButton_.setToolTipText("Abort acquisition");
       abortButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -481,7 +481,7 @@ public class DisplayWindowControls extends Panel {
          }
       });
 
-      pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/plugins/magellan/icons/pause.png"))); // NOI18N
+      pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource("/main/resources/org/micromanager/pause.png"))); // NOI18N
       pauseButton_.setToolTipText("Pause/resume acquisition");
       pauseButton_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -652,7 +652,7 @@ public class DisplayWindowControls extends Panel {
     private void pauseButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButton_ActionPerformed
         acq_.togglePaused();
         pauseButton_.setIcon(new javax.swing.ImageIcon(getClass().getResource(
-                acq_.isPaused() ? "/org/micromanager/plugins/magellan/icons/play.png" : "/org/micromanager/plugins/magellan/icons/pause.png")));
+                acq_.isPaused() ? "main/resources/org/micromanager/play.png" : "main/resources/org/micromanager/pause.png")));
         repaint();
     }//GEN-LAST:event_pauseButton_ActionPerformed
 

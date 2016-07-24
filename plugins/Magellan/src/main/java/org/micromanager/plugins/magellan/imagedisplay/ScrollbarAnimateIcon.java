@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.imagedisplay;
+package main.java.org.micromanager.plugins.magellan.imagedisplay;
 
 import java.awt.BasicStroke;
 import java.awt.Canvas;

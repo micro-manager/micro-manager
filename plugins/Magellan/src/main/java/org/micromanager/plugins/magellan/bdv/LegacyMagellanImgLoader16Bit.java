@@ -14,9 +14,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.bdv;
+package main.java.org.micromanager.plugins.magellan.bdv;
 
-import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
+import main.java.org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import bdv.img.cache.CachedCellImg;
 import net.imglib2.img.basictypeaccess.volatiles.array.VolatileShortArray;
 import net.imglib2.type.numeric.integer.UnsignedShortType;

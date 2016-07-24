@@ -14,16 +14,16 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.propsandcovariants;
+package main.java.org.micromanager.plugins.magellan.propsandcovariants;
 
-import org.micromanager.plugins.magellan.acq.AcquisitionEvent;
+import main.java.org.micromanager.plugins.magellan.acq.AcquisitionEvent;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.NumberUtils;
-import org.micromanager.plugins.magellan.misc.SortFunctionObjects;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.NumberUtils;
+import main.java.org.micromanager.plugins.magellan.misc.SortFunctionObjects;
 import mmcorej.CMMCore;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;

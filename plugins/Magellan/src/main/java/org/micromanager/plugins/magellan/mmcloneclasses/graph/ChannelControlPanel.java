@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.mmcloneclasses.graph;
+package main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.CompositeImage;
@@ -30,19 +30,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.prefs.Preferences;
 import javax.swing.*;
-import org.micromanager.plugins.magellan.acq.MMImageCache;
-import org.micromanager.plugins.magellan.mmcloneclasses.graph.HistogramPanel.CursorListener;
-import org.micromanager.plugins.magellan.imagedisplay.MMCompositeImage;
-import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
-import org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.plugins.magellan.json.JSONArray;
-import org.micromanager.plugins.magellan.json.JSONObject;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.GlobalSettings;
-import org.micromanager.plugins.magellan.misc.HistogramUtils;
-import org.micromanager.plugins.magellan.misc.JavaUtils;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.MD;
+import main.java.org.micromanager.plugins.magellan.acq.MMImageCache;
+import main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph.HistogramPanel.CursorListener;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.MMCompositeImage;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
+import main.java.org.micromanager.plugins.magellan.json.JSONArray;
+import main.java.org.micromanager.plugins.magellan.json.JSONObject;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.GlobalSettings;
+import main.java.org.micromanager.plugins.magellan.misc.HistogramUtils;
+import main.java.org.micromanager.plugins.magellan.misc.JavaUtils;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.MD;
 import mmcorej.CMMCore;
 
 /**
@@ -209,9 +209,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                  "12bit (0-4095)", "13bit (0-8191)", "14bit (0-16383)", "15bit (0-32767)", "16bit (0-65535)"}));
 
       zoomInButton_ = new JButton();
-      zoomInButton_.setIcon(SwingResourceManager.getIcon( "/org/micromanager/plugins/magellan/icons/zoom_in.png"));
+      zoomInButton_.setIcon(SwingResourceManager.getIcon( "main/resources/org/micromanager/zoom_in.png"));
       zoomOutButton_ = new JButton();
-      zoomOutButton_.setIcon(SwingResourceManager.getIcon("/org/micromanager/plugins/magellan/icons/zoom_out.png"));   
+      zoomOutButton_.setIcon(SwingResourceManager.getIcon("main/resources/org/micromanager/zoom_out.png"));   
       zoomInButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.propsandcovariants;
+package main.java.org.micromanager.plugins.magellan.propsandcovariants;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -30,7 +30,7 @@ import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
-import org.micromanager.plugins.magellan.mmcloneclasses.utils.SliderPanel;
+import main.java.org.micromanager.plugins.magellan.mmcloneclasses.utils.SliderPanel;
 
 /**
  * Cell editing using either JTextField or JComboBox depending on whether the

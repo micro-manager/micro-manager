@@ -1,4 +1,4 @@
-package org.micromanager.plugins.magellan.json;
+package main.java.org.micromanager.plugins.magellan.json;
 
 /**
  * The JSONException is thrown by the JSON.org classes then things are amiss.

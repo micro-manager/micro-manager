@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.surfacesandregions;
+package main.java.org.micromanager.plugins.magellan.surfacesandregions;
 
 import java.util.Arrays;
 import java.util.Comparator;

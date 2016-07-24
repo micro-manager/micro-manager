@@ -14,22 +14,22 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.imagedisplay;
+package main.java.org.micromanager.plugins.magellan.imagedisplay;
 
 /*
  * To change this template, choose Tools | Templates and open the template in
  * the editor.
  */
-import org.micromanager.plugins.magellan.acq.Acquisition;
-import org.micromanager.plugins.magellan.acq.ExploreAcquisition;
-import org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
-import org.micromanager.plugins.magellan.acq.MMImageCache;
-import org.micromanager.plugins.magellan.acq.MagellanTaggedImage;
-import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
+import main.java.org.micromanager.plugins.magellan.acq.Acquisition;
+import main.java.org.micromanager.plugins.magellan.acq.ExploreAcquisition;
+import main.java.org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
+import main.java.org.micromanager.plugins.magellan.acq.MMImageCache;
+import main.java.org.micromanager.plugins.magellan.acq.MagellanTaggedImage;
+import main.java.org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.util.Set;
-import org.micromanager.plugins.magellan.misc.LongPoint;
+import main.java.org.micromanager.plugins.magellan.misc.LongPoint;
 
 /**
  * This class acts as an intermediary between display and multiresolution

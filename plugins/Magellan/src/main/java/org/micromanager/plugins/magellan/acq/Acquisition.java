@@ -14,21 +14,21 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.acq;
+package main.java.org.micromanager.plugins.magellan.acq;
 
 import ij.IJ;
-import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
-import org.micromanager.plugins.magellan.channels.ChannelSetting;
+import main.java.org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
+import main.java.org.micromanager.plugins.magellan.channels.ChannelSetting;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
-import org.micromanager.plugins.magellan.json.JSONArray;
-import org.micromanager.plugins.magellan.json.JSONObject;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.MD;
+import main.java.org.micromanager.plugins.magellan.json.JSONArray;
+import main.java.org.micromanager.plugins.magellan.json.JSONObject;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.MD;
 
 /**
  * Abstract class that manages a generic acquisition. Subclassed into specific

@@ -15,23 +15,23 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.coordinates;
+package main.java.org.micromanager.plugins.magellan.coordinates;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
+import main.java.org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.micromanager.plugins.magellan.json.JSONArray;
-import org.micromanager.plugins.magellan.json.JSONException;
-import org.micromanager.plugins.magellan.json.JSONObject;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.LongPoint;
-import org.micromanager.plugins.magellan.misc.MD;
+import main.java.org.micromanager.plugins.magellan.json.JSONArray;
+import main.java.org.micromanager.plugins.magellan.json.JSONException;
+import main.java.org.micromanager.plugins.magellan.json.JSONObject;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.LongPoint;
+import main.java.org.micromanager.plugins.magellan.misc.MD;
 
 
 

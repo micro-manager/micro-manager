@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.surfacesandregions;
+package main.java.org.micromanager.plugins.magellan.surfacesandregions;
 
 import java.awt.FileDialog;
 import java.awt.geom.Point2D;
@@ -24,16 +24,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
 import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.micromanager.plugins.magellan.gui.GUI;
-import org.micromanager.plugins.magellan.misc.JavaUtils;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.NumberUtils;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
+import main.java.org.micromanager.plugins.magellan.gui.GUI;
+import main.java.org.micromanager.plugins.magellan.misc.JavaUtils;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.NumberUtils;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
 
 /**
  *

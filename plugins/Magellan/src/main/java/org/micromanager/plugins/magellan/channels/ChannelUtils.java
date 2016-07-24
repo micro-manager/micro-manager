@@ -15,16 +15,16 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.channels;
+package main.java.org.micromanager.plugins.magellan.channels;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.GlobalSettings;
-import org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.GlobalSettings;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.StrVector;
-import org.micromanager.plugins.magellan.demo.DemoModeImageData;
+import main.java.org.micromanager.plugins.magellan.demo.DemoModeImageData;
 
 /**
  *

@@ -15,11 +15,11 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.misc;
+package main.java.org.micromanager.plugins.magellan.misc;
 
 import java.awt.geom.AffineTransform;
-import org.micromanager.plugins.magellan.demo.DemoModeImageData;
-import org.micromanager.plugins.magellan.gui.GUI;
+import main.java.org.micromanager.plugins.magellan.demo.DemoModeImageData;
+import main.java.org.micromanager.plugins.magellan.gui.GUI;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -31,8 +31,8 @@ import java.util.prefs.Preferences;
 import javax.swing.filechooser.FileSystemView;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.plugins.magellan.coordinates.AffineUtils;
-import org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.coordinates.AffineUtils;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
 
 /**
  *

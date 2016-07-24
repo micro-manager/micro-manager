@@ -14,10 +14,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.imagedisplay;
+package main.java.org.micromanager.plugins.magellan.imagedisplay;
 
-import org.micromanager.plugins.magellan.imagedisplay.DisplayWindow;
-import org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.DisplayWindow;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
 
 
 /**

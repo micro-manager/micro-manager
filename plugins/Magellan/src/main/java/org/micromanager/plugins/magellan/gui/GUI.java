@@ -14,15 +14,15 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.gui;
+package main.java.org.micromanager.plugins.magellan.gui;
 
-import org.micromanager.plugins.magellan.acq.MagellanEngine;
-import org.micromanager.plugins.magellan.acq.ExploreAcqSettings;
-import org.micromanager.plugins.magellan.acq.FixedAreaAcquisitionSettings;
-import org.micromanager.plugins.magellan.misc.LoadedAcquisitionData;
-import org.micromanager.plugins.magellan.acq.MultipleAcquisitionManager;
-import org.micromanager.plugins.magellan.acq.MultipleAcquisitionTableModel;
-import org.micromanager.plugins.magellan.autofocus.AutofocusChannelComboModel;
+import main.java.org.micromanager.plugins.magellan.acq.MagellanEngine;
+import main.java.org.micromanager.plugins.magellan.acq.ExploreAcqSettings;
+import main.java.org.micromanager.plugins.magellan.acq.FixedAreaAcquisitionSettings;
+import main.java.org.micromanager.plugins.magellan.misc.LoadedAcquisitionData;
+import main.java.org.micromanager.plugins.magellan.acq.MultipleAcquisitionManager;
+import main.java.org.micromanager.plugins.magellan.acq.MultipleAcquisitionTableModel;
+import main.java.org.micromanager.plugins.magellan.autofocus.AutofocusChannelComboModel;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -48,29 +48,29 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import org.micromanager.plugins.magellan.mmcloneclasses.utils.PropertyValueCellEditor;
-import org.micromanager.plugins.magellan.mmcloneclasses.utils.PropertyValueCellRenderer;
+import main.java.org.micromanager.plugins.magellan.mmcloneclasses.utils.PropertyValueCellEditor;
+import main.java.org.micromanager.plugins.magellan.mmcloneclasses.utils.PropertyValueCellRenderer;
 import mmcorej.StrVector;
-import org.micromanager.plugins.magellan.propsandcovariants.DeviceControlTableModel;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairValuesTableModel;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsTableModel;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantValueCellEditor;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantValueCellRenderer;
-import org.micromanager.plugins.magellan.surfacesandregions.RegionManager;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceRegionComboBoxModel;
-import org.micromanager.plugins.magellan.surfacesandregions.XYFootprint;
-import org.micromanager.plugins.magellan.misc.ExactlyOneRowSelectionModel;
-import org.micromanager.plugins.magellan.channels.SimpleChannelTableModel;
-import org.micromanager.plugins.magellan.coordinates.AffineGUI;
-import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
-import org.micromanager.plugins.magellan.bidc.FrameIntegrationMethod;
-import org.micromanager.plugins.magellan.channels.ChannelComboBoxModel;
-import org.micromanager.plugins.magellan.channels.ChannelSetting;
-import org.micromanager.plugins.magellan.channels.ColorEditor;
-import org.micromanager.plugins.magellan.channels.ColorRenderer;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.DeviceControlTableModel;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantPairValuesTableModel;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsTableModel;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantValueCellEditor;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantValueCellRenderer;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.RegionManager;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceRegionComboBoxModel;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.XYFootprint;
+import main.java.org.micromanager.plugins.magellan.misc.ExactlyOneRowSelectionModel;
+import main.java.org.micromanager.plugins.magellan.channels.SimpleChannelTableModel;
+import main.java.org.micromanager.plugins.magellan.coordinates.AffineGUI;
+import main.java.org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
+import main.java.org.micromanager.plugins.magellan.bidc.FrameIntegrationMethod;
+import main.java.org.micromanager.plugins.magellan.channels.ChannelComboBoxModel;
+import main.java.org.micromanager.plugins.magellan.channels.ChannelSetting;
+import main.java.org.micromanager.plugins.magellan.channels.ColorEditor;
+import main.java.org.micromanager.plugins.magellan.channels.ColorRenderer;
 import java.awt.FileDialog;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -86,11 +86,11 @@ import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import org.micromanager.plugins.magellan.acq.AcqDurationEstimator;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.GlobalSettings;
-import org.micromanager.plugins.magellan.misc.JavaUtils;
-import org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.acq.AcqDurationEstimator;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.GlobalSettings;
+import main.java.org.micromanager.plugins.magellan.misc.JavaUtils;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
 
 
 /**
@@ -1964,7 +1964,7 @@ public class GUI extends javax.swing.JFrame {
       });
 
       covariantPairingsTable_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      covariantPairingsTable_.setModel(new org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsTableModel());
+      covariantPairingsTable_.setModel(new main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsTableModel());
       propertyPairingsScrollpane_.setViewportView(covariantPairingsTable_);
 
       savePairingsButton_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N

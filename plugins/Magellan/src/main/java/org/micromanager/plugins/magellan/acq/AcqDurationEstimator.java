@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.acq;
+package main.java.org.micromanager.plugins.magellan.acq;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -27,11 +27,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
-import org.micromanager.plugins.magellan.gui.GUI;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.GlobalSettings;
-import org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.coordinates.XYStagePosition;
+import main.java.org.micromanager.plugins.magellan.gui.GUI;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.GlobalSettings;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
 
 public class AcqDurationEstimator {
 

@@ -19,9 +19,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.acq;
+package main.java.org.micromanager.plugins.magellan.acq;
 
-import org.micromanager.plugins.magellan.imagedisplay.DisplaySettings;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.DisplaySettings;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -37,12 +37,12 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.imageio.IIOException;
-import org.micromanager.plugins.magellan.json.JSONException;
-import org.micromanager.plugins.magellan.json.JSONObject;
-import org.micromanager.plugins.magellan.misc.JavaUtils;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.MD;
-import org.micromanager.plugins.magellan.misc.ProgressBar;
+import main.java.org.micromanager.plugins.magellan.json.JSONException;
+import main.java.org.micromanager.plugins.magellan.json.JSONObject;
+import main.java.org.micromanager.plugins.magellan.misc.JavaUtils;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.MD;
+import main.java.org.micromanager.plugins.magellan.misc.ProgressBar;
 
 
 public final class TaggedImageStorageMultipageTiff   {

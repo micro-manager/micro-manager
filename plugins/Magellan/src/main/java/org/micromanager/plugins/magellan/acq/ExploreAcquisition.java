@@ -15,19 +15,19 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.acq;
+package main.java.org.micromanager.plugins.magellan.acq;
 
-import org.micromanager.plugins.magellan.channels.ChannelSetting;
-import org.micromanager.plugins.magellan.gui.GUI;
+import main.java.org.micromanager.plugins.magellan.channels.ChannelSetting;
+import main.java.org.micromanager.plugins.magellan.gui.GUI;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import org.micromanager.plugins.magellan.json.JSONArray;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.json.JSONArray;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.CMMCore;
 
 /**

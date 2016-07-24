@@ -15,13 +15,13 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.surfacesandregions;
+package main.java.org.micromanager.plugins.magellan.surfacesandregions;
 
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.plugins.magellan.surfacesandregions.MultiPosRegion;
-import org.micromanager.plugins.magellan.surfacesandregions.RegionManager;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.MultiPosRegion;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.RegionManager;
 
 /**
  *

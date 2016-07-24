@@ -15,12 +15,12 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.surfacesandregions;
+package main.java.org.micromanager.plugins.magellan.surfacesandregions;
 
-import org.micromanager.plugins.magellan.acq.FixedAreaAcquisitionSettings;
-import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
-import org.micromanager.plugins.magellan.coordinates.AffineUtils;
-import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
+import main.java.org.micromanager.plugins.magellan.acq.FixedAreaAcquisitionSettings;
+import main.java.org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
+import main.java.org.micromanager.plugins.magellan.coordinates.AffineUtils;
+import main.java.org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -34,8 +34,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
 import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
 import org.apache.commons.math3.geometry.euclidean.twod.PolygonsSet;
 import org.apache.commons.math3.geometry.euclidean.twod.Vector2D;
@@ -43,8 +43,8 @@ import org.apache.commons.math3.geometry.euclidean.twod.hull.ConvexHull2D;
 import org.apache.commons.math3.geometry.euclidean.twod.hull.MonotoneChain;
 import org.apache.commons.math3.geometry.partitioning.Region;
 import org.apache.commons.math3.geometry.partitioning.RegionFactory;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
-import org.micromanager.plugins.magellan.propsandcovariants.SurfaceData;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.SurfaceData;
 
 /**
  *

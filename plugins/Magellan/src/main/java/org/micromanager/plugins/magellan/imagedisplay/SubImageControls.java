@@ -14,11 +14,11 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.imagedisplay;
+package main.java.org.micromanager.plugins.magellan.imagedisplay;
 
-import org.micromanager.plugins.magellan.acq.Acquisition;
-import org.micromanager.plugins.magellan.acq.ExploreAcquisition;
-import org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
+import main.java.org.micromanager.plugins.magellan.acq.Acquisition;
+import main.java.org.micromanager.plugins.magellan.acq.ExploreAcquisition;
+import main.java.org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import ij.gui.StackWindow;
@@ -45,12 +45,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.JavaUtils;
-import org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.JavaUtils;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.plugins.magellan.misc.NumberUtils;
+import main.java.org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  *

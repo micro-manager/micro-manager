@@ -3,13 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.plugins.magellan.propsandcovariants;
+package main.java.org.micromanager.plugins.magellan.propsandcovariants;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.AbstractListModel;
 import javax.swing.DefaultComboBoxModel;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
 
 
 
