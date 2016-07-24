@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.imagedisplay;
+package main.java.org.micromanager.plugins.magellan.imagedisplay;
 
 import ij.ImagePlus;
 import java.awt.Font;
@@ -33,15 +33,15 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
-import org.micromanager.plugins.magellan.acq.MMImageCache;
-import org.micromanager.plugins.magellan.json.JSONException;
-import org.micromanager.plugins.magellan.json.JSONObject;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.MD;
-import org.micromanager.plugins.magellan.mmcloneclasses.graph.ContrastPanel;
-import org.micromanager.plugins.magellan.mmcloneclasses.graph.MultiChannelHistograms;
-import org.micromanager.plugins.magellan.mmcloneclasses.graph.SingleChannelHistogram;
-import org.micromanager.plugins.magellan.mmcloneclasses.graph.Histograms;
+import main.java.org.micromanager.plugins.magellan.acq.MMImageCache;
+import main.java.org.micromanager.plugins.magellan.json.JSONException;
+import main.java.org.micromanager.plugins.magellan.json.JSONObject;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.MD;
+import main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph.ContrastPanel;
+import main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph.MultiChannelHistograms;
+import main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph.SingleChannelHistogram;
+import main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph.Histograms;
 
 
 

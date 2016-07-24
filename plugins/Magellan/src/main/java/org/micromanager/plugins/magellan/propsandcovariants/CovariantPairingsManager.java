@@ -14,10 +14,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.propsandcovariants;
+package main.java.org.micromanager.plugins.magellan.propsandcovariants;
 
-import org.micromanager.plugins.magellan.acq.MultipleAcquisitionManager;
-import org.micromanager.plugins.magellan.gui.GUI;
+import main.java.org.micromanager.plugins.magellan.acq.MultipleAcquisitionManager;
+import main.java.org.micromanager.plugins.magellan.gui.GUI;
 import java.awt.FileDialog;
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,13 +30,13 @@ import java.util.Arrays;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.GlobalSettings;
-import org.micromanager.plugins.magellan.misc.JavaUtils;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.NumberUtils;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.GlobalSettings;
+import main.java.org.micromanager.plugins.magellan.misc.JavaUtils;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.NumberUtils;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
 
 /**
  *

@@ -15,10 +15,10 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.imagedisplay;
+package main.java.org.micromanager.plugins.magellan.imagedisplay;
 
-import org.micromanager.plugins.magellan.acq.MMImageCache;
-import org.micromanager.plugins.magellan.acq.MagellanTaggedImage;
+import main.java.org.micromanager.plugins.magellan.acq.MMImageCache;
+import main.java.org.micromanager.plugins.magellan.acq.MagellanTaggedImage;
 import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -26,9 +26,9 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.image.ColorModel;
-import org.micromanager.plugins.magellan.json.JSONObject;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.MD;
+import main.java.org.micromanager.plugins.magellan.json.JSONObject;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.MD;
 
 /**
  * This stack class provides the ImagePlus with images from the MMImageCache.

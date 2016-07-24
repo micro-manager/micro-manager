@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.misc;
+package main.java.org.micromanager.plugins.magellan.misc;
 
 /**
  *

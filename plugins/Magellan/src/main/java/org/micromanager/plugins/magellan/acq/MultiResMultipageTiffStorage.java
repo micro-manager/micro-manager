@@ -15,11 +15,11 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.acq;
+package main.java.org.micromanager.plugins.magellan.acq;
 
-import org.micromanager.plugins.magellan.coordinates.AffineUtils;
-import org.micromanager.plugins.magellan.coordinates.PositionManager;
-import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
+import main.java.org.micromanager.plugins.magellan.coordinates.AffineUtils;
+import main.java.org.micromanager.plugins.magellan.coordinates.PositionManager;
+import main.java.org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -35,13 +35,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.micromanager.plugins.magellan.json.JSONArray;
-import org.micromanager.plugins.magellan.json.JSONException;
-import org.micromanager.plugins.magellan.json.JSONObject;
-import org.micromanager.plugins.magellan.misc.JavaUtils;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.LongPoint;
-import org.micromanager.plugins.magellan.misc.MD;
+import main.java.org.micromanager.plugins.magellan.json.JSONArray;
+import main.java.org.micromanager.plugins.magellan.json.JSONException;
+import main.java.org.micromanager.plugins.magellan.json.JSONObject;
+import main.java.org.micromanager.plugins.magellan.misc.JavaUtils;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.LongPoint;
+import main.java.org.micromanager.plugins.magellan.misc.MD;
 
 /**
  * This class manages multiple multipage Tiff datasets, averaging multiple 2x2

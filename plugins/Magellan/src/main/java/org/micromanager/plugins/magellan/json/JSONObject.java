@@ -1,4 +1,4 @@
-package org.micromanager.plugins.magellan.json;
+package main.java.org.micromanager.plugins.magellan.json;
 
 /*
 Copyright (c) 2002 JSON.org
@@ -29,7 +29,7 @@ import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import org.micromanager.plugins.magellan.misc.NumberUtils;
+import main.java.org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  * A JSONObject is an unordered collection of name/value pairs. Its

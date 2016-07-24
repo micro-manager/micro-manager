@@ -21,7 +21,7 @@
 //
 // CVS:          $Id$
 //
-package org.micromanager.plugins.magellan.mmcloneclasses.graph;
+package main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph;
 
 
 import java.awt.*;
@@ -33,7 +33,7 @@ import java.awt.geom.Point2D.Float;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
-import org.micromanager.plugins.magellan.misc.JavaUtils;
+import main.java.org.micromanager.plugins.magellan.misc.JavaUtils;
 
 /**
  * Histogram view. 

@@ -14,13 +14,13 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.acq;
+package main.java.org.micromanager.plugins.magellan.acq;
 
-import org.micromanager.plugins.magellan.channels.ChannelSetting;
-import org.micromanager.plugins.magellan.channels.ChannelUtils;
+import main.java.org.micromanager.plugins.magellan.channels.ChannelSetting;
+import main.java.org.micromanager.plugins.magellan.channels.ChannelUtils;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
-import org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
 
 /**
  * Container for settings specific to explore acquisition

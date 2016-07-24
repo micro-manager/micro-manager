@@ -1,4 +1,4 @@
-package org.micromanager.plugins.magellan.json;
+package main.java.org.micromanager.plugins.magellan.json;
 
 /*
 Copyright (c) 2002 JSON.org
@@ -28,7 +28,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
-import org.micromanager.plugins.magellan.misc.NumberUtils;
+import main.java.org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  * A JSONArray is an ordered sequence of values. Its external text form is a

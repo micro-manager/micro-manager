@@ -14,11 +14,11 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.acq;
+package main.java.org.micromanager.plugins.magellan.acq;
 
-import org.micromanager.plugins.magellan.autofocus.CrossCorrelationAutofocus;
-import org.micromanager.plugins.magellan.bidc.FrameIntegrationMethod;
-import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
+import main.java.org.micromanager.plugins.magellan.autofocus.CrossCorrelationAutofocus;
+import main.java.org.micromanager.plugins.magellan.bidc.FrameIntegrationMethod;
+import main.java.org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import ij.IJ;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,19 +30,19 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
-import org.micromanager.plugins.magellan.channels.ChannelSetting;
-import org.micromanager.plugins.magellan.coordinates.AffineUtils;
+import main.java.org.micromanager.plugins.magellan.bidc.JavaLayerImageConstructor;
+import main.java.org.micromanager.plugins.magellan.channels.ChannelSetting;
+import main.java.org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import java.awt.geom.Point2D;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.micromanager.plugins.magellan.json.JSONArray;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.surfacesandregions.Point3d;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceChangedListener;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
-import org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
+import main.java.org.micromanager.plugins.magellan.json.JSONArray;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.Point3d;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceChangedListener;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceInterpolator;
+import main.java.org.micromanager.plugins.magellan.surfacesandregions.SurfaceManager;
 
 /**
  *

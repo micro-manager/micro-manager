@@ -2,13 +2,13 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.plugins.magellan.gui;
+package main.java.org.micromanager.plugins.magellan.gui;
 
-import org.micromanager.plugins.magellan.propsandcovariants.Covariant;
-import org.micromanager.plugins.magellan.propsandcovariants.EligibleCovariantTableModel;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
-import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
-import org.micromanager.plugins.magellan.misc.ExactlyOneRowSelectionModel;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.Covariant;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.EligibleCovariantTableModel;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.CovariantPairingsManager;
+import main.java.org.micromanager.plugins.magellan.misc.ExactlyOneRowSelectionModel;
 
 /**
  *

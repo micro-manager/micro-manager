@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-package org.micromanager.plugins.magellan.mmcloneclasses.graph;
+package main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.ImagePlus;
@@ -43,13 +43,13 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.micromanager.plugins.magellan.acq.MMImageCache;
-import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
-import org.micromanager.plugins.magellan.mmcloneclasses.graph.HistogramPanel.CursorListener;
-import org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.plugins.magellan.misc.HistogramUtils;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.NumberUtils;
+import main.java.org.micromanager.plugins.magellan.acq.MMImageCache;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
+import main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph.HistogramPanel.CursorListener;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
+import main.java.org.micromanager.plugins.magellan.misc.HistogramUtils;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.NumberUtils;
 
 
 /**
@@ -226,9 +226,9 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
 
       JButton zoomInButton = new JButton();
-      zoomInButton.setIcon(SwingResourceManager.getIcon("/org/micromanager/plugins/magellan/icons/zoom_in.png"));
+      zoomInButton.setIcon(SwingResourceManager.getIcon("main/resources/org/micromanager/zoom_in.png"));
       JButton zoomOutButton = new JButton();
-      zoomOutButton.setIcon(SwingResourceManager.getIcon( "/org/micromanager/plugins/magellan/icons/zoom_out.png"));
+      zoomOutButton.setIcon(SwingResourceManager.getIcon( "main/resources/org/micromanager/zoom_out.png"));
       zoomInButton.addActionListener(new ActionListener() {
 
          @Override

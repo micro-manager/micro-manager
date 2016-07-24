@@ -21,7 +21,7 @@
 //
 // CVS:          $Id: ProgressBar.java 12081 2013-11-06 21:27:25Z nico $
 //
-package org.micromanager.plugins.magellan.misc;
+package main.java.org.micromanager.plugins.magellan.misc;
 
 import java.awt.BorderLayout;
 

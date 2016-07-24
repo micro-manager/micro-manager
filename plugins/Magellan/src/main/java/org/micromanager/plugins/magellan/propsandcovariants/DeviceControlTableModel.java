@@ -15,15 +15,15 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.propsandcovariants;
+package main.java.org.micromanager.plugins.magellan.propsandcovariants;
 
-import org.micromanager.plugins.magellan.propsandcovariants.PropertyAndGroupUtils;
+import main.java.org.micromanager.plugins.magellan.propsandcovariants.PropertyAndGroupUtils;
 import java.util.LinkedList;
 import java.util.prefs.Preferences;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.NumberUtils;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.NumberUtils;
 import mmcorej.CMMCore;
 
 
@@ -66,7 +66,7 @@ public class DeviceControlTableModel extends AbstractTableModel   {
          SinglePropertyOrGroup item = storedGroupsAndProps_.get(row);
          setValueInCore(item, value);
          core_.updateSystemStateCache();
-         Magellan.getStudio().getCompatibilityInterface().refreshGUIFromCache();
+         Magellan.getStudio().getApplication().refreshGUIFromCache();
          fireTableCellUpdated(row, col);
       }
    }

@@ -1,15 +1,15 @@
-package org.micromanager.plugins.magellan.mmcloneclasses.graph;
+package main.java.org.micromanager.plugins.magellan.mmcloneclasses.graph;
 
 import ij.CompositeImage;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import javax.swing.JPanel;
-import org.micromanager.plugins.magellan.acq.MMImageCache;
-import org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
-import org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
-import org.micromanager.plugins.magellan.misc.Log;
-import org.micromanager.plugins.magellan.misc.MD;
+import main.java.org.micromanager.plugins.magellan.acq.MMImageCache;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.DisplayPlus;
+import main.java.org.micromanager.plugins.magellan.imagedisplay.VirtualAcquisitionDisplay;
+import main.java.org.micromanager.plugins.magellan.misc.Log;
+import main.java.org.micromanager.plugins.magellan.misc.MD;
 
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          MultiChannelHistograms.java

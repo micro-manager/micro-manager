@@ -15,10 +15,10 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.autofocus;
+package main.java.org.micromanager.plugins.magellan.autofocus;
 
-import org.micromanager.plugins.magellan.channels.SimpleChannelTableModel;
-import org.micromanager.plugins.magellan.channels.SimpleChannelTableModel;
+import main.java.org.micromanager.plugins.magellan.channels.SimpleChannelTableModel;
+import main.java.org.micromanager.plugins.magellan.channels.SimpleChannelTableModel;
 import javax.swing.DefaultComboBoxModel;
 
 /** 

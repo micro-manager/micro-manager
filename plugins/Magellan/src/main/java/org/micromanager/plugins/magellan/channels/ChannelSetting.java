@@ -21,7 +21,7 @@
 //
 // CVS:          $Id: ChannelSpec.java 12081 2013-11-06 21:27:25Z nico $
 //
-package org.micromanager.plugins.magellan.channels;
+package main.java.org.micromanager.plugins.magellan.channels;
 import java.awt.Color; 
 
 import com.google.gson.Gson;

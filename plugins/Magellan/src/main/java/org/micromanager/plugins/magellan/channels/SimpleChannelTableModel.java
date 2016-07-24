@@ -15,7 +15,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.plugins.magellan.channels;
+package main.java.org.micromanager.plugins.magellan.channels;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
@@ -23,12 +23,12 @@ import java.util.ArrayList;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.plugins.magellan.main.Magellan;
-import org.micromanager.plugins.magellan.misc.GlobalSettings;
+import main.java.org.micromanager.plugins.magellan.main.Magellan;
+import main.java.org.micromanager.plugins.magellan.misc.GlobalSettings;
 import mmcorej.CMMCore;
 import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.plugins.magellan.demo.DemoModeImageData;
-import org.micromanager.plugins.magellan.misc.NumberUtils;
+import main.java.org.micromanager.plugins.magellan.demo.DemoModeImageData;
+import main.java.org.micromanager.plugins.magellan.misc.NumberUtils;
 
 /**
  *

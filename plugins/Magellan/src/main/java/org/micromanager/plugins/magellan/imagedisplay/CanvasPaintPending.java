@@ -1,7 +1,7 @@
 /*
  * 
  */
-package org.micromanager.plugins.magellan.imagedisplay;
+package main.java.org.micromanager.plugins.magellan.imagedisplay;
 
 import ij.gui.ImageCanvas;
 import java.util.ArrayList;
