@@ -33,7 +33,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.TableModel;
 import javax.swing.UIManager;
 
-import org.micromanager.CompatibilityInterface;
+import org.micromanager.ApplicationSkin;
+import org.micromanager.ApplicationSkin.SkinMode;
 
 /*
  * This class controls the colors of the user interface
@@ -41,10 +42,10 @@ import org.micromanager.CompatibilityInterface;
  * interact well with Look and Feel; see
  * http://stackoverflow.com/questions/27933017/cant-update-look-and-feel-on-the-fly
  */
-public class DaytimeNighttime {
+public class DaytimeNighttime implements ApplicationSkin {
 
    // Key into the user's profile for the current display mode.
-   private static final String BACKGROUND_MODE = "current window style (as per CompatibilityInterface.BACKGROUND_OPTIONS)";
+   private static final String BACKGROUND_MODE = "current window style (as per ApplicationSkin.SkinMode)";
    // List of keys to UIManager.put() method for setting the background color
    // look and feel. Selected from this page:
    // http://alvinalexander.com/java/java-uimanager-color-keys-list
@@ -95,63 +96,69 @@ public class DaytimeNighttime {
    };
 
    // background color of the UI
-   private static final HashMap<String, ColorUIResource> background_;
+   private final HashMap<SkinMode, ColorUIResource> background_;
    // background color of disabled UI elements.
-   private static final HashMap<String, ColorUIResource> disabledBackground_;
+   private final HashMap<SkinMode, ColorUIResource> disabledBackground_;
    // Lighter background colors, for certain elements.
-   private static final HashMap<String, ColorUIResource> lightBackground_;
+   private final HashMap<SkinMode, ColorUIResource> lightBackground_;
    // background color of pads in the UI
-   private static final HashMap<String, ColorUIResource> padBackground_;
+   private final HashMap<SkinMode, ColorUIResource> padBackground_;
    // Color of enabled text.
-   private static final HashMap<String, ColorUIResource> enabledTextColor_;
+   private final HashMap<SkinMode, ColorUIResource> enabledTextColor_;
    // Color of disabled text.
-   private static final HashMap<String, ColorUIResource> disabledTextColor_;
+   private final HashMap<SkinMode, ColorUIResource> disabledTextColor_;
 
    // Mode we were in before suspendToMode() was called.
-   private static String suspendedMode_ = null;
+   private SkinMode suspendedMode_ = null;
 
+   private static DaytimeNighttime staticInstance_;
    static {
+      staticInstance_ = new DaytimeNighttime();
+   }
+
+   private DaytimeNighttime() {
       // Possible: make UI to let user set these colors
-      background_ = new HashMap<String, ColorUIResource>();
-      background_.put(CompatibilityInterface.DAY,
+      background_ = new HashMap<SkinMode, ColorUIResource>();
+      background_.put(SkinMode.DAY,
             new ColorUIResource(java.awt.SystemColor.control));
-      background_.put(CompatibilityInterface.NIGHT,
+      background_.put(SkinMode.NIGHT,
             new ColorUIResource(new Color(64, 64, 64)));
 
-      disabledBackground_ = new HashMap<String, ColorUIResource>();
-      disabledBackground_.put(CompatibilityInterface.DAY,
+      disabledBackground_ = new HashMap<SkinMode, ColorUIResource>();
+      disabledBackground_.put(SkinMode.DAY,
             new ColorUIResource(Color.LIGHT_GRAY));
-      disabledBackground_.put(CompatibilityInterface.NIGHT,
+      disabledBackground_.put(SkinMode.NIGHT,
             new ColorUIResource(new Color(32, 32, 32)));
 
-      lightBackground_ = new HashMap<String, ColorUIResource>();
-      lightBackground_.put(CompatibilityInterface.DAY,
+      lightBackground_ = new HashMap<SkinMode, ColorUIResource>();
+      lightBackground_.put(SkinMode.DAY,
             new ColorUIResource(java.awt.SystemColor.control));
       // 37.5% gray; dodging both the OSX checkmark (25% gray) and disabled
       // text (50% gray).
-      lightBackground_.put(CompatibilityInterface.NIGHT,
+      lightBackground_.put(SkinMode.NIGHT,
             new ColorUIResource(new Color(96, 96, 96)));
 
-      padBackground_ = new HashMap<String, ColorUIResource>();
-      padBackground_.put(CompatibilityInterface.DAY,
+      padBackground_ = new HashMap<SkinMode, ColorUIResource>();
+      padBackground_.put(SkinMode.DAY,
             new ColorUIResource(Color.white));
-      padBackground_.put(CompatibilityInterface.NIGHT,
+      padBackground_.put(SkinMode.NIGHT,
             new ColorUIResource(java.awt.SystemColor.control));
 
-      enabledTextColor_ = new HashMap<String, ColorUIResource>();
-      enabledTextColor_.put(CompatibilityInterface.DAY,
+      enabledTextColor_ = new HashMap<SkinMode, ColorUIResource>();
+      enabledTextColor_.put(SkinMode.DAY,
             new ColorUIResource(20, 20, 20));
-      enabledTextColor_.put(CompatibilityInterface.NIGHT,
+      enabledTextColor_.put(SkinMode.NIGHT,
             new ColorUIResource(200, 200, 200));
 
-      disabledTextColor_ = new HashMap<String, ColorUIResource>();
-      disabledTextColor_.put(CompatibilityInterface.DAY,
+      disabledTextColor_ = new HashMap<SkinMode, ColorUIResource>();
+      disabledTextColor_.put(SkinMode.DAY,
             new ColorUIResource(100, 100, 100));
-      disabledTextColor_.put(CompatibilityInterface.NIGHT,
+      disabledTextColor_.put(SkinMode.NIGHT,
             new ColorUIResource(120, 120, 120));
    }
 
-   public static void setMode(String mode) {
+   @Override
+   public void setSkin(SkinMode mode) {
       setMode(mode, true);
    }
 
@@ -161,13 +168,8 @@ public class DaytimeNighttime {
     * wanted in cases where a one-off component must be created that doesn't
     * adhere to our custom look and feel; see suspendToMode() below.
     */
-   private static void setMode(String mode, boolean shouldUpdateUI) {
-      if (!(mode.contentEquals(CompatibilityInterface.DAY) ||
-            mode.contentEquals(CompatibilityInterface.NIGHT))) {
-         throw new IllegalArgumentException("Invalid background style \"" +
-               mode + "\"");
-      }
-      storeBackgroundMode(mode);
+   private void setMode(SkinMode mode, boolean shouldUpdateUI) {
+      storeSkin(mode);
 
       // Ensure every GUI object type gets the right background color.
       for (String key : BACKGROUND_COLOR_KEYS) {
@@ -206,11 +208,9 @@ public class DaytimeNighttime {
     * If the specified mode is not currently active, then we switch to that
     * mode without updating the UI. Useful if a component must be generated
     * with a nonstandard look-and-feel.
-    * @param mode String indicating the mode, e.g. CompatibilityInterface.DAY
-    *        or CompatibilityInterface.NIGHT.
     */
-   public static void suspendToMode(String mode) {
-      suspendedMode_ = getBackgroundMode();
+   public void suspendToMode(SkinMode mode) {
+      suspendedMode_ = getSkin();
       if (suspendedMode_.equals(mode)) {
          // Already in the desired mode.
          suspendedMode_ = null;
@@ -222,7 +222,7 @@ public class DaytimeNighttime {
    /**
     * Restores the mode that was active before suspendToMode was called.
     */
-   public static void resume() {
+   public void resume() {
       if (suspendedMode_ != null) {
          setMode(suspendedMode_, false);
          suspendedMode_ = null;
@@ -233,58 +233,76 @@ public class DaytimeNighttime {
     * Set a new default background mode in the user's profile.
     * @param mode new default background mode
     */
-   public static void storeBackgroundMode(String mode) {
+   private void storeSkin(SkinMode mode) {
       DefaultUserProfile.getInstance().setString(DaytimeNighttime.class,
-            BACKGROUND_MODE, mode);
+            BACKGROUND_MODE, mode.getDesc());
    }
 
    /**
     * Return the current stored background mode from the profile.
     * @return current stored background mode from the profile
     */
-   public static String getBackgroundMode() {
-      return DefaultUserProfile.getInstance().getString(DaytimeNighttime.class,
-            BACKGROUND_MODE, CompatibilityInterface.NIGHT);
+   @Override
+   public SkinMode getSkin() {
+      return SkinMode.fromString(DefaultUserProfile.getInstance().getString(
+               DaytimeNighttime.class,
+            BACKGROUND_MODE, SkinMode.NIGHT.getDesc()));
+   }
+
+   /**
+    * Load the stored skin from the profile and apply it.
+    */
+   public void loadStoredSkin() {
+      setSkin(getSkin());
    }
 
    /**
     * Return the current background color.
     * @return current background color
     */
-   public static Color getBackgroundColor() {
-      return background_.get(getBackgroundMode());
+   @Override
+   public Color getBackgroundColor() {
+      return background_.get(getSkin());
    }
 
    /**
     * Return the current "lighter" background color.
     * @return light background color
     */
-   public static Color getLightBackgroundColor() {
-      return lightBackground_.get(getBackgroundMode());
+   @Override
+   public Color getLightBackgroundColor() {
+      return lightBackground_.get(getSkin());
    }
 
    /**
     * Return a proper "disabled" background color based on the current mode.
     * @return "disabled" background color based on the current mode
     */
-   public static Color getDisabledBackgroundColor() {
-      return disabledBackground_.get(getBackgroundMode());
+   @Override
+   public Color getDisabledBackgroundColor() {
+      return disabledBackground_.get(getSkin());
    }
 
    /**
     * Return the current color for enabled text.
     * @return current color for enabled text
     */
-   public static Color getEnabledTextColor() {
-      return enabledTextColor_.get(getBackgroundMode());
+   @Override
+   public Color getEnabledTextColor() {
+      return enabledTextColor_.get(getSkin());
    }
 
    /**
     * Return the current color for disabled text.
     * @return current color for disabled text.
     */
-   public static Color getDisabledTextColor() {
-      return disabledTextColor_.get(getBackgroundMode());
+   @Override
+   public Color getDisabledTextColor() {
+      return disabledTextColor_.get(getSkin());
+   }
+
+   public static DaytimeNighttime getInstance() {
+      return staticInstance_;
    }
 
    /**

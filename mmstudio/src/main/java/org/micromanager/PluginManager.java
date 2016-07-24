@@ -22,6 +22,7 @@ package org.micromanager;
 import java.util.HashMap;
 
 import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.InspectorPlugin;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.quickaccess.QuickAccessPlugin;
@@ -82,4 +83,11 @@ public interface PluginManager {
     * instances. InspectorPlugins create the panels in the Inspector windows.
     */
    public HashMap<String, InspectorPlugin> getInspectorPlugins();
+
+   /**
+    * Return a HashMap that maps plugin class names to DisplayGearMenuPlugin
+    * instances. DisplayGearMenuPlugins add entries to the gear menus in
+    * DisplayWindows.
+    */
+   public HashMap<String, DisplayGearMenuPlugin> getDisplayGearMenuPlugins();
 }

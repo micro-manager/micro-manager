@@ -45,11 +45,11 @@ public class PropertyNameCellRenderer implements TableCellRenderer {
        lab.setText((String) value);
 
        if (item_.readOnly) {
-           lab.setBackground(DaytimeNighttime.getDisabledBackgroundColor());
-           lab.setForeground(DaytimeNighttime.getDisabledTextColor());
+           lab.setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
+           lab.setForeground(DaytimeNighttime.getInstance().getDisabledTextColor());
         } else {
-           lab.setBackground(DaytimeNighttime.getBackgroundColor());
-           lab.setForeground(DaytimeNighttime.getEnabledTextColor());
+           lab.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
+           lab.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
         }    
         return lab;
     }

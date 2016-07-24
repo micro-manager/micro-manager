@@ -577,11 +577,11 @@ public class AutofocusPropertyEditor extends MMDialog {
          }
          
          if (item_.readOnly) {
-            comp.setBackground(DaytimeNighttime.getDisabledBackgroundColor());
-            comp.setForeground(DaytimeNighttime.getDisabledTextColor());
+            comp.setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
+            comp.setForeground(DaytimeNighttime.getInstance().getDisabledTextColor());
          } else {
-            comp.setBackground(DaytimeNighttime.getBackgroundColor());
-            comp.setForeground(DaytimeNighttime.getEnabledTextColor());
+            comp.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
+            comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
          }         
          return comp;
       }

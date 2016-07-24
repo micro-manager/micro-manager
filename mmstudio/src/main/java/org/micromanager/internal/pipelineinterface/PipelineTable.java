@@ -18,6 +18,8 @@ package org.micromanager.internal.pipelineinterface;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.Font;
+import java.awt.Insets;
 import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -34,11 +36,18 @@ import org.micromanager.Studio;
 public class PipelineTable extends JTable {
 
    private static final String buttonCellLayoutConstraints =
-         "fill, insets 0, align center center";
+         "insets 0, align center center";
+
+   private static JButton makeConfigureButton() {
+      JButton result = new JButton("Configure...");
+      result.setMargin(new Insets(0, 0, 0, 0));
+      result.setFont(new Font("Arial", Font.PLAIN, 10));
+      return result;
+   }
 
    private class ConfigureButtonCellRenderer implements TableCellRenderer {
       private final JPanel panel_ = new JPanel();
-      private final JButton button_ = new JButton("Configure...");
+      private final JButton button_ = makeConfigureButton();
 
       public ConfigureButtonCellRenderer() {
          panel_.setLayout(new MigLayout(buttonCellLayoutConstraints));
@@ -63,7 +72,7 @@ public class PipelineTable extends JTable {
          implements TableCellEditor, ActionListener {
 
       private final JPanel panel_ = new JPanel();
-      private final JButton button_ = new JButton("Configure...");
+      private final JButton button_ = makeConfigureButton();
       private ConfiguratorWrapper configurator_;
 
       public ConfigureButtonCellEditor() {
@@ -112,10 +121,13 @@ public class PipelineTable extends JTable {
       setDefaultEditor(ConfiguratorWrapper.class,
             new ConfigureButtonCellEditor());
 
-      TableColumn enabledColumn = getColumnModel().
-            getColumn(PipelineTableModel.ENABLED_COLUMN);
-      enabledColumn.setMinWidth(enabledColumn.getPreferredWidth());
-      enabledColumn.setMaxWidth(enabledColumn.getPreferredWidth());
+      // Shrink the checkbox columns down to size.
+      for (int columnID : new int[] {PipelineTableModel.ENABLED_COLUMN,
+         PipelineTableModel.ENABLED_LIVE_COLUMN}) {
+         TableColumn column = getColumnModel().getColumn(columnID);
+         column.setMinWidth(column.getPreferredWidth());
+         column.setMaxWidth(column.getPreferredWidth());
+      }
    }
 
    ConfiguratorWrapper getSelectedConfigurator() {

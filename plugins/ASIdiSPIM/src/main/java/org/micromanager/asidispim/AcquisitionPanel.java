@@ -704,7 +704,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       editPositionListButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            gui_.getCompatibilityInterface().showPositionList();
+            gui_.getApplication().showPositionList();
          }
       });
       positionPanel.add(editPositionListButton, "span 2, center");

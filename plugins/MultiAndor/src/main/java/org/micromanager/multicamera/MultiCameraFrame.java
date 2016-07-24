@@ -487,7 +487,7 @@ public class MultiCameraFrame extends MMFrame {
          for (String camera : camerasInUse_) {
             setPropertyIfPossible(camera, EMGAIN, NumberUtils.intToCoreString(val));
          }
-         gui_.compat().refreshGUI();
+         gui_.app().refreshGUI();
       } catch (Exception ex) {
          gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
       }
@@ -619,7 +619,7 @@ public class MultiCameraFrame extends MMFrame {
 
     private void EMGainSliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_EMGainSliderMouseReleased
        setEMGain();
-       gui_.compat().refreshGUI();
+       gui_.app().refreshGUI();
     }//GEN-LAST:event_EMGainSliderMouseReleased
 
     private void tempButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tempButtonActionPerformed
@@ -662,7 +662,7 @@ public class MultiCameraFrame extends MMFrame {
           updateItems(gainComboBox, AMPGAIN);
           updateItems(speedComboBox, SPEED);
 
-          gui_.compat().refreshGUI();
+          gui_.app().refreshGUI();
        } catch (Exception ex) {
           gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
@@ -676,7 +676,7 @@ public class MultiCameraFrame extends MMFrame {
           return;
        }
        setComboSelection(gainComboBox, AMPGAIN);
-       gui_.compat().refreshGUI();
+       gui_.app().refreshGUI();
     }//GEN-LAST:event_gainComboBoxItemStateChanged
 
     private void speedComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_speedComboBoxItemStateChanged
@@ -684,7 +684,7 @@ public class MultiCameraFrame extends MMFrame {
           return;
        }
        setComboSelection(speedComboBox, SPEED);
-       gui_.compat().refreshGUI();
+       gui_.app().refreshGUI();
     }//GEN-LAST:event_speedComboBoxItemStateChanged
 
     private void frameTransferComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_frameTransferComboBoxItemStateChanged
@@ -692,7 +692,7 @@ public class MultiCameraFrame extends MMFrame {
           return;
        }
        setComboSelection(frameTransferComboBox, FRAMETRANSFER);
-       gui_.compat().refreshGUI();
+       gui_.app().refreshGUI();
     }//GEN-LAST:event_frameTransferComboBoxItemStateChanged
 
     private void triggerComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_triggerComboBoxItemStateChanged
@@ -700,7 +700,7 @@ public class MultiCameraFrame extends MMFrame {
           return;
        }
        setComboSelection(triggerComboBox, TRIGGER);
-       gui_.compat().refreshGUI();
+       gui_.app().refreshGUI();
     }//GEN-LAST:event_triggerComboBoxItemStateChanged
 
    private void updateCamerasInUse(String camera) {
@@ -788,7 +788,7 @@ public class MultiCameraFrame extends MMFrame {
           gui_.live().setSuspended(false);
        }
 
-       gui_.compat().refreshGUI();
+       gui_.app().refreshGUI();
     }//GEN-LAST:event_cameraSelectComboBoxItemStateChanged
 
     private void modeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modeComboBoxActionPerformed

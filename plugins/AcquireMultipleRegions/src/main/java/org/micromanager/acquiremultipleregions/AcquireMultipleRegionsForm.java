@@ -236,7 +236,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
 //                gui_.compat().setImageSavingFormat(org.micromanager.acquisition.internal.TaggedImageStorageMultipageTiff.class);
                 //update positionlist with grid
                 gui_.positions().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));               
-                gui_.compat().refreshGUI();
+                gui_.app().refreshGUI();
                 Datastore store = gui_.acquisitions().runAcquisition(currRegion.filename, currRegion.directory);
                 gui_.displays().closeDisplaysFor(store);
             } catch (Exception ex) {

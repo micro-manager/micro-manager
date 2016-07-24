@@ -318,7 +318,7 @@ public class Hub {
       roiManager_.updateMappings();
       try {
          app_.positions().setPositionList(roiManager_.convertRoiManagerToPositionList());
-         app_.compat().showPositionList();
+         app_.app().showPositionList();
       } catch (Exception ex) {
          ex.printStackTrace();
       }

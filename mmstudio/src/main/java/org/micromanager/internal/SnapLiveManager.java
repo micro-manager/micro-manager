@@ -84,7 +84,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private final ArrayList<LiveModeListener> listeners_;
    private boolean isLiveOn_ = false;
    private Object liveModeLock_ = new Object();
-   private int numCameraChannels_ = 0;
+   private int numCameraChannels_ = -1;
    private double exposureMs_ = 0;
    private boolean shouldStopGrabberThread_ = false;
    private boolean shouldForceReset_ = false;
@@ -396,7 +396,7 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          store_ = new DefaultRewritableDatastore();
          store_.setStorage(new StorageRAM(store_));
          // Use a synchronous pipeline for live mode.
-         pipeline_ = studio_.data().copyApplicationPipeline(store_, true);
+         pipeline_ = studio_.data().copyLivePipeline(store_, true);
       }
    }
 
@@ -419,6 +419,10 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          // default of composite mode) if there is no existing profile settings
          // for the user and we do not have a multicamera setup.
          DisplaySettings.ColorMode mode = DefaultDisplaySettings.getStandardColorMode(TITLE, null);
+         if (numCameraChannels_ == -1) {
+            // Haven't yet figured out how many camera channels there are.
+            numCameraChannels_ = (int) core_.getNumberOfCameraChannels();
+         }
          if (mode == null && numCameraChannels_ == 1) {
             DisplaySettings settings = display_.getDisplaySettings();
             settings = settings.copy()
@@ -580,11 +584,16 @@ public class SnapLiveManager implements org.micromanager.SnapLiveManager {
          display_.getAsWindow().setLocation(displayLoc);
       }
       channelToLastImage_.clear();
+
       // Set up the channel names in the store's summary metadata. This will
       // as a side-effect ensure that our channels are displayed with the
       // correct colors.
       try {
          String channel = core_.getCurrentConfig(core_.getChannelGroup());
+         if (numCameraChannels_ == -1) {
+            // Haven't yet figured out how many camera channels there are.
+            numCameraChannels_ = (int) core_.getNumberOfCameraChannels();
+         }
          String[] channelNames = new String[numCameraChannels_];
          for (int i = 0; i < numCameraChannels_; ++i) {
             channelNames[i] = makeChannelName(channel, i);

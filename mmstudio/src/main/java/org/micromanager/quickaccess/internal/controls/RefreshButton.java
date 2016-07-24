@@ -94,6 +94,6 @@ public class RefreshButton extends SimpleButtonPlugin implements SciJavaPlugin {
 
    @Override
    public void activate() {
-      studio_.compat().refreshGUI();
+      studio_.app().refreshGUI();
    }
 }

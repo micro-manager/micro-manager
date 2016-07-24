@@ -69,6 +69,9 @@ private:
 };
 
 
+class MultiAnalogOutPort;
+
+
 // A hub-peripheral device set for driving multiple analog output ports,
 // possibly with hardware-triggered sequencing using a shared trigger input.
 class MultiAnalogOutHub : public HubBase<MultiAnalogOutHub>,
@@ -87,21 +90,26 @@ public:
 
    virtual int DetectInstalledDevices();
 
-public:
+public: // Interface for individual ports
    virtual int GetVoltageLimits(double& minVolts, double& maxVolts);
+
+   virtual int RegisterPort(const std::string& port, MultiAnalogOutPort* ptr);
+   virtual int UnregisterPort(const std::string& port);
 
    virtual int StartSequenceForPort(const std::string& port,
       const std::vector<double> sequence);
    virtual int StopSequenceForPort(const std::string& port);
 
-   virtual int AddPortToSequencing(const std::string& port,
-      const std::vector<double> sequence);
-   virtual void RemovePortFromSequencing(const std::string& port);
-
    virtual int IsSequencingEnabled(bool& flag) const;
    virtual int GetSequenceMaxLength(long& maxLength) const;
 
+   virtual bool IsDeviceRunningSequence() const;
+
 private:
+   int AddPortToSequencing(const std::string& port,
+      const std::vector<double> sequence);
+   void RemovePortFromSequencing(const std::string& port);
+
    int GetVoltageRangeForDevice(const std::string& device,
       double& minVolts, double& maxVolts);
    std::vector<std::string> GetTriggerPortsForDevice(
@@ -114,6 +122,9 @@ private:
 
    int StartSequencingTask();
    int StopTask();
+
+   int StartAllPerPortTasks();
+   int StopAllPerPortTasks();
 
 private:
    // Action handlers
@@ -131,7 +142,6 @@ private:
 
    std::string niDeviceName_;
    std::string niTriggerPort_;
-   std::vector<std::string> niAnalogOutputPorts_;
 
    double minVolts_; // Min possible for device
    double maxVolts_; // Max possible for device
@@ -143,6 +153,11 @@ private:
    // Invariant: physicalChannels_.size() == channelSequences_.size()
    std::vector<std::string> physicalChannels_; // Invariant: all unique
    std::vector< std::vector<double> > channelSequences_;
+
+   // All ports (physical channels) managed by this hub
+   // Invariant: allPorts_.size() == portPtrs_.size()
+   std::vector<std::string> allPorts_;
+   std::vector< MultiAnalogOutPort* > portPtrs_;
 };
 
 
@@ -183,12 +198,15 @@ private:
    // Post-init property action handlers
    int OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+public: // Interface for hub to access
+   virtual double GetNonSequencedVoltage();
+   virtual int StartOnDemandTask(double voltage);
+   virtual int StopTask();
+
 private:
    MultiAnalogOutHub* GetAOHub() const
    { return static_cast<MultiAnalogOutHub*>(GetParentHub()); }
    int TranslateHubError(int err);
-   int StartOnDemandTask(double voltage);
-   int StopTask();
 
 private:
    const std::string niPort_;

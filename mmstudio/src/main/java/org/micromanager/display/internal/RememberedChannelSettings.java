@@ -224,9 +224,12 @@ public class RememberedChannelSettings {
          String channel = summary.getSafeChannelName(i);
          DisplaySettings.ContrastSettings contrast = settings.getSafeContrastSettings(i,
                new DefaultDisplaySettings.DefaultContrastSettings(0, 0, 1.0, true));
+         Color defaultColor = Color.WHITE;
+         if (i < ColorSets.COLORBLIND_COLORS.length) {
+            defaultColor = ColorSets.COLORBLIND_COLORS[i];
+         }
          Color color = settings.getSafeChannelColor(i,
-               getColorForChannel(channel, group,
-                  ColorSets.COLORBLIND_COLORS[i]));
+               getColorForChannel(channel, group, defaultColor));
          new RememberedChannelSettings(channel, group, color,
                contrast.getContrastMins(), contrast.getContrastMaxes(),
                settings.getShouldAutostretch()).saveToProfile();

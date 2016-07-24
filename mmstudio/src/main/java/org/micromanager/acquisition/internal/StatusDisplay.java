@@ -110,7 +110,7 @@ public class StatusDisplay extends JFrame {
       add(contents);
       pack();
       // Put us centered, on the same display as the main window.
-      GUIUtils.centerFrameWithFrame(this, studio_.compat().getMainWindow());
+      GUIUtils.centerFrameWithFrame(this, studio_.app().getMainWindow());
       setVisible(true);
    }
 

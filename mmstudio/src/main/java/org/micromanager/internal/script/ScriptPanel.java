@@ -1240,7 +1240,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
           ReportingUtils.logError(e);
         promptStr = "bsh % ";
       } 
-     cons_.print("\n"+promptStr, DaytimeNighttime.getEnabledTextColor());
+     cons_.print("\n"+promptStr, DaytimeNighttime.getInstance().getEnabledTextColor());
    }
    
    /**
@@ -1441,7 +1441,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       messagePane_.setCharacterAttributes(
          sc_.getStyle(blackStyleName_), false);
       messagePane_.replaceSelection(text + "\n");
-      cons_.print("\n" + text, DaytimeNighttime.getEnabledTextColor());
+      cons_.print("\n" + text, DaytimeNighttime.getInstance().getEnabledTextColor());
       showPrompt();
    }
 

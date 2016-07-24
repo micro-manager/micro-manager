@@ -9,12 +9,12 @@
 import ij.gui.GenericDialog;
 
 
-mm.compat().clearRunnables();
+mm.acquisitions().clearRunnables();
 
 runnable = new Runnable() {
    int count = 0;
    public void run() {
-      settings = mm.compat().getAcquisitionSettings();
+      settings = mm.acquisitions().getAcquisitionSettings();
       channels = settings.channels;
       channel = channels.get(count);
       // deal with useChannel_ flag
@@ -44,4 +44,4 @@ runnable = new Runnable() {
 // -1 --> attach to all planes along given dimension
 
 // Numbers are frames, stage positions, channels, slices
-mm.compat().attachRunnable(-1, 0, -1, 0, runnable);
+mm.acquisitions().attachRunnable(-1, 0, -1, 0, runnable);

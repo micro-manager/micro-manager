@@ -38,7 +38,8 @@ import javax.swing.WindowConstants;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.CompatibilityInterface;
+import org.micromanager.ApplicationSkin;
+import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.Studio;
 import org.micromanager.internal.logging.LogFileManager;
@@ -204,9 +205,13 @@ public class OptionsDlg extends MMDialog {
       bufSizeField_ = new JTextField(
             Integer.toString(MMStudio.getCircularBufferSize()), 5);
 
-      comboDisplayBackground_ = new JComboBox(CompatibilityInterface.BACKGROUND_OPTIONS);
+      String[] options = new String[SkinMode.values().length];
+      for (int i = 0; i < SkinMode.values().length; ++i) {
+         options[i] = SkinMode.values()[i].getDesc();
+      }
+      comboDisplayBackground_ = new JComboBox(options);
       comboDisplayBackground_.setMaximumRowCount(2);
-      comboDisplayBackground_.setSelectedItem(DaytimeNighttime.getBackgroundMode());
+      comboDisplayBackground_.setSelectedItem(DaytimeNighttime.getInstance().getSkin().getDesc());
       comboDisplayBackground_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -336,7 +341,7 @@ public class OptionsDlg extends MMDialog {
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
 
-      parent_.compat().setBackgroundStyle(background);
+      parent_.app().skin().setSkin(SkinMode.fromString(background));
    }
 
    private void closeRequested() {
@@ -357,7 +362,7 @@ public class OptionsDlg extends MMDialog {
       MMStudio.setCoreLogLifetimeDays(deleteLogDays);
 
       ScriptPanel.setStartupScript(startupScriptFile_.getText());
-      parent_.compat().makeActive();
+      parent_.app().makeActive();
       dispose();
    }
 

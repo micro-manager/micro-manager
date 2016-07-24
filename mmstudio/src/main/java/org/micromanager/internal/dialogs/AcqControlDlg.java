@@ -372,7 +372,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       listButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            studio_.compat().showPositionList();
+            studio_.app().showPositionList();
          }
       });
 
@@ -719,7 +719,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             saveSettings();
             saveAcqSettings();
             AcqControlDlg.this.dispose();
-            studio_.compat().makeActive();
+            studio_.app().makeActive();
          }
       });
       return closeButton;
@@ -1079,7 +1079,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
             String channel = studio_.core().getCurrentConfig(channelGroup);
             double exposure = getChannelExposureTime(
                   channelGroup, channel, 10.0);
-            studio_.compat().setChannelExposureTime(channelGroup, channel,
+            studio_.app().setChannelExposureTime(channelGroup, channel,
                   exposure);
          }
          catch (Exception e) {
@@ -1109,7 +1109,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
    }
 
    protected void afOptions() {
-      studio_.compat().showAutofocusDialog();
+      studio_.app().showAutofocusDialog();
    }
 
    public boolean inArray(String member, String[] group) {
@@ -1152,7 +1152,7 @@ public class AcqControlDlg extends MMFrame implements PropertyChangeListener,
       }
       if (null != studio_) {
          try {
-            studio_.compat().makeActive();
+            studio_.app().makeActive();
          } catch (Throwable t) {
             ReportingUtils.logError(t, "in makeActive");
          }

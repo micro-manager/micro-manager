@@ -26,6 +26,7 @@ package org.micromanager;
 import mmcorej.CMMCore;
 
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.alerts.AlertManager;
 import org.micromanager.data.DataManager;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.events.EventManager;
@@ -95,11 +96,24 @@ public interface Studio {
    public AcquisitionManager getAcquisitionManager();
 
    /**
+    * Provide access to the AlertManager, for creating low-profile, non-
+    * interrupting alerts in the user interface.
+    */
+   public AlertManager alerts();
+
+   /**
+    * Provide access to the AlertManager, for creating low-profile, non-
+    * interrupting alerts in the user interface. Identical to alerts() except
+    * in name.
+    */
+   public AlertManager getAlertManager();
+
+   /**
     * Provide access to the AutofocusManager, for performing autofocus
     * operations.
     */
    public AutofocusManager getAutofocusManager();
-   
+
    /**
     * Provides access to the Core and its functionality.
     * @return Micro-Manager core object. 
@@ -250,4 +264,18 @@ public interface Studio {
     * @return ShutterManager instance.
     */
    public ShutterManager getShutterManager();
+
+   /**
+    * Provides access to the application API for controlling and updating the
+    * GUI.
+    * @return Application instance.
+    */
+   public Application app();
+
+   /**
+    * Provides access to the application API for controlling and updating the
+    * GUI. Identical to app() except in name.
+    * @return Application instance.
+    */
+   public Application getApplication();
 }

@@ -300,18 +300,36 @@ public interface DataManager {
 
    /**
     * Create a copy of the current application Pipeline as configured in the
-    * "Data Processing Pipeline" window.
+    * "Data Processing Pipeline" window. This pipeline is used by Micro-Manager
+    * for data acquisition. Compare copyLivePipeline().
     * @param store Datastore in which Images should be stored after making
     *        their way through the Pipeline.
     * @param isSynchronous If true, then every call to Pipeline.insertImage()
     *        will block until the input Image has been "fully consumed" by
-    *        the pipeline (any result Image(s) have been added to the Datastore
-    *        the Pipeline is connected to). If false, Pipeline.insertImage()
-    *        will return immediately and the Images will arrive in the
-    *        Datastore at some indeterminate later time.
+    *        the pipeline (any result Image(s), if any, have been added to the
+    *        Datastore the Pipeline is connected to). If false,
+    *        Pipeline.insertImage() will return immediately and the Images will
+    *        arrive in the Datastore at some indeterminate later time.
     * @return a Pipeline based on the current GUI pipeline.
     */
    public Pipeline copyApplicationPipeline(Datastore store,
+         boolean isSynchronous);
+
+   /**
+    * Create a copy of the current Live Pipeline as configured in the
+    * "Data Processing Pipeline" window. This pipeline is only used by
+    * Micro-Manager for the Snap/Live view. Compare copyApplicationPipeline().
+    * @param store Datastore in which Images should be stored after making
+    *        their way through the Pipeline.
+    * @param isSynchronous If true, then every call to Pipeline.insertImage()
+    *        will block until the input Image has been "fully consumed" by
+    *        the pipeline (any result Image(s), if any, have been added to the
+    *        Datastore the Pipeline is connected to). If false,
+    *        Pipeline.insertImage() will return immediately and the Images will
+    *        arrive in the Datastore at some indeterminate later time.
+    * @return a Pipeline based on the current GUI pipeline.
+    */
+   public Pipeline copyLivePipeline(Datastore store,
          boolean isSynchronous);
 
    /**

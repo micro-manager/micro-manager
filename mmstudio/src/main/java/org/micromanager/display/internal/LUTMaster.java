@@ -32,6 +32,7 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -39,6 +40,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 
 import org.micromanager.display.DisplaySettings;
@@ -257,6 +259,12 @@ public class LUTMaster {
          setModeByIndex(display,
                DisplaySettings.ColorMode.COMPOSITE.getIndex());
       }
+      // Ensure that each channel has a valid initial LUT.
+      // HACK: even if the datastore lacks a channel axis, there's still 1
+      // processor that needs to be set.
+      for (int i = 0; i < Math.max(1, display.getDatastore().getAxisLength(Coords.CHANNEL)); ++i) {
+         updateDisplayLUTForChannel(display, i, false);
+      }
       updateDisplayLUTs(display);
    }
 
@@ -277,9 +285,15 @@ public class LUTMaster {
          SwingUtilities.invokeLater(runnable);
          return;
       }
-      // HACK: if there's no channel axis, force a single update.
-      for (int i = 0; i < Math.max(1, display.getDatastore().getAxisLength(Coords.CHANNEL)); ++i) {
-         updateDisplayLUTForChannel(display, i);
+      // Determine which image(s) to update.
+      // HACK: always do at least one update (even if there's no channel axis).
+      // That's what the Math.max() call accomplishes.
+      HashSet<Integer> displayedChannels = new HashSet<Integer>();
+      for (Image image : display.getDisplayedImages()) {
+         displayedChannels.add(Math.max(0, image.getCoords().getChannel()));
+      }
+      for (Integer i : displayedChannels) {
+         updateDisplayLUTForChannel(display, i, true);
       }
    }
 
@@ -288,7 +302,7 @@ public class LUTMaster {
     * on the parameters currently in the DisplaySettings.
     */
    private static void updateDisplayLUTForChannel(DisplayWindow display,
-         int channelIndex) {
+         int channelIndex, boolean shouldUpdateImage) {
       DisplaySettings settings = display.getDisplaySettings();
       DisplaySettings.ColorMode mode = settings.getChannelColorMode();
       boolean hasCustomLUT = (mode != null &&
@@ -299,10 +313,13 @@ public class LUTMaster {
       // have a channel color, then we should use either the remembered
       // color for this channel name, or a colorblind-friendly color, and then
       // save the new color to the display settings.
+      Color defaultColor = Color.WHITE;
+      if (channelIndex < ColorSets.COLORBLIND_COLORS.length) {
+         defaultColor = ColorSets.COLORBLIND_COLORS[channelIndex];
+      }
       Color color = RememberedChannelSettings.getColorWithSettings(
             summary.getSafeChannelName(channelIndex),
-            summary.getChannelGroup(), settings, channelIndex,
-            ColorSets.COLORBLIND_COLORS[channelIndex]);
+            summary.getChannelGroup(), settings, channelIndex, defaultColor);
       if (!color.equals(settings.getSafeChannelColor(channelIndex, null))) {
          settings = settings.copy().safeUpdateChannelColor(color,
                channelIndex).build();
@@ -323,8 +340,8 @@ public class LUTMaster {
          composite = (CompositeImage) plus;
          if (composite.getMode() == CompositeImage.COMPOSITE) {
             // Get the processor for the specific channel we want to modify.
-            // Don't ask me why we don't do this when in color/grayscale modes.
-            // Chalk it up to ImageJ weirdness.
+            // We don't need to do this in color/grayscale mode because the
+            // processor is already the correct one.
             processor = composite.getProcessor(channelIndex + 1);
          }
       }
@@ -417,7 +434,9 @@ public class LUTMaster {
                ReportingUtils.logError(ex);
             }
          }
-         composite.updateImage();
+         if (shouldUpdateImage) {
+            composite.updateImage();
+         }
       } // End multi-channel case.
       processor.setMinAndMax(lut.min, lut.max);
    }

@@ -1,6 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,41 +17,28 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal.events;
+package org.micromanager.display;
+
+import org.micromanager.MMPlugin;
 
 /**
- * This event is used to ensure that the different histogram controls apply
- * their LUTs to the image.
+ * DisplayGearMenuPlugins add items to be shown in the "gear menu" shown in
+ * each DisplayWindow.
  */
-public class LUTUpdateEvent {
-   // Each of these may be null, which signifies to the recipient that they
-   // should use their own values instead.
-   private Integer[] mins_;
-   private Integer[] maxes_;
-   private Double gamma_;
-   private Object source_;
+public interface DisplayGearMenuPlugin extends MMPlugin {
+   /**
+    * Indicate which sub-menu of the gear menu this plugin should appear
+    * in. If that sub-menu does not exist, it will be created. If an empty
+    * string is returned, then the plugin will be inserted directly into the
+    * gear menu, instead of into a sub-menu.
+    * @return Sub-menu of the gear menu hosting this entry, or empty string.
+    */
+   public String getSubMenu();
 
-   public LUTUpdateEvent(Object source, Integer[] mins, Integer[] maxes,
-         Double gamma) {
-      source_ = source;
-      mins_ = mins;
-      maxes_ = maxes;
-      gamma_ = gamma;
-   }
-
-   public Object getSource() {
-      return source_;
-   }
-
-   public Integer[] getMins() {
-      return mins_;
-   }
-
-   public Integer[] getMaxes() {
-      return maxes_;
-   }
-
-   public Double getGamma() {
-      return gamma_;
-   }
+   /**
+    * This method will be called when the plugin is selected from the
+    * gear menu.
+    * @param display The display whose gear menu was interacted with.
+    */
+   public void onPluginSelected(DisplayWindow display);
 }

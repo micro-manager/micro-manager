@@ -18,72 +18,84 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.gearmenu;
 
 import com.bulenkov.iconloader.IconLoader;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
 
+import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.inspector.InspectorFrame;
-import org.micromanager.internal.LineProfile;
+import org.micromanager.Studio;
+
+import org.micromanager.internal.utils.SortedPopupMenu;
 
 /**
  * This class provides access to various rarely-used functions (like save or
  * duplicate) via a dropdown menu.
  */
 public class GearButton extends JButton {
-   private JPopupMenu menu_;
+   private SortedPopupMenu menu_;
 
-   public GearButton(final DisplayWindow display) {
+   public GearButton(final DisplayWindow display, Studio studio) {
       setToolTipText("Access additional commands");
-      menu_ = new JPopupMenu();
-      JMenuItem openInspector = new JMenuItem("Open New Inspector Window");
+      menu_ = new SortedPopupMenu();
+      JMenuItem openInspector = new JMenuItem("New Inspector Window");
       openInspector.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             InspectorFrame.createInspector(display);
          }
       });
-      menu_.add(openInspector);
+      menu_.addUnsorted(openInspector);
 
-      JMenuItem duplicate = new JMenuItem("Duplicate This Window");
+      JMenuItem duplicate = new JMenuItem("New Window For This Data");
       duplicate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             display.duplicate();
          }
       });
-      menu_.add(duplicate);
+      menu_.addUnsorted(duplicate);
 
       menu_.addSeparator();
 
-      JMenuItem lineProfile = new JMenuItem("Show Line Profile");
-      lineProfile.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new LineProfile(display);
+      // Insert plugins. Sorted alphabetically by name/submenu name.
+      HashMap<String, DisplayGearMenuPlugin> plugins = studio.plugins().getDisplayGearMenuPlugins();
+      HashMap<String, SortedPopupMenu> subMenus = new HashMap<String, SortedPopupMenu>();
+      ArrayList<JMenuItem> items = new ArrayList<JMenuItem>();
+      for (final DisplayGearMenuPlugin plugin : plugins.values()) {
+         JMenuItem item = new JMenuItem(plugin.getName());
+         item.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               plugin.onPluginSelected(display);
+            }
+         });
+         String subMenu = plugin.getSubMenu();
+         if (subMenu.contentEquals("")) {
+            // Add directly to the base menu.
+            menu_.add(item);
          }
-      });
-      menu_.add(lineProfile);
-
-      menu_.addSeparator();
-
-      JMenuItem movieExport = new JMenuItem("Export Images As Displayed");
-      movieExport.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            new ExportMovieDlg(display);
+         else {
+            // Add it to a submenu, creating it if necessary.
+            if (!subMenus.containsKey(subMenu)) {
+               SortedPopupMenu popup = new SortedPopupMenu();
+               subMenus.put(subMenu, popup);
+            }
+            subMenus.get(subMenu).add(item);
          }
-      });
-      menu_.add(movieExport);
+      }
 
       final JButton staticThis = this;
       addMouseListener(new MouseInputAdapter() {

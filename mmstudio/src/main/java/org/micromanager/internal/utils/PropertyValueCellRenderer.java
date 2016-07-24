@@ -57,17 +57,17 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
       }
 
       if (item_.readOnly) {
-         comp.setBackground(DaytimeNighttime.getDisabledBackgroundColor());
-         comp.setForeground(DaytimeNighttime.getDisabledTextColor());
+         comp.setBackground(DaytimeNighttime.getInstance().getDisabledBackgroundColor());
+         comp.setForeground(DaytimeNighttime.getInstance().getDisabledTextColor());
       } else {
-         comp.setBackground(DaytimeNighttime.getBackgroundColor());
-         comp.setForeground(DaytimeNighttime.getEnabledTextColor());
+         comp.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
+         comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
       }
 
       if (disable_) {
          comp.setEnabled(false);
          // For legibility's sake, we always use the "enabled" color.
-         comp.setForeground(DaytimeNighttime.getEnabledTextColor());
+         comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
       }
 
       return comp;

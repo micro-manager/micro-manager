@@ -27,6 +27,7 @@ package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
 
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Component;
 import java.awt.Toolkit;
@@ -51,6 +52,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -125,6 +127,7 @@ public class PropertyEditor extends MMFrame {
       setIconImage(Toolkit.getDefaultToolkit().getImage(
               getClass().getResource("/org/micromanager/icons/microscope.gif") ) );
 
+      setMinimumSize(new Dimension(400, 400));
       setLayout(new MigLayout("fill, insets 2"));
 
       addWindowListener(new WindowAdapter() {
@@ -188,7 +191,7 @@ public class PropertyEditor extends MMFrame {
       scrollPane_.setViewportView(table_);
       scrollPane_.setFont(defaultFont);
       scrollPane_.setBorder(new BevelBorder(BevelBorder.LOWERED));
-      add(scrollPane_, "span, grow, wrap");
+      add(scrollPane_, "span, grow, push, wrap");
    }
 
    protected void refresh() {
@@ -215,6 +218,15 @@ public class PropertyEditor extends MMFrame {
       data_.update(device, property, value);
    }
 
+   /**
+    * Manually save now; if we wait until the program actually exits, then
+    * the profile will be done finalizing and our settings won't get saved.
+    */
+   @Subscribe
+   public void onShutdownCommencing(ShutdownCommencingEvent event) {
+      flags_.save(PropertyEditor.class);
+   }
+
     public class PropertyEditorTableData extends PropertyTableData {
       public PropertyEditorTableData(CMMCore core, String groupName, String presetName,
          int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
@@ -233,7 +245,7 @@ public class PropertyEditor extends MMFrame {
          }
          core_.updateSystemStateCache();
          refresh(true);
-         studio_.compat().refreshGUIFromCache();
+         studio_.app().refreshGUIFromCache();
          fireTableCellUpdated(row, col);
       }
 

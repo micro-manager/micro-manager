@@ -131,79 +131,79 @@ public class DefaultPropertyMap implements PropertyMap {
 
       public String getAsString() {
          if (type_ != String.class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not String");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not String");
          }
          return (String) val_;
       }
       public String[] getAsStringArray() {
          if (type_ != String[].class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not String[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not String[]");
          }
          return (String[]) val_;
       }
 
       public Integer getAsInteger() {
          if (type_ != Integer.class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not Integer");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Integer");
          }
          return (Integer) val_;
       }
       public Integer[] getAsIntegerArray() {
          if (type_ != Integer[].class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not Integer[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Integer[]");
          }
          return (Integer[]) val_;
       }
 
       public Long getAsLong() {
          if (type_ != Long.class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not Long");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Long");
          }
          return (Long) val_;
       }
       public Long[] getAsLongArray() {
          if (type_ != Long[].class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not Long[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Long[]");
          }
          return (Long[]) val_;
       }
 
       public Double getAsDouble() {
          if (type_ != Double.class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not Double");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Double");
          }
          return (Double) val_;
       }
       public Double[] getAsDoubleArray() {
          if (type_ != Double[].class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not Double[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Double[]");
          }
          return (Double[]) val_;
       }
 
       public Boolean getAsBoolean() {
          if (type_ != Boolean.class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not Boolean");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Boolean");
          }
          return (Boolean) val_;
       }
       public Boolean[] getAsBooleanArray() {
          if (type_ != Boolean[].class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not Boolean[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Boolean[]");
          }
          return (Boolean[]) val_;
       }
 
       public PropertyMap getAsPropertyMap() {
          if (type_ != PropertyMap.class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not PropertyMap");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not PropertyMap");
          }
          return (PropertyMap) val_;
       }
 
       public byte[] getAsByteArray() {
          if (type_ != byte[].class) {
-            throw new PropertyMap.TypeMismatchException("Type of value is not byte[]");
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not byte[]");
          }
          return (byte[]) val_;
       }

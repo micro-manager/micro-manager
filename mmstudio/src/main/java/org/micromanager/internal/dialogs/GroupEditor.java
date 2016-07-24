@@ -36,6 +36,7 @@ import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -290,7 +291,7 @@ public class GroupEditor extends ConfigDialog {
          }
       }
 
-      gui_.compat().setConfigChanged(true);
+      ((MMStudio) gui_).setConfigChanged(true);
       return true;
    }
 }

@@ -336,6 +336,9 @@ public class DefaultDisplaySettings implements DisplaySettings {
          for (int i = 0; i < getNumComponents(); ++i) {
             result += String.format("(%d, %d @ %.2f)", getSafeContrastMin(i, -1), getSafeContrastMax(i, -1), getSafeContrastGamma(i, -1.0));
          }
+         if (isVisible_ != null) {
+            result += isVisible_ ? " (visible)" : " (hidden)";
+         }
          return result + ">";
       }
    }
