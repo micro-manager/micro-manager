@@ -173,6 +173,12 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          }
       }
 
+      public void RemoveAllScripts() {
+         scriptFileArray_.clear();
+         lastModArray_.clear();
+         fireTableDataChanged();
+      }
+
       public void RemoveScript(int rowNumber, int columnNumber) {
          if ((rowNumber >= 0) && (isScriptAvailable(rowNumber, columnNumber)) ) {
             scriptFileArray_.remove((rowNumber * columnCount_) + columnNumber);
@@ -1267,12 +1273,13 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    }
 
    public void getScriptsFromPrefs ()
-   { 
+   {
       // restore previously listed scripts from profile
       int j = 0;
       String script;
       boolean isFile = false;
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      model_.RemoveAllScripts();
       do {
          script = profile.getString(ScriptPanel.class, SCRIPT_FILE + j, null);
          if ( (script != null) && (!script.equals("") ) )

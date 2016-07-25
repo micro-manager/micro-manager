@@ -412,6 +412,8 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       frame_.resetPosition();
       frame_.setVisible(true);
       executeStartupScript();
+      // Now that user is logged in, load the shortcuts.
+      scriptPanel_.getScriptsFromPrefs();
 
       // Create Multi-D window here but do not show it.
       // This window needs to be created in order to properly set the 
