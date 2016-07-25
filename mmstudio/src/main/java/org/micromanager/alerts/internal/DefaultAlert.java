@@ -98,6 +98,7 @@ public class DefaultAlert extends Alert {
    private JPanel contents_;
    private boolean isUsable_ = true;
    private boolean isOneShot_;
+   protected MouseAdapter showCloseButtonAdapter_;
 
    /**
     * @param isOneShot: if true, then clicking on the alert dismisses it;
@@ -142,7 +143,7 @@ public class DefaultAlert extends Alert {
                dispose();
             }
          });
-         MouseAdapter adapter = new MouseAdapter() {
+         showCloseButtonAdapter_ = new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
                closeButton.setVisible(true);
@@ -155,8 +156,8 @@ public class DefaultAlert extends Alert {
             }
          };
          closeButton.setVisible(false);
-         wrapper_.addMouseListener(adapter);
-         closeButton.addMouseListener(adapter);
+         wrapper_.addMouseListener(showCloseButtonAdapter_);
+         closeButton.addMouseListener(showCloseButtonAdapter_);
          // Position the button in the upper-right corner of the panel.
          wrapper_.add(closeButton, "hidemode 3, pos null 5 (container.x2 - 5) null");
          // Draw the close button on top of everything.

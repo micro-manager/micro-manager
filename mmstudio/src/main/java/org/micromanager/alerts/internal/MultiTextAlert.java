@@ -79,6 +79,7 @@ public class MultiTextAlert extends DefaultAlert {
                return new Dimension(300, 200);
             }
          };
+         scroller_.addMouseListener(showCloseButtonAdapter_);
          contents_.add(scroller_, "grow");
          for (JLabel line : lines_) {
             scrollerContents_.add(line, "growx");
