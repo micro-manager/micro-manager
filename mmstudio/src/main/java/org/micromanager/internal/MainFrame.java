@@ -83,6 +83,7 @@ import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.interfaces.LiveModeListener;
+import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
@@ -174,6 +175,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       setExitStrategy(OptionsDlg.getShouldCloseOnExit());
       setIconImage(Toolkit.getDefaultToolkit().getImage(
                getClass().getResource("/org/micromanager/icons/microscope.gif")));
+
+      setJMenuBar(MMMenuBar.createMenuBar(studio_));
 
       setConfigText("");
       // Set minimum size so we can't resize smaller and hide some of our

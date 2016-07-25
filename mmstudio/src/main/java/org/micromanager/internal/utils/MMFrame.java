@@ -71,10 +71,13 @@ public class MMFrame extends JFrame {
    }
 
    /**
-    * Create a copy of the Micro-Manager menus for use by this frame.
+    * Create a copy of the Micro-Manager menus for use by this frame. Only
+    * needed on OSX with its global (non-window-specific) menu bar.
     */
    private void setupMenus() {
-      setJMenuBar(MMMenuBar.createMenuBar(MMStudio.getInstance()));
+      if (JavaUtils.isMac()) {
+         setJMenuBar(MMMenuBar.createMenuBar(MMStudio.getInstance()));
+      }
    }
 
    /**
