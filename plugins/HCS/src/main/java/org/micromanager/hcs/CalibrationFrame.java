@@ -209,7 +209,7 @@ public class CalibrationFrame extends JFrame {
                studio.getCMMCore().setAdapterOriginXY(
                        plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(), 
                        plate.getFirstWellY() + (rowNr  - 1) * plate.getWellSpacingY() );
-               siteGenerator.regenerate();
+               siteGenerator.finishCalibration();
                Point2D.Double pt = studio.getCMMCore().getXYStagePosition();
                JOptionPane.showMessageDialog(ourFrame, 
                        "XY Stage set at position: " + pt.x + "," + pt.y);
