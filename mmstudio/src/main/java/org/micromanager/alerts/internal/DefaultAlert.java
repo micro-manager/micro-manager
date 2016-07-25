@@ -126,17 +126,7 @@ public class DefaultAlert extends Alert {
       setModal(false);
       setFocusableWindowState(false);
       wrapper_.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-      // Decide how to dispose of the alert.
-      if (this != moreAlert_ && isOneShot_) {
-         // Dismiss the dialog when it is clicked on anywhere.
-         wrapper_.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-               dispose();
-            }
-         });
-      }
-      else if (this != moreAlert_) {
+      if (this != moreAlert_) {
          // Show a close button when the dialog is moused over, and dismiss
          // the dialog when the button is clicked on. This is rendered a bit
          // trickier by the fact that the mouse entering the button means it is
