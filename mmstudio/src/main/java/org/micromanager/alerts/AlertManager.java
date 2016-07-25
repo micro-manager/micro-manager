@@ -33,7 +33,9 @@ public interface AlertManager {
     * dialog will be created each time this method is called; calling it
     * repeatedly will therefore rapidly hit the message limit (the point where
     * new dialogs are not shown until old ones have been disposed of by the
-    * user).
+    * user). It is therefore strongly encouraged that you use the variant of
+    * this method that takes an "owner" parameter if your code may produce
+    * multiple alerts.
     * @param text Text to display to the user.
     * @return Newly-created Alert
     */
