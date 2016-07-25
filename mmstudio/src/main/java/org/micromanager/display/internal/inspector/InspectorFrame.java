@@ -249,9 +249,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
    private static final String CONTRAST_TITLE = "Histograms and Settings";
    private static final String WINDOW_WIDTH = "width of the inspector frame"; 
    private static final String ALWAYS_ON_TOP = "Always on top";
-   private static boolean alwaysOnTop_ = DefaultUserProfile.getInstance().getBoolean(
-           InspectorFrame.class, ALWAYS_ON_TOP, true);
-   
+
    // This boolean is used to create a new Inspector frame only on the first
    // time that we create a new DisplayWindow in any given session of the
    // program.
@@ -285,17 +283,17 @@ public class InspectorFrame extends MMFrame implements Inspector {
    /**
     * Sets the desired window behavior
     * TODO: propagate this choice to already opened inspector frames, possibly
-    * by listening to an event.
+    * by posting an event
     * @param state desired op top behavior of the inspector frame
     */
    public static void setShouldBeAlwaysOnTop(boolean state) {
-      alwaysOnTop_ = state;
       DefaultUserProfile.getInstance().setBoolean(
-              InspectorFrame.class, ALWAYS_ON_TOP, state); 
+              InspectorFrame.class, ALWAYS_ON_TOP, state);
    }
    
    public static boolean getShouldBeAlwaysOnTop() {
-      return alwaysOnTop_;
+      return DefaultUserProfile.getInstance().getBoolean(
+            InspectorFrame.class, ALWAYS_ON_TOP, true);
    }
 
    private DataViewer display_;
@@ -312,8 +310,7 @@ public class InspectorFrame extends MMFrame implements Inspector {
       haveCreatedInspector_ = true;
       wrapperPanels_ = new ArrayList<WrapperPanel>();
       super.setTitle("Image Inspector");
-      if (alwaysOnTop_)
-         setAlwaysOnTop(true);
+      super.setAlwaysOnTop(getShouldBeAlwaysOnTop());
       // Use a small title bar.
       super.getRootPane().putClientProperty("Window.style", "small");
 
