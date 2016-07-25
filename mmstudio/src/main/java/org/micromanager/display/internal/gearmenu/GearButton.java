@@ -38,6 +38,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.Studio;
 
+import org.micromanager.internal.utils.SortedMenu;
 import org.micromanager.internal.utils.SortedPopupMenu;
 
 /**
@@ -72,7 +73,7 @@ public class GearButton extends JButton {
 
       // Insert plugins. Sorted alphabetically by name/submenu name.
       HashMap<String, DisplayGearMenuPlugin> plugins = studio.plugins().getDisplayGearMenuPlugins();
-      HashMap<String, SortedPopupMenu> subMenus = new HashMap<String, SortedPopupMenu>();
+      HashMap<String, SortedMenu> subMenus = new HashMap<String, SortedMenu>();
       ArrayList<JMenuItem> items = new ArrayList<JMenuItem>();
       for (final DisplayGearMenuPlugin plugin : plugins.values()) {
          JMenuItem item = new JMenuItem(plugin.getName());
@@ -90,8 +91,9 @@ public class GearButton extends JButton {
          else {
             // Add it to a submenu, creating it if necessary.
             if (!subMenus.containsKey(subMenu)) {
-               SortedPopupMenu popup = new SortedPopupMenu();
-               subMenus.put(subMenu, popup);
+               SortedMenu menu = new SortedMenu(subMenu);
+               subMenus.put(subMenu, menu);
+               menu_.add(menu);
             }
             subMenus.get(subMenu).add(item);
          }
