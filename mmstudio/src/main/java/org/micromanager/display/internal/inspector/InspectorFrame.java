@@ -284,10 +284,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
    
    /**
     * Sets the desired window behavior
-    * TODO: propagate this choice to already opened inspector frames
-    * To do so will need code to discover existing instances from a static
-    * context.  A quick search showed this could be done using a list
-    * with weak references, but that seems a bit ugly.
+    * TODO: propagate this choice to already opened inspector frames, possibly
+    * by listening to an event.
     * @param state desired op top behavior of the inspector frame
     */
    public static void setShouldBeAlwaysOnTop(boolean state) {
