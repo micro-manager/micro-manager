@@ -245,6 +245,8 @@ public class InspectorFrame extends MMFrame implements Inspector {
       }
    }
 
+   private static class AlwaysOnTopChangedEvent { }
+
    private static final String TOPMOST_DISPLAY = "Topmost Window";
    private static final String CONTRAST_TITLE = "Histograms and Settings";
    private static final String WINDOW_WIDTH = "width of the inspector frame"; 
@@ -282,15 +284,14 @@ public class InspectorFrame extends MMFrame implements Inspector {
    
    /**
     * Sets the desired window behavior
-    * TODO: propagate this choice to already opened inspector frames, possibly
-    * by posting an event
     * @param state desired op top behavior of the inspector frame
     */
    public static void setShouldBeAlwaysOnTop(boolean state) {
       DefaultUserProfile.getInstance().setBoolean(
               InspectorFrame.class, ALWAYS_ON_TOP, state);
+      DefaultEventManager.getInstance().post(new AlwaysOnTopChangedEvent());
    }
-   
+
    public static boolean getShouldBeAlwaysOnTop() {
       return DefaultUserProfile.getInstance().getBoolean(
             InspectorFrame.class, ALWAYS_ON_TOP, true);
@@ -643,6 +644,11 @@ public class InspectorFrame extends MMFrame implements Inspector {
       catch (Exception e) {
          ReportingUtils.logError(e, "Error on new display activation");
       }
+   }
+
+   @Subscribe
+   public void onAlwaysOnTopChanged(AlwaysOnTopChangedEvent e) {
+      setAlwaysOnTop(getShouldBeAlwaysOnTop());
    }
 
    private void setDisplay(final DataViewer display) {
