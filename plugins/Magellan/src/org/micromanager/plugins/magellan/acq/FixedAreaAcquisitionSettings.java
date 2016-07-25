@@ -61,6 +61,7 @@ public class FixedAreaAcquisitionSettings  {
    public XYFootprint footprint_;
    public int useTopOrBottomFootprint_;
    public double tileOverlap_; //stored as percent * 100, i.e. 55 => 55%
+   public boolean channelsAtEverySlice_;
    
    //channels
    public String channelGroup_;
@@ -90,6 +91,7 @@ public class FixedAreaAcquisitionSettings  {
       numTimePoints_ = prefs.getInt(PREF_PREFIX + "NTP", 1);
       timeIntervalUnit_ = prefs.getInt(PREF_PREFIX + "TPIU", 0);
       //space
+      channelsAtEverySlice_ = prefs.getBoolean(PREF_PREFIX +"ACQORDER", true);
       zStep_ = prefs.getDouble(PREF_PREFIX + "ZSTEP", 1);
       zStart_ = prefs.getDouble(PREF_PREFIX + "ZSTART", 0);
       zEnd_ = prefs.getDouble(PREF_PREFIX + "ZEND", 0);
@@ -176,6 +178,7 @@ public class FixedAreaAcquisitionSettings  {
       prefs.putDouble(PREF_PREFIX + "ZDISTABOVETOP", distanceAboveTopSurface_);
       prefs.putInt(PREF_PREFIX + "SPACEMODE", spaceMode_);
       prefs.putDouble(PREF_PREFIX + "TILEOVERLAP", tileOverlap_);
+      prefs.putBoolean(PREF_PREFIX + "ACQORDER", channelsAtEverySlice_);
       //channels
       prefs.put(PREF_PREFIX + "CHANNELGROUP", channelGroup_);
       

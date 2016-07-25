@@ -514,6 +514,7 @@ public class GUI extends javax.swing.JFrame {
             settings.footprint_ = getFootprintObject(footprint2DComboBox_.getSelectedIndex());
         } else if (checkBox3D_.isSelected()) {
             settings.zStep_ = (Double) zStepSpinner_.getValue();
+            settings.channelsAtEverySlice_ = acqOrderCombo_.getSelectedIndex() == 0;
             if (simpleZStackRadioButton_.isSelected()) {
                 settings.spaceMode_ = FixedAreaAcquisitionSettings.SIMPLE_Z_STACK;
                 settings.footprint_ = getFootprintObject(simpleZStackFootprintCombo_.getSelectedIndex());
@@ -579,6 +580,7 @@ public class GUI extends javax.swing.JFrame {
         timeIntervalSpinner_.setValue(settings.timePointInterval_);
         timeIntevalUnitCombo_.setSelectedIndex(settings.timeIntervalUnit_);
         //space           
+        acqOrderCombo_.setSelectedIndex(settings.channelsAtEverySlice_ ? 0 : 1);
         checkBox2D_.setSelected(settings.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D);
         checkBox3D_.setSelected(settings.spaceMode_ == FixedAreaAcquisitionSettings.SIMPLE_Z_STACK
                 || settings.spaceMode_ == FixedAreaAcquisitionSettings.VOLUME_BETWEEN_SURFACES_Z_STACK
@@ -833,6 +835,8 @@ public class GUI extends javax.swing.JFrame {
       acqTileOverlapLabel_ = new javax.swing.JLabel();
       acqOverlapPercentSpinner_ = new javax.swing.JSpinner();
       tileOverlapPercentLabel_ = new javax.swing.JLabel();
+      acqOrderCombo_ = new javax.swing.JComboBox();
+      acqOrderLabel_ = new javax.swing.JLabel();
       ChannelsTab_ = new javax.swing.JPanel();
       jScrollPane1 = new javax.swing.JScrollPane();
       channelsTable_ = new javax.swing.JTable();
@@ -1823,6 +1827,15 @@ public class GUI extends javax.swing.JFrame {
       tileOverlapPercentLabel_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
       tileOverlapPercentLabel_.setText("%");
 
+      acqOrderCombo_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Channels at each Z slice", "Z stacks for each channel" }));
+      acqOrderCombo_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            acqOrderCombo_ActionPerformed(evt);
+         }
+      });
+
+      acqOrderLabel_.setText("Order:");
+
       javax.swing.GroupLayout spaceTab_Layout = new javax.swing.GroupLayout(spaceTab_);
       spaceTab_.setLayout(spaceTab_Layout);
       spaceTab_Layout.setHorizontalGroup(
@@ -1832,16 +1845,20 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(spaceTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(spaceTab_Layout.createSequentialGroup()
                   .addComponent(checkBox3D_)
-                  .addGap(40, 40, 40)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                   .addComponent(zStepLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(zStepSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(37, 37, 37)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                   .addComponent(acqTileOverlapLabel_)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(acqOverlapPercentSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(tileOverlapPercentLabel_))
+                  .addComponent(acqOverlapPercentSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(tileOverlapPercentLabel_)
+                  .addGap(18, 18, 18)
+                  .addComponent(acqOrderLabel_)
+                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                  .addComponent(acqOrderCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 207, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addGroup(spaceTab_Layout.createSequentialGroup()
                   .addGroup(spaceTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addComponent(simpleZPanel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1866,7 +1883,9 @@ public class GUI extends javax.swing.JFrame {
                   .addComponent(zStepLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addComponent(acqTileOverlapLabel_)
                   .addComponent(acqOverlapPercentSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addComponent(tileOverlapPercentLabel_)))
+                  .addComponent(tileOverlapPercentLabel_)
+                  .addComponent(acqOrderCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addComponent(acqOrderLabel_)))
             .addGroup(spaceTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(spaceTab_Layout.createSequentialGroup()
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -3012,9 +3031,15 @@ public class GUI extends javax.swing.JFrame {
       acquisitionSettingsChanged();
    }//GEN-LAST:event_withinDistanceFromFootprintCombo_ActionPerformed
 
+   private void acqOrderCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acqOrderCombo_ActionPerformed
+      acquisitionSettingsChanged();
+   }//GEN-LAST:event_acqOrderCombo_ActionPerformed
+
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JComboBox ChannelGroupCombo_;
    private javax.swing.JPanel ChannelsTab_;
+   private javax.swing.JComboBox acqOrderCombo_;
+   private javax.swing.JLabel acqOrderLabel_;
    private javax.swing.JSpinner acqOverlapPercentSpinner_;
    private javax.swing.JTabbedPane acqTabbedPane_;
    private javax.swing.JLabel acqTileOverlapLabel_;
