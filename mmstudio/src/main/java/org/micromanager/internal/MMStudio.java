@@ -112,9 +112,7 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.display.internal.DefaultDisplayManager;
 
 import org.micromanager.internal.logging.LogFileManager;
-import org.micromanager.internal.menus.ConfigMenu;
-import org.micromanager.internal.menus.FileMenu;
-import org.micromanager.internal.menus.HelpMenu;
+import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.menus.ToolsMenu;
 import org.micromanager.internal.navigation.ClickToMoveManager;
 import org.micromanager.internal.navigation.XYZKeyListener;
@@ -198,7 +196,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    // Lock invoked while shutting down
    private final Object shutdownLock_ = new Object();
 
-   private final JMenuBar menuBar_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
@@ -237,14 +234,16 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean shouldRunAsPlugin) {
       org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
+      studio_ = this;
 
       DefaultEventManager.getInstance().registerForEvents(this);
+
+      // Relies on the event manager existing.
+      pluginManager_ = new DefaultPluginManager(studio_);
 
       prepAcquisitionEngine();
 
       UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
-      
-      studio_ = this;
 
       amRunningAsPlugin_ = shouldRunAsPlugin;
       isProgramRunning_ = true;
@@ -299,19 +298,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       // The tools menu depends on the Quick-Access Manager.
       DefaultQuickAccessManager.createManager(studio_);
 
-      menuBar_ = new JMenuBar();
-
-      FileMenu fileMenu = new FileMenu(studio_, menuBar_);
-
-      ToolsMenu toolsMenu = new ToolsMenu(studio_, core_, menuBar_);
-
-      ConfigMenu configMenu = new ConfigMenu(studio_, core_, menuBar_);
-
-      HelpMenu helpMenu = new HelpMenu(studio_, core_);
-
       initializationSequence();
-
-      helpMenu.initializeHelpMenu(menuBar_);
    }
 
    /**
@@ -362,7 +349,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
       displayManager_ = new DefaultDisplayManager(this);
 
       afMgr_ = new DefaultAutofocusManager(studio_);
-      pluginManager_ = new DefaultPluginManager(studio_, menuBar_);
 
       posList_ = new PositionList();
       engine_.setPositionList(posList_);
@@ -394,8 +380,7 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
 
-      // The MainFrame relies on plugins.
-      frame_ = new MainFrame(this, core_, snapLiveManager_, menuBar_);
+      frame_ = new MainFrame(this, core_, snapLiveManager_);
       frame_.paintToFront();
       staticInfo_ = new StaticInfo(core_, frame_);
 

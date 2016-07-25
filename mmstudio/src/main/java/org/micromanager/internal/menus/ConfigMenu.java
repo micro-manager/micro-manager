@@ -39,9 +39,9 @@ public class ConfigMenu {
    private final CMMCore core_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public ConfigMenu(MMStudio studio, CMMCore core, JMenuBar menuBar) {
+   public ConfigMenu(MMStudio studio, JMenuBar menuBar) {
       studio_ = studio;
-      core_ = core;
+      core_ = studio_.core();
       switchConfigurationMenu_ = new JMenu();
 
       configMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Config");

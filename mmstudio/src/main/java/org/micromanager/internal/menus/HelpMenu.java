@@ -20,24 +20,22 @@ public class HelpMenu {
    private MMStudio studio_;
    private CMMCore core_;
 
-   public HelpMenu(MMStudio studio, CMMCore core) {
+   public HelpMenu(MMStudio studio, JMenuBar menuBar) {
       studio_ = studio;
-      core_ = core;
-   }
-   
-   public void initializeHelpMenu(JMenuBar menuBar) {
+      core_ = studio_.core();
+
       final JMenu helpMenu = GUIUtils.createMenuInMenuBar(menuBar, "Help");
-        
+
       GUIUtils.addMenuItem(helpMenu, "User's Guide", null,
          GUIUtils.makeURLRunnable("https://micro-manager.org/wiki/Version_2.0_Users_Guide")
       );
-        
+
       GUIUtils.addMenuItem(helpMenu, "Configuration Guide", null,
          GUIUtils.makeURLRunnable("http://micro-manager.org/wiki/Micro-Manager_Configuration_Guide")
       );
-        
+
       if (!RegistrationDlg.getHaveRegistered()) {
-         GUIUtils.addMenuItem(helpMenu, 
+         GUIUtils.addMenuItem(helpMenu,
             "Register your copy of Micro-Manager...", null,
             new Runnable() {
                @Override
@@ -77,7 +75,7 @@ public class HelpMenu {
             }
          }
       );
-      
+
       menuBar.validate();
    }
 }

@@ -30,6 +30,8 @@ import java.awt.event.ComponentEvent;
 
 import javax.swing.JFrame;
 
+import org.micromanager.internal.menus.MMMenuBar;
+import org.micromanager.internal.MMStudio;
 
 /**
  * Base class for Micro-Manager frame windows.
@@ -46,13 +48,35 @@ public class MMFrame extends JFrame {
    public MMFrame() {
       super();
       prefPrefix_ = "";
+      setupMenus();
    }
 
    public MMFrame(String prefPrefix) {
       super();
       prefPrefix_ = prefPrefix;
+      setupMenus();
    }
-   
+
+   /**
+    * @param usesMMMenus If true, then the Micro-Manager menubar will be shown
+    * when the frame has focus. Is effectively true by default for the other
+    * constructors.
+    */
+   public MMFrame(String prefPrefix, boolean usesMMMenus) {
+      super();
+      prefPrefix_ = prefPrefix;
+      if (usesMMMenus) {
+         setupMenus();
+      }
+   }
+
+   /**
+    * Create a copy of the Micro-Manager menus for use by this frame.
+    */
+   private void setupMenus() {
+      setJMenuBar(MMMenuBar.createMenuBar(MMStudio.getInstance()));
+   }
+
    /**
     * Checks whether WINDOW_X and WINDOW_Y coordinates are on the screen(s).
     * If not then it sets the prefs to the values specified.

@@ -235,7 +235,9 @@ public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    private DefaultDisplayWindow(Studio studio, Datastore store,
          ControlsFactory controlsFactory, DisplaySettings settings,
          String customName) {
-      super("image display window");
+      // false means we don't use the Micro-Manager menubar, since we use the
+      // ImageJ menubar instead.
+      super("image display window", false);
       studio_ = studio;
       store_ = store;
       knownChannels_ = new HashSet<String>();

@@ -144,8 +144,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private AbstractButton centerQuadButton_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager,
-         JMenuBar menuBar) {
+   public MainFrame(MMStudio studio, CMMCore core, SnapLiveManager manager) {
       super("main micro manager frame");
       org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
 
@@ -175,8 +174,6 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       setExitStrategy(OptionsDlg.getShouldCloseOnExit());
       setIconImage(Toolkit.getDefaultToolkit().getImage(
                getClass().getResource("/org/micromanager/icons/microscope.gif")));
-
-      setJMenuBar(menuBar);
 
       setConfigText("");
       // Set minimum size so we can't resize smaller and hide some of our

@@ -71,20 +71,12 @@ public class DefaultPluginManager implements PluginManager {
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
 
    private Studio studio_;
-   private JMenu menu_;
    private Thread loadingThread_;
 
    private HashMap<Class, ArrayList<MMPlugin>> pluginTypeToPlugins_;
 
-   // Maps plugin submenu headers to the submenus themselves.
-   private HashMap<String, JMenu> subMenus_;
-
-   public DefaultPluginManager(Studio studio, JMenuBar menuBar) {
+   public DefaultPluginManager(Studio studio) {
       studio_ = studio;
-      menu_ = new SortedMenu("Plugins");
-      menuBar.add(menu_);
-
-      subMenus_ = new HashMap<String, JMenu>();
 
       pluginTypeToPlugins_ = new HashMap<Class, ArrayList<MMPlugin>>();
       for (Class classType : VALID_CLASSES) {
@@ -167,8 +159,7 @@ public class DefaultPluginManager implements PluginManager {
 
    /**
     * Load the provided plugin. We set its context, add it to our
-    * pluginTypeToPlugins_ map, insert it into a submenu if appropriate,
-    * and post a NewPluginEvent.
+    * pluginTypeToPlugins_ map, and post a NewPluginEvent.
     */
    private void addPlugin(final MMPlugin plugin) {
       plugin.setContext(studio_);
@@ -177,30 +168,14 @@ public class DefaultPluginManager implements PluginManager {
             pluginTypeToPlugins_.get(pluginClass).add(plugin);
          }
       }
-      if (ProcessorPlugin.class.isInstance(plugin)) {
-         // Add it to the "On-the-fly image processing" plugin menu.
-         addProcessorPluginToMenu((ProcessorPlugin) plugin);
-      }
-      if (MenuPlugin.class.isInstance(plugin)) {
-         // Add it to the menu.
-         addSubMenuItem(((MenuPlugin) plugin).getSubMenu(),
-               plugin.getName(),
-               new Runnable() {
-                  @Override
-                  public void run() {
-                     ((MenuPlugin) plugin).onPluginSelected();
-                  }
-               }
-         );
-      }
       studio_.events().post(new NewPluginEvent(plugin));
    }
 
    /**
     * Create a new item in the specified submenu of the Plugins menu.
     */
-   private void addSubMenuItem(String subMenu, String title,
-         final Runnable selectAction) {
+   private void addSubMenuItem(JMenu rootMenu, HashMap<String, JMenu> subMenus,
+         String subMenu, String title, final Runnable selectAction) {
       JMenuItem item = new JMenuItem(title);
       item.addActionListener(new ActionListener() {
          @Override
@@ -210,10 +185,10 @@ public class DefaultPluginManager implements PluginManager {
       });
       if (subMenu.equals("")) {
          // Add it to the root menu.
-         menu_.add(item);
+         rootMenu.add(item);
       }
       else {
-         if (!subMenus_.containsKey(subMenu)) {
+         if (!subMenus.containsKey(subMenu)) {
             // Create a new menu.
             SortedMenu menu = new SortedMenu(subMenu);
             // HACK: if this is the processor menu, add a couple of items
@@ -229,10 +204,10 @@ public class DefaultPluginManager implements PluginManager {
                menu.addUnsorted(configure);
                menu.addSeparator();
             }
-            menu_.add(menu);
-            subMenus_.put(subMenu, menu);
+            rootMenu.add(menu);
+            subMenus.put(subMenu, menu);
          }
-         subMenus_.get(subMenu).add(item);
+         subMenus.get(subMenu).add(item);
       }
    }
 
@@ -241,8 +216,9 @@ public class DefaultPluginManager implements PluginManager {
     * when selected, will bring up the Pipeline window and add the processor
     * to the current pipeline.
     */
-   private void addProcessorPluginToMenu(final ProcessorPlugin plugin) {
-      addSubMenuItem(PROCESSOR_MENU, plugin.getName(),
+   private void addProcessorPluginToMenu(JMenu menu,
+         HashMap<String, JMenu> subMenus, final ProcessorPlugin plugin) {
+      addSubMenuItem(menu, subMenus, PROCESSOR_MENU, plugin.getName(),
             new Runnable() {
                @Override
                public void run() {
@@ -330,5 +306,26 @@ public class DefaultPluginManager implements PluginManager {
          result.put(plugin.getClass().getName(), (DisplayGearMenuPlugin) plugin);
       }
       return result;
+   }
+
+   public void createPluginMenu(JMenuBar menuBar) {
+      JMenu menu = new SortedMenu("Plugins");
+      menuBar.add(menu);
+      HashMap<String, JMenu> subMenus = new HashMap<String, JMenu>();
+      for (final MenuPlugin plugin : getMenuPlugins().values()) {
+         // Add it to the menu.
+         addSubMenuItem(menu, subMenus, plugin.getSubMenu(), plugin.getName(),
+               new Runnable() {
+                  @Override
+                  public void run() {
+                     plugin.onPluginSelected();
+                  }
+               }
+         );
+      }
+      for (ProcessorPlugin plugin : getProcessorPlugins().values()) {
+         // Add it to the "On-the-fly image processing" sub-menu.
+         addProcessorPluginToMenu(menu, subMenus, plugin);
+      }
    }
 }

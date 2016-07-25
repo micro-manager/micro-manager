@@ -44,9 +44,9 @@ public class ToolsMenu {
    private final CMMCore core_;
 
    @SuppressWarnings("LeakingThisInConstructor")
-   public ToolsMenu(MMStudio studio, CMMCore core, JMenuBar menuBar) {
+   public ToolsMenu(MMStudio studio, JMenuBar menuBar) {
       studio_ = studio;
-      core_ = core;
+      core_ = studio_.core();
       quickAccessMenu_ = new JMenu("Quick Access Panels");
 
       toolsMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Tools");
