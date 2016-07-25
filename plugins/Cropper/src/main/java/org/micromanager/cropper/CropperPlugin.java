@@ -23,14 +23,15 @@ package org.micromanager.cropper;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
 
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-@Plugin(type = MenuPlugin.class)
-public class CropperPlugin implements MenuPlugin, SciJavaPlugin {
+@Plugin(type = DisplayGearMenuPlugin.class)
+public class CropperPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Crop";
    private Studio studio_;
 
@@ -40,14 +41,9 @@ public class CropperPlugin implements MenuPlugin, SciJavaPlugin {
    }
 
    @Override
-   public void onPluginSelected() {
-      DisplayWindow ourWindow = studio_.displays().getCurrentWindow();
-      if (ourWindow == null) {
-         studio_.logs().showMessage("No Micro-Manager viewer found");
-         return;
-      }
+   public void onPluginSelected(DisplayWindow display) {
       // no need to hold on to the instance, we just want to create the frame
-      CropperPluginFrame ourFrame = new CropperPluginFrame(studio_, ourWindow);
+      CropperPluginFrame ourFrame = new CropperPluginFrame(studio_, display);
    }
 
    @Override
