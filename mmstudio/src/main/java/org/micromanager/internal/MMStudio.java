@@ -166,8 +166,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
    private DisplayManager displayManager_;
    private DefaultPluginManager pluginManager_;
    private final SnapLiveManager snapLiveManager_;
-   private final ToolsMenu toolsMenu_;
-   private final ConfigMenu configMenu_;
 
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
@@ -305,9 +303,9 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
 
       FileMenu fileMenu = new FileMenu(studio_, menuBar_);
 
-      toolsMenu_ = new ToolsMenu(studio_, core_, menuBar_);
+      ToolsMenu toolsMenu = new ToolsMenu(studio_, core_, menuBar_);
 
-      configMenu_ = new ConfigMenu(studio_, core_, menuBar_);
+      ConfigMenu configMenu = new ConfigMenu(studio_, core_, menuBar_);
 
       HelpMenu helpMenu = new HelpMenu(studio_, core_);
 
@@ -1259,8 +1257,6 @@ public class MMStudio implements Studio, CompatibilityInterface, PositionListMan
 
       frame_.setEnabled(true);
       initializeGUI();
-
-      configMenu_.updateSwitchConfigurationMenu();
 
       FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
 

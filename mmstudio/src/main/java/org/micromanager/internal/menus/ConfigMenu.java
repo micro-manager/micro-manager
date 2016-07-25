@@ -1,5 +1,7 @@
 package org.micromanager.internal.menus;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.awt.Cursor;
 import java.io.File;
 import java.util.ArrayList;
@@ -18,20 +20,15 @@ import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.events.internal.MouseMovesStageEvent;
+import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.internal.hcwizard.ConfigWizard;
 import org.micromanager.internal.dialogs.IntroDlg;
-import org.micromanager.internal.dialogs.OptionsDlg;
-import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.HotKeysDialog;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
-import org.micromanager.quickaccess.internal.QuickAccessPanelEvent;
 
 public class ConfigMenu {
 
@@ -111,6 +108,8 @@ public class ConfigMenu {
                     studio_.updateChannelCombos();
                  }
               });
+
+      studio_.events().registerForEvents(this);
    }
 
    private void loadConfiguration() {
@@ -187,7 +186,8 @@ public class ConfigMenu {
       }
    }
 
-   public void updateSwitchConfigurationMenu() {
+   @Subscribe
+   public void onSystemConfigurationLoaded(SystemConfigurationLoadedEvent event) {
       switchConfigurationMenu_.removeAll();
       HashSet<String> seenConfigs = new HashSet<String>();
       for (final String configFile : IntroDlg.getRecentlyUsedConfigs()) {
