@@ -23,8 +23,6 @@ package org.micromanager.cropper;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -64,13 +62,6 @@ public class CropperPluginFrame extends MMDialog {
       final CropperPluginFrame cpFrame = this;
       
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-      super.addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent arg0) {
-            cpFrame.dispose();
-         }
-      }
-      );
       
       ourWindow_ = window;
       ourStore_ = ourWindow_.getDatastore();
@@ -200,10 +191,10 @@ public class CropperPluginFrame extends MMDialog {
          int min = mins.get(Coords.CHANNEL);
          int max = maxes.get(Coords.CHANNEL);
          List<String> chNameList = new ArrayList<String>();
-         for (int index = min; index < max; index++) {
+         for (int index = min; index <= max; index++) {
             chNameList.add(channelNames[index]);
          }
-         channelNames = chNameList.toArray(channelNames);
+         channelNames = chNameList.toArray(new String[chNameList.size()]);
       }
       newSizeCoordsBuilder.channel(channelNames.length);
       String[] axes = {Coords.STAGE_POSITION, Coords.TIME, Coords.Z};
