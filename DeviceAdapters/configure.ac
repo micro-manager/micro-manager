@@ -281,7 +281,7 @@ fi
 
 
 # MessagePack
-MM_ARG_WITH_OPTIONAL_LIB([MSGPACK], [msgpack], [MSGPACK])
+MM_ARG_WITH_OPTIONAL_LIB([MessagePack], [msgpack], [MSGPACK])
 AS_IF([test "x$want_msgpack" != xno],
 [
    MM_LIB_MSGPACK([$MSGPACK_PREFIX],

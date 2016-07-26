@@ -58,7 +58,7 @@ AC_DEFUN([MM_LIB_HIDAPI], [
 AC_DEFUN([MM_LIB_MSGPACK], [
    AC_LANG_PUSH([C++])
    MM_LIB_SIMPLE_CXX([MSGPACK], [MessagePack],
-   [$1], [-lmsgpack], [msgpack.hpp],
+   [$1], [-lmsgpackc], [msgpack.hpp],
    [AC_LANG_PROGRAM([[#include <msgpack.hpp>]],
                     [[msgpack::sbuffer buf;]])],
    [$2], [$3])
