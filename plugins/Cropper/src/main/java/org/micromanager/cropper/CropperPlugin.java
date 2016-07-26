@@ -30,14 +30,14 @@ import org.micromanager.display.DisplayWindow;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-@Plugin(type = DisplayGearMenuPlugin.class)
-public class CropperPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
-   public static final String MENUNAME = "Crop";
+@Plugin(type = MenuPlugin.class)
+public class CropperPlugin implements DisplayGearMenuPlugin, MenuPlugin, SciJavaPlugin {
+   public static final String MENUNAME = "Duplicate...";
    private Studio studio_;
 
    @Override
    public String getSubMenu() {
-      return "Image";
+      return "";
    }
 
    @Override
@@ -69,6 +69,11 @@ public class CropperPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    @Override
    public String getCopyright() {
       return "Regents of the University of California, 2016";
+   }
+
+   @Override
+   public void onPluginSelected() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
 }
