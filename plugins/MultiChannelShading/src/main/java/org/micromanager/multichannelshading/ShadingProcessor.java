@@ -24,6 +24,7 @@ package org.micromanager.multichannelshading;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
+import javax.swing.JLabel;
 
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
@@ -34,6 +35,7 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.alerts.Alert;
 
 /**
  *
@@ -45,11 +47,14 @@ public class ShadingProcessor extends Processor {
    private ImageCollection imageCollection_;
    private String channelGroup_;
    private String[] presets_;
+   private final JLabel userFeedback_;
+   private Alert alert_ = null;
 
    public ShadingProcessor(Studio studio, String channelGroup,
            String backgroundFile, String[] presets,
            String[] files) {
       studio_ = studio;
+      userFeedback_ = new JLabel("");
       channelGroup_ = channelGroup;
       presets_ = presets;
       imageCollection_ = new ImageCollection(studio_);
@@ -77,6 +82,7 @@ public class ShadingProcessor extends Processor {
       // For now, this plugin only works with 8 or 16 bit grayscale images
       if (image.getNumComponents() > 1 || image.getBytesPerPixel() > 2) {
          String msg = "Cannot flatfield correct images other than 8 or 16 bit grayscale";
+         provideFeedback(msg);
          studio_.logs().logError(msg);
          context.outputImage(image);
          return;
@@ -90,19 +96,25 @@ public class ShadingProcessor extends Processor {
       // subtract background
       Integer binning = metadata.getBinning();
       if (binning == null) {
-         studio_.logs().logError("MultiShadingPlugin: Image metadata did not contain Binning information.");
+         String msg = "MultiShadingPlugin: Image metadata did not contain Binning information.";
+         provideFeedback(msg);
+         studio_.logs().logError(msg);
          // Assume binning is 1
          binning = 1;
       }
       Rectangle rect = metadata.getROI();
       if (rect == null) {
-         studio_.logs().logError("MultiShadingPlugin: Image metadata did not list ROI.");
+         String msg = "MultiShadingPlugin: Image metadata did not list ROI.";
+         provideFeedback(msg);
+         studio_.logs().logError(msg);
       }
       ImagePlusInfo background = null;
       try {
          background = imageCollection_.getBackground(binning, rect);
       } catch (ShadingException e) {
-         studio_.logs().logError(e, "Error getting background for bin mode " + binning + " and rect " + rect);
+         String msg = "Error getting background for bin mode " + binning + " and rect " + rect;
+         provideFeedback(msg);
+         studio_.logs().logError(e, msg);
       }
       if (background != null) {
          ImageProcessor ip = studio_.data().ij().createProcessor(image);
@@ -113,7 +125,9 @@ public class ShadingProcessor extends Processor {
                userData = userData.copy().putBoolean("Background-corrected", true).build();
             }
          } catch (ShadingException e) {
-            studio_.logs().logError(e, "Unable to subtract background");
+            String msg = "Unable to subtract background";
+            provideFeedback(msg);
+            studio_.logs().logError(e, msg);
          }
          bgSubtracted = studio_.data().ij().createImage(ip, image.getCoords(),
                  metadata.copy().userData(userData).build());
@@ -170,6 +184,14 @@ public class ShadingProcessor extends Processor {
                  2, 1, image.getCoords(), metadata);
          context.outputImage(result);
       }
+   }
+
+   private void provideFeedback(String msg) {
+      userFeedback_.setText(msg);
+      if (alert_ == null) {
+         alert_ = studio_.alerts().showAlert(userFeedback_, this);
+      }
+      alert_.setVisible(true);
    }
 
    /**
