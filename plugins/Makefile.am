@@ -9,7 +9,7 @@ nobase_mmplugin_DATA = \
 	AutoLase.jar \
 	CRISP.jar \
 	CRISPv2.jar \
-	Cropper.jar \
+	Duplicator.jar \
 	FrameCombiner.jar \
 	Gaussian.jar \
 	HCS.jar \

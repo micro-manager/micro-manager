@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.cropper;
+package org.micromanager.duplicator;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
@@ -31,7 +31,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
-public class CropperPlugin implements DisplayGearMenuPlugin, MenuPlugin, SciJavaPlugin {
+public class DuplicatorPlugin implements DisplayGearMenuPlugin, MenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Duplicate...";
    private Studio studio_;
 
@@ -43,7 +43,7 @@ public class CropperPlugin implements DisplayGearMenuPlugin, MenuPlugin, SciJava
    @Override
    public void onPluginSelected(DisplayWindow display) {
       // no need to hold on to the instance, we just want to create the frame
-      CropperPluginFrame ourFrame = new CropperPluginFrame(studio_, display);
+      DuplicatorPluginFrame ourFrame = new DuplicatorPluginFrame(studio_, display);
    }
 
    @Override

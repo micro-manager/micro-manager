@@ -19,7 +19,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.cropper;
+package org.micromanager.duplicator;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -52,14 +52,14 @@ import org.micromanager.internal.utils.MMDialog;
  *
  * @author nico
  */
-public class CropperPluginFrame extends MMDialog {
+public class DuplicatorPluginFrame extends MMDialog {
    private final Studio studio_;
    private final DisplayWindow ourWindow_;
    private final Datastore ourStore_;
    
-   public CropperPluginFrame (Studio studio, DisplayWindow window) {
+   public DuplicatorPluginFrame (Studio studio, DisplayWindow window) {
       studio_ = studio;
-      final CropperPluginFrame cpFrame = this;
+      final DuplicatorPluginFrame cpFrame = this;
       
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       
@@ -74,7 +74,7 @@ public class CropperPluginFrame extends MMDialog {
       }
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
-      super.setTitle(CropperPlugin.MENUNAME);
+      super.setTitle(DuplicatorPlugin.MENUNAME);
 
       super.loadAndRestorePosition(100, 100, 375, 275);
       
