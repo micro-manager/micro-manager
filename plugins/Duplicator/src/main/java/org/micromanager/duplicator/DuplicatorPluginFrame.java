@@ -21,6 +21,11 @@
 
 package org.micromanager.duplicator;
 
+import ij.ImagePlus;
+import ij.gui.Roi;
+import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -148,7 +153,7 @@ public class DuplicatorPluginFrame extends MMDialog {
       OKButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            crop(ourWindow_, mins, maxes);
+            duplicate(ourWindow_, mins, maxes);
             cpFrame.dispose();
          }
       });
@@ -176,12 +181,15 @@ public class DuplicatorPluginFrame extends MMDialog {
     * @param mins - Map with new (or unchanged) minima for the given axis
     * @param maxes - Map with new (or unchanged) maxima for the given axis
     */
-   public void crop(final DisplayWindow theWindow, 
+   public void duplicate(final DisplayWindow theWindow, 
            final Map<String, Integer> mins,
            final Map<String, Integer> maxes) {
       
       // TODO: provide options for disk-backed datastores
       Datastore newStore = studio_.data().createRAMDatastore();
+      
+      Roi roi = theWindow.getImagePlus().getRoi();
+      
       Datastore oldStore = theWindow.getDatastore();
       Coords oldSizeCoord = oldStore.getMaxIndices();
       CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copy();
@@ -234,7 +242,30 @@ public class DuplicatorPluginFrame extends MMDialog {
                   }
                }
                Image img = oldStore.getImage(oldCoord);
-               Image newImgShallow = img.copyAtCoords(newCoordBuilder.build());
+               Coords newCoords = newCoordBuilder.build();
+               Image newImgShallow = img.copyAtCoords(newCoords);
+               if (roi != null) {
+                  ImageProcessor ip = null;
+                  if (img.getImageJPixelType() == ImagePlus.GRAY8) {
+                     ip = new ByteProcessor(
+                          img.getWidth(), img.getHeight(), (byte[]) img.getRawPixels());
+                  } else 
+                     if (img.getImageJPixelType() == ImagePlus.GRAY16) {
+                        ip = new ShortProcessor(
+                        img.getWidth(), img.getHeight() );
+                        ip.setPixels((short[]) img.getRawPixels());
+                  }
+                  if (ip != null) {
+                     ip.setRoi(roi);
+                     ImageProcessor copyIp = ip.crop();
+                     newImgShallow = studio_.data().createImage(copyIp.getPixels(), 
+                             copyIp.getWidth(), copyIp.getHeight(), 
+                             img.getBytesPerPixel(), img.getNumComponents(), 
+                             newCoords, newImgShallow.getMetadata());
+                  } else {
+                     // TODO: throw exception
+                  }
+               }
                newStore.putImage(newImgShallow);
             }
          }
