@@ -28,6 +28,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
+import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
@@ -73,13 +75,15 @@ public class DuplicatorPluginFrame extends MMDialog {
       
       // Not sure if this is needed, be safe for now
       if (!ourStore_.getIsFrozen()) {
-         studio_.logs().showMessage("Can not crop ongoing acquisitions");
+         studio_.logs().showMessage("Can not duplicate ongoing acquisitions");
          super.dispose();
          return;
       }
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
-      super.setTitle(DuplicatorPlugin.MENUNAME);
+      String[] nameParts = window.getName().split(File.separator);
+      String shortName = nameParts[nameParts.length - 1];
+      super.setTitle(DuplicatorPlugin.MENUNAME + shortName);
 
       super.loadAndRestorePosition(100, 100, 375, 275);
       
@@ -101,8 +105,8 @@ public class DuplicatorPluginFrame extends MMDialog {
             maxes.put(axis, ourStore_.getAxisLength(axis));
             
             super.add(new JLabel(axis));
-            SpinnerNumberModel model = new SpinnerNumberModel((int) 1, (int) 1,
-                    (int) ourStore_.getAxisLength(axis), (int) 1);
+            SpinnerNumberModel model = new SpinnerNumberModel( 1, 1,
+                    (int) ourStore_.getAxisLength(axis), 1);
             mins.put(axis, 0);
             final JSpinner minSpinner = new JSpinner(model);
             JFormattedTextField field = (JFormattedTextField) 
@@ -125,7 +129,7 @@ public class DuplicatorPluginFrame extends MMDialog {
             super.add(minSpinner, "wmin 60");
 
             model = new SpinnerNumberModel((int) ourStore_.getAxisLength(axis),
-                    (int) 1,(int) ourStore_.getAxisLength(axis), (int) 1);
+                     1, (int) ourStore_.getAxisLength(axis), 1);
             maxes.put(axis, ourStore_.getAxisLength(axis) - 1);
             final JSpinner maxSpinner = new JSpinner(model);
             field = (JFormattedTextField) 
@@ -149,11 +153,15 @@ public class DuplicatorPluginFrame extends MMDialog {
          }
       }
       
+      super.add(new JLabel("name"));
+      final JTextField nameField = new JTextField(shortName);
+      super.add(nameField, "span2, grow, wrap");
+      
       JButton OKButton = new JButton("OK");
       OKButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            duplicate(ourWindow_, mins, maxes);
+            duplicate(ourWindow_, nameField.getText(), mins, maxes);
             cpFrame.dispose();
          }
       });
@@ -178,10 +186,12 @@ public class DuplicatorPluginFrame extends MMDialog {
     * Performs the actual creation of a new image with reduced content
     * 
     * @param theWindow - original window to be copied
+    * @param newName - name for the copy
     * @param mins - Map with new (or unchanged) minima for the given axis
     * @param maxes - Map with new (or unchanged) maxima for the given axis
     */
    public void duplicate(final DisplayWindow theWindow, 
+           final String newName, 
            final Map<String, Integer> mins,
            final Map<String, Integer> maxes) {
       
@@ -263,7 +273,7 @@ public class DuplicatorPluginFrame extends MMDialog {
                              img.getBytesPerPixel(), img.getNumComponents(), 
                              newCoords, newImgShallow.getMetadata());
                   } else {
-                     // TODO: throw exception
+                     throw new DuplicatorException("Unsupported pixel type.  Can only copy 8 or 16 bit images.");
                   }
                }
                newStore.putImage(newImgShallow);
@@ -271,13 +281,16 @@ public class DuplicatorPluginFrame extends MMDialog {
          }
 
       } catch (DatastoreFrozenException ex) {
-         // TODO
+         studio_.logs().showError("Can not add data to frozen datastore");
       } catch (DatastoreRewriteException ex) {
-         // TODO
+         studio_.logs().showError("Can not overwrite data");
+      } catch (DuplicatorException ex) {
+         studio_.logs().showError(ex.getMessage());
       }
       
       newStore.freeze();
-      studio_.displays().createDisplay(newStore);
+      DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+      copyDisplay.setCustomTitle(newName);
       studio_.displays().manage(newStore);
    }
    

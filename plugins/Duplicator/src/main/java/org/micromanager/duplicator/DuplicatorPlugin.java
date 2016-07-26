@@ -21,7 +21,6 @@
 
 package org.micromanager.duplicator;
 
-import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
@@ -30,8 +29,16 @@ import org.micromanager.display.DisplayWindow;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
-@Plugin(type = MenuPlugin.class)
-public class DuplicatorPlugin implements DisplayGearMenuPlugin, MenuPlugin, SciJavaPlugin {
+
+/**
+ * Plugin that copies (parts of) Micro-Manager datasets to a new datastore
+ * @author nico
+ */
+// replace with:
+//@plugin(type=MenuPlugin.class)
+// to make the code show up in the gearmenu when running under Netbeans
+@Plugin(type = DisplayGearMenuPlugin.class)
+public class DuplicatorPlugin implements DisplayGearMenuPlugin, SciJavaPlugin {
    public static final String MENUNAME = "Duplicate...";
    private Studio studio_;
 
@@ -63,7 +70,7 @@ public class DuplicatorPlugin implements DisplayGearMenuPlugin, MenuPlugin, SciJ
 
    @Override
    public String getVersion() {
-      return "Version 0.1-alpha";
+      return "Version 0.1-beta";
    }
 
    @Override
@@ -71,9 +78,5 @@ public class DuplicatorPlugin implements DisplayGearMenuPlugin, MenuPlugin, SciJ
       return "Regents of the University of California, 2016";
    }
 
-   @Override
-   public void onPluginSelected() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
 
 }
