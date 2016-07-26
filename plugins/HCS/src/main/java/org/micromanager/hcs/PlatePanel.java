@@ -37,7 +37,7 @@ public class PlatePanel extends JPanel {
    private final int yMargin_ = 30;
    private final int fontSizePt_ = 12;
 
-   private SBSPlate plate_;
+   private final SBSPlate plate_;
    private WellPositionList[] wells_;
    private Hashtable<String, Integer> wellMap_;
    private WellBox[] wellBoxes_;
@@ -71,7 +71,7 @@ public class PlatePanel extends JPanel {
       public boolean active;
 
       private DrawingParams params_;
-      private PositionList sites_;
+      private final PositionList sites_;
 
       public WellBox(PositionList pl) {
          label = "undef";

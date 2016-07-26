@@ -26,8 +26,6 @@ import org.micromanager.StagePosition;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.TextUtils;
 
-import com.swtdesigner.SwingResourceManager;
-
 import javax.swing.border.LineBorder;
 
 import java.awt.Color;
@@ -38,7 +36,6 @@ import net.miginfocom.swing.MigLayout;
 
 import mmcorej.CMMCore;
 
-import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
 
 import java.awt.Dimension;
@@ -83,14 +80,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private final String SITE_OVERLAP    = "site_overlap"; //in µm
    private final String SITE_ROWS       = "site_rows";
    private final String SITE_COLS       = "site_cols";
-   private final String LOCK_ASPECT = "lock_aspect";
-   private final String POINTER_MOVE = "Move";
-   private final String POINTER_SELECT = "Select";
-   private final String ROOT_DIR = "root";
-   private final String PLATE_DIR = "plate";
-   public static final String menuName = "HCS Site Generator";
-   public static final String tooltipDescription =
-           "Generate position list for multi-well plates";
+
    private final JLabel statusLabel_;
    private final JCheckBox chckbxThreePt_;
    private final ButtonGroup toolButtonGroup = new ButtonGroup();
@@ -99,6 +89,10 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
    private double xSpacing_ = 0.0;
    private double ySpacing_ = 0.0;
+   
+   private CalibrationFrame calFrame_ = null;
+   private final JToggleButton moveStage_;
+   private final JToggleButton selectWells_;
 
 
    private void updateXySpacing() {
@@ -159,12 +153,13 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
     */
    /**
     *
+    * @param app Micro-Manager api
     */
    public SiteGenerator(Studio app) {
       super();
       app_ = app;
-      setMinimumSize(new Dimension(815, 600));
-      addWindowListener(new WindowAdapter() {
+      super.setMinimumSize(new Dimension(815, 600));
+      super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(final WindowEvent e) {
             saveSettings();
@@ -173,7 +168,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
 
       JPanel contentsPanel = new JPanel(
             new MigLayout("fill, flowx, insets 0, gap 0"));
-      add(contentsPanel);
+      super.add(contentsPanel);
       plate_ = new SBSPlate();
 
       xyStagePos_ = new Point2D.Double(0.0, 0.0);
@@ -185,8 +180,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       threePtList_ = null;
       focusPlane_ = null;
 
-      setTitle("HCS Site Generator " + HCSPlugin.VERSION_INFO);
-      loadAndRestorePosition(100, 100, 1000, 640);
+      super.setTitle("HCS Site Generator " + HCSPlugin.VERSION_INFO);
+      super.loadAndRestorePosition(100, 100, 1000, 640);
 
       platePanel_ = new PlatePanel(plate_, null, this, app);
       contentsPanel.add(platePanel_, "grow, push");
@@ -195,49 +190,50 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       contentsPanel.add(sidebar, "growprio 0, shrinkprio 200, gap 0, wrap");
 
       // Mutually-exclusive toggle buttons for what the mouse does.
-      final JToggleButton selectWells = new JToggleButton("Select",
+      selectWells_ = new JToggleButton("Select",
             IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
-      final JToggleButton moveStage = new JToggleButton("Move",
+      moveStage_ = new JToggleButton("Move",
             IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
 
-      selectWells.setToolTipText("Click and drag to select wells.");
-      selectWells.addActionListener(new ActionListener() {
+      selectWells_.setToolTipText("Click and drag to select wells.");
+      selectWells_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            if (selectWells.isSelected()) {
+            if (selectWells_.isSelected()) {
                platePanel_.setTool(PlatePanel.Tool.SELECT);
-               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
-               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+               selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
+               moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
             }
             else {
-               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
-               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
+               selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+               moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
             }
          }
       });
-      toolButtonGroup.add(selectWells);
+      toolButtonGroup.add(selectWells_);
       // set default tool
       platePanel_.setTool(PlatePanel.Tool.SELECT);
-      sidebar.add(selectWells, "split 2, alignx center, flowx");
+      sidebar.add(selectWells_, "split 2, alignx center, flowx");
 
-      moveStage.setToolTipText("Click to move the stage");
-      moveStage.addActionListener(new ActionListener() {
+      moveStage_.setToolTipText("Click to move the stage");
+      moveStage_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            if (moveStage.isSelected()) {
+            if (moveStage_.isSelected()) {
                platePanel_.setTool(PlatePanel.Tool.MOVE);
-               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
-               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
+               moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand_on.png"));
+               selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor.png"));
             }
             else {
-               moveStage.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
-               selectWells.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
+               moveStage_.setIcon(IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+               selectWells_.setIcon(IconLoader.getIcon("/org/micromanager/icons/mouse_cursor_on.png"));
             }
          }
       });
-      toolButtonGroup.add(moveStage);
-      selectWells.setSelected(true);
-      sidebar.add(moveStage);
+      toolButtonGroup.add(moveStage_);
+      selectWells_.setSelected(true);
+      moveStage_.setEnabled(false);
+      sidebar.add(moveStage_);
 
       final JLabel plateFormatLabel = new JLabel();
       plateFormatLabel.setAlignmentY(Component.TOP_ALIGNMENT);
@@ -676,22 +672,18 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       if (app_ == null) {
          return;
       }
-      int ret = JOptionPane.showConfirmDialog(this, "Manually position the XY stage over the center of the well A01 and press OK",
-              "XYStage origin setup", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-      if (ret == JOptionPane.OK_OPTION) {
-         try {
-
-            app_.getCMMCore().setAdapterOriginXY(
-                  plate_.getFirstWellX(), plate_.getFirstWellY());
-            regenerate();
-            Point2D.Double pt = app_.getCMMCore().getXYStagePosition();
-            JOptionPane.showMessageDialog(this, "XY Stage set at position: " + pt.x + "," + pt.y);
-         } catch (Exception e) {
-            displayError(e.getMessage());
-         }
+      if (calFrame_ != null) {
+         calFrame_.setVisible(true);
+      } else {
+         calFrame_ = new CalibrationFrame(app_, plate_, this);
       }
    }
 
+   public void finishCalibration() {
+      regenerate();
+      moveStage_.setEnabled(true);
+   }
+   
    private void regenerate() {
       WellPositionList[] selectedWells = platePanel_.getSelectedWellPositions();
       updateXySpacing();

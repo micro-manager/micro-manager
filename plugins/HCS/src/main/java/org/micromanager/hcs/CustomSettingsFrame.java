@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -17,28 +18,31 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class CustomSettingsFrame extends JFrame {
-   private JTextField id_;
-   private JTextField description_;
-   private JTextField rows_;
-   private JTextField cols_;
-   private JTextField wellSpacingX_;
-   private JTextField wellSpacingY_;
-   private JTextField sizeXUm_;
-   private JTextField sizeYUm_;
-   private JTextField firstWellX_;
-   private JTextField firstWellY_;
-   private JTextField wellSizeX_;
-   private JTextField wellSizeY_;
-   private JCheckBox circular_;
+   private final JTextField id_;
+   private final JTextField description_;
+   private final JTextField rows_;
+   private final JTextField cols_;
+   private final JTextField wellSpacingX_;
+   private final JTextField wellSpacingY_;
+   private final JTextField sizeXUm_;
+   private final JTextField sizeYUm_;
+   private final JTextField firstWellX_;
+   private final JTextField firstWellY_;
+   private final JTextField wellSizeX_;
+   private final JTextField wellSizeY_;
+   private final JCheckBox circular_;
 
-   private SiteGenerator parent_;
+   private final SiteGenerator parent_;
 
    public CustomSettingsFrame(SiteGenerator parent) {
       super();
       parent_ = parent;
-      setLayout(new MigLayout("flowx"));
+      super.setLayout(new MigLayout("flowx"));
 
-      add(new JLabel("<html><body>If you believe your settings would be useful to other labs, please consider sharing<br>the settings file on the &#956;Manager mailing list micro-manager-general@lists.sourceforge.net</body></html>"), "span, wrap");
+      super.add(new JLabel(
+              "<html><body>If you believe your settings would be useful to other labs, " +
+               "please consider sharing<br>the settings file on the &#956;Manager mailing list " +
+               "micro-manager-general@lists.sourceforge.net</body></html>"), "span, wrap");
 
       id_ = createText("Layout name: ", 10, false);
       description_ = createText("Layout description: ", 25, true);
@@ -59,7 +63,7 @@ public class CustomSettingsFrame extends JFrame {
       wellSizeY_ = createText("<html>Well height (&#956;m): </html>", 10, true);
 
       circular_ = new JCheckBox("<html>Circular: ");
-      add(circular_, "wrap");
+      super.add(circular_, "wrap");
 
       JButton cancel = new JButton("Cancel");
       cancel.addActionListener(new ActionListener() {
@@ -68,7 +72,7 @@ public class CustomSettingsFrame extends JFrame {
             dispose();
          }
       });
-      add(cancel, "align right");
+      super.add(cancel, "align right");
 
       JButton save = new JButton("Save to file");
       save.addActionListener(new ActionListener() {
@@ -81,10 +85,10 @@ public class CustomSettingsFrame extends JFrame {
             }
          }
       });
-      add(save, "align right");
+      super.add(save, "align right");
 
-      pack();
-      setVisible(true);
+      super.pack();
+      super.setVisible(true);
    }
 
    private JTextField createText(String label, int width, boolean shouldWrap) {
@@ -111,8 +115,12 @@ public class CustomSettingsFrame extends JFrame {
          dispose();
          parent_.loadCustom(target);
       }
-      catch (Exception e) {
-         ReportingUtils.showError(e, "There was an error trying to save your settings");
+      catch (IOException e) {
+         ReportingUtils.showError(e, "There was an IO error trying to save your settings");
+      } catch (NumberFormatException e) {
+         ReportingUtils.showError(e, "There was a NumberFormat Error trying to save your settings");
+      } catch (HCSException e) {
+         ReportingUtils.showError(e, "There was an HCS error trying to save your settings");
       }
    }
 }
