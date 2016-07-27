@@ -456,7 +456,7 @@ public class MMAcquisition {
       imagesReceived_++;
       progressLabel_.setText(String.format("Received %d of %d images",
                imagesReceived_, imagesExpected_));
-      alert_.pack();
+      alert_.relayout();
    }
 
    /**

@@ -49,12 +49,12 @@ public class DefaultAlertManager implements AlertManager {
    }
 
    @Override
-   public Alert showTextAlert(String text) {
-      return DefaultAlert.addOneShotAlert(studio_, text);
+   public Alert showTextAlert(String title, String text) {
+      return AlertsWindow.addOneShotAlert(studio_, title, text);
    }
 
    @Override
-   public Alert showTextAlert(String text, Object owner) throws IllegalArgumentException {
+   public Alert showTextAlert(String title, String text, Object owner) throws IllegalArgumentException {
       if (ownerToCustomAlert_.containsKey(owner)) {
          throw new IllegalArgumentException("Incompatible alert with owner " + owner + " already exists");
       }
@@ -65,7 +65,7 @@ public class DefaultAlertManager implements AlertManager {
       }
       else {
          // Make a new Alert to hold messages from this owner.
-         alert = DefaultAlert.addTextAlert(studio_);
+         alert = AlertsWindow.addTextAlert(studio_, title);
          ownerToTextAlert_.put(owner, alert);
       }
       alert.addText(text);
@@ -80,7 +80,7 @@ public class DefaultAlertManager implements AlertManager {
       }
       JPanel panel = new JPanel(new MigLayout("insets 0, gap 0, fill"));
       panel.add(contents, "grow");
-      DefaultAlert alert = DefaultAlert.addAlert(studio_, panel, false);
+      DefaultAlert alert = AlertsWindow.addAlert(studio_, panel, false);
       ownerToCustomAlert_.put(owner, alert);
       return alert;
    }

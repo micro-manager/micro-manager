@@ -19,31 +19,10 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.alerts;
-
-import javax.swing.JPanel;
+package org.micromanager.alerts.internal;
 
 /**
- * An Alert is a temporary, undecorated message that is displayed to the user
- * in the Alerts window. Alerts can be created via the AlertManager.
+ * This event is posted on the application event bus whenever all alerts have
+ * been dismissed by the user.
  */
-public abstract class Alert extends JPanel {
-   /**
-    * Returns whether or not this Alert is still visible to the user and can
-    * therefore be updated or have more content added to it. Alerts that have
-    * been dismissed are no longer usable.
-    */
-   public abstract boolean isUsable();
-
-   /**
-    * If changes have been made to the shape of the Alert (for example due to
-    * addition or removal of elements from a custom Alert), this method will
-    * cause its layout to be recalculated.
-    */
-   public abstract void relayout();
-
-   /**
-    * Dismiss the Alert, causing it to no longer be visible to the user.
-    */
-   public abstract void dismiss();
-}
+public class NoAlertsAvailableEvent {}

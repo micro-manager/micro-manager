@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.5 r10040"
+   sodipodi:docname="New document 1">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.41491936"
+     inkscape:cx="582.71832"
+     inkscape:cy="542.81993"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1282"
+     inkscape:window-height="764"
+     inkscape:window-x="4"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       sodipodi:type="arc"
+       style="fill:#ff0000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:4;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       id="path2985"
+       sodipodi:cx="290"
+       sodipodi:cy="445.21933"
+       sodipodi:rx="61.42857"
+       sodipodi:ry="61.42857"
+       d="m 351.42857,445.21933 a 61.42857,61.42857 0 1 1 -122.85714,0 61.42857,61.42857 0 1 1 122.85714,0 z"
+       transform="matrix(0.78828831,0,0,0.78828831,21.396391,101.40099)"
+       inkscape:export-filename="/Users/chriswei/exclamation@2x.png"
+       inkscape:export-xdpi="28.799999"
+       inkscape:export-ydpi="28.799999" />
+    <text
+       xml:space="preserve"
+       style="font-size:41.64305496px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ffffff;fill-opacity:0.98823529;stroke:none;font-family:Sans"
+       x="191.11476"
+       y="560.51642"
+       id="text3755"
+       sodipodi:linespacing="125%"
+       transform="scale(1.138423,0.87840812)"
+       inkscape:export-filename="/Users/chriswei/exclamation@2x.png"
+       inkscape:export-xdpi="28.799999"
+       inkscape:export-ydpi="28.799999"><tspan
+         sodipodi:role="line"
+         id="tspan3757"
+         x="191.11476"
+         y="560.51642"
+         style="font-size:124.92915344px;font-weight:bold;fill:#ffffff;fill-opacity:0.98823529;-inkscape-font-specification:Sans Bold">!</tspan></text>
+  </g>
+</svg>

@@ -72,6 +72,8 @@ import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.acquisition.internal.AcquisitionSelector;
+import org.micromanager.alerts.internal.AlertCreatedEvent;
+import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.GUIRefreshEvent;
@@ -129,6 +131,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private JButton autofocusNowButton_;
    private JButton autofocusConfigureButton_;
    private JButton saveConfigButton_;
+   private JButton alertButton_;
 
    private ConfigGroupPad configPad_;
 
@@ -457,6 +460,29 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       return citePleaLabel;
    }
 
+   private JButton createAlertIcon() {
+      alertButton_ = createButton(null, "exclamation.png",
+            "You have alerts requesting your attention. Click to show the Alerts window.",
+            new Runnable() {
+               @Override
+               public void run() {
+                  studio_.alerts().showAlertsWindow();
+               }
+            });
+      alertButton_.setVisible(false);
+      return alertButton_;
+   }
+
+   @Subscribe
+   public void onAlertCreated(AlertCreatedEvent event) {
+      alertButton_.setVisible(true);
+   }
+
+   @Subscribe
+   public void onNoAlertsAvailable(NoAlertsAvailableEvent event) {
+      alertButton_.setVisible(false);
+   }
+
    private JPanel createComponents() {
       JPanel overPanel = new JPanel(new MigLayout("fill, flowx, insets 1, gap 0"));
       overPanel.add(createConfigProfileLine(), "growx, spanx, wrap");
@@ -464,7 +490,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       subPanel.add(createCommonActionButtons(), "growy, aligny top");
       subPanel.add(createImagingSettingsWidgets(), "gapleft 10, growx, wrap");
       subPanel.add(createUtilityButtons(), "span, wrap");
-      subPanel.add(createPleaLabel(), "span, wrap");
+      subPanel.add(createPleaLabel(), "split, span");
+      subPanel.add(createAlertIcon(), "width 30!, height 20!, growx, gapleft push, gapright push, hidemode 2, wrap");
       overPanel.add(subPanel, "gapbottom push, grow 0, pushx 0");
       overPanel.add(createConfigurationControls(), "grow, wrap, pushx 100");
       // Must not be a completely empty label or else our size calculations

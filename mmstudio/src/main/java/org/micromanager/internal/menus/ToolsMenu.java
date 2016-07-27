@@ -19,6 +19,7 @@ import javax.swing.JOptionPane;
 
 import mmcorej.CMMCore;
 
+import org.micromanager.alerts.internal.AlertsWindow;
 import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
@@ -105,6 +106,16 @@ public class ToolsMenu {
                  }
               },
               "application_view_list.png");
+
+      GUIUtils.addMenuItem(toolsMenu_, "Alerts...",
+               "Show the Alerts window",
+               new Runnable() {
+                  @Override
+                  public void run() {
+                     AlertsWindow.show(studio_);
+                  }
+               },
+               "exclamation.png");
 
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
               "Mouse Moves Stage (Use Hand Tool)",
