@@ -115,7 +115,7 @@ public class ToolsMenu {
                      AlertsWindow.show(studio_);
                   }
                },
-               "exclamation.png");
+               "bell.png");
 
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
               "Mouse Moves Stage (Use Hand Tool)",

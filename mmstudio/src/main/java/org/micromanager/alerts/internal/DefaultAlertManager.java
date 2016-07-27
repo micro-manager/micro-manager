@@ -43,6 +43,7 @@ public class DefaultAlertManager implements AlertManager {
    private Studio studio_;
    private HashMap<String, MultiTextAlert> titleToTextAlert_ = new HashMap<String, MultiTextAlert>();
    private HashMap<String, DefaultAlert> titleToCustomAlert_ = new HashMap<String, DefaultAlert>();
+   private HashMap<String, JComponent> titleToCustomContents_ = new HashMap<String, JComponent>();
 
    private DefaultAlertManager(Studio studio) {
       studio_ = studio;
@@ -65,16 +66,22 @@ public class DefaultAlertManager implements AlertManager {
          alert = AlertsWindow.addTextAlert(studio_, title);
          titleToTextAlert_.put(title, alert);
       }
+      AlertsWindow.showWindowUnlessMuted(studio_, alert);
       alert.addText(text);
       return alert;
    }
 
    @Override
    public Alert showCustomAlert(String title, JComponent contents) {
-      JPanel panel = new JPanel(new MigLayout("insets 0, gap 0, fill"));
-      panel.add(contents, "grow");
-      DefaultAlert alert = AlertsWindow.addAlert(studio_, panel);
+      if (titleToCustomContents_.containsKey(title) &&
+            titleToCustomContents_.get(title) == contents) {
+         // Already have this alert.
+         return titleToCustomAlert_.get(title);
+      }
+      DefaultAlert alert = AlertsWindow.addCustomAlert(studio_, title, contents);
+      // TODO: this potentially replaces an existing alert.
       titleToCustomAlert_.put(title, alert);
+      titleToCustomContents_.put(title, contents);
       return alert;
    }
 

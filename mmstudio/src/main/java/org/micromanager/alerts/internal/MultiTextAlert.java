@@ -50,14 +50,15 @@ public class MultiTextAlert extends DefaultAlert {
     * Sets up the contents of the alert before passing them to the constructor,
     * so they can in turn be passed to the DefaultAlert constructor.
     */
-   public static MultiTextAlert createAlert(AlertsWindow parent, JPanel header) {
+   public static MultiTextAlert createAlert(AlertsWindow parent, String title,
+         JPanel header) {
       JPanel contents = new JPanel(new MigLayout("fill, flowy, insets 0, gap 0"));
       contents.add(header, "gapbottom 2, pushx, growx");
-      return new MultiTextAlert(parent, contents);
+      return new MultiTextAlert(parent, title, contents);
    }
 
-   private MultiTextAlert(AlertsWindow parent, JPanel contents) {
-      super(parent, contents);
+   private MultiTextAlert(AlertsWindow parent, String title, JPanel contents) {
+      super(parent, title, contents);
       scrollerContents_ = new JPanel(new MigLayout("fill, insets 0, gap 0, flowy"));
       scroller_ = new JScrollPane(scrollerContents_);
       scroller_.addMouseListener(showCloseButtonAdapter_);
@@ -72,9 +73,15 @@ public class MultiTextAlert extends DefaultAlert {
       JLabel label = new JLabel(text);
       lines_.add(label);
       scrollerContents_.add(label, "growx");
-      // Scroll to the bottom.
-      scroller_.getVerticalScrollBar().setValue(
-            scroller_.getVerticalScrollBar().getMaximum());
+      // Scroll to the bottom. We invoke this later as the scrollbar needs
+      // a chance to recognize that its scrollable range has changed.
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            scroller_.getVerticalScrollBar().setValue(
+                  scroller_.getVerticalScrollBar().getMaximum());
+         }
+      });
       parent_.pack();
       // HACK: for some reason if we don't do this, our viewable area is tiny.
       SwingUtilities.invokeLater(new Runnable() {

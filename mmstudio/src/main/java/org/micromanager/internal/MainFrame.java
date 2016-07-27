@@ -462,7 +462,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    private JButton createAlertIcon() {
-      alertButton_ = createButton(null, "exclamation.png",
+      // This icon adapted from the public domain icon at
+      // https://commons.wikimedia.org/wiki/File:Echo_bell.svg
+      alertButton_ = createButton(null, "bell.png",
             "You have alerts requesting your attention. Click to show the Alerts window.",
             new Runnable() {
                @Override

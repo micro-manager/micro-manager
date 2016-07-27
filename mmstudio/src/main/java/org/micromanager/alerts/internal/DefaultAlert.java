@@ -31,6 +31,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
 import java.awt.Rectangle;
@@ -40,8 +41,10 @@ import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -53,33 +56,53 @@ import org.micromanager.internal.utils.GUIUtils;
 public class DefaultAlert extends Alert {
 
    protected AlertsWindow parent_;
-   private JPanel contents_;
+   private String title_;
+   private JComponent contents_;
+   private JToggleButton muteButton_;
    private boolean isUsable_ = true;
    protected MouseAdapter showCloseButtonAdapter_;
 
    /**
     */
-   protected DefaultAlert(AlertsWindow parent, JPanel contents) {
+   protected DefaultAlert(AlertsWindow parent, String title, JComponent contents) {
       super();
       setLayout(new MigLayout("flowx, fill, insets 1, gap 0", "[]2[]"));
+      if (title != null && !title.contentEquals("")) {
+         JLabel titleLabel = new JLabel(title);
+         titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
+         add(titleLabel, "span, wrap");
+      }
+
       contents.setBorder(BorderFactory.createLineBorder(Color.BLACK));
       parent_ = parent;
+      title_ = title;
       contents_ = contents;
       add(contents_, "grow");
 
       // Show a close button in the top-right, to dismiss the panel.
-      final JButton closeButton = new JButton(
+      JButton closeButton = new JButton(
             IconLoader.getIcon("/org/micromanager/icons/cancel.png"));
-      closeButton.setContentAreaFilled(false);
-      closeButton.setBorderPainted(false);
-      closeButton.setBorder(null);
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             dismiss();
          }
       });
-      add(closeButton, "span, split, flowy, gapbottom push");
+      add(closeButton, "span, split, flowy, width 32!, height 32!");
+
+      // Show a mute button to hide alerts from this source.
+      // This icon based on the public-domain icon at
+      // https://commons.wikimedia.org/wiki/File:Echo_bell.svg
+      muteButton_ = new JToggleButton(
+            IconLoader.getIcon("/org/micromanager/icons/bell_mute.png"));
+      muteButton_.setToolTipText("Mute this alert, so that it will no longer cause the Alerts window to be shown if it reoccurs");
+      muteButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            parent_.setMuted(DefaultAlert.this, muteButton_.isSelected());
+         }
+      });
+      add(muteButton_, "width 32!, height 32!, gapbottom push");
    }
 
    @Override
@@ -96,7 +119,15 @@ public class DefaultAlert extends Alert {
       return isUsable_;
    }
 
-   public JPanel getContents() {
+   public JComponent getContents() {
       return contents_;
+   }
+
+   public String getTitle() {
+      return title_;
+   }
+
+   public void setMuteButtonState(boolean isMuted) {
+      muteButton_.setSelected(isMuted);
    }
 }
