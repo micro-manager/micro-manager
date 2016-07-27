@@ -895,7 +895,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                break;
          }
       }
-      return roiList.toArray(rois);
+      return roiList.toArray(new Roi[roiList.size()]);
    }
    
    // Coverts an array of ImageJ Rois to an array of Polygons.
