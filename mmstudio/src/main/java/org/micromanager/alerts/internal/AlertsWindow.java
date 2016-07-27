@@ -155,7 +155,7 @@ public class AlertsWindow extends JFrame {
             }
          }
       });
-      add(clearAllButton, "gapright push, wrap");
+      add(clearAllButton, "gapleft push, wrap");
 
       JScrollPane scroller = new JScrollPane(alertsPanel_);
       scroller.setBorder(null);
