@@ -77,26 +77,16 @@ public class DefaultAlert extends Alert {
          text_ = ((JLabel) contents).getText();
       }
 
+      // Create a header with title (if available), close button, and mute
+      // button.
+      JPanel header = new JPanel(
+            new MigLayout("flowx, fillx, insets 0, gap 2"));
       if (title != null && !title.contentEquals("")) {
          JLabel titleLabel = new JLabel(title);
          titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
-         add(titleLabel, "span, wrap");
+         header.add(titleLabel);
       }
-      contents.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-      add(contents_, "grow, pushx 100");
 
-      // Show a close button in the top-right, to dismiss the panel.
-      JButton closeButton = new JButton(
-            IconLoader.getIcon("/org/micromanager/icons/cancel_gray.png"));
-      closeButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            dismiss();
-         }
-      });
-      add(closeButton, "span, split, flowy, width 32!, height 32!");
-
-      // Show a mute button to hide alerts from this source.
       // This icon based on the public-domain icon at
       // https://commons.wikimedia.org/wiki/File:Echo_bell.svg
       muteButton_ = new JToggleButton(
@@ -108,7 +98,22 @@ public class DefaultAlert extends Alert {
             parent_.setMuted(DefaultAlert.this, muteButton_.isSelected());
          }
       });
-      add(muteButton_, "width 32!, height 32!, gapbottom push");
+      header.add(muteButton_, "gapleft push, growx, pushx, width 32!, height 32!");
+
+      JButton closeButton = new JButton(
+            IconLoader.getIcon("/org/micromanager/icons/cancel_gray.png"));
+      closeButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            dismiss();
+         }
+      });
+      header.add(closeButton, "width 32!, height 32!");
+      add(header, "growx, pushx 100, span, wrap");
+
+      contents.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+      add(contents_, "grow, pushx 100");
+
    }
 
    @Override

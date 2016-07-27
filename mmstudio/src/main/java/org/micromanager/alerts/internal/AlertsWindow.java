@@ -116,14 +116,14 @@ public class AlertsWindow extends JFrame {
    private Studio studio_;
    private final ArrayList<DefaultAlert> allAlerts_ = new ArrayList<DefaultAlert>();
    private final HashSet<String> mutedAlerts_ = new HashSet<String>();
-   private final JPanel alertsPanel_ = new JPanel(new MigLayout("fill, flowy"));
+   private final JPanel alertsPanel_ = new JPanel(new MigLayout("insets 0, fill, flowy"));
    private boolean shouldShowOnMessage_ = true;
 
    private AlertsWindow(Studio studio) {
       super("Messages");
       studio_ = studio;
 
-      setLayout(new MigLayout("fill, insets 2, gap 0"));
+      setLayout(new MigLayout("insets 2, fill, insets 2, gap 0"));
 
       shouldShowOnMessage_ = studio_.profile().getBoolean(AlertsWindow.class,
             SHOULD_SHOW_WINDOW, true);
