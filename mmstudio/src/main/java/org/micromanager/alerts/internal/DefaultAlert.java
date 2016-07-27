@@ -57,6 +57,7 @@ public class DefaultAlert extends Alert {
 
    protected AlertsWindow parent_;
    private String title_;
+   protected String text_;
    private JComponent contents_;
    private JToggleButton muteButton_;
    private boolean isUsable_ = true;
@@ -67,21 +68,26 @@ public class DefaultAlert extends Alert {
    protected DefaultAlert(AlertsWindow parent, String title, JComponent contents) {
       super();
       setLayout(new MigLayout("flowx, fill, insets 1, gap 0", "[]2[]"));
+
+      parent_ = parent;
+      title_ = title;
+      contents_ = contents;
+      // HACK: if contents are a JLabel, store their text.
+      if (contents instanceof JLabel) {
+         text_ = ((JLabel) contents).getText();
+      }
+
       if (title != null && !title.contentEquals("")) {
          JLabel titleLabel = new JLabel(title);
          titleLabel.setFont(new Font("Arial", Font.BOLD, 12));
          add(titleLabel, "span, wrap");
       }
-
       contents.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-      parent_ = parent;
-      title_ = title;
-      contents_ = contents;
-      add(contents_, "grow");
+      add(contents_, "grow, pushx 100");
 
       // Show a close button in the top-right, to dismiss the panel.
       JButton closeButton = new JButton(
-            IconLoader.getIcon("/org/micromanager/icons/cancel.png"));
+            IconLoader.getIcon("/org/micromanager/icons/cancel_gray.png"));
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -125,6 +131,10 @@ public class DefaultAlert extends Alert {
 
    public String getTitle() {
       return title_;
+   }
+
+   public String getText() {
+      return text_;
    }
 
    public void setMuteButtonState(boolean isMuted) {

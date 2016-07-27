@@ -184,7 +184,7 @@ public class AlertsWindow extends JFrame {
       }
       allAlerts_.add(alert);
       alertsPanel_.add(alert, "pushx, growx");
-      studio_.events().post(new AlertCreatedEvent());
+      studio_.events().post(new AlertCreatedEvent(alert));
       pack();
    }
 

@@ -72,6 +72,8 @@ public class MultiTextAlert extends DefaultAlert {
    public void addText(String text) {
       JLabel label = new JLabel(text);
       lines_.add(label);
+      // Update our summary text.
+      text_ = text;
       scrollerContents_.add(label, "growx");
       // Scroll to the bottom. We invoke this later as the scrollbar needs
       // a chance to recognize that its scrollable range has changed.

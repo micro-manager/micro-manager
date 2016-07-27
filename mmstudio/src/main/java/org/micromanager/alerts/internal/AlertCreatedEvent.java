@@ -25,4 +25,13 @@ package org.micromanager.alerts.internal;
  * This event is posted on the application event bus whenever an alert is
  * created.
  */
-public class AlertCreatedEvent {}
+public class AlertCreatedEvent {
+   private DefaultAlert alert_;
+   public AlertCreatedEvent(DefaultAlert alert) {
+      alert_ = alert;
+   }
+
+   public DefaultAlert getAlert() {
+      return alert_;
+   }
+}

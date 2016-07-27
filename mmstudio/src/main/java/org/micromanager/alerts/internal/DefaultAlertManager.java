@@ -57,9 +57,13 @@ public class DefaultAlertManager implements AlertManager {
    @Override
    public Alert showCombiningTextAlert(String title, String text) {
       MultiTextAlert alert;
+      boolean mustPostEvent = false;
       if (titleToTextAlert_.containsKey(title) &&
             titleToTextAlert_.get(title).isUsable()) {
          alert = titleToTextAlert_.get(title);
+         // This alert is now new again, but AlertsWindow won't post an event
+         // for us.
+         mustPostEvent = true;
       }
       else {
          // Make a new Alert to hold messages.
@@ -68,6 +72,9 @@ public class DefaultAlertManager implements AlertManager {
       }
       AlertsWindow.showWindowUnlessMuted(studio_, alert);
       alert.addText(text);
+      if (mustPostEvent) {
+         studio_.events().post(new AlertCreatedEvent(alert));
+      }
       return alert;
    }
 
