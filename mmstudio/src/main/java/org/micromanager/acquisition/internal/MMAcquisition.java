@@ -202,7 +202,8 @@ public class MMAcquisition {
          display_.registerForEvents(this);
          JPanel alertContents = new JPanel();
          alertContents.add(progressLabel_);
-         alert_ = studio_.alerts().showAlert(alertContents, this);
+         alert_ = studio_.alerts().showCustomAlert("Acquisition Progress",
+               alertContents);
       }
       store_.registerForEvents(this);
       DefaultEventManager.getInstance().registerForEvents(this);
@@ -446,7 +447,7 @@ public class MMAcquisition {
                // This should never happen.
                studio_.logs().logError("Interrupted while waiting to dismiss alert");
             }
-            studio_.alerts().dismissAlert(MMAcquisition.this);
+            alert_.dismiss();
          }
       }).start();
    }
