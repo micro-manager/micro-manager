@@ -73,6 +73,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.acquisition.internal.AcquisitionSelector;
 import org.micromanager.alerts.internal.AlertCreatedEvent;
+import org.micromanager.alerts.internal.AlertsWindow;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ChannelExposureEvent;
@@ -466,7 +467,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
             new Runnable() {
                @Override
                public void run() {
-                  studio_.alerts().showAlertsWindow();
+                  AlertsWindow.show(studio_);
                }
             });
       alertButton_.setVisible(false);
