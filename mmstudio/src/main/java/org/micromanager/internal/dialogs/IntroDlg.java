@@ -62,7 +62,6 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.IntroPlugin;
 import org.micromanager.Studio;
 
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
