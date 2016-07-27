@@ -194,7 +194,7 @@ public class MMAcquisition {
          for (String axis : dims.getAxes()) {
             imagesExpected_ *= dims.getIndex(axis);
          }
-         progressLabel_.setText("Received 0 of " + imagesExpected_ + " images");
+         setProgressText();
       }
       if (show_) {
          display_ = studio_.displays().createDisplay(
@@ -454,9 +454,16 @@ public class MMAcquisition {
    @Subscribe
    public void onNewImage(NewImageEvent event) {
       imagesReceived_++;
-      progressLabel_.setText(String.format("Received %d of %d images",
-               imagesReceived_, imagesExpected_));
-      alert_.relayout();
+      setProgressText();
+      alert_.validate();
+   }
+
+   private void setProgressText() {
+      int numDigits = (int) (Math.log10(imagesExpected_) + 1);
+      String format = "%0" + numDigits + "d";
+      progressLabel_.setText(String.format(
+               "Received " + format + " of %d images",
+            imagesReceived_, imagesExpected_));
    }
 
    /**
