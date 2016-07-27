@@ -36,13 +36,6 @@ public abstract class Alert extends JPanel {
    public abstract boolean isUsable();
 
    /**
-    * If changes have been made to the shape of the Alert (for example due to
-    * addition or removal of elements from a custom Alert), this method will
-    * cause its layout to be recalculated.
-    */
-   public abstract void relayout();
-
-   /**
     * Dismiss the Alert, causing it to no longer be visible to the user.
     */
    public abstract void dismiss();

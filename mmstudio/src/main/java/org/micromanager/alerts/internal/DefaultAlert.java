@@ -118,11 +118,6 @@ public class DefaultAlert extends Alert {
    }
 
    @Override
-   public void relayout() {
-      parent_.pack();
-   }
-
-   @Override
    public void dismiss() {
       isUsable_ = false;
       parent_.removeAlert(this);
