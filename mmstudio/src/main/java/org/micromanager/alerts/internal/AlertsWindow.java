@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -65,7 +66,7 @@ public class AlertsWindow extends JFrame {
     */
    public static void showWindowUnlessMuted(Studio studio, DefaultAlert alert) {
       ensureWindowExists(studio);
-      if (staticInstance_.isMuted(alert)) {
+      if (staticInstance_.isMuted(alert) || staticInstance_.isMutedAll_) {
          return;
       }
       show(studio);
@@ -110,17 +111,39 @@ public class AlertsWindow extends JFrame {
    }
 
    private static final String NO_ALERTS_MSG = "There are no alerts at this time.";
+   private static final String IS_MUTED_ALL = "Are all alerts muted";
 
    private Studio studio_;
    private final ArrayList<DefaultAlert> allAlerts_ = new ArrayList<DefaultAlert>();
    private final HashSet<String> mutedAlerts_ = new HashSet<String>();
    private final JPanel alertsPanel_ = new JPanel(new MigLayout("fill, flowy"));
+   private boolean isMutedAll_ = false;
 
    private AlertsWindow(Studio studio) {
       super("Alerts");
       studio_ = studio;
 
       setLayout(new MigLayout("fill, insets 2, gap 0"));
+
+      final JCheckBox muteAllCheckBox = new JCheckBox();
+      muteAllCheckBox.setToolTipText("Do not reopen this window for any future alerts");
+      muteAllCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            isMutedAll_ = muteAllCheckBox.isSelected();
+            studio_.profile().setBoolean(AlertsWindow.class,
+               IS_MUTED_ALL, isMutedAll_);
+         }
+      });
+      muteAllCheckBox.setSelected(studio_.profile().getBoolean(
+               AlertsWindow.class, IS_MUTED_ALL, false));
+      // Because we can't have a checkbox, text, and icon all in the same
+      // JCheckBox, the checkbox has no text and is adjacent to a JLabel.
+      add(muteAllCheckBox, "split, span");
+      add(new JLabel("Mute All",
+               IconLoader.getIcon("/org/micromanager/icons/bell_mute.png"),
+               JLabel.LEFT),
+            "gapright 15");
 
       JButton unmuteButton = new JButton("Unmute All Alerts");
       unmuteButton.setToolTipText("Unmutes all alerts, so that they will re-open this window when they occur in future.");
@@ -133,7 +156,8 @@ public class AlertsWindow extends JFrame {
             }
          }
       });
-      add(unmuteButton, "split, span");
+      add(unmuteButton);
+
       JButton clearAllButton = new JButton("Clear All Alerts");
       clearAllButton.setToolTipText("Dismiss all alerts, removing them from this window.");
       clearAllButton.addActionListener(new ActionListener() {
