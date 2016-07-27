@@ -53,7 +53,6 @@ import org.micromanager.internal.utils.GUIUtils;
 public class DefaultAlert extends Alert {
 
    protected AlertsWindow parent_;
-   private JPanel wrapper_;
    private JPanel contents_;
    private boolean isUsable_ = true;
    protected MouseAdapter showCloseButtonAdapter_;
@@ -62,27 +61,13 @@ public class DefaultAlert extends Alert {
     */
    protected DefaultAlert(AlertsWindow parent, JPanel contents) {
       super();
-      setLayout(new MigLayout("fill, insets 0, gap 0"));
+      setLayout(new MigLayout("flowx, fill, insets 1, gap 0", "[]2[]"));
+      contents.setBorder(BorderFactory.createLineBorder(Color.BLACK));
       parent_ = parent;
       contents_ = contents;
-      // Wrap contents in a JPanel that uses MigLayout; this is used for the
-      // close button positioning.
-      wrapper_ = new JPanel(
-            new MigLayout("insets 1, gap 0, fill", "[fill, grow]", "[fill, grow]"));
-      wrapper_.add(contents_, "grow");
-      layout(wrapper_);
-   }
+      add(contents_, "grow");
 
-   /**
-    * Note that due to logic in the constructor, we are guaranteed that
-    * contents uses MigLayout for layout.
-    */
-   private void layout(JPanel contents) {
-      wrapper_.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-      // Show a close button when the panel is moused over, and dismiss
-      // the panel when the button is clicked on. This is rendered a bit
-      // trickier by the fact that the mouse entering the button means it is
-      // leaving the contents panel...
+      // Show a close button in the top-right, to dismiss the panel.
       final JButton closeButton = new JButton(
             IconLoader.getIcon("/org/micromanager/icons/cancel.png"));
       closeButton.setContentAreaFilled(false);
@@ -91,30 +76,10 @@ public class DefaultAlert extends Alert {
       closeButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            parent_.removeAlert(DefaultAlert.this);
+            dismiss();
          }
       });
-      showCloseButtonAdapter_ = new MouseAdapter() {
-         @Override
-         public void mouseEntered(MouseEvent e) {
-            closeButton.setVisible(true);
-         }
-         @Override
-         public void mouseExited(MouseEvent e) {
-            if (!closeButton.getBounds().contains(e.getX(), e.getY())) {
-               closeButton.setVisible(false);
-            }
-         }
-      };
-      closeButton.setVisible(false);
-      wrapper_.addMouseListener(showCloseButtonAdapter_);
-      closeButton.addMouseListener(showCloseButtonAdapter_);
-      // Position the button in the upper-right corner of the panel.
-      wrapper_.add(closeButton, "hidemode 3, pos null 5 (container.x2 - 5) null");
-      // Draw the close button on top of everything.
-      wrapper_.setComponentZOrder(closeButton, 0);
-      add(wrapper_, "grow");
-      parent_.pack();
+      add(closeButton, "span, split, flowy, gapbottom push");
    }
 
    @Override
