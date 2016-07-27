@@ -135,18 +135,4 @@ public class AlertsWindow extends JFrame {
       }
       pack();
    }
-
-   /**
-    * HACK: before packing, we want to expand our width to a hardcoded maximum,
-    * if necessary, to contain our various alerts.
-    */
-   @Override
-   public void pack() {
-      int maxWidth = 0;
-      for (Alert alert : allAlerts_) {
-         maxWidth = Math.max(alert.getPreferredSize().width, maxWidth);
-      }
-      setSize(Math.min(400, Math.max(100, maxWidth)), getSize().height);
-      super.pack();
-   }
 }
