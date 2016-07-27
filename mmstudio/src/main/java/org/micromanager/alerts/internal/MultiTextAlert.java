@@ -57,7 +57,7 @@ public class MultiTextAlert extends DefaultAlert {
    }
 
    private MultiTextAlert(AlertsWindow parent, JPanel contents) {
-      super(parent, contents, false);
+      super(parent, contents);
       scrollerContents_ = new JPanel(new MigLayout("fill, insets 0, gap 0, flowy"));
       scroller_ = new JScrollPane(scrollerContents_);
       scroller_.addMouseListener(showCloseButtonAdapter_);

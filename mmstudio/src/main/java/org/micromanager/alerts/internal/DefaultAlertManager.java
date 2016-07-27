@@ -80,7 +80,7 @@ public class DefaultAlertManager implements AlertManager {
       }
       JPanel panel = new JPanel(new MigLayout("insets 0, gap 0, fill"));
       panel.add(contents, "grow");
-      DefaultAlert alert = AlertsWindow.addAlert(studio_, panel, false);
+      DefaultAlert alert = AlertsWindow.addAlert(studio_, panel);
       ownerToCustomAlert_.put(owner, alert);
       return alert;
    }

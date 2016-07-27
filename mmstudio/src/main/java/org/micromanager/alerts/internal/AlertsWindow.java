@@ -71,16 +71,15 @@ public class AlertsWindow extends JFrame {
       JPanel contents = new JPanel(new MigLayout("fill, flowy, insets 2, gap 0"));
       contents.add(createHeader(title));
       contents.add(new JLabel(text));
-      return addAlert(studio, contents, true);
+      return addAlert(studio, contents);
    }
 
    /**
     * Create a custom alert with any contents
     */
-   public static DefaultAlert addAlert(Studio studio, JPanel contents,
-         boolean isOneShot) {
+   public static DefaultAlert addAlert(Studio studio, JPanel contents) {
       show(studio);
-      DefaultAlert alert = new DefaultAlert(staticInstance_, contents, isOneShot);
+      DefaultAlert alert = new DefaultAlert(staticInstance_, contents);
       staticInstance_.addAlert(alert);
       return alert;
    }
@@ -145,7 +144,7 @@ public class AlertsWindow extends JFrame {
    public void pack() {
       int maxWidth = 0;
       for (Alert alert : allAlerts_) {
-         maxWidth = Math.max(alert.getSize().width, maxWidth);
+         maxWidth = Math.max(alert.getPreferredSize().width, maxWidth);
       }
       setSize(Math.min(400, Math.max(100, maxWidth)), getSize().height);
       super.pack();

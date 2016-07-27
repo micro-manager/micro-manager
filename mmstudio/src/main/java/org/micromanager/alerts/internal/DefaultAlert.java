@@ -56,20 +56,17 @@ public class DefaultAlert extends Alert {
    private JPanel wrapper_;
    private JPanel contents_;
    private boolean isUsable_ = true;
-   private boolean isOneShot_;
    protected MouseAdapter showCloseButtonAdapter_;
 
    /**
-    * @param isOneShot: if true, then clicking on the alert dismisses it;
-    * if false, we add a specific button for dismissing the alert instead.
     */
-   protected DefaultAlert(AlertsWindow parent, JPanel contents, boolean isOneShot) {
+   protected DefaultAlert(AlertsWindow parent, JPanel contents) {
       super();
+      setLayout(new MigLayout("fill, insets 0, gap 0"));
       parent_ = parent;
-      isOneShot_ = isOneShot;
       contents_ = contents;
       // Wrap contents in a JPanel that uses MigLayout; this is used for the
-      // "non-one-shot" close button positioning.
+      // close button positioning.
       wrapper_ = new JPanel(
             new MigLayout("insets 1, gap 0, fill", "[fill, grow]", "[fill, grow]"));
       wrapper_.add(contents_, "grow");
@@ -116,7 +113,7 @@ public class DefaultAlert extends Alert {
       wrapper_.add(closeButton, "hidemode 3, pos null 5 (container.x2 - 5) null");
       // Draw the close button on top of everything.
       wrapper_.setComponentZOrder(closeButton, 0);
-      add(wrapper_, "fill, insets 0");
+      add(wrapper_, "grow");
       parent_.pack();
    }
 
