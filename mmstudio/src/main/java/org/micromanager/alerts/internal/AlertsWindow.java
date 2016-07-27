@@ -66,7 +66,7 @@ public class AlertsWindow extends JFrame {
     */
    public static void showWindowUnlessMuted(Studio studio, DefaultAlert alert) {
       ensureWindowExists(studio);
-      if (staticInstance_.isMuted(alert) || staticInstance_.isMutedAll_) {
+      if (staticInstance_.isMuted(alert) || !staticInstance_.shouldShowOnMessage_) {
          return;
       }
       show(studio);
@@ -110,55 +110,43 @@ public class AlertsWindow extends JFrame {
       return alert;
    }
 
-   private static final String NO_ALERTS_MSG = "There are no alerts at this time.";
-   private static final String IS_MUTED_ALL = "Are all alerts muted";
+   private static final String NO_ALERTS_MSG = "There are no messages at this time.";
+   private static final String SHOULD_SHOW_WINDOW = "Show the Messages window when a message is received";
 
    private Studio studio_;
    private final ArrayList<DefaultAlert> allAlerts_ = new ArrayList<DefaultAlert>();
    private final HashSet<String> mutedAlerts_ = new HashSet<String>();
    private final JPanel alertsPanel_ = new JPanel(new MigLayout("fill, flowy"));
-   private boolean isMutedAll_ = false;
+   private boolean shouldShowOnMessage_ = true;
 
    private AlertsWindow(Studio studio) {
-      super("Alerts");
+      super("Messages");
       studio_ = studio;
 
       setLayout(new MigLayout("fill, insets 2, gap 0"));
 
-      final JCheckBox muteAllCheckBox = new JCheckBox();
-      muteAllCheckBox.setToolTipText("Do not reopen this window for any future alerts");
-      muteAllCheckBox.addActionListener(new ActionListener() {
+      shouldShowOnMessage_ = studio_.profile().getBoolean(AlertsWindow.class,
+            SHOULD_SHOW_WINDOW, true);
+      final JCheckBox showWindowCheckBox = new JCheckBox(
+            "", shouldShowOnMessage_);
+      showWindowCheckBox.setToolTipText("Open this window when new messages occur");
+      showWindowCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            isMutedAll_ = muteAllCheckBox.isSelected();
+            shouldShowOnMessage_ = showWindowCheckBox.isSelected();
             studio_.profile().setBoolean(AlertsWindow.class,
-               IS_MUTED_ALL, isMutedAll_);
+               SHOULD_SHOW_WINDOW, shouldShowOnMessage_);
          }
       });
-      muteAllCheckBox.setSelected(studio_.profile().getBoolean(
-               AlertsWindow.class, IS_MUTED_ALL, false));
       // Because we can't have a checkbox, text, and icon all in the same
       // JCheckBox, the checkbox has no text and is adjacent to a JLabel.
-      add(muteAllCheckBox, "split, span");
-      add(new JLabel("Mute All",
+      add(showWindowCheckBox, "split, span");
+      add(new JLabel("Open this window when messages arrive",
                IconLoader.getIcon("/org/micromanager/icons/bell_mute.png"),
                JLabel.LEFT),
             "gapright 15");
 
-      JButton unmuteButton = new JButton("Unmute All Alerts");
-      unmuteButton.setToolTipText("Unmutes all alerts, so that they will re-open this window when they occur in future.");
-      unmuteButton.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            mutedAlerts_.clear();
-            for (DefaultAlert alert : allAlerts_) {
-               alert.setMuteButtonState(false);
-            }
-         }
-      });
-      add(unmuteButton);
-
-      JButton clearAllButton = new JButton("Clear All Alerts");
+      JButton clearAllButton = new JButton("Clear All");
       clearAllButton.setToolTipText("Dismiss all alerts, removing them from this window.");
       clearAllButton.addActionListener(new ActionListener() {
          @Override

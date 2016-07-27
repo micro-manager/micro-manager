@@ -101,7 +101,7 @@ public class DefaultAlert extends Alert {
       // https://commons.wikimedia.org/wiki/File:Echo_bell.svg
       muteButton_ = new JToggleButton(
             IconLoader.getIcon("/org/micromanager/icons/bell_mute.png"));
-      muteButton_.setToolTipText("Mute this alert, so that it will no longer cause the Alerts window to be shown if it reoccurs");
+      muteButton_.setToolTipText("Mute this message source, so that it will no longer cause the Messages window to be shown if it recurs");
       muteButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

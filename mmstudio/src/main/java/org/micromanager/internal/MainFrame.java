@@ -452,7 +452,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       // This icon adapted from the public domain icon at
       // https://commons.wikimedia.org/wiki/File:Echo_bell.svg
       alertButton_ = createButton(null, "bell.png",
-            "You have alerts requesting your attention. Click to show the Alerts window.",
+            "You have messages requesting your attention. Click to show the Messages window.",
             new Runnable() {
                @Override
                public void run() {

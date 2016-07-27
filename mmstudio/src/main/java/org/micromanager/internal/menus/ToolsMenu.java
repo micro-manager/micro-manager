@@ -107,8 +107,8 @@ public class ToolsMenu {
               },
               "application_view_list.png");
 
-      GUIUtils.addMenuItem(toolsMenu_, "Alerts...",
-               "Show the Alerts window",
+      GUIUtils.addMenuItem(toolsMenu_, "Messages...",
+               "Show the Messages window",
                new Runnable() {
                   @Override
                   public void run() {
