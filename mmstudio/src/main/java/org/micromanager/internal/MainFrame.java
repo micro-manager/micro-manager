@@ -72,7 +72,7 @@ import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.acquisition.internal.AcquisitionSelector;
-import org.micromanager.alerts.internal.AlertCreatedEvent;
+import org.micromanager.alerts.internal.AlertUpdatedEvent;
 import org.micromanager.alerts.internal.AlertsWindow;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ConfigGroupChangedEvent;
@@ -467,7 +467,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    @Subscribe
-   public void onAlertCreated(AlertCreatedEvent event) {
+   public void onAlertUpdated(AlertUpdatedEvent event) {
       String title = event.getAlert().getTitle();
       String text = event.getAlert().getText();
       String newText = "";

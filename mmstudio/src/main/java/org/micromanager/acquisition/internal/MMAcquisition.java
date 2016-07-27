@@ -132,7 +132,6 @@ public class MMAcquisition {
 
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
-   private JLabel progressLabel_ = new JLabel();
    private Alert alert_;
 
    public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
@@ -200,10 +199,8 @@ public class MMAcquisition {
          display_ = studio_.displays().createDisplay(
                store_, makeControlsFactory());
          display_.registerForEvents(this);
-         JPanel alertContents = new JPanel();
-         alertContents.add(progressLabel_);
-         alert_ = studio_.alerts().showCustomAlert("Acquisition Progress",
-               alertContents);
+         alert_ = studio_.alerts().showTextAlert("Acquisition Progress", "");
+         setProgressText();
       }
       store_.registerForEvents(this);
       DefaultEventManager.getInstance().registerForEvents(this);
@@ -456,15 +453,16 @@ public class MMAcquisition {
    public void onNewImage(NewImageEvent event) {
       imagesReceived_++;
       setProgressText();
-      alert_.validate();
    }
 
    private void setProgressText() {
       int numDigits = (int) (Math.log10(imagesExpected_) + 1);
       String format = "%0" + numDigits + "d";
-      progressLabel_.setText(String.format(
-               "Received " + format + " of %d images",
-            imagesReceived_, imagesExpected_));
+      if (alert_ != null) {
+         alert_.setText(String.format(
+                  "Received " + format + " of %d images",
+               imagesReceived_, imagesExpected_));
+      }
    }
 
    /**

@@ -75,12 +75,11 @@ public class AlertsWindow extends JFrame {
    /**
     * Create a simple alert with a text message.
     */
-   public static DefaultAlert addOneShotAlert(Studio studio, String title,
+   public static DefaultAlert addTextAlert(Studio studio, String title,
          String text) {
       ensureWindowExists(studio);
-      JPanel wrapper = new JPanel(new MigLayout("fill, flowy, insets 2, gap 0"));
-      wrapper.add(new JLabel(text));
-      DefaultAlert alert = new DefaultAlert(staticInstance_, title, wrapper);
+      DefaultAlert alert = new DefaultAlert(staticInstance_, title,
+            new JLabel(text));
       showWindowUnlessMuted(studio, alert);
       staticInstance_.addAlert(alert);
       return alert;
@@ -172,7 +171,7 @@ public class AlertsWindow extends JFrame {
       }
       allAlerts_.add(alert);
       alertsPanel_.add(alert, "pushx, growx");
-      studio_.events().post(new AlertCreatedEvent(alert));
+      studio_.events().post(new AlertUpdatedEvent(alert));
       pack();
    }
 
@@ -202,5 +201,9 @@ public class AlertsWindow extends JFrame {
 
    public boolean isMuted(DefaultAlert alert) {
       return mutedAlerts_.contains(alert.getTitle());
+   }
+
+   public void textUpdated(DefaultAlert alert) {
+      studio_.events().post(new AlertUpdatedEvent(alert));
    }
 }

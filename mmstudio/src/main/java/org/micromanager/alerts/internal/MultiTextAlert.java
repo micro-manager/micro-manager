@@ -94,4 +94,10 @@ public class MultiTextAlert extends DefaultAlert {
          }
       });
    }
+
+   @Override
+   public void setText(String text) {
+      addText(text);
+      super.setText(text);
+   }
 }

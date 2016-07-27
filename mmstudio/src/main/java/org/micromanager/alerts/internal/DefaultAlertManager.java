@@ -51,7 +51,7 @@ public class DefaultAlertManager implements AlertManager {
 
    @Override
    public Alert showTextAlert(String title, String text) {
-      return AlertsWindow.addOneShotAlert(studio_, title, text);
+      return AlertsWindow.addTextAlert(studio_, title, text);
    }
 
    @Override
@@ -73,7 +73,7 @@ public class DefaultAlertManager implements AlertManager {
       AlertsWindow.showWindowUnlessMuted(studio_, alert);
       alert.addText(text);
       if (mustPostEvent) {
-         studio_.events().post(new AlertCreatedEvent(alert));
+         studio_.events().post(new AlertUpdatedEvent(alert));
       }
       return alert;
    }

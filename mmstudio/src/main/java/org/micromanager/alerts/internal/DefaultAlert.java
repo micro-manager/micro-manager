@@ -53,10 +53,11 @@ import org.micromanager.Studio;
 import org.micromanager.alerts.Alert;
 import org.micromanager.internal.utils.GUIUtils;
 
-public class DefaultAlert extends Alert {
+public class DefaultAlert extends JPanel implements Alert {
 
    protected AlertsWindow parent_;
    private String title_;
+   private JLabel textLabel_ = null;
    protected String text_;
    private JComponent contents_;
    private JToggleButton muteButton_;
@@ -74,7 +75,8 @@ public class DefaultAlert extends Alert {
       contents_ = contents;
       // HACK: if contents are a JLabel, store their text.
       if (contents instanceof JLabel) {
-         text_ = ((JLabel) contents).getText();
+         textLabel_ = (JLabel) contents;
+         text_ = textLabel_.getText();
       }
 
       // Create a header with title (if available), close button, and mute
@@ -128,6 +130,15 @@ public class DefaultAlert extends Alert {
    @Override
    public boolean isUsable() {
       return isUsable_;
+   }
+
+   @Override
+   public void setText(String text) {
+      text_ = text;
+      if (textLabel_ != null) {
+         textLabel_.setText(text);
+      }
+      parent_.textUpdated(this);
    }
 
    public JComponent getContents() {
