@@ -465,6 +465,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       alertButton_.setVisible(false);
       result.add(alertButton_, "width 30!, height 20!, hidemode 2");
       alertLabel_ = new JLabel("");
+      alertLabel_.setFont(defaultFont_);
       result.add(alertLabel_, "width 260!, hidemode 2");
       return result;
    }
