@@ -262,7 +262,7 @@ public abstract class ConfigDialog extends MMDialog {
         scrollPane_ = new JScrollPane();
         scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));
         scrollPane_.setBorder(new BevelBorder(BevelBorder.LOWERED));
-        add(scrollPane_, "span, growx, growy, wrap");
+        add(scrollPane_, "span, growx, growy, pushy, wrap");
 
         table_ = new DaytimeNighttime.Table();
         table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
