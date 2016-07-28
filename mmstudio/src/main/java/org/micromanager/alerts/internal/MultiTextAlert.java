@@ -93,6 +93,7 @@ public class MultiTextAlert extends DefaultAlert {
             parent_.validate();
          }
       });
+      parent_.textUpdated(this);
    }
 
    @Override
