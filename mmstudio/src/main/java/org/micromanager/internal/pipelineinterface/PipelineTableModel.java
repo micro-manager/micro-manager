@@ -240,6 +240,7 @@ public class PipelineTableModel extends AbstractTableModel {
          }
          pipelineConfigs_.add(config);
       }
+      fireTableDataChanged();
       return didUpdate;
    }
 }
