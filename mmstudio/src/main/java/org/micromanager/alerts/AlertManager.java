@@ -24,53 +24,42 @@ import javax.swing.JComponent;
 
 /**
  * The AlertManager allows you to show non-intrusive messages to the user,
- * which will be displayed in small dialogs along the side of the display. You
- * can access the AlertManager via Studio.alerts() or Studio.getAlertManager().
+ * which will be displayed in a special window, the Messages window. You can
+ * access the AlertManager via Studio.alerts() or Studio.getAlertManager().
  */
 public interface AlertManager {
    /**
     * Create a one-time alert that displays some text for the user.  A new
-    * dialog will be created each time this method is called; calling it
-    * repeatedly will therefore rapidly hit the message limit (the point where
-    * new dialogs are not shown until old ones have been disposed of by the
-    * user). It is therefore strongly encouraged that you use the variant of
-    * this method that takes an "owner" parameter if your code may produce
-    * multiple alerts.
+    * alert will be created each time this method is called; calling it
+    * repeatedly will therefore rapidly fill the Messages window.  It is
+    * therefore strongly encouraged that you use showCombiningTextAlert() if
+    * you anticipate showing large numbers of messages.
+    * @param title Title text to show above the main text. May be null.
     * @param text Text to display to the user.
     * @return Newly-created Alert
     */
-   public Alert showTextAlert(String text);
+   public Alert showTextAlert(String title, String text);
 
    /**
-    * Create a text alert for the user that is associated with the provided
-    * owner Object. If there is already a text alert for the owner, and that
+    * Create a text alert that can combine multiple alerts together. If there
+    * is already a combining text alert with the same title, and that
     * alert is still usable (per its isUsable() method), then the new text will
-    * be added as an additional line in the alert. If the owner is null, then
-    * this method is equivalent to calling the showTextAlert() method that
-    * takes no owner parameter.
+    * be added as an additional line in that alert, rather than creating a new
+    * alert.
+    * @param title Title text to show above the main text. May be null.
     * @param text Text to display to the user.
-    * @param owner Owner of this alert; multiple alerts from the same owner
-    *        will be combined together.
     * @return Newly-created Alert, or pre-existing Alert if it is re-used.
-    * @throws IllegalArgumentException if there is an existing alert with this
-    *         owner that was not created by this method.
     */
-   public Alert showTextAlert(String text, Object owner) throws IllegalArgumentException;
+   public Alert showCombiningTextAlert(String title, String text);
 
    /**
-    * Create an alert containing the provided special contents.
+    * Create an alert containing the provided special contents. If there is
+    * already a custom alert with the same title and contents, and that alert
+    * is still usable (per its isUsable() method), then no action will be
+    * taken.
+    * @param title Title text to show above the custom contents. May be null.
     * @param contents Contents to be inserted into the alert dialog.
-    * @param owner Owner of this alert; used only to allow the alert to be
-    *        dismissed later via dismissAlert().
-    * @throws IllegalArgumentException if there is an existing alert with this
-    *         owner.
     * @return Newly-created Alert
     */
-   public Alert showAlert(JComponent contents, Object owner) throws IllegalArgumentException;
-
-   /**
-    * Dismiss an alert that has the specified owner.
-    * @param owner Owner of the alert to dismiss.
-    */
-   public void dismissAlert(Object owner);
+   public Alert showCustomAlert(String title, JComponent contents);
 }

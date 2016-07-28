@@ -41,9 +41,8 @@ public class MultiTextAlert extends DefaultAlert {
    // Going over this limit causes us to embed things in a scrollpane.
    private static final int MAX_LINES = 10;
 
-   private JPanel contents_;
-   private JScrollPane scroller_ = null;
-   private JPanel scrollerContents_ = null;
+   private JScrollPane scroller_;
+   private JPanel scrollerContents_;
    // Holds text lines we have been handed.
    private ArrayList<JLabel> lines_ = new ArrayList<JLabel>();
 
@@ -51,55 +50,55 @@ public class MultiTextAlert extends DefaultAlert {
     * Sets up the contents of the alert before passing them to the constructor,
     * so they can in turn be passed to the DefaultAlert constructor.
     */
-   public static MultiTextAlert addAlert(Studio studio) {
-      JPanel contents = new JPanel(new MigLayout("flowy"));
-      return new MultiTextAlert(studio, contents);
+   public static MultiTextAlert createAlert(AlertsWindow parent, String title,
+         JPanel header) {
+      JPanel contents = new JPanel(new MigLayout("fill, flowy, insets 0, gap 0"));
+      contents.add(header, "gapbottom 2, pushx, growx");
+      return new MultiTextAlert(parent, title, contents);
    }
 
-   private MultiTextAlert(Studio studio, JPanel contents) {
-      super(studio, contents, false);
-      contents_ = contents;
+   private MultiTextAlert(AlertsWindow parent, String title, JPanel contents) {
+      super(parent, title, contents);
+      scrollerContents_ = new JPanel(new MigLayout("fill, insets 0, gap 0, flowy"));
+      scroller_ = new JScrollPane(scrollerContents_);
+      scroller_.addMouseListener(showCloseButtonAdapter_);
+      // Don't let the scroller grow too huge.
+      contents.add(scroller_, "pushx, growx, height ::300");
    }
 
    /**
-    * Add a new label to our contents, embedding everything into a JScrollPane
-    * if necessary.
+    * Add a new label to our contents.
     */
    public void addText(String text) {
       JLabel label = new JLabel(text);
       lines_.add(label);
-      if (lines_.size() == MAX_LINES) {
-         // Hit the size limit.
-         contents_.removeAll();
-         scrollerContents_ = new JPanel(
-               new MigLayout("fill, flowy, insets 0"));
-         scroller_ = new JScrollPane(scrollerContents_) {
-            @Override
-            public Dimension getPreferredSize() {
-               return new Dimension(300, 200);
-            }
-         };
-         scroller_.addMouseListener(showCloseButtonAdapter_);
-         contents_.add(scroller_, "grow");
-         for (JLabel line : lines_) {
-            scrollerContents_.add(line, "growx");
-         }
-      }
-      else if (lines_.size() > MAX_LINES) {
-         scrollerContents_.add(label, "growx");
-      }
-      else {
-         contents_.add(label, "growx");
-      }
-      pack();
-      // HACK: if we don't do this, then the scrollpane shrinks to a tiny size
-      // each time we call this method, until the user mouses over it. No idea
-      // why.
+      // Update our summary text.
+      text_ = text;
+      scrollerContents_.add(label, "growx");
+      // Scroll to the bottom. We invoke this later as the scrollbar needs
+      // a chance to recognize that its scrollable range has changed.
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            getContentPane().layout();
+            scroller_.getVerticalScrollBar().setValue(
+                  scroller_.getVerticalScrollBar().getMaximum());
          }
       });
+      parent_.pack();
+      // HACK: for some reason if we don't do this, our viewable area is tiny.
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            invalidate();
+            parent_.validate();
+         }
+      });
+      parent_.textUpdated(this);
+   }
+
+   @Override
+   public void setText(String text) {
+      addText(text);
+      super.setText(text);
    }
 }

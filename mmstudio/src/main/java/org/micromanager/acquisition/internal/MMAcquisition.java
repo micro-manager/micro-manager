@@ -132,7 +132,6 @@ public class MMAcquisition {
 
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
-   private JLabel progressLabel_ = new JLabel();
    private Alert alert_;
 
    public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
@@ -194,15 +193,14 @@ public class MMAcquisition {
          for (String axis : dims.getAxes()) {
             imagesExpected_ *= dims.getIndex(axis);
          }
-         progressLabel_.setText("Received 0 of " + imagesExpected_ + " images");
+         setProgressText();
       }
       if (show_) {
          display_ = studio_.displays().createDisplay(
                store_, makeControlsFactory());
          display_.registerForEvents(this);
-         JPanel alertContents = new JPanel();
-         alertContents.add(progressLabel_);
-         alert_ = studio_.alerts().showAlert(alertContents, this);
+         alert_ = studio_.alerts().showTextAlert("Acquisition Progress", "");
+         setProgressText();
       }
       store_.registerForEvents(this);
       DefaultEventManager.getInstance().registerForEvents(this);
@@ -446,7 +444,7 @@ public class MMAcquisition {
                // This should never happen.
                studio_.logs().logError("Interrupted while waiting to dismiss alert");
             }
-            studio_.alerts().dismissAlert(MMAcquisition.this);
+            alert_.dismiss();
          }
       }).start();
    }
@@ -454,9 +452,17 @@ public class MMAcquisition {
    @Subscribe
    public void onNewImage(NewImageEvent event) {
       imagesReceived_++;
-      progressLabel_.setText(String.format("Received %d of %d images",
+      setProgressText();
+   }
+
+   private void setProgressText() {
+      int numDigits = (int) (Math.log10(imagesExpected_) + 1);
+      String format = "%0" + numDigits + "d";
+      if (alert_ != null) {
+         alert_.setText(String.format(
+                  "Received " + format + " of %d images",
                imagesReceived_, imagesExpected_));
-      alert_.pack();
+      }
    }
 
    /**

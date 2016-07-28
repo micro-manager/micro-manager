@@ -41,60 +41,48 @@ public class DefaultAlertManager implements AlertManager {
    }
 
    private Studio studio_;
-   private HashMap<Object, MultiTextAlert> ownerToTextAlert_ = new HashMap<Object, MultiTextAlert>();
-   private HashMap<Object, DefaultAlert> ownerToCustomAlert_ = new HashMap<Object, DefaultAlert>();
+   private HashMap<String, MultiTextAlert> titleToTextAlert_ = new HashMap<String, MultiTextAlert>();
+   private HashMap<String, DefaultAlert> titleToCustomAlert_ = new HashMap<String, DefaultAlert>();
+   private HashMap<String, JComponent> titleToCustomContents_ = new HashMap<String, JComponent>();
 
    private DefaultAlertManager(Studio studio) {
       studio_ = studio;
    }
 
    @Override
-   public Alert showTextAlert(String text) {
-      return DefaultAlert.addOneShotAlert(studio_, text);
+   public Alert showTextAlert(String title, String text) {
+      return AlertsWindow.addTextAlert(studio_, title, text);
    }
 
    @Override
-   public Alert showTextAlert(String text, Object owner) throws IllegalArgumentException {
-      if (ownerToCustomAlert_.containsKey(owner)) {
-         throw new IllegalArgumentException("Incompatible alert with owner " + owner + " already exists");
-      }
+   public Alert showCombiningTextAlert(String title, String text) {
       MultiTextAlert alert;
-      if (ownerToTextAlert_.containsKey(owner) &&
-            ownerToTextAlert_.get(owner).isUsable()) {
-         alert = ownerToTextAlert_.get(owner);
+      if (titleToTextAlert_.containsKey(title) &&
+            titleToTextAlert_.get(title).isUsable()) {
+         alert = titleToTextAlert_.get(title);
       }
       else {
-         // Make a new Alert to hold messages from this owner.
-         alert = DefaultAlert.addTextAlert(studio_);
-         ownerToTextAlert_.put(owner, alert);
+         // Make a new Alert to hold messages.
+         alert = AlertsWindow.addTextAlert(studio_, title);
+         titleToTextAlert_.put(title, alert);
       }
+      AlertsWindow.showWindowUnlessMuted(studio_, alert);
       alert.addText(text);
       return alert;
    }
 
    @Override
-   public Alert showAlert(JComponent contents, Object owner) {
-      if (ownerToTextAlert_.containsKey(owner) ||
-            ownerToCustomAlert_.containsKey(owner)) {
-         throw new IllegalArgumentException("Alert with owner " + owner + " already exists");
+   public Alert showCustomAlert(String title, JComponent contents) {
+      if (titleToCustomContents_.containsKey(title) &&
+            titleToCustomContents_.get(title) == contents) {
+         // Already have this alert.
+         return titleToCustomAlert_.get(title);
       }
-      JPanel panel = new JPanel(new MigLayout("insets 0, gap 0, fill"));
-      panel.add(contents, "grow");
-      DefaultAlert alert = DefaultAlert.addAlert(studio_, panel, false);
-      ownerToCustomAlert_.put(owner, alert);
+      DefaultAlert alert = AlertsWindow.addCustomAlert(studio_, title, contents);
+      // TODO: this potentially replaces an existing alert.
+      titleToCustomAlert_.put(title, alert);
+      titleToCustomContents_.put(title, contents);
       return alert;
-   }
-
-   @Override
-   public void dismissAlert(Object owner) {
-      if (ownerToTextAlert_.containsKey(owner)) {
-         ownerToTextAlert_.get(owner).dismiss();
-         ownerToTextAlert_.remove(owner);
-      }
-      if (ownerToCustomAlert_.containsKey(owner)) {
-         ownerToCustomAlert_.get(owner).dismiss();
-         ownerToCustomAlert_.remove(owner);
-      }
    }
 
    public static DefaultAlertManager getInstance() {

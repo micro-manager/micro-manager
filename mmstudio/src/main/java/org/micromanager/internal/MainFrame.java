@@ -72,6 +72,9 @@ import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.acquisition.internal.AcquisitionSelector;
+import org.micromanager.alerts.internal.AlertUpdatedEvent;
+import org.micromanager.alerts.internal.AlertsWindow;
+import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.GUIRefreshEvent;
@@ -129,6 +132,8 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private JButton autofocusNowButton_;
    private JButton autofocusConfigureButton_;
    private JButton saveConfigButton_;
+   private JLabel alertLabel_;
+   private JButton alertButton_;
 
    private ConfigGroupPad configPad_;
 
@@ -442,19 +447,46 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       return subPanel;
    }
 
-   private JLabel createPleaLabel() {
-      JLabel citePleaLabel = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> in your publications!</html>");
-      citePleaLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+   private JPanel createAlertPanel() {
+      JPanel result = new JPanel(new MigLayout("flowx, insets 2, gap 0"));
+      // This icon adapted from the public domain icon at
+      // https://commons.wikimedia.org/wiki/File:Echo_bell.svg
+      alertButton_ = createButton(null, "bell.png",
+            "You have messages requesting your attention. Click to show the Messages window.",
+            new Runnable() {
+               @Override
+               public void run() {
+                  AlertsWindow.show(studio_);
+               }
+            });
+      alertButton_.setVisible(false);
+      result.add(alertButton_, "width 30!, height 20!, hidemode 2");
+      alertLabel_ = new JLabel("");
+      result.add(alertLabel_, "width 260!, hidemode 2");
+      return result;
+   }
 
-      // When users click on the citation plea, we spawn a new thread to send
-      // their browser to the MM wiki.
-      citePleaLabel.addMouseListener(new MouseAdapter() {
-         @Override
-         public void mousePressed(MouseEvent e) {
-            new Thread(GUIUtils.makeURLRunnable("https://micro-manager.org/wiki/Citing_Micro-Manager")).start();
-         }
-      });
-      return citePleaLabel;
+   @Subscribe
+   public void onAlertUpdated(AlertUpdatedEvent event) {
+      String title = event.getAlert().getTitle();
+      String text = event.getAlert().getText();
+      String newText = "";
+      if (title != null) {
+         newText += title + ((text != null) ? ": " : "");
+      }
+      if (text != null) {
+         newText += text;
+      }
+      alertLabel_.setText(newText);
+      alertButton_.setVisible(true);
+      alertLabel_.setVisible(true);
+      alertLabel_.invalidate();
+   }
+
+   @Subscribe
+   public void onNoAlertsAvailable(NoAlertsAvailableEvent event) {
+      alertButton_.setVisible(false);
+      alertLabel_.setVisible(false);
    }
 
    private JPanel createComponents() {
@@ -464,7 +496,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       subPanel.add(createCommonActionButtons(), "growy, aligny top");
       subPanel.add(createImagingSettingsWidgets(), "gapleft 10, growx, wrap");
       subPanel.add(createUtilityButtons(), "span, wrap");
-      subPanel.add(createPleaLabel(), "span, wrap");
+      subPanel.add(createAlertPanel(), "span, wrap");
       overPanel.add(subPanel, "gapbottom push, grow 0, pushx 0");
       overPanel.add(createConfigurationControls(), "grow, wrap, pushx 100");
       // Must not be a completely empty label or else our size calculations
