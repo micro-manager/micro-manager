@@ -72,8 +72,10 @@ import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.acquisition.internal.AcquisitionSelector;
+import org.micromanager.alerts.internal.AlertClearedEvent;
 import org.micromanager.alerts.internal.AlertUpdatedEvent;
 import org.micromanager.alerts.internal.AlertsWindow;
+import org.micromanager.alerts.internal.DefaultAlert;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ChannelExposureEvent;
@@ -134,6 +136,7 @@ public class MainFrame extends MMFrame implements LiveModeListener {
    private JButton saveConfigButton_;
    private JLabel alertLabel_;
    private JButton alertButton_;
+   private DefaultAlert displayedAlert_;
 
    private ConfigGroupPad configPad_;
 
@@ -468,8 +471,9 @@ public class MainFrame extends MMFrame implements LiveModeListener {
 
    @Subscribe
    public void onAlertUpdated(AlertUpdatedEvent event) {
-      String title = event.getAlert().getTitle();
-      String text = event.getAlert().getText();
+      displayedAlert_ = event.getAlert();
+      String title = displayedAlert_.getTitle();
+      String text = displayedAlert_.getText();
       String newText = "";
       if (title != null) {
          newText += title + ((text != null) ? ": " : "");
@@ -481,6 +485,15 @@ public class MainFrame extends MMFrame implements LiveModeListener {
       alertButton_.setVisible(true);
       alertLabel_.setVisible(true);
       alertLabel_.invalidate();
+   }
+
+   @Subscribe
+   public void onAlertCleared(AlertClearedEvent event) {
+      if (event.getAlert() == displayedAlert_) {
+         // Hide the alert text, but leave the icon visible since other alerts
+         // may still be around.
+         alertLabel_.setVisible(false);
+      }
    }
 
    @Subscribe

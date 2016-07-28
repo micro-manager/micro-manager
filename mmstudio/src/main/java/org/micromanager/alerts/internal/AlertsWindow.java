@@ -180,6 +180,7 @@ public class AlertsWindow extends JFrame {
             alertsPanel_.add(new JLabel(NO_ALERTS_MSG));
          }
          alertsPanel_.revalidate();
+         studio_.events().post(new AlertClearedEvent(alert));
       }
       pack();
    }
