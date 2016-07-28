@@ -203,8 +203,6 @@ public class MDUtils {
    public static String getPositionName(JSONObject map) throws JSONException {
       if (isValid(map, "PositionName")) {
          return map.getString("PositionName");
-      } else if (map.has("PositionIndex")) {
-         return "Pos" + map.getString("PositionIndex");
       } else {
          return null;
       }

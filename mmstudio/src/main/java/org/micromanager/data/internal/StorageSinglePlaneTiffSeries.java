@@ -128,6 +128,13 @@ public class StorageSinglePlaneTiffSeries implements Storage {
          ReportingUtils.logError("Attempted to add an image to a read-only fileset");
          return;
       }
+      // We can't properly save multi-position datasets unless each image has
+      // a PositionName property in its metadata.
+      if (isDatasetWritable_ && image.getCoords().getStagePosition() > 0 &&
+            (image.getMetadata() == null ||
+             image.getMetadata().getPositionName() == null)) {
+         throw new IllegalArgumentException("Image " + image + " does not have a valid positionName metadata value");
+      }
       // If we're in the middle of loading a file, then the code that writes
       // stuff to disk should not run; we only need to update our internal
       // records.
