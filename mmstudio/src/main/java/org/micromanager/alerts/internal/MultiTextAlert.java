@@ -63,7 +63,7 @@ public class MultiTextAlert extends DefaultAlert {
       scroller_ = new JScrollPane(scrollerContents_);
       scroller_.addMouseListener(showCloseButtonAdapter_);
       // Don't let the scroller grow too huge.
-      contents.add(scroller_, "pushx, growx, height ::300");
+      contents.add(scroller_, "pushx, growx, height ::100");
    }
 
    /**
