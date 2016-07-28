@@ -82,7 +82,7 @@ public class ShadingProcessor extends Processor {
       // For now, this plugin only works with 8 or 16 bit grayscale images
       if (image.getNumComponents() > 1 || image.getBytesPerPixel() > 2) {
          String msg = "Cannot flatfield correct images other than 8 or 16 bit grayscale";
-         provideFeedback(msg);
+         showAlert(msg);
          studio_.logs().logError(msg);
          context.outputImage(image);
          return;
@@ -97,7 +97,7 @@ public class ShadingProcessor extends Processor {
       Integer binning = metadata.getBinning();
       if (binning == null) {
          String msg = "MultiShadingPlugin: Image metadata did not contain Binning information.";
-         provideFeedback(msg);
+         showAlert(msg);
          studio_.logs().logError(msg);
          // Assume binning is 1
          binning = 1;
@@ -105,7 +105,7 @@ public class ShadingProcessor extends Processor {
       Rectangle rect = metadata.getROI();
       if (rect == null) {
          String msg = "MultiShadingPlugin: Image metadata did not list ROI.";
-         provideFeedback(msg);
+         showAlert(msg);
          studio_.logs().logError(msg);
       }
       ImagePlusInfo background = null;
@@ -113,7 +113,7 @@ public class ShadingProcessor extends Processor {
          background = imageCollection_.getBackground(binning, rect);
       } catch (ShadingException e) {
          String msg = "Error getting background for bin mode " + binning + " and rect " + rect;
-         provideFeedback(msg);
+         showAlert(msg);
          studio_.logs().logError(e, msg);
       }
       if (background != null) {
@@ -126,7 +126,7 @@ public class ShadingProcessor extends Processor {
             }
          } catch (ShadingException e) {
             String msg = "Unable to subtract background";
-            provideFeedback(msg);
+            showAlert(msg);
             studio_.logs().logError(e, msg);
          }
          bgSubtracted = studio_.data().ij().createImage(ip, image.getCoords(),
@@ -186,12 +186,12 @@ public class ShadingProcessor extends Processor {
       }
    }
 
-   private void provideFeedback(String msg) {
-      userFeedback_.setText(msg);
+   private void showAlert(String msg) {
       if (alert_ == null) {
-         alert_ = studio_.alerts().showAlert(userFeedback_, this);
+         alert_ = studio_.alerts().showTextAlert(MultiChannelShading.MENUNAME, msg);
+      } else {
+         alert_.setText(msg);
       }
-      alert_.setVisible(true);
    }
 
    /**
