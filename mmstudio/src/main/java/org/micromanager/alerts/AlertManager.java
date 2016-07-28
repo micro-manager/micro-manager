@@ -24,16 +24,16 @@ import javax.swing.JComponent;
 
 /**
  * The AlertManager allows you to show non-intrusive messages to the user,
- * which will be displayed in a special window, the Alerts window. You can
+ * which will be displayed in a special window, the Messages window. You can
  * access the AlertManager via Studio.alerts() or Studio.getAlertManager().
  */
 public interface AlertManager {
    /**
     * Create a one-time alert that displays some text for the user.  A new
     * alert will be created each time this method is called; calling it
-    * repeatedly will therefore rapidly fill the Alerts window.  It is
-    * therefore strongly encouraged that you use the variant of this method
-    * that takes an "owner" parameter if your code may produce multiple alerts.
+    * repeatedly will therefore rapidly fill the Messages window.  It is
+    * therefore strongly encouraged that you use showCombiningTextAlert() if
+    * you anticipate showing large numbers of messages.
     * @param title Title text to show above the main text. May be null.
     * @param text Text to display to the user.
     * @return Newly-created Alert
@@ -44,7 +44,8 @@ public interface AlertManager {
     * Create a text alert that can combine multiple alerts together. If there
     * is already a combining text alert with the same title, and that
     * alert is still usable (per its isUsable() method), then the new text will
-    * be added as an additional line in the alert.
+    * be added as an additional line in that alert, rather than creating a new
+    * alert.
     * @param title Title text to show above the main text. May be null.
     * @param text Text to display to the user.
     * @return Newly-created Alert, or pre-existing Alert if it is re-used.
