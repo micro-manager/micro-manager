@@ -41,6 +41,7 @@ import javax.swing.ButtonGroup;
 import java.awt.Dimension;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import org.micromanager.internal.utils.NumberUtils;
 
 /**
  * This is the primary user interface for the plugin.
@@ -98,24 +99,41 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private void updateXySpacing() {
       String mode = (String) spacingMode_.getSelectedItem();
       if (mode.equals(VIEW_SPACING)) {
-       core_ = app_.getCMMCore();
-       long width  = core_.getImageWidth();
-       long height = core_.getImageHeight();
-       double cameraXFieldOfView = core_.getPixelSizeUm() * width;
-       double cameraYFieldOfView = core_.getPixelSizeUm() * height;
-       double overlap = Double.parseDouble(overlapField_.getText().replace(',', '.'));
-       xSpacing_ = cameraXFieldOfView - overlap;
-       ySpacing_ = cameraYFieldOfView - overlap;
-     }
-     else {
-       xSpacing_ = Double.parseDouble(spacingFieldX_.getText().replace(',','.'));
-       if (mode.equals(EQUAL_SPACING)) {
-          ySpacing_ = xSpacing_;
+         core_ = app_.getCMMCore();
+         long width = core_.getImageWidth();
+         long height = core_.getImageHeight();
+         double cameraXFieldOfView = core_.getPixelSizeUm() * width;
+         double cameraYFieldOfView = core_.getPixelSizeUm() * height;
+         double overlap;
+         try {
+            overlap = NumberUtils.displayStringToDouble(overlapField_.getText());
+         } catch (java.text.ParseException nfe) {
+            overlap = 0.0;
+            overlapField_.setText(NumberUtils.doubleToDisplayString(0.0));
+            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
          }
-       else {
-          ySpacing_ = Double.parseDouble(spacingFieldY_.getText().replace(',', '.'));
-       }
-     }
+         xSpacing_ = cameraXFieldOfView - overlap;
+         ySpacing_ = cameraYFieldOfView - overlap;
+      } else {
+         try {
+            xSpacing_ = NumberUtils.displayStringToDouble(spacingFieldX_.getText());
+         } catch (java.text.ParseException nfe) {
+            xSpacing_ = 0.0;
+            spacingFieldX_.setText(NumberUtils.doubleToDisplayString(0.0));
+            app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+         }
+         if (mode.equals(EQUAL_SPACING)) {
+            ySpacing_ = xSpacing_;
+         } else {
+            try {
+               ySpacing_ = NumberUtils.displayStringToDouble(spacingFieldY_.getText());
+            } catch (java.text.ParseException nfe) {
+               ySpacing_ = 0.0;
+               spacingFieldY_.setText(NumberUtils.doubleToDisplayString(0.0));
+               app_.logs().logError("NumberFormat error in updateXYSpacing in HCS generator");
+            }
+         }
+      }
    }
 
    public AffineTransform getCurrentAffineTransform() {
