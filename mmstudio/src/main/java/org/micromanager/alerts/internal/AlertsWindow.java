@@ -127,8 +127,7 @@ public class AlertsWindow extends JFrame {
       shouldShowOnMessage_ = studio_.profile().getBoolean(AlertsWindow.class,
             SHOULD_SHOW_WINDOW, true);
       final JCheckBox showWindowCheckBox = new JCheckBox(
-            "", shouldShowOnMessage_);
-      showWindowCheckBox.setToolTipText("Open this window when new messages occur");
+            "Open this window when messages arrive", shouldShowOnMessage_);
       showWindowCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -137,13 +136,7 @@ public class AlertsWindow extends JFrame {
                SHOULD_SHOW_WINDOW, shouldShowOnMessage_);
          }
       });
-      // Because we can't have a checkbox, text, and icon all in the same
-      // JCheckBox, the checkbox has no text and is adjacent to a JLabel.
       add(showWindowCheckBox, "split, span");
-      add(new JLabel("Open this window when messages arrive",
-               IconLoader.getIcon("/org/micromanager/icons/bell_mute.png"),
-               JLabel.LEFT),
-            "gapright 15");
 
       JButton clearAllButton = new JButton("Clear All");
       clearAllButton.setToolTipText("Dismiss all alerts, removing them from this window.");
@@ -168,9 +161,10 @@ public class AlertsWindow extends JFrame {
       if (allAlerts_.isEmpty()) {
          // Remove the "there are no alerts" label.
          alertsPanel_.removeAll();
+         alertsPanel_.revalidate();
       }
       allAlerts_.add(alert);
-      alertsPanel_.add(alert, "pushx, growx");
+      alertsPanel_.add(alert, "pushx, growx, gaptop 0, gapbottom 0");
       studio_.events().post(new AlertUpdatedEvent(alert));
       pack();
    }
@@ -183,6 +177,7 @@ public class AlertsWindow extends JFrame {
             studio_.events().post(new NoAlertsAvailableEvent());
             alertsPanel_.add(new JLabel(NO_ALERTS_MSG));
          }
+         alertsPanel_.revalidate();
       }
       pack();
    }
