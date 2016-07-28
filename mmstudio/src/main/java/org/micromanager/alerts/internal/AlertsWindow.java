@@ -122,7 +122,7 @@ public class AlertsWindow extends JFrame {
       super("Messages");
       studio_ = studio;
 
-      setLayout(new MigLayout("insets 2, fill, insets 2, gap 0"));
+      setLayout(new MigLayout("fill, insets 2, gap 0"));
 
       shouldShowOnMessage_ = studio_.profile().getBoolean(AlertsWindow.class,
             SHOULD_SHOW_WINDOW, true);
@@ -143,6 +143,8 @@ public class AlertsWindow extends JFrame {
       clearAllButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
+            // Reverse iteration because we're modifying allAlerts_ as we
+            // iterate over it.
             for (int i = allAlerts_.size() - 1; i >= 0; --i) {
                allAlerts_.get(i).dismiss();
             }

@@ -23,7 +23,8 @@ package org.micromanager.alerts.internal;
 
 /**
  * This event is posted on the application event bus whenever an alert is
- * updated.
+ * created or updated. The intent is to allow other parts of the GUI than the
+ * Messages window to show alert information.
  */
 public class AlertUpdatedEvent {
    private DefaultAlert alert_;
