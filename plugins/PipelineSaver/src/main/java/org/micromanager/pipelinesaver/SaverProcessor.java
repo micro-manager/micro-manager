@@ -44,24 +44,24 @@ public class SaverProcessor extends Processor {
       // Update save path to account for duplicates -- append a numerical
       // suffix that's max of all suffices + 1.
       savePath_ = findUniqueSavePath(savePath);
-      if (format.equals(SaverPlugin.MULTIPAGE_TIFF)) {
-         // TODO: hardcoded whether or not to split positions.
-         try {
+      try {
+         if (format.equals(SaverPlugin.MULTIPAGE_TIFF)) {
+            // TODO: hardcoded whether or not to split positions.
             store_ = studio_.data().createMultipageTIFFDatastore(savePath_,
                   true, true);
          }
-         catch (IOException e) {
-            studio_.logs().showError(e, "Error creating datastore at " + savePath_);
+         else if (format.equals(SaverPlugin.SINGLEPLANE_TIFF_SERIES)) {
+            store_ = studio.data().createSinglePlaneTIFFSeriesDatastore(savePath_);
+         }
+         else if (format.equals(SaverPlugin.RAM)) {
+            store_ = studio.data().createRAMDatastore();
+         }
+         else {
+            studio_.logs().logError("Unrecognized save format " + format);
          }
       }
-      else if (format.equals(SaverPlugin.SINGLEPLANE_TIFF_SERIES)) {
-         store_ = studio.data().createSinglePlaneTIFFSeriesDatastore(savePath_);
-      }
-      else if (format.equals(SaverPlugin.RAM)) {
-         store_ = studio.data().createRAMDatastore();
-      }
-      else {
-         studio_.logs().logError("Unrecognized save format " + format);
+      catch (IOException e) {
+         studio_.logs().showError(e, "Error creating datastore at " + savePath_);
       }
 
       studio_.displays().manage(store_);

@@ -94,6 +94,9 @@ public class StorageSinglePlaneTiffSeries implements Storage {
       dir_ = directory;
       store_.setSavePath(dir_);
       isDatasetWritable_ = newDataSet;
+      if (isDatasetWritable_ && new File(dir_).exists()) {
+         throw new IOException("Directory at " + dir_ + " already exists");
+      }
       // Must be informed of events before traditional consumers, so that we
       // can provide images on request.
       store_.registerForEvents(this, 0);

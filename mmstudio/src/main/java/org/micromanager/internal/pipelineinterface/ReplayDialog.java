@@ -241,22 +241,21 @@ public class ReplayDialog extends MMDialog {
             return;
          }
          path += "/" + outputName_.getText();
-         if (outputSingleplane_.isSelected()) {
-            destination = studio_.data().createSinglePlaneTIFFSeriesDatastore(
-                  path);
-         }
-         else {
-            try {
+         try {
+            if (outputSingleplane_.isSelected()) {
+               destination = studio_.data().createSinglePlaneTIFFSeriesDatastore(path);
+            }
+            else {
                // TODO: we should imitate the source dataset when possible for
-               // deciding whether to generate metadata.txt and whether to split
-               // positions.
+               // deciding whether to generate metadata.txt and whether to
+               // split positions.
                destination = studio_.data().createMultipageTIFFDatastore(
                      path, true, true);
             }
-            catch (IOException e) {
-               studio_.logs().showError(e, "Unable to open " + path + " for writing");
-               return;
-            }
+         }
+         catch (IOException e) {
+            studio_.logs().showError(e, "Unable to open " + path + " for writing");
+            return;
          }
       }
 

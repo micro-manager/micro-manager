@@ -127,8 +127,9 @@ public interface DataManager {
     * @param directory Location on disk to store the files.
     * @return an empty Datastore backed by disk in the form of multiple
     *         single-plane TIFF files.
+    * @throws IOException If the directory already exists.
     */
-   public Datastore createSinglePlaneTIFFSeriesDatastore(String directory);
+   public Datastore createSinglePlaneTIFFSeriesDatastore(String directory) throws IOException;
 
    /**
     * Given a path string, create a unique string with that name.  In short,
