@@ -5,6 +5,12 @@
 
 #include <map>
 
+enum AcqType
+{
+    AcqType_Snap = 0,
+    AcqType_Live
+};
+
 /**
 * This class holds the camera and acquisition configuration. The idea is that
 * if user changes a property during live mode the configuration is stored in
@@ -28,6 +34,21 @@ class AcqConfig
 {
 public:
     AcqConfig();
+
+    /**
+    * Micro-Manager exposure time in milli-seconds. This is later converted
+    * to PVCAM exposure time based on current exposure resolution.
+    */
+    double ExposureMs;
+    /**
+    * Current PVCAM exposure resolution - EXP_RES_ONE_MILLISEC, MICROSEC, etc.
+    */
+    int    ExposureRes;
+
+    /**
+    * Type of acquisition the camera should be prepared for
+    */
+    AcqType AcquisitionType;
 
     /**
     * Embedded frame metadata enabled or disabled.
@@ -101,6 +122,21 @@ public:
     * True if PVCAM callbacks are active, false to use polling
     */
     bool CallbacksEnabled;
+    /**
+    * Enables or disables the S.M.A.R.T streaming. Please note that the S.M.A.R.T streaming
+    * mode is enabled for continous acquisition only. See the "Active" variable.
+    */
+    bool SmartStreamingEnabled;
+    /**
+    * Controls whether the S.M.A.R.T streaming is actually active or not. In Single snap mode
+    * we always temporarily disable the S.M.A.R.T streaming and use the exposure value from
+    * the main GUI. (S.M.A.R.T streaming does not have any effect in single snaps)
+    */
+    bool SmartStreamingActive;
+    /**
+    * Exposure values for S.M.A.R.T streaming
+    */
+    std::vector<double> SmartStreamingExposures;
 };
 
 #endif

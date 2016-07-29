@@ -11,7 +11,7 @@ int PollingThread::svc(void)
     }
     catch(...)
     {
-        camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
+        camera_->LogAdapterMessage(g_Msg_EXCEPTION_IN_THREAD, false);
     }
     return ret;
 }
