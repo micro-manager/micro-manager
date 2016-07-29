@@ -75,9 +75,7 @@
 #define COLOR_BGGR 5
 #endif
 
-#define SMART_STREAM_MAX_EXPOSURES      128
-
-// Custom error codes
+// Custom error codes originating from this adapter
 #define ERR_INVALID_BUFFER              10002
 #define ERR_INVALID_PARAMETER_VALUE     10003
 #define ERR_BUSY_ACQUIRING              10004
@@ -91,6 +89,14 @@
 #define ERR_OPERATION_TIMED_OUT         10012 // Generic timeout error
 #define ERR_FRAME_READOUT_FAILED        10013 // Polling: status = READOUT_FAILED
 
+// PVCAM-specific error codes base. When a PVCAM error occurs we use the PVCAM
+// ID and PVCAM message to create a new uM error code, we call the the SetErrorCode()
+// and assign a text to a new error code value. In order to not interfere with existing
+// error codes we need to add some offset.
+// Example:
+//     if (pl_something() != PV_OK)
+//        SetErrorCode(pl_error_code() + ERR_PVCAM_OFFSET, pl_error_message());
+#define ERR_PVCAM_OFFSET                20000
 
 //=============================================================================
 //=========================================================== TYPE DECLARATIONS
@@ -428,14 +434,52 @@ public: // Other published methods
     * Published to allow other classes access the camera.
     */
     short Handle();
+
+    // All the logging methods below prepend the message with a PVCAM Adapter
+    // specific prefix. We use that to unify the logs and to clearly see which logs
+    // comes from the adapter. Usage of these functions is preferred over the generic
+    // LogMessage() and similar.
+
     /**
-    * Utility logging functions (published to allow usage from other classes)
-    * TODO: Review these because it's currently quite confusing which we should actually use where.
-    *       We may probably want to move these to some utility class.
+    * Logs a PVCAM-specific error message, use this function ONLY and RIGHT AFTER a PVCAM call fails.
+    * The function will automatically create a new uM-specific error code which can be returned to Core
+    * and displayed in the UI. (see SetErrorMessage())
+    * Usage:
+    *     if (pl_someting() != PV_OK)
+    *         LogPvcamError(...);
+    * @param lineNr use __LINE__ macro
+    * @param message Custom Log message. This should be a descriptive message similar to:
+    *                "This call failed because of this", the PVCAM error code and message will be then
+    *                appended to the message to create a final error message:
+    *                "This call failed because of this. PVCAM Err:36, PVCAM Msg:'Cannot communicate with the camera'"
+    * @param pvErrCode PVCAM error code, obtained with pl_error_code()
+    * @param debug if true the message will be sent only in the log-debug mode
     */
-    int16 LogCamError(int lineNr, const std::string& message, int16 pvErrCode = pl_error_code(), bool debug = false) throw();
-    int   LogMMError(int errCode, int lineNr, std::string message="", bool debug=false) const throw();
-    void  LogMMMessage(int lineNr, std::string message="", bool debug=true) const throw();
+    int   LogPvcamError(int lineNr, const std::string& message, int16 pvErrCode = pl_error_code(), bool debug = false) throw();
+
+    /**
+    * Logs an Adapter-specific or general MM error code (DEVICE_ERR, DEVICE_INTERNAL_INCONSISTENCY, etc).
+    * Use this function to log and display an error message that does not directly originate from PVCAM.
+    * @param mmErrCode MMCore specific error code or a custom error code created with SetErrorMessage()
+    * @param lineNr use __LINE__ macro
+    * @param message Descriptive error message
+    * @param debug if true the message will be sent only in the log-debug mode
+    */
+    int   LogAdapterError(int mmErrCode, int lineNr, const std::string& message, bool debug = false) const throw();
+
+    /**
+    * Logs a simple message to the debug log. Includes file and line information.
+    * @param lineNr use __LINE__ macro
+    * @param debug if true the message will be sent only in the log-debug mode
+    */
+    void  LogAdapterMessage(int lineNr, const std::string& message, bool debug = true) const throw();
+
+    /**
+    * Logs a simple message to the debug log.
+    * @param message Descriptive error message
+    * @param debug if true the message will be sent only in the log-debug mode
+    */
+    void  LogAdapterMessage(const std::string& message, bool debug = true) const throw();
 
 protected:
     /**
@@ -536,14 +580,14 @@ private:
     /**
     * Sends the S.M.A.R.T streaming configuration to the camera.
     */
-    int sendSmartStreamingToCamera();
+    int sendSmartStreamingToCamera(const std::vector<double>& exposures, int exposureRes);
 #endif
 
     /**
     * This function returns the correct exposure mode and exposure value to be used in both
     * pl_exp_setup_seq() and pl_exp_setup_cont() functions.
     */
-    int getPvcamExposureSetupConfig(int16& pvExposeOutMode, uns32& pvExposureValue);
+    int getPvcamExposureSetupConfig(int16& pvExposureMode, double inputExposureMs, uns32& pvExposureValue);
     /**
     * This method is used to estimate how long it might take to read out one frame.
     * The calculation is very inaccurate, it is only used when calculating acquisition timeout.
@@ -654,7 +698,6 @@ private: // Static
     /// CAMERA PARAMETERS:
     uns16           camParSize_;           // CCD parallel size
     uns16           camSerSize_;           // CCD serial size
-    double          exposure_;             // Current Exposure
 
     char            camName_[CAM_NAME_LEN];
     std::string     camChipName_;
@@ -703,12 +746,6 @@ private: // Static
 
     Event            eofEvent_;
     MMThreadLock     acqLock_;
-
-#ifdef PVCAM_SMART_STREAMING_SUPPORTED
-    double          smartStreamValuesDouble_[SMART_STREAM_MAX_EXPOSURES];
-    uns16           smartStreamEntries_;
-    bool            ssWasOn_;              // Remember SMART streaming state before Snap was pressed
-#endif
 
 #ifdef PVCAM_FRAME_INFO_SUPPORTED
     PFRAME_INFO     pFrameInfo_;           // PVCAM frame metadata
