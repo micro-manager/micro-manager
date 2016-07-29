@@ -38,17 +38,4 @@ public interface Alert {
     * Dismiss the Alert, causing it to no longer be visible to the user.
     */
    public void dismiss();
-
-   /**
-    * Update the text displayed by the Alert. This will affect the text shown
-    * in the main Micro-Manager window for this alert. For simple text alerts
-    * and combining text alerts, this will also update the text in the alert in
-    * the Messages window.
-    * Note that this method is only appropriate for alerts that show the
-    * current status of something (like the acquisition status alert). Usually
-    * you should use a combining text alert rather than update this text
-    * directly.
-    * @param text New text of alert.
-    */
-   public void setText(String text);
 }

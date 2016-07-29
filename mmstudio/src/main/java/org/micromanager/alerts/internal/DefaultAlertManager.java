@@ -30,6 +30,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.alerts.Alert;
 import org.micromanager.alerts.AlertManager;
+import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 
@@ -41,47 +42,45 @@ public class DefaultAlertManager implements AlertManager {
    }
 
    private Studio studio_;
-   private HashMap<String, MultiTextAlert> titleToTextAlert_ = new HashMap<String, MultiTextAlert>();
+   private HashMap<String, CategorizedAlert> titleToCategorizedAlert_ = new HashMap<String, CategorizedAlert>();
    private HashMap<String, DefaultAlert> titleToCustomAlert_ = new HashMap<String, DefaultAlert>();
-   private HashMap<String, JComponent> titleToCustomContents_ = new HashMap<String, JComponent>();
 
    private DefaultAlertManager(Studio studio) {
       studio_ = studio;
    }
 
    @Override
-   public Alert showTextAlert(String title, String text) {
-      return AlertsWindow.addTextAlert(studio_, title, text);
+   public UpdatableAlert postUpdatableAlert(String title, String text) {
+      return AlertsWindow.addUpdatableAlert(studio_, title, text);
    }
 
    @Override
-   public Alert showCombiningTextAlert(String title, String text) {
-      MultiTextAlert alert;
-      if (titleToTextAlert_.containsKey(title) &&
-            titleToTextAlert_.get(title).isUsable()) {
-         alert = titleToTextAlert_.get(title);
+   public Alert postAlert(String title, Class<?> category, String text) {
+      CategorizedAlert alert;
+      if (titleToCategorizedAlert_.containsKey(title) &&
+            titleToCategorizedAlert_.get(title).isUsable()) {
+         alert = titleToCategorizedAlert_.get(title);
       }
       else {
          // Make a new Alert to hold messages.
-         alert = AlertsWindow.addTextAlert(studio_, title);
-         titleToTextAlert_.put(title, alert);
+         alert = AlertsWindow.addCategorizedAlert(studio_, title);
+         titleToCategorizedAlert_.put(title, alert);
       }
       AlertsWindow.showWindowUnlessMuted(studio_, alert);
-      alert.addText(text);
+      alert.addText(category, text);
       return alert;
    }
 
    @Override
-   public Alert showCustomAlert(String title, JComponent contents) {
-      if (titleToCustomContents_.containsKey(title) &&
-            titleToCustomContents_.get(title) == contents) {
+   public UpdatableAlert postCustomAlert(String title, JComponent contents) {
+      if (titleToCustomAlert_.containsKey(title) &&
+            titleToCustomAlert_.get(title).getContents() == contents) {
          // Already have this alert.
          return titleToCustomAlert_.get(title);
       }
       DefaultAlert alert = AlertsWindow.addCustomAlert(studio_, title, contents);
       // TODO: this potentially replaces an existing alert.
       titleToCustomAlert_.put(title, alert);
-      titleToCustomContents_.put(title, contents);
       return alert;
    }
 

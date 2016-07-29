@@ -23,6 +23,7 @@ package org.micromanager.alerts.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -75,7 +77,7 @@ public class AlertsWindow extends JFrame {
    /**
     * Create a simple alert with a text message.
     */
-   public static DefaultAlert addTextAlert(Studio studio, String title,
+   public static DefaultAlert addUpdatableAlert(Studio studio, String title,
          String text) {
       ensureWindowExists(studio);
       DefaultAlert alert = new DefaultAlert(staticInstance_, title,
@@ -98,12 +100,11 @@ public class AlertsWindow extends JFrame {
    }
 
    /**
-    * Variant of the above specifically for MultiTextAlerts.
+    * Create an alert that can contain multiple categories of messages.
     */
-   public static MultiTextAlert addTextAlert(Studio studio, String title) {
+   public static CategorizedAlert addCategorizedAlert(Studio studio, String title) {
       ensureWindowExists(studio);
-      MultiTextAlert alert = MultiTextAlert.createAlert(staticInstance_,
-            title, new JPanel());
+      CategorizedAlert alert = CategorizedAlert.createAlert(staticInstance_, title);
       showWindowUnlessMuted(studio, alert);
       staticInstance_.addAlert(alert);
       return alert;
@@ -124,10 +125,13 @@ public class AlertsWindow extends JFrame {
 
       setLayout(new MigLayout("fill, insets 2, gap 0"));
 
+      Font defaultFont = new Font("Arial", Font.PLAIN, 10);
+
       shouldShowOnMessage_ = studio_.profile().getBoolean(AlertsWindow.class,
             SHOULD_SHOW_WINDOW, true);
       final JCheckBox showWindowCheckBox = new JCheckBox(
             "Open this window when messages arrive", shouldShowOnMessage_);
+      showWindowCheckBox.setFont(defaultFont);
       showWindowCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -139,6 +143,7 @@ public class AlertsWindow extends JFrame {
       add(showWindowCheckBox, "split, span");
 
       JButton clearAllButton = new JButton("Clear All");
+      clearAllButton.setFont(defaultFont);
       clearAllButton.setToolTipText("Dismiss all alerts, removing them from this window.");
       clearAllButton.addActionListener(new ActionListener() {
          @Override
@@ -152,7 +157,9 @@ public class AlertsWindow extends JFrame {
       });
       add(clearAllButton, "gapleft push, wrap");
 
-      JScrollPane scroller = new JScrollPane(alertsPanel_);
+      JScrollPane scroller = new JScrollPane(alertsPanel_,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       scroller.setBorder(null);
       alertsPanel_.add(new JLabel(NO_ALERTS_MSG));
       add(scroller, "push, grow");
@@ -168,7 +175,7 @@ public class AlertsWindow extends JFrame {
       allAlerts_.add(alert);
       alertsPanel_.add(alert, "pushx, growx, gaptop 0, gapbottom 0");
       studio_.events().post(new AlertUpdatedEvent(alert));
-      pack();
+      packLater();
    }
 
    public void removeAlert(DefaultAlert alert) {
@@ -182,7 +189,18 @@ public class AlertsWindow extends JFrame {
          alertsPanel_.revalidate();
          studio_.events().post(new AlertClearedEvent(alert));
       }
-      pack();
+      packLater();
+   }
+
+   // HACK: for some reason, packing immediately often results in layout
+   // errors, so we wait to pack until a later pass by the EDT.
+   private void packLater() {
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            pack();
+         }
+      });
    }
 
    /**

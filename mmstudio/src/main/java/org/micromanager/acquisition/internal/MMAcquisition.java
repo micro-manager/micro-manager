@@ -81,7 +81,7 @@ import org.micromanager.events.internal.DefaultEventManager;
 
 import org.micromanager.internal.dialogs.AcqControlDlg;
 
-import org.micromanager.alerts.Alert;
+import org.micromanager.alerts.UpdatableAlert;
 
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
@@ -132,7 +132,7 @@ public class MMAcquisition {
 
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
-   private Alert alert_;
+   private UpdatableAlert alert_;
 
    public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
          boolean diskCached, AcquisitionEngine eng, boolean show) {
@@ -199,7 +199,7 @@ public class MMAcquisition {
          display_ = studio_.displays().createDisplay(
                store_, makeControlsFactory());
          display_.registerForEvents(this);
-         alert_ = studio_.alerts().showTextAlert("Acquisition Progress", "");
+         alert_ = studio_.alerts().postUpdatableAlert("Acquisition Progress", "");
          setProgressText();
       }
       store_.registerForEvents(this);

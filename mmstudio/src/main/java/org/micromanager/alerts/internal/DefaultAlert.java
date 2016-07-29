@@ -50,19 +50,18 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
 
-import org.micromanager.alerts.Alert;
+import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.internal.utils.GUIUtils;
 
-public class DefaultAlert extends JPanel implements Alert {
+public class DefaultAlert extends JPanel implements UpdatableAlert {
 
    protected AlertsWindow parent_;
    private String title_;
    private JLabel textLabel_ = null;
    protected String text_;
-   private JComponent contents_;
+   protected JComponent contents_;
    private JToggleButton muteButton_;
    private boolean isUsable_ = true;
-   protected MouseAdapter showCloseButtonAdapter_;
 
    /**
     */
@@ -141,16 +140,17 @@ public class DefaultAlert extends JPanel implements Alert {
       parent_.textUpdated(this);
    }
 
+   @Override
+   public String getText() {
+      return text_;
+   }
+
    public JComponent getContents() {
       return contents_;
    }
 
    public String getTitle() {
       return title_;
-   }
-
-   public String getText() {
-      return text_;
    }
 
    public void setMuteButtonState(boolean isMuted) {
