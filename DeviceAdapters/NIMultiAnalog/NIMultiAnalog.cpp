@@ -27,8 +27,6 @@
 #include <boost/math/common_factor_rt.hpp>
 #include <boost/scoped_array.hpp>
 
-#include <set>
-
 
 const char* g_DeviceNameMultiAnalogOutHub = "NIMultiAnalogOutHub";
 const char* g_DeviceNameMultiAnalogOutPortPrefix = "NIMultiAnalogOut-";
@@ -185,14 +183,6 @@ int MultiAnalogOutHub::Shutdown()
    physicalChannels_.clear();
    channelSequences_.clear();
 
-   if (!allPorts_.empty())
-   {
-      err = NewErrorCode("Shutting down NIMultiAnalog hub before all ports; "
-            "this may lead to crashes");
-   }
-   allPorts_.clear();
-   portPtrs_.clear();
-
    initialized_ = false;
    return err;
 }
@@ -231,44 +221,9 @@ int MultiAnalogOutHub::GetVoltageLimits(double& minVolts, double& maxVolts)
 }
 
 
-int MultiAnalogOutHub::RegisterPort(const std::string& port, MultiAnalogOutPort* ptr)
-{
-   // Just in case
-   UnregisterPort(port);
-
-   allPorts_.push_back(port);
-   portPtrs_.push_back(ptr);
-   return DEVICE_OK;
-}
-
-
-int MultiAnalogOutHub::UnregisterPort(const std::string& port)
-{
-   // TODO We should check here that port is not currently involved in sequence
-
-   size_t n = allPorts_.size();
-   for (size_t i = 0; i < n; ++i)
-   {
-      if (allPorts_[i] == port) {
-         allPorts_.erase(allPorts_.begin() + i);
-         portPtrs_.erase(portPtrs_.begin() + i);
-         break;
-      }
-   }
-   return DEVICE_OK;
-}
-
-
 int MultiAnalogOutHub::StartSequenceForPort(const std::string& port,
    const std::vector<double> sequence)
 {
-   if (!task_)
-   {
-      int err = StopAllPerPortTasks();
-      if (err != DEVICE_OK)
-         return err;
-   }
-
    int err = StopTask();
    if (err != DEVICE_OK)
       return err;
@@ -289,23 +244,12 @@ int MultiAnalogOutHub::StartSequenceForPort(const std::string& port,
 
 int MultiAnalogOutHub::StopSequenceForPort(const std::string& port)
 {
-   bool wasAlreadyStopped = !task_;
-
    int err = StopTask();
    if (err != DEVICE_OK)
       return err;
    RemovePortFromSequencing(port);
-
    // We do not restart sequencing for the remaining ports,
    // since it is meaningless (we can't preserve their state).
-
-   if (!wasAlreadyStopped)
-   {
-      int err = StartAllPerPortTasks();
-      if (err != DEVICE_OK)
-         return err;
-   }
-
    return DEVICE_OK;
 }
 
@@ -321,12 +265,6 @@ int MultiAnalogOutHub::GetSequenceMaxLength(long& maxLength) const
 {
    maxLength = static_cast<long>(maxSequenceLength_);
    return DEVICE_OK;
-}
-
-
-bool MultiAnalogOutHub::IsDeviceRunningSequence() const
-{
-   return task_ != 0;
 }
 
 
@@ -458,15 +396,14 @@ MultiAnalogOutHub::GetAnalogPortsForDevice(const std::string& device)
 std::string MultiAnalogOutHub::GetPhysicalChannelListForSequencing() const
 {
    std::string ret;
-   for (std::vector<std::string>::const_iterator begin = allPorts_.begin(),
-      end = allPorts_.end(), it = begin;
+   for (std::vector<std::string>::const_iterator begin = physicalChannels_.begin(),
+      end = physicalChannels_.end(), it = begin;
       it != end; ++it)
    {
       if (it != begin)
          ret += ", ";
       ret += *it;
    }
-
    return ret;
 }
 
@@ -506,55 +443,14 @@ void MultiAnalogOutHub::GetLCMSequence(double* buffer) const
    if (GetLCMSamplesPerChannel(seqLen) != DEVICE_OK)
       return;
 
-   // Assumption: there is at least one sequenced channel
-
-   for (int i = 0; i < allPorts_.size(); ++i)
+   for (int i = 0; i < channelSequences_.size(); ++i)
    {
       size_t chanOffset = seqLen * i;
-
-      // Convert i to index into channelSequences_
-      size_t k;
-      for (k = 0; k < physicalChannels_.size(); ++k)
+      size_t chanSeqLen = channelSequences_[i].size();
+      for (int j = 0; j < seqLen; ++j)
       {
-         if (allPorts_[i] == physicalChannels_[k])
-            break;
-      }
-
-      if (k < physicalChannels_.size()) // Sequenced
-      {
-
-         size_t chanSeqLen = channelSequences_[k].size();
-
-         std::string seqStr;
-         size_t logLen = chanSeqLen;
-         if (logLen > 10)
-            logLen = 10;
-         for (int j = 0; j < logLen; ++j)
-         {
-            seqStr += ' ';
-            seqStr += boost::lexical_cast<std::string>(channelSequences_[k][j]);
-         }
-         if (chanSeqLen > 10)
-            seqStr += " ...";
-         LogMessage(("Port " + allPorts_[i] + ": sequence, length " +
-            boost::lexical_cast<std::string>(chanSeqLen) +
-            ":" + seqStr).c_str(), true);
-
-         for (int j = 0; j < seqLen; ++j)
-         {
-            buffer[chanOffset + j] =
-               channelSequences_[k][j % chanSeqLen];
-         }
-      }
-      else
-      {
-         double voltage = portPtrs_[i]->GetNonSequencedVoltage();
-         LogMessage(("Port " + allPorts_[i] + ": fixed voltage: " +
-            boost::lexical_cast<std::string>(voltage) + " V").c_str(), true);
-         for (int j = 0; j < seqLen; ++j)
-         {
-            buffer[chanOffset + j] = voltage;
-         }
+         buffer[chanOffset + j] =
+            channelSequences_[i][j % chanSeqLen];
       }
    }
 }
@@ -573,13 +469,13 @@ int MultiAnalogOutHub::StartSequencingTask()
 
    boost::scoped_array<float64> samples;
 
+   size_t numChans = physicalChannels_.size();
    size_t samplesPerChan;
    int err = GetLCMSamplesPerChannel(samplesPerChan);
    if (err != DEVICE_OK)
       return err;
 
-   LogMessage(boost::lexical_cast<std::string>(physicalChannels_.size()) +
-         " sequenced channel(s)", true);
+   LogMessage(boost::lexical_cast<std::string>(numChans) + " channels", true);
    LogMessage("LCM sequence length = " +
       boost::lexical_cast<std::string>(samplesPerChan), true);
 
@@ -612,7 +508,7 @@ int MultiAnalogOutHub::StartSequencingTask()
    }
    LogMessage("Configured sample clock timing to use " + niTriggerPort_, true);
 
-   samples.reset(new float64[samplesPerChan * allPorts_.size()]);
+   samples.reset(new float64[samplesPerChan * numChans]);
    GetLCMSequence(samples.get());
 
    int32 numWritten = 0;
@@ -670,31 +566,6 @@ int MultiAnalogOutHub::StopTask()
    task_ = 0;
    LogMessage("Stopped task", true);
 
-   return DEVICE_OK;
-}
-
-
-int MultiAnalogOutHub::StartAllPerPortTasks()
-{
-   for (int i = 0; i < portPtrs_.size(); ++i)
-   {
-      double voltage = portPtrs_[i]->GetNonSequencedVoltage();
-      int err = portPtrs_[i]->StartOnDemandTask(voltage);
-      if (err != DEVICE_OK)
-         return err;
-   }
-   return DEVICE_OK;
-}
-
-
-int MultiAnalogOutHub::StopAllPerPortTasks()
-{
-   for (int i = 0; i < portPtrs_.size(); ++i)
-   {
-      int err = portPtrs_[i]->StopTask();
-      if (err != DEVICE_OK)
-         return err;
-   }
    return DEVICE_OK;
 }
 
@@ -857,10 +728,6 @@ int MultiAnalogOutPort::Initialize()
    if (err != DEVICE_OK)
       return err;
 
-   err = GetAOHub()->RegisterPort(niPort_, this);
-   if (err != DEVICE_OK)
-      return TranslateHubError(err);
-
    return DEVICE_OK;
 }
 
@@ -870,18 +737,13 @@ int MultiAnalogOutPort::Shutdown()
    if (!initialized_)
       return DEVICE_OK;
 
-   int err0 = DEVICE_OK;
-   if (sequenceRunning_)
-      err0 = StopDASequence();
-
-   int err1 = StopTask();
-   int err2 = TranslateHubError(GetAOHub()->UnregisterPort(niPort_));
+   int err = StopTask();
 
    unsentSequence_.clear();
    sentSequence_.clear();
 
    initialized_ = false;
-   return err0 || err1 || err2;
+   return err;
 }
 
 
@@ -894,9 +756,6 @@ void MultiAnalogOutPort::GetName(char* name) const
 
 int MultiAnalogOutPort::SetGateOpen(bool open)
 {
-   if (sequenceRunning_)
-      return ERR_SEQUENCE_RUNNING;
-
    if (open && !gateOpen_)
    {
       int err = StartOnDemandTask(gatedVoltage_);
@@ -924,9 +783,6 @@ int MultiAnalogOutPort::GetGateOpen(bool& open)
 
 int MultiAnalogOutPort::SetSignal(double volts)
 {
-   if (sequenceRunning_)
-      return ERR_SEQUENCE_RUNNING;
-
    if (volts < minVolts_ || volts > maxVolts_)
       return ERR_VOLTAGE_OUT_OF_RANGE;
 
@@ -989,8 +845,11 @@ int MultiAnalogOutPort::StopDASequence()
 
    sequenceRunning_ = false;
 
-   // We do not need to restart the on-demand (per-port) task here, since the
-   // hub has already done so from StopSequenceForPort().
+   // Recover voltage from before sequencing started, so that we
+   // are back in sync
+   err = StartOnDemandTask(gateOpen_ ? gatedVoltage_ : 0.0);
+   if (err != DEVICE_OK)
+      return err;
 
    return DEVICE_OK;
 }
@@ -1088,14 +947,22 @@ int MultiAnalogOutPort::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-double MultiAnalogOutPort::GetNonSequencedVoltage()
+int MultiAnalogOutPort::TranslateHubError(int err)
 {
-   return gateOpen_ ? gatedVoltage_ : 0.0;
+   if (err == DEVICE_OK)
+      return DEVICE_OK;
+   char buf[MM::MaxStrLength];
+   if (GetAOHub()->GetErrorText(err, buf))
+      return NewErrorCode(buf);
+   return NewErrorCode("Unknown hub error");
 }
 
 
 int MultiAnalogOutPort::StartOnDemandTask(double voltage)
 {
+   if (sequenceRunning_)
+      return ERR_SEQUENCE_RUNNING;
+
    if (task_)
    {
       int err = StopTask();
@@ -1103,20 +970,7 @@ int MultiAnalogOutPort::StartOnDemandTask(double voltage)
          return err;
    }
 
-   if (GetAOHub()->IsDeviceRunningSequence())
-   {
-      // Given how acquisitions use sequencing, _not_ returning an error here
-      // turns out to be the best behavior possible (given that NIDAQ doesn't
-      // allow us to set an on-demand voltage while _any_ channel of the device
-      // is running a sequence).
-      LogMessage(("Not starting on-demand task for voltage (" +
-         boost::lexical_cast<std::string>(voltage) +
-         " V) because device is running a sequence").c_str(), false);
-      return DEVICE_OK;
-   }
-
-   LogMessage(("Starting on-demand task for voltage: " +
-         boost::lexical_cast<std::string>(voltage) + " V").c_str(), true);
+   LogMessage("Starting on-demand task", true);
 
    int32 nierr = DAQmxCreateTask(NULL, &task_);
    if (nierr != 0)
@@ -1187,15 +1041,4 @@ int MultiAnalogOutPort::StopTask()
    LogMessage("Stopped task", true);
 
    return DEVICE_OK;
-}
-
-
-int MultiAnalogOutPort::TranslateHubError(int err)
-{
-   if (err == DEVICE_OK)
-      return DEVICE_OK;
-   char buf[MM::MaxStrLength];
-   if (GetAOHub()->GetErrorText(err, buf))
-      return NewErrorCode(buf);
-   return NewErrorCode("Unknown hub error");
 }
