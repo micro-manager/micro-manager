@@ -337,74 +337,6 @@ public class MMAcquisition {
          }
       };
    }
-  
-   private void createDefaultAcqSettings() {
-      String keys[] = new String[summary_.length()];
-      Iterator<String> it = summary_.keys();
-      int i = 0;
-      while (it.hasNext()) {
-         keys[0] = it.next();
-         i++;
-      }
-
-      try {
-         JSONObject summaryMetadata = new JSONObject(summary_, keys);
-         CMMCore core = studio_.core();
-
-         summaryMetadata.put("BitDepth", bitDepth_);
-         summaryMetadata.put("Channels", numChannels_);
-         // TODO: set channel name, color, min, max from defaults.
-         summaryMetadata.put("Comment", comment_);
-         String compName = null;
-         try {
-            compName = InetAddress.getLocalHost().getHostName();
-         } catch (UnknownHostException e) {
-            ReportingUtils.showError(e);
-         }
-         if (compName != null) {
-            summaryMetadata.put("ComputerName", compName);
-         }
-         summaryMetadata.put("Date", new SimpleDateFormat("yyyy-MM-dd").format(Calendar.getInstance().getTime()));
-         summaryMetadata.put("Depth", core.getBytesPerPixel());
-         summaryMetadata.put("Frames", numFrames_);
-         summaryMetadata.put("Height", height_);
-         summaryMetadata.put("MetadataVersion",
-               DefaultSummaryMetadata.METADATA_VERSION);
-         summaryMetadata.put("MicroManagerVersion", MMStudio.getInstance().getVersion());
-         summaryMetadata.put("NumComponents", 1);
-         summaryMetadata.put("Positions", numPositions_);
-         summaryMetadata.put("Source", "Micro-Manager");
-         summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());
-         summaryMetadata.put("Slices", numSlices_);
-         summaryMetadata.put("SlicesFirst", false);
-         summaryMetadata.put("StartTime", MDUtils.getCurrentTime());
-         summaryMetadata.put("Time", Calendar.getInstance().getTime());
-         summaryMetadata.put("TimeFirst", true);
-         summaryMetadata.put("UserName", System.getProperty("user.name"));
-         summaryMetadata.put("UUID", UUID.randomUUID());
-         summaryMetadata.put("Width", width_);
-         try {
-            pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
-         }
-         catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata: datastore is frozen.");
-         }
-         catch (DatastoreRewriteException e) {
-            ReportingUtils.logError(e, "Couldn't set summary metadata: it's already been set.");
-         }
-         catch (PipelineErrorException e) {
-            ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
-         }
-      } catch (JSONException ex) {
-         ReportingUtils.showError(ex);
-      }
-   }
-
-   public void close() {
-      if (display_ != null) {
-         display_.requestToClose();
-      }
-   }
 
    @Subscribe
    public void onRequestToClose(RequestToCloseEvent event) {
@@ -465,16 +397,6 @@ public class MMAcquisition {
       }
    }
 
-   /**
-    * Returns show flag, indicating whether this acquisition was opened with
-    * a request to show the image in a window
-    * 
-    * @return flag for request to display image in window
-    */
-   public boolean getShow() {
-      return show_;
-   }
-
    private static Storage getAppropriateStorage(DefaultDatastore store,
          String path, boolean isNew) throws IOException {
       Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode();
@@ -490,19 +412,11 @@ public class MMAcquisition {
       }
    }
 
-   public int getLastAcquiredFrame() {
-      return store_.getAxisLength("time");
-   }
-
    public Datastore getDatastore() {
       return store_;
    }
 
    public Pipeline getPipeline() {
       return pipeline_;
-   }
-
-   public void setAsynchronous() {
-      isAsynchronous_ = true;
    }
 }
