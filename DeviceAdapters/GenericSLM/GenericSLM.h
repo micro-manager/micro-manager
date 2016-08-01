@@ -17,8 +17,6 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Arthur Edelstein, arthuredelstein@gmail.com, 3/17/2009
-//
-//
 
 #ifndef _GENERICSLM_H_
 #define _GENERICSLM_H_
@@ -29,7 +27,6 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include <string>
-//#include <iostream>
 #include <vector>
 using namespace std;
 
@@ -45,38 +42,37 @@ RECT viewBounds;
 
 class GenericSLMWindowsGUIThread : public MMDeviceThreadBase
 {
-   public:
-      GenericSLMWindowsGUIThread(HWND hwnd) : 
-         stop_(false), hwnd_(hwnd) {}
-      ~GenericSLMWindowsGUIThread() {}
-      int svc (void);
+public:
+   GenericSLMWindowsGUIThread(HWND hwnd) :
+      stop_(false), hwnd_(hwnd) {}
+   ~GenericSLMWindowsGUIThread() {}
+   int svc(void);
 
-      void Stop() {stop_ = true;}
-      void Start() {stop_ = false; activate();}
+   void Stop() {stop_ = true;}
+   void Start() {stop_ = false; activate();}
 
-      int RestrictCursor();
+   int RestrictCursor();
 
-
-
-   private:
-      bool stop_;
-      HWND hwnd_;
+private:
+   bool stop_;
+   HWND hwnd_;
 };
+
 
 class GenericSLM : public CSLMBase<GenericSLM>
 {
 public:
    GenericSLM(const char* name);
    ~GenericSLM();
-  
+
    // MMDevice API
    // ------------
    int Initialize();
    int Shutdown();
-  
+
    void GetName(char* pszName) const;
    bool Busy();
-   
+
    int SetImage(unsigned char* pixels);
    int SetImage(unsigned int* pixels);
    int SetPixelsTo(unsigned char red, unsigned char green, unsigned char blue);
@@ -175,15 +171,8 @@ private:
    vector<HWND> windowList_;
    MMThreadLock windowListLock_;
 
-
-
-
-
    GenericSLM& operator=(GenericSLM& /*rhs*/) {assert(false); return *this;}
 };
-
-// Static function
-
 
 
 typedef HRESULT(WINAPI * DIRECTDRAWCREATE) (GUID *, LPDIRECTDRAW *, IUnknown *);
