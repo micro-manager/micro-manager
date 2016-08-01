@@ -25,7 +25,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.ImageDeletedEvent;
 
 /**
- * This class signifies that an image has been added to a Datastore.
+ * This class signifies that an image has been deleted from a Datastore.
  */
 public class DefaultImageDeletedEvent implements org.micromanager.data.ImageDeletedEvent {
    private Image image_;
