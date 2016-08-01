@@ -977,10 +977,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       return acquisitionEngine2010_.isPaused();
    }
 
-   public void restoreSystem() {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
-
    protected boolean isFocusStageAvailable() {
       if (zstage_ != null && zstage_.length() > 0) {
          return true;
