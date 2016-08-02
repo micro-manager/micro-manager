@@ -48,9 +48,6 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    private static final int PIXELS_PER_HANDLE_DIGIT = 6;
 
    private static final long serialVersionUID = -1789623844214721902L;
-   // default histogram bins
-   private int xMin_ = 0;
-   private int xMax_ = 255;
    private int currentHandle_;
    //click location: 1 is low cursor text, 2 is high cursor text
    private int clickLocation_ = 0;
@@ -81,12 +78,11 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    private boolean isLogScale_ = false;
 
    public HistogramCanvas() {
-      super();
       addFocusListener(this);
       addKeyListener(this);
       datas_ = new GraphData[1];
       datas_[0] = new GraphData();
-      setAutoBounds();
+      bounds_ = datas_[0].getBounds();
       cursorLowPositions_ = new double[] {bounds_.xMin};
       cursorHighPositions_ = new double[] {bounds_.xMax};
       gamma_ = 1.0;
@@ -294,14 +290,6 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       g.setColor(Color.black);
       g.drawPolygon(xs, ys, 3);
       g.setStroke(oldStroke);
-   }
-
-   public void refresh() {
-      GraphData.Bounds bounds = getGraphBounds();
-      bounds.xMin = xMin_;
-      bounds.xMax = xMax_;
-      setBounds(bounds);
-      repaint();
    }
 
    @Override
@@ -606,11 +594,6 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       }
    }
 
-   public final void setAutoBounds() {
-      bounds_ = datas_[0].getBounds();
-      AdjustCursors();
-   }
-
    public void setMargins(double x, double y) {
       xMargin_ = x;
       yMargin_ = y;
@@ -640,40 +623,13 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       repaint();
    }
 
-   public GraphData.Bounds getGraphBounds() {
-      return bounds_;
-   }
-
    public void setXBounds(double xMin, double xMax) {
       bounds_.xMin = xMin;
       bounds_.xMax = xMax;
    }
 
-   public void setBounds(double xMin, double xMax, double yMin, double yMax){
-      bounds_.xMin = xMin;
-      bounds_.xMax = xMax;
-      bounds_.yMin = yMin;
-      bounds_.yMax = yMax;
-      AdjustCursors();
-   }
-
-   public void setBounds(GraphData.Bounds b){
-      bounds_ = b;
-      AdjustCursors();
-   }
-
    public void setLogScale(boolean isLogScale) {
       isLogScale_ = isLogScale;
-   }
-
-   // Note: doesn't adjust cursorHighPositions_, so that the contrast line can have an
-   // endpoint past the end of the histogram.
-   private void AdjustCursors() {
-      // This is only null when called via setAutoBounds in the constructor.
-      if (cursorLowPositions_ != null) {
-         cursorLowPositions_[curComponent_] = Math.max(
-               cursorLowPositions_[curComponent_], bounds_.xMin);
-      }
    }
 
    /**
