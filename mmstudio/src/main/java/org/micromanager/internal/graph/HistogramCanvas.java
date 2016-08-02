@@ -61,7 +61,7 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    private String cursorTextLow_ = "",cursorTextHigh_ = "";
    private String overlayText_ = null;
 
-   private GraphData[] datas_ = new GraphData[0];
+   private GraphData[] graphs_ = new GraphData[0];
 
    private double xMargin_   = 50;
    private double yMargin_   = 50;
@@ -81,7 +81,7 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    public HistogramCanvas() {
       addFocusListener(this);
       addKeyListener(this);
-      datas_ = new GraphData[] { new GraphData() };
+      graphs_ = new GraphData[] { new GraphData() };
       cursorLowPositions_ = new double[] { 0.0 };
       cursorHighPositions_ = new double[] { 1.0 };
       gamma_ = 1.0;
@@ -505,7 +505,7 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
 
    public void setData(int component, GraphData d) {
       extendArraysIfNeeded(component);
-      datas_[component] = d;
+      graphs_[component] = d;
    }
 
    public void setGamma(double gamma) {
@@ -548,12 +548,12 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
          traceColors_ = newColors;
       }
 
-      if (datas_.length <= component) {
+      if (graphs_.length <= component) {
          GraphData[] newDatas = new GraphData[component + 1];
-         for (int i = 0; i < datas_.length; ++i) {
-            newDatas[i] = datas_[i];
+         for (int i = 0; i < graphs_.length; ++i) {
+            newDatas[i] = graphs_[i];
          }
-         datas_ = newDatas;
+         graphs_ = newDatas;
       }
    }
 
@@ -600,7 +600,7 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
     * @param box
     */
    protected void drawGraph(Graphics2D g, int component, Rectangle box) {
-      GraphData data = datas_[component];
+      GraphData data = graphs_[component];
       if (data.getSize() < 2) {
          return;
       }
@@ -698,7 +698,7 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
 
    public Point2D.Double getPositionPoint(int x, int y) {
       Rectangle box = getBox();
-      double yRange = datas_[curComponent_].getBounds().getRangeY();
+      double yRange = graphs_[curComponent_].getBounds().getRangeY();
       Point2D.Double posPt = new Point2D.Double(
               ((((double) x - box.x) / box.width) * xDataMax_),
               (((((double) box.y + box.height) - y) / box.height) * yRange));
@@ -732,14 +732,14 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       Stroke oldStroke = g2d.getStroke();
 
       g2d.setPaint(Color.black);
-      if (datas_.length == 1) {
+      if (graphs_.length == 1) {
          g2d.setStroke(new BasicStroke(2.0f));
       }
       else {
          g2d.setStroke(new BasicStroke(1.0f));
       }
 
-      for (int i = 0; i < datas_.length; ++i) {
+      for (int i = 0; i < graphs_.length; ++i) {
          drawGraph(g2d, i, box);
          drawCursor(g2d, box, cursorLowPositions_[i],
                traceColors_[i], i);
