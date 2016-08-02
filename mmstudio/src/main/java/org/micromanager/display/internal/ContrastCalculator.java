@@ -65,11 +65,11 @@ public class ContrastCalculator {
       private final boolean shouldCalcStdDev_;
       private final boolean shouldScaleWithROI_;
 
-      private int minVal_;
-      private int maxVal_;
-      private long meanVal_;
-      private int numPixels_;
-      private double stdDev_;
+      private int minVal_; // Min value in ROI
+      private int maxVal_; // Min value in ROI
+      private long sumVal_; // Sum of values in ROI
+      private int numPixels_; // Number of pixels that are not out of range
+      private int numAllPixels_; // Number of pixels in the ROI
 
       public InternalCalculator(Image image, ImagePlus plus, int component,
             int binPower, int depthPower, double extremaPercentage,
@@ -86,15 +86,34 @@ public class ContrastCalculator {
 
          minVal_ = Integer.MAX_VALUE;
          maxVal_ = Integer.MIN_VALUE;
-         meanVal_ = 0;
+         sumVal_ = 0;
          numPixels_ = 0;
          numBins_ = (int) Math.pow(2, binPower);
          range_ = (int) Math.pow(2, depthPower);
          binSize_ = Math.max(1, range_ / numBins_);
 
-         histogram_ = new int[numBins_];
-
          pixels_ = image.getRawPixels();
+
+         int samplePower;
+         if (pixels_ instanceof byte[]) {
+            samplePower = 8;
+         }
+         else if (pixels_ instanceof short[]) {
+            samplePower = 16;
+         }
+         else {
+            throw new IllegalArgumentException("Unrecognized pixel format " + pixels_);
+         }
+
+         // Number of bins such that we won't get an
+         // ArrayIndexOutOfBoundsException even if some of the data exceeds
+         // what is expected from depthPower.
+         final int safeBinPower = binPower + (samplePower - depthPower);
+         final int safeNumBins = (int) Math.pow(2, safeBinPower);
+
+         // We allocate safeNumBins, but only the numBins portion of the result
+         // is used.
+         histogram_ = new int[safeNumBins];
 
          // Get ROI information. This consists of a rectangle containing the
          // ROI, and then, for non-rectangular ROIs, a pixel mask (fortunately
@@ -131,6 +150,8 @@ public class ContrastCalculator {
             yMin_ = roiRect_.y;
             yMax_ = roiRect_.y + roiRect_.height;
          }
+
+         numAllPixels_ = (xMax_ - xMin_) * (yMax_ - yMin_);
       }
 
       public HistogramData calculate() {
@@ -207,6 +228,9 @@ public class ContrastCalculator {
          // subject to inaccuracies because we only know what bin the pixel
          // is in, not the intensity of the pixel itself. Not typically a
          // problem as our bin size is usually 1.
+         // Note that we use the full "safe" range of histogram_, not just
+         // numBins_, so that min and max are correct even if some or all
+         // pixels are out of range.
          for (int i = 0; i < histogram_.length; ++i) {
             numPixels_ += histogram_[i];
             if (minVal_ == Integer.MAX_VALUE && histogram_[i] > 0) {
@@ -225,7 +249,7 @@ public class ContrastCalculator {
          // Need to interpolate into the histogram to get the correct
          // contrast min/max values. This number is the number of the pixel
          // whose intensity we want.
-         double pixelCount = width_ * height_ * .01 * extremaPercentage_;
+         double pixelCount = numAllPixels_ * .01 * extremaPercentage_;
          // Start with finding the min.
          double curCount = pixelCount;
          for (int i = 0; i < histogram_.length; ++i) {
@@ -257,10 +281,11 @@ public class ContrastCalculator {
             contrastMax = (int) (frac * (interpMax - interpMin) + interpMin);
             break;
          }
+         // Fix contrast min/max in case they are beyond the histogram range
+         contrastMin = Math.min(range_ - 1, contrastMin);
+         contrastMax = Math.min(range_ - 1, contrastMax);
 
-         if (numPixels_ > 0) {
-            meanVal_ = meanVal_ / numPixels_;
-         }
+         int meanVal = (int) (sumVal_ / numAllPixels_);
 
          // Algorithm adapted from ImageJ's standard deviation calculations.
          double stdDev = -1;
@@ -273,9 +298,9 @@ public class ContrastCalculator {
                sum += histogram_[i] * tmp;
                sumSquared += histogram_[i] * (tmp * tmp);
             }
-            stdDev = (numPixels_ * sumSquared - (sum * sum)) / numPixels_;
+            stdDev = (numAllPixels_ * sumSquared - (sum * sum)) / numAllPixels_;
             if (stdDev > 0) {
-               stdDev = Math.sqrt(stdDev / numPixels_);
+               stdDev = Math.sqrt(stdDev / numAllPixels_);
             }
             else {
                stdDev = -1;
@@ -284,7 +309,7 @@ public class ContrastCalculator {
 
          HistogramData result = new HistogramData(histogram_,
                numPixels_, minVal_, maxVal_, contrastMin,
-               contrastMax, (int) meanVal_, stdDev, depthPower_, binSize_);
+               contrastMax, meanVal, stdDev, depthPower_, binSize_);
          return result;
       }
 
@@ -299,7 +324,7 @@ public class ContrastCalculator {
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x000000ff;
                histogram_[pixelVal / binSize_]++;
-               meanVal_ += pixelVal;
+               sumVal_ += pixelVal;
             }
          }
       }
@@ -324,7 +349,7 @@ public class ContrastCalculator {
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x000000ff;
                histogram_[pixelVal / binSize_]++;
-               meanVal_ += pixelVal;
+               sumVal_ += pixelVal;
             }
          }
       }
@@ -344,7 +369,7 @@ public class ContrastCalculator {
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x0000ffff;
                histogram_[pixelVal / binSize_]++;
-               meanVal_ += pixelVal;
+               sumVal_ += pixelVal;
             }
          }
       }
@@ -370,7 +395,7 @@ public class ContrastCalculator {
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x0000ffff;
                histogram_[pixelVal / binSize_]++;
-               meanVal_ += pixelVal;
+               sumVal_ += pixelVal;
             }
          }
       }
@@ -388,7 +413,7 @@ public class ContrastCalculator {
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x000000ff;
                histogram_[pixelVal / binSize_]++;
-               meanVal_ += pixelVal;
+               sumVal_ += pixelVal;
             }
          }
       }
@@ -409,7 +434,7 @@ public class ContrastCalculator {
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x000000ff;
                histogram_[pixelVal / binSize_]++;
-               meanVal_ += pixelVal;
+               sumVal_ += pixelVal;
             }
          }
       }
@@ -430,7 +455,7 @@ public class ContrastCalculator {
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x0000ffff;
                histogram_[pixelVal / binSize_]++;
-               meanVal_ += pixelVal;
+               sumVal_ += pixelVal;
             }
          }
       }
@@ -457,7 +482,7 @@ public class ContrastCalculator {
                // This conversion logic is copied from ImageUtils.unsignedValue
                int pixelVal = ((int) pixels[index]) & 0x0000ffff;
                histogram_[pixelVal / binSize_]++;
-               meanVal_ += pixelVal;
+               sumVal_ += pixelVal;
             }
          }
       }

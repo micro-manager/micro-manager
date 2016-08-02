@@ -20,6 +20,8 @@
 
 package org.micromanager.display;
 
+import java.util.Arrays;
+
 /**
  * This is a simple container class containing a histogram for one component
  * of an int-based image, and some related statistics. You can generate new
@@ -63,11 +65,16 @@ public class HistogramData {
     *        bin in the histogram. For example, if the bit depth is 10 and
     *        there are 2^8 bins, then there are (2^10 / 2^8 = 4) intensities
     *        per bin.
+    *
+    * @throws ArrayIndexOutOfBoundsException if histogram is shorter than correct size
+    * @throws NullPointerException if histogram is null
     */
    public HistogramData(int[] histogram, int numSamples, int minVal,
          int maxVal, int minIgnoringOutliers, int maxIgnoringOutliers,
          int mean, double stdDev, int bitDepth, int binSize) {
-      histogram_ = histogram;
+      int range = (int) Math.pow(2, bitDepth);
+      int numBins = Math.max(1, range / binSize);
+      histogram_ = Arrays.copyOfRange(histogram, 0, numBins);
       numSamples_ = numSamples;
       minVal_ = minVal;
       maxVal_ = maxVal;
@@ -82,7 +89,11 @@ public class HistogramData {
    /**
     * Retrieve the histogram, an array of ints counting the number of samples
     * whose intensities fall into each bin.
-    * @return Array with histogram data
+    *
+    * Note: the returned array is the internal data, not a copy. Calling code
+    * must not modify this array.
+    *
+    * @return Array with histogram data. Must not be modified.
     */
    public int[] getHistogram() {
       return histogram_;
