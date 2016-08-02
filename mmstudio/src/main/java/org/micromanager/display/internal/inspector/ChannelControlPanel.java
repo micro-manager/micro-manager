@@ -953,10 +953,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                // Add 3 to get from index to power-of-2.
                scalePow = histRangeComboBox_.getSelectedIndex() + 3;
             }
-            histogram_.setXBounds(0, Math.pow(2, scalePow));
+            histogram_.setXDataMax(Math.pow(2, scalePow));
          }
       }
-      histogram_.setAutoScale();
       histogram_.repaint();
    }
 
