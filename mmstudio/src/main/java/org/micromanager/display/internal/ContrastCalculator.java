@@ -55,10 +55,10 @@ public class ContrastCalculator {
       private final int[] histogram_;
       private final byte[] maskPixels_;
       private final Rectangle roiRect_;
-      private final int xMin_;
-      private final int xMax_;
-      private final int yMin_;
-      private final int yMax_;
+      private final int xStart_;
+      private final int xStop_;
+      private final int yStart_;
+      private final int yStop_;
       private final Object pixels_;
       private final double extremaPercentage_;
       private final int depthPower_;
@@ -139,19 +139,19 @@ public class ContrastCalculator {
          }
 
          if (roiRect_ == null) {
-            xMin_ = 0;
-            xMax_ = width_;
-            yMin_ = 0;
-            yMax_ = height_;
+            xStart_ = 0;
+            xStop_ = width_;
+            yStart_ = 0;
+            yStop_ = height_;
          }
          else {
-            xMin_ = roiRect_.x;
-            xMax_ = roiRect_.x + roiRect_.width;
-            yMin_ = roiRect_.y;
-            yMax_ = roiRect_.y + roiRect_.height;
+            xStart_ = roiRect_.x;
+            xStop_ = roiRect_.x + roiRect_.width;
+            yStart_ = roiRect_.y;
+            yStop_ = roiRect_.y + roiRect_.height;
          }
 
-         numAllPixels_ = (xMax_ - xMin_) * (yMax_ - yMin_);
+         numAllPixels_ = (xStop_ - xStart_) * (yStop_ - yStart_);
       }
 
       public HistogramData calculate() {
@@ -314,9 +314,9 @@ public class ContrastCalculator {
       }
 
       private void calculate8BitSingleComponent(byte[] pixels) {
-         for (int y = yMin_; y < yMax_; ++y) {
+         for (int y = yStart_; y < yStop_; ++y) {
             int base = y * width_;
-            for (int x = xMin_; x < xMax_; ++x) {
+            for (int x = xStart_; x < xStop_; ++x) {
                int index = base + x;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
@@ -330,9 +330,9 @@ public class ContrastCalculator {
       }
 
       private void calculate8BitMaskedSingleComponent(byte[] pixels) {
-         for (int y = yMin_; y < yMax_; ++y) {
+         for (int y = yStart_; y < yStop_; ++y) {
             int base = y * width_;
-            for (int x = xMin_; x < xMax_; ++x) {
+            for (int x = xStart_; x < xStop_; ++x) {
                // This mask check slows us down by 2-3x compared to the
                // unmasked version of the function (assuming we have to scan
                // the same number of pixels).
@@ -359,9 +359,9 @@ public class ContrastCalculator {
        * pixels array and the unsigned conversion mask.
        */
       private void calculate16BitSingleComponent(short[] pixels) {
-         for (int y = yMin_; y < yMax_; ++y) {
+         for (int y = yStart_; y < yStop_; ++y) {
             int base = y * width_;
-            for (int x = xMin_; x < xMax_; ++x) {
+            for (int x = xStart_; x < xStop_; ++x) {
                int index = base + x;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
@@ -379,9 +379,9 @@ public class ContrastCalculator {
        * of the pixels array and the unsigned conversion mask.
        */
       private void calculate16BitMaskedSingleComponent(short[] pixels) {
-         for (int y = yMin_; y < yMax_; ++y) {
+         for (int y = yStart_; y < yStop_; ++y) {
             int base = y * width_;
-            for (int x = xMin_; x < xMax_; ++x) {
+            for (int x = xStart_; x < xStop_; ++x) {
                int maskIndex = (y - roiRect_.y) * roiRect_.width +
                   (x - roiRect_.x);
                if (maskPixels_[maskIndex] == 0) {
@@ -402,8 +402,8 @@ public class ContrastCalculator {
 
 
       private void calculate8BitMultiComponent(byte[] pixels) {
-         for (int x = xMin_; x < xMax_; ++x) {
-            for (int y = yMin_; y < yMax_; ++y) {
+         for (int x = xStart_; x < xStop_; ++x) {
+            for (int y = yStart_; y < yStop_; ++y) {
                // This index calculation is expensive and slows us down by
                // about a factor of 2 compared to the single-component version.
                int index = (y * width_ + x) * bytesPerPixel_ + component_;
@@ -419,8 +419,8 @@ public class ContrastCalculator {
       }
 
       private void calculate8BitMaskedMultiComponent(byte[] pixels) {
-         for (int x = xMin_; x < xMax_; ++x) {
-            for (int y = yMin_; y < yMax_; ++y) {
+         for (int x = xStart_; x < xStop_; ++x) {
+            for (int y = yStart_; y < yStop_; ++y) {
                int maskIndex = (y - roiRect_.y) * roiRect_.width +
                   (x - roiRect_.x);
                if (maskPixels_[maskIndex] == 0) {
@@ -446,8 +446,8 @@ public class ContrastCalculator {
       private void calculate16BitMultiComponent(short[] pixels) {
          // Since we step 2 bytes at a time in a short[] array.
          int stride = bytesPerPixel_ / 2;
-         for (int x = xMin_; x < xMax_; ++x) {
-            for (int y = yMin_; y < yMax_; ++y) {
+         for (int x = xStart_; x < xStop_; ++x) {
+            for (int y = yStart_; y < yStop_; ++y) {
                int index = (y * width_ + x) * stride + component_;
                // Java doesn't have unsigned number types, so we have to
                // manually convert; otherwise large numbers will set the sign
@@ -467,8 +467,8 @@ public class ContrastCalculator {
       private void calculate16BitMaskedMultiComponent(short[] pixels) {
          // Since we step 2 bytes at a time in a short[] array.
          int stride = bytesPerPixel_ / 2;
-         for (int x = xMin_; x < xMax_; ++x) {
-            for (int y = yMin_; y < yMax_; ++y) {
+         for (int x = xStart_; x < xStop_; ++x) {
+            for (int y = yStart_; y < yStop_; ++y) {
                int maskIndex = (y - roiRect_.y) * roiRect_.width +
                   (x - roiRect_.x);
                if (maskPixels_[maskIndex] == 0) {
