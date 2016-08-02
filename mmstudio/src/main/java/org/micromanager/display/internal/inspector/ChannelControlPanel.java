@@ -915,7 +915,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                lastHistograms_[curComponent_].getMinVal(),
                lastHistograms_[curComponent_].getMaxVal(),
                lastHistograms_[curComponent_].getMean());
-      if (lastHistograms_[curComponent_].getStdDev() > 0) {
+      if (lastHistograms_[curComponent_].getStdDev() >= 0) {
          // Have a valid standard deviation.
          label += "/Std";
          values += String.format("/%.2f",
@@ -953,10 +953,9 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                // Add 3 to get from index to power-of-2.
                scalePow = histRangeComboBox_.getSelectedIndex() + 3;
             }
-            histogram_.setXBounds(0, Math.pow(2, scalePow));
+            histogram_.setXDataMax(Math.pow(2, scalePow));
          }
       }
-      histogram_.setAutoScale();
       histogram_.repaint();
    }
 

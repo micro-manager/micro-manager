@@ -48,9 +48,6 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    private static final int PIXELS_PER_HANDLE_DIGIT = 6;
 
    private static final long serialVersionUID = -1789623844214721902L;
-   // default histogram bins
-   private int xMin_ = 0;
-   private int xMax_ = 255;
    private int currentHandle_;
    //click location: 1 is low cursor text, 2 is high cursor text
    private int clickLocation_ = 0;
@@ -64,11 +61,12 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    private String cursorTextLow_ = "",cursorTextHigh_ = "";
    private String overlayText_ = null;
 
-   private GraphData[] datas_ = new GraphData[0];
-   protected GraphData.Bounds bounds_;
+   private GraphData[] graphs_ = new GraphData[0];
 
    private double xMargin_   = 50;
    private double yMargin_   = 50;
+
+   private double xDataMax_ = 1.0;
 
    double[] cursorLowPositions_;
    double[] cursorHighPositions_;
@@ -81,14 +79,11 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    private boolean isLogScale_ = false;
 
    public HistogramCanvas() {
-      super();
       addFocusListener(this);
       addKeyListener(this);
-      datas_ = new GraphData[1];
-      datas_[0] = new GraphData();
-      setAutoBounds();
-      cursorLowPositions_ = new double[] {bounds_.xMin};
-      cursorHighPositions_ = new double[] {bounds_.xMax};
+      graphs_ = new GraphData[] { new GraphData() };
+      cursorLowPositions_ = new double[] { 0.0 };
+      cursorHighPositions_ = new double[] { 1.0 };
       gamma_ = 1.0;
       this.setFocusable(true);
       cursorListeners_ = new ArrayList<CursorListener>();
@@ -114,40 +109,18 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       return path;
    }
 
-   /**
-    * Auto-scales Y axis.
-    */
-   public void setAutoScale() {
-      bounds_.yMin = datas_[0].getBounds().yMin;
-      bounds_.yMax = datas_[0].getBounds().yMax;
-   }
-
    /*
     * Draws a dashed vertical line at minimum and maximum pixel value
     * position.
     */
    public void drawCursor(Graphics2D g, Rectangle box, double xPos,
          Color color, int offset) {
-      // correct if Y range is zero
-      if (bounds_.getRangeY() == 0.0) {
-         if (bounds_.yMax > 0.0)
-            bounds_.yMin = 0.0;
-         else if (bounds_.yMax < 0.0) {
-            bounds_.yMax = 0.0;
-         }
-      }
+      double xUnit = box.width / xDataMax_;
+      double yUnit = box.height;
 
-      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0) {
-         return; // invalid range data
-      }
-
-      // set scaling
-      double xUnit = (box.width / bounds_.getRangeX());
-      double yUnit = (box.height / bounds_.getRangeY());
-
-      Point2D.Double ptPosBottom = new Point2D.Double(xPos, bounds_.yMax);
+      Point2D.Double ptPosBottom = new Point2D.Double(xPos, 1.0);
       Point2D.Double ptDevBottom = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
-      Point2D.Double ptPosTop = new Point2D.Double(xPos, bounds_.yMin);
+      Point2D.Double ptPosTop = new Point2D.Double(xPos, 0.0);
       Point2D.Double ptDevTop = getDevicePoint(ptPosTop, box, xUnit, yUnit);
 
       Color oldColor = g.getColor();
@@ -169,27 +142,12 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
     */
    public void drawMapping(Graphics2D g, Rectangle box,
          double xStart, double xEnd, double gamma) {
-      // correct if Y range is zero
-      if (bounds_.getRangeY() == 0.0) {
-         if (bounds_.yMax > 0.0)
-            bounds_.yMin = 0.0;
-         else if (bounds_.yMax < 0.0) {
-            bounds_.yMax = 0.0;
-         }
-      }
+      double xUnit = box.width / xDataMax_;
+      double yUnit = box.height;
 
-      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
-         return; // invalid range data
-      }
-
-      // set scaling
-      double xUnit = (box.width / bounds_.getRangeX());
-      double yUnit = (box.height / bounds_.getRangeY());
-
-      Point2D.Double ptPosBottom = new Point2D.Double(xStart,
-            bounds_.yMin);
+      Point2D.Double ptPosBottom = new Point2D.Double(xStart, 0.0);
       ptDevBottom_ = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
-      Point2D.Double ptPosTop = new Point2D.Double(xEnd, bounds_.yMax);
+      Point2D.Double ptPosTop = new Point2D.Double(xEnd, 1.0);
       ptDevTop_ = getDevicePoint(ptPosTop, box, xUnit, yUnit);
       ptDevTopUnclippedX_ = getDevicePointUnclippedXMax(
             ptPosTop, box, xUnit, yUnit);
@@ -262,7 +220,8 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       if (textOffset + textWidth > getBox().width - 50) { // fiddle factor
          // Put the text on the other side of the handle and away from the
          // X bounds.
-         textOffset = x - PIXELS_PER_HANDLE_DIGIT * (text.length() + Integer.toString((int) bounds_.xMax).length());
+         textOffset = x - PIXELS_PER_HANDLE_DIGIT *
+               (text.length() + Integer.toString((int) xDataMax_).length());
       }
       if (contrastMinEditable_) {
          g.setColor(HIGHLIGHT_COLOR);
@@ -294,14 +253,6 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       g.setColor(Color.black);
       g.drawPolygon(xs, ys, 3);
       g.setStroke(oldStroke);
-   }
-
-   public void refresh() {
-      GraphData.Bounds bounds = getGraphBounds();
-      bounds.xMin = xMin_;
-      bounds.xMax = xMax_;
-      setBounds(bounds);
-      repaint();
    }
 
    @Override
@@ -517,7 +468,7 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       Rectangle box = getBox();
       int ymin = box.y + box.height;
       int ymax = box.y;
-      double xUnit = box.width / bounds_.getRangeX();
+      double xUnit = box.width / xDataMax_;
       double deviceCursorLoX = getDevicePoint(
             new Point2D.Double(cursorLowPositions_[curComponent_], 0), box,
             xUnit, 1.0).x;
@@ -554,7 +505,7 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
 
    public void setData(int component, GraphData d) {
       extendArraysIfNeeded(component);
-      datas_[component] = d;
+      graphs_[component] = d;
    }
 
    public void setGamma(double gamma) {
@@ -597,18 +548,13 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
          traceColors_ = newColors;
       }
 
-      if (datas_.length <= component) {
+      if (graphs_.length <= component) {
          GraphData[] newDatas = new GraphData[component + 1];
-         for (int i = 0; i < datas_.length; ++i) {
-            newDatas[i] = datas_[i];
+         for (int i = 0; i < graphs_.length; ++i) {
+            newDatas[i] = graphs_[i];
          }
-         datas_ = newDatas;
+         graphs_ = newDatas;
       }
-   }
-
-   public final void setAutoBounds() {
-      bounds_ = datas_[0].getBounds();
-      AdjustCursors();
    }
 
    public void setMargins(double x, double y) {
@@ -640,40 +586,12 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       repaint();
    }
 
-   public GraphData.Bounds getGraphBounds() {
-      return bounds_;
-   }
-
-   public void setXBounds(double xMin, double xMax) {
-      bounds_.xMin = xMin;
-      bounds_.xMax = xMax;
-   }
-
-   public void setBounds(double xMin, double xMax, double yMin, double yMax){
-      bounds_.xMin = xMin;
-      bounds_.xMax = xMax;
-      bounds_.yMin = yMin;
-      bounds_.yMax = yMax;
-      AdjustCursors();
-   }
-
-   public void setBounds(GraphData.Bounds b){
-      bounds_ = b;
-      AdjustCursors();
+   public void setXDataMax(double xMax) {
+      xDataMax_ = xMax;
    }
 
    public void setLogScale(boolean isLogScale) {
       isLogScale_ = isLogScale;
-   }
-
-   // Note: doesn't adjust cursorHighPositions_, so that the contrast line can have an
-   // endpoint past the end of the histogram.
-   private void AdjustCursors() {
-      // This is only null when called via setAutoBounds in the constructor.
-      if (cursorLowPositions_ != null) {
-         cursorLowPositions_[curComponent_] = Math.max(
-               cursorLowPositions_[curComponent_], bounds_.xMin);
-      }
    }
 
    /**
@@ -682,7 +600,7 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
     * @param box
     */
    protected void drawGraph(Graphics2D g, int component, Rectangle box) {
-      GraphData data = datas_[component];
+      GraphData data = graphs_[component];
       if (data.getSize() < 2) {
          return;
       }
@@ -698,36 +616,24 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       Color oldColor = g.getColor();
       g.setColor(traceColors_[component]);
 
-      // correct if Y range is zero
-      if (bounds_.getRangeY() == 0.0) {
-         if (bounds_.yMax > 0.0)
-            bounds_.yMin = 0.0;
-         else if (bounds_.yMax < 0.0) {
-            bounds_.yMax = 0.0;
-         }
-      }
-
-      // bounds can have strange values (i.e. 1e-42).  Avoid artefacts:
-      // TODO: does this ever happen now? If so, why?
-      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
-         ReportingUtils.logError("Invalid histogram bounds when drawing");
-         return; // invalid range data
-      }
-
       // Determine scaling. Multiple bins in our source data may be applied
       // to a single pixel in the output; compress the data as needed by
       // summing bins together.
       data = data.compress(Math.min(data.getSize(), box.width), 0,
-            (int) bounds_.xMax);
+            (int) xDataMax_);
       if (isLogScale_) {
          data = data.logScale();
       }
-      if (data.getBounds().getRangeY() < 1) {
+
+      // Now the X range of the compressed data corresponds to xDataMax_
+      // of the original data
+      final GraphData.Bounds dataBounds = data.getBounds();
+      if (dataBounds.getRangeY() < 0.5) {
          // We have an array of all zeros, i.e. nothing to draw, so don't try.
          return;
       }
-      double xUnit = box.width / data.getBounds().getRangeX();
-      double yUnit = box.height / data.getBounds().getRangeY();
+      double xUnit = box.width / dataBounds.getRangeX();
+      double yUnit = box.height / dataBounds.getRangeY();
 
       GeneralPath trace = new GeneralPath(
             GeneralPath.WIND_EVEN_ODD, data.getSize() + 1);
@@ -768,7 +674,8 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    public Point2D.Double getDevicePointUnclippedXMax(
          Point2D.Double pt, Rectangle box, double xUnit, double yUnit) {
       Point2D.Double ptDev = new Point2D.Double(
-            (pt.x - bounds_.xMin) * xUnit + box.x, box.height - (pt.y - bounds_.yMin) * yUnit + box.y);
+            pt.x * xUnit + box.x,
+            box.height - pt.y * yUnit + box.y);
       // clip the drawing region
       ptDev.x = Math.max(ptDev.x, box.x);
       ptDev.y = Math.max(Math.min(ptDev.y, box.y + box.height),
@@ -779,8 +686,8 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
    public Point2D.Double getDevicePoint(Point2D.Double pt, Rectangle box,
          double xUnit, double yUnit){
       Point2D.Double ptDev = new Point2D.Double(
-            (pt.x - bounds_.xMin) * xUnit + box.x,
-            box.height - (pt.y - bounds_.yMin) * yUnit + box.y);
+            pt.x * xUnit + box.x,
+            box.height - pt.y * yUnit + box.y);
       // clip the drawing region
       ptDev.x = Math.max(Math.min(ptDev.x, box.x + box.width),
             box.x);
@@ -791,9 +698,10 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
 
    public Point2D.Double getPositionPoint(int x, int y) {
       Rectangle box = getBox();
+      double yRange = graphs_[curComponent_].getBounds().getRangeY();
       Point2D.Double posPt = new Point2D.Double(
-              ((((double) x - box.x) / box.width) * (bounds_.xMax - bounds_.xMin)),
-              (((((double) box.y + box.height) - y) / box.height) * (bounds_.yMax - bounds_.yMin)));
+              ((((double) x - box.x) / box.width) * xDataMax_),
+              (((((double) box.y + box.height) - y) / box.height) * yRange));
       return posPt;
    }
 
@@ -824,14 +732,14 @@ public class HistogramCanvas extends JPanel implements FocusListener, KeyListene
       Stroke oldStroke = g2d.getStroke();
 
       g2d.setPaint(Color.black);
-      if (datas_.length == 1) {
+      if (graphs_.length == 1) {
          g2d.setStroke(new BasicStroke(2.0f));
       }
       else {
          g2d.setStroke(new BasicStroke(1.0f));
       }
 
-      for (int i = 0; i < datas_.length; ++i) {
+      for (int i = 0; i < graphs_.length; ++i) {
          drawGraph(g2d, i, box);
          drawCursor(g2d, box, cursorLowPositions_[i],
                traceColors_[i], i);
