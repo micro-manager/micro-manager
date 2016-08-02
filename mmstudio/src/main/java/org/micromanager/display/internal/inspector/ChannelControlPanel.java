@@ -915,7 +915,7 @@ public class ChannelControlPanel extends JPanel implements CursorListener {
                lastHistograms_[curComponent_].getMinVal(),
                lastHistograms_[curComponent_].getMaxVal(),
                lastHistograms_[curComponent_].getMean());
-      if (lastHistograms_[curComponent_].getStdDev() > 0) {
+      if (lastHistograms_[curComponent_].getStdDev() >= 0) {
          // Have a valid standard deviation.
          label += "/Std";
          values += String.format("/%.2f",
