@@ -12,7 +12,7 @@ import javax.swing.table.TableCellEditor;
 /**
  * Editor component for the position list table
  */
-public class CellEditor extends AbstractCellEditor implements TableCellEditor, 
+public final class CellEditor extends AbstractCellEditor implements TableCellEditor, 
         FocusListener {
    private static final long serialVersionUID = 3L;
    // This is the component that will handle editing of the cell's value

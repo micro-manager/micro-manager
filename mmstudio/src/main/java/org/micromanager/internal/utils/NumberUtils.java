@@ -27,7 +27,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
 
-public class NumberUtils {
+public final class NumberUtils {
 	private static final NumberFormat format_;
 	private static final DecimalFormat coreDoubleFormat_;
 	private static final DecimalFormat coreIntegerFormat_;

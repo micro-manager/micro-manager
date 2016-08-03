@@ -39,7 +39,7 @@ import org.micromanager.display.DataViewer;
 
 import org.micromanager.internal.utils.TooltipTextMaker;
 
-public class ScrollbarLockIcon extends JButton {
+public final class ScrollbarLockIcon extends JButton {
    /**
     * This enum tracks the possible states of the lock icon. The difference
     * between "locked" and "superlocked" is that in the locked state, we will

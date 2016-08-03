@@ -11,7 +11,7 @@ import java.util.HashMap;
  * dispatching events to registrants, those with lower priority numbers are
  * notified first.
  */
-public class PrioritizedEventBus {
+public final class PrioritizedEventBus {
    // Priority at which to register objects when no priority is specified.
    public static final int DEFAULT_PRIORITY = 100;
    /**

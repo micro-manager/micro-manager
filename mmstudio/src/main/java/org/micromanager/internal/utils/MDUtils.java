@@ -35,7 +35,7 @@ import org.micromanager.PropertyMap;
  * identified (e.g. "Frame" vs. "FrameIndex"), and it becomes much easier to
  * track which bits of code are relying on which tags. 
  */
-public class MDUtils {
+public final class MDUtils {
    private final static SimpleDateFormat IMAGEDATEFORMAT =
            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 

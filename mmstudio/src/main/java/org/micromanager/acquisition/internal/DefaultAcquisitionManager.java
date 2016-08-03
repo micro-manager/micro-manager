@@ -65,7 +65,7 @@ import org.micromanager.internal.utils.MMException;
 /**
  * TODO: this class still depends on MMStudio for many things.
  */
-public class DefaultAcquisitionManager implements AcquisitionManager {
+public final class DefaultAcquisitionManager implements AcquisitionManager {
    // NOTE: should match the format used by the acquisition engine.
    private static final SimpleDateFormat formatter_ = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 

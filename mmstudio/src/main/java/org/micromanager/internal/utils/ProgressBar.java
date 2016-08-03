@@ -31,7 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
 
-public class ProgressBar extends JPanel {
+public final class ProgressBar extends JPanel {
    private static final long serialVersionUID = 1L;
    private JProgressBar progressBar;
    private JFrame frame;

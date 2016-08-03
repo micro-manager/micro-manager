@@ -54,7 +54,7 @@ import org.micromanager.Studio;
  * dataset if there are other axes (like, say, stage position). It can only
  * ever access an XYZTC volume.
  */
-public class MMVirtualStack extends ij.VirtualStack {
+public final class MMVirtualStack extends ij.VirtualStack {
    private final Datastore store_;
    private final EventBus displayBus_;
    private ImagePlus plus_;

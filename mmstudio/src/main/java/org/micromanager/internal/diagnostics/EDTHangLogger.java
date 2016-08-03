@@ -31,7 +31,7 @@ import mmcorej.CMMCore;
  * Note: Failure to call stop() before destructing the Core will result in a
  * crash.
  */
-public class EDTHangLogger {
+public final class EDTHangLogger {
    // Implementation notes
    //
    // One way to detect hangs on the EDT is to time the dispatch of each event.

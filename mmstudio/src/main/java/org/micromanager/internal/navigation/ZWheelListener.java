@@ -35,7 +35,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
 */
-public class ZWheelListener implements MouseWheelListener, LiveModeListener {
+public final class ZWheelListener implements MouseWheelListener, LiveModeListener {
    private CMMCore core_;
    private MMStudio studio_;
    private ImageCanvas canvas_;

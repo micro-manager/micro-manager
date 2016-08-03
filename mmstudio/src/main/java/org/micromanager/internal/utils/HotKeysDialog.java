@@ -64,7 +64,7 @@ public final class HotKeysDialog extends MMDialog {
                  System.getProperty("user.home") + "/MMHotKeys",
                  false, (String[]) null);
  
-   public class ShortCutTableModel extends AbstractTableModel {
+   public final class ShortCutTableModel extends AbstractTableModel {
 
       private static final int columnCount_ = 2;
 
@@ -227,7 +227,7 @@ public final class HotKeysDialog extends MMDialog {
        combo_.setFont(ourFont_);
     }
 
-    public class ActionCollRenderer extends DefaultTableCellRenderer {
+    public final class ActionCollRenderer extends DefaultTableCellRenderer {
        @Override
        public Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
           Component res = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -237,7 +237,7 @@ public final class HotKeysDialog extends MMDialog {
        }
     }
 
-    public class HotKeyCol1Renderer extends DefaultTableCellRenderer {
+    public final class HotKeyCol1Renderer extends DefaultTableCellRenderer {
        public void SetValue(Object value) {
           setText(KeyEvent.getKeyText((Integer) value));
        }
@@ -250,7 +250,7 @@ public final class HotKeysDialog extends MMDialog {
        }
     }
 
-    public class KeyEvtHandler implements KeyListener
+    public final class KeyEvtHandler implements KeyListener
     {
        JLabel label_;
 
@@ -279,7 +279,7 @@ public final class HotKeysDialog extends MMDialog {
        }
     }
 
-    public class HotKeyCol1Editor extends AbstractCellEditor implements TableCellEditor {
+    public final class HotKeyCol1Editor extends AbstractCellEditor implements TableCellEditor {
        JLabel keyLabel = new JLabel();
 
        // This method is called when a cell value is edited by the user.

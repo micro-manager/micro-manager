@@ -28,7 +28,7 @@ import org.micromanager.display.HistogramData;
  * This event is posted whenever someone wants to retrieve the current
  * histogram data for a channel.
  */
-public class HistogramRequestEvent {
+public final class HistogramRequestEvent {
    private int channel_;
    public HistogramRequestEvent(int channel) {
       channel_ = channel;

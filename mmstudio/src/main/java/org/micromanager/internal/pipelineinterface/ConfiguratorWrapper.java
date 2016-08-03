@@ -32,7 +32,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * It also contains some backreferences to the plugin that created the
  * Configurator, for ease of use.
  */
-public class ConfiguratorWrapper {
+public final class ConfiguratorWrapper {
    private ProcessorPlugin plugin_;
    private ProcessorConfigurator configurator_;
    private String name_;

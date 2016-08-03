@@ -27,7 +27,7 @@ import java.text.DecimalFormat;
 
 import mmcorej.Configuration;
 
-public class Calibration {
+public final class Calibration {
    private Double pixelSize_;
    private String calibrationName_;
    private Configuration configuration_;

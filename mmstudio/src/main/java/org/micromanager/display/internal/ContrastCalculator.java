@@ -38,7 +38,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * This class calculates histograms and contrast settings for images.
  */
-public class ContrastCalculator {
+public final class ContrastCalculator {
 
    /**
     * This class just encapsulates necessary state for doing the calculations.

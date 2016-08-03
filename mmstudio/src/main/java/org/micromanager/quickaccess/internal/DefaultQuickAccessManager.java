@@ -65,7 +65,7 @@ import org.micromanager.Studio;
 /**
  * This class is responsible for managing the different Quick Access Windows.
  */
-public class DefaultQuickAccessManager implements QuickAccessManager {
+public final class DefaultQuickAccessManager implements QuickAccessManager {
    // These strings are used for formatting the JSON used to describe custom
    // icons.
    public static final String ICON_TYPE = "custom icon type";

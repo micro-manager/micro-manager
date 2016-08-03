@@ -21,7 +21,7 @@
 package org.micromanager.display.internal.events;
 
 // This class provides information when the mouse moves over an image.
-public class MouseMovedEvent {
+public final class MouseMovedEvent {
    private int x_;
    private int y_;
    public MouseMovedEvent(int x, int y) {

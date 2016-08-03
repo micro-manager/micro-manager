@@ -20,7 +20,7 @@ package org.micromanager.internal.diagnostics;
  * This class handles the simple task of uploading, given the report text. It
  * does not and should not depend on the contents of the report or its text.
  */
-public class ReportSender {
+public final class ReportSender {
    private static java.net.URL problemReportUploadURL_;
    static {
       try {

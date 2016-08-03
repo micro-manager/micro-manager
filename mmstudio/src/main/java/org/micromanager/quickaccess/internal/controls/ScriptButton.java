@@ -56,7 +56,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * a preselected script file.
  */
 @Plugin(type = WidgetPlugin.class)
-public class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
+public final class ScriptButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

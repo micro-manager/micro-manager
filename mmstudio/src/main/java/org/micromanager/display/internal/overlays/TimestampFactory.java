@@ -24,7 +24,7 @@ import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.Studio;
 
-public class TimestampFactory implements OverlayPanelFactory {
+public final class TimestampFactory implements OverlayPanelFactory {
    private Studio studio_;
    public TimestampFactory(Studio studio) {
       studio_ = studio;

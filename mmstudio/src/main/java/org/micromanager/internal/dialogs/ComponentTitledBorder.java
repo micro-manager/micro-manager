@@ -29,7 +29,7 @@ import javax.swing.border.Border;
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
  */
-public class ComponentTitledBorder implements Border, MouseListener, SwingConstants {
+public final class ComponentTitledBorder implements Border, MouseListener, SwingConstants {
 
    int offset = 5;
    Component comp;

@@ -47,7 +47,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Wizard page for editing device roles 
  */
-public class RolesPage extends PagePanel {
+public final class RolesPage extends PagePanel {
    private static final long serialVersionUID = 1L;
    private JComboBox focusComboBox_;
    private JComboBox shutterComboBox_;

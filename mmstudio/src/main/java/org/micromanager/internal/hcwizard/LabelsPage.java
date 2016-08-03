@@ -50,14 +50,14 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Wizard page to define labels for state devices.
  *
  */
-public class LabelsPage extends PagePanel {
+public final class LabelsPage extends PagePanel {
    private static final long serialVersionUID = 1L;
    private String labels_[] = new String[0];
    private Hashtable<String, String[]> originalLabels_ = new Hashtable<String, String[]>();
    ArrayList<Device> devices_ = new ArrayList<Device>();
    boolean originalLabelsStored_ = false;
 
-   public class SelectionListener implements ListSelectionListener {
+   public final class SelectionListener implements ListSelectionListener {
       JTable table;
 
       // It is necessary to keep the table since it is not possible

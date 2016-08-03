@@ -61,7 +61,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Allows you to open and close the shutter, and toggle autoshutter.
  */
 @Plugin(type = WidgetPlugin.class)
-public class ShutterControl extends WidgetPlugin implements SciJavaPlugin {
+public final class ShutterControl extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

@@ -56,7 +56,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * LUTs for displays. It is responsible for ensuring that image pixel
  * intensities map to the correct color/brightness in the display.
  */
-public class LUTMaster {
+public final class LUTMaster {
 
    /**
     * Provides an ImageIcon and the byte data used to generate that icon. These

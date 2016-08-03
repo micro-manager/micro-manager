@@ -12,7 +12,7 @@ import javax.swing.table.TableCellRenderer;
  *
  * @author arthur
  */
-public class PropertyUsageCellRenderer implements TableCellRenderer {
+public final class PropertyUsageCellRenderer implements TableCellRenderer {
 
    PropertyItem item_;
    JCheckBox cb_ = new JCheckBox();

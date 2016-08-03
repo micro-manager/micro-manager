@@ -26,7 +26,7 @@ import java.util.List;
  * This event is posted by the ShutterManager to send out the new list of
  * shutter devices to other entities.
  */
-public class ShutterDevicesEvent {
+public final class ShutterDevicesEvent {
    private List<String> devices_;
 
    public ShutterDevicesEvent(List<String> devices) {

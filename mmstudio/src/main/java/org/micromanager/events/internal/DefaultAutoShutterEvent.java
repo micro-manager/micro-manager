@@ -22,7 +22,7 @@ package org.micromanager.events.internal;
 
 import org.micromanager.events.AutoShutterEvent;
 
-public class DefaultAutoShutterEvent implements AutoShutterEvent {
+public final class DefaultAutoShutterEvent implements AutoShutterEvent {
    private boolean isAutoOn_;
    public DefaultAutoShutterEvent(boolean isOn) {
       isAutoOn_ = isOn;

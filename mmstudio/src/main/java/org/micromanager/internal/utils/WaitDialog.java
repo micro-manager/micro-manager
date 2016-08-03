@@ -22,7 +22,7 @@ import javax.swing.JWindow;
  * This is an implementation of a "Loading.."(or just "please wait") dialog. It pops up, when the GUI invokes some 
  * backend operations, like search or similar. 
  */
-public class WaitDialog  extends JWindow  {
+public final class WaitDialog  extends JWindow  {
    private static final long serialVersionUID = 5356404305699524826L;
    // single instance of this class, used through out the scope of the application
 	  private final static Cursor defaultCursor=Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);

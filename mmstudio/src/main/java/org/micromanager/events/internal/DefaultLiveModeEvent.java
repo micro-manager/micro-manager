@@ -22,7 +22,7 @@ package org.micromanager.events.internal;
 
 import org.micromanager.events.LiveModeEvent;
 
-public class DefaultLiveModeEvent implements LiveModeEvent {
+public final class DefaultLiveModeEvent implements LiveModeEvent {
    private boolean isOn_;
 
    public DefaultLiveModeEvent(boolean isOn) {

@@ -44,7 +44,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 import org.micromanager.PropertyMap;
 
-public class DefaultDisplaySettings implements DisplaySettings {
+public final class DefaultDisplaySettings implements DisplaySettings {
 
    /**
     * This string is deprecated; it was used in prior versions of MM2.0 before

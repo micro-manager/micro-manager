@@ -19,7 +19,7 @@ import org.micromanager.internal.utils.TooltipTextMaker;
 /**
  * Data representation class for the channels list in the MDA dialog.
  */
-public class ChannelTableModel extends AbstractTableModel implements TableModelListener {
+public final class ChannelTableModel extends AbstractTableModel implements TableModelListener {
 
    private static final long serialVersionUID = 3290621191844925827L;
    private ArrayList<ChannelSpec> channels_;

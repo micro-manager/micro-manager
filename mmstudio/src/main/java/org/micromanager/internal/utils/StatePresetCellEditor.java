@@ -26,7 +26,7 @@ import org.micromanager.internal.ConfigGroupPad.StateTableData;
  * Cell editing using either JTextField or JComboBox depending on whether the
  * property enforces a set of allowed values.
  */
-public class StatePresetCellEditor extends AbstractCellEditor implements TableCellEditor {
+public final class StatePresetCellEditor extends AbstractCellEditor implements TableCellEditor {
 
     /**
      *

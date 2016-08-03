@@ -16,7 +16,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /*
  * Responsible for handling the Help Menu and its associated logic.
  */
-public class HelpMenu {
+public final class HelpMenu {
    private MMStudio studio_;
    private CMMCore core_;
 

@@ -12,7 +12,7 @@ import java.util.prefs.Preferences;
  * keep around for a little while.
  */
 @Deprecated
-public class UnpleasantLegacyCode {
+public final class UnpleasantLegacyCode {
    public static AffineTransform legacyRetrieveTransformFromPrefs(String key) {
       Preferences prefs = DefaultUserProfile.getInstance().getLegacyUserPreferences14();
       try {

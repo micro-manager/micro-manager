@@ -23,7 +23,7 @@ package org.micromanager.events.internal;
 import org.micromanager.events.NewPositionListEvent;
 import org.micromanager.PositionList;
 
-public class DefaultNewPositionListEvent implements NewPositionListEvent {
+public final class DefaultNewPositionListEvent implements NewPositionListEvent {
    private PositionList newList_;
 
    public DefaultNewPositionListEvent(PositionList newList) {

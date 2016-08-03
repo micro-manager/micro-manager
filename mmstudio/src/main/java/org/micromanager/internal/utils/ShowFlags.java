@@ -24,7 +24,7 @@ package org.micromanager.internal.utils;
  * Utility class for the PropertyBrowser to specify which devices
  * are currently visible.
  */
-public class ShowFlags {
+public final class ShowFlags {
    public boolean cameras_ = true;
    public boolean shutters_ = true;
    public boolean stages_ = true;

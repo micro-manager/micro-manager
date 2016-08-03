@@ -45,7 +45,7 @@ import org.micromanager.internal.utils.SortedPopupMenu;
  * This class provides access to various rarely-used functions (like save or
  * duplicate) via a dropdown menu.
  */
-public class GearButton extends JButton {
+public final class GearButton extends JButton {
    private SortedPopupMenu menu_;
 
    public GearButton(final DisplayWindow display, Studio studio) {

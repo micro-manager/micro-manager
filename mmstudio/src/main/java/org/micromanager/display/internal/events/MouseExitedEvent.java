@@ -21,4 +21,4 @@
 package org.micromanager.display.internal.events;
 
 // This event fires when the mouse leaves the canvas.
-public class MouseExitedEvent {}
+public final class MouseExitedEvent {}

@@ -28,7 +28,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = OverlayPlugin.class)
-public class ScaleBarPlugin implements OverlayPlugin, SciJavaPlugin {
+public final class ScaleBarPlugin implements OverlayPlugin, SciJavaPlugin {
    private Studio studio_;
 
    @Override

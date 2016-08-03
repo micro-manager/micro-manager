@@ -37,7 +37,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 
-public class SliderPanel extends JPanel {
+public final class SliderPanel extends JPanel {
    private static final long serialVersionUID = -6039226355990936685L;
    private SpringLayout springLayout_;
    private JTextField textField_;

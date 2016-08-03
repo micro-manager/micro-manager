@@ -50,7 +50,7 @@ import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 // TODO: there is an awful lot of duplicated code here!
-public class DefaultPropertyMap implements PropertyMap {
+public final class DefaultPropertyMap implements PropertyMap {
    private static final String TYPE = "PropType";
    private static final String VALUE = "PropVal";
    private static final String STRING = "String";

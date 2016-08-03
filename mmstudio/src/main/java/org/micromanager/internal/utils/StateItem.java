@@ -8,7 +8,7 @@ package org.micromanager.internal.utils;
 /**
  * Property descriptor, representing MMCore data
  */
-public class StateItem extends PropertyItem {
+public final class StateItem extends PropertyItem {
 
     public String group;
     public String config;

@@ -44,7 +44,7 @@ import org.micromanager.Studio;
  * @author nico
  * 
  */
-public class DragDropUtil implements DropTargetListener {
+public final class DragDropUtil implements DropTargetListener {
    private Studio studio_;
 
    public DragDropUtil(Studio studio) {

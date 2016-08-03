@@ -239,7 +239,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    }
 
 
-   public class SelectionListener implements ListSelectionListener {
+   public final class SelectionListener implements ListSelectionListener {
        JTable table_;
        int lastRowSelected_ = -1;
        int lastColumnSelected_ = -1;

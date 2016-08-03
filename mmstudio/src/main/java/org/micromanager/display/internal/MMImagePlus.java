@@ -24,7 +24,7 @@ package org.micromanager.display.internal;
 import ij.ImagePlus;
 import ij.ImageStack;
 
-public class MMImagePlus extends ImagePlus implements IMMImagePlus {
+public final class MMImagePlus extends ImagePlus implements IMMImagePlus {
 
    public MMImagePlus() {
       super();

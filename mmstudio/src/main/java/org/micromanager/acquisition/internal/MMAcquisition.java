@@ -99,7 +99,7 @@ import org.micromanager.Studio;
  * This class is used to execute most of the acquisition and image display
  * functionality in the ScriptInterface
  */
-public class MMAcquisition {
+public final class MMAcquisition {
    
    /** 
     * Final queue of images immediately prior to insertion into the ImageCache.

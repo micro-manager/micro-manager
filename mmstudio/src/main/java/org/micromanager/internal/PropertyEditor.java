@@ -73,7 +73,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  *
  * aka the "Device/Property Browser"
  */
-public class PropertyEditor extends MMFrame {
+public final class PropertyEditor extends MMFrame {
    private static final long serialVersionUID = 1507097881635431043L;
 
    private JTable table_;
@@ -227,7 +227,7 @@ public class PropertyEditor extends MMFrame {
       flags_.save(PropertyEditor.class);
    }
 
-    public class PropertyEditorTableData extends PropertyTableData {
+    public final class PropertyEditorTableData extends PropertyTableData {
       public PropertyEditorTableData(CMMCore core, String groupName, String presetName,
          int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
 

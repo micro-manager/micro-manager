@@ -33,7 +33,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.Studio;
 
-public class PipelineTable extends JTable {
+public final class PipelineTable extends JTable {
 
    private static final String buttonCellLayoutConstraints =
          "insets 0, align center center";

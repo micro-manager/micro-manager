@@ -2,7 +2,7 @@ package org.micromanager.internal.utils;
 
 import java.text.ParseException;
 import java.util.Comparator;
-public class SortFunctionObjects
+public final class SortFunctionObjects
 {
 
 /* comparators for GUI ordering of numeric strings

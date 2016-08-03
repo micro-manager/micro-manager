@@ -28,7 +28,7 @@ import org.micromanager.Studio;
 
 // TODO: currently we redraw the entire table any time it changes, rather than
 // only redrawing the row(s) that are modified.
-public class PipelineTableModel extends AbstractTableModel {
+public final class PipelineTableModel extends AbstractTableModel {
    static final int ENABLED_COLUMN = 0;
    static final int ENABLED_LIVE_COLUMN = 1;
    static final int NAME_COLUMN = 2;

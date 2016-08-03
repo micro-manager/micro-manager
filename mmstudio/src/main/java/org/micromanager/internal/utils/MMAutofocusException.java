@@ -1,6 +1,6 @@
 package org.micromanager.internal.utils;
 
-public class MMAutofocusException extends Exception {
+public final class MMAutofocusException extends Exception {
    private static final long serialVersionUID = 1L;
    private Throwable cause;
    private static final String MSG_PREFIX = "MMAutofocus error: ";

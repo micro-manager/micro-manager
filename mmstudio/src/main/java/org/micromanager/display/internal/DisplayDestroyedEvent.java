@@ -26,7 +26,7 @@ import org.micromanager.display.DisplayWindow;
  * This event signifies that a display has been destroyed via its
  * forceClosed() method.
  */
-public class DisplayDestroyedEvent implements org.micromanager.display.DisplayDestroyedEvent {
+public final class DisplayDestroyedEvent implements org.micromanager.display.DisplayDestroyedEvent {
    private final DisplayWindow display_;
 
    public DisplayDestroyedEvent(DisplayWindow display) {

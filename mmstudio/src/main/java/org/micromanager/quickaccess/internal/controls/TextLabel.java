@@ -45,7 +45,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Allows you to put a simple text label into the window.
  */
 @Plugin(type = WidgetPlugin.class)
-public class TextLabel extends WidgetPlugin implements SciJavaPlugin {
+public final class TextLabel extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

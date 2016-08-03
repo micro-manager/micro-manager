@@ -20,7 +20,7 @@
 
 package org.micromanager.data.internal;
 
-public class DefaultDatastoreSavePathEvent implements org.micromanager.data.DatastoreSavePathEvent {
+public final class DefaultDatastoreSavePathEvent implements org.micromanager.data.DatastoreSavePathEvent {
    private String path_;
 
    public DefaultDatastoreSavePathEvent(String path) {

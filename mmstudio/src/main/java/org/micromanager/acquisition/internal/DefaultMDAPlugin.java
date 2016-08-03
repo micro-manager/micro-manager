@@ -35,7 +35,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * This built-in plugin provides access to our standard MDA dialog.
  */
 @Plugin(type = AcquisitionDialogPlugin.class)
-public class DefaultMDAPlugin implements AcquisitionDialogPlugin, SciJavaPlugin {
+public final class DefaultMDAPlugin implements AcquisitionDialogPlugin, SciJavaPlugin {
    private Studio studio_;
 
    @Override

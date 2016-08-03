@@ -42,7 +42,7 @@ import org.micromanager.ApplicationSkin.SkinMode;
  * interact well with Look and Feel; see
  * http://stackoverflow.com/questions/27933017/cant-update-look-and-feel-on-the-fly
  */
-public class DaytimeNighttime implements ApplicationSkin {
+public final class DaytimeNighttime implements ApplicationSkin {
 
    // Key into the user's profile for the current display mode.
    private static final String BACKGROUND_MODE = "current window style (as per ApplicationSkin.SkinMode)";

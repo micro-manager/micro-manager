@@ -30,7 +30,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = DisplayGearMenuPlugin.class)
-public class LineProfileItem implements DisplayGearMenuPlugin, SciJavaPlugin {
+public final class LineProfileItem implements DisplayGearMenuPlugin, SciJavaPlugin {
    private Studio studio_;
 
    @Override

@@ -50,7 +50,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Implements the "Live" button logic.
  */
 @Plugin(type = WidgetPlugin.class)
-public class LiveButton extends WidgetPlugin implements SciJavaPlugin {
+public final class LiveButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

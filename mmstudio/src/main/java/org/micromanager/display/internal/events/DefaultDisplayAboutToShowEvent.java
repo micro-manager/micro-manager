@@ -23,7 +23,7 @@ package org.micromanager.display.internal.events;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.DisplayAboutToShowEvent;
 
-public class DefaultDisplayAboutToShowEvent implements DisplayAboutToShowEvent {
+public final class DefaultDisplayAboutToShowEvent implements DisplayAboutToShowEvent {
    private DisplayWindow display_;
 
    public DefaultDisplayAboutToShowEvent(DisplayWindow display) {

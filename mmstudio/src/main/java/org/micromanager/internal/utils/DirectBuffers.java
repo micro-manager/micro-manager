@@ -12,7 +12,7 @@ import java.nio.ShortBuffer;
  *
  * @author Arthur
  */
-public class DirectBuffers {
+public final class DirectBuffers {
    
    public static ByteOrder NATIVE_ORDER = ByteOrder.nativeOrder();
    

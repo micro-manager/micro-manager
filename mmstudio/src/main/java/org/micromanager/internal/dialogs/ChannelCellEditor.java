@@ -26,7 +26,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Cell editing using either JTextField or JComboBox depending on whether the
  * property enforces a set of allowed values.
  */
-public class ChannelCellEditor extends AbstractCellEditor implements TableCellEditor {
+public final class ChannelCellEditor extends AbstractCellEditor implements TableCellEditor {
 
    private static final long serialVersionUID = -8374637422965302637L;
    JTextField text_ = new JTextField();

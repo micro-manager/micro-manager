@@ -72,7 +72,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Splash screen and introduction dialog. 
  * Opens up at startup and allows selection of the configuration file.
  */
-public class IntroDlg extends JDialog {
+public final class IntroDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private static final String USERNAME_NEW = "Create new profile";
    private static final String RECENTLY_USED_CONFIGS = "recently-used config files";

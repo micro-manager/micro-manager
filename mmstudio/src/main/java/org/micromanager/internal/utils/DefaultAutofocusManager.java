@@ -39,7 +39,7 @@ import org.micromanager.Studio;
  * The class is designed to be instantiated in the top level gui and used to obtain
  * the list of available focusing devices, as well as for selecting a default one.
  */
-public class DefaultAutofocusManager implements AutofocusManager {
+public final class DefaultAutofocusManager implements AutofocusManager {
    private Studio app_;
    private Vector<AutofocusPlugin> afs_;
    private AutofocusPlugin currentAfDevice_;

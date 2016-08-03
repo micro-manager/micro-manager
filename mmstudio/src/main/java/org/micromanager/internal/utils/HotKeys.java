@@ -17,7 +17,7 @@ import java.util.Map;
  *
  * @author nico
  */
-public class HotKeys {
+public final class HotKeys {
    private static final int STOP = -1;
    private static final String KEY = "Key";
    private static final String TYPE = "Type";

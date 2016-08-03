@@ -63,7 +63,7 @@ import org.micromanager.internal.utils.TextUtils;
  *
  * @author nico
  */
-public class StageControlFrame extends MMFrame {
+public final class StageControlFrame extends MMFrame {
    private final Studio studio_;
    private final CMMCore core_;
 

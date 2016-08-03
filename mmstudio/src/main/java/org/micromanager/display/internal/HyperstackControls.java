@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * like pixel intensities, FPS, and some brief information on the displayed
  * image.
  */
-public class HyperstackControls extends JPanel {
+public final class HyperstackControls extends JPanel {
 
    private final DisplayWindow display_;
    private final Datastore store_;

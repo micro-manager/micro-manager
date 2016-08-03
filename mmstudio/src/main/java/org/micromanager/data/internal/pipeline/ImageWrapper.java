@@ -27,7 +27,7 @@ import org.micromanager.data.Image;
  * pipeline. It exists predominantly so we can tell when we're being told to
  * flush the pipeline (by creating an ImageWrapper with a null image).
  */
-public class ImageWrapper {
+public final class ImageWrapper {
    private Image image_;
 
    public ImageWrapper(Image image) {

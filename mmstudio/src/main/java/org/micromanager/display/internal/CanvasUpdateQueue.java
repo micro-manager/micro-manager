@@ -78,7 +78,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  *    Then, if the queue is not empty, it adds an event to the EDT to draw
  *    itself, thus starting the process of drawing new images again.
  */
-public class CanvasUpdateQueue {
+public final class CanvasUpdateQueue {
 
    /**
     * Simple class for tracking our history with respect to calculating

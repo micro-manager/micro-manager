@@ -49,7 +49,7 @@ import org.micromanager.display.internal.events.MouseMovedEvent;
  * MMImageCanvas is a customization of ImageJ's ImageCanvas class with
  * specialized drawing logic and some other minor customizations.
  */
-public class MMImageCanvas extends ImageCanvas {
+public final class MMImageCanvas extends ImageCanvas {
    private ImagePlus ijImage_;
    private DefaultDisplayWindow display_;
 

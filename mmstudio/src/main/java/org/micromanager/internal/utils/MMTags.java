@@ -3,19 +3,19 @@ package org.micromanager.internal.utils;
 /**
  * The list of tags used by the Micro-manager
  */
-public class MMTags {
+public final class MMTags {
    
    /**
     * Meta-tags referring to main sections of the metadata
     */
-   public class Root {
+   public final class Root {
       public static final String SUMMARY = "Summary"; // key for the Summary metadata      
    }
    
    /**
     * Summary tags
     */
-   public class Summary {
+   public final class Summary {
       public static final String PREFIX = "Prefix"; // Acquisition name
       public static final String DIRECTORY = "Directory"; // Acquisition directory
 
@@ -45,7 +45,7 @@ public class MMTags {
 
    }
    
-   public class Image {
+   public final class Image {
       public static final String WIDTH = "Width"; // image width
       public static final String HEIGHT = "Height"; // image height
       public static final String CHANNEL = "Channel";
@@ -67,7 +67,7 @@ public class MMTags {
       public static final String ELAPSED_TIME_MS = "ElapsedTime-ms";
    }
    
-   public class Values {
+   public final class Values {
       public static final String PIX_TYPE_GRAY_16 = "GRAY16";
       public static final String PIX_TYPE_GRAY_8 = "GRAY8";
       public static final String PIX_TYPE_RGB_32 = "RGB32";

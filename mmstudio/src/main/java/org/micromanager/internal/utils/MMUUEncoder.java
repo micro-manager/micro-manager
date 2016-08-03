@@ -9,7 +9,7 @@ import java.io.OutputStream;
  *
  * @author Johannes Schindelin
  */
-public class MMUUEncoder {
+public final class MMUUEncoder {
         protected int maxBytesPerLine = 45;
 
         public void encodeBuffer(InputStream in, OutputStream out) throws IOException {

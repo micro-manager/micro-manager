@@ -29,7 +29,7 @@ import java.util.ArrayList;
  * Encapsulation of the preset data for use in the Configuration Wizard. 
  *
  */
-public class ConfigPreset {
+public final class ConfigPreset {
    private String name_;
    private ArrayList<Setting> settings_;
    

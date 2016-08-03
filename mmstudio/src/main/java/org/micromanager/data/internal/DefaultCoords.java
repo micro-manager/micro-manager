@@ -37,7 +37,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * DefaultCoords indicate the position of a given image within a dataset.
  * They are immutable, constructed using a Builder pattern.
  */
-public class DefaultCoords implements Coords, Comparable<DefaultCoords> {
+public final class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
    public static class Builder implements Coords.CoordsBuilder {
       // Maps axis labels to our index along those axes.

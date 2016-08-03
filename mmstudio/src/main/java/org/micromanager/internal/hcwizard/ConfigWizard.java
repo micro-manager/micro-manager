@@ -76,7 +76,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Based on the dialog frame to be activated as part of the
  * MMStudio
  */
-public class ConfigWizard extends MMDialog {
+public final class ConfigWizard extends MMDialog {
 
    private static final long serialVersionUID = 1L;
    private JPanel pagePanel_;

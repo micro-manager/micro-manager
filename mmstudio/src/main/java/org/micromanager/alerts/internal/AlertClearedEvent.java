@@ -25,7 +25,7 @@ package org.micromanager.alerts.internal;
  * This event is posted on the application event bus whenever an alert is
  * dismissed from the Messages window.
  */
-public class AlertClearedEvent {
+public final class AlertClearedEvent {
    private DefaultAlert alert_;
    public AlertClearedEvent(DefaultAlert alert) {
       alert_ = alert;

@@ -24,7 +24,7 @@ import mmcorej.MMCoreJ;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
 
-public class PeripheralSetupDlg extends MMDialog {
+public final class PeripheralSetupDlg extends MMDialog {
 
    private static final long serialVersionUID = 1L;
    private static final int NAMECOLUMN = 0;

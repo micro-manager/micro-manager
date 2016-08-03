@@ -29,7 +29,7 @@ import org.micromanager.display.DisplayWindow;
  * the global event bus as a system-wide notification. It is not expected that
  * any third-party code will need to know about this.
  */
-public class GlobalDisplayDestroyedEvent {
+public final class GlobalDisplayDestroyedEvent {
    private DisplayWindow display_;
 
    public GlobalDisplayDestroyedEvent(DisplayWindow display) {

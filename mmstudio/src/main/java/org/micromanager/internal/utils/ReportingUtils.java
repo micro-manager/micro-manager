@@ -45,7 +45,7 @@ import org.micromanager.LogManager;
  *
  * @author arthur
  */
-public class ReportingUtils {
+public final class ReportingUtils {
 
    /**
     * This class acts as a thin wrapper around ReportingUtils to present its

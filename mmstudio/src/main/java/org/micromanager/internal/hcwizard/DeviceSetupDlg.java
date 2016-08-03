@@ -40,7 +40,7 @@ import org.micromanager.internal.utils.PropertyValueCellEditor;
 import org.micromanager.internal.utils.PropertyValueCellRenderer;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class DeviceSetupDlg extends MMDialog {
+public final class DeviceSetupDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private static final String SCAN_PORTS = "Scan Ports";
 

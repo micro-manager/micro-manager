@@ -26,7 +26,7 @@ import org.micromanager.display.DisplaySettings;
  * Signifies that the contrast settings for a specific channel of the display
  * have been changed.
  */
-public class ContrastEvent implements DisplaySettingsEvent {
+public final class ContrastEvent implements DisplaySettingsEvent {
    private int channelIndex_;
    private String channelName_;
    private DisplaySettings newSettings_;

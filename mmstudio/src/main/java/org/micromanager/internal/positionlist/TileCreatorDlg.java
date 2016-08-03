@@ -46,7 +46,7 @@ import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class TileCreatorDlg extends MMDialog {
+public final class TileCreatorDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private CMMCore core_;
    private MultiStagePosition[] endPosition_;

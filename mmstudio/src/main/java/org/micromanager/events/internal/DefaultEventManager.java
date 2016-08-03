@@ -6,7 +6,7 @@ import org.micromanager.events.EventManager;
 
 // This is a singleton wrapper around the Guava library's EventBus. It exposes
 // a system-wide EventBus for certain general-purpose events.
-public class DefaultEventManager implements EventManager {
+public final class DefaultEventManager implements EventManager {
    // Singleton.
    private static final DefaultEventManager staticInstance_;
    static {

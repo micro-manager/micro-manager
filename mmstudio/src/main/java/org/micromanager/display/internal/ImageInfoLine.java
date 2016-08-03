@@ -44,7 +44,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * displayed in the DisplayWindow: dimension, bit depth, and pixel intensity
  * data.
  */
-public class ImageInfoLine extends JPanel {
+public final class ImageInfoLine extends JPanel {
    private DefaultDisplayWindow display_;
 
    private JLabel imageInfo_;

@@ -15,7 +15,7 @@ import org.micromanager.internal.utils.NumberUtils;
 /**
  * Renderer class for the channel table.
  */
-public class ChannelCellRenderer extends JLabel implements TableCellRenderer {
+public final class ChannelCellRenderer extends JLabel implements TableCellRenderer {
 
    private static final long serialVersionUID = -4328340719459382679L;
    private AcquisitionEngine acqEng_;

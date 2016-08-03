@@ -26,7 +26,7 @@ import java.awt.Color;
  * This class is a storage for two sets of colors that we provide as sane
  * defaults to the user.
  */
-public class ColorSets {
+public final class ColorSets {
    public static final Color[] RGB_COLORS = new Color[] {
          Color.RED, Color.GREEN, Color.BLUE, Color.CYAN, Color.MAGENTA,
          Color.YELLOW, Color.WHITE};

@@ -34,7 +34,7 @@ import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 
-public class DefaultAlertManager implements AlertManager {
+public final class DefaultAlertManager implements AlertManager {
 
    private static DefaultAlertManager staticInstance_;
    static {

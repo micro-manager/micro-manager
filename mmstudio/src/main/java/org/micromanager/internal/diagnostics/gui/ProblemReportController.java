@@ -26,7 +26,7 @@ import org.micromanager.internal.diagnostics.ReportSender;
  *
  * All methods must be called on the EDT.
  */
-public class ProblemReportController {
+public final class ProblemReportController {
    /*
     * Static fields and methods
     */

@@ -8,7 +8,7 @@ import org.micromanager.internal.MMStudio;
  *
  * @author nico
  */
-public class HotKeyAction {
+public final class HotKeyAction {
       public static final int GUICOMMAND = 0;
       public static final int BEANSHELLSCRIPT = 1;
       public static final int SNAP = 0;

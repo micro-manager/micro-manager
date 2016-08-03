@@ -28,7 +28,7 @@ import java.util.Hashtable;
 /**
  * Configuration group encapsulation for use in Configuration Wizard. 
  */
-public class ConfigGroup {
+public final class ConfigGroup {
    String name_;
    Hashtable<String, ConfigPreset> configs_;
    

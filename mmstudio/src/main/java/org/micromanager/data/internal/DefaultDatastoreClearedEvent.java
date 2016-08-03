@@ -27,7 +27,7 @@ import org.micromanager.data.DatastoreClearedEvent;
 /**
  * This class signifies that all images have been removed from a Datastore.
  */
-public class DefaultDatastoreClearedEvent implements org.micromanager.data.DatastoreClearedEvent {
+public final class DefaultDatastoreClearedEvent implements org.micromanager.data.DatastoreClearedEvent {
    private Datastore store_;
 
    public DefaultDatastoreClearedEvent(Datastore store) {

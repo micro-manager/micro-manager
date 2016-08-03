@@ -44,7 +44,7 @@ import org.micromanager.display.DisplayWindow;
  * This class provides an interface for selecting the FPS at which to display
  * animations for the ScrollerPanel.
  */
-public class FPSPopupMenu extends JPopupMenu {
+public final class FPSPopupMenu extends JPopupMenu {
    /**
     * Maps integer values from the slider to float values for the actual FPS.
     */

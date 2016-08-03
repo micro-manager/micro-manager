@@ -33,7 +33,7 @@ import mmcorej.StrVector;
 
 
 
-public class CalibrationList {
+public final class CalibrationList {
    private ArrayList<Calibration> calibrationList_;
    private String label_;
    private Hashtable<String, String> properties_;

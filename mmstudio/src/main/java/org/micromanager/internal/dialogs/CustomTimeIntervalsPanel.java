@@ -45,7 +45,7 @@ import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.TooltipTextMaker;
 
-public class CustomTimeIntervalsPanel extends JPanel {
+public final class CustomTimeIntervalsPanel extends JPanel {
 
     private final AcquisitionEngine acqEng_;
     private JTable timeIntervalTable_;

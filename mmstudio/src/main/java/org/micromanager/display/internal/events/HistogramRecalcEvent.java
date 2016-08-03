@@ -28,7 +28,7 @@ import org.micromanager.display.HistogramData;
  * This event is posted whenever someone wants histogram data to be
  * recalculated for the display.
  */
-public class HistogramRecalcEvent {
+public final class HistogramRecalcEvent {
    private Integer channel_;
 
    /**

@@ -104,7 +104,7 @@ import org.micromanager.quickaccess.internal.QuickAccessFactory;
 /**
  * GUI code for the primary window of the program. And nothing else.
  */
-public class MainFrame extends MMFrame implements LiveModeListener {
+public final class MainFrame extends MMFrame implements LiveModeListener {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
    private static final String MAIN_FRAME_DIVIDER_POS = "divider_pos";

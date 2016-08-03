@@ -72,7 +72,7 @@ import org.micromanager.Studio;
  * This class represents an icon that can be dragged around the window,
  * for adding or removing controls.
  */
-public class DraggableIcon extends JLabel {
+public final class DraggableIcon extends JLabel {
    /**
     * Paths to images inside the JAR that we can provide as custom icons.
     * Each of these will have "/org/micromanager/icons/" prepended and

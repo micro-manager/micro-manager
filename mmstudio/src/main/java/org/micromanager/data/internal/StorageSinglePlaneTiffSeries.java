@@ -71,7 +71,7 @@ import org.micromanager.internal.utils.VersionUtils;
  * file contains a single 2D image plane. It descends from the old
  * TaggedImageStorageDiskDefault class.
  */
-public class StorageSinglePlaneTiffSeries implements Storage {
+public final class StorageSinglePlaneTiffSeries implements Storage {
    private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
          Arrays.asList(Coords.CHANNEL, Coords.TIME, Coords.Z,
             Coords.STAGE_POSITION));

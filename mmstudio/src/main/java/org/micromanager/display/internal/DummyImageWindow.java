@@ -46,7 +46,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * own entirely-custom display window handles the actual display logic. The
  * DummyImageWindow mostly redirects ImageJ queries to the actual window.
  */
-public class DummyImageWindow extends StackWindow {
+public final class DummyImageWindow extends StackWindow {
    private static DefaultDisplayWindow staticMaster_;
    private static final ReentrantLock masterLock_ = new ReentrantLock();
    /**

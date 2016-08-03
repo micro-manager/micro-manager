@@ -30,7 +30,7 @@ import javax.swing.JMenuItem;
  * Simple extension of JMenu whose menu items remained alphabetically
  * ordered.
  */
-public class SortedMenu extends JMenu {
+public final class SortedMenu extends JMenu {
    private HashSet<JMenuItem> unsortedItems_;
    public SortedMenu(String title) {
       super(title);

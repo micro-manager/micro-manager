@@ -39,7 +39,7 @@ import mmcorej.DeviceType;
 
 import net.miginfocom.swing.MigLayout;
 
-public class ShowFlagsPanel extends JPanel {
+public final class ShowFlagsPanel extends JPanel {
 
    private static final long serialVersionUID = 2414705031299832388L;
    private JCheckBox showCamerasCheckBox_;

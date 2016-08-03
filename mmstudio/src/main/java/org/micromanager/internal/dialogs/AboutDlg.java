@@ -49,7 +49,7 @@ import org.micromanager.internal.utils.GUIUtils;
  * Help | About dialog for MMStudio.
  * Displays version, license, info, etc.
  */
-public class AboutDlg extends JDialog {
+public final class AboutDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private final JTextArea welcomeTextArea_;
    private final JTextArea homeHttphcs100ximagingcomBugTextArea;

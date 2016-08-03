@@ -44,7 +44,7 @@ import org.micromanager.Studio;
  * Subclass of DefaultAlert intended for showing multiple lines of alert texts,
  * broken out into subcategories and using a scrollpane if necessary.
  */
-public class CategorizedAlert extends DefaultAlert {
+public final class CategorizedAlert extends DefaultAlert {
    /**
     * This class represents one row in the display, one category of alert type.
     */

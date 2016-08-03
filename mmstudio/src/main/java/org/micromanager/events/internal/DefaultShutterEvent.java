@@ -22,7 +22,7 @@ package org.micromanager.events.internal;
 
 import org.micromanager.events.ShutterEvent;
 
-public class DefaultShutterEvent implements ShutterEvent {
+public final class DefaultShutterEvent implements ShutterEvent {
    private boolean isOn_;
    public DefaultShutterEvent(boolean isOn) {
       isOn_ = isOn;

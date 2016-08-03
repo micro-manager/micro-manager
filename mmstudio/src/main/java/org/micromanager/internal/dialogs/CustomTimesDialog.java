@@ -23,7 +23,7 @@ import org.micromanager.internal.utils.MMDialog;
  * users to set custom time intervals, i.e. nonuniform timing for a series of
  * frames.
  */
-public class CustomTimesDialog extends MMDialog {
+public final class CustomTimesDialog extends MMDialog {
 
     private static final long serialVersionUID = 1L;
     private final AcquisitionEngine acqEng_;

@@ -34,7 +34,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public class DefaultRewritableDatastore extends DefaultDatastore implements RewritableDatastore {
+public final class DefaultRewritableDatastore extends DefaultDatastore implements RewritableDatastore {
 
    @Override
    public void setStorage(Storage storage) {

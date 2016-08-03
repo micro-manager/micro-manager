@@ -35,7 +35,7 @@ import org.micromanager.data.Metadata;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class DefaultImageJConverter implements ImageJConverter {
+public final class DefaultImageJConverter implements ImageJConverter {
    private static final DefaultImageJConverter staticInstance_;
    static {
       staticInstance_ = new DefaultImageJConverter();

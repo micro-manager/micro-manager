@@ -31,7 +31,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 
-public class TextUtils {
+public final class TextUtils {
    
    static public String readTextFile(String path) throws IOException {
       String newLine = System.getProperty("line.separator");

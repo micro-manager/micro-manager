@@ -66,7 +66,7 @@ import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.PropertyMap;
 
-public class MultipageTiffWriter {
+public final class MultipageTiffWriter {
 
    private static final long BYTES_PER_GIG = 1073741824;
    private static final long MAX_FILE_SIZE = 4 * BYTES_PER_GIG;

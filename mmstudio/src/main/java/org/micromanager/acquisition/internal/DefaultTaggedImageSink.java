@@ -24,7 +24,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  *
  * @author arthur, modified by Chris Weisiger
  */
-public class DefaultTaggedImageSink  {
+public final class DefaultTaggedImageSink  {
 
    private final BlockingQueue<TaggedImage> imageProducingQueue_;
    private Datastore store_;

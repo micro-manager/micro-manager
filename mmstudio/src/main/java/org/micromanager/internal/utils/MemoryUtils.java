@@ -7,7 +7,7 @@ package org.micromanager.internal.utils;
 
 import ij.plugin.Memory;
 
-public class MemoryUtils {
+public final class MemoryUtils {
    /**
     * Returns the currently allocated memory.
     * @return estimate of the currently allocated memory in bytes

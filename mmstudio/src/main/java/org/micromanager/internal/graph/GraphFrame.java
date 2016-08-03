@@ -42,7 +42,7 @@ import org.micromanager.internal.utils.MMFrame;
  * XY Graph window.
  *
  */
-public class GraphFrame extends MMFrame {
+public final class GraphFrame extends MMFrame {
 
    /**
     * 

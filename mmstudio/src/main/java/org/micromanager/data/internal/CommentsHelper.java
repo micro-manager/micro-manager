@@ -33,7 +33,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * A simple helper class to handle access of comments.
  */
-public class CommentsHelper {
+public final class CommentsHelper {
    /** File that comments are saved in. */
    private static final String COMMENTS_FILE = "comments.txt";
    /** String key used to access comments in annotations. */

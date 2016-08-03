@@ -31,7 +31,7 @@ import javax.swing.table.TableCellRenderer;
  *
  * @author arthur
  */
-public class PropertyNameCellRenderer implements TableCellRenderer {
+public final class PropertyNameCellRenderer implements TableCellRenderer {
 
     PropertyItem item_;
 

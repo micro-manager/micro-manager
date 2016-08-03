@@ -36,7 +36,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class DefaultAlbum implements Album {
+public final class DefaultAlbum implements Album {
    private static final DefaultAlbum staticInstance_;
    static {
       staticInstance_ = new DefaultAlbum();

@@ -38,7 +38,7 @@ import org.scijava.plugin.PluginInfo;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class PluginFinder {
+public final class PluginFinder {
    /**
     * Recursively seek through the directory structure under the specified
     * root and generate a list of files that match the given extension.

@@ -69,7 +69,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Wizard page to add or remove devices.
  */
-public class DevicesPage extends PagePanel implements ListSelectionListener, MouseListener, TreeSelectionListener {
+public final class DevicesPage extends PagePanel implements ListSelectionListener, MouseListener, TreeSelectionListener {
    private static final long serialVersionUID = 1L;
    public static final String WEBSITE_ROOT = "https://micro-manager.org/wiki/";
 

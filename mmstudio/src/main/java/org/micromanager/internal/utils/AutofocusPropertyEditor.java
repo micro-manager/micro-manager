@@ -62,7 +62,7 @@ import org.micromanager.internal.utils.DaytimeNighttime;
  * Represents the entire system state as a list of triplets:
  * device - property - value
  */
-public class AutofocusPropertyEditor extends MMDialog {
+public final class AutofocusPropertyEditor extends MMDialog {
    private final SpringLayout springLayout;
    private static final long serialVersionUID = 1507097881635431043L;
    
@@ -400,7 +400,7 @@ public class AutofocusPropertyEditor extends MMDialog {
     * Cell editing using either JTextField or JComboBox depending on whether the
     * property enforces a set of allowed values.
     */
-   public class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
+   public final class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
       private static final long serialVersionUID = 1L;
       // This is the component that will handle the editing of the cell value
       JTextField text_ = new JTextField();
@@ -526,7 +526,7 @@ public class AutofocusPropertyEditor extends MMDialog {
    /**
     * Cell rendering for the device property table
     */
-   public class PropertyCellRenderer implements TableCellRenderer {
+   public final class PropertyCellRenderer implements TableCellRenderer {
       // This method is called each time a cell in a column
       // using this renderer needs to be rendered.
       PropertyItem item_;

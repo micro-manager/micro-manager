@@ -42,7 +42,7 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public class AcquisitionWrapperEngine implements AcquisitionEngine {
+public final class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private CMMCore core_;
    protected Studio studio_;

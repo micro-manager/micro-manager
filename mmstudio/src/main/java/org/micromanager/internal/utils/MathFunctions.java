@@ -33,7 +33,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.QRDecomposition;
 
-public class MathFunctions {
+public final class MathFunctions {
 
    private static void insertPoint2DInMatrix(RealMatrix m, Point2D.Double pt, int row) {
       // Set row to [x,y,1]:

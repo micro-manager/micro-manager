@@ -55,7 +55,7 @@ import org.micromanager.Studio;
  * if there is more than one such dialog available, provides a popup menu
  * of dialogs to choose from.
  */
-public class AcquisitionSelector {
+public final class AcquisitionSelector {
 
    public static JComponent makeSelector(Studio studio) {
       // This requires access to non-API methods.

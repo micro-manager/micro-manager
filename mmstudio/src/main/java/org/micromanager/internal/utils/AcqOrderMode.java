@@ -2,7 +2,7 @@ package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
 
-public class AcqOrderMode {
+public final class AcqOrderMode {
    // HACK: This value chosen to make the text box in the MDA dialog look nice.
    private static final int MAX_LINE_LEN = 60;
    public static final int TIME_POS_SLICE_CHANNEL = 0;

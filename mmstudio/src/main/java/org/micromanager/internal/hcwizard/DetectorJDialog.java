@@ -10,7 +10,7 @@ package org.micromanager.internal.hcwizard;
  *
  * @author karlhoover
  */
-public class DetectorJDialog extends javax.swing.JDialog {
+public final class DetectorJDialog extends javax.swing.JDialog {
 
     public boolean CancelRequest(){
         return cancelRequest_;

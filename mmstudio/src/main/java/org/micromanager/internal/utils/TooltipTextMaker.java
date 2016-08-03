@@ -1,7 +1,7 @@
 package org.micromanager.internal.utils;
 
 
-public class TooltipTextMaker 
+public final class TooltipTextMaker 
 {
 	private static final int numCharsPerLine = 80;
 	

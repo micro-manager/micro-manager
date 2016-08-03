@@ -37,7 +37,7 @@ import org.micromanager.internal.utils.DefaultUserProfile;
  * new display that uses that channel, we are able to recover it from the
  * profile.
  */
-public class RememberedChannelSettings {
+public final class RememberedChannelSettings {
    private static final String NAMES = "names of channels and channel groups";
    private static final String COLOR = "color to use for channels";
    private static final String MINS = "default minimum values to use in the histograms when scaling";

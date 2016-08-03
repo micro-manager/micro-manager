@@ -24,7 +24,7 @@ import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.Studio;
 
-public class ScaleBarFactory implements OverlayPanelFactory {
+public final class ScaleBarFactory implements OverlayPanelFactory {
    private Studio studio_;
    public ScaleBarFactory(Studio studio) {
       studio_ = studio;

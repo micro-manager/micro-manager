@@ -45,7 +45,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * handles any other logic that requires DisplayWindows to work together
  * (e.g. toggling fullscreen mode).
  */
-public class DisplayGroupManager {
+public final class DisplayGroupManager {
    /**
     * This class listens to events from a specific DisplayWindow, and forwards
     * them to the DisplayGroupManager, so it can know which window originated

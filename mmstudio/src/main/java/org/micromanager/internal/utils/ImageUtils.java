@@ -18,7 +18,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ImageUtils {
+public final class ImageUtils {
 
    public static int BppToImageType(long Bpp) {
       int BppInt = (int) Bpp;

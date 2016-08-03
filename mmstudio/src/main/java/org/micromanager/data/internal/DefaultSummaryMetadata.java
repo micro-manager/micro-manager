@@ -41,7 +41,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 import org.micromanager.PropertyMap;
 
-public class DefaultSummaryMetadata implements SummaryMetadata {
+public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    /**
     * This is the version string for all metadata as saved in Micro-Manager

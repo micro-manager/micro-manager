@@ -138,7 +138,7 @@ import org.micromanager.internal.utils.WaitDialog;
  * Implements the Studio (i.e. primary API) and does various other
  * tasks that should probably be refactored out at some point.
  */
-public class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
+public final class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
 
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String OPEN_ACQ_DIR = "openDataDir";

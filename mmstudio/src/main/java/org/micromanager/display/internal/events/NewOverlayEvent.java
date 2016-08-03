@@ -22,7 +22,7 @@ package org.micromanager.display.internal.events;
 
 import org.micromanager.display.OverlayPanelFactory;
 
-public class NewOverlayEvent {
+public final class NewOverlayEvent {
    private OverlayPanelFactory factory_;
    public NewOverlayEvent(OverlayPanelFactory factory) {
       factory_ = factory;

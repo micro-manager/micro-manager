@@ -22,7 +22,7 @@
 //
 package org.micromanager.internal.utils;
 
-public class MMException extends Exception {
+public final class MMException extends Exception {
    private static final long serialVersionUID = 1614553572417963171L;
 
    public MMException(String msg) {

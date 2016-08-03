@@ -24,7 +24,7 @@ import javax.swing.JFileChooser;
 
 import org.micromanager.ApplicationSkin.SkinMode;
 
-public class FileDialogs {
+public final class FileDialogs {
 
    public static class FileType {
       final String name;

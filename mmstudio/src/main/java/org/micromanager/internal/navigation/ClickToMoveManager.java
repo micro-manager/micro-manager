@@ -39,7 +39,7 @@ import org.micromanager.internal.MMStudio;
  * This class handles setting up and disabling click-to-move and keyboard
  * shortcuts for stage motion.
  */
-public class ClickToMoveManager {
+public final class ClickToMoveManager {
    private final HashMap<DefaultDisplayWindow, CenterAndDragListener> displayToDragListener_;
    private final HashMap<DefaultDisplayWindow, KeyAdapter> displayToKeyListener_;
    private final CMMCore core_;

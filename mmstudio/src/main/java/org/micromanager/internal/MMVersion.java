@@ -25,6 +25,6 @@ package org.micromanager.internal;
  * A class with a single public string, containing the version of
  * Micro-Manager. Build scripts will temporarily alter this file.
  */
-public class MMVersion {
+public final class MMVersion {
    public static final String VERSION_STRING = "2.0.x dev";
 }

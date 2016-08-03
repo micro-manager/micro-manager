@@ -82,7 +82,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * DataViewer (or to a specific DataViewer as selected by the user). It
  * consists of a set of expandable panels in a vertical configuration.
  */
-public class InspectorFrame extends MMFrame implements Inspector {
+public final class InspectorFrame extends MMFrame implements Inspector {
    
    
    /**

@@ -30,7 +30,7 @@ import org.micromanager.UserProfile;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.internal.MMStudio;
 
-public class DefaultUserProfile implements UserProfile {
+public final class DefaultUserProfile implements UserProfile {
    private static final String USERNAME_MAPPING_FILE = "Profiles.txt";
    public static final String DEFAULT_USER = "Default user";
    private static final String ALWAYS_USE_DEFAULT_USER = "always use the default user profile";

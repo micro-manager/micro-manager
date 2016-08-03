@@ -56,7 +56,7 @@ import org.micromanager.internal.utils.UIMonitor;
  * Options dialog for MMStudio.
  *
  */
-public class OptionsDlg extends MMDialog {
+public final class OptionsDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private static final String IS_DEBUG_LOG_ENABLED = "is debug logging enabled";
    private static final String SHOULD_CLOSE_ON_EXIT = "should close the entire program when the Micro-Manager plugin is closed";

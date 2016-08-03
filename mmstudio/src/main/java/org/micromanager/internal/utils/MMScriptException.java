@@ -1,6 +1,6 @@
 package org.micromanager.internal.utils;
 
-public class MMScriptException extends Exception {
+public final class MMScriptException extends Exception {
    private static final long serialVersionUID = -8472385639461107823L;
    private Throwable cause;
    private static final String MSG_PREFIX = "MMScript error: ";

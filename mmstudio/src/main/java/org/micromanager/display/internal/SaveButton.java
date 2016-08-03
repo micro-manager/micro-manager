@@ -38,7 +38,7 @@ import org.micromanager.display.DisplayWindow;
 /**
  * This class provides a button for saving the current datastore to TIFF.
  */
-public class SaveButton extends JButton {
+public final class SaveButton extends JButton {
    public SaveButton(final Datastore store, final DisplayWindow display) {
       setToolTipText("Save data as a Micro-Manager dataset.");
 

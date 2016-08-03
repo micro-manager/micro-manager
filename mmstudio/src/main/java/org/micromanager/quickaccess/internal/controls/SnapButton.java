@@ -51,7 +51,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Implements the "Snap" button logic.
  */
 @Plugin(type = WidgetPlugin.class)
-public class SnapButton extends WidgetPlugin implements SciJavaPlugin {
+public final class SnapButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

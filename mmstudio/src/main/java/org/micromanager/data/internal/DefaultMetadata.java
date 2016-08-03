@@ -40,7 +40,7 @@ import org.micromanager.PropertyMap;
  * the copy() method (which provides a MetadataBuilder). Any fields that are
  * not explicitly set will default to null.
  */
-public class DefaultMetadata implements Metadata {
+public final class DefaultMetadata implements Metadata {
 
    /**
     * This class constructs Metadata objects. Use the build() method to 

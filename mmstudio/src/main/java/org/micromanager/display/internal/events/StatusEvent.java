@@ -24,7 +24,7 @@ package org.micromanager.display.internal.events;
  * This class is used to signify that a status string has been changed and
  * should be displayed.
  */
-public class StatusEvent {
+public final class StatusEvent {
    private String status_;
 
    public StatusEvent(String status) {

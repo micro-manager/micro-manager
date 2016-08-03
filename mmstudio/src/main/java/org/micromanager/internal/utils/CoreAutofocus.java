@@ -15,7 +15,7 @@ import org.micromanager.Studio;
  * 
  * 
  */
-public class CoreAutofocus implements AutofocusPlugin {
+public final class CoreAutofocus implements AutofocusPlugin {
 
    private CMMCore core_;
    private String devName_;

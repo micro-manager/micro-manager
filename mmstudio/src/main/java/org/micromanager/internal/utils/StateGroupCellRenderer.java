@@ -16,7 +16,7 @@ import org.micromanager.internal.ConfigGroupPad;
  * Rendering element for the property table.
  *
  */
-public class StateGroupCellRenderer extends PropertyValueCellRenderer {
+public final class StateGroupCellRenderer extends PropertyValueCellRenderer {
 
     private static final long serialVersionUID = 1L;
     // This method is called each time a cell in a column

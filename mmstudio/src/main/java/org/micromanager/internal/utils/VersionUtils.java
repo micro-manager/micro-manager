@@ -24,7 +24,7 @@ package org.micromanager.internal.utils;
 /**
  * This class handles comparing version strings.
  */
-public class VersionUtils {
+public final class VersionUtils {
    /**
     * Returns true if the first version string comes from an earlier version
     * than the second version string.

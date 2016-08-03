@@ -70,7 +70,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This class is responsible for all logic surrounding live mode and the
  * "snap image" display (which is the same display as that used for live mode).
  */
-public class SnapLiveManager implements org.micromanager.SnapLiveManager {
+public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private static final String TITLE = "Snap/Live View";
    private static final int MAX_DISPLAY_HISTORY = 20;
 

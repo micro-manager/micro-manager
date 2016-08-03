@@ -51,7 +51,7 @@ import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.SortedMenu;
 
-public class DefaultPluginManager implements PluginManager {
+public final class DefaultPluginManager implements PluginManager {
 
    // List of the types of plugins we allow.
    private static final ArrayList<Class> VALID_CLASSES = new ArrayList<Class>();

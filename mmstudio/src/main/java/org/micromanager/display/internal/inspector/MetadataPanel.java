@@ -67,7 +67,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * all but the most recent image so that we don't fall behind during periods
  * of rapid display updates.
  */
-public class MetadataPanel extends InspectorPanel {
+public final class MetadataPanel extends InspectorPanel {
    private JSplitPane metadataSplitPane_;
    private JTable imageMetadataTable_;
    private JPanel imageMetadataPanel_;

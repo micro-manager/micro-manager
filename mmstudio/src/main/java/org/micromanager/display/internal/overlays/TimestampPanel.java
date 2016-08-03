@@ -58,7 +58,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * This overlay draws the timestamps of the currently-displayed images.
  */
-public class TimestampPanel extends OverlayPanel {
+public final class TimestampPanel extends OverlayPanel {
 
    // Position options
    private static final String UPPER_LEFT = "Upper left";

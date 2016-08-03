@@ -26,7 +26,7 @@ package org.micromanager.internal.hcwizard;
  * Label data for state devices
  *
  */
-public class Label {
+public final class Label {
    String label_;
    int state_;
    

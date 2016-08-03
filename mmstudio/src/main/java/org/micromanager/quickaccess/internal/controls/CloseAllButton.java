@@ -47,7 +47,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Implements the "CloseAll" button logic.
  */
 @Plugin(type = SimpleButtonPlugin.class)
-public class CloseAllButton extends SimpleButtonPlugin implements SciJavaPlugin {
+public final class CloseAllButton extends SimpleButtonPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

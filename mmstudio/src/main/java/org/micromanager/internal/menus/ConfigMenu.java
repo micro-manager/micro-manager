@@ -30,7 +30,7 @@ import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class ConfigMenu {
+public final class ConfigMenu {
 
    private JMenu configMenu_;
    private final JMenu switchConfigurationMenu_;

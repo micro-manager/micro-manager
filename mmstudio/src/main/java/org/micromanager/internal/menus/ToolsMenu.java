@@ -34,7 +34,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 import org.micromanager.quickaccess.internal.QuickAccessPanelEvent;
 
-public class ToolsMenu {
+public final class ToolsMenu {
    private static final String MOUSE_MOVES_STAGE = "whether or not the hand tool can be used to move the stage";
 
    private JMenu toolsMenu_;

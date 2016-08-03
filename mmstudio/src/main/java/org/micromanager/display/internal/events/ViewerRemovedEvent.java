@@ -26,7 +26,7 @@ import org.micromanager.display.DataViewer;
  * This event signifies that a DataViewer has called
  * DisplayManager.addViewer().
  */
-public class ViewerRemovedEvent {
+public final class ViewerRemovedEvent {
    private final DataViewer viewer_;
    public ViewerRemovedEvent(DataViewer viewer) {
       viewer_ = viewer;

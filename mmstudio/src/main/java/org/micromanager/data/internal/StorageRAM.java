@@ -44,7 +44,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Simple RAM-based storage for Datastores. Methods that interact with the
  * HashMap that is our image storage are synchronized.
  */
-public class StorageRAM implements RewritableStorage {
+public final class StorageRAM implements RewritableStorage {
    private HashMap<Coords, Image> coordsToImage_;
    private Coords maxIndex_;
    private SummaryMetadata summaryMetadata_;

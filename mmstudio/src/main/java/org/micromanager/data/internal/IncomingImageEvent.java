@@ -7,7 +7,7 @@ import org.micromanager.data.Image;
  * This class signifies that a new image is expected to arrive for the given
  * Datastore at some time in the future.
  */
-public class IncomingImageEvent {
+public final class IncomingImageEvent {
    private double nextImageTime_;
 
    public IncomingImageEvent(double nextImageTime) {

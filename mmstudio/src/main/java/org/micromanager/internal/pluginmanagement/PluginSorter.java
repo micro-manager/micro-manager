@@ -22,7 +22,7 @@ import java.util.Comparator;
 
 import org.micromanager.MMPlugin;
 
-public class PluginSorter implements Comparator<MMPlugin> {
+public final class PluginSorter implements Comparator<MMPlugin> {
    public int compare(MMPlugin a, MMPlugin b) {
       return a.getName().compareTo(b.getName());
    }

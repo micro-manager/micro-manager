@@ -26,7 +26,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * @author OD
  *
  */
-public class CenterAndDragListener implements MouseListener,
+public final class CenterAndDragListener implements MouseListener,
         MouseMotionListener, WindowListener {
 
    private CMMCore core_;

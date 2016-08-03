@@ -26,7 +26,7 @@ package org.micromanager.internal.hcwizard;
  * Data structure for device settings.
  *
  */
-public class Setting {
+public final class Setting {
    public String deviceName_;
    public String propertyName_;
    public String propertyValue_;

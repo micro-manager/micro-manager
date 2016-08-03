@@ -64,7 +64,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * configuration group to be at a desired preset.
  */
 @Plugin(type = WidgetPlugin.class)
-public class PresetButton extends WidgetPlugin implements SciJavaPlugin {
+public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

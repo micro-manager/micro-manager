@@ -28,7 +28,7 @@ import java.awt.event.KeyEvent;
  * Downside is that all keyevents in the application will go through here
  * @author nico
  */
-public class MMKeyDispatcher implements KeyEventDispatcher{
+public final class MMKeyDispatcher implements KeyEventDispatcher{
    Class textCanvasClass = null;
    final Class [] forbiddenClasses_;
 

@@ -25,7 +25,7 @@ import org.micromanager.display.DataViewer;
 /**
  * This event signifies that a display has been made the current active window.
  */
-public class DisplayActivatedEvent {
+public final class DisplayActivatedEvent {
    private DataViewer display_;
 
    public DisplayActivatedEvent(DataViewer display) {

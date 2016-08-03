@@ -28,7 +28,7 @@ import java.awt.Graphics;
 /**
  * This class is used to signify when the canvas is performing a paint event.
  */
-public class CanvasDrawEvent {
+public final class CanvasDrawEvent {
    private Graphics graphics_;
    private ImageCanvas canvas_;
 

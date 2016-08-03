@@ -42,7 +42,7 @@ import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.SortFunctionObjects;
 
-public class GroupEditor extends ConfigDialog {
+public final class GroupEditor extends ConfigDialog {
 
    private static final long serialVersionUID = 8281144157746745260L;
    private static final String DISPLAY_SHUTTER_WARNING = "Warn user before saving a config group that includes shutter state.";

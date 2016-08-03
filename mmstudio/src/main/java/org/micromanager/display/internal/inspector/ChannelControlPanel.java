@@ -77,7 +77,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Handles controls for a single histogram.
  */
-public class ChannelControlPanel extends JPanel implements CursorListener {
+public final class ChannelControlPanel extends JPanel implements CursorListener {
 
    public static final Dimension CONTROLS_SIZE = new Dimension(80, 80);
 

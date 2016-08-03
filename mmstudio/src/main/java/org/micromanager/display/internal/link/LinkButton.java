@@ -51,7 +51,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This class provides the GUI for a button that links DisplaySettings
  * attributes across multiple DataViewers.
  */
-public class LinkButton extends JButton {
+public final class LinkButton extends JButton {
    // These icons are modified versions of the public domain icon at
    // http://icon-park.com/icon/black-link-icon-vector-data/
    private static final Icon ACTIVE_ICON = IconLoader.getIcon(

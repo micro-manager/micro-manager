@@ -26,7 +26,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * Handles setting up the File menu and its actions.
  */
-public class FileMenu {
+public final class FileMenu {
    private static final String FILE_HISTORY = "list of recently-viewed files";
    private static final int MAX_HISTORY_SIZE = 15;
    private MMStudio studio_;

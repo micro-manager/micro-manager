@@ -29,7 +29,7 @@ import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.zip.ZipEntry;
 
-public class JavaUtils {
+public final class JavaUtils {
 
    /**
     * Call a private method without arguments.

@@ -34,7 +34,7 @@ import java.util.TimerTask;
 import mmcorej.CMMCore;
 
 
-public class ProblemReport {
+public final class ProblemReport {
    private final CMMCore core_;
 
    private File reportDir_; // null if non-persistent

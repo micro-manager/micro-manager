@@ -68,7 +68,7 @@ import org.micromanager.PropertyMap;
  * This implementation of the DataManager interface provides general utility
  * access to Micro-Manager's data objects.
  */
-public class DefaultDataManager implements DataManager {
+public final class DefaultDataManager implements DataManager {
    private static final String CANCEL_OPTION = "Cancel";
    private static final String CONTINUE_OPTION = "Continue";
    private static final String VIRTUAL_OPTION = "Use Virtual";

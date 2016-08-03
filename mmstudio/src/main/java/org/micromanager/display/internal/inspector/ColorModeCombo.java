@@ -41,7 +41,7 @@ import org.micromanager.display.internal.LUTMaster;
  * use JComboBox because we ran into issues with rendering.
  * TODO: LUTs with color displays don't currently work.
  */
-public class ColorModeCombo extends JButton {
+public final class ColorModeCombo extends JButton {
    private final DataViewer display_;
 
    public ColorModeCombo(DataViewer display) {

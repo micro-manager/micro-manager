@@ -50,7 +50,7 @@ import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public class DefaultImageExporter implements ImageExporter {
+public final class DefaultImageExporter implements ImageExporter {
 
    /**
     * This recursive structure represents the "nested loop" approach to

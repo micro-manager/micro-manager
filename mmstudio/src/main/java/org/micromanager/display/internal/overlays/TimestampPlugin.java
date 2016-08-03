@@ -28,7 +28,7 @@ import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = OverlayPlugin.class)
-public class TimestampPlugin implements OverlayPlugin, SciJavaPlugin {
+public final class TimestampPlugin implements OverlayPlugin, SciJavaPlugin {
    private Studio studio_;
 
    @Override

@@ -50,7 +50,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Wizard page to set device delays.
  *
  */
-public class DelayPage extends PagePanel {
+public final class DelayPage extends PagePanel {
    private static final long serialVersionUID = 1L;
 
    class DelayTableModel extends AbstractTableModel {

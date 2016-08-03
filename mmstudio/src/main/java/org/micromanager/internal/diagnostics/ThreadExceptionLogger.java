@@ -14,7 +14,7 @@ package org.micromanager.internal.diagnostics;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public class ThreadExceptionLogger implements Thread.UncaughtExceptionHandler {
+public final class ThreadExceptionLogger implements Thread.UncaughtExceptionHandler {
    private static boolean setUp_ = false;
    public static void setUp() {
       if (setUp_) {

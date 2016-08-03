@@ -49,7 +49,7 @@ import javax.swing.*;
  *  ScreenImage.createImage( someComponent );
  *
  */
-public class ScreenImage
+public final class ScreenImage
 {
    private static List<String> types = Arrays.asList( ImageIO.getWriterFileSuffixes() );
 

@@ -38,7 +38,7 @@ import javax.swing.JButton;
  * This class displays a little play/pause icon with a single-character label,
  * and is used for handling animation of an AxisScroller.
  */
-public class ScrollbarAnimateIcon extends JButton {
+public final class ScrollbarAnimateIcon extends JButton {
    // HACK: This is intentionally wider than it "needs" to be because otherwise
    // we sometimes end up with the text portion of the button getting
    // "truncated" into an ellipsis, even though that's actually wider than the

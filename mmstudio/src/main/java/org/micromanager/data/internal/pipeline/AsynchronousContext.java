@@ -31,7 +31,7 @@ import org.micromanager.data.ProcessorContext;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class AsynchronousContext extends BaseContext {
+public final class AsynchronousContext extends BaseContext {
    private boolean isFlushed_ = false;
    private LinkedBlockingQueue<ImageWrapper> inputQueue_ = null;
 

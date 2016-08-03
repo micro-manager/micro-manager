@@ -7,7 +7,7 @@ import bsh.Interpreter;
 import bsh.ParseException;
 import bsh.TargetError;
 
-public class BeanshellEngine implements ScriptingEngine {
+public final class BeanshellEngine implements ScriptingEngine {
    Interpreter interp_;
    boolean running_ = false;
    boolean error_ = false;
@@ -16,7 +16,7 @@ public class BeanshellEngine implements ScriptingEngine {
    private final ScriptPanel panel_;
    private Interpreter interp_old_;
 
-   public class EvalThread extends Thread {
+   public final class EvalThread extends Thread {
       String script_;
       String errorText_;
 

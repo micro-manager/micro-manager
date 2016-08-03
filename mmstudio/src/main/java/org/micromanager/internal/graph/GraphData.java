@@ -26,11 +26,11 @@ import java.awt.geom.Point2D;
  * XY graph data structure.
  *
  */
-public class GraphData {
+public final class GraphData {
    private double xVals_[];
    private double yVals_[];
    
-   public class Bounds {
+   public final class Bounds {
       public double xMin;
       public double xMax;
       public double yMin;

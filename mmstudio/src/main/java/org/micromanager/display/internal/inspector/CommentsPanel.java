@@ -62,7 +62,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public class CommentsPanel extends InspectorPanel {
+public final class CommentsPanel extends InspectorPanel {
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
    private boolean shouldIgnoreUpdates_ = false;

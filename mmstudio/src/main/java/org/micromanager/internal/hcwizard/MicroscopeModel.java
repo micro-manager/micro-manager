@@ -49,7 +49,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Configuration data and functionality for the entire automated microscope,
  * from the hardware setup standpoint.
  */
-public class MicroscopeModel {
+public final class MicroscopeModel {
 
    ArrayList<Device> devices_;
    Device availableDevices_[];

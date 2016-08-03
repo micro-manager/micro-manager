@@ -34,7 +34,7 @@ import javax.swing.MenuElement;
  * ordered. Mostly a copy of SortedMenu except that it extends a different
  * base class, which requires some subtle changes in how it works internally.
  */
-public class SortedPopupMenu extends JPopupMenu {
+public final class SortedPopupMenu extends JPopupMenu {
    private HashSet<JMenuItem> unsortedItems_ = new HashSet<JMenuItem>();
    private ArrayList<Integer> separatorIndices_ = new ArrayList<Integer>();
 

@@ -28,7 +28,7 @@ import org.micromanager.data.ImageOverwrittenEvent;
  * This class signifies that an image in a Datastore has been overwritten by a
  * new image.
  */
-public class DefaultImageOverwrittenEvent implements org.micromanager.data.ImageOverwrittenEvent {
+public final class DefaultImageOverwrittenEvent implements org.micromanager.data.ImageOverwrittenEvent {
    private Image newImage_;
    private Image oldImage_;
    private Datastore store_;

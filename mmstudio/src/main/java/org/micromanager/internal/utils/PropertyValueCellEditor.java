@@ -21,7 +21,7 @@ import javax.swing.table.TableCellEditor;
  * Cell editing using either JTextField or JComboBox depending on whether the
  * property enforces a set of allowed values.
  */
-public class PropertyValueCellEditor extends AbstractCellEditor implements TableCellEditor {
+public final class PropertyValueCellEditor extends AbstractCellEditor implements TableCellEditor {
 
     private static final long serialVersionUID = 1L;
     // This is the component that will handle the editing of the cell value

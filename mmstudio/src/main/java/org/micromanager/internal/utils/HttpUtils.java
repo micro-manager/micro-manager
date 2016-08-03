@@ -12,7 +12,7 @@ import java.net.URL;
  *
  * @author karlhoover
  */
-public class HttpUtils {
+public final class HttpUtils {
 
     public void upload(URL url, File f) throws Exception {
         final String boundary = HttpBoundaryString();

@@ -28,7 +28,7 @@ import java.awt.Graphics;
  * draw, primarily so that the ExportMovieDlg can recognize when the draw
  * actions it requested have been completed.
  */
-public class CanvasDrawCompleteEvent {
+public final class CanvasDrawCompleteEvent {
    private Graphics g_;
    public CanvasDrawCompleteEvent(Graphics g) {
       g_ = g;

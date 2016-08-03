@@ -76,7 +76,7 @@ import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
-public class PositionListDlg extends MMDialog implements MouseListener, ChangeListener {
+public final class PositionListDlg extends MMDialog implements MouseListener, ChangeListener {
    private static final long serialVersionUID = 1L;
    private String posListDir_;
    private File curFile_;

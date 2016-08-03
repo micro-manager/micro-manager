@@ -24,7 +24,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.events.AcquisitionSequenceStartedEvent;
 import org.micromanager.acquisition.SequenceSettings;
 
-public class DefaultAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
+public final class DefaultAcquisitionStartedEvent implements AcquisitionSequenceStartedEvent {
    private Datastore store_;
    private Object source_;
    private SequenceSettings settings_;

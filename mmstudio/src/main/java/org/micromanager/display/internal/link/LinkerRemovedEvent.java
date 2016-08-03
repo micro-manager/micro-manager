@@ -25,7 +25,7 @@ package org.micromanager.display.internal.link;
  * It's only needed when a GUI component is removed without the display that
  * contains it going away, since otherwise we use the DisplayDestroyedEvent.
  */
-public class LinkerRemovedEvent {
+public final class LinkerRemovedEvent {
    private SettingsLinker linker_;
 
    public LinkerRemovedEvent(SettingsLinker linker) {

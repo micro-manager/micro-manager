@@ -39,7 +39,7 @@ import javax.swing.SpringLayout;
 /**
  * Dialog box for displaying large error text messages.
  */
-public class LargeMessageDlg extends JDialog {
+public final class LargeMessageDlg extends JDialog {
    private static final long serialVersionUID = -2477635586817637967L;
    private SpringLayout springLayout;
    private JScrollPane scrollPane_;

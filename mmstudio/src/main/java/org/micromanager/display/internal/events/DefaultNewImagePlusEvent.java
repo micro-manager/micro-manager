@@ -29,7 +29,7 @@ import org.micromanager.display.NewImagePlusEvent;
  * A new ImagePlus object has been set for this display; make it available
  * to consumers.
  */
-public class DefaultNewImagePlusEvent implements NewImagePlusEvent {
+public final class DefaultNewImagePlusEvent implements NewImagePlusEvent {
    private DisplayWindow display_;
    private ImagePlus plus_;
 

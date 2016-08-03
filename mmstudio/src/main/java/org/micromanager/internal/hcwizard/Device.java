@@ -40,7 +40,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Data structure describing a general MM device.
  * Part of the MicroscopeModel. 
  *
- */public class Device {
+ */public final class Device {
       // This class behaves simultaneously as any device type, so it has the
       // information for all device types. Not sure why subclasses were not
       // used....

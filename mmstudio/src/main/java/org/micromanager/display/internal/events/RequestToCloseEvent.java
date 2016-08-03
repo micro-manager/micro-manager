@@ -22,7 +22,7 @@ package org.micromanager.display.internal.events;
 
 import org.micromanager.display.DisplayWindow;
 
-public class RequestToCloseEvent implements org.micromanager.display.RequestToCloseEvent {
+public final class RequestToCloseEvent implements org.micromanager.display.RequestToCloseEvent {
    private DisplayWindow window_;
    public RequestToCloseEvent(DisplayWindow window) {
       window_ = window;

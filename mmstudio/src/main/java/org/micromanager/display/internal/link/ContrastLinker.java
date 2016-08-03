@@ -39,7 +39,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * channelGammas(Double), but we don't actually care what the specific values
  * are, just if they've changed.
  */
-public class ContrastLinker extends SettingsLinker {
+public final class ContrastLinker extends SettingsLinker {
    // This identifies ourselves with respect to our parent display, but
    // we use the channel names as the basis for linking with other displays,
    // if available.

@@ -54,7 +54,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * acquisition with current settings).
  */
 @Plugin(type = WidgetPlugin.class)
-public class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
+public final class MDAButtons extends WidgetPlugin implements SciJavaPlugin {
    private MMStudio studio_;
 
    @Override

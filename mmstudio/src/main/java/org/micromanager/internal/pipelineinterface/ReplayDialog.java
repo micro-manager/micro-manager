@@ -53,7 +53,7 @@ import org.micromanager.internal.utils.MMDialog;
 /**
  * This class allows users to process files that already exist on disk.
  */
-public class ReplayDialog extends MMDialog {
+public final class ReplayDialog extends MMDialog {
    private static final String LOAD_FROM_DISK = "Load From Disk...";
 
    public static void makeDialog(Studio studio) {

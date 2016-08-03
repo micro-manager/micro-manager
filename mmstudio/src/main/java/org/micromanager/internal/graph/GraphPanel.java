@@ -42,7 +42,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * XY graph view. 
  */
-public class GraphPanel extends JPanel {
+public final class GraphPanel extends JPanel {
    private static final long serialVersionUID = -1280955888510181945L;
    private GraphData data_;
    protected GraphData.Bounds bounds_;

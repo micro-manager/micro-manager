@@ -50,7 +50,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * warning dialog if that version has not been tested to work properly with
  * Micro-Manager.
  */
-public class IJVersionCheckDlg extends JDialog {
+public final class IJVersionCheckDlg extends JDialog {
    private static final String HAS_OPTED_OUT = "user has opted out of receiving warnings about compatibility with the version of ImageJ they are using";
    private static final ArrayList<String> ALLOWED_VERSIONS = new ArrayList<String>(
          Arrays.asList(new String[] {"1.49h"}));;

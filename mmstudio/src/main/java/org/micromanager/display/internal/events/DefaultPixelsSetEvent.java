@@ -29,7 +29,7 @@ import org.micromanager.display.PixelsSetEvent;
  * displaying, and thus any associated widgets (e.g. histograms and
  * metadata) also need to be updated.
  */
-public class DefaultPixelsSetEvent implements PixelsSetEvent {
+public final class DefaultPixelsSetEvent implements PixelsSetEvent {
    private Image image_;
    private DisplayWindow display_;
 

@@ -35,7 +35,7 @@ import org.micromanager.data.SummaryMetadata;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class DefaultPipeline implements Pipeline {
+public final class DefaultPipeline implements Pipeline {
    
    private List<Processor> processors_;
    private List<BaseContext> contexts_;

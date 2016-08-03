@@ -36,7 +36,7 @@ import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.ShutterManager;
 import org.micromanager.Studio;
 
-public class DefaultShutterManager implements ShutterManager {
+public final class DefaultShutterManager implements ShutterManager {
 
    private static DefaultShutterManager staticInstance_;
 

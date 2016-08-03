@@ -23,7 +23,7 @@ package org.micromanager.acquisition.internal;
 /**
  * This class signals that the acquisition engine is sleeping.
  */
-public class AcquisitionSleepEvent {
+public final class AcquisitionSleepEvent {
    private double wakeTime_;
 
    public AcquisitionSleepEvent(double wakeTime) {

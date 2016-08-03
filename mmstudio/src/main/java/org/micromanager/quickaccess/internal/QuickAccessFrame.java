@@ -84,7 +84,7 @@ import org.micromanager.Studio;
 /**
  * This class shows the Quick Access Window for frequently-used controls.
  */
-public class QuickAccessFrame extends JFrame {
+public final class QuickAccessFrame extends JFrame {
    private static final String OPEN_NEVER = "Never";
    private static final String OPEN_ALWAYS = "Always";
    private static final String OPEN_REMEMBER = "Remember";

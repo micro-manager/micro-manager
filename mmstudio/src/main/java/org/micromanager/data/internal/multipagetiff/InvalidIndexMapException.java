@@ -26,7 +26,7 @@ import java.io.IOException;
  * This exception is thrown when MultipageTiffReader is unable to read the
  * index map in a file.
  */
-public class InvalidIndexMapException extends IOException {
+public final class InvalidIndexMapException extends IOException {
    public InvalidIndexMapException() {
       super();
    }

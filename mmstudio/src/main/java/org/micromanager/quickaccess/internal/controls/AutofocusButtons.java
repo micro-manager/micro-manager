@@ -52,7 +52,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * the autofocus options).
  */
 @Plugin(type = WidgetPlugin.class)
-public class AutofocusButtons extends WidgetPlugin implements SciJavaPlugin {
+public final class AutofocusButtons extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

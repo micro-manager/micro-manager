@@ -37,7 +37,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * coordinates. This is a bit different from the usual SettingsLinker as it
  * operates through an attribute that is not part of the DisplaySettings.
  */
-public class ImageCoordsLinker extends SettingsLinker {
+public final class ImageCoordsLinker extends SettingsLinker {
    private String axis_;
    private ScrollerPanel scrollerPanel_;
    private static final List<Class<?>> RELEVANT_EVENTS = Arrays.asList(

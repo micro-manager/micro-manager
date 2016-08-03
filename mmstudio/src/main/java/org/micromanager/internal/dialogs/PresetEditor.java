@@ -31,7 +31,7 @@ import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class PresetEditor extends ConfigDialog {
+public final class PresetEditor extends ConfigDialog {
 
    private static final long serialVersionUID = 8281144157746745260L;
 

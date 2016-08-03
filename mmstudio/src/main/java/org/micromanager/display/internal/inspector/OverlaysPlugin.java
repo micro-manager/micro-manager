@@ -32,7 +32,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * This plugin makes the OverlayPanels used to draw on top of images.
  */
 @Plugin(type = InspectorPlugin.class)
-public class OverlaysPlugin implements InspectorPlugin, SciJavaPlugin {
+public final class OverlaysPlugin implements InspectorPlugin, SciJavaPlugin {
    @Override
    public void setContext(Studio studio) {}
 

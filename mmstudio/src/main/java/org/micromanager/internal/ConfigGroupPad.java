@@ -52,7 +52,7 @@ import org.micromanager.internal.utils.DefaultUserProfile;
  * Preset panel.
  * Displays a list of groups and lets the user select a preset.
  */
-public class ConfigGroupPad extends JScrollPane {
+public final class ConfigGroupPad extends JScrollPane {
 
    private static final long serialVersionUID = 1L;
    private JTable table_;

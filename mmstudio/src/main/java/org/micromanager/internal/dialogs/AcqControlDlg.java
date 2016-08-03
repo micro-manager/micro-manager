@@ -76,7 +76,7 @@ import org.micromanager.acquisition.SequenceSettings;
  * This dialog specifies all parameters for the MDA acquisition. 
  *
  */
-public class AcqControlDlg extends MMFrame implements PropertyChangeListener, 
+public final class AcqControlDlg extends MMFrame implements PropertyChangeListener, 
         AcqSettingsListener { 
 
    private static final long serialVersionUID = 1L;

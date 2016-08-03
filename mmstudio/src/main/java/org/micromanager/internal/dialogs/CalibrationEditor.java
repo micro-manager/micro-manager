@@ -75,7 +75,7 @@ import org.micromanager.internal.utils.SortFunctionObjects;
 /**
  * Dialog for editing of a pixel size configuration preset.
  */
-public class CalibrationEditor extends MMDialog {
+public final class CalibrationEditor extends MMDialog {
    private static final long serialVersionUID = 1L;
    private final JTextArea textArea_;
    private final JTextField presetSizeField_;
@@ -864,7 +864,7 @@ public class CalibrationEditor extends MMDialog {
     * Cell editing using either JTextField or JComboBox depending on whether the
     * property enforces a set of allowed values.
     */
-   public class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
+   public final class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
       private static final long serialVersionUID = 1L;
       // This is the component that will handle the editing of the cell value
       JTextField text_ = new JTextField();
@@ -983,7 +983,7 @@ public class CalibrationEditor extends MMDialog {
       }
    }
    
-   public class PropertyCellRenderer implements TableCellRenderer {
+   public final class PropertyCellRenderer implements TableCellRenderer {
       // This method is called each time a cell in a column
       // using this renderer needs to be rendered.
       PropertyItem item_;

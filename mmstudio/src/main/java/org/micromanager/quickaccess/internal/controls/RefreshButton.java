@@ -48,7 +48,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * Implements the "Refresh" button logic.
  */
 @Plugin(type = SimpleButtonPlugin.class)
-public class RefreshButton extends SimpleButtonPlugin implements SciJavaPlugin {
+public final class RefreshButton extends SimpleButtonPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

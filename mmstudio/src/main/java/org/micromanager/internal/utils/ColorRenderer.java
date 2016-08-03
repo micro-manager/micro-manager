@@ -34,7 +34,7 @@ import javax.swing.table.TableCellRenderer;
 /**
  * Color chooser cell renderer. 
  */
-public class ColorRenderer extends JLabel implements TableCellRenderer {
+public final class ColorRenderer extends JLabel implements TableCellRenderer {
    private static final long serialVersionUID = -2539377758420096159L;
    Border unselectedBorder = null;
     Border selectedBorder = null;

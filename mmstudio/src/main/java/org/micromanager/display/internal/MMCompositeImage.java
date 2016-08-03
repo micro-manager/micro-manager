@@ -34,7 +34,7 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class MMCompositeImage extends CompositeImage implements IMMImagePlus {
+public final class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    private final DefaultDisplayWindow display_;
    private final ImagePlus hyperImage_;
    private final String title_;

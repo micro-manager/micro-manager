@@ -31,7 +31,7 @@ import org.micromanager.data.ProcessorContext;
 
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class SynchronousContext extends BaseContext {
+public final class SynchronousContext extends BaseContext {
    public SynchronousContext(Processor processor, Datastore store,
          DefaultPipeline parent) {
       super(processor, store, parent);

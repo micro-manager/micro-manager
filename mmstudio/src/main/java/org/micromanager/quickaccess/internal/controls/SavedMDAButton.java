@@ -56,7 +56,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * file and then runs the MDA.
  */
 @Plugin(type = WidgetPlugin.class)
-public class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
+public final class SavedMDAButton extends WidgetPlugin implements SciJavaPlugin {
    private Studio studio_;
 
    @Override

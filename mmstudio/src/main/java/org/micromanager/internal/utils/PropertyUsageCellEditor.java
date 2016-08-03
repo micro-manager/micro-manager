@@ -14,7 +14,7 @@ import javax.swing.table.TableCellEditor;
  *
  * @author arthur
  */
-public class PropertyUsageCellEditor extends AbstractCellEditor implements TableCellEditor {
+public final class PropertyUsageCellEditor extends AbstractCellEditor implements TableCellEditor {
     JCheckBox check_ = new JCheckBox();
     PropertyItem item_;
 

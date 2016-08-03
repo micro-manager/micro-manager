@@ -114,7 +114,7 @@ import org.micromanager.Studio;
  * TODO: this class is getting kind of unwieldy-huge, and should probably be
  * refactored.
  */
-public class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
+public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow {
    /**
     * Default key to use when reading or writing DisplaySettings from/to the
     * user's profile. See setDisplaySettingsKey() for more information.

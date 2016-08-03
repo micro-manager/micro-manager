@@ -65,7 +65,7 @@ import javax.swing.text.JTextComponent;
 
 
 
-public class GUIUtils {
+public final class GUIUtils {
    private static final String DIALOG_POSITION = "dialogPosition";
    public static final Font buttonFont = new Font("Arial", Font.PLAIN, 10);
 

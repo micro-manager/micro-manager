@@ -23,7 +23,7 @@ package org.micromanager.display.internal.events;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.NewDisplayEvent;
 
-public class DefaultNewDisplayEvent implements NewDisplayEvent {
+public final class DefaultNewDisplayEvent implements NewDisplayEvent {
    private DisplayWindow display_;
 
    public DefaultNewDisplayEvent(DisplayWindow display) {

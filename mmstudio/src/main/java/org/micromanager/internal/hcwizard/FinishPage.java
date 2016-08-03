@@ -47,7 +47,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * The last wizard page.
  *
  */
-public class FinishPage extends PagePanel {
+public final class FinishPage extends PagePanel {
 
     private static final long serialVersionUID = 1L;
 

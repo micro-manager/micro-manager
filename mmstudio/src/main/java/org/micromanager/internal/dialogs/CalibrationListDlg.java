@@ -42,7 +42,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Dialog for listing pixel size configuration presets and the corresponding
  * pixel size for each.
  */
-public class CalibrationListDlg extends MMDialog {
+public final class CalibrationListDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private static final String TITLE = "Calibration Editor";
    public static final String PIXEL_SIZE_GROUP = "ConfigPixelSize";

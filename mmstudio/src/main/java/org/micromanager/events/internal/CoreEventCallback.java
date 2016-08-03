@@ -40,7 +40,7 @@ import org.micromanager.events.XYStagePositionChangedEvent;
  * Callback to update Java layer when a change happens in the MMCore. This
  * posts events on the EventManager's event bus.
  */
-public class CoreEventCallback extends MMEventCallback {
+public final class CoreEventCallback extends MMEventCallback {
 
    private final CMMCore core_;
    private final AcquisitionWrapperEngine engine_;

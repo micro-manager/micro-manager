@@ -24,7 +24,7 @@ import org.micromanager.internal.graph.GraphFrame;
 /**
  * This class collects information related to the Line Profile display.
  */
-public class LineProfile {
+public final class LineProfile {
    private GraphData lineProfileData_;
    private GraphFrame profileWin_;
    private DisplayWindow display_;

@@ -1,6 +1,6 @@
 package org.micromanager.internal.utils;
 
-public class MMSerializationException extends Exception {
+public final class MMSerializationException extends Exception {
    private static final long serialVersionUID = -4802471513416825131L;
    private Throwable cause;
    private static final String MSG_PREFIX = "MMSerialization error: ";

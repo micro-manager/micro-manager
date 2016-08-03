@@ -11,7 +11,7 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 
-public class EDTProfiler {
+public final class EDTProfiler {
    private static final int INTERVAL = 100;
    
    private Timer timer_;

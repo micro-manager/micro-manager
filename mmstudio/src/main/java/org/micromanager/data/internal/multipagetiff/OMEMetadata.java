@@ -53,7 +53,7 @@ import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
-public class OMEMetadata {
+public final class OMEMetadata {
 
    private IMetadata metadata_;
    private StorageMultipageTiff mptStorage_;

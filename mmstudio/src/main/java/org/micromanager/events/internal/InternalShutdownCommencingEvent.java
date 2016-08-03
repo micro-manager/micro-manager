@@ -25,7 +25,7 @@ package org.micromanager.events.internal;
  * a complete copy of the ShutdownCommencingEvent, but not available in the
  * API; it's only intended for internal use.
  */
-public class InternalShutdownCommencingEvent {
+public final class InternalShutdownCommencingEvent {
    private boolean isCancelled_ = false;
 
    /**

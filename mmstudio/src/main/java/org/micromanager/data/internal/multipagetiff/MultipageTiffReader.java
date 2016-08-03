@@ -63,7 +63,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.VersionUtils;
 import org.micromanager.PropertyMap;
 
-public class MultipageTiffReader {
+public final class MultipageTiffReader {
 
    private static final long BIGGEST_INT_BIT = (long) Math.pow(2, 31);
    public static final char BITS_PER_SAMPLE = MultipageTiffWriter.BITS_PER_SAMPLE;

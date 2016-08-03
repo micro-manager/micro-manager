@@ -81,7 +81,7 @@ import org.micromanager.Studio;
 /**
  * This class represents a single control in the window.
  */
-public class ControlCell {
+public final class ControlCell {
    private Studio studio_;
    // Plugin that created the control.
    private QuickAccessPlugin plugin_;

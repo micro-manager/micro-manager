@@ -43,7 +43,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * The first page of the Configuration Wizard.
  */
-public class IntroPage extends PagePanel {
+public final class IntroPage extends PagePanel {
    private static final long serialVersionUID = 1L;
    private ButtonGroup buttonGroup = new ButtonGroup();
    private JTextField filePathField_;

@@ -42,7 +42,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This class creates UI widgets for the Quick-Access Window based on the
  * plugins that are handed to it.
  */
-public class QuickAccessFactory {
+public final class QuickAccessFactory {
    /**
     * Given a QuickAccessPlugin, make the appropriate GUI for it. This just
     * farms out to the appropriate more specific method.

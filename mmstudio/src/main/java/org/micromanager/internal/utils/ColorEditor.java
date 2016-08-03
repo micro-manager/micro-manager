@@ -38,7 +38,7 @@ import javax.swing.table.TableCellEditor;
 /**
  * Color chooser for channel data.
  */
-public class ColorEditor extends AbstractCellEditor implements TableCellEditor,
+public final class ColorEditor extends AbstractCellEditor implements TableCellEditor,
 ActionListener {
    private static final long serialVersionUID = -5497293610937812813L;
    Color currentColor;

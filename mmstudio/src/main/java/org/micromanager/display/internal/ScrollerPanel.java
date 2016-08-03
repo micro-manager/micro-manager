@@ -73,7 +73,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This class displays a grid of scrollbars for selecting which images in a
  * Datastore to show.
  */
-public class ScrollerPanel extends JPanel {
+public final class ScrollerPanel extends JPanel {
    /**
     * This class tracks relevant state for a single axis' set of controls.
     */
@@ -103,7 +103,7 @@ public class ScrollerPanel extends JPanel {
    /**
     * This class shows a popup menu to set the exact location of an axis.
     */
-   public class PositionPopup extends JPopupMenu {
+   public final class PositionPopup extends JPopupMenu {
       public PositionPopup(final String axis, JButton button) {
          add(new JLabel("Set index: "));
          final JTextField field = new JTextField(button.getText());

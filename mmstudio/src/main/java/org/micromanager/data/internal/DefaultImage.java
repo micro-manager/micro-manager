@@ -61,7 +61,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * data, returns an ImageJ-style array, while getPixelBuffer (which is not
  * exposed in the API) returns the raw buffer.
  */
-public class DefaultImage implements Image {
+public final class DefaultImage implements Image {
    private static final String COORDS_TAG = "completeCoords";
 
    private DefaultMetadata metadata_;

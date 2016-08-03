@@ -27,4 +27,4 @@ package org.micromanager.events.internal;
  * reason, and because the API also doesn't provide access to that
  * setChannelGroup method.
  */
-public class ChannelGroupEvent {}
+public final class ChannelGroupEvent {}

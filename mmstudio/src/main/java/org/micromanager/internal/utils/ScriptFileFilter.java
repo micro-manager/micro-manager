@@ -29,7 +29,7 @@ import javax.swing.filechooser.FileFilter;
 /**
  * File filter class for Open/Save file choosers 
  */
-public class ScriptFileFilter extends FileFilter {
+public final class ScriptFileFilter extends FileFilter {
    final private String EXT_BSH;
    final private String DESCRIPTION;
    

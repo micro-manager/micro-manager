@@ -27,7 +27,7 @@ import java.awt.GraphicsConfiguration;
  * Indicates that full-screen mode has been turned on/off for the given
  * monitor.
  */
-public class FullScreenEvent {
+public final class FullScreenEvent {
    private GraphicsConfiguration displayConfig_;
    private boolean isFullScreen_;
 

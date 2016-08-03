@@ -26,7 +26,7 @@ package org.micromanager.alerts.internal;
  * created or updated. The intent is to allow other parts of the GUI than the
  * Messages window to show alert information.
  */
-public class AlertUpdatedEvent {
+public final class AlertUpdatedEvent {
    private DefaultAlert alert_;
    public AlertUpdatedEvent(DefaultAlert alert) {
       alert_ = alert;

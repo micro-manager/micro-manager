@@ -31,7 +31,7 @@ import java.util.HashMap;
  * This class does a rigid grid layout that can be sparse (i.e. have gaps) and
  * can have entities take up multiple cells.
  */
-public class SparseGridLayout implements LayoutManager2 {
+public final class SparseGridLayout implements LayoutManager2 {
    private HashMap<Rectangle, Component> rectToComponent_;
    // Size of a cell, in pixels.
    private int cellWidth_;

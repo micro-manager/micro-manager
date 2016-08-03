@@ -43,7 +43,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * Fairly naive Annotation implementation that stores PropertyMaps as JSON in a
  * plaintext file.
  */
-public class DefaultAnnotation implements Annotation {
+public final class DefaultAnnotation implements Annotation {
    private PropertyMap data_;
    private String filename_;
 

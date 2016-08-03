@@ -50,7 +50,7 @@ import org.micromanager.Studio;
  * the user know that something is happening prior to images being displayed.
  * It disappears as soon as any images are available for the acquisition.
  */
-public class StatusDisplay extends JFrame {
+public final class StatusDisplay extends JFrame {
    private static final int DISPLAY_DELAY_MS = 1000;
 
    private Datastore store_;

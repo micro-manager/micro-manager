@@ -22,7 +22,7 @@ package org.micromanager.internal.utils;
 
 import java.util.Comparator;
 
-public class ImageLabelComparator implements Comparator<String> {
+public final class ImageLabelComparator implements Comparator<String> {
 
    private final boolean slicesFirst_;
    private final boolean timeFirst_;

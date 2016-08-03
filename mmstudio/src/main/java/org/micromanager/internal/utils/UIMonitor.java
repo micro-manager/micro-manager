@@ -21,7 +21,7 @@ import javax.swing.SwingUtilities;
  *
  * @author Arthur
  */
-public class UIMonitor {
+public final class UIMonitor {
 
    private static AWTEventListener clickListener_ = null;
 

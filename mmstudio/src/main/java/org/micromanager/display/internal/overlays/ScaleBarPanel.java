@@ -49,7 +49,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
  * This class provides a GUI for drawing a scale bar.
  */
-public class ScaleBarPanel extends OverlayPanel {
+public final class ScaleBarPanel extends OverlayPanel {
    private static final String DRAW_TEXT = "scaleBarOverlay: whether or not to draw text";
    private static final String FONT_SIZE = "scaleBarOverlay: font size";
    private static final String IS_FILLED = "scaleBarOverlay: if the scale bar is drawn as solid";

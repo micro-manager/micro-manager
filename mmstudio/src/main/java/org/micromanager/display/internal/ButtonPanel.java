@@ -50,7 +50,7 @@ import org.micromanager.Studio;
  * with any other custom controls the creator of the display window has decided
  * to include.
  */
-public class ButtonPanel extends JPanel {
+public final class ButtonPanel extends JPanel {
 
    // Zoom levels copied from ij.gui.ImageCanvas.
    private static final Double[] ALLOWED_ZOOMS = new Double[] {

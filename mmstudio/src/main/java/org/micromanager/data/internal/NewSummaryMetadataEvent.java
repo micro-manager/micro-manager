@@ -27,7 +27,7 @@ import org.micromanager.data.SummaryMetadata;
  * Datastore.
  * TODO: should be renamed to DefaultNewSummaryMetadataEvent.
  */
-public class NewSummaryMetadataEvent implements org.micromanager.data.NewSummaryMetadataEvent {
+public final class NewSummaryMetadataEvent implements org.micromanager.data.NewSummaryMetadataEvent {
    private SummaryMetadata metadata_;
    public NewSummaryMetadataEvent(SummaryMetadata metadata) {
       metadata_ = metadata;

@@ -46,7 +46,7 @@ import org.micromanager.alerts.Alert;
 import org.micromanager.internal.utils.GUIUtils;
 
 
-public class AlertsWindow extends JFrame {
+public final class AlertsWindow extends JFrame {
    private static AlertsWindow staticInstance_;
    private static void ensureWindowExists(Studio studio) {
       if (staticInstance_ == null) {

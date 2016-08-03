@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 // TODO: the change to the Profile system (away from Preferences) has caused
 // registration state to be lost.
-public class RegistrationDlg extends JDialog {
+public final class RegistrationDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    public static final String HAVE_REGISTERED = "this user has registered with Micro-Manager";
    public static final String SHOULD_NEVER_REGISTER = "this user never wants to be prompted to register";
