@@ -86,6 +86,7 @@ const char* const MMIIDC_Property_PreInitGainUnits_Auto = "Auto-detect";
 const char* const MMIIDC_Property_PreInitGainUnits_ArbitraryWithAbsoluteReadOut = "AU with dB readout";
 
 const char* const MMIIDC_Property_TimeoutMs = "Timeout (ms)";
+const char* const MMIIDC_Property_AlwaysPoll = "AlwaysUsePolling";
 const char* const MMIIDC_Property_CameraID = "Camera ID";
 const char* const MMIIDC_Property_IIDCVersion = "Camera IIDC version";
 const char* const MMIIDC_Property_Vendor = "Vendor name";
@@ -534,6 +535,14 @@ MMIIDCCamera::Initialize()
       err = CreateIntegerProperty(MMIIDC_Property_TimeoutMs, 10000, false);
       if (err != DEVICE_OK)
          return err;
+
+#ifndef _WIN32
+      err = CreateStringProperty(MMIIDC_Property_AlwaysPoll, "No", false);
+      if (err != DEVICE_OK)
+         return err;
+      AddAllowedValue(MMIIDC_Property_AlwaysPoll, "No");
+      AddAllowedValue(MMIIDC_Property_AlwaysPoll, "Yes");
+#endif
    }
    CATCH_AND_RETURN_ERROR
 
@@ -592,6 +601,16 @@ MMIIDCCamera::SnapImage()
    if (err != DEVICE_OK)
       return err;
 
+   bool usePolling = false;
+   if (HasProperty(MMIIDC_Property_AlwaysPoll))
+   {
+      char value[MM::MaxStrLength];
+      err = GetProperty(MMIIDC_Property_AlwaysPoll, value);
+      if (err != DEVICE_OK)
+         return err;
+      usePolling = (value == std::string("Yes"));
+   }
+
    ResetTimebase();
 
    try
@@ -601,7 +620,7 @@ MMIIDCCamera::SnapImage()
                boost::bind(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4, _5),
                boost::function<void ()>());
       else
-         iidcCamera_->StartContinuousCapture(3, 1, timeoutMs,
+         iidcCamera_->StartContinuousCapture(3, 1, timeoutMs, usePolling,
                boost::bind(&MMIIDCCamera::SnapCallback, this, _1, _2, _3, _4, _5),
                boost::function<void ()>());
       iidcCamera_->WaitForCapture();
@@ -865,6 +884,16 @@ MMIIDCCamera::StartSequenceAcquisition(long count, double /*intervalMs*/, bool s
    if (err != DEVICE_OK)
       return err;
 
+   bool usePolling = false;
+   if (HasProperty(MMIIDC_Property_AlwaysPoll))
+   {
+      char value[MM::MaxStrLength];
+      err = GetProperty(MMIIDC_Property_AlwaysPoll, value);
+      if (err != DEVICE_OK)
+         return err;
+      usePolling = (value == std::string("Yes"));
+   }
+
    stopOnOverflow_ = stopOnOverflow;
 
    err = GetCoreCallback()->PrepareForAcq(this);
@@ -878,6 +907,7 @@ MMIIDCCamera::StartSequenceAcquisition(long count, double /*intervalMs*/, bool s
       if (iidcCamera_->IsMultiShotCapable() && count < 65536)
       {
          iidcCamera_->StartMultiShotCapture(16, static_cast<uint16_t>(count), timeoutMs,
+               usePolling,
                boost::bind(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4, _5),
                boost::bind(&MMIIDCCamera::SequenceFinishCallback, this));
       }
@@ -885,6 +915,7 @@ MMIIDCCamera::StartSequenceAcquisition(long count, double /*intervalMs*/, bool s
       {
          size_t nrFrames = (count == LONG_MAX) ? static_cast<size_t>(count) : 0;
          iidcCamera_->StartContinuousCapture(16, nrFrames, timeoutMs,
+               usePolling,
                boost::bind(&MMIIDCCamera::SequenceCallback, this, _1, _2, _3, _4, _5),
                boost::bind(&MMIIDCCamera::SequenceFinishCallback, this));
       }

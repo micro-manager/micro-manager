@@ -710,7 +710,8 @@ Camera::GetFramerate()
 
 void
 Camera::StartContinuousCapture(uint32_t nrDMABuffers, size_t nrFrames,
-      unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback,
+      unsigned frameTimeoutMs, bool alwaysUsePolling,
+      FrameCallbackFunction frameCallback,
       FinishCallbackFunction finishCallback)
 {
    EnsureReadyForCapture();
@@ -718,7 +719,7 @@ Camera::StartContinuousCapture(uint32_t nrDMABuffers, size_t nrFrames,
    captureFrameCallback_ = frameCallback;
    boost::shared_ptr<Capture> capture =
       boost::make_shared<ContinuousCapture>(libdc1394camera_,
-            nrDMABuffers, nrFrames, firstFrameTimeoutMs,
+            nrDMABuffers, nrFrames, frameTimeoutMs, alwaysUsePolling,
             boost::bind(&Camera::HandleCapturedFrame, this, _1),
             finishCallback);
    RunCaptureInBackground(capture);
@@ -727,7 +728,8 @@ Camera::StartContinuousCapture(uint32_t nrDMABuffers, size_t nrFrames,
 
 void
 Camera::StartMultiShotCapture(uint32_t nrDMABuffers, uint16_t nrFrames,
-      unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback,
+      unsigned frameTimeoutMs, bool alwaysUsePolling,
+      FrameCallbackFunction frameCallback,
       FinishCallbackFunction finishCallback)
 {
    EnsureReadyForCapture();
@@ -738,7 +740,7 @@ Camera::StartMultiShotCapture(uint32_t nrDMABuffers, uint16_t nrFrames,
    captureFrameCallback_ = frameCallback;
    boost::shared_ptr<Capture> capture =
       boost::make_shared<MultiShotCapture>(libdc1394camera_,
-            nrDMABuffers, nrFrames, firstFrameTimeoutMs,
+            nrDMABuffers, nrFrames, frameTimeoutMs, alwaysUsePolling,
             boost::bind(&Camera::HandleCapturedFrame, this, _1),
             finishCallback);
    RunCaptureInBackground(capture);
