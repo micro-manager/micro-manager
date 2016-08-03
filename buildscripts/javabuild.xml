@@ -44,6 +44,7 @@
 	<!-- Global default classpath -->
 	<path id="mm.compile.classpath">
 		<fileset dir="${mm.ivy.lib.dir}/compile" includes="*.jar"/>
+		<fileset dir="${mm.ivy.lib.dir}/optional" includes="*.jar"/>
 		<fileset dir="${mm.ivy.lib.dir}/imagej" includes="*.jar"/>
 	</path>
 
