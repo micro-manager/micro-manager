@@ -86,7 +86,7 @@ const char* const MMIIDC_Property_PreInitGainUnits_Auto = "Auto-detect";
 const char* const MMIIDC_Property_PreInitGainUnits_ArbitraryWithAbsoluteReadOut = "AU with dB readout";
 
 const char* const MMIIDC_Property_TimeoutMs = "Timeout (ms)";
-const char* const MMIIDC_Property_AlwaysPoll = "AlwaysUsePolling";
+const char* const MMIIDC_Property_AlwaysPoll = "Always use polling";
 const char* const MMIIDC_Property_CameraID = "Camera ID";
 const char* const MMIIDC_Property_IIDCVersion = "Camera IIDC version";
 const char* const MMIIDC_Property_Vendor = "Vendor name";
