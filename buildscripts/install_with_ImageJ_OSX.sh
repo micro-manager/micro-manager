@@ -32,7 +32,7 @@ cp -R "$MM_SRCDIR"/bindist/any-platform/* "$MM_STAGEDIR"
 cp -R "$MM_SRCDIR"/bindist/MacOSX/* "$MM_STAGEDIR"
 
 # Stage third-party JARs.
-cp "$MM_SRCDIR"/dependencies/artifacts/{compile,runtime}/*.jar "$MM_JARDIR"
+cp "$MM_SRCDIR"/dependencies/artifacts/{compile,optional,runtime}/*.jar "$MM_JARDIR"
 cp "$MM_SRCDIR"/dependencies/artifacts/imagej/ij-*.jar "$MM_STAGEDIR"/ij.jar
 
 # Ensure SVN data is removed.

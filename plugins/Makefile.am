@@ -16,6 +16,7 @@ nobase_mmplugin_DATA = \
 	ImageFlipper.jar \
 	IntelligentAcquisition.jar \
 	MMTracker.jar \
+	Magellan.jar \
 	MultiAndor.jar \
 	MultiChannelShading.jar \
 	PatternOverlay.jar \
