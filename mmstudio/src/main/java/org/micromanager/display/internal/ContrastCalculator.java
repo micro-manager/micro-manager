@@ -108,6 +108,12 @@ public class ContrastCalculator {
          // Number of bins such that we won't get an
          // ArrayIndexOutOfBoundsException even if some of the data exceeds
          // what is expected from depthPower.
+         // For example, if we have a short[] image (samplePower = 16) whose
+         // data depth is supposed to be 14-bit (depthPower), and a 256-bin
+         // histogram is requested (binPower = 8), then the 256 bins are mapped
+         // to a 14-bit intensity range. But in order to accomodate
+         // out-of-bounds intensity values (up to 16-bit), we need 2^10 = 1024
+         // bins (safeBinPower = 10).
          final int safeBinPower = binPower + (samplePower - depthPower);
          final int safeNumBins = (int) Math.pow(2, safeBinPower);
 
