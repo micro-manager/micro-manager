@@ -194,14 +194,16 @@ public:
     * nrFrames == 0, continue until StopCapture() is called.
     */
    void StartContinuousCapture(uint32_t nrDMABuffers, size_t nrFrames,
-         unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback,
+         unsigned frameTimeoutMs, bool alwaysUsePolling,
+         FrameCallbackFunction frameCallback,
          FinishCallbackFunction finishCallback);
 
    /*
     * Start a multi-shot capture. Camera must be multi-shot capable.
     */
    void StartMultiShotCapture(uint32_t nrDMABuffers, uint16_t nrFrames,
-         unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback,
+         unsigned frameTimeoutMs, bool alwaysUsePolling,
+         FrameCallbackFunction frameCallback,
          FinishCallbackFunction finishCallback);
 
    /*

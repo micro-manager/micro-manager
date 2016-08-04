@@ -1,0 +1,15 @@
+<project name="IIDC">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<property name="PDL2000.libs" location="${mm.basedir}/../3rdparty/PeCon/PDL2000"/>
+
+	<target name="install-Win32">
+		<copy todir="${mm.dll.installdir}" file="${PDL2000.libs}/win32/PDL2000.dll"/>
+		<copy todir="${mm.dll.installdir}" file="${PDL2000.libs}/win32/SiUSBXp.dll"/>
+	</target>
+
+	<target name="install-x64">
+		<copy todir="${mm.dll.installdir}" file="${PDL2000.libs}/x64/PDL2000.dll"/>
+		<copy todir="${mm.dll.installdir}" file="${PDL2000.libs}/x64/SiUSBXp.dll"/>
+	</target>
+</project>
