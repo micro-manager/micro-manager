@@ -91,6 +91,7 @@ public final class CanvasUpdateQueue {
       boolean needsUpdate_ = true;
       UUID imageUUID_ = null;
       int coordsHash_ = 0;
+      DisplaySettings.ContrastSettings contrast_ = null;
       public HistogramHistory() {
          datas_ = new ArrayList<HistogramData>();
       }
@@ -117,6 +118,12 @@ public final class CanvasUpdateQueue {
    // erroneously respond to our own new display settings by redrawing
    // everything.
    private boolean amSettingDisplaySettings_;
+   // These parameters are used to determine if we need to recalculate
+   // histograms when display settings are changed.
+   private Double cachedExtremaPercentage_ = null;
+   private Boolean cachedShouldCalculateStdDev_ = null;
+   private Boolean cachedShouldAutostretch_ = null;
+   private Boolean cachedShouldScaleWithROI_ = null;
 
    public static CanvasUpdateQueue makeQueue(DefaultDisplayWindow display,
          MMVirtualStack stack, Object drawLock) {
@@ -434,6 +441,7 @@ public final class CanvasUpdateQueue {
          history.coordsHash_ = image.getCoords().hashCode();
          history.needsUpdate_ = false;
          history.lastUpdateTime_ = System.currentTimeMillis();
+         history.contrast_ = settings.getSafeContrastSettings(channel, null);
          display_.postEvent(new NewHistogramsEvent(channel, history.datas_));
          if (shouldUpdate) {
             // Check to see if we actually changed anything: there were no
@@ -527,14 +535,33 @@ public final class CanvasUpdateQueue {
 
    @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
-      // The new settings may have new contrast settings, so reapply contrast.
+      // The new settings may have new contrast settings, so check if the
+      // contrast settings or other parameters governing histograms have been
+      // updated.
       // Only if the new settings didn't originate from us of course.
-      if (!amSettingDisplaySettings_) {
-         for (HistogramHistory history : channelToHistory_.values()) {
+      if (amSettingDisplaySettings_) {
+         return;
+      }
+      DisplaySettings settings = event.getDisplaySettings();
+      boolean shouldForceUpdate_ = false;
+      if (settings.getExtremaPercentage() != cachedExtremaPercentage_ ||
+            settings.getShouldCalculateStdDev() != cachedShouldCalculateStdDev_ ||
+            settings.getShouldAutostretch() != cachedShouldAutostretch_ ||
+            settings.getShouldScaleWithROI() != cachedShouldScaleWithROI_) {
+         shouldForceUpdate_ = true;
+      }
+      for (int channel : channelToHistory_.keySet()) {
+         HistogramHistory history = channelToHistory_.get(channel);
+         DisplaySettings.ContrastSettings newContrast = settings.getSafeContrastSettings(channel, null);
+         if (shouldForceUpdate_ || history.contrast_ != newContrast) {
             history.needsUpdate_ = true;
          }
-         reapplyLUTs();
       }
+      cachedExtremaPercentage_ = settings.getExtremaPercentage();
+      cachedShouldCalculateStdDev_ = settings.getShouldCalculateStdDev();
+      cachedShouldAutostretch_ = settings.getShouldAutostretch();
+      cachedShouldScaleWithROI_ = settings.getShouldScaleWithROI();
+      reapplyLUTs();
    }
 
    /**
