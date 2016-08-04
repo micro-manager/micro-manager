@@ -72,7 +72,8 @@ private:
    const size_t requestedFrames_;
    const size_t expectedFrames_;
    size_t retrievedFrames_;
-   unsigned firstFrameTimeoutMs_;
+   unsigned frameTimeoutMs_;
+   bool alwaysUsePolling_;
 
    boost::mutex statusMutex_; // Protect started_ and stopped_
    bool started_;
@@ -83,12 +84,14 @@ private:
 public:
    /*
     * Once Run() is called, retrieve nrFrames from libdc1394camera, waiting
-    * firstFrameTimeoutMs for the first frame to arrive, and call frameCallback
-    * with each frame as the argument.
+    * frameTimeoutMs for the first frame (and subsequent frames, if forcing
+    * polling) to arrive, and call frameCallback with each frame as the
+    * argument.
     */
    FrameRetriever(dc1394camera_t* libdc1394camera,
          size_t desiredNrFrames, size_t expectedNrFrames,
-         unsigned firstFrameTimeoutMs, FrameCallbackFunction frameCallback);
+         unsigned frameTimeoutMs, bool alwaysUsePolling,
+         FrameCallbackFunction frameCallback);
 
    /*
     * Run the retrieval cycle, blocking until finished. Must be called from the
@@ -127,10 +130,12 @@ private:
 
 public:
    CaptureImpl(dc1394camera_t* libdc1394camera,
-         size_t nrFrames, size_t finiteNrFrames, unsigned firstFrameTimeoutMs,
+         size_t nrFrames, size_t finiteNrFrames, unsigned frameTimeoutMs,
+         bool alwaysUsePolling,
          FrameCallbackFunction frameHandler,
          FinishCallbackFunction finishHandler) :
-      retriever_(libdc1394camera, nrFrames, finiteNrFrames, firstFrameTimeoutMs, frameHandler),
+      retriever_(libdc1394camera, nrFrames, finiteNrFrames, frameTimeoutMs,
+            alwaysUsePolling, frameHandler),
       finishCallback_(finishHandler)
    {}
 
@@ -159,10 +164,12 @@ class ContinuousCapture : public CaptureImpl
 
 public:
    ContinuousCapture(dc1394camera_t* libdc1394camera,
-         uint32_t nrDMABuffers, size_t nrFrames, unsigned firstFrameTimeoutMs,
+         uint32_t nrDMABuffers, size_t nrFrames, unsigned frameTimeoutMs,
+         bool alwaysUsePolling,
          FrameCallbackFunction frameHandler,
          FinishCallbackFunction finishHandler) :
-      CaptureImpl(libdc1394camera, nrFrames, 0, firstFrameTimeoutMs,
+      CaptureImpl(libdc1394camera, nrFrames, 0, frameTimeoutMs,
+            alwaysUsePolling,
             frameHandler, finishHandler),
       libdc1394camera_(libdc1394camera),
       nrDMABuffers_(nrDMABuffers)
@@ -182,10 +189,12 @@ class MultiShotCapture : public CaptureImpl
 
 public:
    MultiShotCapture(dc1394camera_t* libdc1394camera,
-         uint32_t nrDMABuffers, uint16_t nrFrames, unsigned firstFrameTimeoutMs,
+         uint32_t nrDMABuffers, uint16_t nrFrames, unsigned frameTimeoutMs,
+         bool alwaysUsePolling,
          FrameCallbackFunction frameHandler,
          FinishCallbackFunction finishHandler) :
-      CaptureImpl(libdc1394camera, nrFrames, nrFrames, firstFrameTimeoutMs,
+      CaptureImpl(libdc1394camera, nrFrames, nrFrames, frameTimeoutMs,
+            alwaysUsePolling,
             frameHandler, finishHandler),
       libdc1394camera_(libdc1394camera),
       nrDMABuffers_(nrDMABuffers),
@@ -208,7 +217,7 @@ public:
          uint32_t nrDMABuffers, unsigned timeoutMs,
          FrameCallbackFunction frameHandler,
          FinishCallbackFunction finishHandler) :
-      CaptureImpl(libdc1394camera, 1, 1, timeoutMs,
+      CaptureImpl(libdc1394camera, 1, 1, timeoutMs, true,
             frameHandler, finishHandler),
       libdc1394camera_(libdc1394camera),
       nrDMABuffers_(nrDMABuffers)

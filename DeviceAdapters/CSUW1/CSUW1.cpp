@@ -548,7 +548,8 @@ int Dichroic::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos);
       if (ret != DEVICE_OK) {
          return  ret;
-	  }
+      }
+      pos_ = pos;
    }
    return DEVICE_OK;
 }
