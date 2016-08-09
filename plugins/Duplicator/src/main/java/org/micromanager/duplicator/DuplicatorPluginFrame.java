@@ -81,8 +81,8 @@ public class DuplicatorPluginFrame extends MMDialog {
       }
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
-      String[] nameParts = window.getName().split(File.separator);
-      String shortName = nameParts[nameParts.length - 1];
+      File file = new File(window.getName());
+      String shortName = file.getName();
       super.setTitle(DuplicatorPlugin.MENUNAME + shortName);
 
       super.loadAndRestorePosition(100, 100, 375, 275);
