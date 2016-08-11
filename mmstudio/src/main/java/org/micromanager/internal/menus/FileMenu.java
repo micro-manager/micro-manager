@@ -2,7 +2,6 @@ package org.micromanager.internal.menus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,7 +9,6 @@ import java.util.Collections;
 
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import javax.swing.JOptionPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -29,7 +27,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class FileMenu {
    private static final String FILE_HISTORY = "list of recently-viewed files";
    private static final int MAX_HISTORY_SIZE = 15;
-   private MMStudio studio_;
+   private final MMStudio studio_;
 
    public FileMenu(MMStudio studio, JMenuBar menuBar) {
       studio_ = studio;
@@ -46,8 +44,10 @@ public final class FileMenu {
             fileMenu.repaint();
          }
 
+         @Override
          public void menuDeselected(MenuEvent e) {
          }
+         @Override
          public void menuCanceled(MenuEvent e) {
          }
       });
@@ -92,6 +92,7 @@ public final class FileMenu {
 
       GUIUtils.addMenuItem(fileMenu, "Exit", null,
          new Runnable() {
+            @Override
             public void run() {
                studio_.closeSequence(false);
             }
@@ -100,25 +101,30 @@ public final class FileMenu {
    }
 
    private void promptToOpenFile(final boolean isVirtual) {
-      try {
-         Datastore store = studio_.data().promptForDataToLoad(
-               MMStudio.getInstance().getFrame(), isVirtual);
-         if (store == null) {
-            // User cancelled.
-            return;
+      new Thread(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               Datastore store = studio_.data().promptForDataToLoad(
+                       MMStudio.getFrame(), isVirtual);
+               if (store == null) {
+                  // User cancelled.
+                  return;
+               }
+               if (store.getAnyImage() == null) {
+                  studio_.logs().showError("Unable to load any images; file may be invalid.");
+                  return;
+               }
+               studio_.displays().loadDisplays(store);
+               studio_.displays().manage(store);
+               updateFileHistory(store.getSavePath());
+            } catch (IOException e) {
+               ReportingUtils.showError(e, "There was an error when opening data");
+            }
          }
-         if (store.getAnyImage() == null) {
-            studio_.logs().showError("Unable to load any images; file may be invalid.");
-            return;
-         }
-         studio_.displays().loadDisplays(store);
-         studio_.displays().manage(store);
-         updateFileHistory(store.getSavePath());
-      }
-      catch (IOException e) {
-         ReportingUtils.showError(e, "There was an error when opening data");
-      }
+      }).start();
    }
+   
 
    private JMenu makeOpenRecentMenu(final boolean isVirtual) {
       JMenu result = new JMenu(String.format("Open Recent (%s)",
@@ -164,6 +170,7 @@ public final class FileMenu {
    /**
     * Whenever a file is opened, add it to our history of recently-opened
     * files.
+    * @param newFile file to be added to history
     */
    public void updateFileHistory(String newFile) {
       String[] fileHistory = getRecentFiles();
