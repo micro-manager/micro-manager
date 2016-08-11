@@ -144,17 +144,20 @@ public class MMWindow {
    /*
     * Returns the ImageJ ImageProcessor object associated with a particular
     * channel, slice, frame, position index.
+    * Note that channel, slice, and frame are all 0-indexed but position is 1-indexed.
     */
    public ImageProcessor getImageProcessor(int channel, int slice, int frame, int position)
       throws MMScriptException {
       setPosition(position);
-      if (channel >= getNumberOfChannels() || slice >= getNumberOfSlices() ||
-              frame >= getNumberOfFrames())
+      if (channel >= getNumberOfChannels() || channel < 0 ||
+          slice >= getNumberOfSlices() || slice < 0 ||
+              frame >= getNumberOfFrames() || frame < 0)
          throw new MMScriptException ("Parameters out of bounds");
       if (virtAcq_ == null)
          return null;
       ImagePlus hyperImage = virtAcq_.getImagePlus();
-      return hyperImage.getImageStack().getProcessor(hyperImage.getStackIndex(channel + 1, slice, frame));
+      return hyperImage.getImageStack().getProcessor(hyperImage.getStackIndex(channel + 1,
+          slice + 1, frame + 1)); // note parameters to getStackIndex() in ij.ImagePlus.java are 1-indexed 
    }
    
    /**
