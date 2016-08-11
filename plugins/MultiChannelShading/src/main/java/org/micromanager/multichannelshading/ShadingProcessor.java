@@ -69,15 +69,14 @@ public class ShadingProcessor extends Processor {
       }
    }
 
+
    // Classes used to classify alerts in the processImage function below
-   private class Not8or16BitClass {};
-   private class NoBinningInfoClass {};
-   private class NoRoiClass {};
-   private class NoBackgroundForThisBinModeClass {};
-   private class ErrorSubtractingClass {};
-   
-   
-   
+   private class Not8or16BitClass {}
+   private class NoBinningInfoClass {}
+   private class NoRoiClass {}
+   private class NoBackgroundForThisBinModeClass {}
+   private class ErrorSubtractingClass {}
+
    @Override
    public void processImage(Image image, ProcessorContext context) {
       int width = image.getWidth();
