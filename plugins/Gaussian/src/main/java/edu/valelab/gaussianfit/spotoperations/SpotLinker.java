@@ -109,7 +109,8 @@ public class SpotLinker {
 
       
          // Add destList to rowData
-         DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Linked", rowData.title_, "", rowData.width_,
+         DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Linked", 
+                 rowData.title_, rowData.dw_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                  0, 1, rowData.maxNrSpots_, destList,

@@ -150,7 +150,7 @@ public class PairFilter {
 
                // Add transformed data to data overview window
                DataCollectionForm.getInstance().addSpotData(
-                       rowData.name_ + "-Pair-Corrected", rowData.title_, "", rowData.width_,
+                       rowData.name_ + "-Pair-Corrected", rowData.title_, rowData.dw_, "", rowData.width_,
                        rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
                        rowData.shape_, rowData.halfSize_, rowData.nrChannels_,
                        rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_,

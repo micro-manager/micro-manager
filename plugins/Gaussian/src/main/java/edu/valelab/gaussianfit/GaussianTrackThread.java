@@ -286,7 +286,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
    private void addListToForm(String name, List<SpotData> resultList, ImagePlus siPlus, ArrayList<Double> timePoints) {
       // Add data to data overview window
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
-      dcForm.addSpotData(name, siPlus.getTitle(), "", siPlus.getWidth(), 
+      dcForm.addSpotData(name, siPlus.getTitle(), null, "", siPlus.getWidth(), 
               siPlus.getHeight(),  pixelSize_, (float) 0.0, shape_,
               halfSize_, siPlus.getNChannels(), siPlus.getNFrames(),
               siPlus.getNSlices(), 1, resultList.size(), resultList, 

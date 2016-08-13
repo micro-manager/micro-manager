@@ -138,7 +138,7 @@ public class LoadAndSave {
          String name = selectedFile.getName();
 
          DataCollectionForm.getInstance().addSpotData(
-                 name, name, "", 256, 256, pixelSize, (float) 0.0, 3, 2, 1, 1,
+                 name, name, null, "", 256, 256, pixelSize, (float) 0.0, 3, 2, 1, 1,
                  1, 1, nr, spotList, null, false,
                  DataCollectionForm.Coordinates.NM, hasZ, minZ, maxZ);
 
@@ -236,7 +236,7 @@ public class LoadAndSave {
          }
 
          DataCollectionForm.getInstance().addSpotData(infoMap.get("name"), infoMap.get("name"),
-                 "", Integer.parseInt(infoMap.get("nr_pixels_x")),
+                 null, "", Integer.parseInt(infoMap.get("nr_pixels_x")),
                  Integer.parseInt(infoMap.get("nr_pixels_y")),
                  Math.round(Double.parseDouble(infoMap.get("pixel_size"))),
                  zStepSize,
@@ -360,7 +360,7 @@ public class LoadAndSave {
             spotList.add(gSpot);
          }
 
-         DataCollectionForm.getInstance().addSpotData(name, title, "", width, height, pixelSizeUm, (float) 0.0, shape, halfSize,
+         DataCollectionForm.getInstance().addSpotData(name, title, null, "", width, height, pixelSizeUm, (float) 0.0, shape, halfSize,
                  nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
                  spotList, null, isTrack, DataCollectionForm.Coordinates.NM, hasZ, minZ, maxZ);
 

@@ -69,6 +69,9 @@ import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.stat.StatUtils;
 import org.jfree.data.xy.XYSeries;
+import org.micromanager.Studio;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.MMStudio;
 
 
 /**
@@ -124,6 +127,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private int jitterMaxFrames_ = 500; 
    private String dir_ = "";   
    public static ZCalibrator zc_ = new ZCalibrator();
+   private final Studio studio_;
       
    
    /**
@@ -186,7 +190,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    public static DataCollectionForm getInstance() {
       if (instance_ == null) {
-         instance_ =  new DataCollectionForm();
+         instance_ =  new DataCollectionForm(MMStudio.getInstance());
          // MMStudio.getInstance().addMMBackgroundListener(instance_);
       }
       return instance_;
@@ -195,8 +199,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
    /** 
     * Creates new form DataCollectionForm
     */
-   private DataCollectionForm() {
+   private DataCollectionForm(Studio studio) {
 
+      studio_ = studio;
+      
       rowData_ = new ArrayList<RowData>();
 
       myTableModel_ = new AbstractTableModel() {
@@ -327,6 +333,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @param name
     * @param title
+    * @param dw
     * @param colCorrRef
     * @param width
     * @param height
@@ -350,6 +357,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    public void addSpotData(
            String name,
            String title,
+           DisplayWindow dw, 
            String colCorrRef,
            int width,
            int height,
@@ -369,7 +377,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
            boolean hasZ, 
            double minZ, 
            double maxZ) {
-      RowData newRow = new RowData(name, title, colCorrRef, width, height, 
+      RowData newRow = new RowData(name, title, dw, colCorrRef, width, height, 
               pixelSizeUm, zStackStepSizeNm, 
               shape, halfSize, nrChannels, nrFrames, nrSlices, nrPositions, 
               maxNrSpots, spotList, timePoints, isTrack, coordinate, 
@@ -1584,7 +1592,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          // Add transformed data to data overview window
          RowData rowData = myRows[0];
-         addSpotData(rowData.name_ + " Average", rowData.title_, "", rowData.width_,
+         addSpotData(rowData.name_ + " Average", rowData.title_, null, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, rowData.shape_,
                  rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                  rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
@@ -1662,7 +1670,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          RowData rowData = source;
          
-         addSpotData(rowData.name_ + " Subtracted", rowData.title_, "", rowData.width_,
+         addSpotData(rowData.name_ + " Subtracted", rowData.title_, rowData.dw_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
                  rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
@@ -1868,6 +1876,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                RowData rowData = rowData_.get(rows[0]);
                addSpotData(rowData.name_ + "-Combined",
                        rowData.title_,
+                       rowData.dw_,
                        referenceName_.getText(), rowData.width_,
                        rowData.height_, rowData.pixelSizeNm_,
                        rowData.zStackStepSizeNm_, rowData.shape_,
@@ -2054,7 +2063,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
             tp.removeKeyListener(ks);
          }
          
-         ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData.halfSize_);
+         ResultsTableListener myk = new ResultsTableListener(studio_, rowData.dw_, siPlus, 
+                 rt, win, rowData.halfSize_);
          tp.addKeyListener(myk);
          tp.addMouseListener(myk);
          frame.toFront();
@@ -2147,6 +2157,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             addSpotData(rowData.name_ + "-CC-" + referenceName_.getText() + "-"
                     + method2CBox_.getSelectedItem(),
                     rowData.title_,
+                    rowData.dw_,
                     referenceName_.getText(), rowData.width_,
                     rowData.height_, rowData.pixelSizeNm_,
                     rowData.zStackStepSizeNm_, rowData.shape_,
@@ -2549,7 +2560,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
          }
          // Add transformed data to data overview window
-         addSpotData(rowData.name_ + "-Filtered", rowData.title_, "", rowData.width_,
+         addSpotData(rowData.name_ + "-Filtered", rowData.title_, rowData.dw_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_,
                  rowData.nrFrames_, rowData.nrSlices_, 1, filteredData.size(),

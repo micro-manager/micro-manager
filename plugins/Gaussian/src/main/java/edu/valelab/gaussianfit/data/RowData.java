@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.micromanager.display.DisplayWindow;
 
 /**
     * Data structure for spotlists
@@ -30,6 +31,7 @@ import java.util.Map;
       public final ArrayList<Double> timePoints_;
       public String name_;             // name as it appears in the DataCollection table
       public final String title_;      // ImagePlus title of the image
+      public final DisplayWindow dw_;  // Micro-Manager window, may be null
       public final String colCorrRef_; // id of the dataset used for color correction
       public final int width_;
       public final int height_;
@@ -59,6 +61,7 @@ import java.util.Map;
          
          name_ = oldRow.name_;
          title_ = oldRow.title_;
+         dw_ = oldRow.dw_;
          colCorrRef_ = oldRow.colCorrRef_;
          width_ =  oldRow.width_;
          height_ = oldRow.height_;
@@ -105,6 +108,7 @@ import java.util.Map;
 
       public RowData(String name,
               String title,
+              DisplayWindow dw,
               String colCorrRef,
               int width,
               int height,
@@ -126,6 +130,7 @@ import java.util.Map;
               double maxZ) {
          name_ = name;
          title_ = title;
+         dw_ = dw;
          colCorrRef_ = colCorrRef;
          width_ = width;
          height_ = height;

@@ -287,7 +287,7 @@ public class DriftCorrector {
                }
                
                RowData newRow = new RowData(rowData.name_ + "-Jitter", 
-                       rowData.title_, "", rowData.width_,rowData.height_, 
+                       rowData.title_, rowData.dw_, "", rowData.width_,rowData.height_, 
                        rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
                        rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
                        stageMovementData.size(),1, 1, stageMovementData.size(), 
@@ -347,7 +347,8 @@ public class DriftCorrector {
 
                // Add transformed data to data overview window
                DataCollectionForm.getInstance().addSpotData(
-                       rowData.name_ + "-Jitter-Correct", rowData.title_, "", 
+                       rowData.name_ + "-Jitter-Correct", rowData.title_, 
+                       rowData.dw_, "", 
                        rowData.width_, rowData.height_, rowData.pixelSizeNm_, 
                        rowData.zStackStepSizeNm_, rowData.shape_, 
                        rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
@@ -526,7 +527,7 @@ public class DriftCorrector {
          ArrayList<Double> timePoints = null;
 
          RowData newRow = new RowData(
-                 rowData.name_ + "-Jitter", rowData.title_, "", rowData.width_,
+                 rowData.name_ + "-Jitter", rowData.title_, rowData.dw_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
                  stageMovementData.size(), 1, 1, stageMovementData.size(), 
@@ -580,7 +581,8 @@ public class DriftCorrector {
 
          // Add transformed data to data overview window
          DataCollectionForm.getInstance().addSpotData(
-                 rowData.name_ + "-Jitter-Correct", rowData.title_, "", rowData.width_,
+                 rowData.name_ + "-Jitter-Correct", rowData.title_, rowData.dw_, 
+                 "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
                  rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 

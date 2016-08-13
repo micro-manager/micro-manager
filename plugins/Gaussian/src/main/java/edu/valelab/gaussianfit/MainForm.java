@@ -13,7 +13,6 @@ package edu.valelab.gaussianfit;
 
 import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.data.GaussianInfo;
-import edu.valelab.gaussianfit.utils.MMWindowAbstraction;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Overlay;
@@ -35,6 +34,9 @@ import edu.valelab.gaussianfit.utils.NumberUtils;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import java.text.ParseException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.display.DisplayWindow;
 
 
 
@@ -70,8 +72,9 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    // we are a singleton with only one window
    public static boolean WINDOWOPEN = false;
 
-   Preferences prefs_;
-
+   private Preferences prefs_;
+   private final Studio studio_;
+   
    // Store values of dropdown menus:
    private int shape_ = 1;
    private final int fitMode_ = 2;
@@ -89,10 +92,14 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     /**
      * Creates new form MainForm
      * 
+     * @param studio Instance of the Micro-Manager 2.0 api
      */
-    public MainForm() {
+    public MainForm(Studio studio) {
        initComponents();
 
+       studio_ = studio;
+       
+       // TODO: convert to using MM profile
        if (prefs_ == null)
             prefs_ = Preferences.userNodeForPackage(this.getClass());
        noiseToleranceTextField_.setText(Integer.toString(prefs_.getInt(NOISETOLERANCE,100)));
@@ -684,7 +691,7 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
     private void fitAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fitAllButton_ActionPerformed
        
        if (ft_ == null || !ft_.isRunning()) {
-          ft_ = new FitAllThread(shape_, fitMode_, preFilterType_, 
+          ft_ = new FitAllThread(studio_, shape_, fitMode_, preFilterType_, 
                   posTextField_.getText());
           updateValues(ft_);
           ft_.init();
@@ -1074,30 +1081,38 @@ public class MainForm extends javax.swing.JFrame implements ij.ImageListener{
    }//GEN-LAST:event_mTrackButton_ActionPerformed
 
    private void allPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allPosButton_ActionPerformed
-      ImagePlus siPlus;
+      ImagePlus ip;
       try {
-          siPlus = IJ.getImage();
+          ip = IJ.getImage();
       } catch (Exception e) {
           return;
       }
-      int nrPos = MMWindowAbstraction.getNumberOfPositions(siPlus);
+      DisplayWindow dw = studio_.displays().getCurrentWindow();
+
+      int nrPos = 1;
+      if ( ! (dw == null || ip != dw.getImagePlus())) {
+         nrPos = dw.getDatastore().getAxisLength(Coords.STAGE_POSITION);
+      }
       if (nrPos > 1) {
          posTextField_.setText("1-" + nrPos);
-      } else {
-         posTextField_.setText("1");
       }
       
 
    }//GEN-LAST:event_allPosButton_ActionPerformed
 
    private void currentPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_currentPosButton_ActionPerformed
-      ImagePlus siPlus;
+      ImagePlus ip;
       try {
-          siPlus = IJ.getImage();
+          ip = IJ.getImage();
       } catch (Exception e) {
           return;
       }
-      int pos = MMWindowAbstraction.getPosition(siPlus);
+      DisplayWindow dw = studio_.displays().getCurrentWindow();
+
+      int pos = 1;
+      if ( ! (dw == null || ip != dw.getImagePlus())) {
+         pos = dw.getDisplayedImages().get(0).getCoords().getStagePosition() + 1;
+      }
       posTextField_.setText("" + pos);
    }//GEN-LAST:event_currentPosButton_ActionPerformed
 

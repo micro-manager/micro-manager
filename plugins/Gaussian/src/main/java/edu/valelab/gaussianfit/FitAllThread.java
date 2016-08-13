@@ -10,12 +10,12 @@
 
 package edu.valelab.gaussianfit;
 
+import com.google.common.eventbus.Subscribe;
 import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.utils.ProgressThread;
 import edu.valelab.gaussianfit.data.GaussianInfo;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.fitting.ZCalibrator;
-import edu.valelab.gaussianfit.utils.MMWindowAbstraction;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -30,6 +30,11 @@ import java.util.Comparator;
 import java.util.concurrent.LinkedBlockingQueue;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import java.util.List;
+import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.data.Coords.CoordsBuilder;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.PixelsSetEvent;
 
 /**
  *
@@ -44,15 +49,25 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    private final FindLocalMaxima.FilterType preFilterType_;
    private final String positionString_;
    private boolean showDataWindow_ = true;
+   private final Studio studio_;
+   
+   public class Monitor {}
+   
+   private final Monitor monitor_;
+   private int desiredPos_;
 
-   public FitAllThread(int shape, int fitMode, 
+   public FitAllThread(Studio studio, int shape, int fitMode, 
            FindLocalMaxima.FilterType preFilterType, String positions) {
+      desiredPos_ = 0;
+      monitor_ = new Monitor();
+      studio_ = studio;
       shape_ = shape;
       fitMode_ = fitMode;
       preFilterType_ = preFilterType;
       positionString_ = positions;
    }
 
+   
    public synchronized void  init() {
       if (running_)
          return;
@@ -107,6 +122,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          stop();
          return;
       }
+      
+      DisplayWindow dw = studio_.displays().getCurrentWindow();
 
       int nrThreads = ij.Prefs.getThreads();
       if (nrThreads > 8) {
@@ -122,11 +139,12 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int nrSlices = siPlus.getNSlices();
       int maxNrSpots = 0;
 
-      boolean isMMWindow = MMWindowAbstraction.isMMWindow(siPlus);
+      // If we have a Micro-Manager window:
+      if (! (dw == null || siPlus != dw.getImagePlus()) ) {
+         dw.registerForEvents(this);
 
-      if (isMMWindow) {
          String[] parts = positionString_.split("-");
-         nrPositions = MMWindowAbstraction.getNumberOfPositions(siPlus);
+         nrPositions = dw.getDatastore().getAxisLength(Coords.STAGE_POSITION);
          int startPos = 1; int endPos = 1;
          if (parts.length > 0) {
             startPos = Integer.parseInt(parts[0]);
@@ -140,17 +158,32 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          if (endPos < startPos) {
             endPos = startPos;
          }
-         for (int p = startPos; p <= endPos; p++) {
-            MMWindowAbstraction.setPosition(siPlus, p);
 
-            int nrSpots = analyzeImagePlus(siPlus, p, nrThreads, originalRoi);
+         CoordsBuilder builder = dw.getDisplayedImages().get(0).getCoords().copy();
+         for (int p = startPos - 1; p <= endPos - 1; p++) {
+            if (dw.getDisplayedImages().get(0).getCoords().getStagePosition() != p) {
+               synchronized (monitor_) {
+                  try {
+                     desiredPos_ = p;
+                     dw.setDisplayedImageTo(builder.stagePosition(p).build());
+                     monitor_.wait();
+                  } catch (InterruptedException ex) {
+                     studio_.logs().logError("Display update thread got interrupted");
+                  }
+               }
+            }
+
+            ImagePlus ip = siPlus.duplicate();
+
+            int nrSpots = analyzeImagePlus(ip, p + 1, nrThreads, originalRoi);
             if (nrSpots > maxNrSpots) {
                maxNrSpots = nrSpots;
             }
          }
+         dw.unregisterForEvents(this);
       }
 
-      if (!isMMWindow) {
+      if (dw == null || siPlus != dw.getImagePlus()) {
          int nrSpots = analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
          if (nrSpots > maxNrSpots) {
             maxNrSpots = nrSpots;
@@ -198,7 +231,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       if (nrPositions > 1) {
          title += "_Pos" + positionString_;
       }
-      dcForm.addSpotData(title, siPlus.getTitle(), "",
+      dcForm.addSpotData(title, siPlus.getTitle(), dw, "",
               siPlus.getWidth(), siPlus.getHeight(), pixelSize_,
               zStackStepSize_, shape_, halfSize_,
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(),
@@ -380,6 +413,21 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       sourceList_.clear();
       return nrSpots;
    }
+   
+   @Subscribe
+   public void checkDisplayedImage(PixelsSetEvent pse) {
+      int pos = pse.getImage().getCoords().getStagePosition();
+      
+      synchronized(monitor_) {
+         if (pos == desiredPos_) {
+            monitor_.notify();
+         } 
+      }
+   }
+   
+   
+   
+   
 
    private class SpotSortComparator implements Comparator {
 

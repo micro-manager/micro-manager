@@ -52,7 +52,7 @@ public class TrackOperator {
 
       // Add transformed data to data overview window
       DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Centered", 
-              rowData.title_, "", rowData.width_,
+              rowData.title_, rowData.dw_, "", rowData.width_,
               rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
               rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
               rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
@@ -95,7 +95,7 @@ public class TrackOperator {
 
       // Add transformed data to data overview window
       DataCollectionForm.getInstance().addSpotData(rowData.name_ + "Straightened", 
-              rowData.title_, "", rowData.width_,
+              rowData.title_, rowData.dw_, "", rowData.width_,
               rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
               rowData.shape_, rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,

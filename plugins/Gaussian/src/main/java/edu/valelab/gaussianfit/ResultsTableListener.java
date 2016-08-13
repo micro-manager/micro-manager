@@ -10,11 +10,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.display.DisplayWindow;
 
 /**
  *
@@ -29,13 +27,18 @@ import java.util.logging.Logger;
  */
 public class ResultsTableListener implements KeyListener, MouseListener {
 
-   ImagePlus siPlus_;
-   ResultsTable res_;
-   TextWindow win_;
-   TextPanel tp_;
-   int hBS_;
+   private final ImagePlus siPlus_;
+   private final ResultsTable res_;
+   private final TextWindow win_;
+   private final TextPanel tp_;
+   private final DisplayWindow dw_;
+   private final Studio studio_;
+   private final int hBS_;
 
-   public ResultsTableListener(ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
+   public ResultsTableListener(Studio studio, DisplayWindow dw, ImagePlus siPlus, 
+           ResultsTable res, TextWindow win, int halfBoxSize) {
+      studio_ = studio;
+      dw_ = dw;
       siPlus_ = siPlus;
       res_ = res;
       win_ = win;
@@ -94,7 +97,7 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    ;
 
    private void update() {
-      if (siPlus_ == null) {
+      if (siPlus_ == null && dw_ == null) {
          return;
       }
       int row = tp_.getSelectionStart();
@@ -105,60 +108,22 @@ public class ResultsTableListener implements KeyListener, MouseListener {
                win_.toFront();
             }
          } else {
-            siPlus_ = null;
             return;
          }
-         try {
-            Boolean isMMWindow = false;
-            Class<?> mmWin = Class.forName("org.micromanager.MMWindow");
-            Constructor[] aCTors = mmWin.getDeclaredConstructors();
-            aCTors[0].setAccessible(true);
-            Object mw = aCTors[0].newInstance(siPlus_);
-            Method[] allMethods = mmWin.getDeclaredMethods();
-
-            // assemble all methods we need
-            Method mIsMMWindow = null;
-            Method mSetPosition = null;
-            for (Method m : allMethods) {
-               String mname = m.getName();
-               if (mname.startsWith("isMMWindow")
-                       && m.getGenericReturnType() == boolean.class) {
-                  mIsMMWindow = m;
-                  mIsMMWindow.setAccessible(true);
-               }
-               if (mname.startsWith("setPosition")) {
-                  mSetPosition = m;
-                  mSetPosition.setAccessible(true);
-               }
-
-            }
-
-            if (mIsMMWindow != null && (Boolean) mIsMMWindow.invoke(mw)) {
-               isMMWindow = true;
-            }
-
-            if (isMMWindow) { // MMImageWindow
-               int position = (int) res_.getValue(Terms.POSITION, row);
-               if (mSetPosition != null) {
-                  mSetPosition.invoke(mw, position);
-               }
-            }
-         } catch (ClassNotFoundException ex) {
-         } catch (IllegalAccessException ex) {
-            Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
-         } catch (IllegalArgumentException ex) {
-            Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
-         } catch (InvocationTargetException ex) {
-            Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
-         } catch (InstantiationException ex) {
-            Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
-         }
-
          int frame = (int) res_.getValue(Terms.FRAME, row);
          int slice = (int) res_.getValue(Terms.SLICE, row);
          int channel = (int) res_.getValue(Terms.CHANNEL, row);
+         int pos = (int) res_.getValue(Terms.POSITION, row);
          int x = (int) res_.getValue(Terms.XPIX, row);
          int y = (int) res_.getValue(Terms.YPIX, row);
+         
+         if (dw_ !=null) {
+            Coords.CoordsBuilder builder = studio_.data().getCoordsBuilder();
+            Coords coords = builder.channel(channel - 1).time(frame - 1).
+                    z(slice - 1).stagePosition (pos - 1).build();
+            dw_.setDisplayedImageTo(coords);
+         }
+
          if (siPlus_.isHyperStack()) {
             siPlus_.setPosition(channel, slice, frame);
          } else {

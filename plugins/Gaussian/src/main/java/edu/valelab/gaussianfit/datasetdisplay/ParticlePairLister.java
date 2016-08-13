@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.jfree.data.xy.XYSeries;
+import org.micromanager.internal.MMStudio;
 
 /**
  *
@@ -245,7 +246,8 @@ public class ParticlePairLister {
                         tp.removeKeyListener(ks);
                      }
 
-                     ResultsTableListener myk = new ResultsTableListener(siPlus,
+                     ResultsTableListener myk = new ResultsTableListener(
+                             MMStudio.getInstance(), rowData.get(row).dw_, siPlus,
                              rt, win, rowData.get(row).halfSize_);
                      tp.addKeyListener(myk);
                      tp.addMouseListener(myk);
@@ -367,7 +369,8 @@ public class ParticlePairLister {
                         tp.removeKeyListener(ks);
                      }
 
-                     ResultsTableListener myk = new ResultsTableListener(siPlus,
+                     ResultsTableListener myk = new ResultsTableListener(
+                             MMStudio.getInstance(), rowData.get(row).dw_, siPlus,
                              rt2, win, rowData.get(row).halfSize_);
                      tp.addKeyListener(myk);
                      tp.addMouseListener(myk);
@@ -600,7 +603,8 @@ public class ParticlePairLister {
                      tp.removeKeyListener(ks);
                   }
 
-                  ResultsTableListener myk = new ResultsTableListener(siPlus,
+                  ResultsTableListener myk = new ResultsTableListener(
+                          MMStudio.getInstance(), rowData.get(0).dw_, siPlus,
                           rt, win, rowData.get(row).halfSize_);
                   tp.addKeyListener(myk);
                   tp.addMouseListener(myk);
