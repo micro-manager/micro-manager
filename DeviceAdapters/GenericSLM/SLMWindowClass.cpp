@@ -34,9 +34,14 @@ EmptyWindowProcedureA(HWND hWindow, unsigned int message, WPARAM wParam, LPARAM 
 
 SLMWindowClass::SLMWindowClass()
 {
-   // Create a 1-by-1-pixel invisible cursor
-   const BYTE andMask[1] = { 1 };
-   const BYTE xorMask[1] = { 0 };
+   // Create a 1-by-1-pixel invisible cursor, so that even if our efforts to
+   // prevent the cursor from entering the SLM window are not perfect, nothing
+   // shows up on the SLM. Note that this is not 100%, because the edge of a
+   // visible cursor may overlap with the SLM window when the mouse is near,
+   // but not inside, it. Also, there is a short delay before the cursor
+   // switches after entering the window.
+   const BYTE andMask[1] = { 0xff };
+   const BYTE xorMask[1] = { 0x00 };
    hInvisibleCursor_ = ::CreateCursor(0, 0, 0, 1, 1, andMask, xorMask);
 
    className_ = GetClassPrefix() + boost::lexical_cast<std::string>(this);
