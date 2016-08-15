@@ -15,21 +15,51 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="DisplayAdapters.cpp">
+    <ClCompile Include="GenericSLM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GenericSLM.cpp">
+    <ClCompile Include="Monitors.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OffscreenBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RefreshWaiter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SleepBlocker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SLMWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SLMWindowClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DisplayAdapters.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GenericSLM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="WinStuff.h">
+    <ClInclude Include="Monitors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OffscreenBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RefreshWaiter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SleepBlocker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SLMColor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SLMWindow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SLMWindowClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
