@@ -87,5 +87,5 @@ private: // Private data
    std::string monoColorStr_;
 
 private:
-	GenericSLM& operator=(const GenericSLM&);
+   GenericSLM& operator=(const GenericSLM&);
 };
