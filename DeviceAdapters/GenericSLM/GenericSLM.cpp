@@ -39,6 +39,14 @@ const char* g_PropName_Inversion = "Inversion";
 const char* g_PropName_MonoColor = "MonochromeColor";
 
 
+enum {
+   ERR_INVALID_TESTMODE_SIZE = 20000,
+   ERR_CANNOT_DETACH,
+   ERR_CANNOT_ATTACH,
+   ERR_OFFSCREEN_BUFFER_UNAVAILABLE,
+};
+
+
 MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_GenericSLMName, MM::SLMDevice,
@@ -79,8 +87,15 @@ GenericSLM::GenericSLM(const char* name) :
    monoColor_(SLM_COLOR_WHITE),
    monoColorStr_("White")
 {
-   SetErrorText(DEVICE_ERR, "An error occurred");
-   // TODO We can do better than that
+   InitializeDefaultErrorMessages();
+   SetErrorText(ERR_INVALID_TESTMODE_SIZE,
+         "Invalid test mode window size");
+   SetErrorText(ERR_CANNOT_DETACH,
+         "Failed to detach monitor from desktop");
+   SetErrorText(ERR_CANNOT_ATTACH,
+         "Failed to attach monitor to desktop");
+   SetErrorText(ERR_OFFSCREEN_BUFFER_UNAVAILABLE,
+         "Cannot set image (device uninitialized?)");
 
    availableMonitors_ = GetMonitorNames(true, false);
 
@@ -168,7 +183,7 @@ int GenericSLM::Initialize()
          return err;
 
       if (w < 1 || h < 1)
-         return DEVICE_ERR; // TODO Invalide test mode window size
+         return ERR_INVALID_TESTMODE_SIZE;
 
       // The top-left of the primary desktop monior is (0, 0), so this is a
       // safe position for the window
@@ -184,7 +199,7 @@ int GenericSLM::Initialize()
       if (!DetachMonitorFromDesktop(monitorName_))
       {
          monitorName_ = "";
-         return DEVICE_ERR; // TODO "Cannot detach monitor from desktop"
+         return ERR_CANNOT_DETACH;
       }
 
       desktopMonitors = GetMonitorNames(false, true);
@@ -195,7 +210,7 @@ int GenericSLM::Initialize()
       if (!AttachMonitorToDesktop(monitorName_, posX, posY))
       {
          monitorName_ = "";
-         return DEVICE_ERR; // TODO "Cannot attach monitor to desktop"
+         return ERR_CANNOT_ATTACH;
       }
 
       GetMonitorRect(monitorName_, x, y, w, h);
@@ -294,7 +309,7 @@ int GenericSLM::SetImage(unsigned char* pixels)
 {
    OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
    if (!offscreen)
-      return DEVICE_ERR;
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
 
    offscreen->DrawImage(pixels, monoColor_, invert_);
    return DEVICE_OK;
@@ -305,7 +320,7 @@ int GenericSLM::SetImage(unsigned int* pixels)
 {
    OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
    if (!offscreen)
-      return DEVICE_ERR;
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
 
    offscreen->DrawImage(pixels);
    shouldBlitInverted_ = invert_;
@@ -317,7 +332,7 @@ int GenericSLM::SetPixelsTo(unsigned char intensity)
 {
    OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
    if (!offscreen)
-      return DEVICE_ERR;
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
 
    intensity ^= (invert_ ? 0xff : 0x00);
 
@@ -339,7 +354,7 @@ int GenericSLM::SetPixelsTo(unsigned char red, unsigned char green, unsigned cha
 {
    OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
    if (!offscreen)
-      return DEVICE_ERR;
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
 
    unsigned char xorMask = invert_ ? 0xff : 0x00;
 
@@ -355,7 +370,7 @@ int GenericSLM::DisplayImage()
 {
    OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
    if (!offscreen)
-      return DEVICE_ERR;
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
 
    HDC onscreenDC = windowThread_->GetDC();
    DWORD op = shouldBlitInverted_ ? NOTSRCCOPY : SRCCOPY;
