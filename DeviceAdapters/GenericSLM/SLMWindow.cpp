@@ -17,14 +17,26 @@
 #include "SLMWindow.h"
 
 
-SLMWindow::SLMWindow(const std::string& title, DWORD x, DWORD y, DWORD w, DWORD h)
+SLMWindow::SLMWindow(bool testMode, const std::string& title,
+      DWORD x, DWORD y, DWORD w, DWORD h)
 {
+   DWORD style = (testMode ? WS_CAPTION : WS_POPUP) |
+      WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+
+   RECT rect;
+   ::SetRect(&rect, x, y, x + w, y + h);
+   ::AdjustWindowRect(&rect, style, FALSE);
+
    hWindow_ = ::CreateWindowExA(
          WS_EX_NOPARENTNOTIFY,
          windowClass_.GetClassName().c_str(),
          title.c_str(),
-         WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS,
-         x, y, w, h, 0, 0, 0, 0);
+         style,
+         rect.left,
+         rect.top,
+         rect.right - rect.left,
+         rect.bottom - rect.top,
+         0, 0, 0, 0);
 }
 
 

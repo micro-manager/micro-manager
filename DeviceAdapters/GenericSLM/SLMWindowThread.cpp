@@ -19,7 +19,7 @@
 #include "SLMWindowThread.h"
 
 
-SLMWindowThread::SLMWindowThread(const std::string& title,
+SLMWindowThread::SLMWindowThread(bool testMode, const std::string& title,
       DWORD x, DWORD y, DWORD w, DWORD h) :
    threadId_(0),
    window_(0),
@@ -28,7 +28,8 @@ SLMWindowThread::SLMWindowThread(const std::string& title,
    x_(x),
    y_(y),
    w_(w),
-   h_(h)
+   h_(h),
+   testMode_(testMode)
 {
    startedEvent_ = ::CreateEventA(0, FALSE, FALSE, 0);
    activate();
@@ -79,7 +80,7 @@ int SLMWindowThread::svc()
    {
       MMThreadGuard g(lock_);
       threadId_ = GetCurrentThreadId();
-      window_ = new SLMWindow("MM_SLM", x_, y_, w_, h_);
+      window_ = new SLMWindow(testMode_, title_, x_, y_, w_, h_);
       offscreen_ = new OffscreenBuffer(window_->GetDC(), w_, h_);
    }
 

@@ -36,10 +36,11 @@ class SLMWindowThread : private MMDeviceThreadBase
    SLMWindow* window_;
    OffscreenBuffer* offscreen_;
    const std::string title_;
-   DWORD x_, y_, w_, h_;
+   const DWORD x_, y_, w_, h_;
+   const bool testMode_;
 
 public:
-   SLMWindowThread(const std::string& title,
+   SLMWindowThread(bool testMode, const std::string& title,
          DWORD x, DWORD y, DWORD w, DWORD h);
    virtual ~SLMWindowThread();
 

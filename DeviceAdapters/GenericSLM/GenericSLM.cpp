@@ -28,6 +28,8 @@
 
 #include <Windows.h>
 
+#include <boost/lexical_cast.hpp>
+
 #include <algorithm>
 
 
@@ -216,7 +218,14 @@ int GenericSLM::Initialize()
       GetMonitorRect(monitorName_, x, y, w, h);
    }
 
-   windowThread_ = new SLMWindowThread("MM_SLM", x, y, w, h);
+   std::string windowTitle = "MM_SLM " +
+      boost::lexical_cast<std::string>(w) + "x" +
+      boost::lexical_cast<std::string>(h) + " [" +
+      (monitorName_.empty() ? "Test Mode" : monitorName_) +
+      "]";
+
+   windowThread_ = new SLMWindowThread(monitorName_.empty(),
+         windowTitle, x, y, w, h);
    windowThread_->Show();
 
    RECT mouseClipRect;

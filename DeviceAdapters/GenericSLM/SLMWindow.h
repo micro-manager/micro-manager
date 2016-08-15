@@ -31,7 +31,7 @@ class SLMWindow
    HWND hWindow_;
 
 public:
-   SLMWindow(const std::string& title,
+   SLMWindow(bool testMode, const std::string& title,
          DWORD x, DWORD y, DWORD w, DWORD h);
    ~SLMWindow();
 
