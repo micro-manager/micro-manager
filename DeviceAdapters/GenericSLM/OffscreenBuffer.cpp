@@ -33,7 +33,9 @@ OffscreenBuffer::OffscreenBuffer(HDC onscreenDC, DWORD width, DWORD height) :
    ZeroMemory(&bitmapInfoHeader, sizeof(bitmapInfoHeader));
    bitmapInfoHeader.biSize = sizeof(bitmapInfoHeader);
    bitmapInfoHeader.biWidth = width_;
-   bitmapInfoHeader.biHeight = height_;
+   // Negative height to make a "top-down" DIB, whose bytes are in the usual
+   // image order
+   bitmapInfoHeader.biHeight = -(LONG)height_;
    bitmapInfoHeader.biPlanes = 1;
    bitmapInfoHeader.biCompression = BI_RGB;
    bitmapInfoHeader.biBitCount = 32;
@@ -80,15 +82,18 @@ void OffscreenBuffer::DrawImage(unsigned int* pixels)
    DWORD srcWidthBytes = width_ * 4;
    DWORD destWidthBytes = GetWidthBytes();
 
-   // Loop over source lines in reverse order, starting at the last line
-   unsigned char* pSrc = (unsigned char*)pixels + height_ * srcWidthBytes;
-   unsigned char* pDest = (unsigned char*)pixels_;
-
-   for (unsigned row = height_ - 1; row >= 0; --row)
+   if (srcWidthBytes == destWidthBytes)
    {
-      pSrc -= srcWidthBytes;
-      memcpy(pDest, pSrc, srcWidthBytes);
-      pDest += destWidthBytes;
+      memcpy(pixels_, pixels, srcWidthBytes * height_);
+   }
+   else
+   {
+      for (unsigned row = 0; row < height_; ++row)
+      {
+         memcpy((unsigned char*)pixels_ + row * destWidthBytes,
+               (unsigned char*)pixels + row * srcWidthBytes,
+               srcWidthBytes);
+      }
    }
 }
 
@@ -98,8 +103,7 @@ void OffscreenBuffer::DrawImage(unsigned char* pixels, SLMColor color, bool inve
    DWORD srcWidthBytes = width_;
    DWORD destRowPadding = GetWidthBytes() - (4 * width_);
 
-   // Loop over source lines in reverse order, starting at the last line
-   unsigned char* pSrc = (unsigned char*)pixels + height_ * srcWidthBytes;
+   unsigned char* pSrc = (unsigned char*)pixels;
    unsigned char* pDest = (unsigned char*)pixels_;
 
    unsigned char xorMask = invert ? 0xff : 0x00;
@@ -107,13 +111,11 @@ void OffscreenBuffer::DrawImage(unsigned char* pixels, SLMColor color, bool inve
    unsigned char greenMask = (color & SLM_COLOR_GREEN) ? 0xff : 0x00;
    unsigned char redMask = (color & SLM_COLOR_RED) ? 0xff : 0x00;
 
-   for (int row = height_ - 1; row >= 0; --row)
+   for (unsigned row = 0; row < height_; ++row)
    {
-      pSrc -= srcWidthBytes;
-
       for (unsigned col = 0; col < width_; ++col)
       {
-         unsigned char pixel = *(pSrc + col) ^ xorMask;
+         unsigned char pixel = pSrc[col] ^ xorMask;
 
          *pDest++ = pixel & blueMask;
          *pDest++ = pixel & greenMask;
@@ -121,6 +123,7 @@ void OffscreenBuffer::DrawImage(unsigned char* pixels, SLMColor color, bool inve
          *pDest++ = 0; // Unused alpha channel
       }
 
+      pSrc += srcWidthBytes;
       pDest += destRowPadding;
    }
 }
