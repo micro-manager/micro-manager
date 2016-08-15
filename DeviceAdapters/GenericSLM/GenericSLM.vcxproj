@@ -167,6 +167,7 @@
     <ClCompile Include="SleepBlocker.cpp" />
     <ClCompile Include="SLMWindow.cpp" />
     <ClCompile Include="SLMWindowClass.cpp" />
+    <ClCompile Include="SLMWindowThread.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GenericSLM.h" />
@@ -177,6 +178,7 @@
     <ClInclude Include="SLMColor.h" />
     <ClInclude Include="SLMWindow.h" />
     <ClInclude Include="SLMWindowClass.h" />
+    <ClInclude Include="SLMWindowThread.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MMDevice\MMDevice-SharedRuntime.vcxproj">

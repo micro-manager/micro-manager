@@ -24,8 +24,7 @@
 #include "DeviceBase.h"
 #include "DeviceUtils.h"
 
-class OffscreenBuffer;
-class SLMWindow;
+class SLMWindowThread;
 class SleepBlocker;
 
 
@@ -73,9 +72,9 @@ private: // Private data
    std::vector<std::string> availableMonitors_;
 
    std::string monitorName_;
+   unsigned width_, height_;
 
-   SLMWindow* window_;
-   OffscreenBuffer* offscreen_;
+   SLMWindowThread* windowThread_;
    SleepBlocker* sleepBlocker_;
    RefreshWaiter refreshWaiter_;
 

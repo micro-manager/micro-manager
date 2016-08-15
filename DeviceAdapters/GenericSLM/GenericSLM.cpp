@@ -20,7 +20,7 @@
 
 #include "Monitors.h"
 #include "OffscreenBuffer.h"
-#include "SLMWindow.h"
+#include "SLMWindowThread.h"
 #include "SleepBlocker.h"
 
 #include "ModuleInterface.h"
@@ -67,8 +67,9 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 GenericSLM::GenericSLM(const char* name) :
    name_(name),
-   window_(0),
-   offscreen_(0),
+   width_(0),
+   height_(0),
+   windowThread_(0),
    sleepBlocker_(0),
    shouldBlitInverted_(false),
    invert_(false),
@@ -163,10 +164,8 @@ int GenericSLM::Initialize()
       w = h = 128;
    }
 
-   window_ = new SLMWindow("MM_SLM", x, y, w, h);
-   window_->Show();
-
-   offscreen_ = new OffscreenBuffer(window_->GetDC(), w, h);
+   windowThread_ = new SLMWindowThread("MM_SLM", x, y, w, h);
+   windowThread_->Show();
 
    RECT mouseClipRect;
    if (GetBoundingRect(otherAttachedMonitors, mouseClipRect))
@@ -175,12 +174,17 @@ int GenericSLM::Initialize()
       sleepBlocker_ = new SleepBlocker();
    sleepBlocker_->Start();
 
+   width_ = w;
+   height_ = h;
+
    return DEVICE_OK;
 }
 
 
 int GenericSLM::Shutdown()
 {
+   width_ = height_ = 0;
+
    if (sleepBlocker_)
    {
       sleepBlocker_->Stop();
@@ -188,16 +192,10 @@ int GenericSLM::Shutdown()
       sleepBlocker_ = 0;
    }
 
-   if (offscreen_)
+   if (windowThread_)
    {
-      delete offscreen_;
-      offscreen_ = 0;
-   }
-
-   if (window_)
-   {
-      delete window_;
-      window_ = 0;
+      delete windowThread_;
+      windowThread_ = 0;
    }
 
    if (!monitorName_.empty())
@@ -220,13 +218,13 @@ bool GenericSLM::Busy()
 
 unsigned int GenericSLM::GetWidth()
 {
-   return offscreen_ ? offscreen_->GetWidth() : 0;
+   return width_;
 }
 
 
 unsigned int GenericSLM::GetHeight()
 {
-   return offscreen_ ? offscreen_->GetHeight() : 0;
+   return height_;
 }
 
 
@@ -257,20 +255,22 @@ double GenericSLM::GetExposure()
 
 int GenericSLM::SetImage(unsigned char* pixels)
 {
-   if (!offscreen_)
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
       return DEVICE_ERR;
 
-   offscreen_->DrawImage(pixels, monoColor_, invert_);
+   offscreen->DrawImage(pixels, monoColor_, invert_);
    return DEVICE_OK;
 }
 
 
 int GenericSLM::SetImage(unsigned int* pixels)
 {
-   if (!offscreen_)
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
       return DEVICE_ERR;
 
-   offscreen_->DrawImage(pixels);
+   offscreen->DrawImage(pixels);
    shouldBlitInverted_ = invert_;
    return DEVICE_OK;
 }
@@ -278,7 +278,8 @@ int GenericSLM::SetImage(unsigned int* pixels)
 
 int GenericSLM::SetPixelsTo(unsigned char intensity)
 {
-   if (!offscreen_)
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
       return DEVICE_ERR;
 
    intensity ^= (invert_ ? 0xff : 0x00);
@@ -291,7 +292,7 @@ int GenericSLM::SetPixelsTo(unsigned char intensity)
             intensity & greenMask,
             intensity & blueMask));
 
-   offscreen_->FillWithColor(color);
+   offscreen->FillWithColor(color);
    shouldBlitInverted_ = false;
    return DisplayImage();
 }
@@ -299,14 +300,15 @@ int GenericSLM::SetPixelsTo(unsigned char intensity)
 
 int GenericSLM::SetPixelsTo(unsigned char red, unsigned char green, unsigned char blue)
 {
-   if (!offscreen_)
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
       return DEVICE_ERR;
 
    unsigned char xorMask = invert_ ? 0xff : 0x00;
 
    COLORREF color(RGB(red ^ xorMask, green ^ xorMask, blue ^ xorMask));
 
-   offscreen_->FillWithColor(color);
+   offscreen->FillWithColor(color);
    shouldBlitInverted_ = false;
    return DisplayImage();
 }
@@ -314,14 +316,15 @@ int GenericSLM::SetPixelsTo(unsigned char red, unsigned char green, unsigned cha
 
 int GenericSLM::DisplayImage()
 {
-   if (!offscreen_)
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
       return DEVICE_ERR;
 
-   HDC onscreenDC = window_->GetDC();
+   HDC onscreenDC = windowThread_->GetDC();
    DWORD op = shouldBlitInverted_ ? NOTSRCCOPY : SRCCOPY;
 
    refreshWaiter_.WaitForVerticalBlank();
-   offscreen_->BlitTo(onscreenDC, op);
+   offscreen->BlitTo(onscreenDC, op);
    return DEVICE_OK;
 }
 
