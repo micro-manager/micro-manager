@@ -71,7 +71,7 @@ private: // Private data
    // Used in constructor, pre-init properties, and Initiazlie()
    std::vector<std::string> availableMonitors_;
 
-   std::string monitorName_;
+   std::string monitorName_; // Empty string if test mode
    unsigned width_, height_;
 
    SLMWindowThread* windowThread_;

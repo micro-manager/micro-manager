@@ -33,6 +33,8 @@
 
 const char* g_GenericSLMName = "GenericSLM";
 const char* g_PropName_GraphicsPort = "GraphicsPort";
+const char* g_PropName_TestModeWidth = "TestModeWidth";
+const char* g_PropName_TestModeHeight = "TestModeHeight";
 const char* g_PropName_Inversion = "Inversion";
 const char* g_PropName_MonoColor = "MonochromeColor";
 
@@ -84,13 +86,17 @@ GenericSLM::GenericSLM(const char* name) :
 
    // Create pre-init properties
 
-   CreateStringProperty(g_PropName_GraphicsPort, "Test128x128", false, 0, true);
-   AddAllowedValue(g_PropName_GraphicsPort, "Test128x128", 0); // Prevent empty list
+   CreateStringProperty(g_PropName_GraphicsPort, "TestMode", false, 0, true);
+   AddAllowedValue(g_PropName_GraphicsPort, "TestMode", 0);
+   // Map available monitors 0 thru N to property data 1 thru N + 1
    for (unsigned i = 0; i < availableMonitors_.size(); ++i)
    {
       AddAllowedValue(g_PropName_GraphicsPort,
             availableMonitors_[i].c_str(), i + 1);
    }
+
+   CreateIntegerProperty(g_PropName_TestModeWidth, 128, false, 0, true);
+   CreateIntegerProperty(g_PropName_TestModeHeight, 128, false, 0, true);
 }
 
 
@@ -145,47 +151,61 @@ int GenericSLM::Initialize()
    // Set up the monitor and window
    //
 
-   long index;
-   err = GetCurrentPropertyData(g_PropName_GraphicsPort, index);
+   long graphicsPortIndex;
+   err = GetCurrentPropertyData(g_PropName_GraphicsPort, graphicsPortIndex);
    if (err != DEVICE_OK)
       return err;
-   if (index > 0) // Unless test mode
-      monitorName_ = availableMonitors_[index - 1];
-
-   if (!monitorName_.empty() && !DetachMonitorFromDesktop(monitorName_))
-   {
-      monitorName_ = "";
-      return DEVICE_ERR; // TODO "Cannot detach monitor from desktop"
-   }
-
-   std::vector<std::string> otherAttachedMonitors(GetMonitorNames(false, true));
-
-   LONG posX, posY;
-   GetRightmostMonitorTopRight(otherAttachedMonitors, posX, posY);
-
-   if (!monitorName_.empty() &&
-         !AttachMonitorToDesktop(monitorName_, posX, posY))
-   {
-      monitorName_ = "";
-      return DEVICE_ERR; // TODO "Cannot attach monitor to desktop"
-   }
 
    LONG x, y, w, h;
-   if (!monitorName_.empty())
+   std::vector<std::string> desktopMonitors;
+   if (graphicsPortIndex == 0) // Test mode
    {
-      GetMonitorRect(monitorName_, x, y, w, h);
+      err = GetProperty(g_PropName_TestModeWidth, w);
+      if (err != DEVICE_OK)
+         return err;
+      err = GetProperty(g_PropName_TestModeHeight, h);
+      if (err != DEVICE_OK)
+         return err;
+
+      if (w < 1 || h < 1)
+         return DEVICE_ERR; // TODO Invalide test mode window size
+
+      // The top-left of the primary desktop monior is (0, 0), so this is a
+      // safe position for the window
+      x = y = 100;
+
+      desktopMonitors = GetMonitorNames(false, true);
    }
-   else // Test mode
+   else // Real monitor
    {
-      x = y = 0;
-      w = h = 128;
+      // Map property data 1 thru N + 1 to available monitors 0 thru N
+      monitorName_ = availableMonitors_[graphicsPortIndex - 1];
+
+      if (!DetachMonitorFromDesktop(monitorName_))
+      {
+         monitorName_ = "";
+         return DEVICE_ERR; // TODO "Cannot detach monitor from desktop"
+      }
+
+      desktopMonitors = GetMonitorNames(false, true);
+
+      LONG posX, posY;
+      GetRightmostMonitorTopRight(desktopMonitors, posX, posY);
+
+      if (!AttachMonitorToDesktop(monitorName_, posX, posY))
+      {
+         monitorName_ = "";
+         return DEVICE_ERR; // TODO "Cannot attach monitor to desktop"
+      }
+
+      GetMonitorRect(monitorName_, x, y, w, h);
    }
 
    windowThread_ = new SLMWindowThread("MM_SLM", x, y, w, h);
    windowThread_->Show();
 
    RECT mouseClipRect;
-   if (GetBoundingRect(otherAttachedMonitors, mouseClipRect))
+   if (GetBoundingRect(desktopMonitors, mouseClipRect))
       sleepBlocker_ = new SleepBlocker(mouseClipRect);
    else
       sleepBlocker_ = new SleepBlocker();
