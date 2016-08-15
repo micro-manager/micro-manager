@@ -84,9 +84,6 @@ GenericSLM::GenericSLM(const char* name) :
 
    // Create pre-init properties
 
-   CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
-   CreateProperty(MM::g_Keyword_Description, "SLM controlled by computer display adapter output", MM::String, true);
-
    CreateStringProperty(g_PropName_GraphicsPort, "Test128x128", false, 0, true);
    AddAllowedValue(g_PropName_GraphicsPort, "Test128x128", 0); // Prevent empty list
    for (unsigned i = 0; i < availableMonitors_.size(); ++i)
@@ -94,21 +91,6 @@ GenericSLM::GenericSLM(const char* name) :
       AddAllowedValue(g_PropName_GraphicsPort,
             availableMonitors_[i].c_str(), i + 1);
    }
-
-   CreateStringProperty(g_PropName_Inversion, inversionStr_.c_str(), false,
-         new CPropertyAction(this, &GenericSLM::OnInversion), false);
-   AddAllowedValue(g_PropName_Inversion, "Off", 0);
-   AddAllowedValue(g_PropName_Inversion, "On", 1);
-
-   CreateProperty(g_PropName_MonoColor, monoColorStr_.c_str(), MM::String, false,
-         new CPropertyAction(this, &GenericSLM::OnMonochromeColor), false);
-   AddAllowedValue(g_PropName_MonoColor, "White", SLM_COLOR_WHITE);
-   AddAllowedValue(g_PropName_MonoColor, "Red", SLM_COLOR_RED);
-   AddAllowedValue(g_PropName_MonoColor, "Green", SLM_COLOR_GREEN);
-   AddAllowedValue(g_PropName_MonoColor, "Blue", SLM_COLOR_BLUE);
-   AddAllowedValue(g_PropName_MonoColor, "Cyan", SLM_COLOR_CYAN);
-   AddAllowedValue(g_PropName_MonoColor, "Magenta", SLM_COLOR_MAGENTA);
-   AddAllowedValue(g_PropName_MonoColor, "Yellow", SLM_COLOR_YELLOW);
 }
 
 
@@ -128,8 +110,43 @@ int GenericSLM::Initialize()
 {
    Shutdown();
 
+   //
+   // Create post-init properties
+   //
+
+   int err = CreateStringProperty(MM::g_Keyword_Name, name_.c_str(), true);
+   if (err != DEVICE_OK)
+      return err;
+   err = CreateStringProperty(MM::g_Keyword_Description,
+         "SLM controlled by computer display adapter output", true);
+   if (err != DEVICE_OK)
+      return err;
+
+   err = CreateStringProperty(g_PropName_Inversion, inversionStr_.c_str(), false,
+         new CPropertyAction(this, &GenericSLM::OnInversion));
+   if (err != DEVICE_OK)
+      return err;
+   AddAllowedValue(g_PropName_Inversion, "Off", 0);
+   AddAllowedValue(g_PropName_Inversion, "On", 1);
+
+   err = CreateStringProperty(g_PropName_MonoColor, monoColorStr_.c_str(), false,
+         new CPropertyAction(this, &GenericSLM::OnMonochromeColor));
+   if (err != DEVICE_OK)
+      return err;
+   AddAllowedValue(g_PropName_MonoColor, "White", SLM_COLOR_WHITE);
+   AddAllowedValue(g_PropName_MonoColor, "Red", SLM_COLOR_RED);
+   AddAllowedValue(g_PropName_MonoColor, "Green", SLM_COLOR_GREEN);
+   AddAllowedValue(g_PropName_MonoColor, "Blue", SLM_COLOR_BLUE);
+   AddAllowedValue(g_PropName_MonoColor, "Cyan", SLM_COLOR_CYAN);
+   AddAllowedValue(g_PropName_MonoColor, "Magenta", SLM_COLOR_MAGENTA);
+   AddAllowedValue(g_PropName_MonoColor, "Yellow", SLM_COLOR_YELLOW);
+
+   //
+   // Set up the monitor and window
+   //
+
    long index;
-   int err = GetCurrentPropertyData(g_PropName_GraphicsPort, index);
+   err = GetCurrentPropertyData(g_PropName_GraphicsPort, index);
    if (err != DEVICE_OK)
       return err;
    if (index > 0) // Unless test mode
