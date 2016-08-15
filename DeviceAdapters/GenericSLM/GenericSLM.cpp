@@ -86,8 +86,8 @@ GenericSLM::GenericSLM(const char* name) :
    CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
    CreateProperty(MM::g_Keyword_Description, "SLM controlled by computer display adapter output", MM::String, true);
 
-   CreateStringProperty(g_PropName_GraphicsPort, "Undefined", false, 0, true);
-   AddAllowedValue(g_PropName_GraphicsPort, "Undefined", 0); // Prevent empty list
+   CreateStringProperty(g_PropName_GraphicsPort, "Test128x128", false, 0, true);
+   AddAllowedValue(g_PropName_GraphicsPort, "Test128x128", 0); // Prevent empty list
    for (unsigned i = 0; i < availableMonitors_.size(); ++i)
    {
       AddAllowedValue(g_PropName_GraphicsPort,
@@ -131,11 +131,10 @@ int GenericSLM::Initialize()
    int err = GetCurrentPropertyData(g_PropName_GraphicsPort, index);
    if (err != DEVICE_OK)
       return err;
-   if (index == 0)
-      return DEVICE_ERR; // TODO "Graphics port not selected"
-   monitorName_ = availableMonitors_[index - 1];
+   if (index > 0) // Unless test mode
+      monitorName_ = availableMonitors_[index - 1];
 
-   if (!DetachMonitorFromDesktop(monitorName_))
+   if (!monitorName_.empty() && !DetachMonitorFromDesktop(monitorName_))
    {
       monitorName_ = "";
       return DEVICE_ERR; // TODO "Cannot detach monitor from desktop"
@@ -146,14 +145,23 @@ int GenericSLM::Initialize()
    LONG posX, posY;
    GetRightmostMonitorTopRight(otherAttachedMonitors, posX, posY);
 
-   if (!AttachMonitorToDesktop(monitorName_, posX, posY))
+   if (!monitorName_.empty() &&
+         !AttachMonitorToDesktop(monitorName_, posX, posY))
    {
       monitorName_ = "";
       return DEVICE_ERR; // TODO "Cannot attach monitor to desktop"
    }
 
    LONG x, y, w, h;
-   GetMonitorRect(monitorName_, x, y, w, h);
+   if (!monitorName_.empty())
+   {
+      GetMonitorRect(monitorName_, x, y, w, h);
+   }
+   else // Test mode
+   {
+      x = y = 0;
+      w = h = 128;
+   }
 
    window_ = new SLMWindow("MM_SLM", x, y, w, h);
    window_->Show();
