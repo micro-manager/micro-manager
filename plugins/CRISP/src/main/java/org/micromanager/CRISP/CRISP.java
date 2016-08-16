@@ -48,7 +48,7 @@ public class CRISP implements MenuPlugin, SciJavaPlugin {
    
     @Override
    public String getName() {
-      return "ASI CRISP Plugin";
+      return MENUNAME;
    }
 
     @Override

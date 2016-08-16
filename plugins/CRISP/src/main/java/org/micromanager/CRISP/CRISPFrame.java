@@ -76,14 +76,15 @@ public class CRISPFrame extends MMFrame {
     private JSpinner naSpinner_;
     private JSpinner nrAvgsSpinner_;
     private JButton resetOffsetButton_;
-    private javax.swing.JButton idleButton_;
-    private javax.swing.JButton updateButton_;
-    private javax.swing.JLabel ledIntLabel;
-    private javax.swing.JLabel gainMultiplierLabel;
-    private javax.swing.JLabel nrAvgLabel;
-    private javax.swing.JLabel naLabel;
-    private javax.swing.JLabel versionLabel;
-    private javax.swing.JSeparator jSeparator1;
+    private JButton idleButton_;
+    private JButton updateButton_;
+    private JLabel ledIntLabel;
+    private JLabel gainMultiplierLabel;
+    private JLabel nrAvgLabel;
+    private JLabel naLabel;
+    private JLabel versionLabel;
+    private JSeparator jSeparator1;
+    private JLabel statusLabel_;
 
 
     /** 
@@ -160,6 +161,9 @@ public class CRISPFrame extends MMFrame {
          float floatVal = Float.parseFloat(val);
          naSpinner_.getModel().setValue(floatVal);
          
+         val = core_.getProperty(CRISP_, "CRISP State");
+         statusLabel_.setText("CRISP State: " + val);
+         
        } catch (Exception ex) {
           ReportingUtils.showError("Error reading values from CRISP");
        }
@@ -234,6 +238,7 @@ public class CRISPFrame extends MMFrame {
         idleButton_ = new javax.swing.JButton();
         resetOffsetButton_ = new javax.swing.JButton();
         versionLabel = new javax.swing.JLabel();
+        statusLabel_ = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         final JFrame frame = this;
@@ -275,11 +280,11 @@ public class CRISPFrame extends MMFrame {
 
         ledIntLabel.setText("LED Int.");
 
-        gainMultiplierLabel.setText("Gain Multiplier");
+        gainMultiplierLabel.setText("Gain");
 
         nrAvgLabel.setText("Nr of Avgs");
 
-        naLabel.setText("NA");
+        naLabel.setText("Obj. NA");
 
         LEDSpinner_.setModel(new javax.swing.SpinnerNumberModel(50, 0, 100, 1));
         LEDSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
@@ -349,7 +354,7 @@ public class CRISPFrame extends MMFrame {
         this.add(lockButton_, "span 3, split 2, grow, gapright 40");
         this.add(calibrateButton_, "span 3, split 2, grow, gapleft 40, wrap 20px");
         this.add(new JSeparator(), "span, grow, wrap 20px");
-        
+        this.add(statusLabel_, "span, grow, wrap");
         
         this.add(ledIntLabel);
         this.add(LEDSpinner_);
@@ -462,6 +467,7 @@ public class CRISPFrame extends MMFrame {
          while (!state.equals("Ready") && counter < 50) {
             state = core_.getProperty(CRISP_, "CRISP State");
             Thread.sleep(100);
+            counter++;
          }
       } catch (Exception ex) {
          ReportingUtils.showMessage("Calibration failed. Focus, make sure that the NA variable is set correctly and try again." + 
