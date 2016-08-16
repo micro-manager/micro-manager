@@ -22,19 +22,20 @@
 //
 package org.micromanager.autofocus;
 
+import com.google.common.eventbus.Subscribe;
 
 import ij.process.ImageProcessor;
 
-import java.text.ParseException;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
-import org.micromanager.internal.MMStudio;
 
 import org.micromanager.Studio;
 
 import org.micromanager.AutofocusPlugin;
+import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
 
 import org.scijava.plugin.Plugin;
@@ -55,19 +56,23 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
    private static final String UPPER_LIMIT = "Upper limit (relative, um)";
    
    private Studio gui_;
-   private boolean settingsLoaded_ = false;
-   private boolean hardwareDeviceAvailable_ = true;
    private String hardwareFocusDevice_;
    private String zDrive_;
    private double stepSize_ = 5.0;
    private double lowerLimit_ = 300.0;
    private double upperLimit_ = 100.0;
-   
-   public HardwareFocusExtender(){ 
-      super();
-      
-      // set-up properties
-      CMMCore core = MMStudio.getInstance().getCore();
+
+   public HardwareFocusExtender() {
+      super.createProperty(HARDWARE_AUTOFOCUS, "");
+      super.createProperty(ZDRIVE, "");
+      super.createProperty(STEP_SIZE, NumberUtils.doubleToDisplayString(stepSize_));
+      super.createProperty(LOWER_LIMIT, NumberUtils.doubleToDisplayString(lowerLimit_));
+      super.createProperty(UPPER_LIMIT, NumberUtils.doubleToDisplayString(upperLimit_));
+   }
+
+   @Override
+   public PropertyItem[] getProperties() {
+      CMMCore core = gui_.getCMMCore();
       String[] autofocusDevices = null;
       String[] zDrives = null;
       try {
@@ -78,25 +83,60 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-      if (autofocusDevices == null || autofocusDevices.length < 1 ||
-              zDrives == null || zDrives.length < 1) {
-         // needed hardware not available, bail out
-         hardwareDeviceAvailable_ = false;
-         return;
-      }
-      createProperty(HARDWARE_AUTOFOCUS, hardwareFocusDevice_, autofocusDevices);
-      createProperty(ZDRIVE, zDrive_, zDrives);
-      createProperty(STEP_SIZE, NumberUtils.doubleToDisplayString(stepSize_));
-      createProperty(LOWER_LIMIT, NumberUtils.doubleToDisplayString(lowerLimit_));
-      createProperty(UPPER_LIMIT, NumberUtils.doubleToDisplayString(upperLimit_));
-      loadSettings();
 
-      applySettings();
+      String[] allowedAFDevices = new String[autofocusDevices.length + 1];
+      allowedAFDevices[0] = "";
+      String[] allowedZDrives = new String[zDrives.length + 1];
+      allowedZDrives[0] = "";
+
+      try {
+         PropertyItem p = getProperty(HARDWARE_AUTOFOCUS);
+         boolean found = false;
+         for (int i = 0; i < autofocusDevices.length; ++i) {
+            allowedAFDevices[i + 1] = autofocusDevices[i];
+            if (p.value.equals(autofocusDevices[i])) {
+               found = true;
+            }
+         }
+         p.allowed = allowedAFDevices;
+         if (!found) {
+            p.value = allowedAFDevices[0];
+         }
+         setProperty(p);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+
+      try {
+         PropertyItem p = getProperty(ZDRIVE);
+         boolean found = false;
+         for (int i = 0; i < zDrives.length; ++i) {
+            allowedZDrives[i + 1] = zDrives[i];
+            if (p.value.equals(zDrives[i])) {
+               found = true;
+            }
+         }
+         p.allowed = allowedZDrives;
+         if (!found) {
+            p.value = allowedZDrives[0];
+         }
+         setProperty(p);
+      }
+      catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+
+      return super.getProperties();
    }
-   
+
+   @Subscribe
+   public void onInitialize(AutofocusPluginShouldInitializeEvent event) {
+      loadSettings();
+   }
+
    @Override
    public final void applySettings() {
-
       try {
          hardwareFocusDevice_ = getPropertyValue(HARDWARE_AUTOFOCUS);
          zDrive_ = getPropertyValue(ZDRIVE);
@@ -113,14 +153,8 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
 
    @Override
    public void setContext(Studio app) {
-      if (!hardwareDeviceAvailable_) {
-         return;
-      }
       gui_ = app;
-      if (!settingsLoaded_) {
-         super.loadSettings();
-         settingsLoaded_ = true;
-      }
+      gui_.events().registerForEvents(this);
    }
 
    /**
@@ -130,6 +164,7 @@ public class HardwareFocusExtender extends AutofocusBase implements AutofocusPlu
     */
    @Override
    public double fullFocus() throws Exception {
+      applySettings();
       if (hardwareFocusDevice_ == null || zDrive_ == null) {
          ReportingUtils.showError("Autofocus, and/or ZDrive have not been set");
          return 0.0;

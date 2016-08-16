@@ -18,12 +18,7 @@
 //
 package org.micromanager.internal;
 
-import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import com.google.common.eventbus.Subscribe;
-
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -31,19 +26,17 @@ import ij.WindowManager;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.gui.Toolbar;
-
 import java.awt.Component;
-import java.awt.geom.AffineTransform;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.WindowEvent;
+import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -51,85 +44,74 @@ import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-
-import org.micromanager.acquisition.AcquisitionManager;
-import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
 import org.micromanager.Album;
 import org.micromanager.Application;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.AutofocusManager;
 import org.micromanager.CompatibilityInterface;
-import org.micromanager.data.DataManager;
-import org.micromanager.data.Image;
-import org.micromanager.display.DisplayManager;
-import org.micromanager.display.DisplayWindow;
-import org.micromanager.events.ChannelExposureEvent;
-import org.micromanager.events.EventManager;
-import org.micromanager.events.ForcedShutdownEvent;
-import org.micromanager.events.GUIRefreshEvent;
-import org.micromanager.events.internal.CoreEventCallback;
-import org.micromanager.events.internal.MouseMovesStageEvent;
-import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.events.StartupCompleteEvent;
-import org.micromanager.events.ShutdownCommencingEvent;
-import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
 import org.micromanager.LogManager;
-import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.PluginManager;
 import org.micromanager.PositionList;
 import org.micromanager.PositionListManager;
-import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
-import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.ScriptController;
 import org.micromanager.ShutterManager;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
-import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.events.PropertiesChangedEvent;
-import org.micromanager.internal.hcwizard.MMConfigFileException;
-import org.micromanager.internal.hcwizard.MicroscopeModel;
-
-import org.micromanager.data.internal.DefaultDataManager;
-
+import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
+import org.micromanager.acquisition.internal.DefaultAcquisitionManager;
+import org.micromanager.acquisition.internal.IAcquisitionEngine2010;
 import org.micromanager.alerts.AlertManager;
 import org.micromanager.alerts.internal.DefaultAlertManager;
-
+import org.micromanager.data.DataManager;
+import org.micromanager.data.Image;
+import org.micromanager.data.internal.DefaultDataManager;
+import org.micromanager.display.DisplayManager;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplayManager;
+import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
+import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.EventManager;
+import org.micromanager.events.ExposureChangedEvent;
+import org.micromanager.events.ForcedShutdownEvent;
+import org.micromanager.events.GUIRefreshEvent;
+import org.micromanager.events.PropertiesChangedEvent;
+import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.events.StartupCompleteEvent;
+import org.micromanager.events.internal.CoreEventCallback;
+import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.diagnostics.EDTHangLogger;
-
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
+import org.micromanager.internal.dialogs.IJVersionCheckDlg;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.RegistrationDlg;
-import org.micromanager.internal.dialogs.IJVersionCheckDlg;
-
-import org.micromanager.events.internal.DefaultEventManager;
-
-import org.micromanager.display.internal.DefaultDisplayManager;
-
+import org.micromanager.internal.hcwizard.MMConfigFileException;
+import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.menus.ToolsMenu;
 import org.micromanager.internal.navigation.ClickToMoveManager;
 import org.micromanager.internal.navigation.XYZKeyListener;
 import org.micromanager.internal.navigation.ZWheelListener;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
+import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.internal.positionlist.PositionListDlg;
 import org.micromanager.internal.script.ScriptPanel;
-import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.DefaultAutofocusManager;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.TextUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
-
-
-
+import org.micromanager.quickaccess.QuickAccessManager;
+import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 
 
 /*
@@ -275,6 +257,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // needed to display the intro dialog. Fortunately, plugin loading is
       // fast in 2.0 (it used to be very slow in 1.4, so we loaded plugins in
       // parallel with the intro dialog).
+      // TODO Remove time out (With the current loading mechanism, the only
+      // case where the plugin loading thread will hang due to individual
+      // plugins is if a plugin constructor hangs, which is a case where we
+      // should just hang rather than pretend nothing is wrong.)
       try {
          pluginManager_.waitForInitialization(15000);
       } catch (InterruptedException ex) {
@@ -318,6 +304,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       coreCallback_ = new CoreEventCallback(core_, engine_);
 
       // Load hardware configuration
+      // Note that this also initializes Autofocus plugins.
       // TODO: This should probably be run on a background thread, while we set
       // up GUI elements (but various managers will need to be aware of this)
       if (!loadSystemConfiguration()) {
@@ -425,6 +412,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       displayManager_ = new DefaultDisplayManager(this);
 
       afMgr_ = new DefaultAutofocusManager(studio_);
+      afMgr_.refresh();
       String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
       if (afMgr_.hasDevice(afDevice)) {
          afMgr_.setAutofocusMethodByName(afDevice);
@@ -1245,6 +1233,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             core_.loadSystemConfiguration(sysConfigFile_);
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
+            events().post(new AutofocusPluginShouldInitializeEvent());
          }
       } catch (final Exception err) {
          GUIUtils.preventDisplayAdapterChangeExceptions();

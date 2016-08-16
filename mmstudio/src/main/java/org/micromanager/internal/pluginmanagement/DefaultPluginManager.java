@@ -113,14 +113,17 @@ public final class DefaultPluginManager implements PluginManager {
     */
    private void loadPlugins() {
       long startTime = System.currentTimeMillis();
-      loadPlugins(PluginFinder.findPlugins(
-            System.getProperty("org.micromanager.plugin.path",
-               System.getProperty("user.dir") + "/mmplugins")));
+      String dir = System.getProperty("org.micromanager.plugin.path",
+               System.getProperty("user.dir") + "/mmplugins");
+      ReportingUtils.logMessage("Searching for plugins in " + dir);
+      loadPlugins(PluginFinder.findPlugins(dir));
 
-      loadPlugins(PluginFinder.findPlugins(
-            System.getProperty("org.micromanager.autofocus.path",
-               System.getProperty("user.dir") + "/mmautofocus")));
+      dir = System.getProperty("org.micromanager.autofocus.path",
+               System.getProperty("user.dir") + "/mmautofocus");
+      ReportingUtils.logMessage("Searching for plugins in " + dir);
+      loadPlugins(PluginFinder.findPlugins(dir));
 
+      ReportingUtils.logMessage("Searching for plugins in class loader");
       // We need to use our normal class loader to load stuff from the MMJ_.jar
       // file, since otherwise we won't be able to cast the new plugin to
       // MMPlugin in loadPlugins(), below.

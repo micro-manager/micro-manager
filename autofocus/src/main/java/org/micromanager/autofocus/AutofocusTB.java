@@ -1,5 +1,7 @@
 package org.micromanager.autofocus;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
@@ -19,6 +21,7 @@ import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
 
 import mmcorej.CMMCore;
+import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -108,18 +111,18 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
     *  Constructor for the Autofocus_ object
     */
    public AutofocusTB() {
-      super();
+      super.createProperty(KEY_SIZE_FIRST, Double.toString(SIZE_FIRST));
+      super.createProperty(KEY_NUM_FIRST, Integer.toString(NUM_FIRST));
+      super.createProperty(KEY_SIZE_SECOND, Double.toString(SIZE_SECOND));
+      super.createProperty(KEY_NUM_SECOND, Integer.toString(NUM_SECOND));
+      super.createProperty(KEY_THRES, Double.toString(THRES));
+      super.createProperty(KEY_CROP_SIZE, Double.toString(CROP_SIZE));
+      super.createProperty(KEY_CHANNEL1, CHANNEL1);
+      super.createProperty(KEY_CHANNEL2, CHANNEL2);
+   }
 
-      // set-up properties
-      createProperty(KEY_SIZE_FIRST, Double.toString(SIZE_FIRST));                                    
-      createProperty(KEY_NUM_FIRST, Integer.toString(NUM_FIRST));
-      createProperty(KEY_SIZE_SECOND, Double.toString(SIZE_SECOND));
-      createProperty(KEY_NUM_SECOND, Integer.toString(NUM_SECOND));
-      createProperty(KEY_THRES, Double.toString(THRES));
-      createProperty(KEY_CROP_SIZE, Double.toString(CROP_SIZE));
-      createProperty(KEY_CHANNEL1, CHANNEL1);
-      createProperty(KEY_CHANNEL2, CHANNEL2);
-
+   @Subscribe
+   public void onInitialize(AutofocusPluginShouldInitializeEvent event) {
       loadSettings();
    }
 
@@ -618,6 +621,7 @@ public class AutofocusTB extends AutofocusBase implements AutofocusPlugin, SciJa
    public void setContext(Studio app) {
       app_ = app;
       core_ = app.getCMMCore();
+      app_.events().registerForEvents(this);
    }
 
    @Override
