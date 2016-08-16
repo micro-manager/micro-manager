@@ -1205,25 +1205,18 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          return;
       }
 
+      ReportingUtils.logMessage("Running startup script (" +
+               f.getAbsolutePath() + ")...");
       WaitDialog waitDlg = new WaitDialog(
             "Executing startup script, please wait...");
       waitDlg.showDialog();
-      Interpreter interp = new Interpreter();
       try {
-         // TODO XXX Ensure 'mmc' and 'mm' are available
-         interp.set(SCRIPT_CORE_OBJECT, core_);
-         interp.eval(TextUtils.readTextFile(f.getAbsolutePath()));
-      }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Unable to read startup script (" +
-               f.getAbsolutePath() + ")");
-      }
-      catch (EvalError e) {
-         ReportingUtils.logError(e);
+         scriptPanel_.runFile(f);
       }
       finally {
          waitDlg.closeDialog();
       }
+      ReportingUtils.logMessage("Finished running startup script");
    }
 
    /**
