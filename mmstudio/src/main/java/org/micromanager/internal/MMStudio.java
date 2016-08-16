@@ -46,7 +46,6 @@ import java.util.List;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
-import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
@@ -112,7 +111,6 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.display.internal.DefaultDisplayManager;
 
 import org.micromanager.internal.logging.LogFileManager;
-import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.menus.ToolsMenu;
 import org.micromanager.internal.navigation.ClickToMoveManager;
 import org.micromanager.internal.navigation.XYZKeyListener;
@@ -163,13 +161,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private DataManager dataManager_;
    private DisplayManager displayManager_;
    private DefaultPluginManager pluginManager_;
-   private final SnapLiveManager snapLiveManager_;
+   private SnapLiveManager snapLiveManager_;
 
    private List<Component> MMFrames_
            = Collections.synchronizedList(new ArrayList<Component>());
    private DefaultAutofocusManager afMgr_;
    private String sysConfigFile_;
-   private String startupScriptFile_;
 
    // MMcore
    private CMMCore core_;
@@ -233,33 +230,28 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
     */
    @SuppressWarnings("LeakingThisInConstructor")
    public MMStudio(boolean shouldRunAsPlugin) {
-      org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
-      studio_ = this;
-
-      DefaultEventManager.getInstance().registerForEvents(this);
-
-      // Relies on the event manager existing.
-      pluginManager_ = new DefaultPluginManager(studio_);
-
-      prepAcquisitionEngine();
-
-      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
-
       amRunningAsPlugin_ = shouldRunAsPlugin;
+
+      // Bad Things will happen if two are instantiated (a lot of legacy
+      // internal code assumes a single instance, and some internal services
+      // are singletons), so just prevent that for now.
+      // Note that studio_ will remain non-null if this constructor fails,
+      // preventing subsequent instantiation. This is not ideal but
+      // intentional, because we do not currently have a way to cleanly exit a
+      // partial initialization.
+      // TODO Management of the singleton instance has not been done in a clean
+      // manner. In fact, there should be an API method to instantiate Studio,
+      // rather than calling the constructor directly.
+      if (studio_ != null) {
+         throw new RuntimeException("Creating more than one instance of MMStudio is not supported");
+      }
+      studio_ = this;
       isProgramRunning_ = true;
 
-      sysConfigFile_ = IntroDlg.getMostRecentlyUsedConfig();
+      org.micromanager.internal.diagnostics.ThreadExceptionLogger.setUp();
 
-      if (ScriptPanel.getStartupScript().length() > 0) {
-         startupScriptFile_ = new File(ScriptPanel.getStartupScript()).getAbsolutePath();
-      } else {
-         startupScriptFile_ = "";
-      }
-
-      DaytimeNighttime.getInstance().loadStoredSkin();
-
-      RegistrationDlg.showIfNecessary();
-
+      // The Core is created as early as possible, so that we can make use of
+      // the CoreLog (and also to fail early if the MMCoreJ is not available)
       try {
          core_ = new CMMCore();
       } catch(UnsatisfiedLinkError ex) {
@@ -267,111 +259,26 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
                "Failed to load the MMCoreJ_wrap native library");
       }
 
-      core_.enableStderrLog(true);
+      initializeLogging(core_);
 
-      // The ClickToMoveManager manages itself; don't need to retain a
-      // reference to it.
-      new ClickToMoveManager(this, core_);
-      snapLiveManager_ = new SnapLiveManager(this, core_);
+      // We need to be subscribed to the global event bus for plugin loading
+      DefaultEventManager.getInstance().registerForEvents(this);
 
-      ReportingUtils.SetContainingFrame(frame_);
+      // Start loading plugins in the background
+      pluginManager_ = new DefaultPluginManager(studio_);
+      // Start loading acqEngine in the background
+      prepAcquisitionEngine();
 
-      // move ImageJ window to place where it last was if possible
-      // or else (150,150) if not
-      if (IJ.getInstance() != null) {
-         Point ijWinLoc = IJ.getInstance().getLocation();
-         if (GUIUtils.getGraphicsConfigurationContaining(ijWinLoc.x, ijWinLoc.y) == null) {
-            // only reach this code if the pref coordinates are off screen
-            IJ.getInstance().setLocation(150, 150);
-         }
-      }
-
-      openAcqDirectory_ = profile().getString(MMStudio.class,
-            OPEN_ACQ_DIR, "");
-
-      ToolTipManager ttManager = ToolTipManager.sharedInstance();
-      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
-      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
-
-      DefaultShutterManager.instantiate(studio_);
-
-      // The tools menu depends on the Quick-Access Manager.
-      DefaultQuickAccessManager.createManager(studio_);
-
-      initializationSequence();
-   }
-
-   /**
-    * Initialize the program.
-    */
-   private void initializationSequence() {
-      if (core_ == null) {
-         // Give up.
-         return;
-      }
-
-      String logFileName = LogFileManager.makeLogFileNameForCurrentSession();
-      new File(logFileName).getParentFile().mkdirs();
-      try {
-         core_.setPrimaryLogFile(logFileName);
-      }
-      catch (Exception ignore) {
-         // The Core will have logged the error to stderr, so do nothing.
-      }
-      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
-
-      if (getShouldDeleteOldCoreLogs()) {
-         LogFileManager.deleteLogFilesDaysOld(
-               getCoreLogLifetimeDays(), logFileName);
-      }
-
-      // Use parameters that ensure a stack trace dump within 10 seconds of an
-      // EDT hang (and _no_ dump on hangs under 5.5 seconds)
-      EDTHangLogger.startDefault(core_, 4500, 1000);
-
-      ReportingUtils.setCore(core_);
-      logStartupProperties();
-              
-      engine_ = new AcquisitionWrapperEngine();
-
-      // This entity is a class property to avoid garbage collection.
-      coreCallback_ = new CoreEventCallback(core_, engine_);
-
-      try {
-         core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-
-      engine_.setParentGUI(studio_);
-
-      dataManager_ = new DefaultDataManager();
-      displayManager_ = new DefaultDisplayManager(this);
-
-      afMgr_ = new DefaultAutofocusManager(studio_);
-
-      posList_ = new PositionList();
-      engine_.setPositionList(posList_);
-      // load (but do no show) the scriptPanel
-      createScriptPanel();
-      // Ditto with the image pipeline panel.
-      createPipelineFrame();
-
-      // Create an instance of HotKeys so that they can be read in from prefs
-      hotKeys_ = new org.micromanager.internal.utils.HotKeys();
-      hotKeys_.loadSettings();
+      RegistrationDlg.showIfNecessary();
 
       // We wait for plugin loading to finish now, since IntroPlugins may be
       // needed to display the intro dialog. Fortunately, plugin loading is
-      // fast in 2.0 (it used to be very slow in 1.4, so we had a special
-      // dialog that popped up prompting the user to wait, and we had to do
-      // plugin loading in parallel with the intro dialog).
-      // TODO: show a splash image (like Fiji does) prior to the intro dialog.
+      // fast in 2.0 (it used to be very slow in 1.4, so we loaded plugins in
+      // parallel with the intro dialog).
       try {
          pluginManager_.waitForInitialization(15000);
       } catch (InterruptedException ex) {
-         ReportingUtils.logError(ex,
-               "Interrupted while waiting for plugin loading thread");
+         Thread.currentThread().interrupt();
       }
       if (!pluginManager_.isInitializationComplete()) {
          ReportingUtils.logMessage("Warning: Plugin loading did not finish within 15 seconds; continuing anyway");
@@ -380,10 +287,16 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          ReportingUtils.logMessage("Finished waiting for plugins to load");
       }
 
-      frame_ = new MainFrame(this, core_, snapLiveManager_);
-      frame_.paintToFront();
-      staticInfo_ = new StaticInfo(core_, frame_);
+      // Essential GUI settings in preparation of the intro dialog
+      DaytimeNighttime.getInstance().loadStoredSkin();
 
+      ToolTipManager ttManager = ToolTipManager.sharedInstance();
+      ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
+      ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
+
+      // Show the intro dialog if not disabled (possibly switches the user
+      // profile)
+      sysConfigFile_ = IntroDlg.getMostRecentlyUsedConfig();
       if (IntroDlg.getShouldAskForConfigFile() ||
             !DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
          // Ask the user for a configuration file and/or user profile.
@@ -395,51 +308,145 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             return;
          }
          sysConfigFile_ = introDlg.getConfigFile();
-         frame_.setUserName(introDlg.getUserName());
       }
 
       IJVersionCheckDlg.execute();
 
-      // if an error occurred during config loading, do not display more 
-      // errors than needed
+      org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
+
+      // This entity is a class property to avoid garbage collection.
+      coreCallback_ = new CoreEventCallback(core_, engine_);
+
+      // Load hardware configuration
+      // TODO: This should probably be run on a background thread, while we set
+      // up GUI elements (but various managers will need to be aware of this)
       if (!loadSystemConfiguration()) {
+         // TODO Do we still need to turn errors off to prevent spurious error messages?
          ReportingUtils.showErrorOn(false);
       }
 
-      // Done with main startup logic; show the main frame now.
-      // Reset its position as the current profile may have a different default
-      // as the one that was active when the frame was created.
-      frame_.resetPosition();
-      frame_.setVisible(true);
-      executeStartupScript();
-      // Now that user is logged in, load the shortcuts.
-      scriptPanel_.getScriptsFromPrefs();
-
-      // Create Multi-D window here but do not show it.
-      // This window needs to be created in order to properly set the 
-      // "ChannelGroup" based on the Multi-D parameters
-      acqControlWin_ = new AcqControlDlg(engine_, studio_);
-      acquisitionManager_ = new DefaultAcquisitionManager(this, engine_,
-            acqControlWin_);
-
-      frame_.initializeConfigPad();
-
-      String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
-      if (afMgr_.hasDevice(afDevice)) {
-         afMgr_.setAutofocusMethodByName(afDevice);
+      try {
+         core_.setCircularBufferMemoryFootprint(getCircularBufferSize());
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
       }
 
+      // Move ImageJ window to place where it last was if possible or else
+      // (150,150) if not
+      if (IJ.getInstance() != null) {
+         Point ijWinLoc = IJ.getInstance().getLocation();
+         if (GUIUtils.getGraphicsConfigurationContaining(ijWinLoc.x, ijWinLoc.y) == null) {
+            // only reach this code if the pref coordinates are off screen
+            IJ.getInstance().setLocation(150, 150);
+         }
+      }
+
+      // TODO This ivar should be eliminated in favor of direct access to the
+      // user profile
+      openAcqDirectory_ = profile().getString(MMStudio.class,
+            OPEN_ACQ_DIR, "");
+
+      initializeVariousManagers();
+
+      // Now create and show the main window
+      frame_ = new MainFrame(this, core_, snapLiveManager_);
+      staticInfo_ = new StaticInfo(core_, frame_);
+      frame_.toFront();
+      frame_.setVisible(true);
+      ReportingUtils.SetContainingFrame(frame_);
+      frame_.initializeConfigPad();
+
+      // We wait until after showing the main window to enable hot keys
+      hotKeys_ = new org.micromanager.internal.utils.HotKeys();
+      hotKeys_.loadSettings();
       zWheelListener_ = new ZWheelListener(core_, studio_);
       snapLiveManager_.addLiveModeListener(zWheelListener_);
       xyzKeyListener_ = new XYZKeyListener(core_, studio_);
       snapLiveManager_.addLiveModeListener(xyzKeyListener_);
 
-      // switch error reporting back on
+      // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);
 
-      org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
+      executeStartupScript();
 
+      // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());
+   }
+
+   private void initializeLogging(CMMCore core) {
+      core.enableStderrLog(true);
+      core.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
+      ReportingUtils.setCore(core);
+
+      // Set up logging to CoreLog file
+      String logFileName = LogFileManager.makeLogFileNameForCurrentSession();
+      new File(logFileName).getParentFile().mkdirs();
+      try {
+         core.setPrimaryLogFile(logFileName);
+      }
+      catch (Exception ignore) {
+         // The Core will have logged the error to stderr, so do nothing.
+      }
+
+      if (getShouldDeleteOldCoreLogs()) {
+         LogFileManager.deleteLogFilesDaysOld(
+               getCoreLogLifetimeDays(), logFileName);
+      }
+
+      logStartupProperties();
+
+      // Arrange to log stack traces when the EDT hangs.
+      // Use parameters that ensure a stack trace dump within 10 seconds of an
+      // EDT hang (and _no_ dump on hangs under 5.5 seconds)
+      EDTHangLogger.startDefault(core, 4500, 1000);
+
+      // Although our general rule is to perform identical logging regardless
+      // of the current log level, we make an exception for UIMonitor, which we
+      // enable only when debug logging is turned on (from the GUI).
+      UIMonitor.enable(OptionsDlg.getIsDebugLogEnabled());
+   }
+
+   private void initializeVariousManagers() {
+      // The ClickToMoveManager manages itself; don't need to retain a
+      // reference to it.
+      new ClickToMoveManager(this, core_);
+
+      snapLiveManager_ = new SnapLiveManager(this, core_);
+
+      DefaultShutterManager.instantiate(studio_);
+
+      // The tools menu depends on the Quick-Access Manager.
+      DefaultQuickAccessManager.createManager(studio_);
+
+      engine_ = new AcquisitionWrapperEngine();
+      engine_.setParentGUI(this);
+
+      dataManager_ = new DefaultDataManager();
+      displayManager_ = new DefaultDisplayManager(this);
+
+      afMgr_ = new DefaultAutofocusManager(studio_);
+      String afDevice = profile().getString(MMStudio.class, AUTOFOCUS_DEVICE, "");
+      if (afMgr_.hasDevice(afDevice)) {
+         afMgr_.setAutofocusMethodByName(afDevice);
+      }
+
+      posList_ = new PositionList();
+      engine_.setPositionList(posList_);
+
+      // Load (but do no show) the scriptPanel
+      createScriptPanel();
+      scriptPanel_.getScriptsFromPrefs();
+
+      // Ditto with the image pipeline panel.
+      createPipelineFrame();
+
+      // Create Multi-D window here but do not show it.
+      // This window needs to be created in order to properly set the 
+      // "ChannelGroup" based on the Multi-D parameters
+      acqControlWin_ = new AcqControlDlg(engine_, studio_);
+
+      acquisitionManager_ = new DefaultAcquisitionManager(this, engine_,
+            acqControlWin_);
    }
 
    public void showPipelineFrame() {
@@ -458,7 +465,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    /**
     * Spawn a new thread to load the acquisition engine jar, because this
-    * takes significant time (or so Mark claims).
+    * takes significant time (TODO: Does it really, not that it is
+    * AOT-compiled?).
     */
    private void prepAcquisitionEngine() {
       acquisitionEngine2010LoadingThread_ = new Thread("Pipeline Class loading thread") {
@@ -716,6 +724,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
    }
 
+   @Override
    public void saveConfigPresets(String path, boolean allowOverwrite) throws IOException {
       if (!allowOverwrite && new File(path).exists()) {
          throw new IOException("Cannot overwrite existing file at " + path);
@@ -938,18 +947,23 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    // SystemConfigurationLoaded itself and handle its own updates.
    public void initializeGUI() {
       try {
-         staticInfo_.refreshValues();
-         engine_.setZStageDevice(StaticInfo.zStageLabel_);  
-  
-         configureBinningCombo();
+         if (staticInfo_ != null) {
+            staticInfo_.refreshValues();
+            if (engine_ != null) {
+               engine_.setZStageDevice(StaticInfo.zStageLabel_);  
+            }
+         }
 
          // Rebuild stage list in XY PositinList
          if (posListDlg_ != null) {
             posListDlg_.rebuildAxisList();
          }
 
-         frame_.updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
-         updateGUI(true);
+         if (frame_ != null) {
+            configureBinningCombo();
+            frame_.updateAutofocusButtons(afMgr_.getAutofocusMethod() != null);
+            updateGUI(true);
+         }
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
@@ -1167,7 +1181,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       } else {
          frame_.dispose();
       }
-      
+
+      studio_ = null;
+
       return true;
    }
 
@@ -1175,33 +1191,38 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       return isProgramRunning_;
    }
 
-   /**
-    * Executes the beanShell script.
-    */
    private void executeStartupScript() {
-      // execute startup script
-      File f = new File(startupScriptFile_);
+      String filename = ScriptPanel.getStartupScript();
+      if (filename == null || filename.length() <= 0) {
+         ReportingUtils.logMessage("No startup script to run");
+         return;
+      }
 
-      if (startupScriptFile_.length() > 0 && f.exists()) {
-         WaitDialog waitDlg = new WaitDialog(
-               "Executing startup script, please wait...");
-         waitDlg.showDialog();
-         Interpreter interp = new Interpreter();
-         try {
-            interp.set(SCRIPT_CORE_OBJECT, core_);
+      File f = new File(filename);
+      if (!f.exists()) {
+         ReportingUtils.logMessage("Startup script (" +
+               f.getAbsolutePath() + ") not present");
+         return;
+      }
 
-            // read text file and evaluate
-            interp.eval(TextUtils.readTextFile(startupScriptFile_));
-         } catch (IOException exc) {
-            ReportingUtils.logError(exc, "Unable to read the startup script (" + startupScriptFile_ + ").");
-         } catch (EvalError exc) {
-            ReportingUtils.logError(exc);
-         } finally {
-            waitDlg.closeDialog();
-         }
-      } else {
-         if (startupScriptFile_.length() > 0)
-            ReportingUtils.logMessage("Startup script file ("+startupScriptFile_+") not present.");
+      WaitDialog waitDlg = new WaitDialog(
+            "Executing startup script, please wait...");
+      waitDlg.showDialog();
+      Interpreter interp = new Interpreter();
+      try {
+         // TODO XXX Ensure 'mmc' and 'mm' are available
+         interp.set(SCRIPT_CORE_OBJECT, core_);
+         interp.eval(TextUtils.readTextFile(f.getAbsolutePath()));
+      }
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Unable to read startup script (" +
+               f.getAbsolutePath() + ")");
+      }
+      catch (EvalError e) {
+         ReportingUtils.logError(e);
+      }
+      finally {
+         waitDlg.closeDialog();
       }
    }
 
@@ -1217,7 +1238,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       waitDlg.setAlwaysOnTop(true);
       waitDlg.showDialog();
-      frame_.setEnabled(false);
+      if (frame_ != null) {
+         frame_.setEnabled(false);
+      }
 
       IntroDlg.addRecentlyUsedConfig(sysConfigFile_);
 
@@ -1240,9 +1263,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          result = false;
       } finally {
          waitDlg.closeDialog();
+         if (frame_ != null) {
+            frame_.setEnabled(true);
+         }
       }
 
-      frame_.setEnabled(true);
       initializeGUI();
 
       FileDialogs.storePath(FileDialogs.MM_CONFIG_FILE, new File(sysConfigFile_));
@@ -1315,7 +1340,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       try {
          hostname = java.net.InetAddress.getLocalHost().getHostName();
       }
-      catch (java.net.UnknownHostException e) {
+      catch (Exception e) {
          hostname = "unknown";
       }
       core_.logMessage("Host: " + hostname);
