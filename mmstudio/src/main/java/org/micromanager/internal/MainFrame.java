@@ -225,11 +225,6 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
       loadAndRestorePosition(100, 100, 644, 220);
    }
 
-   public void paintToFront() {
-      toFront();
-      paint(getGraphics());
-   }
-
    public void initializeConfigPad() {
       configPad_.setCore(core_);
       configPad_.setParentGUI(studio_);
