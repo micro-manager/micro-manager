@@ -25,6 +25,8 @@
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 package org.micromanager.autofocus;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
@@ -41,6 +43,7 @@ import mmcorej.StrVector;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
+import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.PropertyItem;
 
@@ -100,21 +103,21 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
    private long tPrev;
    private long tcur;
 
-   public Autofocus(){ //constructor!!!
-      super();
-      
-      // set-up properties
-      createProperty(KEY_SIZE_FIRST, Double.toString(SIZE_FIRST));
-      createProperty(KEY_NUM_FIRST, Integer.toString(NUM_FIRST));
-      createProperty(KEY_SIZE_SECOND, Double.toString(SIZE_SECOND));
-      createProperty(KEY_NUM_SECOND, Integer.toString(NUM_SECOND));
-      createProperty(KEY_THRES, Double.toString(THRES));
-      createProperty(KEY_CROP_SIZE, Double.toString(CROP_SIZE));
-      createProperty(KEY_CHANNEL, CHANNEL);
-      
+   public Autofocus() {
+      super.createProperty(KEY_SIZE_FIRST, Double.toString(SIZE_FIRST));
+      super.createProperty(KEY_NUM_FIRST, Integer.toString(NUM_FIRST));
+      super.createProperty(KEY_SIZE_SECOND, Double.toString(SIZE_SECOND));
+      super.createProperty(KEY_NUM_SECOND, Integer.toString(NUM_SECOND));
+      super.createProperty(KEY_THRES, Double.toString(THRES));
+      super.createProperty(KEY_CROP_SIZE, Double.toString(CROP_SIZE));
+      super.createProperty(KEY_CHANNEL, CHANNEL);
+   }
+
+   @Subscribe
+   public void onInitialize(AutofocusPluginShouldInitializeEvent event) {
       loadSettings();
    }
-   
+
    @Override
    public void applySettings() {
       try {
@@ -522,6 +525,7 @@ public class Autofocus extends AutofocusBase implements AutofocusPlugin, SciJava
    public void setContext(Studio app) {
       app_ = app;
       core_ = app.getCMMCore();
+      app_.events().registerForEvents(this);
    }
 
    @Override

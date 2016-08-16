@@ -28,6 +28,8 @@
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 package org.micromanager.autofocus;
 
+import com.google.common.eventbus.Subscribe;
+
 import ij.gui.OvalRoi;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
@@ -36,11 +38,11 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 
 import java.awt.Rectangle;
-import java.text.ParseException;
 import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
 import org.apache.commons.math3.analysis.UnivariateFunction;
@@ -55,11 +57,14 @@ import org.json.JSONException;
 
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
+import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.PropertyItem;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
 
 import org.scijava.plugin.Plugin;
@@ -140,10 +145,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private long startTimeMs_;
    private double startZUm_;
    private boolean liveModeOn_;
-   private boolean settingsLoaded_ = false;
 
    public OughtaFocus() {
-      super();
       super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
       super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(absTolerance));
       super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
@@ -152,7 +155,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       super.createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fftUpperCutoff));
       super.createProperty(SHOW_IMAGES, show, SHOWVALUES);
       super.createProperty(SCORING_METHOD, scoringMethod, SCORINGMETHODS);
-      imageCount_ = 0;
+      super.createProperty(CHANNEL, "");
    }
 
    @Override
@@ -948,23 +951,43 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    @Override
    public void setContext(Studio app) {
       studio_ = app;
+      studio_.events().registerForEvents(this);
+   }
+
+   @Subscribe
+   public void onInitialize(AutofocusPluginShouldInitializeEvent event) {
+      loadSettings();
+   }
+
+   @Override
+   public PropertyItem[] getProperties() {
       CMMCore core = studio_.getCMMCore();
-      String chanGroup = core.getChannelGroup();
-      String curChan;
+      String channelGroup = core.getChannelGroup();
+      StrVector channels = core.getAvailableConfigs(channelGroup);
+      String allowedChannels[] = new String[(int)channels.size() + 1];
+      allowedChannels[0] = "";
+
       try {
-         curChan = core.getCurrentConfig(chanGroup);
-         createProperty(CHANNEL, curChan,
-                 core.getAvailableConfigs(core.getChannelGroup()).toArray());
-      } catch (Exception ex) {
-         studio_.logs().logError(ex);
+         PropertyItem p = getProperty(CHANNEL);
+         boolean found = false;
+         for (int i = 0; i < channels.size(); i++) {
+            allowedChannels[i+1] = channels.get(i);
+            if (p.value.equals(channels.get(i))) {
+               found = true;
+            }
+         }
+         p.allowed = allowedChannels;
+         if (!found) {
+            p.value = allowedChannels[0];
+         }
+         setProperty(p);
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
       }
 
-      if (!settingsLoaded_) {
-         super.loadSettings();
-         settingsLoaded_ = true;
-      }
+      return super.getProperties();
    }
-   
+
    private static double clip(double min, double val, double max) {
       return Math.min(Math.max(min, val), max);
    }
