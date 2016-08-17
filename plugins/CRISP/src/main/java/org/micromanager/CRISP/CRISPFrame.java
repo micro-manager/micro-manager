@@ -5,7 +5,7 @@
  * 
  * Nico Stuurman (nico@cmp.ucsf.edu)
  * 
- * Copyright UCSF, 2011
+ * Copyright Regents of the University of California, 2011-2016
  * 
  * Licensed under the BSD license
  *
@@ -19,15 +19,28 @@ import java.awt.Cursor;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
+import java.util.TimerTask;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFrame;
 
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JSeparator;
+import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
 import javax.swing.SpinnerModel;
 import javax.swing.Timer;
+//import javax.swing.Timer;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
+import net.miginfocom.swing.MigLayout;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -35,10 +48,11 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.micromanager.Studio;
-import org.micromanager.internal.utils.ReportingUtils;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.MMFrame;
 
 /**
@@ -51,20 +65,49 @@ public class CRISPFrame extends MMFrame {
 
     private final Studio gui_;
     private final CMMCore core_;
+    private final CRISP parent_;
     private String CRISP_;
 
     private int frameXPos_ = 100;
     private int frameYPos_ = 100;
+    
+    
+    // GUI elements
+    private JButton calibrateButton_;
+    private JButton curveButton_;
+    private JSpinner gainSpinner_;
+    private JSpinner LEDSpinner_;
+    private JToggleButton lockButton_;
+    private JSpinner naSpinner_;
+    private JSpinner nrAvgsSpinner_;
+    private JSpinner maxLockRangeSpinner_;
+    private JButton resetOffsetButton_;
+    private JButton idleButton_;
+    private JButton updateButton_;
+    private JLabel ledIntLabel;
+    private JLabel gainMultiplierLabel;
+    private JLabel nrAvgLabel;
+    private JLabel naLabel;
+    private JLabel versionLabel;
+    private JSeparator jSeparator1;
+    private JLabel statusLabel_;
+    private JLabel AGCLabel_;
+    private JCheckBox pollCheckBox_;
 
 
     /** 
      * Creates new form CRISPFrame
+     * TODO: Add an explanation whenever the D or N state occurs, suggest to
+     *   increase gain and LED intensity
+     * TODO: write help pages that describe use of the CRISP and this plugin
      * 
      * @param gui MM scriptInterface
+     * @param parent Holds on to plugin code to tell it when this frame closes
      */
-    public CRISPFrame(Studio gui)  {
+    public CRISPFrame(Studio gui, CRISP parent)  {
        gui_ = gui;
        core_ = gui.getCMMCore();
+       parent_ = parent;
        CRISP_ = "";
 
        mmcorej.StrVector afs =
@@ -99,29 +142,41 @@ public class CRISPFrame extends MMFrame {
 
       initComponents();
 
-      loadAndRestorePosition(frameXPos_, frameYPos_);
+      super.loadAndRestorePosition(frameXPos_, frameYPos_);
 
-      updateValues();
+      updateValues(true);
     }
 
-    private void updateValues() {
-       try {
-         String val;
-         val = core_.getProperty(CRISP_, "LED Intensity");
-         int intVal = Integer.parseInt(val);
-         LEDSpinner_.getModel().setValue(intVal);
+    private void updateValues(boolean allValues) {
+        try {
+            String val;
+            if (allValues) {
+                val = core_.getProperty(CRISP_, "LED Intensity");
+                int intVal = Integer.parseInt(val);
+                LEDSpinner_.getModel().setValue(intVal);
 
-         val = core_.getProperty(CRISP_, "GainMultiplier");
-         intVal = Integer.parseInt(val);
-         GainSpinner_.getModel().setValue(intVal);
+                val = core_.getProperty(CRISP_, "GainMultiplier");
+                intVal = Integer.parseInt(val);
+                gainSpinner_.getModel().setValue(intVal);
 
-         val = core_.getProperty(CRISP_, "Number of Averages");
-         intVal = Integer.parseInt(val);
-         NrAvgsSpinner_.getModel().setValue(intVal);
+                val = core_.getProperty(CRISP_, "Number of Averages");
+                intVal = Integer.parseInt(val);
+                nrAvgsSpinner_.getModel().setValue(intVal);
 
-         val = core_.getProperty(CRISP_, "Objective NA");
-         float floatVal = Float.parseFloat(val);
-         NASpinner_.getModel().setValue(floatVal);
+                val = core_.getProperty(CRISP_, "Objective NA");
+                float floatVal = Float.parseFloat(val);
+                naSpinner_.getModel().setValue(floatVal);
+                                
+                val = core_.getProperty(CRISP_, "Max Lock Range(mm)");
+                floatVal = Float.parseFloat(val);
+                maxLockRangeSpinner_.getModel().setValue( (int) (floatVal * 1000.0) );
+            }
+ 
+         val = core_.getProperty(CRISP_, "CRISP State");
+         statusLabel_.setText(val);
+         
+         val = core_.getProperty(CRISP_, "LogAmpAGC");
+         AGCLabel_.setText(val);
          
        } catch (Exception ex) {
           ReportingUtils.showError("Error reading values from CRISP");
@@ -174,206 +229,217 @@ public class CRISPFrame extends MMFrame {
 
     /** This method is called from within the constructor to
      * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
+     * History: This function was first created by the Netbeans GUI 
+     * creator, then modified to use MigLayout as Layout manager
      */
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        LockButton_ = new javax.swing.JToggleButton();
-        CalibrateButton_ = new javax.swing.JButton();
-        CurveButton_ = new javax.swing.JButton();
+        lockButton_ = new javax.swing.JToggleButton();
+        calibrateButton_ = new javax.swing.JButton();
+        curveButton_ = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
+        ledIntLabel = new javax.swing.JLabel();
+        gainMultiplierLabel = new javax.swing.JLabel();
+        nrAvgLabel = new javax.swing.JLabel();
+        naLabel = new javax.swing.JLabel();
         LEDSpinner_ = new javax.swing.JSpinner();
-        GainSpinner_ = new javax.swing.JSpinner();
-        NrAvgsSpinner_ = new javax.swing.JSpinner();
-        NASpinner_ = new javax.swing.JSpinner();
-        UpdateButton_ = new javax.swing.JButton();
-        SaveButton_ = new javax.swing.JButton();
-        ResetOffsetButton_ = new javax.swing.JButton();
-        jLabel5 = new javax.swing.JLabel();
+        gainSpinner_ = new javax.swing.JSpinner();
+        nrAvgsSpinner_ = new javax.swing.JSpinner();
+        maxLockRangeSpinner_ = new JSpinner();
+        JLabel maxLockRangeLabel = new JLabel();
+        naSpinner_ = new javax.swing.JSpinner();
+        updateButton_ = new javax.swing.JButton();
+        idleButton_ = new javax.swing.JButton();
+        resetOffsetButton_ = new javax.swing.JButton();
+        versionLabel = new javax.swing.JLabel();
+        statusLabel_ = new javax.swing.JLabel();
+        AGCLabel_ = new JLabel();
+        pollCheckBox_ = new JCheckBox(); 
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+        final JFrame frame = this;
+        this.addWindowListener(new WindowAdapter() {
+          
+           @Override
+           public void windowClosing(WindowEvent e) {           
+              parent_.tellFrameClosed();
+              frame.setVisible(false);
+              frame.dispose();
+           }
+
+        });
         setTitle("ASI CRISP Control");
 
-        LockButton_.setText("Lock");
-        LockButton_.addActionListener(new java.awt.event.ActionListener() {
+        lockButton_.setText("Lock");
+        lockButton_.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 LockButton_ActionPerformed(evt);
             }
         });
 
-        CalibrateButton_.setText("Calibrate");
-        CalibrateButton_.addActionListener(new java.awt.event.ActionListener() {
+        calibrateButton_.setText("Calibrate");
+        calibrateButton_.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 CalibrateButton_ActionPerformed(evt);
             }
         });
 
-        CurveButton_.setText("Focus Curve");
-        CurveButton_.addActionListener(new java.awt.event.ActionListener() {
+        curveButton_.setText("Focus Curve");
+        curveButton_.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 CurveButton_ActionPerformed(evt);
             }
         });
 
-        jLabel1.setText("LED Int.");
+        ledIntLabel.setText("LED Int.");
 
-        jLabel2.setText("Gain Multiplier");
+        gainMultiplierLabel.setText("Gain");
 
-        jLabel3.setText("Nr of Avgs");
+        nrAvgLabel.setText("Nr of Avgs");
 
-        jLabel4.setText("NA");
+        naLabel.setText("Obj. NA");
+        
+        maxLockRangeLabel.setText("Range(" + "\u00B5" + "m)");
 
         LEDSpinner_.setModel(new javax.swing.SpinnerNumberModel(50, 0, 100, 1));
         LEDSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
         LEDSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 LEDSpinner_StateChanged(evt);
             }
         });
 
-        GainSpinner_.setModel(new javax.swing.SpinnerNumberModel(10, 0, 100, 1));
-        GainSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
-        GainSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+        gainSpinner_.setModel(new javax.swing.SpinnerNumberModel(10, 0, 100, 1));
+        gainSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
+        gainSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 GainSpinner_StateChanged(evt);
             }
         });
 
-        NrAvgsSpinner_.setModel(new javax.swing.SpinnerNumberModel(1, 0, 10, 1));
-        NrAvgsSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
-        NrAvgsSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+        nrAvgsSpinner_.setModel(new javax.swing.SpinnerNumberModel(1, 0, 10, 1));
+        nrAvgsSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
+        nrAvgsSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 NrAvgsSpinner_StateChanged(evt);
             }
         });
 
-        NASpinner_.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.65f), Float.valueOf(0.0f), Float.valueOf(1.4f), Float.valueOf(0.05f)));
-        NASpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
-        NASpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+        naSpinner_.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.65f), Float.valueOf(0.0f), Float.valueOf(1.4f), Float.valueOf(0.05f)));
+        naSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
+        naSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 NASpinner_StateChanged(evt);
             }
         });
 
-        UpdateButton_.setText("Refresh");
-        UpdateButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                UpdateButton_ActionPerformed(evt);
+        maxLockRangeSpinner_.setModel(new javax.swing.SpinnerNumberModel(50, 1, 10000, 1));
+        maxLockRangeSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
+        maxLockRangeSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                int newRangeValue = (Integer) maxLockRangeSpinner_.getModel().getValue();
+                try {
+                    core_.setProperty(CRISP_, "Max Lock Range(mm)", (float) newRangeValue / 1000.0);
+                } catch (Exception ex) {
+                    ReportingUtils.showError("Problem while setting LED intensity");
+                }
             }
         });
 
-        SaveButton_.setText("Save Calibration");
-        SaveButton_.addActionListener(new java.awt.event.ActionListener() {
+        updateButton_.setText("Refresh");
+        updateButton_.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                SaveButton_ActionPerformed(evt);
+                updateValues(true);
             }
         });
 
-        ResetOffsetButton_.setText("Reset Offset");
-        ResetOffsetButton_.addActionListener(new java.awt.event.ActionListener() {
+        idleButton_.setText("Idle");
+        idleButton_.addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                try {
+                    core_.setProperty(CRISP_, "CRISP State", "Idle");
+                } catch (Exception ex) {
+                    ReportingUtils.showError("Problem setting Idle State");
+                }
+            }
+        });
+
+        resetOffsetButton_.setText("Reset Offset");
+        resetOffsetButton_.addActionListener(new java.awt.event.ActionListener() {
+            @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 ResetOffsetButton_ActionPerformed(evt);
             }
         });
+        
+        final Timer timer = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                updateValues(false);
+            }
+        });
+        pollCheckBox_.setText("Continuously update State and AGC");
+        pollCheckBox_.addChangeListener(new ChangeListener(){
+            @Override
+            public void stateChanged(ChangeEvent ce) {
+                if (pollCheckBox_.isSelected()) {
+                    timer.restart();
+                } else {
+                    timer.stop();
+                }
+            }
+        });
 
-        jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-        jLabel5.setText("Version 1.0");
+        versionLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+        // TODO: get version from plugin itself
+        versionLabel.setText("Version 1.0");
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jSeparator1, javax.swing.GroupLayout.DEFAULT_SIZE, 289, Short.MAX_VALUE)
-                                .addGap(6, 6, 6))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(jLabel4)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 83, Short.MAX_VALUE)
-                                        .addComponent(NASpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(jLabel3)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 35, Short.MAX_VALUE)
-                                        .addComponent(NrAvgsSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(jLabel2)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(GainSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
-                                        .addComponent(jLabel1)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 53, Short.MAX_VALUE)
-                                        .addComponent(LEDSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addGap(16, 16, 16)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(UpdateButton_, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
-                                    .addComponent(ResetOffsetButton_, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
-                                    .addComponent(CurveButton_, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
-                                    .addComponent(SaveButton_, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(18, 18, 18)
-                                .addComponent(LockButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 82, Short.MAX_VALUE)
-                                .addComponent(CalibrateButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(19, 19, 19)))
-                        .addContainerGap())
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addComponent(jLabel5)
-                        .addGap(31, 31, 31))))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(17, 17, 17)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(CalibrateButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(LockButton_))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel1)
-                        .addComponent(UpdateButton_))
-                    .addComponent(LEDSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE)
-                    .addComponent(GainSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(SaveButton_))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 26, Short.MAX_VALUE)
-                    .addComponent(NrAvgsSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ResetOffsetButton_))
-                .addGap(5, 5, 5)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE)
-                    .addComponent(NASpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(CurveButton_))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel5)
-                .addContainerGap())
-        );
+        this.setLayout(new MigLayout("", "30[]10[]25[]"));
+        this.add(lockButton_, "span 3, split 2, grow, gapright 40");
+        this.add(calibrateButton_, "span 3, split 2, grow, gapleft 40, wrap 20px");
+        this.add(new JSeparator(), "span, grow, wrap 20px");
+        this.add(new JLabel("CRISP State: "));
+        this.add(statusLabel_, "span 2, grow, wrap");
+        this.add(new JLabel("AGC: "));
+        this.add(AGCLabel_, "span 2, grow, wrap");
+        
+        this.add(ledIntLabel);
+        this.add(LEDSpinner_);
+        this.add(updateButton_, "grow, wrap");
+        this.add(gainMultiplierLabel);
+        this.add(gainSpinner_);
+        this.add(idleButton_, "grow, wrap");
+        this.add(nrAvgLabel);
+        this.add(nrAvgsSpinner_);
+        this.add(resetOffsetButton_, "grow, wrap");
+        this.add(naLabel);
+        this.add(naSpinner_);
+        this.add(curveButton_, "grow, wrap");
+        this.add(maxLockRangeLabel);
+        this.add(maxLockRangeSpinner_, "grow, wrap");
+        this.add(pollCheckBox_, "span 3, grow, wrap");
+        this.add(versionLabel, "span 3, align right, wrap");        
 
         pack();
-    }// </editor-fold>//GEN-END:initComponents
+    }
+
+            
 
     private void LockButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LockButton_ActionPerformed
        if ("Lock".equals(evt.getActionCommand())) {
-          LockButton_.setText("Unlock");
+          lockButton_.setText("Unlock");
           // lock the device
           try {
              core_.enableContinuousFocus(true);
@@ -381,9 +447,9 @@ public class CRISPFrame extends MMFrame {
              ReportingUtils.displayNonBlockingMessage("Failed to lock");
           }
 
-          LockButton_.setSelected(true);
+          lockButton_.setSelected(true);
        } else if ("Unlock".equals(evt.getActionCommand())) {
-          LockButton_.setText("Lock");
+          lockButton_.setText("Lock");
           // unlock the device
           try {
              core_.enableContinuousFocus(false);
@@ -391,7 +457,7 @@ public class CRISPFrame extends MMFrame {
              ReportingUtils.displayNonBlockingMessage("Failed to unlock");
           }
 
-          LockButton_.setSelected(false);
+          lockButton_.setSelected(false);
        }
     }//GEN-LAST:event_LockButton_ActionPerformed
 
@@ -401,6 +467,9 @@ public class CRISPFrame extends MMFrame {
           // HACK: The controller appears to be unresponsive for ~1.5 s after  
           // setting the loG_cal state.  Either the user can set the serial port 
           // timeout to something higher than 2000ms, or we can wait here 
+          // UPDATE: Newer firmware is no longer unresponsive, so this sleep can
+          // go away.  On the other hand, it does not reallty hurt and this way
+          // we stay backward compatible
           setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
           Thread.sleep(2000);
           setCursor(Cursor.getDefaultCursor());
@@ -424,7 +493,6 @@ public class CRISPFrame extends MMFrame {
          final JLabel jl = new JLabel();
          final JLabel jlA = new JLabel();
          @SuppressWarnings("unused")
-         final JLabel jlB = new JLabel();
          final String msg1 = "Value:  ";
          final String msg2 = "Adjust the detector lateral adjustment screw until the value is > 100 or" +
                  "< -100 and stable.";
@@ -449,11 +517,6 @@ public class CRISPFrame extends MMFrame {
          timer.setInitialDelay(500);
          timer.start();
 
-         /*JOptionPane optionPane = new JOptionPane(new JLabel("Hello World",JLabel.CENTER));
-         JDialog dialog = optionPane.createDialog("");
-    dialog.setModal(true);
-    dialog.setVisible(true); */
-
          JOptionPane.showMessageDialog(null, msg, "CRISP Calibration", JOptionPane.OK_OPTION);
 
          timer.stop();
@@ -464,12 +527,13 @@ public class CRISPFrame extends MMFrame {
          while (!state.equals("Ready") && counter < 50) {
             state = core_.getProperty(CRISP_, "CRISP State");
             Thread.sleep(100);
+            counter++;
          }
       } catch (Exception ex) {
          ReportingUtils.showMessage("Calibration failed. Focus, make sure that the NA variable is set correctly and try again." + 
                "\nYou can also try increasing the serial port timeout in the HCW."); 
       }
-    }//GEN-LAST:event_CalibrateButton_ActionPerformed
+    }
 
     private void LEDSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_LEDSpinner_StateChanged
        SpinnerModel numberModel = LEDSpinner_.getModel();
@@ -480,14 +544,10 @@ public class CRISPFrame extends MMFrame {
        } catch (Exception ex) {
           ReportingUtils.showError("Problem while setting LED intensity");
        }
-    }//GEN-LAST:event_LEDSpinner_StateChanged
+    }
 
-    private void UpdateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UpdateButton_ActionPerformed
-       updateValues();
-    }//GEN-LAST:event_UpdateButton_ActionPerformed
-
-    private void GainSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_GainSpinner_StateChanged
-       SpinnerModel numberModel = GainSpinner_.getModel();
+    private void GainSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {
+       SpinnerModel numberModel = gainSpinner_.getModel();
 
        int newGainValue = (Integer) numberModel.getValue();
        try {
@@ -495,10 +555,10 @@ public class CRISPFrame extends MMFrame {
        } catch (Exception ex) {
           ReportingUtils.showError("Problem while setting LED intensity");
        }
-    }//GEN-LAST:event_GainSpinner_StateChanged
+    }
 
-    private void NrAvgsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_NrAvgsSpinner_StateChanged
-       SpinnerModel numberModel = NrAvgsSpinner_.getModel();
+    private void NrAvgsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {
+       SpinnerModel numberModel = nrAvgsSpinner_.getModel();
 
        int newNrAvgValue = (Integer) numberModel.getValue();
        try {
@@ -506,10 +566,10 @@ public class CRISPFrame extends MMFrame {
        } catch (Exception ex) {
           ReportingUtils.showError("Problem while setting LED intensity");
        }
-    }//GEN-LAST:event_NrAvgsSpinner_StateChanged
+    }
 
-    private void NASpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_NASpinner_StateChanged
-       SpinnerModel numberModel = NASpinner_.getModel();
+    private void NASpinner_StateChanged(javax.swing.event.ChangeEvent evt) {
+       SpinnerModel numberModel = naSpinner_.getModel();
 
        float newNAValue = (Float) numberModel.getValue();
        try {
@@ -517,15 +577,15 @@ public class CRISPFrame extends MMFrame {
        } catch (Exception ex) {
           ReportingUtils.showError("Problem while setting LED intensity");
        }
-    }//GEN-LAST:event_NASpinner_StateChanged
+    }
 
-    private void ResetOffsetButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ResetOffsetButton_ActionPerformed
+    private void ResetOffsetButton_ActionPerformed(java.awt.event.ActionEvent evt) {
        try {
           core_.setProperty(CRISP_, "CRISP State", "Reset Focus Offset");
        } catch (Exception ex) {
           ReportingUtils.showError("Problem resetting Focus Offset");
        }
-    }//GEN-LAST:event_ResetOffsetButton_ActionPerformed
+    }
 
     private void CurveButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CurveButton_ActionPerformed
        try {
@@ -561,34 +621,7 @@ public class CRISPFrame extends MMFrame {
        } finally {
           setCursor(Cursor.getDefaultCursor());
        }
-    }//GEN-LAST:event_CurveButton_ActionPerformed
+    }
 
-    private void SaveButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveButton_ActionPerformed
-       try {
-          core_.setProperty(CRISP_, "CRISP State", "Save to Controller");
-       } catch (Exception ex) {
-          ReportingUtils.showError("Problem acquiring focus curve");
-       }
-    }//GEN-LAST:event_SaveButton_ActionPerformed
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton CalibrateButton_;
-    private javax.swing.JButton CurveButton_;
-    private javax.swing.JSpinner GainSpinner_;
-    private javax.swing.JSpinner LEDSpinner_;
-    private javax.swing.JToggleButton LockButton_;
-    private javax.swing.JSpinner NASpinner_;
-    private javax.swing.JSpinner NrAvgsSpinner_;
-    private javax.swing.JButton ResetOffsetButton_;
-    private javax.swing.JButton SaveButton_;
-    private javax.swing.JButton UpdateButton_;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JSeparator jSeparator1;
-    // End of variables declaration//GEN-END:variables
 
 }
