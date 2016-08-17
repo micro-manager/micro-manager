@@ -49,11 +49,14 @@ static const char* g_DeviceTsiCam = "TSICam";
 static const char* g_ReadoutRate = "ReadoutRate";
 static const char* g_Gain = "Gain";
 static const char* g_NumberOfTaps = "Taps";
-static const char* g_ColorFilterArray = "ColorArray";
+static const char* g_ColorFilterArray = "SensorArray";
 static const char* g_WhiteBalance = "WhiteBalance";
 static const char* g_Set = "SetNow";
 static const char* g_Off = "Off";
 static const char* g_On = "On";
+static const char* g_Yes = "Yes";
+static const char* g_No = "No";
+static const char* g_ColorEnable = "Color";
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -147,6 +150,7 @@ public:
    int OnTaps(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnColorEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // stubs
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -189,6 +193,7 @@ private:
    TSI_ROI_BIN fullFrame;
 
    // color camera support
+   bool bayerMask;
    bool color;
    bool wb;
    LONG whiteBalanceSelected;
