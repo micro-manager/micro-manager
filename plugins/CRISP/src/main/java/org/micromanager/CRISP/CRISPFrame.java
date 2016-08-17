@@ -5,7 +5,7 @@
  * 
  * Nico Stuurman (nico@cmp.ucsf.edu)
  * 
- * Copyright UCSF, 2011
+ * Copyright Regents of the University of California, 2011-2016
  * 
  * Licensed under the BSD license
  *
@@ -22,7 +22,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
+import java.util.TimerTask;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 
 import javax.swing.JLabel;
@@ -32,6 +34,9 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerModel;
 import javax.swing.Timer;
+//import javax.swing.Timer;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -75,6 +80,7 @@ public class CRISPFrame extends MMFrame {
     private JToggleButton lockButton_;
     private JSpinner naSpinner_;
     private JSpinner nrAvgsSpinner_;
+    private JSpinner maxLockRangeSpinner_;
     private JButton resetOffsetButton_;
     private JButton idleButton_;
     private JButton updateButton_;
@@ -85,13 +91,12 @@ public class CRISPFrame extends MMFrame {
     private JLabel versionLabel;
     private JSeparator jSeparator1;
     private JLabel statusLabel_;
+    private JLabel AGCLabel_;
+    private JCheckBox pollCheckBox_;
 
 
     /** 
      * Creates new form CRISPFrame
-     * TODO: Add status line that can be refreshed with Refresh button
-     * TODO: Evaluate adding a thread that updates the status continuously
-     * TODO: Figure out why the MM lock autofocus button causes an error in the CRISP
      * TODO: Add an explanation whenever the D or N state occurs, suggest to
      *   increase gain and LED intensity
      * TODO: write help pages that describe use of the CRISP and this plugin
@@ -137,32 +142,41 @@ public class CRISPFrame extends MMFrame {
 
       initComponents();
 
-      loadAndRestorePosition(frameXPos_, frameYPos_);
+      super.loadAndRestorePosition(frameXPos_, frameYPos_);
 
-      updateValues();
+      updateValues(true);
     }
 
-    private void updateValues() {
-       try {
-         String val;
-         val = core_.getProperty(CRISP_, "LED Intensity");
-         int intVal = Integer.parseInt(val);
-         LEDSpinner_.getModel().setValue(intVal);
+    private void updateValues(boolean allValues) {
+        try {
+            String val;
+            if (allValues) {
+                val = core_.getProperty(CRISP_, "LED Intensity");
+                int intVal = Integer.parseInt(val);
+                LEDSpinner_.getModel().setValue(intVal);
 
-         val = core_.getProperty(CRISP_, "GainMultiplier");
-         intVal = Integer.parseInt(val);
-         gainSpinner_.getModel().setValue(intVal);
+                val = core_.getProperty(CRISP_, "GainMultiplier");
+                intVal = Integer.parseInt(val);
+                gainSpinner_.getModel().setValue(intVal);
 
-         val = core_.getProperty(CRISP_, "Number of Averages");
-         intVal = Integer.parseInt(val);
-         nrAvgsSpinner_.getModel().setValue(intVal);
+                val = core_.getProperty(CRISP_, "Number of Averages");
+                intVal = Integer.parseInt(val);
+                nrAvgsSpinner_.getModel().setValue(intVal);
 
-         val = core_.getProperty(CRISP_, "Objective NA");
-         float floatVal = Float.parseFloat(val);
-         naSpinner_.getModel().setValue(floatVal);
-         
+                val = core_.getProperty(CRISP_, "Objective NA");
+                float floatVal = Float.parseFloat(val);
+                naSpinner_.getModel().setValue(floatVal);
+                                
+                val = core_.getProperty(CRISP_, "Max Lock Range(mm)");
+                floatVal = Float.parseFloat(val);
+                maxLockRangeSpinner_.getModel().setValue( (int) (floatVal * 1000.0) );
+            }
+ 
          val = core_.getProperty(CRISP_, "CRISP State");
-         statusLabel_.setText("CRISP State: " + val);
+         statusLabel_.setText(val);
+         
+         val = core_.getProperty(CRISP_, "LogAmpAGC");
+         AGCLabel_.setText(val);
          
        } catch (Exception ex) {
           ReportingUtils.showError("Error reading values from CRISP");
@@ -233,12 +247,16 @@ public class CRISPFrame extends MMFrame {
         LEDSpinner_ = new javax.swing.JSpinner();
         gainSpinner_ = new javax.swing.JSpinner();
         nrAvgsSpinner_ = new javax.swing.JSpinner();
+        maxLockRangeSpinner_ = new JSpinner();
+        JLabel maxLockRangeLabel = new JLabel();
         naSpinner_ = new javax.swing.JSpinner();
         updateButton_ = new javax.swing.JButton();
         idleButton_ = new javax.swing.JButton();
         resetOffsetButton_ = new javax.swing.JButton();
         versionLabel = new javax.swing.JLabel();
         statusLabel_ = new javax.swing.JLabel();
+        AGCLabel_ = new JLabel();
+        pollCheckBox_ = new JCheckBox(); 
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         final JFrame frame = this;
@@ -285,6 +303,8 @@ public class CRISPFrame extends MMFrame {
         nrAvgLabel.setText("Nr of Avgs");
 
         naLabel.setText("Obj. NA");
+        
+        maxLockRangeLabel.setText("Range(" + "\u00B5" + "m)");
 
         LEDSpinner_.setModel(new javax.swing.SpinnerNumberModel(50, 0, 100, 1));
         LEDSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
@@ -322,11 +342,25 @@ public class CRISPFrame extends MMFrame {
             }
         });
 
+        maxLockRangeSpinner_.setModel(new javax.swing.SpinnerNumberModel(50, 1, 10000, 1));
+        maxLockRangeSpinner_.setPreferredSize(new java.awt.Dimension(50, 20));
+        maxLockRangeSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+            @Override
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                int newRangeValue = (Integer) maxLockRangeSpinner_.getModel().getValue();
+                try {
+                    core_.setProperty(CRISP_, "Max Lock Range(mm)", (float) newRangeValue / 1000.0);
+                } catch (Exception ex) {
+                    ReportingUtils.showError("Problem while setting LED intensity");
+                }
+            }
+        });
+
         updateButton_.setText("Refresh");
         updateButton_.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                UpdateButton_ActionPerformed(evt);
+                updateValues(true);
             }
         });
 
@@ -334,7 +368,11 @@ public class CRISPFrame extends MMFrame {
         idleButton_.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                IdleButton_ActionPerformed(evt);
+                try {
+                    core_.setProperty(CRISP_, "CRISP State", "Idle");
+                } catch (Exception ex) {
+                    ReportingUtils.showError("Problem setting Idle State");
+                }
             }
         });
 
@@ -343,6 +381,24 @@ public class CRISPFrame extends MMFrame {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 ResetOffsetButton_ActionPerformed(evt);
+            }
+        });
+        
+        final Timer timer = new Timer(1000, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+                updateValues(false);
+            }
+        });
+        pollCheckBox_.setText("Continuously update State and AGC");
+        pollCheckBox_.addChangeListener(new ChangeListener(){
+            @Override
+            public void stateChanged(ChangeEvent ce) {
+                if (pollCheckBox_.isSelected()) {
+                    timer.restart();
+                } else {
+                    timer.stop();
+                }
             }
         });
 
@@ -354,7 +410,10 @@ public class CRISPFrame extends MMFrame {
         this.add(lockButton_, "span 3, split 2, grow, gapright 40");
         this.add(calibrateButton_, "span 3, split 2, grow, gapleft 40, wrap 20px");
         this.add(new JSeparator(), "span, grow, wrap 20px");
-        this.add(statusLabel_, "span, grow, wrap");
+        this.add(new JLabel("CRISP State: "));
+        this.add(statusLabel_, "span 2, grow, wrap");
+        this.add(new JLabel("AGC: "));
+        this.add(AGCLabel_, "span 2, grow, wrap");
         
         this.add(ledIntLabel);
         this.add(LEDSpinner_);
@@ -368,11 +427,15 @@ public class CRISPFrame extends MMFrame {
         this.add(naLabel);
         this.add(naSpinner_);
         this.add(curveButton_, "grow, wrap");
+        this.add(maxLockRangeLabel);
+        this.add(maxLockRangeSpinner_, "grow, wrap");
+        this.add(pollCheckBox_, "span 3, grow, wrap");
         this.add(versionLabel, "span 3, align right, wrap");        
-
 
         pack();
     }
+
+            
 
     private void LockButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LockButton_ActionPerformed
        if ("Lock".equals(evt.getActionCommand())) {
@@ -404,6 +467,9 @@ public class CRISPFrame extends MMFrame {
           // HACK: The controller appears to be unresponsive for ~1.5 s after  
           // setting the loG_cal state.  Either the user can set the serial port 
           // timeout to something higher than 2000ms, or we can wait here 
+          // UPDATE: Newer firmware is no longer unresponsive, so this sleep can
+          // go away.  On the other hand, it does not reallty hurt and this way
+          // we stay backward compatible
           setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
           Thread.sleep(2000);
           setCursor(Cursor.getDefaultCursor());
@@ -427,7 +493,6 @@ public class CRISPFrame extends MMFrame {
          final JLabel jl = new JLabel();
          final JLabel jlA = new JLabel();
          @SuppressWarnings("unused")
-         final JLabel jlB = new JLabel();
          final String msg1 = "Value:  ";
          final String msg2 = "Adjust the detector lateral adjustment screw until the value is > 100 or" +
                  "< -100 and stable.";
@@ -452,11 +517,6 @@ public class CRISPFrame extends MMFrame {
          timer.setInitialDelay(500);
          timer.start();
 
-         /*JOptionPane optionPane = new JOptionPane(new JLabel("Hello World",JLabel.CENTER));
-         JDialog dialog = optionPane.createDialog("");
-    dialog.setModal(true);
-    dialog.setVisible(true); */
-
          JOptionPane.showMessageDialog(null, msg, "CRISP Calibration", JOptionPane.OK_OPTION);
 
          timer.stop();
@@ -473,7 +533,7 @@ public class CRISPFrame extends MMFrame {
          ReportingUtils.showMessage("Calibration failed. Focus, make sure that the NA variable is set correctly and try again." + 
                "\nYou can also try increasing the serial port timeout in the HCW."); 
       }
-    }//GEN-LAST:event_CalibrateButton_ActionPerformed
+    }
 
     private void LEDSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_LEDSpinner_StateChanged
        SpinnerModel numberModel = LEDSpinner_.getModel();
@@ -484,13 +544,9 @@ public class CRISPFrame extends MMFrame {
        } catch (Exception ex) {
           ReportingUtils.showError("Problem while setting LED intensity");
        }
-    }//GEN-LAST:event_LEDSpinner_StateChanged
+    }
 
-    private void UpdateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UpdateButton_ActionPerformed
-       updateValues();
-    }//GEN-LAST:event_UpdateButton_ActionPerformed
-
-    private void GainSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_GainSpinner_StateChanged
+    private void GainSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {
        SpinnerModel numberModel = gainSpinner_.getModel();
 
        int newGainValue = (Integer) numberModel.getValue();
@@ -499,9 +555,9 @@ public class CRISPFrame extends MMFrame {
        } catch (Exception ex) {
           ReportingUtils.showError("Problem while setting LED intensity");
        }
-    }//GEN-LAST:event_GainSpinner_StateChanged
+    }
 
-    private void NrAvgsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_NrAvgsSpinner_StateChanged
+    private void NrAvgsSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {
        SpinnerModel numberModel = nrAvgsSpinner_.getModel();
 
        int newNrAvgValue = (Integer) numberModel.getValue();
@@ -510,9 +566,9 @@ public class CRISPFrame extends MMFrame {
        } catch (Exception ex) {
           ReportingUtils.showError("Problem while setting LED intensity");
        }
-    }//GEN-LAST:event_NrAvgsSpinner_StateChanged
+    }
 
-    private void NASpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_NASpinner_StateChanged
+    private void NASpinner_StateChanged(javax.swing.event.ChangeEvent evt) {
        SpinnerModel numberModel = naSpinner_.getModel();
 
        float newNAValue = (Float) numberModel.getValue();
@@ -521,15 +577,15 @@ public class CRISPFrame extends MMFrame {
        } catch (Exception ex) {
           ReportingUtils.showError("Problem while setting LED intensity");
        }
-    }//GEN-LAST:event_NASpinner_StateChanged
+    }
 
-    private void ResetOffsetButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ResetOffsetButton_ActionPerformed
+    private void ResetOffsetButton_ActionPerformed(java.awt.event.ActionEvent evt) {
        try {
           core_.setProperty(CRISP_, "CRISP State", "Reset Focus Offset");
        } catch (Exception ex) {
           ReportingUtils.showError("Problem resetting Focus Offset");
        }
-    }//GEN-LAST:event_ResetOffsetButton_ActionPerformed
+    }
 
     private void CurveButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CurveButton_ActionPerformed
        try {
@@ -566,16 +622,6 @@ public class CRISPFrame extends MMFrame {
           setCursor(Cursor.getDefaultCursor());
        }
     }
-
-    private void IdleButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SaveButton_ActionPerformed
-       try {
-          core_.setProperty(CRISP_, "CRISP State", "Idle");
-       } catch (Exception ex) {
-          ReportingUtils.showError("Problem setting Idle State");
-       }
-    }
-
-
 
 
 }
