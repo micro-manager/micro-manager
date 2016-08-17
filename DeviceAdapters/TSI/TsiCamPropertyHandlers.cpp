@@ -26,6 +26,9 @@ int TsiCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      if (color)
+         return DEVICE_OK; // ignore if color camera
+
       long bin = 1;
       pProp->Get(bin);
       roiBinData.XBin = bin;
@@ -195,6 +198,38 @@ int TsiCam::OnTemperatureSetPoint(MM::PropertyBase* /*pProp*/, MM::ActionType eA
    }
    else if (eAct == MM::BeforeGet)
    {
+   }
+   return DEVICE_OK;
+}
+
+int TsiCam::OnColorEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      if (val.compare(g_Off) == 0)
+      {
+         color = false;
+      }
+      else if (val.compare(g_On) == 0)
+      {
+         if (!color)
+         {
+            // switch binning to 1
+            int ret = SetProperty(MM::g_Keyword_Binning, "1");
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+         color = true;
+      }
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      if (color)
+         pProp->Set(g_On);
+      else
+         pProp->Set(g_Off);
    }
    return DEVICE_OK;
 }

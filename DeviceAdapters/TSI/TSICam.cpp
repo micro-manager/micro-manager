@@ -124,10 +124,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 TsiCam::TsiCam() :
    initialized(0), stopOnOverflow(false),
    acquiring(0),
-   color(false),
+   bayerMask(false),
    bitDepth(14),
    wb(false),
-   whiteBalanceSelected(0)
+   whiteBalanceSelected(0),
+   color(true)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -375,13 +376,24 @@ int TsiCam::Initialize()
    }
 
    // check color capabilities
-   color = false;
+   bayerMask = false;
    char colorFiltertype[32] = {0};
    bRet = camHandle_->GetParameter (TSI_PARAM_COLOR_FILTER_TYPE, 32, &colorFiltertype);
    if (bRet && (strlen (colorFiltertype) != 0) && (strcmp (colorFiltertype, "mono") != 0))
+      bayerMask = true;
+   else
+      bayerMask = false;
+
+   CreateProperty(g_ColorFilterArray, strlen(colorFiltertype) == 0 ? g_No : colorFiltertype, MM::String, true);
+
+   if (bayerMask)
    {
       color = true;
-      ret = CreateProperty(g_ColorFilterArray, colorFiltertype, MM::String, true);
+      // create color select property
+      pAct = new CPropertyAction(this, &TsiCam::OnColorEnable);
+      CreateProperty(g_ColorEnable, g_On, MM::String, false, pAct);
+      AddAllowedValue(g_ColorEnable, g_On);
+      AddAllowedValue(g_ColorEnable, g_Off);
 
       //configure color processing
       ConfigureDefaultColorPipeline();
@@ -393,27 +405,24 @@ int TsiCam::Initialize()
       AddAllowedValue(g_WhiteBalance, g_Set);
       AddAllowedValue(g_WhiteBalance, g_On);
 
-      assert(ret == DEVICE_OK);
-
+   } else {
+      // we can't support color if no bayer mask
+      color = false;
    }
 
-      // binning
+   // binning
    pAct = new CPropertyAction (this, &TsiCam::OnBinning);
    ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
    assert(ret == DEVICE_OK);
 
    vector<string> binValues;
    binValues.push_back("1");
-   if (!color)
-   {
-      // binning is not supported for color cameras
-      binValues.push_back("2");
-      binValues.push_back("4");
-      binValues.push_back("8");
-   }
+   binValues.push_back("2");
+   binValues.push_back("4");
+   binValues.push_back("8");
+  
    ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
    assert(ret == DEVICE_OK);
-
 
    ret = ResizeImageBuffer();
    if (ret != DEVICE_OK)

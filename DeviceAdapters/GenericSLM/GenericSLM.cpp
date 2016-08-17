@@ -1,12 +1,9 @@
-///////////////////////////////////////////////////////////////////////////////
-// FILE:          GenericSLM.cpp
-// PROJECT:       Micro-Manager
-// SUBSYSTEM:     DeviceAdapters
-//-----------------------------------------------------------------------------
 // DESCRIPTION:   GenericSLM device adapter
-// COPYRIGHT:     University of California, San Francisco, 2009
+// COPYRIGHT:     2009-2016 Regents of the University of California
+//                2016 Open Imaging, Inc.
 //
 // AUTHOR:        Arthur Edelstein, arthuredelstein@gmail.com, 3/17/2009
+//                Mark Tsuchida (refactor/rewrite), 2016
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -19,56 +16,56 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-
-#ifdef WIN32
-   #include <windows.h>
-   #define snprintf _snprintf
-#endif
-
-
-#include "../../MMDevice/MMDevice.h"
 #include "GenericSLM.h"
-#include <string>
-#include <math.h>
-#include "../../MMDevice/ModuleInterface.h"
-#include "../../MMDevice/DeviceUtils.h"
-#include <sstream>
-#include <iostream>
-#include <windows.h>
-#include <tchar.h>
+
+#include "Monitors.h"
+#include "OffscreenBuffer.h"
+#include "SLMWindowThread.h"
+#include "SleepBlocker.h"
+
+#include "ModuleInterface.h"
+#include "DeviceUtils.h"
+
+#include <Windows.h>
+
+#include <boost/lexical_cast.hpp>
+
+#include <algorithm>
 
 
-// GenericSLM
 const char* g_GenericSLMName = "GenericSLM";
-const char* g_Keyword_Intensity = "Intensity";
-const char* g_Graphics_Port = "GraphicsPort";
-const char* g_Keyword_Inversion = "Inversion";
-const char* g_Keyword_MonochromeColor = "MonochromeColor";
+const char* g_PropName_GraphicsPort = "GraphicsPort";
+const char* g_PropName_TestModeWidth = "TestModeWidth";
+const char* g_PropName_TestModeHeight = "TestModeHeight";
+const char* g_PropName_Inversion = "Inversion";
+const char* g_PropName_MonoColor = "MonochromeColor";
 
-///////////////////////////////////////////////////////////////////////////////
-// Exported MMDevice API
-///////////////////////////////////////////////////////////////////////////////
+
+enum {
+   ERR_INVALID_TESTMODE_SIZE = 20000,
+   ERR_CANNOT_DETACH,
+   ERR_CANNOT_ATTACH,
+   ERR_OFFSCREEN_BUFFER_UNAVAILABLE,
+};
+
 
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_GenericSLMName, MM::SLMDevice, "Spatial Light Modulator controlled through computer graphics output");
+   RegisterDevice(g_GenericSLMName, MM::SLMDevice,
+         "Spatial light modulator controlled through computer graphics output");
 }
 
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-
    if (deviceName == 0)
       return 0;
 
    if (strcmp(deviceName, g_GenericSLMName) == 0)
    {
-      // create GenericSLM
       GenericSLM* pGenericSLM = new GenericSLM(g_GenericSLMName);
       return pGenericSLM;
    }
-
-
 
    return 0;
 }
@@ -79,415 +76,216 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
    delete pDevice;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// GenericSLM implementation
-// ~~~~~~~~~~~~~~~~~~~~
 
 GenericSLM::GenericSLM(const char* name) :
-   initialized_(false),
    name_(name),
-   busy_(false),
-   error_(0),
-   graphicsPortDescription_(""),
-   allOff_(false),
-   allOn_(false),
+   width_(0),
+   height_(0),
+   windowThread_(0),
+   sleepBlocker_(0),
+   shouldBlitInverted_(false),
    invert_(false),
-   colorInvert_(false),
-   inversionNum_(0),
-   monochromeColorNum_(0),
    inversionStr_("Off"),
-   monochromeColorStr_("White"),
-   chosenDisplayIndex_(-1),
-   ddObject_(NULL)
+   monoColor_(SLM_COLOR_WHITE),
+   monoColorStr_("White")
 {
-   assert(strlen(name) < (unsigned int) MM::MaxStrLength);
-
    InitializeDefaultErrorMessages();
-   SetErrorText(ERR_DIRECT_DRAW, "Error invoking Direct Draw function");
+   SetErrorText(ERR_INVALID_TESTMODE_SIZE,
+         "Invalid test mode window size");
+   SetErrorText(ERR_CANNOT_DETACH,
+         "Failed to detach monitor from desktop");
+   SetErrorText(ERR_CANNOT_ATTACH,
+         "Failed to attach monitor to desktop");
+   SetErrorText(ERR_OFFSCREEN_BUFFER_UNAVAILABLE,
+         "Cannot set image (device uninitialized?)");
 
-   displays_ = getMonitorInfo();
+   availableMonitors_ = GetMonitorNames(true, false);
 
-   // create pre-initialization properties
-   // ------------------------------------
+   // Create pre-init properties
 
-   // Name
-   CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
-
-   // Description
-   CreateProperty(MM::g_Keyword_Description, "SLM controlled by computer display adapter output", MM::String, true);
-
-   // Graphics Port
-   GenerateGraphicsPortProperty();
-
-   // Mode Properties
-   GenerateModeProperties();
-}
-
-
-void GenericSLM::GenerateModeProperties()
-{
-   CPropertyAction* pAct;
-
-   // Inversion Mode property
-   pAct = new CPropertyAction (this, &GenericSLM::OnInversion);
-   CreateProperty(g_Keyword_Inversion, "Off", MM::String, false, pAct, false);
-   AddAllowedValue(g_Keyword_Inversion, "Off", 0);
-   AddAllowedValue(g_Keyword_Inversion, "On", 1);
-
-   // Monochrome Mode property
-   pAct = new CPropertyAction (this, &GenericSLM::OnMonochromeColor);
-   CreateProperty(g_Keyword_MonochromeColor, "White", MM::String, false, pAct, false);
-   AddAllowedValue(g_Keyword_MonochromeColor, "White", 0);
-   AddAllowedValue(g_Keyword_MonochromeColor, "Red", 1);
-   AddAllowedValue(g_Keyword_MonochromeColor, "Green", 2);
-   AddAllowedValue(g_Keyword_MonochromeColor, "Blue", 3);
-}
-
-
-void GenericSLM::GenerateGraphicsPortProperty()
-{
-
-   // Graphics port
-   CPropertyAction* pAct = new CPropertyAction (this, &GenericSLM::OnGraphicsPort);
-   CreateProperty(g_Graphics_Port, "Undefined", MM::String, false, pAct, true);
-
-   for(unsigned int i=0;i<displays_.size();++i) {
-      if (! displays_[i].isPrimary) {
-         stringstream displayDescription;
-         displayDescription << displays_[i].cardName;
-         AddAllowedValue(g_Graphics_Port,displayDescription.str().c_str(),i);
-      } else {
-         primaryDisplayIndex_ = i;
-      }
+   CreateStringProperty(g_PropName_GraphicsPort, "TestMode", false, 0, true);
+   AddAllowedValue(g_PropName_GraphicsPort, "TestMode", 0);
+   // Map available monitors 0 thru N to property data 1 thru N + 1
+   for (unsigned i = 0; i < availableMonitors_.size(); ++i)
+   {
+      AddAllowedValue(g_PropName_GraphicsPort,
+            availableMonitors_[i].c_str(), i + 1);
    }
+
+   CreateIntegerProperty(g_PropName_TestModeWidth, 128, false, 0, true);
+   CreateIntegerProperty(g_PropName_TestModeHeight, 128, false, 0, true);
 }
 
 
 GenericSLM::~GenericSLM()
 {
-   if (initialized_)
-      Shutdown();
-}
-
-
-bool GenericSLM::Busy()
-{
-   return false;
+   Shutdown();
 }
 
 
 void GenericSLM::GetName(char* name) const
 {
-   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
    CDeviceUtils::CopyLimitedString(name, name_.c_str());
 }
 
 
 int GenericSLM::Initialize()
 {
-   if (!initialized_)
+   Shutdown();
+
+   //
+   // Create post-init properties
+   //
+
+   int err = CreateStringProperty(MM::g_Keyword_Name, name_.c_str(), true);
+   if (err != DEVICE_OK)
+      return err;
+   err = CreateStringProperty(MM::g_Keyword_Description,
+         "SLM controlled by computer display adapter output", true);
+   if (err != DEVICE_OK)
+      return err;
+
+   err = CreateStringProperty(g_PropName_Inversion, inversionStr_.c_str(), false,
+         new CPropertyAction(this, &GenericSLM::OnInversion));
+   if (err != DEVICE_OK)
+      return err;
+   AddAllowedValue(g_PropName_Inversion, "Off", 0);
+   AddAllowedValue(g_PropName_Inversion, "On", 1);
+
+   err = CreateStringProperty(g_PropName_MonoColor, monoColorStr_.c_str(), false,
+         new CPropertyAction(this, &GenericSLM::OnMonochromeColor));
+   if (err != DEVICE_OK)
+      return err;
+   AddAllowedValue(g_PropName_MonoColor, "White", SLM_COLOR_WHITE);
+   AddAllowedValue(g_PropName_MonoColor, "Red", SLM_COLOR_RED);
+   AddAllowedValue(g_PropName_MonoColor, "Green", SLM_COLOR_GREEN);
+   AddAllowedValue(g_PropName_MonoColor, "Blue", SLM_COLOR_BLUE);
+   AddAllowedValue(g_PropName_MonoColor, "Cyan", SLM_COLOR_CYAN);
+   AddAllowedValue(g_PropName_MonoColor, "Magenta", SLM_COLOR_MAGENTA);
+   AddAllowedValue(g_PropName_MonoColor, "Yellow", SLM_COLOR_YELLOW);
+
+   //
+   // Set up the monitor and window
+   //
+
+   long graphicsPortIndex;
+   err = GetCurrentPropertyData(g_PropName_GraphicsPort, graphicsPortIndex);
+   if (err != DEVICE_OK)
+      return err;
+
+   LONG x, y, w, h;
+   std::vector<std::string> desktopMonitors;
+   if (graphicsPortIndex == 0) // Test mode
    {
-      if (chosenDisplayIndex_ == -1)
-         return DEVICE_NOT_CONNECTED;
+      err = GetProperty(g_PropName_TestModeWidth, w);
+      if (err != DEVICE_OK)
+         return err;
+      err = GetProperty(g_PropName_TestModeHeight, h);
+      if (err != DEVICE_OK)
+         return err;
 
-      LogMessage("GenericSLM::Initialize()");
+      if (w < 1 || h < 1)
+         return ERR_INVALID_TESTMODE_SIZE;
 
-      stringstream msg;
-      displays_[chosenDisplayIndex_].isSLM = true;
+      // The top-left of the primary desktop monior is (0, 0), so this is a
+      // safe position for the window
+      x = y = 100;
 
-      msg << "Graphics Port: " << displays_[chosenDisplayIndex_].deviceName;
-      this->LogMessage(msg.str().c_str());
+      desktopMonitors = GetMonitorNames(false, true);
+   }
+   else // Real monitor
+   {
+      // Map property data 1 thru N + 1 to available monitors 0 thru N
+      monitorName_ = availableMonitors_[graphicsPortIndex - 1];
 
-      if (! displays_[chosenDisplayIndex_].isDisabled) {
-         DetachDisplayDevice(&displays_[chosenDisplayIndex_]);
+      if (!DetachMonitorFromDesktop(monitorName_))
+      {
+         monitorName_ = "";
+         return ERR_CANNOT_DETACH;
       }
 
-      POINT pos = getNextDisplayPosition(displays_);
+      desktopMonitors = GetMonitorNames(false, true);
 
-      displays_[chosenDisplayIndex_].x = pos.x;
-      displays_[chosenDisplayIndex_].y = pos.y;
+      LONG posX, posY;
+      GetRightmostMonitorTopRight(desktopMonitors, posX, posY);
 
-      AttachDisplayDevice(&displays_[chosenDisplayIndex_]);
+      if (!AttachMonitorToDesktop(monitorName_, posX, posY))
+      {
+         monitorName_ = "";
+         return ERR_CANNOT_ATTACH;
+      }
 
-      viewBounds = getViewingMonitorsBounds(displays_);
-
-      DeployWindow();
-
-      Sleep(500); // Wait for the adapter hardware to get fully attached.
-
-      FixWindows(wnd_);
-      SetWindowPos(wnd_, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
-      thd_ = new GenericSLMWindowsGUIThread(wnd_);
-      thd_->Start();
-
-      InitializeDrawContext();
-
-      initialized_=true;
+      GetMonitorRect(monitorName_, x, y, w, h);
    }
-   return HandleErrors();
+
+   std::string windowTitle = "MM_SLM " +
+      boost::lexical_cast<std::string>(w) + "x" +
+      boost::lexical_cast<std::string>(h) + " [" +
+      (monitorName_.empty() ? "Test Mode" : monitorName_) +
+      "]";
+
+   windowThread_ = new SLMWindowThread(monitorName_.empty(),
+         windowTitle, x, y, w, h);
+   windowThread_->Show();
+
+   RECT mouseClipRect;
+   if (GetBoundingRect(desktopMonitors, mouseClipRect))
+      sleepBlocker_ = new SleepBlocker(mouseClipRect);
+   else
+      sleepBlocker_ = new SleepBlocker();
+   sleepBlocker_->Start();
+
+   width_ = w;
+   height_ = h;
+
+   return DEVICE_OK;
 }
 
 
 int GenericSLM::Shutdown()
 {
-   if (initialized_)
+   width_ = height_ = 0;
+
+   if (sleepBlocker_)
    {
-      initialized_ = false;
-      LogMessage("GenericSLM::Shutdown()");
-      DestroyDrawContext();
-
-      thd_->Stop();
-      thd_->wait();
-
-      RemoveWindow();
-      DetachDisplayDevice(&displays_[chosenDisplayIndex_]);
-
-      Sleep(500);
+      sleepBlocker_->Stop();
+      delete sleepBlocker_;
+      sleepBlocker_ = 0;
    }
-   return HandleErrors();
-}
 
+   if (windowThread_)
+   {
+      delete windowThread_;
+      windowThread_ = 0;
+   }
 
-void GenericSLM::InitializeDrawContext()
-{
-   // Create a device context (display image buffer) for window.
-   windc_ = GetDC(wnd_);
+   if (!monitorName_.empty())
+   {
+      DetachMonitorFromDesktop(monitorName_);
+      monitorName_ = "";
+   }
 
-   // Create a device context (drawing image buffer) in memory.
-   memdc_ = CreateCompatibleDC(windc_);
-
-   // Create a device-independent bitmap (DIB) to be associated with the memory device context.
-   // Retrieve the pointer to the bitmap pixel data (bmpPixels_).
-   hbmp_ = CreateDIBSection(memdc_, createBitmapInfo(), DIB_RGB_COLORS, (void **) &bmpPixels_, NULL, NULL);
-
-   // Save the old 1x1 pixel bitmap from the memory device context and apply the new bitmap, hbmp_.
-   hbmpold_ = (HBITMAP) SelectObject(memdc_, hbmp_);
-
-   // Get the BITMAP associated with the HBITMAP hbmp_; call it bmp.
-   BITMAP bmp;
-   GetObject(hbmp_, sizeof(BITMAP), &bmp);
-
-   // Get the byte-padded width of the bitmap.
-   bmWidthBytes_ = bmp.bmWidthBytes;
-
-   // Fill with black (off) pixels.
-   FillDC(memdc_, RGB(0,0,0));
-
-   // Spit out the results.
-   stringstream msg;
-   msg << "bmp: " << bmp.bmWidth << " x " << bmp.bmHeight << ", bits = " << bmp.bmBits << ", bitsPixel = " << bmp.bmBitsPixel
-      << ", Contexts = " << bmp.bmPlanes << ", type = " << bmp.bmType << ", widthBytes = " << bmp.bmWidthBytes;
-   LogMessage(msg.str(), false);
-}
-
-
-BITMAPINFO * GenericSLM::createBitmapInfo()
-{
-   BITMAPINFO *pbi;
-
-   // Create a BITMAPINFOHEADER for creating a device-independent bitmap (DIB).
-   BITMAPINFOHEADER bih;
-
-   bih.biSize = sizeof(bih);
-   bih.biWidth = displays_[chosenDisplayIndex_].width;
-   bih.biHeight = displays_[chosenDisplayIndex_].height;
-   bih.biPlanes = 1;         // Always 1
-   bih.biCompression = BI_RGB; // Uncompressed
-   bih.biSizeImage = 0;        // Okay for BI_RGB format.
-   bih.biXPelsPerMeter = 0;    // Not used
-   bih.biYPelsPerMeter = 0;    // Not used
-   bih.biClrUsed = 0;          // Not used
-   bih.biClrImportant = 0;     // Not used
-   bih.biBitCount = 32;
-
-   BITMAPINFO bi;
-   pbi = &bi;
-   pbi->bmiHeader = bih;
-   return pbi;
-}
-
-
-int GenericSLM::BlitBitmap()
-{
-   int ret = WaitForScreenRefresh();
-   if (ret != DEVICE_OK)
-      return ret;
-   BitBlt(windc_, 0, 0, GetWidth(), GetHeight(), memdc_, 0, 0, colorInvert_ ? NOTSRCCOPY : SRCCOPY);
    return DEVICE_OK;
 }
 
 
-int GenericSLM::WaitForScreenRefresh()
+bool GenericSLM::Busy()
 {
-   if (ddObject_ == NULL)
-   {
-      HINSTANCE hLibDDraw = LoadLibrary(TEXT("ddraw.dll"));
-      DIRECTDRAWCREATE ddcreate = (DIRECTDRAWCREATE) GetProcAddress(hLibDDraw, "DirectDrawCreate");
-
-      if (ddcreate) {
-         HRESULT hr = ddcreate(NULL, &ddObject_, NULL);
-         if (hr != DD_OK) {
-            this->LogMessage("DirectDraw call in WaitForScreenRefresh function failed");
-            ddObject_ = NULL;
-            return ERR_DIRECT_DRAW;
-         }
-      }
-   }
-   ddObject_->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, NULL);
-   return DEVICE_OK;
-}
-
-
-void GenericSLM::DestroyDrawContext()
-{
-   // Windows API cleanup of device contexts and bitmaps.
-
-   // Set the memory device context back to its original 1x1 bitmap.
-   SelectObject(memdc_, hbmpold_);
-
-   // Delete the memory device context.
-   DeleteDC(memdc_);
-
-   // Delete the bitmap.
-   DeleteObject(hbmp_);
-}
-
-
-int GenericSLM::SetImage(unsigned char* pixels)
-{
-   if (initialized_)
-   {
-      unsigned int * newPix = (unsigned int *) malloc(displays_[chosenDisplayIndex_].height * displays_[chosenDisplayIndex_].width * 4);
-      ConvertOneByteToFour(pixels,newPix);
-      colorInvert_ = false;
-      CopyIntPixelsToBitmap(newPix);
-      free(newPix);
-      return DEVICE_OK;
-   }
-   else
-   {
-      SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "SLM not initialized.");
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-   }
-}
-
-
-void GenericSLM::ConvertOneByteToFour(unsigned char* pixelsIn, unsigned int * pixelsOut)
-{
-   long length = displays_[chosenDisplayIndex_].height * displays_[chosenDisplayIndex_].width;
-   unsigned char * pixelsOutByte = (unsigned char *) pixelsOut;
-   for (long i=0;i<length;++i)
-   {
-      unsigned char pixel = *pixelsIn;
-      if (invert_)
-         pixel = ~pixel;
-
-      // B
-      if (monochromeColorNum_ == 0 || monochromeColorNum_ == 3)
-         *pixelsOutByte = pixel;
-      else
-         *pixelsOutByte = 0;
-      ++pixelsOutByte;
-
-      // G
-      if (monochromeColorNum_ == 0 || monochromeColorNum_ == 2)
-         *pixelsOutByte = pixel;
-      else
-         *pixelsOutByte = 0;
-      ++pixelsOutByte;
-
-      // R
-      if (monochromeColorNum_ == 0 || monochromeColorNum_ == 1)
-         *pixelsOutByte = pixel;
-      else
-         *pixelsOutByte = 0;
-      ++pixelsOutByte;
-
-      // A (unused byte)
-      *pixelsOutByte = 0;
-      ++pixelsOutByte;
-
-      // Move to next input byte.
-      ++pixelsIn;
-   }
-}
-
-
-int GenericSLM::SetImage(unsigned int* pixels)
-{
-   if (initialized_)
-   {
-      colorInvert_ = invert_;
-      CopyIntPixelsToBitmap(pixels);
-      return DEVICE_OK;
-   }
-   else
-   {
-      SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "SLM not initialized.");
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-   }
-}
-
-
-void GenericSLM::CopyIntPixelsToBitmap(unsigned int* pixels)
-{
-   unsigned char * bmpLoc = (unsigned char *) bmpPixels_;
-   unsigned char * inputOrigin = (unsigned char *) pixels;
-   unsigned char * inputLoc;
-
-   int rows = displays_[chosenDisplayIndex_].height;
-   int cols = displays_[chosenDisplayIndex_].width;
-   long inputWidthBytes = cols * 4;
-   long bmpWidthBytes = bmWidthBytes_;
-
-   for (int row = rows - 1; row >= 0; --row)
-   {
-      inputLoc = inputOrigin + row * inputWidthBytes;
-      memcpy(bmpLoc, inputLoc, inputWidthBytes);
-      bmpLoc += bmpWidthBytes;
-   }
-}
-
-
-int GenericSLM::DisplayImage()
-{
-   if (initialized_)
-   {
-      inversionStr_ = invert_ ? "On" : "Off" ;
-
-      return BlitBitmap();
-   }
-   else
-   {
-      SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "SLM not active.");
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-   }
-}
-
-
-int GenericSLM::SetExposure(double /*interval_ms*/)
-{
-   // ignore for now.
-   return DEVICE_OK;
-}
-
-
-double GenericSLM::GetExposure()
-{
-   return 0;
+   // TODO We _could_ make the wait for vertical sync asynchronous
+   // (Make sure first that Projector knows to wait for non-busy)
+   return false;
 }
 
 
 unsigned int GenericSLM::GetWidth()
 {
-   return displays_[chosenDisplayIndex_].width;
+   return width_;
 }
 
 
 unsigned int GenericSLM::GetHeight()
 {
-   return displays_[chosenDisplayIndex_].height;
+   return height_;
 }
 
 
@@ -503,81 +301,92 @@ unsigned int GenericSLM::GetBytesPerPixel()
 }
 
 
-int GenericSLM::SetPixelsTo(unsigned char red, unsigned char green, unsigned char blue)
+int GenericSLM::SetExposure(double)
 {
-   if (initialized_)
-   {
-      if (invert_) {
-         red = ~red;
-         green = ~green;
-         blue = ~blue;
-      }
-      return FillDC(windc_, RGB(red, green, blue));
-   }
-   else
-   {
-      SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "SLM not active.");
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-   }
+   // ignore for now.
+   return DEVICE_OK;
+}
+
+
+double GenericSLM::GetExposure()
+{
+   return 0;
+}
+
+
+int GenericSLM::SetImage(unsigned char* pixels)
+{
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
+
+   offscreen->DrawImage(pixels, monoColor_, invert_);
+   return DEVICE_OK;
+}
+
+
+int GenericSLM::SetImage(unsigned int* pixels)
+{
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
+
+   offscreen->DrawImage(pixels);
+   shouldBlitInverted_ = invert_;
+   return DEVICE_OK;
 }
 
 
 int GenericSLM::SetPixelsTo(unsigned char intensity)
 {
-   if (initialized_)
-   {
-      COLORREF color( RGB(0,0,0) );
-      if (invert_)
-         intensity = ~intensity;
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
 
-      switch (monochromeColorNum_)
-      {
-         case 0: //white
-            color = RGB(intensity,intensity,intensity);
-            break;
+   intensity ^= (invert_ ? 0xff : 0x00);
 
-         case 1: //red
-            color = RGB(intensity,0,0);
-            break;
+   unsigned char redMask = (monoColor_ & SLM_COLOR_RED) ? 0xff : 0x00;
+   unsigned char greenMask = (monoColor_ & SLM_COLOR_GREEN) ? 0xff : 0x00;
+   unsigned char blueMask = (monoColor_ & SLM_COLOR_BLUE) ? 0xff : 0x00;
 
-         case 2: //green
-            color = RGB(0,intensity,0);
-            break;
+   COLORREF color(RGB(intensity & redMask,
+            intensity & greenMask,
+            intensity & blueMask));
 
-         case 3: //blue
-            color = RGB(0,0,intensity);
-            break;
-      }
-
-      return FillDC(windc_, color);
-   }
-   else
-   {
-      SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "SLM not active.");
-      return DEVICE_LOCALLY_DEFINED_ERROR;
-   }
+   offscreen->FillWithColor(color);
+   shouldBlitInverted_ = false;
+   return DisplayImage();
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers
-///////////////////////////////////////////////////////////////////////////////
-
-int GenericSLM::OnGraphicsPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+int GenericSLM::SetPixelsTo(unsigned char red, unsigned char green, unsigned char blue)
 {
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set((const char *) graphicsPortDescription_.c_str());
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long graphicsPortNum;
-      pProp->Get(graphicsPortDescription_);
-      GetCurrentPropertyData(g_Graphics_Port,graphicsPortNum);
-      chosenDisplayIndex_ = graphicsPortNum;
-      DetachDisplayDevice(&displays_[chosenDisplayIndex_]);
-   }
-   return HandleErrors();
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
+
+   unsigned char xorMask = invert_ ? 0xff : 0x00;
+
+   COLORREF color(RGB(red ^ xorMask, green ^ xorMask, blue ^ xorMask));
+
+   offscreen->FillWithColor(color);
+   shouldBlitInverted_ = false;
+   return DisplayImage();
+}
+
+
+int GenericSLM::DisplayImage()
+{
+   OffscreenBuffer* offscreen = windowThread_->GetOffscreenBuffer();
+   if (!offscreen)
+      return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
+
+   HDC onscreenDC = windowThread_->GetDC();
+   DWORD op = shouldBlitInverted_ ? NOTSRCCOPY : SRCCOPY;
+
+   refreshWaiter_.WaitForVerticalBlank();
+   offscreen->BlitTo(onscreenDC, op);
+   return DEVICE_OK;
 }
 
 
@@ -590,8 +399,12 @@ int GenericSLM::OnInversion(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(inversionStr_);
-      ((MM::Property *) pProp)->GetData(inversionStr_.c_str(), inversionNum_);
-      invert_ = (inversionNum_ == 1);
+      long data;
+      int ret = GetPropertyData(g_PropName_Inversion, inversionStr_.c_str(),
+            data);
+      if (ret != DEVICE_OK)
+         return ret;
+      invert_ = (data != 0);
    }
 
    return DEVICE_OK;
@@ -602,209 +415,18 @@ int GenericSLM::OnMonochromeColor(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(monochromeColorStr_.c_str());
+      pProp->Set(monoColorStr_.c_str());
    }
    else if (eAct == MM::AfterSet)
    {
-      pProp->Get(monochromeColorStr_);
-      ((MM::Property *) pProp)->GetData(monochromeColorStr_.c_str(), monochromeColorNum_);
+      pProp->Get(monoColorStr_);
+      long data;
+      int ret = GetPropertyData(g_PropName_MonoColor,
+            monoColorStr_.c_str(), data);
+      if (ret != DEVICE_OK)
+         return ret;
+      monoColor_ = (SLMColor)data;
    }
 
    return DEVICE_OK;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Error handler
-///////////////////////////////////////////////////////////////////////////////
-
-int GenericSLM::HandleErrors()
-{
-   int lastError = error_;
-   error_ = 0;
-   return lastError;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-/// Windows API stuff
-///////////////////////////////////////////////////////////////////////////////
-
-int GenericSLM::FillDC(HDC hdc, COLORREF color)
-{
-
-   RECT rect;
-   rect.left = 0;
-   rect.top = 0;
-   rect.right = GetWidth();
-   rect.bottom = GetHeight();
-
-   HBRUSH hbrush = CreateSolidBrush(color);
-   FillRect(hdc, &rect, hbrush);
-   return DEVICE_OK;
-}
-
-
-bool GenericSLM::AttachDisplayDevice(MonitorDevice * dev)
-{
-   DEVMODE defaultMode;
-
-   ZeroMemory(&defaultMode, sizeof(DEVMODE));
-   defaultMode.dmSize = sizeof(DEVMODE);
-   defaultMode.dmPosition.x = dev->x;
-   defaultMode.dmPosition.y = dev->y;
-   defaultMode.dmFields = DM_POSITION;
-
-   ChangeDisplaySettingsEx((LPSTR)dev->cardName.c_str(), &defaultMode, NULL, CDS_NORESET|CDS_UPDATEREGISTRY, NULL);
-   ChangeDisplaySettings(NULL, 0);
-   dev->isDisabled = false;
-   Sleep(1000);
-
-   updateMonitorRects(&displays_);
-   return true;
-}
-
-
-bool GenericSLM::DetachDisplayDevice(MonitorDevice * dev)
-{
-   int result;
-   DEVMODE    DevMode;
-   ZeroMemory(&DevMode, sizeof(DevMode));
-   DevMode.dmSize = sizeof(DevMode);
-   DevMode.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_POSITION
-      | DM_DISPLAYFREQUENCY | DM_DISPLAYFLAGS ;
-   result = ChangeDisplaySettingsEx(dev->cardName.c_str(), &DevMode, NULL, CDS_UPDATEREGISTRY, NULL);
-   result = ChangeDisplaySettingsEx(dev->cardName.c_str(), &DevMode, NULL, CDS_UPDATEREGISTRY, NULL);
-   dev->isDisabled = true;
-
-   updateMonitorRects(&displays_);
-   return true;
-}
-
-
-void GenericSLM::DeployWindow()
-{
-   updateMonitorRects(&displays_);
-   const char * className = name_.append("_MMWindow").c_str();
-
-   winClass_ = new WinClass(WindowProcedure, className, 0);
-   winClass_->SetBackColor(RGB(0,0,0)); // Make sure the window is black at the beginning.
-   winClass_->Register();
-
-   WinMaker win ("MM_SLM", className, 0, displays_[chosenDisplayIndex_].x, displays_[chosenDisplayIndex_].y, displays_[chosenDisplayIndex_].width, displays_[chosenDisplayIndex_].height);
-   win.Show(1);
-
-   // Make this the topmost window.
-   SetWindowPos(win.getHandle(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-
-   wnd_ = win.getHandle();
-}
-
-
-void GenericSLM::RemoveWindow()
-{
-   DestroyWindow(wnd_);
-   winClass_->Unregister();
-}
-
-
-// Windows GUI thread to prevent screen savers or hibernation, and prevent the cursor from getting lost.
-int GenericSLMWindowsGUIThread::svc(void)
-{
-   long i=0;
-   while(!stop_)
-   {
-      ++i;
-
-      if ((i % 900) == 0) {  // Every 30 seconds or so ...
-         // ... reset idle clocks to prevent screensaver or hibernation (would appear on SLM).
-         SetThreadExecutionState(ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED);
-      }
-
-      if ((i % 30) == 0)
-      {
-         //FixWindows(hwnd_); // This seems to be too slow. Run in separate thread?
-         //SetWindowPos(hwnd_, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE); // This seems to be too slow.
-      }
-
-      RestrictCursor();
-
-      Sleep(30);
-   }
-
-   return 0;
-}
-
-int GenericSLMWindowsGUIThread::RestrictCursor()
-{
-   ClipCursor(&viewBounds);
-   return 0;
-}
-
-
-// Static functions for controlling windows.
-bool GenericSLM::FixWindows(HWND slmWnd)
-{
-   HWND wnd;
-   vector<HWND> windows = GetWindowList();
-   char caption[32];
-
-   for (unsigned int i=0;i<windows.size();++i)
-   {
-      wnd = windows[i];
-
-      if (IsWindowVisible(windows[i]))
-      {
-         GetWindowText(wnd, caption, 32);
-         if (strncmp(caption, "MM_SLM", 6) !=0 && wnd != slmWnd)
-         {
-            MoveWindowToViewingMonitor(wnd);
-         }
-      }
-   }
-   return true;
-}
-
-
-void GenericSLM::MoveWindowToViewingMonitor(HWND wnd)
-{
-   RECT winRect;
-   int width, height;
-   GetWindowRect(wnd, &winRect);
-
-   if ((winRect.left > viewBounds.right) || (winRect.top > viewBounds.bottom))
-   {
-      width = winRect.right - winRect.left;
-      height = winRect.bottom - winRect.top;
-      winRect.left = 10;
-      winRect.top = 10;
-      SetWindowPos(wnd, HWND_TOP, winRect.left, winRect.top, width, height, SWP_NOZORDER);
-   }
-}
-
-
-vector<HWND> GenericSLM::GetWindowList()
-{
-   windowList_.clear();
-   EnumWindows(reinterpret_cast<WNDENUMPROC>(&GenericSLM::AddWindowToList), (long) &windowList_);
-   return windowList_;
-}
-
-
-// Only called from GetWindowList()
-BOOL CALLBACK GenericSLM::AddWindowToList(HWND wnd, long windowListAddr)
-{
-   ((vector<HWND> *) windowListAddr)->push_back(wnd);
-   EnumChildWindows(wnd,reinterpret_cast<WNDENUMPROC>(AddWindowToList),windowListAddr);
-   return 1;
-}
-
-
-HDC GenericSLM::CreateDeviceContext(string deviceName)
-{
-   DEVMODE dm;
-   ZeroMemory(&dm, sizeof(dm));
-   dm.dmSize = sizeof(dm);
-   EnumDisplaySettingsEx(deviceName.c_str(), ENUM_REGISTRY_SETTINGS, &dm, 0);
-   return CreateDC(deviceName.c_str(), 0, 0, &dm);
 }
