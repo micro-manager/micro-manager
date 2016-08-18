@@ -524,7 +524,17 @@ public final class ContrastCalculator {
    public static HistogramData calculateHistogramWithSettings(Image image,
          ImagePlus plus, int component, DisplaySettings settings) {
       // We span the full allowed intensity values.
-      int bitDepth = image.getMetadata().getBitDepth();
+      int bitDepth = 0;
+      try {
+         bitDepth = image.getMetadata().getBitDepth();
+      }
+      catch (NullPointerException e) {
+         switch (image.getBytesPerPixel()) {
+            case 1: bitDepth = 8; break;
+            case 2: bitDepth = 16; break;
+            case 4: bitDepth = 8; break;
+         }
+      }
       Double percentage = settings.getExtremaPercentage();
       if (percentage == null) {
          percentage = 0.0;

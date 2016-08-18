@@ -419,14 +419,22 @@ public final class CanvasUpdateQueue {
          for (int i = 0; i < image.getNumComponents(); ++i) {
             int bitDepth = settings.getSafeBitDepthIndex(channel, 0);
             if (bitDepth == 0) {
-               // Use camera depth.
-               bitDepth = image.getMetadata().getBitDepth();
+               try {
+                  bitDepth = image.getMetadata().getBitDepth();
+               }
+               catch (NullPointerException e) {
+                  switch (image.getBytesPerPixel()) {
+                     case 1: bitDepth = 8; break;
+                     case 2: bitDepth = 16; break;
+                     case 4: bitDepth = 8; break;
+                  }
+               }
             }
             else {
                // Add 3 to convert from index to power of 2.
                bitDepth += 3;
             }
-            // 8 means 256 bins.
+            // TODO Why a minimum of 256 bins?
             int binPower = Math.min(8, bitDepth);
             HistogramData data = ContrastCalculator.calculateHistogramWithSettings(
                   image, plus_, i, settings);
@@ -447,7 +455,7 @@ public final class CanvasUpdateQueue {
             // Check to see if we actually changed anything: there were no
             // contrast settings previously, or any of the old contrast values
             // doesn't match a new contrast value.
-            boolean didChange = false;
+            boolean didChange;
             DisplaySettings.ContrastSettings oldContrast = settings.getSafeContrastSettings(channel, null);
             if (oldContrast == null) {
                didChange = true;
