@@ -353,7 +353,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);
 
+      updateGUI(true);
+
       executeStartupScript();
+
+      updateGUI(true, true);
 
       // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());
