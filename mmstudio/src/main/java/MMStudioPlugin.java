@@ -91,9 +91,6 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
             @Override
             public void run() {
                closed_ = studio_.closeSequence(true);
-               if (closed_) {
-                  Executer.removeCommandListener(MMStudioPlugin.this);
-               }
             }
          });
       }
@@ -117,6 +114,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
    public String commandExecuting(String command) {
       if (command.equalsIgnoreCase("Quit") && studio_ != null) {
          if (closeStudio()) {
+            Executer.removeCommandListener(MMStudioPlugin.this);
             return command;
          }
          return null;
