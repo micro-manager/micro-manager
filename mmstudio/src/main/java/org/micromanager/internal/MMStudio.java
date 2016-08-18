@@ -134,7 +134,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
    // GUI components
-   private boolean amRunningAsPlugin_;
+   private boolean wasStartedAsImageJPlugin_;
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
@@ -205,12 +205,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    /**
     * MMStudio constructor
-    * @param shouldRunAsPlugin Indicates if we're running from "within" ImageJ,
-    *        which governs our behavior when we are closed.
+    * @param startAsImageJPlugin Indicates if we're running from "within"
+    * ImageJ, which governs our behavior when we are closed.
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public MMStudio(boolean shouldRunAsPlugin) {
-      amRunningAsPlugin_ = shouldRunAsPlugin;
+   public MMStudio(boolean startAsImageJPlugin) {
+      wasStartedAsImageJPlugin_ = startAsImageJPlugin;
 
       // TODO Of course it is crazy to do all of the following in the
       // constructor.
@@ -1152,7 +1152,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          }
       }
       if (OptionsDlg.getShouldCloseOnExit()) {
-         if (!amRunningAsPlugin_) {
+         if (!wasStartedAsImageJPlugin_) {
             System.exit(0);
          } else {
             ImageJ ij = IJ.getInstance();
