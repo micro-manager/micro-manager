@@ -1020,11 +1020,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    /**
     * Cleans up resources while shutting down 
     * 
-    * @param calledByImageJ
+    * @param quitInitiatedByImageJ
     * @return Whether or not cleanup was successful. Shutdown should abort
     *         on failure.
     */
-   private boolean cleanupOnClose(boolean calledByImageJ) {
+   private boolean cleanupOnClose(boolean quitInitiatedByImageJ) {
       // Save config presets if they were changed.
       if (configChanged_) {
          Object[] options = {"Yes", "No"};
@@ -1044,7 +1044,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // check needed to avoid deadlock
-      if (!calledByImageJ) {
+      if (!quitInitiatedByImageJ) {
          if (!WindowManager.closeAllWindows()) {
             core_.logMessage("Failed to close some windows");
          }
@@ -1106,7 +1106,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
    }
 
-   public synchronized boolean closeSequence(boolean calledByImageJ) {
+   public synchronized boolean closeSequence(boolean quitInitiatedByImageJ) {
       if (!getIsProgramRunning()) {
          if (core_ != null) {
             core_.logMessage("MMStudio::closeSequence called while isProgramRunning_ is false");
@@ -1128,7 +1128,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          return false;
       }
 
-      if (!cleanupOnClose(calledByImageJ)) {
+      if (!cleanupOnClose(quitInitiatedByImageJ)) {
          return false;
       }
 
@@ -1151,17 +1151,25 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             ReportingUtils.logError(e);
          }
       }
-      if (OptionsDlg.getShouldCloseOnExit()) {
-         if (!wasStartedAsImageJPlugin_) {
-            System.exit(0);
-         } else {
+
+      if (frame_ != null) {
+         frame_.dispose();
+         frame_ = null;
+      }
+
+      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit();
+      if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
+         if (wasStartedAsImageJPlugin_) {
+            // Let ImageJ do the quitting
             ImageJ ij = IJ.getInstance();
             if (ij != null) {
                ij.quit();
             }
          }
-      } else {
-         frame_.dispose();
+         else {
+            // We are on our own to actually exit
+            System.exit(0);
+         }
       }
 
       studio_ = null;
