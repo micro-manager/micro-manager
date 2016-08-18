@@ -297,6 +297,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          sysConfigFile_ = introDlg.getConfigFile();
       }
 
+      // Profile may have been switched in Intro Dialog, so reflect its setting
+      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
+
       IJVersionCheckDlg.execute();
 
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
