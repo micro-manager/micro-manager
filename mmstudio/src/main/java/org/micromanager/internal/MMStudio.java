@@ -212,6 +212,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    public MMStudio(boolean shouldRunAsPlugin) {
       amRunningAsPlugin_ = shouldRunAsPlugin;
 
+      // TODO Of course it is crazy to do all of the following in the
+      // constructor.
+
       // Bad Things will happen if two are instantiated (a lot of legacy
       // internal code assumes a single instance, and some internal services
       // are singletons), so just prevent that for now.
@@ -1090,7 +1093,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    private void saveSettings() {
-      frame_.savePrefs();
+      // TODO All of the following should be taken care of by specific modules
+
+      if (frame_ != null) {
+         frame_.savePrefs();
+      }
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
