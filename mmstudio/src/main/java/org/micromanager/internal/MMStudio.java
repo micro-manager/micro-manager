@@ -121,7 +121,6 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 public final class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
 
    private static final long serialVersionUID = 3556500289598574541L;
-   private static final String OPEN_ACQ_DIR = "openDataDir";
    private static final String SCRIPT_CORE_OBJECT = "mmc";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
@@ -155,7 +154,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private AcquisitionWrapperEngine engine_;
    private PositionList posList_;
    private PositionListDlg posListDlg_;
-   private String openAcqDirectory_ = "";
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
    private boolean isClickToMoveEnabled_ = false;
@@ -327,11 +325,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             IJ.getInstance().setLocation(150, 150);
          }
       }
-
-      // TODO This ivar should be eliminated in favor of direct access to the
-      // user profile
-      openAcqDirectory_ = profile().getString(MMStudio.class,
-            OPEN_ACQ_DIR, "");
 
       initializeVariousManagers();
 
@@ -747,10 +740,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       loadSystemConfiguration();
    }
 
-   public void setAcqDirectory(String dir) {
-      openAcqDirectory_ = dir;
-   }
-
    protected void changeBinning() {
       try {
          String mode = frame_.getBinMode();
@@ -1102,8 +1091,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    private void saveSettings() {
       frame_.savePrefs();
-      
-      profile().setString(MMStudio.class, OPEN_ACQ_DIR, openAcqDirectory_);
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
