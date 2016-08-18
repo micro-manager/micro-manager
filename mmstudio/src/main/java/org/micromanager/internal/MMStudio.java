@@ -121,7 +121,6 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 public final class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
 
    private static final long serialVersionUID = 3556500289598574541L;
-   private static final String OPEN_ACQ_DIR = "openDataDir";
    private static final String SCRIPT_CORE_OBJECT = "mmc";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
@@ -135,7 +134,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
    // GUI components
-   private boolean amRunningAsPlugin_;
+   private boolean wasStartedAsImageJPlugin_;
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
@@ -155,7 +154,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private AcquisitionWrapperEngine engine_;
    private PositionList posList_;
    private PositionListDlg posListDlg_;
-   private String openAcqDirectory_ = "";
    private boolean isProgramRunning_;
    private boolean configChanged_ = false;
    private boolean isClickToMoveEnabled_ = false;
@@ -207,12 +205,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    /**
     * MMStudio constructor
-    * @param shouldRunAsPlugin Indicates if we're running from "within" ImageJ,
-    *        which governs our behavior when we are closed.
+    * @param startAsImageJPlugin Indicates if we're running from "within"
+    * ImageJ, which governs our behavior when we are closed.
     */
    @SuppressWarnings("LeakingThisInConstructor")
-   public MMStudio(boolean shouldRunAsPlugin) {
-      amRunningAsPlugin_ = shouldRunAsPlugin;
+   public MMStudio(boolean startAsImageJPlugin) {
+      wasStartedAsImageJPlugin_ = startAsImageJPlugin;
+
+      // TODO Of course it is crazy to do all of the following in the
+      // constructor.
 
       // Bad Things will happen if two are instantiated (a lot of legacy
       // internal code assumes a single instance, and some internal services
@@ -296,6 +297,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          sysConfigFile_ = introDlg.getConfigFile();
       }
 
+      // Profile may have been switched in Intro Dialog, so reflect its setting
+      core_.enableDebugLog(OptionsDlg.getIsDebugLogEnabled());
+
       IJVersionCheckDlg.execute();
 
       org.micromanager.internal.diagnostics.gui.ProblemReportController.startIfInterruptedOnExit();
@@ -328,11 +332,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          }
       }
 
-      // TODO This ivar should be eliminated in favor of direct access to the
-      // user profile
-      openAcqDirectory_ = profile().getString(MMStudio.class,
-            OPEN_ACQ_DIR, "");
-
       initializeVariousManagers();
 
       // Now create and show the main window
@@ -354,7 +353,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);
 
+      updateGUI(true);
+
       executeStartupScript();
+
+      updateGUI(true, true);
 
       // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());
@@ -747,10 +750,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       loadSystemConfiguration();
    }
 
-   public void setAcqDirectory(String dir) {
-      openAcqDirectory_ = dir;
-   }
-
    protected void changeBinning() {
       try {
          String mode = frame_.getBinMode();
@@ -1028,11 +1027,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    /**
     * Cleans up resources while shutting down 
     * 
-    * @param calledByImageJ
+    * @param quitInitiatedByImageJ
     * @return Whether or not cleanup was successful. Shutdown should abort
     *         on failure.
     */
-   private boolean cleanupOnClose(boolean calledByImageJ) {
+   private boolean cleanupOnClose(boolean quitInitiatedByImageJ) {
       // Save config presets if they were changed.
       if (configChanged_) {
          Object[] options = {"Yes", "No"};
@@ -1052,7 +1051,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // check needed to avoid deadlock
-      if (!calledByImageJ) {
+      if (!quitInitiatedByImageJ) {
          if (!WindowManager.closeAllWindows()) {
             core_.logMessage("Failed to close some windows");
          }
@@ -1101,9 +1100,11 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    private void saveSettings() {
-      frame_.savePrefs();
-      
-      profile().setString(MMStudio.class, OPEN_ACQ_DIR, openAcqDirectory_);
+      // TODO All of the following should be taken care of by specific modules
+
+      if (frame_ != null) {
+         frame_.savePrefs();
+      }
 
       // NOTE: do not save auto shutter state
       if (afMgr_ != null && afMgr_.getAutofocusMethod() != null) {
@@ -1112,7 +1113,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
    }
 
-   public synchronized boolean closeSequence(boolean calledByImageJ) {
+   public synchronized boolean closeSequence(boolean quitInitiatedByImageJ) {
       if (!getIsProgramRunning()) {
          if (core_ != null) {
             core_.logMessage("MMStudio::closeSequence called while isProgramRunning_ is false");
@@ -1134,7 +1135,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          return false;
       }
 
-      if (!cleanupOnClose(calledByImageJ)) {
+      if (!cleanupOnClose(quitInitiatedByImageJ)) {
          return false;
       }
 
@@ -1157,17 +1158,25 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             ReportingUtils.logError(e);
          }
       }
-      if (OptionsDlg.getShouldCloseOnExit()) {
-         if (!amRunningAsPlugin_) {
-            System.exit(0);
-         } else {
+
+      if (frame_ != null) {
+         frame_.dispose();
+         frame_ = null;
+      }
+
+      boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit();
+      if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
+         if (wasStartedAsImageJPlugin_) {
+            // Let ImageJ do the quitting
             ImageJ ij = IJ.getInstance();
             if (ij != null) {
                ij.quit();
             }
          }
-      } else {
-         frame_.dispose();
+         else {
+            // We are on our own to actually exit
+            System.exit(0);
+         }
       }
 
       studio_ = null;
