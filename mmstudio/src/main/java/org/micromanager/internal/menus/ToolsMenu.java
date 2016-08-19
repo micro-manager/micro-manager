@@ -80,6 +80,16 @@ public final class ToolsMenu {
                  }
               });
 
+      GUIUtils.addMenuItem(toolsMenu_, "Messages...",
+               "Show the Messages window",
+               new Runnable() {
+                  @Override
+                  public void run() {
+                     AlertsWindow.show(studio_);
+                  }
+               },
+               "bell.png");
+
       toolsMenu_.addSeparator();
 
       GUIUtils.addMenuItem(toolsMenu_, "Stage Control...",
@@ -100,16 +110,6 @@ public final class ToolsMenu {
                  }
               },
               "application_view_list.png");
-
-      GUIUtils.addMenuItem(toolsMenu_, "Messages...",
-               "Show the Messages window",
-               new Runnable() {
-                  @Override
-                  public void run() {
-                     AlertsWindow.show(studio_);
-                  }
-               },
-               "bell.png");
 
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
               "Mouse Moves Stage (Use Hand Tool)",
