@@ -316,6 +316,10 @@ int FilterWheel::Initialize()
    AddAllowedValue("Speed", "2");
    AddAllowedValue("Speed", "3");
 
+   // Although we compute an appropriate delay, we allow the user to set an
+   // extra delay to wait for vibrations to sibside.
+   EnableDelay(true);
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
       return ret; 
@@ -344,7 +348,7 @@ bool FilterWheel::Busy()
       msPerPosition = 400;
       break;
    }
-   long waitTimeMs = posMoved_ * msPerPosition;
+   long waitTimeMs = posMoved_ * msPerPosition + GetDelayMs();
    return elapsed.getMsec() < waitTimeMs;
 }
 
