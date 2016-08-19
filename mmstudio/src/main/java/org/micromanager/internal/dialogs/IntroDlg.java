@@ -31,7 +31,6 @@ import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -40,7 +39,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.Set;
@@ -74,7 +72,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public final class IntroDlg extends JDialog {
    private static final long serialVersionUID = 1L;
-   private static final String USERNAME_NEW = "Create new profile";
+   private static final String USERNAME_NEW = "Create New Profile...";
    private static final String RECENTLY_USED_CONFIGS = "recently-used config files";
    private static final String GLOBAL_CONFIGS = "config files supplied from a central authority";
    private static final String SHOULD_ASK_FOR_CONFIG = "whether or not the intro dialog should include a prompt for the config file";
@@ -149,7 +147,7 @@ public final class IntroDlg extends JDialog {
 
       final JLabel microscopeManagerLabel = new JLabel();
       microscopeManagerLabel.setFont(new Font("", Font.BOLD, 12));
-      microscopeManagerLabel.setText("Micro-Manager startup configuration");
+      microscopeManagerLabel.setText("Micro-Manager Startup Configuration");
       contentsPanel.add(microscopeManagerLabel, "gapleft 5");
 
       final JLabel versionLabel = new JLabel();
@@ -230,7 +228,7 @@ public final class IntroDlg extends JDialog {
    private void addConfigFileSelect(JPanel contentsPanel) {
       final JLabel loadConfigurationLabel = new JLabel();
       loadConfigurationLabel.setFont(DEFAULT_FONT);
-      loadConfigurationLabel.setText("Configuration file:");
+      loadConfigurationLabel.setText("Hardware Configuration File:");
       contentsPanel.add(loadConfigurationLabel, "gapleft 5");
 
       cfgFileDropperDown_ = new JComboBox();
@@ -302,7 +300,7 @@ public final class IntroDlg extends JDialog {
    }
 
    private void addProfileDropdown(JPanel contentsPanel) {
-      JLabel userProfileLabel = new JLabel("User profile:");
+      JLabel userProfileLabel = new JLabel("User Profile:");
       userProfileLabel.setFont(DEFAULT_FONT);
       contentsPanel.add(userProfileLabel, "gapleft 5");
 
