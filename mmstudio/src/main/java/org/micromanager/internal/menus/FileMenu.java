@@ -80,7 +80,7 @@ public final class FileMenu {
 
       fileMenu.addSeparator();
 
-      GUIUtils.addMenuItem(fileMenu, "Close all open windows...", null,
+      GUIUtils.addMenuItem(fileMenu, "Close All Images...", null,
          new Runnable() {
             @Override
             public void run() {
