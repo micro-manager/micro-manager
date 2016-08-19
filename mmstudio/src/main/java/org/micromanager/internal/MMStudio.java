@@ -80,6 +80,7 @@ import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StartupCompleteEvent;
+import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.internal.CoreEventCallback;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
@@ -353,11 +354,13 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);
 
-      updateGUI(true);
+      // Tell the GUI to reflect the hardware configuration. (The config was
+      // loaded before creating the GUI, so we need to reissue the event.)
+      events().post(new SystemConfigurationLoadedEvent());
 
       executeStartupScript();
 
-      updateGUI(true, true);
+      updateGUI(true);
 
       // Give plugins a chance to initialize their state
       events().post(new StartupCompleteEvent());

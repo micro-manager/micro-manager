@@ -4,14 +4,8 @@ import com.google.common.eventbus.Subscribe;
 
 import java.awt.Cursor;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
-
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -25,7 +19,6 @@ import org.micromanager.internal.hcwizard.ConfigWizard;
 import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -97,10 +90,10 @@ public final class ConfigMenu {
 
       switchConfigurationMenu_.setText("Switch Hardware Configuration");
       configMenu_.add(switchConfigurationMenu_);
-      switchConfigurationMenu_.setToolTipText("Switch between recently used configurations");
+      switchConfigurationMenu_.setToolTipText("Switch to a recently used configuration");
 
-      GUIUtils.addMenuItem(configMenu_, "Save Configuration Settings As...",
-              "Save current configuration settings as new configuration file",
+      GUIUtils.addMenuItem(configMenu_, "Save Hardware Configuration As...",
+              "Save the current hardware configuration",
               new Runnable() {
                  @Override
                  public void run() {
@@ -114,7 +107,7 @@ public final class ConfigMenu {
 
    private void loadConfiguration() {
       File configFile = FileDialogs.openFile(MMStudio.getFrame(), 
-            "Load a config file", FileDialogs.MM_CONFIG_FILE);
+            "Load a Configuration File", FileDialogs.MM_CONFIG_FILE);
       if (configFile != null) {
          studio_.setSysConfigFile(configFile.getAbsolutePath());
       }
@@ -134,7 +127,7 @@ public final class ConfigMenu {
          if (studio_.getIsConfigChanged()) {
             Object[] options = {"Yes", "No"};
             int n = JOptionPane.showOptionDialog(null,
-                  "Save Changed Configuration?", "Micro-Manager",
+                  "Save Hardware Configuration?", "Micro-Manager",
                   JOptionPane.YES_NO_OPTION,
                   JOptionPane.QUESTION_MESSAGE, null, options,
                   options[0]);
@@ -149,7 +142,7 @@ public final class ConfigMenu {
          // Show a "please wait" dialog.
          JDialog waiter = GUIUtils.createBareMessageDialog(
                studio_.app().getMainWindow(),
-               "Loading Wizard; please wait...");
+               "Loading wizard; please wait...");
          waiter.setVisible(true);
 
          // unload all devices before starting configurator
