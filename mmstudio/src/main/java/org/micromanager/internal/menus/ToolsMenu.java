@@ -1,5 +1,6 @@
 package org.micromanager.internal.menus;
 
+import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
 
 import java.io.File;
@@ -31,7 +32,7 @@ import org.micromanager.quickaccess.internal.QuickAccessPanelEvent;
 public final class ToolsMenu {
    private static final String MOUSE_MOVES_STAGE = "whether or not the hand tool can be used to move the stage";
 
-   private JMenu toolsMenu_;
+   private final JMenu toolsMenu_;
    private final JMenu quickAccessMenu_;
    private JCheckBoxMenuItem centerAndDragMenuItem_;
 
@@ -99,17 +100,8 @@ public final class ToolsMenu {
                public void run() {
                   StageControlFrame.showStageControl();
                }
-            });
-
-      GUIUtils.addMenuItem(toolsMenu_, "Stage Position List...",
-              "Open the stage position list window",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    studio_.app().showPositionList();
-                 }
-              },
-              "application_view_list.png");
+            },
+            "move.png");
 
       centerAndDragMenuItem_ = GUIUtils.addCheckBoxMenuItem(toolsMenu_,
               "Mouse Moves Stage (Use Hand Tool)",
@@ -123,6 +115,18 @@ public final class ToolsMenu {
                  }
               },
               getMouseMovesStage());
+      centerAndDragMenuItem_.setIcon(
+            IconLoader.getIcon("/org/micromanager/icons/move_hand.png"));
+
+      GUIUtils.addMenuItem(toolsMenu_, "Stage Position List...",
+              "Open the stage position list window",
+              new Runnable() {
+                 @Override
+                 public void run() {
+                    studio_.app().showPositionList();
+                 }
+              },
+              "application_view_list.png");
 
       toolsMenu_.addSeparator();
 
