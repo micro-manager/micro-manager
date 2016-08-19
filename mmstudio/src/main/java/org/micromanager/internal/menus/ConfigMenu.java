@@ -40,7 +40,7 @@ public final class ConfigMenu {
       configMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Config");
 
       GUIUtils.addMenuItem(configMenu_, "Device Property Browser...",
-              "Open new window to view and edit device property values",
+            "View and set device states and features",
               new Runnable() {
                  @Override
                  public void run() {
@@ -51,7 +51,7 @@ public final class ConfigMenu {
       configMenu_.addSeparator();
 
       GUIUtils.addMenuItem(configMenu_, "Hardware Configuration Wizard...",
-              "Open wizard to create new hardware configuration",
+            "Set up hardware devices or modify an existing hardware configuration",
               new Runnable() {
                  @Override
                  public void run() {
@@ -60,7 +60,7 @@ public final class ConfigMenu {
               });
 
       GUIUtils.addMenuItem(configMenu_, "Load Hardware Configuration...",
-              "Un-initialize current configuration and initialize new one",
+            "Load hardware setup from a file",
               new Runnable() {
                  @Override
                  public void run() {
@@ -71,7 +71,7 @@ public final class ConfigMenu {
               });
 
       GUIUtils.addMenuItem(configMenu_, "Reload Hardware Configuration",
-              "Shutdown current configuration and initialize most recently loaded configuration",
+            "Reload the current hardware configuration and initialize device control",
               new Runnable() {
                  @Override
                  public void run() {
@@ -89,8 +89,8 @@ public final class ConfigMenu {
       }
 
       switchConfigurationMenu_.setText("Switch Hardware Configuration");
+      switchConfigurationMenu_.setToolTipText("Switch to a recently used hardware configuration");
       configMenu_.add(switchConfigurationMenu_);
-      switchConfigurationMenu_.setToolTipText("Switch to a recently used configuration");
 
       GUIUtils.addMenuItem(configMenu_, "Save Hardware Configuration As...",
               "Save the current hardware configuration",
@@ -101,6 +101,17 @@ public final class ConfigMenu {
                     studio_.updateChannelCombos();
                  }
               });
+
+      configMenu_.addSeparator();
+
+      GUIUtils.addMenuItem(configMenu_, "Pixel Size Calibration...",
+            "Define pixel sizes and how they depend on hardware state",
+            new Runnable() {
+               @Override
+               public void run() {
+                  studio_.createCalibrationListDlg();
+               }
+            });
 
       studio_.events().registerForEvents(this);
    }

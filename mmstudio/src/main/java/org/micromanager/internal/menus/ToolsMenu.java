@@ -2,11 +2,9 @@ package org.micromanager.internal.menus;
 
 import com.google.common.eventbus.Subscribe;
 
-import java.awt.Cursor;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 
 import javax.swing.JCheckBoxMenuItem;
@@ -15,19 +13,15 @@ import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 
 import mmcorej.CMMCore;
 
 import org.micromanager.alerts.internal.AlertsWindow;
 import org.micromanager.events.internal.MouseMovesStageEvent;
-import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
-import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
-import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.HotKeysDialog;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -141,20 +135,6 @@ public final class ToolsMenu {
                  }
               },
               "film.png");
-      
-      toolsMenu_.addSeparator();
-
-      GUIUtils.addMenuItem(toolsMenu_, "Pixel Size Calibration...",
-              "Define size calibrations specific to each objective lens.  "
-              + "When the objective in use has a calibration defined, "
-              + "micromanager will automatically use it when "
-              + "calculating metadata",
-              new Runnable() {
-                 @Override
-                 public void run() {
-                    studio_.createCalibrationListDlg();
-                 }
-              });
 
       toolsMenu_.addSeparator();
 
