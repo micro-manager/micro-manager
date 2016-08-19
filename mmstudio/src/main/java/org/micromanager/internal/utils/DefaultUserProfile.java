@@ -1,25 +1,18 @@
 package org.micromanager.internal.utils;
 
 import com.google.common.base.Charsets;
-import com.google.common.io.BaseEncoding;
 import com.google.common.io.Files;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Scanner;
 import java.util.Set;
 
 import org.json.JSONException;
@@ -28,7 +21,6 @@ import org.json.JSONObject;
 import org.micromanager.PropertyMap;
 import org.micromanager.UserProfile;
 import org.micromanager.data.internal.DefaultPropertyMap;
-import org.micromanager.internal.MMStudio;
 
 public final class DefaultUserProfile implements UserProfile {
    private static final String USERNAME_MAPPING_FILE = "Profiles.txt";
@@ -689,7 +681,6 @@ public final class DefaultUserProfile implements UserProfile {
          // Update a few things that have already pulled values from the
          // default user profile by the time this has happened.
          DaytimeNighttime.getInstance().loadStoredSkin();
-         MMStudio.getInstance().getFrame().resetPosition();
       }
    }
 
