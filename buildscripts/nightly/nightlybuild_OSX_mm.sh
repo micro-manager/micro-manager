@@ -193,7 +193,11 @@ buildscripts/nightly/mkportableapp_OSX/mkportableapp.py \
 
 
 # Stage third-party JARs.
-cp $MM_SRCDIR/dependencies/artifacts/{compile,optional,runtime}/*.jar $MM_JARDIR
+for artifact_dir in compile optional runtime; do
+   if ls $MM_SRCDIR/dependencies/artifacts/$artifact_dir/*.jar 1>/dev/null; then
+      cp $MM_SRCDIR/dependencies/artifacts/$artifact_dir/*.jar $MM_JARDIR
+   fi
+done
 cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ij.jar
 
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
