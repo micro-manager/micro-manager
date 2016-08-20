@@ -316,6 +316,10 @@ int FilterWheel::Initialize()
    AddAllowedValue("Speed", "2");
    AddAllowedValue("Speed", "3");
 
+   // Although we compute an appropriate delay, we allow the user to set an
+   // extra delay to wait for vibrations to sibside.
+   EnableDelay(true);
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
       return ret; 
@@ -327,31 +331,25 @@ int FilterWheel::Initialize()
 
 bool FilterWheel::Busy()
 {
-   // TODO: figure out how speed commadn affects Busy
-   MM::MMTime now = GetCurrentMMTime();
-   // each position moved takes ?? msec
-   if (speed_ == 3)
-   {
-      if ((now - lastMoveTime_) < (posMoved_ * 40))
-         return true;
+   MM::MMTime elapsed = GetCurrentMMTime() - lastMoveTime_;
+   long msPerPosition;
+   switch (speed_) {
+   case 3:
+      msPerPosition = 40;
+      break;
+   case 2:
+      msPerPosition = 66;
+      break;
+   case 1:
+      msPerPosition = 100;
+      break;
+   case 0:
+   default:
+      msPerPosition = 400;
+      break;
    }
-   else if (speed_ == 2)
-   {
-      if ((now - lastMoveTime_) < (posMoved_ * 66))
-         return true;
-   }
-   else if (speed_ == 1)
-   {
-      if ((now - lastMoveTime_) < (posMoved_ * 100))
-         return true;
-   }
-   else
-   {
-      if ((now - lastMoveTime_) < (posMoved_ * 400))
-         return true;
-   }
-
-   return false;
+   long waitTimeMs = posMoved_ * msPerPosition + GetDelayMs();
+   return elapsed.getMsec() < waitTimeMs;
 }
 
 int FilterWheel::Shutdown()
