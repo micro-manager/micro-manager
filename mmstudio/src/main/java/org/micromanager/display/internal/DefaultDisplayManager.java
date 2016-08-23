@@ -29,10 +29,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JOptionPane;
 
-import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
@@ -52,7 +52,6 @@ import org.micromanager.display.OverlayPlugin;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
-import org.micromanager.display.internal.events.NewOverlayEvent;
 import org.micromanager.display.internal.events.ViewerAddedEvent;
 import org.micromanager.display.internal.events.ViewerRemovedEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
@@ -77,14 +76,14 @@ public final class DefaultDisplayManager implements DisplayManager {
    private static DefaultDisplayManager staticInstance_;
 
    private final MMStudio studio_;
-   private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
+   private final ConcurrentHashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
    private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
    private final Stack<DisplayWindow> displayFocusHistory_;
    private final HashSet<DataViewer> externalViewers_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
-      storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
+      storeToDisplays_ = new ConcurrentHashMap<Datastore, ArrayList<DisplayWindow>>();
       displayFocusHistory_ = new Stack<DisplayWindow>();
       externalViewers_ = new HashSet<DataViewer>();
       studio_.events().registerForEvents(this);
