@@ -22,29 +22,23 @@ package org.micromanager.display.internal;
 
 import com.google.common.base.Joiner;
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
 import java.util.Timer;
 import java.util.TimerTask;
-
+import java.util.concurrent.TimeUnit;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
-import org.micromanager.display.DisplayWindow;
-
-import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.data.internal.IncomingImageEvent;
 import org.micromanager.data.internal.NewImageEvent;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.internal.utils.ReportingUtils;

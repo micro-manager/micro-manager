@@ -3,16 +3,14 @@ package org.micromanager.internal.dialogs;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
-
-import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.display.internal.inspector.HistogramsPanel;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
+import org.micromanager.acquisition.internal.AcquisitionEngine;
+import org.micromanager.display.internal.inspector.HistogramsPanel;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 

@@ -20,12 +20,9 @@
 package org.micromanager.quickaccess;
 
 import java.io.File;
-
 import java.util.Map;
-
 import javax.swing.Icon;
 import javax.swing.JFrame;
-
 import org.micromanager.PropertyMap;
 
 /**

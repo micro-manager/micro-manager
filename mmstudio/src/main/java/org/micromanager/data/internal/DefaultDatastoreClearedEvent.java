@@ -21,8 +21,6 @@
 package org.micromanager.data.internal;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
-import org.micromanager.data.DatastoreClearedEvent;
 
 /**
  * This class signifies that all images have been removed from a Datastore.

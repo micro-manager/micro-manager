@@ -21,8 +21,6 @@
 package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.Subscribe;
-
-
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -32,10 +30,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Timer;
-
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JLabel;
@@ -44,9 +38,9 @@ import javax.swing.JPopupMenu;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
-
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.NewImageEvent;
@@ -55,15 +49,12 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.NewDisplaySettingsEvent;
-
+import org.micromanager.display.PixelsSetEvent;
+import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.events.ViewerAddedEvent;
 import org.micromanager.display.internal.events.ViewerRemovedEvent;
-import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.link.DisplayGroupManager;
-import org.micromanager.display.PixelsSetEvent;
-
 import org.micromanager.events.internal.DefaultEventManager;
-
 import org.micromanager.internal.utils.ReportingUtils;
 
 // This class tracks all histograms for all displays in a given inspector

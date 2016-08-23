@@ -4,10 +4,7 @@
 package org.micromanager.internal.navigation;
 
 import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
 import ij.gui.Toolbar;
-import ij.WindowManager;
-
 import java.awt.Event;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;

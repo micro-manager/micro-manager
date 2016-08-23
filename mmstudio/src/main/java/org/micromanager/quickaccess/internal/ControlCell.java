@@ -19,64 +19,18 @@
 
 package org.micromanager.quickaccess.internal;
 
-import com.bulenkov.iconloader.IconLoader;
-
-import com.google.common.eventbus.Subscribe;
-
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Window;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-
-import javax.swing.BorderFactory;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JSpinner;
-import javax.swing.JToggleButton;
-import javax.swing.SpinnerNumberModel;
-import javax.swing.SwingUtilities;
-
 import net.miginfocom.swing.MigLayout;
-
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import org.micromanager.data.internal.DefaultPropertyMap;
-import org.micromanager.events.StartupCompleteEvent;
-import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.ScreenImage;
-import org.micromanager.quickaccess.QuickAccessPlugin;
-import org.micromanager.quickaccess.WidgetPlugin;
-import org.micromanager.MMPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.internal.DefaultPropertyMap;
+import org.micromanager.quickaccess.QuickAccessPlugin;
+import org.micromanager.quickaccess.WidgetPlugin;
 
 /**
  * This class represents a single control in the window.

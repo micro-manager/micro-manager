@@ -23,20 +23,17 @@ package org.micromanager.display.internal;
 import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-
 import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.Menus;
+import ij.WindowManager;
 import ij.gui.ImageWindow;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
-import ij.Menus;
-import ij.WindowManager;
-
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -47,47 +44,34 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-
-import javax.swing.event.MouseInputAdapter;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
-
+import javax.swing.event.MouseInputAdapter;
 import net.miginfocom.swing.MigLayout;
-
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreFrozenEvent;
-import org.micromanager.data.DatastoreSavePathEvent;
 import org.micromanager.data.Image;
-import org.micromanager.data.Metadata;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.HistogramData;
 import org.micromanager.display.NewDisplaySettingsEvent;
-import org.micromanager.events.DatastoreClosingEvent;
-
-import org.micromanager.data.internal.DefaultCoords;
-
-import org.micromanager.events.internal.DefaultEventManager;
-
 import org.micromanager.display.internal.events.DefaultDisplayAboutToShowEvent;
 import org.micromanager.display.internal.events.DefaultNewDisplayEvent;
 import org.micromanager.display.internal.events.DefaultNewImagePlusEvent;
-import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
@@ -95,12 +79,11 @@ import org.micromanager.display.internal.events.RequestToCloseEvent;
 import org.micromanager.display.internal.events.StatusEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
-
+import org.micromanager.events.DatastoreClosingEvent;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMFrame;
-
-import org.micromanager.Studio;
 
 
 /**

@@ -25,17 +25,12 @@ package org.micromanager.acquisition.internal;
 import java.awt.Color;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.List;
-
-import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
-
 import org.json.JSONObject;
-import org.micromanager.data.Datastore;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
-import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.acquisition.ChannelSpec;
+import org.micromanager.data.Datastore;
+import org.micromanager.internal.interfaces.AcqSettingsListener;
 import org.micromanager.internal.utils.MMException;
 
 /**

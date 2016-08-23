@@ -20,8 +20,6 @@
 
 package org.micromanager.data;
 
-import java.util.List;
-
 /**
  * This interface is for Storage entities that allow the overwriting and
  * deletion of Images and SummaryMetadata, as per RewritableDatastore.

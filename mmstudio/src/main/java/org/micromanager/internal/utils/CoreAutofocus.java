@@ -2,10 +2,8 @@ package org.micromanager.internal.utils;
 
 import ij.process.ImageProcessor;
 import java.util.Vector;
-
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
-
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.Studio;
 

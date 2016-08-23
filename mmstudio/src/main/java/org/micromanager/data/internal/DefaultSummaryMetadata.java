@@ -22,24 +22,19 @@ package org.micromanager.data.internal;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PropertyMap;
+import org.micromanager.StagePosition;
 import org.micromanager.data.Coords;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.MultiStagePosition;
-import org.micromanager.StagePosition;
-
 import org.micromanager.internal.MMStudio;
-
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import org.micromanager.PropertyMap;
 
 public final class DefaultSummaryMetadata implements SummaryMetadata {
 

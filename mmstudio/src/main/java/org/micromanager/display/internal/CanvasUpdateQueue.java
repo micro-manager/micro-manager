@@ -21,30 +21,21 @@
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.Subscribe;
-
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ColorProcessor;
-import ij.process.ImageProcessor;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-
+import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.SwingUtilities;
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.HistogramData;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewHistogramsEvent;
@@ -54,7 +45,6 @@ import org.micromanager.display.internal.events.DefaultPixelsSetEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.HistogramRequestEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
-
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 

@@ -19,15 +19,9 @@
 
 package org.micromanager.acquisition.internal;
 
-import com.bulenkov.iconloader.IconLoader;
-
 import javax.swing.ImageIcon;
-
-import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.Studio;
-
 import org.micromanager.internal.MMStudio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 

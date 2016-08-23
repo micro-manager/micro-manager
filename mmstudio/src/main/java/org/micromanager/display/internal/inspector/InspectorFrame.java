@@ -21,9 +21,7 @@
 package org.micromanager.display.internal.inspector;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -36,15 +34,12 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
-
+import java.awt.event.WindowEvent;
 import java.io.File;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -56,16 +51,14 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.InspectorPlugin;
 import org.micromanager.display.internal.DefaultDisplayManager;
-import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;

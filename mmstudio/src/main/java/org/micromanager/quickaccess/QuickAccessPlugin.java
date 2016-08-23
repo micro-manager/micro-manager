@@ -20,9 +20,7 @@
 package org.micromanager.quickaccess;
 
 import java.awt.Dimension;
-
 import javax.swing.ImageIcon;
-
 import org.micromanager.MMPlugin;
 
 /**

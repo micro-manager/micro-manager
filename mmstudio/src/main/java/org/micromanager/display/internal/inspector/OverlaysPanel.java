@@ -21,27 +21,22 @@
 package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import javax.swing.border.TitledBorder;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-
+import javax.swing.border.TitledBorder;
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.data.Image;
-
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.Inspector;

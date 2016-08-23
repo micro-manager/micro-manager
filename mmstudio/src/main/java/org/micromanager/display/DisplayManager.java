@@ -21,10 +21,9 @@
 package org.micromanager.display;
 
 import java.util.List;
-
+import org.micromanager.PropertyMap;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.PropertyMap;
 
 /**
  * This interface declares generic display-related methods. You can access

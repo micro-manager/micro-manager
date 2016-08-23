@@ -20,10 +20,9 @@
 
 package org.micromanager.display.internal.overlays;
 
+import org.micromanager.Studio;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.display.OverlayPlugin;
-import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 

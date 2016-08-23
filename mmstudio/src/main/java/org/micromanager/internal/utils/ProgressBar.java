@@ -23,7 +23,6 @@
 package org.micromanager.internal.utils;
 
 import java.awt.BorderLayout;
-
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;

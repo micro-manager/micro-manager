@@ -21,44 +21,25 @@
 package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.Subscribe;
-
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.CommentsHelper;
-import org.micromanager.data.DatastoreRewriteException;
-import org.micromanager.data.Image;
-import org.micromanager.data.Metadata;
-import org.micromanager.data.SummaryMetadata;
-
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.PixelsSetEvent;
-
-import org.micromanager.PropertyMap;
-
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
 

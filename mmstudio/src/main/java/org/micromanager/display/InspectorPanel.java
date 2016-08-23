@@ -20,8 +20,8 @@
 
 package org.micromanager.display;
 
-import javax.swing.JPopupMenu;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
 /**
  * An InspectorPanel is a single component in the inspector window. 

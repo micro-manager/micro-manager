@@ -1,8 +1,7 @@
 package org.micromanager.internal.script;
 
-import org.micromanager.internal.utils.MMScriptException;
-
 import bsh.Interpreter;
+import org.micromanager.internal.utils.MMScriptException;
 
 public interface ScriptingEngine {
    public void evaluate(String script) throws MMScriptException;

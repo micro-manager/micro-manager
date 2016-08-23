@@ -21,20 +21,16 @@
 package org.micromanager.display.internal;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.JButton;
 import javax.swing.JPanel;
-
 import net.miginfocom.swing.MigLayout;
-
+import org.micromanager.Studio;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
@@ -42,7 +38,6 @@ import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.Studio;
 
 
 /**

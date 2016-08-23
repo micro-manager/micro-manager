@@ -19,25 +19,14 @@
 
 package org.micromanager.quickaccess.internal.controls;
 
-import com.bulenkov.iconloader.IconLoader;
-
-import com.google.common.eventbus.Subscribe;
-
-import java.awt.Dimension;
-import java.awt.Insets;
 import java.awt.Frame;
-
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-
-import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-
+import org.micromanager.quickaccess.WidgetPlugin;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 

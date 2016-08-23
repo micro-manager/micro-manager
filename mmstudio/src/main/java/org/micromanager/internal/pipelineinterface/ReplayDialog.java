@@ -15,13 +15,11 @@
 package org.micromanager.internal.pipelineinterface;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
-
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -32,9 +30,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.ProgressMonitor;
 import javax.swing.SwingUtilities;
-
 import net.miginfocom.swing.MigLayout;
-
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
@@ -44,8 +41,6 @@ import org.micromanager.data.PipelineErrorException;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
-import org.micromanager.Studio;
-
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMDialog;

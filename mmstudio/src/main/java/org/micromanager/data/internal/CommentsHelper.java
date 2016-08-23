@@ -21,13 +21,10 @@
 package org.micromanager.data.internal;
 
 import java.io.IOException;
-
+import org.micromanager.PropertyMap;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.internal.DefaultPropertyMap;
-import org.micromanager.PropertyMap;
-
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**

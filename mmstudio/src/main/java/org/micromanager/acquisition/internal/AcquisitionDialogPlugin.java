@@ -20,7 +20,6 @@
 package org.micromanager.acquisition.internal;
 
 import javax.swing.ImageIcon;
-
 import org.micromanager.MMPlugin;
 
 /**

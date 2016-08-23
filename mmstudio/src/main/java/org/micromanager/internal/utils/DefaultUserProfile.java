@@ -2,22 +2,19 @@ package org.micromanager.internal.utils;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Set;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.micromanager.PropertyMap;
 import org.micromanager.UserProfile;
 import org.micromanager.data.internal.DefaultPropertyMap;

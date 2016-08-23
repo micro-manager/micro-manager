@@ -21,7 +21,6 @@
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,42 +29,35 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import net.miginfocom.swing.MigLayout;
-
-import javax.swing.event.MouseInputAdapter;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
-
+import javax.swing.event.MouseInputAdapter;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.NewImageEvent;
+import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewDisplaySettingsEvent;
-
-import org.micromanager.data.internal.DefaultCoords;
-
+import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
 import org.micromanager.display.internal.link.ImageCoordsEvent;
 import org.micromanager.display.internal.link.ImageCoordsLinker;
 import org.micromanager.display.internal.link.LinkButton;
-import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.internal.utils.GUIUtils;
-
 import org.micromanager.internal.utils.ReportingUtils;
 
 

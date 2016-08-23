@@ -1,12 +1,10 @@
 package org.micromanager.internal.positionlist;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-
 import org.micromanager.internal.utils.DaytimeNighttime;
 
 /**

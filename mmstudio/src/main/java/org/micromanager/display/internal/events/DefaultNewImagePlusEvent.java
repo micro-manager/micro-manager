@@ -21,7 +21,6 @@
 package org.micromanager.display.internal.events;
 
 import ij.ImagePlus;
-
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.NewImagePlusEvent;
 

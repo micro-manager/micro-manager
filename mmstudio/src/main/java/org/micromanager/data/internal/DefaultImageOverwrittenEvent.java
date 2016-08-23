@@ -22,7 +22,6 @@ package org.micromanager.data.internal;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImageOverwrittenEvent;
 
 /**
  * This class signifies that an image in a Datastore has been overwritten by a

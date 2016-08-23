@@ -1,23 +1,18 @@
 package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
-
+import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.Line;
 import ij.gui.Roi;
-import ij.ImagePlus;
 import ij.process.ImageProcessor;
-import ij.WindowManager;
-
+import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.Rectangle;
-
 import javax.swing.JFrame;
-
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.PixelsSetEvent;
-
 import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.GraphFrame;
 

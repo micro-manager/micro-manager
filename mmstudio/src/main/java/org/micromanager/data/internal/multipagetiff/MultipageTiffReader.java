@@ -22,7 +22,6 @@
 package org.micromanager.data.internal.multipagetiff;
 
 import com.google.common.collect.ImmutableList;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -34,14 +33,10 @@ import java.nio.channels.FileChannel;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-
 import javax.swing.SwingUtilities;
-
 import mmcorej.TaggedImage;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Metadata;
@@ -52,16 +47,12 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
-import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMException;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.VersionUtils;
-import org.micromanager.PropertyMap;
 
 public final class MultipageTiffReader {
 

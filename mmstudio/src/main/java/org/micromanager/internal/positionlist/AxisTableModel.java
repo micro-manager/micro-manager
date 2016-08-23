@@ -20,10 +20,8 @@
 package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.EventBus;
-
 import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
-
 import org.micromanager.internal.utils.DefaultUserProfile;
 
 /**

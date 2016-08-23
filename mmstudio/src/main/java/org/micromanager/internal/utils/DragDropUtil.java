@@ -31,9 +31,8 @@ import java.awt.dnd.DropTargetEvent;
 import java.awt.dnd.DropTargetListener;
 import java.io.File;
 import java.io.IOException;
-
-import org.micromanager.data.Datastore;
 import org.micromanager.Studio;
+import org.micromanager.data.Datastore;
 
 /**
  * DragDropUtil

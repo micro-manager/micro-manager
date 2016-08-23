@@ -20,7 +20,6 @@
 package org.micromanager;
 
 import java.util.List;
-
 import javax.swing.Icon;
 
 /**

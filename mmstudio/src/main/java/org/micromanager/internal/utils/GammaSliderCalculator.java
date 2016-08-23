@@ -21,8 +21,8 @@
 
 package org.micromanager.internal.utils;
 
-import java.util.Hashtable;
 import java.text.ParseException;
+import java.util.Hashtable;
 
 public final class GammaSliderCalculator {
    final double c0_ = 5.0 * 0.02;

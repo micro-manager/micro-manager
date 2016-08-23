@@ -20,47 +20,36 @@
 package org.micromanager.quickaccess.internal;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.imageio.ImageIO;
-
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import org.micromanager.data.internal.DefaultPropertyMap;
-import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.PropertyMap;
+import org.micromanager.Studio;
 import org.micromanager.events.StartupCompleteEvent;
-import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.ScreenImage;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
-import org.micromanager.MMPlugin;
-import org.micromanager.PropertyMap;
-import org.micromanager.Studio;
 
 /**
  * This class is responsible for managing the different Quick Access Windows.

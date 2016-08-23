@@ -20,10 +20,6 @@
 
 package org.micromanager.data;
 
-import java.awt.Window;
-import java.io.Closeable;
-import java.util.List;
-
 /**
  * RewritableDatastores are Datastores that allow images and SummaryMetadata
  * to be deleted or overwritten after they have been inserted. They also

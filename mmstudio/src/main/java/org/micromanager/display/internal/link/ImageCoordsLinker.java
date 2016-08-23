@@ -22,14 +22,11 @@ package org.micromanager.display.internal.link;
 
 import java.util.Arrays;
 import java.util.List;
-
 import org.micromanager.data.Coords;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DataViewer;
-import org.micromanager.display.internal.ScrollerPanel;
-
 import org.micromanager.data.internal.DefaultCoords;
-
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.ScrollerPanel;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**

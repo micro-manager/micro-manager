@@ -24,7 +24,6 @@
 package org.micromanager.internal.dialogs;
 
 import ij.IJ;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -39,13 +38,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-import java.util.Set;
-
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
-import javax.swing.border.EtchedBorder;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -53,13 +50,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.IntroPlugin;
 import org.micromanager.Studio;
-
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;

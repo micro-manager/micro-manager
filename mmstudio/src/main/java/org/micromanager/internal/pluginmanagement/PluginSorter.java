@@ -19,7 +19,6 @@
 package org.micromanager.internal.pluginmanagement;
 
 import java.util.Comparator;
-
 import org.micromanager.MMPlugin;
 
 public final class PluginSorter implements Comparator<MMPlugin> {

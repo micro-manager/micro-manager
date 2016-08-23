@@ -16,13 +16,10 @@ package org.micromanager.internal.pipelineinterface;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import org.micromanager.data.internal.DefaultPropertyMap;
+import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorPlugin;
-
-import org.micromanager.Studio;
-
+import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.internal.utils.ReportingUtils;
 
 

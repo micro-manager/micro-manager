@@ -19,8 +19,6 @@
 
 package org.micromanager.display;
 
-import javax.swing.JPanel;
-
 import org.micromanager.MMPlugin;
 
 /**

@@ -16,19 +16,16 @@
 package org.micromanager.internal.pipelineinterface;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -40,24 +37,16 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import mmcorej.TaggedImage;
-
 import net.miginfocom.swing.MigLayout;
-
+import org.micromanager.PropertyMap;
+import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.data.ProcessorPlugin;
-
-import org.micromanager.internal.MMStudio;
-
-import org.micromanager.PropertyMap;
-import org.micromanager.Studio;
-
-import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StartupCompleteEvent;
-
+import org.micromanager.events.internal.NewPluginEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMFrame;
 
 

@@ -21,9 +21,8 @@
 package org.micromanager.display;
 
 
-import ij.gui.ImageWindow;
 import ij.ImagePlus;
-
+import ij.gui.ImageWindow;
 import java.awt.GraphicsConfiguration;
 import java.awt.Window;
 

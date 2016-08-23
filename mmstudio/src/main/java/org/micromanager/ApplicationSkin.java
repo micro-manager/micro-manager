@@ -24,11 +24,6 @@ package org.micromanager;
 
 
 import java.awt.Color;
-import java.awt.geom.AffineTransform;
-import java.awt.Rectangle;
-import javax.swing.JFrame;
-
-import org.micromanager.data.Datastore;
 
 
 /**

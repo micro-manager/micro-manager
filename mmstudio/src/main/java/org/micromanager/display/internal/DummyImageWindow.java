@@ -21,14 +21,11 @@
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.Subscribe;
-
-import ij.gui.ImageCanvas;
-import ij.gui.StackWindow;
 import ij.ImagePlus;
 import ij.WindowManager;
-
+import ij.gui.ImageCanvas;
+import ij.gui.StackWindow;
 import java.util.concurrent.locks.ReentrantLock;
-
 import org.micromanager.data.Coords;
 import org.micromanager.display.NewImagePlusEvent;
 import org.micromanager.display.internal.events.StackPositionChangedEvent;

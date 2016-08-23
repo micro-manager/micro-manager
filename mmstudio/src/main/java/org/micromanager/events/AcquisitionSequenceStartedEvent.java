@@ -20,7 +20,6 @@
 
 package org.micromanager.events;
 
-import org.micromanager.data.Datastore;
 import org.micromanager.acquisition.SequenceSettings;
 
 /**

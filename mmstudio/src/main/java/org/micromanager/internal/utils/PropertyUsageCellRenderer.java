@@ -2,7 +2,6 @@
 
 package org.micromanager.internal.utils;
 
-import java.awt.Color;
 import java.awt.Component;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;

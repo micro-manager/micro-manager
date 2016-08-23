@@ -21,22 +21,15 @@
 package org.micromanager.display.internal;
 
 import com.bulenkov.iconloader.IconLoader;
-
-import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Dimension;
 import java.awt.event.MouseEvent;
-
 import java.util.HashMap;
-
-import javax.swing.event.MouseInputAdapter;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.SwingUtilities;
-
+import javax.swing.event.MouseInputAdapter;
 import org.micromanager.display.DataViewer;
-
 import org.micromanager.internal.utils.TooltipTextMaker;
 
 public final class ScrollbarLockIcon extends JButton {

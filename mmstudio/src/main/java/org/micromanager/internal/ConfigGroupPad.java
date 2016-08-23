@@ -23,29 +23,26 @@
 
 package org.micromanager.internal;
 
-import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.StateGroupCellRenderer;
-import org.micromanager.internal.utils.NumberUtils;
-import org.micromanager.internal.utils.StatePresetCellEditor;
-import org.micromanager.internal.utils.StatePresetCellRenderer;
-import org.micromanager.internal.utils.StateItem;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
-
 import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.StateGroupCellRenderer;
+import org.micromanager.internal.utils.StateItem;
+import org.micromanager.internal.utils.StatePresetCellEditor;
+import org.micromanager.internal.utils.StatePresetCellRenderer;
 
 
 /**

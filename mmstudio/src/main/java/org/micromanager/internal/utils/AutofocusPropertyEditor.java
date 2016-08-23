@@ -26,7 +26,6 @@ package org.micromanager.internal.utils;
  * PropertyEditor provides UI for manipulating sets of autofocus properties
  */
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -35,9 +34,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.ParseException;
 import java.util.ArrayList;
-
 import javax.swing.AbstractCellEditor;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -51,11 +51,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-
-import java.text.ParseException;
-import javax.swing.ImageIcon;
-
-import org.micromanager.internal.utils.DaytimeNighttime;
 
 /**
  * JFrame based component for generic manipulation of device properties.

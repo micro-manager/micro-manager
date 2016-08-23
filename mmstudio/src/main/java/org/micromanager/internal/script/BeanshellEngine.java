@@ -1,11 +1,10 @@
 package org.micromanager.internal.script;
 
-import org.micromanager.internal.utils.MMScriptException;
-
 import bsh.EvalError;
 import bsh.Interpreter;
 import bsh.ParseException;
 import bsh.TargetError;
+import org.micromanager.internal.utils.MMScriptException;
 
 public final class BeanshellEngine implements ScriptingEngine {
    Interpreter interp_;

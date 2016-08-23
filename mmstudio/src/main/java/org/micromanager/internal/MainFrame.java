@@ -22,63 +22,49 @@
 package org.micromanager.internal;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.KeyboardFocusManager;
+import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.Font;
-import java.awt.Insets;
-import java.awt.KeyboardFocusManager;
-import java.awt.Toolkit;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
-
 import javax.swing.AbstractButton;
-import javax.swing.border.MatteBorder;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
-import javax.swing.SpringLayout;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-
+import javax.swing.border.MatteBorder;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.acquisition.internal.AcquisitionSelector;
 import org.micromanager.alerts.internal.AlertClearedEvent;
 import org.micromanager.alerts.internal.AlertUpdatedEvent;
 import org.micromanager.alerts.internal.AlertsWindow;
 import org.micromanager.alerts.internal.DefaultAlert;
 import org.micromanager.alerts.internal.NoAlertsAvailableEvent;
-import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ChannelExposureEvent;
+import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
@@ -96,10 +82,8 @@ import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMKeyDispatcher;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import org.micromanager.quickaccess.internal.controls.ShutterControl;
-
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
+import org.micromanager.quickaccess.internal.controls.ShutterControl;
 
 /**
  * GUI code for the primary window of the program. And nothing else.

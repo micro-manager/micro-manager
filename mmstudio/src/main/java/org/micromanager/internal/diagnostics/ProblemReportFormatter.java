@@ -11,8 +11,6 @@
 
 package org.micromanager.internal.diagnostics;
 
-import org.micromanager.internal.diagnostics.ProblemReport;
-
 
 public final class ProblemReportFormatter {
    static final String FORMAT_VERSION = "2.1";

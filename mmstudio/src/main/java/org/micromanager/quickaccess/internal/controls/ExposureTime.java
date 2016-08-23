@@ -19,38 +19,25 @@
 
 package org.micromanager.quickaccess.internal.controls;
 
-import com.bulenkov.iconloader.IconLoader;
-
 import com.google.common.eventbus.Subscribe;
-
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.Insets;
 import java.awt.Frame;
-
 import java.text.ParseException;
-
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.events.GUIRefreshEvent;
-import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-
+import org.micromanager.events.ExposureChangedEvent;
+import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.NumberUtils;
-
+import org.micromanager.quickaccess.WidgetPlugin;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 

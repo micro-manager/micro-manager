@@ -1,7 +1,6 @@
 package org.micromanager;
 
 import java.io.IOException;
-
 import java.util.Set;
 
 /**

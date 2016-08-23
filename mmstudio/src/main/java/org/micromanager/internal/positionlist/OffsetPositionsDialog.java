@@ -19,23 +19,19 @@
 
 package org.micromanager.internal.positionlist;
 
-import mmcorej.CMMCore;
-import mmcorej.DeviceType;
-import mmcorej.StrVector;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
+import mmcorej.CMMCore;
+import mmcorej.DeviceType;
+import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 

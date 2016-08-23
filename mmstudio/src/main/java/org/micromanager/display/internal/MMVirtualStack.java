@@ -22,29 +22,21 @@ package org.micromanager.display.internal;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.display.NewImagePlusEvent;
-
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultImageJConverter;
 import org.micromanager.data.internal.DefaultMetadata;
-
+import org.micromanager.display.NewImagePlusEvent;
 import org.micromanager.display.internal.events.StackPositionChangedEvent;
-
-import org.micromanager.internal.utils.ImageUtils;
-
-import org.micromanager.Studio;
 
 /**
  * This stack class provides the ImagePlus with images from the Datastore.

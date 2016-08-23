@@ -25,9 +25,7 @@ package org.micromanager.internal.utils;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
-
 import javax.swing.JOptionPane;
-
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 

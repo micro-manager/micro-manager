@@ -32,9 +32,7 @@ import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
-
 import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Histogram view.

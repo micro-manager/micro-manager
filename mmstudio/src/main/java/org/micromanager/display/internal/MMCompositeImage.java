@@ -25,11 +25,8 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.plugin.frame.ContrastAdjuster;
 import ij.process.LUT;
-
 import java.lang.reflect.InvocationTargetException;
-
 import javax.swing.SwingUtilities;
-
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;

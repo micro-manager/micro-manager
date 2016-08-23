@@ -22,13 +22,12 @@ package org.micromanager.data.internal;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import org.micromanager.data.Coords;
+import org.micromanager.data.DatastoreFrozenException;
+import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Image;
 import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.RewritableStorage;
-import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.Image;
-import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.ReportingUtils;

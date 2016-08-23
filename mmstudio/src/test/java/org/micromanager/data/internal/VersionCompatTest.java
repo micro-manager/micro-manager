@@ -21,40 +21,22 @@
 package org.micromanager.data.internal;
 
 import com.google.common.io.Files;
-
-import ij.ImagePlus;
-
 import java.awt.Rectangle;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
-
 import org.json.JSONArray;
 import org.json.JSONException;
-
-import org.junit.Test;
 import org.junit.Assert;
-
-import org.micromanager.data.Annotation;
+import org.junit.Test;
+import org.micromanager.MultiStagePosition;
+import org.micromanager.PropertyMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
-
-import org.micromanager.data.internal.DefaultCoords;
-import org.micromanager.data.internal.DefaultDataManager;
-import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.data.internal.DefaultMetadata;
-import org.micromanager.data.internal.DefaultPropertyMap;
-import org.micromanager.data.internal.DefaultSummaryMetadata;
-
-import org.micromanager.MultiStagePosition;
-import org.micromanager.PropertyMap;
 
 /**
  * This class tests that we properly transfer data between versions

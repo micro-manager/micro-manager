@@ -23,13 +23,9 @@
 package org.micromanager;
 
 
-import java.awt.geom.AffineTransform;
 import java.awt.Rectangle;
 import java.io.IOException;
-
 import javax.swing.JFrame;
-
-import org.micromanager.data.Datastore;
 
 
 /**

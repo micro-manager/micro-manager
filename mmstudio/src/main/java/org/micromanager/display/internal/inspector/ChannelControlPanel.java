@@ -21,9 +21,7 @@
 package org.micromanager.display.internal.inspector;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -32,7 +30,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
@@ -44,9 +41,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -57,21 +52,17 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.HistogramData;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewHistogramsEvent;
-
-import org.micromanager.internal.graph.GraphData;
-import org.micromanager.internal.graph.HistogramCanvas;
-import org.micromanager.internal.graph.HistogramCanvas.CursorListener;
-
-import org.micromanager.display.internal.events.MouseExitedEvent;
-import org.micromanager.display.internal.events.MouseMovedEvent;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.HistogramRequestEvent;
+import org.micromanager.display.internal.events.MouseExitedEvent;
+import org.micromanager.display.internal.events.MouseMovedEvent;
 import org.micromanager.display.internal.link.ContrastEvent;
 import org.micromanager.display.internal.link.ContrastLinker;
 import org.micromanager.display.internal.link.LinkButton;
-import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.DisplayDestroyedEvent;
-
+import org.micromanager.internal.graph.GraphData;
+import org.micromanager.internal.graph.HistogramCanvas;
+import org.micromanager.internal.graph.HistogramCanvas.CursorListener;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**

@@ -7,13 +7,10 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
-
 import java.awt.Color;
 import java.awt.Point;
-
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

@@ -23,9 +23,7 @@ package org.micromanager.events.internal;
 
 import mmcorej.CMMCore;
 import mmcorej.MMEventCallback;
-
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
-
 import org.micromanager.events.ConfigGroupChangedEvent;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.events.PixelSizeChangedEvent;

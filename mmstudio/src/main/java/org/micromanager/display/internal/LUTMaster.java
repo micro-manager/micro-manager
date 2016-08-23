@@ -21,32 +21,25 @@
 package org.micromanager.display.internal;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
-
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DirectColorModel;
 import java.util.ArrayList;
 import java.util.HashSet;
-
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
-
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.DefaultDisplaySettings;
-
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;

@@ -23,7 +23,6 @@
 package org.micromanager;
 
 import java.util.Collection;
-
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 

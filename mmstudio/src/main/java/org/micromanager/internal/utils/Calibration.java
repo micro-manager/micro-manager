@@ -24,7 +24,6 @@
 package org.micromanager.internal.utils;
 
 import java.text.DecimalFormat;
-
 import mmcorej.Configuration;
 
 public final class Calibration {

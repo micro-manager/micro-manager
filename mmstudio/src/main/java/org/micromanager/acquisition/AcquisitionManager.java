@@ -23,7 +23,6 @@ package org.micromanager.acquisition;
 
 import java.io.IOException;
 import java.util.List;
-
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;

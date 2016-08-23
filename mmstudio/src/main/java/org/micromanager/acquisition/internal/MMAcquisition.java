@@ -21,9 +21,6 @@
 package org.micromanager.acquisition.internal;
 
 import com.google.common.eventbus.Subscribe;
-
-import ij.ImagePlus;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -31,32 +28,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.concurrent.BlockingQueue;
-import java.util.Iterator;
 import java.util.List;
-import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JToggleButton;
-
-import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-
-import org.json.JSONObject;
 import org.json.JSONException;
-import org.micromanager.internal.MMStudio;
-
+import org.json.JSONObject;
+import org.micromanager.Studio;
+import org.micromanager.alerts.UpdatableAlert;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
@@ -65,35 +49,21 @@ import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Storage;
-import org.micromanager.data.SummaryMetadata;
-
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.internal.DefaultDatastore;
-import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
-import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
-import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.StorageRAM;
-
-import org.micromanager.events.AcquisitionEndedEvent;
-import org.micromanager.events.internal.DefaultEventManager;
-
-import org.micromanager.internal.dialogs.AcqControlDlg;
-
-import org.micromanager.alerts.UpdatableAlert;
-
+import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
-
+import org.micromanager.events.AcquisitionEndedEvent;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import org.micromanager.Studio;
 
 /**
  * This class is used to execute most of the acquisition and image display

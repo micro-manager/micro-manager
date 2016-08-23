@@ -22,10 +22,9 @@
 //
 package org.micromanager.acquisition;
 
-import java.awt.Color;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import java.awt.Color;
 
 /**
  * A ChannelSpec is a description of how a specific channel will be used in an

@@ -21,48 +21,36 @@
 package org.micromanager.data.internal;
 
 import java.awt.Window;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.ProgressMonitor;
-
 import mmcorej.TaggedImage;
-
 import org.json.JSONException;
-
+import org.micromanager.PropertyMap;
+import org.micromanager.data.Coords;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.RewritableDatastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.ImageJConverter;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.NewPipelineEvent;
-import org.micromanager.data.ProcessorPlugin;
-import org.micromanager.data.SummaryMetadata;
-
-import org.micromanager.data.Coords;
-import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
-import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.data.internal.pipeline.DefaultPipeline;
-import org.micromanager.data.internal.StorageRAM;
-import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorFactory;
-
+import org.micromanager.data.ProcessorPlugin;
+import org.micromanager.data.RewritableDatastore;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.pipeline.DefaultPipeline;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
-// TODO: this should be moved into the API.
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.PropertyMap;
 
 /**
  * This implementation of the DataManager interface provides general utility

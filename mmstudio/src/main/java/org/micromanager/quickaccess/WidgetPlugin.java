@@ -21,9 +21,7 @@ package org.micromanager.quickaccess;
 
 import java.awt.Dimension;
 import java.awt.Frame;
-
 import javax.swing.JComponent;
-
 import org.micromanager.PropertyMap;
 
 /**

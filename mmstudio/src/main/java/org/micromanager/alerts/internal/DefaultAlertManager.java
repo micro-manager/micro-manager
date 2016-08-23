@@ -21,17 +21,11 @@
 package org.micromanager.alerts.internal;
 
 import java.util.HashMap;
-
 import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-
-import net.miginfocom.swing.MigLayout;
-
+import org.micromanager.Studio;
 import org.micromanager.alerts.Alert;
 import org.micromanager.alerts.AlertManager;
 import org.micromanager.alerts.UpdatableAlert;
-import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 
 public final class DefaultAlertManager implements AlertManager {

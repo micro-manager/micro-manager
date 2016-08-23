@@ -25,11 +25,9 @@ package org.micromanager.internal.hcwizard;
 
 import java.awt.Dialog;
 import java.awt.Font;
-
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-
 import mmcorej.CMMCore;
 import org.micromanager.internal.utils.ReportingUtils;
 

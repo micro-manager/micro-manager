@@ -23,13 +23,10 @@ package org.micromanager.internal.navigation;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
-
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-
-
-import org.micromanager.internal.MMStudio;
 import mmcorej.CMMCore;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.ReportingUtils;
 

@@ -26,13 +26,11 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Window;
 import java.util.HashMap;
-
 import javax.swing.JTable;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.SwingUtilities;
-import javax.swing.table.TableModel;
 import javax.swing.UIManager;
-
+import javax.swing.plaf.ColorUIResource;
+import javax.swing.table.TableModel;
 import org.micromanager.ApplicationSkin;
 import org.micromanager.ApplicationSkin.SkinMode;
 

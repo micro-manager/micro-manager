@@ -21,23 +21,18 @@
 package org.micromanager.display.internal.gearmenu;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
-
-import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
 import javax.swing.JMenuItem;
-import javax.swing.JSeparator;
-
+import javax.swing.event.MouseInputAdapter;
+import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.inspector.InspectorFrame;
-import org.micromanager.Studio;
-
 import org.micromanager.internal.utils.SortedMenu;
 import org.micromanager.internal.utils.SortedPopupMenu;
 

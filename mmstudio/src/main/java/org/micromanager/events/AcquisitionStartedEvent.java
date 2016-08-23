@@ -21,7 +21,6 @@
 package org.micromanager.events;
 
 import org.micromanager.data.Datastore;
-import org.micromanager.acquisition.SequenceSettings;
 
 /**
  * This class signals that an acquisition is starting, and provides access to

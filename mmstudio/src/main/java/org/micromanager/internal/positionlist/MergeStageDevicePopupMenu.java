@@ -3,10 +3,8 @@ package org.micromanager.internal.positionlist;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Vector;
-
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;

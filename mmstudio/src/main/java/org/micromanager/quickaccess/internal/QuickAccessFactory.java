@@ -19,24 +19,18 @@
 
 package org.micromanager.quickaccess.internal;
 
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
-import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JToggleButton;
-
 import org.micromanager.data.internal.DefaultPropertyMap;
-
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.SimpleButtonPlugin;
 import org.micromanager.quickaccess.ToggleButtonPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
-
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * This class creates UI widgets for the Quick-Access Window based on the

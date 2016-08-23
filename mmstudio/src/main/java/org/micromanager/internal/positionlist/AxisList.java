@@ -1,11 +1,9 @@
 package org.micromanager.internal.positionlist;
 
 import java.util.ArrayList;
-
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
-
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.ReportingUtils;
 

@@ -10,8 +10,8 @@ package org.micromanager.internal.utils;
 import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
-import java.util.List;
 import java.util.Arrays;
+import java.util.List;
 import javax.imageio.*;
 import javax.swing.*;
 

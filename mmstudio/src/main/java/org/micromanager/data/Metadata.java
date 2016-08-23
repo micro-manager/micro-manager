@@ -22,8 +22,6 @@ package org.micromanager.data;
 
 import java.awt.Rectangle;
 import java.util.UUID;
-
-import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
 
 

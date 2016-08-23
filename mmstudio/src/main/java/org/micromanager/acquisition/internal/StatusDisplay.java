@@ -20,30 +20,21 @@
 package org.micromanager.acquisition.internal;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.GraphicsConfiguration;
-import java.awt.Rectangle;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
 import net.miginfocom.swing.MigLayout;
-
+import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.NewImageEvent;
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.Studio;
 
 /**
  * This class shows a status display when an acquisition is started, to let

@@ -26,7 +26,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
-
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -35,15 +34,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
-
 import mmcorej.CMMCore;
-
 import org.micromanager.ApplicationSkin.SkinMode;
-import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.Studio;
+import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.display.internal.inspector.InspectorFrame;
-import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;

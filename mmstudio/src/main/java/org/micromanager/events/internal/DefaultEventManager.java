@@ -1,7 +1,6 @@
 package org.micromanager.events.internal;
 
 import com.google.common.eventbus.EventBus;
-
 import org.micromanager.events.EventManager;
 
 // This is a singleton wrapper around the Guava library's EventBus. It exposes

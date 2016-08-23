@@ -22,20 +22,15 @@
 package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
-
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
-
 import org.json.JSONException;
-
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
-
 import org.micromanager.events.internal.DefaultEventManager;
-
-import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
 
 /**

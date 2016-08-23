@@ -22,17 +22,13 @@ package org.micromanager.data.internal;
 
 import java.awt.Rectangle;
 import java.util.UUID;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import org.micromanager.PropertyMap;
 import org.micromanager.data.Metadata;
-
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import org.micromanager.PropertyMap;
 
 /**
  * This class holds the metadata for ImagePlanes. It is intended to be 

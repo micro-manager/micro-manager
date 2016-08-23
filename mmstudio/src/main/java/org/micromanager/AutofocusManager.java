@@ -22,8 +22,6 @@ package org.micromanager;
 
 import java.util.List;
 
-import org.micromanager.AutofocusPlugin;
-
 /**
  * This entity provides access to methods for controlling autofocus of the
  * microscope. You can access it via Studio.getAutofocusManager().

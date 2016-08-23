@@ -21,27 +21,21 @@
 package org.micromanager.data.internal;
 
 import ij.ImagePlus;
-
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
 import mmcorej.TaggedImage;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.micromanager.PropertyMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
-import org.micromanager.data.internal.DefaultPropertyMap;
+import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
-
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DirectBuffers;
 import org.micromanager.internal.utils.ImageUtils;

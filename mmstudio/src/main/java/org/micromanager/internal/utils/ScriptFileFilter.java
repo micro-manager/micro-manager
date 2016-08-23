@@ -23,7 +23,6 @@
 package org.micromanager.internal.utils;
 
 import java.io.File;
-
 import javax.swing.filechooser.FileFilter;
 
 /**

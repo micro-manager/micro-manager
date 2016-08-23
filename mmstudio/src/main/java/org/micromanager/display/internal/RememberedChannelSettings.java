@@ -22,13 +22,9 @@
 package org.micromanager.display.internal;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.Arrays;
-
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.DefaultDisplaySettings;
-
 import org.micromanager.internal.utils.DefaultUserProfile;
 
 /**

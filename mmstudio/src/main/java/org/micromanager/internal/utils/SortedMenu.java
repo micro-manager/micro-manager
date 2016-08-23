@@ -22,7 +22,6 @@
 package org.micromanager.internal.utils;
 
 import java.util.HashSet;
-
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 

@@ -21,22 +21,18 @@
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Font;
-
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
-import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**

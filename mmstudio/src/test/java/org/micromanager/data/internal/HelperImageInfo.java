@@ -21,7 +21,6 @@
 package org.micromanager.data.internal;
 
 import org.junit.Assert;
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;

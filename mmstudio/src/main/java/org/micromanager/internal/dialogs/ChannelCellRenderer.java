@@ -2,14 +2,12 @@ package org.micromanager.internal.dialogs;
 
 import java.awt.Component;
 import java.util.ArrayList;
-
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-
-import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.acquisition.ChannelSpec;
+import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**

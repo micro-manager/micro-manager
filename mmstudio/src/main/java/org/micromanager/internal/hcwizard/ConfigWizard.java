@@ -22,8 +22,6 @@
 package org.micromanager.internal.hcwizard;
 
 import java.awt.Color;
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -46,25 +44,16 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JEditorPane;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.border.LineBorder;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.text.DefaultCaret;
 import javax.swing.WindowConstants;
-
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
-
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.HttpUtils;

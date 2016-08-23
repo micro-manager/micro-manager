@@ -24,19 +24,16 @@ package org.micromanager.internal.utils;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.BorderFactory;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
-
 import net.miginfocom.swing.MigLayout;
 
 public final class ShowFlagsPanel extends JPanel {

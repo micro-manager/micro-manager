@@ -1,9 +1,7 @@
 package org.micromanager.internal.utils;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.text.ParseException;
-
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;

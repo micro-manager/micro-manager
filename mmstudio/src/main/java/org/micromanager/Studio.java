@@ -24,7 +24,6 @@ package org.micromanager;
 
 
 import mmcorej.CMMCore;
-
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.alerts.AlertManager;
 import org.micromanager.data.DataManager;

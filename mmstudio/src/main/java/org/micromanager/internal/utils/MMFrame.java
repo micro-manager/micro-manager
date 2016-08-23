@@ -27,11 +27,9 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-
 import javax.swing.JFrame;
-
-import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.menus.MMMenuBar;
 
 /**
  * Base class for Micro-Manager frame windows.

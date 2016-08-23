@@ -1,70 +1,52 @@
 package org.micromanager.internal;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
-import javax.swing.ImageIcon;
-
 import javax.swing.JButton;
 import javax.swing.JComponent;
-
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
-
-
 import org.json.JSONObject;
-
-import org.micromanager.data.internal.StorageRAM;
-
+import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
-import org.micromanager.display.ControlsFactory;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.PixelsSetEvent;
-import org.micromanager.display.RequestToCloseEvent;
-
 import org.micromanager.data.NewPipelineEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
-import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.data.internal.DefaultMetadata;
-
+import org.micromanager.data.internal.DefaultRewritableDatastore;
+import org.micromanager.data.internal.StorageRAM;
+import org.micromanager.display.ControlsFactory;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.PixelsSetEvent;
+import org.micromanager.display.RequestToCloseEvent;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
-
-import org.micromanager.events.LiveModeEvent;
-import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-
-import org.micromanager.quickaccess.internal.QuickAccessFactory;
-
-import org.micromanager.Studio;
-
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.navigation.ClickToMoveManager;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.quickaccess.internal.QuickAccessFactory;
 
 /**
  * This class is responsible for all logic surrounding live mode and the

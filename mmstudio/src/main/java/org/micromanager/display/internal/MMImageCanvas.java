@@ -21,27 +21,22 @@
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.Subscribe;
-
-import ij.gui.ImageCanvas;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Prefs;
-
+import ij.gui.ImageCanvas;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.Graphics;
 import java.awt.Rectangle;
-
-
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.NewDisplaySettingsEvent;
-import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
+import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
-import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseExitedEvent;
 import org.micromanager.display.internal.events.MouseMovedEvent;
 

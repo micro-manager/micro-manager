@@ -16,7 +16,6 @@
 package org.micromanager.internal.menus;
 
 import javax.swing.JMenuBar;
-
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 

@@ -20,23 +20,14 @@
 
 package org.micromanager.data.internal;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import org.micromanager.PropertyMap;
+import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.Annotation;
-
-import org.micromanager.PropertyMap;
-
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**

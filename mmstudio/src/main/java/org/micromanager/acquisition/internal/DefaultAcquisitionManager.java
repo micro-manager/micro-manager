@@ -20,13 +20,7 @@ package org.micromanager.acquisition.internal;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-
-import ij.ImagePlus;
-
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -36,30 +30,24 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-
 import javax.swing.SwingUtilities;
-
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
-
+import org.micromanager.PropertyMap;
+import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionManager;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.data.internal.DefaultMetadata;
-import org.micromanager.data.internal.DefaultMetadata;
-import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.PropertyMap;
-import org.micromanager.acquisition.SequenceSettings;
-import org.micromanager.Studio;
-
-import org.micromanager.internal.dialogs.AcqControlDlg;
+import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.MMException;
 
 /**

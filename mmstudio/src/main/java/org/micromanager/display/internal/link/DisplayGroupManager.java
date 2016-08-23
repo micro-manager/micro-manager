@@ -21,22 +21,18 @@
 package org.micromanager.display.internal.link;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.GraphicsConfiguration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
-
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.events.internal.DefaultEventManager;
-
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**

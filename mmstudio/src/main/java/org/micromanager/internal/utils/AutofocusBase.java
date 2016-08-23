@@ -1,7 +1,6 @@
 package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
-
 import org.micromanager.AutofocusPlugin;
 
 public abstract class AutofocusBase implements AutofocusPlugin {

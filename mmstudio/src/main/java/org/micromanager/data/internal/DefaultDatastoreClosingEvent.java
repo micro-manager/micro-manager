@@ -20,8 +20,8 @@
 
 package org.micromanager.data.internal;
 
-import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.data.Datastore;
+import org.micromanager.events.DatastoreClosingEvent;
 
 public final class DefaultDatastoreClosingEvent implements DatastoreClosingEvent {
    private Datastore store_;

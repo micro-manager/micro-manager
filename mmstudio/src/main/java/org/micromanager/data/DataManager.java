@@ -24,11 +24,8 @@ import java.awt.Window;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
-
 import mmcorej.TaggedImage;
-
 import org.json.JSONException;
-
 import org.micromanager.PropertyMap;
 
 /**

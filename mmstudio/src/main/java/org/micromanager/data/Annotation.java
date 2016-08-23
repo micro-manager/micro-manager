@@ -21,7 +21,6 @@
 package org.micromanager.data;
 
 import java.io.IOException;
-
 import org.micromanager.PropertyMap;
 
 /**

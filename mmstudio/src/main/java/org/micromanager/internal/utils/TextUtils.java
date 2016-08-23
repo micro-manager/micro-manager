@@ -23,7 +23,6 @@
 package org.micromanager.internal.utils;
 
 import com.google.common.io.Files;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;

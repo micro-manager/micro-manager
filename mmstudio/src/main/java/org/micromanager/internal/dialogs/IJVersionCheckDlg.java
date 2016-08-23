@@ -24,23 +24,19 @@
 package org.micromanager.internal.dialogs;
 
 import ij.ImageJ;
-
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.Rectangle;
-import java.util.Arrays;
 import java.util.ArrayList;
-
-import javax.swing.JDialog;
+import java.util.Arrays;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;

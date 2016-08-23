@@ -21,20 +21,16 @@ package org.micromanager.internal.dialogs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.PropertyItem;

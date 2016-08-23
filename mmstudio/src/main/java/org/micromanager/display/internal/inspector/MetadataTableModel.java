@@ -23,12 +23,9 @@ package org.micromanager.display.internal.inspector;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Vector;
-
 import javax.swing.table.AbstractTableModel;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 

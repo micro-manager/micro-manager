@@ -20,9 +20,9 @@
 
 package org.micromanager.display.internal.overlays;
 
+import org.micromanager.Studio;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
-import org.micromanager.Studio;
 
 public final class ScaleBarFactory implements OverlayPanelFactory {
    private Studio studio_;

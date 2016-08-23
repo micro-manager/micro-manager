@@ -20,12 +20,10 @@
 
 package org.micromanager.display.internal.gearmenu;
 
+import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.ExportMovieDlg;
-import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 

@@ -22,34 +22,26 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.AutofocusPlugin;
+import org.micromanager.IntroPlugin;
+import org.micromanager.MMPlugin;
+import org.micromanager.MenuPlugin;
+import org.micromanager.PluginManager;
+import org.micromanager.Studio;
+import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.InspectorPlugin;
 import org.micromanager.display.OverlayPlugin;
-import org.micromanager.IntroPlugin;
-import org.micromanager.MenuPlugin;
-import org.micromanager.MMPlugin;
-import org.micromanager.PluginManager;
-import org.micromanager.quickaccess.QuickAccessPlugin;
-import org.micromanager.Studio;
-
 import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.SortedMenu;
+import org.micromanager.quickaccess.QuickAccessPlugin;
 
 public final class DefaultPluginManager implements PluginManager {
 

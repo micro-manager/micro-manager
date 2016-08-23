@@ -22,13 +22,8 @@ package org.micromanager.data.internal.pipeline;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
-import org.micromanager.data.ProcessorContext;
-
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class AsynchronousContext extends BaseContext {

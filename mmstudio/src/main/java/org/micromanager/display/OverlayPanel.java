@@ -21,11 +21,8 @@
 package org.micromanager.display;
 
 import ij.gui.ImageCanvas;
-
 import java.awt.Graphics;
-
 import javax.swing.JPanel;
-
 import org.micromanager.data.Image;
 
 /**

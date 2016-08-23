@@ -25,7 +25,6 @@ package org.micromanager.data.internal.multipagetiff;
 import ij.ImageJ;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
-
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
@@ -40,31 +39,26 @@ import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-
 import mmcorej.TaggedImage;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import org.micromanager.internal.MMStudio;
-import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.internal.RememberedChannelSettings;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.PropertyMap;
 
 public final class MultipageTiffWriter {
 

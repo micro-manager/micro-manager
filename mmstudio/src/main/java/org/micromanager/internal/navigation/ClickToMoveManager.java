@@ -20,16 +20,12 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
-
 import ij.IJ;
-
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
-
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.internal.DefaultDisplayWindow;
 import org.micromanager.events.internal.MouseMovesStageEvent;

@@ -23,11 +23,8 @@
 package org.micromanager.internal.hcwizard;
 
 import java.util.ArrayList;
-
 import javax.swing.table.AbstractTableModel;
-
 import mmcorej.MMCoreJ;
-
 import org.micromanager.internal.utils.MMPropertyTableModel;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;

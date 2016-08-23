@@ -31,18 +31,15 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import org.micromanager.PropertyMap;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import org.micromanager.PropertyMap;
 
 public final class DefaultDisplaySettings implements DisplaySettings {
 

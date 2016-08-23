@@ -20,7 +20,6 @@
 package org.micromanager;
 
 import java.util.HashMap;
-
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.InspectorPlugin;

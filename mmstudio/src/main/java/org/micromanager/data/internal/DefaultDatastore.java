@@ -24,23 +24,19 @@ import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-
-import javax.swing.filechooser.FileFilter;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
-
+import javax.swing.filechooser.FileFilter;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
+import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;

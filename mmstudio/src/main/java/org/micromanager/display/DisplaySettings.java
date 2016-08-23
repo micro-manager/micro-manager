@@ -21,7 +21,6 @@
 package org.micromanager.display;
 
 import java.awt.Color;
-
 import org.micromanager.PropertyMap;
 
 /**

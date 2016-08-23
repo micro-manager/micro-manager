@@ -21,24 +21,15 @@
 package org.micromanager.data.internal;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.Image;
-import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.NewSummaryMetadataEvent;
-import org.micromanager.data.Storage;
+import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.SummaryMetadata;
-
-import org.micromanager.internal.MMStudio;
-
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Simple RAM-based storage for Datastores. Methods that interact with the

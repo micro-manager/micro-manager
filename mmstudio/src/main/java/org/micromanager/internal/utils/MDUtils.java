@@ -1,7 +1,6 @@
 package org.micromanager.internal.utils;
 
 import ij.ImagePlus;
-
 import java.awt.Rectangle;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -11,18 +10,15 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.UUID;
-
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import org.micromanager.PropertyMap;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.PropertyMap;
 
 /**
  * This class is intended to standardize interactions with the tags in 

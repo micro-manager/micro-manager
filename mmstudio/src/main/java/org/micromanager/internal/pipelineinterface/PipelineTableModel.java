@@ -18,13 +18,12 @@ package org.micromanager.internal.pipelineinterface;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.table.AbstractTableModel;
-
-import org.micromanager.data.ProcessorConfigurator;
-import org.micromanager.data.ProcessorFactory;
-import org.micromanager.data.NewPipelineEvent;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.NewPipelineEvent;
+import org.micromanager.data.ProcessorConfigurator;
+import org.micromanager.data.ProcessorFactory;
+import org.micromanager.internal.MMStudio;
 
 // TODO: currently we redraw the entire table any time it changes, rather than
 // only redrawing the row(s) that are modified.

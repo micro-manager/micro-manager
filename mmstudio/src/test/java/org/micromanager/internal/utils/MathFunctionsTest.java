@@ -2,12 +2,12 @@
 
 package org.micromanager.internal.utils;
 
-import java.util.Map;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.HashMap;
-import org.junit.Test;
+import java.util.Map;
 import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class MathFunctionsTest {
 

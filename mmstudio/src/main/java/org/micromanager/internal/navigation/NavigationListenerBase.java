@@ -4,9 +4,7 @@
 package org.micromanager.internal.navigation;
 
 import ij.gui.ImageWindow;
-
 import javax.swing.JOptionPane;
-
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.internal.utils.ReportingUtils;

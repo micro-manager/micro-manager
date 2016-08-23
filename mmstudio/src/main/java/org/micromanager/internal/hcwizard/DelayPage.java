@@ -27,7 +27,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.ArrayList;
-
 import javax.swing.CellEditor;
 import javax.swing.InputMap;
 import javax.swing.JButton;
@@ -38,9 +37,7 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.micromanager.internal.hcwizard.DevicesPage.DeviceTable_TableModel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.GUIUtils;

@@ -21,7 +21,6 @@
 package org.micromanager.display.internal;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,19 +28,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-
 import javax.swing.JOptionPane;
-
+import org.micromanager.PropertyMap;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.Image;
 import org.micromanager.data.DatastoreRewriteException;
-
-import org.micromanager.display.DataViewer;
+import org.micromanager.data.Image;
+import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.ControlsFactory;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayManager;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.HistogramData;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.display.NewHistogramsEvent;
@@ -55,18 +53,12 @@ import org.micromanager.display.internal.events.ViewerAddedEvent;
 import org.micromanager.display.internal.events.ViewerRemovedEvent;
 import org.micromanager.display.internal.inspector.InspectorFrame;
 import org.micromanager.display.internal.link.DisplayGroupManager;
-
 import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
-
-import org.micromanager.data.internal.DefaultPropertyMap;
-
-import org.micromanager.PropertyMap;
 
 
 public final class DefaultDisplayManager implements DisplayManager {

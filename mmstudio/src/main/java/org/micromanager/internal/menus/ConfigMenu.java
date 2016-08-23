@@ -1,7 +1,6 @@
 package org.micromanager.internal.menus;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Cursor;
 import java.io.File;
 import java.util.HashSet;
@@ -11,14 +10,12 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
 import mmcorej.CMMCore;
-
 import org.micromanager.events.SystemConfigurationLoadedEvent;
-import org.micromanager.internal.hcwizard.ConfigWizard;
-import org.micromanager.internal.dialogs.IntroDlg;
-import org.micromanager.internal.MainFrame;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.MainFrame;
+import org.micromanager.internal.dialogs.IntroDlg;
+import org.micromanager.internal.hcwizard.ConfigWizard;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;

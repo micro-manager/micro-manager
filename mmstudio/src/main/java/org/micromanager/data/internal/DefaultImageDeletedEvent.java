@@ -22,7 +22,6 @@ package org.micromanager.data.internal;
 
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.ImageDeletedEvent;
 
 /**
  * This class signifies that an image has been deleted from a Datastore.

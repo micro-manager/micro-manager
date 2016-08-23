@@ -22,26 +22,22 @@
 package org.micromanager.internal.positionlist;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 import java.text.ParseException;
-
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-import javax.swing.JComboBox;
-
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-
-import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
+import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;

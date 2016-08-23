@@ -25,10 +25,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.micromanager.data.Coords;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;

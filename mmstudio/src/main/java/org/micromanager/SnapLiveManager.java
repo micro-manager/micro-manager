@@ -23,9 +23,7 @@
 package org.micromanager;
 
 import java.util.List;
-
 import org.micromanager.data.Image;
-
 import org.micromanager.display.DisplayWindow;
 
 /**

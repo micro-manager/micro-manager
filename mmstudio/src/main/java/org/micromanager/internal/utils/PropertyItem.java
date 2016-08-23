@@ -1,7 +1,6 @@
 package org.micromanager.internal.utils;
 
 import java.util.Arrays;
-
 import mmcorej.CMMCore;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;

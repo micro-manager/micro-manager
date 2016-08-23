@@ -23,16 +23,13 @@ package org.micromanager.data.internal.multipagetiff;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.UUID;
-
 import mmcorej.TaggedImage;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.micromanager.data.Coords;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultSummaryMetadata;

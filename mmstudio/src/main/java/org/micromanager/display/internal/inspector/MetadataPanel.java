@@ -21,16 +21,13 @@
 package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.Subscribe;
-
 import ij.gui.ImageWindow;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.List;
 import java.util.UUID;
-
+import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -39,12 +36,9 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
-
 import net.miginfocom.swing.MigLayout;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -55,7 +49,6 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.Inspector;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.PixelsSetEvent;
-
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 

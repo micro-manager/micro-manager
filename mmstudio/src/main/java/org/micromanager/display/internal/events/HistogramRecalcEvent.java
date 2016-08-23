@@ -20,10 +20,6 @@
 
 package org.micromanager.display.internal.events;
 
-import java.util.HashMap;
-
-import org.micromanager.display.HistogramData;
-
 /**
  * This event is posted whenever someone wants histogram data to be
  * recalculated for the display.

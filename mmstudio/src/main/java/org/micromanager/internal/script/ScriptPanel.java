@@ -24,8 +24,6 @@ package org.micromanager.internal.script;
 import bsh.EvalError;
 import bsh.Interpreter;
 import bsh.util.JConsole;
-
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -47,7 +45,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
@@ -74,21 +71,18 @@ import javax.swing.text.PlainDocument;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
-
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rtextarea.RTextScrollPane;
 import org.fife.ui.rtextarea.SearchContext;
 import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rtextarea.SearchResult;
-
-import org.micromanager.internal.MMStudio;
 import org.micromanager.ScriptController;
-import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
-import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.HotKeysDialog;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MMScriptException;

@@ -22,17 +22,15 @@
 package org.micromanager.display.internal;
 
 import com.bulenkov.iconloader.IconLoader;
-
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.event.MouseEvent;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-
-import javax.swing.event.MouseInputAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.event.MouseInputAdapter;
 
 /**
  * This class displays a little play/pause icon with a single-character label,

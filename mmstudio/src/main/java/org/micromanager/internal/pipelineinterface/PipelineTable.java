@@ -16,10 +16,10 @@
 package org.micromanager.internal.pipelineinterface;
 
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -28,10 +28,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import mmcorej.TaggedImage;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.Studio;
 
 public final class PipelineTable extends JTable {
 

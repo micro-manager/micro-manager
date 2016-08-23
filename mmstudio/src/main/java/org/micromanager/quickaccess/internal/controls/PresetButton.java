@@ -20,20 +20,14 @@
 package org.micromanager.quickaccess.internal.controls;
 
 import com.bulenkov.iconloader.IconLoader;
-
-import com.google.common.eventbus.Subscribe;
-
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
-import java.awt.Insets;
-import java.awt.Frame;
-
-import java.util.Arrays;
-
+import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -44,18 +38,13 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-
 import net.miginfocom.swing.MigLayout;
-
-import org.micromanager.display.internal.RememberedChannelSettings;
-import org.micromanager.events.LiveModeEvent;
-import org.micromanager.quickaccess.QuickAccessPlugin;
-import org.micromanager.quickaccess.WidgetPlugin;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-
+import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.internal.utils.GUIUtils;
-
+import org.micromanager.quickaccess.QuickAccessPlugin;
+import org.micromanager.quickaccess.WidgetPlugin;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 

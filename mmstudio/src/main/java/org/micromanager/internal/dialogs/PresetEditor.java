@@ -24,7 +24,6 @@ package org.micromanager.internal.dialogs;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
-
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.PropertyItem;

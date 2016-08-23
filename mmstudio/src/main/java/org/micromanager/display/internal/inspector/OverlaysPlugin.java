@@ -20,11 +20,9 @@
 
 package org.micromanager.display.internal.inspector;
 
+import org.micromanager.Studio;
 import org.micromanager.display.InspectorPanel;
 import org.micromanager.display.InspectorPlugin;
-
-import org.micromanager.Studio;
-
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 

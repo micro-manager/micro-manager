@@ -21,7 +21,6 @@
 package org.micromanager.display.internal.events;
 
 import ij.gui.ImageCanvas;
-
 import java.awt.Graphics;
 
 

@@ -1,15 +1,12 @@
 package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
-
 import javax.swing.table.AbstractTableModel;
-
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
-
 import org.micromanager.Studio;
 
 /**

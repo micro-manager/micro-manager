@@ -21,7 +21,6 @@
 
 package org.micromanager.internal.utils;
 
-import java.awt.Color;
 import java.awt.Component;
 import javax.swing.JLabel;
 import javax.swing.JTable;

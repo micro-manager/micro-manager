@@ -23,8 +23,6 @@ package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-
-import javax.swing.JSeparator;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.MenuElement;
