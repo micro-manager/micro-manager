@@ -87,16 +87,13 @@ public final class CanvasUpdateQueue {
       }
    }
 
-   private final Datastore store_;
-   private final MMVirtualStack stack_;
-   private ImagePlus plus_;
    private final DefaultDisplayWindow display_;
-   private final Runnable consumer_;
+   private final MMVirtualStack stack_;
 
    private final Object drawLock_;
    private final LinkedBlockingQueue<Coords> coordsQueue_;
    private boolean shouldAcceptNewCoords_ = true;
-   private HashMap<Integer, HistogramHistory> channelToHistory_;
+   private final HashMap<Integer, HistogramHistory> channelToHistory_;
    // Unfortunately, even though we do all of our work in the EDT, there's
    // no way for us to tell Swing to paint *right now* -- we can only put a
    // draw command on the EDT to be processed later. This boolean allows us
@@ -134,16 +131,8 @@ public final class CanvasUpdateQueue {
       display_ = display;
       stack_ = stack;
       drawLock_ = drawLock;
-      store_ = display_.getDatastore();
-      plus_ = display_.getImagePlus();
       coordsQueue_ = new LinkedBlockingQueue<Coords>();
       channelToHistory_ = new HashMap<Integer, HistogramHistory>();
-      consumer_ = new Runnable() {
-         @Override
-         public void run() {
-            consumeImages();
-         }
-      };
    }
 
    /**
@@ -164,7 +153,12 @@ public final class CanvasUpdateQueue {
       catch (InterruptedException e) {
          ReportingUtils.logError("Interrupted while adding coords " + coords + " to queue");
       }
-      SwingUtilities.invokeLater(consumer_);
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            consumeImages();
+         }
+      });
    }
 
    /**
@@ -174,10 +168,12 @@ public final class CanvasUpdateQueue {
     */
    private void consumeImages() {
       try {
+         Datastore store = display_.getDatastore();
+         ImagePlus plus = display_.getImagePlus();
          // Depending on if we're in composite view or not, we may need to draw
          // multiple images or just the most recent image.
-         boolean isComposite = (plus_ instanceof CompositeImage &&
-               ((CompositeImage) plus_).getMode() == CompositeImage.COMPOSITE);
+         boolean isComposite = (plus instanceof CompositeImage &&
+               ((CompositeImage) plus).getMode() == CompositeImage.COMPOSITE);
          HashMap<Integer, Coords> channelToCoords = new HashMap<Integer, Coords>();
          Coords lastCoords = null;
          if (amWaitingForDraw_) {
@@ -197,7 +193,7 @@ public final class CanvasUpdateQueue {
             // No images in the queue; nothing to do.
             return;
          }
-         if (plus_.getCanvas() == null) {
+         if (plus.getCanvas() == null) {
             // The display may have gone away while we were waiting.
             return;
          }
@@ -207,7 +203,7 @@ public final class CanvasUpdateQueue {
          DisplaySettings settings = display_.getDisplaySettings();
          if (isComposite && settings.getShouldAutostretch() != null &&
                settings.getShouldAutostretch()) {
-            for (int c = 0; c < store_.getAxisLength(Coords.CHANNEL); ++c) {
+            for (int c = 0; c < store.getAxisLength(Coords.CHANNEL); ++c) {
                channelToCoords.put(c, lastCoords.copy().channel(c).build());
             }
          }
@@ -217,8 +213,8 @@ public final class CanvasUpdateQueue {
                   // Channel isn't visible, so no need to do anything with it.
                   continue;
                }
-               if (store_.hasImage(c)) {
-                  Image image = store_.getImage(c);
+               if (store.hasImage(c)) {
+                  Image image = store.getImage(c);
                   // HACK: in rare cases (like, running DemoCamera live mode at
                   // 100FPS, 2k x 2k with Fast Image, for half an hour kinds of
                   // rare) this image can be null despite the store claiming
@@ -235,16 +231,14 @@ public final class CanvasUpdateQueue {
                }
             }
          }
-         else {
+         else if (store.hasImage(lastCoords)) {
+            Image image = store.getImage(lastCoords);
             // HACK: see above HACK note regarding a similar null image check.
-            if (store_.hasImage(lastCoords)) {
-               Image image = store_.getImage(lastCoords);
-               if (image != null) {
-                  showImage(image);
-               }
-               else {
-                  ReportingUtils.logError("Unexpected null image at " + lastCoords);
-               }
+            if (image != null) {
+               showImage(image);
+            }
+            else {
+               ReportingUtils.logError("Unexpected null image at " + lastCoords);
             }
          }
       }
@@ -258,20 +252,28 @@ public final class CanvasUpdateQueue {
       amWaitingForDraw_ = false;
       if (!coordsQueue_.isEmpty()) {
          // New image(s) arrived while we were drawing; repeat.
-         SwingUtilities.invokeLater(consumer_);
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               consumeImages();
+            }
+         });
       }
    }
 
    /**
     * Show an image -- set the pixels of the canvas and update the display.
+    *
+    * Always called on the EDT.
     */
    private void showImage(Image image) {
       // This synchronized block corresponds to one in
       // DefaultDisplayWindow.forceClosed(), and ensures that we do not lose
       // the objects needed to perform drawing operations while we are trying
       // to do those operations.
-      synchronized(drawLock_) {
-         if (plus_.getProcessor() == null) {
+      synchronized (drawLock_) {
+         ImagePlus plus = display_.getImagePlus();
+         if (plus.getProcessor() == null) {
             // Display went away since we last checked.
             return;
          }
@@ -280,12 +282,13 @@ public final class CanvasUpdateQueue {
          Object pixels = image.getRawPixels();
          // If we have an RGB byte array, we need to convert it to an
          // int array for ImageJ's consumption.
-         if (plus_.getProcessor() instanceof ColorProcessor &&
-               pixels instanceof byte[]) {
+         if (plus.getProcessor() instanceof ColorProcessor
+               && pixels instanceof byte[]) {
             pixels = ImageUtils.convertRGB32BytesToInt(
                   (byte[]) pixels);
          }
-         plus_.getProcessor().setPixels(pixels);
+         plus.getProcessor().setPixels(pixels);
+
          // Recalculate histogram data, if necessary (because the image
          // is different from the last one we've calculated or because we
          // need to force an update).
@@ -326,17 +329,18 @@ public final class CanvasUpdateQueue {
          // image scaling is encoded into the pixel data. And in other
          // situations we also need to just reapply LUTs now.
          if (shouldReapplyLUTs_ ||
-               plus_.getProcessor() instanceof ColorProcessor) {
-            if (plus_.getProcessor() instanceof ColorProcessor) {
+               plus.getProcessor() instanceof ColorProcessor) {
+            if (plus.getProcessor() instanceof ColorProcessor) {
                // Create a new snapshot which will be used as a basis for
                // calculating image stats.
-               ((ColorProcessor) plus_.getProcessor()).snapshot();
+               ((ColorProcessor) plus.getProcessor()).snapshot();
             }
             // Must apply LUTs to the display now that it has pixels.
             LUTMaster.initializeDisplay(display_);
             shouldReapplyLUTs_ = false;
          }
-         plus_.updateAndDraw();
+
+         plus.updateAndDraw();
          display_.postEvent(new DefaultPixelsSetEvent(image, display_));
       }
    }
@@ -427,7 +431,7 @@ public final class CanvasUpdateQueue {
             // TODO Why a minimum of 256 bins?
             int binPower = Math.min(8, bitDepth);
             HistogramData data = ContrastCalculator.calculateHistogramWithSettings(
-                  image, plus_, i, settings);
+                  image, display_.getImagePlus(), i, settings);
             history.datas_.add(data);
             if (shouldUpdate) {
                mins[i] = data.getMinIgnoringOutliers();
@@ -527,11 +531,6 @@ public final class CanvasUpdateQueue {
    }
 
    @Subscribe
-   public void onNewImagePlus(NewImagePlusEvent event) {
-      plus_ = event.getImagePlus();
-   }
-
-   @Subscribe
    public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
       // The new settings may have new contrast settings, so check if the
       // contrast settings or other parameters governing histograms have been
@@ -601,9 +600,10 @@ public final class CanvasUpdateQueue {
          history = new HistogramHistory();
          Coords coords = display_.getDisplayedImages().get(0).getCoords();
          coords = coords.copy().channel(channel).build();
-         if (store_.hasImage(coords)) {
+         Datastore store = display_.getDatastore();
+         if (store.hasImage(coords)) {
             // This posts the new histograms.
-            updateHistogram(store_.getImage(coords), history);
+            updateHistogram(store.getImage(coords), history);
             channelToHistory_.put(channel, history);
          }
       }
