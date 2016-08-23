@@ -29,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JOptionPane;
 
@@ -76,14 +75,18 @@ public final class DefaultDisplayManager implements DisplayManager {
    private static DefaultDisplayManager staticInstance_;
 
    private final MMStudio studio_;
-   private final ConcurrentHashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
+
+   // Map from "managed" datastores to attached displays. Synchronized by
+   // monitor on 'this'.
+   private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
+
    private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
    private final Stack<DisplayWindow> displayFocusHistory_;
    private final HashSet<DataViewer> externalViewers_;
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
-      storeToDisplays_ = new ConcurrentHashMap<Datastore, ArrayList<DisplayWindow>>();
+      storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
       displayFocusHistory_ = new Stack<DisplayWindow>();
       externalViewers_ = new HashSet<DataViewer>();
       studio_.events().registerForEvents(this);
@@ -109,12 +112,12 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public List<Datastore> getManagedDatastores() {
+   public synchronized List<Datastore> getManagedDatastores() {
       return new ArrayList<Datastore>(storeToDisplays_.keySet());
    }
 
    @Override
-   public void manage(Datastore store) {
+   public synchronized void manage(Datastore store) {
       // Iterate over all display windows, find those associated with this
       // datastore, and manually associate them now.
       ArrayList<DisplayWindow> displays = new ArrayList<DisplayWindow>();
@@ -128,7 +131,7 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public boolean getIsManaged(Datastore store) {
+   public synchronized boolean getIsManaged(Datastore store) {
       return storeToDisplays_.containsKey(store);
    }
 
@@ -139,13 +142,18 @@ public final class DefaultDisplayManager implements DisplayManager {
     */
    @Subscribe
    public void onDatastoreClosed(DatastoreClosingEvent event) {
+      ArrayList<DisplayWindow> displays = null;
       Datastore store = event.getDatastore();
-      if (storeToDisplays_.containsKey(store)) {
-         ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
+      synchronized (this) {
+         if (storeToDisplays_.containsKey(store)) {
+            displays = storeToDisplays_.get(store);
+            storeToDisplays_.remove(store);
+         }
+      }
+      if (displays != null) {
          for (DisplayWindow display : displays) {
             display.forceClosed();
          }
-         storeToDisplays_.remove(store);
       }
    }
 
@@ -310,8 +318,8 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public List<DisplayWindow> getDisplays(Datastore store) {
-      return storeToDisplays_.get(store);
+   public synchronized List<DisplayWindow> getDisplays(Datastore store) {
+      return new ArrayList<DisplayWindow>(storeToDisplays_.get(store));
    }
 
    @Override
@@ -387,15 +395,18 @@ public final class DefaultDisplayManager implements DisplayManager {
    public void onRequestToClose(RequestToCloseEvent event) {
       DisplayWindow display = event.getDisplay();
       Datastore store = display.getDatastore();
-      if (!storeToDisplays_.containsKey(store)) {
-         // This should never happen.
-         ReportingUtils.logError("Somehow got notified of a request to close for a display that isn't associated with a datastore that we are managing.");
-         return;
-      }
-      ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
-      if (!displays.contains(display)) {
-         // This should also never happen.
-         ReportingUtils.logError("Got notified of a request to close for a display that we didn't know was associated with datastore " + store);
+      List<DisplayWindow> displays;
+      synchronized (this) {
+         if (!storeToDisplays_.containsKey(store)) {
+            // This should never happen.
+            ReportingUtils.logError("Somehow got notified of a request to close for a display that isn't associated with a datastore that we are managing.");
+            return;
+         }
+         displays = getDisplays(store);
+         if (!displays.contains(display)) {
+            // This should also never happen.
+            ReportingUtils.logError("Got notified of a request to close for a display that we didn't know was associated with datastore " + store);
+         }
       }
 
       if (displays.size() > 1) {
@@ -482,45 +493,55 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    private void removeDisplay(DisplayWindow display) {
       Datastore store = display.getDatastore();
-      ArrayList<DisplayWindow> displays = storeToDisplays_.get(store);
-      displays.remove(display);
+      synchronized (this) {
+         storeToDisplays_.get(store).remove(display);
+      }
       display.forceClosed();
    }
 
    /**
-    * Newly-created DisplayWindows should be associated with their Datastores
-    * if the Datastore is being managed.
+    * Newly-created DisplayWindows should be associated with their Datastores if
+    * the Datastore is being managed.
     */
    @Subscribe
    public void onDisplayAboutToShowEvent(DisplayAboutToShowEvent event) {
       DisplayWindow display = event.getDisplay();
       Datastore store = display.getDatastore();
-      if (getIsManaged(store)) {
-         storeToDisplays_.get(store).add(display);
-         display.registerForEvents(this);
+      synchronized (this) {
+         if (getIsManaged(store)) {
+            storeToDisplays_.get(store).add(display);
+            display.registerForEvents(this);
+         }
       }
       displayFocusHistory_.push(display);
       DefaultEventManager.getInstance().post(new ViewerAddedEvent(display));
    }
 
    /**
-    * Ensure that we don't think the display still exists.
-    * Translate the display-destroyed event into a viewer-removed event.
+    * Ensure that we don't think the display still exists. Translate the
+    * display-destroyed event into a viewer-removed event.
     */
    @Subscribe
    public void onGlobalDisplayDestroyed(GlobalDisplayDestroyedEvent event) {
       try {
          DisplayWindow display = event.getDisplay();
          Datastore store = display.getDatastore();
-         if (getIsManaged(store)) {
-            if (storeToDisplays_.get(store).contains(display)) {
-               storeToDisplays_.get(store).remove(display);
+         boolean shouldCloseDatastore = false;
+         synchronized (this) {
+            if (getIsManaged(store)) {
+               List<DisplayWindow> displays = storeToDisplays_.get(store);
+               if (displays.contains(display)) {
+                  displays.remove(display);
+               }
+               if (displays.isEmpty()) {
+                  // No more references to this display exist. Clean it up.
+                  storeToDisplays_.remove(store);
+                  shouldCloseDatastore = true;
+               }
             }
-            if (storeToDisplays_.get(store).size() == 0) {
-               // No more references to this display exist. Clean it up.
-               storeToDisplays_.remove(store);
-               store.close();
-            }
+         }
+         if (shouldCloseDatastore) {
+            store.close();
          }
          if (displayFocusHistory_.contains(display)) {
             displayFocusHistory_.remove(display);
