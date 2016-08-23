@@ -94,12 +94,16 @@ public final class CanvasUpdateQueue {
    private final LinkedBlockingQueue<Coords> coordsQueue_;
    private boolean shouldAcceptNewCoords_ = true;
    private final HashMap<Integer, HistogramHistory> channelToHistory_;
-   // Unfortunately, even though we do all of our work in the EDT, there's
-   // no way for us to tell Swing to paint *right now* -- we can only put a
-   // draw command on the EDT to be processed later. This boolean allows us
-   // to recognize when we're waiting for such a draw to process, so we don't
-   // spam up the EDT with lots of excess draw requests.
-   private boolean amWaitingForDraw_ = false;
+
+   // We use (through ImageJ's ImageCanvas) the normal way of drawing in
+   // Swing/AWT, which is to issue a repaint request, which is enqueued on the
+   // EDT to be processed later (as opposed to eagerly drawing). However, we
+   // want to ensure we don't issue repaint requests when one is already
+   // pending, because this can cause the EDT to become unresponsive when the
+   // frame rate is not otherwise regulated. This flag indicates that a repaint
+   // request is currently pending.
+   private boolean isCanvasPaintPending_ = false; // Always accessed from EDT
+
    private boolean shouldReapplyLUTs_ = true;
    // This boolean is set when we call setDisplaySettings(), so we don't
    // erroneously respond to our own new display settings by redrawing
@@ -167,6 +171,12 @@ public final class CanvasUpdateQueue {
     * Only called on the EDT.
     */
    private void consumeImages() {
+      if (isCanvasPaintPending_) {
+         // A repaint is currently pending on the EDT, so avoid triggering
+         // another repaint. A new invocation of consumeImage() will be
+         // scheduled when the repaint completes.
+         return;
+      }
       try {
          Datastore store = display_.getDatastore();
          ImagePlus plus = display_.getImagePlus();
@@ -176,11 +186,6 @@ public final class CanvasUpdateQueue {
                ((CompositeImage) plus).getMode() == CompositeImage.COMPOSITE);
          HashMap<Integer, Coords> channelToCoords = new HashMap<Integer, Coords>();
          Coords lastCoords = null;
-         if (amWaitingForDraw_) {
-            // No point in running right now as we're waiting for a draw
-            // request to make its way through the EDT.
-            return;
-         }
          // Grab images from the queue until we get the last one, so all
          // others get ignored (because we don't have time to display them).
          while (!coordsQueue_.isEmpty()) {
@@ -249,7 +254,7 @@ public final class CanvasUpdateQueue {
 
    @Subscribe
    public void onCanvasDrawComplete(CanvasDrawCompleteEvent event) {
-      amWaitingForDraw_ = false;
+      isCanvasPaintPending_ = false;
       if (!coordsQueue_.isEmpty()) {
          // New image(s) arrived while we were drawing; repeat.
          SwingUtilities.invokeLater(new Runnable() {
@@ -277,7 +282,7 @@ public final class CanvasUpdateQueue {
             // Display went away since we last checked.
             return;
          }
-         amWaitingForDraw_ = true;
+         isCanvasPaintPending_ = true;
          stack_.setCoords(image.getCoords());
          Object pixels = image.getRawPixels();
          // If we have an RGB byte array, we need to convert it to an
