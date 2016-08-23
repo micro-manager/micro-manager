@@ -35,8 +35,8 @@ enum InterestingNodeInteger
 	HEIGHT_MAX,
 	BINNING_HORIZONTAL,
 	BINNING_VERTICAL,
-	U3V_VERSION_MAJOR,
-	U3V_VERSION_MINOR,
+	GIC_VERSION_MAJOR,
+	GIC_VERSION_MINOR,
 
 	EXPOSURE_TIME_ABS_INT, // deprecated, but JAI seems to use only this, not EXPOSURE_TIME
 	// also, the GenICam docs say this should be a float, but our camera has it as an int

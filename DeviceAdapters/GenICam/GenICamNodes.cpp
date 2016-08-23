@@ -55,8 +55,8 @@ const std::map< int, std::string > sfncNames
 
 							( TEMPERATURE, "DeviceTemperature" )
 
-							( U3V_VERSION_MAJOR, "DeviceGenCpVersionMajor" )
-							( U3V_VERSION_MINOR, "DeviceGenCpVersionMinor" )
+							( GIC_VERSION_MAJOR, "DeviceGenCpVersionMajor" )
+							( GIC_VERSION_MINOR, "DeviceGenCpVersionMinor" )
 
 							( ACQUISITION_FRAME_RATE, "AcquisitionFrameRate" )
 							( ACQUISITION_FRAME_RATE_STR, "AcquisitionFrameRate" )
@@ -125,8 +125,8 @@ GenICamNodes::GenICamNodes( CAM_HANDLE camera, boost::function<void(const std::s
 
 	floatNodes.insert( std::make_pair( TEMPERATURE, nf.FloatNode( TEMPERATURE ) ) );
 
-	intNodes.insert( std::make_pair( U3V_VERSION_MAJOR, nf.IntNode( U3V_VERSION_MAJOR ) ) );
-	intNodes.insert( std::make_pair( U3V_VERSION_MINOR, nf.IntNode( U3V_VERSION_MINOR ) ) );
+	intNodes.insert( std::make_pair( GIC_VERSION_MAJOR, nf.IntNode( GIC_VERSION_MAJOR ) ) );
+	intNodes.insert( std::make_pair( GIC_VERSION_MINOR, nf.IntNode( GIC_VERSION_MINOR ) ) );
 
 	floatNodes.insert( std::make_pair( ACQUISITION_FRAME_RATE, nf.FloatNode( ACQUISITION_FRAME_RATE ) ) );
 }

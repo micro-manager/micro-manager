@@ -360,18 +360,18 @@ int CGenICam::Initialize()
 
 	// GenICam spec version
 	int64_t v;
-	if( nodes->get( v, GenICam_VERSION_MAJOR ) )
+	if( nodes->get( v, GIC_VERSION_MAJOR ) )
 	{
 		nRet = CreateProperty( "GenICam Major Version Number", boost::lexical_cast<std::string>( v ).c_str(), MM::Integer, 
-								!nodes->isWritable( GenICam_VERSION_MAJOR ) );
+								!nodes->isWritable( GIC_VERSION_MAJOR ) );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
 	
-	if( nodes->get( v, GenICam_VERSION_MINOR ) )
+	if( nodes->get( v, GIC_VERSION_MINOR ) )
 	{
 		nRet = CreateProperty( "GenICam Minor Version Number", boost::lexical_cast<std::string>( v ).c_str(), MM::Integer, 
-								!nodes->isWritable( GenICam_VERSION_MINOR ) );
+								!nodes->isWritable( GIC_VERSION_MINOR ) );
 		if( nRet != DEVICE_OK )
 			return nRet;
 	}
