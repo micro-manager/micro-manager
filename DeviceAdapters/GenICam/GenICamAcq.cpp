@@ -10,13 +10,13 @@
 // AUTHOR:        Derin Sevenler, BU, derin@bu.edu
 // largely copied from the GigECamera adapter by David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 
-#include "USB3VisionCamera.h"
+#include "GenICam.h"
 
 #include "boost/lexical_cast.hpp"
 
 
 // this is/should be called only from JAI-started threads for image acquisition
-void CUSB3VisionCamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
+void CGenICam::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 {
 	// Skip logging for sequence acquisition
 	if( snapOneImageOnly )
@@ -96,7 +96,7 @@ void CUSB3VisionCamera::SnapImageCallback( J_tIMAGE_INFO* imageInfo )
 		continuousAcquisitionDone = true;
 	}
 }
-int CUSB3VisionCamera::aquireImage(J_tIMAGE_INFO* imageInfo, uint8_t *buffer)
+int CGenICam::aquireImage(J_tIMAGE_INFO* imageInfo, uint8_t *buffer)
 {
 	J_tIMAGE_INFO BufferInfo;
 	uint32_t img_buffer_size = img_.Width() * img_.Height() * img_.Depth();
@@ -191,7 +191,7 @@ int CUSB3VisionCamera::aquireImage(J_tIMAGE_INFO* imageInfo, uint8_t *buffer)
 	return DEVICE_OK;
 }
 
-J_STATUS_TYPE CUSB3VisionCamera::setupImaging( )
+J_STATUS_TYPE CGenICam::setupImaging( )
 {
 	J_STATUS_TYPE retval;
 
@@ -201,7 +201,7 @@ J_STATUS_TYPE CUSB3VisionCamera::setupImaging( )
 
 	retval = J_Image_OpenStream( hCamera, 0,
 								 reinterpret_cast<J_IMG_CALLBACK_OBJECT>(this),
-								 reinterpret_cast<J_IMG_CALLBACK_FUNCTION>(&CUSB3VisionCamera::SnapImageCallback), 
+								 reinterpret_cast<J_IMG_CALLBACK_FUNCTION>(&CGenICam::SnapImageCallback), 
 								 &hThread, (uint32_t) ( w * h * LARGEST_PIXEL_IN_BYTES ) );  
 	if( retval != J_ST_SUCCESS )
 	{
@@ -212,7 +212,7 @@ J_STATUS_TYPE CUSB3VisionCamera::setupImaging( )
 }
 
 
-int CUSB3VisionCamera::StartSequenceAcquisition( long numImages, double interval_ms, bool stopOnOverflow )
+int CGenICam::StartSequenceAcquisition( long numImages, double interval_ms, bool stopOnOverflow )
 {
 	LogMessage( "Started camera streaming with an interval of "
 				+ boost::lexical_cast<std::string>( interval_ms ) + " ms, for " 
@@ -246,7 +246,7 @@ int CUSB3VisionCamera::StartSequenceAcquisition( long numImages, double interval
 }
 
 
-int CUSB3VisionCamera::StopSequenceAcquisition()
+int CGenICam::StopSequenceAcquisition()
 {
 	if( !doContinuousAcquisition ) return DEVICE_OK;
 	LogMessage( "StopSequenceAcquisition", true );
@@ -290,7 +290,7 @@ int CUSB3VisionCamera::StopSequenceAcquisition()
 * (i.e., before readout).  This behavior is needed for proper synchronization with the shutter.
 * Required by the MM::Camera API.
 */
-int CUSB3VisionCamera::SnapImage()
+int CGenICam::SnapImage()
 {
 	if( snapOneImageOnly ) return DEVICE_OK;
 
@@ -349,7 +349,7 @@ int CUSB3VisionCamera::SnapImage()
 	return DEVICE_OK;
 }
 
-bool CUSB3VisionCamera::IsCapturing()
+bool CGenICam::IsCapturing()
 {
    return doContinuousAcquisition;
 }

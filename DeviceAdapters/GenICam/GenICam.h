@@ -1,13 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          GigECamera.h
+// FILE:          GenICam.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   An adapter for Gigbit-Ethernet cameras using an
-//                SDK from JAI, Inc.  Users and developers will
-//                need to download and install the JAI SDK and control tool.
+// DESCRIPTION:   An adapter for GigEVision and USB3Vision cameras using the
+// 	              GenICam SDK from JAI, Inc.
 //
-// AUTHOR:        David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
+// AUTHOR:        Derin Sevenler, BU, derin@bu.edu, 2016
+// largely copied from the GigECamera adapter by David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
 #ifndef _GENICAM_H_
@@ -258,7 +258,7 @@ protected:
 	bool useExposureTimeAbsInt;
 
 	// other members
-	USB3VisionCameraNodes* nodes;
+	GenICamNodes* nodes;
 	unsigned char* buffer_;
 	size_t bufferSizeBytes;
 
@@ -273,11 +273,11 @@ protected:
 	int testIfPixelFormatResultsInColorImage(uint32_t &byteDepth);
 
 	/**
-	* aquires the image from GigEDevice
+	* aquires the image from camera
 	* does the conversion from Bayer image to color or grayscale image depending of the results of
 	* testIfPixelFormatResultsInColorImage
 	*/
 	int aquireImage(J_tIMAGE_INFO* imageBuffer, unsigned char* buffer);
 };
 
-#endif //_GigECAMERA_H_
+#endif //_GENICAM_H_

@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          USB3VisionCameraAction.cpp
+// FILE:          GenICamAction.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
@@ -10,18 +10,18 @@
 // AUTHOR:        David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 //
 
-#include "USB3VisionCamera.h"
+#include "GenICam.h"
 
 #include <boost/lexical_cast.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
-// CUSB3VisionCamera Action handlers
+// CGenICam Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
 * Handles "Binning" property.
 */
-int CUSB3VisionCamera::OnBinning( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnBinning( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	int ret = DEVICE_OK;
 	switch(eAct)
@@ -53,7 +53,7 @@ int CUSB3VisionCamera::OnBinning( MM::PropertyBase* pProp, MM::ActionType eAct )
 } // OnBinning
 
 
-int CUSB3VisionCamera::OnBinningV( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnBinningV( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	int ret = DEVICE_OK;
 	switch(eAct)
@@ -136,7 +136,7 @@ int CUSB3VisionCamera::OnBinningV( MM::PropertyBase* pProp, MM::ActionType eAct 
 
 
 
-int CUSB3VisionCamera::OnBinningH( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnBinningH( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	int ret = DEVICE_OK;
 
@@ -226,7 +226,7 @@ int CUSB3VisionCamera::OnBinningH( MM::PropertyBase* pProp, MM::ActionType eAct 
 
 
 
-int CUSB3VisionCamera::OnImageWidth( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnImageWidth( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	int nErr = 0;
 	if( eAct == MM::AfterSet )
@@ -249,7 +249,7 @@ int CUSB3VisionCamera::OnImageWidth( MM::PropertyBase* pProp, MM::ActionType eAc
 }
 
 
-int CUSB3VisionCamera::OnImageHeight( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnImageHeight( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	int nErr = 0;
 	if( eAct == MM::AfterSet )
@@ -272,7 +272,7 @@ int CUSB3VisionCamera::OnImageHeight( MM::PropertyBase* pProp, MM::ActionType eA
 }
 
 
-int CUSB3VisionCamera::OnImageWidthMax( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnImageWidthMax( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	if( eAct == MM::BeforeGet )
 	{
@@ -284,7 +284,7 @@ int CUSB3VisionCamera::OnImageWidthMax( MM::PropertyBase* pProp, MM::ActionType 
 }
 
 
-int CUSB3VisionCamera::OnImageHeightMax( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnImageHeightMax( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	if( eAct == MM::BeforeGet )
 	{
@@ -299,7 +299,7 @@ int CUSB3VisionCamera::OnImageHeightMax( MM::PropertyBase* pProp, MM::ActionType
 /**
 * Handles "PixelType" property.
 */
-int CUSB3VisionCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CGenICam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	LogMessage("OnPixelType was called", true);
 
@@ -356,7 +356,7 @@ int CUSB3VisionCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret; 
 }
 
-int CUSB3VisionCamera::onAcquisitionMode( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::onAcquisitionMode( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	int ret = DEVICE_OK;
 	switch(eAct)
@@ -398,7 +398,7 @@ int CUSB3VisionCamera::onAcquisitionMode( MM::PropertyBase* pProp, MM::ActionTyp
 	return ret;
 }
 
-int CUSB3VisionCamera::OnCameraChoice( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnCameraChoice( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	if( eAct == MM::AfterSet )
 	{
@@ -441,7 +441,7 @@ int CUSB3VisionCamera::OnCameraChoice( MM::PropertyBase* pProp, MM::ActionType e
 }
 
 
-int CUSB3VisionCamera::OnGain( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnGain( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	int nRet = DEVICE_OK;
 	if( eAct == MM::AfterSet )
@@ -491,7 +491,7 @@ int CUSB3VisionCamera::OnGain( MM::PropertyBase* pProp, MM::ActionType eAct )
 }
 
 
-int CUSB3VisionCamera::OnExposure( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnExposure( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	// note that GenICam units of exposure are us; umanager uses ms
 	int nRet = DEVICE_OK;
@@ -562,7 +562,7 @@ int CUSB3VisionCamera::OnExposure( MM::PropertyBase* pProp, MM::ActionType eAct 
 }
 
 
-void CUSB3VisionCamera::UpdateExposureRange()
+void CGenICam::UpdateExposureRange()
 {
 	if( useExposureTime )
 	{
@@ -591,7 +591,7 @@ void CUSB3VisionCamera::UpdateExposureRange()
 }
 
 
-int CUSB3VisionCamera::OnTemperature( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnTemperature( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	int nRet = DEVICE_OK;
 	if( eAct == MM::BeforeGet )
@@ -620,7 +620,7 @@ int CUSB3VisionCamera::OnTemperature( MM::PropertyBase* pProp, MM::ActionType eA
 }
 
 
-int CUSB3VisionCamera::OnFrameRate( MM::PropertyBase* pProp, MM::ActionType eAct )
+int CGenICam::OnFrameRate( MM::PropertyBase* pProp, MM::ActionType eAct )
 {
 	int nRet = DEVICE_OK;
 

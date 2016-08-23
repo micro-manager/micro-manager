@@ -144,7 +144,7 @@ protected:
 
 
 
-class USB3VisionCameraNodes
+class GenICamNodes
 {
 protected:
 	typedef Node<int64_t> IntNode;
@@ -162,8 +162,8 @@ protected:
 	CAM_HANDLE camera;
 
 public:
-	USB3VisionCameraNodes( CAM_HANDLE camera, boost::function<void(const std::string&)> logger = 0 );
-	virtual ~USB3VisionCameraNodes(void);
+	GenICamNodes( CAM_HANDLE camera, boost::function<void(const std::string&)> logger = 0 );
+	virtual ~GenICamNodes(void);
 
 	bool isAvailable( InterestingNodeInteger node )
 	{  return intNodes[node].isAvailable();  }

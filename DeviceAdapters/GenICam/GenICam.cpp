@@ -1,11 +1,10 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          USB3VisionCamera.cpp
+// FILE:          GenICam.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   An adapter for Gigbit-Ethernet cameras using an
-//                SDK from JAI, Inc.  Users and developers will
-//                need to download and install the JAI SDK and control tool.
+// DESCRIPTION:   An adapter for GigEVision and USB3Vision cameras using the
+// 	              GenICam SDK from JAI, Inc.
 //
 // AUTHOR:        Derin Sevenler, BU, derin@bu.edu
 // largely copied from the GigECamera adapter by David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
@@ -28,7 +27,7 @@ double g_IntensityFactor_ = 1.0;
 
 // External names used used by the rest of the system
 // to load particular device from the "GenICam.dll" library
-const char* g_CameraDeviceName = "GenICam USB3 GigE camera adapter";
+const char* g_CameraDeviceName = "GenICam camera adapter";
 
 
 ///////////////////////////////////////////////////////////////////////////////

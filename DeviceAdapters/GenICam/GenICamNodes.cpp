@@ -10,7 +10,7 @@
 // AUTHOR:        Derin Sevenler, BU, derin@bu.edu
 // largely copied from the GigECamera adapter by David Marshburn, UNC-CH, marshbur@cs.unc.edu, Jan. 2011
 
-#include "USB3VisionCameraNodes.h"
+#include "GenICamNodes.h"
 #include <vector>
 #include <map>
 #include <boost/assign/list_of.hpp>
@@ -84,7 +84,7 @@ public:
 } // anonymous namespace
 
 
-USB3VisionCameraNodes::USB3VisionCameraNodes( CAM_HANDLE camera, boost::function<void(const std::string&)> logger )
+GenICamNodes::GenICamNodes( CAM_HANDLE camera, boost::function<void(const std::string&)> logger )
 	: camera( camera )
 {
 	// the types of all these nodes is as specified in the GenICam sfnc 1.4
@@ -132,14 +132,14 @@ USB3VisionCameraNodes::USB3VisionCameraNodes( CAM_HANDLE camera, boost::function
 }
 
 
-USB3VisionCameraNodes::~USB3VisionCameraNodes(void)
+GenICamNodes::~GenICamNodes(void)
 {
 
 
 }
 
 
-bool USB3VisionCameraNodes::get( int64_t& i, InterestingNodeInteger node )
+bool GenICamNodes::get( int64_t& i, InterestingNodeInteger node )
 {
 	IntNode n = intNodes[node];
 	if( n.isReadable() )
@@ -150,7 +150,7 @@ bool USB3VisionCameraNodes::get( int64_t& i, InterestingNodeInteger node )
 }
 
 
-bool USB3VisionCameraNodes::get( double& i, InterestingNodeFloat node )
+bool GenICamNodes::get( double& i, InterestingNodeFloat node )
 {
 	FloatNode n = floatNodes[node];
 	if( n.isReadable() )
@@ -161,7 +161,7 @@ bool USB3VisionCameraNodes::get( double& i, InterestingNodeFloat node )
 }
 
 
-bool USB3VisionCameraNodes::get( std::string& i, InterestingNodeString node )
+bool GenICamNodes::get( std::string& i, InterestingNodeString node )
 {
 	StringNode n = stringNodes[node];
 	if( n.isReadable() )
@@ -172,7 +172,7 @@ bool USB3VisionCameraNodes::get( std::string& i, InterestingNodeString node )
 }
 
 
-bool USB3VisionCameraNodes::set( const int64_t i, InterestingNodeInteger node )
+bool GenICamNodes::set( const int64_t i, InterestingNodeInteger node )
 {
 	IntNode n = intNodes[node];
 	if( n.isWritable() )
@@ -183,7 +183,7 @@ bool USB3VisionCameraNodes::set( const int64_t i, InterestingNodeInteger node )
 }
 
 
-bool USB3VisionCameraNodes::set( const double i, InterestingNodeFloat node )
+bool GenICamNodes::set( const double i, InterestingNodeFloat node )
 {
 	FloatNode n = floatNodes[node];
 	if( n.isWritable() )
@@ -194,7 +194,7 @@ bool USB3VisionCameraNodes::set( const double i, InterestingNodeFloat node )
 }
 
 
-bool USB3VisionCameraNodes::set( const std::string i, InterestingNodeString node )
+bool GenICamNodes::set( const std::string i, InterestingNodeString node )
 {
 	StringNode n = stringNodes[node];
 	if( n.isWritable() )
@@ -205,7 +205,7 @@ bool USB3VisionCameraNodes::set( const std::string i, InterestingNodeString node
 }
 
 
-bool USB3VisionCameraNodes::getMin( InterestingNodeInteger node, int64_t& value )
+bool GenICamNodes::getMin( InterestingNodeInteger node, int64_t& value )
 {
 	if( !intNodes[node].hasMinimum() )
 		return false;
@@ -213,7 +213,7 @@ bool USB3VisionCameraNodes::getMin( InterestingNodeInteger node, int64_t& value 
 }
 
 
-bool USB3VisionCameraNodes::getMax( InterestingNodeInteger node, int64_t& value )
+bool GenICamNodes::getMax( InterestingNodeInteger node, int64_t& value )
 {
 	if( !intNodes[node].hasMaximum() )
 		return false;
@@ -221,7 +221,7 @@ bool USB3VisionCameraNodes::getMax( InterestingNodeInteger node, int64_t& value 
 }
 
 
-bool USB3VisionCameraNodes::getIncrement( InterestingNodeInteger node, int64_t& value )
+bool GenICamNodes::getIncrement( InterestingNodeInteger node, int64_t& value )
 {
 	if( !intNodes[node].hasIncrement() )
 		return false;
@@ -229,7 +229,7 @@ bool USB3VisionCameraNodes::getIncrement( InterestingNodeInteger node, int64_t& 
 }
 
 
-bool USB3VisionCameraNodes::getMin( InterestingNodeFloat node, double& value )
+bool GenICamNodes::getMin( InterestingNodeFloat node, double& value )
 {
 	if( !floatNodes[node].hasMinimum() )
 		return false;
@@ -237,7 +237,7 @@ bool USB3VisionCameraNodes::getMin( InterestingNodeFloat node, double& value )
 }
 
 
-bool USB3VisionCameraNodes::getMax( InterestingNodeFloat node, double& value )
+bool GenICamNodes::getMax( InterestingNodeFloat node, double& value )
 {
 	if( !floatNodes[node].hasMaximum() )
 		return false;
@@ -245,13 +245,13 @@ bool USB3VisionCameraNodes::getMax( InterestingNodeFloat node, double& value )
 }
 
 
-bool USB3VisionCameraNodes::hasIncrement( InterestingNodeFloat node )
+bool GenICamNodes::hasIncrement( InterestingNodeFloat node )
 {
 	return floatNodes[node].hasIncrement( );
 }
 
 
-bool USB3VisionCameraNodes::getIncrement( InterestingNodeFloat node, double& value )
+bool GenICamNodes::getIncrement( InterestingNodeFloat node, double& value )
 {
 	if( !floatNodes[node].hasIncrement() )
 		return false;
@@ -259,19 +259,19 @@ bool USB3VisionCameraNodes::getIncrement( InterestingNodeFloat node, double& val
 }
 
 
-bool USB3VisionCameraNodes::isEnum( InterestingNodeInteger node )
+bool GenICamNodes::isEnum( InterestingNodeInteger node )
 {
 	return intNodes[node].isEnumeration( );
 }
 
 
-bool USB3VisionCameraNodes::isEnum( InterestingNodeString node )
+bool GenICamNodes::isEnum( InterestingNodeString node )
 {
 	return stringNodes[node].isEnumeration();
 }
 
 
-uint32_t USB3VisionCameraNodes::getNumEnumEntries( InterestingNodeInteger node )
+uint32_t GenICamNodes::getNumEnumEntries( InterestingNodeInteger node )
 {
 	uint32_t i;
 	J_STATUS_TYPE retval = intNodes[node].getNumEnumEntries( camera, i );
@@ -281,7 +281,7 @@ uint32_t USB3VisionCameraNodes::getNumEnumEntries( InterestingNodeInteger node )
 }
 
 
-uint32_t USB3VisionCameraNodes::getNumEnumEntries( InterestingNodeString node )
+uint32_t GenICamNodes::getNumEnumEntries( InterestingNodeString node )
 {
 	uint32_t i;
 	J_STATUS_TYPE retval = stringNodes[node].getNumEnumEntries( camera, i );
@@ -291,7 +291,7 @@ uint32_t USB3VisionCameraNodes::getNumEnumEntries( InterestingNodeString node )
 }
 
 
-bool USB3VisionCameraNodes::getEnumEntry( std::string& entry, uint32_t index, InterestingNodeInteger node )
+bool GenICamNodes::getEnumEntry( std::string& entry, uint32_t index, InterestingNodeInteger node )
 {
 	J_STATUS_TYPE retval = intNodes[node].getEnumEntry( camera, index, entry );
 	if( retval == J_ST_SUCCESS )
@@ -301,7 +301,7 @@ bool USB3VisionCameraNodes::getEnumEntry( std::string& entry, uint32_t index, In
 }
 
 
-bool USB3VisionCameraNodes::getEnumEntry( std::string& entry, uint32_t index, InterestingNodeString node )
+bool GenICamNodes::getEnumEntry( std::string& entry, uint32_t index, InterestingNodeString node )
 {
 	J_STATUS_TYPE retval = stringNodes[node].getEnumEntry( camera, index, entry );
 	if( retval == J_ST_SUCCESS )
@@ -311,7 +311,7 @@ bool USB3VisionCameraNodes::getEnumEntry( std::string& entry, uint32_t index, In
 }
 
 
-bool USB3VisionCameraNodes::getEnumDisplayName( std::string& name, uint32_t index, InterestingNodeInteger node )
+bool GenICamNodes::getEnumDisplayName( std::string& name, uint32_t index, InterestingNodeInteger node )
 {
 	J_STATUS_TYPE retval = intNodes[node].getEnumDisplayName( camera, index, name );
 	if( retval == J_ST_SUCCESS )
@@ -321,7 +321,7 @@ bool USB3VisionCameraNodes::getEnumDisplayName( std::string& name, uint32_t inde
 }
 
 
-bool USB3VisionCameraNodes::getEnumDisplayName( std::string& name, uint32_t index, InterestingNodeString node )
+bool GenICamNodes::getEnumDisplayName( std::string& name, uint32_t index, InterestingNodeString node )
 {
 	J_STATUS_TYPE retval = stringNodes[node].getEnumDisplayName( camera, index, name );
 	if( retval == J_ST_SUCCESS )
