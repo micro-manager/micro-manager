@@ -24,8 +24,8 @@ import org.scijava.plugin.SciJavaPlugin;
  */
 @org.scijava.plugin.Plugin(type = MenuPlugin.class)
 public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
-    public static final String MENUNAME = "Localization Microscopy";
-    public static final String TOOLTIPDESCRIPTION =
+   public static final String MENUNAME = "Localization Microscopy";
+   public static final String TOOLTIPDESCRIPTION =
        "Toolbox for analyzing spots using Gaussian fitting";
 
 
