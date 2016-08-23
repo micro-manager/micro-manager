@@ -21,7 +21,6 @@
 
 package org.micromanager.alerts.internal;
 
-import com.bulenkov.iconloader.IconLoader;
 
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -41,12 +40,11 @@ import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
-
-import org.micromanager.alerts.Alert;
-import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MMFrame;
 
 
-public final class AlertsWindow extends JFrame {
+
+public final class AlertsWindow extends MMFrame {
    private static AlertsWindow staticInstance_;
    private static void ensureWindowExists(Studio studio) {
       if (staticInstance_ == null) {
@@ -56,6 +54,7 @@ public final class AlertsWindow extends JFrame {
 
    /**
     * Display the AlertsWindow, creating it if necessary.
+    * @param studio MM Studio instance
     */
    public static void show(Studio studio) {
       ensureWindowExists(studio);
@@ -123,6 +122,8 @@ public final class AlertsWindow extends JFrame {
       super("Messages");
       studio_ = studio;
 
+      super.loadAndRestorePosition(300, 100);
+      
       setLayout(new MigLayout("fill, insets 2, gap 0"));
 
       Font defaultFont = new Font("Arial", Font.PLAIN, 10);
