@@ -26,6 +26,7 @@ import java.awt.event.WindowEvent;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -83,6 +84,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
    @Override
    public void setContext(Studio studio) {
       gui_ = studio;
+      gui_.events().registerForEvents(this);
    }
 
    @Override
@@ -93,5 +95,11 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
    @Override
    public String getHelpText() {
       return TOOLTIPDESCRIPTION;
+   }
+   
+   public void closeRequested( ShutdownCommencingEvent sce){
+      if (myFrame_ != null) {
+         myFrame_.dispose();
+      }
    }
 }

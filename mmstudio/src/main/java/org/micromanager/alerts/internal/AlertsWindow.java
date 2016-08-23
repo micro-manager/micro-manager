@@ -22,6 +22,7 @@
 package org.micromanager.alerts.internal;
 
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -36,6 +37,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.MMFrame;
 
 
@@ -45,6 +47,7 @@ public final class AlertsWindow extends MMFrame {
    private static void ensureWindowExists(Studio studio) {
       if (staticInstance_ == null) {
          staticInstance_ = new AlertsWindow(studio);
+         studio.events().registerForEvents(staticInstance_);
       }
    }
 
@@ -219,4 +222,14 @@ public final class AlertsWindow extends MMFrame {
    public void textUpdated(DefaultAlert alert) {
       studio_.events().post(new AlertUpdatedEvent(alert));
    }
+   
+   @Subscribe
+   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      if (!event.getIsCancelled()) {
+         if (staticInstance_ != null) {
+            staticInstance_.dispose();
+         }
+      }
+   }
+   
 }

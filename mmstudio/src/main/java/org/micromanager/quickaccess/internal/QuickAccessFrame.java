@@ -20,6 +20,7 @@
 package org.micromanager.quickaccess.internal;
 
 import com.bulenkov.iconloader.IconLoader;
+import com.google.common.eventbus.Subscribe;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -38,6 +39,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import javax.swing.BorderFactory;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -47,10 +52,6 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -60,6 +61,7 @@ import org.micromanager.Studio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 
 /**
  * This class shows the Quick Access Window for frequently-used controls.
@@ -70,23 +72,23 @@ public final class QuickAccessFrame extends JFrame {
    private static final String OPEN_REMEMBER = "Remember";
    private static final String DEFAULT_TITLE = "Quick Access Panel";
 
-   private Studio studio_;
+   private final Studio studio_;
    // Holds everything.
-   private JPanel contentsPanel_;
+   private final JPanel contentsPanel_;
    // Holds the active controls.
-   private GridPanel controlsPanel_;
+   private final GridPanel controlsPanel_;
    // Holds icons representing the current active controls.
-   private GridPanel configuringControlsPanel_;
+   private final GridPanel configuringControlsPanel_;
    // Holds the "source" icons that can be added to the active controls, as
    // well as the rows/columns configuration fields.
-   private ConfigurationPanel configurePanel_;
+   private final ConfigurationPanel configurePanel_;
    // Switches between normal and configure modes.
    private JToggleButton configureButton_;
    // List of visual dividers in the grid.
-   private HashSet<Divider> dividers_;
+   private final HashSet<Divider> dividers_;
 
    // All of the controls we have in the grid.
-   private HashSet<ControlCell> controls_;
+   private final HashSet<ControlCell> controls_;
    // Dimensions of the grid.
    private int numCols_ = 3;
    private int numRows_ = 3;
@@ -100,6 +102,7 @@ public final class QuickAccessFrame extends JFrame {
    private int iconOffsetX_ = -1;
    private int iconOffsetY_ = -1;
 
+   @SuppressWarnings("LeakingThisInConstructor")
    public QuickAccessFrame(Studio studio, JSONObject config) {
       setAlwaysOnTop(true);
 
@@ -150,6 +153,8 @@ public final class QuickAccessFrame extends JFrame {
       loadConfig(config);
 
       pack();
+      
+      studio.events().registerForEvents(this);
    }
 
    /**
@@ -198,6 +203,8 @@ public final class QuickAccessFrame extends JFrame {
 
    /**
     * Create a JSONObject for storing our settings to the profile.
+    * @return JSONObject containing the Quick Access settings to be stored
+    *                   in the user profile
     */
    public JSONObject getConfig() {
       try {
@@ -276,7 +283,7 @@ public final class QuickAccessFrame extends JFrame {
       }
       // Default to 1x1 cell.
       Rectangle rect = new Rectangle(p.x, p.y, 1, 1);
-      if (p != null && plugin != null) {
+      if (plugin != null) {
          PropertyMap config = null;
          try {
             if (plugin instanceof WidgetPlugin) {
@@ -454,9 +461,10 @@ public final class QuickAccessFrame extends JFrame {
     * be DraggableIcons instead of normal controls).
     */
    private class GridPanel extends JPanel {
-      private boolean isConfigurePanel_;
+      private final boolean isConfigurePanel_;
       // Current divider under the mouse, for drawing.
       private Divider curDivider_;
+      
       public GridPanel(boolean isConfigurePanel) {
          super(new SparseGridLayout(QuickAccessPlugin.CELL_WIDTH,
                   QuickAccessPlugin.CELL_HEIGHT));
@@ -581,6 +589,7 @@ public final class QuickAccessFrame extends JFrame {
          }
       }
 
+      @Override
       public Dimension getPreferredSize() {
          return new Dimension(numCols_ * QuickAccessPlugin.CELL_WIDTH,
                numRows_ * QuickAccessPlugin.CELL_HEIGHT);
@@ -593,12 +602,12 @@ public final class QuickAccessFrame extends JFrame {
     */
    private class ConfigurationPanel extends JPanel {
       // Dimensionality controls.
-      private JSpinner colsControl_;
-      private JSpinner rowsControl_;
+      private final JSpinner colsControl_;
+      private final JSpinner rowsControl_;
       // Title input text field
       private JTextField titleField_;
       // Dropdown menu for selecting the open mode.
-      private JComboBox openSelect_;
+      private final JComboBox openSelect_;
 
       /**
        * We take the title as a parameter because, at the time that this
@@ -829,5 +838,12 @@ public final class QuickAccessFrame extends JFrame {
       int x2 = json.getInt("x2");
       int y2 = json.getInt("y2");
       return new Divider(new Point(x1, y1), new Point(x2, y2));
+   }
+   
+   @Subscribe
+   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      if (!event.getIsCancelled()) {
+         dispose();
+      }
    }
 }

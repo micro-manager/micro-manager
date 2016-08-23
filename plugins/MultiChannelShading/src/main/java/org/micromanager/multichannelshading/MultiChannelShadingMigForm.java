@@ -21,6 +21,7 @@
 
 package org.micromanager.multichannelshading;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -46,6 +47,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMDialog;
 
@@ -243,6 +245,8 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       add(statusLabel_, "span 3, wrap");
       updateAddAndRemoveButtons(addButton, removeButton);
       pack();
+      
+      studio_.events().registerForEvents(this);
    }
    
    @Override
@@ -357,6 +361,9 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       }
     }
 
-   
+   @Subscribe
+   public void closeRequested( ShutdownCommencingEvent sce){
+      this.dispose();
+   }
     
 }
