@@ -322,8 +322,6 @@ SettingLogger::DumpMsgPackToBuffer(char* dest, size_t destSize,
    msgpack::sbuffer sbuf;
    msgpack::packer<msgpack::sbuffer> pk(&sbuf);
 
-   typedef std::string s;
-
    pk.pack_array(7);
    // packetNumber
    pk.pack(GetNextGlobalImageNr());

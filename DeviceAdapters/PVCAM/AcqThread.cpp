@@ -13,18 +13,18 @@ AcqThread::~AcqThread()
 
 void AcqThread::Start()
 {
-    camera_->LogMessage("PVCAM: AcqThead starting");
+    camera_->LogAdapterMessage("AcqThead starting");
     this->activate();
 }
 
 void AcqThread::Stop()
 {
-    camera_->LogMessage("PVCAM: AcqThead exit requested");
+    camera_->LogAdapterMessage("AcqThead exit requested");
     requestStop_ = true;
     Resume();
     // Wait for the thread func to exit
     this->wait();
-    camera_->LogMessage("PVCAM: AcqThead exited");
+    camera_->LogAdapterMessage("AcqThead exited");
 }
 
 void AcqThread::Pause()
@@ -41,7 +41,7 @@ void AcqThread::Resume()
 
 int AcqThread::svc(void)
 {
-    camera_->LogMessage("PVCAM: AcqThead loop started");
+    camera_->LogAdapterMessage("AcqThead loop started");
     int nRet = DEVICE_OK;
     while(!requestStop_)
     {
@@ -61,6 +61,6 @@ int AcqThread::svc(void)
         if (!camera_->acqCfgCur_.CallbacksEnabled)
             camera_->FrameAcquired();
     }
-    camera_->LogMessage("PVCAM: AcqThead loop exited");
+    camera_->LogAdapterMessage("AcqThead loop exited");
     return nRet;
 }

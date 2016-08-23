@@ -10,6 +10,12 @@ typedef unsigned long long ulong64;
 #endif
 
 /**
+* The hardcoded maximum number of S.M.A.R.T exposures. This numbers is used to allocate
+* the exposure array for PVCAM.
+*/
+#define SMART_STREAM_MAX_EXPOSURES      128
+
+/**
 * A base class for PVCAM parameters. This is used for easy access to specific camera parameters.
 */
 class PvParamBase
@@ -45,36 +51,36 @@ private:
     int initialize(bool aDbgPrint)
     {
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: Initializing " + mDebugName + "...");
+            mCamera->LogAdapterMessage("Initializing " + mDebugName + "...");
         if (pl_get_param(mCamera->Handle(), mId, ATTR_AVAIL, &mAvail ) != PV_OK)
         {
             mAvail = FALSE;
-            mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_AVAIL failed");
+            mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_AVAIL failed");
             return DEVICE_ERR;
         }
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_AVAIL: " + (mAvail ? "TRUE" : "FALSE"));
+            mCamera->LogAdapterMessage(mDebugName + " ATTR_AVAIL: " + (mAvail ? "TRUE" : "FALSE"));
         if ( mAvail )
         {
             if (pl_get_param(mCamera->Handle(), mId, ATTR_ACCESS, &mAccess ) != PV_OK)
             {
                 mAccess = ACC_READ_ONLY;
-                mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_ACCESS failed");
+                mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_ACCESS failed");
                 return DEVICE_ERR;
             }
             if (aDbgPrint)
-                mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_ACCESS: " + CDeviceUtils::ConvertToString(mAccess));
+                mCamera->LogAdapterMessage(mDebugName + " ATTR_ACCESS: " + CDeviceUtils::ConvertToString(mAccess));
             if (pl_get_param(mCamera->Handle(), mId, ATTR_TYPE, &mType ) != PV_OK)
             {
                 mType = 0; // We can ignore this, the mType is not used anyway
-                mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_TYPE failed");
+                mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_TYPE failed");
                 return DEVICE_ERR;
             }
             if (aDbgPrint)
-                mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_TYPE: " + CDeviceUtils::ConvertToString(mType));
+                mCamera->LogAdapterMessage(mDebugName + " ATTR_TYPE: " + CDeviceUtils::ConvertToString(mType));
         }
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: " + mDebugName + " initialized");
+            mCamera->LogAdapterMessage(mDebugName + " initialized");
         return DEVICE_OK;
     }
 };
@@ -134,53 +140,53 @@ public:
     int Update(bool aDbgPrint = false)
     {
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: Updating " + mDebugName + "...");
+            mCamera->LogAdapterMessage("Updating " + mDebugName + "...");
         // must be set to max exposures number so we can retrieve current number of exposures
         // from the camera in case new requested exposures count is greater than the previous  
         mCurrent.entries=SMART_STREAM_MAX_EXPOSURES;
         if (pl_get_param(mCamera->Handle(), mId, ATTR_CURRENT, &mCurrent ) != PV_OK)
         {
-            mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + "ATTR_CURRENT failed");
+            mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + "ATTR_CURRENT failed");
             mCurrent.entries = 0;
             return DEVICE_ERR;
         }
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_CURRENT (entries): " + CDeviceUtils::ConvertToString(mCurrent.entries));
+            mCamera->LogAdapterMessage(mDebugName + " ATTR_CURRENT (entries): " + CDeviceUtils::ConvertToString(mCurrent.entries));
 
         if (pl_get_param(mCamera->Handle(), mId, ATTR_MIN, &mMin ) != PV_OK)
         {
-            mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_MIN failed");
+            mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_MIN failed");
             return DEVICE_ERR;
         }
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_MIN (entries): " + CDeviceUtils::ConvertToString(mMin.entries));
+            mCamera->LogAdapterMessage(mDebugName + " ATTR_MIN (entries): " + CDeviceUtils::ConvertToString(mMin.entries));
 
         if (pl_get_param(mCamera->Handle(), mId, ATTR_MAX, &mMax ) != PV_OK)
         {
-            mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_MAX failed");
+            mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_MAX failed");
             return DEVICE_ERR;
         }
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_MAX (entries): " + CDeviceUtils::ConvertToString(mMax.entries));
+            mCamera->LogAdapterMessage(mDebugName + " ATTR_MAX (entries): " + CDeviceUtils::ConvertToString(mMax.entries));
 
         if (pl_get_param(mCamera->Handle(), mId, ATTR_COUNT, &mCount ) != PV_OK)
         {
-            mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_COUNT failed");
+            mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_COUNT failed");
             return DEVICE_ERR;
         }
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_COUNT (entries): " + CDeviceUtils::ConvertToString(mCount.entries));
+            mCamera->LogAdapterMessage(mDebugName + " ATTR_COUNT (entries): " + CDeviceUtils::ConvertToString(mCount.entries));
 
         if (pl_get_param(mCamera->Handle(), mId, ATTR_INCREMENT, &mIncrement ) != PV_OK)
         {
-            mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_INCREMENT failed");
+            mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_INCREMENT failed");
             return DEVICE_ERR;
         }
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_INCREMENT (entries): " + CDeviceUtils::ConvertToString(mIncrement.entries));
+            mCamera->LogAdapterMessage(mDebugName + " ATTR_INCREMENT (entries): " + CDeviceUtils::ConvertToString(mIncrement.entries));
 
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: " + mDebugName + " update complete");
+            mCamera->LogAdapterMessage(mDebugName + " update complete");
         return DEVICE_OK;
     }
 
@@ -194,7 +200,7 @@ public:
         if (pl_set_param(mCamera->Handle(), mId, (void_ptr)&mCurrent) != PV_OK)
         {
             Update(); // On failure we need to update the cache with actual camera value
-            mCamera->LogCamError(__LINE__, "pl_set_param");
+            mCamera->LogPvcamError(__LINE__, "pl_set_param");
             return DEVICE_CAN_NOT_SET_PROPERTY;
         }
         return DEVICE_OK;
@@ -273,58 +279,58 @@ public:
       int Update(bool aDbgPrint = false)
       {
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: Updating " + mDebugName + "...");
+              mCamera->LogAdapterMessage("Updating " + mDebugName + "...");
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_CURRENT, &mCurrent ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_CURRENT failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_CURRENT failed");
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_CURRENT " + CDeviceUtils::ConvertToString((int)mCurrent));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_CURRENT " + CDeviceUtils::ConvertToString((int)mCurrent));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_MIN, &mMin ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_MIN failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_MIN failed");
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_MIN: " + CDeviceUtils::ConvertToString((int)mMin));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_MIN: " + CDeviceUtils::ConvertToString((int)mMin));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_MAX, &mMax ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_MAX failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_MAX failed");
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_MAX: " + CDeviceUtils::ConvertToString((int)mMax));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_MAX: " + CDeviceUtils::ConvertToString((int)mMax));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_COUNT, &mCount ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_COUNT failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_COUNT failed");
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_COUNT: " + CDeviceUtils::ConvertToString((int)mCount));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_COUNT: " + CDeviceUtils::ConvertToString((int)mCount));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_INCREMENT, &mIncrement ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_INCREMENT failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_INCREMENT failed");
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_INCREMENT: " + CDeviceUtils::ConvertToString((int)mIncrement));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_INCREMENT: " + CDeviceUtils::ConvertToString((int)mIncrement));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_DEFAULT, &mDefault ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_DEFAULT failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_DEFAULT failed");
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_DEFAULT: " + CDeviceUtils::ConvertToString((int)mDefault));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_DEFAULT: " + CDeviceUtils::ConvertToString((int)mDefault));
 
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " update complete");
+              mCamera->LogAdapterMessage(mDebugName + " update complete");
           return DEVICE_OK;
       }
 
@@ -336,8 +342,8 @@ public:
           // Write the current value to camera
           if (pl_set_param(mCamera->Handle(), mId, (void_ptr)&mCurrent) != PV_OK)
           {
+              mCamera->LogPvcamError(__LINE__, "pl_set_param");
               Update(); // On failure we need to update the cache with actual camera value
-              mCamera->LogCamError(__LINE__, "pl_set_param");
               return DEVICE_CAN_NOT_SET_PROPERTY;
           }
           return DEVICE_OK;
@@ -399,63 +405,63 @@ public:
       int Update(bool aDbgPrint = false)
       {
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: Updating " + mDebugName + "...");
+              mCamera->LogAdapterMessage("Updating " + mDebugName + "...");
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_CURRENT, mTemp ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_CURRENT failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_CURRENT failed");
               return DEVICE_ERR;
           }
           mCurrent.assign(mTemp);
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_CURRENT '" + mCurrent + "'");
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_CURRENT '" + mCurrent + "'");
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_MIN, mTemp ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_MIN failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_MIN failed");
               return DEVICE_ERR;
           }
           mMin.assign(mTemp);
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_MIN: '" + mMin + "'");
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_MIN: '" + mMin + "'");
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_MAX, mTemp ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_MAX failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_MAX failed");
               return DEVICE_ERR;
           }
           mMax.assign(mTemp);
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_MAX: '" + mMax + "'");
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_MAX: '" + mMax + "'");
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_COUNT, &mCount ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_COUNT failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_COUNT failed");
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_COUNT: " + CDeviceUtils::ConvertToString((int)mCount));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_COUNT: " + CDeviceUtils::ConvertToString((int)mCount));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_INCREMENT, mTemp ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_INCREMENT failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_INCREMENT failed");
               return DEVICE_ERR;
           }
           mIncrement.assign(mTemp);
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_INCREMENT: '" + mIncrement + "'");
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_INCREMENT: '" + mIncrement + "'");
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_DEFAULT, mTemp ) != PV_OK)
           {
-              mCamera->LogCamError(__LINE__, "PVCAM: pl_get_param for " + mDebugName + " ATTR_DEFAULT failed");
+              mCamera->LogPvcamError(__LINE__, "pl_get_param for " + mDebugName + " ATTR_DEFAULT failed");
               return DEVICE_ERR;
           }
           mDefault.assign(mTemp);
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " ATTR_DEFAULT: '" + mDefault + "'");
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_DEFAULT: '" + mDefault + "'");
 
           if (aDbgPrint)
-              mCamera->LogMessage("PVCAM: " + mDebugName + " update complete");
+              mCamera->LogAdapterMessage(mDebugName + " update complete");
           return DEVICE_OK;
       }
 
@@ -542,8 +548,8 @@ public:
         std::map<std::string, int32>::iterator it = mEnumMapReverse.find(aValue);
         if (it == mEnumMapReverse.end())
         {
-            mCamera->LogCamError(__LINE__, "PvEnumParam::Set() invalid argument");
-            return DEVICE_CAN_NOT_SET_PROPERTY;
+            return mCamera->LogAdapterError(DEVICE_CAN_NOT_SET_PROPERTY, __LINE__,
+                "PvEnumParam::Set() invalid argument");
         }
         mCurrent = it->second;
         return DEVICE_OK;
@@ -559,8 +565,8 @@ public:
         std::map<int32, std::string>::iterator it = mEnumMap.find(aValue);
         if (it == mEnumMap.end())
         {
-            mCamera->LogCamError(__LINE__, "PvEnumParam::Set() invalid argument");
-            return DEVICE_CAN_NOT_SET_PROPERTY;
+            return mCamera->LogAdapterError(DEVICE_CAN_NOT_SET_PROPERTY, __LINE__,
+                "PvEnumParam::Set() invalid argument");
         }
         mCurrent = it->first;
         return DEVICE_OK;
@@ -587,7 +593,7 @@ private:
     void enumerate(bool aDbgPrint)
     {
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: Enumerating " + mDebugName + "...");
+            mCamera->LogAdapterMessage("Enumerating " + mDebugName + "...");
 
         mEnumStrings.clear();
         mEnumValues.clear();
@@ -601,14 +607,14 @@ private:
             uns32 enumStrLen = 0;
             if ( pl_enum_str_length( mCamera->Handle(), mId, i, &enumStrLen ) != PV_OK )
             {
-                mCamera->LogCamError(__LINE__, "pl_enum_str_length");
+                mCamera->LogPvcamError(__LINE__, "pl_enum_str_length");
                 break;
             }
             char* enumStrBuf = new char[enumStrLen+1];
             enumStrBuf[enumStrLen] = '\0';
             if ( pl_get_enum_param( mCamera->Handle(), mId, i, &enumVal, enumStrBuf, enumStrLen ) != PV_OK )
             {
-                mCamera->LogCamError(__LINE__, "pl_get_enum_param");
+                mCamera->LogPvcamError(__LINE__, "pl_get_enum_param");
                 mEnumStrings.push_back( "Unable to read" );
                 mEnumValues.push_back(0);
                 break;
@@ -622,7 +628,7 @@ private:
                 mEnumMapReverse[enumStr] = enumVal;
                 if (aDbgPrint)
                 {
-                    mCamera->LogMessage("PVCAM: " + mDebugName
+                    mCamera->LogAdapterMessage(mDebugName
                         + ", value=" + CDeviceUtils::ConvertToString(enumVal)
                         + ", string=" + enumStr);
                 }
@@ -630,7 +636,7 @@ private:
             delete[] enumStrBuf;
         }
         if (aDbgPrint)
-            mCamera->LogMessage("PVCAM: " + mDebugName + " enumeration complete");
+            mCamera->LogAdapterMessage(mDebugName + " enumeration complete");
     }
 
     // Enum values and their corresponding names, stored in vectors in the

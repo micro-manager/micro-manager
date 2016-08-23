@@ -1973,6 +1973,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   acqSettings.numSlices, nrPositions, true, save);
             }
             
+            // save exposure time, will restore at end of acquisition
+            prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                    Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(),
+                    (float)core_.getExposure());
+            
             core_.setExposure(firstCamera, exposureTime);
             if (twoSided) {
                core_.setExposure(secondCamera, exposureTime);

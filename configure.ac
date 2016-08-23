@@ -364,7 +364,6 @@ AC_CONFIG_SUBDIRS([DeviceAdapters])
 AS_IF([test "x$build_secretdeviceadapters" = xyes], [
    AC_CONFIG_SUBDIRS([SecretDeviceAdapters])
 ])
-AC_CONFIG_SUBDIRS([DeviceKit])
 
 
 ##

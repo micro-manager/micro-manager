@@ -66,7 +66,10 @@ void PvCircularBuffer::Resize(size_t frameSize, int count)
         frameSize_  = frameSize;
         size_       = count * static_cast<size_t>(frameSize);
         delete[] pBuffer_;
-        pBuffer_ = new unsigned char[size_];
+        // HACK! There still seems to be some heap corruption issues in PVCAM, in
+        // debug builds I am getting heap corruption error on delete[] here.
+        // Adding just 16 bytes to the entire buffer seems to help.
+        pBuffer_ = new unsigned char[size_ + 16];
 
         delete[] pFrameInfoArray_;
         pFrameInfoArray_ = new PvFrameInfo[frameCount_];

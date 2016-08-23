@@ -31,13 +31,15 @@ namespace IIDC {
 FrameRetriever::FrameRetriever(dc1394camera_t* libdc1394camera,
       size_t desiredNrFrames,
       size_t expectedNrFrames,
-      unsigned firstFrameTimeoutMs,
+      unsigned frameTimeoutMs,
+      bool alwaysUsePolling,
       FrameCallbackFunction frameCallback) :
    libdc1394camera_(libdc1394camera),
    requestedFrames_(desiredNrFrames),
    expectedFrames_(expectedNrFrames),
    retrievedFrames_(0),
-   firstFrameTimeoutMs_(firstFrameTimeoutMs),
+   frameTimeoutMs_(frameTimeoutMs),
+   alwaysUsePolling_(alwaysUsePolling),
    started_(false),
    stopped_(false),
    frameCallback_(frameCallback)
@@ -60,7 +62,7 @@ FrameRetriever::Run()
       // We poll for the first frame, with a timeout, in case the camera fails to
       // deliver images for the current settings. Once we've got the first frame,
       // we can be reasonably confident that subsequent frames will follow, so we
-      // switch to the more efficient blocking method.
+      // (by default) switch to the more efficient blocking method.
       // However, we avoid this on Windows because the POLL policy does not
       // appear to work with the CMU driver (tested with AVT Pike F421, PCIe
       // FireWire card with LSI/Agere FW643 chipset, Microsoft Legacy OHCI driver,
@@ -68,12 +70,20 @@ FrameRetriever::Run()
 #ifndef _WIN32
       if (!requestedFrames_ || retrievedFrames_ < requestedFrames_)
       {
-         dc1394_log_debug("[mm] Polling for the first frame");
-         RetrieveFrame(firstFrameTimeoutMs_, 1);
+         dc1394_log_debug("[mm] Using the POLL policy to retrieve the first frame");
+         RetrieveFrame(frameTimeoutMs_, 1);
       }
 #endif
 
-      dc1394_log_debug("[mm] Using the WAIT policy to retrieve any remaining frames");
+      bool usePollingForRemaining =
+#ifdef _WIN32
+         false;
+#else
+         alwaysUsePolling_;
+#endif
+
+      dc1394_log_debug("[mm] Using the %s policy to retrieve any remaining frames",
+            (usePollingForRemaining ? "POLL" : "WAIT"));
       while (!requestedFrames_ || retrievedFrames_ < requestedFrames_)
       {
          {
@@ -81,7 +91,11 @@ FrameRetriever::Run()
             if (stopped_)
                break;
          }
-         RetrieveFrame();
+
+         if (usePollingForRemaining)
+            RetrieveFrame(frameTimeoutMs_, 1);
+         else
+            RetrieveFrame();
       }
    }
    catch (const Error&)

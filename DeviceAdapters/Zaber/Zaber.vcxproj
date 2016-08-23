@@ -118,11 +118,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FilterWheel.cpp" />
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="XYStage.cpp" />
     <ClCompile Include="Zaber.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="FilterWheel.h" />
     <ClInclude Include="Stage.h" />
     <ClInclude Include="XYStage.h" />
     <ClInclude Include="Zaber.h" />

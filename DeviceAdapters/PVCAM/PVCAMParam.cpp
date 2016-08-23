@@ -42,7 +42,7 @@ std::string PvUniversalParam::ToString()
             if ( mEnumValues[i] == mValue.enum_val )
                 return mEnumStrings[i];
         }
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::ToString() Enum string not found" );
+        mCamera->LogAdapterError(DEVICE_ERR, __LINE__, "PvUniversalParam::ToString() Enum string not found" );
         return "VALUE NAME NOT FOUND";
     case TYPE_UNS32:
         os << mValue.uns32_val;
@@ -56,7 +56,7 @@ std::string PvUniversalParam::ToString()
         return os.str();
 #endif
     default:
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::ToString() Type not supported" );
+        mCamera->LogAdapterError(DEVICE_ERR, __LINE__, "PvUniversalParam::ToString() Type not supported" );
         return "VALUE TYPE NOT SUPPORTED";
     }
 }
@@ -88,7 +88,7 @@ long PvUniversalParam::ToLong()
         return (long)mValue.long64_val;
 #endif
     default:
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::ToLong() Type not supported" );
+        mCamera->LogAdapterError(DEVICE_ERR, __LINE__, "PvUniversalParam::ToLong() Type not supported" );
         return 0;
     }
 }
@@ -120,7 +120,7 @@ double PvUniversalParam::ToDouble()
         return (double)mValue.long64_val;
 #endif
     default:
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::ToDouble() Type not supported" );
+        mCamera->LogAdapterError(DEVICE_ERR, __LINE__, "PvUniversalParam::ToDouble() Type not supported" );
         return 0;
     }
 }
@@ -143,8 +143,8 @@ int PvUniversalParam::Set(std::string aValue)
                 return DEVICE_OK;
             }
         }
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::Set(string) String not found among enum values" );
-        return DEVICE_CAN_NOT_SET_PROPERTY;
+        return mCamera->LogAdapterError(DEVICE_CAN_NOT_SET_PROPERTY, __LINE__,
+            "PvUniversalParam::Set(string) String not found among enum values" );
     case TYPE_INT8:
     case TYPE_UNS8:
     case TYPE_INT16:
@@ -161,14 +161,14 @@ int PvUniversalParam::Set(std::string aValue)
         ss >> dValue;
         if (ss.fail())
         {
-            mCamera->LogCamError(__LINE__, "PvUniversalParam::Set(string) Failed to convert the param from string" );
-            return DEVICE_CAN_NOT_SET_PROPERTY;
+            return mCamera->LogAdapterError(DEVICE_CAN_NOT_SET_PROPERTY, __LINE__,
+                "PvUniversalParam::Set(string) Failed to convert the param from string" );
         }
         return Set(dValue);
 
     default:
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::Set(string) Type not supported" );
-        return DEVICE_CAN_NOT_SET_PROPERTY;
+        return mCamera->LogAdapterError(DEVICE_CAN_NOT_SET_PROPERTY, __LINE__,
+            "PvUniversalParam::Set(string) Type not supported" );
     }
 }
 
@@ -182,8 +182,8 @@ int PvUniversalParam::Set(double aValue)
     // Here is where all the overloaded Set method calls end up for value-type parameters
     if ( aValue < GetMin() || aValue > GetMax() )
     {
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::Set(double) Value out of range" );
-        return DEVICE_CAN_NOT_SET_PROPERTY;
+        return mCamera->LogAdapterError(DEVICE_CAN_NOT_SET_PROPERTY, __LINE__,
+            "PvUniversalParam::Set(double) Value out of range" );
     }
 
     switch (mType)
@@ -221,8 +221,8 @@ int PvUniversalParam::Set(double aValue)
         return DEVICE_OK;
 #endif
     default:
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::Set(double) Type not supported" );
-        return DEVICE_CAN_NOT_SET_PROPERTY;
+        return mCamera->LogAdapterError(DEVICE_CAN_NOT_SET_PROPERTY, __LINE__,
+            "PvUniversalParam::Set(double) Type not supported" );
     }
 }
 
@@ -264,7 +264,7 @@ double PvUniversalParam::GetMax()
         return (double)mValueMax.long64_val;
 #endif
     default:
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::GetMax() Type not supported" );
+        mCamera->LogAdapterError(DEVICE_ERR, __LINE__, "PvUniversalParam::GetMax() Type not supported" );
         return 0;
     }
 }
@@ -296,7 +296,7 @@ double PvUniversalParam::GetMin()
         return (double)mValueMin.long64_val;
 #endif
     default:
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::GetMin() Type not supported" );
+        mCamera->LogAdapterError(DEVICE_ERR, __LINE__, "PvUniversalParam::GetMin() Type not supported" );
         return 0;
     }
 }
@@ -316,7 +316,7 @@ int PvUniversalParam::initialize()
         int32 enumValue;
         if (pl_get_param( mCamera->Handle(), mId, ATTR_COUNT, (void_ptr)&count) != PV_OK)
         {
-            mCamera->LogCamError(__LINE__, "PvUniversalParam::initialize() pl_get_param ATTR_COUNT");
+            mCamera->LogPvcamError(__LINE__, "PvUniversalParam::initialize() pl_get_param ATTR_COUNT");
             return DEVICE_ERR;
         }
         for ( uns32 i = 0; i < count; i++ )
@@ -324,14 +324,14 @@ int PvUniversalParam::initialize()
             uns32 enumStrLen;
             if ( pl_enum_str_length( mCamera->Handle(), mId, i, &enumStrLen ) != PV_OK )
             {
-                mCamera->LogCamError(__LINE__, "PvUniversalParam::initialize() pl_enum_str_length");
+                mCamera->LogPvcamError(__LINE__, "PvUniversalParam::initialize() pl_enum_str_length");
                 return DEVICE_ERR;
             }
             char* enumStrBuf = new char[enumStrLen+1];
             enumStrBuf[enumStrLen] = '\0';
             if (pl_get_enum_param( mCamera->Handle(), mId, i, &enumValue, enumStrBuf, enumStrLen) != PV_OK )
             {
-                mCamera->LogCamError(__LINE__, "PvUniversalParam::initialize() pl_get_enum_param");
+                mCamera->LogPvcamError(__LINE__, "PvUniversalParam::initialize() pl_get_enum_param");
                 return DEVICE_ERR;
             }
             mEnumStrings.push_back(std::string( enumStrBuf ));
@@ -388,7 +388,7 @@ int PvUniversalParam::plGetParam( int16 aAttr, PvUniversalParamValue& aValueOut 
         break;
 #endif
     default:
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::plGetParam() type not supported");
+        mCamera->LogAdapterError(DEVICE_ERR, __LINE__, "PvUniversalParam::plGetParam() type not supported");
         pvRet = PV_FAIL;
         break;
     }
@@ -436,7 +436,7 @@ int PvUniversalParam::plSetParam( PvUniversalParamValue& aValueOut )
         break;
 #endif
     default:
-        mCamera->LogCamError(__LINE__, "PvUniversalParam::plSetParam() type not supported");
+        mCamera->LogAdapterError(DEVICE_ERR, __LINE__, "PvUniversalParam::plSetParam() type not supported");
         pvRet = PV_FAIL;
         break;
     }

@@ -136,7 +136,7 @@ void PvRoiCollection::AdjustCoords()
         m_rois[i].AdjustCoords();
         m_rgnTypeArray[i] = m_rois[i].ToRgnType();
     }
-
+    updateImpliedRoi();
 }
 
 uns16 PvRoiCollection::BinX() const
@@ -193,7 +193,7 @@ void PvRoiCollection::updateImpliedRoi()
     // Adjust the implied ROI
     m_impliedRoi = m_rois[0];
 
-    for (unsigned int i = 0; i < count; ++i)
+    for (unsigned int i = 1; i < count; ++i)
     {
         const PvRoi& roi = m_rois[i];
         const uns16 implX1 = (std::min)(roi.SensorRgnX(), m_impliedRoi.SensorRgnX());
