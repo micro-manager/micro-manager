@@ -143,9 +143,6 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
    // Ensures that we don't try to make the GUI twice from separate threads.
    // TODO: is this even still a concern?
    private final Object guiLock_ = new Object();
-   // Ensures that we don't try to close the window when in the middle of
-   // drawing.
-   private final Object drawLock_ = new Object();
    // This flag indicates that the DisplayWindow has finished setting up its
    // UI components. It is set at the end of makeGUI().
    private boolean haveCreatedGUI_ = false;
@@ -333,7 +330,7 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
             ((MMCompositeImage) ijImage_).reset();
          }
 
-         canvasQueue_ = CanvasUpdateQueue.makeQueue(this, stack_, drawLock_);
+         canvasQueue_ = CanvasUpdateQueue.makeQueue(this, stack_);
 
          makeWindowControls();
          // This needs to be done after the canvas is created, but before we
@@ -906,21 +903,13 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
             return;
          }
       }
-      // Closing the window immediately invalidates the ImagePlus
-      // ImageProcessor that we use for drawing, even if our CanvasUpdateQueue
-      // is in the middle of performing a drawing operation. This synchronized
-      // block corresponds to one in CanvasUpdateQueue.showImage(), and ensures
-      // that we don't potentially lock the EDT by destroying a window when
-      // we're trying to operate on it.
-      synchronized(drawLock_) {
-         canvasQueue_.halt();
-         dispose();
-         if (fullScreenFrame_ != null) {
-            fullScreenFrame_.dispose();
-            fullScreenFrame_ = null;
-         }
-         haveClosed_ = true;
+      canvasQueue_.halt(); // Ensures any ongoing draw completes
+      dispose();
+      if (fullScreenFrame_ != null) {
+         fullScreenFrame_.dispose();
+         fullScreenFrame_ = null;
       }
+      haveClosed_ = true;
    }
 
    /**

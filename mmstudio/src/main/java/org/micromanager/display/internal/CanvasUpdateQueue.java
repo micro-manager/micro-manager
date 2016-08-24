@@ -90,8 +90,6 @@ public final class CanvasUpdateQueue {
    private final DefaultDisplayWindow display_;
    private final MMVirtualStack stack_;
 
-   private final Object drawLock_; // TODO Eliminate this in favor of local synchronization
-
    // Coords of images to be drawn next. Only the last enqueued image is drawn,
    // and the queue is drained when scheduling a repaint.
    private final LinkedBlockingQueue<Coords> coordsQueue_;
@@ -121,24 +119,16 @@ public final class CanvasUpdateQueue {
    private Boolean cachedShouldScaleWithROI_ = null;
 
    public static CanvasUpdateQueue makeQueue(DefaultDisplayWindow display,
-         MMVirtualStack stack, Object drawLock) {
-      CanvasUpdateQueue queue = new CanvasUpdateQueue(display, stack,
-            drawLock);
+         MMVirtualStack stack) {
+      CanvasUpdateQueue queue = new CanvasUpdateQueue(display, stack);
       display.registerForEvents(queue);
       return queue;
    }
 
-   /**
-    * The drawLock parameter is a shared object between this class and the
-    * DefaultDisplayWindow, as the display is not allowed to close when we are
-    * in the middle of drawing anything (or equivalently, we are not allowed to
-    * draw when the display is closing).
-    */
    private CanvasUpdateQueue(DefaultDisplayWindow display,
-         MMVirtualStack stack, Object drawLock) {
+         MMVirtualStack stack) {
       display_ = display;
       stack_ = stack;
-      drawLock_ = drawLock;
       coordsQueue_ = new LinkedBlockingQueue<Coords>();
       channelToHistory_ = new HashMap<Integer, HistogramHistory>();
    }
@@ -151,15 +141,16 @@ public final class CanvasUpdateQueue {
     * if the queue is empty.
     */
    public void enqueue(Coords coords) {
-      if (!shouldAcceptNewCoords_) {
-         // Additions are currently blocked
-         throw new RuntimeException("Attempted to add images to canvas update queue when it is blocked.");
-      }
-      try {
-         coordsQueue_.put(coords);
-      }
-      catch (InterruptedException e) {
-         ReportingUtils.logError("Interrupted while adding coords " + coords + " to queue");
+      synchronized (this) {
+         if (!shouldAcceptNewCoords_) {
+            return;
+         }
+         try {
+            coordsQueue_.put(coords);
+         }
+         catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+         }
       }
       SwingUtilities.invokeLater(new Runnable() {
          @Override
@@ -174,11 +165,15 @@ public final class CanvasUpdateQueue {
     * mode), if any.
     * Only called on the EDT.
     */
-   private void consumeImages() {
+   private synchronized void consumeImages() {
       if (isCanvasPaintPending_) {
          // A repaint is currently pending on the EDT, so avoid triggering
          // another repaint. A new invocation of consumeImage() will be
          // scheduled when the repaint completes.
+         return;
+      }
+      if (!shouldAcceptNewCoords_) {
+         // We are halted; display and image info may no longer be available
          return;
       }
       try {
@@ -250,7 +245,10 @@ public final class CanvasUpdateQueue {
 
    @Subscribe
    public void onCanvasDrawComplete(CanvasDrawCompleteEvent event) {
-      isCanvasPaintPending_ = false;
+      synchronized (this) {
+         isCanvasPaintPending_ = false;
+         notify();
+      }
       if (!coordsQueue_.isEmpty()) {
          // New image(s) arrived while we were drawing; repeat.
          SwingUtilities.invokeLater(new Runnable() {
@@ -267,83 +265,77 @@ public final class CanvasUpdateQueue {
     *
     * Always called on the EDT.
     */
-   private void showImage(Image image) {
-      // This synchronized block corresponds to one in
-      // DefaultDisplayWindow.forceClosed(), and ensures that we do not lose
-      // the objects needed to perform drawing operations while we are trying
-      // to do those operations.
-      synchronized (drawLock_) {
-         ImagePlus plus = display_.getImagePlus();
-         if (plus.getProcessor() == null) {
-            // Display went away since we last checked.
-            return;
-         }
-         isCanvasPaintPending_ = true;
-         stack_.setCoords(image.getCoords());
-         Object pixels = image.getRawPixels();
-         // If we have an RGB byte array, we need to convert it to an
-         // int array for ImageJ's consumption.
-         if (plus.getProcessor() instanceof ColorProcessor
-               && pixels instanceof byte[]) {
-            pixels = ImageUtils.convertRGB32BytesToInt(
-                  (byte[]) pixels);
-         }
-         plus.getProcessor().setPixels(pixels);
-
-         // Recalculate histogram data, if necessary (because the image
-         // is different from the last one we've calculated or because we
-         // need to force an update).
-         int channel = image.getCoords().getChannel();
-         if (!channelToHistory_.containsKey(channel)) {
-            HistogramHistory history = new HistogramHistory();
-            channelToHistory_.put(channel, history);
-         }
-         HistogramHistory history = channelToHistory_.get(channel);
-         // We check two things to determine if this is the last image
-         // we drew:
-         // - UUID: should be unique per-image but can be duplicated if
-         //   Metadata objects are copied.
-         // - Coords hash: uniquely identifies a coordinate location, but
-         //   it is allowed to replace images in Datastores so this does not
-         //   mean that the image itself is the same.
-         // Note that we do NOT check the image's hash, as disk-based
-         // storage systems may create a new Image object every time
-         // Datastore.getImage() is called, which would have a different
-         // hash code.
-         boolean uuidMatch = false;
-         UUID oldUUID = history.imageUUID_;
-         UUID newUUID = image.getMetadata().getUUID();
-         uuidMatch = (oldUUID == null && newUUID == null) ||
-            (oldUUID != null && newUUID != null && oldUUID.equals(newUUID));
-         if (history.needsUpdate_ || !uuidMatch ||
-               history.coordsHash_ != image.getCoords().hashCode()) {
-            scheduleHistogramUpdate(image, history);
-            DisplaySettings settings = display_.getDisplaySettings();
-            // After a histogram update, we may need to reapply LUTs.
-            // TODO: This is pointless in situations where the histogram
-            // update rate isn't "every image".
-            shouldReapplyLUTs_ = (shouldReapplyLUTs_ ||
-                  (settings.getShouldAutostretch() != null &&
-                   settings.getShouldAutostretch()));
-         }
-         // RGB images need to have their LUTs reapplied, because the
-         // image scaling is encoded into the pixel data. And in other
-         // situations we also need to just reapply LUTs now.
-         if (shouldReapplyLUTs_ ||
-               plus.getProcessor() instanceof ColorProcessor) {
-            if (plus.getProcessor() instanceof ColorProcessor) {
-               // Create a new snapshot which will be used as a basis for
-               // calculating image stats.
-               ((ColorProcessor) plus.getProcessor()).snapshot();
-            }
-            // Must apply LUTs to the display now that it has pixels.
-            LUTMaster.initializeDisplay(display_);
-            shouldReapplyLUTs_ = false;
-         }
-
-         plus.updateAndDraw();
-         display_.postEvent(new DefaultPixelsSetEvent(image, display_));
+   private synchronized void showImage(Image image) {
+      ImagePlus plus = display_.getImagePlus();
+      if (plus.getProcessor() == null) {
+         // Display went away since we last checked.
+         return;
       }
+      isCanvasPaintPending_ = true;
+      stack_.setCoords(image.getCoords());
+      Object pixels = image.getRawPixels();
+      // If we have an RGB byte array, we need to convert it to an
+      // int array for ImageJ's consumption.
+      if (plus.getProcessor() instanceof ColorProcessor
+            && pixels instanceof byte[]) {
+         pixels = ImageUtils.convertRGB32BytesToInt(
+               (byte[]) pixels);
+      }
+      plus.getProcessor().setPixels(pixels);
+
+      // Recalculate histogram data, if necessary (because the image
+      // is different from the last one we've calculated or because we
+      // need to force an update).
+      int channel = image.getCoords().getChannel();
+      if (!channelToHistory_.containsKey(channel)) {
+         HistogramHistory history = new HistogramHistory();
+         channelToHistory_.put(channel, history);
+      }
+      HistogramHistory history = channelToHistory_.get(channel);
+      // We check two things to determine if this is the last image
+      // we drew:
+      // - UUID: should be unique per-image but can be duplicated if
+      //   Metadata objects are copied.
+      // - Coords hash: uniquely identifies a coordinate location, but
+      //   it is allowed to replace images in Datastores so this does not
+      //   mean that the image itself is the same.
+      // Note that we do NOT check the image's hash, as disk-based
+      // storage systems may create a new Image object every time
+      // Datastore.getImage() is called, which would have a different
+      // hash code.
+      boolean uuidMatch = false;
+      UUID oldUUID = history.imageUUID_;
+      UUID newUUID = image.getMetadata().getUUID();
+      uuidMatch = (oldUUID == null && newUUID == null) ||
+         (oldUUID != null && newUUID != null && oldUUID.equals(newUUID));
+      if (history.needsUpdate_ || !uuidMatch ||
+            history.coordsHash_ != image.getCoords().hashCode()) {
+         scheduleHistogramUpdate(image, history);
+         DisplaySettings settings = display_.getDisplaySettings();
+         // After a histogram update, we may need to reapply LUTs.
+         // TODO: This is pointless in situations where the histogram
+         // update rate isn't "every image".
+         shouldReapplyLUTs_ = (shouldReapplyLUTs_ ||
+               (settings.getShouldAutostretch() != null &&
+                settings.getShouldAutostretch()));
+      }
+      // RGB images need to have their LUTs reapplied, because the
+      // image scaling is encoded into the pixel data. And in other
+      // situations we also need to just reapply LUTs now.
+      if (shouldReapplyLUTs_ ||
+            plus.getProcessor() instanceof ColorProcessor) {
+         if (plus.getProcessor() instanceof ColorProcessor) {
+            // Create a new snapshot which will be used as a basis for
+            // calculating image stats.
+            ((ColorProcessor) plus.getProcessor()).snapshot();
+         }
+         // Must apply LUTs to the display now that it has pixels.
+         LUTMaster.initializeDisplay(display_);
+         shouldReapplyLUTs_ = false;
+      }
+
+      plus.updateAndDraw();
+      display_.postEvent(new DefaultPixelsSetEvent(image, display_));
    }
 
    /**
@@ -492,21 +484,44 @@ public final class CanvasUpdateQueue {
    }
 
    /**
-    * Wait for the coords queue to become empty, and block any additions to
-    * it.
+    * Wait for any ongoing repaints and stop accepting new coords.
     */
-   public synchronized void halt() {
-      shouldAcceptNewCoords_ = false;
-      coordsQueue_.clear();
+   public void halt() {
+      synchronized (this) {
+         if (!shouldAcceptNewCoords_) {
+            return;
+         }
+         shouldAcceptNewCoords_ = false;
+         coordsQueue_.clear(); // We will instead redraw when/if we resume
+
+         if (SwingUtilities.isEventDispatchThread()) {
+            // If we are on the EDT, consumeImages() will know to stop
+            return;
+         }
+
+         // If we are not on the EDT (unlikely), we can safely wait for the
+         // paint to complete.
+         while (isCanvasPaintPending_ || !coordsQueue_.isEmpty()) {
+            try {
+               wait();
+            }
+            catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+            }
+         }
+      }
    }
 
    /**
-    * Allow additions to the coords queue again. Since halt() empties the queue
-    * and may potentially result in there being nothing drawn at all, we add a
-    * redraw now.
+    * Allow additions to the coords queue again.
     */
    public void resume() {
-      shouldAcceptNewCoords_ = true;
+      synchronized (this) {
+         if (shouldAcceptNewCoords_) {
+            return;
+         }
+         shouldAcceptNewCoords_ = true;
+      }
       display_.requestRedraw();
    }
 
@@ -524,10 +539,9 @@ public final class CanvasUpdateQueue {
     * Force refresh of the display.
     */
    public void redraw() {
-      if (coordsQueue_.isEmpty() && shouldAcceptNewCoords_) {
-         for (Image image : display_.getDisplayedImages()) {
-            enqueue(image.getCoords());
-         }
+      for (Image image : display_.getDisplayedImages()) {
+         // TODO Do we need all coords?
+         enqueue(image.getCoords());
       }
    }
 
