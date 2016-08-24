@@ -90,8 +90,12 @@ public final class CanvasUpdateQueue {
    private final DefaultDisplayWindow display_;
    private final MMVirtualStack stack_;
 
-   private final Object drawLock_;
+   private final Object drawLock_; // TODO Eliminate this in favor of local synchronization
+
+   // Coords of images to be drawn next. Only the last enqueued image is drawn,
+   // and the queue is drained when scheduling a repaint.
    private final LinkedBlockingQueue<Coords> coordsQueue_;
+
    private boolean shouldAcceptNewCoords_ = true;
    private final HashMap<Integer, HistogramHistory> channelToHistory_;
 
@@ -184,61 +188,53 @@ public final class CanvasUpdateQueue {
          // multiple images or just the most recent image.
          boolean isComposite = (plus instanceof CompositeImage &&
                ((CompositeImage) plus).getMode() == CompositeImage.COMPOSITE);
-         HashMap<Integer, Coords> channelToCoords = new HashMap<Integer, Coords>();
          Coords lastCoords = null;
          // Grab images from the queue until we get the last one, so all
          // others get ignored (because we don't have time to display them).
          while (!coordsQueue_.isEmpty()) {
             lastCoords = coordsQueue_.poll();
-            if (isComposite) {
-               channelToCoords.put(lastCoords.getChannel(), lastCoords);
-            }
          }
          if (lastCoords == null) {
             // No images in the queue; nothing to do.
             return;
          }
-         if (plus.getCanvas() == null) {
+         if (plus == null || plus.getCanvas() == null) {
             // The display may have gone away while we were waiting.
             return;
          }
-         // HACK: in composite view mode with autostretch turned on, we need
-         // to manually update every image. Otherwise, only the image indicated
-         // by the axis scrollbars will have its histogram updated.
          DisplaySettings settings = display_.getDisplaySettings();
-         if (isComposite && settings.getShouldAutostretch() != null &&
-               settings.getShouldAutostretch()) {
-            for (int c = 0; c < store.getAxisLength(Coords.CHANNEL); ++c) {
-               channelToCoords.put(c, lastCoords.copy().channel(c).build());
-            }
-         }
          if (isComposite) {
-            for (Coords c : channelToCoords.values()) {
-               if (!settings.getSafeIsVisible(c.getChannel(), true)) {
+            // In composite view mode, we need to update the images for every
+            // channel.
+            // TODO BUG We should update the histograms for all channels even
+            // if we are not in composite view mode?
+            for (int ch = 0; ch < store.getAxisLength(Coords.CHANNEL); ++ch) {
+               Coords coords = lastCoords.copy().channel(ch).build();
+               if (!settings.getSafeIsVisible(coords.getChannel(), true)) {
                   // Channel isn't visible, so no need to do anything with it.
+                  // TODO BUG What if none of the channels are visible?
                   continue;
                }
-               if (store.hasImage(c)) {
-                  Image image = store.getImage(c);
-                  // HACK: in rare cases (like, running DemoCamera live mode at
-                  // 100FPS, 2k x 2k with Fast Image, for half an hour kinds of
-                  // rare) this image can be null despite the store claiming
-                  // that it has an image. I don't know how. But attempting to
-                  // show a null image will break the update queue, so this
-                  // extra check is necessary to keep things working, until we
-                  // figure out what's going on.
+               // TODO BUG What if none of the visible channels have an image?
+               if (store.hasImage(coords)) {
+                  Image image = store.getImage(coords);
+                  // TODO That this check was found to be necessary suggests
+                  // that datastores have a race condition.
                   if (image != null) {
                      showImage(image);
                   }
                   else {
-                     ReportingUtils.logError("Unexpected null image at " + c);
+                     ReportingUtils.logError("Unexpected null image at " + coords);
                   }
                }
             }
          }
+         // TODO BUG If there is no image, we should draw nothing instead of
+         // keeping the previously drawn image
          else if (store.hasImage(lastCoords)) {
             Image image = store.getImage(lastCoords);
-            // HACK: see above HACK note regarding a similar null image check.
+            // TODO That this check was found to be necessary suggests that
+            // datastores have a race condition.
             if (image != null) {
                showImage(image);
             }
