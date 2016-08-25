@@ -173,12 +173,14 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                }
             }
 
+            siPlus.deleteRoi();
             ImagePlus ip = siPlus.duplicate();
 
             int nrSpots = analyzeImagePlus(ip, p + 1, nrThreads, originalRoi);
             if (nrSpots > maxNrSpots) {
                maxNrSpots = nrSpots;
             }
+            siPlus.setRoi(originalRoi);
          }
          dw.unregisterForEvents(this);
       }
