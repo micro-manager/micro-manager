@@ -109,6 +109,13 @@ public class DisplayWindowControls extends Panel {
       }
       setupPopupHints();
    }
+   
+   @Subscribe
+   public void onNewImageEvent(NewImageEvent e) {
+      //once there's an image, surfaces and grids are game
+      tabbedPane_.setEnabledAt(1, true);
+      tabbedPane_.setEnabledAt(2, true);
+   }
 
    @Subscribe
    public void onSetImageEvent(ScrollerPanel.SetImageEvent event) {
@@ -119,9 +126,7 @@ public class DisplayWindowControls extends Panel {
       if (tags == null) {
          return;
       }
-      //now that there's an image, surfaces and grids can be made
-      tabbedPane_.setEnabledAt(1, true);
-      tabbedPane_.setEnabledAt(2, true);
+
       //update status panel
 //      long sizeBytes = acq_.getStorage().getDataSetSize();
 //      if (sizeBytes < 1024) {
@@ -267,9 +272,9 @@ public class DisplayWindowControls extends Panel {
                .addComponent(elapsedTimeLabel_, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(jLabel3)
-               .addComponent(zPosLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addGroup(statusPanel_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+               .addComponent(zPosLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(jLabel3))
             .addGap(44, 44, 44))
       );
 
