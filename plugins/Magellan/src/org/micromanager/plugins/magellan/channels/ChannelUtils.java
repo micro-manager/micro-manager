@@ -69,7 +69,7 @@ public class ChannelUtils {
       if (numCamChannels <= 1) {
          for (String config : getChannelConfigs(channelGroup)) {
             Color color = new Color(GlobalSettings.getInstance().getIntInPrefs(PREF_COLOR + config,
-                    DEFAULT_COLORS[Arrays.asList(getChannelConfigs(channelGroup)).indexOf(config)].getRGB()));
+                    DEFAULT_COLORS[Arrays.asList(getChannelConfigs(channelGroup)).indexOf(config) % DEFAULT_COLORS.length].getRGB()));
             boolean use = GlobalSettings.getInstance().getBooleanInPrefs(PREF_USE + config, true);
             channels.add(new ChannelSetting(channelGroup, 
                     channelGroup == null || channelGroup.equals("") ? null : config, config, exposure, color, use, true));
