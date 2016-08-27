@@ -64,11 +64,13 @@ public final class GUIUtils {
 
    public static void setComboSelection(JComboBox cb, String sel){
       ActionListener[] listeners = cb.getActionListeners();
-      for (int i=0; i<listeners.length; i++)            
-         cb.removeActionListener(listeners[i]);
+      for (ActionListener listener : listeners) {
+         cb.removeActionListener(listener);
+      }
       cb.setSelectedItem(sel);
-      for (int i=0; i<listeners.length; i++)            
-         cb.addActionListener(listeners[i]);
+      for (ActionListener listener : listeners) {
+         cb.addActionListener(listener);
+      }
    }
 
    public static void replaceComboContents(JComboBox cb, String[] items) {
@@ -83,8 +85,8 @@ public final class GUIUtils {
          cb.removeAllItems();
       
       // add contents
-      for (int i=0; i<items.length; i++){
-         cb.addItem(items[i]);
+      for (String item : items) {
+         cb.addItem(item);
       }
       
       // restore listeners
@@ -591,10 +593,24 @@ public final class GUIUtils {
    /**
     * Center the provided Window within the screen contained by the provided
     * other window.
+    * @param child Window to be centered on the relevant screen
+    * @param source parent Window.  Used to figure out the screen we should be on
+    * 
     */
    public static void centerFrameWithFrame(Window child, Window source) {
       GraphicsConfiguration config = getGraphicsConfigurationContaining(
             source.getLocation().x, source.getLocation().y);
+      // if the top left corner is not on a screen, config will be null
+      if (config == null) {
+         config = getGraphicsConfigurationContaining(
+               source.getLocation().x + source.getWidth(), 
+                source.getLocation().y + source.getHeight());
+      }
+      // if we still have no GraphicConfiguration, just grab the first
+      if (config == null) {
+         config = getConfigs().get(0);
+      }
+      
       Dimension size = child.getSize();
       Rectangle bounds = config.getBounds();
       child.setLocation(bounds.x + bounds.width / 2 - size.width / 2,
