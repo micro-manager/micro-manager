@@ -30,6 +30,8 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -43,6 +45,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -52,12 +55,19 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
@@ -153,8 +163,8 @@ public final class QuickAccessFrame extends JFrame {
       loadConfig(config);
 
       pack();
-      
-      studio.events().registerForEvents(this);
+
+      studio_.events().registerForEvents(this);
    }
 
    /**
@@ -163,7 +173,9 @@ public final class QuickAccessFrame extends JFrame {
    private void loadConfig(JSONObject config) {
       if (config.length() == 0) {
          // Empty config; create a default (i.e. empty) window.
-         setTitle(DEFAULT_TITLE);
+         setTitle(DefaultQuickAccessManager.getUniqueTitle(this,DEFAULT_TITLE));
+         super.setBounds(100, 100, 100, 100);
+         super.pack();
          setVisible(true);
          return;
       }
@@ -203,8 +215,7 @@ public final class QuickAccessFrame extends JFrame {
 
    /**
     * Create a JSONObject for storing our settings to the profile.
-    * @return JSONObject containing the Quick Access settings to be stored
-    *                   in the user profile
+    * @return JSONObject containing the settings for this Quick Access Panel
     */
    public JSONObject getConfig() {
       try {
@@ -256,6 +267,8 @@ public final class QuickAccessFrame extends JFrame {
    /**
     * Start dragging the specified DraggableIcon, which was clicked on
     * according to the provided MouseEvent.
+    * @param icon - Icon being dragged
+    * @param e - The MouseEvent that started all of this
     */
    public void startDragging(DraggableIcon icon, MouseEvent e) {
       draggedIcon_ = icon;
@@ -379,6 +392,9 @@ public final class QuickAccessFrame extends JFrame {
       contentsPanel_.add(panel);
       contentsPanel_.add(configureButton_);
       if (isShown) {
+         // Update the configure panels titel, since it may have changed since
+         // the panel was created.
+         configurePanel_.setUserTitle(this.getTitle());
          String paramString = "growx";
          // Depending on the grid shape, we either put the configure panel
          // below or to the right of the grid. We prefer having the panel
@@ -447,11 +463,13 @@ public final class QuickAccessFrame extends JFrame {
    /**
     * Update the title of this window according to the provided string.
     */
-   private void updateTitle(String title) {
-      setTitle(DefaultQuickAccessManager.getUniqueTitle(this, title));
+   private String updateTitle(String title) {
+      String newTitle = DefaultQuickAccessManager.getUniqueTitle(this, title);
+      setTitle(newTitle);
       // This is mostly to let the Tools menu know it needs to regenerate its
       // submenu for the quick access panels.
       studio_.events().post(new QuickAccessPanelEvent());
+      return newTitle;
    }
 
    /**
@@ -646,18 +664,16 @@ public final class QuickAccessFrame extends JFrame {
 
          subPanel.add(new JLabel("Panel title:"), "split 2, span");
          titleField_ = new JTextField(title, 20);
-         titleField_.getDocument().addDocumentListener(new DocumentListener() {
+         titleField_.addFocusListener(new FocusListener(){
             @Override
-            public void insertUpdate(DocumentEvent e) {
-               updateTitle(titleField_.getText());
+            public void focusGained(FocusEvent fe) {
+               // Nothing to be done
             }
+
             @Override
-            public void removeUpdate(DocumentEvent e) {
-               updateTitle(titleField_.getText());
-            }
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-               updateTitle(titleField_.getText());
+            public void focusLost(FocusEvent fe) {
+               String newTitle = updateTitle(titleField_.getText());
+               titleField_.setText(newTitle);
             }
          });
          subPanel.add(titleField_, "wrap");
@@ -727,6 +743,10 @@ public final class QuickAccessFrame extends JFrame {
        */
       public String getUserTitle() {
          return titleField_.getText();
+      }
+
+      public void setUserTitle(String newTitle) {
+         titleField_.setText(newTitle);
       }
 
       /**
@@ -839,7 +859,7 @@ public final class QuickAccessFrame extends JFrame {
       int y2 = json.getInt("y2");
       return new Divider(new Point(x1, y1), new Point(x2, y2));
    }
-   
+
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.getIsCancelled()) {
