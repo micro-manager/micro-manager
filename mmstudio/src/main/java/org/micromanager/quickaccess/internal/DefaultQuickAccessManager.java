@@ -19,7 +19,6 @@
 
 package org.micromanager.quickaccess.internal;
 
-import com.bulenkov.iconloader.IconLoader;
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
@@ -29,6 +28,7 @@ import java.awt.Image;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,6 +46,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ScreenImage;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.QuickAccessPlugin;
@@ -68,14 +69,15 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    private static DefaultQuickAccessManager staticInstance_;
    /**
     * Create the manager, a static singleton.
+    * @param studio The Micro-Manager Studio instance
     */
    public static void createManager(Studio studio) {
       staticInstance_ = new DefaultQuickAccessManager(studio);
       studio.events().registerForEvents(staticInstance_);
    }
 
-   private Studio studio_;
-   private ArrayList<QuickAccessFrame> knownPanels_;
+   private final Studio studio_;
+   private final ArrayList<QuickAccessFrame> knownPanels_;
 
    private DefaultQuickAccessManager(Studio studio) {
       studio_ = studio;
@@ -84,11 +86,11 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
 
    /**
     * Check the user's profile to see if we have any saved settings there.
+    * @param event Event that is fired when MM completes startup
     */
    @Subscribe
    public void onStartupComplete(StartupCompleteEvent event) {
       try {
-         boolean hasContents = false;
          String configStr = studio_.profile().getString(
                QuickAccessManager.class, SAVED_CONFIG, null);
          if (configStr == null) {
@@ -152,7 +154,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
 
    @Override
    public void showPanels() {
-      if (knownPanels_.size() == 0) {
+      if (knownPanels_.isEmpty()) {
          addPanel(new JSONObject());
       }
       for (QuickAccessFrame panel : knownPanels_) {
@@ -198,8 +200,9 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
          }
          else if (iconType.equals(JAR_ICON)) {
             // Load the icon from our jar.
-            return IconLoader.getIcon("/org/micromanager/icons/" +
-                  json.getString(ICON_PATH) + ".png");
+            return new ImageIcon (
+               getClass().getResource("/org/micromanager/icons/" +
+                  json.getString(ICON_PATH) + ".png") );
          }
          else {
             studio_.logs().logError("Unsupported icon type " + iconType);
@@ -273,21 +276,38 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
    }
 
    /**
-    * Provide a unique string for the provided panel, based on the provided
-    * base title and the titles of the other extant panels.
+    * Provides a unique string for the provided panel, based on the provided
+    * base title and the titles of the other panels.
+    * @param panel QuickAccessFrame whose title we want to test
+    * @param base Proposed new title for this frame
+    * @return Unique title
     */
    public static String getUniqueTitle(QuickAccessFrame panel, String base) {
-      int offset = 0;
       for (QuickAccessFrame alt : staticInstance_.knownPanels_) {
-         if (alt != panel && alt.getTitle().startsWith(base)) {
-            offset++;
+         if (alt != panel) {
+            if (base.equals(alt.getTitle())) {
+               // Only need to modify if the names are equal
+               String[] baseParts = base.split(" ");
+               try {
+                  int nr = NumberUtils.displayStringToInt(baseParts[baseParts.length - 1]);
+                  nr++;
+                  baseParts[baseParts.length - 1] = "" + nr;
+                  // reassemble the name
+                  base = baseParts[0];
+                  for (int i = 1; i < baseParts.length; i++) {
+                     base += " " + baseParts[i];
+                  }
+               } catch (ParseException pe) {
+                  // last part was not a number, so we can safely use 1
+                  base += " 1";
+               }
+               // since we modified the title, we need to test again against all titles
+               // use recursion:
+               return getUniqueTitle(panel, base);
+            }
          }
       }
-      if (offset == 0) {
-         // Title is already unique.
-         return base;
-      }
-      return base + " " + (offset + 1);
+      return base;
    }
 
    /**
@@ -299,6 +319,7 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
 
    /**
     * Remove an existing panel.
+    * @param panel The panel to be removed
     */
    public static void deletePanel(QuickAccessFrame panel) {
       staticInstance_.knownPanels_.remove(panel);
