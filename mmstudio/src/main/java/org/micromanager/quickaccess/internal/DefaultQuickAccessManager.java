@@ -19,6 +19,7 @@
 
 package org.micromanager.quickaccess.internal;
 
+import com.bulenkov.iconloader.IconLoader;
 import com.google.common.base.Charsets;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.io.Files;
@@ -200,9 +201,8 @@ public final class DefaultQuickAccessManager implements QuickAccessManager {
          }
          else if (iconType.equals(JAR_ICON)) {
             // Load the icon from our jar.
-            return new ImageIcon (
-               getClass().getResource("/org/micromanager/icons/" +
-                  json.getString(ICON_PATH) + ".png") );
+             return IconLoader.getIcon("/org/micromanager/icons/" +
+                    json.getString(ICON_PATH) + ".png");
          }
          else {
             studio_.logs().logError("Unsupported icon type " + iconType);

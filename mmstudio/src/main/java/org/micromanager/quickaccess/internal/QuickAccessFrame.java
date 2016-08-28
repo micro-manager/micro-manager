@@ -19,6 +19,7 @@
 
 package org.micromanager.quickaccess.internal;
 
+import com.bulenkov.iconloader.IconLoader;
 import com.google.common.eventbus.Subscribe;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -133,10 +134,8 @@ public final class QuickAccessFrame extends JFrame {
 
       contentsPanel_.add(controlsPanel_);
 
-      ImageIcon gearIcon = new ImageIcon (
-               getClass().getResource("/org/micromanager/icons/gear.png"));
-      configureButton_ = new JToggleButton(gearIcon);
-           // IconLoader.getIcon("/org/micromanager/icons/gear.png"));
+      configureButton_ = new JToggleButton(
+              IconLoader.getIcon("/org/micromanager/icons/gear.png"));
       configureButton_.setToolTipText("Open the configuration UI for this panel");
       configureButton_.addActionListener(new ActionListener() {
          @Override
