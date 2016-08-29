@@ -21,7 +21,6 @@
 package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.Subscribe;
-import ij.gui.ImageWindow;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -66,14 +65,12 @@ public final class MetadataPanel extends InspectorPanel {
    private JPanel imageMetadataPanel_;
    private JCheckBox showUnchangingPropertiesCheckbox_;
    private JTable summaryMetadataTable_;
-   private JScrollPane summaryMetadataScrollPane_;
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
-   private ImageWindow currentWindow_;
    private Datastore store_;
    private DataViewer display_;
-   private Thread updateThread_;
-   private LinkedBlockingQueue<Image> updateQueue_;
+   private final Thread updateThread_;
+   private final LinkedBlockingQueue<Image> updateQueue_;
    private boolean shouldShowUpdates_ = true;
    private boolean shouldForceUpdate_ = false;
    private UUID lastImageUUID_ = null;
@@ -108,6 +105,9 @@ public final class MetadataPanel extends InspectorPanel {
             updateMetadata();
          }
       });
+   }
+   
+   public void startUpdateThread() {
       updateThread_.start();
    }
 
@@ -245,6 +245,10 @@ public final class MetadataPanel extends InspectorPanel {
       while (shouldShowUpdates_) {
          Image image = null;
          while (!updateQueue_.isEmpty()) {
+            // Note: it would be nicer to use:
+            // image = updateQueue_.poll(100L, TimeUnit.MILLISECONDS);
+            // and not use a sleep in this thread, however, that approach
+            // leads to very hgh CPU usage for reasons I do not understand
             image = updateQueue_.poll();
          }
          if (image != null) {
@@ -268,6 +272,7 @@ public final class MetadataPanel extends InspectorPanel {
     * Extract metadata from the provided image, and from the summary metadata,
     * and update our tables. We may need to do some modification of the
     * metadata to format it nicely for our tables.
+    * @param image Image for which to show metadata
     */
    public void imageChangedUpdate(final Image image) {
       Metadata data = image.getMetadata();
@@ -297,7 +302,7 @@ public final class MetadataPanel extends InspectorPanel {
             JSONObject userJSON = metadata.getJSONObject("userData");
             userData.flattenJSONSerialization(userJSON);
             for (String key : MDUtils.getKeys(userJSON)) {
-               metadata.put(key, userJSON.get(key));
+               metadata.put("userData-" + key, userJSON.get(key));
             }
          }
          // Enhance this structure with information about basic image

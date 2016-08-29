@@ -372,7 +372,9 @@ public final class InspectorFrame extends MMFrame implements Inspector {
 
       // Hard-coded initial panels.
       addPanel(CONTRAST_TITLE, new HistogramsPanel());
-      addPanel("Metadata", new MetadataPanel());
+      MetadataPanel metadataPanel = new MetadataPanel();
+      metadataPanel.startUpdateThread();
+      addPanel("Metadata", metadataPanel);
       addPanel("Comments", new CommentsPanel());
       // Pluggable panels. Sort by name -- not the classpath name in the
       // given HashMap, but the name returned by getName();
