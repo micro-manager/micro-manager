@@ -41,6 +41,7 @@ import org.json.JSONObject;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -74,6 +75,8 @@ public final class MetadataPanel extends InspectorPanel {
    private boolean shouldShowUpdates_ = true;
    private boolean shouldForceUpdate_ = false;
    private UUID lastImageUUID_ = null;
+   private String lastSummaryMetadataDate_ = null;
+   
 
    /** This class makes smaller JTables, since the default size is absurd. */
    private class SmallerJTable extends JTable {
@@ -272,9 +275,43 @@ public final class MetadataPanel extends InspectorPanel {
     * Extract metadata from the provided image, and from the summary metadata,
     * and update our tables. We may need to do some modification of the
     * metadata to format it nicely for our tables.
-    * @param image Image for which to show metadata
+    * @param image Image for which to show metadata and summary metadata
     */
    public void imageChangedUpdate(final Image image) {
+      SummaryMetadata summaryMetadata = store_.getSummaryMetadata();
+      // HACK: compare StartDate field to determine if we have to update the
+      // summarymetadata.  There does not appear to be a UI for summary metadata
+      // This may fail when a dataset has been duplicated!
+      boolean updateSummary = false;
+      JSONObject jsonSummaryMetadata = null;
+      if (lastSummaryMetadataDate_ == null || 
+              (!lastSummaryMetadataDate_.equals(summaryMetadata.getStartDate()))) {
+         lastSummaryMetadataDate_ = summaryMetadata.getStartDate();
+         updateSummary = true;
+         // If the "userData" property is present,
+         // we need to "flatten" it a bit -- the keys and values
+         // have been serialized into the JSON using PropertyMap
+         // serialization rules, which create a JSONObject for each
+         // property. UserData is stored within its own
+         // distinct JSONObject.
+         // TODO: this is awfully tightly-bound to the hacks we've put in
+         // to maintain backwards compatibility with our file formats.
+         jsonSummaryMetadata
+                 = ((DefaultSummaryMetadata) store_.getSummaryMetadata()).toJSON();
+         try {
+            if (summaryMetadata.getUserData() != null) {
+               DefaultPropertyMap userData = (DefaultPropertyMap) summaryMetadata.getUserData();
+               JSONObject userJSON = jsonSummaryMetadata.getJSONObject("UserData");
+               userData.flattenJSONSerialization(userJSON);
+               for (String key : MDUtils.getKeys(userJSON)) {
+                  jsonSummaryMetadata.put("UserData-" + key, userJSON.get(key));
+               }
+            }
+         } catch (JSONException e) {
+            ReportingUtils.logError(e, "Failed to update Summary metadata display");
+         }
+      }
+      
       Metadata data = image.getMetadata();
       if (data.getUUID() != null && data.getUUID() == lastImageUUID_ &&
             !shouldForceUpdate_) {
@@ -320,14 +357,18 @@ public final class MetadataPanel extends InspectorPanel {
          ReportingUtils.logError(e, "Failed to update metadata display");
       }
       // Update the tables in the EDT.
+      final boolean fUpdateSummary = updateSummary;
+      final JSONObject fSummaryMetadata = jsonSummaryMetadata;
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
             imageMetadataModel_.setMetadata(metadata,
                   showUnchangingPropertiesCheckbox_.isSelected());
+            if (fUpdateSummary) {
             summaryMetadataModel_.setMetadata(
-                  ((DefaultSummaryMetadata) store_.getSummaryMetadata()).toJSON(),
+                  fSummaryMetadata,
                   true);
+            }
          }
       });
       lastImageUUID_ = data.getUUID();
