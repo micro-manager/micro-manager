@@ -2571,7 +2571,7 @@ int Universal::OnPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct
         }
 
         // translate the value from the actual control in MM
-        if (PostProc_[index].GetRange() == 1)
+        if (PostProc_[index].IsBoolean())
         {
             pProp->Get(valueStr);
 
@@ -2611,7 +2611,7 @@ int Universal::OnPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct
         // Here we return the 'cached' parameter values only. We cannot ask camera directly
         // because this part of code might be called when sequence acquisition is active and
         // we cannot ask camera when streaming is on.
-        if (PostProc_[index].GetRange() == 1)
+        if (PostProc_[index].IsBoolean())
         {
             // The property is of a Yes/No type
             ppValue = (uns32)PostProc_[index].GetcurValue();
@@ -3549,9 +3549,12 @@ int Universal::initializePostProcessing()
 
                                         CPropertyActionEx *pExAct = new CPropertyActionEx(this, &Universal::OnPostProcProperties, CntPP++);
 
+                                        PpParam ppParam(paramNameStream.str().c_str(), i,j);
+
                                         // create a special drop-down control box for booleans
                                         if (min == 0 && max == 1)
                                         {
+                                            ppParam.SetBoolean(true);
                                             nRet = CreateProperty(paramNameStream.str().c_str(), currentValueStream.str().c_str(), MM::String, false, pExAct);
                                             SetAllowedValues(paramNameStream.str().c_str(), boolValues);
                                         }
@@ -3561,10 +3564,7 @@ int Universal::initializePostProcessing()
                                             SetPropertyLimits(paramNameStream.str().c_str(), min, max);
                                         }
 
-                                        PpParam* ptr = new PpParam(paramNameStream.str().c_str(), i,j);
-                                        ptr->SetRange(max-min);
-                                        PostProc_.push_back (*ptr);
-                                        delete ptr;
+                                        PostProc_.push_back (ppParam);
                                     }
                                 }
                             }
