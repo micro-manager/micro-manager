@@ -274,13 +274,15 @@ public class GaussianUtils {
     * and plots it
     * @param title - of the plot
     * @param data - distance measurements (in nm)
+    * @param max - highest value in the histogram plot
     * @param fitResult - double[0] is mu, double[1] is sigma
     */
-   public static void plotP2D(String title, double[] data, double[] fitResult) {
-      int nrBins = 25;
-      double min =0.0;
-      double max = 50.0;
-      HistogramDataset hds = new HistogramDataset();
+   public static void plotP2D(final String title, final double[] data, 
+           final double max, double[] fitResult) {
+      final double testNrBins = (data.length / max) * 5.0;
+      final int nrBins = testNrBins > 25 ? (int) testNrBins : 25;
+      final double min = 0.0;
+      final HistogramDataset hds = new HistogramDataset();
       hds.addSeries("Distances", data, nrBins, min, max);
       
       XYSeriesCollection p2dDataSet = new XYSeriesCollection();

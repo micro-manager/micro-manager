@@ -402,9 +402,10 @@ public class ParticlePairLister {
                           NumberUtils.doubleToDisplayString(distMean) +  
                           " nm, std = " + 
                           NumberUtils.doubleToDisplayString(distStd) + " nm"); 
+                  
+                  // plot function and histogram
                   GaussianUtils.plotP2D(rowData.get(row).title_ + " distances", 
-                          d, p2dfResult);
-                  // TODO: plot function and histogram
+                          d, maxDistanceNm, p2dfResult);
                }
 
                ij.IJ.showStatus("");
