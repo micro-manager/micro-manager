@@ -21,7 +21,6 @@
 package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.Subscribe;
-import ij.gui.ImageWindow;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -42,6 +41,7 @@ import org.json.JSONObject;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -66,17 +66,17 @@ public final class MetadataPanel extends InspectorPanel {
    private JPanel imageMetadataPanel_;
    private JCheckBox showUnchangingPropertiesCheckbox_;
    private JTable summaryMetadataTable_;
-   private JScrollPane summaryMetadataScrollPane_;
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
-   private ImageWindow currentWindow_;
    private Datastore store_;
    private DataViewer display_;
-   private Thread updateThread_;
-   private LinkedBlockingQueue<Image> updateQueue_;
+   private final Thread updateThread_;
+   private final LinkedBlockingQueue<Image> updateQueue_;
    private boolean shouldShowUpdates_ = true;
    private boolean shouldForceUpdate_ = false;
    private UUID lastImageUUID_ = null;
+   private String lastSummaryMetadataDate_ = null;
+   
 
    /** This class makes smaller JTables, since the default size is absurd. */
    private class SmallerJTable extends JTable {
@@ -108,6 +108,9 @@ public final class MetadataPanel extends InspectorPanel {
             updateMetadata();
          }
       });
+   }
+   
+   public void startUpdateThread() {
       updateThread_.start();
    }
 
@@ -245,6 +248,10 @@ public final class MetadataPanel extends InspectorPanel {
       while (shouldShowUpdates_) {
          Image image = null;
          while (!updateQueue_.isEmpty()) {
+            // Note: it would be nicer to use:
+            // image = updateQueue_.poll(100L, TimeUnit.MILLISECONDS);
+            // and not use a sleep in this thread, however, that approach
+            // leads to very hgh CPU usage for reasons I do not understand
             image = updateQueue_.poll();
          }
          if (image != null) {
@@ -268,8 +275,43 @@ public final class MetadataPanel extends InspectorPanel {
     * Extract metadata from the provided image, and from the summary metadata,
     * and update our tables. We may need to do some modification of the
     * metadata to format it nicely for our tables.
+    * @param image Image for which to show metadata and summary metadata
     */
    public void imageChangedUpdate(final Image image) {
+      SummaryMetadata summaryMetadata = store_.getSummaryMetadata();
+      // HACK: compare StartDate field to determine if we have to update the
+      // summarymetadata.  There does not appear to be a UI for summary metadata
+      // This may fail when a dataset has been duplicated!
+      boolean updateSummary = false;
+      JSONObject jsonSummaryMetadata = null;
+      if (lastSummaryMetadataDate_ == null || 
+              (!lastSummaryMetadataDate_.equals(summaryMetadata.getStartDate()))) {
+         lastSummaryMetadataDate_ = summaryMetadata.getStartDate();
+         updateSummary = true;
+         // If the "userData" property is present,
+         // we need to "flatten" it a bit -- the keys and values
+         // have been serialized into the JSON using PropertyMap
+         // serialization rules, which create a JSONObject for each
+         // property. UserData is stored within its own
+         // distinct JSONObject.
+         // TODO: this is awfully tightly-bound to the hacks we've put in
+         // to maintain backwards compatibility with our file formats.
+         jsonSummaryMetadata
+                 = ((DefaultSummaryMetadata) store_.getSummaryMetadata()).toJSON();
+         try {
+            if (summaryMetadata.getUserData() != null) {
+               DefaultPropertyMap userData = (DefaultPropertyMap) summaryMetadata.getUserData();
+               JSONObject userJSON = jsonSummaryMetadata.getJSONObject("UserData");
+               userData.flattenJSONSerialization(userJSON);
+               for (String key : MDUtils.getKeys(userJSON)) {
+                  jsonSummaryMetadata.put("UserData-" + key, userJSON.get(key));
+               }
+            }
+         } catch (JSONException e) {
+            ReportingUtils.logError(e, "Failed to update Summary metadata display");
+         }
+      }
+      
       Metadata data = image.getMetadata();
       if (data.getUUID() != null && data.getUUID() == lastImageUUID_ &&
             !shouldForceUpdate_) {
@@ -297,7 +339,7 @@ public final class MetadataPanel extends InspectorPanel {
             JSONObject userJSON = metadata.getJSONObject("userData");
             userData.flattenJSONSerialization(userJSON);
             for (String key : MDUtils.getKeys(userJSON)) {
-               metadata.put(key, userJSON.get(key));
+               metadata.put("userData-" + key, userJSON.get(key));
             }
          }
          // Enhance this structure with information about basic image
@@ -315,14 +357,18 @@ public final class MetadataPanel extends InspectorPanel {
          ReportingUtils.logError(e, "Failed to update metadata display");
       }
       // Update the tables in the EDT.
+      final boolean fUpdateSummary = updateSummary;
+      final JSONObject fSummaryMetadata = jsonSummaryMetadata;
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
             imageMetadataModel_.setMetadata(metadata,
                   showUnchangingPropertiesCheckbox_.isSelected());
+            if (fUpdateSummary) {
             summaryMetadataModel_.setMetadata(
-                  ((DefaultSummaryMetadata) store_.getSummaryMetadata()).toJSON(),
+                  fSummaryMetadata,
                   true);
+            }
          }
       });
       lastImageUUID_ = data.getUUID();
