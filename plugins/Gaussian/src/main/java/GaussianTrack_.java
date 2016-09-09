@@ -8,11 +8,13 @@
  * @author nico
  */
 
+import com.google.common.eventbus.Subscribe;
 import edu.valelab.gaussianfit.MainForm;
 
 import ij.plugin.*;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+import org.micromanager.events.ShutdownCommencingEvent;
 
 import org.scijava.plugin.SciJavaPlugin;
 
@@ -22,15 +24,15 @@ import org.scijava.plugin.SciJavaPlugin;
  */
 @org.scijava.plugin.Plugin(type = MenuPlugin.class)
 public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
-    public static final String menuName = "Localization Microscopy";
-    public static final String tooltipDescription =
+    public static final String MENUNAME = "Localization Microscopy";
+    public static final String TOOLTIPDESCRIPTION =
        "Toolbox for analyzing spots using Gaussian fitting";
 
-    private MainForm theForm_;
+   private MainForm theForm_;
 
    @Override
    public String getName() {
-      return menuName;
+      return MENUNAME;
    }
 
    @Override
@@ -44,20 +46,14 @@ public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
          theForm_ = new MainForm();
       }
       theForm_.setVisible(true);
-      /*
-      if (gui_ != null) {
-         theForm_.setBackground(gui_.getBackgroundColor());
-         gui_.addMMBackgroundListener(theForm_);
-      }
-       */
       theForm_.formWindowOpened();
       theForm_.toFront();
    }
 
 
-
    @Override
-   public void setContext(Studio app) {      
+   public void setContext(Studio app) {
+      app.events().registerForEvents(this);
    }
 
    @Override
@@ -83,6 +79,11 @@ public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
    @Override
    public String getCopyright() {
       return "University of California, 2010-2014";
+   }
+   
+   @Subscribe
+   public void closeRequested( ShutdownCommencingEvent sce){
+      dispose();
    }
 
 }

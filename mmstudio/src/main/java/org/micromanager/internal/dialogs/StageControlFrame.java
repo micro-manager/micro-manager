@@ -46,6 +46,7 @@ import org.micromanager.Studio;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.TextUtils;
 
@@ -131,7 +132,7 @@ public final class StageControlFrame extends MMFrame {
 
       initComponents();
 
-      loadAndRestorePosition(frameXPos_, frameYPos_);
+      super.loadAndRestorePosition(frameXPos_, frameYPos_);
    }
 
    /**
@@ -216,6 +217,7 @@ public final class StageControlFrame extends MMFrame {
       setResizable(false);
       setLayout(new MigLayout("fill, insets 5, gap 2"));
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(WindowEvent evt) {
             for (int i = 0; i < 3; ++i) {
                studio_.profile().setDouble(StageControlFrame.class,
@@ -622,6 +624,16 @@ public final class StageControlFrame extends MMFrame {
    public void onXYStagePositionChanged(XYStagePositionChangedEvent event) {
       if (event.getDeviceName().contentEquals(core_.getXYStageDevice())) {
          setXYPosLabel(event.getXPos(), event.getYPos());
+      }
+   }
+   
+      
+   @Subscribe
+   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      if (!event.getIsCancelled()) {
+         if (staticFrame_ != null) {
+            staticFrame_.dispose();
+         }
       }
    }
 

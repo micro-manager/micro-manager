@@ -26,8 +26,10 @@
 
 package org.micromanager.hcs;
 
+import com.google.common.eventbus.Subscribe;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+import org.micromanager.events.ShutdownCommencingEvent;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -45,6 +47,7 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    @Override
    public void setContext(Studio studio) {
       studio_ = studio;
+      studio_.events().registerForEvents(this);
    }
 
    @Override
@@ -78,6 +81,15 @@ public class HCSPlugin implements MenuPlugin, SciJavaPlugin {
    @Override
    public String getVersion() {
       return VERSION_INFO;
+   }
+   
+   @Subscribe
+   public void closeRequested( ShutdownCommencingEvent sce){
+      if (frame_ != null) {
+         if (!sce.getIsCancelled()) {
+            frame_.dispose();
+         }
+      }
    }
 
 }

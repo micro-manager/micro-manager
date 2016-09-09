@@ -176,6 +176,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    public SiteGenerator(Studio app) {
       super();
       app_ = app;
+      
       super.setMinimumSize(new Dimension(815, 600));
       super.addWindowListener(new WindowAdapter() {
          @Override

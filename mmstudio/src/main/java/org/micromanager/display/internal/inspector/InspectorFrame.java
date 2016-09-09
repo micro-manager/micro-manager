@@ -62,6 +62,7 @@ import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.events.DisplayActivatedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.events.internal.DefaultEventManager;
+import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.pluginmanagement.PluginSorter;
 import org.micromanager.internal.utils.DefaultUserProfile;
@@ -419,6 +420,8 @@ public final class InspectorFrame extends MMFrame implements Inspector {
       });
 
       refillContents();
+      
+      MMStudio.getInstance().events().registerForEvents(this);
    }
 
    /**
@@ -742,5 +745,13 @@ public final class InspectorFrame extends MMFrame implements Inspector {
    private static void setDefaultWidth(int width) {
       DefaultUserProfile.getInstance().setInt(
             InspectorFrame.class, WINDOW_WIDTH, width);
+   }
+   
+      
+   @Subscribe
+   public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
+      if (!event.getIsCancelled()) {
+         this.dispose();
+      }
    }
 }
