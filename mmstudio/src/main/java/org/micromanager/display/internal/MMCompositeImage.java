@@ -33,14 +33,12 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public final class MMCompositeImage extends CompositeImage implements IMMImagePlus {
    private final DefaultDisplayWindow display_;
-   private final ImagePlus hyperImage_;
    private final String title_;
 
    public MMCompositeImage(DefaultDisplayWindow display, ImagePlus imgp,
          int type, String title) {
       super(imgp, type);
       display_ = display;
-      hyperImage_ = imgp;
       title_ = title;
    }
    

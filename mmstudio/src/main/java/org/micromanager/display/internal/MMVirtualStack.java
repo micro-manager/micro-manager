@@ -52,7 +52,7 @@ public final class MMVirtualStack extends ij.VirtualStack {
    private ImagePlus plus_;
    private Coords curCoords_;
    private final HashMap<Integer, Image> channelToLastValidImage_;
-   private Studio studio_;
+   private final Studio studio_;
 
    public MMVirtualStack(Studio studio, Datastore store, EventBus displayBus,
          ImagePlus plus) {

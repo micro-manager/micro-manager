@@ -72,7 +72,7 @@ public final class DummyImageWindow extends StackWindow {
       }
    }
 
-   private DefaultDisplayWindow master_;
+   private final DefaultDisplayWindow master_;
 
    private DummyImageWindow(ImagePlus plus, DefaultDisplayWindow master) {
       super(plus);

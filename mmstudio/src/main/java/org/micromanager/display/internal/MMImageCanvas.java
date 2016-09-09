@@ -45,7 +45,7 @@ import org.micromanager.display.internal.events.MouseMovedEvent;
  * specialized drawing logic and some other minor customizations.
  */
 public final class MMImageCanvas extends ImageCanvas {
-   private ImagePlus ijImage_;
+   private final ImagePlus ijImage_;
    private DefaultDisplayWindow display_;
 
    public MMImageCanvas(ImagePlus ijImage, DefaultDisplayWindow display) {

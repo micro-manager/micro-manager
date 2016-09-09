@@ -53,7 +53,6 @@ public final class HyperstackControls extends JPanel {
 
    private final DisplayWindow display_;
    private final Datastore store_;
-   private final MMVirtualStack stack_;
 
    // Controls common to both control sets
    private ScrollerPanel scrollerPanel_;
@@ -70,18 +69,13 @@ public final class HyperstackControls extends JPanel {
 
    /**
     * @param store
-    * @param stack
     * @param display DisplayWindow we are embedded in
-    * @param shouldUseLiveControls - indicates if we should use the buttons for 
-    *        the "Snap/Live" window or the buttons for normal displays.
     */
-   public HyperstackControls(Datastore store, MMVirtualStack stack,
-         DisplayWindow display, boolean shouldUseLiveControls) {
+   public HyperstackControls(Datastore store, DisplayWindow display) {
       super(new MigLayout("insets 0, fillx, align center"));
       display_ = display;
       store_ = store;
       store_.registerForEvents(this);
-      stack_ = stack;
       initComponents();
       display_.registerForEvents(this);
    }

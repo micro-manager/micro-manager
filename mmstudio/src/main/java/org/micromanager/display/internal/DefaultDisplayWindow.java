@@ -110,7 +110,7 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
    private static final HashMap<Integer, String> displayHashToUniqueName_ =
       new HashMap<Integer, String>();
 
-   private Studio studio_;
+   private final Studio studio_;
    private final Datastore store_;
    private DisplaySettings displaySettings_;
    // Used for storing DisplaySettings under different locations in the profile
@@ -121,7 +121,7 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
    private final EventBus displayBus_;
    // List of channel names we have seen, for ensuring our contrast settings
    // are up-to-date.
-   private HashSet<String> knownChannels_;
+   private final HashSet<String> knownChannels_;
 
    // This will be our intermediary with ImageJ.
    private DummyImageWindow dummyWindow_;
@@ -146,9 +146,6 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
    // This flag indicates that the DisplayWindow has finished setting up its
    // UI components. It is set at the end of makeGUI().
    private boolean haveCreatedGUI_ = false;
-
-   // Used by the pack() method to track changes in our size.
-   private Dimension prevControlsSize_;
 
    private CanvasUpdateQueue canvasQueue_;
 
@@ -402,8 +399,7 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
       }
       controlsPanel_.removeAll();
       if (hyperstackControls_ == null) {
-         hyperstackControls_ = new HyperstackControls(store_, stack_, this,
-               false);
+         hyperstackControls_ = new HyperstackControls(store_, this);
       }
       controlsPanel_.add(hyperstackControls_,
             "align center, span, growx, wrap");
