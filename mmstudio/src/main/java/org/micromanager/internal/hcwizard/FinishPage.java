@@ -47,8 +47,8 @@ public final class FinishPage extends PagePanel {
 
     private static final long serialVersionUID = 1L;
 
-    private JButton browseButton_;
-    private JTextField fileNameField_;
+    private final JButton browseButton_;
+    private final JTextField fileNameField_;
     private boolean overwrite_ = false;
     JCheckBox sendCheck_;
 
@@ -72,6 +72,7 @@ public final class FinishPage extends PagePanel {
 
         browseButton_ = new JButton("Browse...");
         browseButton_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(final ActionEvent e) {
                 browseConfigurationFile();
             }
@@ -81,6 +82,7 @@ public final class FinishPage extends PagePanel {
         sendCheck_ = new JCheckBox("Send configuration to micro-manager.org");
         sendCheck_.setFont(new Font("", Font.PLAIN, 12));
         sendCheck_.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent arg0) {
               model_.setSendConfiguration(sendCheck_.isSelected());
             }
@@ -95,13 +97,19 @@ public final class FinishPage extends PagePanel {
         add(sendConfigExplain, "wrap");
     }
 
+    @Override
     public boolean enterPage(boolean next) {
         sendCheck_.setSelected(model_.getSendConfiguration());
-        fileNameField_.setText(model_.getFileName());
+        if (model_.creatingNew_) {
+           fileNameField_.setText("");
+        } else {
+           fileNameField_.setText(model_.getFileName());
+        }
         return true;
     }
 
 
+    @Override
     public boolean exitPage(boolean toNext) {
         if( toNext)
             saveConfiguration();
@@ -109,19 +117,21 @@ public final class FinishPage extends PagePanel {
         return true;
     }
 
+    @Override
     public void refresh() {
     }
 
+    @Override
     public void loadSettings() {
         // TODO Auto-generated method stub
     }
 
+    @Override
     public void saveSettings() {
         // TODO Auto-generated method stub
     }
 
     private void browseConfigurationFile() {
-        String suffixes[] = {".cfg"};
         File f = FileDialogs.save(this.parent_,
                 "Select a configuration file name",
                 FileDialogs.MM_CONFIG_FILE);

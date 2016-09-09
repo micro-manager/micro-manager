@@ -40,11 +40,11 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public final class IntroPage extends PagePanel {
    private static final long serialVersionUID = 1L;
-   private ButtonGroup buttonGroup = new ButtonGroup();
+   private final ButtonGroup buttonGroup = new ButtonGroup();
    private JTextField filePathField_;
    private boolean initialized_ = false;
-   private JRadioButton modifyRadioButton_;
-   private JRadioButton createNewRadioButton_;
+   private final JRadioButton modifyRadioButton_;
+   private final JRadioButton createNewRadioButton_;
    private JButton browseButton_;
 
    /**
@@ -62,8 +62,10 @@ public final class IntroPage extends PagePanel {
 
       createNewRadioButton_ = new JRadioButton("Create new configuration");
       createNewRadioButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             model_.reset();
+            model_.creatingNew_ = true;
             initialized_ = false;
             filePathField_.setEnabled(false);
             browseButton_.setEnabled(false);
@@ -75,7 +77,9 @@ public final class IntroPage extends PagePanel {
       modifyRadioButton_ = new JRadioButton("Modify or explore existing configuration");
       buttonGroup.add(modifyRadioButton_);
       modifyRadioButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
+            model_.creatingNew_ = false;
             filePathField_.setEnabled(true);
             browseButton_.setEnabled(true);
          }
@@ -87,6 +91,7 @@ public final class IntroPage extends PagePanel {
 
       browseButton_ = new JButton("Browse...");
       browseButton_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent arg0) {
             loadConfiguration();
          }
@@ -98,6 +103,7 @@ public final class IntroPage extends PagePanel {
       browseButton_.setEnabled(false);
    }
    
+   @Override
    public void loadSettings() {
       // load settings
       if (model_ != null)
@@ -110,10 +116,12 @@ public final class IntroPage extends PagePanel {
      }
    }
 
+   @Override
    public void saveSettings() {
       // save settings
    }
    
+   @Override
    public boolean enterPage(boolean fromNextPage) {
       if (fromNextPage) {
          // if we are returning from the previous page clear everything and start all over
@@ -122,13 +130,14 @@ public final class IntroPage extends PagePanel {
             core_.unloadAllDevices();
          } catch (Exception e) {
             ReportingUtils.showError(e);
-         };
+         }
          filePathField_.setText(model_.getFileName());
          initialized_ = false;
       }
       return true;
    }
 
+   @Override
    public boolean exitPage(boolean toNextPage) {
       if (modifyRadioButton_.isSelected() && (!initialized_ || filePathField_.getText().compareTo(model_.getFileName()) != 0)) {
          Cursor oldCur = getCursor();
@@ -148,6 +157,7 @@ public final class IntroPage extends PagePanel {
    }
    
 
+   @Override
    public void refresh() {
    }
    

@@ -64,6 +64,7 @@ public final class MicroscopeModel {
    public static final String PIXEL_SIZE_GROUP = "PixelSizeGroup";
 
    boolean sendConfiguration_;
+   public boolean creatingNew_ = false;
 
    public static boolean generateDeviceListFile(StringBuffer deviceListFileName, CMMCore c) {
       try {
