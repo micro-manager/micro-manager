@@ -598,41 +598,43 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       }
       catch (JSONException e) {}
 
-      
+
       if (tags.has("UserData")) {
          try {
             builder.userData(
-                       DefaultPropertyMap.fromJSON(tags.getJSONObject("UserData")));
-           } catch (JSONException e) {
-           }
-       } else { //1.4. did not have the field UserData but User Data were 
-           // interpersed with other metadata.
-           String[] reservedNames = {"Prefix", "UserName", "ProfileName", "MicroManagerVersion",
-               "MetadataVersion", "ComputerName", "Directory", "ChannelGroup", "ChNames",
-               "WaitInterval", "Interval_ms", "CustomIntervals_ms", "AxisOrder", "IntendedDimensions",
-               "StartTime", "Time", "StagePositions", "InitialPositionList", "KeepShutterOpenSlices",
-               "UserData", "Frames", "Slices", "Channels", "PixelSize_um", "z-step_um",
-                "ChContrastMax", "ChContrastMin"};
+                  DefaultPropertyMap.fromJSON(tags.getJSONObject("UserData")));
+         }
+         catch (JSONException e) {
+         }
+       }
+      else {
+         // 1.4 did not have the field UserData but user data were interspersed
+         // with other metadata.
+         String[] reservedNames = {"Prefix", "UserName", "ProfileName",
+            "MicroManagerVersion", "MetadataVersion", "ComputerName",
+            "Directory", "ChannelGroup", "ChNames", "WaitInterval",
+            "Interval_ms", "CustomIntervals_ms", "AxisOrder",
+            "IntendedDimensions", "StartTime", "Time", "StagePositions",
+            "InitialPositionList", "KeepShutterOpenSlices", "UserData",
+            "Frames", "Slices", "Channels", "PixelSize_um", "z-step_um",
+            "ChContrastMax", "ChContrastMin"};
 
-           PropertyMapBuilder pmb = MMStudio.getInstance().data().getPropertyMapBuilder();
+         PropertyMapBuilder pmb = MMStudio.getInstance().data().getPropertyMapBuilder();
 
-               Iterator<String> keys = tags.keys();
-               while (keys.hasNext()) {
-                   String key = keys.next();
-                   if (!Arrays.asList(reservedNames).contains(key)) {
-                       try {
-                           //JSONArray uds = tags.getJSONArray(key);
-                           //JSONObject obj = tags.optJSONObject(key);
-                           pmb.putString(key, tags.getString(key));
-                       } catch (JSONException ex) {
-                       } catch (ClassCastException ex2) {
-                       }
-                   }
-
+         Iterator<String> keys = tags.keys();
+         while (keys.hasNext()) {
+            String key = keys.next();
+            if (!Arrays.asList(reservedNames).contains(key)) {
+               try {
+                  pmb.putString(key, tags.getString(key));
                }
-               builder.userData(pmb.build());
-
-
+               catch (JSONException ex) {
+               }
+               catch (ClassCastException ex2) {
+               }
+            }
+         }
+         builder.userData(pmb.build());
        }
 
       return builder.build();
