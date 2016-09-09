@@ -45,8 +45,8 @@ import org.micromanager.internal.utils.ReportingUtils;
  */
 public final class DummyImageWindow extends StackWindow {
    private static DefaultDisplayWindow staticMaster_;
-   private static final ReentrantLock masterLock_ = new ReentrantLock();
-   /**
+   private static final Object masterLock_ = new Object();
+   /*
     * We have a problem. StackWindows automatically try to draw themselves,
     * and raise themselves to the front, as soon as they are created. We
     * override getCanvas() and toFront() to prevent this (and to redirect
@@ -57,22 +57,24 @@ public final class DummyImageWindow extends StackWindow {
     * static DefaultDisplayWindow instance which we set in this method, with
     * appropriate locks to ensure only one DummyImageWindow can be made at a
     * time. Once the constructor is completed, the static master is no longer
-    * needed, since the DummyImageWindow keeps its own copy around.  Naturally,
-    * this is a gigantic hack.
+    * needed, since the DummyImageWindow keeps its own copy around.
     */
    public static DummyImageWindow makeWindow(ImagePlus plus,
          DefaultDisplayWindow master) {
-      masterLock_.lock();
-      staticMaster_ = master;
-      DummyImageWindow result = new DummyImageWindow(plus, master);
-      // And of course if we keep this around, then we leak memory.
-      staticMaster_ = null;
-      masterLock_.unlock();
-      return result;
+      synchronized (masterLock_) {
+         staticMaster_ = master;
+         try {
+            return new DummyImageWindow(plus, master);
+         }
+         finally {
+            staticMaster_ = null;
+         }
+      }
    }
 
    private DefaultDisplayWindow master_;
-   public DummyImageWindow(ImagePlus plus, DefaultDisplayWindow master) {
+
+   private DummyImageWindow(ImagePlus plus, DefaultDisplayWindow master) {
       super(plus);
       imp = plus;
       master_ = master;
@@ -123,10 +125,6 @@ public final class DummyImageWindow extends StackWindow {
       else {
          master_.show();
       }
-   }
-
-   public DefaultDisplayWindow getMaster() {
-      return master_;
    }
 
    /**
