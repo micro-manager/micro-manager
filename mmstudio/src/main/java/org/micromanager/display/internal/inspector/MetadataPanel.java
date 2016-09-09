@@ -25,7 +25,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -74,9 +73,9 @@ public final class MetadataPanel extends InspectorPanel {
    private final LinkedBlockingQueue<Image> updateQueue_;
    private boolean shouldShowUpdates_ = true;
    private boolean shouldForceUpdate_ = false;
-   private UUID lastImageUUID_ = null;
-   private String lastSummaryMetadataDate_ = null;
-   
+   private SummaryMetadata prevSummaryMetadata_ = null;
+   private Metadata prevMetadata_ = null;
+
 
    /** This class makes smaller JTables, since the default size is absurd. */
    private class SmallerJTable extends JTable {
@@ -279,47 +278,47 @@ public final class MetadataPanel extends InspectorPanel {
     */
    public void imageChangedUpdate(final Image image) {
       SummaryMetadata summaryMetadata = store_.getSummaryMetadata();
-      // HACK: compare StartDate field to determine if we have to update the
-      // summarymetadata.  There does not appear to be a UI for summary metadata
-      // This may fail when a dataset has been duplicated!
-      boolean updateSummary = false;
-      JSONObject jsonSummaryMetadata = null;
-      if (lastSummaryMetadataDate_ == null || 
-              (!lastSummaryMetadataDate_.equals(summaryMetadata.getStartDate()))) {
-         lastSummaryMetadataDate_ = summaryMetadata.getStartDate();
-         updateSummary = true;
-         // If the "userData" property is present,
-         // we need to "flatten" it a bit -- the keys and values
-         // have been serialized into the JSON using PropertyMap
-         // serialization rules, which create a JSONObject for each
-         // property. UserData is stored within its own
-         // distinct JSONObject.
-         // TODO: this is awfully tightly-bound to the hacks we've put in
-         // to maintain backwards compatibility with our file formats.
-         jsonSummaryMetadata
-                 = ((DefaultSummaryMetadata) store_.getSummaryMetadata()).toJSON();
+      Metadata metadata = image.getMetadata();
+
+      // Since Metadata and SummaryMetadata are immutable, we'll have a new
+      // object if it has changed. However, use the UUID for plane metadata,
+      // in case the (unchanged) Metadata object is recreated for the same
+      // plane (otherwise the hiding of unchanging fields may break).
+      final boolean summaryChanged = (summaryMetadata != prevSummaryMetadata_);
+      prevSummaryMetadata_ = summaryMetadata;
+      final boolean metadataChanged = (metadata != prevMetadata_ &&
+            (prevMetadata_ == null ||
+             !prevMetadata_.getUUID().equals(metadata.getUUID())));
+      prevMetadata_ = metadata;
+
+      if (!metadataChanged && !summaryChanged && !shouldForceUpdate_) {
+         return;
+      }
+      shouldForceUpdate_ = false;
+
+      JSONObject jsonSummary = null;
+      if (summaryChanged) {
+         // If the "UserData" field is present, we need to "flatten" it a bit:
+         // the keys and values have been serialized into the JSON using
+         // PropertyMap serialization rules, which create a JSONObject for each
+         // property. UserData is stored within its own distinct JSONObject.
+         jsonSummary = ((DefaultSummaryMetadata) summaryMetadata).toJSON();
          try {
-            if (summaryMetadata.getUserData() != null) {
-               DefaultPropertyMap userData = (DefaultPropertyMap) summaryMetadata.getUserData();
-               JSONObject userJSON = jsonSummaryMetadata.getJSONObject("UserData");
+            DefaultPropertyMap userData = (DefaultPropertyMap) summaryMetadata.getUserData();
+            if (userData != null) {
+               JSONObject userJSON = jsonSummary.getJSONObject("UserData");
                userData.flattenJSONSerialization(userJSON);
                for (String key : MDUtils.getKeys(userJSON)) {
-                  jsonSummaryMetadata.put("UserData-" + key, userJSON.get(key));
+                  jsonSummary.put("UserData-" + key, userJSON.get(key));
                }
             }
          } catch (JSONException e) {
             ReportingUtils.logError(e, "Failed to update Summary metadata display");
          }
       }
-      
-      Metadata data = image.getMetadata();
-      if (data.getUUID() != null && data.getUUID() == lastImageUUID_ &&
-            !shouldForceUpdate_) {
-         // We're already displaying this image's metadata.
-         return;
-      }
-      shouldForceUpdate_ = false;
-      final JSONObject metadata = ((DefaultMetadata) data).toJSON();
+      final JSONObject jsonSummaryMetadata = jsonSummary;
+
+      final JSONObject jsonMetadata = ((DefaultMetadata) metadata).toJSON();
       try {
          // If the "userData" and/or "scopeData" properties are present,
          // we need to "flatten" them a bit -- their keys and values
@@ -328,27 +327,25 @@ public final class MetadataPanel extends InspectorPanel {
          // property. userData additionally is stored within its own
          // distinct JSONObject while scopeData is stored within the
          // metadata as a whole.
-         // TODO: this is awfully tightly-bound to the hacks we've put in
-         // to maintain backwards compatibility with our file formats.
-         if (data.getScopeData() != null) {
-            DefaultPropertyMap scopeData = (DefaultPropertyMap) data.getScopeData();
-            scopeData.flattenJSONSerialization(metadata);
+         DefaultPropertyMap scopeData = (DefaultPropertyMap) metadata.getScopeData();
+         if (scopeData != null) {
+            scopeData.flattenJSONSerialization(jsonMetadata);
          }
-         if (data.getUserData() != null) {
-            DefaultPropertyMap userData = (DefaultPropertyMap) data.getUserData();
-            JSONObject userJSON = metadata.getJSONObject("userData");
+         DefaultPropertyMap userData = (DefaultPropertyMap) metadata.getUserData();
+         if (userData != null) {
+            JSONObject userJSON = jsonMetadata.getJSONObject("userData");
             userData.flattenJSONSerialization(userJSON);
             for (String key : MDUtils.getKeys(userJSON)) {
-               metadata.put("userData-" + key, userJSON.get(key));
+               jsonMetadata.put("userData-" + key, userJSON.get(key));
             }
          }
          // Enhance this structure with information about basic image
          // properties.
-         metadata.put("Width", image.getWidth());
-         metadata.put("Height", image.getHeight());
+         jsonMetadata.put("Width", image.getWidth());
+         jsonMetadata.put("Height", image.getHeight());
          if (image.getCoords() != null) {
             for (String axis : image.getCoords().getAxes()) {
-               metadata.put(axis + " index",
+               jsonMetadata.put(axis + " index",
                      image.getCoords().getIndex(axis));
             }
          }
@@ -356,22 +353,19 @@ public final class MetadataPanel extends InspectorPanel {
       catch (JSONException e) {
          ReportingUtils.logError(e, "Failed to update metadata display");
       }
-      // Update the tables in the EDT.
-      final boolean fUpdateSummary = updateSummary;
-      final JSONObject fSummaryMetadata = jsonSummaryMetadata;
+
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            imageMetadataModel_.setMetadata(metadata,
-                  showUnchangingPropertiesCheckbox_.isSelected());
-            if (fUpdateSummary) {
-            summaryMetadataModel_.setMetadata(
-                  fSummaryMetadata,
-                  true);
+            if (metadataChanged) {
+               imageMetadataModel_.setMetadata(jsonMetadata,
+                     showUnchangingPropertiesCheckbox_.isSelected());
+            }
+            if (summaryChanged) {
+               summaryMetadataModel_.setMetadata(jsonSummaryMetadata, true);
             }
          }
       });
-      lastImageUUID_ = data.getUUID();
    }
 
    @Override
