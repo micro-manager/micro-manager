@@ -309,7 +309,7 @@ public final class MetadataPanel extends InspectorPanel {
                JSONObject userJSON = jsonSummary.getJSONObject("UserData");
                userData.flattenJSONSerialization(userJSON);
                for (String key : MDUtils.getKeys(userJSON)) {
-                  jsonSummary.put("UserData-" + key, userJSON.get(key));
+                  jsonSummary.put("UserData:" + key, userJSON.get(key));
                }
             }
          } catch (JSONException e) {
@@ -336,7 +336,7 @@ public final class MetadataPanel extends InspectorPanel {
             JSONObject userJSON = jsonMetadata.getJSONObject("userData");
             userData.flattenJSONSerialization(userJSON);
             for (String key : MDUtils.getKeys(userJSON)) {
-               jsonMetadata.put("userData-" + key, userJSON.get(key));
+               jsonMetadata.put("UserData:" + key, userJSON.get(key));
             }
          }
          // Enhance this structure with information about basic image
