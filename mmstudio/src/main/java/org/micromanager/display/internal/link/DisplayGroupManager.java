@@ -326,7 +326,8 @@ public final class DisplayGroupManager {
          DisplayWindow display = (DisplayWindow) viewer;
          if (!displaysToSkip.contains(display)) {
             display.getAsWindow().setVisible(
-                  !bannedConfigs.contains(display.getScreenConfig()));
+                  !bannedConfigs.contains(
+                        display.getAsWindow().getGraphicsConfiguration()));
          }
       }
    }

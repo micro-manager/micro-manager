@@ -20,11 +20,9 @@
 
 package org.micromanager.display;
 
-
 import ij.ImagePlus;
-import ij.gui.ImageWindow;
-import java.awt.GraphicsConfiguration;
 import java.awt.Window;
+
 
 /**
  * A DisplayWindow is the interface to Micro-Manager's custom image display
@@ -41,26 +39,44 @@ public interface DisplayWindow extends DataViewer {
    public void displayStatusString(String status);
 
    /**
+    * Retrieve the current zoom level for the display.
+    * @return the current zoom level.
+    */
+   public double getZoom();
+
+   /**
+    * Obsolete equivalent to getZoom().
+    *
+    * @return the current zoom level
+    * @deprecated use getZoom() instead.
+    */
+   @Deprecated
+   public double getMagnification();
+
+   /**
     * Set the zoom level for this display. This may result in the canvas
     * changing size, and there is no guarantee that you will get precisely
-    * the zoom level you request, as ImageJ quantizes magnification levels.
-    * @param magnification Magnification level to set.
+    * the zoom level you request, as ImageJ quantizes zoom levels.
+    * @param magnification Zoom level to set.
     */
+   public void setZoom(double magnification);
+
+   /**
+    * Obsolete equivalent to setZoom().
+    *
+    * @param magnification
+    * @deprecated use setZoom() instead.
+    */
+   @Deprecated
    public void setMagnification(double magnification);
 
    /**
-    * Multiplay the current zoom level of the image canvas by the provided
+    * Multiply the current zoom level of the image canvas by the provided
     * factor. Thus for example a zoom of 2.0 will double the amount of screen
     * pixels dedicated to each camera pixel.
     * @param factor Amount to adjust zoom by.
     */
    public void adjustZoom(double factor);
-
-   /**
-    * Retrieve the current zoom level for the display.
-    * @return the current magnification level.
-    */
-   public double getMagnification();
 
    /**
     * Cause the display to autostretch each of its displayed channels, as if
@@ -118,13 +134,6 @@ public interface DisplayWindow extends DataViewer {
    public void toggleFullScreen();
 
    /**
-    * Return the GraphicsConfiguration for the monitor the DisplayWindow's
-    * upper-left corner is in.
-    * @return the GraphicsConfiguration of the monitor this window is in.
-    */
-   public GraphicsConfiguration getScreenConfig();
-
-   /**
     * Create a new DisplayWindow for the same Datastore as this DisplayWindow.
     * @return The newly-created DisplayWindow.
     */
@@ -136,16 +145,6 @@ public interface DisplayWindow extends DataViewer {
    public void toFront();
 
    /**
-    * If appropriate, return the ImageJ ImageWindow that this display
-    * represents.  Otherwise return null. This is not necessarily the same
-    * java.awt.Window that the DisplayWindow represents; MicroManager uses a
-    * dummy ImageWindow to simplify communications with ImageJ. You probably
-    * should not need to call this method.
-    * @return an ImageWindow corresponding to this DisplayWindow.
-    */
-   public ImageWindow getImageWindow();
-
-   /**
     * Provide a java.awt.Window representing this display; mostly useful for
     * positioning dialogs or if you need to move a display window around.
     * @return the DisplayWindow as a Window.
@@ -155,11 +154,18 @@ public interface DisplayWindow extends DataViewer {
    /**
     * Block the calling thread until the DisplayWindow is visible. Returns
     * immediately if it already is.
+    *
+    * Currently, the display window is not visible until the Datastore contains
+    * at least one image. However, this may change in future versions.
+    *
     * @throws IllegalThreadStateException if this method is called from the
     *         Event Dispatch Thread (EDT), as the DisplayWindow needs that
     *         thread to be unblocked if it is to ever become visible.
+    * @throws InterruptedException if the current thread is interrupted while
+    *         waiting.
     */
-   public void waitUntilVisible() throws IllegalThreadStateException;
+   public void waitUntilVisible()
+         throws IllegalThreadStateException, InterruptedException;
 
    /**
     * Add a custom extra string to the title of this display. The usual format

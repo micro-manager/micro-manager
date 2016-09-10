@@ -27,7 +27,6 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.Menus;
 import ij.WindowManager;
-import ij.gui.ImageWindow;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
 import java.awt.Dimension;
@@ -649,10 +648,10 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
          info.fileName = summary.getPrefix();
          info.width = sample.getWidth();
          info.height = sample.getHeight();
-         ijImage_.setFileInfo(info);
+         plus.setFileInfo(info);
       }
       catch (Exception e) {
-         studio_.logs().logError(e, "Error setting metadata");
+         studio_.logs().logError(e, "Error setting ImagePlus metadata");
       }
    }
 
@@ -719,7 +718,7 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
 
    @Override
    public void adjustZoom(double factor) {
-      setMagnification(getMagnification() * factor);
+      setZoom(getZoom() * factor);
       // HACK: for some reason, changing the zoom level can cause us to
       // "lose" our LUTs, reverting to grayscale or single-color mode. So we
       // refresh our LUT status after changing the zoom.
@@ -727,15 +726,27 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
    }
 
    @Override
-   public void setMagnification(double magnification) {
+   public void setZoom(double magnification) {
       setDisplaySettings(displaySettings_.copy().magnification(magnification).build());
    }
 
    @Override
-   public double getMagnification() {
+   @Deprecated
+   public void setMagnification(double magnification) {
+      setZoom(magnification);
+   }
+
+   @Override
+   public double getZoom() {
       return canvas_.getMagnification();
    }
-      
+
+   @Override
+   @Deprecated
+   public double getMagnification() {
+      return getZoom();
+   }
+
    @Override
    public Datastore getDatastore() {
       return store_;
@@ -957,7 +968,7 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
             setVisible(false);
             fullScreenFrame_.setUndecorated(true);
             fullScreenFrame_.setBounds(
-                  GUIUtils.getFullScreenBounds(getScreenConfig()));
+                  GUIUtils.getFullScreenBounds(getGraphicsConfiguration()));
             fullScreenFrame_.setExtendedState(JFrame.MAXIMIZED_BOTH);
             fullScreenFrame_.setResizable(false);
             fullScreenFrame_.add(contentsPanel_);
@@ -966,7 +977,8 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
          }
          canvasQueue_.resume();
          displayBus_.post(
-               new FullScreenEvent(getScreenConfig(), fullScreenFrame_ != null));
+               new FullScreenEvent(getGraphicsConfiguration(),
+                     fullScreenFrame_ != null));
          if (fullScreenFrame_ == null) {
             // Our non-fullscreened self should be on top.
             toFront();
@@ -974,17 +986,12 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
       }
    }
 
-   @Override
-   public GraphicsConfiguration getScreenConfig() {
-      return getGraphicsConfiguration();
-   }
-
    /**
     * This retrieves the boundaries of the current screen that are not taken
     * over by OS components like taskbars and menubars.
     */
    public Rectangle getSafeBounds() {
-      GraphicsConfiguration config = getScreenConfig();
+      GraphicsConfiguration config = getGraphicsConfiguration();
       Rectangle bounds = config.getBounds();
       Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(config);
       bounds.x += screenInsets.left;
@@ -1005,28 +1012,19 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
    }
 
    @Override
-   public ImageWindow getImageWindow() {
-      return dummyWindow_;
-   }
-
-   @Override
    public Window getAsWindow() {
       return (Window) this;
    }
 
    @Override
-   public void waitUntilVisible() throws IllegalThreadStateException {
+   public void waitUntilVisible()
+         throws IllegalThreadStateException, InterruptedException
+   {
       if (SwingUtilities.isEventDispatchThread()) {
          throw new IllegalThreadStateException("Do not call this method from the Event Dispatch Thread");
       }
       while (!haveCreatedGUI_) {
-         try {
-            Thread.sleep(100);
-         }
-         catch (InterruptedException e) {
-            // Just exit now.
-            return;
-         }
+         Thread.sleep(100);
       }
    }
 

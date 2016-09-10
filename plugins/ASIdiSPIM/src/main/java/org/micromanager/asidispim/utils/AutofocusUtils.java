@@ -22,7 +22,6 @@
 package org.micromanager.asidispim.utils;
 
 import ij.ImagePlus;
-import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -195,11 +194,7 @@ public class AutofocusUtils {
             // TODO: should this be an option?
             Roi roi = null;
             try {
-               gui_.getSnapLiveManager().getDisplay();
-               ImageWindow iw = gui_.getSnapLiveManager().getDisplay().getImageWindow();
-               if (iw != null) {
-                  roi = iw.getImagePlus().getRoi();
-               }
+               roi = gui_.getSnapLiveManager().getDisplay().getImagePlus().getRoi();
             } catch (NullPointerException npw) {
                // nothing to do, could also test every call above for null
             }
