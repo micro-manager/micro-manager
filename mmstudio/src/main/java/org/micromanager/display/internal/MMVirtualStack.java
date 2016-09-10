@@ -69,7 +69,7 @@ public final class MMVirtualStack extends ij.VirtualStack {
     * Given a flat index number, convert that into a Coords object for our
     * dataset.
     */
-   public Coords mapFlatIndexToCoords(int flatIndex) {
+   private Coords mapFlatIndexToCoords(int flatIndex) {
       // These coordinates are missing all axes that ImageJ doesn't know 
       // about (e.g. stage position), so we augment curCoords with them and
       // use that for our lookup.
@@ -272,9 +272,12 @@ public final class MMVirtualStack extends ij.VirtualStack {
    }
 
    /**
-    * Update the current index we are centered on. This in turn will affect
-    * future calls to getPixels(). In the process we also ensure that the
-    * ImagePlus object has the right dimensions to encompass these coordinates.
+    * Update the current index we are centered on.
+    *
+    * This in turn will affect future calls to getPixels(). In the process we
+    * also ensure that the ImagePlus object has the right dimensions to
+    * encompass these coordinates.
+    * TODO Shouldn't this live in MMImagePlus/MMCompositeImage?
     */
    public void setCoords(Coords coords) {
       int numChannels = Math.max(1, store_.getAxisLength(Coords.CHANNEL));
@@ -342,6 +345,7 @@ public final class MMVirtualStack extends ij.VirtualStack {
       plus_ = event.getImagePlus();
    }
 
+   // TODO Remove this after removing sole use in Projector
    public Datastore getDatastore() {
       return store_;
    }
