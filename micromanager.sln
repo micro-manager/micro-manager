@@ -362,6 +362,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaptorEPIX", "DeviceAdapter
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HoribaEPIX", "DeviceAdapters\RaptorEPIX\HoribaEPIX.vcxproj", "{ED3E2C21-ADA8-446D-8951-26F1E6E9F4DC}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCiteXT600", "DeviceAdapters\XCiteXT600\XCiteXT600.vcxproj", "{97768FFD-1616-4CA5-902A-2F128118CC39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1785,6 +1787,14 @@ Global
 		{ED3E2C21-ADA8-446D-8951-26F1E6E9F4DC}.Release|Win32.Build.0 = Release|Win32
 		{ED3E2C21-ADA8-446D-8951-26F1E6E9F4DC}.Release|x64.ActiveCfg = Release|x64
 		{ED3E2C21-ADA8-446D-8951-26F1E6E9F4DC}.Release|x64.Build.0 = Release|x64
+		{97768FFD-1616-4CA5-902A-2F128118CC39}.Debug|Win32.ActiveCfg = Debug|Win32
+		{97768FFD-1616-4CA5-902A-2F128118CC39}.Debug|Win32.Build.0 = Debug|Win32
+		{97768FFD-1616-4CA5-902A-2F128118CC39}.Debug|x64.ActiveCfg = Debug|x64
+		{97768FFD-1616-4CA5-902A-2F128118CC39}.Debug|x64.Build.0 = Debug|x64
+		{97768FFD-1616-4CA5-902A-2F128118CC39}.Release|Win32.ActiveCfg = Release|Win32
+		{97768FFD-1616-4CA5-902A-2F128118CC39}.Release|Win32.Build.0 = Release|Win32
+		{97768FFD-1616-4CA5-902A-2F128118CC39}.Release|x64.ActiveCfg = Release|x64
+		{97768FFD-1616-4CA5-902A-2F128118CC39}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

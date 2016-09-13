@@ -11,35 +11,32 @@
     </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Zaber.cpp">
+    <ClCompile Include="XT600.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="XYStage.cpp">
+    <ClCompile Include="XT600Ctrl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Stage.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FilterWheel.cpp">
+    <ClCompile Include="XT600Dev.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Zaber.h">
+    <ClInclude Include="XT600.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="XYStage.h">
+    <ClInclude Include="XT600Ctrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Stage.h">
+    <ClInclude Include="XT600Dev.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FilterWheel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
   </ItemGroup>
 </Project>

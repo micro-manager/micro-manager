@@ -16,13 +16,13 @@ public:
     std::string GetName();
     int         GetppIndex();
     int         GetpropIndex();
-    int         GetRange();
+    bool        IsBoolean();
     double      GetcurValue();
     void        SetName(std::string name);
     void        SetppIndex(int ppIndex);
     void        SetpropInex(int propIndex);
     void        SetcurValue(double curValue);
-    void        SetRange(int range);
+    void        SetBoolean(bool isBoolean);
 
     void SetPostProc(PpParam& tmp);
 
@@ -31,7 +31,7 @@ protected:
     int         mppIndex;
     int         mpropIndex;
     double      mcurValue;
-    int         mRange;
+    bool        mIsBoolean;
 
 };
 

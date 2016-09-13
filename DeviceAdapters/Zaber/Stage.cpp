@@ -59,7 +59,7 @@ Stage::Stage() :
 	CreateProperty(MM::g_Keyword_Description, "Zaber stage driver adapter", MM::String, true);
 
 	CPropertyAction* pAct = new CPropertyAction (this, &Stage::OnPort);
-	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+	CreateProperty(MM::g_Keyword_Port, "COM1", MM::String, false, pAct, true);
 
 	pAct = new CPropertyAction (this, &Stage::OnDeviceAddress);
 	CreateIntegerProperty("Controller Device Number", deviceAddress_, false, pAct, true);
@@ -143,8 +143,12 @@ int Stage::Initialize()
 		return ret;
 	}
 
-	initialized_ = true;
-	return DEVICE_OK;
+	if (ret == DEVICE_OK)
+	{
+		initialized_ = true;
+	}
+
+	return ret;
 }
 
 int Stage::Shutdown()
