@@ -494,6 +494,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Vortran
    XCite120PC_Exacte
    XCiteLed
+   XCiteXT600
    XLight
    Xcite
    Yokogawa
