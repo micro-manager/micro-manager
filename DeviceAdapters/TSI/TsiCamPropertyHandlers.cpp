@@ -223,6 +223,7 @@ int TsiCam::OnColorEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
          }
          color = true;
       }
+      return ResizeImageBuffer();
    }
    else if (eAct == MM::BeforeGet)
    {

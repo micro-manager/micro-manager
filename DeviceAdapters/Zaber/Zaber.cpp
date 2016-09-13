@@ -29,6 +29,7 @@
 #include "Zaber.h"
 #include "XYStage.h"
 #include "Stage.h"
+#include "FilterWheel.h"
 
 using namespace std;
 
@@ -48,6 +49,7 @@ MODULE_API void InitializeModuleData()
 {
 	RegisterDevice(g_XYStageName, MM::XYStageDevice, g_XYStageDescription);
 	RegisterDevice(g_StageName, MM::StageDevice, g_StageDescription);
+	RegisterDevice(g_FilterWheelName, MM::StateDevice, g_FilterWheelDescription);
 }                                                            
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
@@ -59,6 +61,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	else if (strcmp(deviceName, g_StageName) == 0)
 	{	
 		return new Stage();
+	}
+	else if (strcmp(deviceName, g_FilterWheelName) == 0)
+	{	
+		return new FilterWheel();
 	}
 	else
 	{	
@@ -146,7 +152,7 @@ int ZaberBase::QueryCommand(const string command, vector<string>& reply) const
 		return  DEVICE_SERIAL_INVALID_RESPONSE;
 	}
 	// remove checksum before parsing
-	int thirdLast = resp.length() - 3;
+	int thirdLast = int(resp.length() - 3);
 	if (resp[thirdLast] == ':')
 	{
 		resp.erase(thirdLast, string::npos);

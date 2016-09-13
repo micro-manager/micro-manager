@@ -158,6 +158,7 @@ SUBDIRS = \
 	Vortran \
 	XCite120PC_Exacte \
 	XCiteLed \
+	XCiteXT600 \
 	XLight \
 	Xcite \
 	Yokogawa \

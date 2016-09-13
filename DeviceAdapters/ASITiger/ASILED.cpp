@@ -74,7 +74,7 @@ CLED::CLED(const char* name) :
       channelAxisChar_='R';
       break;
    case 1:
-   case 0:  // use 'X' for 2-axis LED
+   case 0:  // use 'X' for supplemental LED on two-axis card (e.g. XY card)
    default:
       channelAxisChar_='X';
       break;
@@ -95,7 +95,7 @@ int CLED::Initialize()
       command << " Channel=" << channel_ << ":" << channelAxisChar_;
    }
    CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
-   
+
    CPropertyAction* pAct;
 
    pAct = new CPropertyAction (this, &CLED::OnIntensity);
@@ -132,7 +132,7 @@ int CLED::Initialize()
    if (channel_ > 0)
    {
       pAct = new CPropertyAction (this, &CLED::OnCurrentLimit);
-      CreateProperty(g_LEDCurrentLimitPropertyName  , "700", MM::Integer, false, pAct);
+      CreateProperty(g_LEDCurrentLimitPropertyName, "700", MM::Integer, false, pAct);
       SetPropertyLimits(g_LEDCurrentLimitPropertyName , 0, 1000);
       UpdateProperty(g_LEDCurrentLimitPropertyName );
    }
@@ -234,26 +234,26 @@ int CLED::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CLED::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
-   
+
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-     UpdateOpenIntensity();  // will set intensity_ unless LED is turned off
-   if (!pProp->Set((long)intensity_))
+      UpdateOpenIntensity();  // will set intensity_ unless LED is turned off
+      if (!pProp->Set((long)intensity_))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       if(open_)  // if we are closed then don't actually want to set the controller, only the internal
-	  {
-	  command << addressChar_ << "LED " << channelAxisChar_ << "=" << tmp;
+      {
+         command << addressChar_ << "LED " << channelAxisChar_ << "=" << tmp;
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
-	  }
+      }
       intensity_ = tmp;
 
-     
+
    }
    return DEVICE_OK;
 }
@@ -283,34 +283,30 @@ int CLED::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 int CLED::OnCurrentLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
-{ //sets the LED current limit , can also be used to control brightness. This is however a card wide setting.
+{
+   //sets the LED current limit, which can be used to control brightness but is a card-wide setting
    ostringstream command; command.str("");
-   ostringstream replyprefix; replyprefix.str("");
+
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
-      return DEVICE_OK;
-   command << addressChar_ << "WRDAC X?"; //same syntax for all channels
-   replyprefix << "X=";
-   RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), replyprefix.str()) );
-   RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-   //convert the reply in percent to milliamps
-   //at 100 , its 1200milliamps 
-
-   tmp=tmp*12;
-      
-   if (!pProp->Set((long)tmp))
+         return DEVICE_OK;
+      command << addressChar_ << "WRDAC X?"; //same syntax for all channels
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "X=") );
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp *= 12;   // controller units are percent of 1.2A, convert to milliamps
+      if (!pProp->Set((long)tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
-   else if (eAct == MM::AfterSet) {
+   else if (eAct == MM::AfterSet)
+   {
       pProp->Get(tmp);
-         //convert milliamps to percent , total current is 1200ma
-		 tmp=(long)(tmp*0.08);
-		 command << addressChar_ << "WRDAC X="<< tmp;
-         RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
-      intensity_ = tmp;
+      tmp /= 12;  // convert from milliamps into percent of 1.2A
+      command << addressChar_ << "WRDAC X="<< tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
    }
+
    return DEVICE_OK;
 }
 
