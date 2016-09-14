@@ -4203,7 +4203,9 @@ int QICamera::QISequenceThread::svc()
    }
 
    // set a reasonable timeout (in msec) for waiting on frames
-   timeout = (long)(5 * m_pCam->m_dExposure + 50000);
+   char ctimeout[MM::MaxStrLength];
+   m_pCam->GetCoreCallback()->GetDeviceProperty("Core", "TimeoutMs", ctimeout);
+   timeout = (long)(5 * m_pCam->m_dExposure + atof(ctimeout));
 
    // start streaming images. 
    // Queue up all of the circular image buffers so we always have an image
