@@ -294,11 +294,9 @@ void ConvertSyncBToString(QCam_qcSyncb inSync, char *outString)
 {
     switch(inSync) {
         case qcSyncbTrigmask:
-        case qcSyncbOem1:
             strcpy(outString, "Trigger Mask");
             break;
         case qcSyncbExpose:
-        case qcSyncbOem2:
             strcpy(outString, "Expose Mode");
             break;
         case qcSyncb_last:
