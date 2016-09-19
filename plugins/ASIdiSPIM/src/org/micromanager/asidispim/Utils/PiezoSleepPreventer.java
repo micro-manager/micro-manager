@@ -100,7 +100,7 @@ public class PiezoSleepPreventer {
             }
          }
       } catch (Exception e) {
-         MyDialogUtils.showError("Could not reset piezo's positions");
+         MyDialogUtils.showError(e, "Could not reset piezo's positions");
       }
    }
    

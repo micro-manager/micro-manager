@@ -387,9 +387,8 @@ public class Cameras {
    }
    
    /**
-    * @return dimension/resolution of sensor with binning accounted for
-    *          (i.e. return value will change if binning changes).
-    *          Origin (rectangle's "x" and "y") is always (0, 0).
+    * @return dimension/resolution of sensor.  If binning is enabled then it is
+    *         not reflected here because reset/readout time don't depend on binning.
     */
    private Rectangle getSensorSize(Devices.Keys camKey) {
       int x = 0;
@@ -424,13 +423,12 @@ public class Cameras {
       default:
          break;
       }
-      int binningFactor = getBinningFactor(camKey);
       if (x==0 || y==0){
          MyDialogUtils.showError(
                "Was not able to get sensor size of camera " 
                      + devices_.getMMDevice(camKey));
       }
-      return new Rectangle(0, 0, x/binningFactor, y/binningFactor);
+      return new Rectangle(0, 0, x, y);
    }
    
    /**
@@ -635,18 +633,30 @@ public class Cameras {
    }
    
    /**
-    * Gets the camera ROI
+    * Gets the camera ROI in actual pixels used (i.e. if binning is 4x with 2k sensor return 2k instead of 512).
+    * This is because reset and readout times depend on actual pixels and only data transfer time (usually less
+    * then readout time) is affected by binning (at least for Flash4v2 CameraLink and Zyla 4.2 CameraLink)
     * @param camKey
     * @return
     */
    public Rectangle getCameraROI(Devices.Keys camKey) {
       Rectangle roi = new Rectangle();
+      int binning;
       try {
          roi = core_.getROI(devices_.getMMDevice(camKey));
+         binning = getBinningFactor(camKey);
+         if (binning > 1) {
+        	 return new Rectangle(
+        			 (roi.x < 0 ? 0 : roi.x*binning),  // make sure isn't negative, some cameras seem to do this
+        			 (roi.y < 0 ? 0 : roi.y*binning),  // make sure isn't negative, some cameras seem to do this
+        			 roi.width*binning, roi.height*binning);
+         } else {
+        	 return roi;
+         }
       } catch (Exception e) {
          MyDialogUtils.showError(e);
       }
-      return roi;
+      return roi;  // only should reach here if there was exception
    }
    
 
