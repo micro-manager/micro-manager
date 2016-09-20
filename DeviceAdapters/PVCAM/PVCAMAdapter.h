@@ -687,6 +687,7 @@ private: // Static
 
     long            triggerTimeout_;       // Max time to wait for an external trigger
     bool            microsecResSupported_; // True if camera supports microsecond exposures
+    uns32           microsecResMax_;       // Maximum value for microsec resolution
 
     friend class    PollingThread;
     PollingThread*  pollingThd_;           // Pointer to the sequencing thread
@@ -760,6 +761,7 @@ private: // Static
     PvEnumParam*      prmTriggerMode_;     // (PARAM_EXPOSURE_MODE)
     PvParam<uns16>*   prmExpResIndex_;
     PvEnumParam*      prmExpRes_;
+    PvParam<ulong64>* prmExposureTime_;    // (PARAM_EXPOSURE_TIME)
     PvEnumParam*      prmExposeOutMode_;
     PvParam<uns16>*   prmClearCycles_;
     PvEnumParam*      prmReadoutPort_;

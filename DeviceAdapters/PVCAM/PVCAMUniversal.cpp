@@ -221,6 +221,7 @@ Universal::Universal(short cameraId) :
     isAcquiring_(false),
     triggerTimeout_(10),
     microsecResSupported_(false),
+    microsecResMax_(1000000), // Will run in usec for up to 1 second
     pollingThd_(0),
     notificationThd_(0),
     acqThd_(0),
@@ -253,6 +254,7 @@ Universal::Universal(short cameraId) :
     prmTriggerMode_(0),
     prmExpResIndex_(0),
     prmExpRes_(0),
+    prmExposureTime_(0),
     prmExposeOutMode_(0),
     prmClearCycles_(0),
     prmReadoutPort_(0),
@@ -330,6 +332,7 @@ Universal::~Universal()
     delete prmBinningPar_;
     delete prmExpResIndex_;
     delete prmExpRes_;
+    delete prmExposureTime_;
     delete prmTriggerMode_;
     delete prmExposeOutMode_;
     delete prmClearCycles_;
@@ -845,6 +848,7 @@ int Universal::Initialize()
     acqCfgNew_.ExposureRes = EXP_RES_ONE_MILLISEC;
     prmExpResIndex_ = new PvParam<uns16>( "PARAM_EXP_RES_INDEX", PARAM_EXP_RES_INDEX, this, true );
     prmExpRes_ = new PvEnumParam( "PARAM_EXP_RES", PARAM_EXP_RES, this, true );
+    prmExposureTime_ = new PvParam<ulong64>( "PARAM_EXPOSURE_TIME", PARAM_EXPOSURE_TIME, this, true );
     if ( prmExpResIndex_->IsAvailable() )
     {
         if ( prmExpRes_->IsAvailable() )
@@ -854,20 +858,39 @@ int Universal::Initialize()
             {
                 if ( enumVals[i] == EXP_RES_ONE_MICROSEC )
                 {
+                    // If microsec is supported and the camera reports the range,
+                    // we check what is the max microsec range and keep the camera
+                    // running in microsec up to the max range.
+                    if (prmExposureTime_->IsAvailable())
+                    {
+                        // Switch to microsec...
+                        nRet = prmExpRes_->SetAndApply(EXP_RES_ONE_MICROSEC);
+                        if (nRet != DEVICE_OK)
+                            return nRet; // Error logged in SetAndApply()
+                        // We need to re-read the exposure time parameter from PVCAM to
+                        // update the cached values.
+                        nRet = prmExposureTime_->Update();
+                        if (nRet != DEVICE_OK)
+                            return nRet; // Error logged in Update()
+                        // Read the microsec max range
+                        microsecResMax_ = static_cast<uns32>(prmExposureTime_->Max());
+                    }
+
                     microsecResSupported_ = true;
                     break;
                 }
             }
             // Switch the resolution to usec if available. We will later switch it
-            // back and forth dynamically based on exposure value.
+            // back and forth dynamically based on exposure value and microsec max range
             if (microsecResSupported_)
             {
-                prmExpRes_->SetAndApply(EXP_RES_ONE_MICROSEC);
+                nRet = prmExpRes_->SetAndApply(EXP_RES_ONE_MICROSEC);
+                if (nRet != DEVICE_OK)
+                    return nRet; // Error logged in Update()
                 acqCfgNew_.ExposureRes = EXP_RES_ONE_MICROSEC;
             }
         }
     }
-
 
     /// MULTIPLIER GAIN
     // The HQ2 has 'visual gain', which shows up as EM Gain.  
@@ -4704,7 +4727,7 @@ int Universal::applyAcqConfig()
         bufferResizeRequired = true;
     }
 
-          PvRoiCollection& newRois = acqCfgNew_.Rois;
+    PvRoiCollection& newRois = acqCfgNew_.Rois;
     const PvRoiCollection& curRois = acqCfgCur_.Rois;
 
     // NOTE: Some features do not work when turned on together. E.g. Centroids may
@@ -4929,7 +4952,7 @@ int Universal::applyAcqConfig()
     }
     // The exposure time value that will be used to decide which exposure
     // resolution to set, this depends on S.M.A.R.T streaming as well.
-    double exposureTimeDecisive = acqCfgNew_.ExposureMs;
+    double exposureTimeDecisiveMs = acqCfgNew_.ExposureMs;
 
     // S.M.A.R.T streaming is quite tricky. We want to have it active only for Live mode because
     // it does not work for single snaps. For single snaps (a sequence of one frame) we want to
@@ -4970,15 +4993,15 @@ int Universal::applyAcqConfig()
     // If the S.M.A.R.T streaming is active we need to check the exposure values
     // and possibly switch the camera exposure resolution accordingly (see below)
     if (acqCfgNew_.SmartStreamingActive)
-        exposureTimeDecisive = *std::max_element(
+        exposureTimeDecisiveMs = *std::max_element(
             acqCfgNew_.SmartStreamingExposures.begin(), acqCfgNew_.SmartStreamingExposures.end());
 
     // Now we know for sure wheter S.M.A.R.T is going to be used or not, so we have
     // the exposure time that should be used to select the right exposure resolution
 
-    // If the exposure is smaller than 60 milliseconds (MM works in milliseconds but uses float type)
+    // If the exposure is smaller than 'microsecResMax' milliseconds (MM works in milliseconds but uses float type)
     // we switch the camera to microseconds so user can type 59.5 and we send 59500 to PVCAM.
-    if (exposureTimeDecisive < 60 && microsecResSupported_)
+    if (exposureTimeDecisiveMs < (microsecResMax_/1000.0) && microsecResSupported_)
         acqCfgNew_.ExposureRes = EXP_RES_ONE_MICROSEC;
     else
         acqCfgNew_.ExposureRes = EXP_RES_ONE_MILLISEC;
