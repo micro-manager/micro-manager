@@ -80,6 +80,7 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 
 import org.micromanager.api.MultiStagePosition;
+import org.micromanager.api.StagePosition;
 import org.micromanager.api.PositionList;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.ImageCache;
@@ -2194,8 +2195,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         throw new IllegalMonitorStateException("User stopped the acquisition");
                      }
                      
-                     // between positions move stage fast
-                     // this will clobber stage scanning setting so need to restore it
+                     // want to move between positions move stage fast, so we 
+                     //   will clobber stage scanning setting so need to restore it
                      float scanXSpeed = 1f;
                      if (acqSettings.isStageScanning) {
                         scanXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
@@ -2211,6 +2212,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      if (acqSettings.isStageScanning) {
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_SPEED, scanXSpeed);
+                     }
+                     
+                     // setup stage scan at this position
+                     if (acqSettings.isStageScanning) {
+                        StagePosition pos = positionList.getPosition(positionNum).get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                        controller_.prepareStageScanForAcquisition(pos.x, pos.y);
                      }
                      
                      // wait any extra time the user requests
@@ -2247,8 +2254,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                         // trigger the state machine on the controller
                         // do this even with demo cameras to test everything else
-                        boolean success = controller_.triggerControllerStartAcquisition(
-                                    spimMode, firstSideA);
+                        boolean success = controller_.triggerControllerStartAcquisition(spimMode, firstSideA);
                         if (!success) {
                            throw new Exception("Controller triggering not successful");
                         }

@@ -85,7 +85,7 @@ import org.micromanager.utils.MMFrame;
 //TODO Make it easier to adjust stack center (or start and end) including autodetect start/end based on content
 //TODO allow different stack center, number of slices, offset, or other settings for each XY position
 //TODO iconify tab labels and/or other parts of plugin
-
+//TODO use new J *=0 to more efficiently clear joystick settings (require comm card version 3.1)
 
 /**
  *

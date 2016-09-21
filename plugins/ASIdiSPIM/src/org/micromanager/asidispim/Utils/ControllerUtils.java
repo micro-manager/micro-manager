@@ -50,6 +50,7 @@ public class ControllerUtils {
    final Devices devices_;
    final Positions positions_;
    final CMMCore core_;
+   double scanDistance_;   // cached value from last call to prepareControllerForAquisition()
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
            final Prefs prefs, final Devices devices, final Positions positions) {
@@ -59,7 +60,30 @@ public class ControllerUtils {
       devices_ = devices;
       positions_ = positions;
       core_ = gui_.getMMCore();
+      scanDistance_ = 0;
    }
+   
+   /**
+    * Stage scan needs to be setup at each XY position, so call this method.
+    * This method assumes that prepareControllerForAquisition() has been called already
+    *    to initialize scanDistance_.
+    * @param x center x position in um
+    * @param y y position in um
+    * @return false if there was some error that should abort acquisition 
+    */
+   public boolean prepareStageScanForAcquisition(double x, double y) {
+      final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
+      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START,
+            (float)((x - scanDistance_/2) / 1000d));
+      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP,
+            (float)((x + scanDistance_/2) / 1000d));
+      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START,
+            (float)(y / 1000d));
+      props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP,
+            (float)(y / 1000d));
+      return true;
+   }
+   
    
    /**
    * Sets all the controller's properties according to volume settings
@@ -70,8 +94,7 @@ public class ControllerUtils {
    * 
    * @return false if there was some error that should abort acquisition
    */
-   public boolean prepareControllerForAquisition(final AcquisitionSettings settings) 
-   {
+   public boolean prepareControllerForAquisition(final AcquisitionSettings settings) {
       // turn off beam and scan on both sides (they are turned off by SPIM state machine anyway)
       // also ensures that properties match reality at end of acquisition
       // SPIM state machine restores position of beam at end of SPIM state machine, now it
@@ -84,7 +107,6 @@ public class ControllerUtils {
             Properties.Values.SAM_DISABLED, true);
       props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SA_MODE_X,
             Properties.Values.SAM_DISABLED, true);
-
       
       // set up controller with appropriate SPIM parameters for each active side
       // some of these things only need to be done once if the same micro-mirror
@@ -160,24 +182,22 @@ public class ControllerUtils {
          final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
          final double actualStepSizeUm = actualMotorSpeed / speedFactor * sliceDuration * settings.numChannels;  
          
-         final double scanDistance = settings.numSlices * actualStepSizeUm * speedFactor;
+         // cache this value for later use
+         scanDistance_ = settings.numSlices * actualStepSizeUm * speedFactor;
          
-         Point2D.Double posUm;
-         try {
-            posUm = core_.getXYStagePosition(devices_.getMMDevice(xyDevice));
-         } catch (Exception ex) {
-            MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
-            return false;
+         if (!settings.useMultiPositions) {
+            // use current position as center position for stage scanning
+            // multi-position situation is handled in position-switching code instead
+            Point2D.Double posUm;
+            try {
+               posUm = core_.getXYStagePosition(devices_.getMMDevice(xyDevice));
+            } catch (Exception ex) {
+               MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
+               return false;
+            }
+            prepareStageScanForAcquisition(posUm.x, posUm.y);
          }
          
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_START,
-               (float)((posUm.x - scanDistance/2) / 1000d));
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_FAST_STOP,
-               (float)((posUm.x + scanDistance/2) / 1000d));
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_START,
-               (float)(posUm.y / 1000d));
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SLOW_STOP,
-               (float)(posUm.y / 1000d));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, 
                (isInterleaved ? 1 : settings.numSides));  // assume can't have 1 side interleaved
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
@@ -497,6 +517,9 @@ public class ControllerUtils {
       if (movePiezo) {
          positions_.setPosition(piezoDevice, piezoPosition, true); 
       }
+
+      // TODO consider whether we need to do anything different for stage scanning case,
+      //   in particular clearing STAGESCAN_STATE of XY card
       
       // make sure to stop the SPIM state machine in case the acquisition was cancelled
       // even if the acquisition wasn't cancelled make sure the Micro-Manager properties are updated
