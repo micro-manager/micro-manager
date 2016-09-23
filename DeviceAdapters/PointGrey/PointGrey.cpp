@@ -171,6 +171,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 * perform most of the initialization in the Initialize() method.
 */
 PointGrey::PointGrey() :
+   nComponents_(1),
    initialized_(false),
    sequenceStartTime_(0),
    imageCounter_(0),
