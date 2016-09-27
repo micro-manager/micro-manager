@@ -429,7 +429,7 @@ void CTriggerScopeHub::GetName(char* Name) const
 void CTriggerScopeDAC::GetName(char* Name) const
 {
    CDeviceUtils::CopyLimitedString(Name, g_TriggerScopeDACDeviceName);
-   sprintf_s(&Name[strlen(Name)-2], 3, "%02d", nChannel_);
+   snprintf(&Name[strlen(Name)-2], 3, "%02d", nChannel_);
 }
 void CTriggerScopeTTL::GetName(char* Name) const
 {	
@@ -440,7 +440,7 @@ void CTriggerScopeTTL::GetName(char* Name) const
    else
    {
 	   CDeviceUtils::CopyLimitedString(Name, g_TriggerScopeTTLDeviceName);   
-	   sprintf_s(&Name[strlen(Name)-2], 3, "%02d", nChannel_);
+	   snprintf(&Name[strlen(Name)-2], 3, "%02d", nChannel_);
    }
 }
 void CTriggerScopeCAM::GetName(char* Name) const
@@ -473,7 +473,7 @@ int CTriggerScopeHub::Initialize()
 #ifdef _WIN32
 	sprintf_s(strLog,1024,"%s\\TriggerScope_SerialLog.txt",profilepath);
 #else
-	sprintf_s(strLog,1024,"/tmp/TriggerScope_Serial_Log_%s_%d.txt",buffer,getpid());
+	snprintf(strLog,1024,"/tmp/TriggerScope_Serial_Log_%d.txt",getpid());
 #endif
 	fidSerialLog_ = fopen(strLog,"w");
 
@@ -514,7 +514,7 @@ int CTriggerScopeHub::Initialize()
 	firmwareVer_  = 0.0;
 	for(int ii=0;ii<10;ii++)
 	{
-		Sleep(1000);
+      CDeviceUtils::SleepMs(1000);
 		Purge();
 		Send("*");
 		ReceiveOneLine(1);
@@ -552,7 +552,7 @@ int CTriggerScopeHub::Initialize()
 		return DEVICE_SERIAL_TIMEOUT;
 
 	if(buf_string_.length()>0)
-		sprintf_s(str, 256, "%s", buf_string_.c_str());
+		snprintf(str, 256, "%s", buf_string_.c_str());
 	else
 	{
       return DEVICE_SERIAL_TIMEOUT;
@@ -574,9 +574,9 @@ int CTriggerScopeHub::Initialize()
       return ret;
 
     string strBuffer;
-    Sleep(600);
+    CDeviceUtils::SleepMs(600);
 	Send("STAT?");
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	for(int ii=0; ii<5; ii++)
 	{
 		ReceiveOneLine(1);
@@ -586,7 +586,7 @@ int CTriggerScopeHub::Initialize()
 	if(buf_string_.length()==0)
 	{
 		Send("STAT?");
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		ReceiveOneLine(2);
 	}
 	strBuffer = buf_string_;
@@ -827,28 +827,28 @@ int CTriggerScopeTTL::LoadSequence(unsigned size, unsigned char* seq)
    MMThreadGuard myLock(hub->GetLock());
 
    char str[128];
-   sprintf_s(str, 128, "CLEAR_TTL,%d",nChannel_);
+   snprintf(str, 128, "CLEAR_TTL,%d",nChannel_);
 
    //hub->PurgeComPortH();
 	hub->Purge();
 	hub->Send(str);
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	hub->ReceiveOneLine();
 
    for(unsigned int ii=0; ii<size; ii++)
    {
 		
-		sprintf_s(str, 128, "PROG_TTL,%d,%d,%d",ii+1,nChannel_,int(seq[ii]));
+		snprintf(str, 128, "PROG_TTL,%d,%d,%d",ii+1,nChannel_,int(seq[ii]));
 		hub->Purge();
 		hub->Send(str);
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		hub->ReceiveOneLine();
 		
 		if(hub->buf_string_.length()==0)
 		{
 			hub->Purge();
 			hub->Send(str);
-			Sleep(10);
+         CDeviceUtils::SleepMs(10);
 			hub->ReceiveOneLine();
 		}
    }
@@ -963,12 +963,12 @@ int CTriggerScopeTTL::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       MMThreadGuard myLock(hub->GetLock());
 
 	char str[128];
-	sprintf_s(str, 128, "ARM");
+	snprintf(str, 128, "ARM");
 
 	//hub->PurgeComPortH();
 	hub->Purge();
 	hub->Send(str);
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	hub->ReceiveOneLine();
 
 /*      hub->PurgeComPortH();
@@ -1235,11 +1235,11 @@ int CTriggerScopeFocus::Initialize()
    ret = CreateProperty("DAC Number", "16", MM::Integer, true);
 
    char str[32];
-   sprintf_s(str, 32, "%g", upperLimit_ );
+   snprintf(str, 32, "%g", upperLimit_ );
    pAct = new CPropertyAction(this, &CTriggerScopeFocus::OnUpperLimit);
    ret = CreateProperty("Z Upper Limit", str, MM::Float, true);
 
-   sprintf_s(str, 32, "%g", lowerLimit_ );
+   snprintf(str, 32, "%g", lowerLimit_ );
    pAct = new CPropertyAction(this, &CTriggerScopeFocus::OnLowerLimit);
    ret = CreateProperty("Z Lower Limit", str, MM::Float, true);
 
@@ -1389,7 +1389,7 @@ int CTriggerScopeFocus::StartStageSequence()
 	char str[] = "ARM";
 	hub->Purge();
 	hub->Send(str);
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	
    return DEVICE_OK;
 }
@@ -1480,21 +1480,21 @@ int CTriggerScopeFocus::SendStageSequence()
     //hub->PurgeComPortH();
 	hub->Purge();
 	hub->Send("CLEAR_FOCUS");
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	hub->ReceiveOneLine();
 
-	sprintf_s(str, 256, "PROG_FOCUS,%d,%d,%d,%d,%d", nStartVal, nStepVal, nNum, nDir, nSlave);
+	snprintf(str, 256, "PROG_FOCUS,%d,%d,%d,%d,%d", nStartVal, nStepVal, nNum, nDir, nSlave);
 
 	hub->Purge();
 	hub->Send(str);
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	hub->ReceiveOneLine();
 		
 	if(hub->buf_string_.length()==0)
 	{
 		hub->Purge();
 		hub->Send(str);
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		hub->ReceiveOneLine();
 	}
 
@@ -1606,17 +1606,17 @@ int CTriggerScopeDAC::WriteToPort(unsigned long value)
 
 
 	char str[32];
-	sprintf_s(str, 32, "DAC%d,%d",nChannel_,int(value));
+	snprintf(str, 32, "DAC%d,%d",nChannel_,int(value));
 	hub->Purge();
 	hub->Send(str);
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	hub->ReceiveOneLine();
 		
 	if(hub->buf_string_.length()==0)
 	{
 		hub->Purge();
 		hub->Send(str);
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		hub->ReceiveOneLine();
 	}
 
@@ -1654,12 +1654,12 @@ int CTriggerScopeDAC::SendDASequence()
 	MMThreadGuard myLock(hub->GetLock());
 
 	char str[128];
-	sprintf_s(str, 128, "CLEAR_DAC,%d",nChannel_);
+	snprintf(str, 128, "CLEAR_DAC,%d",nChannel_);
 
 	//hub->PurgeComPortH();
 	hub->Purge();
 	hub->Send(str);
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	hub->ReceiveOneLine();
 
 	double dMaxCount = 4095, volts;
@@ -1679,17 +1679,17 @@ int CTriggerScopeDAC::SendDASequence()
 
 	    long value = (long) ( (volts - minV_) / maxV_ * dMaxCount);
 
-		sprintf_s(str, 128, "PROG_DAC,%d,%d,%d",ii+1,nChannel_,int(value));
+		snprintf(str, 128, "PROG_DAC,%d,%d,%d",ii+1,nChannel_,int(value));
 		hub->Purge();
 		hub->Send(str);
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		hub->ReceiveOneLine();
 		
 		if(hub->buf_string_.length()==0)
 		{
 			hub->Purge();
 			hub->Send(str);
-			Sleep(10);
+         CDeviceUtils::SleepMs(10);
 			hub->ReceiveOneLine();
 		}
 	}
@@ -1724,7 +1724,7 @@ int CTriggerScopeDAC::StartPropertySequence(const char* propertyName)
 		//hub->PurgeComPortH();
 		hub->Purge();
 		hub->Send("ARM");
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		hub->ReceiveOneLine();
 
 	    return DEVICE_OK;
@@ -1796,17 +1796,17 @@ int CTriggerScopeFocus::WriteToPort(unsigned long value)
 
 
 	char str[16];
-	sprintf_s(str, "FOCUS,%d",int(value));
+	snprintf(str, 16, "FOCUS,%d",int(value));
 	hub->Purge();
 	hub->Send(str);
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	hub->ReceiveOneLine();
 		
 	if(hub->buf_string_.length()==0)
 	{
 		hub->Purge();
 		hub->Send(str);
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		hub->ReceiveOneLine();
 	}
 
@@ -1824,17 +1824,17 @@ int CTriggerScopeTTL::WriteToPort(unsigned long value)
    //hub->PurgeComPortH();
    
 	char str[16];
-	sprintf_s(str, "TTL%d,%d",nChannel_,int(value));
+	snprintf(str, 16, "TTL%d,%d",nChannel_,int(value));
 	hub->Purge();
 	hub->Send(str);
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	hub->ReceiveOneLine();
 		
 	if(hub->buf_string_.length()==0)
 	{
 		hub->Purge();
 		hub->Send(str);
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		hub->ReceiveOneLine();
 	}
 
@@ -1853,17 +1853,17 @@ int CTriggerScopeCAM::WriteToPort(unsigned long value)
 
 
 	char str[16];
-	sprintf_s(str, "CAM%d,%d",nChannel_,int(value));
+	snprintf(str, 16, "CAM%d,%d",nChannel_,int(value));
 	hub->Purge();
 	hub->Send(str);
-	Sleep(10);
+   CDeviceUtils::SleepMs(10);
 	hub->ReceiveOneLine();
 		
 	if(hub->buf_string_.length()==0)
 	{
 		hub->Purge();
 		hub->Send(str);
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		hub->ReceiveOneLine();
 	}
 
@@ -1987,7 +1987,7 @@ int CTriggerScopeHub::OnStepMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 	    pProp->Get(stepMode_);
 		char str[16];
-		sprintf_s(str, "STEP,%d",stepMode_);
+		snprintf(str, 16, "STEP,%d", (int) stepMode_);
 		Purge();
 		Send(str);
 		ReceiveOneLine();
@@ -2013,7 +2013,7 @@ int CTriggerScopeHub::OnArrayNum(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 	    pProp->Get(arrayNum_);
 		char str[16];
-		sprintf_s(str, "ARRAY,%d",arrayNum_);
+		snprintf(str, 16, "ARRAY,%d", (int) arrayNum_);
 		Purge();
 		Send(str);
 		ReceiveOneLine();
@@ -2041,7 +2041,7 @@ int CTriggerScopeHub::OnArmMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if(armMode_>0)
 		{
 			char str[16];
-			sprintf_s(str, "ARM");
+			snprintf(str, 16, "ARM");
 			Purge();
 			Send(str);
 			ReceiveOneLine();
@@ -2071,9 +2071,9 @@ int CTriggerScopeHub::OnClear(MM::PropertyBase* pProp, MM::ActionType eAct)
 	   pProp->Get(clearStr_);
 
 	   if(clearStr_.compare(g_Keyword_Clear_Active_Array)==0)
-			sprintf_s(str, "CLEARTABLE");
+			snprintf(str, 16, "CLEARTABLE");
 	   else if(clearStr_.compare(g_Keyword_Clear_All_Arrays)==0)
-			sprintf_s(str, "CLEARALL");
+			snprintf(str, 16, "CLEARALL");
 
 	   if(clearStr_.compare(g_Keyword_Clear_Off)!=0)
 	   {
@@ -2138,7 +2138,7 @@ int CTriggerScopeHub::OnSendSerialCmd(MM::PropertyBase* pProp, MM::ActionType eA
 	   recvSerialCmd_ = "";
 	   Purge();
 		Send(sendSerialCmd_.c_str());
-		Sleep(10);
+      CDeviceUtils::SleepMs(10);
 		ReceiveOneLine();
 		if(buf_string_.length()>0)
 			recvSerialCmd_ = buf_string_;
@@ -2198,16 +2198,16 @@ int CTriggerScopeHub::LoadProgFile()
 						}
 						str2 = strOut;
 						
-						sprintf_s(str2, 1024, "PROG");
+						snprintf(str2, 1024, "PROG");
 						for(int ii=0; ii<16; ii++)
 						{
-							str2 = strchr(str2, NULL);
+							str2 = strchr(str2, 0);
 							if(str2)
 							{
 								if(nTable[ii]==-1)
-									sprintf_s(str2, 1024-strlen(strOut), ",N");
+									snprintf(str2, 1024-strlen(strOut), ",N");
 								else
-									sprintf_s(str2, 1024-strlen(strOut), ",%d",nTable[ii]);
+									snprintf(str2, 1024-strlen(strOut), ",%d",nTable[ii]);
 							}
 						}
 
@@ -2219,7 +2219,7 @@ int CTriggerScopeHub::LoadProgFile()
 				}
 			}
 		}
-		Sleep(500);
+      CDeviceUtils::SleepMs(500);
 		Send("STAT?");
 		ReceiveOneLine(2);
 		while(buf_string_.length()>0)
@@ -2307,7 +2307,7 @@ void CTriggerScopeHub::ReceiveSerialBytes(unsigned char* buf, unsigned long bufl
    int nLoop=0, nRet=0;
    unsigned long bytesRead=0;
    totalBytes=0;
-   buf[0] = NULL;
+   buf[0] = 0;
    
    MM::MMTime timeStart, timeNow;
    timeStart = GetCurrentMMTime();   
@@ -2318,7 +2318,7 @@ void CTriggerScopeHub::ReceiveSerialBytes(unsigned char* buf, unsigned long bufl
 	   nLoop++;
 	   totalBytes += bytesRead;
 	   timeNow = GetCurrentMMTime();   
-	   Sleep(1);
+      CDeviceUtils::SleepMs(1);
    }
    if(nLoop>1)
 	   nLoop += 0;
@@ -2345,7 +2345,7 @@ void CTriggerScopeHub::FlushSerialBytes(unsigned char* buf, unsigned long buflen
    buf_string_ = "";
    int nRet=0;
    unsigned long bytesRead=0;
-   buf[0] = NULL;
+   buf[0] = 0;
    
    nRet = ReadFromComPort(port_.c_str(), buf, buflen, bytesRead);
 
@@ -2398,10 +2398,10 @@ int CTriggerScopeHub::GetTriggerTimeDelta(const char *buf_string)
 			strcpy(str2, &str[7]);
 			str3 = strchr(&str2[0], 10);
 			if(str3)
-				str3[0] = NULL;
+				str3[0] = 0;
 			str3 = strchr(&str2[0], 13);
 			if(str3)
-				str3[0] = NULL;
+				str3[0] = 0;
 
 			OnPropertyChanged("Trigger Time Delta", str2);
 		}
