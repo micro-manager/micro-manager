@@ -48,7 +48,7 @@ import org.micromanager.utils.MMScriptException;
  * import org.micromanager.asidispim.api.ASIdiSPIMImplementation;
  *
  * ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
- * diSPIM.runAcquisition(); 
+ * diSPIM.runAcquisition(); // or other API methods in ASIdiSPIMInterface
  * 
  * @author nico
  * @author Jon
