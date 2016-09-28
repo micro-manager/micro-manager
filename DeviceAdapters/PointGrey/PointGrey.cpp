@@ -1038,7 +1038,7 @@ int PointGrey::InsertImage(Image* pImg) const
    }
 
    TimeStamp ts = pImg->GetTimeStamp();
-   MM::MMTime timeStamp = MM::MMTime(ts.seconds, (long) ts.microSeconds);
+   MM::MMTime timeStamp = MM::MMTime((long) ts.seconds, (long) ts.microSeconds);
    char label[MM::MaxStrLength];
    this->GetLabel(label);
    // TODO: we want to set the sequenceStartTimeStamp_ here but can not do so since we are const
