@@ -146,7 +146,7 @@ MODULE_API void InitializeModuleData()
 
 //***********************************************************************
 
-MODULE_API MM::Device* CreateDevice(const char* deviceName)
+MODULE_API MM::Device* CreateDevice(const char* /* deviceName */)
 {
     return new PointGrey();
 }
@@ -216,7 +216,7 @@ PointGrey::PointGrey() :
    }
    CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnCameraId);
    CreateProperty(g_CameraId, cameras.front().c_str(), MM::String, false, pAct, true);
-   for (int i = 0; i < cameras.size(); i++) {
+   for (unsigned int i = 0; i < cameras.size(); i++) {
       AddAllowedValue(g_CameraId, cameras[i].c_str());
    }
 
@@ -902,7 +902,7 @@ void PointGrey::SetExposure(double exp)
          LogMessage(error.GetDescription(), false);
          return;
       }
-      prop.absValue = exp;
+      prop.absValue = (float) exp;
       error = cam_.SetProperty(&prop);
       if (error != PGRERROR_OK) {
          LogMessage(error.GetDescription(), false);
@@ -1000,7 +1000,7 @@ int PointGrey::StopSequenceAcquisition()
 * Because of the syntax, InsertImage needs to be const, which poses a few
 * problems maintaining state.
 */
-int PointGrey::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
+int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */, bool stopOnOverflow)
 {
    stopOnOverflow_ = stopOnOverflow;
    imageCounter_ = 0;
@@ -1038,13 +1038,13 @@ int PointGrey::InsertImage(Image* pImg) const
    }
 
    TimeStamp ts = pImg->GetTimeStamp();
-	MM::MMTime timeStamp = MM::MMTime(ts.seconds, ts.microSeconds);
-	char label[MM::MaxStrLength];
-	this->GetLabel(label);
+   MM::MMTime timeStamp = MM::MMTime(ts.seconds, (long) ts.microSeconds);
+   char label[MM::MaxStrLength];
+   this->GetLabel(label);
    // TODO: we want to set the sequenceStartTimeStamp_ here but can not do so since we are const
-  // if (imageCounter_ == 0) {
-  //    sequenceStartTimeStamp_ = timeStamp;
-  // }
+   // if (imageCounter_ == 0) {
+   //    sequenceStartTimeStamp_ = timeStamp;
+   // }
 
 	// Important:  metadata about the image are generated here:
 	Metadata md;
@@ -1091,7 +1091,7 @@ bool PointGrey::IsCapturing()
 /***********************************************************************
 * Handles "Binning" property.
 */
-int PointGrey::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
+int PointGrey::OnBinning(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */)
 {
 	int ret = DEVICE_OK;
    /*
