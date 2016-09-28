@@ -2745,6 +2745,8 @@ int CScanner::OnSPIMNumSides(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
       tmp += (tmp2 & (0xFC));  // preserve the upper 6 bits from before, change only the two LSBs
+      if (tmp == tmp2)
+         return DEVICE_OK;  // don't need to set value if it's already correct
       command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
@@ -2795,6 +2797,8 @@ int CScanner::OnSPIMFirstSide(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
       tmp += (tmp2 & (0xFC));  // preserve the upper 6 bits from before, change only the two LSBs
+      if (tmp == tmp2)
+         return DEVICE_OK;  // don't need to set value if it's already correct
       command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
@@ -2910,6 +2914,8 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
                RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
                RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
                tmp += (tmp2 & (0xF3));  // preserve the upper 4 bits and the two LSBs from prior setting, add bits 2 and 3 in manually
+               if (tmp == tmp2)
+                  return DEVICE_OK;  // don't need to set value if it's already correct
                command.str("");
                command << addressChar_ << "NR Z=" << tmp;
                RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
@@ -2958,6 +2964,8 @@ int CScanner::OnSPIMScannerHomeDisable(MM::PropertyBase* pProp, MM::ActionType e
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
       tmp += (tmp2 & (0xFB));  // keep bit 2 from tmp, all others use current setting
+      if (tmp == tmp2)
+         return DEVICE_OK;  // don't need to set value if it's already correct
       command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
@@ -3006,6 +3014,8 @@ int CScanner::OnSPIMPiezoHomeDisable(MM::PropertyBase* pProp, MM::ActionType eAc
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
       tmp += (tmp2 & (0xF7));  // keep bit 3 from tmp, all others use current setting
+      if (tmp == tmp2)
+         return DEVICE_OK;  // don't need to set value if it's already correct
       command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
@@ -3052,6 +3062,8 @@ int CScanner::OnSPIMInterleaveSidesEnable(MM::PropertyBase* pProp, MM::ActionTyp
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
       tmp += (tmp2 & (0xEF));  // keep bit 4 from tmp, all others use current setting
+      if (tmp == tmp2)
+         return DEVICE_OK;  // don't need to set value if it's already correct
       command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
@@ -3098,6 +3110,8 @@ int CScanner::OnSPIMAlternateDirectionsEnable(MM::PropertyBase* pProp, MM::Actio
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
       tmp += (tmp2 & (0xDF));  // keep bit 5 from tmp, all others use current setting
+      if (tmp == tmp2)
+         return DEVICE_OK;  // don't need to set value if it's already correct
       command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
