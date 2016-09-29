@@ -413,6 +413,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
       engine_ = new AcquisitionWrapperEngine();
       engine_.setParentGUI(this);
+      engine_.setZStageDevice(core_.getFocusDevice());
 
       dataManager_ = new DefaultDataManager();
       displayManager_ = new DefaultDisplayManager(this);
