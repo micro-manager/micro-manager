@@ -21,7 +21,6 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
-import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import java.awt.event.MouseWheelEvent;
