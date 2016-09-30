@@ -33,11 +33,11 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
 */
 public final class ZWheelListener implements MouseWheelListener, LiveModeListener {
-   private CMMCore core_;
-   private MMStudio studio_;
+   private final CMMCore core_;
+   private final MMStudio studio_;
    private ImageCanvas canvas_;
    private static boolean isRunning_ = false;
-   private static final double moveIncrement_ = 0.20;
+   private static final double MOVE_INCREMENT = 0.20;
 
    public ZWheelListener(CMMCore core, MMStudio gui) {
       core_ = core;
@@ -88,7 +88,7 @@ public final class ZWheelListener implements MouseWheelListener, LiveModeListene
 		  if (zStage == null || zStage.equals(""))
 			  return;
  
-		  double moveIncrement = moveIncrement_;
+		  double moveIncrement = MOVE_INCREMENT;
 		  double pixSizeUm = core_.getPixelSizeUm();
 		  if (pixSizeUm > 0.0) {
 			  moveIncrement = 2 * pixSizeUm;
@@ -107,6 +107,7 @@ public final class ZWheelListener implements MouseWheelListener, LiveModeListene
 	  }
    } 
    
+   @Override
    public void liveModeEnabled(boolean enabled) {
       if (enabled) {
          start();
