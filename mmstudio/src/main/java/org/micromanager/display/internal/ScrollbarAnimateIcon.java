@@ -55,12 +55,12 @@ public final class ScrollbarAnimateIcon extends JButton {
    public ScrollbarAnimateIcon(final String axis, final ScrollerPanel parent) {
       super();
       curIcon_ = PLAY_ICON;
-      setSize(BUTTON_WIDTH, BUTTON_HEIGHT);
+      super.setSize(BUTTON_WIDTH, BUTTON_HEIGHT);
       // Only use the first letter of the axis.
       label_ = axis.substring(0, 1);
       isAnimated_ = false;
-      setToolTipText("Toggle animation of the " + axis + " axis.");
-      addMouseListener(new MouseInputAdapter() {
+      super.setToolTipText("Toggle animation of the " + axis + " axis.");
+      super.addMouseListener(new MouseInputAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
             parent.toggleAnimation(axis);
@@ -101,7 +101,6 @@ public final class ScrollbarAnimateIcon extends JButton {
       return isAnimated_;
    }
 
-   /** Don't require more space than is needed to show the icon. */
    @Override
    public Dimension getPreferredSize() {
       return new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT);
