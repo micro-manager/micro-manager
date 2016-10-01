@@ -287,9 +287,13 @@ public final class ScrollerPanel extends JPanel {
    /**
     * One of our animation icons has changed state; adjust animation for that
     * icon. Called from the ScrollbarAnimateIcon class.
+    * @param axis Axis to be animated
     */
    public void toggleAnimation(String axis) {
-      axisToState_.get(axis).isAnimated_ = !axisToState_.get(axis).isAnimated_;
+      // set the index to be animated to the currently displayed index
+      AxisState axisState = axisToState_.get(axis);
+      axisState.animatedIndex_ = axisState.scrollbar_.getValue();
+      axisState.isAnimated_ = !axisState.isAnimated_;
       updateAnimation();
    }
 
