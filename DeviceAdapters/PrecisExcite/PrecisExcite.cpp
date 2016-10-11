@@ -463,8 +463,17 @@ void Controller::Illuminate()
    }
    else if (state_==1)
    {
-      if (triggerMode_ == OFF)
-         msg << "SQZ" << carriage_return << "C" << channelLetters_[currentChannel_] << "N";
+      if (triggerMode_ == OFF) {
+         msg << "SQZ" << carriage_return;
+         for (unsigned int i=0; i<channelLetters_.size(); i++) {
+            msg << "C" << channelLetters_[i];
+            if (i == currentChannel_)
+               msg << "N";
+            else
+               msg << "F";
+            msg << carriage_return;
+         }
+      }
       else if (triggerMode_ == FOLLOW_PULSE)
          msg << "SQZ" << carriage_return << "A" << channelLetters_[currentChannel_] << "#";
       else
@@ -565,8 +574,10 @@ void Controller::ReceiveOneLine()
 void Controller::Purge()
 {
    int ret = PurgeComPort(port_.c_str());
+   /*
    if (ret!=0)
       error_ = DEVICE_SERIAL_COMMAND_FAILED;
+      */
 }
 
 //********************
