@@ -16,7 +16,7 @@ import java.util.concurrent.BlockingQueue;
  * @author nico
  */
 public class GaussianInfo {
-   protected static final Object gfsLock_ = new Object();
+   protected static final Object GFSLOCK = new Object();
    protected ImagePlus siPlus_;
    protected ImageProcessor siProc_;
    protected BlockingQueue<SpotData> sourceList_;
@@ -57,7 +57,13 @@ public class GaussianInfo {
    protected boolean endTrackAfterBadFrames_;
    protected int endTrackAfterNBadFrames_;
 
+   // Special setting for Stefan
+   protected boolean skipChannels_ = false;
+   protected int[] channelsToSkip_;
+   
    protected boolean stop_ = false;
+   
+
 
 
    protected void print(String myText) {
@@ -172,6 +178,18 @@ public class GaussianInfo {
    }
    public int getEndTrackAfterNFrames() {
       return endTrackAfterNBadFrames_;
+   }
+   public void setSkipChannels(boolean skip) {
+      skipChannels_ = skip;
+   }
+   public boolean getSkipChannels() {
+      return skipChannels_;
+   }
+   public void setChannelsToSkip(int[] c2s) {
+      channelsToSkip_ = c2s;
+   }
+   public int[] getChannelsToSkip() {
+      return channelsToSkip_;
    }
    
 }

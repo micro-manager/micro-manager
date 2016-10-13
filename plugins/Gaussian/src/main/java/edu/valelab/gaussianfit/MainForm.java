@@ -35,6 +35,7 @@ import edu.valelab.gaussianfit.utils.ReportingUtils;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -1071,6 +1072,15 @@ public class MainForm extends JFrame implements ij.ImageListener{
          tT.setFitMode(fitMethodComboBox1_.getSelectedIndex() + 1);
          tT.setEndTrackBool(endTrackCheckBox_.isSelected());
          tT.setEndTrackAfterNFrames((Integer) endTrackSpinner_.getValue());
+         tT.setSkipChannels(skipChannelsCheckBox_.isSelected());
+         if (skipChannelsCheckBox_.isSelected()) {
+            String[] parts = channelsToSkip_.getText().split(",");
+            int[] result = new int[parts.length];
+            for (int i = 0; i < parts.length; i++) {
+               result[i] =  NumberUtils.displayStringToInt(parts[i]);
+            }
+            tT.setChannelsToSkip(result);
+         }
       } catch (NumberFormatException ex) {
          JOptionPane.showMessageDialog(null, "Error interpreting input: " + ex.getMessage());
       } catch (ParseException ex) {

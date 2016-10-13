@@ -60,7 +60,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
 
       while (!stopNow_) {
          SpotData spot;
-         synchronized (gfsLock_) {
+         synchronized (GFSLOCK) {
             try {
                spot = sourceList_.take();
                // Look for signal that we are done, add back to queue if found
