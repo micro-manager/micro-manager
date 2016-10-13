@@ -184,14 +184,17 @@ int Controller::ReadChannelLabels()
    }
       while(! buf_string_.empty());
    
-   
    for (unsigned int i=0;i<buf_tokens_.size();i++)
    {
       if (buf_tokens_[i].substr(0,3).compare("LAM")==0) {
-         channelLetters_.push_back(buf_tokens_[i][4]); // Read 4th character
          string label = buf_tokens_[i].substr(6);
          StripString(label);
 
+         //This skips invalid channels
+         if (label.compare("----") == 0)
+            continue;
+
+         channelLetters_.push_back(buf_tokens_[i][4]); // Read 4th character
          // This is a temporary log entry to debug an issue with channel labels
          // that appear to contain an invalid character at the end.
          std::ostringstream ss;
@@ -358,7 +361,7 @@ int Controller::OnChannelLabel(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       GetState(state_);
       pProp->Get(currentChannelLabel_);
-      for (unsigned i=0;i<channelLabels_.size();i++)
+      for (unsigned int i=0;i<channelLabels_.size();i++)
          if (channelLabels_[i].compare(currentChannelLabel_) == 0)
          {
             currentChannel_ = i;
@@ -440,7 +443,7 @@ void Controller::SetTrigger()
    stringstream msg;
    msg << "SQX" << carriage_return;
 
-   for (unsigned i=0;i<triggerSequence_.size();i++)
+   for (unsigned int i=0;i<triggerSequence_.size();i++)
    {
       msg << "SQ" << triggerSequence_[i] << carriage_return;
    }
@@ -527,7 +530,7 @@ void Controller::GetState(long &state)
       Send("C?");
       long stateTmp = 0;
 
-      for (unsigned int i=1;i<=channelLetters_.size();i++)
+      for (unsigned int i=0;i<channelLetters_.size();i++)
       {
          ReceiveOneLine();
 
@@ -574,10 +577,8 @@ void Controller::ReceiveOneLine()
 void Controller::Purge()
 {
    int ret = PurgeComPort(port_.c_str());
-   /*
    if (ret!=0)
       error_ = DEVICE_SERIAL_COMMAND_FAILED;
-      */
 }
 
 //********************
