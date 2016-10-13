@@ -470,7 +470,7 @@ void Controller::Illuminate()
    {
       if (triggerMode_ == OFF) {
          msg << "SQZ" << carriage_return;
-         for (unsigned int i=0; i<channelLetters_.size(); i++) {
+         for (int i=0; i<channelLetters_.size(); i++) {
             msg << "C" << channelLetters_[i];
             if (i == currentChannel_)
                msg << "N";
