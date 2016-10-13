@@ -34,8 +34,9 @@ import edu.valelab.gaussianfit.utils.NumberUtils;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -123,6 +124,7 @@ public class MainForm extends JFrame implements ij.ImageListener{
    private javax.swing.JCheckBox filterDataCheckBoxWidth_;
    private JCheckBox skipChannelsCheckBox_;
    private JTextField channelsToSkip_;
+   private JLabel widthLabel_;
    private javax.swing.JSpinner endTrackSpinner_;
    private javax.swing.JButton fitAllButton_;
    private javax.swing.JToggleButton showOverlay_;
@@ -194,6 +196,7 @@ public class MainForm extends JFrame implements ij.ImageListener{
           }
        };
 
+       updateWidthDisplay();
        noiseToleranceTextField_.getDocument().addDocumentListener(updateNoiseOverlay);
        boxSizeTextField.getDocument().addDocumentListener(updateNoiseOverlay);
        
@@ -461,7 +464,15 @@ public class MainForm extends JFrame implements ij.ImageListener{
       
 /*-----------  Filter Data  -----------*/
       getContentPane().add(new JLabel("Filter Data..."), "wrap");
-
+      
+      widthLabel_ = new JLabel(" nm < Width < "); 
+      
+      filterDataCheckBoxWidth_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            updateWidthDisplay();
+         }
+      });
       getContentPane().add(filterDataCheckBoxWidth_, indent + ",span 3, split 5");  
 
       minSigmaTextField_.setFont(gFont); 
@@ -474,11 +485,9 @@ public class MainForm extends JFrame implements ij.ImageListener{
       });
       minSigmaTextField_.setMinimumSize(textFieldDim);
       getContentPane().add(minSigmaTextField_);
- 
-
-      JLabel jLabel4 = new JLabel(" nm < Width < ");          
-      jLabel4.setFont(gFont);
-      getContentPane().add(jLabel4);
+          
+      widthLabel_.setFont(gFont);
+      getContentPane().add(widthLabel_);
       
       maxSigmaTextField_.setFont(gFont); 
       maxSigmaTextField_.setText("200");
@@ -666,6 +675,13 @@ public class MainForm extends JFrame implements ij.ImageListener{
        }
     }
 
+   private void updateWidthDisplay() {
+      boolean selected = filterDataCheckBoxWidth_.isSelected();
+      minSigmaTextField_.setEnabled(selected);
+      widthLabel_.setEnabled(selected);
+      maxSigmaTextField_.setEditable(selected);
+    }
+    
     private void formWindowClosing(java.awt.event.WindowEvent evt) {
        try {
        prefs_.put(NOISETOLERANCE, noiseToleranceTextField_.getText());
