@@ -88,7 +88,7 @@ public class MainForm extends JFrame implements ij.ImageListener{
    
    // Store values of dropdown menus:
    private int shape_ = 1;
-   private final int fitMode_ = 2;
+   private int fitMode_ = 2;
    private FindLocalMaxima.FilterType preFilterType_ = FindLocalMaxima.FilterType.NONE;
 
    private FitAllThread ft_;
@@ -582,11 +582,11 @@ public class MainForm extends JFrame implements ij.ImageListener{
       
       skipChannelsCheckBox_ = new JCheckBox();
       skipChannelsCheckBox_.setFont(gFont); 
-      skipChannelsCheckBox_.setText("Skip channels:");
-      getContentPane().add(skipChannelsCheckBox_, indent);
+      skipChannelsCheckBox_.setText("Skip channel 1");
+      getContentPane().add(skipChannelsCheckBox_, indent + ", wrap");
       
-      channelsToSkip_.setMinimumSize(textFieldDim);
-      getContentPane().add(channelsToSkip_, "wrap");
+      //channelsToSkip_.setMinimumSize(textFieldDim);
+      //getContentPane().add(channelsToSkip_, "wrap");
       
       
       getContentPane().add(new JSeparator(), "span, grow, wrap");
@@ -664,8 +664,14 @@ public class MainForm extends JFrame implements ij.ImageListener{
     }
 
     private void fitAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-       
        if (ft_ == null || !ft_.isRunning()) {
+          try {
+             shape_ = NumberUtils.displayStringToInt(fitDimensionsComboBox1_.getSelectedItem());
+          } catch (ParseException ex) {
+             studio_.logs().showError(ex, "Input error that should never happen");
+             return;
+          }
+          fitMode_ = fitMethodComboBox1_.getSelectedIndex();
           ft_ = new FitAllThread(studio_, shape_, fitMode_, preFilterType_, 
                   posTextField_.getText());
           updateValues(ft_);
@@ -1090,12 +1096,14 @@ public class MainForm extends JFrame implements ij.ImageListener{
          tT.setEndTrackAfterNFrames((Integer) endTrackSpinner_.getValue());
          tT.setSkipChannels(skipChannelsCheckBox_.isSelected());
          if (skipChannelsCheckBox_.isSelected()) {
+            /*
             String[] parts = channelsToSkip_.getText().split(",");
             int[] result = new int[parts.length];
             for (int i = 0; i < parts.length; i++) {
                result[i] =  NumberUtils.displayStringToInt(parts[i]);
             }
             tT.setChannelsToSkip(result);
+            */
          }
       } catch (NumberFormatException ex) {
          JOptionPane.showMessageDialog(null, "Error interpreting input: " + ex.getMessage());

@@ -173,9 +173,10 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                }
             }
 
-            ImagePlus ip = siPlus.duplicate();
+            siPlus.deleteRoi();
+            //magePlus ip = siPlus.duplicate();
 
-            int nrSpots = analyzeImagePlus(ip, p + 1, nrThreads, originalRoi);
+            int nrSpots = analyzeImagePlus(siPlus, p + 1, nrThreads, originalRoi);
             if (nrSpots > maxNrSpots) {
                maxNrSpots = nrSpots;
             }
@@ -280,115 +281,128 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          gfsThreads_[i].setMaxIterations(maxIterations_);
          gfsThreads_[i].setUseWidthFilter(useWidthFilter_);
          gfsThreads_[i].setUseNrPhotonsFilter(useNrPhotonsFilter_);
+         gfsThreads_[i].setSkipChannels(skipChannels_);
+         //gfsThreads_[i].setChannelsToSkip(channelsToSkip_);
          gfsThreads_[i].init();
       }
-
+      
+      
       // work around strange bug that happens with freshly opened images
       for (int i = 1; i <= siPlus.getNChannels(); i++) {
          siPlus.setPosition(i, siPlus.getCurrentSlice(), siPlus.getFrame());
       }
-
-      int nrImages = siPlus.getNChannels() * siPlus.getNSlices() * siPlus.getNFrames();
+      
+      int nrChannels = siPlus.getNChannels();
+      if (skipChannels_) {
+         nrChannels -= 1;
+      }
+      int nrImages = nrChannels * siPlus.getNSlices() * siPlus.getNFrames();
       int imageCount = 0;
       try {
          for (int c = 1; c <= siPlus.getNChannels(); c++) {
             if (!running_) {
                break;
             }
-            for (int z = 1; z <= siPlus.getNSlices(); z++) {
-               if (!running_) {
-                  break;
-               }
-               for (int f = 1; f <= siPlus.getNFrames(); f++) {
+            if (!skipChannels_ || c != 1) {
+               for (int z = 1; z <= siPlus.getNSlices(); z++) {
                   if (!running_) {
                      break;
                   }
-                  // to avoid making a gigantic sourceList and running out of memory
-                  // sleep a bit when the sourcesize gets too big
-                  // once we have very fast multi-core computers, this constant can be increased
-                  if (sourceList_.size() > 100000) {
-                     try {
-                        Thread.sleep(1000);
-                     } catch (InterruptedException ex) {
-                        // not sure what to do
+                  for (int f = 1; f <= siPlus.getNFrames(); f++) {
+                     if (!running_) {
+                        break;
                      }
-                  }
-
-                  imageCount++;
-                  ij.IJ.showStatus("Processing image " + imageCount);
-
-                  ImageProcessor siProc = null;
-                  Polygon p = new Polygon();
-                  synchronized (SpotData.lockIP) {
-                     siPlus.setPositionWithoutUpdate(c, z, f);
-                     // If ROI manager is used, use RoiManager Rois
-                     //  may be dangerous if the user is not aware
-                     RoiManager roiM = RoiManager.getInstance();
-                     Roi[] rois = null;
-                     //if (roiM != null && roiM.getSelectedIndex() > -1 ) {
-                     //   rois = roiM.getSelectedRoisAsArray();
-                     //}
-                     if (rois != null && rois.length > 0) {
-                        for (Roi roi : rois) {
-                           siPlus.setRoi(roi, false);
-                           siProc = siPlus.getProcessor();
-                           Polygon q = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_,
-                                   preFilterType_);
-                           for (int i = 0; i < q.npoints; i++) {
-                              p.addPoint(q.xpoints[i], q.ypoints[i]);
-                           }
-                        }
-                     } else {  // no Rois in RoiManager
-                        siPlus.setRoi(originalRoi, false);
-                        siProc = siPlus.getProcessor();
-                        p = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_,
-                                preFilterType_);
-                     }
-                  }
-
-                  ij.IJ.showProgress(imageCount, nrImages);
-
-
-                  if (p.npoints > nrSpots) {
-                     nrSpots = p.npoints;
-                  }
-                  int[][] sC = new int[p.npoints][2];
-                  for (int j = 0; j < p.npoints; j++) {
-                     sC[j][0] = p.xpoints[j];
-                     sC[j][1] = p.ypoints[j];
-                  }
-
-                  
-                  Arrays.sort(sC, new SpotSortComparator());
-
-                  for (int j = 0; j < sC.length; j++) {
-                     // filter out spots too close to the edge
-                     if (sC[j][0] > halfSize_ && sC[j][0] < siPlus.getWidth() - halfSize_
-                             && sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
-                        ImageProcessor sp = SpotData.getSpotProcessor(siProc,
-                                halfSize_, sC[j][0], sC[j][1]);
-                        if (sp == null) {
-                           continue;
-                        }
-                        SpotData thisSpot = new SpotData(sp, c, z, f,
-                                position, j, sC[j][0], sC[j][1]);
+                     // to avoid making a gigantic sourceList and running out of memory
+                     // sleep a bit when the sourcesize gets too big
+                     // once we have very fast multi-core computers, this constant can be increased
+                     if (sourceList_.size() > 100000) {
                         try {
-                           sourceList_.put(thisSpot);
-                        } catch (InterruptedException iex) {
-                           Thread.currentThread().interrupt();
-                           throw new RuntimeException("Unexpected interruption");
+                           Thread.sleep(1000);
+                        } catch (InterruptedException ex) {
+                           // not sure what to do
+                        }
+                     }
+
+                     imageCount++;
+                     ij.IJ.showStatus("Processing image " + imageCount);
+
+                     ImageProcessor siProc = null;
+                     Polygon p = new Polygon();
+                     synchronized (SpotData.lockIP) {
+                        siPlus.setPositionWithoutUpdate(c, z, f);
+                        // If ROI manager is used, use RoiManager Rois
+                        //  may be dangerous if the user is not aware
+                        RoiManager roiM = RoiManager.getInstance();
+                        Roi[] rois = null;
+                        //if (roiM != null && roiM.getSelectedIndex() > -1 ) {
+                        //   rois = roiM.getSelectedRoisAsArray();
+                        //}
+                        if (rois != null && rois.length > 0) {
+                           for (Roi roi : rois) {
+                              siPlus.setRoi(roi, false);
+                              siProc = siPlus.getProcessor();
+                              Polygon q = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_,
+                                      preFilterType_);
+                              for (int i = 0; i < q.npoints; i++) {
+                                 p.addPoint(q.xpoints[i], q.ypoints[i]);
+                              }
+                           }
+                        } else {  // no Rois in RoiManager
+                           siPlus.setRoi(originalRoi, false);
+                           siProc = siPlus.getProcessor();
+                           p = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_,
+                                   preFilterType_);
+                        }
+                     }
+
+                     ij.IJ.showProgress(imageCount, nrImages);
+
+                     if (p.npoints > nrSpots) {
+                        nrSpots = p.npoints;
+                     }
+                     int[][] sC = new int[p.npoints][2];
+                     for (int j = 0; j < p.npoints; j++) {
+                        sC[j][0] = p.xpoints[j];
+                        sC[j][1] = p.ypoints[j];
+                     }
+
+                     Arrays.sort(sC, new SpotSortComparator());
+
+                     for (int j = 0; j < sC.length; j++) {
+                        // filter out spots too close to the edge
+                        if (sC[j][0] > halfSize_ && sC[j][0] < siPlus.getWidth() - halfSize_
+                                && sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
+                           ImageProcessor sp = SpotData.getSpotProcessor(siProc,
+                                   halfSize_, sC[j][0], sC[j][1]);
+                           if (sp == null) {
+                              continue;
+                           }
+                           int channel = c;
+                           /*
+                           if (skipChannels_) {
+                              // HACK we can only skip channel number 1
+                              channel -= 1;
+                           }
+                           */
+                           SpotData thisSpot = new SpotData(sp, channel, z, f,
+                                   position, j, sC[j][0], sC[j][1]);
+                           try {
+                              sourceList_.put(thisSpot);
+                           } catch (InterruptedException iex) {
+                              Thread.currentThread().interrupt();
+                              throw new RuntimeException("Unexpected interruption");
+                           }
                         }
                      }
                   }
                }
             }
          }
+         // start ProgresBar thread
+         ProgressThread pt = new ProgressThread(sourceList_);
+         pt.init();
 
-      // start ProgresBar thread
-      ProgressThread pt = new ProgressThread(sourceList_);
-      pt.init();
-      
-      
+
       } catch (OutOfMemoryError ome) {
          ij.IJ.error("Out Of Memory");
       }
