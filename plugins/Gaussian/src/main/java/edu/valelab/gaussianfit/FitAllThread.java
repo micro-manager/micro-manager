@@ -137,7 +137,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       int nrChannels = siPlus.getNChannels();
       int nrFrames = siPlus.getNFrames();
       int nrSlices = siPlus.getNSlices();
-      int maxNrSpots = 0;
+      // int maxNrSpots = 0;
 
       // If we have a Micro-Manager window:
       if (! (dw == null || siPlus != dw.getImagePlus()) ) {
@@ -176,20 +176,20 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
             siPlus.deleteRoi();
             //magePlus ip = siPlus.duplicate();
 
-            int nrSpots = analyzeImagePlus(siPlus, p + 1, nrThreads, originalRoi);
-            if (nrSpots > maxNrSpots) {
-               maxNrSpots = nrSpots;
-            }
+            analyzeImagePlus(siPlus, p + 1, nrThreads, originalRoi);
+            //if (nrSpots > maxNrSpots) {
+            //   maxNrSpots = nrSpots;
+            //}
             siPlus.setRoi(originalRoi);
          }
          dw.unregisterForEvents(this);
       }
 
       if (dw == null || siPlus != dw.getImagePlus()) {
-         int nrSpots = analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
-         if (nrSpots > maxNrSpots) {
-            maxNrSpots = nrSpots;
-         }
+         analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
+         //if (nrSpots > maxNrSpots) {
+         //   maxNrSpots = nrSpots;
+         //}
       }
 
       long endTime = System.nanoTime();
@@ -285,7 +285,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          //gfsThreads_[i].setChannelsToSkip(channelsToSkip_);
          gfsThreads_[i].init();
       }
-      
+      int shownChannel = siPlus.getChannel();
+      int shownSlice = siPlus.getSlice();
+      int shownFrame = siPlus.getFrame();
       
       // work around strange bug that happens with freshly opened images
       for (int i = 1; i <= siPlus.getNChannels(); i++) {
@@ -425,6 +427,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          }
       }
 
+      siPlus.setPosition(shownChannel, shownSlice, shownFrame);
+       
       sourceList_.clear();
       return nrSpots;
    }
