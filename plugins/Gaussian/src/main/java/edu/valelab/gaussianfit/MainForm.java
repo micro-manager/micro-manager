@@ -582,11 +582,11 @@ public class MainForm extends JFrame implements ij.ImageListener{
       
       skipChannelsCheckBox_ = new JCheckBox();
       skipChannelsCheckBox_.setFont(gFont); 
-      skipChannelsCheckBox_.setText("Skip channel 1");
-      getContentPane().add(skipChannelsCheckBox_, indent + ", wrap");
+      skipChannelsCheckBox_.setText("Skip channel(s):");
+      getContentPane().add(skipChannelsCheckBox_, indent );
       
-      //channelsToSkip_.setMinimumSize(textFieldDim);
-      //getContentPane().add(channelsToSkip_, "wrap");
+      channelsToSkip_.setMinimumSize(textFieldDim);
+      getContentPane().add(channelsToSkip_, "wrap");
       
       
       getContentPane().add(new JSeparator(), "span, grow, wrap");
@@ -1096,14 +1096,18 @@ public class MainForm extends JFrame implements ij.ImageListener{
          tT.setEndTrackAfterNFrames((Integer) endTrackSpinner_.getValue());
          tT.setSkipChannels(skipChannelsCheckBox_.isSelected());
          if (skipChannelsCheckBox_.isSelected()) {
-            /*
-            String[] parts = channelsToSkip_.getText().split(",");
-            int[] result = new int[parts.length];
-            for (int i = 0; i < parts.length; i++) {
-               result[i] =  NumberUtils.displayStringToInt(parts[i]);
+            try {
+               if (skipChannelsCheckBox_.isSelected()) {
+                  String[] parts = channelsToSkip_.getText().split(",");
+                  int[] result = new int[parts.length];
+                  for (int i = 0; i < parts.length; i++) {
+                     result[i] = NumberUtils.displayStringToInt(parts[i]);
+                  }
+                  tT.setChannelsToSkip(result);
+               }
+            } catch (NumberFormatException ex) {
+               JOptionPane.showMessageDialog(null, "Error channels to skip : " + ex.getMessage());
             }
-            tT.setChannelsToSkip(result);
-            */
          }
       } catch (NumberFormatException ex) {
          JOptionPane.showMessageDialog(null, "Error interpreting input: " + ex.getMessage());

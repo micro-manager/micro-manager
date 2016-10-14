@@ -296,7 +296,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       
       int nrChannels = siPlus.getNChannels();
       if (skipChannels_) {
-         nrChannels -= 1;
+         nrChannels -= channelsToSkip_.length;
       }
       int nrImages = nrChannels * siPlus.getNSlices() * siPlus.getNFrames();
       int imageCount = 0;
@@ -305,7 +305,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
             if (!running_) {
                break;
             }
-            if (!skipChannels_ || c != 1) {
+            if (!skipChannels_ || !inArray(channelsToSkip_, c)) {
                for (int z = 1; z <= siPlus.getNSlices(); z++) {
                   if (!running_) {
                      break;
@@ -474,6 +474,14 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    }
 
 
+   private static boolean inArray(int[] input, final int c) {
+      for (final int n : input) {
+         if (n == c) {
+            return true;
+         }
+      }
+      return false;
+   }
    
 
 
