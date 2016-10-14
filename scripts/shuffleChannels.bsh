@@ -1,0 +1,40 @@
+/**
+ * Utility for Micro-manager 2.0 that creates a copy of the 
+ * data in the topmost image window with a differen channel
+ * order.
+ * 
+ * Written to help Stefan in his 2-color mapping experiments
+ */
+
+// Declare the desired mappping here.  The original order is:
+// 0, 1, 2, etc..
+// Make sure that the number of channels is identical to the
+// input image.  
+
+int[] outputOrder = {2, 0, 1};
+
+import org.micromanager.data.Coords.CoordsBuilder;
+
+dw = mm.displays().getCurrentWindow();
+
+if (dw == null) {
+	mm.scripter().message("No window open");
+	return;
+}
+
+store = dw.getDatastore();
+
+if (store.getAxisLength("channel") != outputOrder.length) {
+	mm.scripter().message("Length of outputOrder differs from number of Channels");
+	return;
+}
+
+newStore = mm.data().createRAMDatastore();
+
+for (coord : store.getUnorderedImageCoords()) {
+	newCoord = coord.copy().channel(outputOrder[coord.getChannel()]).build();
+	newImage = store.getImage(coord).copyAtCoords(newCoord);
+	newStore.putImage(newImage);
+}
+newStore.freeze();
+mm.displays().createDisplay(newStore);
