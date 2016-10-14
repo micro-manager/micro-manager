@@ -406,12 +406,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @return RowData with selected ID, or null if not found
     */
    public RowData getDataSet(int ID) {
-      int i=0;
-      while (i < rowData_.size()) {
-         if (rowData_.get(i).ID_ == ID)
-            return rowData_.get(i);
+      for (RowData row : rowData_) {
+         if (row.ID_ == ID) {
+            return row;
+         }
       }
-
       return null;
    }
 

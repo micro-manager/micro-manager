@@ -203,6 +203,9 @@ import org.micromanager.display.DisplayWindow;
       
       public List<SpotData> get(int frame, int slice, int channel, int position) {
          ImageIndex ii = new ImageIndex(frame, slice, channel, position);
+         if (indexedSpotList_ == null) {
+            index();
+         }
          return indexedSpotList_.get(ii);
       }
       

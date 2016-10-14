@@ -5,6 +5,7 @@ import static edu.valelab.gaussianfit.DataCollectionForm.getInstance;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.data.GsSpotPair;
 import edu.valelab.gaussianfit.data.RowData;
+import edu.valelab.gaussianfit.data.TrackData;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -201,6 +202,118 @@ public class SpotLinker {
       sp.addKeyValue("stdDevY", stdDevY);
 
       dest.add(sp);
+   }
+
+   
+    /**
+    * Function that executes spot linkage.  Goes through a list of spots
+    * and looks in every consecutive frames for the closest by spot (at a 
+    * maximum distance of maxDistance).  If no spot is found, the link is added
+    * and the track is added as a row.  Only tracks longer then minNr are created.
+    * 
+    * @param rowData - input Spot data (obtained through the "Fit" function
+    * @param minNr - track needs to be larger than this or it will not be saved
+    * @param nrMissing - Continue searching for this many frames if no spot was
+    *                  - found.
+    * @param maxDistance - Maximum distance between spot in consecutive frames
+    *                    - if larger, it will not be added to the tracks
+    */
+   public static void extractTracks(final RowData rowData, final int minNr, 
+           final int nrMissing, final double maxDistance) {
+      try {
+         ij.IJ.showStatus("Extracting tracks...");
+         boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
+         int nr = rowData.nrSlices_;
+         if (useFrames) {
+            nr = rowData.nrFrames_;
+         }
+         int trackNr = 1;
+
+         // maintain active tracks here
+         List<TrackData> tracks = 
+                 new ArrayList<TrackData>();
+         for (int pos = 1; pos <= rowData.nrPositions_; pos++) {
+            for (int ch = 1; ch <= rowData.nrChannels_; ch++) {
+               for (int s = 1; s <= rowData.nrSlices_; s++) {
+                  for (int f = 1; f <= rowData.nrFrames_; f++) {
+                     List<SpotData> spots = rowData.get(f, s, ch, pos);
+                     if (spots != null) {
+                        // keep track of spots in this frame added to tracks 
+                        List<SpotData> markedSpots = new ArrayList<SpotData>();
+                        // go through all tracks to see if they can be extended
+                        if (tracks.size() > 0) {
+                           ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
+                           for (SpotData spot : spots) {
+                              gsSpots.add(new GsSpotPair(spot,
+                                      new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
+                                      new Point2D.Double(0.0, 0.0)));
+                           }
+                           NearestPointGsSpotPair nsp = new NearestPointGsSpotPair(gsSpots, maxDistance);
+                           List<TrackData> removedTracks = 
+                                   new ArrayList<TrackData>();
+                           for (TrackData track : tracks) {
+                              SpotData tSpot = track.get(track.size() - 1);
+                              GsSpotPair newSpot = nsp.findKDWSE(new Point2D.Double(
+                                      tSpot.getXCenter(), tSpot.getYCenter()));
+                              if (newSpot == null) {
+                                 track.addMissing();
+                                 if (track.missingMoreThan(nrMissing)) {
+                                    // track could not be extended, finalize it
+                                    // Write out the track:
+                                    if (track.size() > minNr) {
+                                       writeTrack(rowData, track.getList(), trackNr);
+                                       trackNr++;
+                                       // and remove from the list of tracks
+                                       // to avoid a concurrent modification exception
+                                       // the removal needs to be a two step process
+                                       removedTracks.add(track);
+                                    }
+                                 }
+                              } else {
+                                 track.resetMissing();
+                                 track.add(newSpot.getGSD());
+                                 markedSpots.add(newSpot.getGSD());
+                              }
+                           }
+                           // second part of removing tracks
+                           for (TrackData track : removedTracks) {
+                              tracks.remove(track);
+                           }
+                        }
+                        // go through spots and start a new track with any spot 
+                        // that was not part of a track
+                        for (SpotData spot : spots) {
+                           if (!markedSpots.contains(spot)) {
+                              TrackData track = new TrackData();
+                              track.add(spot);
+                              tracks.add(track);
+                           }
+                        }
+                     }
+                  }
+                  // add tracks that made it to the end to destination list
+                  for (TrackData track : tracks) {
+                     if (track.size() > minNr) {
+                        writeTrack(rowData, track.getList(), trackNr);
+                        trackNr++;
+                     }
+                  }
+                  tracks.clear();
+               }
+            }
+         }
+      } catch (OutOfMemoryError oome) {
+         JOptionPane.showMessageDialog(getInstance(), "Out of memory");
+      }
+   }
+   
+   private static void writeTrack(RowData rowData, List<SpotData> track, int trackNr) {
+      DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Track " + trackNr,
+              rowData.title_, rowData.dw_, "", rowData.width_,
+              rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
+              rowData.shape_, rowData.halfSize_, 1, rowData.nrFrames_,
+              0, 1, track.size(), track, rowData.timePoints_, true,
+              DataCollectionForm.Coordinates.NM, false, 0.0, 0.0);
    }
 
 }
