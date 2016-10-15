@@ -75,7 +75,7 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    @Override
    public void keyPressed(KeyEvent e) {
       key_ = e.getKeyCode();
-     // t_.start();
+      t_.start();
    }
 
    @Override
