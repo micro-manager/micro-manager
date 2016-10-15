@@ -23,7 +23,6 @@ import java.awt.Polygon;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
@@ -45,6 +44,7 @@ import javax.swing.JLabel;
 import javax.swing.JSeparator;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayWindow;
 
@@ -83,7 +83,6 @@ public class MainForm extends JFrame implements ij.ImageListener{
    // we are a singleton with only one window
    public static boolean WINDOWOPEN = false;
 
-   private Preferences prefs_;
    private final Studio studio_;
    
    // Store values of dropdown menus:
@@ -142,35 +141,35 @@ public class MainForm extends JFrame implements ij.ImageListener{
 
        studio_ = studio;
        
-       // TODO: convert to using MM profile
-       if (prefs_ == null)
-            prefs_ = Preferences.userNodeForPackage(this.getClass());
-       noiseToleranceTextField_.setText(Integer.toString(prefs_.getInt(NOISETOLERANCE,100)));
-       photonConversionTextField_.setText(Double.toString(prefs_.getDouble(PCF, 10.41)));
-       emGainTextField_.setText(Double.toString(prefs_.getDouble(GAIN, 50)));
-       pixelSizeTextField_.setText(Double.toString(prefs_.getDouble(PIXELSIZE, 107.0)));
-       baseLevelTextField.setText(Double.toString(prefs_.getDouble(BACKGROUNDLEVEL, 100)));
-       timeIntervalTextField_.setText(Double.toString(prefs_.getDouble(TIMEINTERVALMS, 1)));
-       zStepTextField_.setText(Double.toString(prefs_.getDouble(ZSTEPSIZE, 50)));                   
+       UserProfile up = studio_.getUserProfile();
+       Class oc = MainForm.class;
+       noiseToleranceTextField_.setText(Integer.toString(up.getInt(oc, NOISETOLERANCE,100)));
+       photonConversionTextField_.setText(Double.toString(up.getDouble(oc, PCF, 10.41)));
+       emGainTextField_.setText(Double.toString(up.getDouble(oc, GAIN, 50.0)));
+       pixelSizeTextField_.setText(Double.toString(up.getDouble(oc, PIXELSIZE, 107.0)));
+       baseLevelTextField.setText(Double.toString(up.getDouble(oc, BACKGROUNDLEVEL, 100.0)));
+       timeIntervalTextField_.setText(Double.toString(up.getDouble(oc, TIMEINTERVALMS, 1.0)));
+       zStepTextField_.setText(Double.toString(up.getDouble(oc, ZSTEPSIZE, 50.0))); 
+       
        pixelSizeTextField_.getDocument().addDocumentListener(new BackgroundCleaner(pixelSizeTextField_));
        emGainTextField_.getDocument().addDocumentListener(new BackgroundCleaner(emGainTextField_));      
        timeIntervalTextField_.getDocument().addDocumentListener(new BackgroundCleaner(timeIntervalTextField_));
        
-       minSigmaTextField_.setText(Double.toString(prefs_.getDouble(SIGMAMIN, 100)));
-       maxSigmaTextField_.setText(Double.toString(prefs_.getDouble(SIGMAMAX, 200)));
-       minNrPhotonsTextField_.setText(Double.toString(prefs_.getDouble(NRPHOTONSMIN, 500)));
-       maxNrPhotonsTextField_.setText(Double.toString(prefs_.getDouble(NRPHOTONSMAX, 50000)));
-       filterDataCheckBoxNrPhotons_.setSelected(prefs_.getBoolean(USENRPHOTONSFILTER, false));
-       fitDimensionsComboBox1_.setSelectedIndex(prefs_.getInt(FITSHAPE, 1) - 1);
-       fitMethodComboBox1_.setSelectedIndex(prefs_.getInt(FITMODE, 0));
-       maxIterationsTextField_.setText(Integer.toString(prefs_.getInt(MAXITERATIONS, 250)));
-       boxSizeTextField.setText(Integer.toString(prefs_.getInt(BOXSIZE, 16)));
-       filterDataCheckBoxWidth_.setSelected(prefs_.getBoolean(USEFILTER, false));
-       preFilterComboBox_.setSelectedIndex(prefs_.getInt(PREFILTER, 0));
-       endTrackCheckBox_.setSelected(prefs_.getBoolean(ENDTRACKBOOL, false));
-       endTrackSpinner_.setValue(prefs_.getInt(ENDTRACKINT, 0));
-       skipChannelsCheckBox_.setSelected(prefs_.getBoolean(SKIPCHANNELS, false));
-       channelsToSkip_.setText(prefs_.get(CHANNELSKIPSTRING, ""));
+       minSigmaTextField_.setText(Double.toString(up.getDouble(oc, SIGMAMIN, 100.0)));
+       maxSigmaTextField_.setText(Double.toString(up.getDouble(oc, SIGMAMAX, 200.0)));
+       minNrPhotonsTextField_.setText(Double.toString(up.getDouble(oc, NRPHOTONSMIN, 500.0)));
+       maxNrPhotonsTextField_.setText(Double.toString(up.getDouble(oc, NRPHOTONSMAX, 50000.0)));
+       filterDataCheckBoxNrPhotons_.setSelected(up.getBoolean(oc, USENRPHOTONSFILTER, false));
+       fitDimensionsComboBox1_.setSelectedIndex(up.getInt(oc, FITSHAPE, 1) - 1);
+       fitMethodComboBox1_.setSelectedIndex(up.getInt(oc, FITMODE, 0));
+       maxIterationsTextField_.setText(Integer.toString(up.getInt(oc, MAXITERATIONS, 250)));
+       boxSizeTextField.setText(Integer.toString(up.getInt(oc, BOXSIZE, 8)));
+       filterDataCheckBoxWidth_.setSelected(up.getBoolean(oc, USEFILTER, false));
+       preFilterComboBox_.setSelectedIndex(up.getInt(oc, PREFILTER, 0));
+       endTrackCheckBox_.setSelected(up.getBoolean(oc, ENDTRACKBOOL, false));
+       endTrackSpinner_.setValue(up.getInt(oc, ENDTRACKINT, 0));
+       skipChannelsCheckBox_.setSelected(up.getBoolean(oc, SKIPCHANNELS, false));
+       channelsToSkip_.setText(up.getString(oc, CHANNELSKIPSTRING, ""));
              
        DocumentListener updateNoiseOverlay = new DocumentListener() {
 
@@ -206,7 +205,7 @@ public class MainForm extends JFrame implements ij.ImageListener{
           
        super.setTitle("Localization Microscopy");
        
-       super.setLocation(prefs_.getInt(FRAMEXPOS, 100), prefs_.getInt(FRAMEYPOS, 100));
+       super.setLocation(up.getInt(oc, FRAMEXPOS, 100), up.getInt(oc, FRAMEYPOS, 100));
        
        ImagePlus.addImageListener(this);
        super.setVisible(true);
@@ -715,30 +714,32 @@ public class MainForm extends JFrame implements ij.ImageListener{
     
     private void formWindowClosing(java.awt.event.WindowEvent evt) {
        try {
-       prefs_.put(NOISETOLERANCE, noiseToleranceTextField_.getText());
-       prefs_.putDouble(PCF, NumberUtils.displayStringToDouble(photonConversionTextField_.getText()));
-       prefs_.putDouble(GAIN, NumberUtils.displayStringToDouble(emGainTextField_.getText()));
-       prefs_.putDouble(PIXELSIZE, NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));      
-       prefs_.putDouble(TIMEINTERVALMS, NumberUtils.displayStringToDouble(timeIntervalTextField_.getText()));
-       prefs_.putDouble(ZSTEPSIZE, NumberUtils.displayStringToDouble(zStepTextField_.getText()));
-       prefs_.putDouble(BACKGROUNDLEVEL, NumberUtils.displayStringToDouble(baseLevelTextField.getText()));
-       prefs_.putBoolean(USEFILTER, filterDataCheckBoxWidth_.isSelected());
-       prefs_.putDouble(SIGMAMIN, NumberUtils.displayStringToDouble(minSigmaTextField_.getText()));
-       prefs_.putDouble(SIGMAMAX, NumberUtils.displayStringToDouble(maxSigmaTextField_.getText()));
-       prefs_.putBoolean(USENRPHOTONSFILTER, filterDataCheckBoxNrPhotons_.isSelected());
-       prefs_.putDouble(NRPHOTONSMIN, NumberUtils.displayStringToDouble(minNrPhotonsTextField_.getText()));
-       prefs_.putDouble(NRPHOTONSMAX, NumberUtils.displayStringToDouble(maxNrPhotonsTextField_.getText()));
-       prefs_.putInt(MAXITERATIONS, NumberUtils.displayStringToInt(maxIterationsTextField_.getText()));
-       prefs_.putInt(BOXSIZE, NumberUtils.displayStringToInt(boxSizeTextField.getText()));
-       prefs_.putInt(PREFILTER, preFilterComboBox_.getSelectedIndex());
-       prefs_.putInt(FRAMEXPOS, getX());
-       prefs_.putInt(FRAMEYPOS, getY());
-       prefs_.putBoolean(ENDTRACKBOOL, endTrackCheckBox_.isSelected() );
-       prefs_.putInt(ENDTRACKINT, (Integer) endTrackSpinner_.getValue() );
-       prefs_.putInt(FITMODE, fitMethodComboBox1_.getSelectedIndex());
-       prefs_.putInt(FITSHAPE, fitDimensionsComboBox1_.getSelectedIndex() + 1);
-       prefs_.putBoolean(SKIPCHANNELS, skipChannelsCheckBox_.isSelected());
-       prefs_.put(CHANNELSKIPSTRING, channelsToSkip_.getText());
+                 UserProfile up = studio_.getUserProfile();
+       Class oc = MainForm.class;
+       up.setString(oc, NOISETOLERANCE, noiseToleranceTextField_.getText());
+       up.setDouble(oc, PCF, NumberUtils.displayStringToDouble(photonConversionTextField_.getText()));
+       up.setDouble(oc, GAIN, NumberUtils.displayStringToDouble(emGainTextField_.getText()));
+       up.setDouble(oc, PIXELSIZE, NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));      
+       up.setDouble(oc, TIMEINTERVALMS, NumberUtils.displayStringToDouble(timeIntervalTextField_.getText()));
+       up.setDouble(oc, ZSTEPSIZE, NumberUtils.displayStringToDouble(zStepTextField_.getText()));
+       up.setDouble(oc, BACKGROUNDLEVEL, NumberUtils.displayStringToDouble(baseLevelTextField.getText()));
+       up.setBoolean(oc, USEFILTER, filterDataCheckBoxWidth_.isSelected());
+       up.setDouble(oc, SIGMAMIN, NumberUtils.displayStringToDouble(minSigmaTextField_.getText()));
+       up.setDouble(oc, SIGMAMAX, NumberUtils.displayStringToDouble(maxSigmaTextField_.getText()));
+       up.setBoolean(oc, USENRPHOTONSFILTER, filterDataCheckBoxNrPhotons_.isSelected());
+       up.setDouble(oc, NRPHOTONSMIN, NumberUtils.displayStringToDouble(minNrPhotonsTextField_.getText()));
+       up.setDouble(oc, NRPHOTONSMAX, NumberUtils.displayStringToDouble(maxNrPhotonsTextField_.getText()));
+       up.setInt(oc, MAXITERATIONS, NumberUtils.displayStringToInt(maxIterationsTextField_.getText()));
+       up.setInt(oc, BOXSIZE, NumberUtils.displayStringToInt(boxSizeTextField.getText()));
+       up.setInt(oc, PREFILTER, preFilterComboBox_.getSelectedIndex());
+       up.setInt(oc, FRAMEXPOS, getX());
+       up.setInt(oc, FRAMEYPOS, getY());
+       up.setBoolean(oc, ENDTRACKBOOL, endTrackCheckBox_.isSelected() );
+       up.setInt(oc, ENDTRACKINT, (Integer) endTrackSpinner_.getValue() );
+       up.setInt(oc, FITMODE, fitMethodComboBox1_.getSelectedIndex());
+       up.setInt(oc, FITSHAPE, fitDimensionsComboBox1_.getSelectedIndex() + 1);
+       up.setBoolean(oc, SKIPCHANNELS, skipChannelsCheckBox_.isSelected());
+       up.setString(oc, CHANNELSKIPSTRING, channelsToSkip_.getText());
        } catch (ParseException ex) {
           ReportingUtils.logError(ex, "Error while closing Localization Microscopy plugin");
        }
