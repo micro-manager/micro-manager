@@ -6,10 +6,13 @@ import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import javax.swing.Timer;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayWindow;
@@ -34,6 +37,9 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    private final DisplayWindow dw_;
    private final Studio studio_;
    private final int hBS_;
+   private final Timer t_;
+   private int key_;
+   private int row_;
 
    public ResultsTableListener(Studio studio, DisplayWindow dw, ImagePlus siPlus, 
            ResultsTable res, TextWindow win, int halfBoxSize) {
@@ -44,32 +50,42 @@ public class ResultsTableListener implements KeyListener, MouseListener {
       win_ = win;
       tp_ = win.getTextPanel();
       hBS_ = halfBoxSize;
+      t_ = new Timer(200, new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            row_ = tp_.getSelectionStart();
+            if (key_ == KeyEvent.VK_J) {
+               if (row_ > 0) {
+                  row_--;
+                  tp_.setSelection(row_, row_);
+               }
+            } else if (key_ == KeyEvent.VK_K) {
+               if (row_ < tp_.getLineCount() - 1) {
+                  row_++;
+                  tp_.setSelection(row_, row_);
+               }
+            }
+            update();
+         }
+      });
+
    }
+   
 
    @Override
    public void keyPressed(KeyEvent e) {
-      int key = e.getKeyCode();
-      int row = tp_.getSelectionStart();
-      if (key == KeyEvent.VK_J) {
-         if (row > 0) {
-            row--;
-            tp_.setSelection(row, row);
-         }
-      } else if (key == KeyEvent.VK_K) {
-         if (row < tp_.getLineCount() - 1) {
-            row++;
-            tp_.setSelection(row, row);
-         }
-      }
-      update();
+      key_ = e.getKeyCode();
+     // t_.start();
    }
 
    @Override
    public void keyReleased(KeyEvent e) {
+      t_.stop();
    }
 
    @Override
    public void keyTyped(KeyEvent e) {
+      //t_.stop();
    }
 
    @Override
@@ -117,14 +133,12 @@ public class ResultsTableListener implements KeyListener, MouseListener {
          int x = (int) res_.getValue(Terms.XPIX, row);
          int y = (int) res_.getValue(Terms.YPIX, row);
          
-         if (dw_ !=null) {
+         if (dw_ != null) {
             Coords.CoordsBuilder builder = studio_.data().getCoordsBuilder();
             Coords coords = builder.channel(channel - 1).time(frame - 1).
-                    z(slice - 1).stagePosition (pos - 1).build();
+                    z(slice - 1).stagePosition(pos - 1).build();
             dw_.setDisplayedImageTo(coords);
-         }
-
-         if (siPlus_.isHyperStack()) {
+         } else if (siPlus_.isHyperStack()) {
             siPlus_.setPosition(channel, slice, frame);
          } else {
             siPlus_.setPosition(Math.max(frame, slice));
