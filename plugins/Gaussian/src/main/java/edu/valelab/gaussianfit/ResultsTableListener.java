@@ -37,7 +37,7 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    private final DisplayWindow dw_;
    private final Studio studio_;
    private final int hBS_;
-   private final Timer t_;
+   //private final Timer t_;
    private int key_;
    private int row_;
 
@@ -50,6 +50,7 @@ public class ResultsTableListener implements KeyListener, MouseListener {
       win_ = win;
       tp_ = win.getTextPanel();
       hBS_ = halfBoxSize;
+      /*
       t_ = new Timer(200, new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
@@ -68,6 +69,7 @@ public class ResultsTableListener implements KeyListener, MouseListener {
             update();
          }
       });
+*/
 
    }
    
@@ -75,12 +77,13 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    @Override
    public void keyPressed(KeyEvent e) {
       key_ = e.getKeyCode();
-      t_.start();
+      interpretKeyPress();
+      //t_.start();
    }
 
    @Override
    public void keyReleased(KeyEvent e) {
-      t_.stop();
+      //t_.stop();
    }
 
    @Override
@@ -110,7 +113,21 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    public void mouseExited(MouseEvent e) {
    }
 
-   ;
+   private void interpretKeyPress() {
+      row_ = tp_.getSelectionStart();
+      if (key_ == KeyEvent.VK_J) {
+         if (row_ > 0) {
+            row_--;
+            tp_.setSelection(row_, row_);
+         }
+      } else if (key_ == KeyEvent.VK_K) {
+         if (row_ < tp_.getLineCount() - 1) {
+            row_++;
+            tp_.setSelection(row_, row_);
+         }
+      }
+      update();
+   }
 
    private void update() {
       if (siPlus_ == null && dw_ == null) {
