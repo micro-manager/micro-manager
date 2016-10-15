@@ -197,6 +197,8 @@ public class MainForm extends JFrame implements ij.ImageListener{
        };
 
        updateWidthDisplay();
+       updateNrPhotonsDisplay();
+       updateEndTrack();
        noiseToleranceTextField_.getDocument().addDocumentListener(updateNoiseOverlay);
        boxSizeTextField.getDocument().addDocumentListener(updateNoiseOverlay);
        
@@ -382,7 +384,7 @@ public class MainForm extends JFrame implements ij.ImageListener{
       
       jLabel = new JLabel("Pre-Filter");
       jLabel.setFont(gFont); 
-      getContentPane().add(jLabel, indent + ", span, split2, grow");
+      getContentPane().add(jLabel, indent);
 
       preFilterComboBox_.setFont(gFont); 
       preFilterComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "None", "Gaussian1-5" }));
@@ -417,7 +419,7 @@ public class MainForm extends JFrame implements ij.ImageListener{
  
       jLabel = new JLabel("Dimensions");            
       jLabel.setFont(gFont);
-      getContentPane().add(jLabel, indent + ", split 2, span 2, grow");
+      getContentPane().add(jLabel, indent);
          
       fitDimensionsComboBox1_.setFont(gFont); 
       fitDimensionsComboBox1_.setModel(new javax.swing.DefaultComboBoxModel(
@@ -428,13 +430,13 @@ public class MainForm extends JFrame implements ij.ImageListener{
  
       jLabel = new JLabel("Fitter");      
       jLabel.setFont(gFont);
-      getContentPane().add(jLabel, indent + ", span 2, split 2, grow");
+      getContentPane().add(jLabel, indent);
       
       fitMethodComboBox1_.setFont(gFont); 
       fitMethodComboBox1_.setModel(new javax.swing.DefaultComboBoxModel(
               new String[] { "Simplex", "Levenberg-Marq", "Simplex-MLE", "Levenberg-Marq-Weighted" }));
       fitMethodComboBox1_.setMinimumSize(dropDownSize);    
-      fitMethodComboBox1_.setMaximumSize(dropDownSizeMax);
+      fitMethodComboBox1_.setMaximumSize(dropDownSize);
       getContentPane().add(fitMethodComboBox1_, "gapright push, wrap");
 
       jLabel = new JLabel("Max Iterations");      
@@ -504,6 +506,12 @@ public class MainForm extends JFrame implements ij.ImageListener{
       jLabel3.setFont(gFont); 
       getContentPane().add(jLabel3, "wrap");
 
+      filterDataCheckBoxNrPhotons_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            updateNrPhotonsDisplay();
+         }
+      });
       getContentPane().add(filterDataCheckBoxNrPhotons_, indent + ", span, split 4");
 
       minNrPhotonsTextField_.setFont(gFont); 
@@ -532,10 +540,16 @@ public class MainForm extends JFrame implements ij.ImageListener{
  
       endTrackCheckBox_.setFont(gFont); 
       endTrackCheckBox_.setText("End track when missing");
+      endTrackCheckBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            updateEndTrack();
+         }
+      });
       getContentPane().add(endTrackCheckBox_, indent + ", span 3, split 3");
 
       endTrackSpinner_.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
-      getContentPane().add(endTrackSpinner_);
+      getContentPane().add(endTrackSpinner_, "width 40");
 
       jLabel.setText(" frames");
       jLabel.setFont(gFont); 
@@ -687,6 +701,17 @@ public class MainForm extends JFrame implements ij.ImageListener{
       widthLabel_.setEnabled(selected);
       maxSigmaTextField_.setEditable(selected);
     }
+   
+   private void updateNrPhotonsDisplay() {
+      boolean selected = filterDataCheckBoxNrPhotons_.isSelected();
+      minNrPhotonsTextField_.setEnabled(selected);
+      maxNrPhotonsTextField_.setEnabled(selected);
+   }
+   
+   private void updateEndTrack() {
+      boolean selected = endTrackCheckBox_.isSelected();
+      endTrackSpinner_.setEnabled(selected);
+   }
     
     private void formWindowClosing(java.awt.event.WindowEvent evt) {
        try {
@@ -713,6 +738,7 @@ public class MainForm extends JFrame implements ij.ImageListener{
        prefs_.putInt(FITMODE, fitMethodComboBox1_.getSelectedIndex());
        prefs_.putInt(FITSHAPE, fitDimensionsComboBox1_.getSelectedIndex() + 1);
        prefs_.putBoolean(SKIPCHANNELS, skipChannelsCheckBox_.isSelected());
+       prefs_.put(CHANNELSKIPSTRING, channelsToSkip_.getText());
        } catch (ParseException ex) {
           ReportingUtils.logError(ex, "Error while closing Localization Microscopy plugin");
        }
