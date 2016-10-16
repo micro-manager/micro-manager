@@ -38,6 +38,7 @@ import edu.valelab.gaussianfit.utils.ReportingUtils;
 import edu.valelab.gaussianfit.utils.NumberUtils;
 import edu.valelab.gaussianfit.utils.FileDialogs;
 import edu.valelab.gaussianfit.utils.FileDialogs.FileType;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
@@ -102,13 +103,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final String RENDERMAG = "VisualizationMagnification";
    private static final String PAIRSMAXDISTANCE = "PairsMaxDistance";
    private static final String METHOD2C = "MethodFor2CCorrection";
-   private static final String COL0Width = "Col0Width";  
-   private static final String COL1Width = "Col1Width";
-   private static final String COL2Width = "Col2Width";
-   private static final String COL3Width = "Col3Width";
-   private static final String COL4Width = "Col4Width";
-   private static final String COL5Width = "Col5Width";
-   private static final String COL6Width = "Col6Width";
+   private static final String COL0WIDTH = "Col0Width";  
+   private static final String COL1WIDTH = "Col1Width";
+   private static final String COL2WIDTH = "Col2Width";
+   private static final String COL3WIDTH = "Col3Width";
+   private static final String COL4WIDTH = "Col4Width";
+   private static final String COL5WIDTH = "Col5Width";
+   private static final String COL6WIDTH = "Col6Width";
    
    private static final int OK = 0;
    private static final int FAILEDDONOTINFORM = 1;
@@ -269,7 +270,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
               
        if (prefs_ == null)
           prefs_ = Preferences.userNodeForPackage(this.getClass());
-       setBounds(prefs_.getInt(FRAMEXPOS, 50), prefs_.getInt(FRAMEYPOS, 100),
+       super.setBounds(prefs_.getInt(FRAMEXPOS, 50), prefs_.getInt(FRAMEYPOS, 100),
              prefs_.getInt(FRAMEWIDTH, 800), prefs_.getInt(FRAMEHEIGHT, 250));
        filterSigmaCheckBox_.setSelected(prefs_.getBoolean(USESIGMA, false));
        sigmaMin_.setText(prefs_.get(SIGMAMIN, "0.0"));
@@ -284,16 +285,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
        
        jTable1_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
        TableColumnModel cm = jTable1_.getColumnModel();
-       cm.getColumn(0).setPreferredWidth(prefs_.getInt(COL0Width, 25));
-       cm.getColumn(1).setPreferredWidth(prefs_.getInt(COL1Width, 300));
-       cm.getColumn(2).setPreferredWidth(prefs_.getInt(COL2Width, 150));
-       cm.getColumn(3).setPreferredWidth(prefs_.getInt(COL3Width, 75));
-       cm.getColumn(4).setPreferredWidth(prefs_.getInt(COL4Width, 75));
-       cm.getColumn(5).setPreferredWidth(prefs_.getInt(COL5Width, 75));
-       cm.getColumn(6).setPreferredWidth(prefs_.getInt(COL6Width, 75));
+       cm.getColumn(0).setPreferredWidth(prefs_.getInt(COL0WIDTH, 25));
+       cm.getColumn(1).setPreferredWidth(prefs_.getInt(COL1WIDTH, 300));
+       cm.getColumn(2).setPreferredWidth(prefs_.getInt(COL2WIDTH, 150));
+       cm.getColumn(3).setPreferredWidth(prefs_.getInt(COL3WIDTH, 75));
+       cm.getColumn(4).setPreferredWidth(prefs_.getInt(COL4WIDTH, 75));
+       cm.getColumn(5).setPreferredWidth(prefs_.getInt(COL5WIDTH, 75));
+       cm.getColumn(6).setPreferredWidth(prefs_.getInt(COL6WIDTH, 75));
        
        // Drag and Drop support for file loading
-       this.setTransferHandler(new TransferHandler() {
+       super.setTransferHandler(new TransferHandler() {
 
          @Override
          public boolean canImport(TransferHandler.TransferSupport support) {
@@ -323,7 +324,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       });
 
-      setVisible(true);
+      super.setVisible(true);
    }
 
 
@@ -481,11 +482,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
       setTitle("Gaussian tracking data");
       setMinimumSize(new java.awt.Dimension(450, 80));
       addWindowListener(new java.awt.event.WindowAdapter() {
+         @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
             formWindowClosing(evt);
          }
       });
       addComponentListener(new java.awt.event.ComponentAdapter() {
+         @Override
          public void componentResized(java.awt.event.ComponentEvent evt) {
             formComponentResized(evt);
          }
@@ -521,6 +524,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       filterIntensityCheckBox_.setText("Intensity");
       filterIntensityCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             filterIntensityCheckBox_ActionPerformed(evt);
          }
@@ -529,6 +533,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       filterSigmaCheckBox_.setText("Sigma");
       filterSigmaCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             filterSigmaCheckBox_ActionPerformed(evt);
          }
@@ -540,6 +545,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       renderButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       renderButton_.setText("Render");
       renderButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             renderButton_ActionPerformed(evt);
          }
@@ -551,6 +557,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       zCalibrateButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       zCalibrateButton_.setText("Z Calibration");
       zCalibrateButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             zCalibrateButton_ActionPerformed(evt);
          }
@@ -562,6 +569,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       unjitterButton_.setText("Drift Correct");
       unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             unjitterButton_ActionPerformed(evt);
          }
@@ -570,6 +578,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       linkButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       linkButton_.setText("Link");
       linkButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             linkButton_ActionPerformed(evt);
          }
@@ -580,6 +589,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       centerTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       centerTrackButton_.setText("Center");
       centerTrackButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             centerTrackButton_ActionPerformed(evt);
          }
@@ -588,6 +598,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       straightenTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       straightenTrackButton_.setText("Straighten");
       straightenTrackButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             straightenTrackButton_ActionPerformed(evt);
          }
@@ -596,6 +607,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       logLogCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       logLogCheckBox_.setText("log-log");
       logLogCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             logLogCheckBox_ActionPerformed(evt);
          }
@@ -607,6 +619,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       SubRange.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       SubRange.setText("SubRange");
       SubRange.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             SubRangeActionPerformed(evt);
          }
@@ -615,6 +628,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       mathButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       mathButton_.setText("Math");
       mathButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             mathButton_ActionPerformed(evt);
          }
@@ -623,6 +637,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       averageTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       averageTrackButton_.setText("Average");
       averageTrackButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             averageTrackButton_ActionPerformed(evt);
          }
@@ -631,6 +646,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       powerSpectrumCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       powerSpectrumCheckBox_.setText("PSD");
       powerSpectrumCheckBox_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             powerSpectrumCheckBox_ActionPerformed(evt);
          }
@@ -639,6 +655,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       plotButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       plotButton_.setText("Plot");
       plotButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             plotButton_ActionPerformed(evt);
          }
@@ -661,6 +678,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       c2CorrectButton.setText("2C Correct");
       c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             c2CorrectButtonActionPerformed(evt);
          }
@@ -669,6 +687,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       method2CBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       method2CBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "NR-Similarity", "Affine", "Piecewise-Affine", "LWM" }));
       method2CBox_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             method2CBox_ActionPerformed(evt);
          }
@@ -677,6 +696,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       c2StandardButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       c2StandardButton.setText("2C Reference");
       c2StandardButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             c2StandardButtonActionPerformed(evt);
          }
@@ -690,6 +710,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       infoButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       infoButton_.setText("Info");
       infoButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             infoButton_ActionPerformed(evt);
          }
@@ -698,6 +719,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       removeButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       removeButton.setText("Remove");
       removeButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             removeButtonActionPerformed(evt);
          }
@@ -709,6 +731,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       saveButton.setText("Save");
       saveButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             saveButtonActionPerformed(evt);
          }
@@ -717,6 +740,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       loadButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       loadButton.setText("Load");
       loadButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             loadButtonActionPerformed(evt);
          }
@@ -725,6 +749,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       showButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       showButton_.setText("Show");
       showButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             showButton_ActionPerformed(evt);
          }
@@ -739,6 +764,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       combineButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       combineButton_.setText("Combine");
       combineButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             combineButton_ActionPerformed(evt);
          }
@@ -747,6 +773,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       listButton_1.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       listButton_1.setText("List Pairs");
       listButton_1.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             listButton_1ActionPerformed(evt);
          }
@@ -1364,13 +1391,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
        prefs_.put(PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
        
        TableColumnModel cm = jTable1_.getColumnModel();
-       prefs_.putInt(COL0Width, cm.getColumn(0).getWidth());
-       prefs_.putInt(COL1Width, cm.getColumn(1).getWidth());
-       prefs_.putInt(COL2Width, cm.getColumn(2).getWidth());
-       prefs_.putInt(COL3Width, cm.getColumn(3).getWidth());
-       prefs_.putInt(COL4Width, cm.getColumn(4).getWidth());
-       prefs_.putInt(COL5Width, cm.getColumn(5).getWidth());
-       prefs_.putInt(COL6Width, cm.getColumn(6).getWidth());
+       prefs_.putInt(COL0WIDTH, cm.getColumn(0).getWidth());
+       prefs_.putInt(COL1WIDTH, cm.getColumn(1).getWidth());
+       prefs_.putInt(COL2WIDTH, cm.getColumn(2).getWidth());
+       prefs_.putInt(COL3WIDTH, cm.getColumn(3).getWidth());
+       prefs_.putInt(COL4WIDTH, cm.getColumn(4).getWidth());
+       prefs_.putInt(COL5WIDTH, cm.getColumn(5).getWidth());
+       prefs_.putInt(COL6WIDTH, cm.getColumn(6).getWidth());
        
        setVisible(false);
    }//GEN-LAST:event_formWindowClosing
@@ -1963,7 +1990,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    class ButtonRenderer extends JButton implements TableCellRenderer {
 
       public ButtonRenderer() {
-         setOpaque(true);
+         super.setOpaque(true);
       }
 
       @Override
@@ -2056,14 +2083,21 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
          // TODO: the following does not work, there is some voodoo going on here
          for (MouseListener ms : tp.getMouseListeners()) {
+            
             tp.removeMouseListener(ms);
          }
          for (KeyListener ks : tp.getKeyListeners()) {
             tp.removeKeyListener(ks);
          }
+         for (KeyListener ks : win.getKeyListeners()) {
+            win.removeKeyListener(ks);
+         }
          
          ResultsTableListener myk = new ResultsTableListener(studio_, rowData.dw_, siPlus, 
                  rt, win, rowData.halfSize_);
+         
+         tp.removeKeyListener(IJ.getInstance());
+         win.removeKeyListener(IJ.getInstance());
          tp.addKeyListener(myk);
          tp.addMouseListener(myk);
          frame.toFront();
