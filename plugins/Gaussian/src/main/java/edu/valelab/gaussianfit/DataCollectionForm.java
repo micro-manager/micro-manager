@@ -61,7 +61,6 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
-import java.util.prefs.Preferences;
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -71,6 +70,7 @@ import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.stat.StatUtils;
 import org.jfree.data.xy.XYSeries;
 import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 
@@ -115,7 +115,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final int FAILEDDONOTINFORM = 1;
    private static final int FAILEDDOINFORM = 2;
    
-   private Preferences prefs_;
    private static final FileType TSF_FILE = new FileType("TSF File",
            "Tagged Spot Format file",
            "./data.tsf",
@@ -268,30 +267,33 @@ public class DataCollectionForm extends javax.swing.JFrame {
        visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(renderSizes_));
        jScrollPane1_.setName("Gaussian Spot Fitting Data Sets");      
               
-       if (prefs_ == null)
-          prefs_ = Preferences.userNodeForPackage(this.getClass());
-       super.setBounds(prefs_.getInt(FRAMEXPOS, 50), prefs_.getInt(FRAMEYPOS, 100),
-             prefs_.getInt(FRAMEWIDTH, 800), prefs_.getInt(FRAMEHEIGHT, 250));
-       filterSigmaCheckBox_.setSelected(prefs_.getBoolean(USESIGMA, false));
-       sigmaMin_.setText(prefs_.get(SIGMAMIN, "0.0"));
-       sigmaMax_.setText(prefs_.get(SIGMAMAX, "20.0"));
-       filterIntensityCheckBox_.setSelected(prefs_.getBoolean(USEINT, false));
-       intensityMin_.setText(prefs_.get(INTMIN, "0.0"));
-       intensityMax_.setText(prefs_.get(INTMAX, "20000"));
-       loadTSFDir_ = prefs_.get(LOADTSFDIR, "");
-       visualizationMagnification_.setSelectedIndex(prefs_.getInt(RENDERMAG, 0));
-       pairsMaxDistanceField_.setText(prefs_.get(PAIRSMAXDISTANCE, "500"));
-       method2CBox_.setSelectedItem(prefs_.get(METHOD2C, "LWM"));
-       
+      UserProfile up = studio_.getUserProfile();
+      Class oc = DataCollectionForm.class;
+      int x = up.getInt(oc, FRAMEXPOS, 50);
+      int y = up.getInt(oc, FRAMEYPOS, 100);
+      int width = up.getInt(oc, FRAMEWIDTH, 800);
+      int height = up.getInt(oc, FRAMEHEIGHT, 250);
+      super.setBounds(x, y, width, height);
+      filterSigmaCheckBox_.setSelected(up.getBoolean(oc, USESIGMA, false));
+      sigmaMin_.setText(up.getString(oc, SIGMAMIN, "0.0"));
+      sigmaMax_.setText(up.getString(oc, SIGMAMAX, "20.0"));
+      filterIntensityCheckBox_.setSelected(up.getBoolean(oc, USEINT, false));
+      intensityMin_.setText(up.getString(oc, INTMIN, "0.0"));
+      intensityMax_.setText(up.getString(oc, INTMAX, "20000"));
+      loadTSFDir_ = up.getString(oc, LOADTSFDIR, "");
+      visualizationMagnification_.setSelectedIndex(up.getInt(oc, RENDERMAG, 0));
+      pairsMaxDistanceField_.setText(up.getString(oc, PAIRSMAXDISTANCE, "500"));
+      method2CBox_.setSelectedItem(up.getString(oc, METHOD2C, "LWM"));
+      
        jTable1_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
        TableColumnModel cm = jTable1_.getColumnModel();
-       cm.getColumn(0).setPreferredWidth(prefs_.getInt(COL0WIDTH, 25));
-       cm.getColumn(1).setPreferredWidth(prefs_.getInt(COL1WIDTH, 300));
-       cm.getColumn(2).setPreferredWidth(prefs_.getInt(COL2WIDTH, 150));
-       cm.getColumn(3).setPreferredWidth(prefs_.getInt(COL3WIDTH, 75));
-       cm.getColumn(4).setPreferredWidth(prefs_.getInt(COL4WIDTH, 75));
-       cm.getColumn(5).setPreferredWidth(prefs_.getInt(COL5WIDTH, 75));
-       cm.getColumn(6).setPreferredWidth(prefs_.getInt(COL6WIDTH, 75));
+       cm.getColumn(0).setPreferredWidth(up.getInt(oc, COL0WIDTH, 25));
+       cm.getColumn(1).setPreferredWidth(up.getInt(oc, COL1WIDTH, 300));
+       cm.getColumn(2).setPreferredWidth(up.getInt(oc, COL2WIDTH, 150));
+       cm.getColumn(3).setPreferredWidth(up.getInt(oc, COL3WIDTH, 75));
+       cm.getColumn(4).setPreferredWidth(up.getInt(oc, COL4WIDTH, 75));
+       cm.getColumn(5).setPreferredWidth(up.getInt(oc, COL5WIDTH, 75));
+       cm.getColumn(6).setPreferredWidth(up.getInt(oc, COL6WIDTH, 75));
        
        // Drag and Drop support for file loading
        super.setTransferHandler(new TransferHandler() {
@@ -1375,29 +1377,31 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }//GEN-LAST:event_filterIntensityCheckBox_ActionPerformed
 
    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-       prefs_.putInt(FRAMEXPOS, getX());
-       prefs_.putInt(FRAMEYPOS, getY());
-       prefs_.putInt(FRAMEWIDTH, getWidth());
-       prefs_.putInt(FRAMEHEIGHT, getHeight());
+      UserProfile up = studio_.profile();
+      Class oc = DataCollectionForm.class;
+      up.setInt(oc, FRAMEXPOS, getX());
+       up.setInt(oc, FRAMEYPOS, getY());
+       up.setInt(oc, FRAMEWIDTH, getWidth());
+       up.setInt(oc, FRAMEHEIGHT, getHeight());
        
-       prefs_.putBoolean(USESIGMA, filterSigmaCheckBox_.isSelected());
-       prefs_.put(SIGMAMIN, sigmaMin_.getText());
-       prefs_.put(SIGMAMAX, sigmaMax_.getText());
-       prefs_.putBoolean(USEINT, filterIntensityCheckBox_.isSelected());
-       prefs_.put(INTMIN, intensityMin_.getText());
-       prefs_.put(INTMAX, intensityMax_.getText());
-       prefs_.put(LOADTSFDIR, loadTSFDir_);
-       prefs_.putInt(RENDERMAG, visualizationMagnification_.getSelectedIndex());
-       prefs_.put(PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
+       up.setBoolean(oc, USESIGMA, filterSigmaCheckBox_.isSelected());
+       up.setString(oc, SIGMAMIN, sigmaMin_.getText());
+       up.setString(oc, SIGMAMAX, sigmaMax_.getText());
+       up.setBoolean(oc, USEINT, filterIntensityCheckBox_.isSelected());
+       up.setString(oc, INTMIN, intensityMin_.getText());
+       up.setString(oc, INTMAX, intensityMax_.getText());
+       up.setString(oc, LOADTSFDIR, loadTSFDir_);
+       up.setInt(oc, RENDERMAG, visualizationMagnification_.getSelectedIndex());
+       up.setString(oc, PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
        
        TableColumnModel cm = jTable1_.getColumnModel();
-       prefs_.putInt(COL0WIDTH, cm.getColumn(0).getWidth());
-       prefs_.putInt(COL1WIDTH, cm.getColumn(1).getWidth());
-       prefs_.putInt(COL2WIDTH, cm.getColumn(2).getWidth());
-       prefs_.putInt(COL3WIDTH, cm.getColumn(3).getWidth());
-       prefs_.putInt(COL4WIDTH, cm.getColumn(4).getWidth());
-       prefs_.putInt(COL5WIDTH, cm.getColumn(5).getWidth());
-       prefs_.putInt(COL6WIDTH, cm.getColumn(6).getWidth());
+       up.setInt(oc, COL0WIDTH, cm.getColumn(0).getWidth());
+       up.setInt(oc, COL1WIDTH, cm.getColumn(1).getWidth());
+       up.setInt(oc, COL2WIDTH, cm.getColumn(2).getWidth());
+       up.setInt(oc, COL3WIDTH, cm.getColumn(3).getWidth());
+       up.setInt(oc, COL4WIDTH, cm.getColumn(4).getWidth());
+       up.setInt(oc, COL5WIDTH, cm.getColumn(5).getWidth());
+       up.setInt(oc, COL6WIDTH, cm.getColumn(6).getWidth());
        
        setVisible(false);
    }//GEN-LAST:event_formWindowClosing
@@ -1816,11 +1820,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
             ReportingUtils.showError("Z-Calibration failed");
          }
       }
-   }//GEN-LAST:event_zCalibrateButton_ActionPerformed
+   }
 
    private void method2CBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_method2CBox_ActionPerformed
-      prefs_.put(METHOD2C, (String) method2CBox_.getSelectedItem());
-   }//GEN-LAST:event_method2CBox_ActionPerformed
+      studio_.profile().setString(DataCollectionForm.class, METHOD2C, 
+              (String) method2CBox_.getSelectedItem());
+   }
 
    private String range_ = "";
 
