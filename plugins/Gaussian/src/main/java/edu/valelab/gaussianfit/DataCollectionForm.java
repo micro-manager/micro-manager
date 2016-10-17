@@ -17,6 +17,7 @@
 
 package edu.valelab.gaussianfit;
 
+import com.google.common.eventbus.Subscribe;
 import edu.valelab.gaussianfit.algorithm.FFTUtils;
 import edu.valelab.gaussianfit.datasetdisplay.ImageRenderer;
 import edu.valelab.gaussianfit.datasettransformations.SpotDataFilter;
@@ -43,7 +44,6 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
 import ij.text.TextPanel;
@@ -72,6 +72,7 @@ import org.jfree.data.xy.XYSeries;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 
 
@@ -382,6 +383,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
       });
 
       super.setVisible(true);
+      studio_.events().registerForEvents(this);
+   }
+   
+   @Subscribe
+   public void closeRequested( ShutdownCommencingEvent sce){
+      this.dispose();
    }
 
 
@@ -1247,18 +1254,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
          Point s = MouseInfo.getPointerInfo().getLocation();
          new ExtractTracksDialog(studio_, rowData_.get(row), s);
       }
-
-      // SpotLinker.extractTracks(rowData_.get(row), 10, 0, 100.0);
-
    }
     
-   private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
+   private void formComponentResized(java.awt.event.ComponentEvent evt) {
       //jScrollPane1.setSize(this.getSize());
       Dimension d = getSize();
       d.height -= 155;
       jScrollPane1_.setSize(d);
       jScrollPane1_.getViewport().setViewSize(d);
-   }//GEN-LAST:event_formComponentResized
+   }
 
    /**
     * Use the selected data set as the reference for 2-channel color correction
@@ -1459,31 +1463,32 @@ public class DataCollectionForm extends javax.swing.JFrame {
       UserProfile up = studio_.profile();
       Class oc = DataCollectionForm.class;
       up.setInt(oc, FRAMEXPOS, getX());
-       up.setInt(oc, FRAMEYPOS, getY());
-       up.setInt(oc, FRAMEWIDTH, getWidth());
-       up.setInt(oc, FRAMEHEIGHT, getHeight());
+      up.setInt(oc, FRAMEYPOS, getY());
+      up.setInt(oc, FRAMEWIDTH, getWidth());
+      up.setInt(oc, FRAMEHEIGHT, getHeight());
        
-       up.setBoolean(oc, USESIGMA, filterSigmaCheckBox_.isSelected());
-       up.setString(oc, SIGMAMIN, sigmaMin_.getText());
-       up.setString(oc, SIGMAMAX, sigmaMax_.getText());
-       up.setBoolean(oc, USEINT, filterIntensityCheckBox_.isSelected());
-       up.setString(oc, INTMIN, intensityMin_.getText());
-       up.setString(oc, INTMAX, intensityMax_.getText());
-       up.setString(oc, LOADTSFDIR, loadTSFDir_);
-       up.setInt(oc, RENDERMAG, visualizationMagnification_.getSelectedIndex());
-       up.setString(oc, PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
+      up.setBoolean(oc, USESIGMA, filterSigmaCheckBox_.isSelected());
+      up.setString(oc, SIGMAMIN, sigmaMin_.getText());
+      up.setString(oc, SIGMAMAX, sigmaMax_.getText());
+      up.setBoolean(oc, USEINT, filterIntensityCheckBox_.isSelected());
+      up.setString(oc, INTMIN, intensityMin_.getText());
+      up.setString(oc, INTMAX, intensityMax_.getText());
+      up.setString(oc, LOADTSFDIR, loadTSFDir_);
+      up.setInt(oc, RENDERMAG, visualizationMagnification_.getSelectedIndex());
+      up.setString(oc, PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
        
-       TableColumnModel cm = jTable1_.getColumnModel();
-       up.setInt(oc, COL0WIDTH, cm.getColumn(0).getWidth());
-       up.setInt(oc, COL1WIDTH, cm.getColumn(1).getWidth());
-       up.setInt(oc, COL2WIDTH, cm.getColumn(2).getWidth());
-       up.setInt(oc, COL3WIDTH, cm.getColumn(3).getWidth());
-       up.setInt(oc, COL4WIDTH, cm.getColumn(4).getWidth());
-       up.setInt(oc, COL5WIDTH, cm.getColumn(5).getWidth());
-       up.setInt(oc, COL6WIDTH, cm.getColumn(6).getWidth());
-       
-       setVisible(false);
-   }//GEN-LAST:event_formWindowClosing
+      TableColumnModel cm = jTable1_.getColumnModel();
+      up.setInt(oc, COL0WIDTH, cm.getColumn(0).getWidth());
+      up.setInt(oc, COL1WIDTH, cm.getColumn(1).getWidth());
+      up.setInt(oc, COL2WIDTH, cm.getColumn(2).getWidth());
+      up.setInt(oc, COL3WIDTH, cm.getColumn(3).getWidth());
+      up.setInt(oc, COL4WIDTH, cm.getColumn(4).getWidth());
+      up.setInt(oc, COL5WIDTH, cm.getColumn(5).getWidth());
+      up.setInt(oc, COL6WIDTH, cm.getColumn(6).getWidth());
+      
+      setVisible(false);
+      studio_.events().unregisterForEvents(this);
+   }
 
    /**
     * Present user with summary data of this dataset.
