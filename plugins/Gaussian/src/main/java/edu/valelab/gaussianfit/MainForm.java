@@ -143,7 +143,7 @@ public class MainForm extends JFrame implements ij.ImageListener{
        
        UserProfile up = studio_.getUserProfile();
        Class oc = MainForm.class;
-       noiseToleranceTextField_.setText(Integer.toString(up.getInt(oc, NOISETOLERANCE,100)));
+       noiseToleranceTextField_.setText((up.getString(oc, NOISETOLERANCE, "100")));
        photonConversionTextField_.setText(Double.toString(up.getDouble(oc, PCF, 10.41)));
        emGainTextField_.setText(Double.toString(up.getDouble(oc, GAIN, 50.0)));
        pixelSizeTextField_.setText(Double.toString(up.getDouble(oc, PIXELSIZE, 107.0)));

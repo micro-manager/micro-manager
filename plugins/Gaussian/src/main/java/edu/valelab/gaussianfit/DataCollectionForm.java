@@ -128,6 +128,61 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private String dir_ = "";   
    public static ZCalibrator zc_ = new ZCalibrator();
    private final Studio studio_;
+   
+   // GUI elements
+   private javax.swing.JLabel IntLabel2;
+   private javax.swing.JLabel SigmaLabel2;
+   private javax.swing.JLabel SigmaLabel3;
+   private javax.swing.JButton SubRange;
+   private javax.swing.JButton averageTrackButton_;
+   private javax.swing.JButton c2CorrectButton;
+   private javax.swing.JButton c2StandardButton;
+   private javax.swing.JButton centerTrackButton_;
+   private javax.swing.JButton combineButton_;
+   private javax.swing.JCheckBox filterIntensityCheckBox_;
+   private javax.swing.JCheckBox filterSigmaCheckBox_;
+   private javax.swing.JButton infoButton_;
+   private javax.swing.JTextField intensityMax_;
+   private javax.swing.JTextField intensityMin_;
+   private javax.swing.JLabel jLabel1;
+   private javax.swing.JLabel jLabel2;
+   private javax.swing.JLabel jLabel3;
+   private javax.swing.JLabel jLabel4;
+   private javax.swing.JLabel jLabel5;
+   private javax.swing.JLabel jLabel6;
+   private javax.swing.JLabel jLabel7;
+   private javax.swing.JPanel jPanel1;
+   private javax.swing.JPanel jPanel2;
+   private javax.swing.JScrollPane jScrollPane1_;
+   private javax.swing.JSeparator jSeparator2;
+   private javax.swing.JSeparator jSeparator3;
+   private javax.swing.JSeparator jSeparator4;
+   private javax.swing.JTable jTable1_;
+   private javax.swing.JButton linkButton_;
+   private javax.swing.JButton listButton_1;
+   private javax.swing.JButton loadButton;
+   private javax.swing.JCheckBox logLogCheckBox_;
+   private javax.swing.JButton mathButton_;
+   private javax.swing.JComboBox method2CBox_;
+   private javax.swing.JTextField pairsMaxDistanceField_;
+   private javax.swing.JButton plotButton_;
+   private javax.swing.JComboBox plotComboBox_;
+   private javax.swing.JCheckBox powerSpectrumCheckBox_;
+   private javax.swing.JLabel referenceName_;
+   private javax.swing.JButton removeButton;
+   private javax.swing.JButton renderButton_;
+   private javax.swing.JButton saveButton;
+   private javax.swing.JComboBox saveFormatBox_;
+   private javax.swing.JButton showButton_;
+   private javax.swing.JButton extractTracksButton_;
+   private javax.swing.JTextField sigmaMax_;
+   private javax.swing.JTextField sigmaMin_;
+   private javax.swing.JButton straightenTrackButton_;
+   private javax.swing.JButton unjitterButton_;
+   private javax.swing.JComboBox visualizationMagnification_;
+   private javax.swing.JComboBox visualizationModel_;
+   private javax.swing.JButton zCalibrateButton_;
+   private javax.swing.JLabel zCalibrationLabel_;
       
    
    /**
@@ -472,6 +527,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       saveButton = new javax.swing.JButton();
       loadButton = new javax.swing.JButton();
       showButton_ = new javax.swing.JButton();
+      extractTracksButton_ = new javax.swing.JButton();
       jLabel2 = new javax.swing.JLabel();
       jLabel3 = new javax.swing.JLabel();
       combineButton_ = new javax.swing.JButton();
@@ -756,7 +812,16 @@ public class DataCollectionForm extends javax.swing.JFrame {
             showButton_ActionPerformed(evt);
          }
       });
-
+      
+      extractTracksButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      extractTracksButton_.setText("Extract Tracks");
+      extractTracksButton_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            extractTracksButton_ActionPerformed(evt);
+         }
+      });
+      
       jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       jLabel2.setText("< spot <");
 
@@ -797,7 +862,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                            .addComponent(saveButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
                            .addComponent(loadButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addComponent(showButton_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
+                           .addComponent(showButton_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
+                           .addComponent(extractTracksButton_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(4, 4, 4)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                            .addComponent(saveFormatBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -940,7 +1006,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                   .addGap(25, 25, 25)
                   .addComponent(loadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addGap(1, 1, 1)
-                  .addComponent(showButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
+                  .addComponent(showButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addGap(1, 1, 1)
+                  .addComponent(extractTracksButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(1, 1, 1)
                   .addComponent(saveFormatBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -1160,7 +1228,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        }
     }//GEN-LAST:event_removeButtonActionPerformed
 
-    private void showButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showButton_ActionPerformed
+    private void showButton_ActionPerformed(java.awt.event.ActionEvent evt) {
        int row = jTable1_.getSelectedRow();
        if (row > -1) {
           try {
@@ -1171,8 +1239,19 @@ public class DataCollectionForm extends javax.swing.JFrame {
        } else {
           JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to show");
        }
-    }//GEN-LAST:event_showButton_ActionPerformed
+    }
 
+   private void extractTracksButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      int row = jTable1_.getSelectedRow();
+      if (row > -1) {
+         Point s = MouseInfo.getPointerInfo().getLocation();
+         new ExtractTracksDialog(studio_, rowData_.get(row), s);
+      }
+
+      // SpotLinker.extractTracks(rowData_.get(row), 10, 0, 100.0);
+
+   }
+    
    private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
       //jScrollPane1.setSize(this.getSize());
       Dimension d = getSize();
@@ -1714,7 +1793,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    }
 
-   private void mathButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mathButton_ActionPerformed
+   private void mathButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int[] rows = new int[jTable1_.getRowCount()];
 
       for (int i = 0; i < rows.length; i++) {
@@ -1724,7 +1803,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       MathForm mf = new MathForm(rows, rows);
 
       mf.setVisible(true);
-   }//GEN-LAST:event_mathButton_ActionPerformed
+   }
 
    /**
     * Links spots by checking in consecutive frames whether the spot is still present
@@ -1771,6 +1850,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       } else {
          for (int row : rows) {
             RowData r = rowData_.get(row);
+            /*
             if (evt.getModifiers() > 0) {
                if (r.title_.equals(ij.IJ.getImage().getTitle())) {
                   ImagePlus ip = ij.IJ.getImage();
@@ -1782,6 +1862,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                }
             }
+            */
             TrackOperator.straightenTrack(r);
          }
       }
@@ -1934,59 +2015,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    
    // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JLabel IntLabel2;
-   private javax.swing.JLabel SigmaLabel2;
-   private javax.swing.JLabel SigmaLabel3;
-   private javax.swing.JButton SubRange;
-   private javax.swing.JButton averageTrackButton_;
-   private javax.swing.JButton c2CorrectButton;
-   private javax.swing.JButton c2StandardButton;
-   private javax.swing.JButton centerTrackButton_;
-   private javax.swing.JButton combineButton_;
-   private javax.swing.JCheckBox filterIntensityCheckBox_;
-   private javax.swing.JCheckBox filterSigmaCheckBox_;
-   private javax.swing.JButton infoButton_;
-   private javax.swing.JTextField intensityMax_;
-   private javax.swing.JTextField intensityMin_;
-   private javax.swing.JLabel jLabel1;
-   private javax.swing.JLabel jLabel2;
-   private javax.swing.JLabel jLabel3;
-   private javax.swing.JLabel jLabel4;
-   private javax.swing.JLabel jLabel5;
-   private javax.swing.JLabel jLabel6;
-   private javax.swing.JLabel jLabel7;
-   private javax.swing.JPanel jPanel1;
-   private javax.swing.JPanel jPanel2;
-   private javax.swing.JScrollPane jScrollPane1_;
-   private javax.swing.JSeparator jSeparator2;
-   private javax.swing.JSeparator jSeparator3;
-   private javax.swing.JSeparator jSeparator4;
-   private javax.swing.JTable jTable1_;
-   private javax.swing.JButton linkButton_;
-   private javax.swing.JButton listButton_1;
-   private javax.swing.JButton loadButton;
-   private javax.swing.JCheckBox logLogCheckBox_;
-   private javax.swing.JButton mathButton_;
-   private javax.swing.JComboBox method2CBox_;
-   private javax.swing.JTextField pairsMaxDistanceField_;
-   private javax.swing.JButton plotButton_;
-   private javax.swing.JComboBox plotComboBox_;
-   private javax.swing.JCheckBox powerSpectrumCheckBox_;
-   private javax.swing.JLabel referenceName_;
-   private javax.swing.JButton removeButton;
-   private javax.swing.JButton renderButton_;
-   private javax.swing.JButton saveButton;
-   private javax.swing.JComboBox saveFormatBox_;
-   private javax.swing.JButton showButton_;
-   private javax.swing.JTextField sigmaMax_;
-   private javax.swing.JTextField sigmaMin_;
-   private javax.swing.JButton straightenTrackButton_;
-   private javax.swing.JButton unjitterButton_;
-   private javax.swing.JComboBox visualizationMagnification_;
-   private javax.swing.JComboBox visualizationModel_;
-   private javax.swing.JButton zCalibrateButton_;
-   private javax.swing.JLabel zCalibrationLabel_;
-   // End of variables declaration//GEN-END:variables
+
 
 
    /**
