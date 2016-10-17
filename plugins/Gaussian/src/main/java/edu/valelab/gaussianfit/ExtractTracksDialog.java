@@ -100,7 +100,7 @@ public class ExtractTracksDialog  {
          }
       });
       jp.add(cancelButton, "tag cancel, wrap");
-      jp.setPreferredSize(jp.getMinimumSize();
+      jp.setPreferredSize(jp.getMinimumSize());
       jp.revalidate();
       
       jf.add(jp);
