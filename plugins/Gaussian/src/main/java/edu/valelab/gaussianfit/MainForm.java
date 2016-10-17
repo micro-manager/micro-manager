@@ -11,6 +11,7 @@
 
 package edu.valelab.gaussianfit;
 
+import com.google.common.eventbus.Subscribe;
 import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.data.GaussianInfo;
 import ij.IJ;
@@ -46,6 +47,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.PixelsSetEvent;
 
 
 
@@ -53,7 +55,7 @@ import org.micromanager.display.DisplayWindow;
  *
  * @author nico
  */
-public class MainForm extends JFrame implements ij.ImageListener{
+public class MainForm extends JFrame {
    private static final String NOISETOLERANCE = "NoiseTolerance";
    private static final String PCF = "PhotonConversionFactor";
    private static final String GAIN = "Gain";
@@ -206,7 +208,6 @@ public class MainForm extends JFrame implements ij.ImageListener{
        
        super.setLocation(up.getInt(oc, FRAMEXPOS, 100), up.getInt(oc, FRAMEYPOS, 100));
        
-       //ImagePlus.addImageListener(this);
        super.setVisible(true);
    }
     
@@ -823,7 +824,6 @@ public class MainForm extends JFrame implements ij.ImageListener{
          int val = Integer.parseInt(noiseToleranceTextField_.getText());
          int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
          Polygon pol = FindLocalMaxima.FindMax(siPlus, 2* halfSize, val, preFilterType_);
-         // pol = FindLocalMaxima.noiseFilter(siPlus.getProcessor(), pol, val);
          Overlay ov = new Overlay();
          for (int i = 0; i < pol.npoints; i++) {
             int x = pol.xpoints[i];
@@ -891,12 +891,24 @@ public class MainForm extends JFrame implements ij.ImageListener{
      
    }
 
+   @Subscribe
+   public void OnImageChanged (PixelsSetEvent pe) {
+      showNoiseTolerance();
+   }
+   
    private void showOverlay_ActionPerformed(java.awt.event.ActionEvent evt) {
+      DisplayWindow currentWindow = studio_.displays().getCurrentWindow();
       if (showOverlay_.isSelected()) {
          if (showNoiseTolerance()) {
             showOverlay_.setText("hide");
+            if (currentWindow != null) {
+               currentWindow.registerForEvents(this);
+            }
          }
       } else {
+         if (currentWindow != null) {
+            currentWindow.unregisterForEvents(this);
+         }
          ImagePlus siPlus;
          try {
             siPlus = IJ.getImage();
@@ -1047,17 +1059,8 @@ public class MainForm extends JFrame implements ij.ImageListener{
       }
    }
 
-   @Override
-   public void imageOpened(ImagePlus ip) {
-      imageUpdated(ip);
-   }
-
-   @Override
-   public void imageClosed(ImagePlus ip) {
-         //   System.out.println("Closed");
-   }
-
-   @Override
+   
+   // Legacy code.  Delete
    public void imageUpdated(ImagePlus ip) {
       if (!WINDOWOPEN) {
          return;
