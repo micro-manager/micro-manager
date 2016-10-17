@@ -3,7 +3,6 @@ package org.micromanager.plugins.framecombiner;
 import java.text.NumberFormat;
 import javax.swing.text.NumberFormatter;
 
-import mmcorej.CMMCore;
 
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
@@ -12,17 +11,16 @@ import org.micromanager.internal.utils.MMFrame;
 
 public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfigurator {
 
+    private static final String PROCESSOR_DIMENSION = "Dimension";
    private static final String PROCESSOR_ALGO = "Algorithm to apply on stack images";
    private static final String NUMBER_TO_PROCESS = "Number of images to process";
    private static final String CHANNEL_TO_AVOID = "Avoid Channel(s) (eg. 1,2 or 1-5)";
 
    private final Studio studio_;
-   private final CMMCore core_;
    private final PropertyMap settings_;
 
    public FrameCombinerConfigurator(PropertyMap settings, Studio studio) {
       studio_ = studio;
-      core_ = studio_.getCMMCore();
       settings_ = settings;
 
       initComponents();
@@ -45,8 +43,10 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         processorAlgoBox_ = new javax.swing.JComboBox();
+        processorDimensionBox_ = new javax.swing.JComboBox();
         channelsToAvoidField_ = new javax.swing.JFormattedTextField();
         jLabel3 = new javax.swing.JLabel();
+       jLabel4 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setTitle("FrameCombiner Processor Configuration");
@@ -56,6 +56,10 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
         jLabel1.setText("Number of images to process");
 
         jLabel2.setText("Algorithm to apply on image stack");
+
+       //no channel option, because mm2 already provides a channel overlapping view option
+       processorDimensionBox_.addItem(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME);
+       processorDimensionBox_.addItem(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z);
 
         processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MEAN);
         //processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MEDIAN);
@@ -67,6 +71,7 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
 
         jLabel3.setText("<html>Avoid Channel(s) (zero-based)<br/><p style=\"text-align: center;\">eg. 1,2 or 1-5 (no space)</p></html>");
 
+        jLabel4.setText("Dimension to process");
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -76,7 +81,8 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel1)
                     .addComponent(jLabel2)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
@@ -84,6 +90,7 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
                             .addComponent(numerOfImagesToProcessField_)
                             .addComponent(channelsToAvoidField_))
                         .addContainerGap(156, Short.MAX_VALUE))
+                        .addComponent(processorDimensionBox_)
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(processorAlgoBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap(139, Short.MAX_VALUE))))
@@ -92,6 +99,10 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(processorDimensionBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(processorAlgoBox_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2))
@@ -122,10 +133,12 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        pack();
+//        pack();
     }// </editor-fold>//GEN-END:initComponents
 
    private void loadSettingValue() {
+      processorDimensionBox_.setSelectedItem(settings_.getString(
+              "processorDimension", getProcessorDimension()));
       processorAlgoBox_.setSelectedItem(settings_.getString(
               "processorAlgo", getProcessorAglo()));
       numerOfImagesToProcessField_.setText(Integer.toString(settings_.getInt(
@@ -150,15 +163,27 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
 
       // Save preferences now.
       setProcessorAglo((String) processorAlgoBox_.getSelectedItem());
+      setProcessorDimension((String) processorDimensionBox_.getSelectedItem());
       setNumerOfImagesToProcess(Integer.parseInt(numerOfImagesToProcessField_.getText()));
       setChannelsToAvoid(channelsToAvoidField_.getText());
 
       PropertyMap.PropertyMapBuilder builder = studio_.data().getPropertyMapBuilder();
+      builder.putString("processorDimension", (String) processorDimensionBox_.getSelectedItem());
       builder.putString("processorAlgo", (String) processorAlgoBox_.getSelectedItem());
       builder.putInt("numerOfImagesToProcess", Integer.parseInt(numerOfImagesToProcessField_.getText()));
       builder.putString("channelsToAvoid", channelsToAvoidField_.getText());
       return builder.build();
    }
+
+    private String getProcessorDimension() {
+        return studio_.profile().getString(FrameCombinerConfigurator.class,
+                PROCESSOR_DIMENSION, FrameCombinerPlugin.PROCESSOR_DIMENSION_Z);
+    }
+
+    private void setProcessorDimension(String processorDimension) {
+        studio_.profile().setString(FrameCombinerConfigurator.class,
+                PROCESSOR_ALGO, processorDimension);
+    }
 
    private String getProcessorAglo() {
       return studio_.profile().getString(FrameCombinerConfigurator.class,
@@ -195,8 +220,11 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JFormattedTextField numerOfImagesToProcessField_;
     private javax.swing.JComboBox processorAlgoBox_;
     // End of variables declaration//GEN-END:variables
+
+    private javax.swing.JComboBox processorDimensionBox_;
 }
