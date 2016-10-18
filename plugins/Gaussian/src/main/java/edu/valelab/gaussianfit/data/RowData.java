@@ -52,7 +52,7 @@ import org.micromanager.display.DisplayWindow;
       public final boolean hasZ_;
       public final double minZ_;
       public final double maxZ_;
-      public final double totalNrPhotons_;  
+      public final double totalNrPhotons_; 
       
       private static int rowDataID_ = 1;
       
@@ -87,7 +87,7 @@ import org.micromanager.display.DisplayWindow;
                  
          double stdX = 0.0;
          double stdY = 0.0;
-         double nrPhotons = 0.0;
+         double nrPhotons = 0.0;         
          if (isTrack_) {
             ArrayList<Point2D.Double> xyList = ListUtils.spotListToPointList(spotList_);
             Point2D.Double avgPoint = ListUtils.avgXYList(xyList);
