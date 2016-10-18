@@ -66,6 +66,18 @@ public class FrameCombiner extends Processor {
          context.outputImage(image);
          return;
       }
+      // when live mode is on and user selected to do z proejct => do nothing
+      if (studio_.live().getIsLiveModeOn() &&
+              processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)){
+         context.outputImage(image);
+         return;
+      }
+       // when running MDA without z stack and user want FrameCombiner to combin z frames => do nothing
+      if (studio_.getAcquisitionManager().getAcquisitionSettings().slices.size() == 0 &&
+              processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)){
+          context.outputImage(image);
+          return;
+      }
 
       Coords coords = null;
       Coords.CoordsBuilder builder = image.getCoords().copy();
