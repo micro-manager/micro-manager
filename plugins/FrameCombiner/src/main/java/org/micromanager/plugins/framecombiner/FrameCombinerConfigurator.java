@@ -182,7 +182,7 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
 
     private void setProcessorDimension(String processorDimension) {
         studio_.profile().setString(FrameCombinerConfigurator.class,
-                PROCESSOR_ALGO, processorDimension);
+                PROCESSOR_DIMENSION, processorDimension);
     }
 
    private String getProcessorAglo() {
