@@ -53,7 +53,7 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
 
         numerOfImagesToProcessField_.setName("_"); // NOI18N
 
-        jLabel1.setText("Number of images to process");
+        jLabel1.setText("<html>Number of images to process<br>( &lt; total frame/slices if using MDA)</html>");
 
         jLabel2.setText("Algorithm to apply on image stack");
 
@@ -113,8 +113,7 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(channelsToAvoidField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(121, 121, 121))
+                    .addComponent(jLabel3)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -129,7 +128,7 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.DEFAULT_SIZE)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.DEFAULT_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
