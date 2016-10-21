@@ -1486,7 +1486,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          message("Reset of BeanShell interpreter failed");
       }
       // Apparently clear() also erases bsh.console, which we need
-      beanshellREPLint_.setConsole(cons_);
+      //beanshellREPLint_.setConsole(cons_);
 
       initializeInterpreter();
    }
