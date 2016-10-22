@@ -515,7 +515,7 @@ public:
    long timeOut_;
    long fullFocusTime_;
    double lockThreshold_;
-   int LEDIntensity;
+   long LEDIntensity_;
 };
 
 class AFCOffset : public CStageBase<AFCOffset>

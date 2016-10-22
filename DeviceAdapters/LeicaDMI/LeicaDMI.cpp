@@ -2998,7 +2998,7 @@ int AFC::Initialize()
   
    pAct = new CPropertyAction(this, &AFC::OnLEDIntensity);
    ret = CreateProperty("LEDIntensity","200",MM::Integer,false,pAct);
-
+   SetPropertyLimits("LEDIntensity",0,255);
    initialized_ = true;
    return 0;
 }
@@ -3089,7 +3089,13 @@ int AFC::IncrementalFocus() {
    return FullFocus();
 }
 
-int AFC::GetLEDIntensity(int &intensity){
+int AFC::GetLEDIntensity(int &intensity){ 
+	int ret = g_ScopeInterface.GetAFCLEDIntensity(*this,*GetCoreCallback());
+    bool busy = true;
+    while (busy) {
+		g_ScopeModel.afc_.GetBusy(busy);
+		CDeviceUtils::SleepMs(10);
+    }
 	return g_ScopeModel.afc_.GetLEDIntensity(intensity);
 }
 
@@ -3167,7 +3173,7 @@ int AFC::OnLockThreshold(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int AFC::OnLEDIntensity(MM::PropertyBase* pProp,MM::ActionType eAct)
 {
-     if (eAct == MM::BeforeGet)
+   if (eAct == MM::BeforeGet)
    {
 	  int intensity;
 	  int ret = GetLEDIntensity(intensity);
@@ -3179,9 +3185,8 @@ int AFC::OnLEDIntensity(MM::PropertyBase* pProp,MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       
-      pProp->Get(lockThreshold_);
-	 
-      return DEVICE_OK;
+      pProp->Get(LEDIntensity_);
+	  return SetLEDIntensity((int) LEDIntensity_);
    }
 
    return DEVICE_OK;
