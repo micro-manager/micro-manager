@@ -259,6 +259,10 @@ CAndorSDK3Camera::CameraId CAndorSDK3Camera::DetermineCameraId(wstring & cameraS
       {
          id = CIDZyla;
       }
+	  else if (0 == cameraSerialCheck.compare(L"ISC-"))
+	  {
+		  id = CIDiStar;
+	  }
    }
    catch (const std::out_of_range&)
    {
@@ -285,6 +289,11 @@ std::string CAndorSDK3Camera::GenerateCameraName(unsigned cameraID, wstring & ca
          s_cameraName = "Zyla 4.2 ";
       }
    }
+   else if (CIDiStar == cameraID)
+   {
+	   s_cameraName = "iStar-sCMOS ";
+   }
+   
    return s_cameraName;
 }
 
@@ -574,12 +583,21 @@ int CAndorSDK3Camera::Initialize()
    triggerMode_property = new TEnumProperty(TAndorSDK3Strings::TRIGGER_MODE, triggerMode_valueMapper,
                                             this, thd_, snapShotController_, false, false);
 
+   gateMode_property = new TEnumProperty(TAndorSDK3Strings::GATE_MODE, cameraDevice->GetEnum(L"GateMode"),
+                                            this, thd_, snapShotController_, false, false);
+
    readTemperature_property = new TFloatProperty(TAndorSDK3Strings::SENSOR_TEMPERATURE, 
                                                  cameraDevice->GetFloat(L"SensorTemperature"), 
                                                  callbackManager_, true, false);
 
    overlap_property = new TBooleanProperty(TAndorSDK3Strings::OVERLAP, cameraDevice->GetBool(L"Overlap"),
                                            callbackManager_, false);
+
+   pretrigger_property = new TBooleanProperty(TAndorSDK3Strings::PRETRIGGER, cameraDevice->GetBool(L"PreTriggerEnable"), 
+											callbackManager_, false);
+											
+	piv_property = new TBooleanProperty(TAndorSDK3Strings::PIV, cameraDevice->GetBool(L"PIVEnable"), 
+											callbackManager_, false);
 
    exposureTime_property = new TExposureProperty(MM::g_Keyword_Exposure,
                                        new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
@@ -701,6 +719,8 @@ int CAndorSDK3Camera::Shutdown()
       delete rollingShutterGlobalClear_property;
       delete sensorCooling_property;
       delete overlap_property;
+	  delete pretrigger_property;
+	  delete piv_property;
       delete frameRate_property;
       delete frameRateLimits_property;
       delete fanSpeed_property;
@@ -708,6 +728,7 @@ int CAndorSDK3Camera::Shutdown()
 	    delete staticBlemishCorrection_property;
       delete aoi_property_;
       delete triggerMode_property;
+	  delete gateMode_property;
       delete exposureTime_property;
       delete auxOutSignal_property;
       delete auxOutTwoSignal_property;

@@ -113,7 +113,7 @@ public:
    void RestartLiveAcquisition();
 
 private:
-   enum CameraId { CIDNeo = 0, CIDZyla = 1 };
+   enum CameraId { CIDNeo = 0, CIDZyla = 1, CIDiStar=2 };
    std::wstring currentSoftwareVersion_;
    std::wstring PerformReleaseVersionCheck();
    double CalculateDefaultExposure(std::wstring & interfaceType);
@@ -178,8 +178,11 @@ private:
    TEnumProperty* temperatureStatus_property;
    TBooleanProperty* sensorCooling_property;
    TBooleanProperty* overlap_property;
+   TBooleanProperty* pretrigger_property;
+   TBooleanProperty* piv_property;
    TEnumProperty* triggerMode_property;
    TEnumProperty* fanSpeed_property;
+   TEnumProperty* gateMode_property;
    TBooleanProperty* spuriousNoiseFilter_property;
    TBooleanProperty* staticBlemishCorrection_property;
    TBooleanProperty* rollingShutterGlobalClear_property;
@@ -212,6 +215,7 @@ private:
    andor::IEnum* triggerMode_Enum;
    TTriggerRemapper* triggerMode_remapper;
    TAndorEnumValueMapper* triggerMode_valueMapper;
+   TAndorEnumValueMapper* gateMode_valueMapper;
 
    CEventsManager* eventsManager_;
    ICallBackManager * callbackManager_;
