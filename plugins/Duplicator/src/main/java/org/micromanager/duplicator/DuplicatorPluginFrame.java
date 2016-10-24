@@ -210,7 +210,7 @@ public class DuplicatorPluginFrame extends MMDialog {
          int max = maxes.get(Coords.CHANNEL);
          List<String> chNameList = new ArrayList<String>();
          for (int index = min; index <= max; index++) {
-            if (channelNames == null) {
+            if (channelNames == null || index >= channelNames.length) {
                chNameList.add("channel " + index);
             } else {
                chNameList.add(channelNames[index]);
