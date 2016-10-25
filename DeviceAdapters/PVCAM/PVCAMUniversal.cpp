@@ -213,7 +213,7 @@ Universal::Universal(short cameraId) :
     cameraId_(cameraId),
     cameraModel_(PvCameraModel_Generic),
     circBufFrameCount_(CIRC_BUF_FRAME_CNT_DEF), // Sizes larger than 3 caused image tearing in ICX-674. Reason unknown.
-    circBufFrameRecoveryEnabled_(true),
+    circBufFrameRecoveryEnabled_(false),
     stopOnOverflow_(true),
     snappingSingleFrame_(false),
     singleFrameModeReady_(false),
