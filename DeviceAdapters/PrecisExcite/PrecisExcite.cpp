@@ -158,6 +158,7 @@ int Controller::Initialize()
    GeneratePropertyState();
    GeneratePropertyTrigger();
    GeneratePropertyTriggerSequence();
+   GetState(state_);
    
    initialized_ = true;
    return HandleErrors();
@@ -357,6 +358,10 @@ int Controller::OnChannelLabel(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
+      GetState(state_);
+      if (state_ == 1) {
+         currentChannelLabel_ = channelLabels_[currentChannel_];
+      }
       pProp->Set(currentChannelLabel_.c_str());
    }
    else if (eAct == MM::AfterSet)
@@ -537,8 +542,11 @@ void Controller::GetState(long &state)
          ReceiveOneLine();
 
          if (! buf_string_.empty())
-            if (buf_string_[5]=='N')
-               stateTmp = 1;       
+            if (buf_string_[5]=='N') {
+               stateTmp = 1;
+               currentChannel_ = i;
+               break;
+            }
       }
       state = stateTmp;
    }
