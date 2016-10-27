@@ -128,7 +128,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private int jitterMaxFrames_ = 500; 
    private String dir_ = "";   
    public static ZCalibrator zc_ = new ZCalibrator();
-   private final Studio studio_;
+   private static Studio studio_;
    
    // GUI elements
    private javax.swing.JLabel IntLabel2;
@@ -247,7 +247,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    public static DataCollectionForm getInstance() {
       if (instance_ == null) {
          instance_ =  new DataCollectionForm(MMStudio.getInstance());
-         // MMStudio.getInstance().addMMBackgroundListener(instance_);
+         studio_.events().registerForEvents(instance_);
       }
       return instance_;
    }
@@ -393,7 +393,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
       });
 
       super.setVisible(true);
-      studio_.events().registerForEvents(this);
    }
    
    @Subscribe
@@ -595,21 +594,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       filterIntensityCheckBox_.setText("Intensity");
-      filterIntensityCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            filterIntensityCheckBox_ActionPerformed(evt);
-         }
-      });
 
       filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       filterSigmaCheckBox_.setText("Sigma");
-      filterSigmaCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            filterSigmaCheckBox_ActionPerformed(evt);
-         }
-      });
 
       jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       jLabel1.setText("Filters:");
@@ -678,12 +665,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       logLogCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       logLogCheckBox_.setText("log-log");
-      logLogCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            logLogCheckBox_ActionPerformed(evt);
-         }
-      });
 
       plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "t-dist.", "t-Int.", "X-Y", " " }));
@@ -717,12 +698,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       powerSpectrumCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       powerSpectrumCheckBox_.setText("PSD");
-      powerSpectrumCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            powerSpectrumCheckBox_ActionPerformed(evt);
-         }
-      });
 
       plotButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
       plotButton_.setText("Plot");
@@ -1153,7 +1128,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @evt
     */
-    private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
+    private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {
 
        int modifiers = evt.getModifiers();
               
@@ -1187,7 +1162,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          (new Thread(loadFile)).start();
 
       }
-    }//GEN-LAST:event_loadButtonActionPerformed
+    }
 
     /**
      * Given an array of files, tries to import them all 
@@ -1210,7 +1185,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }
     
                   
-    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {
        int rows[] = jTable1_.getSelectedRows();
        if (rows.length > 0) {
           for (int i = 0; i < rows.length; i++) {
@@ -1228,9 +1203,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
        } else {
           JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to save");
        }
-    }//GEN-LAST:event_saveButtonActionPerformed
+    }
 
-    private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
+    private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {
        int rows[] = jTable1_.getSelectedRows();
        if (rows.length > 0) {
           for (int row = rows.length - 1; row >= 0; row--) {
@@ -1240,7 +1215,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
        } else {
           JOptionPane.showMessageDialog(getInstance(), "No dataset selected");
        }
-    }//GEN-LAST:event_removeButtonActionPerformed
+    }
 
     private void showButton_ActionPerformed(java.awt.event.ActionEvent evt) {
        int row = jTable1_.getSelectedRow();
@@ -1259,12 +1234,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
       int row = jTable1_.getSelectedRow();
       if (row > -1) {
          Point s = MouseInfo.getPointerInfo().getLocation();
-         new ExtractTracksDialog(studio_, rowData_.get(row), s);
+         ExtractTracksDialog extractTracksDialog = 
+                 new ExtractTracksDialog(studio_, rowData_.get(row), s);
       }
    }
     
    private void formComponentResized(java.awt.event.ComponentEvent evt) {
-      //jScrollPane1.setSize(this.getSize());
       Dimension d = getSize();
       d.height -= 155;
       jScrollPane1_.setSize(d);
@@ -1275,7 +1250,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * Use the selected data set as the reference for 2-channel color correction
     * @param evt 
     */
-   private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2StandardButtonActionPerformed
+   private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets as color reference");
@@ -1334,49 +1309,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          try {
             c2t_ = new CoordinateMapper(points, 2, 1);
             
-            /*
-            boolean continueQualityCheck = true;
-            int nrOfRemovedSpots = 0;
-
-            while (continueQualityCheck && points.size() > 4) {
-               // quality control on our new coordinate mapper.  
-               // Apply an affine transform on our data and check distribution 
-               int method = CoordinateMapper.AFFINE;
-               c2t_.setMethod(method);
-               CoordinateMapper.PointMap corPoints = new CoordinateMapper.PointMap();
-               List<Double> distances = new ArrayList<Double>();
-               double maxDistance = 0.0;
-               Point2D.Double maxPairKey = null;
-               for (Map.Entry pair : points.entrySet()) {
-                  Point2D.Double uPt = (Point2D.Double) pair.getValue();
-                  Point2D.Double otherPt = (Point2D.Double) pair.getKey();
-                  Point2D.Double corPt = c2t_.transform(otherPt);
-                  corPoints.put(uPt, corPt);
-                  double distance = Math.sqrt(NearestPoint2D.distance2(uPt, corPt));
-                  if (distance > maxDistance) {
-                     maxDistance = distance;
-                     maxPairKey = otherPt;
-                  }
-                  distances.add(distance);
-               }
-               Double avg = ListUtils.listAvg(distances);
-               Double stdDev = ListUtils.listStdDev(distances, avg);
-
-               // Quality control check
-               if (2 * stdDev > avg) {
-                  nrOfRemovedSpots+=1;
-                  points.remove(maxPairKey);
-                  c2t_ = new CoordinateMapper(points, 2, 1);
-               } else {
-                  continueQualityCheck = false;
-                  ij.IJ.log("Removed " + nrOfRemovedSpots + " pairs, " + ", avg. distance: " +
-                    avg + ", std. dev: " + stdDev);
-               }
-            }
-            */
             ij.IJ.log("Used " + points.size() + " spot pairs to calculate 2C Reference");
-            
-            //ij.IJ.showMessage("Corrected data have average of: " + avg + ",  std. dev. of: " + stdDev);
             
             String name = "ID: " + rowData_.get(rows[0]).ID_;
             if (rows.length > 1) {
@@ -1391,7 +1324,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
          
       }
-   }//GEN-LAST:event_c2StandardButtonActionPerformed
+   }
 
   
    public void listPairs(double maxDistance, boolean showPairs, 
@@ -1426,7 +1359,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }
    
-   private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2CorrectButtonActionPerformed
+   private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {
       int[] rows = jTable1_.getSelectedRows();
       if (rows.length > 0) {     
          try {
@@ -1438,9 +1371,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       } else
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to color correct");
-   }//GEN-LAST:event_c2CorrectButtonActionPerformed
+   }
 
-   private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unjitterButton_ActionPerformed
+   private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       final int row = jTable1_.getSelectedRow();
       if (row > -1) {
          Runnable doWorkRunnable = new Runnable() {
@@ -1456,17 +1389,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
       } else {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to unjitter");
       }
-   }//GEN-LAST:event_unjitterButton_ActionPerformed
+   }
 
-   private void filterSigmaCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterSigmaCheckBox_ActionPerformed
-      // TODO add your handling code here:
-   }//GEN-LAST:event_filterSigmaCheckBox_ActionPerformed
 
-   private void filterIntensityCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterIntensityCheckBox_ActionPerformed
-      // TODO add your handling code here:
-   }//GEN-LAST:event_filterIntensityCheckBox_ActionPerformed
-
-   private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+   private void formWindowClosing(java.awt.event.WindowEvent evt) {
       UserProfile up = studio_.profile();
       Class oc = DataCollectionForm.class;
       up.setInt(oc, FRAMEXPOS, getX());
@@ -1502,7 +1428,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * 
     * @param evt 
     */
-   private void infoButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoButton_ActionPerformed
+   private void infoButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int row = jTable1_.getSelectedRow();
       if (row > -1) {
           
@@ -1545,14 +1471,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
        }
        else
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset first");
-   }//GEN-LAST:event_infoButton_ActionPerformed
+   }
 
    /**
     * Renders dataset 
     * 
     * @param evt 
     */
-   private void renderButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renderButton_ActionPerformed
+   private void renderButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       final int row = jTable1_.getSelectedRow();
       if (row < 0) {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to render");
@@ -1613,9 +1539,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          (new Thread(doWorkRunnable)).start();
       }
-   }//GEN-LAST:event_renderButton_ActionPerformed
+   }
 
-   private void plotButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_plotButton_ActionPerformed
+   private void plotButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets to plot");
@@ -1626,7 +1552,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             myRows[i] = rowData_.get(rows[i]);
          plotData(myRows, plotComboBox_.getSelectedIndex());
       }
-   }//GEN-LAST:event_plotButton_ActionPerformed
+   }
 
    
    public class TrackAnalysisData {
@@ -1646,7 +1572,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * 
     * @param evt 
     */
-   private void averageTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_averageTrackButton_ActionPerformed
+   private void averageTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
@@ -1736,7 +1662,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
       }
 
-   }//GEN-LAST:event_averageTrackButton_ActionPerformed
+   }
 
    public void doMathOnRows(RowData source, RowData operand, int action) {
       // create a copy of the dataset and copy in the corrected data
@@ -1825,7 +1751,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * The Frame number of the linked spot list will be 0
     * @param evt - ignored...
     */
-   private void linkButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_linkButton_ActionPerformed
+   private void linkButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       final int rows[] = jTable1_.getSelectedRows();
 
       final double maxDistance;
@@ -1852,9 +1778,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
       };
 
       (new Thread(doWorkRunnable)).start();
-   }//GEN-LAST:event_linkButton_ActionPerformed
+   }
 
-   private void straightenTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_straightenTrackButton_ActionPerformed
+   private void straightenTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
@@ -1878,9 +1804,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
             TrackOperator.straightenTrack(r);
          }
       }
-   }//GEN-LAST:event_straightenTrackButton_ActionPerformed
+   }
 
-   private void centerTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerTrackButton_ActionPerformed
+   private void centerTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
@@ -1890,17 +1816,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             TrackOperator.centerTrack(rowData_.get(row));
          }
       }
-   }//GEN-LAST:event_centerTrackButton_ActionPerformed
+   }
 
-   private void powerSpectrumCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_powerSpectrumCheckBox_ActionPerformed
 
-   }//GEN-LAST:event_powerSpectrumCheckBox_ActionPerformed
-
-   private void logLogCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logLogCheckBox_ActionPerformed
-
-   }//GEN-LAST:event_logLogCheckBox_ActionPerformed
-
-   private void zCalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zCalibrateButton_ActionPerformed
+   private void zCalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = jTable1_.getSelectedRows();
       if (rows.length != 1) {
          JOptionPane.showMessageDialog(getInstance(),
@@ -1915,14 +1834,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }
 
-   private void method2CBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_method2CBox_ActionPerformed
+   private void method2CBox_ActionPerformed(java.awt.event.ActionEvent evt) {
       studio_.profile().setString(DataCollectionForm.class, METHOD2C, 
               (String) method2CBox_.getSelectedItem());
    }
 
    private String range_ = "";
 
-   private void SubRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SubRangeActionPerformed
+   private void SubRangeActionPerformed(java.awt.event.ActionEvent evt) {
 
       final int[] rows = jTable1_.getSelectedRows();
 
@@ -1969,9 +1888,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
       };
       doWorkRunnable.run();
 
-   }//GEN-LAST:event_SubRangeActionPerformed
+   }
 
-   private void combineButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_combineButton_ActionPerformed
+   private void combineButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       try {
          final int[] rows = jTable1_.getSelectedRows();
          
@@ -2018,15 +1937,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
          ReportingUtils.showError(ex, "Data set combiner got interupted");
       }
       
-   }//GEN-LAST:event_combineButton_ActionPerformed
+   }
 
-   private void listButton_1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listButton_1ActionPerformed
+   private void listButton_1ActionPerformed(java.awt.event.ActionEvent evt) {
       PairDisplayForm pdf = new PairDisplayForm();
       pdf.setVisible(true);
-   }//GEN-LAST:event_listButton_1ActionPerformed
-
-   
-   // Variables declaration - do not modify//GEN-BEGIN:variables
+   }
 
 
 

@@ -140,7 +140,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
       // If we have a Micro-Manager window:
       if (! (dw == null || siPlus != dw.getImagePlus()) ) {
-         dw.registerForEvents(this);
 
          String[] parts = positionString_.split("-");
          nrPositions = dw.getDatastore().getAxisLength(Coords.STAGE_POSITION);
@@ -187,7 +186,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
             siPlus.setRoi(originalRoi);
          }
-         dw.unregisterForEvents(this);
+         
       }
 
       if (dw == null || siPlus != dw.getImagePlus()) {
