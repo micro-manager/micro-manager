@@ -10,7 +10,6 @@
 
 package edu.valelab.gaussianfit;
 
-import com.google.common.eventbus.Subscribe;
 import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.utils.ProgressThread;
 import edu.valelab.gaussianfit.data.GaussianInfo;
@@ -29,12 +28,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.concurrent.LinkedBlockingQueue;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
+import ij.ImageStack;
+import ij.plugin.HyperStackConverter;
 import java.util.List;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
+import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.PixelsSetEvent;
 
 /**
  *
@@ -54,11 +55,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    public class Monitor {}
    
    private final Monitor monitor_;
-   private int desiredPos_;
 
    public FitAllThread(Studio studio, int shape, int fitMode, 
            FindLocalMaxima.FilterType preFilterType, String positions) {
-      desiredPos_ = 0;
       monitor_ = new Monitor();
       studio_ = studio;
       shape_ = shape;
@@ -145,6 +144,9 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
          String[] parts = positionString_.split("-");
          nrPositions = dw.getDatastore().getAxisLength(Coords.STAGE_POSITION);
+         nrChannels = dw.getDatastore().getAxisLength(Coords.CHANNEL);
+         nrFrames = dw.getDatastore().getAxisLength(Coords.TIME);
+         nrSlices = dw.getDatastore().getAxisLength(Coords.Z);
          int startPos = 1; int endPos = 1;
          if (parts.length > 0) {
             startPos = Integer.parseInt(parts[0]);
@@ -161,25 +163,28 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
          CoordsBuilder builder = dw.getDisplayedImages().get(0).getCoords().copy();
          for (int p = startPos - 1; p <= endPos - 1; p++) {
-            if (dw.getDisplayedImages().get(0).getCoords().getStagePosition() != p) {
-               synchronized (monitor_) {
-                  try {
-                     desiredPos_ = p;
-                     dw.setDisplayedImageTo(builder.stagePosition(p).build());
-                     monitor_.wait();
-                  } catch (InterruptedException ex) {
-                     studio_.logs().logError("Display update thread got interrupted");
+            
+            Image image = dw.getDatastore().getImage(builder.stagePosition(p).build());
+            ImageStack stack = new ImageStack(image.getWidth(), image.getHeight());
+            for (int c = 0; c < nrChannels; c++) {
+               for (int z = 0; z < nrSlices; z++) {
+                  for (int f = 0; f < nrFrames; f++) {
+                     image = dw.getDatastore().getImage(builder.stagePosition(p).
+                             channel(c).time(f).z(z).build());
+                     ImageProcessor iProcessor = studio_.data().ij().createProcessor(image);
+                     stack.addSlice(iProcessor);
                   }
                }
             }
 
-            siPlus.deleteRoi();
-            //magePlus ip = siPlus.duplicate();
+            ImagePlus tmpSP = (new ImagePlus("tmp", stack)).duplicate();
+            tmpSP = HyperStackConverter.toHyperStack(tmpSP, nrChannels, 
+                    nrSlices, nrFrames);
 
-            analyzeImagePlus(siPlus, p + 1, nrThreads, originalRoi);
-            //if (nrSpots > maxNrSpots) {
-            //   maxNrSpots = nrSpots;
-            //}
+            siPlus.deleteRoi();
+
+            analyzeImagePlus(tmpSP, p + 1, nrThreads, originalRoi);
+
             siPlus.setRoi(originalRoi);
          }
          dw.unregisterForEvents(this);
@@ -187,9 +192,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
       if (dw == null || siPlus != dw.getImagePlus()) {
          analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
-         //if (nrSpots > maxNrSpots) {
-         //   maxNrSpots = nrSpots;
-         //}
       }
 
       long endTime = System.nanoTime();
@@ -432,20 +434,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       sourceList_.clear();
       return nrSpots;
    }
-   
-   @Subscribe
-   public void checkDisplayedImage(PixelsSetEvent pse) {
-      int pos = pse.getImage().getCoords().getStagePosition();
-      
-      synchronized(monitor_) {
-         if (pos == desiredPos_) {
-            monitor_.notify();
-         } 
-      }
-   }
-   
-   
-   
    
 
    private class SpotSortComparator implements Comparator {
