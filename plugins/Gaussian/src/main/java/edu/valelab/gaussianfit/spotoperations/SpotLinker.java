@@ -302,6 +302,7 @@ public class SpotLinker {
                }
             }
          }
+         ij.IJ.showStatus("Extracted " + trackNr + " tracks");
       } catch (OutOfMemoryError oome) {
          JOptionPane.showMessageDialog(getInstance(), "Out of memory");
       }
