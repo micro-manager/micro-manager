@@ -108,12 +108,16 @@ public final class HyperstackControls extends JPanel {
       add(labelsPanel, "span, growx, align center, wrap");
 
       scrollerPanel_ = new ScrollerPanel(store_, display_);
+      scrollerPanel_.startUpdateThread();
+      store_.registerForEvents(scrollerPanel_);
+      display_.registerForEvents(scrollerPanel_);
       add(scrollerPanel_, "span, growx, shrinkx, wrap 0px");
    }
 
    /**
     * A new image has arrived; we may need to update our data FPS (
     * rate at which new images are being acquired).
+    * @param event - NewImageEvent
     */
    @Subscribe
    public void onNewImage(NewImageEvent event) {
@@ -124,6 +128,7 @@ public final class HyperstackControls extends JPanel {
    /**
     * Changed which image is displayed; update our short status line text about
     * the displayed image.
+    * @param event - PixelsSetEvent
     */
    @Subscribe
    public void onPixelsSet(PixelsSetEvent event) {
@@ -132,6 +137,7 @@ public final class HyperstackControls extends JPanel {
 
    /**
     * Create a timer to show the countdown for incoming images.
+    * @param event - IncomingImageEvent
     */
    @Subscribe
    public void onIncomingImage(IncomingImageEvent event) {
@@ -163,6 +169,7 @@ public final class HyperstackControls extends JPanel {
    /**
     * The displayed image has changed, so update our display FPS (the rate at
     * which images are displayed).
+    * @param event - CanvasDrawCompleteEvent
     */
    @Subscribe
    public void onCanvasDrawComplete(CanvasDrawCompleteEvent event) {
@@ -175,6 +182,7 @@ public final class HyperstackControls extends JPanel {
     * Update the FPS display label. We use sequence number and elapsedTimeMs
     * when they're available, and otherwise just the number of images added to
     * the datastore and the system time change.
+    * @param newImage Newly added image for which we should adjust the fps
     */
    public void updateFPS(Image newImage) {
       if (System.currentTimeMillis() - msSinceLastFPSUpdate_ < 500) {
