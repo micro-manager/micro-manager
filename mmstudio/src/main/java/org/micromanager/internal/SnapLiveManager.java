@@ -59,20 +59,20 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
    private final Studio studio_;
    private final CMMCore core_;
    private DisplayWindow display_;
-   private Object displayLock_ = new Object();
+   private final Object displayLock_ = new Object();
    private DefaultRewritableDatastore store_;
    private Pipeline pipeline_;
-   private Object pipelineLock_ = new Object();
+   private final Object pipelineLock_ = new Object();
    private final ArrayList<LiveModeListener> listeners_;
    private boolean isLiveOn_ = false;
-   private Object liveModeLock_ = new Object();
+   private final Object liveModeLock_ = new Object();
    private int numCameraChannels_ = -1;
    private double exposureMs_ = 0;
    private boolean shouldStopGrabberThread_ = false;
    private boolean shouldForceReset_ = false;
    private boolean amStartingSequenceAcquisition_ = false;
    private Thread grabberThread_;
-   private ArrayList<Long> displayUpdateTimes_;
+   private final ArrayList<Long> displayUpdateTimes_;
    // Maps channel index to the last image we have received for that channel.
    private final HashMap<Integer, DefaultImage> channelToLastImage_;
 

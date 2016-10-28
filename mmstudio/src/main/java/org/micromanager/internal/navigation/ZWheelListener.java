@@ -20,12 +20,14 @@
 
 package org.micromanager.internal.navigation;
 
-import ij.WindowManager;
+import com.google.common.eventbus.Subscribe;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import mmcorej.CMMCore;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -33,25 +35,52 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
 */
 public final class ZWheelListener implements MouseWheelListener, LiveModeListener {
-   private CMMCore core_;
-   private MMStudio studio_;
+   private final CMMCore core_;
+   private final MMStudio studio_;
    private ImageCanvas canvas_;
    private static boolean isRunning_ = false;
-   private static final double moveIncrement_ = 0.20;
+   private static boolean waitingForWindow_ = false;
+   private static final double MOVE_INCREMENT = 0.20;
 
-   public ZWheelListener(CMMCore core, MMStudio gui) {
+   public ZWheelListener(CMMCore core, MMStudio studio) {
       core_ = core;
-      studio_ = gui;
+      studio_ = studio;
+   }
+   /**
+    * Even when the live mode manager starts live mode, the ZWheel Listener
+    * can only attach to an existing window.  Therefore, listen for the formation
+    * of a new display.  If the listener has been started and there was no window
+    * 
+    * @param datse Handle to the new display
+    */
+   @Subscribe
+   public synchronized void onNewDisplay(DisplayAboutToShowEvent datse) {
+      try {
+      ImageWindow win = datse.getDisplay().getImagePlus().getWindow();
+      if (waitingForWindow_) {
+         start(win);
+      }
+      } catch (NullPointerException npe) {
+         studio_.logs().logError(npe, "New display has no ImageJ Window in ZWheelListener");
+      }
    }
 
-   public void start () {
+   /**
+    * We can only start if there is a live window
+    * Otherwise, be ready for one and start in the OnNewDisplay event handler
+    */
+   public synchronized void start () {
+      waitingForWindow_ = true;
       // Get a handle to the AcqWindow
-      if (WindowManager.getCurrentWindow() != null) {
-         start(WindowManager.getCurrentWindow());
+      DisplayWindow dw = studio_.getSnapLiveManager().getDisplay();
+      if (dw != null) {
+         ImageWindow win = dw.getImagePlus().getWindow();
+         start (win);
       }
    }
    
    public void start(ImageWindow win) {
+      waitingForWindow_ = false;
       if (isRunning_) {
          stop(); 
       }
@@ -67,6 +96,7 @@ public final class ZWheelListener implements MouseWheelListener, LiveModeListene
          canvas_.removeMouseWheelListener(this);
       }
       isRunning_ = false;
+      waitingForWindow_ = false;
    }
 
    public boolean isRunning() {
@@ -88,7 +118,7 @@ public final class ZWheelListener implements MouseWheelListener, LiveModeListene
 		  if (zStage == null || zStage.equals(""))
 			  return;
  
-		  double moveIncrement = moveIncrement_;
+		  double moveIncrement = MOVE_INCREMENT;
 		  double pixSizeUm = core_.getPixelSizeUm();
 		  if (pixSizeUm > 0.0) {
 			  moveIncrement = 2 * pixSizeUm;
@@ -107,6 +137,7 @@ public final class ZWheelListener implements MouseWheelListener, LiveModeListene
 	  }
    } 
    
+   @Override
    public void liveModeEnabled(boolean enabled) {
       if (enabled) {
          start();
