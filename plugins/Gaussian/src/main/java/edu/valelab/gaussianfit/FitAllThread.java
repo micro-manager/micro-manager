@@ -30,6 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import ij.ImageStack;
 import ij.plugin.HyperStackConverter;
+import ij.process.ShortProcessor;
 import java.util.List;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
@@ -164,13 +165,20 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          for (int p = startPos - 1; p <= endPos - 1; p++) {
             
             Image image = dw.getDatastore().getImage(builder.stagePosition(p).build());
-            ImageStack stack = new ImageStack(image.getWidth(), image.getHeight());
-            for (int c = 0; c < nrChannels; c++) {
+            int width = image.getWidth();
+            int height = image.getHeight();
+            ImageStack stack = new ImageStack(width, height);
+            for (int f = 0; f < nrFrames; f++) {
                for (int z = 0; z < nrSlices; z++) {
-                  for (int f = 0; f < nrFrames; f++) {
+                  for (int c = 0; c < nrChannels; c++) {
                      image = dw.getDatastore().getImage(builder.stagePosition(p).
                              channel(c).time(f).z(z).build());
-                     ImageProcessor iProcessor = studio_.data().ij().createProcessor(image);
+                     ImageProcessor iProcessor;
+                     if (image != null) {
+                        iProcessor = studio_.data().ij().createProcessor(image);
+                     } else {
+                        iProcessor = new ShortProcessor(width, height);
+                     }
                      stack.addSlice(iProcessor);
                   }
                }
@@ -179,6 +187,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
             ImagePlus tmpSP = (new ImagePlus("tmp", stack)).duplicate();
             tmpSP = HyperStackConverter.toHyperStack(tmpSP, nrChannels, 
                     nrSlices, nrFrames);
+            //tmpSP.show();
 
             siPlus.deleteRoi();
 
@@ -251,7 +260,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       double rate = resultList_.size() / took;
       DecimalFormat df2 = new DecimalFormat("#.##");
       DecimalFormat df0 = new DecimalFormat("#");
-      print("Analyzed " + resultList_.size() + " spots in " + df2.format(took)
+      studio_.alerts().postAlert("Spot analysis results", FitAllThread.class, 
+              "Analyzed " + resultList_.size() + " spots in " + df2.format(took)
               + " seconds (" + df0.format(rate) + " spots/sec.)");
 
       running_ = false;
@@ -333,6 +343,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                      Polygon p = new Polygon();
                      synchronized (SpotData.lockIP) {
                         siPlus.setPositionWithoutUpdate(c, z, f);
+                        //siPlus.setPosition(c, z, f);
                         // If ROI manager is used, use RoiManager Rois
                         //  may be dangerous if the user is not aware
                         RoiManager roiM = RoiManager.getInstance();
@@ -381,12 +392,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                               continue;
                            }
                            int channel = c;
-                           /*
-                           if (skipChannels_) {
-                              // HACK we can only skip channel number 1
-                              channel -= 1;
-                           }
-                           */
+
                            SpotData thisSpot = new SpotData(sp, channel, z, f,
                                    position, j, sC[j][0], sC[j][1]);
                            try {
