@@ -454,6 +454,7 @@ public class DefaultDatastore implements Datastore {
          freeze();
          duplicate.setSavePath(path);
          duplicate.freeze();
+         duplicate.close();
          // Save our annotations now.
          for (DefaultAnnotation annotation : annotations_.values()) {
             annotation.save();

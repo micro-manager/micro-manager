@@ -12,8 +12,11 @@ import org.micromanager.display.DisplayWindow;
 
 import mmcorej.TaggedImage;
 
+String saveLocation = "C:\\tmp2";
+
 Datastore store = mm.data().createRAMDatastore();
 DisplayWindow display = mm.displays().createDisplay(store);
+mm.displays().manage(store);
 
 mm.getCore().snapImage();
 TaggedImage tmp = mm.getCore().getTaggedImage();
@@ -27,4 +30,6 @@ image2 = image2.copyAtCoords(image1.getCoords().copy().channel(1).build());
 
 store.putImage(image1);
 store.putImage(image2);
-store.save(Datastore.SaveMode.MULTIPAGE_TIFF, display);
+store.freeze();
+store.save(Datastore.SaveMode.MULTIPAGE_TIFF, saveLocation);
+store.close();
