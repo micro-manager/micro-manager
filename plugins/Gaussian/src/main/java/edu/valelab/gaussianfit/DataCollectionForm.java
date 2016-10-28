@@ -397,7 +397,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    
    @Subscribe
    public void closeRequested( ShutdownCommencingEvent sce){
-      this.dispose();
+      formWindowClosing(null);
    }
 
 
@@ -860,11 +860,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                               .addGap(6, 6, 6)
                               .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                  .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                 .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                                 .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))))))
                   .addGap(7, 7, 7))
                .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                   .addGap(0, 0, Short.MAX_VALUE)
-                  .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                  .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
             .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1309,7 +1309,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
          try {
             c2t_ = new CoordinateMapper(points, 2, 1);
             
-            ij.IJ.log("Used " + points.size() + " spot pairs to calculate 2C Reference");
+            studio_.alerts().postAlert("2C Reference", DataCollectionForm.class , 
+                    "Used " + points.size() + " spot pairs to calculate 2C Reference");
             
             String name = "ID: " + rowData_.get(rows[0]).ID_;
             if (rows.length > 1) {
@@ -1418,9 +1419,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
       up.setInt(oc, COL4WIDTH, cm.getColumn(4).getWidth());
       up.setInt(oc, COL5WIDTH, cm.getColumn(5).getWidth());
       up.setInt(oc, COL6WIDTH, cm.getColumn(6).getWidth());
-      
-      setVisible(false);
+
       studio_.events().unregisterForEvents(this);
+      this.dispose();
+      instance_ = null;
    }
 
    /**
@@ -2486,9 +2488,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
             double meanY = StatUtils.mean(yws);
             double varX = StatUtils.variance(xws, meanX);
             double varY = StatUtils.variance(yws, meanY);
-            
-            //System.out.println("Frame: " + frameNr + ", X: " + (int) meanX + ", " + (int) varX + 
-            //        ", Y: " + (int) meanY + ", " + (int) varY);
             
             if (frameSpots.size() >= minNrSpots && 
                     meanX < widthCutoff &&
