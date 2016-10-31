@@ -174,12 +174,15 @@ private:
    TEnumProperty* pixelReadoutRate_property;
    TEnumProperty* pixelEncoding_property;
    TIntegerProperty* accumulationLength_property;
+   TIntegerProperty* MCPGain_property;
+   TIntegerProperty* MCPVoltage_property;
    TFloatProperty* readTemperature_property;
    TEnumProperty* temperatureStatus_property;
    TBooleanProperty* sensorCooling_property;
    TBooleanProperty* overlap_property;
    TBooleanProperty* pretrigger_property;
    TBooleanProperty* piv_property;
+   TBooleanProperty* MCPIntelligate_property;
    TEnumProperty* triggerMode_property;
    TEnumProperty* fanSpeed_property;
    TEnumProperty* gateMode_property;
@@ -193,6 +196,25 @@ private:
    TEnumProperty* auxOutTwoSignal_property;
    TEnumProperty* shutterOutputMode_property;
    TFloatProperty* shutterTransferTime_property;
+   TEnumProperty* InsertionDelay_property;
+   TBooleanProperty* DDGIOCEnable_property;
+   TIntegerProperty* DDGIOCNumberOfPulses_property;
+   TIntegerProperty* DDGIOCPeriod_property;
+   TIntegerProperty* DDGIOCOutputDelay_property;
+   TBooleanProperty* DDGOutputEnable_property;
+   TBooleanProperty* DDGOutputStepEnable_property;
+   TBooleanProperty* DDGStepEnabled_property;
+   TBooleanProperty* DDGOpticalWidthEnable_property;
+   TEnumProperty* DDGOutputPolarity_property;
+   TEnumProperty* DDGOutputSelector_property;
+   TIntegerProperty* DDGOutputWidth_property;
+   TIntegerProperty* DDGStepCount_property;
+   TFloatProperty* DDGStepDelayCoefficientA_property;
+   TFloatProperty* DDGStepDelayCoefficientB_property;
+   TEnumProperty* DDGStepDelayMode_property;
+   TFloatProperty* DDGStepWidthCoefficientA_property;
+   TFloatProperty* DDGStepWidthCoefficientB_property;
+   TEnumProperty* DDGStepWidthMode_property;
    
    // LightScanPlus properties
    TEnumProperty* LSPSensorReadoutMode_property;

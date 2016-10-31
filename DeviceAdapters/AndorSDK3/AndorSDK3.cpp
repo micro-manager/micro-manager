@@ -593,12 +593,6 @@ int CAndorSDK3Camera::Initialize()
    overlap_property = new TBooleanProperty(TAndorSDK3Strings::OVERLAP, cameraDevice->GetBool(L"Overlap"),
                                            callbackManager_, false);
 
-   pretrigger_property = new TBooleanProperty(TAndorSDK3Strings::PRETRIGGER, cameraDevice->GetBool(L"PreTriggerEnable"), 
-											callbackManager_, false);
-											
-	piv_property = new TBooleanProperty(TAndorSDK3Strings::PIV, cameraDevice->GetBool(L"PIVEnable"), 
-											callbackManager_, false);
-
    exposureTime_property = new TExposureProperty(MM::g_Keyword_Exposure,
                                        new TAndorFloatValueMapper(cameraDevice->GetFloat(L"ExposureTime"), 1000),
                                        callbackManager_, false, false);
@@ -651,6 +645,93 @@ int CAndorSDK3Camera::Initialize()
    LSPExternalTriggerDelay_Property = new TFloatProperty("LightScanPlus-ExternalTriggerDelay [s]", 
                                              cameraDevice->GetFloat(L"ExternalTriggerDelay"), 
                                              callbackManager_, false, false);
+
+   pretrigger_property = new TBooleanProperty(TAndorSDK3Strings::PRETRIGGER, cameraDevice->GetBool(L"PreTriggerEnable"), 
+											callbackManager_, false);
+											
+   piv_property = new TBooleanProperty(TAndorSDK3Strings::PIV, cameraDevice->GetBool(L"PIVEnable"), 
+											callbackManager_, false);
+
+   MCPIntelligate_property = new TBooleanProperty(TAndorSDK3Strings::MCP_INTELLIGATE, cameraDevice->GetBool(L"MCPIntelligate"), 
+											callbackManager_, false);
+
+   MCPGain_property = new TIntegerProperty(TAndorSDK3Strings::MCP_GAIN,
+                                                      cameraDevice->GetInteger(L"MCPGain"), this, thd_, 
+                                                      snapShotController_, false, false);
+
+   MCPVoltage_property = new TIntegerProperty(TAndorSDK3Strings::MCP_VOLTAGE,
+                                                      cameraDevice->GetInteger(L"MCPVoltage"), this, thd_, 
+                                                      snapShotController_, false, false);
+
+   DDGIOCEnable_property = new TBooleanProperty(TAndorSDK3Strings::DDG_IOC_ENABLE, cameraDevice->GetBool(L"DDGIOCEnable"), 
+											callbackManager_, false);
+
+   InsertionDelay_property = new TEnumProperty(TAndorSDK3Strings::INSERTION_DELAY, cameraDevice->GetEnum(L"InsertionDelay"),
+                                            this, thd_, snapShotController_, false, true);
+
+   DDGIOCNumberOfPulses_property = new TIntegerProperty(TAndorSDK3Strings::DDG_IOC_NUMBER_OF_PULSES,
+                                             cameraDevice->GetInteger(L"DDGIOCNumberOfPulses"), this, thd_, 
+                                             snapShotController_, false, true);
+
+   DDGIOCPeriod_property = new TIntegerProperty(TAndorSDK3Strings::DDG_IOC_PERIOD,
+                                             cameraDevice->GetInteger(L"DDGIOCPeriod"), this, thd_, 
+                                             snapShotController_, false, true);
+
+   DDGIOCOutputDelay_property = new TIntegerProperty(TAndorSDK3Strings::DDG_OUTPUT_DELAY,
+                                             cameraDevice->GetInteger(L"DDGOutputDelay"), this, thd_, 
+                                             snapShotController_, false, true);
+
+   DDGOutputEnable_property = new TBooleanProperty(TAndorSDK3Strings::DDG_OUTPUT_ENABLE, 
+                                             cameraDevice->GetBool(L"DDGOutputEnable"),
+                                             callbackManager_, false);
+
+   DDGOutputStepEnable_property = new TBooleanProperty(TAndorSDK3Strings::DDG_OUTPUT_STEP_ENABLE, 
+                                             cameraDevice->GetBool(L"DDGOutputStepEnable"),
+                                             callbackManager_, false);
+
+   DDGStepEnabled_property = new TBooleanProperty(TAndorSDK3Strings::DDG_STEP_ENABLED, 
+                                             cameraDevice->GetBool(L"DDGStepEnabled"),
+                                             callbackManager_, true);
+
+   DDGOpticalWidthEnable_property = new TBooleanProperty(TAndorSDK3Strings::DDG_OPTICAL_WIDTH_ENABLE, 
+                                             cameraDevice->GetBool(L"DDGOpticalWidthEnable"),
+                                             callbackManager_, false);
+
+   DDGOutputPolarity_property = new TEnumProperty(TAndorSDK3Strings::DDG_OUTPUT_POLARITY, cameraDevice->GetEnum(L"DDGOutputPolarity"),
+                                            this, thd_, snapShotController_, false, true);
+
+   DDGOutputSelector_property = new TEnumProperty(TAndorSDK3Strings::DDG_OUTPUT_SELECTOR, cameraDevice->GetEnum(L"DDGOutputSelector"),
+                                            this, thd_, snapShotController_, false, true);
+
+   DDGOutputWidth_property = new TIntegerProperty(TAndorSDK3Strings::DDG_OUTPUT_WIDTH,
+                                             cameraDevice->GetInteger(L"DDGOutputWidth"), this, thd_, 
+                                             snapShotController_, false, true);
+
+   DDGStepCount_property = new TIntegerProperty(TAndorSDK3Strings::DDG_STEP_COUNT,
+                                             cameraDevice->GetInteger(L"DDGStepCount"), this, thd_, 
+                                             snapShotController_, false, true);
+
+   DDGStepDelayCoefficientA_property = new TFloatProperty(TAndorSDK3Strings::DDG_STEP_DELAY_COEFFICIENT_A, 
+                                             cameraDevice->GetFloat(L"DDGStepDelayCoefficientA"), 
+                                             callbackManager_, false, true);
+
+   DDGStepDelayCoefficientB_property = new TFloatProperty(TAndorSDK3Strings::DDG_STEP_DELAY_COEFFICIENT_B, 
+                                             cameraDevice->GetFloat(L"DDGStepDelayCoefficientB"), 
+                                             callbackManager_, false, true);
+
+   DDGStepDelayMode_property = new TEnumProperty(TAndorSDK3Strings::DDG_STEP_DELAY_MODE, cameraDevice->GetEnum(L"DDGStepDelayMode"),
+                                            this, thd_, snapShotController_, false, false);
+
+   DDGStepWidthCoefficientA_property = new TFloatProperty(TAndorSDK3Strings::DDG_STEP_WIDTH_COEFFICIENT_A, 
+                                             cameraDevice->GetFloat(L"DDGStepWidthCoefficientA"), 
+                                             callbackManager_, false, true);
+
+   DDGStepWidthCoefficientB_property = new TFloatProperty(TAndorSDK3Strings::DDG_STEP_WIDTH_COEFFICIENT_B, 
+                                             cameraDevice->GetFloat(L"DDGStepWidthCoefficientB"), 
+                                             callbackManager_, false, true);
+
+   DDGStepWidthMode_property = new TEnumProperty(TAndorSDK3Strings::DDG_STEP_WIDTH_MODE, cameraDevice->GetEnum(L"DDGStepWidthMode"),
+                                            this, thd_, snapShotController_, false, true);
 
    char errorStr[MM::MaxStrLength];
    if (false == eventsManager_->Initialise(errorStr) )
@@ -741,6 +822,28 @@ int CAndorSDK3Camera::Shutdown()
       delete LSPLineScanSpeed_property;
       delete LSPRowReadTime_property;
       delete LSPExternalTriggerDelay_Property;
+	    delete MCPGain_property;
+	    delete MCPVoltage_property;
+	    delete MCPIntelligate_property;
+	    delete InsertionDelay_property;
+	    delete DDGIOCEnable_property;
+	    delete DDGIOCNumberOfPulses_property;
+	    delete DDGIOCPeriod_property;
+	    delete DDGIOCOutputDelay_property;
+	    delete DDGOutputEnable_property;
+	    delete DDGOutputStepEnable_property;
+	    delete DDGStepEnabled_property;
+	    delete DDGOpticalWidthEnable_property;
+	    delete DDGOutputPolarity_property;
+	    delete DDGOutputSelector_property;
+	    delete DDGOutputWidth_property;
+	    delete DDGStepCount_property;
+	    delete DDGStepDelayCoefficientA_property;
+	    delete DDGStepDelayCoefficientB_property;
+	    delete DDGStepDelayMode_property;
+	    delete DDGStepWidthCoefficientA_property;
+	    delete DDGStepWidthCoefficientB_property;
+	    delete DDGStepWidthMode_property;
 
       delete callbackManager_;
       delete snapShotController_;
