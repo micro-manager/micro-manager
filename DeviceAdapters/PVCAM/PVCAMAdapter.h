@@ -88,6 +88,7 @@
 #define ERR_BINNING_INVALID             10011 // Binning value is not valid for current configuration
 #define ERR_OPERATION_TIMED_OUT         10012 // Generic timeout error
 #define ERR_FRAME_READOUT_FAILED        10013 // Polling: status = READOUT_FAILED
+#define ERR_TOO_MANY_ROIS               10014 // Device does not support that many ROIs (uM 2.0)
 
 // PVCAM-specific error codes base. When a PVCAM error occurs we use the PVCAM
 // ID and PVCAM message to create a new uM error code, we call the the SetErrorCode()

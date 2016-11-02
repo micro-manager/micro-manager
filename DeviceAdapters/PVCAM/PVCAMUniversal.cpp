@@ -282,6 +282,7 @@ Universal::Universal(short cameraId) :
     SetErrorText(ERR_BINNING_INVALID, "Binning value is not valid for current configuration");
     SetErrorText(ERR_OPERATION_TIMED_OUT, "The operation has timed out");
     SetErrorText(ERR_FRAME_READOUT_FAILED, "Frame readout failed");
+    SetErrorText(ERR_TOO_MANY_ROIS, "Too many ROIs"); // Later overwritten by more specific message
 
     pollingThd_ = new PollingThread(this);             // Pointer to the sequencing thread
 
@@ -1102,6 +1103,9 @@ int Universal::Initialize()
         maxRois = prmRoiCount_->Max();
     acqCfgNew_.Rois.SetCapacity(maxRois);
     acqCfgNew_.Rois.Add(PvRoi(0, 0, camSerSize_, camParSize_));
+    // We know the max ROIs so update our error message
+    SetErrorText(ERR_TOO_MANY_ROIS,
+        std::string("Device supports only " + std::to_string((long long)maxRois) + " ROI(s).").c_str());
 
     // Make sure our configs are synchronized
     acqCfgCur_ = acqCfgNew_;
@@ -1451,6 +1455,9 @@ int Universal::GetMultiROICount(unsigned& count)
 int Universal::SetMultiROI(const unsigned* xs, const unsigned* ys, const unsigned* widths, const unsigned* heights, unsigned numROIs)
 {
     int nRet = DEVICE_OK;
+
+    if (numROIs > acqCfgCur_.Rois.Capacity())
+        return ERR_TOO_MANY_ROIS;
 
     // Get the current binning
     const uns16 bx = acqCfgCur_.Rois.BinX();
