@@ -42,6 +42,7 @@ const char* g_SensorInfo               = "Sensor Info";
 const char* g_DriverName               = "Driver Name";
 const char* g_FirmwareVersion          = "Firmware Version";
 const char* g_FirmwareBuildTime        = "Firmware Build Time";
+const char* g_MaxBusSpeed              = "Maximum Bus Speed";
 const char* g_InterfaceType            = "Interface Type";
 const char* g_ColorMonoChrome          = "Color or Monochrome";
 const char* g_IIDCVersion              = "IIDC version";
@@ -325,7 +326,11 @@ int PointGrey::Initialize()
 
    sprintf(buf, "%s", camInfo.firmwareBuildTime);
    ret = CreateProperty(g_FirmwareBuildTime, buf, MM::String, true);
-	assert(ret == DEVICE_OK); 
+   assert(ret == DEVICE_OK); 
+
+   sprintf(buf, "%s", GetBusSpeedAsString(camInfo.maximumBusSpeed));
+   ret = CreateProperty(g_MaxBusSpeed, buf, MM::String, true);
+   assert (ret == DEVICE_OK);
 
    std::string colorType = "MonoChrome";
    if (camInfo.isColorCamera) {
@@ -374,6 +379,13 @@ int PointGrey::Initialize()
             os << "Format 7 mode " << mode << " is available";
             LogMessage (os.str().c_str(), false);
          }
+        
+         else if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+       
       }
       
       if (f7Requested && f7Available) {
@@ -1701,4 +1713,30 @@ int PointGrey::Format7ModeFromString(std::string modeString, Mode* mode) const
    *mode = (Mode) iMode;
 
    return DEVICE_OK;
+}
+
+const char* PointGrey::GetBusSpeedAsString(BusSpeed speed)
+{  
+   switch (speed) 
+   {
+   case BUSSPEED_S100:
+      return "s100";
+   case BUSSPEED_S200:
+         return "s200";
+   case BUSSPEED_S400:
+      return "s400";
+   case BUSSPEED_S480:
+      return "s480";
+   case BUSSPEED_S800:
+      return "s800";
+   case BUSSPEED_S1600:
+      return "s1600";
+   case BUSSPEED_S3200:
+      return "s3200";
+   case BUSSPEED_S5000:
+      return "s5000";
+
+   default:
+      return "Unknown bus speed";
+   }
 }

@@ -100,6 +100,7 @@ public:
 private:
    void updatePixelFormats(unsigned int pixelFormatBitField);
    int SetEndianess(bool little);
+   const char* GetBusSpeedAsString(BusSpeed speed);
 
    FlyCapture2::PGRGuid guid_;
    FlyCapture2::Camera cam_;
