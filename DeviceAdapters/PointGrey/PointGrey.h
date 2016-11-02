@@ -89,7 +89,6 @@ public:
    //////////////////////////////////////////////////////////////
    // action interface
    int OnCameraId(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAbsValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct, long value);

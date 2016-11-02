@@ -514,7 +514,14 @@ int PointGrey::Initialize()
             std::string propName = g_PropertyNames[i] + "-AutoOrManual";
             std::string val = "Manual";
             if (pProp->autoManualMode) {
-               val = "Auto";
+               // set all auto/manual properties to manual, since things like
+               // automatic gain control are not good for quantitative measurements
+               pProp->autoManualMode = false;
+               error = cam_.SetProperty(pProp);
+               if (error != PGRERROR_OK) {
+                  SetErrorText(ALLERRORS, error.GetDescription());
+                  return ALLERRORS;  
+               }
             }
             CreateProperty(propName.c_str(), val.c_str(), MM::String, false, pActEx, false);
             AddAllowedValue(propName.c_str(), "Auto");
@@ -586,13 +593,6 @@ int PointGrey::Initialize()
 
 
    // TODO: check for the AutoExpose property and switch it off
-
-
-	// -------------------------------------------------------------------------------------
-	// binning
-	CPropertyAction* pAct = new CPropertyAction (this, &PointGrey::OnBinning);
-	ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
-	assert(ret == DEVICE_OK);
 
    // TODO: figure out possibility of hardware binning with Point Grey cameras
 
@@ -745,11 +745,6 @@ long PointGrey::GetImageBufferSize() const
 * Sets the camera Region Of Interest.
 * Required by the MM::Camera API.
 * This command will change the dimensions of the image.
-* Depending on the hardware capabilities the camera may not be able to configure the
-* exact dimensions requested - but should try do as close as possible.
-* If the hardware does not have this capability the software should simulate the ROI by
-* appropriately cropping each frame.
-* This demo implementation ignores the position coordinates and just crops the buffer.
 * @param x - top-left corner coordinate
 * @param y - top-left corner coordinate
 * @param xSize - width
@@ -803,10 +798,38 @@ int PointGrey::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 */
 int PointGrey::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-   x = 0;
-   y = 0;
-   xSize = image_.GetCols();
-   ySize = image_.GetRows();
+   if (!f7InUse_) 
+   {
+      x = 0;
+      y = 0;
+      xSize = image_.GetCols();
+      ySize = image_.GetRows();
+
+      return DEVICE_OK;
+   }
+   	  
+   Format7ImageSettings format7ImageSettings;
+   unsigned int packetSize;
+   float percentage;
+   Error error = cam_.GetFormat7Configuration(&format7ImageSettings, &packetSize, &percentage);
+   if (error != PGRERROR_OK) {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+
+   Format7Info format7Info;
+   format7Info.mode = format7ImageSettings.mode;
+   bool supported;
+   error = cam_.GetFormat7Info(&format7Info, &supported);
+
+   if (error != PGRERROR_OK) {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+   x = format7ImageSettings.offsetX;
+   y = format7ImageSettings.offsetY;
+   xSize = format7ImageSettings.width;
+   ySize = format7ImageSettings.height;
 
 	return DEVICE_OK;
 }
@@ -1000,7 +1023,8 @@ int PointGrey::StopSequenceAcquisition()
 * Because of the syntax, InsertImage needs to be const, which poses a few
 * problems maintaining state.
 */
-int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */, bool stopOnOverflow)
+int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */, 
+		bool stopOnOverflow)
 {
    stopOnOverflow_ = stopOnOverflow;
    imageCounter_ = 0;
@@ -1038,9 +1062,9 @@ int PointGrey::InsertImage(Image* pImg) const
    }
 
    TimeStamp ts = pImg->GetTimeStamp();
-   MM::MMTime timeStamp = MM::MMTime((long) ts.seconds, (long) ts.microSeconds);
+	MM::MMTime timeStamp = MM::MMTime( (long) ts.seconds, (long) ts.microSeconds);
    char label[MM::MaxStrLength];
-   this->GetLabel(label);
+	this->GetLabel(label);
    // TODO: we want to set the sequenceStartTimeStamp_ here but can not do so since we are const
    // if (imageCounter_ == 0) {
    //    sequenceStartTimeStamp_ = timeStamp;
@@ -1085,37 +1109,6 @@ bool PointGrey::IsCapturing()
    // TODO: evaluate if a lock is needed
    return isCapturing_;
 }
-
-///////////////////////////////////////////////////////////////////////////////
-// PointGrey Action handlers
-/***********************************************************************
-* Handles "Binning" property.
-*/
-int PointGrey::OnBinning(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */)
-{
-	int ret = DEVICE_OK;
-   /*
-	if (eAct == MM::AfterSet)
-	{
-		long binSize;
-		pProp->Get(binSize);
-		binning_ = (int)binSize;
-		ret = xiSetParamInt( handle, XI_PRM_DOWNSAMPLING, binning_);
-
-		int width = 0;
-		xiGetParamInt( handle, XI_PRM_WIDTH XI_PRM_INFO_MAX, &width);
-		xiSetParamInt( handle, XI_PRM_WIDTH, width - (width%4));
-		return ResizeImageBuffer();
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		pProp->Set((long)binning_);
-	}
-   */
-	return ret;
-}
-
-
 
 /***********************************************************************
 * Handles "CameraId" property.
