@@ -388,7 +388,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          useChannels_ = false;
          
       channels_ = ss.channels;
-       // no channel group
+       try {
+           core_.setChannelGroup(ss.channelGroup);
+       } catch (Exception e) {
+           ReportingUtils.logError(e, "Couldn't set core channelGroup from SequenceSettings.");
+       }
 
       //timeFirst = true means that time points are collected at each position      
       if (ss.timeFirst && ss.slicesFirst) {
