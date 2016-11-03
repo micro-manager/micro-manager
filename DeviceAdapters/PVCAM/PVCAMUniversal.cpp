@@ -3786,10 +3786,15 @@ int Universal::initializeSpeedTable()
                     {
                         if (pl_set_param(hPVCAM_, PARAM_GAIN_INDEX, &gainIdx) == PV_OK)
                         {
-                            char gainName[MAX_GAIN_NAME_LEN];
-                            if (pl_get_param(hPVCAM_, PARAM_GAIN_NAME, ATTR_CURRENT, gainName) == PV_OK)
+                            char pvGainName[MAX_GAIN_NAME_LEN];
+                            if (pl_get_param(hPVCAM_, PARAM_GAIN_NAME, ATTR_CURRENT, pvGainName) == PV_OK)
                             {
-                                gainNameStr.assign(gainName);
+                                // Workaround if for some reason PVCAM returns empty string
+                                if (strlen(pvGainName) != 0)
+                                {
+                                    gainNameStr.append("-");
+                                    gainNameStr.append(pvGainName);
+                                }
                             }
                         }
                     }
