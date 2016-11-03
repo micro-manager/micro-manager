@@ -123,12 +123,9 @@ public final class DragDropUtil implements DropTargetListener {
          if (studio_.displays().getDisplays(store).isEmpty()) {
             studio_.displays().createDisplay(store);
          }
-         MMMenuBar mmMenuBar = (MMMenuBar) MMStudio.getFrame().getJMenuBar();
-         if (mmMenuBar != null) {
-            FileMenu fm = mmMenuBar.getFileMenu();
-            if (fm != null) {
-               fm.updateFileHistory(store.getSavePath());
-            }
+         FileMenu fm = MMMenuBar.getFileMenu();
+         if (fm != null) {
+            fm.updateFileHistory(store.getSavePath());
          }
       } catch (IOException e) {
          ReportingUtils.showError(e, "There was an error while opening the file at " + dir);
