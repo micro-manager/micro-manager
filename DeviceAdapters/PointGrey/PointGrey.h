@@ -24,6 +24,7 @@
 #include "ImgBuffer.h"
 #include "DeviceThreads.h"
 #include "ImgBuffer.h"
+#include "MMDeviceConstants.h"
 
 #include "FlyCapture2.h"
 
@@ -88,6 +89,7 @@ public:
 
    //////////////////////////////////////////////////////////////
    // action interface
+   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCameraId(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAbsValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);

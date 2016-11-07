@@ -606,7 +606,11 @@ int PointGrey::Initialize()
 
    // TODO: check for the AutoExpose property and switch it off
 
-   // TODO: figure out possibility of hardware binning with Point Grey cameras
+   // Binning property is just a stub.  It is kind of disappointing to see that Micro-Manager GUI does not function
+   // without it
+   CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnBinning);
+   CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct, false);
+   AddAllowedValue(MM::g_Keyword_Binning, "1");
 
    FC2Config config;
    error = cam_.GetConfiguration( &config );
@@ -1121,6 +1125,26 @@ bool PointGrey::IsCapturing()
    // TODO: evaluate if a lock is needed
    return isCapturing_;
 }
+
+
+/***********************************************************************
+* Handles Binning property.
+* Although some PGR cameras support binning by switching modes, there is
+* binning "function" in the SDK.  To full support binning would need a 
+* lot of knowledge of specific cameras in this device adapter,  which is
+* something we want to avoid.  Instruct the user to read the camera's data
+* sheet instead.
+*/
+int PointGrey::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+	{
+		pProp->Set( (long) GetBinning());
+	}
+
+	return DEVICE_OK;
+}
+
 
 /***********************************************************************
 * Handles "CameraId" property.
