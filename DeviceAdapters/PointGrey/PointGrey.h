@@ -37,7 +37,7 @@ class SequenceThread;
 class PointGrey : public CCameraBase<PointGrey>  
 {
 public:
-   PointGrey();
+   PointGrey(const char* deviceName);
    ~PointGrey();
   
    //////////////////////////////////////////////////////////////
@@ -78,7 +78,7 @@ public:
    /////////////////////////////////////////////////////////////
    // Functions to convert between PGR and MM
    int CameraPGRGuid(FlyCapture2::BusManager* busMgr, FlyCapture2::PGRGuid* guid, int nr);
-   int CameraID(FlyCapture2::PGRGuid id, std::string* camIDString);
+   int static CameraID(FlyCapture2::PGRGuid id, std::string* camIDString);
    int CameraGUIDfromOurID(FlyCapture2::BusManager* busMgr, FlyCapture2::PGRGuid* guid, std::string ourID);
    void VideoModeAndFrameRateStringFromEnums(std::string &readableString, FlyCapture2::VideoMode vm, FlyCapture2::FrameRate fr) const;
    int VideoModeAndFrameRateEnumsFromString(std::string readableString, FlyCapture2::VideoMode &vm, FlyCapture2::FrameRate &fr) const;
@@ -90,7 +90,6 @@ public:
    //////////////////////////////////////////////////////////////
    // action interface
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnCameraId(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAbsValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
@@ -109,8 +108,7 @@ private:
    FlyCapture2::Image image_;
    unsigned int nComponents_;
    bool initialized_;
-   std::string name_;
-   std::string cameraId_;
+   std::string deviceName_;
    MM::MMTime sequenceStartTime_;
    MM::MMTime sequenceStartTimeStamp_;
    long imageCounter_;

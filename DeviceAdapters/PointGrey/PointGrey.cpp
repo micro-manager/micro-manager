@@ -106,10 +106,11 @@ void PGCallback(Image* pImage,  const void* pCallbackData)
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
 
+
 /***********************************************************************
-* Update available devices list
-*/
-void UpdateDevList()
+ * List all supported hardware devices here
+ */
+MODULE_API void InitializeModuleData()
 {
    BusManager busMgr;
    Error error;
@@ -131,25 +132,24 @@ void UpdateDevList()
          // TODO work out how to return/report errors, 
          return;
       }
-      std::string name = "Camera-" + std::to_string((_ULonglong) (i + 1) );
+
+      std::string name;
+      int ret = PointGrey::CameraID(guid, &name);
+      if (ret != DEVICE_OK) 
+      {
+         return;
+      }
+
       RegisterDevice(name.c_str(), MM::CameraDevice, "Point Grey Camera");
    }
 }
 
 
-/***********************************************************************
- * List all supported hardware devices here
- */
-MODULE_API void InitializeModuleData()
-{
-	UpdateDevList();
-}
-
 //***********************************************************************
 
-MODULE_API MM::Device* CreateDevice(const char* /* deviceName */)
+MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-    return new PointGrey();
+    return new PointGrey(deviceName);
 }
 
 //***********************************************************************
@@ -171,9 +171,10 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 * the constructor. We should do as little as possible in the constructor and
 * perform most of the initialization in the Initialize() method.
 */
-PointGrey::PointGrey() :
+PointGrey::PointGrey(const char* deviceName) :
    nComponents_(1),
    initialized_(false),
+   deviceName_(deviceName),
    sequenceStartTime_(0),
    imageCounter_(0),
    stopOnOverflow_(false),
@@ -185,54 +186,7 @@ PointGrey::PointGrey() :
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
 
-   // Create pre-init property with name and SN
-   BusManager busMgr;
-   Error error;
-
-   FC2Version pVersion;
-   error = Utilities::GetLibraryVersion(&pVersion);
-   if (error != PGRERROR_OK)
-   {
-      LogMessage("Failed to determine FlyCapture2_v100.dll version number", false);
-      return;
-   }
-
-   std::ostringstream os;
-   os << "FlyCapture2_v100.dll version number is " << pVersion.major << "." << pVersion.minor << "." << pVersion.type << "." << pVersion.build;
-   LogMessage(os.str().c_str(), false);
-
-   unsigned int numCameras = 0;
-   error = busMgr.GetNumOfCameras(&numCameras);
-   if (error != PGRERROR_OK)
-   {
-      LogMessage("Failed to determine number of cameras", false);
-      return;
-   }
-
-	if(numCameras == 0)	
-   {
-      LogMessage("No Point Grey cameras detected", false);
-		return; 
-   }
-
-   std::vector<std::string> cameras(numCameras);
-   for (unsigned int i = 0; i < numCameras; i++) {
-      PGRGuid guid;
-      int ret =  CameraPGRGuid(&busMgr, &guid, i);
-      if (ret == DEVICE_OK) {
-         std::string name;;
-         ret = CameraID(guid, &name);
-         if (ret == DEVICE_OK) {
-            cameras.push_back(name);
-         }
-      }
-   }
-   CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnCameraId);
-   CreateProperty(g_CameraId, cameras.front().c_str(), MM::String, false, pAct, true);
-   for (unsigned int i = 0; i < cameras.size(); i++) {
-      AddAllowedValue(g_CameraId, cameras[i].c_str());
-   }
-
+   // Create pre-init property with advanced mode
    CreateProperty(g_AdvancedMode, "Yes", MM::String, false, 0, true);
    AddAllowedValue(g_AdvancedMode, "No");
    AddAllowedValue(g_AdvancedMode, "Yes");
@@ -258,7 +212,7 @@ PointGrey::~PointGrey()
 */
 void PointGrey::GetName(char* name) const
 {
-	CDeviceUtils::CopyLimitedString(name, name_.c_str());
+	CDeviceUtils::CopyLimitedString(name, deviceName_.c_str());
 }
 
 /***********************************************************************
@@ -273,6 +227,8 @@ int PointGrey::Initialize()
 	if (initialized_)
 		return DEVICE_OK;
 
+   // check dll version and make sure it is compatible (the same as used to build the code)
+   // Todo: find an automated way to synchronize version numbers
    FC2Version pVersion;
    Error error = Utilities::GetLibraryVersion(&pVersion);
    if (error != PGRERROR_OK)
@@ -280,6 +236,11 @@ int PointGrey::Initialize()
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
+   
+   std::ostringstream os;
+   os << "FlyCapture2_v100.dll version number is " << pVersion.major << "." << pVersion.minor << "." << pVersion.type << "." << pVersion.build;
+   LogMessage(os.str().c_str(), false);
+
    // BE AWARE: This version number needs to be updates if/when MM is linked against another PGR version
    if (pVersion.major != 2 || pVersion.minor != 10 || pVersion.type != 3 || pVersion.build != 169) {
       SetErrorText(ALLERRORS, "Flycapture2_v100.dll is not version 2.10.3.169.  Micro-Manager works correctly only with that version");
@@ -288,7 +249,7 @@ int PointGrey::Initialize()
 
    BusManager busMgr;
    
-   int ret = CameraGUIDfromOurID(&busMgr, &guid_, cameraId_.c_str()); 
+   int ret = CameraGUIDfromOurID(&busMgr, &guid_, deviceName_.c_str()); 
    if (ret != DEVICE_OK) {
       return ret;
    }
@@ -378,9 +339,9 @@ int PointGrey::Initialize()
    assert(ret == DEVICE_OK); 
 
    // IIDC version
-   std::ostringstream os;
-   os << std::fixed << std::setprecision(2) << ( ((float) camInfo.iidcVer) / 100.0f);
-   ret = CreateProperty(g_IIDCVersion, os.str().c_str(), MM::String, true);
+   std::ostringstream os2;
+   os2 << std::fixed << std::setprecision(2) << ( ((float) camInfo.iidcVer) / 100.0f);
+   ret = CreateProperty(g_IIDCVersion, os2.str().c_str(), MM::String, true);
    
    if (it == INTERFACE_GIGE) {
       
@@ -767,9 +728,6 @@ unsigned int PointGrey::GetImageBytesPerPixel() const
 unsigned int PointGrey::GetBitDepth() const
 {
    unsigned int bpp = image_.GetBitsPerPixel();
-   std::ostringstream os;
-   os << "BitDepth: " << bpp;
-   LogMessage(os.str().c_str());
    return bpp;
 }
 
@@ -779,7 +737,6 @@ unsigned int PointGrey::GetBitDepth() const
 */
 long PointGrey::GetImageBufferSize() const
 {
-	// GetImageWidth() * GetImageHeight() * GetImageBytesPerPixel();
    return image_.GetDataSize();
 }
 
@@ -1033,8 +990,6 @@ int PointGrey::SetBinning(int binF)
 
 /***********************************************************************
  * Required by the MM::Camera API
- * Please implement this yourself and do not rely on the base class implementation
- * The Base class implementation is deprecated and will be removed shortly
  */
 int PointGrey::StartSequenceAcquisition(double interval)
 {
@@ -1042,7 +997,7 @@ int PointGrey::StartSequenceAcquisition(double interval)
 }
 
 /***********************************************************************                                                                       
-* Stop and wait for the Sequence thread finished                                   
+* Stop and wait for the Sequence thread to finish                                  
 */                                                                        
 int PointGrey::StopSequenceAcquisition()                                     
 {
@@ -1171,23 +1126,6 @@ int PointGrey::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-
-/***********************************************************************
-* Handles "CameraId" property.
-*/
-int PointGrey::OnCameraId(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-	if (eAct == MM::AfterSet)
-	{
-		pProp->Get(cameraId_);
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		pProp->Set(cameraId_.c_str());
-	}
-
-	return DEVICE_OK;
-}
 
 /***********************************************************************
  * Handles Absolute value aspect of properties
@@ -1592,7 +1530,7 @@ int PointGrey::CameraID(PGRGuid id, std::string* camIdString)
    Error error = cam.Connect(&id);
    if (error != PGRERROR_OK)
    {
-      SetErrorText(ALLERRORS, error.GetDescription());
+      //SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
 
@@ -1602,7 +1540,7 @@ int PointGrey::CameraID(PGRGuid id, std::string* camIdString)
    if (error != PGRERROR_OK)
    {
       cam.Disconnect();
-      SetErrorText(ALLERRORS, error.GetDescription());
+      //SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
 
