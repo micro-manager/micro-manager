@@ -189,6 +189,18 @@ PointGrey::PointGrey() :
    BusManager busMgr;
    Error error;
 
+   FC2Version pVersion;
+   error = Utilities::GetLibraryVersion(&pVersion);
+   if (error != PGRERROR_OK)
+   {
+      LogMessage("Failed to determine FlyCapture2_v100.dll version number", false);
+      return;
+   }
+
+   std::ostringstream os;
+   os << "FlyCapture2_v100.dll version number is " << pVersion.major << "." << pVersion.minor << "." << pVersion.type << "." << pVersion.build;
+   LogMessage(os.str().c_str(), false);
+
    unsigned int numCameras = 0;
    error = busMgr.GetNumOfCameras(&numCameras);
    if (error != PGRERROR_OK)
@@ -261,7 +273,21 @@ int PointGrey::Initialize()
 	if (initialized_)
 		return DEVICE_OK;
 
+   FC2Version pVersion;
+   Error error = Utilities::GetLibraryVersion(&pVersion);
+   if (error != PGRERROR_OK)
+   {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+   // BE AWARE: This version number needs to be updates if/when MM is linked against another PGR version
+   if (pVersion.major != 2 || pVersion.minor != 10 || pVersion.type != 3 || pVersion.build != 169) {
+      SetErrorText(ALLERRORS, "Flycapture2_v100.dll is not version 2.10.3.169.  Micro-Manager works correctly only with that version");
+      return ALLERRORS;
+   }
+
    BusManager busMgr;
+   
    int ret = CameraGUIDfromOurID(&busMgr, &guid_, cameraId_.c_str()); 
    if (ret != DEVICE_OK) {
       return ret;
@@ -269,7 +295,7 @@ int PointGrey::Initialize()
 
 	// -------------------------------------------------------------------------------------
 	// Open camera device
-   Error error = cam_.Connect(&guid_);
+   error = cam_.Connect(&guid_);
    if (error != PGRERROR_OK)
    {
       SetErrorText(ALLERRORS, error.GetDescription());
