@@ -366,6 +366,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCiteXT600", "DeviceAdapter
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PointGrey", "DeviceAdapters\PointGrey\PointGrey.vcxproj", "{00E2B1E5-E1AA-4422-882C-A1DC0FB3C296}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AmScope", "DeviceAdapters\AmScope\AmScope.vcxproj", "{BC02359B-2485-413C-ABAF-54CA71E650E5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1805,6 +1807,14 @@ Global
 		{00E2B1E5-E1AA-4422-882C-A1DC0FB3C296}.Release|Win32.Build.0 = Release|Win32
 		{00E2B1E5-E1AA-4422-882C-A1DC0FB3C296}.Release|x64.ActiveCfg = Release|x64
 		{00E2B1E5-E1AA-4422-882C-A1DC0FB3C296}.Release|x64.Build.0 = Release|x64
+		{BC02359B-2485-413C-ABAF-54CA71E650E5}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BC02359B-2485-413C-ABAF-54CA71E650E5}.Debug|Win32.Build.0 = Debug|Win32
+		{BC02359B-2485-413C-ABAF-54CA71E650E5}.Debug|x64.ActiveCfg = Debug|x64
+		{BC02359B-2485-413C-ABAF-54CA71E650E5}.Debug|x64.Build.0 = Debug|x64
+		{BC02359B-2485-413C-ABAF-54CA71E650E5}.Release|Win32.ActiveCfg = Release|Win32
+		{BC02359B-2485-413C-ABAF-54CA71E650E5}.Release|Win32.Build.0 = Release|Win32
+		{BC02359B-2485-413C-ABAF-54CA71E650E5}.Release|x64.ActiveCfg = Release|x64
+		{BC02359B-2485-413C-ABAF-54CA71E650E5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
