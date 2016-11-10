@@ -103,6 +103,7 @@ public:
    int OnSAPatternByte        (MM::PropertyBase* pProp, MM::ActionType eAct);
    // SPIM properties
    int OnSetHomeHere          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnHomePosition         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
    // ring buffer properties
