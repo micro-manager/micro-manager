@@ -1357,7 +1357,6 @@ int AmScope::OnAutoLevelRange(MM::PropertyBase* pProp, MM::ActionType eAct)
 	   string val;
       pProp->Get(val);
 
-	   BOOL b = false;
 	  if (val.compare("1") == 0)
 	  {
 		 autoLevelRange_ = 1;
@@ -1720,7 +1719,6 @@ void AmScope::GenerateCameraImage()
 	{
 		unsigned char* pBuf = const_cast<unsigned char*>(img_.GetPixels());
 		unsigned char* pIn = m_pData;
-		unsigned char R;
 		int counter = 0;
 		for (unsigned int j = 0; j < nHeight; j++)
 		{
@@ -1735,8 +1733,7 @@ void AmScope::GenerateCameraImage()
 	{
 		unsigned int * pBuf = (unsigned int*)(img_.GetPixels());
 		unsigned char* pIn = m_pData;
-		int counter = 0;		
-		float R, G, B;
+		int counter = 0;	
 		unsigned char rgbBytes[4];
 		rgbBytes[3] = 0;
 		for (unsigned int j = 0; j < nHeight; j++)
