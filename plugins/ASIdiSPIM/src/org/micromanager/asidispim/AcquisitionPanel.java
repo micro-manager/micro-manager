@@ -199,6 +199,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    private String lastAcquisitionPath_;
    private String lastAcquisitionName_;
+   private MMAcquisition acq_;
    private String[] channelNames_;
    private int nrRepeats_;  // how many separate acquisitions to perform
    
@@ -230,6 +231,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceTiming_ = new SliceTiming();
       lastAcquisitionPath_ = "";
       lastAcquisitionName_ = "";
+      acq_ = null;
       channelNames_ = null;
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
@@ -1907,6 +1909,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean nonfatalError = false;
       long acqButtonStart = System.currentTimeMillis();
       String acqName = "";
+      acq_ = null;
 
       // do not want to return from within this loop => throw exception instead
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected
@@ -1933,12 +1936,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          
          // try to close last acquisition viewer if there could be one open (only in single acquisition per timepoint mode)
-         if (acqSettings.separateTimepoints && gui_.acquisitionExists(acqName) && !cancelAcquisition_.get()) {
+         if (acqSettings.separateTimepoints && (acq_!=null) && !cancelAcquisition_.get()) {
             try {
                // following line needed due to some arcane internal reason, otherwise
                //   call to closeAcquisitionWindow() fails silently. 
                //   See http://sourceforge.net/p/micro-manager/mailman/message/32999320/
-               gui_.getAcquisition(acqName).promptToSave(false);
+               acq_.promptToSave(false);
                gui_.closeAcquisitionWindow(acqName);
             } catch (Exception ex) {
                // do nothing if unsuccessful
@@ -2075,11 +2078,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
-            MMAcquisition acq = gui_.getAcquisition(acqName);
+            acq_ = gui_.getAcquisition(acqName);
             
             // Dive into MM internals since script interface does not support pipelines
-            ImageCache imageCache = acq.getImageCache();
-            vad = acq.getAcquisitionWindow();
+            ImageCache imageCache = acq_.getImageCache();
+            vad = acq_.getAcquisitionWindow();
             imageCache.addImageCacheListener(vad);
             
             // Start pumping images into the ImageCache
@@ -2114,7 +2117,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // patterned after implementation in MMStudio.java
             // will be null if not saving to disk
-            lastAcquisitionPath_ = acq.getImageCache().getDiskLocation();
+            lastAcquisitionPath_ = acq_.getImageCache().getDiskLocation();
             lastAcquisitionName_ = acqName;
             
             // make sure all devices have arrived, e.g. a stage isn't still moving
@@ -2344,11 +2347,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  // add image to acquisition
                                  if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                                     // create time series for no scan
-                                    addImageToAcquisition(acqName,
+                                    addImageToAcquisition(acq_,
                                           frNumber[channelIndex], channelIndex, actualTimePoint, 
                                           positionNum, now - acqStart, timg, bq);
                                  } else { // standard, create Z-stacks
-                                    addImageToAcquisition(acqName, actualTimePoint, channelIndex,
+                                    addImageToAcquisition(acq_, actualTimePoint, channelIndex,
                                           frNumber[channelIndex], positionNum,
                                           now - acqStart, timg, bq);
                                  }
@@ -2386,6 +2389,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                        updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
                                     }
                                  }
+                                 
                                  last = now;  // keep track of last image timestamp
 
                               } else {  // no image ready yet
@@ -2393,7 +2397,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  Thread.sleep(1);
                                  if (now - last >= timeout2) {
                                     ReportingUtils.logError("Camera did not send all expected images within" +
-                                          " a reasonable period for timepoint " + (timePoint+1) + ".  Continuing anyway.");
+                                          " a reasonable period for timepoint " + numTimePointsDone_ + ".  Continuing anyway.");
                                     nonfatalError = true;
                                     done = true;
                                  }
@@ -2535,7 +2539,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          try {
             path = prefs_.getString(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_TESTACQ_PATH, "");
-            IJ.saveAs(gui_.getAcquisition(acqName).getAcquisitionWindow().getImagePlus(), "raw", path);
+            IJ.saveAs(acq_.getAcquisitionWindow().getImagePlus(), "raw", path);
             // TODO consider generating a short metadata file to assist in interpretation
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not save raw data from test acquisition to path " + path);
@@ -2644,7 +2648,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * much faster than the one currently implemented in the ScriptInterface
     * Eventually, this function should be replaced by the ScriptInterface version
     * of the same.
-    * @param name - named acquisition to add image to
+    * @param acq - MMAcquisition object to use (old way used acquisition name and then
+    *  had to call deprecated function on every call, now just pass acquisition object
     * @param frame - frame nr at which to insert the image
     * @param channel - channel at which to insert image
     * @param slice - (z) slice at which to insert image
@@ -2656,7 +2661,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @throws java.lang.InterruptedException
     * @throws org.micromanager.utils.MMScriptException
     */
-   public void addImageToAcquisition(String name,
+   public void addImageToAcquisition(MMAcquisition acq,
            int frame,
            int channel,
            int slice,
@@ -2664,8 +2669,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            long ms,
            TaggedImage taggedImg,
            BlockingQueue<TaggedImage> bq) throws MMScriptException, InterruptedException {
-
-      MMAcquisition acq = gui_.getAcquisition(name);
 
       // verify position number is allowed 
       if (acq.getPositions() <= position) {
