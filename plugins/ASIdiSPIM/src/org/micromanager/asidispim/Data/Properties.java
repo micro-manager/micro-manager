@@ -118,6 +118,7 @@ public class Properties {
       INPUT_MODE("InputMode"),
       PIEZO_MODE("PiezoMode"),
       SET_HOME_HERE("SetHomeToCurrentPosition"),
+      HOME_POSITION("HomePosition(mm)"),
       AUTO_SLEEP_DELAY("AutoSleepDelay(min)"),
       PLOGIC_MODE("PLogicMode"),
       PLOGIC_PRESET("SetCardPreset"),
