@@ -30,7 +30,9 @@
 
 using namespace std;
 
+#ifndef TDIBWIDTHBYTES
 #define TDIBWIDTHBYTES(bits)	(((bits) + 31) / 32 * 4)
+#endif
 
 const char* g_CameraName = "AmScope";
 const char* g_AutoFocusDeviceName = "ASAutoFocus";
@@ -220,7 +222,7 @@ int AmScope::Initialize()
 	Toupcam_StartPullModeWithCallback(m_Htoupcam, NULL, NULL);
 	Toupcam_put_AutoExpoEnable(m_Htoupcam, TRUE); // Enable the camera auto exposure
 	Toupcam_put_HZ(m_Htoupcam, 0); //  0: 60Hz alternating current, 1: 50Hz alternating current, 2: direct current
-	Toupcam_put_AutoExpoTarget(m_Htoupcam, exposureTarget_); // Set the auto exposure target value
+	Toupcam_put_AutoExpoTarget(m_Htoupcam, (unsigned short)exposureTarget_); // Set the auto exposure target value
 	Toupcam_LevelRangeAuto(m_Htoupcam); // Set the RGB color level to default auto range (0 - 255)
 	
 
@@ -273,7 +275,8 @@ int AmScope::Initialize()
    unsigned int nMin, nMax, nDef;
    Toupcam_get_ExpTimeRange(m_Htoupcam, &nMin, &nMax, &nDef);
    Toupcam_get_ExpoTime(m_Htoupcam, &nDef);
-   defaultExposureTime_ = exposureMs_ = nDef / 1000;
+   exposureMs_ = nDef / 1000;
+   defaultExposureTime_ = (long)exposureMs_;
    ret = CreateIntegerProperty("ExposureTime(ms)", nDef, false, pAct);
    assert(ret == DEVICE_OK);
    SetPropertyLimits("ExposureTime(ms)", nMin / 1000, nMax / 1000);
@@ -339,7 +342,8 @@ int AmScope::Initialize()
 
    // Physical pixel size (um)
    Toupcam_get_PixelSize(m_Htoupcam, 0, &orgPixelSizeXUm_, &orgPixelSizeYUm_);
-   pixelSizeXUm_ = nominalPixelSizeUm_ = orgPixelSizeXUm_;
+   nominalPixelSizeUm_ = orgPixelSizeXUm_;
+   pixelSizeXUm_ = (float)nominalPixelSizeUm_;
    pixelSizeYUm_ = orgPixelSizeYUm_;
    pAct = new CPropertyAction (this, &AmScope::OnPixelSizeXUm);
    CreateFloatProperty("PixelSizeX(um)", pixelSizeXUm_, true, pAct);
@@ -667,7 +671,7 @@ void AmScope::SetExposure(double exp)
 	if (exposureMs_ != exp)
 	{
 		exposureMs_ = exp;
-		Toupcam_put_ExpoTime(m_Htoupcam, exposureMs_ * 1000);
+		Toupcam_put_ExpoTime(m_Htoupcam, (unsigned int)(exposureMs_ * 1000));
 	}
 }
 
@@ -893,7 +897,7 @@ int AmScope::OnAutoExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 	  else
 	  {
 		  Toupcam_put_AutoExpoEnable(m_Htoupcam, FALSE);
-		  Toupcam_put_ExpoTime(m_Htoupcam, exposureMs_ * 1000);
+		  Toupcam_put_ExpoTime(m_Htoupcam, (unsigned int)(exposureMs_ * 1000));
 	  }
    }
    else if (eAct == MM::BeforeGet)
@@ -913,7 +917,7 @@ int AmScope::OnAutoExposureTarget(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		pProp->Get(exposureTarget_);
 
-		Toupcam_put_AutoExpoTarget(m_Htoupcam, exposureTarget_);
+		Toupcam_put_AutoExpoTarget(m_Htoupcam, (unsigned short)exposureTarget_);
 	}
    else if (eAct == MM::BeforeGet)
    {
@@ -931,7 +935,7 @@ int AmScope::OnExposureTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       pProp->Get(exposureMs_);
 	  
-	  Toupcam_put_ExpoTime(m_Htoupcam, exposureMs_ * 1000);
+	  Toupcam_put_ExpoTime(m_Htoupcam, (unsigned int)(exposureMs_ * 1000));
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -950,7 +954,7 @@ int AmScope::OnAGain(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       pProp->Get(aGain_);
 
-	  Toupcam_put_ExpoAGain(m_Htoupcam, aGain_);
+	  Toupcam_put_ExpoAGain(m_Htoupcam, (unsigned short)aGain_);
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -1398,7 +1402,7 @@ int AmScope::OnLevelRangeRMin(MM::PropertyBase* pProp, MM::ActionType eAct)
 		   val = aHigh_[2];
 	   }
 
-	   aLow_[2] = val;
+	   aLow_[2] = (unsigned short)val;
 	   autoLevelRange_ = 0;
 
 	   Toupcam_put_LevelRange(m_Htoupcam, aLow_, aHigh_);
@@ -1424,7 +1428,7 @@ int AmScope::OnLevelRangeGMin(MM::PropertyBase* pProp, MM::ActionType eAct)
 		   val = aHigh_[1];
 	   }
 
-	   aLow_[1] = val;
+	   aLow_[1] = (unsigned short)val;
 	   autoLevelRange_ = 0;
 
 	   Toupcam_put_LevelRange(m_Htoupcam, aLow_, aHigh_);
@@ -1450,7 +1454,7 @@ int AmScope::OnLevelRangeBMin(MM::PropertyBase* pProp, MM::ActionType eAct)
 		   val = aHigh_[0];
 	   }
 
-	   aLow_[0] = val;
+	   aLow_[0] = (unsigned short)val;
 	   autoLevelRange_ = 0;
 
 	   Toupcam_put_LevelRange(m_Htoupcam, aLow_, aHigh_);
@@ -1476,7 +1480,7 @@ int AmScope::OnLevelRangeRMax(MM::PropertyBase* pProp, MM::ActionType eAct)
 		   val = aLow_[2];
 	   }
 
-	   aHigh_[2] = val;
+	   aHigh_[2] = (unsigned short)val;
 	   autoLevelRange_ = 0;
 
 	   Toupcam_put_LevelRange(m_Htoupcam, aLow_, aHigh_);
@@ -1502,7 +1506,7 @@ int AmScope::OnLevelRangeGMax(MM::PropertyBase* pProp, MM::ActionType eAct)
 		   val = aLow_[1];
 	   }
 
-	   aHigh_[1] = val;
+	   aHigh_[1] = (unsigned short)val;
 	   autoLevelRange_ = 0;
 
 	   Toupcam_put_LevelRange(m_Htoupcam, aLow_, aHigh_);
@@ -1528,7 +1532,7 @@ int AmScope::OnLevelRangeBMax(MM::PropertyBase* pProp, MM::ActionType eAct)
 		   val = aLow_[0];
 	   }
 
-	   aHigh_[0] = val;
+	   aHigh_[0] = (unsigned short)val;
 	   autoLevelRange_ = 0;
 
 	   Toupcam_put_LevelRange(m_Htoupcam, aLow_, aHigh_);
@@ -1549,7 +1553,7 @@ int AmScope::OnPixelSizeXUm(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 	   long val;
        pProp->Get(val);
-	   pixelSizeXUm_ = val;
+	   pixelSizeXUm_ = (float)val;
    }
    return DEVICE_OK;
 }
@@ -1567,7 +1571,7 @@ int AmScope::OnPixelSizeYUm(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
 	   long val;
        pProp->Get(val);
-	   pixelSizeYUm_ = val;
+	   pixelSizeYUm_ = (float)val;
    }
    return DEVICE_OK;
 }
