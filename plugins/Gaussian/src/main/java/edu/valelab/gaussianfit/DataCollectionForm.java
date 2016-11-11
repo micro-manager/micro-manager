@@ -226,9 +226,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }
   
    
-   public static DataCollectionForm instance_ = null;
-   
-   // public since it is used in MathForm.  
+   private static DataCollectionForm instance_ = null;
+    
    private ArrayList<RowData> rowData_;
    public enum Coordinates {NM, PIXELS};
    public enum PlotMode {X, Y, INT};
