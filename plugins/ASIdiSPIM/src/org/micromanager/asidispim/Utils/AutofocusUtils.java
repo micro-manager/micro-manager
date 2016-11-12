@@ -233,6 +233,7 @@ public class AutofocusUtils {
             
             // start with current acquisition settings, then modify a few of them for the focus acquisition
             AcquisitionSettings acqSettings = ASIdiSPIM.getFrame().getAcquisitionPanel().getCurrentAcquisitionSettings();
+            acqSettings.isStageScanning = false;
             acqSettings.hardwareTimepoints = false;
             acqSettings.channelMode = MultichannelModes.Keys.NONE;
             acqSettings.useChannels = false;
