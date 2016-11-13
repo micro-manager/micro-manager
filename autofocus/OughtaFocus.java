@@ -476,7 +476,6 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    
    /**
     * From "Autofocusing Algorithm Selection in Computer Microscopy" (doi: 10.1109/IROS.2005.1545017)
-    * Added sqrt to make RMS value instead of sum of squares.
     * 2016 paper (doi:10.1038/nbt.3708) concludes this is best  most non-spectral metric
     *   for their light sheet microscopy application
     * @author Jon
@@ -493,7 +492,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       proc2.convolve3x3(ken2);
       for (int i=0; i<w; i++){
          for (int j=0; j<h; j++){
-            sum += Math.sqrt(Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2));
+            sum += Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2);
          }
       }
       return sum;
