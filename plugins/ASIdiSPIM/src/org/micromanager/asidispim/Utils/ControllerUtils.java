@@ -429,20 +429,6 @@ public class ControllerUtils {
       
       // set up stage scan parameters if necessary
       if (settings.isStageScanning) {
-         
-         if (settings.useChannels && settings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-            // acquire one slice from each channel before switching sides
-            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_SLICES_PER_PIEZO,
-                  settings.numChannels, skipScannerWarnings);
-         }
-
-//        //  I don't think we have to do this, micro-mirror firmware will do it
-//         // for stage scanning the slice position won't be set automatically during acquisition
-//         //   so set it explicitly here; we have to turn on the beam before it will actually move
-//         //   (earlier we have turned the beam off)
-//         props_.setPropValue(galvoDevice, Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
-//         positions_.setPosition(galvoDevice, Directions.Y, sliceCenter);
-         
          // TODO update UI to hide image center control for stage scanning
          // for interleaved stage scanning there will never be "home" pulse and for normal stage scanning
          //   the first side piezo will never get moved into position either so do both manually (for
@@ -452,26 +438,28 @@ public class ControllerUtils {
          } catch (Exception e) {
             ReportingUtils.showError(e, "Could not move piezo to home");
          }
+      }
          
-         final boolean isInterleaved = (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
-         // even though we have moved piezos to home position let's still tell firmware
-         //    not to move piezos anywhere (i.e. maybe setting "home disable" to true doesn't have any really effect)
-         if (isInterleaved) {
-            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
-                  Properties.Values.YES, skipScannerWarnings);
-         } else {
-            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
-                  Properties.Values.NO, skipScannerWarnings);
-         }
+      final boolean isInterleaved = (settings.isStageScanning && 
+            settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
+      
+      // even though we have moved piezos to home position let's still tell firmware
+      //    not to move piezos anywhere (i.e. maybe setting "home disable" to true doesn't have any really effect)
+      if (isInterleaved) {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
+               Properties.Values.YES, skipScannerWarnings);
+      } else {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_PIEZO_HOME_DISABLE,
+               Properties.Values.NO, skipScannerWarnings);
+      }
 
-         // set interleaved sides flag low unless we are doing interleaved stage scan
-         if (isInterleaved) {
-            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
-                  Properties.Values.YES, skipScannerWarnings); // make sure to check for errors
-         } else {
-            props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
-                  Properties.Values.NO, true);  // ignore errors b/c older firmware won't have it
-         }
+      // set interleaved sides flag low unless we are doing interleaved stage scan
+      if (isInterleaved) {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
+               Properties.Values.YES, skipScannerWarnings); // make sure to check for errors
+      } else {
+         props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
+               Properties.Values.NO, true);  // ignore errors b/c older firmware won't have it
       }
       
       return true;
