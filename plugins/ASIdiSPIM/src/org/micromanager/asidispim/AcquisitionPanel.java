@@ -2343,6 +2343,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  if (acqSettings.hardwareTimepoints) {
                                     actualTimePoint = tpNumber[channelIndex];
                                  }
+                                 if (acqSettings.separateTimepoints) {
+                                    // if we are doing separate timepoints then frame is always 0
+                                    actualTimePoint = 0;
+                                 }
+                                 // note that hardwareTimepoints and separateTimepoints can never both be true
                                  
                                  // add image to acquisition
                                  if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
