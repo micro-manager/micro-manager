@@ -578,13 +578,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
       
       separateTimePointsCB_ = pu.makeCheckBox("Separate viewer / file for each time point",
-            Properties.Keys.PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false); 
-      savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
+            Properties.Keys.PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false);
       
       saveCB_ = pu.makeCheckBox("Save while acquiring",
             Properties.Keys.PREFS_SAVE_WHILE_ACQUIRING, panelName_, false);
-      // init the save while acquiring CB; could also do two doClick() calls
-      // TODO check that it's initialized now
+
+      // make sure that when separate viewer is enabled then saving gets enabled too
+      separateTimePointsCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (separateTimePointsCB_.isSelected() && !saveCB_.isSelected()) {
+               saveCB_.doClick();  // setSelected() won't work because need to call its listener
+            }
+         }
+      });
+      savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
       savePanel_.add(saveCB_, "skip 1, span 2, center, wrap");
 
       JLabel dirRootLabel = new JLabel ("Directory root:");
@@ -1718,9 +1726,38 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       float cameraReadoutTime = computeCameraReadoutTime();
       double exposureTime = acqSettings.sliceTiming.cameraExposure;
       
-      boolean save = saveCB_.isSelected() && !testAcq;
-      String rootDir = rootField_.getText();
-
+      final boolean save = saveCB_.isSelected() && !testAcq;
+      final String rootDir = rootField_.getText();
+      
+      // make sure we have a valid directory to save in
+      final File dir = new File(rootDir);
+      if (save) {
+         try {
+            if (!dir.exists()) {
+               if (!dir.mkdir()) {
+                  throw new Exception();
+               }
+            }
+         } catch (Exception ex) {
+            MyDialogUtils.showError("Could not create directory for saving acquisition data.");
+            return false;
+         }
+      }
+      
+      if (acqSettings.separateTimepoints) {
+         // because separate timepoints closes windows when done, force the user to save data to disk to avoid confusion
+         if (!save) {
+            MyDialogUtils.showError("For separate timepoints, \"Save while acquiring\" must be enabled.");
+            return false;
+         }
+         // for separate timepoints, make sure the directory is empty to make sure naming pattern is "clean"
+         // this is an arbitrary choice to avoid confusion later on when looking at file names
+         if (dir != null && (dir.list().length > 0)) {
+            MyDialogUtils.showError("For separate timepoints the saving directory must be empty.");
+            return false;
+         }
+      }
+      
       int nrFrames;   // how many Micro-manager "frames" = time points to take
       if (acqSettings.separateTimepoints) {
          nrFrames = 1;
@@ -1949,6 +1986,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          
          if (acqSettings.separateTimepoints) {
+            // call to getUniqueAcquisitionName is extra safety net, we have checked that directory is empty before starting
             acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + acqNum);
          } else {
             acqName = gui_.getUniqueAcquisitionName(prefixField_.getText());
