@@ -120,6 +120,7 @@ public class ASIdiSPIMFrame extends MMFrame
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
    private PiezoSleepPreventer piezoSleepPreventer_;
+   private final LiveModeListener piezoSleepListener_;
    
    private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
@@ -229,12 +230,7 @@ public class ASIdiSPIMFrame extends MMFrame
       piezoSleepPreventer_ = new PiezoSleepPreventer(gui_, devices_, props_);
 
       // attach live mode listeners
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
-      if (!ASIdiSPIM.oSPIM) {
-         MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
-      }
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
+      piezoSleepListener_ = new LiveModeListener() {
          // make sure to "wake up" any piezos with autosleep enabled before we start imaging 
          @Override
          public void liveModeEnabled(boolean enabled) {
@@ -244,7 +240,13 @@ public class ASIdiSPIMFrame extends MMFrame
                piezoSleepPreventer_.stop();
             }
          }
-      });
+      };
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(piezoSleepListener_);
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
+      if (!ASIdiSPIM.oSPIM) {
+         MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
+      }
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
       
       // set scan for live mode to be triangle (now live mode setting not affected by SPIM setting)
       props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
@@ -435,8 +437,13 @@ public class ASIdiSPIMFrame extends MMFrame
    @Override
    public void dispose() {
       stagePosUpdater_.stop();
+      piezoSleepPreventer_.stop();
       saveSettings();
       windowClosing();
+      MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener(piezoSleepListener_);
+      MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener((LiveModeListener) setupPanelA_);
+      MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener((LiveModeListener) setupPanelB_);
+      MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener((LiveModeListener) navigationPanel_);
       super.dispose();
    }
 }
