@@ -201,9 +201,11 @@ public class AutofocusUtils {
             );
 
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+            Devices.Keys cameraDevice = Devices.Keys.CAMERAB;
             boolean usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM);
             if (side.equals(Devices.Sides.B)) {
                camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+               cameraDevice = Devices.Keys.CAMERAB;
                usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM);
             }
             Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
@@ -326,8 +328,12 @@ public class AutofocusUtils {
                }
                gui_.getMMCore().clearCircularBuffer();
                gui_.getMMCore().initializeCircularBuffer();
-               cameras_.setSPIMCamerasForAcquisition(true);
+               cameras_.setCameraForAcquisition(cameraDevice, true);
+               prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                     Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(),
+                     (float)gui_.getMMCore().getExposure());
                gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
+               gui_.refreshGUIFromCache();
                gui_.getMMCore().startSequenceAcquisition(camera, nrImages, 0, true);
 
                boolean success = controller_.triggerControllerStartAcquisition(
@@ -479,8 +485,13 @@ public class AutofocusUtils {
 
                   controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
                   
-                  if (runAsynchronously)
-                     cameras_.setSPIMCamerasForAcquisition(false);
+                  if (runAsynchronously) {
+                     // when run from Setup panels then put things back to live mode settings, but not if run during acquisition
+                     cameras_.setCameraForAcquisition(cameraDevice, false);
+                     gui_.getMMCore().setExposure(camera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                           Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 10f));
+                     gui_.refreshGUIFromCache();
+                  }
 
                   // move back to original position if needed
                   if (!centerAtCurrentZ) {

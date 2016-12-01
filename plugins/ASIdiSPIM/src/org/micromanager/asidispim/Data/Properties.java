@@ -199,7 +199,8 @@ public class Properties {
       AUTOFOCUS_SCORING_ALGORITHM("AutofocusScoringAlgorithm"),
       PLUGIN_ACQUSITION_USE_AUTOFOCUS("UseAutofocusInAcquisition"),
       PLUGIN_CAMERA_MODE("CameraMode"),
-      PLUGIN_CAMERA_LIVE_EXPOSURE("CameraLiveExposureMs"),  // used to be use setting, now used internally to save/restore live exposure time
+      PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST("CameraLiveExposureMs_First"),  // used internally to save/restore live exposure time
+      PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND("CameraLiveExposureMs_Second"),  // used internally to save/restore live exposure time
       PLUGIN_CAMERA_LIVE_SCAN("CameraLiveScanMs"),
       PREFS_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
       PREFS_AUTO_SHEET_WIDTH("AutomaticSheetWidth"),

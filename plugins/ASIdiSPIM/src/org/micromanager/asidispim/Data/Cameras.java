@@ -146,15 +146,15 @@ public class Cameras {
       String mmDevice = devices_.getMMDevice(key);
       if (mmDevice != null) {
          try {
-            boolean liveEnabled = gui_.isLiveModeOn();
+            final boolean liveEnabled = gui_.isLiveModeOn();
             if (liveEnabled) {
-               enableLiveMode(false);
+               gui_.enableLiveMode(false);
             }
             currentCameraKey_ = key;
             core_.setCameraDevice(mmDevice);
             gui_.refreshGUIFromCache();
             if (liveEnabled) {
-               enableLiveMode(true);
+               gui_.enableLiveMode(true);
             }
          } catch (Exception ex) {
             MyDialogUtils.showError("Failed to set Core Camera property");
@@ -192,17 +192,6 @@ public class Cameras {
     */
    public boolean isCurrentCameraValid() {
       return !((currentCameraKey_ == null) || (currentCameraKey_ == Devices.Keys.NONE));
-   }
-
-   /**
-    * Turns live mode on or off via core call
-    * @param enable true: switch on live mode, false: switch it off
-    */
-   public void enableLiveMode(boolean enable) {
-      if (enable) {
-         setSPIMCamerasForAcquisition(false);
-      }
-      gui_.enableLiveMode(enable);
    }
 
    /**
@@ -597,41 +586,23 @@ public class Cameras {
    }
    
    /**
-    * private utility/shortcut function to set both SPIM cameras
-    * @param trigMode
+    * Sets the specified camera for acquisition if acq is true or for live mode if acq is false
+    * @param camKey
+    * @param acq
     */
-   private void setSPIMTriggerMode(CameraModes.Keys trigMode) {
-      // TODO look at whether both sides are active before setting cameras up
-      setCameraTriggerMode(Devices.Keys.CAMERAA, trigMode);
-      setCameraTriggerMode(Devices.Keys.CAMERAB, trigMode);
-   }
-
-   /**
-    * Sets up SPIM cameras in correct mode for acquisition when called with true.
-    * Uses the camera mode setting to see which external trigger mode.
-    * @param acq true if setting for acquisition, false if setting for live
-    */
-   public void setSPIMCamerasForAcquisition(boolean acq) {
+   public void setCameraForAcquisition(Devices.Keys camKey, boolean acq) {
       if (acq) {
          CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
                // could also get from props_ with PLUGIN device
                prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
                      Properties.Keys.PLUGIN_CAMERA_MODE, 0));
-         setSPIMTriggerMode(cameraMode);
+         setCameraTriggerMode(camKey, cameraMode);
          // exposure time set by acquisition setup code
       } else { // for Live mode
-         setSPIMTriggerMode(CameraModes.Keys.INTERNAL);
-         // also set exposure time to the live mode value
-         float exposure = prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
-               Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(), 100f);
-         try {
-            core_.setExposure(exposure);
-         } catch (Exception e) {
-            MyDialogUtils.showError("Could not change exposure setting for live mode");
-         }
+         setCameraTriggerMode(camKey, CameraModes.Keys.INTERNAL);
       }
    }
-   
+
    /**
     * Gets the camera ROI in actual pixels used (i.e. if binning is 4x with 2k sensor return 2k instead of 512).
     * This is because reset and readout times depend on actual pixels and only data transfer time (usually less
