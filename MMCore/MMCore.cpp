@@ -4076,25 +4076,6 @@ double CMMCore::getExposure() throw (CMMError)
 }
 
 /**
- * Returns the current exposure setting of the specified camera in milliseconds.
- * @param label  the camera device label
- * @return the exposure time in milliseconds
- */
-double CMMCore::getExposure(const char* label) throw (CMMError)
-{
-   boost::shared_ptr<CameraInstance> pCamera =
-         deviceManager_->GetDeviceOfType<CameraInstance>(label);
-   if (pCamera)
-   {
-      mm::DeviceModuleLockGuard guard(pCamera);
-      return pCamera->GetExposure();
-   }
-   else
-      //throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
-      return 0.0;
-}
-
-/**
  * Set the hardware region of interest for the current camera.
  *
  * A successful call to this method will clear any images in the sequence
