@@ -1559,10 +1559,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       AcquisitionSettings acqSettingsOrig = getCurrentAcquisitionSettings();
       
       // if a test acquisition then only run single timpoint, no autofocus
+      // allow multi-positions for test acquisition for now, though perhaps this is not desirable
       if (testAcq) {
          acqSettingsOrig.useTimepoints = false;
          acqSettingsOrig.numTimepoints = 1;
          acqSettingsOrig.useAutofocus = false;
+         acqSettingsOrig.separateTimepoints = false;
+         
          // if called from the setup panels then the side will be specified
          //   so we can do an appropriate single-sided acquisition
          // if called from the acquisition panel then NONE will be specified
@@ -1932,7 +1935,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          gui_.refreshGUIFromCache();
       } catch (Exception ex) {
-         MyDialogUtils.showError(ex, "could not get set exposure");
+         MyDialogUtils.showError(ex, "could not set exposure");
       }
       
       // seems to have a problem if the core's camera has been set to some other
