@@ -227,7 +227,8 @@ public class Properties {
       PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET("AutofocusAutoUpdateOffset"),
       PLUGIN_AUTOFOCUS_CHANNEL("AutofocusChannel"),
       PLUGIN_AUTOFOCUS_MINIMUMR2("AutofocusMinimumR2"),
-      PLUGIN_ADVANCED_CAMERA_EXPOSURE("AdvancedCameraExposure")
+      PLUGIN_ADVANCED_CAMERA_EXPOSURE("AdvancedCameraExposure"),
+      PLUGIN_DESKEW_FACTOR("DeskewFactor"),
       ;
       private final String text;
       private final boolean forceSet;

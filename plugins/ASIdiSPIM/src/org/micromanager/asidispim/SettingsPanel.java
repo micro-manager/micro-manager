@@ -265,6 +265,14 @@ public class SettingsPanel extends ListeningJPanel {
                Devices.Keys.XYSTAGE,
                Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
          stageScanPanel.add(stageAccelTime, "wrap");
+//         final JCheckBox useToolset = pu.makeCheckBox("Automatically deskew",
+//               Properties.Keys.PLUGIN_USE_TOOLSET, panelName_, true);
+//         useToolset.setToolTipText("places icons in ImageJ toolbar for quick access of commonly-used image manipulation tasks");
+//         if (useToolset.isSelected()) {
+//            ImageJUtils.loadToolset();
+//         }
+//         imageJPanel.add(useToolset, "span 2, wrap");
+         
       } else {
          stageScanPanel.add(new JLabel("Stage scanning not supported by your firmware."), "left, wrap");
          stageScanPanel.add(new JLabel("See http://dispim.org for further information."), "left, wrap");

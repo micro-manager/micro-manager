@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -26,8 +27,10 @@ import javax.swing.SwingWorker;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.json.JSONObject;
 import org.micromanager.api.MMWindow;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
@@ -35,6 +38,8 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
 
 
 /**
@@ -48,10 +53,15 @@ import org.micromanager.utils.FileDialogs;
  */
 @SuppressWarnings("serial")
 public class DataAnalysisPanel extends ListeningJPanel {
+   private final ScriptInterface gui_;
    private final Prefs prefs_;
+   private final Properties props_;
+   private final Devices devices_;
    private final JPanel exportPanel_;
+   private final JPanel deskewPanel_;
    private final JTextField saveDestinationField_;
    private final JTextField baseNameField_;
+   private final JFormattedTextField deskewFactor_;
    
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
@@ -68,13 +78,17 @@ public class DataAnalysisPanel extends ListeningJPanel {
     * @param gui
     * @param prefs - Plugin-wide preferences
     */
-   public DataAnalysisPanel(ScriptInterface gui, Prefs prefs) {    
+   public DataAnalysisPanel(ScriptInterface gui, Prefs prefs, Properties props, Devices devices) {    
       super(MyStrings.PanelNames.DATAANALYSIS.toString(),
               new MigLayout(
               "",
               "[right]",
               "[]16[]"));
+      gui_ = gui;
       prefs_ = prefs;
+      props_ = props;
+      devices_ = devices;
+      PanelUtils pu = new PanelUtils(prefs_, props_, devices);
             
       int textFieldWidth = 35;
 
@@ -209,6 +223,85 @@ public class DataAnalysisPanel extends ListeningJPanel {
       // end export sub-panel
       
       this.add(exportPanel_);
+      
+      // start deskew sub-panel
+      deskewPanel_ = new JPanel(new MigLayout(
+              "",
+              "[right]4[center]",
+              "[]8[]"));
+      
+      deskewPanel_.setBorder(PanelUtils.makeTitledBorder("Deskew stage scanning data"));
+      
+      deskewPanel_.add(new JLabel("Deskew fudge factor:"));
+      deskewFactor_ = pu.makeFloatEntryField(panelName_, 
+            Properties.Keys.PLUGIN_DESKEW_FACTOR.toString(), 1.0, 5);
+      deskewPanel_.add(deskewFactor_, "wrap");
+      
+      JButton deskewButton = new JButton("Deskew Open Dataset");
+      deskewButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(final ActionEvent e) {
+            
+            class MyThread extends Thread {
+               @Override
+               public void run() {
+                  try {
+                     long startTime = System.currentTimeMillis();
+                     final ImagePlus ip = IJ.getImage();
+                     final MMWindow mmW = new MMWindow(ip);
+                     if (!mmW.isMMWindow()) {
+                        throw new Exception("Can only deskew Micro-Manager data set");
+                     }
+                     final JSONObject metadata = mmW.getSummaryMetaData();
+                     if (!metadata.getString("SPIMmode").equals("Stage scan")) {
+                        throw new Exception("Can only deskew stage scanning data");
+                     }
+                     
+                     final double dx = NumberUtils.coreStringToDouble(metadata.getString("z-step_um"))
+                           / NumberUtils.coreStringToDouble(metadata.getString("PixelSize_um"))
+                           * (Double) deskewFactor_.getValue();
+                     if (!(dx > -100 && dx < 100)) {
+                        throw new Exception("Couldn't get deskew parameters from metadata");
+                     }
+                     
+                     final int sc = ip.getNChannels();
+                     final int sx = ip.getWidth();
+                     final int sy = ip.getHeight();
+                     final int ss = ip.getNSlices();
+                     final String title = ip.getTitle() + "-deskewed";
+                     final int sx_new = sx + (int) Math.abs(Math.ceil(dx*ss));
+                     
+                     IJ.run("Duplicate...", "title=" + title + " duplicate");
+                     IJ.run("Split Channels");
+                     String mergeCmd = "";
+                     for (int c=0; c<sc; c++) {
+                        IJ.selectWindow("C" + (c+1) + "-" + title);
+                        int dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, -1 for path B
+                        IJ.run("Canvas Size...", "width=" + sx_new + " height=" + sy + " position=Center-" 
+                              + (dir < 0 ? "Right" : "Left") + " zero");
+                        for (int s=0; s<ss; s++) {
+                           IJ.setSlice(s+1);
+                           IJ.run("Translate...", "x=" + (dx*s*dir) + " y=0 interpolation=Bilinear slice");
+                        }
+                        mergeCmd += ("c" + (c+1) + "=C" + (c+1) + "-" + title + " ");  
+                     }
+                     IJ.run("Merge Channels...", mergeCmd + "create");
+                     long finishTime = System.currentTimeMillis();
+                     ReportingUtils.logDebugMessage("Deskew operation took " + (finishTime - startTime) + 
+                           " milliseconds with total of " + (sc*ss) + " images");
+                  } catch (Exception ex) {
+                     MyDialogUtils.showError(ex, "Could not deskew data");
+                  }
+               }
+            }
+            
+            MyThread t = new MyThread();
+            t.start();
+         }
+      });
+      deskewPanel_.add(deskewButton, "span 2, wrap");
+      
+      this.add(deskewPanel_);
    }
    
    @Override
