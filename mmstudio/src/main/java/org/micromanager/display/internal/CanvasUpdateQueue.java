@@ -39,7 +39,6 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.HistogramData;
 import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.NewHistogramsEvent;
-import org.micromanager.display.NewImagePlusEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.DefaultPixelsSetEvent;
 import org.micromanager.display.internal.events.HistogramRecalcEvent;
@@ -94,7 +93,8 @@ public final class CanvasUpdateQueue {
    // and the queue is drained when scheduling a repaint.
    private final LinkedBlockingQueue<Coords> coordsQueue_;
 
-   private boolean shouldAcceptNewCoords_ = true;
+   private volatile boolean shouldAcceptNewCoords_;
+   private final Object shouldAcceptNewCoordsLock_;
    private final HashMap<Integer, HistogramHistory> channelToHistory_;
 
    // We use (through ImageJ's ImageCanvas) the normal way of drawing in
@@ -131,6 +131,8 @@ public final class CanvasUpdateQueue {
       stack_ = stack;
       coordsQueue_ = new LinkedBlockingQueue<Coords>();
       channelToHistory_ = new HashMap<Integer, HistogramHistory>();
+      shouldAcceptNewCoords_ = true;
+      shouldAcceptNewCoordsLock_ = new Object();
    }
 
    /**
@@ -139,16 +141,19 @@ public final class CanvasUpdateQueue {
     * TODO: hypothetically this could jam up the EDT with consume requests,
     * though in practice they ought to fizzle out as soon as they're called
     * if the queue is empty.
+    * @param coords Coords of newly added image
     */
    public void enqueue(Coords coords) {
-      synchronized (this) {
+      // We synchronize here even though the boolean and queue are each thread
+      // safe.  We just want to be sure that the state of the boolean does not
+      // change while we interpret it
+      synchronized (shouldAcceptNewCoordsLock_) {
          if (!shouldAcceptNewCoords_) {
             return;
          }
          try {
             coordsQueue_.put(coords);
-         }
-         catch (InterruptedException e) {
+         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
          }
       }
@@ -162,84 +167,82 @@ public final class CanvasUpdateQueue {
 
    /**
     * Draw the most recent image on the queue (or images when in composite
-    * mode), if any.
-    * Only called on the EDT.
+    * mode), if any. Only called on the EDT.
     */
-   private synchronized void consumeImages() {
-      if (isCanvasPaintPending_) {
-         // A repaint is currently pending on the EDT, so avoid triggering
-         // another repaint. A new invocation of consumeImage() will be
-         // scheduled when the repaint completes.
-         return;
-      }
+   private void consumeImages() {
       if (!shouldAcceptNewCoords_) {
          // We are halted; display and image info may no longer be available
          return;
       }
-      try {
-         Datastore store = display_.getDatastore();
-         ImagePlus plus = display_.getImagePlus();
-         // Depending on if we're in composite view or not, we may need to draw
-         // multiple images or just the most recent image.
-         boolean isComposite = (plus instanceof CompositeImage &&
-               ((CompositeImage) plus).getMode() == CompositeImage.COMPOSITE);
-         Coords lastCoords = null;
-         // Grab images from the queue until we get the last one, so all
-         // others get ignored (because we don't have time to display them).
-         while (!coordsQueue_.isEmpty()) {
-            lastCoords = coordsQueue_.poll();
-         }
-         if (lastCoords == null) {
-            // No images in the queue; nothing to do.
+      synchronized (this) {
+         if (isCanvasPaintPending_) {
+            // A repaint is currently pending on the EDT, so avoid triggering
+            // another repaint. A new invocation of consumeImage() will be
+            // scheduled when the repaint completes.
             return;
          }
-         if (plus == null || plus.getCanvas() == null) {
-            // The display may have gone away while we were waiting.
-            return;
-         }
-         DisplaySettings settings = display_.getDisplaySettings();
-         if (isComposite) {
-            // In composite view mode, we need to update the images for every
-            // channel.
-            // TODO BUG We should update the histograms for all channels even
-            // if we are not in composite view mode?
-            for (int ch = 0; ch < store.getAxisLength(Coords.CHANNEL); ++ch) {
-               Coords coords = lastCoords.copy().channel(ch).build();
-               if (!settings.getSafeIsVisible(coords.getChannel(), true)) {
-                  // Channel isn't visible, so no need to do anything with it.
-                  // TODO BUG What if none of the channels are visible?
-                  continue;
-               }
-               // TODO BUG What if none of the visible channels have an image?
-               if (store.hasImage(coords)) {
-                  Image image = store.getImage(coords);
-                  // TODO That this check was found to be necessary suggests
-                  // that datastores have a race condition.
-                  if (image != null) {
-                     showImage(image);
+
+         try {
+            Datastore store = display_.getDatastore();
+            ImagePlus plus = display_.getImagePlus();
+            // Depending on if we're in composite view or not, we may need to draw
+            // multiple images or just the most recent image.
+            boolean isComposite = (plus instanceof CompositeImage
+                    && ((CompositeImage) plus).getMode() == CompositeImage.COMPOSITE);
+            Coords lastCoords = null;
+            // Grab images from the queue until we get the last one, so all
+            // others get ignored (because we don't have time to display them).
+            while (!coordsQueue_.isEmpty()) {
+               lastCoords = coordsQueue_.poll();
+            }
+            if (lastCoords == null) {
+               // No images in the queue; nothing to do.
+               return;
+            }
+            if (plus == null || plus.getCanvas() == null) {
+               // The display may have gone away while we were waiting.
+               return;
+            }
+            DisplaySettings settings = display_.getDisplaySettings();
+            if (isComposite) {
+               // In composite view mode, we need to update the images for every
+               // channel.
+               // TODO BUG We should update the histograms for all channels even
+               // if we are not in composite view mode?
+               for (int ch = 0; ch < store.getAxisLength(Coords.CHANNEL); ++ch) {
+                  Coords coords = lastCoords.copy().channel(ch).build();
+                  if (!settings.getSafeIsVisible(coords.getChannel(), true)) {
+                     // Channel isn't visible, so no need to do anything with it.
+                     // TODO BUG What if none of the channels are visible?
+                     continue;
                   }
-                  else {
-                     ReportingUtils.logError("Unexpected null image at " + coords);
+                  // TODO BUG What if none of the visible channels have an image?
+                  if (store.hasImage(coords)) {
+                     Image image = store.getImage(coords);
+                     // TODO That this check was found to be necessary suggests
+                     // that datastores have a race condition.
+                     if (image != null) {
+                        showImage(image);
+                     } else {
+                        ReportingUtils.logError("Unexpected null image at " + coords);
+                     }
                   }
                }
+            } // TODO BUG If there is no image, we should draw nothing instead of
+            // keeping the previously drawn image
+            else if (store.hasImage(lastCoords)) {
+               Image image = store.getImage(lastCoords);
+               // TODO That this check was found to be necessary suggests that
+               // datastores have a race condition.
+               if (image != null) {
+                  showImage(image);
+               } else {
+                  ReportingUtils.logError("Unexpected null image at " + lastCoords);
+               }
             }
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Error consuming images");
          }
-         // TODO BUG If there is no image, we should draw nothing instead of
-         // keeping the previously drawn image
-         else if (store.hasImage(lastCoords)) {
-            Image image = store.getImage(lastCoords);
-            // TODO That this check was found to be necessary suggests that
-            // datastores have a race condition.
-            if (image != null) {
-               showImage(image);
-            }
-            else {
-               ReportingUtils.logError("Unexpected null image at " + lastCoords);
-            }
-         }
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Error consuming images");
       }
    }
 
@@ -303,10 +306,9 @@ public final class CanvasUpdateQueue {
       // storage systems may create a new Image object every time
       // Datastore.getImage() is called, which would have a different
       // hash code.
-      boolean uuidMatch = false;
       UUID oldUUID = history.imageUUID_;
       UUID newUUID = image.getMetadata().getUUID();
-      uuidMatch = (oldUUID == null && newUUID == null) ||
+      boolean uuidMatch = (oldUUID == null && newUUID == null) ||
          (oldUUID != null && newUUID != null && oldUUID.equals(newUUID));
       if (history.needsUpdate_ || !uuidMatch ||
             history.coordsHash_ != image.getCoords().hashCode()) {
@@ -353,11 +355,8 @@ public final class CanvasUpdateQueue {
          // Assume we always update.
          updateRate = 0.0;
       }
-      if (updateRate < 0) {
-         // Never update histograms.
-         return;
-      }
-      else if (updateRate > 0 &&
+
+      if (updateRate > 0 &&
             System.currentTimeMillis() - history.lastUpdateTime_ <= updateRate * 1000) {
          // Calculate histogram sometime in the future. Only if a timer isn't
          // already running for this channel.
@@ -379,11 +378,12 @@ public final class CanvasUpdateQueue {
             history.timer_.schedule(task, waitTime);
          }
       }
-      else {
+      else if (updateRate >= 0) {
          // We either always update, or it's been too long since the last
          // update, so do it now.
          updateHistogram(image, history);
       }
+      // Do not update if updateRate < 0   
    }
 
    /**
@@ -487,11 +487,13 @@ public final class CanvasUpdateQueue {
     * Wait for any ongoing repaints and stop accepting new coords.
     */
    public void halt() {
-      synchronized (this) {
+      synchronized(shouldAcceptNewCoordsLock_) {
          if (!shouldAcceptNewCoords_) {
             return;
          }
          shouldAcceptNewCoords_ = false;
+      }
+      synchronized (this) {
          coordsQueue_.clear(); // We will instead redraw when/if we resume
 
          if (SwingUtilities.isEventDispatchThread()) {
@@ -516,7 +518,7 @@ public final class CanvasUpdateQueue {
     * Allow additions to the coords queue again.
     */
    public void resume() {
-      synchronized (this) {
+      synchronized (shouldAcceptNewCoordsLock_) {
          if (shouldAcceptNewCoords_) {
             return;
          }
@@ -556,10 +558,11 @@ public final class CanvasUpdateQueue {
       }
       DisplaySettings settings = event.getDisplaySettings();
       boolean shouldForceUpdate_ = false;
-      if (settings.getExtremaPercentage() != cachedExtremaPercentage_ ||
-            settings.getShouldCalculateStdDev() != cachedShouldCalculateStdDev_ ||
-            settings.getShouldAutostretch() != cachedShouldAutostretch_ ||
-            settings.getShouldScaleWithROI() != cachedShouldScaleWithROI_) {
+      if (!settings.getExtremaPercentage().equals(cachedExtremaPercentage_) ||
+            !settings.getShouldCalculateStdDev().equals(cachedShouldCalculateStdDev_) ||
+            !settings.getShouldAutostretch().equals(cachedShouldAutostretch_) ||
+            !settings.getShouldScaleWithROI().equals(cachedShouldScaleWithROI_) 
+         ) {
          shouldForceUpdate_ = true;
       }
       for (int channel : channelToHistory_.keySet()) {
@@ -578,6 +581,7 @@ public final class CanvasUpdateQueue {
 
    /**
     * Someone wants us to recalculate histograms.
+    * @param event 
     */
    @Subscribe
    public void onHistogramRecalc(HistogramRecalcEvent event) {
@@ -596,6 +600,7 @@ public final class CanvasUpdateQueue {
 
    /**
     * Someone is requesting that the current histograms be posted.
+    * @param event
     */
    @Subscribe
    public void onHistogramRequest(HistogramRequestEvent event) {
@@ -607,7 +612,7 @@ public final class CanvasUpdateQueue {
          history = channelToHistory_.get(channel);
          haveValidHistory = history.datas_.size() > 0;
       }
-      if (haveValidHistory) {
+      if (haveValidHistory && history != null) {
          display_.postEvent(new NewHistogramsEvent(channel, history.datas_));
       }
       else {
