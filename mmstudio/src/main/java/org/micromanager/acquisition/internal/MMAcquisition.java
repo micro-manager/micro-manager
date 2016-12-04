@@ -358,12 +358,16 @@ public final class MMAcquisition {
    }
 
    private void setProgressText() {
-      int numDigits = (int) (Math.log10(imagesExpected_) + 1);
-      String format = "%0" + numDigits + "d";
-      if (alert_ != null) {
-         alert_.setText(String.format(
-                  "Received " + format + " of %d images",
-               imagesReceived_, imagesExpected_));
+      if (imagesExpected_ > 0) {
+         int numDigits = (int) (Math.log10(imagesExpected_) + 1);
+         String format = "%0" + numDigits + "d";
+         if (alert_ != null) {
+            alert_.setText(String.format(
+                    "Received " + format + " of %d images",
+                    imagesReceived_, imagesExpected_));
+         }
+      } else if (alert_ != null) {
+         alert_.setText("No images expected.");
       }
    }
 
