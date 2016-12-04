@@ -514,7 +514,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private AffineTransform generateLinearMapping() {
       double centerX = dev_.getXRange() / 2 + dev_.getXMinimum();
       double centerY = dev_.getYRange() / 2 + dev_.getYMinimum();
-      double spacing = Math.min(dev_.getXRange(), dev_.getYRange()) / 10;  // user 10% of galvo/SLM range
+      double spacing = Math.min(dev_.getXRange(), dev_.getYRange()) / 30;  // user 3% of galvo/SLM range
       Map<Point2D.Double, Point2D.Double> spotMap
             = new HashMap<Point2D.Double, Point2D.Double>();
 
