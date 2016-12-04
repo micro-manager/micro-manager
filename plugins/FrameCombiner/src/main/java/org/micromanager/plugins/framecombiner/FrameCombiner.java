@@ -23,23 +23,23 @@ public class FrameCombiner extends Processor {
    private final LogManager log_;
 
    private final String processorAlgo_;
+   private final String processorDimension_;
    private final int numerOfImagesToProcess_;
    private final List<Integer> channelsToAvoid_;
 
    private boolean imageNotProcessedFirstTime_ = true;
    private boolean imageCanBeProcessed_ = true;
 
-   private int newIntendedTime_;
-
    private HashMap<Coords, SingleCombinationProcessor> singleAquisitions_;
 
-   public FrameCombiner(Studio studio, String processorAlgo,
+   public FrameCombiner(Studio studio, String processorDimension, String processorAlgo,
            int numerOfImagesToProcess, String channelsToAvoidString) {
 
       studio_ = studio;
       log_ = studio_.logs();
 
       processorAlgo_ = processorAlgo;
+      processorDimension_ = processorDimension;
       numerOfImagesToProcess_ = numerOfImagesToProcess;
 
       // Check whether channelsToAvoidString is correctly formated
@@ -66,10 +66,32 @@ public class FrameCombiner extends Processor {
          context.outputImage(image);
          return;
       }
+      // when live mode is on and user selected to do z proejct => do nothing
+      if (studio_.live().getIsLiveModeOn() &&
+              processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)){
+         context.outputImage(image);
+         return;
+      }
+       // when running MDA without z stack and user want FrameCombiner to combin z frames => do nothing
+      if (studio_.getAcquisitionManager().getAcquisitionSettings().slices.size() == 0 &&
+              processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)){
+          context.outputImage(image);
+          return;
+      }
 
-      // Get coords without time (set it to 0)
-      Coords coords = image.getCoords().copy().time(0).build();
+      Coords coords = null;
+      Coords.CoordsBuilder builder = image.getCoords().copy();
 
+       switch (processorDimension_){
+         case FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME:
+            // Get coords without time (set it to 0)
+              coords= builder.time(0).build();
+              break;
+         case FrameCombinerPlugin.PROCESSOR_DIMENSION_Z:
+            // Get coords without z (set it to 0)
+              coords= builder.z(0).build();
+              break;
+      }
       // If this coordinates index does not exist in singleAquisitions hasmap, create it
       SingleCombinationProcessor singleAcquProc;
       if (!singleAquisitions_.containsKey(coords)) {
@@ -80,7 +102,7 @@ public class FrameCombiner extends Processor {
             processCombinations = false;
          }
 
-         singleAcquProc = new SingleCombinationProcessor(coords, studio_, processorAlgo_,
+         singleAcquProc = new SingleCombinationProcessor(coords, studio_, processorAlgo_, processorDimension_,
                  numerOfImagesToProcess_, processCombinations, !channelsToAvoid_.isEmpty());
          singleAquisitions_.put(coords, singleAcquProc);
       } else {
@@ -93,16 +115,18 @@ public class FrameCombiner extends Processor {
 
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
-
       if (summary.getIntendedDimensions() != null) {
-
-         // Calculate new number of times
-         newIntendedTime_ = (int) (summary.getIntendedDimensions().getTime() / numerOfImagesToProcess_);
-
-         Coords.CoordsBuilder coordsBuilder = summary.getIntendedDimensions().copy();
-         SummaryMetadata.SummaryMetadataBuilder builder = summary.copy();
-         builder.intendedDimensions(coordsBuilder.time(newIntendedTime_).build());
-
+          Coords.CoordsBuilder coordsBuilder = summary.getIntendedDimensions().copy();
+          SummaryMetadata.SummaryMetadataBuilder builder = summary.copy();
+         // Calculate new number of corresponding dimension number
+          int newIntendedDimNumber_;
+          if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
+              newIntendedDimNumber_ = summary.getIntendedDimensions().getTime() / numerOfImagesToProcess_;
+              builder.intendedDimensions(coordsBuilder.time(newIntendedDimNumber_).build());
+          } else if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)){
+              newIntendedDimNumber_ = summary.getIntendedDimensions().getZ() / numerOfImagesToProcess_;
+              builder.intendedDimensions(coordsBuilder.z(newIntendedDimNumber_).build());
+          }
          return builder.build();
       } else {
          return summary;
@@ -113,9 +137,9 @@ public class FrameCombiner extends Processor {
     * Check if the image can be processed or not.
     *
     * @param image the image to process.
-    * @return
+    * @return whether or not the image is good to process
     */
-   public boolean imageGoodToProcess(Image image) {
+   private boolean imageGoodToProcess(Image image) {
 
       if (imageNotProcessedFirstTime_ && (image.getBytesPerPixel() > 2 || image.getNumComponents() > 1)) {
 
@@ -140,7 +164,7 @@ public class FrameCombiner extends Processor {
 
    }
 
-   public static Boolean isValidIntRangeInput(String channelToAvoidString) {
+   private static Boolean isValidIntRangeInput(String channelToAvoidString) {
       Pattern re_valid = Pattern.compile(
               "# Validate comma separated integers/integer ranges.\n"
               + "^             # Anchor to start of string.         \n"
@@ -160,14 +184,14 @@ public class FrameCombiner extends Processor {
               + "$             # Anchor to end of string.           ",
               Pattern.COMMENTS);
       Matcher m = re_valid.matcher(channelToAvoidString);
-      if (m.matches()) {
-         return true;
-      } else {
-         return false;
-      }
+       if (!m.matches()) {
+          return false;
+       } else {
+          return true;
+       }
    }
 
-   public static List<Integer> convertToList(String channelToAvoidString) {
+   private static List<Integer> convertToList(String channelToAvoidString) {
       Pattern re_next_val = Pattern.compile(
               "# extract next integers/integer range value.    \n"
               + "([0-9]+)      # $1: 1st integer (Base).         \n"
@@ -180,7 +204,7 @@ public class FrameCombiner extends Processor {
 
       Matcher m = re_next_val.matcher(channelToAvoidString);
 
-      List<Integer> channelsToAvoid = new ArrayList<Integer>();
+      List<Integer> channelsToAvoid = new ArrayList<>();
 
       while (m.find()) {
          if (m.group(2) != null) {
@@ -195,7 +219,7 @@ public class FrameCombiner extends Processor {
       }
 
       // Remove duplicate entries
-      channelsToAvoid = new ArrayList<Integer>(new LinkedHashSet<Integer>(channelsToAvoid));
+      channelsToAvoid = new ArrayList<>(new LinkedHashSet<>(channelsToAvoid));
 
       return channelsToAvoid;
    }

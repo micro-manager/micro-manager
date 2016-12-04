@@ -22,6 +22,7 @@ public class FrameCombinerFactory implements ProcessorFactory {
    public Processor createProcessor() {
       // log_.logMessage("FrameCombiner : Create FrameCombinerProcessor");
       return new FrameCombiner(studio_,
+              settings_.getString("processorDimension", FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME),
               settings_.getString("processorAlgo", FrameCombinerPlugin.PROCESSOR_ALGO_MEAN),
               settings_.getInt("numerOfImagesToProcess", 10),
               settings_.getString("channelsToAvoid", ""));

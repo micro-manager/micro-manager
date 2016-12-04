@@ -17,6 +17,7 @@ public class SingleCombinationProcessor {
    private Image processedImage_;
 
    private final String processorAlgo_;
+   private final String processorDimension_;
    private final int numerOfImagesToProcess_;
 
    // Do we want to enable processing for this combinations of Z, Channel, Stage Position ?
@@ -28,7 +29,7 @@ public class SingleCombinationProcessor {
    private Image[] bufferImages_;
    private int currentBufferIndex_;
 
-   public SingleCombinationProcessor(Coords coords, Studio studio, String processorAlgo,
+   public SingleCombinationProcessor(Coords coords, Studio studio, String processorAlgo, String processorDimension,
            int numerOfImagesToProcess, boolean processCombinations, boolean isAnyChannelToAvoid) {
 
       studio_ = studio;
@@ -37,6 +38,7 @@ public class SingleCombinationProcessor {
       coords_ = coords;
 
       processorAlgo_ = processorAlgo;
+      processorDimension_ = processorDimension;
       numerOfImagesToProcess_ = numerOfImagesToProcess;
       processCombinations_ = processCombinations;
       isAnyChannelToAvoid_ = isAnyChannelToAvoid;
@@ -97,7 +99,11 @@ public class SingleCombinationProcessor {
          // Add correct metadata if in acquisition mode
          if (studio_.acquisitions().isAcquisitionRunning() && !isAnyChannelToAvoid_) {
             Coords.CoordsBuilder builder = processedImage_.getCoords().copy();
-            builder.time(processed_frame_index_);
+            if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)){
+                builder.time(processed_frame_index_);
+            }else if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z)){
+                builder.z(processed_frame_index_);
+            }
             processedImage_ = processedImage_.copyAtCoords(builder.build());
             processed_frame_index_ += 1;
          }
