@@ -320,8 +320,11 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
                acquisitionSettings.channels.add(channel);
             }
          }
-         acquisitionSettings.channelGroup = core_.getChannelGroup();
       }
+      //since we're just getting this from the core, it should be safe to get 
+      //regardless of whether we're using any channels. This also makes the 
+      //behavior more consisitent with the setting behavior.
+      acquisitionSettings.channelGroup = getChannelGroup();
 
       //timeFirst = true means that time points are collected at each position
       acquisitionSettings.timeFirst = (acqOrderMode_ == AcqOrderMode.POS_TIME_CHANNEL_SLICE
@@ -388,7 +391,10 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          useChannels_ = false;
          
       channels_ = ss.channels;
-       // no channel group
+      //should check somewhere that channels actually belong to channelGroup
+      //currently it is possible to set channelGroup to a group other than that
+      //which channels belong to.
+      setChannelGroup(ss.channelGroup);
 
       //timeFirst = true means that time points are collected at each position      
       if (ss.timeFirst && ss.slicesFirst) {
