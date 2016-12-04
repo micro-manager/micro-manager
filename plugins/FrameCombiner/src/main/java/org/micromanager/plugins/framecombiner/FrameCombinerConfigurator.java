@@ -11,7 +11,7 @@ import org.micromanager.internal.utils.MMFrame;
 
 public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfigurator {
 
-    private static final String PROCESSOR_DIMENSION = "Dimension";
+   private static final String PROCESSOR_DIMENSION = "Dimension";
    private static final String PROCESSOR_ALGO = "Algorithm to apply on stack images";
    private static final String NUMBER_TO_PROCESS = "Number of images to process";
    private static final String CHANNEL_TO_AVOID = "Avoid Channel(s) (eg. 1,2 or 1-5)";
