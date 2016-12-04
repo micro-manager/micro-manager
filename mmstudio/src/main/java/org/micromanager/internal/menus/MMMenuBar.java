@@ -23,13 +23,17 @@ import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
  * This class is the standard Micro-Manager menu bar.
  */
 public final class MMMenuBar extends JMenuBar {
+   private static FileMenu fileMenu_;
    public static MMMenuBar createMenuBar(MMStudio studio) {
       MMMenuBar result = new MMMenuBar();
-      new FileMenu(studio, result);
+      fileMenu_ = new FileMenu(studio, result);
       new ToolsMenu(studio, result);
       new ConfigMenu(studio, result);
       ((DefaultPluginManager) studio.plugins()).createPluginMenu(result);
       new HelpMenu(studio, result);
       return result;
    }
+   public static FileMenu getFileMenu() {
+      return fileMenu_;
+   } 
 }

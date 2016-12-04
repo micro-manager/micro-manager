@@ -33,6 +33,9 @@ import java.io.File;
 import java.io.IOException;
 import org.micromanager.Studio;
 import org.micromanager.data.Datastore;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.menus.FileMenu;
+import org.micromanager.internal.menus.MMMenuBar;
 
 /**
  * DragDropUtil
@@ -44,7 +47,7 @@ import org.micromanager.data.Datastore;
  * 
  */
 public final class DragDropUtil implements DropTargetListener {
-   private Studio studio_;
+   private final Studio studio_;
 
    public DragDropUtil(Studio studio) {
       studio_ = studio;
@@ -72,6 +75,7 @@ public final class DragDropUtil implements DropTargetListener {
 
    /**
     * This function does the actual work
+    * @param dtde
     */
    @Override
    public void drop(final DropTargetDropEvent dtde) {
@@ -119,9 +123,12 @@ public final class DragDropUtil implements DropTargetListener {
          if (studio_.displays().getDisplays(store).isEmpty()) {
             studio_.displays().createDisplay(store);
          }
-      }
-      catch (IOException e) {
-         ReportingUtils.showError(e, "There was an error when opening the file at " + dir);
+         FileMenu fm = MMMenuBar.getFileMenu();
+         if (fm != null) {
+            fm.updateFileHistory(store.getSavePath());
+         }
+      } catch (IOException e) {
+         ReportingUtils.showError(e, "There was an error while opening the file at " + dir);
       }
    }
 }
