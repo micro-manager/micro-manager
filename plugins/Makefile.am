@@ -26,6 +26,7 @@ nobase_mmplugin_DATA = \
 	PatternOverlay.jar \
 	PipelineSaver.jar \
 	PixelCalibrator.jar \
+    PositionSplitter.jar \
 	ProjectorPlugin.jar \
 	Recall.jar \
 	SequenceBufferMonitor.jar \
