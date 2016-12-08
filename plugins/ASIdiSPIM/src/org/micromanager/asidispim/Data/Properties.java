@@ -229,6 +229,7 @@ public class Properties {
       PLUGIN_AUTOFOCUS_MINIMUMR2("AutofocusMinimumR2"),
       PLUGIN_ADVANCED_CAMERA_EXPOSURE("AdvancedCameraExposure"),
       PLUGIN_DESKEW_FACTOR("DeskewFactor"),
+      PLUGIN_DESKEW_INVERT("DeskewInvert"),
       ;
       private final String text;
       private final boolean forceSet;
