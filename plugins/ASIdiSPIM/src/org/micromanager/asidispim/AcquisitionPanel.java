@@ -1791,6 +1791,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Must have stage with scan-enabled firmware for stage scanning.");
             return false;
          }
+         if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+               && acqSettings.numSides < 2) {
+            MyDialogUtils.showError("Interleaved mode requires two sides.");
+            return false;
+         }
       }
       
       double sliceDuration = acqSettings.sliceTiming.sliceDuration;
@@ -2489,6 +2494,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               Thread.sleep(200);  // for serial communication overhead
                               Thread.sleep((long)volumeDuration/nrChannelsSoftware);  // estimate the time per channel, not ideal in case of software channel switching
                            }
+                           
 
                         } catch (InterruptedException iex) {
                            MyDialogUtils.showError(iex);
