@@ -1,4 +1,4 @@
-// DESCRIPTION:   Qoptiq iFLEX-Viper adapter, based on Measurement Computing DAQ adapter
+// DESCRIPTION:   Qioptiq iFLEX-Viper adapter, based on Measurement Computing DAQ adapter
 // COPYRIGHT:     University of California, Berkeley, 2013
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
