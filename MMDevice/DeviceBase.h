@@ -1476,23 +1476,23 @@ public:
 
    virtual bool IsMultiROISet()
    {
-      return DEVICE_UNSUPPORTED_COMMAND;
+      return false;
    }
 
-   virtual int GetMultiROICount(unsigned& count)
+   virtual int GetMultiROICount(unsigned& /* count */)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int SetMultiROI(const unsigned* xs, const unsigned* ys,
-         const unsigned* widths, const unsigned* heights,
-         unsigned numROIs)
+   virtual int SetMultiROI(const unsigned* /* xs */, const unsigned* /* ys */,
+         const unsigned* /* widths */, const unsigned* /* heights */,
+         unsigned /* numROIs */)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int GetMultiROI(unsigned* xs, unsigned* ys,
-         unsigned* widths, unsigned* heights, unsigned* length)
+   virtual int GetMultiROI(unsigned* /* xs */, unsigned* /* ys */,
+         unsigned* /* widths */, unsigned* /* heights */, unsigned* /* length */)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }

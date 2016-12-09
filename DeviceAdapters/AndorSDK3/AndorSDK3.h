@@ -113,7 +113,7 @@ public:
    void RestartLiveAcquisition();
 
 private:
-   enum CameraId { CIDNeo = 0, CIDZyla = 1 };
+   enum CameraId { CIDNeo = 0, CIDZyla = 1, CIDiStar=2 };
    std::wstring currentSoftwareVersion_;
    std::wstring PerformReleaseVersionCheck();
    double CalculateDefaultExposure(std::wstring & interfaceType);
@@ -174,12 +174,18 @@ private:
    TEnumProperty* pixelReadoutRate_property;
    TEnumProperty* pixelEncoding_property;
    TIntegerProperty* accumulationLength_property;
+   TIntegerProperty* MCPGain_property;
+   TIntegerProperty* MCPVoltage_property;
    TFloatProperty* readTemperature_property;
    TEnumProperty* temperatureStatus_property;
    TBooleanProperty* sensorCooling_property;
    TBooleanProperty* overlap_property;
+   TBooleanProperty* pretrigger_property;
+   TBooleanProperty* piv_property;
+   TBooleanProperty* MCPIntelligate_property;
    TEnumProperty* triggerMode_property;
    TEnumProperty* fanSpeed_property;
+   TEnumProperty* gateMode_property;
    TBooleanProperty* spuriousNoiseFilter_property;
    TBooleanProperty* staticBlemishCorrection_property;
    TBooleanProperty* rollingShutterGlobalClear_property;
@@ -190,6 +196,25 @@ private:
    TEnumProperty* auxOutTwoSignal_property;
    TEnumProperty* shutterOutputMode_property;
    TFloatProperty* shutterTransferTime_property;
+   TEnumProperty* InsertionDelay_property;
+   TBooleanProperty* DDGIOCEnable_property;
+   TIntegerProperty* DDGIOCNumberOfPulses_property;
+   TIntegerProperty* DDGIOCPeriod_property;
+   TIntegerProperty* DDGIOCOutputDelay_property;
+   TBooleanProperty* DDGOutputEnable_property;
+   TBooleanProperty* DDGOutputStepEnable_property;
+   TBooleanProperty* DDGStepEnabled_property;
+   TBooleanProperty* DDGOpticalWidthEnable_property;
+   TEnumProperty* DDGOutputPolarity_property;
+   TEnumProperty* DDGOutputSelector_property;
+   TIntegerProperty* DDGOutputWidth_property;
+   TIntegerProperty* DDGStepCount_property;
+   TFloatProperty* DDGStepDelayCoefficientA_property;
+   TFloatProperty* DDGStepDelayCoefficientB_property;
+   TEnumProperty* DDGStepDelayMode_property;
+   TFloatProperty* DDGStepWidthCoefficientA_property;
+   TFloatProperty* DDGStepWidthCoefficientB_property;
+   TEnumProperty* DDGStepWidthMode_property;
    
    // LightScanPlus properties
    TEnumProperty* LSPSensorReadoutMode_property;
@@ -212,6 +237,7 @@ private:
    andor::IEnum* triggerMode_Enum;
    TTriggerRemapper* triggerMode_remapper;
    TAndorEnumValueMapper* triggerMode_valueMapper;
+   TAndorEnumValueMapper* gateMode_valueMapper;
 
    CEventsManager* eventsManager_;
    ICallBackManager * callbackManager_;

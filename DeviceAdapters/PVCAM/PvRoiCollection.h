@@ -45,6 +45,12 @@ public:
     void SetCapacity(unsigned int capacity);
 
     /**
+    * Gets the collection capacity.
+    * @return Maximum number of elements the collection can hold
+    */
+    unsigned int Capacity() const;
+
+    /**
     * Adds a new ROI to the collection
     * @param newRoi A ROI to add.
     * @throw length_error if the capacity is not sufficient

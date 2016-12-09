@@ -208,7 +208,9 @@ bool NewportZStage::Busy()
    std::string cmd = MakeCommand("TS");
    int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r\n");
    if (ret != DEVICE_OK)
-      return ret;
+   {
+      return true;  // not sure if device is busy, but this is in any case a bad situation
+   }
 
    std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
@@ -376,11 +378,21 @@ int NewportZStage::GetError(bool& error, std::string& errorCode)
    error = true;
    if (answer.substr(cmd.size(), 1) == "@")
    {
-      error = false;
+	  error= false;
       return DEVICE_OK;
    }
 
-   std::string msg = "Device return error code: " + errorCode;
+   if (answer.substr(cmd.size(), 1) == "H") // state is not referenced, so home and ask again
+   {
+	   ret = SetOrigin();
+	   if (ret != DEVICE_OK) 
+	   {
+		   return ret;
+	   }
+	   return GetError(error, errorCode);  // dangeroud! recursive call
+   }
+
+   std::string msg = "Device returned error code: " + errorCode;
    LogMessage(msg, true);
 
    SetErrorText(CONTROLLER_ERROR, msg.c_str());

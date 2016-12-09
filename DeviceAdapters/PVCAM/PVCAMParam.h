@@ -16,6 +16,18 @@ typedef unsigned long long ulong64;
 #define SMART_STREAM_MAX_EXPOSURES      128
 
 /**
+* A quick local function for converting numbers to strings, used for debugging
+* purposes where the CDeviceUtils::ConvertToString() is not sufficient.
+*/
+template<typename T>
+static std::string numToStr(T num)
+{
+    std::stringstream str;
+    str << num;
+    return str.str();
+}
+
+/**
 * A base class for PVCAM parameters. This is used for easy access to specific camera parameters.
 */
 class PvParamBase
@@ -287,7 +299,7 @@ public:
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogAdapterMessage(mDebugName + " ATTR_CURRENT " + CDeviceUtils::ConvertToString((int)mCurrent));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_CURRENT " + numToStr<T>(mCurrent));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_MIN, &mMin ) != PV_OK)
           {
@@ -295,7 +307,7 @@ public:
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogAdapterMessage(mDebugName + " ATTR_MIN: " + CDeviceUtils::ConvertToString((int)mMin));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_MIN: " + numToStr<T>(mMin));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_MAX, &mMax ) != PV_OK)
           {
@@ -303,7 +315,7 @@ public:
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogAdapterMessage(mDebugName + " ATTR_MAX: " + CDeviceUtils::ConvertToString((int)mMax));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_MAX: " + numToStr<T>(mMax));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_COUNT, &mCount ) != PV_OK)
           {
@@ -311,7 +323,7 @@ public:
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogAdapterMessage(mDebugName + " ATTR_COUNT: " + CDeviceUtils::ConvertToString((int)mCount));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_COUNT: " + numToStr<uns32>(mCount));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_INCREMENT, &mIncrement ) != PV_OK)
           {
@@ -319,7 +331,7 @@ public:
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogAdapterMessage(mDebugName + " ATTR_INCREMENT: " + CDeviceUtils::ConvertToString((int)mIncrement));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_INCREMENT: " + numToStr<T>(mIncrement));
 
           if (pl_get_param(mCamera->Handle(), mId, ATTR_DEFAULT, &mDefault ) != PV_OK)
           {
@@ -327,7 +339,7 @@ public:
               return DEVICE_ERR;
           }
           if (aDbgPrint)
-              mCamera->LogAdapterMessage(mDebugName + " ATTR_DEFAULT: " + CDeviceUtils::ConvertToString((int)mDefault));
+              mCamera->LogAdapterMessage(mDebugName + " ATTR_DEFAULT: " + numToStr<T>(mDefault));
 
           if (aDbgPrint)
               mCamera->LogAdapterMessage(mDebugName + " update complete");

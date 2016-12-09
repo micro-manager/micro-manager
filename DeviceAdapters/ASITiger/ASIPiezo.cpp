@@ -244,6 +244,10 @@ int CPiezo::Initialize()
    AddAllowedValue(g_SetHomeHerePropertyName, g_DoneState, 2);
    UpdateProperty(g_SetHomeHerePropertyName);
 
+   pAct = new CPropertyAction (this, &CPiezo::OnHomePosition);
+   CreateProperty(g_HomePositionPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_HomePositionPropertyName);
+
    // "do it" property to go home removed with addition of Home() API call
    // will use API call in diSPIM plugin; anybody else using it contact author
    // if you really need the property to continue to exist
@@ -1599,10 +1603,41 @@ int CPiezo::OnSetHomeHere(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_DoItState) == 0)
       {
-         command << "HM " << axisLetter_ << "+";
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         // old code used the controller's "+" ability but adapter needs to know the home position
+         // so now implement in less efficient way that keeps OnHomePosition value up to date
+         // one unfortunate side effect of this approach is that due to precision considerations
+         //    the home position is limited to increments of 0.1um (probably sufficient)
+         double homePos;
+         ostringstream tmp; tmp.str("");
+         RETURN_ON_MM_ERROR ( GetPositionUm(homePos) );
+         tmp << homePos/1000;  // divide by 1000 b/c home position read out in mm
+         RETURN_ON_MM_ERROR ( SetProperty(g_HomePositionPropertyName, tmp.str().c_str()) );
          pProp->Set(g_DoneState);
       }
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnHomePosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "HM " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "HM " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
