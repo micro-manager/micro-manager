@@ -85,7 +85,6 @@ public class ControllerUtils {
       return true;
    }
    
-   
    /**
    * Sets all the controller's properties according to volume settings
    * and otherwise gets controller all ready for acquisition
@@ -176,12 +175,13 @@ public class ControllerUtils {
          // with oSPIM, angle is 60 degrees so go 1.15x faster
          final double speedFactor = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
          
-         double requestedMotorSpeed = settings.stepSizeUm * speedFactor / sliceDuration / settings.numChannels;
+         final int channelsPerPass = settings.channelMode == MultichannelModes.Keys.SLICE_HW ? settings.numChannels : 1;
+         double requestedMotorSpeed = settings.stepSizeUm * speedFactor / sliceDuration / channelsPerPass;
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
          
          // ask for the actual speed and calculate the actual step size
          final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
-         final double actualStepSizeUm = actualMotorSpeed / speedFactor * sliceDuration * settings.numChannels;  
+         final double actualStepSizeUm = actualMotorSpeed / speedFactor * sliceDuration * channelsPerPass;  
          
          // cache this value for later use
          scanDistance_ = settings.numSlices * actualStepSizeUm * speedFactor;
@@ -203,9 +203,7 @@ public class ControllerUtils {
          if (isInterleaved) {
             numLines = 1;  // can't have 1 side interleaved
          }
-         if (settings.numChannels < 1 && settings.channelMode == MultichannelModes.Keys.VOLUME) {
-            numLines *= settings.numChannels;
-         }
+         numLines *= (settings.numChannels / channelsPerPass);
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, numLines);
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
                (!isInterleaved && (settings.numSides == 2) ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
@@ -742,5 +740,5 @@ public class ControllerUtils {
          return 0;
       }
    }
-   
+
 }

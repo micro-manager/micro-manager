@@ -1234,18 +1234,29 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       final double stackDuration = numCameraTriggers * acqSettings.sliceTiming.sliceDuration;
       if (acqSettings.isStageScanning) {
          final double rampDuration = delayBeforeSide + acqSettings.accelerationX;
+         final double retraceSpeed = 0.67f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);  // retrace speed set to 67% of max speed in firmware
+         final double speedFactor = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
+         final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
+         final double retraceTime = scanDistance/retraceSpeed/1000;
          // TODO double-check these calculations below, at least they are better than before ;-)
          if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN) {
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-               return (numSides * ((rampDuration * 2) + (stackDuration * numChannels)));
-            } else {
-               return (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
+               return retraceTime + (numSides * ((rampDuration * 2) + (stackDuration * numChannels)));
+            } else {  // "normal" stage scan with volume channel switching
+               if (numSides == 1) {
+                  // single-view so will retrace at beginning of each channel
+                  return ((rampDuration * 2) + stackDuration + retraceTime) * numChannels;
+               } else {
+                  // will only retrace at very start/end
+                  return retraceTime + (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
+               }
             }
-         } else {  // interleaved mode
+         } else {  // interleaved mode => one-way pass collecting both sides
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-               return (rampDuration * 2 + stackDuration * numSides * numChannels);
-            } else {
-               return ((rampDuration * 2 + stackDuration * numSides) * numChannels);
+               // single pass with all sides and channels
+               return retraceTime + (rampDuration * 2 + stackDuration * numSides * numChannels);
+            } else {  // one-way pass collecting both sides, then rewind for next channel
+               return ((rampDuration * 2) + (stackDuration * numSides) + retraceTime) * numChannels;
             }
          }
       } else { // piezo scan
@@ -1300,12 +1311,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Update the displayed volume duration.
     */
    private void updateActualVolumeDurationLabel() {
-      actualVolumeDurationLabel_.setText(
-            NumberUtils.doubleToDisplayString(computeActualVolumeDuration()) +
-            " ms");
+      double duration = computeActualVolumeDuration();
+      if (duration > 1000) {
+         actualVolumeDurationLabel_.setText(
+               NumberUtils.doubleToDisplayString(duration/1000d) +
+               " s"); // round to ms
+      } else {
+         actualVolumeDurationLabel_.setText(
+               NumberUtils.doubleToDisplayString(Math.round(10*duration)/10d) +
+               " ms");  // round to tenth of ms
+      }
    }
-   
-   
    
    /**
     * Compute the time lapse duration
@@ -2037,6 +2053,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             acqName = gui_.getUniqueAcquisitionName(prefixField_.getText());
          }
          
+         long extraStageScanTimeout = 0;
+         if (acqSettings.isStageScanning) {
+            // approximately compute the extra time to wait for stack to begin by getting the per-channel volume duration
+            //   and subtracting the acquisition duration and then dividing by two
+            extraStageScanTimeout = (long) Math.ceil(computeActualVolumeDuration(acqSettings)/acqSettings.numChannels
+                  - (acqSettings.numSlices * acqSettings.sliceTiming.sliceDuration)) / 2;
+         }
+         
          VirtualAcquisitionDisplay vad = null;
          WindowListener wl_acq = null;
          WindowListener[] wls_orig = null;
@@ -2343,7 +2367,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         // Do not actually grab first image here, just make sure it is there
                         long start = System.currentTimeMillis();
                         long now = start;
-                        final long timeout = Math.max(3000, Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide));
+                        final long timeout = Math.max(3000, Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide)) + extraStageScanTimeout;
                         while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
                               && !cancelAcquisition_.get()) {
                            now = System.currentTimeMillis();
