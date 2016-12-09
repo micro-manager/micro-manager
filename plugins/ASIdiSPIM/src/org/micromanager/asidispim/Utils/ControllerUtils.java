@@ -198,9 +198,15 @@ public class ControllerUtils {
             }
             prepareStageScanForAcquisition(posUm.x, posUm.y);
          }
-         
-         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, 
-               (isInterleaved ? 1 : settings.numSides));  // assume can't have 1 side interleaved
+
+         int numLines = settings.numSides;
+         if (isInterleaved) {
+            numLines = 1;  // can't have 1 side interleaved
+         }
+         if (settings.numChannels < 1 && settings.channelMode == MultichannelModes.Keys.VOLUME) {
+            numLines *= settings.numChannels;
+         }
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, numLines);
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
                (!isInterleaved && (settings.numSides == 2) ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, settings.delayBeforeSide);
