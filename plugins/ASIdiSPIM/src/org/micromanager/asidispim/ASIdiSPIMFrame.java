@@ -364,6 +364,9 @@ public class ASIdiSPIMFrame extends MMFrame
    @Override
    public void propertyChangedAlert(String device, String property, String value) {
      // props_.callListeners();
+     // if (device.equals("Core") && property.equals("Camera")) {
+     //    could call cameras_.setCamera() here
+     //}
    }
 
    @Override

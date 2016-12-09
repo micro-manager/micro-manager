@@ -107,6 +107,11 @@ public class DevicesPanel extends ListeningJPanel {
             maxSelectorWidth*2);
       add(boxLowerCam_, "span 2, center, wrap");
       
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.SHUTTERLOWER) + ":"));
+      final JComboBox boxLowerShutter_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
+            Devices.Keys.SHUTTERLOWER, maxSelectorWidth*2);
+      add(boxLowerShutter_, "span 2, center, wrap");
+      
       add(new JLabel("Imaging Path A"), "skip 1");
       add(new JLabel("Imaging Path B"), "wrap");
       

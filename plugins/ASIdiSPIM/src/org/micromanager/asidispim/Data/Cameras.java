@@ -133,6 +133,25 @@ public class Cameras {
       return noduplicates.toArray(new CameraData[0]);
    }
 
+   private void setShutterForCamera(Devices.Keys camera) {
+      Devices.Keys shutter = null;
+      if (camera == Devices.Keys.CAMERAA
+            || camera == Devices.Keys.CAMERAB
+            || camera == Devices.Keys.MULTICAMERA) {
+         shutter = Devices.Keys.PLOGIC;
+      }
+      if (camera == Devices.Keys.CAMERALOWER) {
+         shutter = Devices.Keys.SHUTTERLOWER;
+      }
+      if (shutter != null) {
+         try {
+            gui_.getMMCore().setShutterDevice(devices_.getMMDevice(shutter));
+         } catch (Exception ex) {
+            // do nothing
+         }
+      }  
+   }
+   
    /**
     * Switches the active camera to the desired one. Takes care of possible side
     * effects.
@@ -152,6 +171,7 @@ public class Cameras {
             }
             currentCameraKey_ = key;
             core_.setCameraDevice(mmDevice);
+            setShutterForCamera(key);
             gui_.refreshGUIFromCache();
             if (liveEnabled) {
                gui_.enableLiveMode(true);
