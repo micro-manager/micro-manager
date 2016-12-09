@@ -2613,10 +2613,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // make sure stage scanning state machine is stopped, otherwise setting speed/position won't take
             props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
                   Properties.Values.SPIM_IDLE);
-            core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
-                    xyPosUm.x, xyPosUm.y);
             props_.setPropValue(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_SPEED, origXSpeed);
+            core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
+                  xyPosUm.x, xyPosUm.y);
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not restore XY stage position after acquisition");
          }
