@@ -85,12 +85,12 @@ using namespace std;
  * 3.0.0, this is maintained according to the rules outlined at
  * http://semver.org/ . Briefely,
  *
- * - Incremant the major version when making backward-incompatible changes
+ * - Increment the major version when making backward-incompatible changes
  *   (changes that will require any existing code to be modified, or that may
  *   change behavior).
  * - Increment the minor version when adding methods or functionality without
  *   breaking backward-compatibility.
- * - Incremant the patch version when fixing incorrect behavior in a
+ * - Increment the patch version when fixing incorrect behavior in a
  *   backward-compatible manner.
  *
  * There is no need to increment the patch number when making changes that do
@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 3, MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 4, MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4073,6 +4073,24 @@ double CMMCore::getExposure() throw (CMMError)
    else
       //throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
       return 0.0;
+}
+
+/**
+* Returns the current exposure setting of the specified camera in milliseconds.
+* @param label  the camera device label
+* @return the exposure time in milliseconds
+*/
+double CMMCore::getExposure(const char* label) throw (CMMError)
+{
+  boost::shared_ptr<CameraInstance> pCamera =
+        deviceManager_->GetDeviceOfType<CameraInstance>(label);
+  if (pCamera)
+  {
+     mm::DeviceModuleLockGuard guard(pCamera);
+     return pCamera->GetExposure();
+  }
+  else
+     return 0.0;
 }
 
 /**

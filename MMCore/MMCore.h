@@ -366,6 +366,7 @@ public:
    void setExposure(double exp) throw (CMMError);
    void setExposure(const char* cameraLabel, double dExp) throw (CMMError);
    double getExposure() throw (CMMError);
+   double getExposure(const char* label) throw (CMMError);
 
    void snapImage() throw (CMMError);
    void* getImage() throw (CMMError);

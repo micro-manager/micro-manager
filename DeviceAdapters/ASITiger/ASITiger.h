@@ -144,8 +144,6 @@ const char* const g_RefreshPropValsPropertyName = "RefreshPropertyValues";
 const char* const g_AxisLetterXPropertyName = "AxisLetterX";
 const char* const g_AxisLetterYPropertyName = "AxisLetterY";
 const char* const g_AxisLetterPropertyName = "AxisLetter";
-const char* const g_SetHomeHerePropertyName = "SetHomeToCurrentPosition";
-const char* const g_MoveToHomePropertyName = "MoveToHome";
 const char* const g_AdvancedPropertiesPropertyName = "EnableAdvancedProperties";
 
 // Hub property names
@@ -216,6 +214,9 @@ const char* const g_StepSizePropertyName = "StepSize(um)";
 const char* const g_LowerLimPropertyName =  "LowerLim(mm)";
 const char* const g_UpperLimPropertyName =  "UpperLim(mm)";
 const char* const g_JoystickSelectPropertyName = "JoystickInput";
+const char* const g_SetHomeHerePropertyName = "SetHomeToCurrentPosition";
+const char* const g_HomePositionPropertyName = "HomePosition(mm)";
+//const char* const g_MoveToHomePropertyName = "MoveToHome";  // no longer used
 
 // filter wheel property names
 const char* const g_FWSpinStatePropertyName = "SpinOffOn";

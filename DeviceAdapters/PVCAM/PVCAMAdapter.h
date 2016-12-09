@@ -88,6 +88,7 @@
 #define ERR_BINNING_INVALID             10011 // Binning value is not valid for current configuration
 #define ERR_OPERATION_TIMED_OUT         10012 // Generic timeout error
 #define ERR_FRAME_READOUT_FAILED        10013 // Polling: status = READOUT_FAILED
+#define ERR_TOO_MANY_ROIS               10014 // Device does not support that many ROIs (uM 2.0)
 
 // PVCAM-specific error codes base. When a PVCAM error occurs we use the PVCAM
 // ID and PVCAM message to create a new uM error code, we call the the SetErrorCode()
@@ -687,6 +688,7 @@ private: // Static
 
     long            triggerTimeout_;       // Max time to wait for an external trigger
     bool            microsecResSupported_; // True if camera supports microsecond exposures
+    uns32           microsecResMax_;       // Maximum value for microsec resolution
 
     friend class    PollingThread;
     PollingThread*  pollingThd_;           // Pointer to the sequencing thread
@@ -760,6 +762,7 @@ private: // Static
     PvEnumParam*      prmTriggerMode_;     // (PARAM_EXPOSURE_MODE)
     PvParam<uns16>*   prmExpResIndex_;
     PvEnumParam*      prmExpRes_;
+    PvParam<ulong64>* prmExposureTime_;    // (PARAM_EXPOSURE_TIME)
     PvEnumParam*      prmExposeOutMode_;
     PvParam<uns16>*   prmClearCycles_;
     PvEnumParam*      prmReadoutPort_;

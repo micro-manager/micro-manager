@@ -43,7 +43,7 @@ void SnapShotControl::setupTriggerModeSilently()
    }
    else if (temp_ws.compare(L"External Start") == 0)
    {
-      triggerMode->Set(L"Software");
+      triggerMode->Set(L"External");
       set_internal_ = false;
       in_software_ = true;
       in_external_ = true;
@@ -172,6 +172,7 @@ void SnapShotControl::poiseForSnapShot()
    cycleMode->Set(L"Continuous");
    cameraDevice->Release(cycleMode);
    setupTriggerModeSilently();
+
    eventsManager_->ResetEvent(CEventsManager::EV_EXPOSURE_END_EVENT);
 
    IInteger* imageSizeBytes = cameraDevice->GetInteger(L"ImageSizeBytes");
@@ -196,7 +197,7 @@ void SnapShotControl::poiseForSnapShot()
 bool SnapShotControl::takeSnapShot()
 {
    bool b_ret = false;
-   if (in_software_)
+   if (in_software_ && !in_external_)//in external start triggermode this will be ignored, and wait for an external trigger below
    {
       sendSoftwareTrigger->Do();
    }
@@ -207,7 +208,7 @@ bool SnapShotControl::takeSnapShot()
    {
       if (eventsManager_->IsEventRegistered(CEventsManager::EV_EXPOSURE_END_EVENT) )
       {
-         if (in_software_)
+         if (in_software_ && !in_external_)
          {
             // wait until event is set
             b_ret = eventsManager_->WaitForEvent(CEventsManager::EV_EXPOSURE_END_EVENT, AT_INFINITE);
