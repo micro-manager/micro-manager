@@ -449,22 +449,16 @@ public final class PositionListDlg extends MMDialog implements MouseListener, Ch
    }
    
    
-    @Override
-    public void stateChanged(ChangeEvent e) {
-        try {
-            GUIUtils.invokeLater(new Runnable() {
-               @Override
-                public void run() {
-                    posTable_.revalidate();
-                    axisTable_.revalidate();
-                }
-            });
-        } catch (InterruptedException ex) {
-            ReportingUtils.logError(ex);
-        } catch (InvocationTargetException ex) {
-           ReportingUtils.logError(ex);
-      }
-    }
+   @Override
+   public void stateChanged(ChangeEvent e) {
+      GUIUtils.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            posTable_.revalidate();
+            axisTable_.revalidate();
+         }
+      });
+   }
 
    protected void updateMarkButtonText() {
       PositionTableModel tm = (PositionTableModel) posTable_.getModel();

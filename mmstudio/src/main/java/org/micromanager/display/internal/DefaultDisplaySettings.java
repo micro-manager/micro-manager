@@ -51,7 +51,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    private static final String ANIMATION_FPS_DOUBLE = "animationFPS_Double";
    private static final String CHANNEL_COLOR_MODE = "channelColorMode";
    private static final String HISTOGRAM_UPDATE_RATE = "histogramUpdateRate";
-   private static final String MAGNIFICATION = "magnification";
+   private static final String ZOOM_RATIO = "magnification";
    private static final String SHOULD_SYNC_CHANNELS = "shouldSyncChannels";
    private static final String SHOULD_AUTOSTRETCH = "shouldAutostretch";
    private static final String SHOULD_SCALE_WITH_ROI = "shouldScaleWithROI";
@@ -93,9 +93,9 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       builder.histogramUpdateRate(profile.getDouble(
             DefaultDisplaySettings.class,
                key + HISTOGRAM_UPDATE_RATE, 0.0));
-      builder.magnification(profile.getDouble(
+      builder.zoom(profile.getDouble(
             DefaultDisplaySettings.class,
-               key + MAGNIFICATION, 1.0));
+               key + ZOOM_RATIO, 1.0));
       builder.shouldSyncChannels(profile.getBoolean(
             DefaultDisplaySettings.class,
                key + SHOULD_SYNC_CHANNELS, false));
@@ -142,7 +142,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       profile.setDouble(DefaultDisplaySettings.class,
             key + HISTOGRAM_UPDATE_RATE, settings.getHistogramUpdateRate());
       profile.setDouble(DefaultDisplaySettings.class,
-            key + MAGNIFICATION, settings.getMagnification());
+            key + ZOOM_RATIO, settings.getZoom());
       profile.setBoolean(DefaultDisplaySettings.class,
             key + SHOULD_SYNC_CHANNELS, settings.getShouldSyncChannels());
       profile.setBoolean(DefaultDisplaySettings.class,
@@ -343,7 +343,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    public static class Builder implements DisplaySettings.DisplaySettingsBuilder {
       private Color[] channelColors_ = null;
       private ContrastSettings[] contrastSettings_ = null;
-      private Double magnification_ = null;
+      private Double zoom_ = null;
       private Double animationFPS_ = null;
       private DisplaySettings.ColorMode channelColorMode_ = null;
       private Double histogramUpdateRate_ = null;
@@ -417,9 +417,15 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
 
       @Override
-      public DisplaySettingsBuilder magnification(Double magnification) {
-         magnification_ = magnification;
+      public DisplaySettingsBuilder zoom(Double ratio) {
+         zoom_ = ratio;
          return this;
+      }
+
+      @Override
+      @Deprecated
+      public DisplaySettingsBuilder magnification(Double ratio) {
+         return zoom(ratio);
       }
 
       @Override
@@ -491,7 +497,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
 
    private Color[] channelColors_ = null;
    private ContrastSettings[] contrastSettings_ = null;
-   private Double magnification_ = null;
+   private Double zoom_ = null;
    private Double animationFPS_ = null;
    private DisplaySettings.ColorMode channelColorMode_ = null;
    private Double histogramUpdateRate_ = null;
@@ -507,7 +513,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    public DefaultDisplaySettings(Builder builder) {
       channelColors_ = builder.channelColors_;
       contrastSettings_ = builder.contrastSettings_;
-      magnification_ = builder.magnification_;
+      zoom_ = builder.zoom_;
       animationFPS_ = builder.animationFPS_;
       channelColorMode_ = builder.channelColorMode_;
       histogramUpdateRate_ = builder.histogramUpdateRate_;
@@ -597,8 +603,14 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   public Double getZoom() {
+      return zoom_;
+   }
+
+   @Override
+   @Deprecated
    public Double getMagnification() {
-      return magnification_;
+      return getZoom();
    }
 
    @Override
@@ -672,7 +684,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       return new Builder()
             .channelColors(channelColors_)
             .channelContrastSettings(contrastSettings_)
-            .magnification(magnification_)
+            .zoom(zoom_)
             .animationFPS(animationFPS_)
             .channelColorMode(channelColorMode_)
             .histogramUpdateRate(histogramUpdateRate_)
@@ -748,8 +760,8 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             builder.channelColorMode(ColorMode.fromInt(
                      tags.getInt(CHANNEL_COLOR_MODE)));
          }
-         if (tags.has(MAGNIFICATION)) {
-            builder.magnification(tags.getDouble(MAGNIFICATION));
+         if (tags.has(ZOOM_RATIO)) {
+            builder.zoom(tags.getDouble(ZOOM_RATIO));
          }
          if (tags.has(ANIMATION_FPS_DOUBLE)) {
             builder.animationFPS(tags.getDouble(ANIMATION_FPS_DOUBLE));
@@ -907,7 +919,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             result.put("ChContrastMax", maxes);
          }
          result.put(CHANNEL_COLOR_MODE, channelColorMode_.getIndex());
-         result.put(MAGNIFICATION, magnification_);
+         result.put(ZOOM_RATIO, zoom_);
          result.put(ANIMATION_FPS_DOUBLE, animationFPS_);
          result.put(HISTOGRAM_UPDATE_RATE, histogramUpdateRate_);
          result.put(SHOULD_SYNC_CHANNELS, shouldSyncChannels_);

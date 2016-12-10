@@ -15,7 +15,7 @@ import java.util.Arrays;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.internal.DisplayController;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -36,7 +36,7 @@ public final class CenterAndDragListener implements MouseListener,
    private int lastX_, lastY_;
 
    public CenterAndDragListener(CMMCore core, MMStudio studio,
-         DefaultDisplayWindow display) {
+         DisplayController display) {
       studio_ = studio;
       core_ = core;
       canvas_ = display.getCanvas();

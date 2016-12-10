@@ -112,9 +112,9 @@ public interface DisplayManager {
     *        calculated in the resulting HistogramData; otherwise it will be -1
     * @return a HistogramData derived from the pixels in the image.
     */
-   public HistogramData calculateHistogram(Image image, int component,
-         int binPower, int bitDepth, double extremaPercentage,
-         boolean shouldCalcStdDev);
+//   public HistogramData calculateHistogram(Image image, int component,
+//         int binPower, int bitDepth, double extremaPercentage,
+//         boolean shouldCalcStdDev);
 
    /**
     * Generate a HistogramData object based on the pixels in the provided
@@ -130,8 +130,8 @@ public interface DisplayManager {
     *        histogram calculation values.
     * @return a HistogramData derived from the pixels in the image.
     */
-   public HistogramData calculateHistogramWithSettings(Image image,
-         int component, DisplaySettings settings);
+//   public HistogramData calculateHistogramWithSettings(Image image,
+//         int component, DisplaySettings settings);
 
    /**
     * Send updated histogram information to anyone who is listening for it for
@@ -142,7 +142,7 @@ public interface DisplayManager {
     * @param images List of images to calculate histograms for.
     * @param viewer DataViewer that histogram information should be updated for
     */
-   public void updateHistogramDisplays(List<Image> images, DataViewer viewer);
+//   public void updateHistogramDisplays(List<Image> images, DataViewer viewer);
 
    /**
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.

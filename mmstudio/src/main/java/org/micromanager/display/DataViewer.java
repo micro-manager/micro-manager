@@ -1,11 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display implementation
-//-----------------------------------------------------------------------------
-//
-// AUTHOR:       Chris Weisiger, 2015
-//
-// COPYRIGHT:    University of California, San Francisco, 2015
+// Copyright (C) 2015-2017 Open Imaging, Inc.
+//           (C) 2015 Regents of the University of California
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -21,108 +15,238 @@
 package org.micromanager.display;
 
 import java.util.List;
+import org.micromanager.EventPublisher;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 
 /**
- * This is a basic interface that is implemented by DisplayWindow and may
- * potentially be implemented by other types of displays in the future. Its
- * methods chiefly deal with DisplaySettings, events, and access to data. We
- * may also in the future allow other code that implements this interface to
- * make use of standard display widgets (like the Inspector).
+ * General interface for any user interface displaying image data.
+ *
+ * Implementers: Normally, you should subclass {@link AbstractDataViewer}
+ * rather than directly implementing this interface. That will allow your
+ * implementation to continue to work when methods are added to this interface
+ * in the future.
+ *
+ * <b>Warning</b>: Support for custom data viewers should be considered
+ * experimental. Future updates may require you to update such code for
+ * compatibility.
+ *
+ * @author Chris Weisiger, Mark A. Tsuchida
  */
-public interface DataViewer {
+public interface DataViewer extends EventPublisher {
    /**
-    * Update the DisplaySettings for the display. This must post a
-    * NewDisplaySettingsEvent on the display's EventBus, and should also cause
-    * the display to redraw itself. If you are implementing your own DataViewer
-    * then you should be certain to do those actions yourself. For example,
-    * if your implementation stores the DisplaySettings under the "settings_"
-    * field and has an EventBus under the "bus_" field:
+    * Register an object to receive events on the viewer event bus.
+    * <p>
+    * Objects registered by this method will receive viewer events through
+    * their methods bearing a {@code com.google.common.eventbus.Subscribe}
+    * annotation. See Guava Event Bus documentation for how this works.
+    * <p>
+    * Events that can be subscribed to include:
+    * <ul>
+    * <li>{@link NewDisplaySettingsEvent} (on an arbitrary thread)
+    * <li>{@link NewDataPositionRenderedEvent} (on the EDT)
+    * <li>{@link DisplayDidCloseEvent} (on the EDT)
+    * </ul>
     *
-    * <pre><code>
-    * {@literal @}Override
-    * public void setDisplaySettings(DisplaySettings settings) {
-    *    settings_ = settings;
-    *    bus_.post(new NewDisplaySettingsEvent(settings_, this));
-    *    repaint();
-    * }
-    * </code></pre>
+    * @param recipient the object to register
     *
-    * @param settings The new display settings.
+    * @see unregisterForEvents
+    */
+   @Override
+   void registerForEvents(Object recipient);
+
+   @Override
+   void unregisterForEvents(Object recipient);
+
+   /**
+    * Set the display settings.
+    * <p>
+    * This method is a good way to set all of the display settings at once, for
+    * example to restore a saved set of settings. For changing just part of the
+    * settings (for example, in response to the user setting a UI control), see
+    * {@link compareAndSetDisplaySettings}.
+    * <p>
+    * This method can be called from any thread. There may be a delay before
+    * the new settings are actually reflected in the viewer user interface.
+    * However, {@link getDisplaySettings} will always reflect the most recent
+    * settings, even if they have not been applied to the UI.
+    * <p>
+    * Implementers: The implementation of this method must not directly alter
+    * display settings, but should instead just post a
+    * {@link NewDisplaySettingsEvent}. Actual updating of display settings
+    * should be done by subscribing to that event. See {@link
+    * AbstractDataViewer.setDisplaySettings}.
+    *
+    * @param settings the new display settings
     */
    public void setDisplaySettings(DisplaySettings settings);
 
    /**
-    * Retrieve the DisplaySettings for this display.
-    * @return The DisplaySettings for this display.
+    * Get the current display settings.
+    * <p>
+    * This method can be called from any thread. The return value will be
+    * consistent with the most recent call to {@link setDisplaySettings} or
+    * {@code compareAndSetDisplaySettings}.
+    *
+    * @return the current display settings
     */
    public DisplaySettings getDisplaySettings();
 
    /**
-    * Register for access to the EventBus that the window uses for propagating
-    * events. Note that this is different from the EventBus for the Datastore
-    * that this display uses; this EventBus is specifically for events related
-    * to the display.
-    * @param obj The object that wants to subscribe for events.
+    * Set the display settings only if the current settings match the expected
+    * one.
+    * <p>
+    * This method will allow you to make changes to the display settings in
+    * a way that is safe if multiple threads are trying to make changes. For
+    * example, the following code will set the zoom. If another thread has
+    * makes a change to another part of the display settings at the same time
+    * (using the same method), all changes will be correctly reflected.
+    * <pre><code>
+    * DataViewer viewer = ...;
+    * do {
+    *    DisplaySettings oldSettings = viewer.getDisplaySettings();
+    *    DisplaySettings newSettings = oldSettings.copy().
+    *          zoom(2.0).build();
+    * } while (!viewer.compareAndSetDisplaySettings(oldSettings, newSettings));
+    * </code></pre>
+    * <p>
+    * Implementers: See {@link AbstractDataViewer.compareAndSetDisplaySettings}.
+    *
+    * @param originalSettings apply the new settings only if the current
+    * settings match this
+    * @param newSettings the new settings
+    * @return whether the new settings were applied
     */
-   public void registerForEvents(Object obj);
+   public boolean compareAndSetDisplaySettings(
+         DisplaySettings originalSettings, DisplaySettings newSettings);
 
    /**
-    * Unregister for events for this display. See documentation for
-    * registerForEvents().
-    * @param obj The object that wants to no longer be subscribed for events.
+    * Retrieve the data provider backing this viewer.
+    *
+    * This method can be called from any thread.
+    *
+    * Implementers: This method should be implemented so that it can be called
+    * from any thread. Typically, the data provider will be a {@code private
+    * final} field in your implementation.
+    *
+    * @return the data provider backing this viewer
     */
-   public void unregisterForEvents(Object obj);
+   public DataProvider getDataProvider();
 
    /**
-    * Post the provided event object on the display's EventBus, so that objects
-    * that have called registerForEvents(), above, can receive it.
-    * @param obj The event to post.
+    * Retrieve the datastore backing this viewer.
+    *
+    * @return the datastore backing this viewer, or {@code null} if this viewer
+    * is backed by a data provider that is not a datastore
+    * @deprecated use {@link getDataProvider} instead
     */
-   public void postEvent(Object obj);
-
-   /**
-    * Retrieve the Datastore backing this display.
-    * @return The Datastore backing this display.
-    */
+   @Deprecated
    public Datastore getDatastore();
 
    /**
-    * Display the image at the specified coordinates in the Datastore the
-    * display is showing.
-    * @param coords The coordinates of the image to be displayed.
+    * Display the images at the specified coordinates in the data provider.
+    * <p>
+    * The exact interpretation of the position may depend on the viewer
+    * implementation: for example, a 3D viewer might ignore the Z slice
+    * coordinate passed to this method and instead display a whole volume.
+    * If the passed position does not uniquely specify a set of images to
+    * display, then the viewer might choose an arbitrary subset of the passed
+    * coordinates.
+    * <p>
+    * This method can be called from any thread. There may be a delay before
+    * the new position is actually reflected in the viewer user interface.
+    * However, {@link getDisplayPosition} will always reflect the most recent
+    * position, even if it has not been applied to the UI.
+    *
+    * @param position the coordinates of the images to display
+    *
+    * @see compareAndSetDisplayPosition
     */
-   public void setDisplayedImageTo(Coords coords);
+   public void setDisplayPosition(Coords position);
+
+   /**
+    * Get the coordinates for the currently displayed images.
+    * <p>
+    * This method can be called from any thread. The return value will be
+    * consistent with the most recent call to {@link setDisplayPosition} or
+    * {@code compareAndSetDisplayPosition}.
+    *
+    * @return the current coordinates displayed
+    */
+   public Coords getDisplayPosition();
+
+   /**
+    * Set the display position only if the current position is the expected one.
+    * <p>
+    * This method will allow you to set the display position based on the
+    * current position in a way that is safe if multiple threads are trying to
+    * make changes. For  example, the following code will scroll to the next
+    * channel. If the display position is being changed by another thread
+    * (perhaps the time points are being animated, or new time points are being
+    * added), all changes will be correctly reflected.
+    * <pre><code>
+    * DataViewer viewer = ...;
+    * do {
+    *    Coords oldPos = viewer.getDisplayPosition();
+    *    Coords newPos = oldPos.copy().
+    *          channel((oldPos.getChannel() + 1) % nChannels).build();
+    * } while (!viewer.compareAndSetDisplayPosition(oldPos, newPos));
+    * </code></pre>
+    * <p>
+    * Implementers: See {@link AbstractDataViewer.compareAndSetDisplayPosition}.
+    *
+    * @param originalPosition apply the new position only if the current
+    * position matches this one
+    * @param newPosition the new display position
+    * @return whether the new position was applied
+    */
+   public boolean compareAndSetDisplayPosition(Coords originalPosition,
+         Coords newPosition);
+
+   /**
+    * Obsolete equivalent of {@link setDisplayPosition}.
+    *
+    * @param position the coordinates of the images to display
+    * @deprecated use {@link setDisplayPosition} instead
+    */
+   @Deprecated
+   public void setDisplayedImageTo(Coords position);
 
    /**
     * Retrieve the Images currently being displayed.
+    * <p>
+    * This method can be called from any thread.
+    *
     * @return Every image at the currently-displayed image coordinates.
     */
    public List<Image> getDisplayedImages();
 
    /**
-    * Request that the display redraw its current image. You shouldn't need
-    * to call this often; most changes that affect the display (for example,
-    * changes to the display settings) automatically cause the image to be
-    * redrawn.
+    * Return true if this viewer has been closed.
+    *
+    * It is recommended that this method be called on the Swing/AWT event
+    * dispatch thread. If you call it from another thread, make sure that your
+    * thread is not obstructing the event dispatch thread (i.e. the event
+    * dispatch thread is not waiting for your thread to finish something).
+    *
+    * @return whether the view has been closed
     */
-   public void requestRedraw();
+   public boolean isClosed();
 
    /**
-    * Return true if the DataViewer has been closed and should no longer be
-    * used.
-    */
-   public boolean getIsClosed();
-
-   /**
-    * Return the unique name of this display. Typically this will include the
-    * display number and the name of the dataset; if no name is available, then
-    * "MM image display" will be used instead. For DisplayWindows, this string
-    * is displayed in the inspector window, ImageJ's "Windows" menu, and a few
-    * other places.
-    * @return a string labeling this display.
+    * Return the name of this viewer.
+    *
+    * Typically this will include the display number and the name of the
+    * dataset.
+    *
+    * Implementers: An effort should be made to return a unique name (e.g. by
+    * adding a suffix) so that the user can distinguish between viewers that
+    * would otherwise have the same name (for example, because they are
+    * attached to the same dataset).
+    *
+    * @return a string labeling this display
     */
    public String getName();
 }

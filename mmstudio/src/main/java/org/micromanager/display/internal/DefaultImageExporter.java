@@ -122,7 +122,7 @@ public final class DefaultImageExporter implements ImageExporter {
       }
    }
 
-   private DefaultDisplayWindow display_;
+   private DisplayController display_;
    private OutputFormat format_;
    private String directory_;
    private String prefix_;
@@ -146,7 +146,7 @@ public final class DefaultImageExporter implements ImageExporter {
 
    @Override
    public void setDisplay(DisplayWindow display) {
-      display_ = (DefaultDisplayWindow) display;
+      display_ = (DisplayController) display;
       if (outerLoop_ != null) {
          outerLoop_.setDisplay(display);
       }
@@ -212,7 +212,7 @@ public final class DefaultImageExporter implements ImageExporter {
             currentImage_ = new BufferedImage(canvasSize.width,
                   canvasSize.height, BufferedImage.TYPE_INT_RGB);
             currentGraphics_ = currentImage_.getGraphics();
-            display_.paintImageWithGraphics(currentGraphics_);
+            display_.paintDisplayedImageToGraphics(currentGraphics_);
          }
          else {
             // Display just finished painting to currentGraphics_, so export

@@ -18,9 +18,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display;
+package org.micromanager.display.internal.events;
 
 import ij.ImagePlus;
+import org.micromanager.display.DisplayWindow;
 
 /**
  * This event is published by the display's EventBus to indicate that it is

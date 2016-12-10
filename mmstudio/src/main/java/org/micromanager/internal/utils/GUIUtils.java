@@ -279,7 +279,7 @@ public final class GUIUtils {
     * Wraps SwingUtilities.invokeLater so that if it is being called
     * from the EDT, then the runnable is simply run.
     */
-   public static void invokeLater(Runnable r) throws InterruptedException, InvocationTargetException {
+   public static void invokeLater(Runnable r) {
       if (SwingUtilities.isEventDispatchThread()) {
          r.run();
       } else {

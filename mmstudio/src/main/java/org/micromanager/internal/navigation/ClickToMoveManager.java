@@ -27,7 +27,7 @@ import java.util.HashMap;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.display.DisplayDestroyedEvent;
-import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.internal.DisplayController;
 import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.MMStudio;
 
@@ -36,8 +36,8 @@ import org.micromanager.internal.MMStudio;
  * shortcuts for stage motion.
  */
 public final class ClickToMoveManager {
-   private final HashMap<DefaultDisplayWindow, CenterAndDragListener> displayToDragListener_;
-   private final HashMap<DefaultDisplayWindow, KeyAdapter> displayToKeyListener_;
+   private final HashMap<DisplayController, CenterAndDragListener> displayToDragListener_;
+   private final HashMap<DisplayController, KeyAdapter> displayToKeyListener_;
    private final CMMCore core_;
    private final MMStudio studio_;
 
@@ -46,8 +46,8 @@ public final class ClickToMoveManager {
    public ClickToMoveManager(MMStudio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
-      displayToDragListener_ = new HashMap<DefaultDisplayWindow, CenterAndDragListener>();
-      displayToKeyListener_ = new HashMap<DefaultDisplayWindow, KeyAdapter>();
+      displayToDragListener_ = new HashMap<DisplayController, CenterAndDragListener>();
+      displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
       staticInstance_ = this;
       studio_.events().registerForEvents(this);
    }
@@ -55,7 +55,7 @@ public final class ClickToMoveManager {
    /**
     * Keep track of enabling/disabling click-to-move for this display.
     */
-   public void activate(DefaultDisplayWindow display) {
+   public void activate(DisplayController display) {
       CenterAndDragListener dragListener = null;
       KeyAdapter keyListener = null;
       display.registerForEvents(this);
@@ -72,7 +72,7 @@ public final class ClickToMoveManager {
    @Subscribe
    public void onMouseMovesStage(MouseMovesStageEvent event) {
       try {
-         for (DefaultDisplayWindow display : displayToDragListener_.keySet()) {
+         for (DisplayController display : displayToDragListener_.keySet()) {
             if (event.getIsEnabled()) {
                // Create listeners for each display.
                activate(display);
@@ -102,7 +102,7 @@ public final class ClickToMoveManager {
 
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      DefaultDisplayWindow display = (DefaultDisplayWindow) event.getDisplay();
+      DisplayController display = (DisplayController) event.getDisplay();
       display.unregisterForEvents(this);
       displayToDragListener_.remove(display);
       displayToKeyListener_.remove(display);

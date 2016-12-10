@@ -158,6 +158,11 @@ public final class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    }
 
    @Override
+   public boolean hasAxis(String axis) {
+      return sortedAxes_.contains(axis);
+   }
+
+   @Override
    public boolean matches(Coords alt) {
       for (String axis : alt.getAxes()) {
          if (getIndex(axis) != alt.getIndex(axis)) {

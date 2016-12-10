@@ -1,3 +1,17 @@
+// Copyright (C) 2015-2017 Open Imaging, Inc.
+//           (C) 2015 Regents of the University of California
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.internal;
 
 import com.bulenkov.iconloader.IconLoader;
@@ -8,14 +22,19 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -35,46 +54,62 @@ import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.RequestToCloseEvent;
+import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.internal.DisplayController;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.navigation.ClickToMoveManager;
 import org.micromanager.internal.utils.GUIUtils;
+import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.ThreadFactoryFactory;
+import org.micromanager.internal.utils.performance.PerformanceMonitor;
+import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 
 /**
  * This class is responsible for all logic surrounding live mode and the
  * "snap image" display (which is the same display as that used for live mode).
+ *
+ * @author Chris Weisiger and Mark A. Tsuchida
  */
 public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
-   private static final String TITLE = "Snap/Live View";
-   private static final int MAX_DISPLAY_HISTORY = 20;
+   private static final String TITLE = "Preview";
+
+   private static final double MIN_GRAB_DELAY_MS = 1000.0 / 60.0;
+   private static final double MAX_GRAB_DELAY_MS = 300.0;
+   private static final double DISPLAY_INTERVAL_ESTIMATE_Q = 0.25;
 
    private final Studio studio_;
    private final CMMCore core_;
    private DisplayWindow display_;
-   private final Object displayLock_ = new Object();
    private DefaultRewritableDatastore store_;
    private Pipeline pipeline_;
    private final Object pipelineLock_ = new Object();
-   private final ArrayList<LiveModeListener> listeners_;
+   private final ArrayList<LiveModeListener> listeners_ =
+         new ArrayList<LiveModeListener>();
    private boolean isLiveOn_ = false;
    private final Object liveModeLock_ = new Object();
    private int numCameraChannels_ = -1;
-   private double exposureMs_ = 0;
-   private boolean shouldStopGrabberThread_ = false;
-   private boolean shouldForceReset_ = false;
+   private boolean shouldForceReset_ = true;
    private boolean amStartingSequenceAcquisition_ = false;
-   private Thread grabberThread_;
-   private final ArrayList<Long> displayUpdateTimes_;
-   // Maps channel index to the last image we have received for that channel.
-   private final HashMap<Integer, DefaultImage> channelToLastImage_;
+
+   private final List<DefaultImage> lastImageForEachChannel_ =
+         new ArrayList<DefaultImage>();
+
+   private final ScheduledExecutorService scheduler_ =
+         Executors.newSingleThreadScheduledExecutor(
+               ThreadFactoryFactory.createThreadFactory("SnapLiveManager"));
+   // Guarded by monitor on this
+   private ScheduledFuture scheduledGrab_;
+   // Counter for live acquisitions started, needed to synchronize across
+   // a stopped and rapidly restarted run of live mode.
+   // Guarded by monitor on this
+   private long liveModeStartCount_ = 0;
 
    // As a (significant) convenience to our clients, we allow live mode to be
    // "suspended" and unsuspended, which amounts to briefly turning live mode
@@ -82,12 +117,14 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
    // suspended. This gets unexpectedly complicated See setSuspended().
    private int suspendCount_ = 0;
 
+   private final PerformanceMonitor perfMon_ =
+         PerformanceMonitor.createWithTimeConstantMs(1000.0);
+   private final PerformanceMonitorUI pmUI_ =
+         PerformanceMonitorUI.create(perfMon_, "SnapLiveManager Performance");
+
    public SnapLiveManager(Studio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
-      channelToLastImage_ = new HashMap<Integer, DefaultImage>();
-      listeners_ = new ArrayList<LiveModeListener>();
-      displayUpdateTimes_ = new ArrayList<Long>();
       studio_.events().registerForEvents(this);
    }
 
@@ -157,21 +194,9 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
          studio_.logs().logDebugMessage("Skipping startLiveMode as startContinuousSequenceAcquisition is in process");
          return;
       }
-      // First, ensure that any extant grabber thread is dead.
-      stopLiveMode();
-      shouldStopGrabberThread_ = false;
-      grabberThread_ = new Thread(new Runnable() {
-         @Override
-         public void run() {
-            grabImages();
-         }
-      }, "Live mode image grabber");
-      // NOTE: start the grabber thread *after* the sequence acquisition
-      // starts, because the grabber thread will need to acquire a core camera
-      // lock as part of its setup (to get e.g. the number of core camera
-      // channels), and that lock is also acquired as part of
-      // startSequenceAcquisition. Thus if we start the grabber thread first,
-      // in certain circumstances we can get a deadlock.
+
+      stopLiveMode(); // Make sure
+
       try {
          amStartingSequenceAcquisition_ = true;
          core_.startContinuousSequenceAcquisition(0);
@@ -184,10 +209,100 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
          setLiveMode(false);
          return;
       }
-      grabberThread_.start();
+
+      long coreCameras = core_.getNumberOfCameraChannels();
+      if (coreCameras != numCameraChannels_) {
+         // Number of camera channels has changed; need to reset the display.
+         shouldForceReset_ = true;
+      }
+      numCameraChannels_ = (int) coreCameras;
+      final double exposureMs;
+      try {
+         exposureMs = core_.getExposure();
+      }
+      catch (Exception e) {
+         studio_.logs().showError(e, "Unable to determine exposure time");
+         return;
+      }
+      final String camName = core_.getCameraDevice();
+
+      synchronized (this) {
+         lastImageForEachChannel_.clear();
+      }
+
+      if (display_ != null) {
+         ((DisplayController) display_).resetDisplayIntervalEstimate();
+      }
+
+      synchronized (this) {
+         final long liveModeCount = ++liveModeStartCount_;
+         final Runnable grab;
+         grab = new Runnable() {
+            @Override
+            public void run() {
+               // We are started from within the monitor. Wait until that
+               // monitor is released before starting.
+               synchronized (SnapLiveManager.this) {
+                  if (scheduledGrab_ == null ||
+                        liveModeStartCount_ != liveModeCount) {
+                     return;
+                  }
+               }
+               grabAndAddImages(camName, liveModeCount);
+
+               // Choose an interval within the absolute bounds, and at least as
+               // long as the exposure. Within that range, try to match the
+               // actual frequency at which the images are getting displayed.
+
+               double displayIntervalLowQuantileMs;
+               if (display_ != null) {
+                  displayIntervalLowQuantileMs =
+                        ((DisplayController) display_).
+                              getDisplayIntervalQuantile(
+                                    DISPLAY_INTERVAL_ESTIMATE_Q);
+               }
+               else {
+                  displayIntervalLowQuantileMs = 0.0;
+               }
+
+               long delayMs;
+               synchronized (SnapLiveManager.this) {
+                  if (scheduledGrab_ == null ||
+                        liveModeStartCount_ != liveModeCount) {
+                     return;
+                  }
+                  delayMs = computeGrabDelayMs(exposureMs,
+                        displayIntervalLowQuantileMs,
+                        -scheduledGrab_.getDelay(TimeUnit.MILLISECONDS));
+                  scheduledGrab_ = scheduler_.schedule(this,
+                        delayMs, TimeUnit.MILLISECONDS);
+               }
+               perfMon_.sample("Grab schedule delay (ms)", delayMs);
+            }
+         };
+         scheduledGrab_ = scheduler_.schedule(grab, 0, TimeUnit.MILLISECONDS);
+      }
+
       if (display_ != null) {
          display_.toFront();
       }
+   }
+
+   private static long computeGrabDelayMs(double exposureMs,
+         double displayIntervalMs, double alreadyElapsedMs)
+   {
+      double delayMs = Math.max(exposureMs, displayIntervalMs);
+      delayMs -= alreadyElapsedMs;
+
+      // Clip to allowed range
+      delayMs = Math.max(MIN_GRAB_DELAY_MS, delayMs);
+      if (delayMs > MAX_GRAB_DELAY_MS) {
+         // A trick to get an interval that is less likely to frequently (and
+         // noticeable) skip frames when the frame rate is low.
+         delayMs /= Math.ceil(delayMs / MAX_GRAB_DELAY_MS);
+      }
+
+      return Math.round(delayMs);
    }
 
    private void stopLiveMode() {
@@ -199,110 +314,32 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
          studio_.logs().logDebugMessage("Skipping stopLiveMode as startContinuousSequenceAcquisition is in process");
          return;
       }
-      // Kill the grabber thread before we stop the sequence acquisition, to
-      // ensure we don't try to grab images while stopping the acquisition.
-      if (grabberThread_ != null) {
-         shouldStopGrabberThread_ = true;
-         // We can in rare cases be stopped from within the grabber thread;
-         // in such cases joining it is obviously futile.
-         if (Thread.currentThread() != grabberThread_) {
-            try {
-               grabberThread_.join();
-            }
-            catch (InterruptedException e) {
-               ReportingUtils.logError(e, "Interrupted while waiting for grabber thread to end");
-            }
+
+      synchronized (this) {
+         if (scheduledGrab_ != null) {
+            scheduledGrab_.cancel(false);
+            scheduledGrab_ = null;
          }
       }
+
       try {
          if (core_.isSequenceRunning()) {
             core_.stopSequenceAcquisition();
          }
-      }
-      catch (Exception e) {
-         // TODO: in prior versions we tried to stop the sequence acquisition
-         // again, after waiting 1s, with claims that the error was caused by
-         // failing to close a shutter. I've left that out of this version.
-         ReportingUtils.showError(e, "Failed to stop sequence acquisition. Double-check shutter status.");
-      }
-   }
-
-   /**
-    * This function is expected to run in its own thread. It continuously
-    * polls the core for new images, which then get inserted into the
-    * Datastore (which in turn propagates them to the display).
-    * TODO: our polling approach blindly assigns images to channels on the
-    * assumption that a) images always arrive from cameras in the same order,
-    * and b) images don't arrive in the middle of our polling action. Obviously
-    * this breaks down sometimes, which can cause images to "swap channels"
-    * in the display. Fixing it would require the core to provide blocking
-    * "get next image" calls, though, which it doesn't.
-    */
-   private void grabImages() {
-      // Reset our list of when images have updated.
-      synchronized(displayUpdateTimes_) {
-         displayUpdateTimes_.clear();
-      }
-
-      long coreCameras = core_.getNumberOfCameraChannels();
-      if (coreCameras != numCameraChannels_) {
-         // Number of camera channels has changed; need to reset the display.
-         shouldForceReset_ = true;
-      }
-      numCameraChannels_ = (int) coreCameras;
-      try {
-         exposureMs_ = core_.getExposure();
-      }
-      catch (Exception e) {
-         studio_.logs().showError(e, "Unable to determine exposure time");
-         return;
-      }
-      String camName = core_.getCameraDevice();
-      while (!shouldStopGrabberThread_) {
-         waitForNextDisplay();
-         grabAndAddImages(camName);
-      }
-   }
-
-   /**
-    * This method waits for the next time at which we should grab images. It
-    * takes as a parameter the current known rate at which the display is
-    * showing images (which thus takes into account delays e.g. due to image
-    * processing), and returns the updated display rate.
-    */
-   private void waitForNextDisplay() {
-      long shortestWait = -1;
-      // Determine our sleep time based on image display times (a.k.a. the
-      // amount of time passed between PixelsSetEvents).
-      synchronized(displayUpdateTimes_) {
-         for (int i = 0; i < displayUpdateTimes_.size() - 1; ++i) {
-            long delta = displayUpdateTimes_.get(i + 1) - displayUpdateTimes_.get(i);
-            if (shortestWait == -1) {
-               shortestWait = delta;
-            }
-            else {
-               shortestWait = Math.min(shortestWait, delta);
-            }
+         while (core_.isSequenceRunning()) {
+            core_.sleep(2);
          }
       }
-      // Sample faster than shortestWait because glitches should not cause the
-      // system to permanently bog down; this allows us to recover if we
-      // temporarily end up displaying images slowly than we normally can.
-      // On the other hand, we don't want to sample faster than the exposure
-      // time, or slower than 2x/second.
-      int rateLimit = (int) Math.max(33, exposureMs_);
-      int waitTime = (int) Math.min(500, Math.max(rateLimit, shortestWait * .75));
-      try {
-         Thread.sleep(waitTime);
+      catch (Exception e) {
+         ReportingUtils.showError(e, "Failed to stop sequence acquisition. Double-check shutter status.");
       }
-      catch (InterruptedException e) {}
    }
 
    /**
     * This method takes images out of the Core and inserts them into our
     * pipeline.
     */
-   private void grabAndAddImages(String camName) {
+   private void grabAndAddImages(String camName, final long liveModeCount) {
       try {
          // We scan over 2*numCameraChannels here because, in multi-camera
          // setups, one camera could be generating images faster than the
@@ -313,9 +350,12 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
             TaggedImage tagged;
             try {
                tagged = core_.getNBeforeLastTaggedImage(c);
+               perfMon_.sampleTimeInterval("getNBeforeLastTaggedImage");
+               perfMon_.sample("No image in sequence buffer (%)", 0.0);
             }
             catch (Exception e) {
                // No image in the sequence buffer.
+               perfMon_.sample("No image in sequence buffer (%)", 100.0);
                continue;
             }
             JSONObject tags = tagged.tags;
@@ -328,6 +368,9 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
                continue;
             }
             DefaultImage image = new DefaultImage(tagged);
+            Long seqNr = image.getMetadata().getImageNumber();
+            perfMon_.sample("Image missing ImageNumber (%)",
+                  seqNr == null ? 100.0 : 0.0);
             Coords newCoords = image.getCoords().copy()
                .time(0)
                .channel(imageChannel).build();
@@ -335,7 +378,30 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
             // update code realizes this is a new image.
             Metadata newMetadata = image.getMetadata().copy()
                .uuid(UUID.randomUUID()).build();
-            displayImage(image.copyWith(newCoords, newMetadata));
+            final Image newImage = image.copyWith(newCoords, newMetadata);
+            try {
+               SwingUtilities.invokeAndWait(new Runnable() {
+                  @Override
+                  public void run() {
+                     synchronized (SnapLiveManager.this) {
+                        if (scheduledGrab_ == null ||
+                              liveModeStartCount_ != liveModeCount) {
+                           throw new CancellationException();
+                        }
+                     }
+                     displayImage(newImage);
+                  }
+               });
+            }
+            catch (InterruptedException unexpected) {
+               Thread.currentThread().interrupt();
+            }
+            catch (InvocationTargetException e) {
+               if (e.getCause() instanceof CancellationException) {
+                  return;
+               }
+               throw new RuntimeException(e.getCause());
+            }
             channelsSet.add(imageChannel);
             if (channelsSet.size() == numCameraChannels_) {
                // Got every channel.
@@ -382,39 +448,33 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
       }
    }
 
-   /**
-    * We need to [re]create the display and its associated custom controls.
-    */
    private void createDisplay() {
-      synchronized(displayLock_) {
-         display_ = studio_.displays().createDisplay(store_,
-            new ControlsFactory() {
-               @Override
-               public List<Component> makeControls(DisplayWindow display) {
-                  return createControls(display);
-               }
-         });
-         // Store our display settings separately in the profile from other
-         // displays.
-         ((DefaultDisplayWindow) display_).setDisplaySettingsKey(TITLE);
-         // HACK: coerce single-camera setups to grayscale (instead of the
-         // default of composite mode) if there is no existing profile settings
-         // for the user and we do not have a multicamera setup.
-         DisplaySettings.ColorMode mode = DefaultDisplaySettings.getStandardColorMode(TITLE, null);
-         if (numCameraChannels_ == -1) {
-            // Haven't yet figured out how many camera channels there are.
-            numCameraChannels_ = (int) core_.getNumberOfCameraChannels();
+      ControlsFactory controlsFactory = new ControlsFactory() {
+         @Override
+         public List<Component> makeControls(DisplayWindow display) {
+            return createControls(display);
          }
-         if (mode == null && numCameraChannels_ == 1) {
-            DisplaySettings settings = display_.getDisplaySettings();
-            settings = settings.copy()
-               .channelColorMode(DisplaySettings.ColorMode.GRAYSCALE)
-               .build();
-            display_.setDisplaySettings(settings);
-         }
-         display_.registerForEvents(this);
-         display_.setCustomTitle(TITLE);
+      };
+      display_ = new DisplayController.Builder(
+            DefaultDisplayManager.getInstance(), // TODO Avoid static access
+            store_).
+            controlsFactory(controlsFactory).
+            settingsProfileKey(TITLE).
+            shouldShow(true).build();
+
+      // HACK: coerce single-camera setups to grayscale (instead of the
+      // default of composite mode) if there is no existing profile settings
+      // for the user and we do not have a multicamera setup.
+      DisplaySettings.ColorMode mode = DefaultDisplaySettings.getStandardColorMode(TITLE, null);
+      if (mode == null && numCameraChannels_ == 1) {
+         DisplaySettings settings = display_.getDisplaySettings();
+         settings = settings.copy()
+            .channelColorMode(DisplaySettings.ColorMode.GRAYSCALE)
+            .build();
+         display_.setDisplaySettings(settings);
       }
+      display_.registerForEvents(this);
+      display_.setCustomTitle(TITLE);
    }
 
    /**
@@ -424,26 +484,33 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * click-to-move to be enabled.
     */
    private List<Component> createControls(final DisplayWindow display) {
-      ClickToMoveManager.getInstance().activate((DefaultDisplayWindow) display);
+      /* TODO
+      ClickToMoveManager.getInstance().activate((DisplayController) display);
+      */
       ArrayList<Component> controls = new ArrayList<Component>();
       Insets zeroInsets = new Insets(0, 0, 0, 0);
+      Dimension buttonSize = new Dimension(90, 28);
+
       JComponent snapButton = QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.SnapButton"));
-      snapButton.setPreferredSize(new Dimension(90, 28));
+      snapButton.setPreferredSize(buttonSize);
+      snapButton.setMinimumSize(buttonSize);
       controls.add(snapButton);
 
       JComponent liveButton = QuickAccessFactory.makeGUI(
             studio_.plugins().getQuickAccessPlugins().get(
                "org.micromanager.quickaccess.internal.controls.LiveButton"));
-      liveButton.setPreferredSize(new Dimension(90, 28));
+      liveButton.setPreferredSize(buttonSize);
+      liveButton.setMinimumSize(buttonSize);
       controls.add(liveButton);
 
       JButton toAlbumButton = new JButton("Album",
             IconLoader.getIcon(
                "/org/micromanager/icons/camera_plus_arrow.png"));
       toAlbumButton.setToolTipText("Add the current image to the Album collection");
-      toAlbumButton.setPreferredSize(new Dimension(90, 28));
+      toAlbumButton.setPreferredSize(buttonSize);
+      toAlbumButton.setMinimumSize(buttonSize);
       toAlbumButton.setFont(GUIUtils.buttonFont);
       toAlbumButton.setMargin(zeroInsets);
       toAlbumButton.addActionListener(new ActionListener() {
@@ -470,112 +537,149 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
     * @param image Image to be displayed
     */
    @Override
-   public void displayImage(Image image) {
-      synchronized(displayLock_) {
-         boolean shouldReset = shouldForceReset_;
-         if (store_ != null) {
-            String[] channelNames = store_.getSummaryMetadata().getChannelNames();
-            String curChannel = "";
-            try {
-               curChannel = core_.getCurrentConfig(core_.getChannelGroup());
+   public void displayImage(final Image image) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               displayImage(image);
             }
-            catch (Exception e) {
-               ReportingUtils.logError(e, "Error getting current channel");
-            }
-            for (int i = 0; i < numCameraChannels_; ++i) {
-               String name = makeChannelName(curChannel, i);
-               if (i >= channelNames.length || !name.equals(channelNames[i])) {
-                  // Channel name changed.
-                  shouldReset = true;
-               }
-            }
-         }
+         });
+      }
+
+      boolean shouldReset = shouldForceReset_;
+      if (store_ != null) {
+         String[] channelNames = store_.getSummaryMetadata().getChannelNames();
+         String curChannel = "";
          try {
-            DefaultImage newImage = new DefaultImage(image, image.getCoords(),
-                  studio_.acquisitions().generateMetadata(image, true));
-            // Find any image to compare against, at all.
-            DefaultImage lastImage = null;
-            if (channelToLastImage_.keySet().size() > 0) {
-               int channel = new ArrayList<Integer>(channelToLastImage_.keySet()).get(0);
-               lastImage = channelToLastImage_.get(channel);
-            }
-            if (lastImage == null ||
-                  newImage.getWidth() != lastImage.getWidth() ||
-                  newImage.getHeight() != lastImage.getHeight() ||
-                  newImage.getNumComponents() != lastImage.getNumComponents() ||
-                  newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()) {
-               // Format changing, channel changing, and/or we have no display;
-               // we need to recreate everything.
-               shouldReset = true;
-            }
-            if (shouldReset) {
-               reset();
-            }
-            // Check for display having been closed on us by the user.
-            else if (display_ == null || display_.getIsClosed()) {
-               createDisplay();
-            }
-            channelToLastImage_.put(newImage.getCoords().getChannel(),
-                  newImage);
-            synchronized(pipelineLock_) {
-               try {
-                  pipeline_.insertImage(newImage);
-               }
-               catch (DatastoreRewriteException e) {
-                  // This should never happen, because we use an erasable
-                  // Datastore.
-                  studio_.logs().showError(e,
-                        "Unable to insert image into pipeline; this should never happen.");
-               }
-               catch (PipelineErrorException e) {
-                  // Notify the user, and halt live.
-                  studio_.logs().showError(e,
-                        "An error occurred while processing images.");
-                  stopLiveMode();
-                  pipeline_.clearExceptions();
-               }
-            }
-         }
-         catch (DatastoreFrozenException e) {
-            // Datastore has been frozen (presumably the user saved a snapped
-            // image); replace it.
-            reset();
-            displayImage(image);
+            curChannel = core_.getCurrentConfig(core_.getChannelGroup());
          }
          catch (Exception e) {
-            // Error getting metadata from the system state cache.
-            studio_.logs().logError(e, "Error drawing image in snap/live view");
+            ReportingUtils.logError(e, "Error getting current channel");
          }
+         for (int i = 0; i < numCameraChannels_; ++i) {
+            String name = makeChannelName(curChannel, i);
+            if (i >= channelNames.length || !name.equals(channelNames[i])) {
+               // Channel name changed.
+               shouldReset = true;
+            }
+         }
+      }
+      try {
+         DefaultImage newImage = new DefaultImage(image, image.getCoords(),
+               studio_.acquisitions().generateMetadata(image, true));
+
+         int newImageChannel = newImage.getCoords().getChannel();
+         DefaultImage lastImage = null;
+         synchronized (this) {
+            lastImage = lastImageForEachChannel_.size() > newImageChannel ?
+                  lastImageForEachChannel_.get(newImageChannel) :
+                  null;
+         }
+
+         if (lastImage != null &&
+               (newImage.getWidth() != lastImage.getWidth() ||
+               newImage.getHeight() != lastImage.getHeight() ||
+               newImage.getNumComponents() != lastImage.getNumComponents() ||
+               newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()))
+         {
+            // Format changing, channel changing, and/or we have no display;
+            // we need to recreate everything.
+            shouldReset = true;
+         }
+         else if (lastImage != null) {
+            Long prevSeqNr = lastImage.getMetadata().getImageNumber();
+            Long newSeqNr = newImage.getMetadata().getImageNumber();
+            if (prevSeqNr != null && newSeqNr != null) {
+               if (prevSeqNr >= newSeqNr)
+               {
+                  perfMon_.sample(
+                        "Image rejected based on ImageNumber (%)", 100.0);
+                  return; // Already displayed this image
+               }
+               perfMon_.sample("Frames dropped at sequence buffer exit (%)",
+                     100.0 * (newSeqNr - prevSeqNr - 1) / (newSeqNr - prevSeqNr));
+            }
+         }
+         perfMon_.sample("Image rejected based on ImageNumber (%)", 0.0);
+
+         if (shouldReset) {
+            createOrResetDatastoreAndDisplay();
+         }
+         // Check for display having been closed on us by the user.
+         else if (display_ == null || display_.isClosed()) {
+            createDisplay();
+         }
+
+         synchronized (this) {
+            if (lastImageForEachChannel_.size() > newImageChannel) {
+               lastImageForEachChannel_.set(newImageChannel, newImage);
+            }
+            else {
+               lastImageForEachChannel_.add(newImageChannel, newImage);
+            }
+         }
+
+         synchronized(pipelineLock_) {
+            try {
+               pipeline_.insertImage(newImage);
+               perfMon_.sampleTimeInterval("Image inserted in pipeline");
+            }
+            catch (DatastoreRewriteException e) {
+               // This should never happen, because we use an erasable
+               // Datastore.
+               studio_.logs().showError(e,
+                     "Unable to insert image into pipeline; this should never happen.");
+            }
+            catch (PipelineErrorException e) {
+               // Notify the user, and halt live.
+               studio_.logs().showError(e,
+                     "An error occurred while processing images.");
+               stopLiveMode();
+               pipeline_.clearExceptions();
+            }
+         }
+      }
+      catch (DatastoreFrozenException e) {
+         // Datastore has been frozen (presumably the user saved a snapped
+         // image); replace it.
+         createOrResetDatastoreAndDisplay();
+         displayImage(image);
+      }
+      catch (Exception e) {
+         // Error getting metadata from the system state cache.
+         studio_.logs().logError(e, "Error drawing image in snap/live view");
       }
    }
 
-   /**
-    * Reset our display and datastore.
-    */
-   private void reset() {
+   @MustCallOnEDT
+   private void createOrResetDatastoreAndDisplay() {
+      if (numCameraChannels_ == -1) {
+         numCameraChannels_ = (int) core_.getNumberOfCameraChannels();
+      }
+
       // Remember the position of the window.
       Point displayLoc = null;
+      if (display_ != null && !display_.isClosed()) {
+         displayLoc = display_.getWindow().getLocation();
+         display_.forceClose();
+      }
+
       createDatastore();
-      if (display_ != null) {
-         displayLoc = display_.getAsWindow().getLocation();
-         display_.forceClosed();
-      }
       createDisplay();
-      displayUpdateTimes_.clear();
       if (displayLoc != null) {
-         display_.getAsWindow().setLocation(displayLoc);
+         display_.getWindow().setLocation(displayLoc);
       }
-      channelToLastImage_.clear();
+
+      synchronized (this) {
+         lastImageForEachChannel_.clear();
+      }
 
       // Set up the channel names in the store's summary metadata. This will
       // as a side-effect ensure that our channels are displayed with the
       // correct colors.
       try {
          String channel = core_.getCurrentConfig(core_.getChannelGroup());
-         if (numCameraChannels_ == -1) {
-            // Haven't yet figured out how many camera channels there are.
-            numCameraChannels_ = (int) core_.getNumberOfCameraChannels();
-         }
          String[] channelNames = new String[numCameraChannels_];
          for (int i = 0; i < numCameraChannels_; ++i) {
             channelNames[i] = makeChannelName(channel, i);
@@ -613,17 +717,17 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
    public List<Image> snap(boolean shouldDisplay) {
       if (isLiveOn_) {
          // Just return the most recent images.
-         ArrayList<Image> result = new ArrayList<Image>();
-         ArrayList<Integer> keys = new ArrayList<Integer>(channelToLastImage_.keySet());
-         Collections.sort(keys);
-         for (Integer i : keys) {
-            result.add(channelToLastImage_.get(i));
+         // BUG: In theory this could transiently contain nulls
+         synchronized (this) {
+            return new ArrayList<Image>(lastImageForEachChannel_);
          }
-         return result;
       }
       try {
          List<Image> images = studio_.acquisitions().snap();
          if (shouldDisplay) {
+            if (display_ != null) {
+               ((DisplayController) display_).resetDisplayIntervalEstimate();
+            }
             for (Image image : images) {
                displayImage(image);
             }
@@ -639,21 +743,10 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    @Override
    public DisplayWindow getDisplay() {
-      if (display_ != null && !display_.getIsClosed()) {
-         return display_;
+      if (display_ == null || display_.isClosed()) {
+         return null;
       }
-      return null;
-   }
-
-   @Subscribe
-   public void onDisplayUpdated(PixelsSetEvent event) {
-      synchronized(displayUpdateTimes_) {
-         displayUpdateTimes_.add(System.currentTimeMillis());
-         while (displayUpdateTimes_.size() > MAX_DISPLAY_HISTORY) {
-            // Limit the history we maintain.
-            displayUpdateTimes_.remove(displayUpdateTimes_.get(0));
-         }
-      }
+      return display_;
    }
 
    @Subscribe

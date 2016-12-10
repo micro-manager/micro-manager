@@ -49,7 +49,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class IJVersionCheckDlg extends JDialog {
    private static final String HAS_OPTED_OUT = "user has opted out of receiving warnings about compatibility with the version of ImageJ they are using";
    private static final ArrayList<String> ALLOWED_VERSIONS = new ArrayList<String>(
-         Arrays.asList(new String[] {"1.49h"}));;
+         Arrays.asList(new String[] {"1.51g"}));;
 
    /**
     * Show the warning dialog, if applicable and user has not opted out.
@@ -105,14 +105,14 @@ public final class IJVersionCheckDlg extends JDialog {
          goodVersions += version;
       }
       if (hasOneGoodVersion) {
-         goodVersions = "is only tested with " + goodVersions;
+         goodVersions = "is only known to work with ImageJ " + goodVersions;
       }
       else {
-         goodVersions = "is only known to work with these versions: " + goodVersions;
+         goodVersions = "is only known to work with these ImageJ versions: " + goodVersions;
       }
       JLabel warning = new JLabel(
-            "<html><body>The version of ImageJ you are using is not guaranteed to be compatible with<br>this version of MicroManager. You are using version " +
-            badVersion + ", while<br>this version of MicroManager " + goodVersions +
+            "<html><body>The version of ImageJ you are running may not be compatible with<br>this version of Micro-Manager.<br>" +
+                  "You are running ImageJ " + badVersion + ";<br>this version of Micro-Manager " + goodVersions +
             ".</body></html>");
 
       warning.setIcon(UIManager.getIcon("OptionPane.warningIcon"));
@@ -127,7 +127,7 @@ public final class IJVersionCheckDlg extends JDialog {
       });
       contents.add(optOut);
 
-      JButton okay = new JButton("Okay");
+      JButton okay = new JButton("OK");
       okay.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

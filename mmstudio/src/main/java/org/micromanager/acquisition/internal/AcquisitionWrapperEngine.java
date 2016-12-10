@@ -149,9 +149,6 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
                  shouldShow);
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();
-         if (shouldShow) {
-            new StatusDisplay(studio_, curStore_);
-         }
 
          studio_.events().post(new DefaultAcquisitionStartedEvent(curStore_,
                   this, acquisitionSettings));

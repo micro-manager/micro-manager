@@ -48,7 +48,7 @@ import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.internal.DisplayController;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -676,9 +676,7 @@ public final class MultipageTiffReader {
       buffer.putInt(0, 0);
       fileChannel_.write(buffer, nextIFDOffsetLocation); 
 
-      filePosition += writeDisplaySettings(
-            DefaultDisplaySettings.getStandardSettings(
-               DefaultDisplayWindow.DEFAULT_SETTINGS_KEY), filePosition);
+      filePosition += writeDisplaySettings(DefaultDisplaySettings.getStandardSettings(DisplayController.DEFAULT_SETTINGS_KEY), filePosition);
 
       fileChannel_.close();
       raFile_.close();

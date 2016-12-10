@@ -48,6 +48,6 @@ import java.util.List;
  * );
  * </code></pre>
  */
-public abstract class ControlsFactory {
-   public abstract List<Component> makeControls(DisplayWindow display);
+public interface ControlsFactory {
+   List<Component> makeControls(DisplayWindow display);
 }

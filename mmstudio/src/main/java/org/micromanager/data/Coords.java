@@ -196,6 +196,13 @@ public interface Coords {
    public List<String> getAxes();
 
    /**
+    * Returns whether this coords has the given axis.
+    * @param axis the axis to test for presence
+    * @return true if this coords includes {@code axis}
+    */
+   public boolean hasAxis(String axis);
+
+   /**
     * Return true if, for every index in the provided Coords, we have a
     * matching and equal index in ourself. Returns false if either any
     * index in the provided Coords differs from our own index, or we have

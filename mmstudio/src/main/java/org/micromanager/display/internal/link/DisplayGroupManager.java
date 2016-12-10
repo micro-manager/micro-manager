@@ -29,7 +29,7 @@ import java.util.List;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.DefaultDisplayWindow;
+import org.micromanager.display.internal.DisplayController;
 import org.micromanager.display.internal.DisplayDestroyedEvent;
 import org.micromanager.display.internal.events.FullScreenEvent;
 import org.micromanager.events.internal.DefaultEventManager;
@@ -187,8 +187,8 @@ public final class DisplayGroupManager {
       if (displays.size() > 1) {
          // Multiple displays; numbers in titles need to be shown.
          for (DataViewer alt : displays) {
-            if (alt instanceof DefaultDisplayWindow) {
-               ((DefaultDisplayWindow) alt).resetTitle();
+            if (alt instanceof DisplayController) {
+               ((DisplayController) alt).updateTitle();
             }
          }
       }
@@ -233,9 +233,9 @@ public final class DisplayGroupManager {
             ArrayList<DataViewer> displays = storeToDisplays_.get(store);
             displays.remove(display);
             if (displays.size() == 1 &&
-                  displays.get(0) instanceof DefaultDisplayWindow) {
+                  displays.get(0) instanceof DisplayController) {
                // Back down to one display; hide display numbers.
-               ((DefaultDisplayWindow) displays.get(0)).resetTitle();
+               ((DisplayController) displays.get(0)).updateTitle();
             }
             else if (displays.size() == 0) {
                // Stop tracking.

@@ -1,11 +1,5 @@
-///////////////////////////////////////////////////////////////////////////////
-//PROJECT:       Micro-Manager
-//SUBSYSTEM:     Display API
-//-----------------------------------------------------------------------------
-//
-// AUTHOR:       Chris Weisiger, 2015
-//
-// COPYRIGHT:    University of California, San Francisco, 2015
+// Copyright (C) 2015-2017 Open Imaging, Inc.
+//           (C) 2015 Regents of the University of California
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -21,38 +15,73 @@
 package org.micromanager.display;
 
 /**
- * This class signifies that new display settings have been set for a
- * DataViewer, and provides access to those DisplaySettings. Third-party code
- * should post this event when DisplaySettings are updated, so that other
- * components (e.g. the Inspector) can be updated.
+ * Event used internally by a data viewer to respond to requests to update
+ * the display settings.
+ *
+ * All compliant {@code DataViewer} implementations post an instance of this
+ * event when told to change the display settings (this is usually handled by
+ * {@code AbstractDataViewer}). Implementations then subscribe to this event,
+ * and in their handler(s) arrange to apply the new settings.
+ *
+ * {@code DataViewer.setDisplaySettings} and other methods that can result in
+ * new display settings can be called on any thread. This event is posted from
+ * any such calling thread. Thus, handlers for this event must be prepared to
+ * be called on any thread, including the Swing/AWT event dispatch thread
+ * (EDT).
+ *
+ * It is guaranteed that only a single instance of this event will ever be
+ * posted concurrently for a given data viewer, and that such posting will
+ * happen in the correct order.
+ *
+ * Although applying display settings almost always requires interaction with
+ * UI components, handlers for this event must not perform any action
+ * synchronously on the EDT (such as by calling {@code
+ * SwingUtilities.invokeAndWait}). Instead, actions on the EDT should be
+ * deferred until a later time (such as by calling {@code
+ * SwingUtilities.invokeLater}).
+ *
+ * This event may be posted at a relatively high frequency (up to 60 times per
+ * second under normal conditions, though there is no guaranteed upper limit),
+ * so well-designed handlers should defer time-consuming operations to a later
+ * time.
+ *
+ * It is okay for objects not directly related to the data viewer to subscribe
+ * to this event, but they must obey the same rules regarding threading and
+ * performance.
+ *
+ * @author Chris Weisiger and Mark A. Tsuchida
  */
-public class NewDisplaySettingsEvent {
-   private final DisplaySettings settings_;
-   private final DataViewer display_;
+public interface NewDisplaySettingsEvent {
 
    /**
-    * Create the event.
-    * @param settings The new DisplaySettings.
-    * @param display The DataViewer whose DisplaySettings have been updated.
+    * Get the new display settings.
+    * @return the new display settings
     */
-   public NewDisplaySettingsEvent(DisplaySettings settings, DataViewer display) {
-      settings_ = settings;
-      display_ = display;
-   }
+   DisplaySettings getDisplaySettings();
 
    /**
-    * Provide access to the new DisplaySettings.
-    * @return the new DisplaySettings
+    * Get the display settings before the change being handled.
+    *
+    * Comparing this with the return value of {@code getDisplaySettings} can
+    * reveal what exactly is to be changed.
+    *
+    * @return the previous display settings
     */
-   public DisplaySettings getDisplaySettings() {
-      return settings_;
-   }
+   DisplaySettings getPreviousDisplaySettings();
 
    /**
-    * Provide the DataViewer that the new DisplaySettings are for.
-    * @return The DataViewer whose display settings were updated
+    * Get the data viewer.
+    * @return the data viewer for which the new display settings is to be
+    * applied
     */
-   public DataViewer getDisplay() {
-      return display_;
-   }
+   DataViewer getDataViewer();
+
+   /**
+    * Old name for {@code getDataViewer}.
+    * @return the data viewer for which the new display settings is to be
+    * applied
+    * @deprecated use {@code getDataViewer} instead
+    */
+   @Deprecated
+   DataViewer getDisplay();
 }

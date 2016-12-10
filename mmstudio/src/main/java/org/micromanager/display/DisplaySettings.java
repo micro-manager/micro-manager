@@ -175,7 +175,9 @@ public interface DisplaySettings {
       DisplaySettingsBuilder safeUpdateContrastSettings(
             ContrastSettings newSettings, int channelIndex);
 
+      @Deprecated
       DisplaySettingsBuilder magnification(Double magnification);
+      DisplaySettingsBuilder zoom(Double ratio);
       DisplaySettingsBuilder animationFPS(Double animationFPS);
       DisplaySettingsBuilder channelColorMode(ColorMode channelColorMode);
       DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
@@ -295,8 +297,12 @@ public interface DisplaySettings {
    /**
     * The magnification level of the canvas
     * @return magnification level of the canvas
+    * @deprecated use {@code getZoom} instead
     */
+   @Deprecated
    public Double getMagnification();
+
+   public Double getZoom();
 
    /**
     * Animation speed, when animation of the display is turned on

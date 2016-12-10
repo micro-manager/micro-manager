@@ -40,9 +40,7 @@ import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.HistogramData;
 import org.micromanager.display.ImageExporter;
-import org.micromanager.display.NewHistogramsEvent;
 import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.display.OverlayPlugin;
@@ -164,7 +162,7 @@ public final class DefaultDisplayManager implements DisplayManager {
    @Override
    public DisplaySettings getStandardDisplaySettings() {
       return DefaultDisplaySettings.getStandardSettings(
-            DefaultDisplayWindow.DEFAULT_SETTINGS_KEY);
+            DisplayController.DEFAULT_SETTINGS_PROFILE_KEY);
    }
 
    @Override
@@ -188,6 +186,7 @@ public final class DefaultDisplayManager implements DisplayManager {
             contrastMins, contrastMaxes, gammas, isVisible);
    }
 
+   /* TODO
    @Override
    public HistogramData calculateHistogram(Image image, int component,
          int binPower, int bitDepth, double extremaPercentage,
@@ -222,6 +221,7 @@ public final class DefaultDisplayManager implements DisplayManager {
                new NewHistogramsEvent(image.getCoords().getChannel(), datas));
       }
    }
+   */
 
    @Override
    public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
@@ -230,13 +230,14 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplayWindow createDisplay(Datastore store) {
-      return DefaultDisplayWindow.createDisplay(studio_, store, null);
+      return new DisplayController.Builder(this, store).build();
    }
 
    @Override
-   public DisplayWindow createDisplay(Datastore store,
-         ControlsFactory factory) {
-      return DefaultDisplayWindow.createDisplay(studio_, store, factory);
+   public DisplayWindow createDisplay(Datastore store, ControlsFactory factory)
+   {
+      return new DisplayController.Builder(this, store).
+            controlsFactory(factory).build();
    }
 
    @Override

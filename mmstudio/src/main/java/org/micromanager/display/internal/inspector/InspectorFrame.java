@@ -622,7 +622,7 @@ public final class InspectorFrame extends MMFrame implements Inspector {
    @Subscribe
    public void onDisplayActivated(DisplayActivatedEvent event) {
       DataViewer newDisplay = event.getDisplay();
-      if (newDisplay.getIsClosed()) {
+      if (newDisplay.isClosed()) {
          // TODO: why do we get notified of this?
          return;
       }

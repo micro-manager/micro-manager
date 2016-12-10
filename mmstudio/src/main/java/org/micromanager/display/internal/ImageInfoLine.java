@@ -20,6 +20,7 @@
 
 package org.micromanager.display.internal;
 
+import org.micromanager.display.internal.imagej.MMVirtualStack;
 import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
 import javax.swing.JLabel;
@@ -41,7 +42,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * data.
  */
 public final class ImageInfoLine extends JPanel {
-   private DefaultDisplayWindow display_;
+   private DisplayController display_;
 
    private JLabel imageInfo_;
    private JLabel pixelInfo_;
@@ -49,7 +50,7 @@ public final class ImageInfoLine extends JPanel {
    private int mouseX_ = -1;
    private int mouseY_ = -1;
 
-   public ImageInfoLine(DefaultDisplayWindow display) {
+   public ImageInfoLine(DisplayController display) {
       super(new MigLayout("flowx, fillx, gap 0, insets 0"));
       display_ = display;
 
