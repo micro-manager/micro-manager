@@ -25,6 +25,8 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
 
       initComponents();
       loadSettingValue();
+      super.loadAndRestorePosition(200, 200);
+      
    }
 
    @SuppressWarnings("unchecked")
@@ -35,8 +37,6 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
       jLabel4 = new javax.swing.JLabel();
       processorDimensionBox_ = new javax.swing.JComboBox();
       jLabel1 = new javax.swing.JLabel();
-      processorAlgoBox_ = new javax.swing.JComboBox();
-      jLabel2 = new javax.swing.JLabel();
       NumberFormat format = NumberFormat.getInstance();
       NumberFormatter formatter = new NumberFormatter(format);
       formatter.setValueClass(Integer.class);
@@ -45,6 +45,8 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
       formatter.setCommitsOnValidEdit(true);
       formatter.setAllowsInvalid(false);
       numerOfImagesToProcessField_ = new javax.swing.JFormattedTextField(formatter);
+      jLabel2 = new javax.swing.JLabel();
+      processorAlgoBox_ = new javax.swing.JComboBox();
       jLabel3 = new javax.swing.JLabel();
       channelsToAvoidField_ = new javax.swing.JFormattedTextField();
 
@@ -59,10 +61,21 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
 
       processorDimensionBox_.addItem(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME);
       processorDimensionBox_.addItem(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z);
+      processorDimensionBox_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            processorDimensionBox_ActionPerformed(evt);
+         }
+      });
       jPanel1.add(processorDimensionBox_);
 
       jLabel1.setText("Number of images to process");
       jPanel1.add(jLabel1);
+
+      numerOfImagesToProcessField_.setName("_"); // NOI18N
+      jPanel1.add(numerOfImagesToProcessField_);
+
+      jLabel2.setText("Algorithm to apply on image stack");
+      jPanel1.add(jLabel2);
 
       processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MEAN);
       //processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MEDIAN);
@@ -70,12 +83,6 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
       processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MAX);
       processorAlgoBox_.addItem(FrameCombinerPlugin.PROCESSOR_ALGO_MIN);
       jPanel1.add(processorAlgoBox_);
-
-      jLabel2.setText("Algorithm to apply on image stack");
-      jPanel1.add(jLabel2);
-
-      numerOfImagesToProcessField_.setName("_"); // NOI18N
-      jPanel1.add(numerOfImagesToProcessField_);
 
       jLabel3.setText("<html>Avoid Channel(s) (zero-based)<br/><p style=\"text-align: center;\">eg. 1,2 or 1-5 (no space)</p></html>");
       jPanel1.add(jLabel3);
@@ -89,19 +96,23 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(layout.createSequentialGroup()
             .addContainerGap()
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 468, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(layout.createSequentialGroup()
-            .addGap(24, 24, 24)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 190, Short.MAX_VALUE)
-            .addGap(24, 24, 24))
+            .addContainerGap()
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addContainerGap())
       );
 
       pack();
    }// </editor-fold>//GEN-END:initComponents
+
+   private void processorDimensionBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_processorDimensionBox_ActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_processorDimensionBox_ActionPerformed
 
    private void loadSettingValue() {
       processorDimensionBox_.setSelectedItem(settings_.getString(
