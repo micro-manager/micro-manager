@@ -1931,19 +1931,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
 
       // save exposure time, will restore at end of acquisition
-      // TODO use new getExposure(label) method once it's in MMCore to avoid having to set active camera
       try {
-         cameras_.setCamera(firstCameraKey);
-         gui_.refreshGUIFromCache();
          prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
                Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(),
-               (float)core_.getExposure());
+               (float)core_.getExposure(devices_.getMMDevice(firstCameraKey)));
          if (twoSided) {
-            cameras_.setCamera(secondCameraKey);
-            gui_.refreshGUIFromCache();
             prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND.toString(),
-                  (float)core_.getExposure());
+                  (float)core_.getExposure(devices_.getMMDevice(secondCameraKey)));
          }
       } catch (Exception ex) {
          MyDialogUtils.showError(ex, "could not cache exposure");
