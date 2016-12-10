@@ -231,6 +231,7 @@ public class Properties {
       PLUGIN_ADVANCED_CAMERA_EXPOSURE("AdvancedCameraExposure"),
       PLUGIN_DESKEW_FACTOR("DeskewFactor"),
       PLUGIN_DESKEW_INVERT("DeskewInvert"),
+      PLUGIN_DESKEW_INTERPOLATE("DeskewInterpolate"),
       ;
       private final String text;
       private final boolean forceSet;
