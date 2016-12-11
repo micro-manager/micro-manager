@@ -49,12 +49,14 @@ import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Storage;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.multipagetiff.XYSplitStorageMultipageTiff;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
@@ -372,13 +374,16 @@ public final class MMAcquisition {
    }
 
    private static Storage getAppropriateStorage(DefaultDatastore store,
-         String path, boolean isNew) throws IOException {
+         String path, boolean isNew) throws IOException, DatastoreFrozenException, DatastoreRewriteException {
       Datastore.SaveMode mode = DefaultDatastore.getPreferredSaveMode();
       if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          return new StorageSinglePlaneTiffSeries(store, path, isNew);
       }
       else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
          return new StorageMultipageTiff(store, path, isNew);
+      }
+      else if (mode == Datastore.SaveMode.XY_SPLIT_MULTIPAGE_TIFF) {
+         return new XYSplitStorageMultipageTiff(store, path, isNew);
       }
       else {
          ReportingUtils.logError("Unrecognized save mode " + mode);
