@@ -1,15 +1,7 @@
 #include "DC2200.h"
-
-// Base driver
 #include "TLDC2200.h"
 
-const char* g_DeviceDC2200Name = "Thorlabs DC2200";
-
-template <typename T> std::string tostr(const T& t) { 
-  std::ostringstream os; 
-   os<<t; 
-   return os.str(); 
-} 
+const char* const g_Keyword_Device_Selection = "Device Selection";
 
 /****************************************************************************
 
@@ -21,14 +13,13 @@ template <typename T> std::string tostr(const T& t) {
 /*---------------------------------------------------------------------------
  Default constructor.
 ---------------------------------------------------------------------------*/
-DC2200::DC2200() :
-	m_handle(VI_NULL),
+DC2200::DC2200(const char* deviceName) :
+	m_devName(deviceName),
 	m_name("Undefined"),
-	m_serialNumber("n/a"),
 	m_LEDOn("On"),
 	m_mode("Constant Current"),
 	m_status("No Fault"),
-	
+	m_serialNumber("n/a"),
 	m_firmwareRev("n/a"),
 	m_wavelength("n/a"),
 	m_forwardBias("n/a"),
@@ -40,25 +31,21 @@ DC2200::DC2200() :
 	m_pwmFrequency(0),
 	m_pwmDutyCycle(0),
 	m_pwmCounts(0),
-	m_terminal(0)
+	m_handle(VI_NULL)
 {
 	InitializeDefaultErrorMessages();
 	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
 	SetErrorText(ERR_INVALID_DEVICE, "The selected plugin does not fit for the device.");
 
 	// Name
-	CreateProperty(MM::g_Keyword_Name, g_DeviceDC2200Name, MM::String, true);
+	CreateProperty(MM::g_Keyword_Name, deviceName, MM::String, true);
 
 	// Description
 	CreateProperty(MM::g_Keyword_Description, "Thorlabs DC2200", MM::String, true);
 
-	// Port
-	CPropertyAction* pAct = new CPropertyAction (this, &DC2200::OnDeviceChanged);
-	//CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
-	CreateProperty("Serial Number", "Undefined", MM::String, false, pAct, true);
-
-	// get the serial number of the first device
-	GetFirstDevice();
+	// Device Selection
+	CPropertyAction* pAct = new CPropertyAction (this, &DC2200::OnPort);
+	CreateProperty(g_Keyword_Device_Selection, "<Enter Serial Number>", MM::String, false, pAct, true);
 }
 
 /*---------------------------------------------------------------------------
@@ -70,20 +57,15 @@ DC2200::~DC2200()
 }
 
 /*---------------------------------------------------------------------------
- This functions return the device name ("DC2200").
+ This function returns the device name ("Thorlabs DC2200").
 ---------------------------------------------------------------------------*/
 void DC2200::GetName(char* Name) const
 {
-	CDeviceUtils::CopyLimitedString(Name, g_DeviceDC2200Name);
-}
-
-const char* DC2200::DeviceName()
-{
-	return g_DeviceDC2200Name;
+	CDeviceUtils::CopyLimitedString(Name, m_devName);
 }
 
 /*---------------------------------------------------------------------------
- This function initialize a DC2200 device and creates the actions.
+ This function initialize a DC2xxx device and creates the actions.
 ---------------------------------------------------------------------------*/
 int DC2200::Initialize()
 {
@@ -137,12 +119,8 @@ int DC2200::Initialize()
 	nRet = CreateProperty("Operation Mode", "Constant Current", MM::String, false, pAct);
 	std::vector<std::string> commands2;
 	commands2.push_back("Constant Current");
-	commands2.push_back("Brightness");
 	commands2.push_back("PWM");
-	commands2.push_back("Pulse");
-	commands2.push_back("Internal Modulation");
-	commands2.push_back("External Modulation");
-	commands2.push_back("TTL");
+	commands2.push_back("External Control");
 	SetAllowedValues("Operation Mode", commands2);
 	if (DEVICE_OK != nRet)	return nRet;
 
@@ -157,10 +135,60 @@ int DC2200::Initialize()
 	LEDOnOff(false);
 
 	// init message
-	log << "DC2200 - initializied " << "S/N: " << m_serialNumber << " Rev: " << m_firmwareRev << "\r\n";
+	log << "DC2200 - initializied " << "S/N: " << m_serialNumber << " Rev: " << m_firmwareRev;
 	LogMessage(log.str().c_str());
 
 	return DEVICE_OK;
+}
+
+/*---------------------------------------------------------------------------
+ This function checks if the device is valid.
+---------------------------------------------------------------------------*/
+int DC2200::ValidateDevice(void)
+{
+	int nRet = DEVICE_OK;
+	ViUInt32	devCnt;
+	ViChar		resName[256];
+	ViReal32	limit;
+	ViReal64	minimumVoltage;
+
+	if(m_handle)
+	{
+		// check if the device is still available
+		return TLDC2200_getLedOnOff(m_handle, VI_NULL);
+	}
+
+	// get the list of available devices
+	nRet = TLDC2200_get_device_count(VI_NULL, &devCnt);
+	if (nRet ==  0xBFFF0011 || devCnt == 0)
+		nRet = ERR_NO_DEVICE_CONNECTED;
+
+	if (VI_SUCCESS != nRet)
+		return nRet;
+
+	// initialize the first device
+	nRet = TLDC2200_get_device_info(VI_NULL, 0, VI_NULL, VI_NULL, VI_NULL, VI_NULL, resName);
+	if (VI_SUCCESS != nRet)
+		return nRet;
+
+	nRet = TLDC2200_init(resName, VI_TRUE, VI_TRUE, (ViPSession)&m_handle);
+	if (VI_SUCCESS != nRet)
+		return nRet;
+
+	// get some device parameter
+	nRet = TLDC2200_get_output_terminal(m_handle,  &m_terminal);
+	if (VI_SUCCESS != nRet)
+		return nRet;
+
+	nRet = TLDC2200_getLimitCurrent(m_handle,  &limit);
+	if (VI_SUCCESS != nRet)
+		return nRet;
+
+	nRet = TLDC2200_get_limit_voltage_range(m_handle,  m_terminal, limit, &minimumVoltage, &m_maximumVoltage);
+	if (VI_SUCCESS != nRet)
+		return nRet;
+
+	return nRet;
 }
 
 /*---------------------------------------------------------------------------
@@ -168,11 +196,11 @@ int DC2200::Initialize()
 ---------------------------------------------------------------------------*/
 int DC2200::Shutdown()
 {
-   if (VI_NULL != m_handle )
+   if (m_handle)
    {
 		LEDOnOff(false);
 		TLDC2200_close(m_handle);
-	 	m_handle = VI_NULL;
+		m_handle = VI_NULL;
    }
 
    return DEVICE_OK;
@@ -192,6 +220,7 @@ bool DC2200::Busy()
 int DC2200::SetOpen(bool open)
 {
 	int val = 0;
+
 	(open) ? val = 1 : val = 0;
 	return LEDOnOff(val);
 }
@@ -200,29 +229,41 @@ int DC2200::SetOpen(bool open)
  This function returns the LED output.
 ---------------------------------------------------------------------------*/
 int DC2200::GetOpen(bool &open)
+{	
+	int nRet = DEVICE_OK;
+	ViBoolean onOff;
+	m_LEDOn = "Undefined";
+
+	nRet = TLDC2200_getLedOnOff(m_handle, &onOff);
+	if(VI_SUCCESS != nRet)
+		return nRet;
+
+	m_LEDOn = onOff == VI_TRUE ? "On" : "Off";
+	open = (onOff == VI_TRUE);
+
+	return nRet;
+}
+
+/*---------------------------------------------------------------------------
+ This function sets the LED output on or off.
+---------------------------------------------------------------------------*/
+int DC2200::LEDOnOff(int onoff)
 {
-	int ret = DEVICE_OK;
-	ViBoolean state;
+	int nRet = DEVICE_OK;
+	nRet = TLDC2200_setLedOnOff(m_handle, (ViBoolean)onoff);
+	if (VI_SUCCESS != nRet)
+		return nRet;
 
-	ret = TLDC2200_getLedOnOff(m_handle, &state);
-	if(VI_SUCCESS != ret)
+	if (onoff == 0)
 	{
-		getErrorDescription(&ret);
-		return ret;
+		 m_LEDOn = "Off";
+	}
+	else
+	{
+		 m_LEDOn = "On";
 	}
 
-	if (VI_OFF == state)
-	{
-		m_LEDOn = "Off";
-		open = false;
-	}
-	else if (VI_ON == state)
-	{
-		m_LEDOn = "On";
-		open = true;
-	}
-
-	return ret;
+	return nRet;
 }
 
 /*---------------------------------------------------------------------------
@@ -233,41 +274,13 @@ int DC2200::Fire(double)
    return DEVICE_UNSUPPORTED_COMMAND;
 }
 
-/*---------------------------------------------------------------------------
- This function sets the LED output on or off.
----------------------------------------------------------------------------*/
-int DC2200::LEDOnOff(int onoff)
-{
-	int ret = DEVICE_OK;
-	ViBoolean state;
-
-	if (0 == onoff)
-	{
-		 state = VI_OFF;
-		 m_LEDOn = "Off";
-	}
-	else
-	{
-		 state = VI_ON;
-		 m_LEDOn = "On";
-	}
-
-	ret = TLDC2200_setLedOnOff(m_handle, state);
-	if(VI_SUCCESS != ret)
-	{
-		getErrorDescription(&ret);
-	}
-
-	return ret;
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 /*---------------------------------------------------------------------------
  This function reacts on port changes.
 ---------------------------------------------------------------------------*/
-int DC2200::OnDeviceChanged(MM::PropertyBase* pProp, MM::ActionType eAct)
+int DC2200::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet)
 	{
@@ -275,7 +288,7 @@ int DC2200::OnDeviceChanged(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::AfterSet)
 	{
-		if (VI_NULL != m_handle )
+		if (m_handle)
 		{
 			// revert
 			pProp->Set(m_serialNumber.c_str());
@@ -293,42 +306,33 @@ int DC2200::OnDeviceChanged(MM::PropertyBase* pProp, MM::ActionType eAct)
 ---------------------------------------------------------------------------*/
 int DC2200::OnLimitCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	int ret = DEVICE_OK;
-	ViReal32 limit;
-	std::string answer;
-	std::ostringstream command;
+	int nRet = DEVICE_OK;
+	ViReal32 currentLimit;
 
 	if (eAct == MM::BeforeGet)
 	{
-		ret = TLDC2200_getLimitCurrent(m_handle, &limit);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_getLimitCurrent(m_handle, &currentLimit);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 
-		m_limitCurrent = (long)limit;
+		m_limitCurrent = (long)currentLimit;
 		pProp->Set(m_limitCurrent);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		// get property
 		pProp->Get(m_limitCurrent);
-
-		limit = (ViReal32)m_limitCurrent;
-		ret = TLDC2200_setLimitCurrent(m_handle, limit);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		currentLimit = (ViReal32)m_limitCurrent;
+		nRet = TLDC2200_setLimitCurrent(m_handle, currentLimit);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 	}
 
 	// set the limits
 	SetPropertyLimits("Constant Current", 0, m_limitCurrent);
 	SetPropertyLimits("PWM Current", 0, m_limitCurrent);
 
-	return ret;
+	return nRet;
 }
 
 /*---------------------------------------------------------------------------
@@ -336,35 +340,24 @@ int DC2200::OnLimitCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 ---------------------------------------------------------------------------*/
 int DC2200::OnMaximumCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	int ret = DEVICE_OK;
-	ViReal64 voltage;
-	ViReal64 currentMaximum;
-	ViReal64 currentMinimum;
+	int nRet = DEVICE_OK;
+	ViReal64 minimumCurrent;
+	ViReal64 maximumCurrent;
 
 	if (eAct == MM::BeforeGet)
 	{
-		ret = TLDC2200_get_limit_voltage(m_handle, &voltage);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_get_limit_current_range(m_handle, m_terminal, m_maximumVoltage, &minimumCurrent, &maximumCurrent);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 
-		ret = TLDC2200_get_limit_current_range(m_handle, m_terminal, voltage, &currentMinimum, &currentMaximum);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
-
-		m_maximumCurrent = (long)currentMaximum;
+		m_maximumCurrent = (long)maximumCurrent;
 		pProp->Set(m_maximumCurrent);
 	}
 
 	// set the limits
 	SetPropertyLimits("Limit Current", 0, m_maximumCurrent);
 
-	return ret;
+	return nRet;
 }
 
 /*---------------------------------------------------------------------------
@@ -372,36 +365,30 @@ int DC2200::OnMaximumCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 ---------------------------------------------------------------------------*/
 int DC2200::OnConstantCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	int ret = DEVICE_OK;
+	int nRet = DEVICE_OK;
 	ViReal32 current;
 
 	if (eAct == MM::BeforeGet)
 	{
-		ret = TLDC2200_getConstCurrent(m_handle, &current);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		} 
+		nRet = TLDC2200_getConstCurrent(m_handle, &current);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 
-		m_constCurrent = (long)current; 
+		m_constCurrent = (long)current;
 		pProp->Set(m_constCurrent);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		// get property
 		pProp->Get(m_constCurrent);
+		current = (ViReal32)m_constCurrent;
 
-		current = (ViReal32) m_constCurrent;
-		ret = TLDC2200_setConstCurrent(m_handle, current);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_setConstCurrent(m_handle, current);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 	}
 
-	return ret;
+	return nRet;
 }
 
 /*---------------------------------------------------------------------------
@@ -409,17 +396,14 @@ int DC2200::OnConstantCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 ---------------------------------------------------------------------------*/
 int DC2200::OnPWMCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	int ret = DEVICE_OK;
+	int nRet = DEVICE_OK;
 	ViReal32 current;
 
 	if (eAct == MM::BeforeGet)
 	{
-		ret = TLDC2200_getPWMCurrent(m_handle, &current);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_getPWMCurrent(m_handle, &current);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 
 		m_pwmCurrent = (long)current;
 		pProp->Set(m_pwmCurrent);
@@ -428,17 +412,14 @@ int DC2200::OnPWMCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		// get property
 		pProp->Get(m_pwmCurrent);
+		current = (ViReal32)m_pwmCurrent;
 
-		current = (ViReal32) m_pwmCurrent;
-		ret = TLDC2200_setPWMCurrent(m_handle, current);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_setPWMCurrent(m_handle, current);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 	}
 
-	return ret;
+	return nRet;
 }
 
 /*---------------------------------------------------------------------------
@@ -446,36 +427,30 @@ int DC2200::OnPWMCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 ---------------------------------------------------------------------------*/
 int DC2200::OnPWMFrequency(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	int ret = DEVICE_OK;
-	ViReal64 freq;
+	int nRet = DEVICE_OK;
+	ViReal64 frequency;
 
 	if (eAct == MM::BeforeGet)
 	{
-		ret = TLDC2200_getPWMFrequency(m_handle, &freq);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_getPWMFrequency(m_handle, &frequency);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 
-		m_pwmFrequency = (long)freq;
+		m_pwmFrequency = (long)frequency;
 		pProp->Set(m_pwmFrequency);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		// get property
 		pProp->Get(m_pwmFrequency);
-		
-		freq = (ViReal32) m_pwmFrequency;
-		ret = TLDC2200_setPWMFrequency(m_handle, freq);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		frequency = (ViReal64)m_pwmFrequency;
+
+		nRet = TLDC2200_setPWMFrequency(m_handle, frequency);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 	}
 
-	return ret;
+	return nRet;
 }
 
 /*---------------------------------------------------------------------------
@@ -483,73 +458,64 @@ int DC2200::OnPWMFrequency(MM::PropertyBase* pProp, MM::ActionType eAct)
 ---------------------------------------------------------------------------*/
 int DC2200::OnPWMDutyCycle(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	int ret = DEVICE_OK;
-	ViInt32 cycle;
+	int nRet = DEVICE_OK;
+	ViInt32 dutyCycle;
 
 	if (eAct == MM::BeforeGet)
 	{
-		ret = TLDC2200_getPWMDutyCycle(m_handle, &cycle);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_getPWMDutyCycle(m_handle, &dutyCycle);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 
-		m_pwmDutyCycle = (long)cycle;
+		m_pwmDutyCycle = (long)dutyCycle;
 		pProp->Set(m_pwmDutyCycle);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		// get property
 		pProp->Get(m_pwmDutyCycle);
-		
-		cycle = (ViInt32) m_pwmDutyCycle;
-		ret = TLDC2200_setPWMDutyCycle(m_handle, cycle);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+
+		dutyCycle = (ViInt32)m_pwmDutyCycle;
+
+		nRet = TLDC2200_setPWMDutyCycle(m_handle, dutyCycle);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 	}
 
-	return ret;
+	return nRet;
 }
+
 
 /*---------------------------------------------------------------------------
  This function is the callback function for the "PWM Counts" property.
 ---------------------------------------------------------------------------*/
 int DC2200::OnPWMCounts(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	int ret = DEVICE_OK;
-	ViInt32 counts;
-
+	int nRet = DEVICE_OK;
+	ViInt32 pwmCnts;
+	
 	if (eAct == MM::BeforeGet)
 	{
-		ret = TLDC2200_getPWMCounts(m_handle, &counts);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_getPWMCounts(m_handle, &pwmCnts);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 
-		m_pwmCounts = (long)counts;
+		m_pwmCounts = (long)pwmCnts;
 		pProp->Set(m_pwmCounts);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		// get property
 		pProp->Get(m_pwmCounts);
-		
-		counts = (ViInt32) m_pwmCounts;
-		ret = TLDC2200_setPWMCounts(m_handle, counts);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+
+		pwmCnts = (ViInt32)m_pwmCounts;
+
+		nRet = TLDC2200_setPWMCounts(m_handle, pwmCnts);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 	}
 
-	return ret;
+	return nRet;
 }
 
 /*---------------------------------------------------------------------------
@@ -557,43 +523,31 @@ int DC2200::OnPWMCounts(MM::PropertyBase* pProp, MM::ActionType eAct)
 ---------------------------------------------------------------------------*/
 int DC2200::OnOperationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	int ret = DEVICE_OK;
+	int nRet = DEVICE_OK;
 	ViInt32 operationMode;
-	m_mode = "Undefined";
+	std::string opModeString;	
 
 	if (eAct == MM::BeforeGet)
 	{
-		ret = TLDC2200_getOperationMode(m_handle, &operationMode);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_getOperationMode(m_handle, &operationMode);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 
 		switch(operationMode)
 		{
-		case TLDC2200_LD_OPMODE_CC:
+		case MODUS_CONST_CURRENT:
 			m_mode = "Constant Current";
 			break;
-		case TLDC2200_LD_OPMODE_CB:
-			m_mode = "Brightness";
-			break;
-		case TLDC2200_LD_OPMODE_PWM:
+		case MODUS_PWM:
 			m_mode = "PWM";
 			break;
-		case TLDC2200_LD_OPMODE_PULS:
-			m_mode = "Pulse";
+		case MODUS_EXTERNAL_CONTROL:
+			m_mode = "External Control";
 			break;
-		case TLDC2200_LD_OPMODE_IMOD:
-			m_mode = "Internal Modulation";
+		default:
+			m_mode = "Undefined";
 			break;
-		case TLDC2200_LD_OPMODE_EMOD:
-			m_mode = "External Modulation";
-			break;
-		case TLDC2200_LD_OPMODE_TTL:
-			m_mode = "TTL";
-			break;
-		}
+		}			
 
 		pProp->Set(m_mode.c_str());
 	}
@@ -601,77 +555,98 @@ int DC2200::OnOperationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	{
 		LEDOnOff(0);
 
-		pProp->Get(m_mode);
-		if (m_mode == "Constant Current")
+		pProp->Get(opModeString);
+		if (opModeString == "Constant Current")
 		{
-			operationMode = TLDC2200_LD_OPMODE_CC;
+			operationMode = MODUS_CONST_CURRENT;
+			m_mode = "Constant Current";
 		}
-		else if (m_mode == "Brightness")
+		else if (opModeString == "PWM")
 		{
-			operationMode = TLDC2200_LD_OPMODE_CB;
-		}
-		else if (m_mode == "PWM")
-		{
-			operationMode = TLDC2200_LD_OPMODE_PWM;
-		}
-		else if (m_mode == "Pulse")
-		{
-			operationMode = TLDC2200_LD_OPMODE_PULS;
-		}
-		else if (m_mode == "Internal Modulation")
-		{
-			operationMode = TLDC2200_LD_OPMODE_IMOD;
-		}
-		else if (m_mode == "External Modulation")
-		{
-			operationMode = TLDC2200_LD_OPMODE_EMOD;
+			operationMode =  MODUS_PWM;
+			m_mode = "PWM";
 		}
 		else
 		{
-			operationMode = TLDC2200_LD_OPMODE_TTL;
+			operationMode =  MODUS_EXTERNAL_CONTROL;
+			m_mode = "External Control";
 		}
 
-		ret = TLDC2200_setOperationMode(m_handle, operationMode);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_setOperationMode(m_handle, operationMode);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 	}
 
-	return ret;
+	return nRet;
 }
+
 
 /*---------------------------------------------------------------------------
  This function is the callback function for the "status" query.
 ---------------------------------------------------------------------------*/
 int DC2200::OnStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	int ret = DEVICE_OK;
+	int nRet = DEVICE_OK;
 	ViInt32 statusRegister;
 
 	if (eAct == MM::BeforeGet)
 	{
-		ret = TLDC2200_getStatusRegister(m_handle, &statusRegister);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		}
+		nRet = TLDC2200_getStatusRegister(m_handle, &statusRegister);
+		if(VI_SUCCESS != nRet)
+			return nRet;
 
 		// clear string
 		m_status.clear();
 
-		if (statusRegister & 0x02)	m_status += "No LED ";
-		if (statusRegister & 0x08)	m_status += "LED open ";
-		if (statusRegister & 0x20)	m_status += "Limit";
-		if (!statusRegister)		m_status = "No Fault";
+		if (statusRegister & STAT_NO_LED1)		m_status += "No LED ";
+		if (statusRegister & STAT_LED_OPEN1)	m_status += "LED open ";
+		if (statusRegister & STAT_LED_LIMIT1)	m_status += "Limit";
+		if (!statusRegister)					m_status = "No Fault";
 
 		pProp->Set(m_status.c_str());
 	}
 
+	return nRet;
+}
+
+
+/*
+int DC2xxx::OnDisplayBrightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	int ret = DEVICE_OK;
+	std::string answer;
+	std::ostringstream command;
+
+	if (eAct == MM::BeforeGet)
+	{
+		command << "b?";
+		ret = SendSerialCommand(m_port.c_str(), command.str().c_str(), "\r\n");
+		if (ret != DEVICE_OK) return ret;
+		ret = GetSerialAnswer(m_port.c_str(), "\r\n", answer);
+		if (ret != DEVICE_OK) return ret;
+		// error handling
+		getLastError(&ret);
+
+		std::istringstream iss(answer);
+		iss >> m_displayBrightness;
+		pProp->Set(m_displayBrightness);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		// get property
+		pProp->Get(m_displayBrightness);
+		// prepare command
+		command << "b " << (int)m_displayBrightness;
+		// send command
+		ret = SendSerialCommand(m_port.c_str(), command.str().c_str(), "\r\n");
+		if (ret != DEVICE_OK) return ret;
+		// error handling
+		getLastError(&ret);
+	}
+
 	return ret;
 }
+*/
 
 /*---------------------------------------------------------------------------
  This function clears the dynamic error list.
@@ -687,6 +662,7 @@ bool DC2200::dynErrlist_free(void)
 
 	return true;
 }
+
 
 /*---------------------------------------------------------------------------
  This function searches for specified error code within the dynamic error
@@ -706,6 +682,7 @@ bool DC2200::dynErrlist_lookup(int err, std::string* descr)
 
 	return false;
 }
+
 
 /*---------------------------------------------------------------------------
  This function adds an errror and its description to list. In case the error
@@ -728,170 +705,116 @@ bool DC2200::dynErrlist_add(int err, std::string descr)
 	return true;
 }
 
+
 /*---------------------------------------------------------------------------
  This function requests the last error from the DC2200.
 ---------------------------------------------------------------------------*/
-bool DC2200::getErrorDescription(int* err)
+bool DC2200::getLastError(int* err)
 {
 	std::ostringstream errRequest;
 	std::string answer;
 	std::string errDescr;
-	ViInt32 errCode;
-	int ret;
-	ViChar errMsg[256];
+	int errCode;
 
 	// preset
-	ret = TLDC2200_error_query(m_handle, &errCode, errMsg);
-	if(VI_SUCCESS != ret)
-		return false;
-
+	if(err) *err = 0;
+	// prepare error request
+	errRequest << "e?";
+	// send error request
+	//SendSerialCommand(m_port.c_str(), errRequest.str().c_str(), "\r\n");
+	//// receive the answer
+	//GetSerialAnswer(m_port.c_str(), "\r\n", answer);
+	// parsing out the information
+	std::string tmp;
+	std::istringstream iss(answer);
+	std::getline(iss, tmp, ' ');
+	iss >> errCode;
+	std::getline(iss, tmp, ':');
+	std::getline(iss, errDescr);
+	// check if there is no error
+	if(errCode == 0)
+	{
+		if(err) *err = 0;
+		return true;
+	}
 	// add error to list
-	dynErrlist_add(errCode + ERR_DCxxxx_OFFSET, errMsg);
-
+	dynErrlist_add(errCode + ERR_DCxxxx_OFFSET, errDescr);
 	// publish the error code
-	if(err) 
-		*err = errCode + ERR_DCxxxx_OFFSET;
-
+	if(err) *err = errCode + ERR_DCxxxx_OFFSET;
+	// return
 	return true;
 }
+
 
 /*---------------------------------------------------------------------------
  This function creates the static read only properties.
 ---------------------------------------------------------------------------*/
 int DC2200::CreateStaticReadOnlyProperties(void)
 {
-	int ret = DEVICE_OK;
+	int nRet = DEVICE_OK;
 	ViReal32 wavelength;
-	ViChar driverRev[256];
-	ViChar instrRev[256];
+	ViStatus res;
+	ViChar serialNumber[256];
+	ViChar instrRevision[256];
 	ViChar headSerialNumber[256];
-	ViChar headName[256];
-	ViInt32 headType;
 	ViReal32 forwardBias;
 
 	// wavelength information
-	ret = TLDC2200_getWavelength(m_handle, &wavelength); 
-	if (VI_SUCCESS != ret)
-	{
-		getErrorDescription(&ret);
-		return ret;
-	}
+	res = TLDC2200_getWavelength(m_handle, &wavelength);
+	if (VI_SUCCESS != res)
+		return res;
 
-	m_wavelength = tostr(wavelength);
-	ret = CreateProperty("LED Wavelength", m_wavelength.c_str(), MM::String, true);
-	if (DEVICE_OK != ret)	
-		return ret;
+	m_wavelength = wavelength;
+
+	nRet = CreateProperty("LED Wavelength", m_wavelength.c_str(), MM::String, true);
+	if (DEVICE_OK != nRet)	
+		return nRet;
+
+	// serial number information
+	nRet = TLDC2200_get_device_info(VI_NULL, 0, VI_NULL, VI_NULL, serialNumber, VI_NULL, VI_NULL);
+	if (VI_SUCCESS != nRet)
+		return nRet;
+
+	m_serialNumber = serialNumber;
+
+	nRet = CreateProperty("Serial Number", serialNumber, MM::String, true);
+	if (DEVICE_OK != nRet)	
+		return nRet;
 
 	// firmware version information
-	ret = TLDC2200_revision_query(m_handle, driverRev, instrRev); 
-	if (VI_SUCCESS != ret)
-	{
-		getErrorDescription(&ret);
-		return ret;
-	}
+	nRet = TLDC2200_revision_query(m_handle,  VI_NULL, instrRevision);
+	if (VI_SUCCESS != nRet)
+		return nRet;
 
-	m_firmwareRev = instrRev;
-	ret = CreateProperty("Firmware Revision", m_firmwareRev.c_str(), MM::String, true);
-	if (DEVICE_OK != ret)	
-		return ret;
+	m_firmwareRev = instrRevision;
 
+	nRet = CreateProperty("Firmware Revision", instrRevision, MM::String, true);
+	if (DEVICE_OK != nRet)	
+		return nRet;
+	
 	// head serial number information
-	ret = TLDC2200_get_head_info(m_handle, headSerialNumber, headName, &headType); 
-	if (VI_SUCCESS != ret)
-	{
-		getErrorDescription(&ret);
-		return ret;
-	}
+	nRet = TLDC2200_get_head_info(m_handle, headSerialNumber, VI_NULL, VI_NULL);
+	if (VI_SUCCESS != nRet)
+		return nRet;
 
 	m_headSerialNo = headSerialNumber;
-	ret = CreateProperty("LED Serial Number", m_headSerialNo.c_str(), MM::String, true);
-	if (DEVICE_OK != ret)	
-		return ret;
+
+	nRet = CreateProperty("LED Serial Number", headSerialNumber, MM::String, true);
+	if (DEVICE_OK != nRet)	
+		return nRet;
 
 	// forward bias information
-	ret = TLDC2200_getForwardBias(m_handle, &forwardBias); 
-	if (VI_SUCCESS != ret)
-	{
-		getErrorDescription(&ret);
-		return ret;
-	}
+	nRet = TLDC2200_getForwardBias(m_handle, &forwardBias);
+	if (VI_SUCCESS != nRet)
+		return nRet;
 
-	m_forwardBias = tostr(forwardBias);
-	ret = CreateProperty("LED Forward Bias", m_forwardBias.c_str(), MM::String, true);
-	if (DEVICE_OK != ret)	
-		return ret;
+	m_forwardBias = forwardBias;
 
-	// current terminal
-	m_terminal = 0;
-
-	return ret;
-}
-
-/*---------------------------------------------------------------------------
- This function checks if the device is valid.
----------------------------------------------------------------------------*/
-int DC2200::ValidateDevice(void)
-{ 
-	ViBoolean state;
-	int ret;
+	nRet = CreateProperty("LED Forward Bias", m_forwardBias.c_str(), MM::String, true);
 	
-	if (VI_NULL != m_handle )
-	{
-		log << "Check if the device is still available"<< "\r\n";
-		LogMessage(log.str().c_str());
-
-		// check if the device is still active
-		ret = TLDC2200_getLedOnOff(m_handle, &state);
-		if (VI_SUCCESS != ret)
-		{
-			getErrorDescription(&ret);
-			return ret;
-		} 
-
-		return ret;
-	}
-
-	ret = GetFirstDevice();
-	if (VI_SUCCESS != ret)
-	{
-		getErrorDescription(&ret);
-		return ret;
-	}
-
-	// initialize the device
-	ret = TLDC2200_init(m_resName, VI_TRUE, VI_FALSE, &m_handle);
-	if (VI_SUCCESS != ret)
-	{
-		getErrorDescription(&ret);
-		return ret;
-	}
-
-	return ret;
+	return nRet;
 }
 
-int DC2200::GetFirstDevice(void)
-{
-	ViStatus ret;
-	ViUInt32 devCnt;
-	ViBoolean devAvailable;
-	ViChar modelName[256];
-	ViChar serialNumber[256];
-
-	// get a list of connected devices
-	ret = TLDC2200_get_device_count(VI_NULL, &devCnt);
-	if(VI_SUCCESS != ret)
-		return ret;
-
-	// get some global device information
-	ret = TLDC2200_get_device_info(VI_NULL, 0, VI_NULL, modelName, serialNumber, &devAvailable, m_resName);
-	if(VI_SUCCESS != ret)
-		return ret;
-
-	m_serialNumber	= serialNumber;
-	m_name			= modelName;
-
-	return ret;
-}
 
 
 

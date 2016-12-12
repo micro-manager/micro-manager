@@ -1,7 +1,5 @@
 #include "DC2XXX.h"
 
-const char* g_DeviceDC2xxxName = "Thorlabs DC2010/DC2100";
-
 /****************************************************************************
 
  class: 			DC2xxx
@@ -12,7 +10,8 @@ const char* g_DeviceDC2xxxName = "Thorlabs DC2010/DC2100";
 /*---------------------------------------------------------------------------
  Default constructor.
 ---------------------------------------------------------------------------*/
-DC2xxx::DC2xxx() :
+DC2xxx::DC2xxx(const char* deviceName) :
+m_devName(deviceName),
 	m_name("Undefined"),
    m_port("Undefined"),
    m_LEDOn("On"),
@@ -37,7 +36,7 @@ DC2xxx::DC2xxx() :
 	SetErrorText(ERR_INVALID_DEVICE, "The selected plugin does not fit for the device.");
 
 	// Name
-	CreateProperty(MM::g_Keyword_Name, g_DeviceDC2xxxName, MM::String, true);
+	CreateProperty(MM::g_Keyword_Name, deviceName, MM::String, true);
 
 	// Description
 	CreateProperty(MM::g_Keyword_Description, "Thorlabs DC2xxx", MM::String, true);
@@ -62,13 +61,9 @@ DC2xxx::~DC2xxx()
 ---------------------------------------------------------------------------*/
 void DC2xxx::GetName(char* Name) const
 {
-	CDeviceUtils::CopyLimitedString(Name, g_DeviceDC2xxxName);
+	CDeviceUtils::CopyLimitedString(Name, m_devName);
 }
 
-const char* DC2xxx::DeviceName()
-{
-	return g_DeviceDC2xxxName;
-}
 
 /*---------------------------------------------------------------------------
  This function initialize a DC2xxx device and creates the actions.

@@ -14,7 +14,7 @@ public:
 
 	// constructor and destructor
 	// ------------
-	DC3100();									// constructs a DC3100 device
+	DC3100(const char* deviceName);									// constructs a DC3100 device
 	~DC3100();									// destroys a DC3100 device
 
 	// MMDevice API
@@ -26,7 +26,6 @@ public:
 	// ------------
 	void GetName(char* pszName) const;	// returns the device name -> DC3100
 	bool Busy();								// returns true in case device is busy
-	static const char* DeviceName();
 
 	// Shutter API
 	// ------------
@@ -54,13 +53,14 @@ private:
 	int ValidateDevice(void);
 
 private:
-	bool dynErrlist_free		(void);
+	bool dynErrlist_free	(void);
 	bool dynErrlist_lookup	(int err, std::string* descr);
 	bool dynErrlist_add		(int err, std::string descr);
-	bool getLastError			(int* err);
+	bool getLastError		(int* err);
 
 
 private:
+	const char* m_devName;
 	std::string 	m_name;
 	std::string 	m_port;
 	std::string 	m_LEDOn;
@@ -69,15 +69,16 @@ private:
 	std::string 	m_serialNumber;
 	std::string 	m_firmwareRev;
 	std::string		m_headSerialNo;
-	long				m_limitCurrent;
-	long				m_maximumCurrent;
-	float				m_maximumFrequency;
-	long 				m_constCurrent;
-	long 				m_moduCurrent;
+	long			m_limitCurrent;
+	long			m_maximumCurrent;
+	float			m_maximumFrequency;
+	long 			m_constCurrent;
+	long 			m_moduCurrent;
 	float 			m_moduFrequency;
-	long 				m_moduDepth;
-	bool 				m_initialized;
+	long 			m_moduDepth;
+	bool 			m_initialized;
 
 	// dynamic error list
 	std::vector<DynError*>	m_dynErrlist;
 };
+
