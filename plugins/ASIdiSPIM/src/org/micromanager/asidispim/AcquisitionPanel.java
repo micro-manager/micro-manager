@@ -1125,7 +1125,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          break;
       case INTERNAL:
       default:
-         MyDialogUtils.showError("Invalid camera mode");
+         if (showWarnings) {
+            MyDialogUtils.showError("Invalid camera mode");
+         }
+         s.valid = false;
          break;
       }
       
@@ -1472,6 +1475,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acquisitionStatusLabel_.setText(text);
    }
    
+   private boolean requiresPiezos(AcquisitionModes.Keys mode) {
+      switch (mode) {
+      case STAGE_SCAN:
+      case NONE:
+      case SLICE_SCAN_ONLY:
+      case STAGE_SCAN_INTERLEAVED:
+      case NO_SCAN:
+         return false;
+      case PIEZO_SCAN_ONLY:
+      case PIEZO_SLICE_SCAN:
+         return true;
+      default:
+         MyDialogUtils.showError("Unspecified acquisition mode " + mode.toString());
+         return true;
+      }
+   }
+   
    /**
     * runs a test acquisition with the following features:
     *   - not saved to disk
@@ -1572,6 +1592,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // do this before getting snapshot of sliceTiming_ in acqSettings
       recalculateSliceTiming(!minSlicePeriodCB_.isSelected());
       
+      if (!sliceTiming_.valid) {
+         MyDialogUtils.showError("Error in calculating the slice timing; is the camera mode set correctly?");
+         return false;
+      }
+      
       AcquisitionSettings acqSettingsOrig = getCurrentAcquisitionSettings();
       
       // if a test acquisition then only run single timpoint, no autofocus
@@ -1663,6 +1688,36 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          } else {
             sideActiveA = false;
             sideActiveB = true;
+         }
+      }
+      
+      if (sideActiveA) {
+         if (!devices_.isValidMMDevice(Devices.Keys.CAMERAA)) {
+            MyDialogUtils.showError("Using side A but no camera specified for that side.");
+            return false;
+         }
+         if (!devices_.isValidMMDevice(Devices.Keys.GALVOA)) {
+            MyDialogUtils.showError("Using side A but no scanner specified for that side.");
+            return false;
+         }
+         if (requiresPiezos(acqSettings.spimMode) && !devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
+            MyDialogUtils.showError("Using side A and acquisition mode requires piezos but no piezo specified for that side.");
+            return false;
+         }
+      }
+      
+      if (sideActiveB) {
+         if (!devices_.isValidMMDevice(Devices.Keys.CAMERAB)) {
+            MyDialogUtils.showError("Using side B but no camera specified for that side.");
+            return false;
+         }
+         if (!devices_.isValidMMDevice(Devices.Keys.GALVOB)) {
+            MyDialogUtils.showError("Using side B but no scanner specified for that side.");
+            return false;
+         }
+         if (requiresPiezos(acqSettings.spimMode) && !devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
+            MyDialogUtils.showError("Using side B and acquisition mode requires piezos but no piezo specified for that side.");
+            return false;
          }
       }
       

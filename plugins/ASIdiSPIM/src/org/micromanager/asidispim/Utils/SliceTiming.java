@@ -39,6 +39,7 @@ public class SliceTiming {
    public float cameraDuration;
    public float cameraExposure;  // used to set exposure in Micro-Manager, not the controller timing
    public float sliceDuration;   // depends on first 7 values by formula, up to users to keep updated
+   public boolean valid;         // marked false to show that there was some error in calculating 
 
    /**
     * Chooses some reasonable defaults (may not be controller defaults).
@@ -53,6 +54,7 @@ public class SliceTiming {
       cameraDuration = 1;
       cameraExposure = 1;
       sliceDuration = 2;
+      valid = true;
    }
    
    /**
@@ -68,6 +70,7 @@ public class SliceTiming {
       cameraDuration = orig.cameraDuration;
       cameraExposure = orig.cameraExposure;
       sliceDuration = orig.sliceDuration;
+      valid = orig.valid;
    }
    
    @Override
@@ -82,7 +85,8 @@ public class SliceTiming {
                && cameraDelay == s.cameraDelay
                && cameraDuration == s.cameraDuration
                && cameraExposure == s.cameraExposure
-               && sliceDuration == s.sliceDuration);
+               && sliceDuration == s.sliceDuration
+               && valid == s.valid);
       } else {
          return false;
       }
