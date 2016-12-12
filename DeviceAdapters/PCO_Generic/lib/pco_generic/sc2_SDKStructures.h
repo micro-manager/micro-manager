@@ -491,7 +491,7 @@ typedef struct
   WORD  wSize;                         // Sizeof this struct
   WORD  wSignalNum;                    // Index for strSignal (0,1,2,3,)
   WORD  wEnabled;                      // Flag shows enable state of the signal (0: off, 1: on)
-  WORD  wType;                         // Selected signal type (1: TTL, 2: HL TTL, 4: contact, 8: RS485)
+  WORD  wType;                         // Selected signal type (1: TTL, 2: HL TTL, 4: contact, 8: RS485, 80: TTL-A/GND-B)
   WORD  wPolarity;                     // Selected signal polarity (1: H, 2: L, 4: rising, 8: falling)
   WORD  wFilterSetting;                // Selected signal filter (1: off, 2: med, 4: high) // 12
   WORD  wSelected;                     // Select signal (0: standard signal, >1 other signal)

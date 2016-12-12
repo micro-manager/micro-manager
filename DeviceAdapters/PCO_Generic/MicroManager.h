@@ -39,7 +39,7 @@
 #error Missing current pco library (in camera.h). Please copy pco lib into correct library/include folder.
 #endif
 
-#define KAMLIBVERSION_MM 240  // Will be incremented by pco when a new Kamlib is present (do not change)
+#define KAMLIBVERSION_MM 241  // Will be incremented by pco when a new Kamlib is present (do not change)
 #if KAMLIBVERSION != KAMLIBVERSION_MM
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
@@ -100,6 +100,7 @@ public:
   int StoppedByThread();
   bool IsCapturing();
   void SetSizes(int iw, int ih, int ib);
+  int InitHWIO();
 
   // action interface
   //int OnBoard(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -121,6 +122,13 @@ public:
   int OnTimestampMode( MM::PropertyBase* pProp, MM::ActionType eAct );
   int OnDoubleShutterMode( MM::PropertyBase* pProp, MM::ActionType eAct );
   int OnIRMode( MM::PropertyBase* pProp, MM::ActionType eAct );
+
+  int OnSelectSignal(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnSelectSignalTiming(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnSelectSignalOnOff(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnSelectSignalType(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnSelectSignalFilter(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnSelectSignalPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
   /*
   int OnMode(CPropertyBase* pProp, ActionType eAct);
   int OnSubMode(CPropertyBase* pProp, ActionType eAct);
@@ -137,6 +145,7 @@ private:
   int SetupCamera();
   int CleanupSequenceAcquisition();
   int SetNCheckROI(int *Roix0, int *Roix1, int *Roiy0, int *Roiy1);
+  int GetSignalNum(std::string szSigName);
 
 
   class SequenceThread : public MMDeviceThreadBase
