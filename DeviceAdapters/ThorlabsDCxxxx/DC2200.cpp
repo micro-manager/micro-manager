@@ -312,17 +312,19 @@ int DC2200::OnLimitCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet)
 	{
 		nRet = TLDC2200_getLimitCurrent(m_handle, &currentLimit);
+
 		if(VI_SUCCESS != nRet)
 			return nRet;
 
-		m_limitCurrent = (long)currentLimit;
+		m_limitCurrent = (long)(currentLimit * 1000.0f);
 		pProp->Set(m_limitCurrent);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		// get property
 		pProp->Get(m_limitCurrent);
-		currentLimit = (ViReal32)m_limitCurrent;
+		currentLimit = ((ViReal32)m_limitCurrent) / 1000.0f;
+
 		nRet = TLDC2200_setLimitCurrent(m_handle, currentLimit);
 		if(VI_SUCCESS != nRet)
 			return nRet;
@@ -350,7 +352,7 @@ int DC2200::OnMaximumCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if(VI_SUCCESS != nRet)
 			return nRet;
 
-		m_maximumCurrent = (long)maximumCurrent;
+		m_maximumCurrent = (long)(maximumCurrent * 1000.0f);
 		pProp->Set(m_maximumCurrent);
 	}
 
@@ -374,14 +376,14 @@ int DC2200::OnConstantCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if(VI_SUCCESS != nRet)
 			return nRet;
 
-		m_constCurrent = (long)current;
+		m_constCurrent = (long)(current * 1000.0f);
 		pProp->Set(m_constCurrent);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		// get property
 		pProp->Get(m_constCurrent);
-		current = (ViReal32)m_constCurrent;
+		current = ((ViReal32)m_constCurrent) / 1000.0f;
 
 		nRet = TLDC2200_setConstCurrent(m_handle, current);
 		if(VI_SUCCESS != nRet)
@@ -405,14 +407,14 @@ int DC2200::OnPWMCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if(VI_SUCCESS != nRet)
 			return nRet;
 
-		m_pwmCurrent = (long)current;
+		m_pwmCurrent = (long)(current * 1000.0f);
 		pProp->Set(m_pwmCurrent);
 	}
 	else if (eAct == MM::AfterSet)
 	{
 		// get property
 		pProp->Get(m_pwmCurrent);
-		current = (ViReal32)m_pwmCurrent;
+		current = ((ViReal32)m_pwmCurrent) / 1000.0f;
 
 		nRet = TLDC2200_setPWMCurrent(m_handle, current);
 		if(VI_SUCCESS != nRet)
