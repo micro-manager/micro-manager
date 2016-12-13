@@ -201,7 +201,7 @@ public class AutofocusUtils {
             );
 
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
-            Devices.Keys cameraDevice = Devices.Keys.CAMERAB;
+            Devices.Keys cameraDevice = Devices.Keys.CAMERAA;
             boolean usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM);
             if (side.equals(Devices.Sides.B)) {
                camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
