@@ -1484,8 +1484,14 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       catch (EvalError e) {
          message("Reset of BeanShell interpreter failed");
       }
-      // Apparently clear() also erases bsh.console, which we need
-      beanshellREPLint_.setConsole(cons_);
+      try {
+         // Apparently clear() also erases bsh.console, which we need
+         beanshellREPLint_.setConsole(cons_);
+         // this call appears to fail on linux so catch the error that was reported:
+      } catch (bsh.InterpreterError bi) {
+         ReportingUtils.logError("Called to Beanshell setConsole failed. Probably inocuous." 
+                 + bi.getMessage());
+      }
 
       initializeInterpreter();
    }
