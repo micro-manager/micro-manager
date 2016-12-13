@@ -72,7 +72,7 @@ const char* const g_Msg_DEVICE_COMM_HUB_MISSING= "Parent module (Hub) is not ava
 const char* const g_Msg_DEVICE_DUPLICATE_LIBRARY="Duplicate Device Library Name";
 const char* const g_Msg_DEVICE_PROPERTY_NOT_SEQUENCEABLE="This property is not sequenceable";
 const char* const g_Msg_DEVICE_SEQUENCE_TOO_LARGE="Sequence is too large for this device";
-const char* const g_Msg_DEVICE_NOT_YET_IMPLEMENTED="This command has not yet been implemented for this devce.";
+const char* const g_Msg_DEVICE_NOT_YET_IMPLEMENTED="This command has not yet been implemented for this device.";
 
 inline long nint( double value )
 {
@@ -231,7 +231,7 @@ public:
 
    /**
     * Check if the property value is equal to a specific string
-    * @return true only if property exists and is eqaul to, false otherwise
+    * @return true only if property exists and is equal to, false otherwise
     * @param name - property identifier (name)
     * @param value - the value to compare to
     */
@@ -476,7 +476,7 @@ public:
    /**
    * Obtains the property name given the index.
    * Can be used for enumerating properties.
-   * @param idx - property index
+   * @param uIdx - property index
    * @param name - property name
    */
    virtual bool GetPropertyName(unsigned uIdx, char* name) const
@@ -505,7 +505,7 @@ public:
    /**
    * Sets the property value.
    * @param name - property name
-   * @param value - propery value
+   * @param value - property value
    */
    virtual int SetProperty(const char* name, const char* value)
    {
@@ -617,7 +617,7 @@ public:
       // Note: in theory, we can avoid converting to string and back. At this
       // moment, it is not worth the trouble.
       //
-      // However, note the following assumtion being made here: the default
+      // However, note the following assumption being made here: the default
       // settings of std::ostream will return strings with a decimal precision
       // of 6 digits. When this eventually gets passed to
       // MM::FloatProperty::Set(double), it gets truncated to 4 digits before
@@ -636,7 +636,7 @@ public:
    }
 
    /**
-   * Define limits for properties with continous range of values
+   * Define limits for properties with continuous range of values
    */
    int SetPropertyLimits(const char* name, double low, double high)
    {
@@ -703,7 +703,7 @@ public:
    }
 
    /**
-   * Obtains data field associated with the currently appplied property value.
+   * Obtains data field associated with the currently applied property value.
    */
    int GetCurrentPropertyData(const char* name, long& data)
    {
@@ -716,7 +716,7 @@ public:
    }
 
    /**
-   * Rrefresh the entire state of the device and synchrnize property values with
+   * Rrefresh the entire state of the device and synchronize property values with
    * the actual state of the hardware.
    */
    int UpdateStatus()
@@ -768,7 +768,7 @@ public:
          SetMorePropertyErrorInfo("");
          // native message
          CDeviceUtils::CopyLimitedString(text, stringStreamMessage.str().c_str());
-         return true; // mesage found
+         return true; // message found
       }
    }
 
@@ -842,7 +842,7 @@ protected:
    /**
    * Output the specified text message to the log stream.
    * @param msg - message text
-   * @param debugOnly - if true the meassage will be sent only in the log-debug mode
+   * @param debugOnly - if true the message will be sent only in the log-debug mode
    */
    int LogMessage(const char* msg, bool debugOnly = false) const
    {
@@ -854,7 +854,7 @@ protected:
    /**
    * Output the specified text message to the log stream.
    * @param msg - message text
-   * @param debugOnly - if true the meassage will be sent only in the log-debug mode
+   * @param debugOnly - if true the message will be sent only in the log-debug mode
    */
    int LogMessage(const std::string& msg, bool debugOnly = false) const
    {
@@ -866,7 +866,7 @@ protected:
    /**
    * Output the  text message of specified code to the log stream.
    * @param errorCode - error code
-   * @param debugOnly - if true the meassage will be sent only in the log-debug mode
+   * @param debugOnly - if true the message will be sent only in the log-debug mode
    */
    int LogMessageCode(const int errorCode, bool debugOnly = false) const
    {
@@ -884,9 +884,9 @@ protected:
    * Outputs time difference between two time stamps.
    * Handy for hardware profiling
    * @param start - Time stamp for start of Process 
-   * @param end - Time stamp for endof Process 
+   * @param end - Time stamp for end of Process 
    * @param message - message that will be displayed in output
-   * @param debugOnly - if true the meassage will be sent only in the log-debug mode
+   * @param debugOnly - if true the message will be sent only in the log-debug mode
    */
    int LogTimeDiff(MM::MMTime start, MM::MMTime end, const std::string& message, bool debugOnly = false) const
    {
@@ -902,8 +902,8 @@ protected:
    * Outputs time difference between two time stamps.
    * Handy for hardware profiling
    * @param start - Time stamp for start of Process 
-   * @param end - Time stamp for endof Process 
-   * @param debugOnly - if true the meassage will be sent only in the log-debug mode
+   * @param end - Time stamp for end of Process 
+   * @param debugOnly - if true the message will be sent only in the log-debug mode
    */
    int LogTimeDiff(MM::MMTime start, MM::MMTime end, bool debugOnly = false) const
    {
@@ -984,7 +984,7 @@ protected:
    }
 
    /**
-   * Sends an ASCII string withe the specified terminting characters to the serial port.
+   * Sends an ASCII string withe the specified terminating characters to the serial port.
    * @param portName
    * @param command - command string
    * @param term - terminating string, e.g. CR or CR,LF, or something else
@@ -1144,7 +1144,7 @@ protected:
    }
 
    /**
-   * Check if we have callback mecahnism set up.
+   * Check if we have callback mechanism set up.
    */
    bool IsCallbackRegistered() const
    {
@@ -1295,7 +1295,7 @@ public:
 
    CCameraBase() : busy_(false), stopWhenCBOverflows_(false), thd_(0)
    {
-      // create and intialize common transpose properties
+      // create and initialize common transpose properties
       std::vector<std::string> allowedValues;
       allowedValues.push_back("0");
       allowedValues.push_back("1");
@@ -1374,7 +1374,7 @@ public:
 
    /**
     * Multi-channel cameras should provide names for their channels
-    * Single cahnnel cameras do not need to override this default implementation
+    * Single channel cameras do not need to override this default implementation
     */
    virtual int GetChannelName(unsigned /* channel */, char* name)
    {
@@ -1741,7 +1741,7 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
 
    virtual int Stop()
    {
-      // Historycally, Move() has been in this interface longer than Stop(), so
+      // Historically, Move() has been in this interface longer than Stop(), so
       // there is a chance that a stage implements Move() but not Stop(). In
       // which case zero velocity is the best thing to do.
       return Move(0.0);
@@ -1985,7 +1985,7 @@ public:
 protected:
 
    /**
-    * GetCachedXUm() and GetCachedUm() allow the device adapter to implent X and Y positions as properties
+    * GetCachedXUm() and GetCachedUm() allow the device adapter to implement X and Y positions as properties
     * more efficiently than using GetPositionUm(). Because of transpose and origin functionality the base
     * class always keeps track of current x,y position in user-coordinate system
     * Use of this method is optional and the best way to take advantage of it is to implement
