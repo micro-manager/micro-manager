@@ -18,6 +18,7 @@ import javax.swing.DefaultComboBoxModel;
 
 import java.awt.event.ItemEvent;
 import java.util.ArrayList;
+import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -43,6 +44,7 @@ public class MultiCameraFrame extends MMFrame {
    private ArrayList<String> camerasInUse_;
    private String coreCamera_;
    private boolean initialized_ = false;
+   private volatile boolean externalCameraChange_ = false;
    private static final String MIXED = "";
    private static final int MIXEDINT = -1;
    private static final String FRAMEXPOS = "FRAMEXPOS";
@@ -727,6 +729,8 @@ public class MultiCameraFrame extends MMFrame {
    }
 
     private void cameraSelectComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_cameraSelectComboBoxItemStateChanged
+       
+      
        if (!(evt.getStateChange() == ItemEvent.SELECTED)) {
           return;
        }
@@ -734,61 +738,40 @@ public class MultiCameraFrame extends MMFrame {
           return;
        }
 
-      gui_.live().setSuspended(true);
+       // since the core call to set the camera will result in a call
+       // back into our code that will set the externalCameraChange_ flag
+       // we need to record its value now
+       boolean externalCameraChange = externalCameraChange_;
+       externalCameraChange_ = false;
+ 
+
+       gui_.live().setSuspended(true);
        try {
           // Use the initialize flag to prevent pushing settings back to the hardware
           initialized(true, false);
 
           coreCamera_ = (String) cameraSelectComboBox.getSelectedItem();
-          core_.setProperty("Core", "Camera", coreCamera_);
+          String currentCamera = core_.getProperty("Core", "Camera");
+
+          if (!currentCamera.equals(coreCamera_)) {
+             core_.setProperty("Core", "Camera", coreCamera_);
+          }
           updateCamerasInUse(coreCamera_);
 
           String fsCamera = camerasInUse_.get(0);
-          
+
           adjustUIToCamera(fsCamera);
-/*
-          if (core_.hasProperty(fsCamera, MODE)) {
-             modeComboBox.setSelectedItem(getMode());
-          }
-          if (core_.hasProperty(fsCamera, EMGAIN)) {
-             int gain = getEMGain();
-             EMGainSlider.setValue(gain);
-             if (gain == MIXEDINT) {
-                EMGainTextField.setText(MIXED);
-                EMGainSlider.setEnabled(false);
-             } else {
-                EMGainTextField.setText(NumberUtils.intToDisplayString(gain));
-                EMGainSlider.setEnabled(true);
-                EMGainSlider.setValue(gain);
-             }
-          }
-          if (core_.hasProperty(fsCamera, EMSWITCH)) {
-             EMCheckBox.setSelected(getEMSwitch());
-          }
-          if (core_.hasProperty(fsCamera, AMPGAIN)) {
-             getComboSelection(gainComboBox, AMPGAIN);
-          }
-          if (core_.hasProperty(fsCamera, SPEED)) {
-             getComboSelection(speedComboBox, SPEED);
-          }
-          if (core_.hasProperty(fsCamera, FRAMETRANSFER)) {
-             getComboSelection(frameTransferComboBox, FRAMETRANSFER);
-          }
-          if (core_.hasProperty(fsCamera, TRIGGER)) {
-             getComboSelection(triggerComboBox, TRIGGER);
-          }
-        */
           updateTemp();
           initialized(true, true);
 
        } catch (Exception ex) {
           gui_.logs().showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
-       }
-       finally {
+       } finally {
           gui_.live().setSuspended(false);
        }
-
-       gui_.app().refreshGUI();
+       if (!externalCameraChange) {
+          gui_.app().refreshGUI();
+       }
     }//GEN-LAST:event_cameraSelectComboBoxItemStateChanged
 
     private void modeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modeComboBoxActionPerformed
@@ -911,12 +894,20 @@ public class MultiCameraFrame extends MMFrame {
 
    @Subscribe
    public void onPropertyChanged(PropertyChangedEvent event) {
-      String device = event.getDevice();
-      String property = event.getProperty();
-      String value = event.getValue();
+      final String device = event.getDevice();
+      final String property = event.getProperty();
+      final String value = event.getValue();
       try {
-         if (device.equals("Core") && property.equals("Camera") )
-            cameraSelectComboBox.setSelectedItem(value);
+         if (device.equals("Core") && property.equals("Camera") && 
+                 !value.equals(cameraSelectComboBox.getSelectedItem() ) ) {
+            SwingUtilities.invokeLater(new Runnable() {
+               @Override
+               public void run() {
+                  externalCameraChange_ = true;
+                  cameraSelectComboBox.setSelectedItem(value);
+               }
+            });
+         }
       } catch (Exception ex) {
       }
    }
@@ -930,5 +921,6 @@ public class MultiCameraFrame extends MMFrame {
          gui_.logs().logError(ex);
       }
    }
+
 
 }
