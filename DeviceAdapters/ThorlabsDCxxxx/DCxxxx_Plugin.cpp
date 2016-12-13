@@ -55,7 +55,11 @@ MODULE_API void InitializeModuleData()
 	RegisterDevice(g_DeviceDC2xxxName, MM::ShutterDevice, "DC2010/DC2100 High Power LED Driver");
 	RegisterDevice(g_DeviceDC3100Name, MM::ShutterDevice, "DC3100 FLIM LED Driver");
 	RegisterDevice(g_DeviceDC4100Name, MM::ShutterDevice, "DC4100 Four channel LED Driver");
+
+// DC2200 uses the TLDC2200 driver which exists only for windows
+#if _WIN32 
 	RegisterDevice(g_DeviceDC2200Name, MM::ShutterDevice, "DC2200 High Power LED Driver");
+#endif
 }
 
 /*---------------------------------------------------------------------------
@@ -78,10 +82,13 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	{
 		return new DC4100(g_DeviceDC4100Name);
 	}
+
+#if _WIN32 
 	else if(strcmp(deviceName, g_DeviceDC2200Name) == 0)
 	{
 		return new DC2200(g_DeviceDC2200Name);
 	}
+#endif
 
 	return 0;
 }
