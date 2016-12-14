@@ -67,8 +67,10 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private static final String SHOW_IMAGES = "ShowImages";
    private static final String SCORING_METHOD = "Maximize";
    private static final String showValues[] = {"Yes", "No"};
-   private final static String scoringMethods[] = {"Edges", "StdDev", "Mean", "NormalizedVariance",
-      "SharpEdges", "Redondo", "Volath", "Volath5", "MedianEdges", "FFTBandpass"};
+   private final static String scoringMethods[] = {"Edges", "StdDev", "Mean", 
+      "NormalizedVariance", "SharpEdges", "Redondo", "Volath", "Volath5", 
+      "MedianEdges", "Tenengrad", "FFTBandpass"
+   };
    private final static String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
    private final static String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
    private double searchRange = 10;
@@ -474,6 +476,31 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       return sum;
    }
 
+   
+   /**
+    * From "Autofocusing Algorithm Selection in Computer Microscopy" (doi: 10.1109/IROS.2005.1545017)
+    * 2016 paper (doi:10.1038/nbt.3708) concludes this is best  most non-spectral metric
+    *   for their light sheet microscopy application
+    * @author Jon
+    */
+   private double computeTenengrad(ImageProcessor proc) {
+      int h = proc.getHeight();
+      int w = proc.getWidth();
+      double sum = 0.0;
+      int[] ken1 = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+      int[] ken2 = {1, 2, 1, 0, 0, 0, -1, -2, -1};
+
+      ImageProcessor proc2 = proc.duplicate();
+      proc.convolve3x3(ken1);
+      proc2.convolve3x3(ken2);
+      for (int i=0; i<w; i++){
+         for (int j=0; j<h; j++){
+            sum += Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2);
+         }
+      }
+      return sum;
+   }
+
    /**
     * Per suggestion of William "Bill" Mohler @ UConn.  Returns the power in a
     * specified band of spatial frequencies via the FFT.  Key according to Bill is
@@ -526,6 +553,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          return computeVolath5(proc);
       } else if (scoringMethod.contentEquals("MedianEdges")) {
          return computeMedianEdges(proc);
+      } else if (scoringMethod.contentEquals("Tenengrad")) {
+         return computeTenengrad(proc);
       } else if (scoringMethod.contentEquals("FFTBandpass")) {
          return computeFFTBandpass(proc);
       } else {
