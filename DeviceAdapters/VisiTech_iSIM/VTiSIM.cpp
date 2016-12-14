@@ -118,7 +118,7 @@ int VTiSIMHub::Initialize()
    DWORD err = vti_GetDllVersionInfo(&major, &minor, &rev, &build);
    if (err == VTI_SUCCESS)
    {
-      char s[MM::MaxStrLength];
+      char s[MM::MaxStrLength + 1];
       snprintf(s, MM::MaxStrLength, "%d.%d.%d.%d",
          (int)major, (int)minor, (int)rev, (int)build);
       int err = CreateStringProperty("DLLVersion", s, true);
@@ -314,7 +314,7 @@ VTiSIMLasers::~VTiSIMLasers()
 
 int VTiSIMLasers::Initialize()
 {
-   char s[MM::MaxStrLength];
+   char s[MM::MaxStrLength + 1];
    for (long i = 0; i < nChannels; ++i)
    {
       snprintf(s, MM::MaxStrLength, "Laser-%ld", i);
@@ -688,7 +688,7 @@ int VTiSIMScanner::DoSetScanWidth(int width)
       scanOffset_ = newMaxOffset;
    }
    int err = SetPropertyLimits(g_PropName_ScanOffset, 0, newMaxOffset);
-   char s[MM::MaxStrLength];
+   char s[MM::MaxStrLength + 1];
    snprintf(s, MM::MaxStrLength, "%d", scanOffset_);
    err = OnPropertyChanged(g_PropName_ScanOffset, s);
    if (err != DEVICE_OK)
@@ -763,7 +763,7 @@ int VTiSIMScanner::DoStartStopScan(bool shouldScan)
    if (newActualRate != actualRate_)
    {
       actualRate_ = newActualRate;
-      char s[MM::MaxStrLength];
+      char s[MM::MaxStrLength + 1];
       snprintf(s, MM::MaxStrLength, "%f", static_cast<double>(actualRate_));
       int mmerr = OnPropertyChanged(g_PropName_ActualRate, s);
       if (mmerr != DEVICE_OK)
@@ -836,7 +836,7 @@ int VTiSIMPinholeArray::Initialize()
       return err;
    for (int i = 0; i < nSizes; ++i)
    {
-      char s[MM::MaxStrLength];
+      char s[MM::MaxStrLength + 1];
       snprintf(s, MM::MaxStrLength, "%d", GetPinholeSizeUmForIndex(i));
       err = AddAllowedValue(g_PropName_PinholeSize, s);
       if (err != DEVICE_OK)
@@ -1001,7 +1001,7 @@ int VTiSIMPinholeArray::DoSetFinePosition(int position, int backlashComp)
 
    curFinePosition_ = position;
 
-   char s[MM::MaxStrLength];
+   char s[MM::MaxStrLength + 1];
    snprintf(s, MM::MaxStrLength, "%d", curFinePosition_);
    int mmerr = OnPropertyChanged(g_PropName_FinePosition, s);
    if (mmerr != DEVICE_OK)
