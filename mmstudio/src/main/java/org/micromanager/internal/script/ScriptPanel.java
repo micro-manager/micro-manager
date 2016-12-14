@@ -124,8 +124,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    private static final String EXT_POS = "bsh";
    private static final String EXT_ACQ = "xml";
    private static final String APP_NAME = "MMScriptPanel";
-   private static final String blackStyleName_ = "blackStyle";
-   private static final String redStyleName_ = "Red";
+   private static final String BLACK_STYLE_NAME = "blackStyle";
+   private static final String RED_STYLE_NAME = "Red";
    private final MMStudio gui_;
 
    /*
@@ -133,7 +133,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
     */
    private class ScriptTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
-      private static final int columnCount_ = 1;
+      private static final int COLUMN_COUNT = 1;
       private ArrayList<File> scriptFileArray_;
       private ArrayList<Long> lastModArray_;
 
@@ -162,8 +162,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       {
          int index = scriptFileArray_.indexOf(f);
          if (index >= 0) {
-            cellAddress[0] = index / columnCount_;
-            cellAddress[1] = index % columnCount_;
+            cellAddress[0] = index / COLUMN_COUNT;
+            cellAddress[1] = index % COLUMN_COUNT;
          }
       }
 
@@ -175,31 +175,31 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
 
       public void RemoveScript(int rowNumber, int columnNumber) {
          if ((rowNumber >= 0) && (isScriptAvailable(rowNumber, columnNumber)) ) {
-            scriptFileArray_.remove((rowNumber * columnCount_) + columnNumber);
-            lastModArray_.remove((rowNumber * columnCount_) + columnNumber);
+            scriptFileArray_.remove((rowNumber * COLUMN_COUNT) + columnNumber);
+            lastModArray_.remove((rowNumber * COLUMN_COUNT) + columnNumber);
          }
       }
 
       public File getScript(int rowNumber, int columnNumber) {
          if ((rowNumber >= 0) && (columnNumber >= 0) && ( isScriptAvailable(rowNumber, columnNumber)) )
-            return scriptFileArray_.get( (rowNumber * columnCount_) + columnNumber);
+            return scriptFileArray_.get((rowNumber * COLUMN_COUNT) + columnNumber);
          return null;
       }
 
       public Long getLastMod(int rowNumber, int columnNumber) {
          if ((rowNumber >= 0) && (columnNumber >= 0) && ( isScriptAvailable(rowNumber, columnNumber)) )
-            return lastModArray_.get( (rowNumber * columnCount_) + columnNumber);
+            return lastModArray_.get((rowNumber * COLUMN_COUNT) + columnNumber);
          return null;
       }
 
       public void setLastMod(int rowNumber, int columnNumber, Long lastMod) {
          if ((rowNumber >= 0) && (columnNumber >= 0) && ( isScriptAvailable(rowNumber, columnNumber)) )
-            lastModArray_.set((rowNumber * columnCount_) + columnNumber, lastMod);
+            lastModArray_.set((rowNumber * COLUMN_COUNT) + columnNumber, lastMod);
       }
 
       public boolean isScriptAvailable(int rowNumber, int columnNumber) {
          return (rowNumber >= 0) && (columnNumber >=0) && 
-                 ((rowNumber * columnCount_) + columnNumber) < scriptFileArray_.size();
+                 ((rowNumber * COLUMN_COUNT) + columnNumber) < scriptFileArray_.size();
       }
 
       public ArrayList<File> getFileArray() {
@@ -209,13 +209,13 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       @Override
       public int getRowCount() {
          if (scriptFileArray_ != null)
-            return (int) Math.ceil (((double)scriptFileArray_.size() / (double) columnCount_));
+            return (int) Math.ceil (((double)scriptFileArray_.size() / (double) COLUMN_COUNT));
          return 0;
       }
 
       @Override
       public int getColumnCount() {
-         return columnCount_;
+         return COLUMN_COUNT;
       }
 
       @Override
@@ -226,7 +226,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (rowIndex >= 0 && (isScriptAvailable(rowIndex, columnIndex) )) {
-            return scriptFileArray_.get((rowIndex * columnCount_) + columnIndex).getName();
+            return scriptFileArray_.get((rowIndex * COLUMN_COUNT) + columnIndex).getName();
          } 
          return null;
       }
@@ -399,7 +399,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       Dimension buttonSize = new Dimension(80, buttonHeight);
       int gap = 5; // determines gap between buttons
 
-      loadAndRestorePosition(100, 100, 550, 495);
+      super.loadAndRestorePosition(100, 100, 550, 495);
 
       final JPanel leftPanel = new JPanel();
       SpringLayout spLeft = new SpringLayout();
@@ -534,9 +534,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       // Set up styles for the messagePane
       sc_ = new StyleContext();
       Style blackStyle = messagePane_.getLogicalStyle();
-      blackStyle = sc_.addStyle(blackStyleName_, blackStyle);
+      blackStyle = sc_.addStyle(BLACK_STYLE_NAME, blackStyle);
       StyleConstants.setForeground(blackStyle, Color.black);
-      Style redStyle = sc_.addStyle(redStyleName_, null);
+      Style redStyle = sc_.addStyle(RED_STYLE_NAME, null);
       StyleConstants.setForeground(redStyle, Color.red);
 
       // disable user input to the messagePane
@@ -1225,7 +1225,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             ReportingUtils.logError(ex, "Error in Scriptpanel member function messageException");
          }
       }
-      messagePane_.setCharacterAttributes(sc_.getStyle(redStyleName_), false);
+      messagePane_.setCharacterAttributes(sc_.getStyle(RED_STYLE_NAME), false);
       messagePane_.replaceSelection(text + "\n");
       cons_.print("\n"+text,java.awt.Color.red);
       showPrompt();
@@ -1439,8 +1439,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    }
 
    private void showMessage(String text) {
-      messagePane_.setCharacterAttributes(
-         sc_.getStyle(blackStyleName_), false);
+      messagePane_.setCharacterAttributes(sc_.getStyle(BLACK_STYLE_NAME), false);
       messagePane_.replaceSelection(text + "\n");
       cons_.print("\n" + text, DaytimeNighttime.getInstance().getEnabledTextColor());
       showPrompt();
@@ -1485,8 +1484,14 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       catch (EvalError e) {
          message("Reset of BeanShell interpreter failed");
       }
-      // Apparently clear() also erases bsh.console, which we need
-      beanshellREPLint_.setConsole(cons_);
+      try {
+         // Apparently clear() also erases bsh.console, which we need
+         beanshellREPLint_.setConsole(cons_);
+         // this call appears to fail on linux so catch the error that was reported:
+      } catch (bsh.InterpreterError bi) {
+         ReportingUtils.logError("Called to Beanshell setConsole failed. Probably inocuous." 
+                 + bi.getMessage());
+      }
 
       initializeInterpreter();
    }
