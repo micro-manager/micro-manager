@@ -369,6 +369,7 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AmScope", "DeviceAdapters\AmScope\AmScope.vcxproj", "{BC02359B-2485-413C-ABAF-54CA71E650E5}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "USB_Viper_QPL", "DeviceAdapters\USB_Viper_QPL\USB_Viper_QPL.vcxproj", "{9EFC3E5C-9172-4AA9-A258-787E9A432F9D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VisiTech_iSIM", "DeviceAdapters\VisiTech_iSIM\VisiTech_iSIM.vcxproj", "{641D9549-0A15-4A98-9895-FDD19B380376}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1825,6 +1826,12 @@ Global
 		{9EFC3E5C-9172-4AA9-A258-787E9A432F9D}.Release|Win32.Build.0 = Release|Win32
 		{9EFC3E5C-9172-4AA9-A258-787E9A432F9D}.Release|x64.ActiveCfg = Release|x64
 		{9EFC3E5C-9172-4AA9-A258-787E9A432F9D}.Release|x64.Build.0 = Release|x64
+		{641D9549-0A15-4A98-9895-FDD19B380376}.Debug|Win32.ActiveCfg = Debug|x64
+		{641D9549-0A15-4A98-9895-FDD19B380376}.Debug|x64.ActiveCfg = Debug|x64
+		{641D9549-0A15-4A98-9895-FDD19B380376}.Debug|x64.Build.0 = Debug|x64
+		{641D9549-0A15-4A98-9895-FDD19B380376}.Release|Win32.ActiveCfg = Release|x64
+		{641D9549-0A15-4A98-9895-FDD19B380376}.Release|x64.ActiveCfg = Release|x64
+		{641D9549-0A15-4A98-9895-FDD19B380376}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
