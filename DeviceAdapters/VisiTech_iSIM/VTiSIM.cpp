@@ -31,6 +31,15 @@
 const char* const g_DeviceName_Hub = "VTiSIMHub";
 const char* const g_DeviceName_LaserShutter = "LaserShutter";
 const char* const g_DeviceName_Lasers = "Lasers";
+const char* const g_DeviceName_Scanner = "Scanner";
+
+const char* const g_PropName_Scanning = "Scanning";
+const char* const g_PropName_ScanRate = "Scan Rate (Hz)";
+const char* const g_PropName_ScanWidth = "Scan Width";
+const char* const g_PropName_ScanOffset = "Scan Offset";
+const char* const g_PropName_ActualRate = "Actual Scan Rate (Hz)";
+const char* const g_PropVal_Off = "Off";
+const char* const g_PropVal_On = "On";
 
 
 MODULE_API void InitializeModuleData()
@@ -50,6 +59,8 @@ MODULE_API MM::Device* CreateDevice(const char* name)
       return new VTiSIMLaserShutter();
    if (strcmp(name, g_DeviceName_Lasers) == 0)
       return new VTiSIMLasers();
+   if (strcmp(name, g_DeviceName_Scanner) == 0)
+      return new VTiSIMScanner();
 
    return 0;
 }
@@ -138,12 +149,19 @@ bool VTiSIMHub::Busy()
 int VTiSIMHub::DetectInstalledDevices()
 {
    ClearInstalledDevices();
+
    MM::Device* pDev = new VTiSIMLaserShutter();
    if (pDev)
       AddInstalledDevice(pDev);
+
    pDev = new VTiSIMLasers();
    if (pDev)
       AddInstalledDevice(pDev);
+
+   pDev = new VTiSIMScanner();
+   if (pDev)
+      AddInstalledDevice(pDev);
+
    return DEVICE_OK;
 }
 
@@ -241,6 +259,11 @@ int VTiSIMLaserShutter::DoSetOpen(bool open)
    if (err != VTI_SUCCESS)
       return err;
    isOpen_ = open;
+
+   int mmerr = OnPropertyChanged(MM::g_Keyword_State, open ? "1" : "0");
+   if (mmerr != DEVICE_OK)
+      return mmerr;
+
    return DEVICE_OK;
 }
 
@@ -395,5 +418,342 @@ int VTiSIMLasers::DoSetIntensity(int chan, int percentage)
    if (err != VTI_SUCCESS)
       return err;
    intensities_[chan] = percentage;
+   return DEVICE_OK;
+}
+
+
+VTiSIMScanner::VTiSIMScanner() :
+   minRate_(1),
+   maxRate_(1000),
+   minWidth_(0),
+   maxWidth_(4095),
+   scanRate_(150),
+   scanWidth_(1600),
+   scanOffset_(0), // 0 is always an allowed offset
+   actualRate_(0.0f)
+{
+   SetErrorText(VTI_ERR_TIMEOUT_OCCURRED, "Timeout occurred");
+   SetErrorText(VTI_ERR_DEVICE_NOT_FOUND, "Device not found");
+   SetErrorText(VTI_ERR_NOT_INITIALISED, "Device not initialized");
+   SetErrorText(VTI_ERR_NOT_SUPPORTED, "Operation not supported");
+}
+
+
+VTiSIMScanner::~VTiSIMScanner()
+{
+}
+
+
+int VTiSIMScanner::Initialize()
+{
+   int err = CreateStringProperty(g_PropName_Scanning, g_PropVal_Off, false,
+      new CPropertyAction(this, &VTiSIMScanner::OnStartStop));
+   if (err != DEVICE_OK)
+      return err;
+   err = AddAllowedValue(g_PropName_Scanning, g_PropVal_Off);
+   if (err != DEVICE_OK)
+      return err;
+   err = AddAllowedValue(g_PropName_Scanning, g_PropVal_On);
+   if (err != DEVICE_OK)
+      return err;
+
+   DWORD vterr = vti_GetScanRateRange(VTiHub()->GetScanAndMotorHandle(),
+      &minRate_, &maxRate_);
+   if (vterr != VTI_SUCCESS)
+      return vterr;
+   if (scanRate_ < minRate_)
+      scanRate_ = minRate_;
+   if (scanRate_ > maxRate_)
+      scanRate_ = maxRate_;
+   err = CreateIntegerProperty(g_PropName_ScanRate, scanRate_, false,
+      new CPropertyAction(this, &VTiSIMScanner::OnScanRate));
+   if (err != DEVICE_OK)
+      return err;
+   err = SetPropertyLimits(g_PropName_ScanRate, minRate_, maxRate_);
+   if (err != DEVICE_OK)
+      return err;
+
+   vterr = vti_GetScanWidthRange(VTiHub()->GetScanAndMotorHandle(),
+      &minWidth_, &maxWidth_);
+   if (vterr != VTI_SUCCESS)
+      return vterr;
+   if (scanWidth_ < minWidth_)
+      scanWidth_ = minWidth_;
+   if (scanWidth_ > maxWidth_)
+      scanWidth_ = maxWidth_;
+   err = CreateIntegerProperty(g_PropName_ScanWidth, scanWidth_, false,
+      new CPropertyAction(this, &VTiSIMScanner::OnScanWidth));
+   if (err != DEVICE_OK)
+      return err;
+   err = SetPropertyLimits(g_PropName_ScanWidth, minWidth_, maxWidth_);
+   if (err != DEVICE_OK)
+      return err;
+
+   err = CreateFloatProperty(g_PropName_ActualRate, actualRate_, true,
+      new CPropertyAction(this, &VTiSIMScanner::OnActualScanRate));
+   if (err != DEVICE_OK)
+      return err;
+
+   err = CreateIntegerProperty(g_PropName_ScanOffset, scanOffset_, false,
+      new CPropertyAction(this, &VTiSIMScanner::OnScanOffset));
+   if (err != DEVICE_OK)
+      return err;
+   err = SetPropertyLimits(g_PropName_ScanOffset, 0, GetMaxOffset());
+   if (err != DEVICE_OK)
+      return err;
+   
+   return DoStartStopScan(false);
+}
+
+
+int VTiSIMScanner::Shutdown()
+{
+   return DoStartStopScan(false);
+}
+
+
+void VTiSIMScanner::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_DeviceName_Scanner);
+}
+
+
+bool VTiSIMScanner::Busy()
+{
+   return false;
+}
+
+
+int VTiSIMScanner::OnScanRate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(static_cast<long>(scanRate_));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long v;
+      pProp->Get(v);
+      if (v == scanRate_)
+         return DEVICE_OK;
+      return DoSetScanRate(v);
+   }
+   return DEVICE_OK;
+}
+
+
+int VTiSIMScanner::OnScanWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(static_cast<long>(scanWidth_));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long v;
+      pProp->Get(v);
+      if (v == scanWidth_)
+         return DEVICE_OK;
+      return DoSetScanWidth(v);
+   }
+   return DEVICE_OK;
+}
+
+
+int VTiSIMScanner::OnScanOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(static_cast<long>(scanOffset_));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long v;
+      pProp->Get(v);
+      if (v == scanOffset_)
+         return DEVICE_OK;
+      return DoSetScanOffset(v);
+   }
+   return DEVICE_OK;
+}
+
+
+int VTiSIMScanner::OnStartStop(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      bool scanning;
+      int err = DoGetScanning(scanning);
+      if (err != DEVICE_OK)
+         return err;
+      pProp->Set(scanning ? g_PropVal_On : g_PropVal_Off);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string s;
+      pProp->Get(s);
+      bool shouldScan = (s == g_PropVal_On);
+      bool scanning;
+      int err = DoGetScanning(scanning);
+      if (err != DEVICE_OK)
+         return err;
+      if (shouldScan == scanning)
+         return DEVICE_OK;
+      return DoStartStopScan(shouldScan);
+   }
+   return DEVICE_OK;
+}
+
+
+int VTiSIMScanner::OnActualScanRate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(static_cast<double>(actualRate_));
+   }
+   return DEVICE_OK;
+}
+
+
+VTiSIMHub* VTiSIMScanner::VTiHub()
+{
+   return static_cast<VTiSIMHub*>(GetParentHub());
+}
+
+
+int VTiSIMScanner::DoSetScanRate(int rateHz)
+{
+   if (rateHz < minRate_)
+      rateHz = minRate_;
+   if (rateHz > maxRate_)
+      rateHz = maxRate_;
+
+   scanRate_ = rateHz;
+
+   bool scanning;
+   int err = DoGetScanning(scanning);
+   if (err != DEVICE_OK)
+      return err;
+
+   if (scanning)
+   {
+      err = DoStartStopScan(true);
+      if (err != DEVICE_OK)
+         return err;
+   }
+
+   return DEVICE_OK;
+}
+
+
+int VTiSIMScanner::DoSetScanWidth(int width)
+{
+   if (width < minWidth_)
+      width = minWidth_;
+   if (width > maxWidth_)
+      width = maxWidth_;
+
+   scanWidth_ = width;
+
+   // Update offset range (and value, if necessary)
+   int newMaxOffset = GetMaxOffset();
+   if (scanOffset_ > newMaxOffset)
+   {
+      scanOffset_ = newMaxOffset;
+   }
+   int err = SetPropertyLimits(g_PropName_ScanOffset, 0, newMaxOffset);
+   char s[MM::MaxStrLength];
+   snprintf(s, MM::MaxStrLength, "%d", scanOffset_);
+   err = OnPropertyChanged(g_PropName_ScanOffset, s);
+   if (err != DEVICE_OK)
+      return err;
+
+   bool scanning;
+   err = DoGetScanning(scanning);
+   if (err != DEVICE_OK)
+      return err;
+
+   if (scanning)
+   {
+      err = DoStartStopScan(true);
+      if (err != DEVICE_OK)
+         return err;
+   }
+
+   return DEVICE_OK;
+}
+
+
+int VTiSIMScanner::DoSetScanOffset(int offset)
+{
+   if (offset < 0)
+      offset = 0;
+   if (offset > GetMaxOffset())
+      offset = GetMaxOffset();
+
+   scanOffset_ = offset;
+
+   bool scanning;
+   int err = DoGetScanning(scanning);
+   if (err != DEVICE_OK)
+      return err;
+
+   if (scanning)
+   {
+      err = DoStartStopScan(true);
+      if (err != DEVICE_OK)
+         return err;
+   }
+
+   return DEVICE_OK;
+}
+
+
+int VTiSIMScanner::DoStartStopScan(bool shouldScan)
+{
+   float newActualRate = 0.0f;
+
+   if (shouldScan)
+   {
+      DWORD err = vti_StartScan(VTiHub()->GetScanAndMotorHandle(),
+         scanRate_, scanWidth_, scanOffset_);
+      if (err != VTI_SUCCESS)
+         return err;
+
+      err = vti_GetActualScanRate(VTiHub()->GetScanAndMotorHandle(),
+         &newActualRate);
+      if (err != VTI_SUCCESS)
+         return err;
+   }
+   else
+   {
+      DWORD err = vti_StopScan(VTiHub()->GetScanAndMotorHandle());
+      if (err != VTI_SUCCESS)
+         return err;
+
+      newActualRate = 0.0f;
+   }
+
+   if (newActualRate != actualRate_)
+   {
+      actualRate_ = newActualRate;
+      char s[MM::MaxStrLength];
+      snprintf(s, MM::MaxStrLength, "%f", static_cast<double>(actualRate_));
+      int mmerr = OnPropertyChanged(g_PropName_ActualRate, s);
+      if (mmerr != DEVICE_OK)
+         return mmerr;
+   }
+
+   return DEVICE_OK;
+}
+
+
+int VTiSIMScanner::DoGetScanning(bool& scanning)
+{
+   BOOL flag;
+   DWORD err = vti_IsScanning(VTiHub()->GetScanAndMotorHandle(), &flag);
+   if (err != VTI_SUCCESS)
+      return err;
+   scanning = (flag != FALSE);
    return DEVICE_OK;
 }

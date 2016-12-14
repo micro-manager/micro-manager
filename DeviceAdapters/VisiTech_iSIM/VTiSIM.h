@@ -104,3 +104,43 @@ private:
    int curChan_;
    int intensities_[nChannels];
 };
+
+
+class VTiSIMScanner : public CGenericBase<VTiSIMScanner>
+{
+public:
+   VTiSIMScanner();
+   virtual ~VTiSIMScanner();
+
+   virtual int Initialize();
+   virtual int Shutdown();
+   virtual void GetName(char* name) const;
+   virtual bool Busy();
+
+private:
+   int OnScanRate(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStartStop(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnActualScanRate(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   VTiSIMHub* VTiHub();
+   int DoSetScanRate(int rateHz);
+   int DoSetScanWidth(int width);
+   int DoSetScanOffset(int offset);
+   int DoStartStopScan(bool shouldScan);
+   int DoGetScanning(bool& scanning);
+
+   int GetMaxOffset() const
+   { return (maxWidth_ - scanWidth_) / 2; }
+
+private:
+   LONG minRate_, maxRate_;
+   LONG minWidth_, maxWidth_;
+
+   int scanRate_;
+   int scanWidth_;
+   int scanOffset_;
+   float actualRate_;
+};
