@@ -104,6 +104,16 @@ int VTiSIMHub::Initialize()
          return err;
    }
 
+   LONG major, minor, rev, build;
+   DWORD err = vti_GetDllVersionInfo(&major, &minor, &rev, &build);
+   if (err == VTI_SUCCESS)
+   {
+      char s[MM::MaxStrLength];
+      snprintf(s, MM::MaxStrLength, "%d.%d.%d.%d",
+         (int)major, (int)minor, (int)rev, (int)build);
+      int err = CreateStringProperty("DLLVersion", s, true);
+   }
+
    return DEVICE_OK;
 }
 
