@@ -32,6 +32,10 @@
 
 package org.micromanager.plugins.snaponmove;
 
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMap.PropertyMapBuilder;
+import org.micromanager.plugins.snaponmove.MonitoredItem.XYMonitoredItem;
+import org.micromanager.plugins.snaponmove.MonitoredItem.ZMonitoredItem;
 import org.micromanager.plugins.snaponmove.MonitoredValue.MonitoredFloatValue;
 import org.micromanager.plugins.snaponmove.MonitoredValue.MonitoredXYValue;
 
@@ -62,6 +66,46 @@ abstract class ChangeCriterion {
 
    abstract MonitoredItem getMonitoredItem();
    abstract boolean testForChange(MonitoredValue oldValue, MonitoredValue newValue);
+
+   private static final String SER_CLASS = "Class";
+   private static final String SER_REQUIRES_POLLING = "Requires poling";
+   private static final String SER_MONITORED_ITEM = "Monitored item";
+   private static final String SER_THRESHOLD = "Threshold";
+
+   void serialize(PropertyMapBuilder pmb) {
+      pmb.putString(SER_CLASS, this.getClass().getSimpleName());
+      pmb.putBoolean(SER_REQUIRES_POLLING, requiresPolling_);
+   }
+
+   static ChangeCriterion deserialize(PropertyMap pm) {
+      String theClass = pm.getString(SER_CLASS, null);
+      String itemStr = pm.getString(SER_MONITORED_ITEM, null);
+      if (theClass == null || itemStr == null) {
+         return null;
+      }
+      MonitoredItem item = MonitoredItem.fromString(itemStr);
+      if (item == null || item.getDeviceLabel() == null) {
+         return null;
+      }
+
+      if (theClass.equals("ZDistanceCriterion")) {
+         if (!(item instanceof ZMonitoredItem)) {
+            return null; // inconsistent
+         }
+         return createZDistanceCriterion(item.getDeviceLabel(),
+               pm.getDouble(SER_THRESHOLD, 0.1),
+               pm.getBoolean(SER_REQUIRES_POLLING, false));
+      }
+      else if (theClass.equals("XYDistanceCriterion")) {
+         if (!(item instanceof XYMonitoredItem)) {
+            return null;
+         }
+         return createXYDistanceCriterion(item.getDeviceLabel(),
+               pm.getDouble(SER_THRESHOLD, 0.1),
+               pm.getBoolean(SER_REQUIRES_POLLING, false));
+      }
+      return null;
+   }
 
    protected String requiresPollingStringSuffix() {
       return requiresPolling_ ? " (poll)" : "";
@@ -107,6 +151,13 @@ abstract class ChangeCriterion {
          else {
             throw new IllegalArgumentException(); // Programming error
          }
+      }
+
+      @Override
+      void serialize(PropertyMapBuilder pmb) {
+         super.serialize(pmb);
+         pmb.putString(SER_MONITORED_ITEM, item_.toString());
+         pmb.putDouble(SER_THRESHOLD, threshold_);
       }
    }
 
@@ -154,6 +205,13 @@ abstract class ChangeCriterion {
          else {
             throw new IllegalArgumentException(); // Programming error
          }
+      }
+
+      @Override
+      void serialize(PropertyMapBuilder pmb) {
+         super.serialize(pmb);
+         pmb.putString(SER_MONITORED_ITEM, item_.toString());
+         pmb.putDouble(SER_THRESHOLD, threshold_);
       }
    }
 }

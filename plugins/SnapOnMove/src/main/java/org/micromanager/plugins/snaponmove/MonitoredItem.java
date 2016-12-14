@@ -60,7 +60,8 @@ abstract class MonitoredItem {
    /**
     * Return a string uniquely representing the item.
     *
-    * (This string representation is used for equality and hash computation.)
+    * (This string representation is used for equality, hash computation,
+    * and serialization. See fromString().)
     *
     * @return string representation of the item
     */
@@ -100,6 +101,32 @@ abstract class MonitoredItem {
       return new XYMonitoredItem(label);
    }
 
+   private static final String Z_ITEM_SER_PREFIX = "ZPOS,";
+   private static final String XY_ITEM_SER_PREFIX = "XYPOS,";
+
+   /**
+    * Reverse the effect of toString().
+    *
+    * @param serialized serialized string
+    * @return MonitoredItem, or null if parsing failed
+    */
+   static MonitoredItem fromString(String serialized) {
+      // The format is
+      // ZPOS,<device label>
+      // XYPOS,<device label>
+      // Potential extension:
+      // PROP,<device label>,<prop name>
+      if (serialized.startsWith(Z_ITEM_SER_PREFIX)) {
+         String deviceLabel = serialized.substring(Z_ITEM_SER_PREFIX.length());
+         return createZItem(deviceLabel);
+      }
+      else if (serialized.startsWith(XY_ITEM_SER_PREFIX)) {
+         String deviceLabel = serialized.substring(XY_ITEM_SER_PREFIX.length());
+         return createXYItem(deviceLabel);
+      }
+      return null;
+   }
+
    static class ZMonitoredItem extends MonitoredItem {
       private ZMonitoredItem(String label) {
          super(label);
@@ -107,7 +134,7 @@ abstract class MonitoredItem {
 
       @Override
       public String toString() {
-         return super.toString() + ",,ZPOS";
+         return Z_ITEM_SER_PREFIX + super.toString();
       }
 
       @Override
@@ -128,7 +155,7 @@ abstract class MonitoredItem {
 
       @Override
       public String toString() {
-         return super.toString() + ",,XYPOS";
+         return XY_ITEM_SER_PREFIX + super.toString();
       }
 
       @Override
