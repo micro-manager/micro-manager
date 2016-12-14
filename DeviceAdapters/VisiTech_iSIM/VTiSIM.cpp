@@ -344,6 +344,10 @@ int VTiSIMLasers::Initialize()
       err = SetPropertyLimits(s, 0, 100);
       if (err != DEVICE_OK)
          return err;
+
+      err = DoSetIntensity(i, intensities_[i]);
+      if (err != DEVICE_OK)
+         return err;
    }
 
    // Sync with our memory of state
