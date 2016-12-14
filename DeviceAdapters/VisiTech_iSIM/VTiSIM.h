@@ -161,17 +161,20 @@ public:
 private:
    int OnFinePosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPinholeSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBacklashCompensation(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    VTiSIMHub* VTiHub();
    int DoGetPinholePositions(int* positions);
-   int DoSetFinePosition(int position);
+   int DoSetFinePosition(int position, int backlashComp = 0);
    int GetNearestPinholeIndex(int finePosition) const;
    int GetPinholeSizeUmForIndex(int index) const;
    int GetPinholeSizeIndex(int sizeUm) const;
+   int ClipFinePositionToMotorRange(int finePosition) const;
 
 private:
    int pinholePositions_[nSizes];
    LONG minFinePosition_, maxFinePosition_;
    int curFinePosition_;
+   int backlashCompensation_;
 };

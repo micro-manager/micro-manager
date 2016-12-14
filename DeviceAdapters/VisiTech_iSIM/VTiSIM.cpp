@@ -45,6 +45,7 @@ const char* const g_PropName_ScanOffset = "Scan Offset";
 const char* const g_PropName_ActualRate = "Actual Scan Rate (Hz)";
 const char* const g_PropName_FinePosition = "Fine Step Position";
 const char* const g_PropName_PinholeSize = "Pinhole Size (um)";
+const char* const g_PropName_Backlash = "Backlash Compensation";
 const char* const g_PropVal_Off = "Off";
 const char* const g_PropVal_On = "On";
 
@@ -787,7 +788,8 @@ int VTiSIMScanner::DoGetScanning(bool& scanning)
 VTiSIMPinholeArray::VTiSIMPinholeArray() :
    minFinePosition_(0),
    maxFinePosition_(1),
-   curFinePosition_(6000)
+   curFinePosition_(6000),
+   backlashCompensation_(0)
 {
    memset(pinholePositions_, 0, sizeof(pinholePositions_));
 
@@ -840,6 +842,14 @@ int VTiSIMPinholeArray::Initialize()
       if (err != DEVICE_OK)
          return err;
    }
+
+   err = CreateIntegerProperty(g_PropName_Backlash, backlashCompensation_, false,
+      new CPropertyAction(this, &VTiSIMPinholeArray::OnBacklashCompensation));
+   if (err != DEVICE_OK)
+      return err;
+   err = SetPropertyLimits(g_PropName_Backlash, -500, 500);
+   if (err != DEVICE_OK)
+      return err;
 
    err = DoSetFinePosition(curFinePosition_);
    if (err != DEVICE_OK)
@@ -906,9 +916,25 @@ int VTiSIMPinholeArray::OnPinholeSize(MM::PropertyBase* pProp, MM::ActionType eA
       if (finePos == curFinePosition_)
          return DEVICE_OK;
 
-      int err = DoSetFinePosition(finePos);
+      int err = DoSetFinePosition(finePos, backlashCompensation_);
       if (err != DEVICE_OK)
          return err;
+   }
+   return DEVICE_OK;
+}
+
+
+int VTiSIMPinholeArray::OnBacklashCompensation(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(static_cast<long>(backlashCompensation_));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long v;
+      pProp->Get(v);
+      backlashCompensation_ = v;
    }
    return DEVICE_OK;
 }
@@ -943,12 +969,28 @@ int VTiSIMPinholeArray::DoGetPinholePositions(int* positions)
 }
 
 
-int VTiSIMPinholeArray::DoSetFinePosition(int position)
+int VTiSIMPinholeArray::DoSetFinePosition(int position, int backlashComp)
 {
-   if (position < minFinePosition_)
-      position = minFinePosition_;
-   if (position > maxFinePosition_)
-      position = maxFinePosition_;
+   position = ClipFinePositionToMotorRange(position);
+
+   // First movement destination for backlash compensation
+   int bcPos = ClipFinePositionToMotorRange(position + backlashComp);
+
+   bool needBacklashComp = true;
+   if (bcPos == position)
+      needBacklashComp = false;
+   if (bcPos > position && curFinePosition_ > bcPos)
+      needBacklashComp = false;
+   if (bcPos < position && curFinePosition_ < bcPos)
+      needBacklashComp = false;
+
+   if (needBacklashComp)
+   {
+      DWORD err = vti_MoveMotor(VTiHub()->GetScanAndMotorHandle(),
+         VTI_MOTOR_PINHOLE_ARRAY, bcPos);
+      if (err != VTI_SUCCESS)
+         return err;
+   }
 
    DWORD err = vti_MoveMotor(VTiHub()->GetScanAndMotorHandle(),
       VTI_MOTOR_PINHOLE_ARRAY, position);
@@ -1009,4 +1051,14 @@ int VTiSIMPinholeArray::GetPinholeSizeIndex(int sizeUm) const
       case 10: return VTI_PINHOLE_10_MICRON;
       default: return 0;
    }
+}
+
+
+int VTiSIMPinholeArray::ClipFinePositionToMotorRange(int finePosition) const
+{
+   if (finePosition < minFinePosition_)
+      return minFinePosition_;
+   if (finePosition > maxFinePosition_)
+      return maxFinePosition_;
+   return finePosition;
 }
