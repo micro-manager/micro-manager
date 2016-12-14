@@ -32,15 +32,75 @@ public:
    VTiSIMHub();
    virtual ~VTiSIMHub();
 
-   int Initialize();
-   int Shutdown();
-   void GetName(char* name) const;
-   bool Busy();
+   virtual int Initialize();
+   virtual int Shutdown();
+   virtual void GetName(char* name) const;
+   virtual bool Busy();
 
-   int DetectInstalledDevices();
+   virtual int DetectInstalledDevices();
+
+public:
+   HANDLE GetAOTFHandle() { return hAotfControl_; }
+   HANDLE GetScanAndMotorHandle() { return hScanAndMotorControl_; }
 
 private:
-   HANDLE hAotfControl;
-   HANDLE hScanAndMotorControl;
+   HANDLE hAotfControl_;
+   HANDLE hScanAndMotorControl_;
 };
 
+
+class VTiSIMLaserShutter : public CShutterBase<VTiSIMLaserShutter>
+{
+public:
+   VTiSIMLaserShutter();
+   virtual ~VTiSIMLaserShutter();
+
+   virtual int Initialize();
+   virtual int Shutdown();
+   virtual void GetName(char* name) const;
+   virtual bool Busy();
+
+   virtual int GetOpen(bool& open);
+   virtual int SetOpen(bool open);
+   virtual int Fire(double) { return DEVICE_UNSUPPORTED_COMMAND; }
+
+private:
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   VTiSIMHub* VTiHub();
+   int DoSetOpen(bool open);
+
+private:
+   bool isOpen_;
+};
+
+
+class VTiSIMLasers : public CStateDeviceBase<VTiSIMLasers>
+{
+public:
+   static const int nChannels = 8;
+
+public:
+   VTiSIMLasers();
+   virtual ~VTiSIMLasers();
+
+   virtual int Initialize();
+   virtual int Shutdown();
+   virtual void GetName(char* name) const;
+   virtual bool Busy();
+   virtual unsigned long GetNumberOfPositions() const;
+
+private:
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct, long chan);
+
+private:
+   VTiSIMHub* VTiHub();
+   int DoSetChannel(int chan);
+   int DoSetIntensity(int chan, int percentage);
+
+private:
+   int curChan_;
+   int intensities_[nChannels];
+};
