@@ -269,7 +269,7 @@ int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
           m_pCamera->strCam.strTiming.dwFrameRate = (DWORD)(m_dFps * 1000.0);
         }
       }
-      nErr = SetupCamera();
+      nErr = SetupCamera(false);
     }
 
     if (nErr != 0)
@@ -308,7 +308,7 @@ int CPCOCam::OnAcquireMode( MM::PropertyBase* pProp, MM::ActionType eAct )
       if(m_pCamera->iCamClass == 3)
         m_pCamera->strCam.strRecording.wAcquMode = (WORD)m_iAcquireMode;
 
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -357,7 +357,7 @@ int CPCOCam::OnTriggerMode( MM::PropertyBase* pProp, MM::ActionType eAct )
       if(m_pCamera->iCamClass == 3)
         m_pCamera->strCam.strTiming.wTriggerMode = (WORD)m_nTrig;
 
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -395,7 +395,7 @@ int CPCOCam::OnTimestampMode( MM::PropertyBase* pProp, MM::ActionType eAct )
       {
         m_pCamera->strCam.strRecording.wTimeStampMode = (WORD)m_iTimestamp;
       }
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -444,7 +444,7 @@ int CPCOCam::OnFpsMode(MM::PropertyBase* pProp, MM::ActionType eAct)
           m_pCamera->strCam.strTiming.wTimingControlMode = 0;
         }
       }
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -483,7 +483,7 @@ int CPCOCam::OnNoiseFilterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
         m_nMode &= 0xFFFFFF7F;
       else
         m_nMode |= 0x80;
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -528,7 +528,7 @@ int CPCOCam::OnDoubleShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
         m_pCamera->strCam.strSensor.wDoubleImage = (WORD)m_iDoubleShutterMode;
       }
 
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -573,7 +573,7 @@ int CPCOCam::OnIRMode(MM::PropertyBase* pProp, MM::ActionType eAct)
         m_pCamera->strCam.strSensor.wIR = (WORD)m_iIRMode;
       }
 
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -615,7 +615,7 @@ int CPCOCam::OnFps(MM::PropertyBase* pProp, MM::ActionType eAct)
           m_pCamera->strCam.strTiming.dwDelayTable[0] = 0;
         }
       }
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -658,7 +658,7 @@ int CPCOCam::OnPixelRate(MM::PropertyBase* pProp, MM::ActionType eAct)
         m_pCamera->strCam.strTiming.dwDelayTable[0] = 0;
       }
 
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -736,7 +736,7 @@ int CPCOCam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
         m_pCamera->strCam.strSensor.wBinVert = (WORD)m_nVBin;
       }
 
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
       if(nErr != 0)
       {
         return nErr;
@@ -790,7 +790,7 @@ int CPCOCam::OnEMLeftROI(MM::PropertyBase* pProp, MM::ActionType eAct)
     m_nRoiYMin = 1;
     m_nRoiXMax = roiXMaxFull_;
     m_nRoiYMax = roiYMaxFull_;
-    nErr = SetupCamera();
+    nErr = SetupCamera(true);
     if(nErr != 0)
     {
       return nErr;
@@ -818,7 +818,7 @@ int CPCOCam::OnEMLeftROI(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-int CPCOCam::SetupCamera()
+int CPCOCam::SetupCamera( bool bStopRecording )
 {
   unsigned int uiMode;
   int nErr = 0;
@@ -832,9 +832,12 @@ int CPCOCam::SetupCamera()
       return nErr;
     return DEVICE_OK;
   }
-  nErr = m_pCamera->StopCam(&istopresult);
-  if (nErr != 0)
-    return nErr;
+  if(bStopRecording)
+  {
+    nErr = m_pCamera->StopCam(&istopresult);
+    if (nErr != 0)
+      return nErr;
+  }
 
   iOffsPxr = m_iOffset;
 
@@ -853,19 +856,22 @@ int CPCOCam::SetupCamera()
       return nErr;
     nErr = m_pCamera->setcoc(m_nMode, m_nTrig, m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax,
       m_nHBin, m_nVBin, m_pszTimes, m_iGain, iOffsPxr, m_uiFlags);
+    if (nErr != 0)
+      return nErr;
   }
 
   m_bSettingsChanged = TRUE;
-  if (nErr != 0)
-    return nErr;
-  nErr = ResizeImageBuffer();
-  if (nErr != 0)
-    return nErr;
+  if (bStopRecording)
+  {
+    nErr = ResizeImageBuffer();
+    if (nErr != 0)
+      return nErr;
 
-  uiMode = 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
-  nErr = m_pCamera->PreStartCam(uiMode, 0, 0, 0);            // schaltet automatisch auf internen Trigger
-  if (nErr != 0)
-    return nErr;
+    uiMode = 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
+    nErr = m_pCamera->PreStartCam(uiMode, 0, 0, 0);            // schaltet automatisch auf internen Trigger
+    if (nErr != 0)
+      return nErr;
+  }
   //nErr = m_pCamera->StartCam();
   return nErr;
 
@@ -939,7 +945,7 @@ int CPCOCam::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
         m_iGainCam = ihelp;
         ihelp = m_nMode & 0xFF;
         m_nMode = ihelp + (m_nSubMode << 16) + (m_iGainCam << 8);
-        nErr = SetupCamera();
+        nErr = SetupCamera(true);
       }
 
       if (nErr != 0)
@@ -962,7 +968,7 @@ int CPCOCam::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
       m_iEMGain = ihelp;
       sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%d,-1,-1\r\nmg%d", (int)m_dExposure, m_iEMGain);
-      nErr = SetupCamera();
+      nErr = SetupCamera(true);
     }
 
     if (nErr != 0)
@@ -1494,7 +1500,7 @@ int CPCOCam::Initialize()
     m_nMode = imode;
   m_nSubMode = isubmode;
   m_iGain = igain;
-  nErr = SetupCamera();
+  nErr = SetupCamera(true);
   if (nErr != DEVICE_OK)
     return nErr;
   m_bInitialized = true;
@@ -1516,6 +1522,8 @@ int CPCOCam::GetSignalNum(std::string szSigName)
     isc = 3;
   return isc;
 }
+
+char szSelectSignalTiming[4][40] = {"Show time of 'First Line'", "Show common time of 'All Lines'", "Show time of 'Last Line'", "Show overall time of 'All Lines'"};
 
 int CPCOCam::OnSelectSignal(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -1548,8 +1556,30 @@ int CPCOCam::OnSelectSignal(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
         if(m_pCamera->strCam.strTiming.strSignal[isc].wSelected != (WORD)i)
         {
+          int isignal = i;
+          int iflag = 1 << isignal;
+
+          if(iflag & m_pCamera->strCam.strSensor.strSignalDesc.strSingeSignalDesc[isc].wSignalDefinitions)
+          {
+            char csh[200];
+            int ivalue_helper = (isc + 1) * 0x100;
+            sprintf_s(csh, 200, "Signal %d (%s) Timing", isc + 1, m_pCamera->strCam.strSensor.strSignalDesc.strSingeSignalDesc[isc].strSignalName[0]);
+            ClearAllowedValues(csh);
+
+            if(m_pCamera->strCam.strTiming.strSignal[isc].dwSignalFunctionality[isignal] == 0x07)
+            {
+              AddAllowedValue(csh, szSelectSignalTiming[0], 0 + ivalue_helper);
+              AddAllowedValue(csh, szSelectSignalTiming[1], 1 + ivalue_helper);
+              AddAllowedValue(csh, szSelectSignalTiming[2], 2 + ivalue_helper);
+              AddAllowedValue(csh, szSelectSignalTiming[3], 3 + ivalue_helper);
+            }
+            else
+            {
+              AddAllowedValue(csh, "Not available", ivalue_helper);
+            }
+          }
           m_pCamera->strCam.strTiming.strSignal[isc].wSelected = (WORD)i;
-          SetupCamera();
+          SetupCamera(true);
         }
         break;
       }
@@ -1560,7 +1590,6 @@ int CPCOCam::OnSelectSignal(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 int iBitToIndex[16] = { 0,0, 1,1, 2,2,2,2, 3,3,3,3,3,3,3,3};
-char szSelectSignalTiming[4][40] = {"Show time of 'First Line'", "Show common time of 'All Lines'", "Show time of 'Last Line'", "Show overall time of 'All Lines'"};
 int CPCOCam::OnSelectSignalTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   if(m_pCamera->iCamClass != 3)// pco.camera
@@ -1569,7 +1598,11 @@ int CPCOCam::OnSelectSignalTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
   if (eAct == MM::BeforeGet)
   {
     int iselectedpar = m_pCamera->strCam.strTiming.strSignal[3].dwParameter[0];
-    pProp->Set(szSelectSignalTiming[iselectedpar - 1]);
+    int iselectedsignal = m_pCamera->strCam.strTiming.strSignal[3].wSelected;
+    if(iselectedsignal != 0)
+      pProp->Set("Not available");
+    else
+      pProp->Set(szSelectSignalTiming[iselectedpar - 1]);
   }
   else if (eAct == MM::AfterSet)
   {
@@ -1586,7 +1619,7 @@ int CPCOCam::OnSelectSignalTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
         if(m_pCamera->strCam.strTiming.strSignal[3].dwParameter[0] != (DWORD)i)
         {
           m_pCamera->strCam.strTiming.strSignal[3].dwParameter[0] = (DWORD)i;
-          SetupCamera();
+          SetupCamera(true);
         }
         break;
       }
@@ -1630,7 +1663,7 @@ int CPCOCam::OnSelectSignalOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
     if(m_pCamera->strCam.strTiming.strSignal[isc].wEnabled != (WORD)inewval)
     {
       m_pCamera->strCam.strTiming.strSignal[isc].wEnabled = (WORD)inewval;
-      SetupCamera();
+      SetupCamera(true);
     }
   }
 
@@ -1672,7 +1705,7 @@ int CPCOCam::OnSelectSignalType(MM::PropertyBase* pProp, MM::ActionType eAct)
         if(m_pCamera->strCam.strTiming.strSignal[isc].wType != (WORD)inewval)
         {
           m_pCamera->strCam.strTiming.strSignal[isc].wType = (WORD)inewval;
-          SetupCamera();
+          SetupCamera(true);
         }
         break;
       }
@@ -1718,7 +1751,7 @@ int CPCOCam::OnSelectSignalFilter(MM::PropertyBase* pProp, MM::ActionType eAct)
         if(m_pCamera->strCam.strTiming.strSignal[isc].wFilterSetting != (WORD)inewval)
         {
           m_pCamera->strCam.strTiming.strSignal[isc].wFilterSetting = (WORD)inewval;
-          SetupCamera();
+          SetupCamera(true);
         }
         break;
       }
@@ -1764,7 +1797,7 @@ int CPCOCam::OnSelectSignalPolarity(MM::PropertyBase* pProp, MM::ActionType eAct
         if(m_pCamera->strCam.strTiming.strSignal[isc].wPolarity != (WORD)inewval)
         {
           m_pCamera->strCam.strTiming.strSignal[isc].wPolarity = (WORD)inewval;
-          SetupCamera();
+          SetupCamera(true);
         }
         break;
       }
@@ -2232,7 +2265,7 @@ int CPCOCam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
       m_nRoiYMax = roiYMaxFull_ / m_nVBin;
     SetNCheckROI(&m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax);
   }
-  nErr = SetupCamera();
+  nErr = SetupCamera(true);
   if (nErr != 0)
     return nErr;
   nErr = ResizeImageBuffer();
@@ -2488,7 +2521,7 @@ int CPCOCam::ClearROI()
       SetNCheckROI(&m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax);
     }
   }
-  nErr = SetupCamera();
+  nErr = SetupCamera(true);
 
   if(nErr != 0)
     return nErr;

@@ -142,7 +142,7 @@ public:
 
 private:
   int ResizeImageBuffer();
-  int SetupCamera();
+  int SetupCamera(bool bStopRecording);
   int CleanupSequenceAcquisition();
   int SetNCheckROI(int *Roix0, int *Roix1, int *Roiy0, int *Roiy1);
   int GetSignalNum(std::string szSigName);
