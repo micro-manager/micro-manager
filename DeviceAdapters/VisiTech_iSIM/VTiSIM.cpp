@@ -789,7 +789,7 @@ VTiSIMPinholeArray::VTiSIMPinholeArray() :
    minFinePosition_(0),
    maxFinePosition_(1),
    curFinePosition_(6000),
-   backlashCompensation_(0)
+   backlashCompensation_(100)
 {
    memset(pinholePositions_, 0, sizeof(pinholePositions_));
 
@@ -797,6 +797,10 @@ VTiSIMPinholeArray::VTiSIMPinholeArray() :
    SetErrorText(VTI_ERR_DEVICE_NOT_FOUND, "Device not found");
    SetErrorText(VTI_ERR_NOT_INITIALISED, "Device not initialized");
    SetErrorText(VTI_ERR_NOT_SUPPORTED, "Operation not supported");
+
+   CreateIntegerProperty(g_PropName_Backlash, backlashCompensation_, false,
+      new CPropertyAction(this, &VTiSIMPinholeArray::OnBacklashCompensation), true);
+   SetPropertyLimits(g_PropName_Backlash, -500, 500);
 }
 
 
@@ -843,17 +847,7 @@ int VTiSIMPinholeArray::Initialize()
          return err;
    }
 
-   err = CreateIntegerProperty(g_PropName_Backlash, backlashCompensation_, false,
-      new CPropertyAction(this, &VTiSIMPinholeArray::OnBacklashCompensation));
-   if (err != DEVICE_OK)
-      return err;
-   err = SetPropertyLimits(g_PropName_Backlash, -500, 500);
-   if (err != DEVICE_OK)
-      return err;
-
-   // TODO We should perform backlash compensation here, but for that we need
-   // the compensation amount to be a pre-init parameter.
-   err = DoSetFinePosition(curFinePosition_);
+   err = DoSetFinePosition(curFinePosition_, backlashCompensation_);
    if (err != DEVICE_OK)
       return err;
 
