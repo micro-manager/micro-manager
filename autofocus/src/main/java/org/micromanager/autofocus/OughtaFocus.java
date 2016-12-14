@@ -8,7 +8,8 @@
 //                Based on SimpleAutofocus by Karl Hoover
 //                and the Autofocus "H&P" plugin
 //                by Pakpoom Subsoontorn & Hernan Garcia
-//                Contributions by Jon Daniels (ASI): FFTBandpass and MedianEdges
+//                Contributions by Jon Daniels (ASI): FFTBandpass, MedianEdges 
+//                      and Tenengrad
 //                Chris Weisiger: 2.0 port
 //                Nico Stuurman: 2.0 port and Math3 port
 //
@@ -38,6 +39,7 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 
 import java.awt.Rectangle;
+import java.text.ParseException;
 import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
@@ -62,6 +64,7 @@ import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.internal.utils.AutofocusBase;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MDUtils;
+import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -83,8 +86,9 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
    private static final String SHOW_IMAGES = "ShowImages";
    private static final String SCORING_METHOD = "Maximize";
    private static final String[] SHOWVALUES = {"Yes", "No"};
-   private final static String[] SCORINGMETHODS = {"Edges", "StdDev", "Mean", "NormalizedVariance",
-      "SharpEdges", "Redondo", "Volath", "Volath5", "MedianEdges", "FFTBandpass"};
+   private final static String[] SCORINGMETHODS = {"Edges", "StdDev", "Mean", 
+      "NormalizedVariance", "SharpEdges", "Redondo", "Volath", "Volath5", 
+      "MedianEdges", "Tenengrad", "FFTBandpass"};
    private final static String FFT_UPPER_CUTOFF = "FFTUpperCutoff(%)";
    private final static String FFT_LOWER_CUTOFF = "FFTLowerCutoff(%)";
 
@@ -174,7 +178,9 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          show = getPropertyValue(SHOW_IMAGES);
          scoringMethod = getPropertyValue(SCORING_METHOD);
 
-      } catch (Exception ex) {
+      } catch (MMException ex) {
+         studio_.logs().logError(ex);
+      } catch (ParseException ex) {
          studio_.logs().logError(ex);
       }
    }
@@ -345,7 +351,7 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
                      }
                      catch (JSONException e) {
                         studio_.logs().showError(e);
-                     } catch (Exception e) {
+                     } catch (IllegalArgumentException e) {
                         studio_.logs().showError(e);
                      }
                   }
@@ -475,6 +481,32 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
       return sum;
    }
 
+     
+   /**
+    * From "Autofocusing Algorithm Selection in Computer Microscopy" 
+    * (doi: 10.1109/IROS.2005.1545017). 
+    * 2016 paper (doi:10.1038/nbt.3708) concludes this is best  most 
+    * non-spectral metric for their light sheet microscopy application
+    * @author Jon
+    */
+   private double computeTenengrad(ImageProcessor proc) {
+      int h = proc.getHeight();
+      int w = proc.getWidth();
+      double sum = 0.0;
+      int[] ken1 = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
+      int[] ken2 = {1, 2, 1, 0, 0, 0, -1, -2, -1};
+
+      ImageProcessor proc2 = proc.duplicate();
+      proc.convolve3x3(ken1);
+      proc2.convolve3x3(ken2);
+      for (int i=0; i<w; i++){
+         for (int j=0; j<h; j++){
+            sum += Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2);
+         }
+      }
+      return sum;
+   }
+   
    // Volath's 1D autocorrelation
    // Volath  D., "The influence of the scene parameters and of noise on
    // the behavior of automatic focusing algorithms,"
@@ -603,6 +635,8 @@ public class OughtaFocus extends AutofocusBase implements AutofocusPlugin, SciJa
          return computeVolath5(proc);
       } else if (scoringMethod.contentEquals("MedianEdges")) {
          return computeMedianEdges(proc);
+      } else if (scoringMethod.contentEquals("Tenengrad")) {
+         return computeTenengrad(proc);
       } else if (scoringMethod.contentEquals("FFTBandpass")) {
          return computeFFTBandpass(proc);
       } else {
