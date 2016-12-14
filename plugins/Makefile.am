@@ -30,6 +30,7 @@ nobase_mmplugin_DATA = \
 	Recall.jar \
 	SequenceBufferMonitor.jar \
 	SlideExplorer.jar \
+	SnapOnMove.jar \
 	SplitView.jar \
 	WhiteBalance.jar \
 	pgFocus.jar
