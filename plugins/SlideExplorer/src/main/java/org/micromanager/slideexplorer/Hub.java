@@ -21,7 +21,6 @@ import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class Hub {
@@ -46,6 +45,7 @@ public class Hub {
    private String surveyPixelSizeConfig_ = "";
    private String navigatePixelSizeConfig_ = "";
    private Map<String, OffsetsRow> offsetsData_ = new HashMap<String, OffsetsRow>();
+   private boolean contrastAutoAdjusted_ = false;
 
    /*
     * Hub constructor.
@@ -558,7 +558,10 @@ public class Hub {
          } else {
             drawTile(tileIndex_);
          }
-         display_.updateAndDraw();
+         display_.updateAndDraw(!contrastAutoAdjusted_);
+         if (tileIndex_ != null) {
+            contrastAutoAdjusted_ = true;
+         }
       }
 
       /*

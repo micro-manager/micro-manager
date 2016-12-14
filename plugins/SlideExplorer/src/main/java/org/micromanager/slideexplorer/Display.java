@@ -13,7 +13,6 @@ import java.awt.event.WindowEvent;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-import org.micromanager.internal.MMStudio;
 import org.micromanager.slideexplorer.Hub.ModeManager;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -32,7 +31,6 @@ public class Display {
     private boolean currentlyPanning_ = false;
     private RoiManager roiManager_;
     private Coordinates coords_;
-	private boolean contrastAutoAdjusted_ = false;
    private boolean windowExists_ = true;
 
 	public Display(Hub hub, int imageType, int width, int height) {
@@ -140,15 +138,14 @@ public class Display {
 		imgp_.setRoi(roiRect);
 	}
 
-	public void updateAndDraw() {
+	public void updateAndDraw(boolean adjustContrast) {
 		imgp_.updateAndDraw();
-      if (! contrastAutoAdjusted_) {// Only do this once.
+      if (adjustContrast) {
          ImageStatistics stats = imgp_.getStatistics();
          double displayRange = imgp_.getDisplayRangeMax()-imgp_.getDisplayRangeMin();
          double actualRange = stats.max - stats.min;
          if ((displayRange < 5) || (displayRange/actualRange < 0.6667) || (displayRange/actualRange > 1.5)) {
             imgp_.setDisplayRange(stats.min, stats.max);
-            contrastAutoAdjusted_ = true;
          }
       }
 	}
