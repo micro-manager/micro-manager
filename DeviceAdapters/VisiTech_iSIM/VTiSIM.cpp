@@ -851,6 +851,8 @@ int VTiSIMPinholeArray::Initialize()
    if (err != DEVICE_OK)
       return err;
 
+   // TODO We should perform backlash compensation here, but for that we need
+   // the compensation amount to be a pre-init parameter.
    err = DoSetFinePosition(curFinePosition_);
    if (err != DEVICE_OK)
       return err;
@@ -998,6 +1000,18 @@ int VTiSIMPinholeArray::DoSetFinePosition(int position, int backlashComp)
       return err;
 
    curFinePosition_ = position;
+
+   char s[MM::MaxStrLength];
+   snprintf(s, MM::MaxStrLength, "%d", curFinePosition_);
+   int mmerr = OnPropertyChanged(g_PropName_FinePosition, s);
+   if (mmerr != DEVICE_OK)
+      return mmerr;
+   snprintf(s, MM::MaxStrLength, "%d",
+      GetPinholeSizeUmForIndex(GetNearestPinholeIndex(curFinePosition_)));
+   mmerr = OnPropertyChanged(g_PropName_PinholeSize, s);
+   if (mmerr != DEVICE_OK)
+      return mmerr;
+
    return DEVICE_OK;
 }
 
