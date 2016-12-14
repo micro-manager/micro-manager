@@ -78,7 +78,6 @@ private:
 
 class VTiSIMLasers : public CStateDeviceBase<VTiSIMLasers>
 {
-public:
    static const int nChannels = 8;
 
 public:
@@ -143,4 +142,36 @@ private:
    int scanWidth_;
    int scanOffset_;
    float actualRate_;
+};
+
+
+class VTiSIMPinholeArray : public CGenericBase<VTiSIMPinholeArray>
+{
+   static const int nSizes = 7;
+
+public:
+   VTiSIMPinholeArray();
+   virtual ~VTiSIMPinholeArray();
+
+   virtual int Initialize();
+   virtual int Shutdown();
+   virtual void GetName(char* name) const;
+   virtual bool Busy();
+
+private:
+   int OnFinePosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPinholeSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   VTiSIMHub* VTiHub();
+   int DoGetPinholePositions(int* positions);
+   int DoSetFinePosition(int position);
+   int GetNearestPinholeIndex(int finePosition) const;
+   int GetPinholeSizeUmForIndex(int index) const;
+   int GetPinholeSizeIndex(int sizeUm) const;
+
+private:
+   int pinholePositions_[nSizes];
+   LONG minFinePosition_, maxFinePosition_;
+   int curFinePosition_;
 };

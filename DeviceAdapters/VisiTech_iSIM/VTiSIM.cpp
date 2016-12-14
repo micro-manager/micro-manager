@@ -27,17 +27,24 @@
 
 #include <VisiSDK.h>
 
+#include <algorithm>
+#include <utility>
+#include <vector>
+
 
 const char* const g_DeviceName_Hub = "VTiSIMHub";
 const char* const g_DeviceName_LaserShutter = "LaserShutter";
 const char* const g_DeviceName_Lasers = "Lasers";
 const char* const g_DeviceName_Scanner = "Scanner";
+const char* const g_DeviceName_PinholeArray = "PinholeArray";
 
 const char* const g_PropName_Scanning = "Scanning";
 const char* const g_PropName_ScanRate = "Scan Rate (Hz)";
 const char* const g_PropName_ScanWidth = "Scan Width";
 const char* const g_PropName_ScanOffset = "Scan Offset";
 const char* const g_PropName_ActualRate = "Actual Scan Rate (Hz)";
+const char* const g_PropName_FinePosition = "Fine Step Position";
+const char* const g_PropName_PinholeSize = "Pinhole Size (um)";
 const char* const g_PropVal_Off = "Off";
 const char* const g_PropVal_On = "On";
 
@@ -61,6 +68,8 @@ MODULE_API MM::Device* CreateDevice(const char* name)
       return new VTiSIMLasers();
    if (strcmp(name, g_DeviceName_Scanner) == 0)
       return new VTiSIMScanner();
+   if (strcmp(name, g_DeviceName_PinholeArray) == 0)
+      return new VTiSIMPinholeArray();
 
    return 0;
 }
@@ -112,6 +121,8 @@ int VTiSIMHub::Initialize()
       snprintf(s, MM::MaxStrLength, "%d.%d.%d.%d",
          (int)major, (int)minor, (int)rev, (int)build);
       int err = CreateStringProperty("DLLVersion", s, true);
+      if (err != DEVICE_OK)
+         return err;
    }
 
    return DEVICE_OK;
@@ -169,6 +180,10 @@ int VTiSIMHub::DetectInstalledDevices()
       AddInstalledDevice(pDev);
 
    pDev = new VTiSIMScanner();
+   if (pDev)
+      AddInstalledDevice(pDev);
+
+   pDev = new VTiSIMPinholeArray();
    if (pDev)
       AddInstalledDevice(pDev);
 
@@ -766,4 +781,232 @@ int VTiSIMScanner::DoGetScanning(bool& scanning)
       return err;
    scanning = (flag != FALSE);
    return DEVICE_OK;
+}
+
+
+VTiSIMPinholeArray::VTiSIMPinholeArray() :
+   minFinePosition_(0),
+   maxFinePosition_(1),
+   curFinePosition_(6000)
+{
+   memset(pinholePositions_, 0, sizeof(pinholePositions_));
+
+   SetErrorText(VTI_ERR_TIMEOUT_OCCURRED, "Timeout occurred");
+   SetErrorText(VTI_ERR_DEVICE_NOT_FOUND, "Device not found");
+   SetErrorText(VTI_ERR_NOT_INITIALISED, "Device not initialized");
+   SetErrorText(VTI_ERR_NOT_SUPPORTED, "Operation not supported");
+}
+
+
+VTiSIMPinholeArray::~VTiSIMPinholeArray()
+{
+}
+
+
+int VTiSIMPinholeArray::Initialize()
+{
+   DWORD vterr = vti_GetMotorRange(VTiHub()->GetScanAndMotorHandle(),
+      VTI_MOTOR_PINHOLE_ARRAY, &minFinePosition_, &maxFinePosition_);
+   if (vterr != VTI_SUCCESS)
+      return vterr;
+
+   int err = DoGetPinholePositions(pinholePositions_);
+   if (err != DEVICE_OK)
+      return err;
+
+   // Initialize our fine position to that of the 64 um pinhole, which is the
+   // default pinhole where we will move to below after properties are set up.
+   curFinePosition_ = pinholePositions_[VTI_PINHOLE_64_MICRON];
+
+   err = CreateIntegerProperty(g_PropName_FinePosition, curFinePosition_, false,
+      new CPropertyAction(this, &VTiSIMPinholeArray::OnFinePosition));
+   if (err != DEVICE_OK)
+      return err;
+   err = SetPropertyLimits(g_PropName_FinePosition,
+      minFinePosition_, maxFinePosition_);
+   if (err != DEVICE_OK)
+      return err;
+
+   err = CreateIntegerProperty(g_PropName_PinholeSize,
+      GetPinholeSizeUmForIndex(VTI_PINHOLE_64_MICRON), false,
+      new CPropertyAction(this, &VTiSIMPinholeArray::OnPinholeSize));
+   if (err != DEVICE_OK)
+      return err;
+   for (int i = 0; i < nSizes; ++i)
+   {
+      char s[MM::MaxStrLength];
+      snprintf(s, MM::MaxStrLength, "%d", GetPinholeSizeUmForIndex(i));
+      err = AddAllowedValue(g_PropName_PinholeSize, s);
+      if (err != DEVICE_OK)
+         return err;
+   }
+
+   err = DoSetFinePosition(curFinePosition_);
+   if (err != DEVICE_OK)
+      return err;
+
+   return DEVICE_OK;
+}
+
+
+int VTiSIMPinholeArray::Shutdown()
+{
+   return DEVICE_OK;
+}
+
+
+void VTiSIMPinholeArray::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_DeviceName_PinholeArray);
+}
+
+
+bool VTiSIMPinholeArray::Busy()
+{
+   return false;
+}
+
+
+int VTiSIMPinholeArray::OnFinePosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(static_cast<long>(curFinePosition_));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long v;
+      pProp->Get(v);
+      if (v == curFinePosition_)
+         return DEVICE_OK;
+      int err = DoSetFinePosition(v);
+      if (err != DEVICE_OK)
+         return err;
+   }
+   return DEVICE_OK;
+}
+
+
+int VTiSIMPinholeArray::OnPinholeSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int sizeUm = GetPinholeSizeUmForIndex(GetNearestPinholeIndex(curFinePosition_));
+      pProp->Set(static_cast<long>(sizeUm));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long v;
+      pProp->Get(v);
+      int index = GetPinholeSizeIndex(v);
+      if (index < 0 || index >= nSizes)
+         return DEVICE_ERR; // Shouldn't happen
+
+      int finePos = pinholePositions_[index];
+      if (finePos == curFinePosition_)
+         return DEVICE_OK;
+
+      int err = DoSetFinePosition(finePos);
+      if (err != DEVICE_OK)
+         return err;
+   }
+   return DEVICE_OK;
+}
+
+
+VTiSIMHub* VTiSIMPinholeArray::VTiHub()
+{
+   return static_cast<VTiSIMHub*>(GetParentHub());
+}
+
+
+int VTiSIMPinholeArray::DoGetPinholePositions(int* positions)
+{
+   for (int i = 0; i < nSizes; ++i)
+   {
+      vt_int32 pos;
+
+      VTI_EX_PARAM param;
+      memset(&param, 0, sizeof(param)); // Just in case
+      param.ParamOption = i;
+      param.ArrayBytes = sizeof(vt_int32);
+      param.pArray = &pos;
+
+      DWORD err = vti_GetExtendedFeature(VTiHub()->GetScanAndMotorHandle(),
+         VTI_FEATURE_GET_PINHOLE_SETTING, &param, sizeof(vt_int32));
+      if (err != VTI_SUCCESS)
+         return err;
+
+      positions[i] = pos;
+   }
+   return DEVICE_OK;
+}
+
+
+int VTiSIMPinholeArray::DoSetFinePosition(int position)
+{
+   if (position < minFinePosition_)
+      position = minFinePosition_;
+   if (position > maxFinePosition_)
+      position = maxFinePosition_;
+
+   DWORD err = vti_MoveMotor(VTiHub()->GetScanAndMotorHandle(),
+      VTI_MOTOR_PINHOLE_ARRAY, position);
+   if (err != VTI_SUCCESS)
+      return err;
+
+   curFinePosition_ = position;
+   return DEVICE_OK;
+}
+
+
+int VTiSIMPinholeArray::GetNearestPinholeIndex(int finePosition) const
+{
+   // There are only several (actually, 7) pinhole positions, so we just do
+   // the simplest thing: find the index of the position whose distance from
+   // the given fine position is smallest. This avoids making assumptions
+   // about the fine positions being monotonous.
+
+   std::vector< std::pair<int, int> > distToIndex;
+   for (int i = 0; i < nSizes; ++i)
+   {
+      int dist = finePosition - pinholePositions_[i];
+      if (dist < 0)
+         dist = -dist;
+      distToIndex.push_back(std::make_pair(dist, i));
+   }
+   std::sort(distToIndex.begin(), distToIndex.end());
+   return distToIndex[0].second;
+}
+
+
+int VTiSIMPinholeArray::GetPinholeSizeUmForIndex(int index) const
+{
+   switch (index)
+   {
+      case VTI_PINHOLE_30_MICRON: return 30;
+      case VTI_PINHOLE_40_MICRON: return 40;
+      case VTI_PINHOLE_50_MICRON: return 50;
+      case VTI_PINHOLE_64_MICRON: return 64;
+      case VTI_PINHOLE_25_MICRON: return 25;
+      case VTI_PINHOLE_15_MICRON: return 15;
+      case VTI_PINHOLE_10_MICRON: return 10;
+      default: return 0; // Shouldn't happen
+   }
+}
+
+
+int VTiSIMPinholeArray::GetPinholeSizeIndex(int sizeUm) const
+{
+   switch (sizeUm)
+   {
+      case 30: return VTI_PINHOLE_30_MICRON;
+      case 40: return VTI_PINHOLE_40_MICRON;
+      case 50: return VTI_PINHOLE_50_MICRON;
+      case 64: return VTI_PINHOLE_64_MICRON;
+      case 25: return VTI_PINHOLE_25_MICRON;
+      case 15: return VTI_PINHOLE_15_MICRON;
+      case 10: return VTI_PINHOLE_10_MICRON;
+      default: return 0;
+   }
 }
