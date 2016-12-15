@@ -22,7 +22,7 @@ public class SpotData {
 
    
    // lock to avoid clashes during access to image data
-   public static final Object lockIP = new Object();
+   public static final Object LOCK_IP = new Object();
 
    private ImageProcessor ip_ = null;   // ImageProcessor for given spot
    private final int frame_;        // frame number in the original stack - 1-based
@@ -205,12 +205,25 @@ public class SpotData {
    public double getSigma() {
       return sigma_;
    }
+   
+   /**
+    * Calculates the pythagorean distance to a given other spot
+    *
+    * @param otherSpot -
+    * @return distance to the other spot
+    */
+   public double distance(SpotData otherSpot) {
+      double x = this.getXCenter() - otherSpot.getXCenter();
+      double y = this.getYCenter() - otherSpot.getYCenter();
+      double distance =  (Math.sqrt((x * x) + (y * y)));
+      return distance;
+   }
 
    // For performance reasons, it is much better to use the cached version of the processor
    public ImageProcessor getSpotProcessor(ImagePlus siPlus, int halfSize) {
       if (ip_ != null)
          return ip_;
-      synchronized(lockIP) {
+      synchronized(LOCK_IP) {
          Roi spotRoi = new Roi(x_ - halfSize, y_ - halfSize, 2 * halfSize, 2 * halfSize);
          siPlus.setPositionWithoutUpdate(channel_, slice_, frame_);
          siPlus.setRoi(spotRoi, false);
@@ -221,7 +234,7 @@ public class SpotData {
    public ImageProcessor getSpotProcessor(ImageProcessor siProc, int halfSize) {
       if (ip_ != null)
          return ip_;
-      synchronized(lockIP) {
+      synchronized(LOCK_IP) {
          Roi spotRoi = new Roi(x_ - halfSize, y_ - halfSize, 2 * halfSize, 2 * halfSize);
          //siProc.setSliceWithoutUpdate(frame_);
          siProc.setRoi(spotRoi);
@@ -230,7 +243,7 @@ public class SpotData {
    }
 
    public static ImageProcessor getSpotProcessor(ImageProcessor siProc, int halfSize, int x, int y) {
-      synchronized(lockIP) {
+      synchronized(LOCK_IP) {
          Roi spotRoi = new Roi(x - halfSize, y - halfSize, 2 * halfSize, 2 * halfSize);
          siProc.setRoi(spotRoi);
          try {

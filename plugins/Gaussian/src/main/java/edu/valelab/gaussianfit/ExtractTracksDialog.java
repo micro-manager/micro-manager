@@ -14,6 +14,7 @@ import java.awt.Font;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.ParseException;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -31,9 +32,10 @@ import org.micromanager.internal.utils.NumberUtils;
  * @author Nico
  */
 public class ExtractTracksDialog  {
-   private static final String MINFRAMES = "minframes";
-   private static final String MAXMISSING = "maxmissing";
-   private static final String MAXDISTANCE = "maxdistance";
+   private static final String MINIMUM_NUMBER_OF_FRAMES = "minframes";
+   private static final String MAXIMUM_NUMBER_OF_MISSING_FRAMES = "maxmissing";
+   private static final String MAXIMUM_DISTANCE_BETWEEN_FRAMES = "maxdistance";
+   private static final String MINIMUM_TOTAL_DISTANCE = "minimum_total_distance";
    
    ExtractTracksDialog(final Studio studio, final RowData rowData, final Point p) {
       final JFrame jf = new JFrame();
@@ -49,45 +51,64 @@ public class ExtractTracksDialog  {
       JLabel label = new JLabel("Minimum # of Frames:");
       label.setFont(gFont);
       jp.add(label);
-      
       final JSpinner minFramesSp = new JSpinner();
       minFramesSp.setFont(gFont);
       String w = "width 60:60:60";
       minFramesSp.setModel(new SpinnerNumberModel(
-              up.getInt(us, MINFRAMES, 10),1, null, 1));
+              up.getInt(us, MINIMUM_NUMBER_OF_FRAMES, 10),1, null, 1));
       jp.add(minFramesSp, w + ", wrap");
       
       JLabel label2 = new JLabel("Max # missing Frames:");
       label.setFont(gFont);
       jp.add(label2);
-      
       final JSpinner maxMissingSp = new JSpinner();
       maxMissingSp.setFont(gFont);
       maxMissingSp.setModel(new SpinnerNumberModel(
-              up.getInt(us, MAXMISSING, 0), 0, null, 1));
+              up.getInt(us, MAXIMUM_NUMBER_OF_MISSING_FRAMES, 0), 0, null, 1));
       jp.add(maxMissingSp, w + ", wrap");
       
       JLabel label3 = new JLabel("Max. distance (nm)");
       label3.setFont(gFont);
       jp.add(label3);
-      
       final JTextField distanceTF = new JTextField(
-              NumberUtils.doubleToDisplayString(up.getDouble(us, MAXDISTANCE,90.0)));
+              NumberUtils.doubleToDisplayString(up.getDouble(us, 
+                      MAXIMUM_DISTANCE_BETWEEN_FRAMES, 90.0)));
       distanceTF.setFont(gFont);
       jp.add(distanceTF, w + ", wrap");
+      
+      JLabel label4 = new JLabel("Min. total distance (nm)");
+      label4.setFont(gFont);
+      jp.add(label4);
+      final JTextField minTotalDistanceTF = new JTextField(
+               NumberUtils.doubleToDisplayString(up.getDouble(us, 
+                       MINIMUM_TOTAL_DISTANCE, 300.0)) );
+      minTotalDistanceTF.setFont(gFont);
+      jp.add(minTotalDistanceTF, w + ", wrap");
       
       JButton okButton = new JButton("OK");
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            int minFrames = (Integer) minFramesSp.getValue();
-            up.setInt(us, MINFRAMES, minFrames);
-            int maxMissing = (Integer) maxMissingSp.getValue();
-            up.setInt(us, MAXMISSING, maxMissing);
-            double distance = Double.parseDouble(distanceTF.getText());
-            up.setDouble(us, MAXDISTANCE, distance);
-            SpotLinker.extractTracks(rowData, minFrames, maxMissing, distance);
-            jf.dispose();
+            try {
+               int minFrames = (Integer) minFramesSp.getValue();
+               up.setInt(us, MINIMUM_NUMBER_OF_FRAMES, minFrames);
+               int maxMissing = (Integer) maxMissingSp.getValue();
+               up.setInt(us, MAXIMUM_NUMBER_OF_MISSING_FRAMES, maxMissing);
+               double distance = NumberUtils.displayStringToDouble(
+                       distanceTF.getText());
+               up.setDouble(us, MAXIMUM_DISTANCE_BETWEEN_FRAMES, distance);
+               double minTotalDistance = NumberUtils.displayStringToDouble(
+                       minTotalDistanceTF.getText());
+               up.setDouble(us, MINIMUM_TOTAL_DISTANCE, minTotalDistance);
+               int nrExtractedTracks = SpotLinker.extractTracks(rowData, minFrames, maxMissing, distance,
+                       minTotalDistance);
+               if (nrExtractedTracks == 0) {
+                  studio.logs().showMessage("No tracks found with current settings");
+               }
+               jf.dispose();
+            } catch (ParseException pe) {
+               studio.logs().showError("Failed to parse numeric input");
+            }
          }
       });
       jp.add(okButton, "span, split 2, tag ok");

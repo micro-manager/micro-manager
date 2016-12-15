@@ -217,9 +217,15 @@ public class SpotLinker {
     *                  - found.
     * @param maxDistance - Maximum distance between spot in consecutive frames
     *                    - if larger, it will not be added to the tracks
+    * @param minTotalDistance - Minimum distance between first and last point 
+    *                in the track.  Track will only be reported if distance is 
+    *                greater than this number.
+    * @return Number of tracks that were extracted.
     */
-   public static void extractTracks(final RowData rowData, final int minNr, 
-           final int nrMissing, final double maxDistance) {
+   public static int extractTracks(final RowData rowData, final int minNr, 
+           final int nrMissing, final double maxDistance, final double minTotalDistance) {
+      
+      int trackNr = 0;
       try {
          ij.IJ.showStatus("Extracting tracks...");
          boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
@@ -227,7 +233,6 @@ public class SpotLinker {
          if (useFrames) {
             nr = rowData.nrFrames_;
          }
-         int trackNr = 1;
 
          // maintain active tracks here
          List<TrackData> tracks = 
@@ -260,7 +265,8 @@ public class SpotLinker {
                                  if (track.missingMoreThan(nrMissing)) {
                                     // track could not be extended, finalize it
                                     // Write out the track:
-                                    if (track.size() > minNr) {
+                                    if (track.size() > minNr && 
+                                             track.get(0).distance(track.get(track.size() - 1)) > minTotalDistance)  {
                                        writeTrack(rowData, track.getList(), trackNr);
                                        trackNr++;
                                        // and remove from the list of tracks
@@ -281,7 +287,7 @@ public class SpotLinker {
                            }
                         }
                         // go through spots and start a new track with any spot 
-                        // that was not part of a track
+                        // that was not part of a previous track
                         for (SpotData spot : spots) {
                            if (!markedSpots.contains(spot)) {
                               TrackData track = new TrackData();
@@ -293,7 +299,9 @@ public class SpotLinker {
                   }
                   // add tracks that made it to the end to destination list
                   for (TrackData track : tracks) {
-                     if (track.size() > minNr) {
+                     if (track.size() > minNr && 
+                             track.get(0).distance(track.get(track.size() - 1) ) 
+                             > minTotalDistance) {
                         writeTrack(rowData, track.getList(), trackNr);
                         trackNr++;
                      }
@@ -306,6 +314,8 @@ public class SpotLinker {
       } catch (OutOfMemoryError oome) {
          JOptionPane.showMessageDialog(getInstance(), "Out of memory");
       }
+      
+      return trackNr;
    }
    
    private static void writeTrack(RowData rowData, List<SpotData> track, int trackNr) {

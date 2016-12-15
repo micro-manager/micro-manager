@@ -341,7 +341,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
                      ImageProcessor siProc = null;
                      Polygon p = new Polygon();
-                     synchronized (SpotData.lockIP) {
+                     synchronized (SpotData.LOCK_IP) {
                         siPlus.setPositionWithoutUpdate(c, z, f);
                         //siPlus.setPosition(c, z, f);
                         // If ROI manager is used, use RoiManager Rois
