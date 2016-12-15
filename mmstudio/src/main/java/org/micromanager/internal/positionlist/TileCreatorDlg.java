@@ -38,13 +38,15 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
 import org.micromanager.events.PixelSizeChangedEvent;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class TileCreatorDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
-   private CMMCore core_;
+   private final CMMCore core_;
+   private final Studio studio_;
    private MultiStagePosition[] endPosition_;
    private boolean[] endPositionSet_;
    private PositionListDlg positionListDlg_;
@@ -65,20 +67,23 @@ public final class TileCreatorDlg extends MMDialog {
    private static int prefix_ = 0;
 
    private static final DecimalFormat FMT_POS = new DecimalFormat("000");
+   private static final String OVERLAP_PREF = "overlap";
 
    /**
     * Create the dialog
     * @param core - Micro-Manager Core object
+    * @param studio - the Micro-Manager UI 
     * @param positionListDlg - The position list dialog
     */
-   public TileCreatorDlg(CMMCore core, Studio studio,
-           PositionListDlg positionListDlg) {
+   public TileCreatorDlg(final CMMCore core, final Studio studio,
+           final PositionListDlg positionListDlg) {
       super("grid tile creator");
       setResizable(false);
       setName("tileDialog");
       getContentPane().setLayout(null);
       
       core_ = core;
+      studio_ = studio;
       positionListDlg_ = positionListDlg;   
       positionListDlg_.activateAxisTable(false);
       endPosition_ = new MultiStagePosition[4];
@@ -86,8 +91,8 @@ public final class TileCreatorDlg extends MMDialog {
 
       setTitle("Tile Creator");
 
-      loadAndRestorePosition(300, 300);
-      this.setSize(344, 280);
+      super.loadAndRestorePosition(300, 300);
+      super.setSize(344, 280);
 
       final JButton goToLeftButton = new JButton();
       goToLeftButton.setFont(new Font("", Font.PLAIN, 10));
@@ -282,12 +287,15 @@ public final class TileCreatorDlg extends MMDialog {
       overlapField_ = new JTextField();
       overlapField_.setBounds(70, 186, 50, 20);
       overlapField_.setFont(new Font("", Font.PLAIN, 10));
-      overlapField_.setText("0");
+      overlapField_.setText(studio.profile().getString(TileCreatorDlg.class, 
+              OVERLAP_PREF, "0"));
       overlapField_.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent arg0) {
-              updateCenteredSizeLabel();
-          }
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            studio.profile().setString(TileCreatorDlg.class, 
+               OVERLAP_PREF,overlapField_.getText() );
+            updateCenteredSizeLabel();
+         }
       });
 
       getContentPane().add(overlapField_);
@@ -330,6 +338,8 @@ public final class TileCreatorDlg extends MMDialog {
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
+            studio.profile().setString(TileCreatorDlg.class, 
+               OVERLAP_PREF,overlapField_.getText() );
             addToPositionList();
          }
       });
@@ -341,7 +351,9 @@ public final class TileCreatorDlg extends MMDialog {
       cancelButton.setFont(new Font("", Font.PLAIN, 10));
       cancelButton.addActionListener(new ActionListener() {
          @Override
-         public void actionPerformed(ActionEvent arg0) { 
+         public void actionPerformed(ActionEvent arg0) {
+            studio.profile().setString(TileCreatorDlg.class, 
+               OVERLAP_PREF,overlapField_.getText() );
             positionListDlg_.activateAxisTable(true);
             dispose();
          }
@@ -364,6 +376,13 @@ public final class TileCreatorDlg extends MMDialog {
       studio.events().registerForEvents(this);
    }
 
+   @Subscribe
+   public void stuttingDown(ShutdownCommencingEvent se) {
+      studio_.profile().setString(TileCreatorDlg.class,
+              OVERLAP_PREF, overlapField_.getText());
+      positionListDlg_.activateAxisTable(true);
+      dispose();
+   }
 
    /**
     * Store current xyPosition.
@@ -559,30 +578,13 @@ public final class TileCreatorDlg extends MMDialog {
 
       try {
          String tmp = core_.getProperty(camera, "TransposeCorrection");
-         if (tmp.equals("0")) {
-            correction = false;
-         } else {
-            correction = true;
-         }
+         correction = !tmp.equals("0");
          tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
-         if (tmp.equals("0")) {
-            mirrorX = false;
-         } else {
-            mirrorX = true;
-         }
+         mirrorX = !tmp.equals("0");
          tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
-         if (tmp.equals("0")) {
-            mirrorY = false;
-         } else {
-            mirrorY = true;
-         }
-
+         mirrorY = !tmp.equals("0");
          tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
-         if (tmp.equals("0")) {
-            transposeXY = false;
-         } else {
-            transposeXY = true;
-         }
+         transposeXY = !tmp.equals("0");
       } catch (Exception exc) {
          ReportingUtils.showError(exc);
          return false;
