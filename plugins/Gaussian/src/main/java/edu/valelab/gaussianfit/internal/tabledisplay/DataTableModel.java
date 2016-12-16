@@ -13,14 +13,14 @@ import javax.swing.table.AbstractTableModel;
  *
  * @author nico
  */
-public class dataTableModel extends AbstractTableModel {
+public class DataTableModel extends AbstractTableModel {
 
    private final String[] columnNames_ = {"ID", "Image", "Nr of spots",
       "2C Reference", "Ch.", "X", "Y", "stdX", "stdY", "nrPhotons"};
 
    private final ArrayList<RowData> rowData_;
 
-   public dataTableModel() {
+   public DataTableModel() {
       rowData_ = new ArrayList<RowData>();
    }
 
