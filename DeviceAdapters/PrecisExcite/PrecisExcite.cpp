@@ -190,8 +190,10 @@ int Controller::ReadChannelLabels()
          string label = buf_tokens_[i].substr(6);
          StripString(label);
 
-         //This skips invalid channels
-         if (label.compare("----") == 0)
+         //This skips invalid channels.
+	 //Invalid names seem to have a different number of dashes.
+	 //pe2: First invalid is called ----, then second is -----
+         if (label.substr(0,4).compare("----") == 0)
             continue;
 
          channelLetters_.push_back(buf_tokens_[i][4]); // Read 4th character
