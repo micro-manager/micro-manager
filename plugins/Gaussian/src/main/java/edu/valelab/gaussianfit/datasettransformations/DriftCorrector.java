@@ -294,9 +294,7 @@ public class DriftCorrector {
                        stageMovementData, timePoints, true, Coordinates.NM, 
                        false, 0.0, 0.0);
                
-               DataCollectionForm.getInstance().getRowData().add(newRow);
-               
-               DataCollectionForm.getInstance().fireRowAdded();
+               DataCollectionForm.getInstance().addSpotData(newRow);
                                            
                ij.IJ.showStatus("Assembling jitter corrected dataset...");
                ij.IJ.showProgress(1);
@@ -533,8 +531,7 @@ public class DriftCorrector {
                  stageMovementData.size(), 1, 1, stageMovementData.size(), 
                  stageMovementData, timePoints, true, Coordinates.NM, 
                  false, 0, 0);
-         DataCollectionForm.getInstance().getRowData().add(newRow);
-         DataCollectionForm.getInstance().fireRowAdded();
+         DataCollectionForm.getInstance().addSpotData(newRow);
          
          ij.IJ.showStatus("Assembling jitter corrected dataset...");
          ij.IJ.showProgress(1);

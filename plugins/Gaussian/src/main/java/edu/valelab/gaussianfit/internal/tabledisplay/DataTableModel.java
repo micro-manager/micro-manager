@@ -23,7 +23,23 @@ public class DataTableModel extends AbstractTableModel {
    public DataTableModel() {
       rowData_ = new ArrayList<RowData>();
    }
-
+   
+   public void addRowData(RowData row) {
+      rowData_.add(row);
+   }
+   
+   public void fireRowInserted() {
+      super.fireTableRowsInserted(rowData_.size()-1, rowData_.size() -1 );
+   }
+   
+   public RowData getRow(int rowNr) {
+      return rowData_.get(rowNr);
+   }
+   
+   public ArrayList<RowData> getRowData() {
+      return rowData_;
+   }
+ 
    @Override
    public String getColumnName(int col) {
       return columnNames_[col];

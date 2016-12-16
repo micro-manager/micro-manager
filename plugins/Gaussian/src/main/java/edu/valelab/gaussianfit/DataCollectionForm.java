@@ -34,6 +34,8 @@ import edu.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
 import edu.valelab.gaussianfit.datasettransformations.DriftCorrector;
 import edu.valelab.gaussianfit.datasettransformations.PairFilter;
 import edu.valelab.gaussianfit.datasettransformations.TrackOperator;
+import edu.valelab.gaussianfit.internal.tabledisplay.DataTableModel;
+import edu.valelab.gaussianfit.internal.tabledisplay.DataTableRowSorter;
 import edu.valelab.gaussianfit.utils.ListUtils;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import edu.valelab.gaussianfit.utils.NumberUtils;
@@ -79,7 +81,6 @@ import javax.swing.LayoutStyle;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.TransferHandler;
@@ -101,9 +102,7 @@ import org.micromanager.internal.MMStudio;
  * @author Nico Stuurman
  */
 public class DataCollectionForm extends JFrame {
-   AbstractTableModel myTableModel_;
-   private final String[] columnNames_ = {"ID", "Image", "Nr of spots", 
-      "2C Reference", "Ch.", "X", "Y", "stdX", "stdY", "nrPhotons"};
+   DataTableModel mainTableModel_;
    private final String[] plotModes_ = {"t-X", "t-Y", "t-dist", "t-Int", "X-Y"};
    private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
    private final String[] renderSizes_  = {"1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x"};
@@ -248,13 +247,21 @@ public class DataCollectionForm extends JFrame {
    
    private static DataCollectionForm instance_ = null;
     
-   private ArrayList<RowData> rowData_;
+   //private ArrayList<RowData> rowData_;
    public enum Coordinates {NM, PIXELS};
    public enum PlotMode {X, Y, INT};
    
-   
+   /**
+    * 
+    * @return 
+    */
+   @Deprecated
    public ArrayList<RowData> getRowData() {
-      return rowData_;
+      return mainTableModel_.getRowData();
+   }
+   
+   public RowData getSpotData(int rowNr) {
+      return mainTableModel_.getRow(rowNr);
    }
    
 
@@ -278,108 +285,10 @@ public class DataCollectionForm extends JFrame {
 
       studio_ = studio;
       
-      rowData_ = new ArrayList<RowData>();
+      //rowData_ = new ArrayList<RowData>();
 
-      myTableModel_ = new AbstractTableModel() {
-         @Override
-         public String getColumnName(int col) {
-            return columnNames_[col];
-         }
-
-         @Override
-         public int getRowCount() {
-            if (rowData_ == null) {
-               return 0;
-            }
-            return rowData_.size();
-         }
-
-         @Override
-         public int getColumnCount() {
-            return columnNames_.length;
-         }
-
-         @Override
-         public Object getValueAt(int row, int col) {
-            if (col == 0 && rowData_ != null) {
-               return rowData_.get(row).ID_;
-            } else if (col == 1 && rowData_ != null) {
-               return rowData_.get(row).name_;
-            } else if (col == 2) {
-               return rowData_.get(row).spotList_.size();
-            } else if (col == 3) {
-               return rowData_.get(row).colCorrRef_;
-            } else if (col == 4) {
-               if (rowData_.get(row).isTrack_) {
-                  return "" + rowData_.get(row).spotList_.get(0).getChannel();
-               } else {
-                  return null;
-               }
-            } else if (col == 5) {
-               if (rowData_.get(row).isTrack_) {
-                  return String.format("%.2f", rowData_.get(row).spotList_.get(0).getXCenter());
-               } else {
-                  return null;
-               }
-            } else if (col == 6) {
-               if (rowData_.get(row).isTrack_) {
-                  return String.format("%.2f", rowData_.get(row).spotList_.get(0).getYCenter());
-               } else {
-                  return null;
-               }
-            } else if (col == 7) {
-               if (rowData_.get(row).isTrack_) {
-                  return String.format("%.2f", rowData_.get(row).stdX_);
-               } else {
-                  return null;
-               }
-            } else if (col == 8) {
-               if (rowData_.get(row).isTrack_) {
-                  return String.format("%.2f", rowData_.get(row).stdY_);
-               } else {
-                  return null;
-               }
-            } else if (col == 9) {
-               if (rowData_.get(row).isTrack_) {
-                  return String.format("%.2f", rowData_.get(row).totalNrPhotons_);
-               } else {
-                  return null;
-               }
-            }
-
-            return getColumnName(col);
-
-         }
-
-         @Override
-         public boolean isCellEditable(int row, int col) {
-            return col == 1;
-         }
-         
-         @Override
-         public Class getColumnClass(int col) {
-            switch (col) {
-               case 1:
-                  return String.class;
-               case 0:
-               case 2:
-                  return Integer.class;
-               default:  // even though all others are Doubles, they have empty 
-                  // values, which causes issues elsewhere.  Probably need 
-                  // to write my own sorter
-                  return String.class;
-            }
-         }
-
-         @Override
-         public void setValueAt(Object value, int row, int col) {
-            if (col == 1) {
-               rowData_.get(row).name_ = (String) value;
-            }
-            fireTableCellUpdated(row, col);
-         }
-      };
-
+      mainTableModel_ = new DataTableModel();
+      
       initComponents();
       referenceName_.setText("  ");
       plotComboBox_.setModel(new DefaultComboBoxModel(plotModes_));
@@ -414,7 +323,10 @@ public class DataCollectionForm extends JFrame {
       cm.getColumn(4).setPreferredWidth(up.getInt(oc, COL4WIDTH, 75));
       cm.getColumn(5).setPreferredWidth(up.getInt(oc, COL5WIDTH, 75));
       cm.getColumn(6).setPreferredWidth(up.getInt(oc, COL6WIDTH, 75));
-      mainTable_.setAutoCreateRowSorter(true);
+      
+      //DataTableRowSorter sorter = 
+      //        new DataTableRowSorter(mainTableModel_);
+      //mainTable_.setAutoCreateRowSorter(true);
        
       // Drag and Drop support for file loading
       super.setTransferHandler(new TransferHandler() {
@@ -518,14 +430,14 @@ public class DataCollectionForm extends JFrame {
       if (mainTable_.getRowSorter() != null) {
          mainTable_.getRowSorter().allRowsChanged();
       } else {
-         myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size() -1 );
+         mainTableModel_.fireRowInserted();
       }
    }
       
       
    
    public void addSpotData(RowData newRow) {
-      rowData_.add(newRow);
+      mainTableModel_.addRowData(newRow);
       fireRowAdded();
       SwingUtilities.invokeLater(new Runnable() {
          @Override
@@ -541,12 +453,7 @@ public class DataCollectionForm extends JFrame {
     * @return RowData with selected ID, or null if not found
     */
    public RowData getDataSet(int ID) {
-      for (RowData row : rowData_) {
-         if (row.ID_ == ID) {
-            return row;
-         }
-      }
-      return null;
+      return mainTableModel_.getDataSet(ID);
    }
 
    /**
@@ -1156,7 +1063,7 @@ public class DataCollectionForm extends JFrame {
       jScrollPane1_.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
       jScrollPane1_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
-      mainTable_.setModel(myTableModel_);
+      mainTable_.setModel(mainTableModel_);
       mainTable_.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
       jScrollPane1_.setViewportView(mainTable_);
 
@@ -1252,13 +1159,13 @@ public class DataCollectionForm extends JFrame {
           for (int i = 0; i < rows.length; i++) {
              if (saveFormatBox_.getSelectedIndex() == 0) {
                 if (i == 0)
-                   dir_ = LoadAndSave.saveData(rowData_.get(rows[i]), false, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), false, 
                            dir_, this);
                 else
-                   dir_ = LoadAndSave.saveData(rowData_.get(rows[i]), true, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), true, 
                            dir_, this);
              } else {
-                LoadAndSave.saveDataAsText(rowData_.get(rows[i]), this);
+                LoadAndSave.saveDataAsText(mainTableModel_.getRow(i), this);
              }
           }
        } else {
@@ -1271,7 +1178,7 @@ public class DataCollectionForm extends JFrame {
        if (rows.length > 0) {
           for (int row = rows.length - 1; row >= 0; row--) {
              rowData_.remove(rows[row]);
-             myTableModel_.fireTableRowsDeleted(rows[row], rows[row]);
+             mainTableModel_.fireTableRowsDeleted(rows[row], rows[row]);
           }
        } else {
           JOptionPane.showMessageDialog(getInstance(), "No dataset selected");
@@ -1282,7 +1189,7 @@ public class DataCollectionForm extends JFrame {
        int row = mainTable_.getSelectedRow();
        if (row > -1) {
           try {
-          showResults(rowData_.get(row));
+          showResults(mainTableModel_.getRow(row));
           } catch (OutOfMemoryError ome) {
              JOptionPane.showMessageDialog(getInstance(), "Not enough memory to show data");
           }
@@ -1296,7 +1203,7 @@ public class DataCollectionForm extends JFrame {
       if (row > -1) {
          Point s = MouseInfo.getPointerInfo().getLocation();
          ExtractTracksDialog extractTracksDialog = 
-                 new ExtractTracksDialog(studio_, rowData_.get(row), s);
+                 new ExtractTracksDialog(studio_, mainTableModel_.getRow(row), s);
       }
    }
     

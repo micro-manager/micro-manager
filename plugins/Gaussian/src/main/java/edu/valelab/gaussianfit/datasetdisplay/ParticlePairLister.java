@@ -444,8 +444,9 @@ public class ParticlePairLister {
 
          @Override
          public void run() {
-            ArrayList<RowData> rowData = DataCollectionForm.getInstance().getRowData();
-
+            
+            RowData spotData = DataCollectionForm.getInstance().getSpotData(row);
+            
             ResultsTable rt = new ResultsTable();
             rt.reset();
             rt.setPrecision(2);
@@ -454,10 +455,10 @@ public class ParticlePairLister {
             rt2.reset();
             rt2.setPrecision(2);
 
-            int width = rowData.get(row).width_;
-            int height = rowData.get(row).height_;
-            double factor = rowData.get(row).pixelSizeNm_;
-            boolean useS = DataCollectionForm.getInstance().useSeconds(rowData.get(row));
+            int width = spotData.width_;
+            int height = spotData.height_;
+            double factor = spotData.pixelSizeNm_;
+            boolean useS = DataCollectionForm.getInstance().useSeconds(spotData);
             ij.ImageStack stack = new ij.ImageStack(width, height);
 
             XYSeries xData = new XYSeries("XError");
@@ -465,8 +466,8 @@ public class ParticlePairLister {
 
             ij.IJ.showStatus("Creating Pairs...");
 
-            for (int frame = 1; frame <= rowData.get(row).nrFrames_; frame++) {
-               ij.IJ.showProgress(frame, rowData.get(row).nrFrames_);
+            for (int frame = 1; frame <= spotData.nrFrames_; frame++) {
+               ij.IJ.showProgress(frame, spotData.nrFrames_);
                ImageProcessor ip = new ShortProcessor(width, height);
                short pixels[] = new short[width * height];
                ip.setPixels(pixels);
@@ -475,7 +476,7 @@ public class ParticlePairLister {
                // Get points from both channels in each frame as ArrayLists        
                ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
                ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-               for (SpotData gs : rowData.get(row).spotList_) {
+               for (SpotData gs : spotData.spotList_) {
                   if (gs.getFrame() == frame) {
                      if (gs.getChannel() == 1) {
                         gsCh1.add(gs);
@@ -548,8 +549,8 @@ public class ParticlePairLister {
                rt2.addValue("Y", avgY);
                rt2.addValue("StdDevY", stdDevY);
                double timePoint = frame;
-               if (rowData.get(row).timePoints_ != null) {
-                  timePoint = rowData.get(row).timePoints_.get(frame);
+               if (spotData.timePoints_ != null) {
+                  timePoint = spotData.timePoints_.get(frame);
                   if (useS) {
                      timePoint /= 1000;
                   }
@@ -566,18 +567,18 @@ public class ParticlePairLister {
 
             if (showSummary) {
                // show summary in resultstable
-               rt2.show("Summary of Pairs found in " + rowData.get(row).name_);
+               rt2.show("Summary of Pairs found in " + spotData.name_);
             }
 
             if (showGraph) {
                String xAxis = "Time (frameNr)";
-               if (rowData.get(row).timePoints_ != null) {
+               if (spotData.timePoints_ != null) {
                   xAxis = "Time (ms)";
                   if (useS) {
                      xAxis = "Time (s)";
                   }
                }
-               GaussianUtils.plotData2("Error in " + rowData.get(row).name_,
+               GaussianUtils.plotData2("Error in " + spotData.name_,
                        xData, yData, xAxis, "Error(nm)", 0, 400);
 
                ij.IJ.showStatus("");
@@ -588,9 +589,9 @@ public class ParticlePairLister {
                TextPanel tp;
                TextWindow win;
 
-               String rtName = "Pairs found in " + rowData.get(row).name_;
+               String rtName = "Pairs found in " + spotData.name_;
                rt.show(rtName);
-               ImagePlus siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
+               ImagePlus siPlus = ij.WindowManager.getImage(spotData.title_);
                Frame frame = WindowManager.getFrame(rtName);
                if (frame != null && frame instanceof TextWindow && siPlus != null) {
                   win = (TextWindow) frame;
@@ -605,8 +606,8 @@ public class ParticlePairLister {
                   }
 
                   ResultsTableListener myk = new ResultsTableListener(
-                          MMStudio.getInstance(), rowData.get(0).dw_, siPlus,
-                          rt, win, rowData.get(row).halfSize_);
+                          MMStudio.getInstance(), spotData.dw_, siPlus,
+                          rt, win, spotData.halfSize_);
                   tp.addKeyListener(myk);
                   tp.addMouseListener(myk);
                   frame.toFront();
@@ -618,10 +619,10 @@ public class ParticlePairLister {
                sp.setOpenAsHyperStack(true);
                sp.setStack(stack, 1, 1, stack.getSize());
                sp.setDisplayRange(0, 20);
-               sp.setTitle(rowData.get(row).title_);
+               sp.setTitle(spotData.title_);
 
                ImageWindow w = new StackWindow(sp);
-               w.setTitle("Error in " + rowData.get(row).name_);
+               w.setTitle("Error in " + spotData.name_);
 
                w.setImage(sp);
                w.setVisible(true);
@@ -630,7 +631,7 @@ public class ParticlePairLister {
             if (savePairs) {
                try {
                   String fileName = filePath + File.separator
-                          + rowData.get(row).name_ + "_Pairs.cvs";
+                          + spotData.name_ + "_Pairs.cvs";
                   rt.saveAs(fileName);
                   ij.IJ.log("Saved file: " + fileName);
                } catch (IOException ex) {
