@@ -377,10 +377,9 @@ public final class TileCreatorDlg extends MMDialog {
    }
 
    @Subscribe
-   public void stuttingDown(ShutdownCommencingEvent se) {
+   public void shuttingDown(ShutdownCommencingEvent se) {
       studio_.profile().setString(TileCreatorDlg.class,
               OVERLAP_PREF, overlapField_.getText());
-      positionListDlg_.activateAxisTable(true);
       dispose();
    }
 
