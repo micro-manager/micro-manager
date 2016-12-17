@@ -35,9 +35,31 @@ public class DataTableModel extends AbstractTableModel {
    public RowData getRow(int rowNr) {
       return rowData_.get(rowNr);
    }
-   
+
+   @Deprecated
    public ArrayList<RowData> getRowData() {
       return rowData_;
+   }
+   
+   public void removeRow(int rowNr) {
+      rowData_.remove(rowNr);
+      // TODO: this may not work with sorted tables! 
+      super.fireTableRowsDeleted(rowNr, rowNr);
+   }
+   
+   
+   /**
+    * Return a dataset
+    * @param ID with requested ID.
+    * @return RowData with selected ID, or null if not found
+    */
+   public RowData getDataByID(int ID) {
+      for (RowData row : rowData_) {
+         if (row.ID_ == ID) {
+            return row;
+         }
+      }
+      return null;
    }
  
    @Override

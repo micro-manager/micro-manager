@@ -324,9 +324,9 @@ public class DataCollectionForm extends JFrame {
       cm.getColumn(5).setPreferredWidth(up.getInt(oc, COL5WIDTH, 75));
       cm.getColumn(6).setPreferredWidth(up.getInt(oc, COL6WIDTH, 75));
       
-      //DataTableRowSorter sorter = 
-      //        new DataTableRowSorter(mainTableModel_);
-      //mainTable_.setAutoCreateRowSorter(true);
+      DataTableRowSorter sorter = 
+              new DataTableRowSorter(mainTableModel_);
+      mainTable_.setAutoCreateRowSorter(true);
        
       // Drag and Drop support for file loading
       super.setTransferHandler(new TransferHandler() {
@@ -452,8 +452,8 @@ public class DataCollectionForm extends JFrame {
     * @param ID with requested ID.
     * @return RowData with selected ID, or null if not found
     */
-   public RowData getDataSet(int ID) {
-      return mainTableModel_.getDataSet(ID);
+   public RowData getDataByID(int ID) {
+      return mainTableModel_.getDataByID(ID);
    }
 
    /**
@@ -1177,8 +1177,7 @@ public class DataCollectionForm extends JFrame {
        int rows[] = mainTable_.getSelectedRows();
        if (rows.length > 0) {
           for (int row = rows.length - 1; row >= 0; row--) {
-             rowData_.remove(rows[row]);
-             mainTableModel_.fireTableRowsDeleted(rows[row], rows[row]);
+             mainTableModel_.removeRow(rows[row]);
           }
        } else {
           JOptionPane.showMessageDialog(getInstance(), "No dataset selected");
@@ -1230,7 +1229,7 @@ public class DataCollectionForm extends JFrame {
             // Get points from both channels in first frame as ArrayLists        
             ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
             ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-            for (SpotData gs : rowData_.get(row).spotList_) {
+            for (SpotData gs : mainTableModel_.getRow(row).spotList_) {
                if (gs.getFrame() == 1) {
                   Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                   if (gs.getChannel() == 1) {
@@ -1280,10 +1279,10 @@ public class DataCollectionForm extends JFrame {
             studio_.alerts().postAlert("2C Reference", DataCollectionForm.class , 
                     "Used " + points.size() + " spot pairs to calculate 2C Reference");
             
-            String name = "ID: " + rowData_.get(rows[0]).ID_;
+            String name = "ID: " + mainTableModel_.getRow(rows[0]).ID_;
             if (rows.length > 1) {
                for (int i = 1; i < rows.length; i++) {
-                  name += "," + rowData_.get(rows[i]).ID_;
+                  name += "," + mainTableModel_.getRow(rows[i]).ID_;
                }
             }
             referenceName_.setText(name);
@@ -1333,7 +1332,7 @@ public class DataCollectionForm extends JFrame {
       if (rows.length > 0) {     
          try {
             for (int row : rows) {
-               correct2C(rowData_.get(row));
+               correct2C(mainTableModel_.getRow(row));
             }
          } catch (InterruptedException ex) {
             ReportingUtils.showError(ex);
@@ -1349,9 +1348,9 @@ public class DataCollectionForm extends JFrame {
             @Override
             public void run() {
                if (jitterMethod_ == 0)
-                  DriftCorrector.unJitter(rowData_.get(row));
+                  DriftCorrector.unJitter(mainTableModel_.getRow(row));
                else
-                  new DriftCorrector().unJitter2(rowData_.get(row), jitterMaxFrames_, jitterMaxSpots_);
+                  new DriftCorrector().unJitter2(mainTableModel_.getRow(row), jitterMaxFrames_, jitterMaxSpots_);
             }
          };
          (new Thread(doWorkRunnable)).start();
@@ -1403,7 +1402,7 @@ public class DataCollectionForm extends JFrame {
       if (row > -1) {
           
          
-         RowData rowData = rowData_.get(row);
+         RowData rowData = mainTableModel_.getRow(row);
          String data = "Name: " + rowData.name_ + "\n" +
                  "Title: " + rowData.title_ + "\n" + 
                  "BoxSize: " + 2*rowData.halfSize_ + "\n" +
@@ -1471,7 +1470,7 @@ public class DataCollectionForm extends JFrame {
                              Double.parseDouble(intensityMax_.getText()));
                   }
 
-                  RowData rowData = rowData_.get(row);
+                  RowData rowData = mainTableModel_.getRow(row);
                   String fsep = System.getProperty("file.separator");
                   String ttmp = rowData.name_;
                   if (rowData.name_.contains(fsep)) {
@@ -1493,7 +1492,7 @@ public class DataCollectionForm extends JFrame {
                              visualizationModel_.getSelectedIndex(), mag, null, sf);
                      sp = new ImagePlus(title, ip);
 
-                     GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row),
+                     GaussCanvas gs = new GaussCanvas(sp, mainTableModel_.getRow(row),
                              visualizationModel_.getSelectedIndex(), mag, sf);
                      DisplayUtils.AutoStretch(sp);
                      DisplayUtils.SetCalibration(sp, (rowData.pixelSizeNm_ / mag));
@@ -1519,7 +1518,7 @@ public class DataCollectionForm extends JFrame {
          RowData[] myRows = new RowData[rows.length];
          // TODO: check that these are tracks 
          for (int i = 0; i < rows.length; i++)
-            myRows[i] = rowData_.get(rows[i]);
+            myRows[i] = mainTableModel_.getRow(rows[i]);
          plotData(myRows, plotComboBox_.getSelectedIndex());
       }
    }
@@ -1552,7 +1551,7 @@ public class DataCollectionForm extends JFrame {
          ArrayList<Point2D.Double> listAvgs = new ArrayList<Point2D.Double>();
          
          for (int i = 0; i < rows.length; i++) {
-            myRows[i] = rowData_.get(rows[i]);
+            myRows[i] = mainTableModel_.getRow(rows[i]);
             ArrayList<Point2D.Double> xyPoints = ListUtils.spotListToPointList(myRows[i].spotList_);
             Point2D.Double listAvg = ListUtils.avgXYList(xyPoints);
             listAvgs.add(listAvg);
@@ -1738,7 +1737,7 @@ public class DataCollectionForm extends JFrame {
          @Override
          public void run() {
             for (int row : rows) {
-               final RowData rowData = rowData_.get(row);
+               final RowData rowData = mainTableModel_.getRow(row);
                if (rowData.frameIndexSpotList_ == null) {
                   rowData.index();
                }
@@ -1757,7 +1756,7 @@ public class DataCollectionForm extends JFrame {
                  "Please select one or more datasets to straighten");
       } else {
          for (int row : rows) {
-            RowData r = rowData_.get(row);
+            RowData r = mainTableModel_.getRow(row);
             /*
             if (evt.getModifiers() > 0) {
                if (r.title_.equals(ij.IJ.getImage().getTitle())) {
@@ -1783,7 +1782,7 @@ public class DataCollectionForm extends JFrame {
                  "Please select one or more datasets to center");
       } else {
          for (int row : rows) {
-            TrackOperator.centerTrack(rowData_.get(row));
+            TrackOperator.centerTrack(mainTableModel_.getRow(row));
          }
       }
    }
@@ -1824,7 +1823,7 @@ public class DataCollectionForm extends JFrame {
       range_ = (String) JOptionPane.showInputDialog(this, "Provide desired subrange\n"
               + "e.g. \"7-50\"", "SubRange", JOptionPane.PLAIN_MESSAGE, null, null, range_);
       ArrayList<Integer> desiredFrameNumbers = new ArrayList<Integer>(
-              rowData_.get(rows[0]).maxNrSpots_);
+              mainTableModel_.getRow(rows[0]).maxNrSpots_);
       String[] parts = range_.split(",");
       try {
          for (String part : parts) {
@@ -1849,7 +1848,7 @@ public class DataCollectionForm extends JFrame {
                for (int row : rows) {
                   RowData newRow =
                           edu.valelab.gaussianfit.utils.SubRange.subRange(
-                          rowData_.get(row), desiredFrameNumbersCopy);
+                          mainTableModel_.getRow(row), desiredFrameNumbersCopy);
                   addSpotData(newRow);
                }
 
@@ -1868,7 +1867,7 @@ public class DataCollectionForm extends JFrame {
             JOptionPane.showMessageDialog(getInstance(), 
                     "Please select two or more datasets to combine");
             return;
-         }
+         }               
          semaphore_.acquire();
 
          Runnable doWorkRunnable = new Runnable() {
@@ -1878,7 +1877,8 @@ public class DataCollectionForm extends JFrame {
                List<SpotData> newData =
                        Collections.synchronizedList(new ArrayList<SpotData>());
                for (int i = 0; i < rows.length; i++) {
-                  RowData rowData = rowData_.get(rows[i]);
+                  RowData rowData = mainTableModel_.getRow(
+                          mainTable_.convertRowIndexToModel(rows[i]));
                   for (SpotData gs : rowData.spotList_) {
                      newData.add(gs);
                   }
@@ -1886,7 +1886,7 @@ public class DataCollectionForm extends JFrame {
 
                // Add transformed data to data overview window
                // for now, copy header of first data set
-               RowData rowData = rowData_.get(rows[0]);
+               RowData rowData = mainTableModel_.getRow(rows[0]);
                addSpotData(rowData.name_ + "-Combined",
                        rowData.title_,
                        rowData.dw_,
@@ -1932,7 +1932,7 @@ public class DataCollectionForm extends JFrame {
          setForeground(table.getForeground());
          setBackground(UIManager.getColor("Button.background"));
 
-         if (rowData_.get(row).isTrack_) {
+         if (mainTableModel_.getRow(row).isTrack_) {
             if (column == 4)
                setText((value == null ? "" : "Center"));
             else {
@@ -2412,7 +2412,7 @@ public class DataCollectionForm extends JFrame {
       
       zc_.clearDataPoints();
       
-      RowData rd = rowData_.get(rowNr);
+      RowData rd = mainTableModel_.getRow(rowNr);
       if (rd.shape_ < 2) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Use Fit Parameters Dimension 2 or 3 for Z-calibration");
@@ -2502,7 +2502,7 @@ public class DataCollectionForm extends JFrame {
       }
       
       for (int i = 0; i < rows.length; i++) {
-         RowData rowData = rowData_.get(rows[i]);
+         RowData rowData = mainTableModel_.getRow(rows[i]);
          PairFilter.filter(rowData, maxDistance, deviationMax, nrQuadrants);
       }
    }
@@ -2514,7 +2514,7 @@ public class DataCollectionForm extends JFrame {
    public void filterSpots(SpotDataFilter sf) {
       final int[] rows = mainTable_.getSelectedRows();
       for (int i = 0; i < rows.length; i++) {
-         RowData rowData = rowData_.get(rows[i]);
+         RowData rowData = mainTableModel_.getRow(rows[i]);
          List<SpotData> filteredData = new ArrayList<SpotData>();
          for (SpotData spot : rowData.spotList_) {
             if (sf.filter(spot)) {
