@@ -53,6 +53,9 @@ import org.micromanager.asidispim.api.ASIdiSPIMException;
  */
 public class Devices {
 
+   // TODO would like to be able to use static methods on devices (e.g. to see whether a camera supports a particular triggering mode)
+   //   but it isn't possible as presently implemented  => consider other architectures
+   
    private final List<String> loadedDevices_;
    private final Prefs prefs_;
    private final CMMCore core_;
@@ -120,6 +123,7 @@ public class Devices {
       HAMCAM("HamamatsuHam"), 
       PCOCAM("PCO_Camera"), 
       ANDORCAM("AndorSDK3"),
+      PVCAM("PVCAM"),
       DEMOCAM("DemoCamera"),
       UTILITIES("Utilities"),
       UNKNOWN("Unknown") // if the device is valid but not one we know about

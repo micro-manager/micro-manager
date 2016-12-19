@@ -175,7 +175,7 @@ public class SettingsPanel extends ListeningJPanel {
             "[]8[]"));
       cameraPanel.setBorder(PanelUtils.makeTitledBorder("Camera"));
       cameraPanel.add(new JLabel("Acq. Trigger Mode:"));
-      CameraModes camModeObject = new CameraModes(devices_, props_, prefs_);
+      CameraModes camModeObject = new CameraModes(devices_, prefs_);
       JComboBox camModeCB = camModeObject.getComboBox();
       cameraPanel.add(camModeCB, "wrap");
       

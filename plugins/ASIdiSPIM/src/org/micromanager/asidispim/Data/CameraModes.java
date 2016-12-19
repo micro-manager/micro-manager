@@ -29,6 +29,7 @@ import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 
+import org.micromanager.asidispim.Data.Cameras.CameraData;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 
@@ -41,7 +42,6 @@ import org.micromanager.asidispim.Utils.MyDialogUtils;
 public class CameraModes {
    
    private Devices devices_;   // object holding information about selected/available devices
-   private Properties props_;  // object handling all property read/writes
    private Prefs prefs_;
    
    /**
@@ -70,10 +70,13 @@ public class CameraModes {
       }
    };
    
-   public CameraModes(Devices devices, Properties props, Prefs prefs) {
+   public CameraModes(Devices devices, Prefs prefs) {
       devices_ = devices;
-      props_ = props;
       prefs_ = prefs;
+   }
+   
+   public boolean equals(CameraModes a) {
+      return (this.toString().equals(a.toString()));
    }
    
    /**
@@ -86,6 +89,72 @@ public class CameraModes {
          }
       }
       return null;
+   }
+   
+   /**
+    * Does camera support overlap/synchronous mode?
+    * @param devKey
+    * @return
+    */
+   private static boolean cameraSupportsOverlap(Devices.Libraries camLib) {
+      return (camLib == Devices.Libraries.HAMCAM ||
+            camLib == Devices.Libraries.ANDORCAM ||
+            camLib == Devices.Libraries.DEMOCAM);
+   }
+   
+   /**
+    * Does camera support pseudo overlap/synchronous mode?
+    * This is just PCO for the moment.
+    * @param devKey
+    * @return
+    */
+   private static boolean cameraSupportsPseudoOverlap(Devices.Libraries camLib) {
+      return (camLib == Devices.Libraries.PCOCAM);
+   }
+   
+   /**
+    * Does camera support level trigger mode?
+    * @param devKey
+    * @return
+    */
+   private static boolean cameraSupportsLevelTrigger(Devices.Libraries camLib) {
+      return (camLib == Devices.Libraries.HAMCAM ||
+            camLib == Devices.Libraries.ANDORCAM ||
+            camLib == Devices.Libraries.PCOCAM
+            );
+   }
+   
+   /**
+    * Does the camera exist and is it from a known camera library? 
+    * @param devKey
+    * @return
+    */
+   private static boolean cameraInvalid(Devices.Libraries camLib) {
+      return (camLib == Devices.Libraries.UNKNOWN ||
+            camLib == Devices.Libraries.NODEVICE);
+   }
+   
+   /**
+    * get list of all valid camera triggering modes for specified camera library
+    * (can't do with Device key because needs to be static for reference elsewhere)
+    * @param camLib
+    * @return
+    */
+   public static List<Keys> getValidModeKeys(Devices.Libraries camLib) {
+      List<Keys> keyList = new ArrayList<Keys>();
+      if (!cameraInvalid(camLib)) {
+         keyList.add(Keys.EDGE);
+         if (cameraSupportsLevelTrigger(camLib)) {
+            keyList.add(Keys.LEVEL);
+         }
+         if (cameraSupportsOverlap(camLib)) {
+            keyList.add(Keys.OVERLAP);
+         }
+         if (cameraSupportsPseudoOverlap(camLib)) {
+            keyList.add(Keys.PSEUDO_OVERLAP);
+         }
+      }
+      return keyList;
    }
    
    public JComboBox getComboBox() {
@@ -160,80 +229,20 @@ public class CameraModes {
       
       
       /**
-       * Does camera support overlap/synchronous mode?
-       * @param devKey
-       * @return
-       */
-      private boolean cameraSupportsOverlap(Devices.Keys devKey) {
-         Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
-         return (devLib == Devices.Libraries.HAMCAM ||
-               devLib == Devices.Libraries.ANDORCAM ||
-               devLib == Devices.Libraries.DEMOCAM);
-      }
-      
-      /**
-       * Does camera support pseudo overlap/synchronous mode?
-       * This is just PCO for the moment.
-       * @param devKey
-       * @return
-       */
-      private boolean cameraSupportsPseudoOverlap(Devices.Keys devKey) {
-         Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
-         return (devLib == Devices.Libraries.PCOCAM);
-      }
-      
-      private boolean cameraInvalid(Devices.Keys devKey) {
-         Devices.Libraries devLib = devices_.getMMDeviceLibrary(devKey);
-         return (devLib == Devices.Libraries.UNKNOWN ||
-               devLib == Devices.Libraries.NODEVICE);
-      }
-      
-      /**
        * Returns whatever acquisition modes are available based on devices
-       * and installed firmware.  Can be expanded in the future
-       * (will use devices_ and props_)
+       * and installed firmware.  Can be expanded in the future.
+       * Currently returns all modes supported by either camera and then we check on acquisition
+       *    to make sure the selected camera supports the selected mode.
        * @return
        */
       private List<Keys> getValidModeKeys() {
-         // TODO add level ("bulb") triggering
-         List<Keys> keyList = new ArrayList<Keys>();
-         boolean twoSided = 
-               (props_.getPropValueInteger(Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_NUM_SIDES)) != 1;
-               //true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isTwoSided();
-         boolean sideAFirst = 
-               (props_.getPropValueString(Devices.Keys.PLUGIN,
-                     Properties.Keys.PLUGIN_FIRST_SIDE).equals("A"));
-                     //true; // ASIdiSPIM.getFrame().getAcquisitionPanel().isFirstSideA();
-         
-         if (twoSided) {
-            if (cameraInvalid(Devices.Keys.CAMERAA) ||
-                  cameraInvalid(Devices.Keys.CAMERAB)) {
-               return keyList;
-            }
-            keyList.add(Keys.EDGE);
-            keyList.add(Keys.LEVEL);
-            if (cameraSupportsOverlap(Devices.Keys.CAMERAA) &&
-                  cameraSupportsOverlap(Devices.Keys.CAMERAB)) {
-               keyList.add(Keys.OVERLAP);
-            } else if (cameraSupportsPseudoOverlap(Devices.Keys.CAMERAA) &&
-                  cameraSupportsPseudoOverlap(Devices.Keys.CAMERAB)) {
-               keyList.add(Keys.PSEUDO_OVERLAP);
-            }
-         } else {
-            Devices.Keys camKey = sideAFirst ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
-            if (cameraInvalid(camKey)) {
-               return keyList;
-            }
-            keyList.add(Keys.EDGE);
-            keyList.add(Keys.LEVEL);
-            if (cameraSupportsOverlap(camKey)) {
-               keyList.add(Keys.OVERLAP);
-            } else if (cameraSupportsPseudoOverlap(camKey)) {
-               keyList.add(Keys.PSEUDO_OVERLAP);
+         List<Keys> keyList = CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA));
+         List<Keys> keyListB = CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA));
+         for (Keys k : keyListB) {
+            if (!keyList.contains(k)) {
+               keyList.add(k);
             }
          }
-
          return keyList;
       }
 

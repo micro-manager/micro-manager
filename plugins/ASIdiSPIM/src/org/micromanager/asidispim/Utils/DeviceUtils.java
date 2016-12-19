@@ -158,18 +158,30 @@ public class DeviceUtils {
          switch (deviceLibrary) {
          case HAMCAM:
             checkPropertyExists(key, Properties.Keys.TRIGGER_SOURCE);
+            checkPropertyExists(key, Properties.Keys.TRIGGER_ACTIVE);
+            checkPropertyExists(key, Properties.Keys.SCAN_MODE);
+            checkPropertyExists(key, Properties.Keys.SENSOR_MODE);
             checkPropertyValueEquals(key, Properties.Keys.TRIGGER_POLARITY, Properties.Values.POSITIVE);
             break;
          case PCOCAM:
             // trigger polarity not accessible in Micro-Manager, so we have to trust it is correct
             checkPropertyExists(key, Properties.Keys.TRIGGER_MODE_PCO);
+            checkPropertyExists(key, Properties.Keys.PIXEL_RATE);
             break;
          case ANDORCAM:
             // TODO check trigger polarity
             checkPropertyExists(key, Properties.Keys.TRIGGER_MODE);
+            checkPropertyExists(key, Properties.Keys.PIXEL_READOUT_RATE);
             break;
          case DEMOCAM:
             checkPropertyValueEquals(key, Properties.Keys.PIXEL_TYPE, Properties.Values.SIXTEENBIT);
+            checkPropertyExists(key, Properties.Keys.CAMERA_SIZE_X);
+            checkPropertyExists(key, Properties.Keys.CAMERA_SIZE_Y);
+            break;
+         case PVCAM:
+            checkPropertyExists(key, Properties.Keys.TRIGGER_MODE);
+            checkPropertyExists(key, Properties.Keys.CAMERA_X_DIMENSION);
+            checkPropertyExists(key, Properties.Keys.CAMERA_Y_DIMENSION);
             break;
          default:
             MyDialogUtils.showError("Plugin doesn't support your camera for SPIM yet;"

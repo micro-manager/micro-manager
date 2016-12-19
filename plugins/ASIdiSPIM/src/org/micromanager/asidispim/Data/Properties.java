@@ -153,13 +153,15 @@ public class Properties {
       TRIGGER_MODE_PCO("Triggermode"),         // for PCO
       PIXEL_RATE("PixelRate"),                 // for PCO
       CAMERA_TYPE("CameraType"),               // for PCO
-      TRIGGER_MODE("TriggerMode"),             // for Andor Zyla
+      TRIGGER_MODE("TriggerMode"),             // for Andor Zyla, PVCAM
       CAMERA_NAME("CameraName"),               // for Andor Zyla
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
       ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
       PIXEL_TYPE("PixelType"),            // for DemoCam
       CAMERA_SIZE_X("OnCameraCCDXSize"),  // for DemoCam
       CAMERA_SIZE_Y("OnCameraCCDYSize"),  // for DemoCam
+      CAMERA_X_DIMENSION("X-dimension"),  // for PVCAM
+      CAMERA_Y_DIMENSION("Y-dimension"),  // for PVCAM
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
@@ -298,6 +300,8 @@ public class Properties {
       LEVEL_PCO("External Exp. Ctrl."),
       INTERNAL_ANDOR("Internal (Recommended for fast acquisitions)"),
       LEVEL_ANDOR("External Exposure"),
+      INTERNAL_TRIGGER("Internal Trigger"),
+      EDGE_TRIGGER("Edge Trigger"),
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
       SIXTEENBIT("16bit"),
