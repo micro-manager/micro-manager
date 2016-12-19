@@ -292,6 +292,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       firstSide_ = pu.makeDropDownBox(ab, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.A.toString());
+      firstSide_.addActionListener(recalculateTimingDisplayAL);
       if (!ASIdiSPIM.oSPIM) {
       } else {
          firstSide_.setEnabled(false);
@@ -1696,6 +1697,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Using side A but no camera specified for that side.");
             return false;
          }
+         if (!CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA)).contains(getSPIMCameraMode())) {
+            MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera A doesn't support it.");
+            return false;
+         }
          if (!devices_.isValidMMDevice(Devices.Keys.GALVOA)) {
             MyDialogUtils.showError("Using side A but no scanner specified for that side.");
             return false;
@@ -1709,6 +1714,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (sideActiveB) {
          if (!devices_.isValidMMDevice(Devices.Keys.CAMERAB)) {
             MyDialogUtils.showError("Using side B but no camera specified for that side.");
+            return false;
+         }
+         if (!CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB)).contains(getSPIMCameraMode())) {
+            MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera B doesn't support it.");
             return false;
          }
          if (!devices_.isValidMMDevice(Devices.Keys.GALVOB)) {
