@@ -30,7 +30,6 @@ import net.miginfocom.swing.MigLayout;
 
 import org.json.JSONObject;
 import org.micromanager.api.MMWindow;
-import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
@@ -39,7 +38,6 @@ import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -51,13 +49,11 @@ import org.micromanager.utils.ReportingUtils;
  * folder - SPIMA - name_SPIMA-0.tif, name_SPIMA-x.tif, name_SPIMA-n.tif
  *        - SPIMB - name_SPIMB-0.tif, name_SPIMB-x.tif, name_SPIMB-n.tif
  * @author Nico
+ * @author Jon
  */
 @SuppressWarnings("serial")
 public class DataAnalysisPanel extends ListeningJPanel {
-   private final ScriptInterface gui_;
    private final Prefs prefs_;
-   private final Properties props_;
-   private final Devices devices_;
    private final JPanel exportPanel_;
    private final JPanel deskewPanel_;
    private final JTextField saveDestinationField_;
@@ -81,17 +77,14 @@ public class DataAnalysisPanel extends ListeningJPanel {
     * @param gui
     * @param prefs - Plugin-wide preferences
     */
-   public DataAnalysisPanel(ScriptInterface gui, Prefs prefs, Properties props, Devices devices) {    
+   public DataAnalysisPanel(Prefs prefs, Properties props, Devices devices) {    
       super(MyStrings.PanelNames.DATAANALYSIS.toString(),
               new MigLayout(
               "",
               "[right]",
               "[]16[]"));
-      gui_ = gui;
       prefs_ = prefs;
-      props_ = props;
-      devices_ = devices;
-      PanelUtils pu = new PanelUtils(prefs_, props_, devices);
+      PanelUtils pu = new PanelUtils(prefs_, props, devices);
             
       int textFieldWidth = 35;
 

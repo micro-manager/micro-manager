@@ -170,7 +170,7 @@ public class ASIdiSPIMFrame extends MMFrame
       navigationPanel_ = new NavigationPanel(gui_, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
 
-      dataAnalysisPanel_ = new DataAnalysisPanel(gui_, prefs_, props_, devices_);
+      dataAnalysisPanel_ = new DataAnalysisPanel(prefs_, props_, devices_);
       autofocusPanel_ = new AutofocusPanel(gui_, devices_, props_, prefs_, autofocus_);
       settingsPanel_ = new SettingsPanel(gui_, devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
