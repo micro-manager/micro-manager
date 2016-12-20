@@ -2100,7 +2100,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public static boolean getShouldSyncExposure() {
       return DefaultUserProfile.getInstance().getBoolean(AcqControlDlg.class,
-            SHOULD_SYNC_EXPOSURE, false);
+            SHOULD_SYNC_EXPOSURE, true);
    }
 
    public static void setShouldSyncExposure(boolean shouldSync) {
