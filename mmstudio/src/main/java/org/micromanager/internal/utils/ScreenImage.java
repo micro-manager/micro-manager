@@ -120,7 +120,6 @@ public final class ScreenImage
    /**
    *  Convenience method to create a BufferedImage of the desktop
    *
-   *  @param  fileName name of file to be created or null
    *  @return   image the image for the given region
    *  @exception AWTException see Robot class constructors
    *  @exception IOException if an error occurs during writing

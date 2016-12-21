@@ -347,13 +347,13 @@ public interface DataManager {
 
    /**
     * Add a new instance of the given ProcessorPlugin to the current
-    * application image processing pipeline (as referenced in the
-    * "Plugins -> On-The-Fly Image Processing" menu). The Pipeline
-    * configuration window will be opened if it is not already open. The new
-    * processor will be inserted onto the end of the pipeline, and the
-    * appropriate ProcessorConfigurator for that plugin will be run.
-    * @param plugin instance of a ProcessorPlugin that will be added to the
-    *        current application image processing pipeline
+    * application image processing pipeline.
+    * The pipeline configuration window will be opened if it is not already
+    * open. The new processor will be inserted onto the end of the pipeline,
+    * and the appropriate <code>ProcessorConfigurator</code> for that plugin
+    * will be run.
+    * @param plugin instance of a <code>ProcessorPlugin</code> that will be
+    *        added to the current application image processing pipeline
     */
    public void addAndConfigureProcessor(ProcessorPlugin plugin);
 

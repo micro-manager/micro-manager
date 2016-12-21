@@ -32,19 +32,21 @@ import java.util.List;
  * as well. If you do not want to provide any custom controls, then use the
  * DisplayManager.createDisplay() method that does not take a ControlsFactory
  * argument.
- * 
+ *
  * Usage example:
  *
+ * <code>
  * Datastore store = mm.data().createRAMDatastore();
  * DisplayWindow display = mm.displays().createDisplay(store,
  *       new ControlsFactory() {
- *          @Override
- *          public List<Component> makeControls(DisplayWindow disp) {
+ *          {@literal @}Override
+ *          public List&lt;Component&gt; makeControls(DisplayWindow disp) {
  *             make your controls here;
  *             return controls;
  *          }
  *      }
  * );
+ * </code>
  */
 public abstract class ControlsFactory {
    public abstract List<Component> makeControls(DisplayWindow display);

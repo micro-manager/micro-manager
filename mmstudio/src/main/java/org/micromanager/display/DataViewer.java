@@ -41,12 +41,14 @@ public interface DataViewer {
     * if your implementation stores the DisplaySettings under the "settings_"
     * field and has an EventBus under the "bus_" field:
     *
-    * @Override
+    * <code>
+    * {@literal @}Override
     * public void setDisplaySettings(DisplaySettings settings) {
     *    settings_ = settings;
     *    bus_.post(new NewDisplaySettingsEvent(settings_, this));
     *    repaint();
     * }
+    * </code>
     *
     * @param settings The new display settings.
     */

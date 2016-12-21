@@ -49,11 +49,11 @@ public interface UserProfile {
 
    /**
     * Retrieves a specific value from the parameter storage, as a String.
-    * @param c A Class<?> which provides scope for where to look for the key;
-    *          this is analogous to the parameter to
-    *          java.util.prefs.Preferences.userNodeForPackage(), except that
-    *          the scope is specific to the class, not the package the class
-    *          is in.
+    * @param c A <code>Class</code> which provides scope for where to look for
+    *          the key; this is analogous to the parameter to
+    *          <code>java.util.prefs.Preferences.userNodeForPackage()</code>,
+    *          except that the scope is specific to the class, not the package
+    *          the class is in.
     * @param key The identifier for the parameter.
     * @param fallback Value that will be returned if the key is not found or the
     *          key points to null.

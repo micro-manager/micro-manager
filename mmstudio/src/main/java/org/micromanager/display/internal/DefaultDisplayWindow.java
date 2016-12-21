@@ -1247,7 +1247,7 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
     * DisplaySettings will be saved under this key, and when this method is
     * called, the display will load any saved settings under this key and use
     * them as the new DisplaySettings.
-    * @param key New key to use when reading from/writing to the profile to
+    * @param newKey New key to use when reading from/writing to the profile to
     *        store DisplaySettings. If null, then revert to
     *        DEFAULT_SETTINGS_KEY.
     */

@@ -26,35 +26,39 @@ import org.scijava.plugin.SciJavaPlugin;
  * This interface is the base interface for all Micro-Manager plugins. In
  * practice, you will not use this interface directly, rather using one of the
  * sub-interfaces, to wit:
- * - org.micromanager.MenuPlugin, for plugins that should appear in the Plugins
- *   menu.
- * - org.micromanager.AutofocusPlugin, for plugins that are used to perform
- *   autofocus actions.
- * - org.micromanager.data.ProcessorPlugin, for processing images as they are
- *   collected.
- * - org.micromanager.display.OverlayPlugin, for drawing on top of image
- *   windows.
+ * - <code>org.micromanager.MenuPlugin</code>, for plugins that should appear
+ *   in the Plugins menu.
+ * - <code>org.micromanager.AutofocusPlugin</code>, for plugins that are used
+ *   to perform autofocus actions.
+ * - <code>org.micromanager.data.ProcessorPlugin</code>, for processing images
+ *   as they are collected.
+ * - <code>org.micromanager.display.OverlayPlugin</code>, for drawing on top of
+ *   image windows.
  *
  * To cause your plugin to be loaded when the program runs, you need to do the
  * following:
  * - Create a class that implements one of the interfaces listed above and the
- *   org.scijava.plugin.SciJavaPlugin interface (which is an empty interface).
- * - Annotate that class with the org.scijava.plugin.Plugin annotation, with
- *   the "type" parameter of that annotation being the type of the interface
- *   your plugin implements.
+ *   <code>org.scijava.plugin.SciJavaPlugin</code> interface (which is an empty
+ *   interface).
+ * - Annotate that class with the <code>org.scijava.plugin.Plugin</code>
+ *   annotation, with the <code>type</code> parameter of that annotation being
+ *   the type of the interface your plugin implements.
  * - Place your plugin's jar file in the mmplugins directory of your ImageJ
  *   installation.
  *
  * The annotated plugin class should look something like this (assuming you
- * want a MenuPlugin; replace with a different type as appropriate):
- * 
+ * want a <code>MenuPlugin</code>; replace with a different type as
+ * appropriate):
+ *
+ * <code>
  * import org.micromanager.MenuPlugin;
  * import org.scijava.plugin.Plugin;
  * import org.scijava.plugin.SciJavaPlugin
- * @Plugin(type = MenuPlugin.class)
+ * {@literal @}Plugin(type = MenuPlugin.class)
  * public class MyPlugin implements MenuPlugin, SciJavaPlugin {
- *    ...plugin contents go here...
+ *    // ...plugin contents go here...
  * }
+ * </code>
  *
  * Note that all plugins must have a default (no-argument) constructor.
  */

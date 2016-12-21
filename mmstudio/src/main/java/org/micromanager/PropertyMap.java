@@ -142,7 +142,7 @@ public interface PropertyMap {
        * @param values values to associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
-      PropertyMapBuilder putPropertyMap(String key, PropertyMap value);
+      PropertyMapBuilder putPropertyMap(String key, PropertyMap values);
 
       /**
        * Put a generic object into the mapping. The object will be internally
