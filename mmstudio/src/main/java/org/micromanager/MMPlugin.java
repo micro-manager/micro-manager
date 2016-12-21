@@ -50,7 +50,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * want a <code>MenuPlugin</code>; replace with a different type as
  * appropriate):
  *
- * <code>
+ * <pre><code>
  * import org.micromanager.MenuPlugin;
  * import org.scijava.plugin.Plugin;
  * import org.scijava.plugin.SciJavaPlugin
@@ -58,7 +58,7 @@ import org.scijava.plugin.SciJavaPlugin;
  * public class MyPlugin implements MenuPlugin, SciJavaPlugin {
  *    // ...plugin contents go here...
  * }
- * </code>
+ * </code></pre>
  *
  * Note that all plugins must have a default (no-argument) constructor.
  */

@@ -35,7 +35,7 @@ import java.util.List;
  *
  * Usage example:
  *
- * <code>
+ * <pre><code>
  * Datastore store = mm.data().createRAMDatastore();
  * DisplayWindow display = mm.displays().createDisplay(store,
  *       new ControlsFactory() {
@@ -46,7 +46,7 @@ import java.util.List;
  *          }
  *      }
  * );
- * </code>
+ * </code></pre>
  */
 public abstract class ControlsFactory {
    public abstract List<Component> makeControls(DisplayWindow display);
