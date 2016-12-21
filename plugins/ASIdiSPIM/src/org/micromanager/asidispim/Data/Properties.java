@@ -234,6 +234,7 @@ public class Properties {
       PLUGIN_DESKEW_FACTOR("DeskewFactor"),
       PLUGIN_DESKEW_INVERT("DeskewInvert"),
       PLUGIN_DESKEW_INTERPOLATE("DeskewInterpolate"),
+      PLUGIN_DESKEW_AUTO_TEST("DeskewAutoTest"),
       ;
       private final String text;
       private final boolean forceSet;
