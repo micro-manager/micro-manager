@@ -97,7 +97,6 @@ public class DataAnalysisPanel extends ListeningJPanel {
               "[]8[]"));
       
       exportPanel_.setBorder(PanelUtils.makeTitledBorder("Export diSPIM data"));
-     
       
       exportPanel_.add(new JLabel("Export directory:"), "");
       
@@ -176,7 +175,6 @@ public class DataAnalysisPanel extends ListeningJPanel {
          }
       });
       exportPanel_.add(exportFormatSelect, "left, wrap");
-      
       
       final JProgressBar progBar = new JProgressBar();
       progBar.setStringPainted(true);
@@ -291,7 +289,9 @@ public class DataAnalysisPanel extends ListeningJPanel {
                if (metadata.getString("FirstSide").equals("B")) {
                   firstSideIsA = false;
                }
-               windowTitle = metadata.getString("AcqusitionName");
+               if (metadata.has("AcquisitionName")) {
+                  windowTitle = metadata.getString("AcqusitionName");
+               }
             }
             
             if (windowTitle.equals("")) {
