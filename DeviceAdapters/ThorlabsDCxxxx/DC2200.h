@@ -1,14 +1,15 @@
 #pragma once
 
+#ifndef _DC2200_H_
+#define _DC2200_H_
 
 #include "../../MMDevice/DeviceBase.h"
 #include "DynError.h"
-#include "vpptype.h"
 
 /****************************************************************************
- class: 			DC2200
+ class: 			DC2xxx
  description:	The class DC2xxx is derived from a shutter base interface and
-					can be used for DC2200devices.
+					can be used for DC2010 and for DC2100 devices.
 ****************************************************************************/
 class DC2200: public CShutterBase<DC2200>
 {
@@ -16,7 +17,7 @@ public:
 
 	// constructor and destructor
 	// ------------
-	DC2200();									// constructs a DC2xxx device
+	DC2200(const char* deviceName);									// constructs a DC2xxx device
 	~DC2200();									// destroys a DC2xxx device
 
 	// MMDevice API
@@ -28,7 +29,6 @@ public:
 	// ------------
 	void GetName(char* pszName) const;	// returns the device name -> DC2xxx
 	bool Busy();								// returns true in case device is busy
-	static const char* DeviceName();
 
 	// Shutter API
 	// ------------
@@ -39,7 +39,7 @@ public:
 
 	// action interface (work like callback/event functions)
 	// -----------------------------------------------------
-	int OnDeviceChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLimitCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnMaximumCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnOperationMode(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -49,28 +49,27 @@ public:
 	int OnPWMFrequency(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPWMDutyCycle(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPWMCounts(MM::PropertyBase* pProp, MM::ActionType eAct);
+	//int OnDisplayBrightness(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 	int LEDOnOff(int);								// sets the LED output on(1) or off(0)
 	int CreateStaticReadOnlyProperties(void);
 	int ValidateDevice(void);
-	int GetFirstDevice(void);
 
 private:
 	bool dynErrlist_free	(void);
 	bool dynErrlist_lookup	(int err, std::string* descr);
 	bool dynErrlist_add		(int err, std::string descr);
-	bool getErrorDescription(int *err); // get the last error and store the description of the last error
+	bool getLastError		(int* err);
+
 
 private:
-	ViSession		m_handle;
+	const char*		m_devName;
 	std::string 	m_name;
-	std::string 	m_serialNumber;
-	ViChar 			m_resName[256];
-
 	std::string 	m_LEDOn;
 	std::string 	m_mode;
 	std::string 	m_status;
+	std::string 	m_serialNumber;
 	std::string 	m_firmwareRev;
 	std::string		m_wavelength;
 	std::string		m_forwardBias;
@@ -82,13 +81,14 @@ private:
 	long 			m_pwmFrequency;
 	long 			m_pwmDutyCycle;
 	long 			m_pwmCounts;
-	short			m_terminal;
+	unsigned int	m_handle;
+	unsigned short	m_terminal;
+	double			m_maximumVoltage;
+
+	std::ostringstream log;
 
 	// dynamic error list
 	std::vector<DynError*>	m_dynErrlist;
-
-	// logger
-	std::ostringstream log;
 };
 
-
+#endif /*_DC2200_H_*/

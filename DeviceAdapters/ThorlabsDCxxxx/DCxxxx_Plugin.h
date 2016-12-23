@@ -33,5 +33,6 @@
 #include "DC2XXX.h"
 #include "DC3100.h"
 #include "DC4100.h"
+#include "DC2200.h"
 
 #endif	// _DCxxxx_PLUGIN_H_

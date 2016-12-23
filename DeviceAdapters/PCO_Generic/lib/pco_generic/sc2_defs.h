@@ -236,6 +236,8 @@
 #define USB_PID_CAM_EDGEHS_20     0x0008      // AVR32
 #define USB_PID_P5CTR             0x0009      // FTDI FT2232H (for updating P5CTR framegrabber)
 #define USB_PID_P5CTR_PROD        0x000A      // FTDI FT2232H (usb bridge for controlling the production tool for the P5CTR framegrabber)
+#define USB_PID_CAM_PANDA_20      0x000B      // Panda AVR32 USB2.0 Interface
+#define USB_PID_CAM_PANDA_30      0x000C      // Panda FX3 USB3.0 Interface
 #define USB_PID_DMCT_DEBUG        0x0080      // Microchip PIC32MZ / DMCT debug port
 
 
@@ -307,12 +309,15 @@
 #define ERROR_POWERSUPPLYTEMPERATURE    0x00000002
 #define ERROR_CAMERATEMPERATURE         0x00000004
 #define ERROR_SENSORTEMPERATURE         0x00000008
+
 #define ERROR_EXTERNAL_BATTERY_LOW      0x00000010
+#define ERROR_FIRMWARE_CORRUPTED        0x00000020
 
 #define ERROR_CAMERAINTERFACE           0x00010000
 #define ERROR_CAMERARAM                 0x00020000
 #define ERROR_CAMERAMAINBOARD           0x00040000
 #define ERROR_CAMERAHEADBOARD           0x00080000
+
 
 #define STATUS_DEFAULT_STATE            0x00000001
 #define STATUS_SETTINGS_VALID           0x00000002
@@ -404,6 +409,11 @@
 
 #define SENSOR_QMFLIM_V2B_BW      0x4000      // CSEM QMFLIM V2B B/W
 
+#define SENSOR_GPIXEL_2020_ASM          0x5000  // GPixel 2020 revision A
+#define SENSOR_GPIXEL_2020_ESM_REV_A    0x5002  // GPixel 2020 eSM prototype, revision a+ , enhanced QE, no binning
+#define SENSOR_GPIXEL_2020_BSM          0x5004  // GPixel 2020 revision B; charge binning
+#define SENSOR_GPIXEL_2020_BSC          0x5005  // GPixel 2020 rev. B, color version
+#define SENSOR_GPIXEL_2020_ESM_REV_B    0x5006  // GPixel 2020 rev. B, enhanced QE version
 
 // ------------------------------------------------------------------------ //
 // -- Defines for Get Info String Command: -------------------------------- //
@@ -468,7 +478,14 @@ const PCO_SENSOR_TYPE_DEF far pco_sensor[] =
                SENSOR_CMOSIS_CMV12000_BW,  "CMOSIS CMV12000 BW",
                SENSOR_CMOSIS_CMV12000_COL, "CMOSIS CMV12000 Color",
                
-               SENSOR_QMFLIM_V2B_BW, "QMFLIM V2B BW"
+               SENSOR_QMFLIM_V2B_BW, "QMFLIM V2B BW",
+							 
+							 SENSOR_GPIXEL_2020_ASM,       "GPixel 2020 rev A",
+							 SENSOR_GPIXEL_2020_ESM_REV_A, "GPixel 2020 rev A+ (eSM prototype)",
+							 SENSOR_GPIXEL_2020_BSM,       "GPixel 2020 rev B",
+							 SENSOR_GPIXEL_2020_BSC,       "GPixel 2020 rev B, color",
+							 SENSOR_GPIXEL_2020_ESM_REV_B, "GPixel 2020 rev B, enhanced QE"
+							 
 };
 
 const int far PCO_SENSOR_TYPE_DEF_NUM = sizeof(pco_sensor) / sizeof(pco_sensor[0]);
@@ -529,6 +546,7 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define GENERALCAPS1_ROI_HORZ_SYMM_TO_VERT_AXIS        0x01000000 // Camera horz.ROI must be symmetrical to vertical axis
 
 #define GENERALCAPS1_COOLING_SETPOINTS                 0x02000000 // Camera has cooling setpoints instead of cooling range
+#define GENERALCAPS1_USER_INTERFACE                    0x04000000 // Camera has user interface commands
 
 //#define GENERALCAPS_ENHANCE_DESCRIPTOR_x             0x10000000 // reserved for future desc.
 //#define GENERALCAPS_ENHANCE_DESCRIPTOR_x             0x20000000 // reserved for future desc.
@@ -580,6 +598,36 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_5     0x1020
 #define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_6     0x1040
 #define PCO_DIMAX_CS_CAMERA_SETUP_TYPE_RSRVD_7     0x1080
+
+
+// ------------------------------------------------------------------------ //
+// -- Defines for User Interface Commands: -------------------------------- //
+// ------------------------------------------------------------------------ //
+
+#define USER_INTERFACE_TYPE_UART                       0x0001
+#define USER_INTERFACE_TYPE_UART_UNIDIRECTIONAL        0x0002
+#define USER_INTERFACE_TYPE_USART                      0x0003
+#define USER_INTERFACE_TYPE_SPI                        0x0004
+#define USER_INTERFACE_TYPE_I2C                        0x0005
+                                                       
+#define USER_INTERFACE_OPTIONS_UART_PARITY_NONE        0x00000001
+#define USER_INTERFACE_OPTIONS_UART_PARITY_EVEN        0x00000002
+#define USER_INTERFACE_OPTIONS_UART_PARITY_ODD         0x00000004
+                                                       
+#define USER_INTERFACE_EQUIPMENT_LENS_CONTROL_BIRGER   0x00000001
+                                                       
+#define USER_INTERFACE_HANDSHAKE_TYPE_NONE             0x0001
+#define USER_INTERFACE_HANDSHAKE_TYPE_RTS_CTS          0x0002
+#define USER_INTERFACE_HANDSHAKE_TYPE_XON_XOFF         0x0004
+
+
+#define USER_INTERFACE_DO_NOT_CLEAR_BUFFERS            0x00
+#define USER_INTERFACE_CLEAR_RX_BUFFER                 0x01
+#define USER_INTERFACE_CLEAR_TX_BUFFER                 0x02
+#define USER_INTERFACE_CLEAR_RX_AND_TX_BUFFER          0x03
+
+
+
 
 
 // ------------------------------------------------------------------------ //
@@ -1113,13 +1161,14 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define SIGNAL_DEF_MASK     0x000000FF // Signal options mask
 
 // SIGNAL Type definitions (up to 16 different types)
-#define SIGNAL_TYPE_TTL     0x00000001 // Signal can be switched to TTL level
+#define SIGNAL_TYPE_TTL           0x00000001 // Signal can be switched to TTL level
 // (0V to 0.8V, 2V to VCC, VCC is 4.75V to 5.25V)
-#define SIGNAL_TYPE_HL_SIG  0x00000002 // Signal can be switched to high level signal
+#define SIGNAL_TYPE_HL_SIG        0x00000002 // Signal can be switched to high level signal
 // (0V to 5V, 10V to VCC, VCC is 56V)
-#define SIGNAL_TYPE_CONTACT 0x00000004 // Signal can be switched to contact level
-#define SIGNAL_TYPE_RS485   0x00000008 // Signal can be switched to RS485 level
-#define SIGNAL_TYPE_MASK    0x0000FFFF // Signal type mask
+#define SIGNAL_TYPE_CONTACT       0x00000004 // Signal can be switched to contact level
+#define SIGNAL_TYPE_RS485         0x00000008 // Signal can be switched to RS485 level
+#define SIGNAL_TYPE_TTL_A_GND_B   0x00000080 // Two pin diff. output, A = TTL, B = GND
+#define SIGNAL_TYPE_MASK          0x0000FFFF // Signal type mask
 
 // SIGNAL Polarity definitions (up to 16 different types)
 #define SIGNAL_POL_HIGH     0x00000001 // Signal can be switched to sense low level

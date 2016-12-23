@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMDevice - Device adapter kit
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Global constans and enumeration types
+// DESCRIPTION:   Global constants and enumeration types
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 07/11/2005
 // COPYRIGHT:     University of California, San Francisco, 2006
 //
@@ -28,7 +28,7 @@
 // Global error codes
 //
 #define MM_CODE_OK 0       // command succeeded
-#define MM_CODE_ERR 1      // undefined error occured
+#define MM_CODE_ERR 1      // undefined error occurred
 
 //////////////////////////////////////////////////////////////////////////////
 // Global constants
