@@ -359,6 +359,13 @@ int CXYStage::Initialize()
       SetPropertyLimits(g_ScanSettlingTimePropertyName, 0., 5000.);  // limits are arbitrary really, just give a reasonable range
       UpdateProperty(g_ScanSettlingTimePropertyName);
 
+      if (FirmwareVersionAtLeast(3.17)) {
+         pAct = new CPropertyAction (this, &CXYStage::OnScanOvershootDistance);
+         CreateProperty(g_ScanOvershootDistancePropertyName, "0", MM::Float, false, pAct);
+         SetPropertyLimits(g_ScanOvershootDistancePropertyName, 0., 500.);  // limits are arbitrary really, just give a reasonable range
+         UpdateProperty(g_ScanOvershootDistancePropertyName);
+      }
+
    }
 
    initialized_ = true;
@@ -1802,6 +1809,30 @@ int CXYStage::OnScanSettlingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << addressChar_ << "NV F=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CXYStage::OnScanOvershootDistance(MM::PropertyBase* pProp, MM::ActionType eAct)
+// note ASI units are in millimeters but MM units are in micrometers
+{
+   ostringstream command; command.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "NV T?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A T="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = 1000*tmp;
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "NV T=" << tmp/1000;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
