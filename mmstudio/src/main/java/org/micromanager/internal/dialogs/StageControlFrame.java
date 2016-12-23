@@ -1,4 +1,3 @@
-
 /**
  * StageControlFrame.java
  *
@@ -24,18 +23,16 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
-import java.util.HashMap;
+import java.text.ParseException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import mmcorej.CMMCore;
@@ -48,6 +45,7 @@ import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
 
 /**
@@ -58,8 +56,6 @@ public final class StageControlFrame extends MMFrame {
    private final Studio studio_;
    private final CMMCore core_;
 
-   private final HashMap<String, Double> smallMovementZ_ = new HashMap<String, Double>();
-   private final HashMap<String, Double> mediumMovementZ_ = new HashMap<String, Double>();
    private String currentZDrive_ = "";
    private boolean initialized_ = false;
 
@@ -68,8 +64,6 @@ public final class StageControlFrame extends MMFrame {
 
    private final ExecutorService stageMotionExecutor_;
 
-   private static final String FRAMEXPOS = "FRAMEXPOS";
-   private static final String FRAMEYPOS = "FRAMEYPOS";
    private static final String[] XY_MOVEMENTS = new String[] {
       "SMALLMOVEMENT", "MEDIUMMOVEMENT", "LARGEMOVEMENT"
    };
@@ -86,7 +80,6 @@ public final class StageControlFrame extends MMFrame {
    private JComboBox zDriveSelect_;
    private JLabel zPositionLabel_;
    // Ordered small, medium, large.
-   private double[] xyStepSizes_ = new double[] {1.0, 10.0, 100.0};
    private JTextField[] xyStepTexts_ = new JTextField[] {
       new JTextField(), new JTextField(), new JTextField()
    };
@@ -115,18 +108,7 @@ public final class StageControlFrame extends MMFrame {
       core_ = studio_.getCMMCore();
       stageMotionExecutor_ = Executors.newFixedThreadPool(2);
 
-      // Read values from PREFS
-      double pixelSize = core_.getPixelSizeUm();
-      long nrPixelsX = core_.getImageWidth();
-      if (pixelSize != 0) {
-         xyStepSizes_[0] = pixelSize;
-         xyStepSizes_[1] = pixelSize * nrPixelsX * 0.1;
-         xyStepSizes_[2] = pixelSize * nrPixelsX;
-      }
-      for (int i = 0; i < 3; ++i) {
-         xyStepSizes_[i] = studio_.getUserProfile().getDouble(this.getClass(),
-               XY_MOVEMENTS[i], xyStepSizes_[i]);
-      }
+      // Get active Z drive from profile
       currentZDrive_ = studio_.getUserProfile().getString(this.getClass(),
               CURRENTZDRIVE, currentZDrive_);
 
@@ -141,9 +123,20 @@ public final class StageControlFrame extends MMFrame {
     * configuration change)
     */
    public final void initialize() {
+      double[] xyStepSizes = new double[] {1.0, 10.0, 100.0};
+      double pixelSize = core_.getPixelSizeUm();
+      long nrPixelsX = core_.getImageWidth();
+      if (pixelSize != 0) {
+         xyStepSizes[0] = pixelSize;
+         xyStepSizes[1] = pixelSize * nrPixelsX * 0.1;
+         xyStepSizes[2] = pixelSize * nrPixelsX;
+      }
+      // Read XY stepsizes from profile
       for (int i = 0; i < 3; ++i) {
-         xyStepTexts_[i].setText(TextUtils.removeNegativeZero(
-               TextUtils.FMT3.format(xyStepSizes_[i])));
+         xyStepSizes[i] = studio_.getUserProfile().getDouble(this.getClass(),
+               XY_MOVEMENTS[i], xyStepSizes[i]);
+         xyStepTexts_[i].setText(
+                 NumberUtils.doubleToDisplayString(xyStepSizes[i]) );
       }
 
       StrVector zDrives = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
@@ -168,10 +161,6 @@ public final class StageControlFrame extends MMFrame {
          }
          for (int i = 0; i < zDrives.size(); i++) {
             String drive = zDrives.get(i);
-            smallMovementZ_.put(drive, studio_.getUserProfile().getDouble(
-                    this.getClass(),SMALLMOVEMENTZ + drive, 1.0));
-            mediumMovementZ_.put(drive, studio_.getUserProfile().getDouble(
-                    this.getClass(),MEDIUMMOVEMENTZ + drive, 10.0));
             zDriveSelect_.addItem(drive);
             if (currentZDrive_.equals(zDrives.get(i))) {
                zDriveFound = true;
@@ -205,10 +194,12 @@ public final class StageControlFrame extends MMFrame {
    }
 
    private void updateZMovements() {
-      zStepTexts_[0].setText(TextUtils.removeNegativeZero(
-            TextUtils.FMT3.format(smallMovementZ_.get(currentZDrive_))));
-      zStepTexts_[1].setText(TextUtils.removeNegativeZero(
-            TextUtils.FMT3.format(mediumMovementZ_.get(currentZDrive_))));
+      double smallMovement = studio_.profile().getDouble(StageControlFrame.class,
+              SMALLMOVEMENTZ + currentZDrive_, 1.0);
+      zStepTexts_[0].setText(NumberUtils.doubleToDisplayString(smallMovement));
+      double mediumMovement = studio_.profile().getDouble(StageControlFrame.class,
+              MEDIUMMOVEMENTZ + currentZDrive_, 10.0);
+      zStepTexts_[1].setText(NumberUtils.doubleToDisplayString(mediumMovement));
    }
 
    private void initComponents() {
@@ -216,15 +207,6 @@ public final class StageControlFrame extends MMFrame {
       setLocationByPlatform(true);
       setResizable(false);
       setLayout(new MigLayout("fill, insets 5, gap 2"));
-      addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent evt) {
-            for (int i = 0; i < 3; ++i) {
-               studio_.profile().setDouble(StageControlFrame.class,
-                  XY_MOVEMENTS[i], xyStepSizes_[i]);
-            }
-         }
-      });
 
       xyPanel_ = createXYPanel();
       add(xyPanel_, "hidemode 2");
@@ -242,6 +224,7 @@ public final class StageControlFrame extends MMFrame {
    }
 
    private JPanel createXYPanel() {
+      final JFrame theWindow = this;
       JPanel result = new JPanel(new MigLayout("insets 0, gap 0"));
       result.add(new JLabel("XY Stage", JLabel.CENTER),
             "span, alignx center, wrap");
@@ -299,8 +282,15 @@ public final class StageControlFrame extends MMFrame {
                      dy = 1;
                      break;
                }
-               double increment = xyStepSizes_[stepIndex];
-               setRelativeXYStagePosition(dx * increment, dy * increment);
+               try {
+                  double increment = 
+                          NumberUtils.displayStringToDouble(xyStepTexts_[stepIndex].getText());
+                  setRelativeXYStagePosition(dx * increment, dy * increment);
+               }
+               catch (ParseException ex) {
+                  JOptionPane.showMessageDialog(theWindow, "XY Step size is not a number");
+               }
+               
             }
          });
          // Add the button to the panel.
@@ -342,21 +332,7 @@ public final class StageControlFrame extends MMFrame {
          result.add(indicator, "height 20!, split, span");
          // This copy can be referred to in the action listener.
          final int index = i;
-         xyStepTexts_[i].addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               double stepSize = 0.0;
-               try {
-                  stepSize = Double.parseDouble(xyStepTexts_[index].getText());
-               }
-               catch (NumberFormatException ex) {
-                  // Give up.
-                  return;
-               }
-               xyStepSizes_[index] = stepSize;
-            }
-         });
-         addFocusActionListener(xyStepTexts_[i]);
+
          // See above HACK note.
          result.add(xyStepTexts_[i], "height 20!, width 80");
 
@@ -372,13 +348,13 @@ public final class StageControlFrame extends MMFrame {
                double[] sizes = new double[] {pixelSize, viewSize / 10,
                   viewSize};
                double stepSize = sizes[index];
-               xyStepTexts_[index].setText(TextUtils.removeNegativeZero(
-                     TextUtils.FMT3.format(stepSize)));
-               xyStepSizes_[index] = stepSize;
+               xyStepTexts_[index].setText(
+                       NumberUtils.doubleToDisplayString(stepSize));
             }
          });
          result.add(presetButton, "width 80!, height 20!, wrap");
       } // End creating set-step-size text fields/buttons.
+      
       return result;
    }
 
@@ -389,6 +365,7 @@ public final class StageControlFrame extends MMFrame {
     * between the chevrons and the step size controls.
     */
    private JPanel createZPanel() {
+      final JFrame theWindow = this;
       JPanel result = new JPanel(new MigLayout("insets 0, gap 0, flowy"));
       result.add(new JLabel("Z Stage", JLabel.CENTER), "growx, alignx center");
       zDriveSelect_ = new JComboBox();
@@ -422,13 +399,13 @@ public final class StageControlFrame extends MMFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                int dz = (index < 2) ? 1 : -1;
-               double stepSize = 0.0;
+               double stepSize;
                JTextField text = (index == 0 || index == 3) ? zStepTexts_[1] : zStepTexts_[0];
                try {
-                  stepSize = Double.parseDouble(text.getText());
+                  stepSize = NumberUtils.displayStringToDouble(text.getText());
                }
-               catch (NumberFormatException ex) {
-                  // Give up.
+               catch (ParseException ex) {
+                  JOptionPane.showMessageDialog(theWindow, "Z-step value is not a number");
                   return;
                }
                setRelativeStagePosition(dz * stepSize);
@@ -453,62 +430,22 @@ public final class StageControlFrame extends MMFrame {
       // Create the controls for setting the step size.
       // These heights again must match those of the corresponding stepsize
       // controls in the XY panel.
-      Double size = smallMovementZ_.get(currentZDrive_);
-      if (size == null) {
-         size = studio_.profile().getDouble(StageControlFrame.class,
-               SMALLMOVEMENTZ, 1.0);
-      }
-      zStepTexts_[0].setText(TextUtils.removeNegativeZero(
-            TextUtils.FMT3.format(size)));
+      double size = studio_.profile().getDouble(StageControlFrame.class,
+               SMALLMOVEMENTZ + currentZDrive_, 1.0);
+      
+      zStepTexts_[0].setText(NumberUtils.doubleToDisplayString(size));
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
             "height 20!, span, split 3, flowx");
       result.add(zStepTexts_[0], "height 20!, width 50");
       result.add(new JLabel("\u00b5m"), "height 20!");
 
-      size = smallMovementZ_.get(currentZDrive_);
-      if (size == null) {
-         size = studio_.profile().getDouble(StageControlFrame.class,
-               MEDIUMMOVEMENTZ, 10.0);
-      }
-      zStepTexts_[1].setText(TextUtils.removeNegativeZero(
-            TextUtils.FMT3.format(size)));
+      size = studio_.profile().getDouble(StageControlFrame.class,
+               MEDIUMMOVEMENTZ + currentZDrive_, 10.0);
+      zStepTexts_[1].setText(NumberUtils.doubleToDisplayString(size));
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
       result.add(zStepTexts_[1], "width 50");
       result.add(new JLabel("\u00b5m"));
-
-      // Set up listeners for the text fields.
-      ActionListener stepSizeListener = new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            JTextField source = (JTextField) e.getSource();
-            String profileKey;
-            HashMap<String, Double> stepStore;
-            if (source == zStepTexts_[0]) {
-               profileKey = SMALLMOVEMENTZ;
-               stepStore = smallMovementZ_;
-            }
-            else {
-               profileKey = MEDIUMMOVEMENTZ;
-               stepStore = mediumMovementZ_;
-            }
-            try {
-               double stepSize = Double.parseDouble(source.getText());
-               stepStore.put(currentZDrive_, stepSize);
-               studio_.profile().setDouble(StageControlFrame.class, profileKey,
-                     stepSize);
-            }
-            catch (NumberFormatException ex) {
-               // Give up.
-               return;
-            }
-         }
-      };
-      zStepTexts_[0].addActionListener(stepSizeListener);
-      zStepTexts_[1].addActionListener(stepSizeListener);
-
-      addFocusActionListener(zStepTexts_[0]);
-      addFocusActionListener(zStepTexts_[1]);
 
       return result;
    }
@@ -526,38 +463,36 @@ public final class StageControlFrame extends MMFrame {
 
       return panel;
    }
-
-   /**
-    * HACK: add a focus listener to the provided JTextField that invokes its
-    * action listener(s) when focus is lost.
-    */
-   private void addFocusActionListener(JTextField text) {
-      FocusAdapter focusAdapter = new FocusAdapter() {
-         @Override
-         public void focusLost(FocusEvent e) {
-            ActionEvent event = new ActionEvent(e.getSource(), e.getID(),
-                  null);
-            JTextField source = (JTextField) e.getSource();
-            for (ActionListener listener : source.getActionListeners()) {
-               listener.actionPerformed(event);
-            }
-         }
-      };
-      text.addFocusListener(focusAdapter);
+   
+   private void storeZValuesInProfile() {
+       try {
+         double stepSize = NumberUtils.displayStringToDouble(zStepTexts_[0].getText());
+         studio_.profile().setDouble(StageControlFrame.class,
+                 SMALLMOVEMENTZ + currentZDrive_, stepSize);
+      } catch (ParseException pe) {// ignore, it would be annoying to ask for user input}
+      } 
+      try {
+         double stepSize = NumberUtils.displayStringToDouble(zStepTexts_[1].getText());
+         studio_.profile().setDouble(StageControlFrame.class,
+                 MEDIUMMOVEMENTZ + currentZDrive_, stepSize);
+      } catch (ParseException pe) {// ignore, it would be annoying to ask for user input}
+      }
    }
 
    private void updateZDriveInfo() {
+      // First store current Z step sizes:
+      storeZValuesInProfile();
+      // then update the current Z Drive
       String curDrive = (String) zDriveSelect_.getSelectedItem();
       if (curDrive != null && initialized_) {
          currentZDrive_ = curDrive;
          studio_.profile().setString(StageControlFrame.class,
-            CURRENTZDRIVE, currentZDrive_);
+                 CURRENTZDRIVE, currentZDrive_);
          // Remember step sizes for this new drive.
          updateZMovements();
          try {
             getZPosLabelFromCore();
-         }
-         catch (Exception ex) {
+         } catch (Exception ex) {
             studio_.logs().logError(ex, "Failed to pull position from core for Z drive " + currentZDrive_);
          }
       }
@@ -569,9 +504,8 @@ public final class StageControlFrame extends MMFrame {
             StageThread st = new StageThread(core_.getXYStageDevice(), x, y);
             stageMotionExecutor_.execute(st);
          }
-      }
-      catch(Exception e) {
-          studio_.logs().logError(e);
+      } catch (Exception e) {
+         studio_.logs().logError(e);
       }
    }
 
@@ -593,9 +527,9 @@ public final class StageControlFrame extends MMFrame {
 
    private void setXYPosLabel(double x, double y) {
       xyPositionLabel_.setText(String.format(
-               "<html>X: %s \u00b5m<br>Y: %s \u00b5m</html>",
-               TextUtils.removeNegativeZero(TextUtils.FMT3.format(x)),
-               TextUtils.removeNegativeZero(TextUtils.FMT3.format(y))));
+              "<html>X: %s \u00b5m<br>Y: %s \u00b5m</html>",
+              TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(x)),
+              TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(y)) ));
    }
 
    private void getZPosLabelFromCore() throws Exception {
@@ -604,8 +538,10 @@ public final class StageControlFrame extends MMFrame {
    }
 
    private void setZPosLabel(double z) {
-      zPositionLabel_.setText(TextUtils.removeNegativeZero(
-            TextUtils.FMT3.format(z)) + " \u00B5m" );
+      zPositionLabel_.setText(
+              TextUtils.removeNegativeZero(
+                      NumberUtils.doubleToDisplayString(z)) + 
+               " \u00B5m");
    }
 
    @Subscribe
@@ -626,15 +562,29 @@ public final class StageControlFrame extends MMFrame {
          setXYPosLabel(event.getXPos(), event.getYPos());
       }
    }
-   
+
       
    @Subscribe
    public void onShutdownCommencing(InternalShutdownCommencingEvent event) {
       if (!event.getIsCancelled()) {
-         if (staticFrame_ != null) {
-            staticFrame_.dispose();
+         this.dispose();
+      }
+   }
+   
+   @Override
+   public void dispose() {
+      for (int i = 0; i < 3; i++) {
+         try {
+            studio_.profile().setDouble(StageControlFrame.class,
+                    XY_MOVEMENTS[i], 
+                    NumberUtils.displayStringToDouble(xyStepTexts_[i].getText()));
+         } catch (ParseException pex) {
+            // since we are closing, no need to warn the user
          }
       }
+      storeZValuesInProfile();
+      
+      super.dispose();
    }
 
    private class StageThread implements Runnable {
@@ -680,4 +630,5 @@ public final class StageControlFrame extends MMFrame {
          }
       }
    }
+   
 }
