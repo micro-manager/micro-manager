@@ -361,8 +361,8 @@ int CXYStage::Initialize()
 
       if (FirmwareVersionAtLeast(3.17)) {
          pAct = new CPropertyAction (this, &CXYStage::OnScanOvershootDistance);
-         CreateProperty(g_ScanOvershootDistancePropertyName, "0", MM::Float, false, pAct);
-         SetPropertyLimits(g_ScanOvershootDistancePropertyName, 0., 500.);  // limits are arbitrary really, just give a reasonable range
+         CreateProperty(g_ScanOvershootDistancePropertyName, "0", MM::Integer, false, pAct);  // on controller it is float but <1um precision isn't important and easier to deal with integer
+         SetPropertyLimits(g_ScanOvershootDistancePropertyName, 0, 500);  // limits are arbitrary really, just give a reasonable range
          UpdateProperty(g_ScanOvershootDistancePropertyName);
       }
 
@@ -1818,7 +1818,7 @@ int CXYStage::OnScanOvershootDistance(MM::PropertyBase* pProp, MM::ActionType eA
 // note ASI units are in millimeters but MM units are in micrometers
 {
    ostringstream command; command.str("");
-   double tmp = 0;
+   double tmp = 0;  // represent as integer in um, but controller gives as float in mm
    if (eAct == MM::BeforeGet)
    {
       if (!refreshProps_ && initialized_)
@@ -1826,8 +1826,7 @@ int CXYStage::OnScanOvershootDistance(MM::PropertyBase* pProp, MM::ActionType eA
       command << addressChar_ << "NV T?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A T="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-      tmp = 1000*tmp;
-      if (!pProp->Set(tmp))
+      if (!pProp->Set(1000*tmp+0.5))  // convert to um, then round to nearest by adding 0.5 before implicit floor operation
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
