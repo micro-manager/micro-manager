@@ -1,7 +1,5 @@
 #include "DC4100.h"
 
-const char* g_DeviceDC4100Name = "Thorlabs DC4100";
-
 /****************************************************************************
 
  class: 			DC4100
@@ -12,7 +10,8 @@ const char* g_DeviceDC4100Name = "Thorlabs DC4100";
 /*---------------------------------------------------------------------------
  Default constructor.
 ---------------------------------------------------------------------------*/
-DC4100::DC4100() :
+DC4100::DC4100(const char* deviceName) :
+m_devName(deviceName),
 	m_name("Undefined"),
    m_port("Undefined"),
    m_LEDOn("On"),
@@ -37,7 +36,7 @@ DC4100::DC4100() :
 	}
 
 	// Name
-	CreateProperty(MM::g_Keyword_Name, g_DeviceDC4100Name, MM::String, true);
+	CreateProperty(MM::g_Keyword_Name, deviceName, MM::String, true);
 
 	// Description
 	CreateProperty(MM::g_Keyword_Description, "Thorlabs DC4100", MM::String, true);
@@ -62,12 +61,7 @@ DC4100::~DC4100()
 ---------------------------------------------------------------------------*/
 void DC4100::GetName(char* Name) const
 {
-	CDeviceUtils::CopyLimitedString(Name, g_DeviceDC4100Name);
-}
-
-const char* DC4100::DeviceName()
-{
-	return g_DeviceDC4100Name;
+	CDeviceUtils::CopyLimitedString(Name, m_devName);
 }
 
 

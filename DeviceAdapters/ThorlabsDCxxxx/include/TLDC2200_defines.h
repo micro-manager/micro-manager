@@ -120,10 +120,10 @@
 #define MODUS_CONST_CURRENT      	(0)
 #define MODUS_PWM                	(1)
 #define MODUS_EXTERNAL_CONTROL   	(2)
-#define MODUS_BRIGHTNESS	        (3) 
-#define MODUS_PULSE					(4) 
-#define MODUS_INTERNAL_MOD			(5) 
-#define MODUS_TTL					(6) 
+#define MODUS_BRIGHTNESS	         (3) 
+#define MODUS_PULSE					   (4) 
+#define MODUS_INTERNAL_MOD				(5) 
+#define MODUS_TTL							(6) 
 		 
 /*---------------------------------------------------------------------------
  Operation modes (Internal for the SCPI commands)

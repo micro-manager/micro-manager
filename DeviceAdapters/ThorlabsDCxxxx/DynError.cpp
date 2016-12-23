@@ -1,19 +1,17 @@
 #include "DynError.h"
 
-// nothing to construct
-DynError::DynError()
+DynError::DynError(void)
 {
 	err = 0;
-};					
-	
-// nothing to destroy
-DynError::~DynError()
-{
-};	
+}
 
-// copy constructor	
-DynError::DynError(const DynError& oDynError)		
+DynError::DynError(const DynError& oDynError) // copy constructor
 {
 	err = oDynError.err;
 	descr = oDynError.descr;
 }
+
+DynError::~DynError(void)
+{
+}
+
