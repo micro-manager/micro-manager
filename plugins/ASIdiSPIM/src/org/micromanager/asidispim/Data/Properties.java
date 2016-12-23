@@ -143,6 +143,7 @@ public class Properties {
       STAGESCAN_MOTOR_SPEED("MotorSpeedX-S(mm/s)", false),
       STAGESCAN_MAX_MOTOR_SPEED("MotorSpeedMaximumX(mm/s)", false),
       STAGESCAN_MOTOR_ACCEL("AccelerationX-AC(ms)", false),
+      STAGESCAN_OVERSHOOT_DIST("ScanOvershootDistance(um)", false),
       BINNING("Binning"),
       TRIGGER_SOURCE("TRIGGER SOURCE"),   // for Hamamatsu
       TRIGGER_POLARITY("TriggerPolarity"),// for Hamamatsu
