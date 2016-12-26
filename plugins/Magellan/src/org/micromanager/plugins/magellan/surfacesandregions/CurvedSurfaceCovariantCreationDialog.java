@@ -24,9 +24,6 @@ import org.micromanager.plugins.magellan.propsandcovariants.CurvedSurfaceCalcula
  * @author Henry
  */
 public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
-
-   public static final int SURFACE_CONSERVATIVE_POWER_MODE = 0;
-   public static final int FIXED_TSSUE_MODE = 1;
    
    private volatile Object waitObject_ = new Object();
    private volatile boolean canceled_ = false;
@@ -59,8 +56,6 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
         powerSpinner_ = new javax.swing.JSpinner();
         okButton_ = new javax.swing.JButton();
         cancelButton_ = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
-        modeCombo_ = new javax.swing.JComboBox();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setTitle("Select precalculated curved surface parameters");
@@ -104,10 +99,6 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
             }
         });
 
-        jLabel2.setText("Mode: ");
-
-        modeCombo_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Conservative surface incident power (Live tissue)", "Default (Fixed tissue)" }));
-
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -118,21 +109,14 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(29, 29, 29)
-                                .addComponent(modeCombo_, 0, 399, Short.MAX_VALUE))
+                                .addComponent(mfpLabel_)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(mfpCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(mfpLabel_)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(mfpCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel3)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(radiusCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                                .addGap(0, 0, Short.MAX_VALUE)))
-                        .addContainerGap())
+                                .addComponent(jLabel3)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(radiusCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(247, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -148,11 +132,7 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(10, 10, 10)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(modeCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
                     .addComponent(powerSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -214,14 +194,6 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
       return Integer.parseInt(mfpCombo_.getSelectedItem().toString());
    }
    
-   public int getMode() {
-      if (modeCombo_.getSelectedIndex() == 0) {
-         return SURFACE_CONSERVATIVE_POWER_MODE;
-      } else {
-         return FIXED_TSSUE_MODE;
-      }
-   }
-   
    public double getBaseVoltage() {
       return (Double) powerSpinner_.getValue();
    }
@@ -245,11 +217,9 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton_;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JComboBox mfpCombo_;
     private javax.swing.JLabel mfpLabel_;
-    private javax.swing.JComboBox modeCombo_;
     private javax.swing.JButton okButton_;
     private javax.swing.JSpinner powerSpinner_;
     private javax.swing.JComboBox radiusCombo_;
