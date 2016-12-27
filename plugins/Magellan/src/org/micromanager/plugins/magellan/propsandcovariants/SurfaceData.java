@@ -64,6 +64,10 @@ public class SurfaceData implements Covariant {
             throw new Exception();
         }
     }
+    
+    public boolean isCurvedSurfaceCalculation() {
+       return category_.equals(CURVED_SURFACE_RELATIVE_POWER);
+    }
 
     public void initializeCurvedSurfaceData() throws Exception {
         if (category_.equals(CURVED_SURFACE_RELATIVE_POWER)) {
@@ -164,65 +168,60 @@ public class SurfaceData implements Covariant {
         }
     }
     
-//
-//    private String curvedSurfacePower(XYStagePosition xyPos, double zPosition) {
-//            
-//        Point2D.Double[] corners = xyPos.getFullTileCorners();
-//        //square is aligned with axes in pixel space, so convert to pixel space to generate test points
-//        double xSpan = corners[2].getX() - corners[0].getX();
-//        double ySpan = corners[2].getY() - corners[0].getY();
-//        Point2D.Double pixelSpan = new Point2D.Double();
-//        AffineTransform transform = AffineUtils.getAffineTransform(surface_.getCurrentPixelSizeConfig(), 0, 0);
-//        try {
-//            transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
-//        } catch (NoninvertibleTransformException ex) {
-//            Log.log("Problem inverting affine transform");
-//        }
-//
-//        double[] modulationPower = new double[FOV_LASER_MODULATION_RESOLUTION * FOV_LASER_MODULATION_RESOLUTION];
-//        for (int xInd = 0; xInd <= FOV_LASER_MODULATION_RESOLUTION; xInd++) {
-//            for (int yInd = 0; yInd <= FOV_LASER_MODULATION_RESOLUTION; yInd++) {
-//
-//                double x = (0.5 + pixelSpan.x) / (double) FOV_LASER_MODULATION_RESOLUTION;
-//                double y = (0.5 + pixelSpan.y) / (double) FOV_LASER_MODULATION_RESOLUTION;
-//                //convert these abritray pixel coordinates back to stage coordinates
-//                double[] transformMaxtrix = new double[6];
-//                transform.getMatrix(transformMaxtrix);
-//                transformMaxtrix[4] = corners[0].getX();
-//                transformMaxtrix[5] = corners[0].getY();
-//                //create new transform with translation applied
-//                transform = new AffineTransform(transformMaxtrix);
-//                Point2D.Double stageCoords = new Point2D.Double();
-//                transform.transform(new Point2D.Double(x, y), stageCoords);
-//
-//                //Index in the way Teensy expects data
-//                int flatIndex;
-//                if (yInd % 2 == 0) {
-//                    flatIndex = xInd + FOV_LASER_MODULATION_RESOLUTION * yInd;
-//                } else {
-//                    flatIndex = (FOV_LASER_MODULATION_RESOLUTION - xInd - 1) + FOV_LASER_MODULATION_RESOLUTION * yInd;
-//                }
-//                try {
-//                    //test point for inclusion of position
-//                    if (!surface_.waitForCurentInterpolation().isInterpDefined(stageCoords.x, stageCoords.y)) {
-//                        //if position is outside of convex hull, use minimum laser power
-//                        modulationPower[flatIndex] = basePower_;
-//                    } else {
-//                        float interpVal = surface_.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
-//                        float normalAngle = surface_.waitForCurentInterpolation().getNormalAngleToVertical(stageCoords.x, stageCoords.y);
-//                        modulationPower[flatIndex] = CurvedSurfaceCalculations.getRelativePower(meanFreePath_, Math.max(0, zPosition - interpVal), normalAngle, radiusOfCurvature_);
-//                    }
-//                } catch (InterruptedException ex) {
-//                    Log.log("Couldn't calculate curved surface power");
-//                    Log.log(ex);
-//                    return null;
-//                }
-//            }
-//        }
-//        //convert modulationPower to eomSetting
-//        
-//        
-//    }
+
+    public double[] curvedSurfacePower(AcquisitionEvent event) {
+        XYStagePosition xyPos = event.xyPosition_;
+        double zPosition = event.zPosition_;
+        Point2D.Double[] corners = xyPos.getFullTileCorners();
+        //square is aligned with axes in pixel space, so convert to pixel space to generate test points
+        double xSpan = corners[2].getX() - corners[0].getX();
+        double ySpan = corners[2].getY() - corners[0].getY();
+        Point2D.Double pixelSpan = new Point2D.Double();
+        AffineTransform transform = AffineUtils.getAffineTransform(surface_.getCurrentPixelSizeConfig(), 0, 0);
+        try {
+            transform.inverseTransform(new Point2D.Double(xSpan, ySpan), pixelSpan);
+        } catch (NoninvertibleTransformException ex) {
+            Log.log("Problem inverting affine transform");
+        }
+
+        double[] relativePower = new double[FOV_LASER_MODULATION_RESOLUTION * FOV_LASER_MODULATION_RESOLUTION];
+        for (int xInd = 0; xInd <= FOV_LASER_MODULATION_RESOLUTION; xInd++) {
+            for (int yInd = 0; yInd <= FOV_LASER_MODULATION_RESOLUTION; yInd++) {
+
+                double x = (0.5 + pixelSpan.x) / (double) FOV_LASER_MODULATION_RESOLUTION;
+                double y = (0.5 + pixelSpan.y) / (double) FOV_LASER_MODULATION_RESOLUTION;
+                //convert these abritray pixel coordinates back to stage coordinates
+                double[] transformMaxtrix = new double[6];
+                transform.getMatrix(transformMaxtrix);
+                transformMaxtrix[4] = corners[0].getX();
+                transformMaxtrix[5] = corners[0].getY();
+                //create new transform with translation applied
+                transform = new AffineTransform(transformMaxtrix);
+                Point2D.Double stageCoords = new Point2D.Double();
+                transform.transform(new Point2D.Double(x, y), stageCoords);
+
+                //Index in the way Teensy expects data
+                int flatIndex = xInd + FOV_LASER_MODULATION_RESOLUTION * yInd;
+                try {
+                    //test point for inclusion of position
+                    if (!surface_.waitForCurentInterpolation().isInterpDefined(stageCoords.x, stageCoords.y)) {
+                        //if position is outside of convex hull, use minimum laser power
+                        relativePower[flatIndex] = basePower_;
+                    } else {
+                        float interpVal = surface_.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
+                        float normalAngle = surface_.waitForCurentInterpolation().getNormalAngleToVertical(stageCoords.x, stageCoords.y);
+                        relativePower[flatIndex] = basePower_ * CurvedSurfaceCalculations.getRelativePower(meanFreePath_,
+                                Math.max(0, zPosition - interpVal), normalAngle, radiusOfCurvature_);
+                    }
+                } catch (InterruptedException ex) {
+                    Log.log("Couldn't calculate curved surface power");
+                    Log.log(ex);
+                    return null;
+                }
+            }
+        }
+        return relativePower;
+    }
 
     /**
      *
@@ -294,8 +293,6 @@ public class SurfaceData implements Covariant {
             return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[0]);
         } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
             return new CovariantValue(distanceAndNormalCalc(xyPos.getFullTileCorners(), event.zPosition_)[1]);
-//        } else if (category_.equals(CURVED_SURFACE_RELATIVE_POWER)) {
-//            return new CovariantValue(curvedSurfacePower(xyPos, event.zPosition_));
         } else {
             Log.log("Unknown Surface data type", true);
             throw new RuntimeException();

@@ -66,6 +66,19 @@ public class CovariantPairing {
     }
 
    public void updateHardwareBasedOnPairing(AcquisitionEvent event) throws Exception {
+     //special behavior for curved surface calcualtions
+      if (independent_ instanceof SurfaceData && ((SurfaceData)independent_).isCurvedSurfaceCalculation() ) {
+         //current value is a string, even though stored values 
+         double[] powers = ((SurfaceData)independent_).curvedSurfacePower(event);
+         byte[] eomSettings = new byte[powers.length];
+         for (int i =0; i < powers.length; i++) {
+            eomSettings[i] = (byte) getInterpolatedNumericalValue(new CovariantValue(powers[i]));
+         }
+         //TODO: send to eom 
+         
+         return;
+      }
+      
       CovariantValue dVal = getDependentValue(event);
       dependent_.updateHardwareToValue(dVal);
    }
@@ -78,7 +91,7 @@ public class CovariantPairing {
    private CovariantValue getDependentValue(AcquisitionEvent evt) throws Exception {
       //get the value of the independent based on state of hardware
       CovariantValue iVal = independent_.getCurrentValue(evt);
-      
+                  
       if (independent_.isDiscrete() || independent_.getType() == CovariantType.STRING) {
          //if independent is discrete, dependent value is whatever is defined
          //for the current value of independent, or null if no mapping is defined
