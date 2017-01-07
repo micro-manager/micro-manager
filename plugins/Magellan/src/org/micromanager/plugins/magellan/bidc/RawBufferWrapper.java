@@ -16,7 +16,7 @@ public class RawBufferWrapper {
    
    //set in Bitflow camera file or other A/D converter
     //you dont need any of the first 8 pixels to construct image anyway so tossing them is fine
-   private static final int PIXELS_PER_LINE = 1288;
+   private static final int PIXELS_PER_LINE = 1270;
    private static final int LINE_START_THROWAWAY_PIX = 8;
    //-Bitflow must have a at least a 4 pixel difference between the total number of pixels per line and the number of pixels used
    //or else it mistakenly thinks two frames are one
