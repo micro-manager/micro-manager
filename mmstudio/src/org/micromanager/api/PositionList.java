@@ -45,7 +45,7 @@ import org.micromanager.utils.MMSerializationException;
  * Navigation list of positions for the XYStage.
  * Used for multi site acquisition support.
  */
-public class PositionList {
+public class PositionList implements Serializable {
    private ArrayList<MultiStagePosition> positions_;
    private final static String ID = "Micro-Manager XY-position list";
    private final static String ID_KEY = "ID";
