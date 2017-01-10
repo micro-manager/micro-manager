@@ -285,6 +285,11 @@ public class ControllerUtils {
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_REPEATS, delayRepeats, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, numVolumesPerTrigger, skipScannerWarnings);
       
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_SIDE,
+            settings.isStageScanning ? 0 : // minimal delay on micro-mirror card for stage scanning (can't actually be less than 2ms but this will get as small as possible)
+               props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DELAY_BEFORE_SIDE),  // this is usual behavior
+            skipScannerWarnings);
+            
       // figure out the piezo parameters
       float piezoCenter;
       if (settings.isStageScanning) {

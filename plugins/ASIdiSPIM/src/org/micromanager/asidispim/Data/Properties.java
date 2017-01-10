@@ -169,6 +169,7 @@ public class Properties {
       PLUGIN_NUM_SIDES("NumberOfSides"),
       PLUGIN_FIRST_SIDE("FirstSide"),
       PLUGIN_NUM_SLICES("NumSlices"),
+      PLUGIN_DELAY_BEFORE_SIDE("DelayBeforeSide"),
       PLUGIN_NUM_ACQUISITIONS("NumberOfAcquisitions"),
       PLUGIN_ACQUISITION_INTERVAL("AcquisitionPeriod"),
       PLUGIN_DIRECTORY_ROOT("DirectoryRoot"),

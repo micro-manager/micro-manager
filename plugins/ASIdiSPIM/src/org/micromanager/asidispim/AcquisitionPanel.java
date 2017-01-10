@@ -302,9 +302,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.add(firstSide_, "wrap");
       
       volPanel_.add(new JLabel("Delay before side [ms]:"));
+      // used to read/write directly to galvo/micro-mirror firmware, but want different stage scan behavior
       delaySide_ = pu.makeSpinnerFloat(0, 10000, 0.25,
-              new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-              Properties.Keys.SPIM_DELAY_SIDE, 0);
+              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DELAY_BEFORE_SIDE, 50);
       delaySide_.addChangeListener(recalculateTimingDisplayCL);
       volPanel_.add(delaySide_, "wrap");
 
