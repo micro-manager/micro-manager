@@ -124,7 +124,7 @@ int PhotoModule::SetTurretPosition(int position)
    return DEVICE_OK;
 }
 
-int PhotoModule::GetTurretPosition(int& position)
+int PhotoModule::GetTurretPosition(int& /* position */)
 {
    string cmd = "EPPo";
    int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(), cmd.c_str());
