@@ -21,6 +21,9 @@
 //
 
 #include <list>
+#include <string>
+#include <map>
+#include <iterator>
 
 #include "PointGrey.h"
 #include "../../MMDevice/ModuleInterface.h"
@@ -49,6 +52,8 @@ const char* g_IIDCVersion              = "IIDC version";
 const char* g_CameraId                 = "CameraID";
 const char* g_AdvancedMode             = "Use Advanced Mode?";
 const char* g_VideoModeAndFrameRate    = "Video Mode and Frame Rate";
+const char* g_NotSet                   = "Not set";
+const char* g_Format7Mode              = "Format-7 Mode";
 
 /////////////////////////////////////////////////////
 
@@ -423,10 +428,25 @@ int PointGrey::Initialize()
             // Format 7 mode selection
             std::string f7Mode = Format7ModeAsString(fmt7ImageSettings.mode);
             pAct = new CPropertyAction(this, &PointGrey::OnFormat7Mode);
-            CreateProperty("Format-7 Mode", f7Mode.c_str(), MM::String, false, pAct, false);
+            CreateProperty(g_Format7Mode, f7Mode.c_str(), MM::String, false, pAct, false);
             for (unsigned int i = 0; i < availableFormat7Modes_.size(); i++) {
                f7Mode = Format7ModeAsString(availableFormat7Modes_[i]);
-               AddAllowedValue("Format-7 Mode", f7Mode.c_str());
+               AddAllowedValue(g_Format7Mode, f7Mode.c_str());
+            }
+
+            // Associate binning with Format-7 modes:
+            long binnings[] = { 1, 2, 4};
+            for (unsigned int i = 0; i < sizeof(binnings)/sizeof(int); i++) 
+            {
+               CPropertyActionEx* pActEx = new CPropertyActionEx(this, &PointGrey::OnBinningFromFormat7Mode, binnings[i]);
+               std::ostringstream propName;
+               propName << "Format 7 Mode for binning " << binnings[i];
+               CreateProperty(propName.str().c_str(), g_NotSet, MM::String, false, pActEx, false);
+               AddAllowedValue(propName.str().c_str(), g_NotSet);
+               for (unsigned int j = 0; j < availableFormat7Modes_.size(); j++) {
+                  f7Mode = Format7ModeAsString(availableFormat7Modes_[j]);
+                  AddAllowedValue(propName.str().c_str(), f7Mode.c_str());
+               }
             }
          }
       }
@@ -992,6 +1012,24 @@ void PointGrey::SetExposure(double exp)
 */
 int PointGrey::GetBinning() const
 {
+   if (HasProperty(g_Format7Mode) )
+   {
+      char mode[MM::MaxStrLength];
+      int ret = GetProperty(g_Format7Mode, mode);
+      if (ret != DEVICE_OK) 
+      {
+         return ret;
+      }
+
+      try
+      {
+         return mode2Bin_.at(mode);
+      } catch (const std::out_of_range& /*oor*/) {
+         // very ugly to use try/catch here, but I somehow can not get an iterator to compile
+      }
+
+   }
+
 	return 1;
 }
 
@@ -1001,8 +1039,17 @@ int PointGrey::GetBinning() const
 */
 int PointGrey::SetBinning(int binF)
 {
+   if (HasProperty(g_Format7Mode) )
+   {
+      std::map<long, std::string>::iterator it = bin2Mode_.find(binF);
+      if (it != bin2Mode_.end())
+      {
+         return SetProperty(g_Format7Mode, it->second.c_str());
+      }
+   }
 
-	return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
+   // not sure if we should return an error code here
+   return DEVICE_OK;
 }
 
 /***********************************************************************
@@ -1128,7 +1175,7 @@ bool PointGrey::IsCapturing()
 
 /***********************************************************************
 * Handles Binning property.
-* Although some PGR cameras support binning by switching modes, there is
+* Although some PGR cameras support binning by switching modes, there is no
 * binning "function" in the SDK.  To full support binning would need a 
 * lot of knowledge of specific cameras in this device adapter,  which is
 * something we want to avoid.  Instruct the user to read the camera's data
@@ -1139,9 +1186,46 @@ int PointGrey::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
 	{
 		pProp->Set( (long) GetBinning());
-	}
+   } else if (eAct == MM::AfterSet) 
+   {
+      long binning;
+      pProp->Get(binning);
+      return SetBinning((int) binning);
+   }
 
 	return DEVICE_OK;
+}
+
+
+/**********************************************************************
+ * Let's the user specify a Format-7 mode for various binning settings
+ */
+
+int PointGrey::OnBinningFromFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct, long value)
+{
+   if (eAct == MM::AfterSet)
+   {
+      std::string format;
+      pProp->Get(format);
+      bin2Mode_[value] = format;
+      mode2Bin_[format] = value;
+      std::ostringstream os;
+      os << value;
+      AddAllowedValue(MM::g_Keyword_Binning, os.str().c_str());
+   } else if (eAct == MM::BeforeGet)
+   {
+      if (bin2Mode_.find(value) != bin2Mode_.end())
+      {
+         pProp->Set(bin2Mode_[value].c_str());
+      } else 
+      {
+        bin2Mode_[value] = g_NotSet;
+        pProp->Set(g_NotSet);
+      }
+
+   }
+
+   return DEVICE_OK;
 }
 
 
