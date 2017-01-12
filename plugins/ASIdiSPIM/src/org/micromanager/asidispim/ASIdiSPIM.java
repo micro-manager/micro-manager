@@ -23,9 +23,15 @@ package org.micromanager.asidispim;
 
 import java.awt.Color;
 import java.awt.event.WindowEvent;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.api.ASIdiSPIMImplementation;
+import org.micromanager.asidispim.api.ASIdiSPIMInterface;
 
 
 public class ASIdiSPIM implements MMPlugin {
@@ -33,11 +39,13 @@ public class ASIdiSPIM implements MMPlugin {
    public static final boolean oSPIM = false;
    
    public final static String menuName = "ASI " + (oSPIM ? "oSPIM" : "diSPIM");
+   public final static String rmiName = "ASIdiSPIM_API";
    public final static String tooltipDescription = "Control the " + menuName;
    public final static Color borderColor = Color.gray;
    
    private ScriptInterface gui_;
    private static ASIdiSPIMFrame myFrame_ = null;
+   private static Registry registry_ = null;
 
    @Override
    public void setApp(ScriptInterface app) {
@@ -58,6 +66,18 @@ public class ASIdiSPIM implements MMPlugin {
          gui_.showError(e);
       }
       myFrame_.setVisible(true);
+     
+      // create and publish object to allow remote invocation of API methods
+      // see documentation of Java RMI
+      try {
+         ASIdiSPIMInterface api = new ASIdiSPIMImplementation();
+         ASIdiSPIMInterface stub = (ASIdiSPIMInterface) UnicastRemoteObject.exportObject(api, 0);
+         // Bind the remote object's stub in the registry
+         registry_ = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);  // maybe we need getRegistry() instead?
+         registry_.rebind(rmiName, stub);
+      } catch (RemoteException ex) {
+         throw new RuntimeException("Error registering API for RMI access", ex);
+      }
    }
    
    public static ASIdiSPIMFrame getFrame() {
