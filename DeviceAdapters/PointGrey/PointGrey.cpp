@@ -242,8 +242,8 @@ int PointGrey::Initialize()
    LogMessage(os.str().c_str(), false);
 
    // BE AWARE: This version number needs to be updates if/when MM is linked against another PGR version
-   if (pVersion.major != 2 || pVersion.minor != 10 || pVersion.type != 3 || pVersion.build != 169) {
-      SetErrorText(ALLERRORS, "Flycapture2_v100.dll is not version 2.10.3.169.  Micro-Manager works correctly only with that version");
+   if (pVersion.major != 2 || pVersion.minor != 10 || pVersion.type != 3 || pVersion.build != 266) {
+      SetErrorText(ALLERRORS, "Flycapture2_v100.dll is not version 2.10.3.266.  Micro-Manager works correctly only with that version");
       return ALLERRORS;
    }
 
