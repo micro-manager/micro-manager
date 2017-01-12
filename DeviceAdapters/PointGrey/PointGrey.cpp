@@ -615,7 +615,13 @@ int PointGrey::Initialize()
 
    // Make sure that we have an image so that 
    // things like bitdepth are set correctly
-   SnapImage();
+   ret = SnapImage();
+   if (ret != DEVICE_OK) {
+      return ret;
+   }
+   // needed to stop sequence
+   GetImageBuffer();
+
 
 	// -------------------------------------------------------------------------------------
 
@@ -649,24 +655,27 @@ int PointGrey::Shutdown()
 */
 int PointGrey::SnapImage()
 {
-   Error error = cam_.StartCapture();
+   if (!IsCapturing()) {
+      Error error = cam_.StartCapture();
+      if (error != PGRERROR_OK)
+      {
+         SetErrorText(ALLERRORS, error.GetDescription());
+         return ALLERRORS;
+      }  
+      isCapturing_ = true;
+   } else {
+      CDeviceUtils::SleepMs( (long) (exposureTimeMs_ + 0.5) );
+   }
+   Error error = cam_.RetrieveBuffer(&image_);
    if (error != PGRERROR_OK)
    {
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
-   }   if (error != PGRERROR_OK)
-   {
-      SetErrorText(ALLERRORS, error.GetDescription());
-      return ALLERRORS;
    }
-   error = cam_.RetrieveBuffer(&image_);
-   if (error != PGRERROR_OK)
-   {
-      SetErrorText(ALLERRORS, error.GetDescription());
-      return ALLERRORS;
-   }
-   error = cam_.StopCapture();
-
+   // Since stopping takes a long time, do it in the GetImageBuffer function
+   // This is a bit ugly since it relies on the calling code calling SnapImage 
+   // and GetImageBuffer in sequence
+  
    return DEVICE_OK;
 }
 
@@ -682,7 +691,15 @@ int PointGrey::SnapImage()
 */
 const unsigned char* PointGrey::GetImageBuffer()
 {
-   // Note: may need to do a DeepCopy first
+   if (IsCapturing()) {
+      Error error = cam_.StopCapture();
+      if (error != PGRERROR_OK)
+      {
+         LogMessage(error.GetDescription(), false);
+      }
+      isCapturing_ = false;
+   }
+   // This seems to work without a DeepCopy first
    return image_.GetData();
 }
 
@@ -1001,7 +1018,7 @@ int PointGrey::StartSequenceAcquisition(double interval)
 */                                                                        
 int PointGrey::StopSequenceAcquisition()                                     
 {
-	isCapturing_ = false;
+   isCapturing_ = false;
    Error error = cam_.StopCapture();
    int ret = DEVICE_OK;
    if (error != PGRERROR_OK)
@@ -1092,7 +1109,8 @@ int PointGrey::InsertImage(Image* pImg) const
 	{
 		// do not stop on overflow - just reset the buffer
 		GetCoreCallback()->ClearImageBuffer(this);
-		return GetCoreCallback()->InsertImage(this, pImg->GetData(), w, h, b, md.Serialize().c_str(), false);
+		GetCoreCallback()->InsertImage(this, pImg->GetData(), w, h, b, md.Serialize().c_str(), false);
+      return DEVICE_OK;
 	} 
 
    return ret;
@@ -1303,6 +1321,8 @@ int PointGrey::OnVideoModeAndFrameRate(MM::PropertyBase* pProp, MM::ActionType e
       // Work around an issue in the Micro-Manager GUI: If we do not snap an image
       // here, the bitdepth information can easily go stale
       SnapImage();
+      // make sure that sequence acquisition stops
+      GetImageBuffer();
    } 
    else if (eAct == MM::BeforeGet) {
       // Find current video mode and frame rate
@@ -1368,6 +1388,8 @@ int PointGrey::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       // if we do not snap an image, MM 2.0 gets the bitdepths wrong. Delete once fixed upstream
       SnapImage();
+      // make sure that sequence acquisition stops
+      GetImageBuffer();
    }
 
    return DEVICE_OK;
@@ -1436,6 +1458,8 @@ int PointGrey::OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct)
             return ALLERRORS;
          }
          SnapImage();
+         // make sure that sequence acquisition stops
+         GetImageBuffer();
       } else {
          SetErrorText(ALLERRORS, "Failed to generate correct settings for this mode");
          return ALLERRORS;
