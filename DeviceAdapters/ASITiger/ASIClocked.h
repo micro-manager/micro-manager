@@ -85,4 +85,12 @@ public:
    int Initialize();
 };
 
+class CPortSwitch : public CClocked
+{
+public:
+   CPortSwitch(const char* name);
+
+   int Initialize();
+};
+
 #endif //_ASIClocked_H_

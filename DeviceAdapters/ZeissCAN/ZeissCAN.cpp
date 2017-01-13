@@ -1768,6 +1768,11 @@ int ReflectorTurret::Initialize()
       SetPositionLabel(i, buf);
    }
 
+   // It happens that the turret reports to be busy (position 0) on startup
+   // if so, set the turret to position 1 
+   if (Busy()) {
+	   SetPosition(1);
+   }
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
       return ret;

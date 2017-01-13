@@ -49,6 +49,7 @@
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
 #define ERR_UNKNOWN_DA_DEVICE 415
 #define ERR_NUM_CHANNELS 416
+#define ERR_NO_CHANNELS_DETECTED 417 
 
 //////////////////////////////////////////////////////////////////////////////
 // BitFlowCamera class

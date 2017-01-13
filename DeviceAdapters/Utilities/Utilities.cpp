@@ -41,6 +41,7 @@
 const char* g_Undefined = "Undefined";
 const char* g_NoDevice = "None";
 const char* g_DeviceNameMultiShutter = "Multi Shutter";
+const char* g_DeviceNameComboXYStage = "Combo XY Stage";
 const char* g_DeviceNameMultiCamera = "Multi Camera";
 const char* g_DeviceNameMultiStage = "Multi Stage";
 const char* g_DeviceNameDAShutter = "DA Shutter";
@@ -76,6 +77,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_DeviceNameMultiShutter, MM::ShutterDevice, "Combine multiple physical shutters into a single logical shutter");
    RegisterDevice(g_DeviceNameMultiCamera, MM::CameraDevice, "Combine multiple physical cameras into a single logical camera");
    RegisterDevice(g_DeviceNameMultiStage, MM::StageDevice, "Combine multiple physical 1D stages into a single logical 1D stage");
+   RegisterDevice(g_DeviceNameComboXYStage, MM::XYStageDevice, "Combine two single-axis stages into an XY stage");
    RegisterDevice(g_DeviceNameDAShutter, MM::ShutterDevice, "DA used as a shutter");
    RegisterDevice(g_DeviceNameDAMonochromator, MM::ShutterDevice, "DA used to control a monochromator");
    RegisterDevice(g_DeviceNameDAZStage, MM::StageDevice, "DA-controlled Z-stage");
@@ -97,6 +99,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new MultiCamera();
    } else if (strcmp(deviceName, g_DeviceNameMultiStage) == 0) {
       return new MultiStage();
+   } else if (strcmp(deviceName, g_DeviceNameComboXYStage) == 0) {
+      return new ComboXYStage();
    } else if (strcmp(deviceName, g_DeviceNameDAShutter) == 0) { 
       return new DAShutter();
    } else if (strcmp(deviceName, g_DeviceNameDAMonochromator) == 0) {
@@ -1495,6 +1499,487 @@ int MultiStage::OnBringIntoSync(MM::PropertyBase* pProp, MM::ActionType eAct)
             return err;
       }
       pProp->Set("");
+   }
+   return DEVICE_OK;
+}
+
+
+ComboXYStage::ComboXYStage() :
+   simulatedXStepSizeUm_(0.01),
+   simulatedYStepSizeUm_(0.01),
+   initialized_(0)
+{
+   InitializeDefaultErrorMessages();
+   SetErrorText(ERR_INVALID_DEVICE_NAME, "Invalid stage device");
+   SetErrorText(ERR_NO_PHYSICAL_STAGE, "Physical X and/or Y stage not assigned");
+
+   CreateStringProperty(MM::g_Keyword_Name, g_DeviceNameComboXYStage, true);
+   CreateStringProperty(MM::g_Keyword_Description,
+         "Combines multiple physical 1D stages into a single 1D stage", true);
+
+   CreateFloatProperty("SimulatedXStepSizeUm", simulatedXStepSizeUm_, false,
+         new CPropertyActionEx(this, &ComboXYStage::OnStepSize, 0),
+         true);
+   CreateFloatProperty("SimulatedYStepSizeUm", simulatedYStepSizeUm_, false,
+         new CPropertyActionEx(this, &ComboXYStage::OnStepSize, 1),
+         true);
+}
+
+
+ComboXYStage::~ComboXYStage()
+{
+   Shutdown();
+}
+
+
+void ComboXYStage::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_DeviceNameComboXYStage);
+}
+
+
+int ComboXYStage::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   for (int i = 0; i < 2; ++i)
+   {
+      usedStages_.push_back(g_Undefined);
+      physicalStages_.push_back(0);
+      stageScalings_.push_back(1.0);
+      stageTranslations_.push_back(0.0);
+   }
+
+   std::vector<std::string> availableStages;
+   availableStages.push_back(g_Undefined);
+   char stageLabel[MM::MaxStrLength];
+   unsigned int index = 0;
+   for (;;)
+   {
+      GetLoadedDeviceOfType(MM::StageDevice, stageLabel, index++);
+      if (strlen(stageLabel))
+      {
+         availableStages.push_back(stageLabel);
+      }
+      else
+      {
+         break;
+      }
+   }
+
+   for (unsigned i = 0; i < 2; ++i)
+   {
+      const std::string displayAxis((i == 0) ? "X" : "Y");
+
+      const std::string propPhysStage("PhysicalStage-" + displayAxis);
+      CreateStringProperty(propPhysStage.c_str(), usedStages_[i].c_str(), false,
+            new CPropertyActionEx(this, &ComboXYStage::OnPhysicalStage, i));
+      SetAllowedValues(propPhysStage.c_str(), availableStages);
+
+      const std::string propScaling("Scaling-" + displayAxis);
+      CreateFloatProperty(propScaling.c_str(), stageScalings_[i], false,
+            new CPropertyActionEx(this, &ComboXYStage::OnScaling, i));
+
+      const std::string propTranslation("TranslationUm-" + displayAxis);
+      CreateFloatProperty(propTranslation.c_str(), stageTranslations_[i], false,
+            new CPropertyActionEx(this, &ComboXYStage::OnTranslationUm, i));
+   }
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::Shutdown()
+{
+   if (!initialized_)
+      return DEVICE_OK;
+
+   usedStages_.clear();
+   physicalStages_.clear();
+   stageScalings_.clear();
+   stageTranslations_.clear();
+
+   return DEVICE_OK;
+}
+
+
+bool ComboXYStage::Busy()
+{
+   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
+         end = physicalStages_.end();
+         it != end;
+         ++it)
+   {
+      if (!*it)
+         continue;
+
+      if ((*it)->Busy())
+         return true;
+   }
+   return false;
+}
+
+
+int ComboXYStage::Stop()
+{
+   // Return last error encountered, but make sure Stop() is attempted on both
+   // axes.
+   int ret = DEVICE_OK;
+
+   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
+         end = physicalStages_.end();
+         it != end;
+         ++it)
+   {
+      if (!*it)
+         continue;
+
+      int err = (*it)->Stop();
+      if (err != DEVICE_OK)
+         ret = err;
+   }
+
+   return ret;
+}
+
+
+int ComboXYStage::Home()
+{
+   for (std::vector<MM::Stage*>::iterator it = physicalStages_.begin(),
+         end = physicalStages_.end();
+         it != end;
+         ++it)
+   {
+      if (!*it)
+         continue;
+
+      int err = (*it)->Home();
+      if (err != DEVICE_OK)
+         return err;
+   }
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::SetPositionSteps(long x, long y)
+{
+   LogMessage(("SetPositionSteps(" + boost::lexical_cast<std::string>(x) + ", " + boost::lexical_cast<std::string>(y) + ")").c_str(), true);
+
+   for (int i = 0; i < 2; ++i)
+   {
+      const long posSteps = (i == 0) ? x : y;
+
+      if (!physicalStages_[i])
+         continue;
+
+      const double& simulatedStepSizeUm = (i == 0) ?
+         simulatedXStepSizeUm_ : simulatedYStepSizeUm_;
+      double logicalPosUm = static_cast<double>(posSteps) * simulatedStepSizeUm;
+      double physicalPosUm = stageScalings_[i] * logicalPosUm + stageTranslations_[i];
+      int err = physicalStages_[i]->SetPositionUm(physicalPosUm);
+      if (err != DEVICE_OK)
+         return err;
+   }
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::GetPositionSteps(long& x, long& y)
+{
+   for (int i = 0; i < 2; ++i)
+   {
+      long& posSteps = (i == 0) ? x : y;
+      const double& simulatedStepSizeUm = (i == 0) ?
+         simulatedXStepSizeUm_ : simulatedYStepSizeUm_;
+
+      if (!physicalStages_[i])
+      {
+         // We can't make this an error because stage position is frequently
+         // requested before anybody has a chance to set the physical stages.
+         posSteps = 0;
+         continue;
+      }
+
+      double physicalPosUm;
+      int err = physicalStages_[i]->GetPositionUm(physicalPosUm);
+      if (err != DEVICE_OK)
+         return err;
+
+      double logicalPosUm = (physicalPosUm - stageTranslations_[i]) / stageScalings_[i];
+      posSteps = Round(logicalPosUm / simulatedStepSizeUm);
+   }
+
+   LogMessage(("GetPositionSteps() -> (" + boost::lexical_cast<std::string>(x) + ", " + boost::lexical_cast<std::string>(y) + ")").c_str(), true);
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
+{
+   for (int i = 0; i < 2; ++i)
+   {
+      double& lower = (i == 0) ? xMin : yMin;
+      double& upper = (i == 0) ? xMax : yMax;
+
+      // If client code cares about stage limits, it is probably dangerous to
+      // give it fake values.
+      if (!physicalStages_[i])
+         return ERR_NO_PHYSICAL_STAGE;
+
+      double physicalLower, physicalUpper;
+      int err = physicalStages_[i]->GetLimits(physicalLower, physicalUpper);
+      if (err != DEVICE_OK)
+         return err;
+
+      lower = (physicalLower - stageTranslations_[i]) / stageScalings_[i];
+      upper = (physicalUpper - stageTranslations_[i]) / stageScalings_[i];
+      if (upper < lower)
+      {
+         std::swap(lower, upper);
+      }
+   }
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
+{
+   double xMinUm, xMaxUm, yMinUm, yMaxUm;
+   int err = GetLimitsUm(xMinUm, xMaxUm, yMinUm, yMaxUm);
+   if (err != DEVICE_OK)
+      return err;
+
+   xMin = Round(xMinUm / simulatedXStepSizeUm_);
+   xMax = Round(xMaxUm / simulatedXStepSizeUm_);
+   yMin = Round(yMinUm / simulatedYStepSizeUm_);
+   yMax = Round(yMaxUm / simulatedYStepSizeUm_);
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::IsXYStageSequenceable(bool& isSequenceable) const
+{
+   for (int i = 0; i < 2; ++i)
+   {
+      if (!physicalStages_[i])
+         return ERR_NO_PHYSICAL_STAGE;
+
+      bool flag;
+      int err = physicalStages_[i]->IsStageSequenceable(flag);
+      if (err != DEVICE_OK)
+         return err;
+
+      if (!flag)
+      {
+         isSequenceable = false;
+         return DEVICE_OK;
+      }
+   }
+   isSequenceable = true;
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::GetXYStageSequenceMaxLength(long& nrEvents) const
+{
+   long minNrEvents = LONG_MAX;
+   for (int i = 0; i < 2; ++i)
+   {
+      if (!physicalStages_[i])
+         return ERR_NO_PHYSICAL_STAGE;
+
+      long nr;
+      int err = physicalStages_[i]->GetStageSequenceMaxLength(nr);
+      if (err != DEVICE_OK)
+         return err;
+
+      minNrEvents = std::min(minNrEvents, nr);
+   }
+
+   nrEvents = minNrEvents;
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::StartXYStageSequence()
+{
+   int startedStages = 0;
+   int err;
+   for (int i = 0; i < 2; ++i)
+   {
+      if (!physicalStages_[i])
+      {
+         err = ERR_NO_PHYSICAL_STAGE;
+         goto error;
+      }
+
+      err = physicalStages_[i]->StartStageSequence();
+      if (err != DEVICE_OK)
+         goto error;
+      ++startedStages;
+   }
+   return DEVICE_OK;
+
+error:
+   while (startedStages > 0)
+   {
+      physicalStages_[--startedStages]->StopStageSequence();
+   }
+   return err;
+}
+
+
+int ComboXYStage::StopXYStageSequence()
+{
+   int lastErr = DEVICE_OK;
+   for (int i = 0; i < 2; ++i)
+   {
+      if (!physicalStages_[i])
+         continue;
+
+      int err = physicalStages_[i]->StopStageSequence();
+      if (err != DEVICE_OK)
+         lastErr = err;
+      // Try to stop all even after error or missing stage
+   }
+   return lastErr;
+}
+
+
+int ComboXYStage::ClearXYStageSequence()
+{
+   int lastErr = DEVICE_OK;
+   for (int i = 0; i < 2; ++i)
+   {
+      if (!physicalStages_[i])
+         continue;
+
+      int err = physicalStages_[i]->ClearStageSequence();
+      if (err != DEVICE_OK)
+         lastErr = err;
+   }
+   return lastErr;
+}
+
+
+int ComboXYStage::AddToXYStageSequence(double positionX, double positionY)
+{
+   for (int i = 0; i < 2; ++i)
+   {
+      if (!physicalStages_[i])
+         return ERR_NO_PHYSICAL_STAGE;
+   }
+   for (int i = 0; i < 2; ++i)
+   {
+      const double& logicalPos = (i == 0) ? positionX : positionY;
+      double physicalPos = stageScalings_[i] * logicalPos + stageTranslations_[i];
+      int err = physicalStages_[i]->AddToStageSequence(physicalPos);
+      if (err != DEVICE_OK)
+         return err;
+   }
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::SendXYStageSequence()
+{
+   for (int i = 0; i < 2; ++i)
+   {
+      if (!physicalStages_[i])
+         return ERR_NO_PHYSICAL_STAGE;
+   }
+   for (int i = 0; i < 2; ++i)
+   {
+      int err = physicalStages_[i]->SendStageSequence();
+      if (err != DEVICE_OK)
+         return err;
+   }
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAct, long xy)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(usedStages_[xy].c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string stageLabel;
+      pProp->Get(stageLabel);
+
+      if (stageLabel == g_Undefined)
+      {
+         usedStages_[xy] = g_Undefined;
+         physicalStages_[xy] = 0;
+      }
+      else
+      {
+         MM::Stage* stage = (MM::Stage*)GetDevice(stageLabel.c_str());
+         if (!stage)
+         {
+            pProp->Set(g_Undefined);
+            physicalStages_[xy] = 0;
+            return ERR_INVALID_DEVICE_NAME;
+         }
+         if (stage->IsContinuousFocusDrive())
+         {
+            pProp->Set(g_Undefined);
+            physicalStages_[xy] = 0;
+            return ERR_AUTOFOCUS_NOT_SUPPORTED;
+         }
+         usedStages_[xy] = stageLabel;
+         physicalStages_[xy] = stage;
+      }
+   }
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct, long xy)
+{
+   double& simulatedStepSizeUm = (xy == 0) ?
+      simulatedXStepSizeUm_ : simulatedYStepSizeUm_;
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(simulatedStepSizeUm);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(simulatedStepSizeUm);
+   }
+
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::OnScaling(MM::PropertyBase* pProp, MM::ActionType eAct, long xy)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(stageScalings_[xy]);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(stageScalings_[xy]);
+   }
+   return DEVICE_OK;
+}
+
+
+int ComboXYStage::OnTranslationUm(MM::PropertyBase* pProp, MM::ActionType eAct, long xy)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(stageTranslations_[xy]);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(stageTranslations_[xy]);
    }
    return DEVICE_OK;
 }

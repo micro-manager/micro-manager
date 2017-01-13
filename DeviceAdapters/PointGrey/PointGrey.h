@@ -90,6 +90,7 @@ public:
    //////////////////////////////////////////////////////////////
    // action interface
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBinningFromFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnAbsValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
@@ -117,6 +118,8 @@ private:
    bool isCapturing_;
    FlyCapture2::Format7Info format7Info_;
    std::map<VideoMode, std::vector<FrameRate>> videoModeFrameRateMap_;
+   std::map<long, std::string> bin2Mode_;
+   std::map<const std::string, long> mode2Bin_;
    std::vector<FlyCapture2::Mode> availableFormat7Modes_;
    bool f7InUse_;
    double exposureTimeMs_;
