@@ -214,9 +214,9 @@ public class AutofocusUtils {
             final int nrImages = props_.getPropValueInteger(
                     Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_NRIMAGES);
             final boolean showImages = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
-                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, false);
+                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, true);
             final boolean showPlot = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
-                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, false);
+                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, true);
             float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
                     Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE);  // user specifies step size in um, we translate to galvo and move only galvo
             final float imagingCenter = prefs_.getFloat(
