@@ -325,6 +325,31 @@ int CFSlider::Initialize()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// CPortSwitch
+// mostly just inherits from CClocked, except description
+//
+CPortSwitch::CPortSwitch(const char* name) :
+      CClocked(name)
+{
+
+}
+
+int CPortSwitch::Initialize()
+{
+   RETURN_ON_MM_ERROR( CClocked::Initialize() );
+
+   ostringstream command;
+
+   // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
+   command.str("");
+   command << g_PortSwitchDeviceDescription << " Axis=" << axisLetter_ << " HexAddr=" << addressString_;
+   CreateProperty(MM::g_Keyword_Description, command.str().c_str(), MM::String, true);
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // CTurret
 // mostly just inherits from CClocked, except description
 //
@@ -348,6 +373,7 @@ int CTurret::Initialize()
    initialized_ = true;
    return DEVICE_OK;
 }
+
 
 
 

@@ -100,6 +100,7 @@ const char* const g_TigerCommHubName =  "TigerCommHub";
 const char* const g_ZStageDeviceName =  "ZStage";
 const char* const g_XYStageDeviceName = "XYStage";
 const char* const g_FSliderDeviceName =  "FilterSlider";
+const char* const g_PortSwitchDeviceName =  "PortSwitch";
 const char* const g_TurretDeviceName =  "Turret";
 const char* const g_FWheelDeviceName =  "FilterWheel";
 const char* const g_ScannerDeviceName =  "Scanner";
@@ -115,6 +116,7 @@ const char* const g_TigerCommHubDescription = "ASI TigerComm Hub (TG-1000)";
 const char* const g_ZStageDeviceDescription =    "ASI Z Stage";
 const char* const g_XYStageDeviceDescription =   "ASI XY Stage";
 const char* const g_FSliderDeviceDescription =   "ASI Filter Slider";
+const char* const g_PortSwitchDeviceDescription =   "ASI Port Switch";
 const char* const g_FWheelDeviceDescription =   "ASI Filter Wheel";
 const char* const g_TurretDeviceDescription =   "ASI Turret";
 const char* const g_ScannerDeviceDescription = "ASI 2-axis Scanner";
@@ -299,6 +301,7 @@ const char* const g_ScanSlowAxisStartPositionPropertyName = "ScanSlowAxisStartPo
 const char* const g_ScanSlowAxisStopPositionPropertyName = "ScanSlowAxisStopPosition(mm)";
 const char* const g_ScanNumLinesPropertyName = "ScanNumLines";
 const char* const g_ScanSettlingTimePropertyName = "ScanSettlingTime(ms)";
+const char* const g_ScanOvershootDistancePropertyName = "ScanOvershootDistance(um)";
 
 // CRISP property names
 const char* const g_CRISPWaitAfterLockPropertyName = "Wait ms after Lock";
@@ -439,6 +442,7 @@ const char* const g_PresetCode23 = "23 - TTL0-7 on BNC1-8";
 const char* const g_PresetCode24 = "24 - BNC3 source = cell 1";
 const char* const g_PresetCode25 = "25 - BNC3 source = cell 8";
 const char* const g_PresetCode26 = "26 - counter clock = rising TTL3";
+const char* const g_PresetCode27 = "27 - BNC3 source = cell 10";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
 const char* const g_ChannelNone = "none of outputs 5-8";

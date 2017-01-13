@@ -255,6 +255,9 @@ int CTigerCommHub::DetectInstalledDevices()
          case 'f': // filter slider, a clocked device
             name = g_FSliderDeviceName;
             break;
+         case 'h': // port switcher, a clocked device
+            name = g_PortSwitchDeviceName;
+            break;
          case 'g': // programmable logic
             name = g_PLogicDeviceName;
             break;

@@ -239,6 +239,67 @@ private:
    std::vector<double> stageTranslations_;
 };
 
+
+class ComboXYStage : public CXYStageBase<ComboXYStage>
+{
+public:
+   ComboXYStage();
+   virtual ~ComboXYStage();
+
+public:
+   virtual void GetName(char* name) const;
+
+   virtual int Initialize();
+   virtual int Shutdown();
+
+   virtual bool Busy();
+
+   virtual int Move(double vx, double vy) { return DEVICE_UNSUPPORTED_COMMAND; }
+   virtual int Stop();
+   virtual int Home();
+
+   virtual int SetPositionSteps(long x, long y);
+   virtual int GetPositionSteps(long& x, long& y);
+
+   virtual int SetOrigin() { return DEVICE_UNSUPPORTED_COMMAND; }
+   virtual int SetXOrigin() { return DEVICE_UNSUPPORTED_COMMAND; }
+   virtual int SetYOrigin() { return DEVICE_UNSUPPORTED_COMMAND; }
+
+   virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+   virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
+
+   virtual double GetStepSizeXUm() { return simulatedXStepSizeUm_; }
+   virtual double GetStepSizeYUm() { return simulatedYStepSizeUm_; }
+
+   virtual int IsXYStageSequenceable(bool& isSequenceable) const;
+   virtual int GetXYStageSequenceMaxLength(long& nrEvents) const;
+   virtual int StartXYStageSequence();
+   virtual int StopXYStageSequence();
+   virtual int ClearXYStageSequence();
+   virtual int AddToXYStageSequence(double positionX, double positionY);
+   virtual int SendXYStageSequence();
+
+private:
+   // long xy is 0 for X and 1 for Y
+   int OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAct, long xy);
+   int OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct, long xy);
+   int OnScaling(MM::PropertyBase* pProp, MM::ActionType eAct, long xy);
+   int OnTranslationUm(MM::PropertyBase* pProp, MM::ActionType eAct, long xy);
+
+private:
+   double simulatedXStepSizeUm_;
+   double simulatedYStepSizeUm_;
+   bool initialized_;
+
+   // The following vectors should always have 2 elements (0 = X, 1 = Y) while
+   // initialized.
+   std::vector<std::string> usedStages_;
+   std::vector<MM::Stage*> physicalStages_;
+   std::vector<double> stageScalings_;
+   std::vector<double> stageTranslations_;
+};
+
+
 /**
  * DAMonochromator: Use DA device as monochromator
  * Also acts as a shutter (using a particular wavelength as "closed")

@@ -133,6 +133,7 @@ public:
    int OnScanSlowStopPosition (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanNumLines         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanSettlingTime     (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanOvershootDistance (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double unitMultX_;

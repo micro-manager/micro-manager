@@ -274,6 +274,13 @@ int BitFlowCamera::Initialize()
 		   return ret;
 	   }
 
+	   char message[200];
+		strcpy(message,"number of buffers, number of channels ");
+		strcat(message,  CDeviceUtils::ConvertToString((int) bfDev_.GetNumberOfBuffers()) );
+		strcat(message,  CDeviceUtils::ConvertToString((int) numChannels_) );
+		GetCoreCallback()->LogMessage(this,message, true );
+
+
 	   // at this point frame grabber is successfully initialized so
 	   // we can re-assign image buffers
 	   if (bfDev_.GetNumberOfBuffers() != numChannels_)
@@ -885,7 +892,7 @@ int BitFlowCamera::OnEnableBitflowChannels(MM::PropertyBase* pProp, MM::ActionTy
 	  bfDev_.UseVFGs(chanlist);
    }  else if (eAct == MM::BeforeGet) {
        string chanlist;
-	   for (unsigned i=0; i < 8; i++)
+	   for (unsigned i=0; i < numChannels_; i++)
 		   if (bfDev_.VFGActive(i))
 			  chanlist += "1";
 		   else

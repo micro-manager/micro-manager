@@ -76,18 +76,29 @@ bool BFCamera::VFGActive(int index) {
 int BFCamera::Initialize(MM::Device* caller, MM::Core* core) {
 	caller_ = caller;
 	core_ = core;
+
+	
+
 	// close existing boards
 	Shutdown();
 	// find the number of available boards
 	BFU32 num = 0;
+
 	BFRC ret = CiSysBrdEnum(CISYS_TYPE_R64, &num);
 	if (ret != BF_OK)
 		return ret;
+	core_->LogMessage(caller_,"num bitflow channels", true );
+	core_->LogMessage(caller_, CDeviceUtils::ConvertToString((int)num), true );
+	if (num == 0) {
+		core_->LogMessage(caller_,"0 bitflow channels detected", true );
+		return BF_NO_CHANNELS_DETECTED;
+	}
 
 	// open all of them
 	if (!dual_ && num > 4)
 		num = 4;
 
+	core_->LogMessage(caller_,CDeviceUtils::ConvertToString((int) num), true );
 	boards_.clear();
 	eofSignals_.clear();
 	for (unsigned i=0; i<num; i++) {  
