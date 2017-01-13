@@ -34,6 +34,7 @@ import edu.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
 import edu.valelab.gaussianfit.datasettransformations.DriftCorrector;
 import edu.valelab.gaussianfit.datasettransformations.PairFilter;
 import edu.valelab.gaussianfit.datasettransformations.TrackOperator;
+import edu.valelab.gaussianfit.internal.tabledisplay.DataTable;
 import edu.valelab.gaussianfit.internal.tabledisplay.DataTableModel;
 import edu.valelab.gaussianfit.internal.tabledisplay.DataTableRowSorter;
 import edu.valelab.gaussianfit.utils.ListUtils;
@@ -81,10 +82,8 @@ import javax.swing.LayoutStyle;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.TransferHandler;
-import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.OptimizationException;
@@ -177,7 +176,7 @@ public class DataCollectionForm extends JFrame {
    private JSeparator jSeparator2;
    private JSeparator jSeparator3;
    private JSeparator jSeparator4;
-   private JTable mainTable_;
+   private DataTable mainTable_;
    private JButton linkButton_;
    private JButton listButton_1;
    private JButton loadButton;
@@ -326,7 +325,8 @@ public class DataCollectionForm extends JFrame {
       
       DataTableRowSorter sorter = 
               new DataTableRowSorter(mainTableModel_);
-      mainTable_.setAutoCreateRowSorter(true);
+      //mainTable_.setAutoCreateRowSorter(true);
+      mainTable_.setRowSorter(sorter);
        
       // Drag and Drop support for file loading
       super.setTransferHandler(new TransferHandler() {
@@ -515,7 +515,7 @@ public class DataCollectionForm extends JFrame {
       listButton_1 = new JButton();
       jPanel2 = new JPanel();
       jScrollPane1_ = new JScrollPane();
-      mainTable_ = new JTable();
+      mainTable_ = new DataTable();
 
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       setTitle("Gaussian tracking data");
@@ -1154,18 +1154,18 @@ public class DataCollectionForm extends JFrame {
     
                   
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {
-       int rows[] = mainTable_.getSelectedRows();
+       int rows[] = mainTable_.getSelectedRowsSorted();
        if (rows.length > 0) {
           for (int i = 0; i < rows.length; i++) {
              if (saveFormatBox_.getSelectedIndex() == 0) {
                 if (i == 0)
-                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(mainTable_.convertRowIndexToModel(i)), false, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), false, 
                            dir_, this);
                 else
-                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(mainTable_.convertRowIndexToModel(i)), true, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), true, 
                            dir_, this);
              } else {
-                LoadAndSave.saveDataAsText(mainTableModel_.getRow(mainTable_.convertRowIndexToModel(i)), this);
+                LoadAndSave.saveDataAsText(mainTableModel_.getRow(i), this);
              }
           }
        } else {
@@ -1174,10 +1174,10 @@ public class DataCollectionForm extends JFrame {
     }
 
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {
-       int rows[] = mainTable_.getSelectedRows();
+       int rows[] = mainTable_.getSelectedRowsSorted();
        if (rows.length > 0) {
           for (int row = rows.length - 1; row >= 0; row--) {
-             mainTableModel_.removeRow(mainTable_.convertRowIndexToModel(rows[row]));
+             mainTableModel_.removeRow(rows[row]);
           }
        } else {
           JOptionPane.showMessageDialog(getInstance(), "No dataset selected");
@@ -1185,10 +1185,10 @@ public class DataCollectionForm extends JFrame {
     }
 
     private void showButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-       int row = mainTable_.getSelectedRow();
+       int row = mainTable_.getSelectedRowSorted();
        if (row > -1) {
           try {
-            showResults(mainTableModel_.getRow(mainTable_.convertRowIndexToModel(row)));
+            showResults(mainTableModel_.getRow(row));
           } catch (OutOfMemoryError ome) {
              JOptionPane.showMessageDialog(getInstance(), "Not enough memory to show data");
           }
@@ -1198,12 +1198,11 @@ public class DataCollectionForm extends JFrame {
     }
 
    private void extractTracksButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      int row = mainTable_.getSelectedRow();
+      int row = mainTable_.getSelectedRowSorted();
       if (row > -1) {
          Point s = MouseInfo.getPointerInfo().getLocation();
          ExtractTracksDialog extractTracksDialog = 
-                 new ExtractTracksDialog(studio_, mainTableModel_.getRow(
-                         mainTable_.convertRowIndexToModel(row) ), s);
+                 new ExtractTracksDialog(studio_, mainTableModel_.getRow(row), s);
       }
    }
     
@@ -1219,7 +1218,7 @@ public class DataCollectionForm extends JFrame {
     * @param evt 
     */
    private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {
-      int rows[] = mainTable_.getSelectedRows();
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets as color reference");
       } else {
@@ -1230,8 +1229,7 @@ public class DataCollectionForm extends JFrame {
             // Get points from both channels in first frame as ArrayLists        
             ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
             ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-            for (SpotData gs : mainTableModel_.getRow(
-                    mainTable_.convertRowIndexToModel(row)).spotList_) {
+            for (SpotData gs : mainTableModel_.getRow(row).spotList_) {
                if (gs.getFrame() == 1) {
                   Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                   if (gs.getChannel() == 1) {
@@ -1300,7 +1298,7 @@ public class DataCollectionForm extends JFrame {
    public void listPairs(double maxDistance, boolean showPairs, 
            boolean showImage, boolean savePairs, String filePath, 
            boolean showSummary, boolean showGraph) {
-      final int[] rows = mainTable_.getSelectedRows();
+      final int[] rows = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select a dataset");
@@ -1308,8 +1306,7 @@ public class DataCollectionForm extends JFrame {
       }
       if (showPairs || showImage || savePairs || showSummary || showGraph) {
          for (int row : rows) {
-            ParticlePairLister.ListParticlePairs(
-                    mainTable_.convertRowIndexToModel(row), maxDistance, showPairs, 
+            ParticlePairLister.ListParticlePairs(row, maxDistance, showPairs, 
                    showImage, savePairs, filePath, showSummary, showGraph);
          }
       }
@@ -1318,28 +1315,24 @@ public class DataCollectionForm extends JFrame {
    public void listPairTracks(double maxDistance, boolean showTrack, 
            boolean showSummary, boolean showOverlay, boolean saveFile, 
            String filePath, boolean p2d) {
-      final int[] rows = mainTable_.getSelectedRows();
+      final int[] rows = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select a dataset");
          return;
       }
       if (showTrack || showSummary || showOverlay || saveFile || p2d) {
-         int[] sortedRows = new int[rows.length];
-         for (int i = 0; i < rows.length; i++) {
-            sortedRows[i] = mainTable_.convertRowIndexToModel(i);
-         }
-         ParticlePairLister.listParticlePairTracks(sortedRows, maxDistance, showTrack, 
+         ParticlePairLister.listParticlePairTracks(rows, maxDistance, showTrack, 
                  showSummary, showOverlay, saveFile, p2d, filePath);
       }
    }
    
    private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {
-      int[] rows = mainTable_.getSelectedRows();
+      int[] rows = mainTable_.getSelectedRowsSorted();
       if (rows.length > 0) {     
          try {
             for (int row : rows) {
-               correct2C(mainTableModel_.getRow(mainTable_.convertRowIndexToModel(row)));
+               correct2C(mainTableModel_.getRow(row));
             }
          } catch (InterruptedException ex) {
             ReportingUtils.showError(ex);
@@ -1349,7 +1342,7 @@ public class DataCollectionForm extends JFrame {
    }
 
    private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      final int row = mainTable_.getSelectedRow();
+      final int row = mainTable_.getSelectedRowSorted();
       if (row > -1) {
          Runnable doWorkRunnable = new Runnable() {
             @Override
@@ -1357,7 +1350,8 @@ public class DataCollectionForm extends JFrame {
                if (jitterMethod_ == 0)
                   DriftCorrector.unJitter(mainTableModel_.getRow(row));
                else
-                  new DriftCorrector().unJitter2(mainTableModel_.getRow(mainTable_.convertRowIndexToModel(row)), jitterMaxFrames_, jitterMaxSpots_);
+                  new DriftCorrector().unJitter2(mainTableModel_.getRow(row), 
+                          jitterMaxFrames_, jitterMaxSpots_);
             }
          };
          (new Thread(doWorkRunnable)).start();
@@ -1405,11 +1399,11 @@ public class DataCollectionForm extends JFrame {
     * @param evt 
     */
    private void infoButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      int row = mainTable_.getSelectedRow();
+      int row = mainTable_.getSelectedRowSorted();
       if (row > -1) {
           
          
-         RowData rowData = mainTableModel_.getRow(mainTable_.convertRowIndexToModel(row));
+         RowData rowData = mainTableModel_.getRow(row);
          String data = "Name: " + rowData.name_ + "\n" +
                  "Title: " + rowData.title_ + "\n" + 
                  "BoxSize: " + 2*rowData.halfSize_ + "\n" +
@@ -1455,11 +1449,10 @@ public class DataCollectionForm extends JFrame {
     * @param evt 
     */
    private void renderButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      int tRow = mainTable_.getSelectedRow();
-      if (tRow < 0) {
+      final int row = mainTable_.getSelectedRowSorted();
+      if (row < 0) {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to render");
       } else {
-         final int row = mainTable_.convertRowIndexToModel(tRow);
 
          Runnable doWorkRunnable = new Runnable() {
 
@@ -1519,14 +1512,14 @@ public class DataCollectionForm extends JFrame {
    }
 
    private void plotButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      int rows[] = mainTable_.getSelectedRows();
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets to plot");
       } else {
          RowData[] myRows = new RowData[rows.length];
          // TODO: check that these are tracks 
          for (int i = 0; i < rows.length; i++)
-            myRows[i] = mainTableModel_.getRow(mainTable_.convertRowIndexToModel(rows[i]));
+            myRows[i] = mainTableModel_.getRow(rows[i]);
          plotData(myRows, plotComboBox_.getSelectedIndex());
       }
    }
@@ -1550,7 +1543,7 @@ public class DataCollectionForm extends JFrame {
     * @param evt 
     */
    private void averageTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      int rows[] = mainTable_.getSelectedRows();
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select one or more datasets to average");
@@ -1559,7 +1552,7 @@ public class DataCollectionForm extends JFrame {
          ArrayList<Point2D.Double> listAvgs = new ArrayList<Point2D.Double>();
          
          for (int i = 0; i < rows.length; i++) {
-            myRows[i] = mainTableModel_.getRow(mainTable_.convertRowIndexToModel(rows[i]));
+            myRows[i] = mainTableModel_.getRow(rows[i]);
             ArrayList<Point2D.Double> xyPoints = ListUtils.spotListToPointList(myRows[i].spotList_);
             Point2D.Double listAvg = ListUtils.avgXYList(xyPoints);
             listAvgs.add(listAvg);
@@ -1729,7 +1722,7 @@ public class DataCollectionForm extends JFrame {
     * @param evt - ignored...
     */
    private void linkButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      final int rows[] = mainTable_.getSelectedRows();
+      final int rows[] = mainTable_.getSelectedRowsSorted();
 
       final double maxDistance;
       try {
@@ -1745,7 +1738,7 @@ public class DataCollectionForm extends JFrame {
          @Override
          public void run() {
             for (int row : rows) {
-               final RowData rowData = mainTableModel_.getRow(mainTable_.convertRowIndexToModel(row));
+               final RowData rowData = mainTableModel_.getRow(row);
                if (rowData.frameIndexSpotList_ == null) {
                   rowData.index();
                }
@@ -1758,13 +1751,13 @@ public class DataCollectionForm extends JFrame {
    }
 
    private void straightenTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      int rows[] = mainTable_.getSelectedRows();
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
                  "Please select one or more datasets to straighten");
       } else {
          for (int row : rows) {
-            RowData r = mainTableModel_.getRow(mainTable_.convertRowIndexToModel(row));
+            RowData r = mainTableModel_.getRow(row);
             /*
             if (evt.getModifiers() > 0) {
                if (r.title_.equals(ij.IJ.getImage().getTitle())) {
@@ -1784,25 +1777,25 @@ public class DataCollectionForm extends JFrame {
    }
 
    private void centerTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      int rows[] = mainTable_.getSelectedRows();
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
                  "Please select one or more datasets to center");
       } else {
          for (int row : rows) {
-            TrackOperator.centerTrack(mainTableModel_.getRow(mainTable_.convertRowIndexToModel(row)));
+            TrackOperator.centerTrack(mainTableModel_.getRow(row));
          }
       }
    }
 
 
    private void zCalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      int rows[] = mainTable_.getSelectedRows();
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length != 1) {
          JOptionPane.showMessageDialog(getInstance(),
                  "Please select one datasets for Z Calibration");
       } else {
-         int result = zCalibrate(mainTable_.convertRowIndexToModel(rows[0]));
+         int result = zCalibrate(rows[0]);
          if (result == OK) {
             zCalibrationLabel_.setText("Calibrated");
          } else if (result == FAILEDDOINFORM) {
@@ -1820,7 +1813,7 @@ public class DataCollectionForm extends JFrame {
 
    private void SubRangeActionPerformed(java.awt.event.ActionEvent evt) {
 
-      final int[] rows = mainTable_.getSelectedRows();
+      final int[] rows = mainTable_.getSelectedRowsSorted();
 
       if (rows == null || rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
@@ -1831,7 +1824,7 @@ public class DataCollectionForm extends JFrame {
       range_ = (String) JOptionPane.showInputDialog(this, "Provide desired subrange\n"
               + "e.g. \"7-50\"", "SubRange", JOptionPane.PLAIN_MESSAGE, null, null, range_);
       ArrayList<Integer> desiredFrameNumbers = new ArrayList<Integer>(
-              mainTableModel_.getRow(mainTable_.convertRowIndexToModel(rows[0])).maxNrSpots_);
+              mainTableModel_.getRow(rows[0]).maxNrSpots_);
       String[] parts = range_.split(",");
       try {
          for (String part : parts) {
@@ -1856,7 +1849,7 @@ public class DataCollectionForm extends JFrame {
                for (int row : rows) {
                   RowData newRow =
                           edu.valelab.gaussianfit.utils.SubRange.subRange(
-                          mainTableModel_.getRow(mainTable_.convertRowIndexToModel(row)), desiredFrameNumbersCopy);
+                          mainTableModel_.getRow(row), desiredFrameNumbersCopy);
                   addSpotData(newRow);
                }
 
@@ -1869,7 +1862,7 @@ public class DataCollectionForm extends JFrame {
 
    private void combineButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       try {
-         final int[] rows = mainTable_.getSelectedRows();
+         final int[] rows = mainTable_.getSelectedRowsSorted();
          
          if (rows == null || rows.length < 2) {
             JOptionPane.showMessageDialog(getInstance(), 
@@ -1885,8 +1878,7 @@ public class DataCollectionForm extends JFrame {
                List<SpotData> newData =
                        Collections.synchronizedList(new ArrayList<SpotData>());
                for (int i = 0; i < rows.length; i++) {
-                  RowData rowData = mainTableModel_.getRow(
-                          mainTable_.convertRowIndexToModel(rows[i]));
+                  RowData rowData = mainTableModel_.getRow(rows[i]);
                   for (SpotData gs : rowData.spotList_) {
                      newData.add(gs);
                   }
@@ -1894,7 +1886,7 @@ public class DataCollectionForm extends JFrame {
 
                // Add transformed data to data overview window
                // for now, copy header of first data set
-               RowData rowData = mainTableModel_.getRow(mainTable_.convertRowIndexToModel(rows[0]));
+               RowData rowData = mainTableModel_.getRow(rows[0]);
                addSpotData(rowData.name_ + "-Combined",
                        rowData.title_,
                        rowData.dw_,
@@ -1923,43 +1915,6 @@ public class DataCollectionForm extends JFrame {
    }
 
 
-
-   /**
-    * Renders button with appropriate names
-    */
-   class ButtonRenderer extends JButton implements TableCellRenderer {
-
-      public ButtonRenderer() {
-         super.setOpaque(true);
-      }
-
-      @Override
-      public Component getTableCellRendererComponent(JTable table, Object value,
-          boolean isSelected, boolean hasFocus, int row, int column) {
-
-         setForeground(table.getForeground());
-         setBackground(UIManager.getColor("Button.background"));
-
-         if (mainTableModel_.getRow(row).isTrack_) {
-            if (column == 4)
-               setText((value == null ? "" : "Center"));
-            else {
-               if (column == 5)
-                  setText((value == null ? "" : "Straighten"));
-               else
-                  setText((value == null ? "" : value.toString()));
-            }
-         } else {
-            return null;
-            //if (column == 4)
-            //   setText((value == null ? "" : "Render"));
-            //if (column == 5)
-            //   return null;     
-         }
-             
-         return this;
-      }
-   }
 
    /**
     * Shows dataset in ImageJ Results Table
@@ -2501,7 +2456,7 @@ public class DataCollectionForm extends JFrame {
    
    public void filterPairs(final double maxDistance, final double deviationMax,
            final int nrQuadrants) {
-      final int[] rows = mainTable_.getSelectedRows();
+      final int[] rows = mainTable_.getSelectedRowsSorted();
       
       if (rows == null || rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
@@ -2510,7 +2465,7 @@ public class DataCollectionForm extends JFrame {
       }
       
       for (int i = 0; i < rows.length; i++) {
-         RowData rowData = mainTableModel_.getRow(mainTable_.convertRowIndexToModel(rows[i]));
+         RowData rowData = mainTableModel_.getRow(rows[i]);
          PairFilter.filter(rowData, maxDistance, deviationMax, nrQuadrants);
       }
    }
@@ -2520,9 +2475,9 @@ public class DataCollectionForm extends JFrame {
     * @param sf SpotDataFilter used to filter the selected dataset
     */
    public void filterSpots(SpotDataFilter sf) {
-      final int[] rows = mainTable_.getSelectedRows();
+      final int[] rows = mainTable_.getSelectedRowsSorted();
       for (int i = 0; i < rows.length; i++) {
-         RowData rowData = mainTableModel_.getRow(mainTable_.convertRowIndexToModel(rows[i]));
+         RowData rowData = mainTableModel_.getRow(rows[i]);
          List<SpotData> filteredData = new ArrayList<SpotData>();
          for (SpotData spot : rowData.spotList_) {
             if (sf.filter(spot)) {

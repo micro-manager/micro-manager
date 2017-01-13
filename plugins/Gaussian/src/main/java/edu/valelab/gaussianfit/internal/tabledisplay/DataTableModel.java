@@ -1,4 +1,11 @@
 /**
+ *  
+ * Nico Stuurman, nico.stuurman at ucsf.edu
+ * 
+ * Copyright UCSF, 2017
+ * 
+ * Licensed under BSD license version 2.0
+ * 
  * Model for the data shown in the Data window in Localization microscopy
  * plugin
  * 
@@ -10,15 +17,17 @@ import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
 
 /**
- *
+ * Model for the data shown in the Data window in Localization microscopy
+ * plugin
+ * 
  * @author nico
  */
 public class DataTableModel extends AbstractTableModel {
-
+   
    private final String[] columnNames_ = {"ID", "Image", "Nr of spots",
       "2C Reference", "Ch.", "X", "Y", "stdX", "stdY", "nrPhotons"};
-
    private final ArrayList<RowData> rowData_;
+   public final static NullClass NULLINSTANCE = new NullClass();
 
    public DataTableModel() {
       rowData_ = new ArrayList<RowData>();
@@ -92,39 +101,39 @@ public class DataTableModel extends AbstractTableModel {
          return rowData_.get(row).colCorrRef_;
       } else if (col == 4) {
          if (rowData_.get(row).isTrack_) {
-            return "" + rowData_.get(row).spotList_.get(0).getChannel();
+            return rowData_.get(row).spotList_.get(0).getChannel();
          } else {
-            return null;
+            return NULLINSTANCE;
          }
       } else if (col == 5) {
          if (rowData_.get(row).isTrack_) {
-            return String.format("%.2f", rowData_.get(row).spotList_.get(0).getXCenter());
+            return rowData_.get(row).spotList_.get(0).getXCenter();
          } else {
-            return null;
+            return NULLINSTANCE;
          }
       } else if (col == 6) {
          if (rowData_.get(row).isTrack_) {
-            return String.format("%.2f", rowData_.get(row).spotList_.get(0).getYCenter());
+            return rowData_.get(row).spotList_.get(0).getYCenter();
          } else {
-            return null;
+            return NULLINSTANCE;
          }
       } else if (col == 7) {
          if (rowData_.get(row).isTrack_) {
-            return String.format("%.2f", rowData_.get(row).stdX_);
+            return rowData_.get(row).stdX_;
          } else {
-            return null;
+            return NULLINSTANCE;
          }
       } else if (col == 8) {
          if (rowData_.get(row).isTrack_) {
-            return String.format("%.2f", rowData_.get(row).stdY_);
+            return rowData_.get(row).stdY_;
          } else {
-            return null;
+            return NULLINSTANCE;
          }
       } else if (col == 9) {
          if (rowData_.get(row).isTrack_) {
-            return String.format("%.2f", rowData_.get(row).totalNrPhotons_);
+            return rowData_.get(row).totalNrPhotons_;
          } else {
-            return null;
+            return NULLINSTANCE;
          }
       }
 
@@ -141,14 +150,14 @@ public class DataTableModel extends AbstractTableModel {
    public Class getColumnClass(int col) {
       switch (col) {
          case 1:
+         case 3:
             return String.class;
          case 0:
          case 2:
+         case 4:
             return Integer.class;
-         default:  // even though all others are Doubles, they have empty 
-            // values, which causes issues elsewhere.  Probably need 
-            // to write my own sorter
-            return String.class;
+         default:  
+            return Double.class;
       }
    }
 
