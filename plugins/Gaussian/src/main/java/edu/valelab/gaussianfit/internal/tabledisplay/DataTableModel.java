@@ -131,7 +131,7 @@ public class DataTableModel extends AbstractTableModel {
          }
       } else if (col == 9) {
          if (rowData_.get(row).isTrack_) {
-            return rowData_.get(row).totalNrPhotons_;
+            return Math.round(rowData_.get(row).totalNrPhotons_);
          } else {
             return NULLINSTANCE;
          }
@@ -155,6 +155,7 @@ public class DataTableModel extends AbstractTableModel {
          case 0:
          case 2:
          case 4:
+         case 9:
             return Integer.class;
          default:  
             return Double.class;

@@ -118,7 +118,7 @@ public class GaussianFit {
  
    /**
     * Performs Gaussian Fit on a given ImageProcessor
-    * Estimates initial values for the fit and sends of to Apache fitting code
+    * Estimates initial values for the fit and sends off to Apache fitting code
     * Background is estimated by averaging the outer rows and columns
     * Sigma estimate is hardcoded to 1.115 pixels
     * Signal estimate is derived from total signal - total background estimate
@@ -145,14 +145,11 @@ public class GaussianFit {
          } catch (java.lang.OutOfMemoryError e) {
             throw(e);
          } catch (FunctionEvaluationException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          } catch (OptimizationException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          } catch (IllegalArgumentException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          }
       }
 
@@ -178,7 +175,7 @@ public class GaussianFit {
          } catch (FunctionEvaluationException ex) {
             ReportingUtils.logError(ex);
          } catch (OptimizationException ex) {
-            // Logger.getLogger(gaussianfit.class.getName()).log(Level.SEVERE, null, ex);
+            ReportingUtils.logError(ex);
          } catch (IllegalArgumentException ex) {
             ReportingUtils.logError(ex);
          }
@@ -196,14 +193,11 @@ public class GaussianFit {
          } catch (java.lang.OutOfMemoryError e) {
             throw(e);
          } catch (FunctionEvaluationException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          } catch (OptimizationException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          } catch (IllegalArgumentException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          }
       }
       

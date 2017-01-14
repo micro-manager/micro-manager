@@ -53,16 +53,14 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    private boolean showDataWindow_ = true;
    private final Studio studio_;
    
-   public class Monitor {}
+   //public class Monitor {}
    
-   private final Monitor monitor_;
+   //private final Monitor monitor_;
 
-   public FitAllThread(Studio studio, int shape, int fitMode, 
+   public FitAllThread(Studio studio, 
            FindLocalMaxima.FilterType preFilterType, String positions) {
-      monitor_ = new Monitor();
+      //monitor_ = new Monitor();
       studio_ = studio;
-      shape_ = shape;
-      fitMode_ = fitMode;
       preFilterType_ = preFilterType;
       positionString_ = positions;
    }
@@ -245,7 +243,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
       dcForm.addSpotData(title, siPlus.getTitle(), dw, "",
               siPlus.getWidth(), siPlus.getHeight(), pixelSize_,
-              zStackStepSize_, shape_, halfSize_,
+              zStackStepSize_, super.getShape(), super.getHalfBoxSize(),
               nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(),
               resultList_, timePoints, false, DataCollectionForm.Coordinates.NM,
               DataCollectionForm.zc_.hasFitFunctions(),
@@ -269,31 +267,13 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
    @SuppressWarnings("unchecked")
    private int analyzeImagePlus(ImagePlus siPlus, int position, int nrThreads, Roi originalRoi) {
-
+      int halfSize = super.getHalfBoxSize();
       int nrSpots = 0;
       // Start up IJ.Prefs.getThreads() threads for gaussian fitting
       gfsThreads_ = new GaussianFitStackThread[nrThreads];
       for (int i = 0; i < nrThreads; i++) {
-         gfsThreads_[i] = new GaussianFitStackThread(sourceList_, resultList_, siPlus, halfSize_,
-                 shape_, fitMode_);
-
-         // TODO: more efficient way of passing through settings!
-         gfsThreads_[i].setPhotonConversionFactor(photonConversionFactor_);
-         gfsThreads_[i].setGain(gain_);
-         gfsThreads_[i].setPixelSize(pixelSize_);
-         gfsThreads_[i].setZStackStepSize(zStackStepSize_);
-         gfsThreads_[i].setTimeIntervalMs(timeIntervalMs_);
-         gfsThreads_[i].setBaseLevel(baseLevel_);
-         gfsThreads_[i].setNoiseTolerance(noiseTolerance_);
-         gfsThreads_[i].setSigmaMax(widthMax_);
-         gfsThreads_[i].setSigmaMin(widthMin_);
-         gfsThreads_[i].setNrPhotonsMin(nrPhotonsMin_);
-         gfsThreads_[i].setNrPhotonsMax(nrPhotonsMax_);
-         gfsThreads_[i].setMaxIterations(maxIterations_);
-         gfsThreads_[i].setUseWidthFilter(useWidthFilter_);
-         gfsThreads_[i].setUseNrPhotonsFilter(useNrPhotonsFilter_);
-         gfsThreads_[i].setSkipChannels(skipChannels_);
-         //gfsThreads_[i].setChannelsToSkip(channelsToSkip_);
+         gfsThreads_[i] = new GaussianFitStackThread(sourceList_, resultList_, siPlus);
+         gfsThreads_[i].copy(this);
          gfsThreads_[i].init();
       }
       int shownChannel = siPlus.getChannel();
@@ -355,7 +335,8 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                            for (Roi roi : rois) {
                               siPlus.setRoi(roi, false);
                               siProc = siPlus.getProcessor();
-                              Polygon q = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_,
+                              Polygon q = FindLocalMaxima.FindMax(siPlus, 
+                                      super.getHalfBoxSize(), noiseTolerance_,
                                       preFilterType_);
                               for (int i = 0; i < q.npoints; i++) {
                                  p.addPoint(q.xpoints[i], q.ypoints[i]);
@@ -364,7 +345,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                         } else {  // no Rois in RoiManager
                            siPlus.setRoi(originalRoi, false);
                            siProc = siPlus.getProcessor();
-                           p = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_,
+                           p = FindLocalMaxima.FindMax(siPlus, super.getHalfBoxSize(), noiseTolerance_,
                                    preFilterType_);
                         }
                      }
@@ -384,10 +365,10 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
                      for (int j = 0; j < sC.length; j++) {
                         // filter out spots too close to the edge
-                        if (sC[j][0] > halfSize_ && sC[j][0] < siPlus.getWidth() - halfSize_
-                                && sC[j][1] > halfSize_ && sC[j][1] < siPlus.getHeight() - halfSize_) {
+                        if (sC[j][0] > halfSize && sC[j][0] < siPlus.getWidth() - halfSize
+                                && sC[j][1] > halfSize && sC[j][1] < siPlus.getHeight() - halfSize) {
                            ImageProcessor sp = SpotData.getSpotProcessor(siProc,
-                                   halfSize_, sC[j][0], sC[j][1]);
+                                   halfSize, sC[j][0], sC[j][1]);
                            if (sp == null) {
                               continue;
                            }

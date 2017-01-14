@@ -100,7 +100,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
            ArrayList<Double> timePoints) {
 
 
-      GaussianFit gs = new GaussianFit(shape_, fitMode_);
+      GaussianFit gs = new GaussianFit(super.getShape(), super.getFitMode());
      
       double cPCF = photonConversionFactor_ / gain_;
 
@@ -114,7 +114,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          return false;
       }
       
-      Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
+      Polygon pol = FindLocalMaxima.FindMax(siPlus, super.getHalfBoxSize(), 
+              super.getNoiseTolerance(), preFilterType_);
       if (pol.npoints == 0) {
          if (!silent_)
             ReportingUtils.showError("No local maxima found in ROI" );
@@ -155,7 +156,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       }
       boolean stop = false;
       int missedFrames = 0;
-      int size = 2 * halfSize_;
+      int size = 2 * super.getHalfBoxSize();
 
       
       for (int i = n; i <= nMax && !stop; i++) {
@@ -176,7 +177,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          siPlus.setRoi(searchRoi, false);
 
          // Find maximum in Roi, might not be needed....
-         pol = FindLocalMaxima.FindMax(siPlus, 2 * halfSize_, noiseTolerance_, preFilterType_);
+         pol = FindLocalMaxima.FindMax(siPlus, size, noiseTolerance_, preFilterType_);
 
          // do not stray more than 2 pixels in x or y.  
          // This velocity maximum parameter should be tunable by the user
@@ -194,7 +195,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          }
 
          // Set Roi for fitting centered around maximum
-         Roi spotRoi = new Roi(xc - halfSize_, yc - halfSize_, 2 * halfSize_, 2*halfSize_);
+         Roi spotRoi = new Roi(xc - super.getHalfBoxSize(), yc - super.getHalfBoxSize(), 
+                 size, size);
          siPlus.setRoi(spotRoi, false);
          ImageProcessor ip;
          try {
@@ -221,8 +223,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             double N = cPCF * paramsOut[GaussianFit.INT] * (2 * Math.PI * paramsOut[GaussianFit.S] * paramsOut[GaussianFit.S]);           
             double xpc = paramsOut[GaussianFit.XC];
             double ypc = paramsOut[GaussianFit.YC];
-            double x = (xpc - halfSize_ + xc) * pixelSize_;
-            double y = (ypc - halfSize_ + yc) * pixelSize_;
+            double x = (xpc - super.getHalfBoxSize() + xc) * pixelSize_;
+            double y = (ypc - super.getHalfBoxSize() + yc) * pixelSize_;
 
                
             double s = paramsOut[GaussianFit.S] * pixelSize_;
@@ -247,9 +249,9 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))
                     && (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_))) {
                // If we have a good fit, update position of the box
-               if (xpc > 0 && xpc < (2 * halfSize_) && ypc > 0 && ypc < (2 * halfSize_)) {
-                  xc += (int) xpc - halfSize_;
-                  yc += (int) ypc - halfSize_;
+               if (xpc > 0 && xpc < (size) && ypc > 0 && ypc < (size)) {
+                  xc += (int) xpc - getHalfBoxSize();
+                  yc += (int) ypc - getHalfBoxSize();
                }
                spot.setData(N, bgr, x, y, 0.0, 2 * s, a, theta, sigma);
                xyPoints.add(new Point2D.Double(x, y));
@@ -287,8 +289,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       // Add data to data overview window
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
       dcForm.addSpotData(name, siPlus.getTitle(), null, "", siPlus.getWidth(), 
-              siPlus.getHeight(),  pixelSize_, (float) 0.0, shape_,
-              halfSize_, siPlus.getNChannels(), siPlus.getNFrames(),
+              siPlus.getHeight(),  pixelSize_, (float) 0.0, getShape(),
+              getHalfBoxSize(), siPlus.getNChannels(), siPlus.getNFrames(),
               siPlus.getNSlices(), 1, resultList.size(), resultList, 
               timePoints, true, DataCollectionForm.Coordinates.NM, false, 
               0.0, 0.0);

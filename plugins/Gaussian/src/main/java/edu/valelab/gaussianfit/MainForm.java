@@ -22,7 +22,6 @@ import ij.plugin.frame.RoiManager;
 import java.awt.Color;
 import java.awt.Polygon;
 import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import edu.valelab.gaussianfit.utils.NumberUtils;
@@ -33,11 +32,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JSeparator;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
+import javax.swing.SpinnerNumberModel;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
@@ -103,40 +108,44 @@ public class MainForm extends JFrame {
    ImagePlus ip_ = null;
    
    // GUI elements
-   private javax.swing.JToggleButton readParmsButton_;
-   private javax.swing.JTextField photonConversionTextField_;
-   private javax.swing.JTextField baseLevelTextField;
-   private javax.swing.JTextField emGainTextField_;
-   private javax.swing.JLabel labelNPoints_;
-   private javax.swing.JButton mTrackButton_;
-   private javax.swing.JTextField maxNrPhotonsTextField_;
-   private javax.swing.JTextField maxSigmaTextField_;
-   private javax.swing.JTextField minNrPhotonsTextField_;
-   private javax.swing.JTextField minSigmaTextField_;
-   private javax.swing.JTextField pixelSizeTextField_;
-   private javax.swing.JTextField posTextField_;
+   private JToggleButton readParmsButton_;
+   private JTextField photonConversionTextField_;
+   private JTextField emGainTextField_;
+   private JTextField pixelSizeTextField_;
+   private JTextField timeIntervalTextField_;
+   private JTextField zStepTextField_;
+   private JTextField baseLevelTextField;
    
-   private javax.swing.JToggleButton showOverlay_;
-   private javax.swing.JComboBox preFilterComboBox_;
-   private javax.swing.JTextField noiseToleranceTextField_;
+   private JToggleButton showOverlay_;
+   private JComboBox preFilterComboBox_;
+   private JTextField noiseToleranceTextField_;
    
-   private javax.swing.JComboBox fitDimensionsComboBox1_;
-   private javax.swing.JComboBox fitMethodComboBox1_;
-   private javax.swing.JTextField boxSizeTextField;
-   private javax.swing.JTextField maxIterationsTextField_;
-   private javax.swing.JCheckBox useFixedWidthInFit_;
-   private javax.swing.JTextField fixedWidthInFit_;
+   private JComboBox fitDimensionsComboBox1_;
+   private JComboBox fitMethodComboBox1_;
+   private JTextField boxSizeTextField;
+   private JTextField maxIterationsTextField_;
+   private JCheckBox useFixedWidthInFit_;
+   private JTextField fixedWidthInFit_;
            
-   private javax.swing.JCheckBox endTrackCheckBox_;
-   private javax.swing.JCheckBox filterDataCheckBoxNrPhotons_;
-   private javax.swing.JCheckBox filterDataCheckBoxWidth_;
+   private JLabel labelNPoints_;
+   
+   private JCheckBox filterDataCheckBoxWidth_;
+   private JTextField minSigmaTextField_;
+   private JTextField maxSigmaTextField_;
+   private JCheckBox filterDataCheckBoxNrPhotons_;
+   private JTextField maxNrPhotonsTextField_;
+   private JTextField minNrPhotonsTextField_;
+   private JCheckBox endTrackCheckBox_;
+   private JSpinner endTrackSpinner_;
+   
+   private JTextField posTextField_;
+   
    private JCheckBox skipChannelsCheckBox_;
    private JTextField channelsToSkip_;
    private JLabel widthLabel_;
-   private javax.swing.JSpinner endTrackSpinner_;
-   private javax.swing.JButton fitAllButton_;
-   private javax.swing.JTextField timeIntervalTextField_;
-   private javax.swing.JTextField zStepTextField_;
+   
+   private JButton fitAllButton_;
+   private JButton mTrackButton_;
 
 
     /**
@@ -258,40 +267,39 @@ public class MainForm extends JFrame {
     @SuppressWarnings("unchecked")
    private void initComponents() {
 
-
-      filterDataCheckBoxWidth_ = new javax.swing.JCheckBox();
+      filterDataCheckBoxWidth_ = new JCheckBox();
       
-      photonConversionTextField_ = new javax.swing.JTextField();
-      emGainTextField_ = new javax.swing.JTextField();
-      baseLevelTextField = new javax.swing.JTextField();
-      minSigmaTextField_ = new javax.swing.JTextField();
-      noiseToleranceTextField_ = new javax.swing.JTextField();
-      pixelSizeTextField_ = new javax.swing.JTextField();
-      preFilterComboBox_ = new javax.swing.JComboBox();
-      fitDimensionsComboBox1_ = new javax.swing.JComboBox();
-      timeIntervalTextField_ = new javax.swing.JTextField();
-      maxIterationsTextField_ = new javax.swing.JTextField();
-      maxSigmaTextField_ = new javax.swing.JTextField();
-      boxSizeTextField = new javax.swing.JTextField();
-      fitMethodComboBox1_ = new javax.swing.JComboBox();
-      useFixedWidthInFit_ = new javax.swing.JCheckBox();
-      fixedWidthInFit_ = new javax.swing.JTextField();
+      photonConversionTextField_ = new JTextField();
+      emGainTextField_ = new JTextField();
+      baseLevelTextField = new JTextField();
+      minSigmaTextField_ = new JTextField();
+      noiseToleranceTextField_ = new JTextField();
+      pixelSizeTextField_ = new JTextField();
+      preFilterComboBox_ = new JComboBox();
+      fitDimensionsComboBox1_ = new JComboBox();
+      timeIntervalTextField_ = new JTextField();
+      maxIterationsTextField_ = new JTextField();
+      maxSigmaTextField_ = new JTextField();
+      boxSizeTextField = new JTextField();
+      fitMethodComboBox1_ = new JComboBox();
+      useFixedWidthInFit_ = new JCheckBox();
+      fixedWidthInFit_ = new JTextField();
            
-      filterDataCheckBoxNrPhotons_ = new javax.swing.JCheckBox();
-      minNrPhotonsTextField_ = new javax.swing.JTextField();
-      maxNrPhotonsTextField_ = new javax.swing.JTextField();
-      endTrackCheckBox_ = new javax.swing.JCheckBox();
-      endTrackSpinner_ = new javax.swing.JSpinner();
-      readParmsButton_ = new javax.swing.JToggleButton();
-      showOverlay_ = new javax.swing.JToggleButton();
-      mTrackButton_ = new javax.swing.JButton();
-      zStepTextField_ = new javax.swing.JTextField();
-      labelNPoints_ = new javax.swing.JLabel();
+      filterDataCheckBoxNrPhotons_ = new JCheckBox();
+      minNrPhotonsTextField_ = new JTextField();
+      maxNrPhotonsTextField_ = new JTextField();
+      endTrackCheckBox_ = new JCheckBox();
+      endTrackSpinner_ = new JSpinner();
+      readParmsButton_ = new JToggleButton();
+      showOverlay_ = new JToggleButton();
+      mTrackButton_ = new JButton();
+      zStepTextField_ = new JTextField();
+      labelNPoints_ = new JLabel();
       
-      posTextField_ = new javax.swing.JTextField();
+      posTextField_ = new JTextField();
       channelsToSkip_ = new JTextField();
       
-      fitAllButton_ = new javax.swing.JButton();
+      fitAllButton_ = new JButton();
       
       Font gFont = new Font("Lucida Grande", 0, 10);
       Dimension textFieldDim = new Dimension(57,20);
@@ -400,7 +408,7 @@ public class MainForm extends JFrame {
       getContentPane().add(jLabel, indent);
 
       preFilterComboBox_.setFont(gFont); 
-      preFilterComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "None", "Gaussian1-5" }));
+      preFilterComboBox_.setModel(new DefaultComboBoxModel(new String[] { "None", "Gaussian1-5" }));
       preFilterComboBox_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -435,7 +443,7 @@ public class MainForm extends JFrame {
       getContentPane().add(jLabel, indent);
          
       fitDimensionsComboBox1_.setFont(gFont); 
-      fitDimensionsComboBox1_.setModel(new javax.swing.DefaultComboBoxModel(
+      fitDimensionsComboBox1_.setModel(new DefaultComboBoxModel(
               new String[] { "1", "2", "3" }));
       fitDimensionsComboBox1_.setMinimumSize(dropDownSize);
       fitDimensionsComboBox1_.setMaximumSize(dropDownSizeMax);
@@ -446,7 +454,7 @@ public class MainForm extends JFrame {
       getContentPane().add(jLabel, indent);
       
       fitMethodComboBox1_.setFont(gFont); 
-      fitMethodComboBox1_.setModel(new javax.swing.DefaultComboBoxModel(
+      fitMethodComboBox1_.setModel(new DefaultComboBoxModel(
               new String[] { "Simplex", "Levenberg-Marq", "Simplex-MLE", "Levenberg-Marq-Weighted" }));
       fitMethodComboBox1_.setMinimumSize(dropDownSize);    
       fitMethodComboBox1_.setMaximumSize(dropDownSize);
@@ -576,7 +584,7 @@ public class MainForm extends JFrame {
       });
       getContentPane().add(endTrackCheckBox_, indent + ", span 3, split 3");
 
-      endTrackSpinner_.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
+      endTrackSpinner_.setModel(new SpinnerNumberModel(1, 1, null, 1));
       getContentPane().add(endTrackSpinner_, "width 40");
 
       jLabel.setText(" frames");
@@ -612,7 +620,7 @@ public class MainForm extends JFrame {
       getContentPane().add(currentPosButton);
 
       posTextField_.setFont(gFont); 
-      posTextField_.setHorizontalAlignment(javax.swing.JTextField.RIGHT);
+      posTextField_.setHorizontalAlignment(JTextField.RIGHT);
       posTextField_.setMinimumSize(textFieldDim);
       posTextField_.setText("1");
       getContentPane().add(posTextField_, "wrap");
@@ -713,8 +721,9 @@ public class MainForm extends JFrame {
              studio_.logs().showError(ex, "Input error that should never happen");
              return;
           }
+          
           fitMode_ = fitMethodComboBox1_.getSelectedIndex();
-          ft_ = new FitAllThread(studio_, shape_, fitMode_, preFilterType_, 
+          ft_ = new FitAllThread(studio_, preFilterType_, 
                   posTextField_.getText());
           updateValues(ft_);
           ft_.init();
@@ -1061,9 +1070,11 @@ public class MainForm extends JFrame {
          tT.setNrPhotonsMin(NumberUtils.displayStringToDouble(minNrPhotonsTextField_.getText()));
          tT.setNrPhotonsMax(NumberUtils.displayStringToDouble(maxNrPhotonsTextField_.getText()));
          tT.setMaxIterations(Integer.parseInt(maxIterationsTextField_.getText()));
-         tT.setBoxSize(Integer.parseInt(boxSizeTextField.getText()));
+         tT.setHalfBoxSize( (Integer.parseInt(boxSizeTextField.getText())) / 2);
          tT.setShape(fitDimensionsComboBox1_.getSelectedIndex() + 1);
          tT.setFitMode(fitMethodComboBox1_.getSelectedIndex() + 1);
+         tT.setUseFixedWidth(useFixedWidthInFit_.isSelected());
+         tT.setFixedWidthNm(NumberUtils.displayStringToDouble(fixedWidthInFit_.getText()));
          tT.setEndTrackBool(endTrackCheckBox_.isSelected());
          tT.setEndTrackAfterNFrames((Integer) endTrackSpinner_.getValue());
          tT.setSkipChannels(skipChannelsCheckBox_.isSelected());
