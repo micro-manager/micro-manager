@@ -71,6 +71,8 @@ public class MainForm extends JFrame {
    private static final String USENRPHOTONSFILTER = "UseNrPhotonsFilter";
    private static final String MAXITERATIONS = "MaxIterations";
    private static final String BOXSIZE = "BoxSize";
+   private static final String USEFIXEDWIDTH = "UseFixedWidth";
+   private static final String FIXEDWIDTH = "FixedWidth";
    private static final String FRAMEXPOS = "XPos";
    private static final String FRAMEYPOS = "YPos";
    private static final String FITMODE = "FitMode";
@@ -101,24 +103,30 @@ public class MainForm extends JFrame {
    ImagePlus ip_ = null;
    
    // GUI elements
+   private javax.swing.JToggleButton readParmsButton_;
+   private javax.swing.JTextField photonConversionTextField_;
+   private javax.swing.JTextField baseLevelTextField;
+   private javax.swing.JTextField emGainTextField_;
    private javax.swing.JLabel labelNPoints_;
    private javax.swing.JButton mTrackButton_;
-   private javax.swing.JTextField maxIterationsTextField_;
    private javax.swing.JTextField maxNrPhotonsTextField_;
    private javax.swing.JTextField maxSigmaTextField_;
    private javax.swing.JTextField minNrPhotonsTextField_;
    private javax.swing.JTextField minSigmaTextField_;
-   private javax.swing.JTextField noiseToleranceTextField_;
-   private javax.swing.JTextField photonConversionTextField_;
    private javax.swing.JTextField pixelSizeTextField_;
    private javax.swing.JTextField posTextField_;
+   
+   private javax.swing.JToggleButton showOverlay_;
    private javax.swing.JComboBox preFilterComboBox_;
+   private javax.swing.JTextField noiseToleranceTextField_;
+   
    private javax.swing.JComboBox fitDimensionsComboBox1_;
    private javax.swing.JComboBox fitMethodComboBox1_;
-   private javax.swing.JToggleButton readParmsButton_;
-   private javax.swing.JTextField baseLevelTextField;
    private javax.swing.JTextField boxSizeTextField;
-   private javax.swing.JTextField emGainTextField_;
+   private javax.swing.JTextField maxIterationsTextField_;
+   private javax.swing.JCheckBox useFixedWidthInFit_;
+   private javax.swing.JTextField fixedWidthInFit_;
+           
    private javax.swing.JCheckBox endTrackCheckBox_;
    private javax.swing.JCheckBox filterDataCheckBoxNrPhotons_;
    private javax.swing.JCheckBox filterDataCheckBoxWidth_;
@@ -127,7 +135,6 @@ public class MainForm extends JFrame {
    private JLabel widthLabel_;
    private javax.swing.JSpinner endTrackSpinner_;
    private javax.swing.JButton fitAllButton_;
-   private javax.swing.JToggleButton showOverlay_;
    private javax.swing.JTextField timeIntervalTextField_;
    private javax.swing.JTextField zStepTextField_;
 
@@ -165,6 +172,9 @@ public class MainForm extends JFrame {
        fitMethodComboBox1_.setSelectedIndex(up.getInt(oc, FITMODE, 0));
        maxIterationsTextField_.setText(Integer.toString(up.getInt(oc, MAXITERATIONS, 250)));
        boxSizeTextField.setText(Integer.toString(up.getInt(oc, BOXSIZE, 8)));
+       useFixedWidthInFit_.setSelected(up.getBoolean(oc, USEFIXEDWIDTH, false));
+       fixedWidthInFit_.setText(Double.toString(up.getDouble(oc, FIXEDWIDTH, 250.0)));
+       fixedWidthInFit_.setEnabled(useFixedWidthInFit_.isSelected());
        filterDataCheckBoxWidth_.setSelected(up.getBoolean(oc, USEFILTER, false));
        preFilterComboBox_.setSelectedIndex(up.getInt(oc, PREFILTER, 0));
        endTrackCheckBox_.setSelected(up.getBoolean(oc, ENDTRACKBOOL, false));
@@ -250,34 +260,38 @@ public class MainForm extends JFrame {
 
 
       filterDataCheckBoxWidth_ = new javax.swing.JCheckBox();
+      
       photonConversionTextField_ = new javax.swing.JTextField();
       emGainTextField_ = new javax.swing.JTextField();
       baseLevelTextField = new javax.swing.JTextField();
       minSigmaTextField_ = new javax.swing.JTextField();
       noiseToleranceTextField_ = new javax.swing.JTextField();
       pixelSizeTextField_ = new javax.swing.JTextField();
-      fitAllButton_ = new javax.swing.JButton();
       preFilterComboBox_ = new javax.swing.JComboBox();
       fitDimensionsComboBox1_ = new javax.swing.JComboBox();
       timeIntervalTextField_ = new javax.swing.JTextField();
       maxIterationsTextField_ = new javax.swing.JTextField();
       maxSigmaTextField_ = new javax.swing.JTextField();
       boxSizeTextField = new javax.swing.JTextField();
+      fitMethodComboBox1_ = new javax.swing.JComboBox();
+      useFixedWidthInFit_ = new javax.swing.JCheckBox();
+      fixedWidthInFit_ = new javax.swing.JTextField();
+           
       filterDataCheckBoxNrPhotons_ = new javax.swing.JCheckBox();
       minNrPhotonsTextField_ = new javax.swing.JTextField();
       maxNrPhotonsTextField_ = new javax.swing.JTextField();
       endTrackCheckBox_ = new javax.swing.JCheckBox();
       endTrackSpinner_ = new javax.swing.JSpinner();
       readParmsButton_ = new javax.swing.JToggleButton();
-      fitMethodComboBox1_ = new javax.swing.JComboBox();
       showOverlay_ = new javax.swing.JToggleButton();
       mTrackButton_ = new javax.swing.JButton();
       zStepTextField_ = new javax.swing.JTextField();
       labelNPoints_ = new javax.swing.JLabel();
+      
       posTextField_ = new javax.swing.JTextField();
       channelsToSkip_ = new JTextField();
-
       
+      fitAllButton_ = new javax.swing.JButton();
       
       Font gFont = new Font("Lucida Grande", 0, 10);
       Dimension textFieldDim = new Dimension(57,20);
@@ -450,17 +464,32 @@ public class MainForm extends JFrame {
       jLabel = new JLabel("Box Size (pixels)");
       jLabel.setFont(gFont); 
       getContentPane().add(jLabel, indent);
-      
-      
-      // HACK: not re-assigning jLabel as done below causes the last 
-      // jLabel to not show. No idea why, but this works around the problem
-      jLabel = new JLabel("Hack");
 
       boxSizeTextField.setFont(gFont); 
       boxSizeTextField.setText("16");
       boxSizeTextField.setMinimumSize(textFieldDim);
       getContentPane().add(boxSizeTextField, "wrap");
       
+      useFixedWidthInFit_.setFont(gFont);
+      useFixedWidthInFit_.setText("Fix Width");
+      useFixedWidthInFit_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            fixedWidthInFit_.setEnabled(useFixedWidthInFit_.isSelected());
+         }
+      });
+      getContentPane().add(indent, useFixedWidthInFit_);
+      fixedWidthInFit_.setFont(gFont);
+      fixedWidthInFit_.setText("250");
+      fixedWidthInFit_.setMinimumSize(textFieldDim);
+      getContentPane().add(fixedWidthInFit_, "split 2");
+      jLabel = new JLabel("nm");
+      jLabel.setFont(gFont);
+      getContentPane().add(jLabel, "wrap");
+      
+      // HACK: not re-assigning jLabel as done below causes the last 
+      // jLabel to not show. No idea why, but this works around the problem
+      jLabel = new JLabel("Hack");
       getContentPane().add(new JSeparator(), "span 3, grow, wrap");
       
 /*-----------  Filter Data  -----------*/
