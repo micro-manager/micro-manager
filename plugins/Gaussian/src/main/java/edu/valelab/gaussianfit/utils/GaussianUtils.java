@@ -391,6 +391,30 @@ public class GaussianUtils {
    public static double cube(double val) {
       return val * val * val;
    }
+   
+    /**
+    * Gaussian function of the form:
+    * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
+    * A = params[INT]  (amplitude)
+    * b = params[BGR]  (background)
+    * xc = params[XC]
+    * yc = params[YC]
+    * @param params - Parameters to be optimized
+    * @param s - width of Gaussian in pixels
+    * @param x - x position in the image
+    * @param y - y position in the image
+    * @return - array
+    */
+   public static double gaussianFixS(double[] params, double s, int x, int y) {
+      if (params.length < 4) {
+                       // Problem, what do we do???
+                       //MMScriptException e;
+                       //e.message = "Params for Gaussian function has too few values"; //throw (e);
+      }
+      double exponent = (sqr(x - params[XC])  + sqr(y - params[YC])) / (2 * sqr(s));
+      double res = params[INT] * Math.exp(-exponent) + params[BGR];
+      return res;
+   }
 
  /**
     * Gaussian function of the form:
@@ -411,7 +435,6 @@ public class GaussianUtils {
                        //MMScriptException e;
                        //e.message = "Params for Gaussian function has too few values"; //throw (e);
       }
-
       double exponent = (sqr(x - params[XC])  + sqr(y - params[YC])) / (2 * sqr(params[S]));
       double res = params[INT] * Math.exp(-exponent) + params[BGR];
       return res;
@@ -435,6 +458,31 @@ public class GaussianUtils {
          dx * q/sqr(params[S]),
          dy * q/sqr(params[S]),
          (sqr(dx) + sqr(dy)) * q/cube(params[S])
+      };
+      return result;
+   }
+
+   
+   /**
+    * Derivative (Jacobian) of the above function
+    *
+    * @param params - Parameters to be optimized
+    * @param s
+    * @param x - x position in the image
+    * @param y - y position in the image
+    * @return - array with the derivates for each of the parameters
+    */
+   public static double[] gaussianJFixS(double[] params, final double s, 
+           final int x, final int y) {
+      double q = gaussianFixS(params, s, x, y) - params[BGR];
+      double dx = x - params[XC];
+      double dy = y - params[YC];
+      double[] result = {
+         q/params[INT],
+         1.0,
+         dx * q/sqr(s),
+         dy * q/sqr(s),
+         (sqr(dx) + sqr(dy)) * q/cube(s)
       };
       return result;
    }

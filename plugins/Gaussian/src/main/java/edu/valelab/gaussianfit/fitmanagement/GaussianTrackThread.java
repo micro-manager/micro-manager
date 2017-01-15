@@ -10,8 +10,9 @@
  *
  */
 
-package edu.valelab.gaussianfit;
+package edu.valelab.gaussianfit.fitmanagement;
 
+import edu.valelab.gaussianfit.DataCollectionForm;
 import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.algorithm.GaussianFit;
 import edu.valelab.gaussianfit.data.GaussianInfo;

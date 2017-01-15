@@ -1,6 +1,7 @@
-package edu.valelab.gaussianfit;
+package edu.valelab.gaussianfit.fitmanagement;
 
 
+import edu.valelab.gaussianfit.DataCollectionForm;
 import edu.valelab.gaussianfit.algorithm.GaussianFit;
 import edu.valelab.gaussianfit.data.GaussianInfo;
 import edu.valelab.gaussianfit.data.SpotData;
@@ -49,7 +50,8 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
 
    @Override
    public void run() {
-      GaussianFit gs_ = new GaussianFit(super.getShape(), super.getFitMode());
+      GaussianFit gs_ = new GaussianFit(super.getShape(), super.getFitMode(),
+            super.getUseFixedWidth(), super.getFixedWidthNm() / super.getPixelSize() / 2);
       double cPCF = photonConversionFactor_ / gain_;
       ZCalibrator zc = DataCollectionForm.zc_;
 
@@ -73,24 +75,31 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
             // Note: the implementation will try to return a cached version of the ImageProcessor
             ImageProcessor ip = spot.getSpotProcessor(siPlus_, super.getHalfBoxSize());
             double[] paramsOut = gs_.dogaussianfit(ip, maxIterations_);
-            // Note that the copy constructor will not copy pixel data, so we loose those when spot goes out of scope
+            // Note that the copy constructor will not copy pixel data, so we loose 
+            // those when spot goes out of scope
             SpotData spotData = new SpotData(spot);
             double sx;
             double sy;
             double a = 1;
             double theta = 0;
-            if (paramsOut.length >= 5) {
-               double N = cPCF * paramsOut[GaussianFit.INT]
-                       * (2 * Math.PI * paramsOut[GaussianFit.S] * paramsOut[GaussianFit.S]);
+            double gs = super.getFixedWidthNm() / pixelSize_ / 2;
+            if (paramsOut.length >= 4) {
+
                double xMax = (paramsOut[GaussianFit.XC] - 
                        super.getHalfBoxSize() + spot.getX()) * pixelSize_;
                double yMax = (paramsOut[GaussianFit.YC] - 
-                       super.getHalfBoxSize() + spot.getY()) * pixelSize_;
-               double s = paramsOut[GaussianFit.S] * pixelSize_;
+                       super.getHalfBoxSize() + spot.getY()) * pixelSize_; 
                // express background in photons after base level correction
                double bgr = cPCF * (paramsOut[GaussianFit.BGR] - baseLevel_);
+               
+               if (paramsOut.length >= 5) {
+                  gs = paramsOut[GaussianFit.S];
+               }
+               double N = cPCF * paramsOut[GaussianFit.INT]
+                       * (2 * Math.PI * gs * gs);
                // calculate error using formular from Thompson et al (2002)
                // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
+               double s = gs * pixelSize_;
                double sigma = (s * s + (pixelSize_ * pixelSize_) / 12) / N
                        + (8 * Math.PI * s * s * s * s * bgr * bgr) / (pixelSize_ * pixelSize_ * N * N);
                sigma = Math.sqrt(sigma);

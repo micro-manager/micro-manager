@@ -49,8 +49,10 @@ public class GaussianFit {
    int nx_;
    int ny_;
    int count_ = 0;
-   int mode_ = 1;
+   int shape_ = 1;
    int fitMode_ = 1;
+   boolean fixWidth_ = false;
+   double fixedWidth_ = 0.9;
 
    NelderMead nm_;
    SimpleScalarValueChecker convergedChecker_;
@@ -59,36 +61,53 @@ public class GaussianFit {
    NonLinearConjugateGradientOptimizer nlcgo_;
    LevenbergMarquardtOptimizer lMO_;
 
+   
    /**
     * Gaussian fit can be run by estimating parameter c (width of Gaussian)
     * as 1 (circle), 2 (width varies in x and y), or 3 (ellipse) parameters
     * 
-    * @param mode - fit circle (1) ellipse(2), or ellipse with varying angle (3)
+    * @param shape - fit circle (1) ellipse(2), or ellipse with varying angle (3)
     * @param fitMode - algorithm use: NelderMead (1), Levenberg Marquard (2), 
     *                   NelderMean MLE (3), LevenberMarquard MLE(4)
+    * @param fixWidth - if true, do not fit the width
+    * @param fixedWidth - width of the Gaussian in pixels
     */
-   public GaussianFit(int mode, int fitMode) {
+   public GaussianFit(int shape, final int fitMode, final boolean fixWidth, 
+           final double fixedWidth) {
       super();
       fitMode_ = fitMode;
-      if (mode == 1) {
-         mode_ = 1;
+      fixWidth_ = fixWidth;
+      fixedWidth_ = fixedWidth;
+      // There is no point to fix the width of the Gaussian in modes other than 1:
+      if (fixWidth_ && fixedWidth_ > 0.0) {
+         shape = 1;
+      } else {
+         fixedWidth_ = -1.0;
+         fixWidth_ = false;
+      }
+      if (shape == 1) {
+         shape_ = 1;
          paramNames_ = new String[] {"A", "b", "x_c", "y_c", "sigma"};
       }
-      if (mode == 2) {
-         mode_ = 2;
+      if (shape == 2) {
+         shape_ = 2;
          paramNames_ = new String[] {"A", "b", "x_c", "y_c", "sigmaX", "sigmaY"};
       }
-      if (mode == 3) {
-         mode_ = 3;
+      if (shape == 3) {
+         shape_ = 3;
          paramNames_ = new String[] {"A", "b", "x_c", "y_c", "sigmaX", "sigmaY", "theta"};
       }
-      params0_ = new double [mode_ + 4] ;
-      steps_ = new double[mode_ + 4];
+      int paramSize = shape_ + 3;
+      if (! (fixWidth_ && fixedWidth_ > 0.0) ) {
+         paramSize += 1;
+      }
+      params0_ = new double [paramSize] ;
+      steps_ = new double[paramSize];
 
       if (fitMode_ == 1) {
          nm_ = new NelderMead();
          convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
-         mGF_ = new MultiVariateGaussianFunction(mode_);
+         mGF_ = new MultiVariateGaussianFunction(shape_, fixedWidth_);
       }
       // Levenberg-Marquardt and weighted Levenberg-Marquardt
       if (fitMode_ == 2 || fitMode == 4) {
@@ -99,7 +118,7 @@ public class GaussianFit {
       if (fitMode_ == 3) {
          nm_ = new NelderMead();
          convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
-         mGFMLE_ = new MultiVariateGaussianMLE(mode_);
+         mGFMLE_ = new MultiVariateGaussianMLE(shape_, fixedWidth_);
       }
       /*
        * Gradient MLE, not working very well
@@ -113,6 +132,11 @@ public class GaussianFit {
          nlcgo_.setInitialStep(0.0000002);
       }
       */
+   }
+   
+   
+   public GaussianFit(int mode, int fitMode) {
+       this(mode, fitMode, false, 0.0);
    }
 
  
@@ -170,8 +194,9 @@ public class GaussianFit {
             }
          }
          try {
-            paramsOut = cF.fit(new ParametricGaussianFunction( mode_, siProc.getWidth(), siProc.getHeight() ),
-                    params0_);
+            paramsOut = cF.fit(new ParametricGaussianFunction( 
+                    shape_, siProc.getWidth(), fixedWidth_), 
+                  params0_);
          } catch (FunctionEvaluationException ex) {
             ReportingUtils.logError(ex);
          } catch (OptimizationException ex) {
@@ -220,7 +245,7 @@ public class GaussianFit {
          
      
       
-      if (mode_ == 3) {
+      if (shape_ == 3) {
          if (paramsOut.length > S3) {
             double[] prms = GaussianUtils.ellipseParmConversion(paramsOut[S1], paramsOut[S2], paramsOut[S3]);
             paramsOut[S1] = prms[1];
@@ -237,11 +262,16 @@ public class GaussianFit {
       short[] imagePixels = (short[]) siProc.getPixels();
 
       // Hard code estimate for sigma (expressed in pixels):
-      params0_[S] = 0.9;
-      if (mode_ >= 2) {
+      double s = 0.9;
+      if (! (fixWidth_ && fixedWidth_ > 0.0) ) {
+         params0_[S] = s;
+      } else {
+         s = fixedWidth_;
+      }
+      if (shape_ >= 2) {
          params0_[S2] = 0.9;
       }
-      if (mode_ == 3) {
+      if (shape_ == 3) {
          params0_[S1] = 1;
          params0_[S2] = 0;
          params0_[S3] = 1;
@@ -266,7 +296,7 @@ public class GaussianFit {
          mt += (imagePixels[i] & 0xffff);
       }
       double ti = mt - ((bg / n) * siProc.getHeight() * siProc.getWidth());
-      params0_[INT] = ti / (2 * Math.PI * params0_[S] * params0_[S]);
+      params0_[INT] = ti / (2 * Math.PI * s * s);
       // print("Total signal: " + ti + "Estimate: " + params0_[0]);
       // estimate center of mass
       double mx = 0.0;
@@ -290,10 +320,12 @@ public class GaussianFit {
    
    
    private class LMChecker implements VectorialConvergenceChecker {
+      
       int iteration_ = 0;
       boolean lastResult_ = false;
       @Override
-      public boolean converged(int i, VectorialPointValuePair previous, VectorialPointValuePair current) {
+      public boolean converged(int i, VectorialPointValuePair previous, 
+              VectorialPointValuePair current) {
          if (i == iteration_)
             return lastResult_;
          
@@ -301,11 +333,16 @@ public class GaussianFit {
          double[] p = previous.getPoint();
          double[] c = current.getPoint();
          
+         boolean sOK = true;
+         if (!fixWidth_) {
+            sOK = Math.abs(p[S] - c[S]) < 5;
+         }
+         
          if ( Math.abs(p[INT] - c[INT]) < 10  &&
                  Math.abs(p[BGR] - c[BGR]) < 2 &&
                  Math.abs(p[XC] - c[XC]) < 0.1 &&
                  Math.abs(p[YC] - c[YC]) < 0.1 &&
-                 Math.abs(p[S] - c[S]) < 5 ) {
+                  sOK) {
             lastResult_ = true;
             return true;
          }

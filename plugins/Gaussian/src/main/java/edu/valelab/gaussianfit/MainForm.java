@@ -11,6 +11,8 @@
 
 package edu.valelab.gaussianfit;
 
+import edu.valelab.gaussianfit.fitmanagement.GaussianTrackThread;
+import edu.valelab.gaussianfit.fitmanagement.FitAllThread;
 import com.google.common.eventbus.Subscribe;
 import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.data.GaussianInfo;
@@ -94,8 +96,6 @@ public class MainForm extends JFrame {
    private final Studio studio_;
    
    // Store values of dropdown menus:
-   private int shape_ = 1;
-   private int fitMode_ = 2;
    private FindLocalMaxima.FilterType preFilterType_ = FindLocalMaxima.FilterType.NONE;
 
    private FitAllThread ft_;
@@ -319,7 +319,7 @@ public class MainForm extends JFrame {
          }
       });
       
-      getContentPane().setLayout(new MigLayout("insets 8, fillx", "", "[13]0[13]"));
+      getContentPane().setLayout(new MigLayout("insets 8", "", "[13]0[13]"));
       
       
 /*-----------  Imaging Parameters  -----------*/
@@ -447,6 +447,15 @@ public class MainForm extends JFrame {
               new String[] { "1", "2", "3" }));
       fitDimensionsComboBox1_.setMinimumSize(dropDownSize);
       fitDimensionsComboBox1_.setMaximumSize(dropDownSizeMax);
+      fitDimensionsComboBox1_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (fitDimensionsComboBox1_.getSelectedIndex() != 0) {
+               useFixedWidthInFit_.setSelected(false);
+               fixedWidthInFit_.setEnabled(false);
+            }
+         }
+      });
       getContentPane().add(fitDimensionsComboBox1_, "wrap");
  
       jLabel = new JLabel("Fitter");      
@@ -455,7 +464,7 @@ public class MainForm extends JFrame {
       
       fitMethodComboBox1_.setFont(gFont); 
       fitMethodComboBox1_.setModel(new DefaultComboBoxModel(
-              new String[] { "Simplex", "Levenberg-Marq", "Simplex-MLE", "Levenberg-Marq-Weighted" }));
+              new String[] { "Simplex", "Levenberg-Marq", "Simplex-MLE", "LM-Weighted" }));
       fitMethodComboBox1_.setMinimumSize(dropDownSize);    
       fitMethodComboBox1_.setMaximumSize(dropDownSize);
       getContentPane().add(fitMethodComboBox1_, "gapright push, wrap");
@@ -484,6 +493,7 @@ public class MainForm extends JFrame {
          @Override
          public void actionPerformed(ActionEvent ae) {
             fixedWidthInFit_.setEnabled(useFixedWidthInFit_.isSelected());
+            fitDimensionsComboBox1_.setSelectedItem("1");
          }
       });
       getContentPane().add(indent, useFixedWidthInFit_);
@@ -650,8 +660,8 @@ public class MainForm extends JFrame {
             fitAllButton_ActionPerformed(evt);
          }
       });
-      getContentPane().add(fitAllButton_, "span, split 3");
-      fitAllButton_.setBounds(10, 530, 80, 30);
+      getContentPane().add(fitAllButton_, "span, split 3, align center");
+      //fitAllButton_.setBounds(10, 530, 80, 30);
 
 
       JButton trackButton = new JButton("Track");
@@ -715,14 +725,6 @@ public class MainForm extends JFrame {
 
     private void fitAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {
        if (ft_ == null || !ft_.isRunning()) {
-          try {
-             shape_ = NumberUtils.displayStringToInt(fitDimensionsComboBox1_.getSelectedItem());
-          } catch (ParseException ex) {
-             studio_.logs().showError(ex, "Input error that should never happen");
-             return;
-          }
-          
-          fitMode_ = fitMethodComboBox1_.getSelectedIndex();
           ft_ = new FitAllThread(studio_, preFilterType_, 
                   posTextField_.getText());
           updateValues(ft_);
@@ -1096,40 +1098,6 @@ public class MainForm extends JFrame {
          JOptionPane.showMessageDialog(null, "Error interpreting input: " + ex.getMessage());
       } catch (ParseException ex) {
          JOptionPane.showMessageDialog(null, "Error interpreting input: " + ex.getMessage());
-      }
-   }
-
-   
-   // Legacy code.  Delete
-   public void imageUpdated(ImagePlus ip) {
-      if (!WINDOWOPEN) {
-         return;
-      }
-      if (ip != ip_) {
-         pixelSizeTextField_.setBackground(Color.white);
-         emGainTextField_.setBackground(Color.white);      
-         timeIntervalTextField_.setBackground(Color.white);
-    
-         if (ip_ != null) {
-            ip_.setOverlay(null);
-            ip_.setHideOverlay(true);
-         }
-         ip_ = ip;
-      }
-         
-      if (showOverlay_.isSelected()) {
-         
-         // note that there is confusion about frames versus slices
-         int frame = 1;
-         if (ip.getNFrames() > 1)
-            frame = ip.getFrame();
-         else if (ip.getNSlices() > 1)
-            frame = ip.getSlice();
-         
-         if (lastFrame_ != frame) {
-            lastFrame_ = frame;
-            showNoiseTolerance();
-         }
       }
    }
 
