@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2015, nico
+ * Copyright (c) 2015, Regents the University of California
+ * Author: Nico Stuurman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,6 +24,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 package edu.valelab.gaussianfit.fitting;
 
 import edu.valelab.gaussianfit.utils.Besseli;
