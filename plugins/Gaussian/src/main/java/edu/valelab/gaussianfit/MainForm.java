@@ -779,119 +779,124 @@ public class MainForm extends JFrame {
    }
     
     private void formWindowClosing(java.awt.event.WindowEvent evt) {
-       try {
-                 UserProfile up = studio_.getUserProfile();
-       Class oc = MainForm.class;
-       up.setString(oc, NOISETOLERANCE, noiseToleranceTextField_.getText());
-       up.setDouble(oc, PCF, NumberUtils.displayStringToDouble(photonConversionTextField_.getText()));
-       up.setDouble(oc, GAIN, NumberUtils.displayStringToDouble(emGainTextField_.getText()));
-       up.setDouble(oc, PIXELSIZE, NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));      
-       up.setDouble(oc, TIMEINTERVALMS, NumberUtils.displayStringToDouble(timeIntervalTextField_.getText()));
-       up.setDouble(oc, ZSTEPSIZE, NumberUtils.displayStringToDouble(zStepTextField_.getText()));
-       up.setDouble(oc, BACKGROUNDLEVEL, NumberUtils.displayStringToDouble(baseLevelTextField.getText()));
-       up.setBoolean(oc, USEFILTER, filterDataCheckBoxWidth_.isSelected());
-       up.setDouble(oc, SIGMAMIN, NumberUtils.displayStringToDouble(minSigmaTextField_.getText()));
-       up.setDouble(oc, SIGMAMAX, NumberUtils.displayStringToDouble(maxSigmaTextField_.getText()));
-       up.setBoolean(oc, USENRPHOTONSFILTER, filterDataCheckBoxNrPhotons_.isSelected());
-       up.setDouble(oc, NRPHOTONSMIN, NumberUtils.displayStringToDouble(minNrPhotonsTextField_.getText()));
-       up.setDouble(oc, NRPHOTONSMAX, NumberUtils.displayStringToDouble(maxNrPhotonsTextField_.getText()));
-       up.setInt(oc, MAXITERATIONS, NumberUtils.displayStringToInt(maxIterationsTextField_.getText()));
-       up.setInt(oc, BOXSIZE, NumberUtils.displayStringToInt(boxSizeTextField.getText()));
-       up.setBoolean(oc, USEFIXEDWIDTH, useFixedWidthInFit_.isSelected());
-       up.setDouble(oc, FIXEDWIDTH, NumberUtils.displayStringToDouble(fixedWidthInFit_.getText()));
-       up.setInt(oc, PREFILTER, preFilterComboBox_.getSelectedIndex());
-       up.setInt(oc, FRAMEXPOS, getX());
-       up.setInt(oc, FRAMEYPOS, getY());
-       up.setBoolean(oc, ENDTRACKBOOL, endTrackCheckBox_.isSelected() );
-       up.setInt(oc, ENDTRACKINT, (Integer) endTrackSpinner_.getValue() );
-       up.setInt(oc, FITMODE, fitMethodComboBox1_.getSelectedIndex());
-       up.setInt(oc, FITSHAPE, fitDimensionsComboBox1_.getSelectedIndex() + 1);
-       up.setBoolean(oc, SKIPCHANNELS, skipChannelsCheckBox_.isSelected());
-       up.setString(oc, CHANNELSKIPSTRING, channelsToSkip_.getText());
-       } catch (ParseException ex) {
-          ReportingUtils.logError(ex, "Error while closing Localization Microscopy plugin");
-       }
-       
-       WINDOWOPEN = false;
-       
-       this.setVisible(false);
-    }
+      try {
+         UserProfile up = studio_.getUserProfile();
+         Class oc = MainForm.class;
+         up.setString(oc, NOISETOLERANCE, noiseToleranceTextField_.getText());
+         up.setDouble(oc, PCF, NumberUtils.displayStringToDouble(photonConversionTextField_.getText()));
+         up.setDouble(oc, GAIN, NumberUtils.displayStringToDouble(emGainTextField_.getText()));
+         up.setDouble(oc, PIXELSIZE, NumberUtils.displayStringToDouble(pixelSizeTextField_.getText()));
+         up.setDouble(oc, TIMEINTERVALMS, NumberUtils.displayStringToDouble(timeIntervalTextField_.getText()));
+         up.setDouble(oc, ZSTEPSIZE, NumberUtils.displayStringToDouble(zStepTextField_.getText()));
+         up.setDouble(oc, BACKGROUNDLEVEL, NumberUtils.displayStringToDouble(baseLevelTextField.getText()));
+         up.setBoolean(oc, USEFILTER, filterDataCheckBoxWidth_.isSelected());
+         up.setDouble(oc, SIGMAMIN, NumberUtils.displayStringToDouble(minSigmaTextField_.getText()));
+         up.setDouble(oc, SIGMAMAX, NumberUtils.displayStringToDouble(maxSigmaTextField_.getText()));
+         up.setBoolean(oc, USENRPHOTONSFILTER, filterDataCheckBoxNrPhotons_.isSelected());
+         up.setDouble(oc, NRPHOTONSMIN, NumberUtils.displayStringToDouble(minNrPhotonsTextField_.getText()));
+         up.setDouble(oc, NRPHOTONSMAX, NumberUtils.displayStringToDouble(maxNrPhotonsTextField_.getText()));
+         up.setInt(oc, MAXITERATIONS, NumberUtils.displayStringToInt(maxIterationsTextField_.getText()));
+         up.setInt(oc, BOXSIZE, NumberUtils.displayStringToInt(boxSizeTextField.getText()));
+         up.setBoolean(oc, USEFIXEDWIDTH, useFixedWidthInFit_.isSelected());
+         up.setDouble(oc, FIXEDWIDTH, NumberUtils.displayStringToDouble(fixedWidthInFit_.getText()));
+         up.setInt(oc, PREFILTER, preFilterComboBox_.getSelectedIndex());
+         up.setInt(oc, FRAMEXPOS, getX());
+         up.setInt(oc, FRAMEYPOS, getY());
+         up.setBoolean(oc, ENDTRACKBOOL, endTrackCheckBox_.isSelected());
+         up.setInt(oc, ENDTRACKINT, (Integer) endTrackSpinner_.getValue());
+         up.setInt(oc, FITMODE, fitMethodComboBox1_.getSelectedIndex());
+         up.setInt(oc, FITSHAPE, fitDimensionsComboBox1_.getSelectedIndex() + 1);
+         up.setBoolean(oc, SKIPCHANNELS, skipChannelsCheckBox_.isSelected());
+         up.setString(oc, CHANNELSKIPSTRING, channelsToSkip_.getText());
+      } catch (ParseException ex) {
+         ReportingUtils.logError(ex, "Error while closing Localization Microscopy plugin");
+      }
+
+      WINDOWOPEN = false;
+
+      this.setVisible(false);
+   }
 
     public void formWindowOpened() {
        WINDOWOPEN = true;
     }
     
    @Override
-    public void dispose() {
-       formWindowClosing(null);
-    }
+   public void dispose() {
+      formWindowClosing(null);
+   }
 
-    private void preFilterComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {
-       String item = (String) preFilterComboBox_.getSelectedItem();
-       if (item.equals("None"))
-          preFilterType_ = FindLocalMaxima.FilterType.NONE;
-       if (item.equals("Gaussian1-5"))
-          preFilterType_ = FindLocalMaxima.FilterType.GAUSSIAN1_5;
-       if (showOverlay_.isSelected())
+   private void preFilterComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {
+      String item = (String) preFilterComboBox_.getSelectedItem();
+      if (item.equals("None")) {
+         preFilterType_ = FindLocalMaxima.FilterType.NONE;
+      }
+      if (item.equals("Gaussian1-5")) {
+         preFilterType_ = FindLocalMaxima.FilterType.GAUSSIAN1_5;
+      }
+      if (showOverlay_.isSelected()) {
          showNoiseTolerance();
-    }
+      }
+   }
 
-    private void maxSigmaTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
-       if (Double.parseDouble(maxSigmaTextField_.getText()) <=
-               Double.parseDouble(minSigmaTextField_.getText() ))
-          minSigmaTextField_.setText( Double.toString
-                  (Double.parseDouble(maxSigmaTextField_.getText()) - 1));
-    }
+   private void maxSigmaTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
+      if (Double.parseDouble(maxSigmaTextField_.getText())
+              <= Double.parseDouble(minSigmaTextField_.getText())) {
+         minSigmaTextField_.setText(Double.toString(Double.parseDouble(maxSigmaTextField_.getText()) - 1));
+      }
+   }
 
-    private void minSigmaTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
-       if (Double.parseDouble(minSigmaTextField_.getText()) >=
-               Double.parseDouble(maxSigmaTextField_.getText() ))
-          maxSigmaTextField_.setText( Double.toString
-                  (Double.parseDouble(minSigmaTextField_.getText()) + 1));
-    }
+   private void minSigmaTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
+      if (Double.parseDouble(minSigmaTextField_.getText())
+              >= Double.parseDouble(maxSigmaTextField_.getText())) {
+         maxSigmaTextField_.setText(Double.toString(Double.parseDouble(minSigmaTextField_.getText()) + 1));
+      }
+   }
 
-    private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {
-       if (ft_ != null && ft_.isRunning())
-          ft_.stop();
-       aStop_.set(true);   
-    }
+   private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {
+      if (ft_ != null && ft_.isRunning()) {
+         ft_.stop();
+      }
+      aStop_.set(true);
+   }
 
-    private void minNrPhotonsTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
-        if (Double.parseDouble(minNrPhotonsTextField_.getText()) >=
-               Double.parseDouble(maxNrPhotonsTextField_.getText() ))
-          minNrPhotonsTextField_.setText( Double.toString
-                  (Double.parseDouble(maxNrPhotonsTextField_.getText()) - 1));
-    }
+   private void minNrPhotonsTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
+      if (Double.parseDouble(minNrPhotonsTextField_.getText())
+              >= Double.parseDouble(maxNrPhotonsTextField_.getText())) {
+         minNrPhotonsTextField_.setText(Double.toString(Double.parseDouble(maxNrPhotonsTextField_.getText()) - 1));
+      }
+   }
 
-    private void maxNrPhotonsTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
-        if (Double.parseDouble(maxNrPhotonsTextField_.getText()) <=
-           Double.parseDouble(minNrPhotonsTextField_.getText() ))
-        maxNrPhotonsTextField_.setText( Double.toString
-           (Double.parseDouble(minNrPhotonsTextField_.getText()) + 1));
-    }
+   private void maxNrPhotonsTextFieldActionPerformed(java.awt.event.ActionEvent evt) {
+      if (Double.parseDouble(maxNrPhotonsTextField_.getText())
+              <= Double.parseDouble(minNrPhotonsTextField_.getText())) {
+         maxNrPhotonsTextField_.setText(Double.toString(Double.parseDouble(minNrPhotonsTextField_.getText()) + 1));
+      }
+   }
 
-    private void showButtonActionPerformed(java.awt.event.ActionEvent evt) {
-       DataCollectionForm dcForm = DataCollectionForm.getInstance();
-       dcForm.setVisible(true);
-    }
+   private void showButtonActionPerformed(java.awt.event.ActionEvent evt) {
+      DataCollectionForm dcForm = DataCollectionForm.getInstance();
+      dcForm.setVisible(true);
+   }
 
 
    private boolean showNoiseTolerance() {
-       ImagePlus siPlus;
-       try {
-          siPlus = IJ.getImage();
-       } catch (Exception e) {
-          return false;
-       }
-       if (ip_ != siPlus)
-          ip_ = siPlus;
+      ImagePlus siPlus;
+      try {
+         siPlus = IJ.getImage();
+      } catch (Exception e) {
+         return false;
+      }
+      if (ip_ != siPlus) {
+         ip_ = siPlus;
+      }
 
-       // Roi originalRoi = siPlus.getRoi();
-       // Find maximum in Roi, might not be needed....
+      // Roi originalRoi = siPlus.getRoi();
+      // Find maximum in Roi, might not be needed....
       try {
          int val = Integer.parseInt(noiseToleranceTextField_.getText());
          int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
-         Polygon pol = FindLocalMaxima.FindMax(siPlus, 2* halfSize, val, preFilterType_);
+         Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 * halfSize, val, preFilterType_);
          Overlay ov = new Overlay();
          for (int i = 0; i < pol.npoints; i++) {
             int x = pol.xpoints[i];
@@ -907,11 +912,10 @@ public class MainForm extends JFrame {
       return true;
    }
 
-
    private void readParmsButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       // should not have made this a push button...
       readParmsButton_.setSelected(false);
-      
+
       DisplayWindow currentWindow = studio_.displays().getCurrentWindow();
       if (currentWindow == null) {
          return;
@@ -926,17 +930,16 @@ public class MainForm extends JFrame {
                  summaryMetadata.getWaitInterval()));
       }
 
-      
       Image img = dataStore.getAnyImage();
       Metadata imgMetadata = img.getMetadata();
       double pixelSize = imgMetadata.getPixelSizeUm();
       pixelSizeTextField_.setText(NumberUtils.doubleToDisplayString(pixelSize * 1000.0));
-         
+
       String camera = imgMetadata.getCamera();
       String key = camera + "-Output_Amplifier";
       double emGain = 1.0;
       if (imgMetadata.getScopeData().containsKey(key)) {
-         if (! imgMetadata.getScopeData().getString(key).equals("Conventional")) {
+         if (!imgMetadata.getScopeData().getString(key).equals("Conventional")) {
             key = camera + "-EMGain";
             String gain = imgMetadata.getScopeData().getString(key);
             try {
@@ -947,8 +950,7 @@ public class MainForm extends JFrame {
          }
       }
       emGainTextField_.setText(NumberUtils.doubleToDisplayString(emGain));
-      
-            
+
       int nrFrames = dataStore.getAxisLength(Coords.TIME);
       Image img0 = dataStore.getImage(img.getCoords().copy().channel(0).time(0).build());
       Image imgLast = dataStore.getImage(img.getCoords().copy().channel(0).time(nrFrames - 1).build());
@@ -956,14 +958,14 @@ public class MainForm extends JFrame {
       double endTimeMs = imgLast.getMetadata().getElapsedTimeMs();
       double msPerFrame = (endTimeMs - startTimeMs) / nrFrames;
       timeIntervalTextField_.setText(NumberUtils.doubleToDisplayString(msPerFrame));
-     
+
    }
 
    @Subscribe
-   public void OnImageChanged (PixelsSetEvent pe) {
+   public void OnImageChanged(PixelsSetEvent pe) {
       showNoiseTolerance();
    }
-   
+
    private void showOverlay_ActionPerformed(java.awt.event.ActionEvent evt) {
       DisplayWindow currentWindow = studio_.displays().getCurrentWindow();
       if (showOverlay_.isSelected()) {
@@ -987,7 +989,7 @@ public class MainForm extends JFrame {
          showOverlay_.setText("show");
       }
    }
-   
+
    private void mTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
 
       // Poor way of tracking multiple spots by running sequential tracks
@@ -1005,7 +1007,7 @@ public class MainForm extends JFrame {
       Runnable mTracker = new Runnable() {
          @Override
          public void run() {
-            aStop_ .set(false);
+            aStop_.set(false);
             int val = Integer.parseInt(noiseToleranceTextField_.getText());
             int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
 
@@ -1024,7 +1026,7 @@ public class MainForm extends JFrame {
                      int x = pol.xpoints[i];
                      int y = pol.ypoints[i];
                      siPlus.setRoi(x - 2 * halfSize, y - 2 * halfSize, 4 * halfSize, 4 * halfSize);
-                     GaussianTrackThread tT = new GaussianTrackThread(siPlus, 
+                     GaussianTrackThread tT = new GaussianTrackThread(siPlus,
                              FindLocalMaxima.FilterType.NONE);
                      updateValues(tT);
                      tT.trackGaussians(true);
@@ -1052,33 +1054,33 @@ public class MainForm extends JFrame {
    private void allPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       ImagePlus ip;
       try {
-          ip = IJ.getImage();
+         ip = IJ.getImage();
       } catch (Exception e) {
-          return;
+         return;
       }
       DisplayWindow dw = studio_.displays().getCurrentWindow();
 
       int nrPos = 1;
-      if ( ! (dw == null || ip != dw.getImagePlus())) {
+      if (!(dw == null || ip != dw.getImagePlus())) {
          nrPos = dw.getDatastore().getAxisLength(Coords.STAGE_POSITION);
       }
       if (nrPos > 1) {
          posTextField_.setText("1-" + nrPos);
       }
-      
+
    }
 
    private void currentPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       ImagePlus ip;
       try {
-          ip = IJ.getImage();
+         ip = IJ.getImage();
       } catch (Exception e) {
-          return;
+         return;
       }
       DisplayWindow dw = studio_.displays().getCurrentWindow();
 
       int pos = 1;
-      if ( ! (dw == null || ip != dw.getImagePlus())) {
+      if (!(dw == null || ip != dw.getImagePlus())) {
          pos = dw.getDisplayedImages().get(0).getCoords().getStagePosition() + 1;
       }
       posTextField_.setText("" + pos);
@@ -1100,7 +1102,7 @@ public class MainForm extends JFrame {
          tT.setNrPhotonsMin(NumberUtils.displayStringToDouble(minNrPhotonsTextField_.getText()));
          tT.setNrPhotonsMax(NumberUtils.displayStringToDouble(maxNrPhotonsTextField_.getText()));
          tT.setMaxIterations(Integer.parseInt(maxIterationsTextField_.getText()));
-         tT.setHalfBoxSize( (Integer.parseInt(boxSizeTextField.getText())) / 2);
+         tT.setHalfBoxSize((Integer.parseInt(boxSizeTextField.getText())) / 2);
          tT.setShape(fitDimensionsComboBox1_.getSelectedIndex() + 1);
          tT.setFitMode(fitMethodComboBox1_.getSelectedIndex() + 1);
          tT.setUseFixedWidth(useFixedWidthInFit_.isSelected());
