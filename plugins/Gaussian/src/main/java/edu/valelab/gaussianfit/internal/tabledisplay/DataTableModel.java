@@ -44,11 +44,6 @@ public class DataTableModel extends AbstractTableModel {
    public RowData getRow(int rowNr) {
       return rowData_.get(rowNr);
    }
-
-   @Deprecated
-   public ArrayList<RowData> getRowData() {
-      return rowData_;
-   }
    
    public void removeRow(int rowNr) {
       rowData_.remove(rowNr);

@@ -250,17 +250,18 @@ public class DataCollectionForm extends JFrame {
    public enum Coordinates {NM, PIXELS};
    public enum PlotMode {X, Y, INT};
    
-   /**
-    * 
+   
+    /**
+    * Get spotdata for the given row
+    * @param rowNr rowNr (unsorted) for which to return the spotdata
     * @return 
     */
-   @Deprecated
-   public ArrayList<RowData> getRowData() {
-      return mainTableModel_.getRowData();
-   }
-   
    public RowData getSpotData(int rowNr) {
       return mainTableModel_.getRow(rowNr);
+   }
+   
+   public int getNumberOfSpotData() {
+      return mainTableModel_.getRowCount();
    }
    
 

@@ -101,8 +101,6 @@ public class MainForm extends JFrame {
    private FitAllThread ft_;
    
    public AtomicBoolean aStop_ = new AtomicBoolean(false);
-
-   private int lastFrame_ = -1;
    
    // to keep track of front most window
    ImagePlus ip_ = null;

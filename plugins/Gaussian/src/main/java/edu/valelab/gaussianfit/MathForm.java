@@ -12,7 +12,6 @@
 package edu.valelab.gaussianfit;
 
 import edu.valelab.gaussianfit.data.RowData;
-import java.util.ArrayList;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -188,31 +187,31 @@ public class MathForm extends JFrame {
          @Override
          public void run() {
             DataCollectionForm df = DataCollectionForm.getInstance();
-            ArrayList<RowData> rowData = df.getRowData();
+            //ArrayList<RowData> rowData = df.getRowData();
             RowData rd1 = null;
             RowData rd2 = null;
             
             if (!useSelectedRows) {
-               for (int i = 0; i < rowData.size(); i++) {
-                  if (id1 == rowData.get(i).ID_) {
-                     rd1 = rowData.get(i);
+               for (int i = 0; i < df.getNumberOfSpotData(); i++) {
+                  if (id1 == df.getSpotData(i).ID_) {
+                     rd1 = df.getSpotData(i);
                   }
-                  if (id2 == rowData.get(i).ID_) {
-                     rd2 = rowData.get(i);
+                  if (id2 == df.getSpotData(i).ID_) {
+                     rd2 = df.getSpotData(i);
                   }
                }
                df.doMathOnRows(rd1, rd2, 0);
             } else {
-               for (int i = 0; i < rowData.size(); i++) {
-                  if (id2 == rowData.get(i).ID_) {
-                     rd2 = rowData.get(i);
+               for (int i = 0; i < df.getNumberOfSpotData(); i++) {
+                  if (id2 == df.getSpotData(i).ID_) {
+                     rd2 = df.getSpotData(i);
                   }
                }
             }
                int rows[] = df.getResultsTable().getSelectedRows();
                if (rows.length > 0) {
                   for (int i = 0; i < rows.length; i++) {
-                     df.doMathOnRows(rowData.get(rows[i]), rd2, 0);
+                     df.doMathOnRows(df.getSpotData(rows[i]), rd2, 0);
                   }
                }
       
