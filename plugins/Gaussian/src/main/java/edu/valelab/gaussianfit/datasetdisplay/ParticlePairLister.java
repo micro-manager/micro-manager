@@ -1,3 +1,30 @@
+/*
+ * Copyright (c) 2015, Regents the University of California
+ * Author: Nico Stuurman
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package edu.valelab.gaussianfit.datasetdisplay;
 
 
@@ -82,8 +109,8 @@ public class ParticlePairLister {
          @Override
          public void run() {
 
-            ArrayList<RowData> rowData = DataCollectionForm.getInstance().getRowData();
-
+            final DataCollectionForm dc = DataCollectionForm.getInstance();
+            
             // Show Particle List as linked Results Table
             ResultsTable rt = new ResultsTable();
             rt.reset();
@@ -102,14 +129,14 @@ public class ParticlePairLister {
 
                // First go through all frames to find all pairs
                int nrSpotPairsInFrame1 = 0;
-               for (int frame = 1; frame <= rowData.get(row).nrFrames_; frame++) {
-                  ij.IJ.showProgress(frame, rowData.get(row).nrFrames_);
+               for (int frame = 1; frame <= dc.getSpotData(row).nrFrames_; frame++) {
+                  ij.IJ.showProgress(frame, dc.getSpotData(row).nrFrames_);
                   spotPairsByFrame.add(new ArrayList<GsSpotPair>());
 
                   // Get points from both channels in first frame as ArrayLists        
                   ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-                  for (SpotData gs : rowData.get(row).spotList_) {
+                  for (SpotData gs : dc.getSpotData(row).spotList_) {
                      if (gs.getFrame() == frame) {
                         if (gs.getChannel() == 1) {
                            gsCh1.add(gs);
@@ -147,7 +174,7 @@ public class ParticlePairLister {
 
                // prepare NearestPoint objects to speed up finding closest pair 
                ArrayList<NearestPointGsSpotPair> npsp = new ArrayList<NearestPointGsSpotPair>();
-               for (int frame = 1; frame <= rowData.get(row).nrFrames_; frame++) {
+               for (int frame = 1; frame <= dc.getSpotData(row).nrFrames_; frame++) {
                   npsp.add(new NearestPointGsSpotPair(
                           spotPairsByFrame.get(frame - 1), maxDistanceNm));
                }
@@ -164,7 +191,7 @@ public class ParticlePairLister {
                      ArrayList<GsSpotPair> track = new ArrayList<GsSpotPair>();
                      track.add(spotPair);
                      int frame = 2;
-                     while (frame <= rowData.get(row).nrFrames_) {
+                     while (frame <= dc.getSpotData(row).nrFrames_) {
 
                         GsSpotPair newSpotPair = npsp.get(frame - 1).findKDWSE(
                                 new Point2D.Double(spotPair.getfp().getX(), spotPair.getfp().getY()));
@@ -205,7 +232,7 @@ public class ParticlePairLister {
                      if (spot.getGSD().hasKey("stdDev")) {
                         double stdDev = spot.getGSD().getValue("stdDev");
                         rt.addValue("stdDev1", stdDev);
-                        SpotData spot2 = rowData.get(row).get(
+                        SpotData spot2 = dc.getSpotData(row).get(
                                 spot.getGSD().getFrame(),
                                 2, spot.getsp().x, spot.getsp().y);
                         if (spot2 != null && spot2.hasKey("stdDev")) {
@@ -229,10 +256,10 @@ public class ParticlePairLister {
                
                TextPanel tp;
                TextWindow win;
-               String rtName = rowData.get(row).name_ + " Particle List";
+               String rtName = dc.getSpotData(row).name_ + " Particle List";
                if (showTrack) {
                   rt.show(rtName);
-                  ImagePlus siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
+                  ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
                   Frame frame = WindowManager.getFrame(rtName);
                   if (frame != null && frame instanceof TextWindow && siPlus != null) {
                      win = (TextWindow) frame;
@@ -247,8 +274,8 @@ public class ParticlePairLister {
                      }
 
                      ResultsTableListener myk = new ResultsTableListener(
-                             MMStudio.getInstance(), rowData.get(row).dw_, siPlus,
-                             rt, win, rowData.get(row).halfSize_);
+                             MMStudio.getInstance(), dc.getSpotData(row).dw_, siPlus,
+                             rt, win, dc.getSpotData(row).halfSize_);
                      tp.addKeyListener(myk);
                      tp.addMouseListener(myk);
                      frame.toFront();
@@ -258,7 +285,7 @@ public class ParticlePairLister {
                if (saveFile) {
                   try {
                      String fileName = filePath + File.separator
-                             + rowData.get(row).name_ + "_PairTracks.cvs";
+                             + dc.getSpotData(row).name_ + "_PairTracks.cvs";
                      rt.saveAs(fileName);
                      ij.IJ.log("Saved file: " + fileName);
                   } catch (IOException ex) {
@@ -266,7 +293,7 @@ public class ParticlePairLister {
                   }
                }
 
-               ImagePlus siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
+               ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
                if (showOverlay) {
                   if (siPlus != null && siPlus.getOverlay() != null) {
                      siPlus.getOverlay().clear();
@@ -294,7 +321,7 @@ public class ParticlePairLister {
                   }
                   GsSpotPair pair = track.get(0);
                   rt2.incrementCounter();
-                  rt2.addValue("Row ID", rowData.get(row).ID_);
+                  rt2.addValue("Row ID", dc.getSpotData(row).ID_);
                   rt2.addValue("Spot ID", spotId);
                   rt2.addValue(Terms.FRAME, pair.getGSD().getFrame());
                   rt2.addValue(Terms.SLICE, pair.getGSD().getSlice());
@@ -328,7 +355,7 @@ public class ParticlePairLister {
                   if (showOverlay) {
                      /* draw arrows in overlay */
                      double mag = 100.0;  // factor that sets magnification of the arrow
-                     double factor = mag * 1 / rowData.get(row).pixelSizeNm_;  // factor relating mad and pixelSize
+                     double factor = mag * 1 / dc.getSpotData(row).pixelSizeNm_;  // factor relating mad and pixelSize
                      int xStart = track.get(0).getGSD().getX();
                      int yStart = track.get(0).getGSD().getY();
 
@@ -353,9 +380,9 @@ public class ParticlePairLister {
                }
 
                if (showSummary) {
-                  rtName = rowData.get(row).name_ + " Particle Summary";
+                  rtName = dc.getSpotData(row).name_ + " Particle Summary";
                   rt2.show(rtName);
-                  siPlus = ij.WindowManager.getImage(rowData.get(row).title_);
+                  siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
                   Frame frame = WindowManager.getFrame(rtName);
                   if (frame != null && frame instanceof TextWindow && siPlus != null) {
                      win = (TextWindow) frame;
@@ -370,8 +397,8 @@ public class ParticlePairLister {
                      }
 
                      ResultsTableListener myk = new ResultsTableListener(
-                             MMStudio.getInstance(), rowData.get(row).dw_, siPlus,
-                             rt2, win, rowData.get(row).halfSize_);
+                             MMStudio.getInstance(), dc.getSpotData(row).dw_, siPlus,
+                             rt2, win, dc.getSpotData(row).halfSize_);
                      tp.addKeyListener(myk);
                      tp.addMouseListener(myk);
                      frame.toFront();
@@ -383,7 +410,7 @@ public class ParticlePairLister {
                   for (int j=0; j < avgDistances.size(); j++) {
                      d[j] = avgDistances.get(j);
                   }
-                  P2DFitter p2df = new P2DFitter(d);
+                  P2DFitter p2df = new P2DFitter(d, -1.0);
                   double distMean = ListUtils.listAvg(avgDistances);
                   double distStd = ListUtils.listStdDev(avgDistances, distMean);
                   p2df.setStartParams(distMean, distStd);
@@ -404,7 +431,7 @@ public class ParticlePairLister {
                           NumberUtils.doubleToDisplayString(distStd) + " nm"); 
                   
                   // plot function and histogram
-                  GaussianUtils.plotP2D(rowData.get(row).title_ + " distances", 
+                  GaussianUtils.plotP2D(dc.getSpotData(row).title_ + " distances", 
                           d, maxDistanceNm, p2dfResult);
                }
 

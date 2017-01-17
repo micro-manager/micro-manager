@@ -31,7 +31,6 @@ import org.apache.commons.math3.analysis.function.Exp;
 import org.apache.commons.math3.optim.InitialGuess;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.PointValuePair;
-import org.apache.commons.math3.optim.SimpleBounds;
 import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.NelderMeadSimplex;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.SimplexOptimizer;
@@ -41,9 +40,18 @@ import org.apache.commons.math3.optim.nonlinear.scalar.MultivariateFunctionMappi
 
 class P2DFunc implements MultivariateFunction {
    private final double[] points_;
+   private final double sigma_;
+   private final boolean fitSigma_;
    
-   public P2DFunc(double[] points) {
+   /**
+    * 
+    * @param points array with measurements
+    * @param sigma  Fixed sigma, or negative number if it should be estimated
+    */
+   public P2DFunc(double[] points, final double sigma) {
       points_ = points;
+      sigma_ = sigma;
+      fitSigma_ = sigma_ <= 0.0;
    }
    
    /**
@@ -55,8 +63,12 @@ class P2DFunc implements MultivariateFunction {
    @Override
    public double value(double[] doubles) {
       double sum = 0;
+      double sigma = sigma_;
+      if (fitSigma_) {
+         sigma = doubles[1];
+      }
       for (double point : points_) {
-         double predictedValue = p2d(point, doubles[0], doubles[1]);
+         double predictedValue = p2d(point, doubles[0], sigma);
          sum += Math.log(predictedValue);
       }
       return -sum;
@@ -93,8 +105,16 @@ public class P2DFitter {
    private final double[] points_;
    private double muGuess_ = 0.0;
    private double sigmaGuess_ = 10.0;
-   public P2DFitter(double[] points) {
+   private final double sigma_;
+   
+   /**
+    * 
+    * @param points array with data points to be fitted
+    * @param sigma set to <= 0.0 if sigma should be fitted, otherwise its fixed value
+    */
+   public P2DFitter(double[] points, final double sigma) {
       points_ = points;
+      sigma_ = sigma;
    }
    
    /**
@@ -109,7 +129,8 @@ public class P2DFitter {
       
    public double[] solve() {
       SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
-      P2DFunc myP2DFunc = new P2DFunc(points_);
+      P2DFunc myP2DFunc = new P2DFunc(points_, sigma_);
+      
       double[] lowerBounds = {0.0, 0.0};
       double[] upperBounds = {50.0, 50.0};
       MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
