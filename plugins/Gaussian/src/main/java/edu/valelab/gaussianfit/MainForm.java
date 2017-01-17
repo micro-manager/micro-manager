@@ -797,6 +797,8 @@ public class MainForm extends JFrame {
        up.setDouble(oc, NRPHOTONSMAX, NumberUtils.displayStringToDouble(maxNrPhotonsTextField_.getText()));
        up.setInt(oc, MAXITERATIONS, NumberUtils.displayStringToInt(maxIterationsTextField_.getText()));
        up.setInt(oc, BOXSIZE, NumberUtils.displayStringToInt(boxSizeTextField.getText()));
+       up.setBoolean(oc, USEFIXEDWIDTH, useFixedWidthInFit_.isSelected());
+       up.setDouble(oc, FIXEDWIDTH, NumberUtils.displayStringToDouble(fixedWidthInFit_.getText()));
        up.setInt(oc, PREFILTER, preFilterComboBox_.getSelectedIndex());
        up.setInt(oc, FRAMEXPOS, getX());
        up.setInt(oc, FRAMEYPOS, getY());
