@@ -69,6 +69,7 @@ public class MD {
    private static final String IJ_TYPE = "IJType";
    private static final String CORE_XYSTAGE = "Core-XYStage";
    private static final String CORE_FOCUS = "Core-Focus";
+   private static final String FIXED_SURFACE_POINTS = "DistanceFromFixedSurfacePoints";
    
    
    
@@ -569,6 +570,15 @@ public class MD {
       }
    }
 
+     public static void setSurfacePoints(JSONObject tags, JSONArray arr) {
+      try {
+         tags.put(FIXED_SURFACE_POINTS, arr);
+      } catch (JSONException ex) {
+         Log.log("Couldnt add fixed surface interpolation points");
+         throw new RuntimeException();
+      }
+   }
+   
    public static double getPixelSizeUm(JSONObject map)  {
       try {
          return map.getDouble(PIX_SIZE);

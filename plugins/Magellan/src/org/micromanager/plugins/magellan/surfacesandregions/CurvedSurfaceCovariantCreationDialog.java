@@ -82,7 +82,7 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
             }
         });
 
-        powerSpinner_.setModel(new javax.swing.SpinnerNumberModel(0.1d, 1.0E-5d, 10.0d, 0.01d));
+        powerSpinner_.setModel(new javax.swing.SpinnerNumberModel(0, 0, 255, 1));
 
         okButton_.setText("Ok");
         okButton_.setEnabled(false);
@@ -106,6 +106,12 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(cancelButton_)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(okButton_)
+                        .addGap(148, 148, 148))
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
@@ -115,19 +121,12 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel3)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(radiusCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addContainerGap(247, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(powerSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(cancelButton_)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(okButton_)
-                        .addGap(148, 148, 148))))
+                                .addComponent(radiusCombo_, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(powerSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(174, Short.MAX_VALUE))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -194,8 +193,8 @@ public class CurvedSurfaceCovariantCreationDialog extends javax.swing.JFrame {
       return Integer.parseInt(mfpCombo_.getSelectedItem().toString());
    }
    
-   public double getBaseVoltage() {
-      return (Double) powerSpinner_.getValue();
+   public int getBaseVoltage() {
+      return (Integer) powerSpinner_.getValue();
    }
    
    public void waitForCreationOrCancel() {

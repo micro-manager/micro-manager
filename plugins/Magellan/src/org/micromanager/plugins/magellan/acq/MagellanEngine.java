@@ -507,6 +507,13 @@ public class MagellanEngine {
          MD.setGridCol(tags, gridCol);
          MD.setStageX(tags, event.xyPosition_.getCenter().x);
          MD.setStageY(tags, event.xyPosition_.getCenter().y);
+         //add data about surface
+         //right now this only works for fixed distance from the surface
+         if ((event.acquisition_ instanceof FixedAreaAcquisition) && 
+                 ((FixedAreaAcquisition)event.acquisition_).getSpaceMode() == FixedAreaAcquisitionSettings.SURFACE_FIXED_DISTANCE_Z_STACK ) {
+             //add metadata about surface
+             MD.setSurfacePoints(tags, ((FixedAreaAcquisition) event.acquisition_ ).getSurfacePoints());
+         }  
       } catch (Exception e) {
          Log.log("Problem adding image metadata");
          throw new RuntimeException();

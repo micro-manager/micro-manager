@@ -484,6 +484,7 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
                   if (!settings_.channels_.get(channelIndex).uniqueEvent_ || !settings_.channels_.get(channelIndex).use_) {
                      continue;
                   }
+                  
                   AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
                           positionIndex, zPos, position, settings_.covariantPairings_);
                   if (eventGenerator_.isShutdown()) {
@@ -669,6 +670,19 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       }
    }
 
+   public JSONArray getSurfacePoints() {
+       Point3d[] points = settings_.fixedSurface_.getPoints();
+       JSONArray pointArray = new JSONArray();
+       for (Point3d p : points) {
+           pointArray.put(p.x+ "_" + p.y + "_" + p.z);
+       }
+       return pointArray;
+   }
+   
+   public int getSpaceMode() {
+       return settings_.spaceMode_;
+   }
+   
    @Override
    public double getZCoordinateOfDisplaySlice(int displaySliceIndex) {
       displaySliceIndex += minSliceIndex_;

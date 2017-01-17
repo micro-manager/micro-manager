@@ -28,6 +28,7 @@ import org.micromanager.plugins.magellan.misc.Log;
 import org.micromanager.plugins.magellan.misc.NumberUtils;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
+import org.micromanager.plugins.magellan.main.Magellan;
 
 /**
  * Class that encapsulates and independent and a dependent covariant, and a set of covaried values between the two
@@ -72,10 +73,19 @@ public class CovariantPairing {
          double[] powers = ((SurfaceData)independent_).curvedSurfacePower(event);
          byte[] eomSettings = new byte[powers.length];
          for (int i =0; i < powers.length; i++) {
-            eomSettings[i] = (byte) getInterpolatedNumericalValue(new CovariantValue(powers[i]));
+            eomSettings[i] = (byte) (0xff& ((int)getInterpolatedNumericalValue(new CovariantValue(powers[i]))));
          }
-         //TODO: send to eom 
-         
+         String name;
+         if (dependent_.getName().startsWith("TeensySLM1")) {
+             name = "TeensySLM1";
+         } else if (dependent_.getName().startsWith("TeensySLM2")) {
+             name = "TeensySLM2";
+         } else {
+             Log.log("Unrecognized SLM name");
+             throw new Exception();
+         }
+         Magellan.getCore().setSLMImage(name, eomSettings);
+         Magellan.getCore().displaySLMImage(name);         
          return;
       }
       

@@ -41,7 +41,7 @@ public class SurfaceData implements Covariant {
     public static String PREFIX = "Surface data: ";
     //number of test points per dimension for finding minimum distance to surface
     private static final int NUM_XY_TEST_POINTS = 9;
-    private static final int FOV_LASER_MODULATION_RESOLUTION = 8;
+    private static final int FOV_LASER_MODULATION_RESOLUTION = 16;
     //number of test points per dimension for finding minimum distance to surface within angle
 //   private static final int NUM_XY_TEST_POINTS_ANGLE = 5;
     public static String SPACER = "--";
@@ -53,7 +53,7 @@ public class SurfaceData implements Covariant {
     private SurfaceInterpolator surface_;
     //used for curved surface calculations
     private int radiusOfCurvature_, meanFreePath_;
-    private double baseVoltage_;
+    private int baseVoltage_;
     private double basePower_;
 
     public SurfaceData(SurfaceInterpolator surface, String type) throws Exception {
@@ -91,8 +91,8 @@ public class SurfaceData implements Covariant {
     }
 
     public static String[] enumerateDataTypes() {
-        return new String[]{DISTANCE_BELOW_SURFACE_CENTER, DISTANCE_BELOW_SURFACE_MINIMUM,
-            DISTANCE_BELOW_SURFACE_MAXIMUM, CURVED_SURFACE_RELATIVE_POWER};
+        return new String[]{CURVED_SURFACE_RELATIVE_POWER, DISTANCE_BELOW_SURFACE_CENTER, DISTANCE_BELOW_SURFACE_MINIMUM,
+            DISTANCE_BELOW_SURFACE_MAXIMUM};
     }
 
     @Override
@@ -185,11 +185,11 @@ public class SurfaceData implements Covariant {
         }
 
         double[] relativePower = new double[FOV_LASER_MODULATION_RESOLUTION * FOV_LASER_MODULATION_RESOLUTION];
-        for (int xInd = 0; xInd <= FOV_LASER_MODULATION_RESOLUTION; xInd++) {
-            for (int yInd = 0; yInd <= FOV_LASER_MODULATION_RESOLUTION; yInd++) {
+        for (int xInd = 0; xInd < FOV_LASER_MODULATION_RESOLUTION; xInd++) {
+            for (int yInd = 0; yInd < FOV_LASER_MODULATION_RESOLUTION; yInd++) {
 
-                double x = (0.5 + pixelSpan.x) / (double) FOV_LASER_MODULATION_RESOLUTION;
-                double y = (0.5 + pixelSpan.y) / (double) FOV_LASER_MODULATION_RESOLUTION;
+                double x = ((0.5 + pixelSpan.x) / (double) FOV_LASER_MODULATION_RESOLUTION) * xInd;
+                double y = ((0.5 + pixelSpan.y) / (double) FOV_LASER_MODULATION_RESOLUTION) * yInd;
                 //convert these abritray pixel coordinates back to stage coordinates
                 double[] transformMaxtrix = new double[6];
                 transform.getMatrix(transformMaxtrix);
