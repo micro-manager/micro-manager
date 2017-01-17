@@ -3,8 +3,8 @@
  * a datasets with spot posiions
  *
  * Author: Nico Stuurman 2016
- * Copyright: Regents of the University of California
- * License: 2-clause BSD:
+
+
 Copyright (c) 2016, Regents of the University of California
 All rights reserved.
 
@@ -85,7 +85,7 @@ public class ExtractTracksDialog  {
       jp.add(minFramesSp, w + ", wrap");
       
       JLabel label2 = new JLabel("Max # missing Frames:");
-      label.setFont(gFont);
+      label2.setFont(gFont);
       jp.add(label2);
       final JSpinner maxMissingSp = new JSpinner();
       maxMissingSp.setFont(gFont);
