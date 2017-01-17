@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Regents of the University of California, San Francisco
+ * Copyright (c) 2015-2017, Regents of the University of California, San Francisco
  * Author: Nico Stuurman, nico.stuurman@ucsf.edu
 
  * All rights reserved.

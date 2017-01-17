@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Regents the University of California
+ * Copyright (c) 2015-2017, Regents the University of California
  * Author: Nico Stuurman
  * All rights reserved.
  *
