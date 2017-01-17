@@ -47,7 +47,6 @@ public class DataTableModel extends AbstractTableModel {
    
    public void removeRow(int rowNr) {
       rowData_.remove(rowNr);
-      // TODO: this may not work with sorted tables! 
       super.fireTableRowsDeleted(rowNr, rowNr);
    }
    
