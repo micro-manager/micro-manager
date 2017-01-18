@@ -177,40 +177,28 @@ public class DataCollectionForm extends JFrame {
    private static Studio studio_;
    
    // GUI elements
-   private JLabel IntLabel2;
-   private JLabel SigmaLabel2;
-   private JLabel SigmaLabel3;
-   private JButton c2CorrectButton;
-   private JButton c2StandardButton;
-   private JCheckBox filterIntensityCheckBox_;
-   private JCheckBox filterSigmaCheckBox_;
-   private JTextField intensityMax_;
-   private JTextField intensityMin_;
-   private JLabel jLabel1;
-   private JLabel jLabel2;
-   private JLabel jLabel3;
+
    private JPanel jPanel1;
    private JPanel jPanel2;
    private JScrollPane jScrollPane1_;
-   private JSeparator jSeparator2;
-   private JSeparator jSeparator3;
-   private JSeparator jSeparator4;
    private DataTable mainTable_;
-   private JButton linkButton_;
-   private JCheckBox logLogCheckBox_;
-   private JComboBox method2CBox_;
+   
+   private JComboBox saveFormatBox_;
    private JTextField pairsMaxDistanceField_;
+   private JComboBox method2CBox_;
+   private JLabel reference2CName_;
+   private JCheckBox logLogCheckBox_;
    private JComboBox plotComboBox_;
    private JCheckBox powerSpectrumCheckBox_;
-   private JLabel referenceName_;
-   private JButton renderButton_;
-   private JComboBox saveFormatBox_;
-   private JTextField sigmaMax_;
-   private JTextField sigmaMin_;
-   private JButton unjitterButton_;
    private JComboBox visualizationMagnification_;
    private JComboBox visualizationModel_;
    private JLabel zCalibrationLabel_;
+   private JCheckBox filterIntensityCheckBox_;
+   private JTextField intensityMax_;
+   private JTextField intensityMin_;
+   private JCheckBox filterSigmaCheckBox_;
+   private JTextField sigmaMax_;
+   private JTextField sigmaMin_;
       
    
    /**
@@ -299,7 +287,7 @@ public class DataCollectionForm extends JFrame {
       mainTableModel_ = new DataTableModel();
       
       initComponents();
-      referenceName_.setText("  ");
+      reference2CName_.setText("  ");
       plotComboBox_.setModel(new DefaultComboBoxModel(plotModes_));
       visualizationModel_.setModel(new DefaultComboBoxModel(renderModes_));
       visualizationMagnification_.setModel(new DefaultComboBoxModel(renderSizes_));
@@ -475,8 +463,6 @@ public class DataCollectionForm extends JFrame {
 
       jPanel1 = new JPanel();
       intensityMax_ = new JTextField();
-      IntLabel2 = new JLabel();
-      SigmaLabel3 = new JLabel();
       sigmaMax_ = new JTextField();
       visualizationMagnification_ = new JComboBox();
       visualizationModel_ = new JComboBox();
@@ -484,26 +470,14 @@ public class DataCollectionForm extends JFrame {
       intensityMin_ = new JTextField();
       filterIntensityCheckBox_ = new JCheckBox();
       filterSigmaCheckBox_ = new JCheckBox();
-      jLabel1 = new JLabel();
-      renderButton_ = new JButton();
       zCalibrationLabel_ = new JLabel();
-      unjitterButton_ = new JButton();
-      linkButton_ = new JButton();
-      jSeparator4 = new JSeparator();
       logLogCheckBox_ = new JCheckBox();
       plotComboBox_ = new JComboBox();
       powerSpectrumCheckBox_ = new JCheckBox();
-      jSeparator2 = new JSeparator();
-      SigmaLabel2 = new JLabel();
       pairsMaxDistanceField_ = new JTextField();
-      referenceName_ = new JLabel();
-      c2CorrectButton = new JButton();
+      reference2CName_ = new JLabel();
       method2CBox_ = new JComboBox();
-      c2StandardButton = new JButton();
-      jSeparator3 = new JSeparator();
       saveFormatBox_ = new JComboBox();
-      jLabel2 = new JLabel();
-      jLabel3 = new JLabel();
       jPanel2 = new JPanel();
       jScrollPane1_ = new JScrollPane();
       mainTable_ = new DataTable();
@@ -607,23 +581,27 @@ public class DataCollectionForm extends JFrame {
             combineButton_ActionPerformed(evt);
          }
       });
-      
+     
+      JSeparator vLine1 = new JSeparator();
+      vLine1.setOrientation(SwingConstants.VERTICAL);
       
 /**********************  2-Color tab    ***************************************/
       
       JLabel c2olorLabel = new JLabel();
       c2olorLabel.setFont(gFont);
       c2olorLabel.setText("2-Color");
-          
+        
+      JButton c2StandardButton = new JButton("2C Reference");
       c2StandardButton.setFont(gFont);
-      c2StandardButton.setText("2C Reference");
       c2StandardButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             c2StandardButtonActionPerformed(evt);
          }
       });
-            
+           
+      reference2CName_.setFont(gFont); 
+          
       method2CBox_.setFont(gFont); 
       method2CBox_.setModel(new DefaultComboBoxModel(
               new String[] { "NR-Similarity", "Affine", "Piecewise-Affine", "LWM" }));
@@ -636,9 +614,13 @@ public class DataCollectionForm extends JFrame {
            
       pairsMaxDistanceField_.setFont(gFont); 
       pairsMaxDistanceField_.setText("500");
+           
+      JLabel nmLabel = new JLabel();
+      nmLabel.setFont(gFont); 
+      nmLabel.setText("nm");
    
+      JButton c2CorrectButton = new JButton("2C Correct");
       c2CorrectButton.setFont(gFont);
-      c2CorrectButton.setText("2C Correct");
       c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -656,9 +638,9 @@ public class DataCollectionForm extends JFrame {
          }
       });
 
-      jSeparator3.setOrientation(SwingConstants.VERTICAL);
-
-   
+      JSeparator vLine2 = new JSeparator();
+      vLine2.setOrientation(SwingConstants.VERTICAL);
+  
 /************************* Tracks ***************************/      
 
       JLabel trackLabel = new JLabel();
@@ -735,6 +717,47 @@ public class DataCollectionForm extends JFrame {
          }
       });
 
+      /************************** Filters ***************************/    
+      
+      
+      JLabel filterLabel = new JLabel();
+      filterLabel.setFont(gFont); 
+      filterLabel.setText("Filters:");
+           
+      filterIntensityCheckBox_.setFont(gFont);
+      filterIntensityCheckBox_.setText("Intensity");
+      
+      intensityMin_.setFont(gFont);
+      intensityMin_.setText("0");
+      
+      JLabel spotCompLabel1 = new JLabel("< spot <");
+      spotCompLabel1.setFont(gFont); 
+      
+      intensityMax_.setFont(gFont);
+      intensityMax_.setText("0");
+
+      JLabel intensityUnitLabel = new JLabel("#");
+      intensityUnitLabel.setFont(gFont); 
+ 
+      filterSigmaCheckBox_.setFont(gFont); 
+      filterSigmaCheckBox_.setText("Sigma");     
+
+      sigmaMin_.setFont(gFont);
+      sigmaMin_.setText("0");
+      
+      JLabel spotCompLabel2 = new JLabel("< spot <");
+      spotCompLabel2.setFont(gFont);
+ 
+      sigmaMax_.setFont(gFont);
+      sigmaMax_.setText("0");
+      
+      JLabel sigmaUnitLabel = new JLabel("nm");
+      sigmaUnitLabel.setFont(gFont);
+     
+      JSeparator vLine3 = new JSeparator();
+      vLine3.setOrientation(SwingConstants.VERTICAL);
+
+
       
 /************************* Localization Microscopy *******************/   
       JLabel lmLabel = new JLabel();
@@ -751,9 +774,10 @@ public class DataCollectionForm extends JFrame {
          }
       });
 
-      renderButton_.setFont(gFont); 
-      renderButton_.setText("Render");
-      renderButton_.addActionListener(new java.awt.event.ActionListener() {
+      JButton renderButton = new JButton();
+      renderButton.setFont(gFont); 
+      renderButton.setText("Render");
+      renderButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             renderButton_ActionPerformed(evt);
@@ -768,19 +792,21 @@ public class DataCollectionForm extends JFrame {
     
       zCalibrationLabel_.setFont(gFont); 
       zCalibrationLabel_.setText("UnCalibrated");
-     
-      unjitterButton_.setFont(gFont); 
-      unjitterButton_.setText("Drift Correct");
-      unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
+      
+      JButton unjitterButton = new JButton();
+      unjitterButton.setFont(gFont); 
+      unjitterButton.setText("Drift Correct");
+      unjitterButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             unjitterButton_ActionPerformed(evt);
          }
       });
 
-      linkButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      linkButton_.setText("Link");
-      linkButton_.addActionListener(new java.awt.event.ActionListener() {
+      JButton linkButton = new JButton();
+      linkButton.setFont(gFont);
+      linkButton.setText("Link");
+      linkButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             linkButton_ActionPerformed(evt);
@@ -788,56 +814,8 @@ public class DataCollectionForm extends JFrame {
       });
 
 
-
-      jSeparator4.setOrientation(SwingConstants.VERTICAL);
-
-
-
-      jSeparator2.setOrientation(SwingConstants.VERTICAL);
-
-      SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      SigmaLabel2.setText("nm");
-
-      referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      referenceName_.setText("JLabel1");
-
-
-     
-/************************** Filters ***************************/
-      
-      intensityMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      intensityMax_.setText("0");
-
-      IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      IntLabel2.setText("#");
-
-      SigmaLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      SigmaLabel3.setText("nm");
-
-      sigmaMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      sigmaMax_.setText("0");
-
-      sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      sigmaMin_.setText("0");
-
-      intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      intensityMin_.setText("0");
-
-      filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      filterIntensityCheckBox_.setText("Intensity");
-
-      filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      filterSigmaCheckBox_.setText("Sigma");
-
-      jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel1.setText("Filters:");
-
-      jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel2.setText("< spot <");
-
-      jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel3.setText("< spot <");
-
+      JSeparator vLine4 = new JSeparator();
+      vLine4.setOrientation(SwingConstants.VERTICAL);
 
 
 
@@ -871,7 +849,7 @@ public class DataCollectionForm extends JFrame {
                   .addGap(0, 0, Short.MAX_VALUE)
                   .addComponent(combineButton, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)))
-            .addComponent(jSeparator3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+            .addComponent(vLine2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
             .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(84, 84, 84)
@@ -885,19 +863,19 @@ public class DataCollectionForm extends JFrame {
                         .addGap(16, 16, 16)
                         .addComponent(c2CorrectButton, GroupLayout.PREFERRED_SIZE, 82, GroupLayout.PREFERRED_SIZE)))
                   .addGap(18, 18, 18)
-                  .addComponent(referenceName_, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE))
+                  .addComponent(reference2CName_, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(11, 11, 11)
                   .addComponent(method2CBox_, GroupLayout.PREFERRED_SIZE, 90, GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(pairsMaxDistanceField_, GroupLayout.PREFERRED_SIZE, 44, GroupLayout.PREFERRED_SIZE)
                   .addGap(8, 8, 8)
-                  .addComponent(SigmaLabel2, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
+                  .addComponent(nmLabel, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
                .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                   .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(listPairsButton, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)))
             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jSeparator2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+            .addComponent(vLine3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
             .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(10, 10, 10)
@@ -927,21 +905,21 @@ public class DataCollectionForm extends JFrame {
                   .addGap(83, 83, 83)
                   .addComponent(trackLabel)))
             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jSeparator4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+            .addComponent(vLine4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
             .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                   .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                      .addComponent(zCalibrateButton)
-                     .addComponent(unjitterButton_, GroupLayout.PREFERRED_SIZE, 107, GroupLayout.PREFERRED_SIZE)
-                     .addComponent(linkButton_, GroupLayout.PREFERRED_SIZE, 107, GroupLayout.PREFERRED_SIZE)
+                     .addComponent(unjitterButton, GroupLayout.PREFERRED_SIZE, 107, GroupLayout.PREFERRED_SIZE)
+                     .addComponent(linkButton, GroupLayout.PREFERRED_SIZE, 107, GroupLayout.PREFERRED_SIZE)
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(20, 20, 20)
                         .addComponent(zCalibrationLabel_, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)))
                   .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(7, 7, 7)
-                        .addComponent(jLabel1)
+                        .addComponent(filterLabel)
                         .addGap(4, 4, 4)
                         .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                            .addComponent(filterSigmaCheckBox_)
@@ -956,25 +934,25 @@ public class DataCollectionForm extends JFrame {
                               .addComponent(intensityMin_, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)))
                         .addGap(1, 1, 1)
                         .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                           .addComponent(jLabel3)
-                           .addComponent(jLabel2))
+                           .addComponent(spotCompLabel2)
+                           .addComponent(spotCompLabel1))
                         .addGap(3, 3, 3)
                         .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                            .addComponent(sigmaMax_, GroupLayout.PREFERRED_SIZE, 48, GroupLayout.PREFERRED_SIZE)
                            .addComponent(intensityMax_, GroupLayout.PREFERRED_SIZE, 48, GroupLayout.PREFERRED_SIZE)))
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(renderButton_)
+                        .addComponent(renderButton)
                         .addGap(4, 4, 4)
                         .addComponent(visualizationModel_, GroupLayout.PREFERRED_SIZE, 110, GroupLayout.PREFERRED_SIZE)
                         .addGap(6, 6, 6)
                         .addComponent(visualizationMagnification_, GroupLayout.PREFERRED_SIZE, 70, GroupLayout.PREFERRED_SIZE)))
                   .addGap(4, 4, 4)
                   .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addComponent(SigmaLabel3)
+                     .addComponent(sigmaUnitLabel)
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(1, 1, 1)
-                        .addComponent(IntLabel2, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE))))
+                        .addComponent(intensityUnitLabel, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE))))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(137, 137, 137)
                   .addComponent(lmLabel))))
@@ -1016,13 +994,13 @@ public class DataCollectionForm extends JFrame {
                   .addGap(33, 33, 33)
                   .addComponent(c2CorrectButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))
                .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addComponent(referenceName_)
+                  .addComponent(reference2CName_)
                   .addGap(12, 12, 12)
                   .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                      .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                         .addComponent(pairsMaxDistanceField_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
                         .addComponent(method2CBox_, GroupLayout.PREFERRED_SIZE, 23, GroupLayout.PREFERRED_SIZE))
-                     .addComponent(SigmaLabel2, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
+                     .addComponent(nmLabel, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
                   .addGap(28, 28, 28)
                   .addComponent(listPairsButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
                .addGroup(jPanel1Layout.createSequentialGroup()
@@ -1050,7 +1028,7 @@ public class DataCollectionForm extends JFrame {
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                      .addComponent(zCalibrateButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                     .addComponent(renderButton_, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))
+                     .addComponent(renderButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))
                   .addGap(7, 7, 7)
                   .addComponent(zCalibrationLabel_))
                .addGroup(jPanel1Layout.createSequentialGroup()
@@ -1063,35 +1041,35 @@ public class DataCollectionForm extends JFrame {
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(1, 1, 1)
                         .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                           .addComponent(jLabel1)
-                           .addComponent(unjitterButton_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)))
+                           .addComponent(filterLabel)
+                           .addComponent(unjitterButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)))
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(filterSigmaCheckBox_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, 0)
                         .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                            .addComponent(filterIntensityCheckBox_)
-                           .addComponent(linkButton_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)))
+                           .addComponent(linkButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)))
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(sigmaMin_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, 0)
                         .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                            .addComponent(intensityMin_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                           .addComponent(jLabel2)))
+                           .addComponent(spotCompLabel1)))
                      .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                            .addComponent(sigmaMax_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                           .addComponent(jLabel3))
+                           .addComponent(spotCompLabel2))
                         .addGap(1, 1, 1)
                         .addComponent(intensityMax_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))))
                .addGroup(jPanel1Layout.createSequentialGroup()
                   .addGap(41, 41, 41)
-                  .addComponent(SigmaLabel3)
+                  .addComponent(sigmaUnitLabel)
                   .addGap(7, 7, 7)
-                  .addComponent(IntLabel2)))
+                  .addComponent(intensityUnitLabel)))
             .addContainerGap())
-         .addComponent(jSeparator3)
-         .addComponent(jSeparator2)
-         .addComponent(jSeparator4)
+         .addComponent(vLine2)
+         .addComponent(vLine3)
+         .addComponent(vLine4)
       );
 
       jPanel2.setLayout(new java.awt.BorderLayout());
@@ -1321,7 +1299,7 @@ public class DataCollectionForm extends JFrame {
                   name += "," + mainTableModel_.getRow(rows[i]).ID_;
                }
             }
-            referenceName_.setText(name);
+            reference2CName_.setText(name);
          } catch (Exception ex) {
             JOptionPane.showMessageDialog(getInstance(), 
                "Error setting color reference.  Did you have enough input points?");
@@ -1926,7 +1904,7 @@ public class DataCollectionForm extends JFrame {
                addSpotData(rowData.name_ + "-Combined",
                        rowData.title_,
                        rowData.dw_,
-                       referenceName_.getText(), rowData.width_,
+                       reference2CName_.getText(), rowData.width_,
                        rowData.height_, rowData.pixelSizeNm_,
                        rowData.zStackStepSizeNm_, rowData.shape_,
                        rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
@@ -2118,11 +2096,11 @@ public class DataCollectionForm extends JFrame {
             }
 
             // Add transformed data to data overview window
-            addSpotData(rowData.name_ + "-CC-" + referenceName_.getText() + "-"
+            addSpotData(rowData.name_ + "-CC-" + reference2CName_.getText() + "-"
                     + method2CBox_.getSelectedItem(),
                     rowData.title_,
                     rowData.dw_,
-                    referenceName_.getText(), rowData.width_,
+                    reference2CName_.getText(), rowData.width_,
                     rowData.height_, rowData.pixelSizeNm_,
                     rowData.zStackStepSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
