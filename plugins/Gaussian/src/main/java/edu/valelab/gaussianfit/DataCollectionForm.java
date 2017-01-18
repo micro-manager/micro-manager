@@ -113,6 +113,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumnModel;
 import javax.swing.TransferHandler;
 import javax.swing.WindowConstants;
+import net.miginfocom.swing.MigLayout;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.stat.StatUtils;
@@ -132,7 +133,12 @@ public class DataCollectionForm extends JFrame {
    DataTableModel mainTableModel_;
    private final String[] plotModes_ = {"t-X", "t-Y", "t-dist", "t-Int", "X-Y"};
    private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
-   private final String[] renderSizes_  = {"1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x"};
+   private final String[] renderSizes_  = 
+               {"1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x"};
+   private final String[] c2CorrectAlgorithms_ =  
+               { "NR-Similarity", "Affine", "Piecewise-Affine", "LWM" };
+   private final String[] fileFormats_ = { "Binary", "Text" };
+   
    public final static String EXTENSION = ".tsf";
    
    // Pref-keys
@@ -242,8 +248,7 @@ public class DataCollectionForm extends JFrame {
   
    
    private static DataCollectionForm instance_ = null;
-    
-   //private ArrayList<RowData> rowData_;
+
    public enum Coordinates {NM, PIXELS};
    public enum PlotMode {X, Y, INT};
    
@@ -281,16 +286,11 @@ public class DataCollectionForm extends JFrame {
    private DataCollectionForm(Studio studio) {
 
       studio_ = studio;
-      
-      //rowData_ = new ArrayList<RowData>();
 
       mainTableModel_ = new DataTableModel();
       
       initComponents();
-      reference2CName_.setText("  ");
-      plotComboBox_.setModel(new DefaultComboBoxModel(plotModes_));
-      visualizationModel_.setModel(new DefaultComboBoxModel(renderModes_));
-      visualizationMagnification_.setModel(new DefaultComboBoxModel(renderSizes_));
+      
       jScrollPane1_.setName("Gaussian Spot Fitting Data Sets");      
               
       UserProfile up = studio_.getUserProfile();
@@ -323,7 +323,6 @@ public class DataCollectionForm extends JFrame {
       
       DataTableRowSorter sorter = 
               new DataTableRowSorter(mainTableModel_);
-      //mainTable_.setAutoCreateRowSorter(true);
       mainTable_.setRowSorter(sorter);
        
       // Drag and Drop support for file loading
@@ -475,7 +474,7 @@ public class DataCollectionForm extends JFrame {
       plotComboBox_ = new JComboBox();
       powerSpectrumCheckBox_ = new JCheckBox();
       pairsMaxDistanceField_ = new JTextField();
-      reference2CName_ = new JLabel();
+      reference2CName_ = new JLabel("  ");
       method2CBox_ = new JComboBox();
       saveFormatBox_ = new JComboBox();
       jPanel2 = new JPanel();
@@ -505,92 +504,99 @@ public class DataCollectionForm extends JFrame {
       });
 
 /***************************    General tab  **********************************/
-      JLabel generalLabel = new JLabel();
-      generalLabel.setFont(gFont); 
-      generalLabel.setText("General");
+      JPanel generalPanel = new JPanel();
+      generalPanel.setLayout(new MigLayout());
       
-      JButton saveButton = new JButton();
-      saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      saveButton.setText("Save");
+      JLabel generalLabel = new JLabel("General");
+      generalLabel.setFont(gFont); 
+      generalPanel.add(generalLabel, "span 2, center, wrap");
+      
+      JButton saveButton = new JButton("Save");
+      saveButton.setFont(gFont); 
       saveButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             saveButtonActionPerformed(evt);
          }
       });
+      generalPanel.add(saveButton);
 
-      saveFormatBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); 
-      saveFormatBox_.setModel(new DefaultComboBoxModel(new String[] { "Binary", "Text" }));
+      saveFormatBox_.setFont(gFont); 
+      saveFormatBox_.setModel(new DefaultComboBoxModel(fileFormats_));
+      saveFormatBox_.setPreferredSize(dropDownSize);
+      saveFormatBox_.setMaximumSize(dropDownSizeMax);
+      generalPanel.add(saveFormatBox_, "wrap");
       
-      JButton loadButton = new JButton();
-      loadButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); 
-      loadButton.setText("Load");
+      JButton loadButton = new JButton("Load");
+      loadButton.setFont(gFont); 
       loadButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             loadButtonActionPerformed(evt);
          }
       });
+      generalPanel.add(loadButton);
 
-      JButton removeButton = new JButton();
+      JButton removeButton = new JButton("Remove");
       removeButton.setFont(gFont); 
-      removeButton.setText("Remove");
       removeButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             removeButtonActionPerformed(evt);
          }
       });
+      generalPanel.add(removeButton, "wrap");
 
-      JButton showButton = new JButton();
+      JButton showButton = new JButton("Show");
       showButton.setFont(gFont); 
-      showButton.setText("Show");
       showButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             showButton_ActionPerformed(evt);
          }
       });  
+      generalPanel.add(showButton);
       
-      JButton infoButton = new JButton();
+      JButton infoButton = new JButton("Info");
       infoButton.setFont(gFont); 
-      infoButton.setText("Info");
       infoButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             infoButton_ActionPerformed(evt);
          }
       });
+      generalPanel.add(infoButton, "wrap");
          
-      JButton extractTracksButton = new JButton();
+      JButton extractTracksButton = new JButton("Extract Tracks");
       extractTracksButton.setFont(gFont); 
-      extractTracksButton.setText("Extract Tracks");
       extractTracksButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             extractTracksButton_ActionPerformed(evt);
          }
       });
+      generalPanel.add(extractTracksButton);
            
-      JButton combineButton = new JButton();
+      JButton combineButton = new JButton("Combine");
       combineButton.setFont(gFont); 
-      combineButton.setText("Combine");
       combineButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             combineButton_ActionPerformed(evt);
          }
       });
+      generalPanel.add(combineButton, "wrap");
      
       JSeparator vLine1 = new JSeparator();
       vLine1.setOrientation(SwingConstants.VERTICAL);
       
 /**********************  2-Color tab    ***************************************/
+      JPanel c2Panel = new JPanel(new MigLayout());
       
-      JLabel c2olorLabel = new JLabel();
+      JLabel c2olorLabel = new JLabel("2-Color");
       c2olorLabel.setFont(gFont);
-      c2olorLabel.setText("2-Color");
-        
+      c2Panel.add(c2olorLabel, "span 2, center, wrap");
+      
       JButton c2StandardButton = new JButton("2C Reference");
       c2StandardButton.setFont(gFont);
       c2StandardButton.addActionListener(new java.awt.event.ActionListener() {
@@ -599,26 +605,31 @@ public class DataCollectionForm extends JFrame {
             c2StandardButtonActionPerformed(evt);
          }
       });
+      c2Panel.add(c2StandardButton);
            
-      reference2CName_.setFont(gFont); 
+      reference2CName_.setFont(gFont);
+      c2Panel.add(reference2CName_, "wrap");
           
       method2CBox_.setFont(gFont); 
-      method2CBox_.setModel(new DefaultComboBoxModel(
-              new String[] { "NR-Similarity", "Affine", "Piecewise-Affine", "LWM" }));
+      method2CBox_.setModel(new DefaultComboBoxModel(c2CorrectAlgorithms_));
       method2CBox_.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             method2CBox_ActionPerformed(evt);
          }
       });
+      method2CBox_.setPreferredSize(dropDownSize);
+      method2CBox_.setMaximumSize(dropDownSizeMax);
+      c2Panel.add(method2CBox_);
            
       pairsMaxDistanceField_.setFont(gFont); 
       pairsMaxDistanceField_.setText("500");
-           
-      JLabel nmLabel = new JLabel();
+      c2Panel.add(pairsMaxDistanceField_, "split 2");
+      
+      JLabel nmLabel = new JLabel("nm");
       nmLabel.setFont(gFont); 
-      nmLabel.setText("nm");
-   
+      c2Panel.add(nmLabel, "wrap");
+      
       JButton c2CorrectButton = new JButton("2C Correct");
       c2CorrectButton.setFont(gFont);
       c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
@@ -627,192 +638,217 @@ public class DataCollectionForm extends JFrame {
             c2CorrectButtonActionPerformed(evt);
          }
       });
+      c2Panel.add(c2CorrectButton, "span 2, center, wrap");
 
-      JButton listPairsButton = new JButton();
+      JButton listPairsButton = new JButton("List Pairs");
       listPairsButton.setFont(gFont); 
-      listPairsButton.setText("List Pairs");
       listPairsButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             listButton_1ActionPerformed(evt);
          }
       });
+      c2Panel.add(listPairsButton, "span 2, center, wrap");
 
       JSeparator vLine2 = new JSeparator();
       vLine2.setOrientation(SwingConstants.VERTICAL);
   
 /************************* Tracks ***************************/      
-
-      JLabel trackLabel = new JLabel();
+      JPanel tracksPanel = new JPanel();
+      tracksPanel.setLayout(new MigLayout());
+      
+      JLabel trackLabel = new JLabel("Tracks");
       trackLabel.setFont(gFont); 
-      trackLabel.setText("Tracks");
+      tracksPanel.add(trackLabel, "span 2, wrap");
 
-      JButton plotButton = new JButton();
+      JButton plotButton = new JButton("Plot");
       plotButton.setFont(gFont); 
-      plotButton.setText("Plot");
       plotButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             plotButton_ActionPerformed(evt);
          }
       });
+      tracksPanel.add(plotButton);
       
       plotComboBox_.setFont(gFont); 
-      plotComboBox_.setModel(new DefaultComboBoxModel(
-              new String[] { "t-X", "t-Y", "t-dist.", "t-Int.", "X-Y", " " }));
-
-      logLogCheckBox_.setFont(gFont); 
-      logLogCheckBox_.setText("log-log");
+      plotComboBox_.setModel(new DefaultComboBoxModel(plotModes_));
+      tracksPanel.add(plotComboBox_, "wrap");
 
       powerSpectrumCheckBox_.setFont(gFont); 
       powerSpectrumCheckBox_.setText("PSD");
+      tracksPanel.add(powerSpectrumCheckBox_);
+      
+      logLogCheckBox_.setFont(gFont); 
+      logLogCheckBox_.setText("log-log");
+      tracksPanel.add(logLogCheckBox_, "wrap");
 
-      JButton averageTrackButton = new JButton();
+
+      JButton averageTrackButton = new JButton("Average");
       averageTrackButton.setFont(gFont);
-      averageTrackButton.setText("Average");
       averageTrackButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             averageTrackButton_ActionPerformed(evt);
          }
       });
+      tracksPanel.add(averageTrackButton);
       
-      JButton straightenTrackButton = new JButton();
+      JButton straightenTrackButton = new JButton("Straighten");
       straightenTrackButton.setFont(gFont); 
-      straightenTrackButton.setText("Straighten");
       straightenTrackButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             straightenTrackButton_ActionPerformed(evt);
          }
       });
+      tracksPanel.add(straightenTrackButton, "wrap");
 
-      JButton mathButton = new JButton();
+      JButton mathButton = new JButton("Math");
       mathButton.setFont(gFont); 
-      mathButton.setText("Math");
       mathButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             mathButton_ActionPerformed(evt);
          }
       });
+      tracksPanel.add(mathButton);
       
-      JButton centerTrackButton = new JButton();
+      JButton centerTrackButton = new JButton("Center");
       centerTrackButton.setFont(gFont);
-      centerTrackButton.setText("Center");
       centerTrackButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             centerTrackButton_ActionPerformed(evt);
          }
       });
+      tracksPanel.add(centerTrackButton, "wrap");
       
-      JButton subRangeButton = new JButton();
+      JButton subRangeButton = new JButton("SubRange");
       subRangeButton.setFont(gFont); 
-      subRangeButton.setText("SubRange");
       subRangeButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             SubRangeActionPerformed(evt);
          }
       });
+      tracksPanel.add(subRangeButton);
 
-      /************************** Filters ***************************/    
+/************************** Filters ***************************/    
+      JPanel filterPanel = new JPanel(new MigLayout());
       
-      
-      JLabel filterLabel = new JLabel();
+      JLabel filterLabel = new JLabel("Filters:");
       filterLabel.setFont(gFont); 
-      filterLabel.setText("Filters:");
+      filterPanel.add(filterLabel, "span 5, center, wrap");
            
       filterIntensityCheckBox_.setFont(gFont);
       filterIntensityCheckBox_.setText("Intensity");
+      filterPanel.add(filterIntensityCheckBox_);
       
       intensityMin_.setFont(gFont);
       intensityMin_.setText("0");
+      filterPanel.add(intensityMin_);
       
       JLabel spotCompLabel1 = new JLabel("< spot <");
       spotCompLabel1.setFont(gFont); 
+      filterPanel.add(spotCompLabel1);
       
       intensityMax_.setFont(gFont);
       intensityMax_.setText("0");
-
+      filterPanel.add(intensityMax_);
+      
       JLabel intensityUnitLabel = new JLabel("#");
       intensityUnitLabel.setFont(gFont); 
- 
+      filterPanel.add(intensityUnitLabel, "wrap");
+      
       filterSigmaCheckBox_.setFont(gFont); 
       filterSigmaCheckBox_.setText("Sigma");     
-
+      filterPanel.add(filterSigmaCheckBox_);
+              
       sigmaMin_.setFont(gFont);
       sigmaMin_.setText("0");
-      
+      filterPanel.add(sigmaMin_);
+              
       JLabel spotCompLabel2 = new JLabel("< spot <");
       spotCompLabel2.setFont(gFont);
- 
+      filterPanel.add(spotCompLabel2);
+              
       sigmaMax_.setFont(gFont);
       sigmaMax_.setText("0");
-      
+      filterPanel.add(sigmaMax_);
+              
       JLabel sigmaUnitLabel = new JLabel("nm");
       sigmaUnitLabel.setFont(gFont);
-     
+      filterPanel.add(sigmaUnitLabel);
+              
       JSeparator vLine3 = new JSeparator();
       vLine3.setOrientation(SwingConstants.VERTICAL);
 
 
       
-/************************* Localization Microscopy *******************/   
-      JLabel lmLabel = new JLabel();
+/************************* Localization Microscopy *******************/  
+      JPanel visualizationPanel = new JPanel(new MigLayout());
+      
+      JLabel lmLabel = new JLabel("Localization Microscopy");
       lmLabel.setFont(gFont);
-      lmLabel.setText("Localization Microscopy");
+      visualizationPanel.add(lmLabel, "span 3, wrap");
 
-      JButton zCalibrateButton = new JButton();
-      zCalibrateButton.setFont(gFont); 
-      zCalibrateButton.setText("Z Calibration");
-      zCalibrateButton.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            zCalibrateButton_ActionPerformed(evt);
-         }
-      });
-
-      JButton renderButton = new JButton();
+      JButton renderButton = new JButton("Render");
       renderButton.setFont(gFont); 
-      renderButton.setText("Render");
       renderButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             renderButton_ActionPerformed(evt);
          }
       });
+      visualizationPanel.add(renderButton);
       
-      visualizationModel_.setFont(gFont); 
-      visualizationModel_.setModel(new DefaultComboBoxModel(new String[] { "Gaussian" }));
+      visualizationModel_.setFont(gFont);
+      visualizationModel_.setModel(new DefaultComboBoxModel(renderModes_));
+      visualizationModel_.setPreferredSize(dropDownSize);
+      visualizationModel_.setMaximumSize(dropDownSizeMax);
+      visualizationPanel.add(visualizationModel_);
 
       visualizationMagnification_.setFont(gFont); 
-      visualizationMagnification_.setModel(new DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x" }));
+      visualizationMagnification_.setModel(new DefaultComboBoxModel(renderSizes_));
+      visualizationMagnification_.setPreferredSize(dropDownSize);
+      visualizationMagnification_.setMaximumSize(dropDownSizeMax);
+      visualizationPanel.add(visualizationMagnification_, "wrap");
     
-      zCalibrationLabel_.setFont(gFont); 
-      zCalibrationLabel_.setText("UnCalibrated");
       
-      JButton unjitterButton = new JButton();
+      JButton zCalibrateButton = new JButton("Z Calibration");
+      zCalibrateButton.setFont(gFont); 
+      zCalibrateButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            zCalibrateButton_ActionPerformed(evt);
+         }
+      });
+      visualizationPanel.add(zCalibrateButton);
+
+      JButton unjitterButton = new JButton("Drift Correct");
       unjitterButton.setFont(gFont); 
-      unjitterButton.setText("Drift Correct");
       unjitterButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             unjitterButton_ActionPerformed(evt);
          }
       });
+      visualizationPanel.add(unjitterButton);
 
-      JButton linkButton = new JButton();
+      JButton linkButton = new JButton("Link");
       linkButton.setFont(gFont);
-      linkButton.setText("Link");
       linkButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             linkButton_ActionPerformed(evt);
          }
       });
-
+      visualizationPanel.add(linkButton, "wrap");
+      
+      zCalibrationLabel_.setFont(gFont); 
+      zCalibrationLabel_.setText("UnCalibrated");
+      visualizationPanel.add(zCalibrationLabel_);
 
       JSeparator vLine4 = new JSeparator();
       vLine4.setOrientation(SwingConstants.VERTICAL);
