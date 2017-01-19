@@ -92,8 +92,6 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -183,7 +181,6 @@ public class DataCollectionForm extends JFrame {
    private static Studio studio_;
    
    // GUI elements
-
    private DataTable mainTable_;
    private JComboBox saveFormatBox_;
    private JTextField pairsMaxDistanceField_;
@@ -201,6 +198,12 @@ public class DataCollectionForm extends JFrame {
    private JCheckBox filterSigmaCheckBox_;
    private JTextField sigmaMax_;
    private JTextField sigmaMin_;
+       
+   
+   private static DataCollectionForm instance_ = null;
+
+   public enum Coordinates {NM, PIXELS};
+   public enum PlotMode {X, Y, INT};
       
    
    /**
@@ -241,13 +244,8 @@ public class DataCollectionForm extends JFrame {
          return null;
       return c2t_.getAffineTransform();
    }
-  
-   
-   private static DataCollectionForm instance_ = null;
 
-   public enum Coordinates {NM, PIXELS};
-   public enum PlotMode {X, Y, INT};
-   
+  
    
     /**
     * Get spotdata for the given row
@@ -286,8 +284,8 @@ public class DataCollectionForm extends JFrame {
       mainTableModel_ = new DataTableModel();
       
       initComponents();
-
               
+      // Read UI values bakc form Profile
       UserProfile up = studio_.getUserProfile();
       Class oc = DataCollectionForm.class;
       int x = up.getInt(oc, FRAMEXPOS, 50);
