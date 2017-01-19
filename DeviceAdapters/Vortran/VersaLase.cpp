@@ -4,7 +4,16 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Controls Vortran VersaLase
-// COPYRIGHT:     Applied Scientific Instrumentation, Eugene OR
+//
+// COPYRIGHT:     Vortran Laser Technologies, Sacramento CA 
+// AUTHOR:		  Floyd Goldstein (floydg@softwareflair.com) 07/2016
+//				  Allow system to operate with unpopulated/undetected laser(s)
+//				  Force VersaLase into a known operational state for Echo and Prompt: Echo "on", prompt "off"
+//					These "forced" settings are retained in non volatile memory, previous settings are overwritten/lost.
+//				  Rename SerialControlEnable to SerialCommandLineEnable
+//				  Fix bug with setting LaserEmissionDelay to On or Off: added TIMEOUT_3_SECONDS
+//
+// COPYRIGHT:     Applied Scientific Instrumentation, Eugene OR. 
 // AUTHOR:        Jon Daniels (jon@asiimaging.com) 05/2016
 //                Complete re-write of the original VersaLase.cpp by David Sweeney
 //                    with heavy influence from Jon's ASITiger device adapter
@@ -53,6 +62,9 @@
 
 using namespace std;
 
+#define TIMEOUT_3_SECONDS		3000	
+#define PORT_TIMEOUT_500_MS		500	
+#define PORT_TIMEOUT_STR_500	"500"	
 
 
 //Required Micro-Manager API Functions&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
@@ -82,7 +94,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // VersaLase Object Initialization
 VersaLase::VersaLase() :
       port_("Undefined"),
-      portTimeoutMs_(500),
+      portTimeoutMs_(PORT_TIMEOUT_500_MS),
       initialized_(false),
       open_(false),
       interlockOK_(false),
@@ -101,7 +113,7 @@ VersaLase::VersaLase() :
       emissionOn_[i] = false;
       faultCode_[i] = 0;
       powerMax_[i] = 0.0;
-      digitalMod_[i] = false;
+  	  digitalMod_[i] = false;
       analogMod_[i] = false;
       laserPower_[i] = 0.0;
       digitalPower_[i] = 0.0;
@@ -145,9 +157,24 @@ int VersaLase::Initialize()
    string tmp_str;
    double tmp_float;
 
+   // get the serial timeout value, usually 500ms (need to extend timeout in a few cases and then restore)
+   // code uses our scratchpad variable
+   GetCoreCallback()->GetDeviceProperty(port_.c_str(), "AnswerTimeout", propName_);
+   portTimeoutMs_ = atol(propName_);
 
-   // "gui1" serial command used by David Sweeney's original code but it's not in documentation
-   RETURN_ON_MM_ERROR( SerialQuery("GUI1") ); //?GUI1=1*1*1*1*FV*PV => 7 tokens
+   // Force Prompt "off" and Echo "on" to configure parsing to the required configuration. Note: ignore "VersaLase" response
+   // Note: various responses may or may not be returned when setting Prompt and then Echo to the required configuration,
+   //		depending on the previous system stored values in "non volatile memory" for Prompt and Echo
+   PurgeComPort(port_.c_str()); 
+   SendSerialCommand(port_.c_str(), "PROMPT=0", "\r");
+   int ret = GetSerialAnswer(port_.c_str(), "\r\n", serialResponse_);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", serialResponse_);
+   SendSerialCommand(port_.c_str(), "ECHO=1", "\r");
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", serialResponse_);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", serialResponse_);
+
+   // proprietary "gui1" serial command used by original code to query "VersaLase System information"
+   RETURN_ON_MM_ERROR( SerialQuery("GUI1") );	//?GUI1=1*1*1*1*FV*PV => 7 tokens: laser "type" for 4 lasers, Firmware Version, Protocol Version
    vector<string> gui1Tokens = SplitAnswerOnDelim("=*");
    if ( 7 == gui1Tokens.size())
    {
@@ -157,10 +184,8 @@ int VersaLase::Initialize()
       }
    }
 
-   // get the serial timeout value, usually 500ms (need to extend timeout in a few cases and then restore)
-   // code uses our scratchpad variable
-   GetCoreCallback()->GetDeviceProperty(port_.c_str(), "AnswerTimeout", propName_);
-   portTimeoutMs_ = atol(propName_);
+
+
 
    // create per-laser properties
    for (size_t laserNum=0; laserNum<MAX_LASERS; laserNum++)
@@ -264,7 +289,12 @@ int VersaLase::Initialize()
 
    // create global properties
 
-   // base plate temp, read only but refreshed on request
+   // firmware version, read-only and doesn't change
+   RETURN_ON_MM_ERROR( SerialQuery("SFV") );
+   RETURN_ON_MM_ERROR( GetStringAfterEquals(tmp_str) );
+   CreateProperty(g_FirmwareVersion_PN, tmp_str.c_str(), MM::String, true);
+
+      // base plate temp, read only but refreshed on request
    pAct = new CPropertyAction (this, &VersaLase::OnBaseT);
    CreateProperty(g_BaseTemp_PN, "0.0", MM::Float, true, pAct);
 
@@ -273,11 +303,6 @@ int VersaLase::Initialize()
    CreateProperty(g_Interlock_PN, g_Interlock_Open, MM::String, true, pAct);
    AddAllowedValue(g_Interlock_PN, g_Interlock_Open);
    AddAllowedValue(g_Interlock_PN, g_Interlock_OK);
-
-   // firmware version, read-only and doesn't change
-   RETURN_ON_MM_ERROR( SerialQuery("SFV") );
-   RETURN_ON_MM_ERROR( GetStringAfterEquals(tmp_str) );
-   CreateProperty(g_FirmwareVersion_PN, tmp_str.c_str(), MM::String, true);
 
    // property to allow user to refresh all values from hardware
    pAct = new CPropertyAction (this, &VersaLase::OnForceRefresh);
@@ -290,13 +315,15 @@ int VersaLase::Initialize()
 
    // property to allow user to refresh all values from hardware
    pAct = new CPropertyAction (this, &VersaLase::OnSerialEnable);
-   CreateProperty(g_SerialEnable_PN, g_OFF, MM::String, false, pAct);
-   AddAllowedValue(g_SerialEnable_PN, g_OFF);
-   AddAllowedValue(g_SerialEnable_PN, g_ON);
+   CreateProperty(g_SerialCommandLineEnable_PN, g_OFF, MM::String, false, pAct);
+   AddAllowedValue(g_SerialCommandLineEnable_PN, g_OFF);
+   AddAllowedValue(g_SerialCommandLineEnable_PN, g_ON);
 
    // it's good practice to turn off all light emission on initialization per Nico
    for (size_t laserNum=0; laserNum<MAX_LASERS; laserNum++)
    {
+      if (!laserPresent_[laserNum])		// no need to communicate with lasers which are not detected on power up
+      	 continue;
       RETURN_ON_MM_ERROR( GetPropertyNameWithLetter(g_Emission_PN, laserNum) );
       RETURN_ON_MM_ERROR( SetProperty(propName_, g_OFF) );
    }
@@ -328,11 +355,11 @@ MM::DeviceDetectionStatus VersaLase::DetectDevice()
          // record the default answer time out
          GetCoreCallback()->GetDeviceProperty(port_.c_str(), "AnswerTimeout", answerTO);
 
-         // device specific default communication parameters for ASI Tiger controller
+         // device specific default communication parameters for Vortran VersaLase controller
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, "Off");
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "19200" );
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "500.0");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", PORT_TIMEOUT_STR_500);
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "0");
          MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
          pS->Initialize();
@@ -447,7 +474,7 @@ int VersaLase::OnEmission(MM::PropertyBase* pProp, MM::ActionType eAct, long las
       // especially critical here because we do this with MM shutter open/close
       if (on == emissionOn_[laserNum])
          return DEVICE_OK;
-      RETURN_ON_MM_ERROR( SerialSet(laserNum, "LE", (on ? 1 : 0), 3000) );  // wait up to 3 sec for setting to take effect
+      RETURN_ON_MM_ERROR( SerialSet(laserNum, "LE", (on ? 1 : 0), TIMEOUT_3_SECONDS) );  // wait for setting to take effect
       // refresh value based on reply
       RETURN_ON_MM_ERROR( GetBoolAfterEquals(tmp) );
       emissionOn_[laserNum] = tmp;
@@ -479,7 +506,7 @@ int VersaLase::OnDigitalMod(MM::PropertyBase* pProp, MM::ActionType eAct, long l
          string tmpstr;
          pProp->Get(tmpstr);
          bool on = (0 == tmpstr.compare(g_ON));
-         RETURN_ON_MM_ERROR( SerialSet(laserNum, "PUL", (on ? 1 : 0), 3000) );   // wait up to 3 sec for setting to take effect
+         RETURN_ON_MM_ERROR( SerialSet(laserNum, "PUL", (on ? 1 : 0), TIMEOUT_3_SECONDS) );   // wait for setting to take effect
          // refresh value based on reply
          RETURN_ON_MM_ERROR( GetBoolAfterEquals(tmp) );
          digitalMod_[laserNum] = tmp;
@@ -499,7 +526,6 @@ int VersaLase::OnDigitalMod(MM::PropertyBase* pProp, MM::ActionType eAct, long l
 
 int VersaLase::OnAnalogMod(MM::PropertyBase* pProp, MM::ActionType eAct, long laserNum)
 {
-   // TODO determine whether digital and analog modulation should be mutually exclusive and implement this if so
    bool tmp;
    if (eAct == MM::BeforeGet) {
       if (!refreshProps_ && initialized_)
@@ -517,7 +543,7 @@ int VersaLase::OnAnalogMod(MM::PropertyBase* pProp, MM::ActionType eAct, long la
          string tmpstr;
          pProp->Get(tmpstr);
          bool on = (0 == tmpstr.compare(g_ON));
-         RETURN_ON_MM_ERROR( SerialSet(laserNum, "EPC", (on ? 1 : 0), 3000) );  // wait up to 3 sec for setting to take effect
+         RETURN_ON_MM_ERROR( SerialSet(laserNum, "EPC", (on ? 1 : 0), TIMEOUT_3_SECONDS) );  // wait for setting to take effect
          // refresh value based on reply
          RETURN_ON_MM_ERROR( GetBoolAfterEquals(tmp) );
          analogMod_[laserNum] = tmp;
@@ -556,7 +582,7 @@ int VersaLase::OnEmissionDelay(MM::PropertyBase* pProp, MM::ActionType eAct, lon
          bool on = (0 == tmpstr.compare(g_ON));
          if (on == emissionDelay_[laserNum])  // don't need to do anything if we are "changing" to same state
             return DEVICE_OK;
-         RETURN_ON_MM_ERROR( SerialSet(laserNum, "DELAY", (on ? 1 : 0)) );
+         RETURN_ON_MM_ERROR( SerialSet(laserNum, "DELAY", (on ? 1 : 0), TIMEOUT_3_SECONDS) );
          // refresh value based on reply
          RETURN_ON_MM_ERROR( GetBoolAfterEquals(tmp) );
          emissionDelay_[laserNum] = tmp;
@@ -659,7 +685,7 @@ int VersaLase::OnLaserPower(MM::PropertyBase* pProp, MM::ActionType eAct, long l
       if (!faultCode_[laserNum] && !digitalMod_[laserNum])  // only take action if possible to change, note special condition that digital modulation be disabled
       {
          pProp->Get(tmp);
-         RETURN_ON_MM_ERROR( SerialSet(laserNum, "LP", tmp, 3000) );  // wait up to 3 sec for setting to take effect
+         RETURN_ON_MM_ERROR( SerialSet(laserNum, "LP", tmp, TIMEOUT_3_SECONDS) );  // wait for setting to take effect
          // have to refresh using different command so call BeforeGet branch
          RETURN_ON_MM_ERROR( ForcePropertyUpdate(pProp->GetName()) );
          // update laser statuses too
@@ -695,7 +721,7 @@ int VersaLase::OnDigitalPower(MM::PropertyBase* pProp, MM::ActionType eAct, long
       if (!faultCode_[laserNum])  // only take action if possible to change
       {
          pProp->Get(tmp);
-         RETURN_ON_MM_ERROR( SerialSet(laserNum, "PP", tmp, 3000) );  // wait up to 3 sec for setting to take effect
+         RETURN_ON_MM_ERROR( SerialSet(laserNum, "PP", tmp, TIMEOUT_3_SECONDS) );  // wait for setting to take effect
          // refresh value based on reply
          RETURN_ON_MM_ERROR( GetFloatAfterEquals(tmp) );
          if (!pProp->Set(tmp))
@@ -739,6 +765,8 @@ int VersaLase::OnInterlock(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          for (size_t laserNum=0; laserNum<MAX_LASERS; laserNum++)
          {
+            if (!laserPresent_[laserNum])		// no need to communicate with lasers which are not detected on power up
+            	continue;
             RETURN_ON_MM_ERROR( ForcePropertyUpdate(g_FaultCode_PN, laserNum) );
          }
       }

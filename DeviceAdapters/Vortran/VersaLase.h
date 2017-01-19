@@ -4,6 +4,14 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Controls Vortran VersaLase
+//
+// COPYRIGHT:     Vortran Laser Technologies, Sacramento CA 
+// AUTHOR:		  Floyd Goldstein (floydg@softwareflair.com) 07/2016
+//				  Allow system to operate with unpopulated/undetected laser(s)
+//				  Force VersaLase into a known operational state for Echo and Prompt: Echo "on", prompt "off"
+//					These "forced" settings are retained in non volatile memory, previous settings are overwritten/lost.
+//				  Rename SerialControlEnable to SerialCommandLineEnable
+//				  Fix bug with setting LaserEmissionDelay, added TIMEOUT_3_SECONDS
 // COPYRIGHT:     Applied Scientific Instrumentation, Eugene OR
 // AUTHOR:        Jon Daniels (jon@asiimaging.com) 05/2016
 //                Complete re-write of the original VersaLase.cpp by David Sweeney
@@ -73,7 +81,7 @@ const char* const g_Interlock_OK = "OK";
 const char* const g_DeviceName = "VLT_VersaLase";
 const char* const g_DeviceDescription = "VLT_VersaLase";
 const char* const g_KeywordDescription = "VORTRAN Stradus VersaLase";
-const char* const g_SerialEnable_PN = "SerialControlEnable";
+const char* const g_SerialCommandLineEnable_PN = "SerialCommandLineEnable";
 const char* const g_SerialCommand_PN = "SerialCommand";
 const char* const g_SerialResponse_PN = "SerialResponse";
 const char* const g_BaseTemp_PN = "BaseplateTemp";
