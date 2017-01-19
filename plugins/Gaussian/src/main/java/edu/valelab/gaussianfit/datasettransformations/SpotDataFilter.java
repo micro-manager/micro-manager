@@ -69,6 +69,12 @@ public class SpotDataFilter {
       sigmaMax_ = max;
    }
    
+   /**
+    * 
+    * @param filter - whether or not to use this filter 
+    * @param min - Smallest value that will be rejected
+    * @param max - Largest value that will be rejected
+    */
    public void setIntensity(boolean filter, double min, double max) {
       useIntensity_ = filter;
       intensityMin_ = min;

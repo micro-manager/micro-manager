@@ -92,8 +92,9 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -106,7 +107,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.LayoutStyle;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -184,11 +184,7 @@ public class DataCollectionForm extends JFrame {
    
    // GUI elements
 
-   private JPanel jPanel1;
-   private JPanel jPanel2;
-   private JScrollPane tableScrollPane;
    private DataTable mainTable_;
-   
    private JComboBox saveFormatBox_;
    private JTextField pairsMaxDistanceField_;
    private JComboBox method2CBox_;
@@ -459,7 +455,6 @@ public class DataCollectionForm extends JFrame {
    @SuppressWarnings("unchecked")
    private void initComponents() {
 
-      jPanel1 = new JPanel();
       intensityMax_ = new JTextField();
       sigmaMax_ = new JTextField();
       visualizationMagnification_ = new JComboBox();
@@ -476,8 +471,6 @@ public class DataCollectionForm extends JFrame {
       reference2CName_ = new JLabel("  ");
       method2CBox_ = new JComboBox();
       saveFormatBox_ = new JComboBox();
-      jPanel2 = new JPanel();
-      tableScrollPane = new JScrollPane();
       mainTable_ = new DataTable();
       
       
@@ -804,7 +797,18 @@ public class DataCollectionForm extends JFrame {
               
       JLabel sigmaUnitLabel = new JLabel("nm");
       sigmaUnitLabel.setFont(gFont);
-      filterPanel.add(sigmaUnitLabel);
+      filterPanel.add(sigmaUnitLabel, "wrap");
+      
+      JButton filterNowButton = new JButton("Filter Now");
+            filterNowButton.setFont(gFont); 
+      filterNowButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            filterNow_ActionPerformed();
+         }
+      });
+      filterNowButton.setMaximumSize(buttonSize);
+      filterPanel.add(filterNowButton, "span 5, center, wrap");
 
       
 /************************* Localization Microscopy *******************/  
@@ -893,10 +897,11 @@ public class DataCollectionForm extends JFrame {
       getContentPane().add(getVLine(vLineMinSize), "growy");
       getContentPane().add(visualizationPanel, "wrap");
       
-            
-      tableScrollPane.setName("Gaussian Spot Fitting Data Sets");      
-      tableScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      tableScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+      JScrollPane tableScrollPane = new JScrollPane();      
+      tableScrollPane.setHorizontalScrollBarPolicy(
+              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      tableScrollPane.setVerticalScrollBarPolicy(
+              ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
       mainTable_.setModel(mainTableModel_);
       mainTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
@@ -909,6 +914,11 @@ public class DataCollectionForm extends JFrame {
       pack();
    }
    
+   /**
+    * Helper function to facilitate the UI
+    * @param minSize minimumSize of the Separator
+    * @return vertical separator with the desired minimum size
+    */
    private JSeparator getVLine(Dimension minSize) {
       JSeparator vLine = new JSeparator();
       vLine.setOrientation(SwingConstants.VERTICAL);
@@ -1584,19 +1594,6 @@ public class DataCollectionForm extends JFrame {
       } else {
          for (int row : rows) {
             RowData r = mainTableModel_.getRow(row);
-            /*
-            if (evt.getModifiers() > 0) {
-               if (r.title_.equals(ij.IJ.getImage().getTitle())) {
-                  ImagePlus ip = ij.IJ.getImage();
-                  Roi roi = ip.getRoi();
-                  if (roi.isLine()) {
-                     Polygon pol = roi.getPolygon();
-
-                  }
-
-               }
-            }
-            */
             TrackOperator.straightenTrack(r);
          }
       }
@@ -2294,6 +2291,34 @@ public class DataCollectionForm extends JFrame {
          RowData rowData = mainTableModel_.getRow(rows[i]);
          PairFilter.filter(rowData, maxDistance, deviationMax, nrQuadrants);
       }
+   }
+   
+   public void filterNow_ActionPerformed() {
+            
+      Runnable doWorkRunnable = new Runnable() {
+
+         @Override
+         public void run() {
+            
+            SpotDataFilter sdf = new SpotDataFilter();  
+            try {
+               if (filterIntensityCheckBox_.isSelected()) {
+                  sdf.setIntensity(true,
+                       NumberUtils.displayStringToDouble(intensityMin_.getText()),
+                       NumberUtils.displayStringToDouble(intensityMax_.getText()) );
+               }
+               if (filterSigmaCheckBox_.isSelected()) {
+                  sdf.setSigma(true, 
+                       NumberUtils.displayStringToDouble(sigmaMin_.getText()), 
+                       NumberUtils.displayStringToDouble(sigmaMax_.getText()) );
+               }
+               filterSpots(sdf);
+            } catch (ParseException ex) {
+              ReportingUtils.showError("Filter inputs are not all numeric");
+            }
+         }
+      };
+      doWorkRunnable.run();
    }
    
    /**
