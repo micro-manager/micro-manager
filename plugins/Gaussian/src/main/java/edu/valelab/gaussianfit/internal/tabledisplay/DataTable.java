@@ -43,8 +43,10 @@ either expressed or implied, of the FreeBSD Project.
 package edu.valelab.gaussianfit.internal.tabledisplay;
 
 import javax.swing.JTable;
+import javax.swing.event.ChangeEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 
 /**
  * Extension of JTable that takes care of sorting
@@ -53,6 +55,7 @@ import javax.swing.table.TableCellRenderer;
  * @author nico
  */
 public class DataTable extends JTable {
+   private boolean inLayout_;
    
    static class DoubleRenderer extends DefaultTableCellRenderer {
       @Override
@@ -75,8 +78,6 @@ public class DataTable extends JTable {
          }
       }
    }
-
-   
 
    public int getSelectedRowSorted() {
       int rawRow = super.getSelectedRow();
@@ -102,4 +103,47 @@ public class DataTable extends JTable {
       } 
       return super.getCellRenderer(row, column);
    }
+   
+   @Override
+   public boolean getScrollableTracksViewportWidth() {
+      return hasExcessWidth();
+   }
+   
+   
+   
+   protected boolean hasExcessWidth() {
+      return getPreferredSize().width < getParent().getWidth();
+   }
+   
+     @Override
+    public void doLayout() {
+        if (hasExcessWidth()) {
+            // fool super
+            autoResizeMode = AUTO_RESIZE_SUBSEQUENT_COLUMNS;
+        }
+        inLayout_ = true;
+        super.doLayout();
+        inLayout_ = false;
+        autoResizeMode = AUTO_RESIZE_OFF;
+    }
+    
+    @Override
+    public void columnMarginChanged(ChangeEvent e) {
+        if (isEditing()) {
+            removeEditor();
+        }
+        TableColumn resizingColumn = getTableHeader().getResizingColumn();
+        // Need to do this here, before the parent's
+        // layout manager calls getPreferredSize().
+        if (resizingColumn != null && autoResizeMode == AUTO_RESIZE_OFF
+                && !inLayout_) {
+            resizingColumn.setPreferredWidth(resizingColumn.getWidth());
+        }
+        resizeAndRepaint();
+    }
+    
+    public void update() {
+       super.resizeAndRepaint();
+    }
+
 }

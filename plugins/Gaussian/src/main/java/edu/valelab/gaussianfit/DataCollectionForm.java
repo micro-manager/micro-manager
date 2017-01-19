@@ -186,7 +186,7 @@ public class DataCollectionForm extends JFrame {
 
    private JPanel jPanel1;
    private JPanel jPanel2;
-   private JScrollPane jScrollPane1_;
+   private JScrollPane tableScrollPane;
    private DataTable mainTable_;
    
    private JComboBox saveFormatBox_;
@@ -290,8 +290,7 @@ public class DataCollectionForm extends JFrame {
       mainTableModel_ = new DataTableModel();
       
       initComponents();
-      
-      jScrollPane1_.setName("Gaussian Spot Fitting Data Sets");      
+
               
       UserProfile up = studio_.getUserProfile();
       Class oc = DataCollectionForm.class;
@@ -430,7 +429,7 @@ public class DataCollectionForm extends JFrame {
          mainTableModel_.fireRowInserted();
       }
    }
-      
+
       
    
    public void addSpotData(RowData newRow) {
@@ -478,14 +477,17 @@ public class DataCollectionForm extends JFrame {
       method2CBox_ = new JComboBox();
       saveFormatBox_ = new JComboBox();
       jPanel2 = new JPanel();
-      jScrollPane1_ = new JScrollPane();
+      tableScrollPane = new JScrollPane();
       mainTable_ = new DataTable();
       
-      Font gFont = new Font("Lucida Grande", 0, 10);
-      Dimension textFieldDim = new Dimension(57,20);
-      Dimension dropDownSize = new Dimension(90, 20);
-      Dimension dropDownSizeMax = new Dimension(120, 20);
-      String indent = "gapleft 20px";
+      
+      final String insets = "insets 3";
+      final Font gFont = new Font("Lucida Grande", 0, 10);
+      final Font hFont = new Font("Lucida Grande", 0, 12);
+      final Dimension buttonSize = new Dimension(100, 20); 
+      final Dimension textFieldSize = new Dimension(50,20);
+      final Dimension dropDownSize = new Dimension(70, 20);
+      final Dimension dropDownSizeMax = new Dimension(100, 20);
 
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       setTitle("Gaussian tracking data");
@@ -505,11 +507,12 @@ public class DataCollectionForm extends JFrame {
 
 /***************************    General tab  **********************************/
       JPanel generalPanel = new JPanel();
-      generalPanel.setLayout(new MigLayout());
+      generalPanel.setLayout(new MigLayout(insets, "[fill]3[fill]", 
+              "[]4[]3[]3[]3[]"));
       
       JLabel generalLabel = new JLabel("General");
-      generalLabel.setFont(gFont); 
-      generalPanel.add(generalLabel, "span 2, center, wrap");
+      generalLabel.setFont(hFont); 
+      generalPanel.add(generalLabel, "span 2, gapleft 80, wrap");
       
       JButton saveButton = new JButton("Save");
       saveButton.setFont(gFont); 
@@ -519,6 +522,7 @@ public class DataCollectionForm extends JFrame {
             saveButtonActionPerformed(evt);
          }
       });
+      saveButton.setMaximumSize(buttonSize);
       generalPanel.add(saveButton);
 
       saveFormatBox_.setFont(gFont); 
@@ -535,6 +539,7 @@ public class DataCollectionForm extends JFrame {
             loadButtonActionPerformed(evt);
          }
       });
+      loadButton.setMaximumSize(buttonSize);
       generalPanel.add(loadButton);
 
       JButton removeButton = new JButton("Remove");
@@ -545,6 +550,7 @@ public class DataCollectionForm extends JFrame {
             removeButtonActionPerformed(evt);
          }
       });
+      removeButton.setMaximumSize(buttonSize);
       generalPanel.add(removeButton, "wrap");
 
       JButton showButton = new JButton("Show");
@@ -554,7 +560,8 @@ public class DataCollectionForm extends JFrame {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             showButton_ActionPerformed(evt);
          }
-      });  
+      }); 
+      showButton.setMaximumSize(buttonSize);
       generalPanel.add(showButton);
       
       JButton infoButton = new JButton("Info");
@@ -565,6 +572,7 @@ public class DataCollectionForm extends JFrame {
             infoButton_ActionPerformed(evt);
          }
       });
+      infoButton.setMaximumSize(buttonSize);
       generalPanel.add(infoButton, "wrap");
          
       JButton extractTracksButton = new JButton("Extract Tracks");
@@ -575,6 +583,7 @@ public class DataCollectionForm extends JFrame {
             extractTracksButton_ActionPerformed(evt);
          }
       });
+      extractTracksButton.setMaximumSize(buttonSize);
       generalPanel.add(extractTracksButton);
            
       JButton combineButton = new JButton("Combine");
@@ -585,17 +594,17 @@ public class DataCollectionForm extends JFrame {
             combineButton_ActionPerformed(evt);
          }
       });
+      combineButton.setMaximumSize(buttonSize);
       generalPanel.add(combineButton, "wrap");
-     
-      JSeparator vLine1 = new JSeparator();
-      vLine1.setOrientation(SwingConstants.VERTICAL);
+
       
 /**********************  2-Color tab    ***************************************/
-      JPanel c2Panel = new JPanel(new MigLayout());
+      JPanel c2Panel = new JPanel(new MigLayout(insets, "[fill]3[fill]", 
+               "[]4[]3[]3[]3[]"));
       
       JLabel c2olorLabel = new JLabel("2-Color");
-      c2olorLabel.setFont(gFont);
-      c2Panel.add(c2olorLabel, "span 2, center, wrap");
+      c2olorLabel.setFont(hFont);
+      c2Panel.add(c2olorLabel, "span 2, gapleft 60, wrap");
       
       JButton c2StandardButton = new JButton("2C Reference");
       c2StandardButton.setFont(gFont);
@@ -605,10 +614,11 @@ public class DataCollectionForm extends JFrame {
             c2StandardButtonActionPerformed(evt);
          }
       });
-      c2Panel.add(c2StandardButton);
+      c2StandardButton.setMaximumSize(buttonSize);
+      c2Panel.add(c2StandardButton, "width 90:90:95");
            
       reference2CName_.setFont(gFont);
-      c2Panel.add(reference2CName_, "wrap");
+      c2Panel.add(reference2CName_, "width 50:50:60, wrap");
           
       method2CBox_.setFont(gFont); 
       method2CBox_.setModel(new DefaultComboBoxModel(c2CorrectAlgorithms_));
@@ -624,6 +634,8 @@ public class DataCollectionForm extends JFrame {
            
       pairsMaxDistanceField_.setFont(gFont); 
       pairsMaxDistanceField_.setText("500");
+      pairsMaxDistanceField_.setPreferredSize(textFieldSize);
+      pairsMaxDistanceField_.setMinimumSize(textFieldSize);
       c2Panel.add(pairsMaxDistanceField_, "split 2");
       
       JLabel nmLabel = new JLabel("nm");
@@ -638,7 +650,8 @@ public class DataCollectionForm extends JFrame {
             c2CorrectButtonActionPerformed(evt);
          }
       });
-      c2Panel.add(c2CorrectButton, "span 2, center, wrap");
+      c2CorrectButton.setMaximumSize(buttonSize);
+      c2Panel.add(c2CorrectButton, "span 2, gapleft 40, gapright 40, wrap");
 
       JButton listPairsButton = new JButton("List Pairs");
       listPairsButton.setFont(gFont); 
@@ -648,18 +661,16 @@ public class DataCollectionForm extends JFrame {
             listButton_1ActionPerformed(evt);
          }
       });
-      c2Panel.add(listPairsButton, "span 2, center, wrap");
+      listPairsButton.setMaximumSize(buttonSize);
+      c2Panel.add(listPairsButton, "span 2, gapleft 40, gapright 40, wrap");
 
-      JSeparator vLine2 = new JSeparator();
-      vLine2.setOrientation(SwingConstants.VERTICAL);
-  
 /************************* Tracks ***************************/      
-      JPanel tracksPanel = new JPanel();
-      tracksPanel.setLayout(new MigLayout());
+      JPanel tracksPanel = new JPanel(new MigLayout(insets, "[fill]3[fill]", 
+               "[]4[]3[]3[]3[]"));
       
       JLabel trackLabel = new JLabel("Tracks");
-      trackLabel.setFont(gFont); 
-      tracksPanel.add(trackLabel, "span 2, wrap");
+      trackLabel.setFont(hFont); 
+      tracksPanel.add(trackLabel, "span 2, gapleft 60, wrap");
 
       JButton plotButton = new JButton("Plot");
       plotButton.setFont(gFont); 
@@ -669,20 +680,23 @@ public class DataCollectionForm extends JFrame {
             plotButton_ActionPerformed(evt);
          }
       });
+      plotButton.setMaximumSize(buttonSize);
       tracksPanel.add(plotButton);
       
       plotComboBox_.setFont(gFont); 
       plotComboBox_.setModel(new DefaultComboBoxModel(plotModes_));
+      plotComboBox_.setMaximumSize(dropDownSizeMax);
       tracksPanel.add(plotComboBox_, "wrap");
 
       powerSpectrumCheckBox_.setFont(gFont); 
       powerSpectrumCheckBox_.setText("PSD");
+      powerSpectrumCheckBox_.setMaximumSize(buttonSize);
       tracksPanel.add(powerSpectrumCheckBox_);
       
       logLogCheckBox_.setFont(gFont); 
       logLogCheckBox_.setText("log-log");
+      logLogCheckBox_.setMaximumSize(buttonSize);
       tracksPanel.add(logLogCheckBox_, "wrap");
-
 
       JButton averageTrackButton = new JButton("Average");
       averageTrackButton.setFont(gFont);
@@ -692,6 +706,7 @@ public class DataCollectionForm extends JFrame {
             averageTrackButton_ActionPerformed(evt);
          }
       });
+      averageTrackButton.setMaximumSize(buttonSize);
       tracksPanel.add(averageTrackButton);
       
       JButton straightenTrackButton = new JButton("Straighten");
@@ -702,6 +717,7 @@ public class DataCollectionForm extends JFrame {
             straightenTrackButton_ActionPerformed(evt);
          }
       });
+      straightenTrackButton.setMaximumSize(buttonSize);
       tracksPanel.add(straightenTrackButton, "wrap");
 
       JButton mathButton = new JButton("Math");
@@ -712,6 +728,7 @@ public class DataCollectionForm extends JFrame {
             mathButton_ActionPerformed(evt);
          }
       });
+      mathButton.setMaximumSize(buttonSize);
       tracksPanel.add(mathButton);
       
       JButton centerTrackButton = new JButton("Center");
@@ -722,6 +739,7 @@ public class DataCollectionForm extends JFrame {
             centerTrackButton_ActionPerformed(evt);
          }
       });
+      centerTrackButton.setMaximumSize(buttonSize);
       tracksPanel.add(centerTrackButton, "wrap");
       
       JButton subRangeButton = new JButton("SubRange");
@@ -732,14 +750,17 @@ public class DataCollectionForm extends JFrame {
             SubRangeActionPerformed(evt);
          }
       });
+      subRangeButton.setMaximumSize(buttonSize);
       tracksPanel.add(subRangeButton);
 
 /************************** Filters ***************************/    
-      JPanel filterPanel = new JPanel(new MigLayout());
+      JPanel filterPanel = new JPanel(new MigLayout(insets, 
+              "[fill]0[fill]0[fill]0[fill]0[fill]", 
+              "[]3[]0[]0[]0[]"));
       
       JLabel filterLabel = new JLabel("Filters:");
-      filterLabel.setFont(gFont); 
-      filterPanel.add(filterLabel, "span 5, center, wrap");
+      filterLabel.setFont(hFont); 
+      filterPanel.add(filterLabel, "span 5, gapleft 90, wrap");
            
       filterIntensityCheckBox_.setFont(gFont);
       filterIntensityCheckBox_.setText("Intensity");
@@ -747,6 +768,8 @@ public class DataCollectionForm extends JFrame {
       
       intensityMin_.setFont(gFont);
       intensityMin_.setText("0");
+      intensityMin_.setPreferredSize(textFieldSize);
+      intensityMin_.setMinimumSize(textFieldSize);
       filterPanel.add(intensityMin_);
       
       JLabel spotCompLabel1 = new JLabel("< spot <");
@@ -767,6 +790,7 @@ public class DataCollectionForm extends JFrame {
               
       sigmaMin_.setFont(gFont);
       sigmaMin_.setText("0");
+      sigmaMin_.setMinimumSize(textFieldSize);
       filterPanel.add(sigmaMin_);
               
       JLabel spotCompLabel2 = new JLabel("< spot <");
@@ -775,23 +799,22 @@ public class DataCollectionForm extends JFrame {
               
       sigmaMax_.setFont(gFont);
       sigmaMax_.setText("0");
+      sigmaMax_.setMinimumSize(textFieldSize);
       filterPanel.add(sigmaMax_);
               
       JLabel sigmaUnitLabel = new JLabel("nm");
       sigmaUnitLabel.setFont(gFont);
       filterPanel.add(sigmaUnitLabel);
-              
-      JSeparator vLine3 = new JSeparator();
-      vLine3.setOrientation(SwingConstants.VERTICAL);
-
 
       
 /************************* Localization Microscopy *******************/  
-      JPanel visualizationPanel = new JPanel(new MigLayout());
+      JPanel visualizationPanel = new JPanel(new MigLayout(insets, 
+              "[fill]3[fill]3[fill]", 
+              "[]4[]3[]3[]3[]"));
       
       JLabel lmLabel = new JLabel("Localization Microscopy");
-      lmLabel.setFont(gFont);
-      visualizationPanel.add(lmLabel, "span 3, wrap");
+      lmLabel.setFont(hFont);
+      visualizationPanel.add(lmLabel, "span 3, gapleft 70, wrap");
 
       JButton renderButton = new JButton("Render");
       renderButton.setFont(gFont); 
@@ -801,6 +824,7 @@ public class DataCollectionForm extends JFrame {
             renderButton_ActionPerformed(evt);
          }
       });
+      renderButton.setMaximumSize(buttonSize);
       visualizationPanel.add(renderButton);
       
       visualizationModel_.setFont(gFont);
@@ -824,6 +848,7 @@ public class DataCollectionForm extends JFrame {
             zCalibrateButton_ActionPerformed(evt);
          }
       });
+      zCalibrateButton.setMaximumSize(buttonSize);
       visualizationPanel.add(zCalibrateButton);
 
       JButton unjitterButton = new JButton("Drift Correct");
@@ -834,6 +859,7 @@ public class DataCollectionForm extends JFrame {
             unjitterButton_ActionPerformed(evt);
          }
       });
+      unjitterButton.setMaximumSize(buttonSize);
       visualizationPanel.add(unjitterButton);
 
       JButton linkButton = new JButton("Link");
@@ -844,298 +870,50 @@ public class DataCollectionForm extends JFrame {
             linkButton_ActionPerformed(evt);
          }
       });
+      linkButton.setMaximumSize(buttonSize);
       visualizationPanel.add(linkButton, "wrap");
       
       zCalibrationLabel_.setFont(gFont); 
       zCalibrationLabel_.setText("UnCalibrated");
-      visualizationPanel.add(zCalibrationLabel_);
+      visualizationPanel.add(zCalibrationLabel_, "gapleft 10");
 
-      JSeparator vLine4 = new JSeparator();
-      vLine4.setOrientation(SwingConstants.VERTICAL);
+   
+/************************* Assemble the complete window  *******************/      
+      Dimension vLineMinSize = new Dimension(6, 60);
 
-
-
-      GroupLayout jPanel1Layout = new GroupLayout(jPanel1);
-      jPanel1.setLayout(jPanel1Layout);
-      jPanel1Layout.setHorizontalGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-         .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-            .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(68, 68, 68)
-                        .addComponent(generalLabel))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap(33, Short.MAX_VALUE)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                           .addComponent(saveButton, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 70, GroupLayout.PREFERRED_SIZE)
-                           .addComponent(loadButton, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 70, GroupLayout.PREFERRED_SIZE)
-                           .addComponent(showButton, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 70, GroupLayout.PREFERRED_SIZE)
-                           .addComponent(extractTracksButton, GroupLayout.Alignment.TRAILING, GroupLayout.PREFERRED_SIZE, 70, GroupLayout.PREFERRED_SIZE))
-                        .addGap(4, 4, 4)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                           .addComponent(saveFormatBox_, GroupLayout.PREFERRED_SIZE, 90, GroupLayout.PREFERRED_SIZE)
-                           .addGroup(jPanel1Layout.createSequentialGroup()
-                              .addGap(6, 6, 6)
-                              .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                 .addComponent(removeButton, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)
-                                 .addComponent(infoButton, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE))))))
-                  .addGap(7, 7, 7))
-               .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                  .addGap(0, 0, Short.MAX_VALUE)
-                  .addComponent(combineButton, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)))
-            .addComponent(vLine2, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(84, 84, 84)
-                  .addComponent(c2olorLabel))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(14, 14, 14)
-                        .addComponent(c2StandardButton, GroupLayout.PREFERRED_SIZE, 82, GroupLayout.PREFERRED_SIZE))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(16, 16, 16)
-                        .addComponent(c2CorrectButton, GroupLayout.PREFERRED_SIZE, 82, GroupLayout.PREFERRED_SIZE)))
-                  .addGap(18, 18, 18)
-                  .addComponent(reference2CName_, GroupLayout.PREFERRED_SIZE, 60, GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(11, 11, 11)
-                  .addComponent(method2CBox_, GroupLayout.PREFERRED_SIZE, 90, GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(pairsMaxDistanceField_, GroupLayout.PREFERRED_SIZE, 44, GroupLayout.PREFERRED_SIZE)
-                  .addGap(8, 8, 8)
-                  .addComponent(nmLabel, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
-               .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                  .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(listPairsButton, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE)))
-            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(vLine3, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(10, 10, 10)
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addComponent(plotButton, GroupLayout.PREFERRED_SIZE, 58, GroupLayout.PREFERRED_SIZE)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(2, 2, 2)
-                        .addComponent(powerSpectrumCheckBox_))
-                     .addComponent(averageTrackButton)
-                     .addComponent(mathButton, GroupLayout.PREFERRED_SIZE, 88, GroupLayout.PREFERRED_SIZE)
-                     .addComponent(subRangeButton, GroupLayout.PREFERRED_SIZE, 88, GroupLayout.PREFERRED_SIZE))
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                           .addGap(4, 4, 4)
-                           .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                              .addComponent(logLogCheckBox_)
-                              .addComponent(plotComboBox_, GroupLayout.PREFERRED_SIZE, 80, GroupLayout.PREFERRED_SIZE))
-                           .addGap(15, 15, 15))
-                        .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                           .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                           .addComponent(straightenTrackButton, GroupLayout.PREFERRED_SIZE, 93, GroupLayout.PREFERRED_SIZE)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addComponent(centerTrackButton, GroupLayout.PREFERRED_SIZE, 93, GroupLayout.PREFERRED_SIZE))))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(83, 83, 83)
-                  .addComponent(trackLabel)))
-            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(vLine4, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addComponent(zCalibrateButton)
-                     .addComponent(unjitterButton, GroupLayout.PREFERRED_SIZE, 107, GroupLayout.PREFERRED_SIZE)
-                     .addComponent(linkButton, GroupLayout.PREFERRED_SIZE, 107, GroupLayout.PREFERRED_SIZE)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(zCalibrationLabel_, GroupLayout.PREFERRED_SIZE, 75, GroupLayout.PREFERRED_SIZE)))
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(7, 7, 7)
-                        .addComponent(filterLabel)
-                        .addGap(4, 4, 4)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                           .addComponent(filterSigmaCheckBox_)
-                           .addGroup(jPanel1Layout.createSequentialGroup()
-                              .addGap(1, 1, 1)
-                              .addComponent(filterIntensityCheckBox_)))
-                        .addGap(1, 1, 1)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                           .addComponent(sigmaMin_, GroupLayout.PREFERRED_SIZE, 47, GroupLayout.PREFERRED_SIZE)
-                           .addGroup(jPanel1Layout.createSequentialGroup()
-                              .addGap(1, 1, 1)
-                              .addComponent(intensityMin_, GroupLayout.PREFERRED_SIZE, 46, GroupLayout.PREFERRED_SIZE)))
-                        .addGap(1, 1, 1)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                           .addComponent(spotCompLabel2)
-                           .addComponent(spotCompLabel1))
-                        .addGap(3, 3, 3)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                           .addComponent(sigmaMax_, GroupLayout.PREFERRED_SIZE, 48, GroupLayout.PREFERRED_SIZE)
-                           .addComponent(intensityMax_, GroupLayout.PREFERRED_SIZE, 48, GroupLayout.PREFERRED_SIZE)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(renderButton)
-                        .addGap(4, 4, 4)
-                        .addComponent(visualizationModel_, GroupLayout.PREFERRED_SIZE, 110, GroupLayout.PREFERRED_SIZE)
-                        .addGap(6, 6, 6)
-                        .addComponent(visualizationMagnification_, GroupLayout.PREFERRED_SIZE, 70, GroupLayout.PREFERRED_SIZE)))
-                  .addGap(4, 4, 4)
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addComponent(sigmaUnitLabel)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(1, 1, 1)
-                        .addComponent(intensityUnitLabel, GroupLayout.PREFERRED_SIZE, 10, GroupLayout.PREFERRED_SIZE))))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(137, 137, 137)
-                  .addComponent(lmLabel))))
-      );
-      jPanel1Layout.setVerticalGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-         .addGroup(jPanel1Layout.createSequentialGroup()
-            .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addComponent(generalLabel)
-                     .addComponent(c2olorLabel))
-                  .addGap(5, 5, 5))
-               .addGroup(GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addComponent(trackLabel, GroupLayout.Alignment.TRAILING)
-                     .addComponent(lmLabel, GroupLayout.Alignment.TRAILING))
-                  .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)))
-            .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(3, 3, 3)
-                  .addComponent(saveButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-                  .addGap(25, 25, 25)
-                  .addComponent(loadButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-                  .addGap(1, 1, 1)
-                  .addComponent(showButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-                  .addGap(1, 1, 1)
-                  .addComponent(extractTracksButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(1, 1, 1)
-                  .addComponent(saveFormatBox_, GroupLayout.PREFERRED_SIZE, 25, GroupLayout.PREFERRED_SIZE)
-                  .addGap(21, 21, 21)
-                  .addComponent(removeButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-                  .addGap(1, 1, 1)
-                  .addComponent(infoButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(combineButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addComponent(c2StandardButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE)
-                  .addGap(33, 33, 33)
-                  .addComponent(c2CorrectButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addComponent(reference2CName_)
-                  .addGap(12, 12, 12)
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                        .addComponent(pairsMaxDistanceField_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                        .addComponent(method2CBox_, GroupLayout.PREFERRED_SIZE, 23, GroupLayout.PREFERRED_SIZE))
-                     .addComponent(nmLabel, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
-                  .addGap(28, 28, 28)
-                  .addComponent(listPairsButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(1, 1, 1)
-                  .addComponent(plotButton, GroupLayout.PREFERRED_SIZE, 18, GroupLayout.PREFERRED_SIZE)
-                  .addGap(2, 2, 2)
-                  .addComponent(powerSpectrumCheckBox_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                  .addGap(2, 2, 2)
-                  .addComponent(averageTrackButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                  .addGap(2, 2, 2)
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                     .addComponent(mathButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                     .addComponent(centerTrackButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
-                  .addGap(2, 2, 2)
-                  .addComponent(subRangeButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(1, 1, 1)
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(17, 17, 17)
-                        .addComponent(logLogCheckBox_))
-                     .addComponent(plotComboBox_, GroupLayout.PREFERRED_SIZE, 23, GroupLayout.PREFERRED_SIZE))
-                  .addGap(2, 2, 2)
-                  .addComponent(straightenTrackButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                     .addComponent(zCalibrateButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                     .addComponent(renderButton, GroupLayout.PREFERRED_SIZE, 19, GroupLayout.PREFERRED_SIZE))
-                  .addGap(7, 7, 7)
-                  .addComponent(zCalibrationLabel_))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(1, 1, 1)
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addComponent(visualizationModel_, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE)
-                     .addComponent(visualizationMagnification_, GroupLayout.PREFERRED_SIZE, 24, GroupLayout.PREFERRED_SIZE))
-                  .addGap(16, 16, 16)
-                  .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(1, 1, 1)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                           .addComponent(filterLabel)
-                           .addComponent(unjitterButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(filterSigmaCheckBox_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                           .addComponent(filterIntensityCheckBox_)
-                           .addComponent(linkButton, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(sigmaMin_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                           .addComponent(intensityMin_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                           .addComponent(spotCompLabel1)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                           .addComponent(sigmaMax_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE)
-                           .addComponent(spotCompLabel2))
-                        .addGap(1, 1, 1)
-                        .addComponent(intensityMax_, GroupLayout.PREFERRED_SIZE, 20, GroupLayout.PREFERRED_SIZE))))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(41, 41, 41)
-                  .addComponent(sigmaUnitLabel)
-                  .addGap(7, 7, 7)
-                  .addComponent(intensityUnitLabel)))
-            .addContainerGap())
-         .addComponent(vLine2)
-         .addComponent(vLine3)
-         .addComponent(vLine4)
-      );
-
-      jPanel2.setLayout(new java.awt.BorderLayout());
-
-      jScrollPane1_.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-      jScrollPane1_.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      getContentPane().setLayout(new MigLayout(insets, 
+              "[fill]0[]0[fill]2[]2[fill]2[]2[fill]", "[top]2[fill, grow 1]"));
+      getContentPane().add(generalPanel);
+      getContentPane().add(getVLine(vLineMinSize), "growy");
+      getContentPane().add(c2Panel);
+      getContentPane().add(getVLine(vLineMinSize), "growy");
+      getContentPane().add(tracksPanel);
+      getContentPane().add(getVLine(vLineMinSize), "growy");
+      getContentPane().add(filterPanel);
+      getContentPane().add(getVLine(vLineMinSize), "growy");
+      getContentPane().add(visualizationPanel, "wrap");
+      
+            
+      tableScrollPane.setName("Gaussian Spot Fitting Data Sets");      
+      tableScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      tableScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
       mainTable_.setModel(mainTableModel_);
-      mainTable_.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-      jScrollPane1_.setViewportView(mainTable_);
+      mainTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+      mainTable_.setPreferredScrollableViewportSize(new Dimension(10000, 10000));
+      tableScrollPane.setViewportView(mainTable_);
 
-      jPanel2.add(jScrollPane1_, java.awt.BorderLayout.CENTER);
+      getContentPane().add(tableScrollPane, "span 9, wrap");
 
-      GroupLayout layout = new GroupLayout(getContentPane());
-      getContentPane().setLayout(layout);
-      layout.setHorizontalGroup(
-         layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-         .addComponent(jPanel1, GroupLayout.Alignment.TRAILING, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-         .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-      );
-      layout.setVerticalGroup(
-         layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addComponent(jPanel1, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jPanel2, GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE)
-            .addGap(0, 0, 0))
-      );
 
       pack();
+   }
+   
+   private JSeparator getVLine(Dimension minSize) {
+      JSeparator vLine = new JSeparator();
+      vLine.setOrientation(SwingConstants.VERTICAL);
+      vLine.setMinimumSize(minSize); 
+      return vLine;
    }
 
    /**
@@ -1257,10 +1035,8 @@ public class DataCollectionForm extends JFrame {
    }
     
    private void formComponentResized(java.awt.event.ComponentEvent evt) {
-      Dimension d = getSize();
-      d.height -= 155;
-      jScrollPane1_.setSize(d);
-      jScrollPane1_.getViewport().setViewSize(d);
+      mainTable_.update();
+      super.repaint();
    }
 
    /**
