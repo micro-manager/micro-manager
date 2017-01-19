@@ -36,6 +36,7 @@ package edu.valelab.gaussianfit;
 
 import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.spotoperations.SpotLinker;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -44,7 +45,6 @@ import java.text.ParseException;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
@@ -66,9 +66,8 @@ public class ExtractTracksDialog  {
    ExtractTracksDialog(final Studio studio, final RowData rowData, final Point p) {
       final JFrame jf = new JFrame();
       jf.setTitle("Extract Tracks");
-      
-      JPanel jp = new JPanel();
-      jp.setLayout(new MigLayout(""));
+
+      jf.getContentPane().setLayout(new MigLayout("insets 20", "[fill]5[]", ""));
       
       Font gFont = new Font("Lucida Grande", 0, 10);
       final UserProfile up = studio.profile();
@@ -76,40 +75,40 @@ public class ExtractTracksDialog  {
       
       JLabel label = new JLabel("Minimum # of Frames:");
       label.setFont(gFont);
-      jp.add(label);
+      jf.getContentPane().add(label);
       final JSpinner minFramesSp = new JSpinner();
       minFramesSp.setFont(gFont);
       String w = "width 60:60:60";
       minFramesSp.setModel(new SpinnerNumberModel(
               up.getInt(us, MINIMUM_NUMBER_OF_FRAMES, 10),1, null, 1));
-      jp.add(minFramesSp, w + ", wrap");
+      jf.getContentPane().add(minFramesSp, w + ", wrap");
       
       JLabel label2 = new JLabel("Max # missing Frames:");
       label2.setFont(gFont);
-      jp.add(label2);
+      jf.getContentPane().add(label2);
       final JSpinner maxMissingSp = new JSpinner();
       maxMissingSp.setFont(gFont);
       maxMissingSp.setModel(new SpinnerNumberModel(
               up.getInt(us, MAXIMUM_NUMBER_OF_MISSING_FRAMES, 0), 0, null, 1));
-      jp.add(maxMissingSp, w + ", wrap");
+      jf.getContentPane().add(maxMissingSp, w + ", wrap");
       
       JLabel label3 = new JLabel("Max. distance (nm)");
       label3.setFont(gFont);
-      jp.add(label3);
+      jf.getContentPane().add(label3);
       final JTextField distanceTF = new JTextField(
               NumberUtils.doubleToDisplayString(up.getDouble(us, 
                       MAXIMUM_DISTANCE_BETWEEN_FRAMES, 90.0)));
       distanceTF.setFont(gFont);
-      jp.add(distanceTF, w + ", wrap");
+      jf.getContentPane().add(distanceTF, w + ", wrap");
       
       JLabel label4 = new JLabel("Min. total distance (nm)");
       label4.setFont(gFont);
-      jp.add(label4);
+      jf.getContentPane().add(label4);
       final JTextField minTotalDistanceTF = new JTextField(
                NumberUtils.doubleToDisplayString(up.getDouble(us, 
                        MINIMUM_TOTAL_DISTANCE, 300.0)) );
       minTotalDistanceTF.setFont(gFont);
-      jp.add(minTotalDistanceTF, w + ", wrap");
+      jf.getContentPane().add(minTotalDistanceTF, w + ", wrap");
       
       JButton okButton = new JButton("OK");
       okButton.addActionListener(new ActionListener() {
@@ -137,7 +136,7 @@ public class ExtractTracksDialog  {
             }
          }
       });
-      jp.add(okButton, "span, split 2, tag ok");
+      jf.getContentPane().add(okButton, "span, split 2, tag ok");
       
       JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener(new ActionListener() {
@@ -146,11 +145,11 @@ public class ExtractTracksDialog  {
             jf.dispose();
          }
       });
-      jp.add(cancelButton, "tag cancel, wrap");
-      jp.setPreferredSize(jp.getMinimumSize());
-      jp.revalidate();
-      
-      jf.add(jp);
+      jf.getContentPane().add(cancelButton, "tag cancel, wrap");
+      jf.validate();
+      // On Windows, the window ends up too wide.  Thi seems to be OS
+      // specific.  When resizable is true, the window can not be made less wide.
+      // Not sure how to override this.
       jf.pack();
       
       jf.setResizable(false);
