@@ -81,7 +81,11 @@ public class DataTable extends JTable {
 
    public int getSelectedRowSorted() {
       int rawRow = super.getSelectedRow();
-      return convertRowIndexToModel(rawRow);
+      try {
+         return convertRowIndexToModel(rawRow);
+      } catch (IndexOutOfBoundsException ioobe) {
+         return -1;
+      }
    }
    
    public int[] getSelectedRowsSorted() {

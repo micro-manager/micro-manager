@@ -1039,6 +1039,8 @@ public class DataCollectionForm extends JFrame {
          Point s = MouseInfo.getPointerInfo().getLocation();
          ExtractTracksDialog extractTracksDialog = 
                  new ExtractTracksDialog(studio_, mainTableModel_.getRow(row), s);
+      } else {
+         JOptionPane.showMessageDialog(getInstance(), "No Data Rows selected");
       }
    }
     

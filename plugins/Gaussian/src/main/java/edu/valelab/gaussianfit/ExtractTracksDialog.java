@@ -36,7 +36,6 @@ package edu.valelab.gaussianfit;
 
 import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.spotoperations.SpotLinker;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
