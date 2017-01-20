@@ -485,7 +485,7 @@ public class ParticlePairLister {
             int width = spotData.width_;
             int height = spotData.height_;
             double factor = spotData.pixelSizeNm_;
-            boolean useS = DataCollectionForm.getInstance().useSeconds(spotData);
+            boolean useS = spotData.useSeconds();
             ij.ImageStack stack = new ij.ImageStack(width, height);
 
             XYSeries xData = new XYSeries("XError");

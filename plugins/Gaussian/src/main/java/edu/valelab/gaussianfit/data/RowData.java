@@ -252,5 +252,28 @@ import org.micromanager.display.DisplayWindow;
  
          return null;
       }
+      
+           
+   public boolean useSeconds() {
+      boolean useS = false;
+      if (timePoints_ != null) {
+         if (timePoints_.get(timePoints_.size() - 1)
+                 - timePoints_.get(0) > 10000) {
+            useS = true;
+         }
+      }
+      return useS;
+   }
+   
+   public boolean hasTimeInfo() {
+      boolean hasTimeInfo = false;
+      if (timePoints_ != null) {
+         if (timePoints_.get(timePoints_.size() - 1)
+                 - timePoints_.get(0) > 0) {
+            hasTimeInfo = true;
+         }
+      }
+      return hasTimeInfo;
+   }
 
    }

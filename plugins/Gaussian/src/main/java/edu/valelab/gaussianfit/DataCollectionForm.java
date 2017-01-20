@@ -59,6 +59,7 @@ import edu.valelab.gaussianfit.data.LoadAndSave;
 import edu.valelab.gaussianfit.spotoperations.SpotLinker;
 import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
+import edu.valelab.gaussianfit.datasetdisplay.TrackPlotter;
 import edu.valelab.gaussianfit.datasettransformations.DriftCorrector;
 import edu.valelab.gaussianfit.datasettransformations.PairFilter;
 import edu.valelab.gaussianfit.datasettransformations.TrackOperator;
@@ -129,7 +130,6 @@ import org.micromanager.internal.MMStudio;
  */
 public class DataCollectionForm extends JFrame {
    DataTableModel mainTableModel_;
-   private final String[] plotModes_ = {"t-X", "t-Y", "t-dist", "t-Int", "X-Y"};
    private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
    private final String[] renderSizes_  = 
                {"1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x"};
@@ -675,7 +675,7 @@ public class DataCollectionForm extends JFrame {
       tracksPanel.add(plotButton);
       
       plotComboBox_.setFont(gFont); 
-      plotComboBox_.setModel(new DefaultComboBoxModel(plotModes_));
+      plotComboBox_.setModel(new DefaultComboBoxModel(TrackPlotter.PLOTMODES));
       plotComboBox_.setMaximumSize(dropDownSizeMax);
       tracksPanel.add(plotComboBox_, "wrap");
 
@@ -1356,7 +1356,11 @@ public class DataCollectionForm extends JFrame {
          // TODO: check that these are tracks 
          for (int i = 0; i < rows.length; i++)
             myRows[i] = mainTableModel_.getRow(rows[i]);
-         plotData(myRows, plotComboBox_.getSelectedIndex());
+         TrackPlotter.plotData(myRows, 
+                 plotComboBox_.getSelectedIndex(), 
+                 logLogCheckBox_.isSelected(), 
+                 powerSpectrumCheckBox_.isSelected(),
+                 this);
       }
    }
 
@@ -1932,6 +1936,7 @@ public class DataCollectionForm extends JFrame {
     * @plotMode - Index of plotMode in array {"t-X", "t-Y", "t-dist.", "t-Int.",
     * "X-Y"};
     */
+   /*
    private void plotData(RowData[] rowDatas, int plotMode) {
       String title = plotModes_[plotMode];
       boolean logLog = logLogCheckBox_.isSelected();
@@ -2039,6 +2044,7 @@ public class DataCollectionForm extends JFrame {
                GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
                        0, 400, useShapes, logLog);
                        * */
+   /*
             } else {
                for (int index = 0; index < rowDatas.length; index++) {
                   datas[index] = new XYSeries(rowDatas[index].ID_);
@@ -2158,28 +2164,7 @@ public class DataCollectionForm extends JFrame {
          break;
       }
    }
-   
-   public boolean useSeconds(RowData row) {
-      boolean useS = false;
-      if (row.timePoints_ != null) {
-         if (row.timePoints_.get(row.timePoints_.size() - 1)
-                 - row.timePoints_.get(0) > 10000) {
-            useS = true;
-         }
-      }
-      return useS;
-   }
-   
-   private boolean hasTimeInfo(RowData row) {
-      boolean hasTimeInfo = false;
-      if (row.timePoints_ != null) {
-         if (row.timePoints_.get(row.timePoints_.size() - 1)
-                 - row.timePoints_.get(0) > 0) {
-            hasTimeInfo = true;
-         }
-      }
-      return hasTimeInfo;
-   }
+*/
    
    /**
     * Performs Z-calibration
