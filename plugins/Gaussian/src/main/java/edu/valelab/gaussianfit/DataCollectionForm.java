@@ -46,14 +46,12 @@ either expressed or implied, of the FreeBSD Project.
 package edu.valelab.gaussianfit;
 
 import com.google.common.eventbus.Subscribe;
-import edu.valelab.gaussianfit.algorithm.FFTUtils;
 import edu.valelab.gaussianfit.datasetdisplay.ImageRenderer;
 import edu.valelab.gaussianfit.datasettransformations.SpotDataFilter;
 import edu.valelab.gaussianfit.datasettransformations.CoordinateMapper;
 import edu.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.valelab.gaussianfit.utils.DisplayUtils;
 import edu.valelab.gaussianfit.data.SpotData;
-import edu.valelab.gaussianfit.utils.GaussianUtils;
 import edu.valelab.gaussianfit.fitting.ZCalibrator;
 import edu.valelab.gaussianfit.data.LoadAndSave;
 import edu.valelab.gaussianfit.spotoperations.SpotLinker;
@@ -116,7 +114,6 @@ import net.miginfocom.swing.MigLayout;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.stat.StatUtils;
-import org.jfree.data.xy.XYSeries;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.display.DisplayWindow;
@@ -1737,7 +1734,7 @@ public class DataCollectionForm extends JFrame {
    }
 
    private void listButton_1ActionPerformed(java.awt.event.ActionEvent evt) {
-      PairDisplayForm pdf = new PairDisplayForm();
+      PairDisplayForm pdf = new PairDisplayForm(studio_);
       pdf.setVisible(true);
    }
 
@@ -1928,244 +1925,6 @@ public class DataCollectionForm extends JFrame {
       (new Thread(doWorkRunnable)).start();
    }
 
-   /**
-    * Plots Tracks using JFreeChart
-    *
-    * @rowData
-    * @plotMode - Index of plotMode in array {"t-X", "t-Y", "X-Y", "t-Int"};
-    * @plotMode - Index of plotMode in array {"t-X", "t-Y", "t-dist.", "t-Int.",
-    * "X-Y"};
-    */
-   /*
-   private void plotData(RowData[] rowDatas, int plotMode) {
-      String title = plotModes_[plotMode];
-      boolean logLog = logLogCheckBox_.isSelected();
-      boolean doPSD = powerSpectrumCheckBox_.isSelected();
-      boolean useShapes = true;
-      if (logLog || doPSD) {
-         useShapes = false;
-      }
-      if (rowDatas.length == 1) {
-         title = rowDatas[0].name_ + " " + plotModes_[plotMode];
-      }
-
-      XYSeries[] datas = new XYSeries[rowDatas.length];
-
-             
-      // Todo: check all rows and throw an error when there is a difference
-      boolean useS = useSeconds(rowDatas[0]);
-      boolean hasTimeInfo = hasTimeInfo(rowDatas[0]);
-
-      String xAxis = null;
-
-      switch (plotMode) {
-
-         case (0): { // t-X
-            if (doPSD) {
-               FFTUtils.calculatePSDs(rowDatas, datas, PlotMode.X);
-               xAxis = "Freq (Hz)";
-               GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
-                       0, 400, useShapes, logLog);
-
-            } else {
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-               }
-
-               for (int index = 0; index < rowDatas.length; index++) {
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     if (hasTimeInfo) {
-                        double timePoint = rowDatas[index].timePoints_.get(i);
-                        if (useS) {
-                           timePoint /= 1000;
-                        }
-                        datas[index].add(timePoint, spot.getXCenter());
-                     } else {
-                        datas[index].add(i, spot.getXCenter());
-                     }
-                  }
-                  xAxis = "Time (frameNr)";
-                  if (hasTimeInfo) {
-                     xAxis = "Time (ms)";
-                     if (useS) {
-                        xAxis = "Time(s)";
-                     }
-                  }
-               }
-               GaussianUtils.plotDataN(title, datas, xAxis, "X(nm)", 0, 400, useShapes, logLog);
-            }
-         }
-         break;
-
-         case (1): { // t-Y
-            if (doPSD) {
-               FFTUtils.calculatePSDs(rowDatas, datas, PlotMode.Y);
-               xAxis = "Freq (Hz)";
-               GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
-                       0, 400, useShapes, logLog);
-            } else {
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-               }
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     if (hasTimeInfo) {
-                        double timePoint = rowDatas[index].timePoints_.get(i);
-                        if (useS) {
-                           timePoint /= 1000;
-                        }
-                        datas[index].add(timePoint, spot.getYCenter());
-                     } else {
-                        datas[index].add(i, spot.getYCenter());
-                     }
-                  }
-                  xAxis = "Time (frameNr)";
-                  if (hasTimeInfo) {
-                     xAxis = "Time (ms)";
-                     if (useS) {
-                        xAxis = "Time(s)";
-                     }
-                  }
-               }
-               GaussianUtils.plotDataN(title, datas, xAxis, "Y(nm)", 0, 400, useShapes, logLog);
-            }
-         }
-         break;
-
-
-         case (2): { // t-dist.
-            if (doPSD) {
-               /*
-               FFTUtils.calculatePSDs(rowDatas, datas, PlotMode.Y);
-               xAxis = "Freq (Hz)";
-               GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
-                       0, 400, useShapes, logLog);
-                       * */
-   /*
-            } else {
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-               }
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-                  SpotData sp = rowDatas[index].spotList_.get(0);
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     double distX = (sp.getXCenter() - spot.getXCenter())
-                             * (sp.getXCenter() - spot.getXCenter());
-                     double distY = (sp.getYCenter() - spot.getYCenter())
-                             * (sp.getYCenter() - spot.getYCenter());
-                     double dist = Math.sqrt(distX + distY);
-                     if (hasTimeInfo) {
-                        double timePoint = rowDatas[index].timePoints_.get(i);
-                        if (useS) {
-                           timePoint /= 1000.0;
-                        }
-                        datas[index].add(timePoint, dist);
-                     } else {
-                        datas[index].add(i, dist);
-                     }
-                  }
-                  xAxis = "Time (frameNr)";
-                  if (hasTimeInfo) {
-                     xAxis = "Time (ms)";
-                     if (useS) {
-                        xAxis = "Time (s)";
-                     }
-                  }
-               }
-               GaussianUtils.plotDataN(title, datas, xAxis, " distance (nm)", 0, 400, useShapes, logLog);
-            }
-         }
-         break;
-
-         case (3): { // t-Int
-            if (doPSD) {
-                JOptionPane.showMessageDialog(this, "Function is not implemented");
-            } else {
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-               }
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     if (hasTimeInfo) {
-                        double timePoint = rowDatas[index].timePoints_.get(i);
-                        if (useS) {
-                           timePoint /= 1000;
-                        }
-                        datas[index].add(timePoint, spot.getIntensity());
-                     } else {
-                        datas[index].add(i, spot.getIntensity());
-                     }
-                  }
-                  xAxis = "Time (frameNr)";
-                  if (hasTimeInfo) {
-                     xAxis = "Time (ms)";
-                     if (useS) {
-                        xAxis = "Time (s)";
-                     }
-
-                  }
-               }
-               GaussianUtils.plotDataN(title, datas, xAxis, "Intensity (#photons)",
-                       0, 400, useShapes, logLog);
-            }
-         }
-         break;
-
-         case (4): { // X-Y
-            if (doPSD) {
-               JOptionPane.showMessageDialog(this, "Function is not implemented");
-            } else {
-               double minX = Double.MAX_VALUE; double minY = Double.MAX_VALUE;
-               double maxX = Double.MIN_VALUE; double maxY = Double.MIN_VALUE;
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     datas[index].add(spot.getXCenter(), spot.getYCenter());
-                     minX = Math.min(minX, spot.getXCenter());
-                     minY = Math.min(minY, spot.getYCenter());
-                     maxX = Math.max(maxX, spot.getXCenter());
-                     maxY = Math.max(maxY, spot.getYCenter());
-                  }
-               }
-               double xDivisor = 1.0;
-               double yDivisor = 1.0;
-               String xAxisTitle = "X(nm)";
-               String yAxisTitle = "Y(nm)";
-               if (maxX - minX > 10000) {
-                  xAxisTitle = "X(micron)";
-                  xDivisor = 1000;
-               }
-               if (maxY - minY > 10000) {
-                  yAxisTitle = "Y(micron)";
-                  yDivisor = 1000;
-               } 
-               if (xDivisor != 1.0 || yDivisor != 1.0) {  
-                  for (int index = 0; index < rowDatas.length; index++) {
-                     datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
-                     for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                        SpotData spot = rowDatas[index].spotList_.get(i);
-                        datas[index].add(spot.getXCenter() / xDivisor, 
-                                spot.getYCenter() / yDivisor);
-                     }
-                  }
-               }
-
-               GaussianUtils.plotDataN(title, datas, xAxisTitle, yAxisTitle, 0, 400, useShapes, logLog);
-            }
-         }
-         break;
-      }
-   }
-*/
-   
    /**
     * Performs Z-calibration
     * 

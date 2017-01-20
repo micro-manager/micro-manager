@@ -41,7 +41,6 @@ import java.awt.event.WindowEvent;
 import java.awt.Dimension;
 import java.io.File;
 import java.text.ParseException;
-import java.util.prefs.Preferences;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -50,6 +49,9 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import org.micromanager.Studio;
+import org.micromanager.UserProfile;
+import org.micromanager.internal.MMStudio;
 
 /**
  *
@@ -68,17 +70,18 @@ public class PairDisplayForm extends GUFrame{
    private static final String SAVETRACKSUMMARYFILEPREF = "savetracksummaryfile";
    private static final String SHOWOVERLAYPREF = "showoverlay";
    private static final String P2DPREF = "p2d";
-   private final Preferences prefs_;
    public static FileDialogs.FileType PAIR_DATA 
            = new FileDialogs.FileType("PAIR_DATA",
                  "Export to Location",
                  System.getProperty("user.home") + "/Untitled",
                  false, (String[]) null);
+   final UserProfile up_;
    
-   public PairDisplayForm() {
+   public PairDisplayForm(final Studio studio) {
+      super(studio, PairDisplayForm.class);
       final GUFrame myFrame = this;
-      prefs_ = getPrefsNode();
-      loadPosition(100, 100, 250, 75);
+      up_ = studio.profile();
+      super.loadPosition(100, 100, 250, 75);
       JPanel panel = new JPanel(new MigLayout(
               "ins 5", 
               "[grow]", 
@@ -89,7 +92,7 @@ public class PairDisplayForm extends GUFrame{
       panel.add(new JLabel("Maximum distance:" ), "split 2, span 2");
       final JTextField distanceTextField = new JTextField();
       distanceTextField.setMinimumSize(new Dimension(60, 20));
-      distanceTextField.setText(prefs_.get(MAXDISTANCEPREF, "50.0"));
+      distanceTextField.setText(up_.getString(this.getClass(), MAXDISTANCEPREF, "50.0"));
       distanceTextField.getDocument().addDocumentListener(
               makeDocumentListener(MAXDISTANCEPREF, distanceTextField));
       panel.add (distanceTextField, "wrap");
@@ -111,7 +114,7 @@ public class PairDisplayForm extends GUFrame{
               "Save Pair Track List as Text File", SAVETRACKSUMMARYFILEPREF);      
       final JLabel filePathLabel = new JLabel("FilePath:");
       final JTextField filePath = new JTextField();
-      filePath.setText(prefs_.get(FILEPATHPREF, ""));
+      filePath.setText(up_.getString(this.getClass(), FILEPATHPREF, ""));
       final JButton dirButton = new JButton("...");
       final JComponent[] fileComps = {filePathLabel, filePath, dirButton};
       setEnabled(savePairTextFile.isSelected(), fileComps);
@@ -167,7 +170,7 @@ public class PairDisplayForm extends GUFrame{
          @Override
          public void actionPerformed(ActionEvent e) {
             setSaveDestinationDirectory(filePath);
-            prefs_.put(FILEPATHPREF, filePath.getText());
+            up_.setString(PairDisplayForm.class, FILEPATHPREF, filePath.getText());
          }
       });
       panel.add(dirButton, "wrap");
@@ -242,11 +245,11 @@ public class PairDisplayForm extends GUFrame{
    
    private JCheckBox makeCheckBox(final String text, final String prefName) {
       final JCheckBox jcb =  new JCheckBox(text);
-      jcb.setSelected(prefs_.getBoolean(prefName, false));
+      jcb.setSelected(up_.getBoolean(PairDisplayForm.class, prefName, false));
       jcb.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            prefs_.putBoolean(prefName, jcb.isSelected());
+            up_.setBoolean(PairDisplayForm.class, prefName, jcb.isSelected());
          }
       });
       return jcb;
@@ -256,7 +259,7 @@ public class PairDisplayForm extends GUFrame{
            final JTextField textField) {
       return new DocumentListener() {
          private void savePref() {
-            prefs_.put(prefName, textField.getText());
+            up_.setString(PairDisplayForm.class, prefName, textField.getText());
          }
          @Override
          public void insertUpdate(DocumentEvent e) {
