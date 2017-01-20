@@ -28,6 +28,7 @@
 #include "ASIBase.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/DeviceThreads.h"
 #include <string>
 
 using namespace std;
@@ -143,6 +144,7 @@ private:
    long serialRepeatDuration_; // for how long total time the command is repeatedly sent
    long serialRepeatPeriod_;  // how often in ms the command is sent
    bool serialOnlySendChanged_;        // if true the serial command is only sent when it has changed
+   MMThreadLock threadLock_;  // used to lock thread during serial transaction
 };
 
 
