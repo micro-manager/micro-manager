@@ -1147,16 +1147,16 @@ public class DataCollectionForm extends JFrame {
    
    public void listPairTracks(double maxDistance, boolean showTrack, 
            boolean showSummary, boolean showOverlay, boolean saveFile, 
-           String filePath, boolean p2d) {
+           String filePath, boolean p2d, double sigmaEstimate) {
       final int[] rows = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select a dataset");
          return;
       }
-      if (showTrack || showSummary || showOverlay || saveFile || p2d) {
+      if (showTrack || showSummary || showOverlay || saveFile || p2d || sigmaEstimate > 0.0) {
          ParticlePairLister.listParticlePairTracks(rows, maxDistance, showTrack, 
-                 showSummary, showOverlay, saveFile, p2d, filePath);
+                 showSummary, showOverlay, saveFile, p2d, sigmaEstimate, filePath);
       }
    }
    

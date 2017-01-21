@@ -98,7 +98,7 @@ class P2DFunc implements MultivariateFunction {
 
 /**
  * Class that uses the apache commons math3 library to fit a maximum likelihood
- * function for the probability density function of the distrubtion of measured
+ * function for the probability density function of the distribution of measured
  * distances.
  * @author nico
  */
@@ -132,21 +132,38 @@ public class P2DFitter {
    public double[] solve() {
       SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
       P2DFunc myP2DFunc = new P2DFunc(points_, sigma_);
-      
-      double[] lowerBounds = {0.0, 0.0};
-      double[] upperBounds = {50.0, 50.0};
-      MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
-              myP2DFunc, lowerBounds, upperBounds);
-      
-      PointValuePair solution = optimizer.optimize(
-              new ObjectiveFunction(mfma),
-              new MaxEval(500),
-              GoalType.MINIMIZE,
-              new InitialGuess(new double[]{muGuess_, sigmaGuess_}),
-              new NelderMeadSimplex(new double[]{0.2, 0.2})//,
-      );
-      
-      return mfma.unboundedToBounded( solution.getPoint() );
+
+      if (sigma_ < 0.0) {
+         double[] lowerBounds = {0.0, 0.0};
+         double[] upperBounds = {50.0, 50.0};
+         MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
+                 myP2DFunc, lowerBounds, upperBounds);
+
+         PointValuePair solution = optimizer.optimize(
+                 new ObjectiveFunction(mfma),
+                 new MaxEval(500),
+                 GoalType.MINIMIZE,
+                 new InitialGuess(new double[]{muGuess_, sigmaGuess_}),
+                 new NelderMeadSimplex(new double[]{0.2, 0.2})//,
+         );
+
+         return mfma.unboundedToBounded(solution.getPoint());
+      } else {
+         double[] lowerBounds = {0.0};
+         double[] upperBounds = {50.0};
+         MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
+                 myP2DFunc, lowerBounds, upperBounds);
+
+         PointValuePair solution = optimizer.optimize(
+                 new ObjectiveFunction(mfma),
+                 new MaxEval(500),
+                 GoalType.MINIMIZE,
+                 new InitialGuess(new double[]{muGuess_}),
+                 new NelderMeadSimplex(new double[]{0.2})//,
+         );
+
+         return mfma.unboundedToBounded(solution.getPoint());
+      }
    }
     
         

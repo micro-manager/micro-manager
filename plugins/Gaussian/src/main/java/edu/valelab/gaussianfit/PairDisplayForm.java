@@ -41,17 +41,18 @@ import java.awt.event.WindowEvent;
 import java.awt.Dimension;
 import java.io.File;
 import java.text.ParseException;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
-import org.micromanager.internal.MMStudio;
 
 /**
  *
@@ -70,6 +71,9 @@ public class PairDisplayForm extends GUFrame{
    private static final String SAVETRACKSUMMARYFILEPREF = "savetracksummaryfile";
    private static final String SHOWOVERLAYPREF = "showoverlay";
    private static final String P2DPREF = "p2d";
+   private static final String P2DFIXEDPREF = "p2dFixedSigma";
+   private static final String SIGMAPREF = "sigma";
+   private static final String SIGMAINPUTFROMDATA = "SigmaInputFromData";
    public static FileDialogs.FileType PAIR_DATA 
            = new FileDialogs.FileType("PAIR_DATA",
                  "Export to Location",
@@ -84,7 +88,7 @@ public class PairDisplayForm extends GUFrame{
       super.loadPosition(100, 100, 250, 75);
       JPanel panel = new JPanel(new MigLayout(
               "ins 5", 
-              "[grow]", 
+              "[][grow]", 
               "[][grow][]"));
       this.setTitle("Pair display options");
       
@@ -158,7 +162,69 @@ public class PairDisplayForm extends GUFrame{
       // Distance estimate
       final JCheckBox distanceEstimate =
               makeCheckBox("Estimate average distance (P2D)", P2DPREF);
+      
+      // Distance estimate with fixed sigma
+      final JCheckBox distanceEstimateFixedSigma =
+              makeCheckBox("P2D with fixed sigma: ", P2DFIXEDPREF);
+      
+      final JTextField sigmaTextField = new JTextField();
+      sigmaTextField.setMinimumSize(new Dimension(60, 20));
+      sigmaTextField.setText(up_.getString(this.getClass(), SIGMAPREF, "10.0"));
+      final JRadioButton useSigmaValue = new JRadioButton("");
+      final JRadioButton estimateSigmaValue = new JRadioButton("from data");
+      ButtonGroup group = new ButtonGroup();
+      group.add(useSigmaValue);
+      group.add(estimateSigmaValue);
+      useSigmaValue.setSelected(up_.getBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, false) == false);
+      estimateSigmaValue.setSelected(up_.getBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, false));
+      useSigmaValue.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            up_.setBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, !useSigmaValue.isSelected());
+         }
+      });
+      estimateSigmaValue.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            up_.setBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, estimateSigmaValue.isSelected());
+         }
+      });
+      
+      sigmaTextField.getDocument().addDocumentListener(
+              makeDocumentListener(SIGMAPREF, sigmaTextField));
+      distanceEstimate.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            distanceEstimateFixedSigma.setEnabled(distanceEstimate.isSelected());
+            sigmaTextField.setEnabled(distanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected());
+            useSigmaValue.setEnabled(distanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected());
+            estimateSigmaValue.setEnabled(distanceEstimate.isSelected()&& 
+                    distanceEstimateFixedSigma.isSelected());
+         }
+      });
+      distanceEstimateFixedSigma.addActionListener(new ActionListener(){
+         @Override
+         public void actionPerformed(ActionEvent ae){
+            useSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());
+            estimateSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());
+         }
+      });
+      distanceEstimateFixedSigma.setEnabled(distanceEstimate.isSelected());
+      sigmaTextField.setEnabled(distanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected());
+      useSigmaValue.setEnabled(distanceEstimate.isSelected()&& 
+                    distanceEstimateFixedSigma.isSelected());
+      estimateSigmaValue.setEnabled(distanceEstimate.isSelected()&& 
+                    distanceEstimateFixedSigma.isSelected());
+      
       panel.add(distanceEstimate, "wrap");
+      panel.add(distanceEstimateFixedSigma, "gapleft 60");
+      panel.add(useSigmaValue, "split 2");
+      panel.add(sigmaTextField, "wrap");
+      panel.add(estimateSigmaValue, "skip 1, wrap");
+      
       
       // basepath for the text file
       panel.add(filePathLabel, "split 3, span 3");
@@ -188,6 +254,17 @@ public class PairDisplayForm extends GUFrame{
                ReportingUtils.showError("Maximum distance should be a number");
                return;
             }
+            final double sigmaValue;
+            if (distanceEstimateFixedSigma.isSelected()) {
+               try {
+                  sigmaValue = NumberUtils.displayStringToDouble(sigmaTextField.getText());
+               } catch (ParseException ex) {
+                  ReportingUtils.showError("Maximum distance should be a number");
+                  return;
+               }
+            } else {
+               sigmaValue = -1.0;
+            }
             DataCollectionForm.getInstance().listPairs(maxDistance, 
                     showPairList.isSelected(), showImage.isSelected(),
                     savePairTextFile.isSelected(), filePath.getText(),
@@ -196,12 +273,12 @@ public class PairDisplayForm extends GUFrame{
             DataCollectionForm.getInstance().listPairTracks(maxDistance, 
                     showTracks.isSelected(), showTrackSummary.isSelected(), 
                     showOverlay.isSelected(), saveTrackSummaryFile.isSelected(), 
-                    filePath.getText(), distanceEstimate.isSelected());
+                    filePath.getText(), distanceEstimate.isSelected(), sigmaValue);
 
             myFrame.dispose();
          }
       });
-      panel.add(okButton, "span, split 2, tag ok");
+      panel.add(okButton, "span, split 3, tag ok");
       this.getRootPane().setDefaultButton(okButton);
       JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener(new ActionListener() {

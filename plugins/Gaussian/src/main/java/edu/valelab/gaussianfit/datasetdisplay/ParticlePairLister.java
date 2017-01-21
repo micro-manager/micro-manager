@@ -97,12 +97,14 @@ public class ParticlePairLister {
     * @param showOverlay
     * @param saveFile
     * @param p2d
+    * @param sigmaEstimate
     * @param filePath
     */
    public static void listParticlePairTracks(final int[] rows,
            final double maxDistanceNm, final boolean showTrack,
            final boolean showSummary, final boolean showOverlay,
-           final boolean saveFile, final boolean p2d, final String filePath) {
+           final boolean saveFile, final boolean p2d, final double sigmaEstimate, 
+           final String filePath) {
 
       Runnable doWorkRunnable = new Runnable() {
 
@@ -410,9 +412,12 @@ public class ParticlePairLister {
                   for (int j=0; j < avgDistances.size(); j++) {
                      d[j] = avgDistances.get(j);
                   }
-                  P2DFitter p2df = new P2DFitter(d, -1.0);
+                  P2DFitter p2df = new P2DFitter(d, sigmaEstimate);
                   double distMean = ListUtils.listAvg(avgDistances);
-                  double distStd = ListUtils.listStdDev(avgDistances, distMean);
+                  double distStd = sigmaEstimate;
+                  if (sigmaEstimate <= 0.0) {
+                     distStd = ListUtils.listStdDev(avgDistances, distMean);
+                  }
                   p2df.setStartParams(distMean, distStd);
                   double[] p2dfResult = p2df.solve();
                   if (p2dfResult.length == 2) {
@@ -420,6 +425,12 @@ public class ParticlePairLister {
                              NumberUtils.doubleToDisplayString(p2dfResult[0]) + 
                              " nm, sigma = " + 
                              NumberUtils.doubleToDisplayString(p2dfResult[1]) + 
+                             " nm");
+                  } else if (p2dfResult.length == 1 && sigmaEstimate > 0.0) {
+                     ij.IJ.log("p2d fit: n = " + avgDistances.size() + ", mu = " + 
+                             NumberUtils.doubleToDisplayString(p2dfResult[0]) + 
+                             " nm, sigma = " + 
+                             sigmaEstimate + 
                              " nm");
                   } else {
                      ij.IJ.log("Error during p2d fit");
@@ -431,9 +442,14 @@ public class ParticlePairLister {
                           NumberUtils.doubleToDisplayString(distStd) + " nm"); 
                   
                   // plot function and histogram
+                  double[] muSigma = {p2dfResult[0], sigmaEstimate};
+                  if (sigmaEstimate <= 0.0) {
+                     muSigma =  p2dfResult;
+                  }
                   GaussianUtils.plotP2D(dc.getSpotData(row).title_ + " distances", 
-                          d, maxDistanceNm, p2dfResult);
+                          d, maxDistanceNm, muSigma);
                }
+                
 
                ij.IJ.showStatus("");
 
