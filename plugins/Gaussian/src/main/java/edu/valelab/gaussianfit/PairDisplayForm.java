@@ -209,7 +209,8 @@ public class PairDisplayForm extends GUFrame{
          @Override
          public void actionPerformed(ActionEvent ae){
             useSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());
-            estimateSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());
+            sigmaTextField.setEnabled(distanceEstimateFixedSigma.isSelected());
+            estimateSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());           
          }
       });
       distanceEstimateFixedSigma.setEnabled(distanceEstimate.isSelected());
@@ -279,6 +280,8 @@ public class PairDisplayForm extends GUFrame{
                     saveFile(saveTrackSummaryFile.isSelected()).
                     filePath(filePath.getText()).
                     p2d(distanceEstimate.isSelected()).
+                    fitSigma(!distanceEstimateFixedSigma.isSelected()).
+                    useSigmaEstimate(useSigmaValue.isSelected()).
                     sigmaEstimate(sigmaValue);
             DataCollectionForm.getInstance().listPairTracks(ppb);
 

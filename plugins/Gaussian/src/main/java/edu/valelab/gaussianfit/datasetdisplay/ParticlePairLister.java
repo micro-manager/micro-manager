@@ -34,6 +34,7 @@ import edu.valelab.gaussianfit.Terms;
 import edu.valelab.gaussianfit.data.GsSpotPair;
 import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.data.SpotData;
+import edu.valelab.gaussianfit.fitting.FittingException;
 import edu.valelab.gaussianfit.fitting.P2DFitter;
 import edu.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.valelab.gaussianfit.spotoperations.NearestPointGsSpotPair;
@@ -78,6 +79,8 @@ public class ParticlePairLister {
       final private Boolean showOverlay_;
       final private Boolean saveFile_;
       final private Boolean p2d_;
+      final private Boolean fitSigma_;
+      final private Boolean useSigmaEstimate_;
       final private Double sigmaEstimate_;
       final private String filePath_;
    
@@ -91,6 +94,8 @@ public class ParticlePairLister {
       private Boolean showOverlay_;
       private Boolean saveFile_;
       private Boolean p2d_;
+      private Boolean fitSigma_;
+      private Boolean useSigmaEstimate_;
       private Double sigmaEstimate_;
       private String filePath_;
       
@@ -133,6 +138,16 @@ public class ParticlePairLister {
          return this;
       }
       
+      public Builder fitSigma(Boolean fixSigma) {
+         fitSigma_ = fixSigma;
+         return this;
+      }
+              
+      public Builder useSigmaEstimate(Boolean useSigmaEstimate) {
+         useSigmaEstimate_ = useSigmaEstimate;
+         return this;
+      }        
+      
       public Builder sigmaEstimate(Double sigmaEstimate) {
          sigmaEstimate_ = sigmaEstimate;
          return this;
@@ -153,6 +168,8 @@ public class ParticlePairLister {
       showOverlay_ = builder.showOverlay_;
       saveFile_ = builder.saveFile_;
       p2d_ = builder.p2d_;
+      fitSigma_ = builder.fitSigma_;
+      useSigmaEstimate_ = builder.useSigmaEstimate_;
       sigmaEstimate_ = builder.sigmaEstimate_;
       filePath_ = builder.filePath_;
    }
@@ -166,6 +183,8 @@ public class ParticlePairLister {
               showOverlay(showOverlay_).
               saveFile(saveFile_).
               p2d(p2d_).
+              fitSigma(fitSigma_).
+              useSigmaEstimate(useSigmaEstimate_).              
               sigmaEstimate(sigmaEstimate_).
               filePath(filePath_);             
    }
@@ -439,14 +458,14 @@ public class ParticlePairLister {
                   rt2.addValue("Dist.Vect.StdDev", Math.sqrt(
                           (xDiffAvgStdDev * xDiffAvgStdDev)
                           + (yDiffAvgStdDev * yDiffAvgStdDev)));
-
+                  
                   if (showOverlay_) {
                      /* draw arrows in overlay */
                      double mag = 100.0;  // factor that sets magnification of the arrow
                      double factor = mag * 1 / dc.getSpotData(row).pixelSizeNm_;  // factor relating mad and pixelSize
                      int xStart = track.get(0).getGSD().getX();
                      int yStart = track.get(0).getGSD().getY();
-
+                     
                      Arrow arrow = new Arrow(xStart, yStart,
                              xStart + (factor * xDiffAvg),
                              yStart + (factor * yDiffAvg));
@@ -458,7 +477,7 @@ public class ParticlePairLister {
                         siPlus.getOverlay().add(arrow);
                      }
                   }
-
+                  
                   spotId++;
                }
                if (showOverlay_) {
@@ -466,7 +485,7 @@ public class ParticlePairLister {
                      siPlus.setHideOverlay(false);
                   }
                }
-
+               
                if (showSummary_) {
                   rtName = dc.getSpotData(row).name_ + " Particle Summary";
                   rt2.show(rtName);
@@ -483,7 +502,7 @@ public class ParticlePairLister {
                      for (KeyListener ks : tp.getKeyListeners()) {
                         tp.removeKeyListener(ks);
                      }
-
+                     
                      ResultsTableListener myk = new ResultsTableListener(
                              MMStudio.getInstance(), dc.getSpotData(row).dw_, siPlus,
                              rt2, win, dc.getSpotData(row).halfSize_);
@@ -495,47 +514,57 @@ public class ParticlePairLister {
                
                if (p2d_) {
                   double[] d = new double[avgDistances.size()];
-                  for (int j=0; j < avgDistances.size(); j++) {
+                  for (int j = 0; j < avgDistances.size(); j++) {
                      d[j] = avgDistances.get(j);
                   }
-                  P2DFitter p2df = new P2DFitter(d, sigmaEstimate_);
+                  P2DFitter p2df = new P2DFitter(d, fitSigma_);
                   double distMean = ListUtils.listAvg(avgDistances);
                   double distStd = sigmaEstimate_;
-                  if (sigmaEstimate_ <= 0.0) {
+                  if (fitSigma_ || !useSigmaEstimate_) {
+                     // how do we best estimate sigma? If we have multiple
+                     // measurements per paricle, it seems best to calculate it 
+                     // directly from the spread in those measurements
+                     // if we have only one particle per track, we need to
+                     // calculate it from the sigmas of the two spots in the particle
+                     // But where is the cutoff between these two methods?
                      distStd = ListUtils.listStdDev(avgDistances, distMean);
                   }
                   p2df.setStartParams(distMean, distStd);
-                  double[] p2dfResult = p2df.solve();
-                  if (p2dfResult.length == 2) {
-                     ij.IJ.log("p2d fit: n = " + avgDistances.size() + ", mu = " + 
-                             NumberUtils.doubleToDisplayString(p2dfResult[0]) + 
-                             " nm, sigma = " + 
-                             NumberUtils.doubleToDisplayString(p2dfResult[1]) + 
-                             " nm");
-                  } else if (p2dfResult.length == 1 && sigmaEstimate_ > 0.0) {
-                     ij.IJ.log("p2d fit: n = " + avgDistances.size() + ", mu = " + 
-                             NumberUtils.doubleToDisplayString(p2dfResult[0]) + 
-                             " nm, sigma = " + 
-                             sigmaEstimate_ + 
-                             " nm");
-                  } else {
-                     ij.IJ.log("Error during p2d fit");
-                  } 
-                  ij.IJ.log("Gaussian distribution: n = " + avgDistances.size() + 
-                          ", avg = " + 
-                          NumberUtils.doubleToDisplayString(distMean) +  
-                          " nm, std = " + 
-                          NumberUtils.doubleToDisplayString(distStd) + " nm"); 
-                  
-                  // plot function and histogram
-                  double[] muSigma = {p2dfResult[0], sigmaEstimate_};
-                  if (sigmaEstimate_ <= 0.0) {
-                     muSigma =  p2dfResult;
+                  try {
+                     double[] p2dfResult = p2df.solve();
+                     if (p2dfResult.length == 2) {
+                        ij.IJ.log("p2d fit: n = " + avgDistances.size() + ", mu = "
+                                + NumberUtils.doubleToDisplayString(p2dfResult[0])
+                                + " nm, sigma = "
+                                + NumberUtils.doubleToDisplayString(p2dfResult[1])
+                                + " nm");
+                     } else if (p2dfResult.length == 1 && !fitSigma_) {
+                        ij.IJ.log("p2d fit: n = " + avgDistances.size() + ", mu = "
+                                + NumberUtils.doubleToDisplayString(p2dfResult[0])
+                                + " nm, sigma = "
+                                + distStd
+                                + " nm");
+                     } else {
+                        ij.IJ.log("Error during p2d fit");
+                     }                     
+                     ij.IJ.log("Gaussian distribution: n = " + avgDistances.size()
+                             + ", avg = "
+                             + NumberUtils.doubleToDisplayString(distMean)
+                             + " nm, std = "
+                             + NumberUtils.doubleToDisplayString(distStd) + " nm");
+
+                     // plot function and histogram
+                     double[] muSigma = {p2dfResult[0], distStd};
+                     if (fitSigma_) {
+                        muSigma = p2dfResult;
+                     }
+                     GaussianUtils.plotP2D(dc.getSpotData(row).title_ + " distances",
+                             d, maxDistanceNm_, muSigma);
+                     
+                  } catch (FittingException fe) {
+                     ReportingUtils.showError(fe.getMessage());
                   }
-                  GaussianUtils.plotP2D(dc.getSpotData(row).title_ + " distances", 
-                          d, maxDistanceNm_, muSigma);
                }
-                
 
                ij.IJ.showStatus("");
 

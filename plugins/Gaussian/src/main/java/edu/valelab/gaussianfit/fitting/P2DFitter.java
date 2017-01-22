@@ -30,6 +30,7 @@ package edu.valelab.gaussianfit.fitting;
 import edu.valelab.gaussianfit.utils.Besseli;
 import org.apache.commons.math3.analysis.MultivariateFunction;
 import org.apache.commons.math3.analysis.function.Exp;
+import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.apache.commons.math3.optim.InitialGuess;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.PointValuePair;
@@ -48,12 +49,13 @@ class P2DFunc implements MultivariateFunction {
    /**
     * 
     * @param points array with measurements
-    * @param sigma  Fixed sigma, or negative number if it should be estimated
+    * @param fitSigma whether sigma value should be fitted
+    * @param sigma  Fixed sigma, only needed when fitSigma is true
     */
-   public P2DFunc(double[] points, final double sigma) {
+   public P2DFunc(double[] points, final boolean fitSigma, final double sigma) {
       points_ = points;
+      fitSigma_ = fitSigma;
       sigma_ = sigma;
-      fitSigma_ = sigma_ <= 0.0;
    }
    
    /**
@@ -107,16 +109,18 @@ public class P2DFitter {
    private final double[] points_;
    private double muGuess_ = 0.0;
    private double sigmaGuess_ = 10.0;
-   private final double sigma_;
+   private final boolean fitSigma_;
    
    /**
     * 
     * @param points array with data points to be fitted
-    * @param sigma set to <= 0.0 if sigma should be fitted, otherwise its fixed value
+    * @param fitSigma whether or not sigma should be fitted.  When false, the
+    *                sigmaEstimate given in setStartParams will be used as 
+    *                a fixed parameter in the P2D function
     */
-   public P2DFitter(double[] points, final double sigma) {
+   public P2DFitter(double[] points, final boolean fitSigma) {
       points_ = points;
-      sigma_ = sigma;
+      fitSigma_ = fitSigma;
    }
    
    /**
@@ -129,11 +133,11 @@ public class P2DFitter {
       sigmaGuess_ = sigma;
    }
       
-   public double[] solve() {
+   public double[] solve() throws FittingException {
       SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
-      P2DFunc myP2DFunc = new P2DFunc(points_, sigma_);
+      P2DFunc myP2DFunc = new P2DFunc(points_, fitSigma_, sigmaGuess_);
 
-      if (sigma_ < 0.0) {
+      if (fitSigma_) {
          double[] lowerBounds = {0.0, 0.0};
          double[] upperBounds = {50.0, 50.0};
          MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
@@ -154,6 +158,7 @@ public class P2DFitter {
          MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
                  myP2DFunc, lowerBounds, upperBounds);
 
+         try {
          PointValuePair solution = optimizer.optimize(
                  new ObjectiveFunction(mfma),
                  new MaxEval(500),
@@ -163,6 +168,9 @@ public class P2DFitter {
          );
 
          return mfma.unboundedToBounded(solution.getPoint());
+         } catch (TooManyEvaluationsException tmee) {
+            throw new FittingException("P2D fit faled due to too many Evaluation Exceptions");
+         }
       }
    }
     
