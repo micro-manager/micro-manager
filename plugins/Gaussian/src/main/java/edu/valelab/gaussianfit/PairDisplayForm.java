@@ -27,6 +27,7 @@
  */
 package edu.valelab.gaussianfit;
 
+import edu.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
 import edu.valelab.gaussianfit.utils.GUFrame;
 import edu.valelab.gaussianfit.utils.FileDialogs;
 import edu.valelab.gaussianfit.utils.NumberUtils;
@@ -90,7 +91,7 @@ public class PairDisplayForm extends GUFrame{
               "ins 5", 
               "[][grow]", 
               "[][grow][]"));
-      this.setTitle("Pair display options");
+      super.setTitle("Pair display options");
       
       // input box with max distance for a pair to be a pair
       panel.add(new JLabel("Maximum distance:" ), "split 2, span 2");
@@ -270,16 +271,22 @@ public class PairDisplayForm extends GUFrame{
                     savePairTextFile.isSelected(), filePath.getText(),
                     showSummary.isSelected(), showGraph.isSelected() );
             
-            DataCollectionForm.getInstance().listPairTracks(maxDistance, 
-                    showTracks.isSelected(), showTrackSummary.isSelected(), 
-                    showOverlay.isSelected(), saveTrackSummaryFile.isSelected(), 
-                    filePath.getText(), distanceEstimate.isSelected(), sigmaValue);
+            ParticlePairLister.Builder ppb = new ParticlePairLister.Builder();
+            ppb.maxDistanceNm(maxDistance).
+                    showTrack(showTracks.isSelected()).
+                    showSummary(showTrackSummary.isSelected()).
+                    showOverlay(showOverlay.isSelected()).
+                    saveFile(saveTrackSummaryFile.isSelected()).
+                    filePath(filePath.getText()).
+                    p2d(distanceEstimate.isSelected()).
+                    sigmaEstimate(sigmaValue);
+            DataCollectionForm.getInstance().listPairTracks(ppb);
 
             myFrame.dispose();
          }
       });
       panel.add(okButton, "span, split 3, tag ok");
-      this.getRootPane().setDefaultButton(okButton);
+      super.getRootPane().setDefaultButton(okButton);
       JButton cancelButton = new JButton("Cancel");
       cancelButton.addActionListener(new ActionListener() {
          @Override
@@ -290,9 +297,9 @@ public class PairDisplayForm extends GUFrame{
       });
       panel.add(cancelButton, "tag cancel");
       
-      add(panel);
-      pack();
-      this.addWindowListener(new WindowAdapter() {
+      super.add(panel);
+      super.pack();
+      super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent ev) {
             myFrame.dispose();
