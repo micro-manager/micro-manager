@@ -109,6 +109,7 @@ public class P2DFitter {
    private final double[] points_;
    private double muGuess_ = 0.0;
    private double sigmaGuess_ = 10.0;
+   private final double upperBound_;
    private final boolean fitSigma_;
    
    /**
@@ -117,10 +118,13 @@ public class P2DFitter {
     * @param fitSigma whether or not sigma should be fitted.  When false, the
     *                sigmaEstimate given in setStartParams will be used as 
     *                a fixed parameter in the P2D function
+    * @param upperBound Upper bound for average and sigma
     */
-   public P2DFitter(double[] points, final boolean fitSigma) {
+   public P2DFitter(double[] points, final boolean fitSigma, 
+           final double upperBound) {
       points_ = points;
       fitSigma_ = fitSigma;
+      upperBound_ = upperBound;
    }
    
    /**
@@ -139,7 +143,7 @@ public class P2DFitter {
 
       if (fitSigma_) {
          double[] lowerBounds = {0.0, 0.0};
-         double[] upperBounds = {50.0, 50.0};
+         double[] upperBounds = {upperBound_, upperBound_};
          MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
                  myP2DFunc, lowerBounds, upperBounds);
 
@@ -147,14 +151,14 @@ public class P2DFitter {
                  new ObjectiveFunction(mfma),
                  new MaxEval(500),
                  GoalType.MINIMIZE,
-                 new InitialGuess(new double[]{muGuess_, sigmaGuess_}),
+                 new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_, sigmaGuess_})),
                  new NelderMeadSimplex(new double[]{0.2, 0.2})//,
          );
 
          return mfma.unboundedToBounded(solution.getPoint());
       } else {
          double[] lowerBounds = {0.0};
-         double[] upperBounds = {50.0};
+         double[] upperBounds = {upperBound_};
          MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
                  myP2DFunc, lowerBounds, upperBounds);
 
@@ -163,7 +167,7 @@ public class P2DFitter {
                  new ObjectiveFunction(mfma),
                  new MaxEval(500),
                  GoalType.MINIMIZE,
-                 new InitialGuess(new double[]{muGuess_}),
+                 new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_})),
                  new NelderMeadSimplex(new double[]{0.2})//,
          );
 

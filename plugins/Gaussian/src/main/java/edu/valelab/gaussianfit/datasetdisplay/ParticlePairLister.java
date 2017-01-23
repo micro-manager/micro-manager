@@ -203,7 +203,7 @@ public class ParticlePairLister {
     * In addition, it will list the average distance, and average distance in x
     * and y for each frame.
     *
-    * spots in channel 2 that are within MAXMATCHDISTANCE of
+    * Currently, the code only lists "tracks" starting at frame 1
     *
     * Needed input variables are set through a builder 
     * 
@@ -466,7 +466,7 @@ public class ParticlePairLister {
                   double std = ListUtils.listStdDev(distances, avg);
                   stdDevs.add(std);
                   rt2.addValue("Distance-StdDev", std);
-                  double avgSigma = ListUtils.listAvg(sigmas);
+                  double avgSigma = ListUtils.listAvg(sigmas) / Math.sqrt(sigmas.size());
                   avgSigmas.add(avgSigma);
                   rt2.addValue("Sigma", avgSigma);
                   double oAvg = ListUtils.listAvg(orientations);
@@ -542,7 +542,7 @@ public class ParticlePairLister {
                   for (int j = 0; j < avgDistances.size(); j++) {
                      d[j] = avgDistances.get(j);
                   }
-                  P2DFitter p2df = new P2DFitter(d, fitSigma_);
+                  P2DFitter p2df = new P2DFitter(d, fitSigma_, maxDistanceNm_);
                   double distMean = ListUtils.listAvg(avgDistances);
                   double distStd = sigmaEstimate_;
                   if (fitSigma_ || !useSigmaEstimate_) {
@@ -589,7 +589,7 @@ public class ParticlePairLister {
                      if (fitSigma_) {
                         muSigma = p2dfResult;
                      }
-                     GaussianUtils.plotP2D(dc.getSpotData(row).title_ + " distances",
+                     GaussianUtils.plotP2D(dc.getSpotData(row).name_ + " distances",
                              d, maxDistanceNm_, muSigma);
                      
                   } catch (FittingException fe) {
