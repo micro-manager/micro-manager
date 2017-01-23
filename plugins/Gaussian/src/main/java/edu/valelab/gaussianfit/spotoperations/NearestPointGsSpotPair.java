@@ -77,7 +77,7 @@ public class NearestPointGsSpotPair {
       if (we_ == null) {
          we_ = new SqrEuclid<Integer>(2, 50 * theList_.size());
          for (int i = 0; i < theList_.size(); i++) {
-            Point2D.Double p = theList_.get(i).getfp();
+            Point2D.Double p = theList_.get(i).getFirstPoint();
             double[] point = {p.x, p.y};
             we_.addPoint(point, i);
          }
@@ -110,7 +110,7 @@ public class NearestPointGsSpotPair {
       GsSpotPair closestPoint = theList_.get(0);
       double minDist2 = Double.MAX_VALUE;
       for (GsSpotPair p : theList_) {
-         double dist2 = NearestPoint2D.distance2(input, p.getfp());
+         double dist2 = NearestPoint2D.distance2(input, p.getFirstPoint());
          if (dist2 < minDist2) {
             minDist2 = dist2;
             closestPoint = p;
@@ -118,7 +118,7 @@ public class NearestPointGsSpotPair {
       }
       
       double dist = Math.sqrt(NearestPoint2D.distance2(input, 
-              closestPoint.getfp()));
+              closestPoint.getFirstPoint()));
       if (dist < maxDistance_)
          return closestPoint;
       return null;

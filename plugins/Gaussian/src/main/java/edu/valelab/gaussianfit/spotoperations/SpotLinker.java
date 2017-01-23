@@ -92,7 +92,7 @@ public class SpotLinker {
                         if (tracks.size() > 0) {
                            ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
                            for (SpotData spot : spots) {
-                              gsSpots.add(new GsSpotPair(spot,
+                              gsSpots.add(new GsSpotPair(spot, null,
                                       new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
                                       new Point2D.Double(0.0, 0.0)));
                            }
@@ -111,8 +111,8 @@ public class SpotLinker {
                                  // the removal needs to be a two step process
                                  removedTracks.add(track);
                               } else {
-                                 track.add(newSpot.getGSD());
-                                 markedSpots.add(newSpot.getGSD());
+                                 track.add(newSpot.getFirstSpot());
+                                 markedSpots.add(newSpot.getFirstSpot());
                               }
                            }
                            // second part of removing tracks
@@ -281,7 +281,7 @@ public class SpotLinker {
                         if (tracks.size() > 0) {
                            ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
                            for (SpotData spot : spots) {
-                              gsSpots.add(new GsSpotPair(spot,
+                              gsSpots.add(new GsSpotPair(spot, null,
                                       new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
                                       new Point2D.Double(0.0, 0.0)));
                            }
@@ -309,8 +309,8 @@ public class SpotLinker {
                                  }
                               } else {
                                  track.resetMissing();
-                                 track.add(newSpot.getGSD());
-                                 markedSpots.add(newSpot.getGSD());
+                                 track.add(newSpot.getFirstSpot());
+                                 markedSpots.add(newSpot.getFirstSpot());
                               }
                            }
                            // second part of removing tracks

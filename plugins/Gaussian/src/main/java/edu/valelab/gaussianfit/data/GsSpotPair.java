@@ -36,30 +36,36 @@ import java.awt.geom.Point2D;
  * @author nico
  */
 public class GsSpotPair {
-   private final SpotData fgs_;
-   private final Point2D.Double fp_;
-   private final Point2D.Double sp_;
+   private final SpotData firstSpot_;
+   private final SpotData secondSpot_;
+   private final Point2D.Double firstPoint_; 
+   private final Point2D.Double secondPoint_;
 
-   public GsSpotPair(SpotData fgs, Point2D.Double fp, Point2D.Double sp) {
-      fgs_ = fgs;
-      fp_ = fp;
-      sp_ = sp;
+   public GsSpotPair(SpotData fgs, SpotData sgs, Point2D.Double fp, Point2D.Double sp) {
+      firstSpot_ = fgs;
+      secondSpot_ = sgs;
+      firstPoint_ = fp;
+      secondPoint_ = sp;
    }
 
-   public SpotData getGSD() {
-      return fgs_;
+   public SpotData getFirstSpot() {
+      return firstSpot_;
+   }
+   
+   public SpotData getSecondSpot() {
+      return secondSpot_;
    }
 
-   public Point2D.Double getfp() {
-      return fp_;
+   public Point2D.Double getFirstPoint() {
+      return firstPoint_;
    }
 
-   public Point2D.Double getsp() {
-      return sp_;
+   public Point2D.Double getSecondPoint() {
+      return secondPoint_;
    }
    
    public GsSpotPair copy() {
-      return new GsSpotPair(fgs_, fp_, sp_);
+      return new GsSpotPair(firstSpot_, secondSpot_, firstPoint_, secondPoint_);
    }
    
 }
