@@ -85,17 +85,30 @@ public class ListUtils {
     /**
     * Calculates the average of a list of doubles
     * 
+    * @param <T>
     * @param vals
     * @return average
     */
-   public static double listAvg(List<Double> vals) {
+   public static <T extends Number> double listAvg(List<T> vals) {
       double result = 0;
-      for (Double val : vals) {
-         result += val;
+      T sample = vals.get(0);
+      if (sample instanceof Double) {
+         for (T val : vals) {
+            result += (Double) val;
+         }
+      } else if (sample instanceof Float) {
+         for (T val : vals) {
+            result += (Float) val;
+         }
+      } else if (sample instanceof Integer) {
+         for (T val : vals) {
+            result += (Integer) val;
+         }
       }
-      
+ 
       return result / vals.size();
    }
+   
    
    /**
     * Returns the Standard Deviation as sqrt( 1/(n-1) sum( square(value - avg)) )
