@@ -428,6 +428,26 @@ public: // Action handlers
     */
     int OnSmartStreamingValues(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
+    /**
+    * Read-only: Shows the camera actual exposure time value in ns.
+    */
+    int OnTimingExposureTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual readout time value in ns.
+    */
+    int OnTimingReadoutTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual clearing time value in ns.
+    */
+    int OnTimingClearingTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual pre-trigger delay value in ns.
+    */
+    int OnTimingPreTriggerDelayNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual post-trigger delay value in ns.
+    */
+    int OnTimingPostTriggerDelayNs(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 public: // Other published methods
     /**
@@ -529,7 +549,10 @@ private:
     * bit depth, readout speed and gain range based on speed index.
     */
     int initializeSpeedTable();
-
+    /**
+    * Initialize all parameters that may change their value after acquisition setup
+    */
+    int initializePostSetupParams();
     /**
     * Resizes the buffer used for continous live acquisition
     */
@@ -778,6 +801,12 @@ private: // Static
     PvEnumParam*      prmTrigTabSignal_;
     PvParam<uns8>*    prmLastMuxedSignal_;
     PvEnumParam*      prmPMode_;
+
+    // These parameters become valid after calling pl_exp_setup_seq()/pl_exp_setup_cont()
+    PvParam<uns32>*   prmReadoutTime_;      // (PARAM_READOUT_TIME)
+    PvParam<long64>*  prmClearingTime_;     // (PARAM_CLEARING_TIME)
+    PvParam<long64>*  prmPostTriggerDelay_; // (PARAM_POST_TRIGGER_DELAY)
+    PvParam<long64>*  prmPreTriggerDelay_;  // (PARAM_PRE_TRIGGER_DELAY)
 
     // List of post processing features
     std::vector<PpParam> PostProc_;

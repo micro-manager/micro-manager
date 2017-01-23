@@ -165,6 +165,12 @@ const char* g_Keyword_CentroidsCount   = "CentroidsCount";
 const char* g_Keyword_FanSpeedSetpoint = "FanSpeedSetpoint";
 const char* g_Keyword_PMode            = "PMode";
 
+const char* g_Keyword_TimingExposureTimeNs     = "Timing-ExposureTimeNs";
+const char* g_Keyword_TimingReadoutTimeNs      = "Timing-ReadoutTimeNs";
+const char* g_Keyword_TimingClearingTimeNs     = "Timing-ClearingTimeNs";
+const char* g_Keyword_TimingPostTriggerDelayNs = "Timing-PostTriggerDelayNs";
+const char* g_Keyword_TimingPreTriggerDelayNs  = "Timing-PreTriggerDelayNs";
+
 // Universal parameters
 // These parameters, their ranges or allowed values are read out from the camera automatically.
 // Use these parameters for simple camera properties that do not need special treatment when a
@@ -268,7 +274,11 @@ Universal::Universal(short cameraId) :
     prmFanSpeedSetpoint_(0),
     prmTrigTabSignal_(0),
     prmLastMuxedSignal_(0),
-    prmPMode_(0)
+    prmPMode_(0),
+    prmReadoutTime_(0),
+    prmClearingTime_(0),
+    prmPreTriggerDelay_(0),
+    prmPostTriggerDelay_(0)
 {
     InitializeDefaultErrorMessages();
 
@@ -349,6 +359,10 @@ Universal::~Universal()
     delete prmTrigTabSignal_;
     delete prmLastMuxedSignal_;
     delete prmPMode_;
+    delete prmReadoutTime_;
+    delete prmClearingTime_;
+    delete prmPreTriggerDelay_;
+    delete prmPostTriggerDelay_;
 #ifdef PVCAM_SMART_STREAMING_SUPPORTED
     delete prmSmartStreamingEnabled_;
     delete prmSmartStreamingValues_;
@@ -849,7 +863,15 @@ int Universal::Initialize()
     acqCfgNew_.ExposureRes = EXP_RES_ONE_MILLISEC;
     prmExpResIndex_ = new PvParam<uns16>( "PARAM_EXP_RES_INDEX", PARAM_EXP_RES_INDEX, this, true );
     prmExpRes_ = new PvEnumParam( "PARAM_EXP_RES", PARAM_EXP_RES, this, true );
+    // The PARAM_EXPOSURE_TIME also returns the camera actual exposure time, if supported
     prmExposureTime_ = new PvParam<ulong64>( "PARAM_EXPOSURE_TIME", PARAM_EXPOSURE_TIME, this, true );
+    if ( prmExposureTime_->IsAvailable() )
+    {
+        pAct = new CPropertyAction (this, &Universal::OnTimingExposureTimeNs);
+        nRet = CreateProperty(g_Keyword_TimingExposureTimeNs, "0", MM::Float, true, pAct);
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
     if ( prmExpResIndex_->IsAvailable() )
     {
         if ( prmExpRes_->IsAvailable() )
@@ -957,10 +979,6 @@ int Universal::Initialize()
     LogAdapterMessage( "Initializing Post Processing features..." );
     initializePostProcessing();
     LogAdapterMessage( "Post Processing initialized" );
-
-    // setup imaging
-    if (!pl_exp_init_seq())
-        return LogPvcamError(__LINE__, "pl_exp_init_seq");
 
     // Circular buffer auto/manual switch
     acqCfgNew_.CircBufSizeAuto = true;
@@ -1089,6 +1107,10 @@ int Universal::Initialize()
         acqCfgNew_.PMode = cur;
     }
 
+    nRet = initializePostSetupParams();
+    if (nRet != DEVICE_OK)
+        return nRet;
+
     // CIRCULAR BUFFER MODE (ON, OFF)
     pAct = new CPropertyAction(this, &Universal::OnCircBufferEnabled);
     nRet = CreateProperty( g_Keyword_CircBufEnabled, g_Keyword_ON, MM::String, false, pAct);
@@ -1132,9 +1154,6 @@ int Universal::Shutdown()
             pl_cam_deregister_callback( hPVCAM_, PL_CALLBACK_EOF );
         }
 #endif
-        ret = pl_exp_uninit_seq();
-        if (!ret)
-            LogPvcamError(__LINE__, "pl_exp_uninit_seq");
         assert(ret);
         ret = pl_cam_close(hPVCAM_);
         if (!ret)
@@ -2825,6 +2844,82 @@ int Universal::OnSmartStreamingValues(MM::PropertyBase* pProp, MM::ActionType eA
 }
 #endif // PVCAM_SMART_STREAMING_SUPPORTED
 
+int Universal::OnTimingExposureTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnTimingExposureTimeNs", eAct);
+    if (eAct == MM::BeforeGet)
+    {
+        // This parameter unit depends on currently selected exposure resolution
+        const ulong64 camVal = prmExposureTime_->Current();
+        double valNs = 0;
+        switch (acqCfgCur_.ExposureRes)
+        {
+        case EXP_RES_ONE_SEC:
+            valNs = static_cast<double>(camVal) * 1000000000.0;
+            break;
+        case EXP_RES_ONE_MILLISEC:
+            valNs = static_cast<double>(camVal) * 1000000.0;
+            break;
+        case EXP_RES_ONE_MICROSEC:
+            valNs = static_cast<double>(camVal) * 1000.0;
+            break;
+        default:
+            valNs = static_cast<double>(camVal);
+            break;
+        }
+        pProp->Set(valNs);
+    }
+    // Nothing to set, this is a read-only property
+    return DEVICE_OK;
+}
+
+int Universal::OnTimingReadoutTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnTimingReadoutTimeNs", eAct);
+    if (eAct == MM::BeforeGet)
+    {
+        // The PARAM_READOUT_TIME returns value in micro-seconds
+        const uns32 camVal = prmReadoutTime_->Current();
+        const double valNs = 1000.0 * camVal;
+        pProp->Set(valNs);
+    }
+    // Nothing to set, this is a read-only property
+    return DEVICE_OK;
+}
+
+int Universal::OnTimingClearingTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnTimingClearingTimeNs", eAct);
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(static_cast<double>(prmClearingTime_->Current()));
+    }
+    // Nothing to set, this is a read-only property
+    return DEVICE_OK;
+}
+
+int Universal::OnTimingPreTriggerDelayNs(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnTimingPreTriggerDelayNs", eAct);
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(static_cast<double>(prmPreTriggerDelay_->Current()));
+    }
+    // Nothing to set, this is a read-only property
+    return DEVICE_OK;
+}
+
+int Universal::OnTimingPostTriggerDelayNs(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnTimingPostTriggerDelayNs", eAct);
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(static_cast<double>(prmPostTriggerDelay_->Current()));
+    }
+    // Nothing to set, this is a read-only property
+    return DEVICE_OK;
+}
+
 
 //=============================================================================
 //====================================================================== PUBLIC
@@ -3832,6 +3927,51 @@ int Universal::initializeSpeedTable()
     return DEVICE_OK;
 }
 
+int Universal::initializePostSetupParams()
+{
+    int nRet = DEVICE_OK;
+    CPropertyAction* pAct = NULL;
+
+    // ACTUAL READOUT TIME - Reported by camera if supported
+    prmReadoutTime_ = new PvParam<uns32>( "PARAM_READOUT_TIME", PARAM_READOUT_TIME, this, true );
+    if ( prmReadoutTime_->IsAvailable() )
+    {
+        pAct = new CPropertyAction (this, &Universal::OnTimingReadoutTimeNs);
+        nRet = CreateProperty(g_Keyword_TimingReadoutTimeNs, "0", MM::Float, true, pAct);
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+    // ACTUAL CLEARING TIME - Reported by camera if supported
+    prmClearingTime_ = new PvParam<long64>( "PARAM_CLEARING_TIME", PARAM_CLEARING_TIME, this, true );
+    if ( prmClearingTime_->IsAvailable() )
+    {
+        pAct = new CPropertyAction (this, &Universal::OnTimingClearingTimeNs);
+        nRet = CreateProperty(g_Keyword_TimingClearingTimeNs, "0", MM::Float, true, pAct);
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+    // ACTUAL POST TRIGGER DELAY - Reported by camera if supported
+    prmPostTriggerDelay_ = new PvParam<long64>( "PARAM_POST_TRIGGER_TIME", PARAM_POST_TRIGGER_DELAY, this, true );
+    if ( prmPostTriggerDelay_->IsAvailable() )
+    {
+        pAct = new CPropertyAction (this, &Universal::OnTimingPostTriggerDelayNs);
+        nRet = CreateProperty(g_Keyword_TimingPostTriggerDelayNs, "0", MM::Float, true, pAct);
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+    // ACTUAL PRE TRIGGER DELAY - Reported by camera if supported
+    prmPreTriggerDelay_ = new PvParam<long64>( "PARAM_PRE_TRIGGER_TIME", PARAM_PRE_TRIGGER_DELAY, this, true );
+    if ( prmPreTriggerDelay_->IsAvailable() )
+    {
+        pAct = new CPropertyAction (this, &Universal::OnTimingPreTriggerDelayNs);
+        nRet = CreateProperty(g_Keyword_TimingPreTriggerDelayNs, "0", MM::Float, true, pAct);
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+
+    return nRet;
+}
+
 int Universal::resizeImageBufferContinuous()
 {
     START_METHOD("Universal::ResizeImageBufferContinuous");
@@ -4616,8 +4756,42 @@ int Universal::postExpSetupInit(unsigned int frameSize)
 {
     int nRet = DEVICE_OK;
 
-    if (prmTempSetpoint_->IsAvailable())
+    if (prmTempSetpoint_ != NULL && prmTempSetpoint_->IsAvailable())
+    {
         nRet = prmTempSetpoint_->Update();
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+    if (prmExposureTime_ != NULL && prmExposureTime_->IsAvailable())
+    {
+        nRet = prmExposureTime_->Update();
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+    if (prmReadoutTime_ != NULL && prmReadoutTime_->IsAvailable())
+    {
+        nRet = prmReadoutTime_->Update();
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+    if (prmClearingTime_ != NULL && prmClearingTime_->IsAvailable())
+    {
+        nRet = prmClearingTime_->Update();
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+    if (prmPostTriggerDelay_ != NULL && prmPostTriggerDelay_->IsAvailable())
+    {
+        nRet = prmPostTriggerDelay_->Update();
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
+    if (prmPreTriggerDelay_ != NULL && prmPreTriggerDelay_->IsAvailable())
+    {
+        nRet = prmPreTriggerDelay_->Update();
+        if (nRet != DEVICE_OK)
+            return nRet;
+    }
 
     // This will update the CircularBufferFrameCount property in the Device/Property
     // browser. We need to call this because we need to reflect the change in circBufFrameCount_.
