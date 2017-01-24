@@ -241,7 +241,7 @@ public class ParticlePairLister {
                   ij.IJ.showProgress(frame, dc.getSpotData(row).nrFrames_);
                   spotPairsByFrame.add(new ArrayList<GsSpotPair>());
 
-                  // Get points from both channels in first frame as ArrayLists        
+                  // Get points from both channels as ArrayLists        
                   ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
                   ArrayList<SpotData> gsCh2 = new ArrayList<SpotData>();
                   ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
