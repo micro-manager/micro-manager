@@ -1910,8 +1910,8 @@ public class DataCollectionForm extends JFrame {
                     rowData.height_, rowData.pixelSizeNm_,
                     rowData.zStackStepSizeNm_, rowData.shape_,
                     rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                    rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-                    rowData.timePoints_,
+                    rowData.nrSlices_, rowData.nrPositions_, rowData.maxNrSpots_, 
+                    correctedData, rowData.timePoints_,
                     false, Coordinates.NM, false, 0.0, 0.0);
 
             semaphore_.release();
