@@ -1154,7 +1154,6 @@ int Universal::Shutdown()
             pl_cam_deregister_callback( hPVCAM_, PL_CALLBACK_EOF );
         }
 #endif
-        assert(ret);
         ret = pl_cam_close(hPVCAM_);
         if (!ret)
             LogPvcamError(__LINE__, "pl_cam_close");
@@ -1601,9 +1600,9 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
         {
             const int16 pvErr = pl_error_code();
             g_pvcamLock.Unlock();
-            LogPvcamError(__LINE__, "pl_exp_start_cont()", pvErr);
+            const int mmErr = LogPvcamError(__LINE__, "pl_exp_start_cont()", pvErr);
             resizeImageBufferSingle();
-            return pvErr;
+            return mmErr;
         }
         g_pvcamLock.Unlock();
     }
@@ -5221,6 +5220,13 @@ int Universal::applyAcqConfig()
             return nRet; // Error logged in SetAndApply()
         }
         configChanged = true;
+        bufferResizeRequired = true;
+    }
+
+    // If the acquisition type changes (Snap vs Live) we need to reconfigure buffer which
+    // in turn reconfigures the camera with pl_exp_setup_xxx() calls.
+    if (acqCfgNew_.AcquisitionType != acqCfgCur_.AcquisitionType)
+    {
         bufferResizeRequired = true;
     }
 
