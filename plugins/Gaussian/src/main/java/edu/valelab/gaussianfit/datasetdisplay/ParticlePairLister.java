@@ -62,8 +62,11 @@ import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import org.jfree.data.xy.XYSeries;
 import org.micromanager.internal.MMStudio;
 
@@ -203,9 +206,9 @@ public class ParticlePairLister {
     * In addition, it will list the average distance, and average distance in x
     * and y for each frame.
     *
-    * Currently, the code only lists "tracks" starting at frame 1
+    * Currently, the code only lists "tracks" starting at frame 1.
     *
-    * Needed input variables are set through a builder 
+    * Needed input variables are set through a builder. 
     * 
    */
    public void listParticlePairTracks()
@@ -229,61 +232,93 @@ public class ParticlePairLister {
             rt2.setPrecision(1);
 
             for (int row : rows_) {
-               
-               ArrayList<ArrayList<GsSpotPair>> spotPairsByFrame
-                       = new ArrayList<ArrayList<GsSpotPair>>();
-
                ij.IJ.showStatus("Creating Pairs...");
+               
+               Map <Integer, ArrayList<ArrayList<GsSpotPair>>> spotPairsByFrame
+                       = new HashMap<Integer, ArrayList<ArrayList<GsSpotPair>>>();
+               
+               // index spots by position
+               Map<Integer, ArrayList<SpotData>> spotListsByPosition = new
+                       HashMap<Integer, ArrayList<SpotData>>();
+               List<Integer> positions = new ArrayList<Integer>();
+               for (SpotData spot : dc.getSpotData(row).spotList_) {
+                  if (positions.indexOf(spot.getPosition()) == -1) {
+                     positions.add(spot.getPosition());
+                  }
+                  if (spotListsByPosition.get(spot.getPosition()) == null) {
+                     spotListsByPosition.put(spot.getPosition(), new ArrayList<SpotData>());
+                  }
+                  spotListsByPosition.get(spot.getPosition()).add(spot);
+               }
+               Collections.sort(positions);
+               
+               // this is a bit of a hack to deal with incorrect input
+               int nrPositions = dc.getSpotData(row).nrPositions_;
+               if (spotListsByPosition.size() > dc.getSpotData(row).nrPositions_) {
+                  nrPositions = spotListsByPosition.size();
+               }
 
-               // First go through all frames to find all pairs
+               // First go through all frames to find all pairs, organize by position
                int nrSpotPairsInFrame1 = 0;
-               for (int frame = 1; frame <= dc.getSpotData(row).nrFrames_; frame++) {
-                  ij.IJ.showProgress(frame, dc.getSpotData(row).nrFrames_);
-                  spotPairsByFrame.add(new ArrayList<GsSpotPair>());
+               for (int pos : positions) {
+                  spotPairsByFrame.put(pos, new ArrayList<ArrayList<GsSpotPair>>());
 
-                  // Get points from both channels as ArrayLists        
-                  ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
-                  ArrayList<SpotData> gsCh2 = new ArrayList<SpotData>();
-                  ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-                  for (SpotData gs : dc.getSpotData(row).spotList_) {
-                     if (gs.getFrame() == frame) {
-                        if (gs.getChannel() == 1) {
-                           gsCh1.add(gs);
-                        } else if (gs.getChannel() == 2) {
-                           gsCh2.add(gs);
-                           Point2D.Double point = new Point2D.Double(
-                                   gs.getXCenter(), gs.getYCenter());
-                           xyPointsCh2.add(point);
-                        }
-                     }
-                  }
+                  
+                  for (int frame = 1; frame <= dc.getSpotData(row).nrFrames_; frame++) {
+                     // TODO: show correct progress
+                     ij.IJ.showProgress(frame, dc.getSpotData(row).nrFrames_);
+                     
+                     spotPairsByFrame.get(pos).add(new ArrayList<GsSpotPair>());
 
-                  if (xyPointsCh2.isEmpty()) {
-                     ReportingUtils.logError(
-                             "Pairs function in Localization plugin: no points found in second channel in frame "
-                             + frame);
-                     continue;
-                  }
-
-                  // Find matching points in the two ArrayLists
-                  Iterator it2 = gsCh1.iterator();
-                  NearestPoint2D np = new NearestPoint2D(xyPointsCh2, maxDistanceNm_);
-                  while (it2.hasNext()) {
-                     SpotData ch1Spot = (SpotData) it2.next();
-                     Point2D.Double pCh1 = new Point2D.Double(
-                             ch1Spot.getXCenter(), ch1Spot.getYCenter());
-                     Point2D.Double pCh2 = np.findKDWSE(pCh1);
-                     if (pCh2 != null) {
-                        // find this point in the ch2 spot list
-                        SpotData ch2Spot = null;
-                        for (int i = 0; i < gsCh2.size() && ch2Spot == null; i++) {
-                           if (pCh2.x == gsCh2.get(i).getXCenter() && 
-                                   pCh2.y == gsCh2.get(i).getYCenter()) {
-                              ch2Spot = gsCh2.get(i);
+                     // Get points from both channels as ArrayLists   
+                     ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
+                     ArrayList<SpotData> gsCh2 = new ArrayList<SpotData>();
+                     ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
+                     for (SpotData gs : spotListsByPosition.get(pos)) {
+                        if (gs.getFrame() == frame) {
+                           if (gs.getChannel() == 1) {
+                              gsCh1.add(gs);
+                           } else if (gs.getChannel() == 2) {
+                              gsCh2.add(gs);
+                              Point2D.Double point = new Point2D.Double(
+                                      gs.getXCenter(), gs.getYCenter());
+                              xyPointsCh2.add(point);
                            }
                         }
-                        GsSpotPair pair = new GsSpotPair(ch1Spot,ch2Spot, pCh1, pCh2);
-                        spotPairsByFrame.get(frame - 1).add(pair);
+                     }
+
+                     if (xyPointsCh2.isEmpty()) {
+                        ReportingUtils.logError(
+                                "Pairs function in Localization plugin: no points found in second channel in frame "
+                                + frame);
+                        continue;
+                     }
+
+                     // Find matching points in the two ArrayLists
+                     Iterator it2 = gsCh1.iterator();
+                     NearestPoint2D np = new NearestPoint2D(xyPointsCh2, maxDistanceNm_);
+                     while (it2.hasNext()) {
+                        SpotData ch1Spot = (SpotData) it2.next();
+                        Point2D.Double pCh1 = new Point2D.Double(
+                                ch1Spot.getXCenter(), ch1Spot.getYCenter());
+                        Point2D.Double pCh2 = np.findKDWSE(pCh1);
+                        if (pCh2 != null) {
+                           // find this point in the ch2 spot list
+                           SpotData ch2Spot = null;
+                           for (int i = 0; i < gsCh2.size() && ch2Spot == null; i++) {
+                              if (pCh2.x == gsCh2.get(i).getXCenter()
+                                      && pCh2.y == gsCh2.get(i).getYCenter()) {
+                                 ch2Spot = gsCh2.get(i);
+                              }
+                           }
+                           if (ch2Spot != null) {
+                              GsSpotPair pair = new GsSpotPair(ch1Spot, ch2Spot, pCh1, pCh2);
+                              spotPairsByFrame.get(pos).get(frame - 1).add(pair);
+                           } else {
+                              // this should never happen!
+                              System.out.println("Failed to find spot");
+                           }
+                        }
                      }
                   }
                }
@@ -293,33 +328,38 @@ public class ParticlePairLister {
 
                // prepare NearestPoint objects to speed up finding closest pair 
                ArrayList<NearestPointGsSpotPair> npsp = new ArrayList<NearestPointGsSpotPair>();
-               for (int frame = 1; frame <= dc.getSpotData(row).nrFrames_; frame++) {
-                  npsp.add(new NearestPointGsSpotPair(
-                          spotPairsByFrame.get(frame - 1), maxDistanceNm_));
+               
+               for (int pos : positions) {
+                  for (int frame = 1; frame <= dc.getSpotData(row).nrFrames_; frame++) {
+                     npsp.add(new NearestPointGsSpotPair(
+                             spotPairsByFrame.get(pos).get(frame - 1), maxDistanceNm_));
+                  }
                }
 
                ArrayList<ArrayList<GsSpotPair>> tracks = new ArrayList<ArrayList<GsSpotPair>>();
-
-               Iterator<GsSpotPair> iSpotPairs = spotPairsByFrame.get(0).iterator();
-               int i = 0;
-               while (iSpotPairs.hasNext()) {
-                  ij.IJ.showProgress(i++, nrSpotPairsInFrame1);
-                  GsSpotPair spotPair = iSpotPairs.next();
-                  // for now, we only start tracks at frame number 1
-                  if (spotPair.getFirstSpot().getFrame() == 1) {
-                     ArrayList<GsSpotPair> track = new ArrayList<GsSpotPair>();
-                     track.add(spotPair);
-                     int frame = 2;
-                     while (frame <= dc.getSpotData(row).nrFrames_) {
-                        GsSpotPair newSpotPair = npsp.get(frame - 1).findKDWSE(
-                                new Point2D.Double(spotPair.getFirstPoint().getX(), spotPair.getFirstPoint().getY()));
-                        if (newSpotPair != null) {
-                           spotPair = newSpotPair;
-                           track.add(spotPair);
+            
+               for (int pos : positions) {
+                  Iterator<GsSpotPair> iSpotPairs = spotPairsByFrame.get(pos).get(0).iterator();
+                  int i = 0;
+                  while (iSpotPairs.hasNext()) {
+                     ij.IJ.showProgress(i++, nrSpotPairsInFrame1);
+                     GsSpotPair spotPair = iSpotPairs.next();
+                     // for now, we only start tracks at frame number 1
+                     if (spotPair.getFirstSpot().getFrame() == 1) {
+                        ArrayList<GsSpotPair> track = new ArrayList<GsSpotPair>();
+                        track.add(spotPair);
+                        int frame = 2;
+                        while (frame <= dc.getSpotData(row).nrFrames_) {
+                           GsSpotPair newSpotPair = npsp.get(frame - 1).findKDWSE(
+                                   new Point2D.Double(spotPair.getFirstPoint().getX(), spotPair.getFirstPoint().getY()));
+                           if (newSpotPair != null) {
+                              spotPair = newSpotPair;
+                              track.add(spotPair);
+                           }
+                           frame++;
                         }
-                        frame++;
+                        tracks.add(track);
                      }
-                     tracks.add(track);
                   }
                }
 
