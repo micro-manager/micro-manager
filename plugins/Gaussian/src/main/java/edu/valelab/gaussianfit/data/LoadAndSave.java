@@ -416,7 +416,9 @@ public class LoadAndSave {
     */
    public static String saveData(final RowData rowData, boolean bypassFileDialog, 
            String dir, final JFrame caller) {
-      String fn = rowData.name_ + EXTENSION;
+      String[] parts = rowData.name_.split(File.separator);
+      String name = parts[parts.length - 1];
+      String fn = name + EXTENSION;
       if (!bypassFileDialog) {
          FileDialog fd = new FileDialog(caller, "Save Spot Data", FileDialog.SAVE);
          fd.setFile(fn);
@@ -567,7 +569,9 @@ public class LoadAndSave {
     */
    public static void saveDataAsText(final RowData rowData, final JFrame caller) {
       FileDialog fd = new FileDialog(caller, "Save Spot Data", FileDialog.SAVE);
-      fd.setFile(rowData.name_ + ".txt");
+      String[] parts = rowData.name_.split(File.separator);
+      String name = parts[parts.length - 1];
+      fd.setFile(name + ".txt");
       FilenameFilter fnf = new FilenameFilter() {
 
          @Override
