@@ -82,6 +82,7 @@ public class ParticlePairLister {
       final private Boolean showOverlay_;
       final private Boolean saveFile_;
       final private Boolean p2d_;
+      final private Boolean useVectDistances_;
       final private Boolean fitSigma_;
       final private Boolean useSigmaEstimate_;
       final private Double sigmaEstimate_;
@@ -97,6 +98,7 @@ public class ParticlePairLister {
       private Boolean showOverlay_;
       private Boolean saveFile_;
       private Boolean p2d_;
+      private Boolean useVectDistances_;
       private Boolean fitSigma_;
       private Boolean useSigmaEstimate_;
       private Double sigmaEstimate_;
@@ -141,6 +143,11 @@ public class ParticlePairLister {
          return this;
       }
       
+      public Builder useVectDistances(Boolean useVectDistances) {
+         useVectDistances_ = useVectDistances;
+         return this;
+      } 
+      
       public Builder fitSigma(Boolean fixSigma) {
          fitSigma_ = fixSigma;
          return this;
@@ -171,6 +178,7 @@ public class ParticlePairLister {
       showOverlay_ = builder.showOverlay_;
       saveFile_ = builder.saveFile_;
       p2d_ = builder.p2d_;
+      useVectDistances_ = builder.useVectDistances_;
       fitSigma_ = builder.fitSigma_;
       useSigmaEstimate_ = builder.useSigmaEstimate_;
       sigmaEstimate_ = builder.sigmaEstimate_;
@@ -186,6 +194,7 @@ public class ParticlePairLister {
               showOverlay(showOverlay_).
               saveFile(saveFile_).
               p2d(p2d_).
+              useVectDistances(useVectDistances_).
               fitSigma(fitSigma_).
               useSigmaEstimate(useSigmaEstimate_).              
               sigmaEstimate(sigmaEstimate_).
@@ -240,6 +249,7 @@ public class ParticlePairLister {
                // index spots by position
                Map<Integer, ArrayList<SpotData>> spotListsByPosition = new
                        HashMap<Integer, ArrayList<SpotData>>();
+               // and keep track of the positions that are actually used
                List<Integer> positions = new ArrayList<Integer>();
                for (SpotData spot : dc.getSpotData(row).spotList_) {
                   if (positions.indexOf(spot.getPosition()) == -1) {
@@ -251,12 +261,6 @@ public class ParticlePairLister {
                   spotListsByPosition.get(spot.getPosition()).add(spot);
                }
                Collections.sort(positions);
-               
-               // this is a bit of a hack to deal with incorrect input
-               int nrPositions = dc.getSpotData(row).nrPositions_;
-               if (spotListsByPosition.size() > dc.getSpotData(row).nrPositions_) {
-                  nrPositions = spotListsByPosition.size();
-               }
 
                // First go through all frames to find all pairs, organize by position
                int nrSpotPairsInFrame1 = 0;
@@ -465,6 +469,7 @@ public class ParticlePairLister {
                itTracks = tracks.iterator();
                spotId = 0;
                List<Double> avgDistances = new ArrayList<Double>(tracks.size());
+               List<Double> avgVectDistances = new ArrayList<Double>(tracks.size());
                List<Double> stdDevs = new ArrayList<Double>(tracks.size());
                List<Double> avgSigmas = new ArrayList<Double>(tracks.size());
                List<Integer> trackLengths = new ArrayList<Integer>(tracks.size());
@@ -519,8 +524,10 @@ public class ParticlePairLister {
                   double yDiffAvg = ListUtils.listAvg(yDiff);
                   double xDiffAvgStdDev = ListUtils.listStdDev(xDiff, xDiffAvg);
                   double yDiffAvgStdDev = ListUtils.listStdDev(yDiff, yDiffAvg);
-                  rt2.addValue("Dist.Vect.Avg", Math.sqrt(
-                          (xDiffAvg * xDiffAvg) + (yDiffAvg * yDiffAvg)));
+                  double vectAvg = Math.sqrt(
+                          (xDiffAvg * xDiffAvg) + (yDiffAvg * yDiffAvg));
+                  avgVectDistances.add(vectAvg);
+                  rt2.addValue("Dist.Vect.Avg", vectAvg);
                   rt2.addValue("Dist.Vect.StdDev", Math.sqrt(
                           (xDiffAvgStdDev * xDiffAvgStdDev)
                           + (yDiffAvgStdDev * yDiffAvgStdDev)));
@@ -579,12 +586,16 @@ public class ParticlePairLister {
                }
                
                if (p2d_) {
-                  double[] d = new double[avgDistances.size()];
-                  for (int j = 0; j < avgDistances.size(); j++) {
-                     d[j] = avgDistances.get(j);
+                  List<Double> avgToUse = avgDistances; // alternative: avgVectDistances
+                  if (useVectDistances_) {
+                     avgToUse = avgVectDistances;
+                  }
+                  double[] d = new double[avgToUse.size()];
+                  for (int j = 0; j < avgToUse.size(); j++) {
+                     d[j] = avgToUse.get(j);
                   }
                   P2DFitter p2df = new P2DFitter(d, fitSigma_, maxDistanceNm_);
-                  double distMean = ListUtils.listAvg(avgDistances);
+                  double distMean = ListUtils.listAvg(avgToUse);
                   double distStd = sigmaEstimate_;
                   if (fitSigma_ || !useSigmaEstimate_) {
                      // how do we best estimate sigma? If we have multiple
@@ -596,7 +607,7 @@ public class ParticlePairLister {
                      // From sigmas of two spots:
                      // distStd = ListUtils.listAvg(avgSigmas);
                      if (ListUtils.listAvg(trackLengths) > 3.0) {
-                        distStd = ListUtils.listStdDev(avgDistances, distMean);
+                        distStd = ListUtils.listStdDev(avgToUse, distMean);
                      } else {
                         distStd = ListUtils.listAvg(avgSigmas);
                      }
@@ -608,7 +619,7 @@ public class ParticlePairLister {
                         MMStudio.getInstance().alerts().postAlert(
                                 "P2D fit for " + dc.getSpotData(row).name_, 
                                 null, 
-                                "n = " + avgDistances.size() + ", mu = "
+                                "n = " + avgToUse.size() + ", mu = "
                                 + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
                                 + " nm, sigma = "
                                 + NumberUtils.doubleToDisplayString(p2dfResult[1], 2)
@@ -617,8 +628,8 @@ public class ParticlePairLister {
                         MMStudio.getInstance().alerts().postAlert(
                                 "P2D fit for " + dc.getSpotData(row).name_, 
                                 null, 
-                                " n = " + avgDistances.size() + ", mu = "
-                                + NumberUtils.doubleToDisplayString(p2dfResult[0])
+                                " n = " + avgToUse.size() + ", mu = "
+                                + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
                                 + " nm, sigma = "
                                 + distStd
                                 + " nm");
@@ -629,7 +640,7 @@ public class ParticlePairLister {
                              "Gaussian distribution for " +  
                                      dc.getSpotData(row).name_,
                              null,
-                             "n = " + avgDistances.size() 
+                             "n = " + avgToUse.size() 
                              + ", avg = "
                              + NumberUtils.doubleToDisplayString(distMean, 2)
                              + " nm, std = "
