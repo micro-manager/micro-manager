@@ -30,6 +30,7 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "../../MMDevice/DeviceThreads.h"
+#include <algorithm>
 #include <string>
 #include <vector>
 
