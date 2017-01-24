@@ -1940,6 +1940,11 @@ int Universal::OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct)
         camCurrentSpeed_ = selectedSpd;
         // Update all speed-dependant variables
         speedChanged();
+
+        // TODO: This is a temporary workaround to force buffer reallocation upon speed change.
+        // We need to move port/speed/gain settings into applyAcqConfig() and handle all the
+        // speed and gain resets there.
+        applyAcqConfig(true);
     }
     else if (eAct == MM::BeforeGet)
     {
@@ -4876,7 +4881,7 @@ int Universal::selectDebayerAlgMask(int xRoiPos, int yRoiPos, int32 pvcamColorMo
         }
 }
 
-int Universal::applyAcqConfig()
+int Universal::applyAcqConfig(bool forceBufferRealloc)
 {
     int nRet = DEVICE_OK;
 
@@ -4892,7 +4897,7 @@ int Universal::applyAcqConfig()
     // Some changes will require reallocation of our buffers
     // TODO: Better name would be "setupRequired" or similar, setting this flag will
     // force the call to pl_exp_setup() functions
-    bool bufferResizeRequired = false;
+    bool bufferResizeRequired = forceBufferRealloc;
     // This function is called on several places. After a change in property and
     // upon starting acquisition. If we are not running live mode the configuration
     // will get applied immediately. To avoid re-applying the configuration in

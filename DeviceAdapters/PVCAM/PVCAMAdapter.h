@@ -667,7 +667,7 @@ private:
     * This function should validate and apply the new acquisition configuration
     * to the camera, if not accepted the setting should be reverted and error returned.
     */
-    int applyAcqConfig();
+    int applyAcqConfig(bool forceBufferRealloc = false);
 
 private: // Static
 
