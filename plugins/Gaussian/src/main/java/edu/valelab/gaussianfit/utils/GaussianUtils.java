@@ -357,8 +357,8 @@ public class GaussianUtils {
          plot.mapDatasetToRangeAxis(1, 1);
          double xAnPos = xAtMaxY + 0.5 * fitResult[1];
          XYPointerAnnotation xypa = new XYPointerAnnotation( 
-                 "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0])  +
-                 " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1]),
+                 "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0], 2)  +
+                 " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1], 2),
                         xAnPos, p1.getValue(xAnPos), 15 * Math.PI / 8 );
          xypa.setLabelOffset(4.0);
          xypa.setTextAnchor(TextAnchor.HALF_ASCENT_LEFT);

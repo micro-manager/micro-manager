@@ -229,6 +229,7 @@ public class ParticlePairLister {
             rt2.setPrecision(1);
 
             for (int row : rows_) {
+               
                ArrayList<ArrayList<GsSpotPair>> spotPairsByFrame
                        = new ArrayList<ArrayList<GsSpotPair>>();
 
@@ -547,7 +548,7 @@ public class ParticlePairLister {
                   double distStd = sigmaEstimate_;
                   if (fitSigma_ || !useSigmaEstimate_) {
                      // how do we best estimate sigma? If we have multiple
-                     // measurements per paricle, it seems best to calculate it 
+                     // measurements per particle, it seems best to calculate it 
                      // directly from the spread in those measurements
                      // if we have only one particle per track, we need to
                      // calculate it from the sigmas of the two spots in the particle
@@ -564,25 +565,35 @@ public class ParticlePairLister {
                   try {
                      double[] p2dfResult = p2df.solve();
                      if (p2dfResult.length == 2) {
-                        ij.IJ.log("p2d fit: n = " + avgDistances.size() + ", mu = "
-                                + NumberUtils.doubleToDisplayString(p2dfResult[0])
+                        MMStudio.getInstance().alerts().postAlert(
+                                "P2D fit for " + dc.getSpotData(row).name_, 
+                                null, 
+                                "n = " + avgDistances.size() + ", mu = "
+                                + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
                                 + " nm, sigma = "
-                                + NumberUtils.doubleToDisplayString(p2dfResult[1])
+                                + NumberUtils.doubleToDisplayString(p2dfResult[1], 2)
                                 + " nm");
                      } else if (p2dfResult.length == 1 && !fitSigma_) {
-                        ij.IJ.log("p2d fit: n = " + avgDistances.size() + ", mu = "
+                        MMStudio.getInstance().alerts().postAlert(
+                                "P2D fit for " + dc.getSpotData(row).name_, 
+                                null, 
+                                " n = " + avgDistances.size() + ", mu = "
                                 + NumberUtils.doubleToDisplayString(p2dfResult[0])
                                 + " nm, sigma = "
                                 + distStd
                                 + " nm");
                      } else {
-                        ij.IJ.log("Error during p2d fit");
-                     }                     
-                     ij.IJ.log("Gaussian distribution: n = " + avgDistances.size()
+                        ReportingUtils.showMessage("Error during p2d fit");
+                     }  
+                     MMStudio.getInstance().alerts().postAlert(
+                             "Gaussian distribution for " +  
+                                     dc.getSpotData(row).name_,
+                             null,
+                             "n = " + avgDistances.size() 
                              + ", avg = "
-                             + NumberUtils.doubleToDisplayString(distMean)
+                             + NumberUtils.doubleToDisplayString(distMean, 2)
                              + " nm, std = "
-                             + NumberUtils.doubleToDisplayString(distStd) + " nm");
+                             + NumberUtils.doubleToDisplayString(distStd,2) + " nm");
 
                      // plot function and histogram
                      double[] muSigma = {p2dfResult[0], distStd};

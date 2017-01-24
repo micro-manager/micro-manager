@@ -44,23 +44,29 @@ import java.text.ParseException;
  * @author nico
  */
 public class NumberUtils {
-   private static final NumberFormat format_;
+   private static final NumberFormat FORMAT;
+   private static final int MAXFRACTIONDIGITS = 4;
    
    static {
 		// The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
-		format_ = NumberFormat.getInstance();
-      format_.setMaximumFractionDigits(4);
+		FORMAT = NumberFormat.getInstance();
+      FORMAT.setMaximumFractionDigits(MAXFRACTIONDIGITS);
    }
    
    public static double displayStringToDouble(Object numberString) throws ParseException {
-		return format_.parse((String) numberString).doubleValue();
+		return FORMAT.parse((String) numberString).doubleValue();
 	}
-   
+    
    public static int displayStringToInt(Object numberString) throws ParseException {
-		return format_.parse((String) numberString).intValue();      
+		return FORMAT.parse((String) numberString).intValue();      
 	}
    
    public static String doubleToDisplayString(double number) {
-		return format_.format(number);
+		return doubleToDisplayString(number, MAXFRACTIONDIGITS);
+	}
+   
+   public static String doubleToDisplayString(double number, int significance) {
+      FORMAT.setMaximumFractionDigits(significance);
+		return FORMAT.format(number);
 	}
 }
