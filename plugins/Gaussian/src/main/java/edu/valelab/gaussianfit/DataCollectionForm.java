@@ -421,6 +421,8 @@ public class DataCollectionForm extends JFrame {
    public void addSpotData(RowData newRow) {
       mainTableModel_.addRowData(newRow);
       fireRowAdded();
+      final Rectangle cellRect = mainTable_.getCellRect(mainTableModel_.getRowCount(), 0, false); 
+      mainTable_.scrollRectToVisible(cellRect);
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
@@ -1704,6 +1706,13 @@ public class DataCollectionForm extends JFrame {
                // Add transformed data to data overview window
                // for now, copy header of first data set
                RowData rowData = mainTableModel_.getRow(rows[0]);
+               RowData.Builder builder = rowData.copy();
+               builder.setName(rowData.name_ + "-Combined").
+                       setColColorRef(reference2CName_.getText()).
+                       setSpotList(newData).setIsTrack(false).
+                       setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
+               addSpotData(builder);
+               /*
                addSpotData(rowData.name_ + "-Combined",
                        rowData.title_,
                        rowData.dw_,
@@ -1714,7 +1723,7 @@ public class DataCollectionForm extends JFrame {
                        rowData.nrSlices_, 1, rowData.maxNrSpots_, newData,
                        rowData.timePoints_,
                        false, Coordinates.NM, false, 0.0, 0.0);
-
+               */
                semaphore_.release();
             }
          };
@@ -1899,6 +1908,13 @@ public class DataCollectionForm extends JFrame {
             }
 
             // Add transformed data to data overview window
+            RowData.Builder builder = rowData.copy();
+            builder.setName(rowData.name_ + "-CC-" + reference2CName_.getText() + "-"
+                    + method2CBox_.getSelectedItem()).
+                    setColColorRef(reference2CName_.getText()).
+                    setSpotList(correctedData);
+            addSpotData(builder);
+            /*
             addSpotData(rowData.name_ + "-CC-" + reference2CName_.getText() + "-"
                     + method2CBox_.getSelectedItem(),
                     rowData.title_,
@@ -1910,7 +1926,7 @@ public class DataCollectionForm extends JFrame {
                     rowData.nrSlices_, rowData.nrPositions_, rowData.maxNrSpots_, 
                     correctedData, rowData.timePoints_,
                     false, Coordinates.NM, false, 0.0, 0.0);
-
+            */
             semaphore_.release();
          }
       };
@@ -2073,13 +2089,18 @@ public class DataCollectionForm extends JFrame {
             }
          }
          // Add transformed data to data overview window
+         RowData.Builder builder = rowData.copy();
+         builder.setName(rowData.name_ + "-Filtered").setMaxNrSpots(filteredData.size()).
+                 setSpotList(filteredData);
+         addSpotData(builder);
+         /*
          addSpotData(rowData.name_ + "-Filtered", rowData.title_, rowData.dw_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_,
                  rowData.nrFrames_, rowData.nrSlices_, 1, filteredData.size(),
                  filteredData, null, false, DataCollectionForm.Coordinates.NM, rowData.hasZ_,
                  rowData.minZ_, rowData.maxZ_);
-
+          */
       }
    }
 
