@@ -231,13 +231,13 @@ public class MathForm extends JFrame {
                      rd2 = df.getSpotData(i);
                   }
                }
-            }
                int rows[] = df.getResultsTable().getSelectedRows();
                if (rows.length > 0) {
                   for (int i = 0; i < rows.length; i++) {
                      df.doMathOnRows(df.getSpotData(rows[i]), rd2, 0);
                   }
                }
+            }
       
                
          }

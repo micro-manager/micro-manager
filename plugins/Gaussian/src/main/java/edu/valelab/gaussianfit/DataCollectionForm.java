@@ -1510,8 +1510,11 @@ public class DataCollectionForm extends JFrame {
          
          ij.IJ.showStatus("Finished doing math...");
 
-         RowData rowData = source;
-         
+         RowData.Builder builder = source.copy();
+         builder.setName(source.name_ + " Subtracted").setNrPositions(1).
+                 setSpotList(transformedResultList);
+         addSpotData(builder);
+         /*
          addSpotData(rowData.name_ + " Subtracted", rowData.title_, rowData.dw_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
@@ -1519,6 +1522,7 @@ public class DataCollectionForm extends JFrame {
                  transformedResultList,
                  rowData.timePoints_, rowData.isTrack_, Coordinates.NM, 
                  rowData.hasZ_, rowData.minZ_, rowData.maxZ_);
+         */
          
       } catch (IndexOutOfBoundsException iobe) {
          JOptionPane.showMessageDialog(getInstance(), "Data sets differ in Size");
@@ -1530,7 +1534,8 @@ public class DataCollectionForm extends JFrame {
       int[] rows = new int[mainTable_.getRowCount()];
 
       for (int i = 0; i < rows.length; i++) {
-         rows[i] = (Integer) mainTable_.getValueAt(mainTable_.convertRowIndexToModel(i), 0);
+         Integer j =  (Integer) mainTable_.getValueAt(mainTable_.convertRowIndexToModel(i), 0);
+         rows[i] = j;
       }
 
       MathForm mf = new MathForm(studio_.getUserProfile(), rows, rows);
