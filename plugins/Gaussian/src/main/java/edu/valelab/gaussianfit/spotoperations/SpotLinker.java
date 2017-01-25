@@ -142,12 +142,19 @@ public class SpotLinker {
 
       
          // Add destList to rowData
+         RowData.Builder builder = rowData.copy();
+         builder.setName(rowData.name_ + " Linked").
+                 setMaxNrSpots(destList.size()).
+                  setSpotList(destList);
+         DataCollectionForm.getInstance().addSpotData(builder);
+         /*
          DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Linked", 
                  rowData.title_, rowData.dw_, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
                  rowData.shape_, rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                  0, 1, rowData.maxNrSpots_, destList,
                  rowData.timePoints_, false, DataCollectionForm.Coordinates.NM, false, 0.0, 0.0);
+         */
       } catch (OutOfMemoryError oome) {
          JOptionPane.showMessageDialog(getInstance(), "Out of memory");
       }
@@ -349,14 +356,23 @@ public class SpotLinker {
       
       return trackNr;
    }
-   
+
    private static void writeTrack(RowData rowData, List<SpotData> track, int trackNr) {
+      RowData.Builder builder = rowData.copy();
+      builder.setName(rowData.name_ + " Track " + trackNr).
+              setNrSlices(1).setNrPositions(1).
+              setMaxNrSpots(track.size()).
+              setSpotList(track);
+      DataCollectionForm.getInstance().addSpotData(builder);
+
+      /*
       DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Track " + trackNr,
               rowData.title_, rowData.dw_, "", rowData.width_,
               rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
               rowData.shape_, rowData.halfSize_, 1, rowData.nrFrames_,
               0, 1, track.size(), track, rowData.timePoints_, true,
               DataCollectionForm.Coordinates.NM, false, 0.0, 0.0);
+       */
    }
 
 }

@@ -81,6 +81,11 @@ public class TrackOperator {
       }
 
       // Add transformed data to data overview window
+      RowData.Builder builder = rowData.copy();
+      builder.setName(rowData.name_ + " Centered").
+              setSpotList(transformedResultList);
+      DataCollectionForm.getInstance().addSpotData(builder);
+      /*
       DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Centered", 
               rowData.title_, rowData.dw_, "", rowData.width_,
               rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
@@ -88,7 +93,7 @@ public class TrackOperator {
               rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
               transformedResultList, rowData.timePoints_, true, DataCollectionForm.Coordinates.NM, 
               false, 0.0, 0.0);
-      
+       */
    }
    
    /**
@@ -124,12 +129,18 @@ public class TrackOperator {
       }
 
       // Add transformed data to data overview window
+      RowData.Builder builder = rowData.copy();
+      builder.setName(rowData.name_ + "Straightened").
+              setSpotList(transformedResultList);
+      DataCollectionForm.getInstance().addSpotData(builder);
+      /*
       DataCollectionForm.getInstance().addSpotData(rowData.name_ + "Straightened", 
               rowData.title_, rowData.dw_, "", rowData.width_,
               rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
               rowData.shape_, rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
               rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
               rowData.timePoints_, true, DataCollectionForm.Coordinates.NM, false, 0.0, 0.0);
+      */
    }
    
    

@@ -45,6 +45,7 @@ import edu.valelab.gaussianfit.DataCollectionForm;
 import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.algorithm.GaussianFit;
 import edu.valelab.gaussianfit.data.GaussianInfo;
+import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import java.awt.geom.Point2D;
@@ -317,6 +318,19 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
 
    private void addListToForm(String name, List<SpotData> resultList, ImagePlus siPlus, ArrayList<Double> timePoints) {
       // Add data to data overview window
+           RowData.Builder builder = new RowData.Builder();
+      builder.setName(name).setTitle(siPlus.getTitle()).
+              setWidth(siPlus.getWidth()).setHeight(siPlus.getHeight()).
+              setPixelSizeNm(pixelSize_).setZStackStepSizeNm(0.0f).
+              setShape(super.getShape()).setHalfSize(super.getHalfBoxSize()).
+              setNrChannels(siPlus.getNChannels()).setNrFrames(siPlus.getNFrames()).
+              setNrSlices(siPlus.getNSlices()).setNrPositions(1).
+              setMaxNrSpots(resultList.size()).setSpotList(resultList).
+              setTimePoints(timePoints).setIsTrack(true).
+              setCoordinate(DataCollectionForm.Coordinates.NM).
+              setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
+      DataCollectionForm.getInstance().addSpotData(builder);
+      /*
       DataCollectionForm dcForm = DataCollectionForm.getInstance();
       dcForm.addSpotData(name, siPlus.getTitle(), null, "", siPlus.getWidth(), 
               siPlus.getHeight(),  pixelSize_, (float) 0.0, getShape(),
@@ -324,7 +338,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
               siPlus.getNSlices(), 1, resultList.size(), resultList, 
               timePoints, true, DataCollectionForm.Coordinates.NM, false, 
               0.0, 0.0);
-      dcForm.setVisible(true);
+      */
+      DataCollectionForm.getInstance().setVisible(true);
    }
 
   

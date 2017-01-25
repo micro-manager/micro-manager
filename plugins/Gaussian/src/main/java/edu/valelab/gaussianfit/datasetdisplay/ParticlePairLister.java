@@ -626,25 +626,24 @@ public class ParticlePairLister {
                                 + " nm");
                      } else if (p2dfResult.length == 1 && !fitSigma_) {
                         MMStudio.getInstance().alerts().postAlert(
-                                "P2D fit for " + dc.getSpotData(row).name_, 
-                                null, 
-                                " n = " + avgToUse.size() + ", mu = "
-                                + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
-                                + " nm, sigma = "
-                                + distStd
-                                + " nm");
+                           "P2D fit for " + dc.getSpotData(row).name_, 
+                           null, 
+                           " n = " + avgToUse.size() + ", mu = "
+                           + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
+                           + " nm, sigma = "
+                           + NumberUtils.doubleToDisplayString(distStd, 2) + " nm");
                      } else {
                         ReportingUtils.showMessage("Error during p2d fit");
                      }  
                      MMStudio.getInstance().alerts().postAlert(
-                             "Gaussian distribution for " +  
-                                     dc.getSpotData(row).name_,
-                             null,
-                             "n = " + avgToUse.size() 
-                             + ", avg = "
-                             + NumberUtils.doubleToDisplayString(distMean, 2)
-                             + " nm, std = "
-                             + NumberUtils.doubleToDisplayString(distStd,2) + " nm");
+                           "Gaussian distribution for " +  
+                                   dc.getSpotData(row).name_,
+                           null,
+                           "n = " + avgToUse.size() 
+                           + ", avg = "
+                           + NumberUtils.doubleToDisplayString(distMean, 2)
+                           + " nm, std = "
+                           + NumberUtils.doubleToDisplayString(distStd, 2) + " nm");
 
                      // plot function and histogram
                      double[] muSigma = {p2dfResult[0], distStd};

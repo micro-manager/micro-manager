@@ -178,6 +178,11 @@ public class PairFilter {
                }
 
                // Add transformed data to data overview window
+               RowData.Builder builder = rowData.copy();
+               builder.setName(rowData.name_ + "-Pair-Corrected").
+                       setSpotList(correctedData);
+               DataCollectionForm.getInstance().addSpotData(builder);
+               /*
                DataCollectionForm.getInstance().addSpotData(
                        rowData.name_ + "-Pair-Corrected", rowData.title_, rowData.dw_, "", rowData.width_,
                        rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
@@ -185,6 +190,7 @@ public class PairFilter {
                        rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_,
                        correctedData, null, false, DataCollectionForm.Coordinates.NM, rowData.hasZ_,
                        rowData.minZ_, rowData.maxZ_);
+               */
                ij.IJ.showStatus("Finished pair correction");
             } catch (OutOfMemoryError oom) {
                System.gc();

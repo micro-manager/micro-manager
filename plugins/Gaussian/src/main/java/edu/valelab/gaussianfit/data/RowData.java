@@ -63,7 +63,7 @@ public class RowData {
       private int nrFrames_ = 1;
       private int nrSlices_ = 1;
       private int nrPositions_ = 1;
-      private int maxNrSpots_;
+      private long maxNrSpots_;
       private List<SpotData> spotList_;
       private ArrayList<Double> timePoints_;
       private boolean isTrack_;
@@ -146,7 +146,7 @@ public class RowData {
          return this;
       }
 
-      public Builder setMaxNrSpots(int maxNrSpots) {
+      public Builder setMaxNrSpots(long maxNrSpots) {
          maxNrSpots_ = maxNrSpots;
          return this;
       }
@@ -206,7 +206,7 @@ public class RowData {
    public final int nrFrames_;
    public final int nrSlices_;
    public final int nrPositions_;
-   public int maxNrSpots_;
+   public long maxNrSpots_;
    public final boolean isTrack_;
    public final double stdX_;
    public final double stdY_;

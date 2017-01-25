@@ -61,7 +61,7 @@ public class SubRange {
     * @return - subranged datase
     */
    public static RowData subRange(RowData input,
-           ArrayList<Integer> desiredFrames) {
+           ArrayList<Long> desiredFrames) {
       
       RowData output = new RowData(input);
       output.spotList_.clear();

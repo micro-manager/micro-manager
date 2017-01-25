@@ -69,7 +69,9 @@ import javax.swing.JOptionPane;
 public class LoadAndSave {
 
    /**
-    * Load Gaussian spot data from indicated file Updates the ImageJ status bar
+    * Load Gaussian spot data from indicated file. 
+    * This is for the file type developed by Bo Huang and adopted by Nikon
+    * Updates the ImageJ status bar
     * to show progress
     *
     * @param selectedFile - file that should be in binary format
@@ -164,11 +166,17 @@ public class LoadAndSave {
          }
 
          String name = selectedFile.getName();
+         
+         RowData.Builder builder = new RowData.Builder();
+         builder.setName(name).setTitle(name).setDisplayWindow(null).
+                 setColColorRef("").setWidth(256).setHeight(256).
+                 setPixelSizeNm(pixelSize).setZStackStepSizeNm(0.0f).
+                 setShape(3).setHalfSize(2).setNrFrames(1).setNrSlices(1).
+                 setNrPositions(1).setMaxNrSpots(nr).setSpotList(spotList).
+                 setIsTrack(false).setCoordinate(DataCollectionForm.Coordinates.NM).
+                 setHasZ(hasZ).setMinZ(minZ).setMaxZ(maxZ);
+         DataCollectionForm.getInstance().addSpotData(builder);
 
-         DataCollectionForm.getInstance().addSpotData(
-                 name, name, null, "", 256, 256, pixelSize, (float) 0.0, 3, 2, 1, 1,
-                 1, 1, nr, spotList, null, false,
-                 DataCollectionForm.Coordinates.NM, hasZ, minZ, maxZ);
 
       } catch (FileNotFoundException ex) {
          JOptionPane.showMessageDialog(getInstance(), "File not found");
@@ -262,27 +270,26 @@ public class LoadAndSave {
          if (infoMap.containsKey("z_step_size")) {
             zStepSize = (float) (Double.parseDouble(infoMap.get("z_step_size")));
          }
+         
+         int halfBoxSize = Integer.parseInt(infoMap.get("box_size")) / 2;
+         RowData.Builder builder = new RowData.Builder();
+         builder.setName(infoMap.get("name")).setTitle(infoMap.get("name")).
+                 setWidth(Integer.parseInt(infoMap.get("nr_pixels_x"))).
+                 setHeight(Integer.parseInt(infoMap.get("nr_pixels_y"))).
+                 setPixelSizeNm(Math.round(Double.parseDouble(infoMap.get("pixel_size")))).
+                 setZStackStepSizeNm(zStepSize).
+                 setShape(Integer.parseInt(infoMap.get("fit_mode"))).
+                 setHalfSize(halfBoxSize).
+                 setNrChannels(Integer.parseInt(infoMap.get("nr_channels"))).
+                 setNrFrames(Integer.parseInt(infoMap.get("nr_frames"))).
+                 setNrSlices(Integer.parseInt(infoMap.get("nr_slices"))).
+                 setNrPositions(Integer.parseInt(infoMap.get("nr_pos"))).
+                 setMaxNrSpots(spotList.size()).
+                 setSpotList(spotList).
+                 setCoordinate(DataCollectionForm.Coordinates.NM).
+                 setHasZ(hasZ).setMinZ(minZ).setMaxZ(maxZ);
+         DataCollectionForm.getInstance().addSpotData(builder);
 
-         DataCollectionForm.getInstance().addSpotData(infoMap.get("name"), infoMap.get("name"),
-                 null, "", Integer.parseInt(infoMap.get("nr_pixels_x")),
-                 Integer.parseInt(infoMap.get("nr_pixels_y")),
-                 Math.round(Double.parseDouble(infoMap.get("pixel_size"))),
-                 zStepSize,
-                 Integer.parseInt(infoMap.get("fit_mode")),
-                 Integer.parseInt(infoMap.get("box_size")) / 2,
-                 Integer.parseInt(infoMap.get("nr_channels")),
-                 Integer.parseInt(infoMap.get("nr_frames")),
-                 Integer.parseInt(infoMap.get("nr_slices")),
-                 Integer.parseInt(infoMap.get("nr_pos")),
-                 spotList.size(),
-                 spotList,
-                 null,
-                 Boolean.parseBoolean(infoMap.get("is_track")),
-                 DataCollectionForm.Coordinates.NM,
-                 hasZ,
-                 minZ,
-                 maxZ
-         );
 
       } catch (NumberFormatException ex) {
          JOptionPane.showMessageDialog(getInstance(), "File format did not meet expectations");
@@ -337,7 +344,7 @@ public class LoadAndSave {
          String title = psl.getName();
          int width = psl.getNrPixelsX();
          int height = psl.getNrPixelsY();
-         float pixelSizeUm = psl.getPixelSize();
+         float pixelSize = psl.getPixelSize();
          int shape = 1;
          if (psl.getFitMode() == TaggedSpotsProtos.FitMode.TWOAXIS) {
             shape = 2;
@@ -388,9 +395,16 @@ public class LoadAndSave {
             spotList.add(gSpot);
          }
 
-         DataCollectionForm.getInstance().addSpotData(name, title, null, "", width, height, pixelSizeUm, (float) 0.0, shape, halfSize,
-                 nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
-                 spotList, null, isTrack, DataCollectionForm.Coordinates.NM, hasZ, minZ, maxZ);
+         RowData.Builder builder = new RowData.Builder();
+         builder.setName(name).setTitle(title).setWidth(width).setHeight(height).
+                 setPixelSizeNm(pixelSize).setZStackStepSizeNm(0.0f).setShape(shape).
+                 setHalfSize(halfSize).setNrChannels(nrChannels).
+                 setNrFrames(nrFrames).setNrSlices(nrSlices).
+                 setNrPositions(nrPositions).setMaxNrSpots(maxNrSpots).
+                 setSpotList(spotList).setIsTrack(isTrack).
+                 setCoordinate(DataCollectionForm.Coordinates.NM).
+                 setHasZ(hasZ).setMinZ(minZ).setMaxZ(maxZ);
+         DataCollectionForm.getInstance().addSpotData(builder);
 
       } catch (FileNotFoundException ex) {
          JOptionPane.showMessageDialog(getInstance(), "File not found");

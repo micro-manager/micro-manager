@@ -42,6 +42,7 @@ import edu.valelab.gaussianfit.DataCollectionForm;
 import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.utils.ProgressThread;
 import edu.valelab.gaussianfit.data.GaussianInfo;
+import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.fitting.ZCalibrator;
 import ij.IJ;
@@ -270,6 +271,21 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       if (nrPositions > 1) {
          title += "_Pos" + positionString_;
       }
+      
+      RowData.Builder builder = new RowData.Builder();
+      builder.setName(title).setTitle(siPlus.getTitle()).setDisplayWindow(dw).
+              setWidth(siPlus.getWidth()).setHeight(siPlus.getHeight()).
+              setPixelSizeNm(pixelSize_).setZStackStepSizeNm(zStackStepSize_).
+              setShape(super.getShape()).setHalfSize(super.getHalfBoxSize()).
+              setNrChannels(nrChannels).setNrFrames(nrFrames).
+              setNrSlices(nrSlices).setNrPositions(nrPositions).
+              setMaxNrSpots(resultList_.size()).setSpotList(resultList_).
+              setTimePoints(timePoints).setIsTrack(false).
+              setCoordinate(DataCollectionForm.Coordinates.NM).
+              setHasZ(DataCollectionForm.zc_.hasFitFunctions()).
+              setMinZ(zMin).setMaxZ(zMax);
+      dcForm.addSpotData(builder);
+      /*
       dcForm.addSpotData(title, siPlus.getTitle(), dw, "",
               siPlus.getWidth(), siPlus.getHeight(), pixelSize_,
               zStackStepSize_, super.getShape(), super.getHalfBoxSize(),
@@ -277,7 +293,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
               resultList_, timePoints, false, DataCollectionForm.Coordinates.NM,
               DataCollectionForm.zc_.hasFitFunctions(),
               zMin, zMax);
-
+      */
       if (showDataWindow_) {
          dcForm.setVisible(true);
       }

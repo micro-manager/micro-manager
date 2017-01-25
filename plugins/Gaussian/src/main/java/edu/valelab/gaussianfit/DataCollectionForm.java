@@ -116,7 +116,6 @@ import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.stat.StatUtils;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 
@@ -359,29 +358,7 @@ public class DataCollectionForm extends JFrame {
     * Adds a spot data set to the form
     *
     *
-    * @param name
-    * @param title
-    * @param dw
-    * @param colCorrRef
-    * @param width
-    * @param height
-    * @param pixelSizeUm
-    * @param zStackStepSizeNm
-    * @param shape
-    * @param halfSize
-    * @param nrChannels
-    * @param nrFrames
-    * @param nrSlices
-    * @param nrPositions
-    * @param maxNrSpots
-    * @param spotList
-    * @param timePoints
-    * @param isTrack
-    * @param coordinate
-    * @param hasZ
-    * @param minZ
-    * @param maxZ
-    */
+
    public void addSpotData(
            String name,
            String title,
@@ -412,7 +389,13 @@ public class DataCollectionForm extends JFrame {
               hasZ, minZ, maxZ);
       addSpotData (newRow);
    }
-     
+    
+ */    
+   
+   /**
+    * 
+    * @param builder 
+    */
    public void addSpotData(RowData.Builder builder) {
       RowData newRow = builder.build();
       addSpotData(newRow);
@@ -1642,13 +1625,13 @@ public class DataCollectionForm extends JFrame {
 
       range_ = (String) JOptionPane.showInputDialog(this, "Provide desired subrange\n"
               + "e.g. \"7-50\"", "SubRange", JOptionPane.PLAIN_MESSAGE, null, null, range_);
-      ArrayList<Integer> desiredFrameNumbers = new ArrayList<Integer>(
-              mainTableModel_.getRow(rows[0]).maxNrSpots_);
+      ArrayList<Long> desiredFrameNumbers = new ArrayList<Long>(
+              (int) mainTableModel_.getRow(rows[0]).maxNrSpots_);
       String[] parts = range_.split(",");
       try {
          for (String part : parts) {
             String[] tokens = part.split("-");
-            for (int i = Integer.parseInt(tokens[0].trim());
+            for (long i = Integer.parseInt(tokens[0].trim());
                     i <= Integer.parseInt(tokens[1].trim()); i++) {
                desiredFrameNumbers.add(i);
             }
@@ -1657,7 +1640,7 @@ public class DataCollectionForm extends JFrame {
          ReportingUtils.showError(ex, "Could not parse input");
       }
 
-      final ArrayList<Integer> desiredFrameNumbersCopy = desiredFrameNumbers;          
+      final ArrayList<Long> desiredFrameNumbersCopy = desiredFrameNumbers;          
       
       Runnable doWorkRunnable = new Runnable() {
 

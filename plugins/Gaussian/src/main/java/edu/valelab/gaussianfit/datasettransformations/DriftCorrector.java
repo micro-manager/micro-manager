@@ -370,8 +370,14 @@ public class DriftCorrector {
                   
                   
                }
-
+               
                // Add transformed data to data overview window
+               RowData.Builder builder = rowData.copy();
+               builder.setName(rowData.name_ + "-Jitter-Correct").
+                       setSpotList(correctedData);
+               DataCollectionForm.getInstance().addSpotData(builder);
+
+               /*
                DataCollectionForm.getInstance().addSpotData(
                        rowData.name_ + "-Jitter-Correct", rowData.title_, 
                        rowData.dw_, "", 
@@ -380,6 +386,7 @@ public class DriftCorrector {
                        rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                        rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
                        null, false, Coordinates.NM, false, 0.0, 0.0);
+               */
                
                ij.IJ.showStatus("Finished jitter correction");
             } catch (OutOfMemoryError oom) {
@@ -605,6 +612,10 @@ public class DriftCorrector {
          }
 
          // Add transformed data to data overview window
+         RowData.Builder builder = rowData.copy();
+         builder.setName(rowData.name_ + "-Jitter-Correct").setSpotList(correctedData);
+         DataCollectionForm.getInstance().addSpotData(builder);
+         /*
          DataCollectionForm.getInstance().addSpotData(
                  rowData.name_ + "-Jitter-Correct", rowData.title_, rowData.dw_, 
                  "", rowData.width_,
@@ -613,6 +624,7 @@ public class DriftCorrector {
                  rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
                  correctedData, null, false, Coordinates.NM, rowData.hasZ_, 
                  rowData.minZ_, rowData.maxZ_);
+         */
          ij.IJ.showStatus("Finished jitter correction");
       } catch (OutOfMemoryError oom) {
          System.gc();
