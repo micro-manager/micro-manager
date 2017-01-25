@@ -412,16 +412,11 @@ public class DataCollectionForm extends JFrame {
               hasZ, minZ, maxZ);
       addSpotData (newRow);
    }
-   
-   public void fireRowAdded() {
-      if (mainTable_.getRowSorter() != null) {
-         mainTable_.getRowSorter().allRowsChanged();
-      } else {
-         mainTableModel_.fireRowInserted();
-      }
-   }
-
-      
+     
+   public void addSpotData(RowData.Builder builder) {
+      RowData newRow = builder.build();
+      addSpotData(newRow);
+   }   
    
    public void addSpotData(RowData newRow) {
       mainTableModel_.addRowData(newRow);
@@ -432,6 +427,14 @@ public class DataCollectionForm extends JFrame {
             formComponentResized(null);
          }
       } );
+   }
+      
+   public void fireRowAdded() {
+      if (mainTable_.getRowSorter() != null) {
+         mainTable_.getRowSorter().allRowsChanged();
+      } else {
+         mainTableModel_.fireRowInserted();
+      }
    }
 
    /**
@@ -1414,10 +1417,9 @@ public class DataCollectionForm extends JFrame {
                           
          List<SpotData> transformedResultList =
                  Collections.synchronizedList(new ArrayList<SpotData>());
-         //List<TrackAnalysisData> avgTrackData = new ArrayList<TrackAnalysisData>();
          
          // for each frame in the collection, calculate the average
-         for (int i = 1; i <= allData.size(); i++) {
+         for (int i : allData.keySet()) {
             List<SpotData> frameList = allData.get(i);
             TrackAnalysisData tad = new TrackAnalysisData();
             tad.frame = i;
@@ -1431,38 +1433,28 @@ public class DataCollectionForm extends JFrame {
             tad.yAvg = listAvg.y;
             tad.xStdDev = stdDev.x;
             tad.yStdDev = stdDev.y;
-            //avgTrackData.add(tad);
              
             avgFrame.setXCenter(listAvg.x);
             avgFrame.setYCenter(listAvg.y);
             
             transformedResultList.add(avgFrame);
          }
-         
 
          // Add transformed data to data overview window
          RowData rowData = myRows[0];
+         RowData.Builder builder = rowData.copy();
+         builder.setName(rowData.name_ + " Average").setDisplayWindow(null).
+                 setColColorRef("").setSpotList(transformedResultList).
+                 setIsTrack(true).setHasZ(false);
+         addSpotData(builder);
+/*         
          addSpotData(rowData.name_ + " Average", rowData.title_, null, "", rowData.width_,
                  rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, rowData.shape_,
                  rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
                  rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
                  rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
-/*
-         // show resultsTable
-         ResultsTable rt = new ResultsTable();
-         for (int i = 0; i < avgTrackData.size(); i++) {
-            rt.incrementCounter();
-            TrackAnalysisData trackData = avgTrackData.get(i);
-            rt.addValue("Frame", trackData.frame);
-            rt.addValue("n", trackData.n);
-            rt.addValue("XAvg", trackData.xAvg);
-            rt.addValue("XStdev", trackData.xStdDev);
-            rt.addValue("YAvg", trackData.yAvg);
-            rt.addValue("YStdev", trackData.yStdDev);
-         }
-         rt.show("Averaged Tracks");
-*/
 
+*/
       }
 
    }
