@@ -283,10 +283,18 @@ public class GaussianUtils {
          // Since the axis autoscale only on the first dataset, we need to scale ourselves
          NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
          yAxis.setAutoRangeIncludesZero(false);
-         yAxis.setRangeWithMargins(minY, maxY);
+         double yPad = 0.02 * (maxY - minY);
+         if (yPad <= 0.0) {
+            yPad = 1.0;
+         }
+         yAxis.setRangeWithMargins(minY - yPad, maxY + yPad);
 
          ValueAxis xAxis = plot.getDomainAxis();
-         xAxis.setRangeWithMargins(minX, maxX);
+         double xPad = 0.02 * (maxX - minX);
+         if (xPad <= 0.0) {
+            xPad = 1.0;
+         }
+         xAxis.setRangeWithMargins(minX - xPad, maxX + xPad);
       }
       
       ChartFrame graphFrame = new ChartFrame(title, chart);
