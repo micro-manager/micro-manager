@@ -421,7 +421,7 @@ public class ParticlePairLister {
                
                TextPanel tp;
                TextWindow win;
-               String rtName = dc.getSpotData(row).name_ + " Particle List";
+               String rtName = dc.getSpotData(row).getName() + " Particle List";
                if (showTrack_) {
                   rt.show(rtName);
                   ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
@@ -450,7 +450,7 @@ public class ParticlePairLister {
                if (saveFile_) {
                   try {
                      String fileName = filePath_ + File.separator
-                             + dc.getSpotData(row).name_ + "_PairTracks.cvs";
+                             + dc.getSpotData(row).getName() + "_PairTracks.cvs";
                      rt.saveAs(fileName);
                      ij.IJ.log("Saved file: " + fileName);
                   } catch (IOException ex) {
@@ -560,7 +560,7 @@ public class ParticlePairLister {
                }
                
                if (showSummary_) {
-                  rtName = dc.getSpotData(row).name_ + " Particle Summary";
+                  rtName = dc.getSpotData(row).getName() + " Particle Summary";
                   rt2.show(rtName);
                   siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
                   Frame frame = WindowManager.getFrame(rtName);
@@ -617,7 +617,7 @@ public class ParticlePairLister {
                      double[] p2dfResult = p2df.solve();
                      if (p2dfResult.length == 2) {
                         MMStudio.getInstance().alerts().postAlert(
-                                "P2D fit for " + dc.getSpotData(row).name_, 
+                                "P2D fit for " + dc.getSpotData(row).getName(), 
                                 null, 
                                 "n = " + avgToUse.size() + ", mu = "
                                 + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
@@ -626,7 +626,7 @@ public class ParticlePairLister {
                                 + " nm");
                      } else if (p2dfResult.length == 1 && !fitSigma_) {
                         MMStudio.getInstance().alerts().postAlert(
-                           "P2D fit for " + dc.getSpotData(row).name_, 
+                           "P2D fit for " + dc.getSpotData(row).getName(), 
                            null, 
                            " n = " + avgToUse.size() + ", mu = "
                            + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
@@ -637,7 +637,7 @@ public class ParticlePairLister {
                      }  
                      MMStudio.getInstance().alerts().postAlert(
                            "Gaussian distribution for " +  
-                                   dc.getSpotData(row).name_,
+                                   dc.getSpotData(row).getName(),
                            null,
                            "n = " + avgToUse.size() 
                            + ", avg = "
@@ -650,7 +650,7 @@ public class ParticlePairLister {
                      if (fitSigma_) {
                         muSigma = p2dfResult;
                      }
-                     GaussianUtils.plotP2D(dc.getSpotData(row).name_ + " distances",
+                     GaussianUtils.plotP2D(dc.getSpotData(row).getName() + " distances",
                              d, maxDistanceNm_, muSigma);
                      
                   } catch (FittingException fe) {
@@ -819,7 +819,7 @@ public class ParticlePairLister {
 
             if (showSummary) {
                // show summary in resultstable
-               rt2.show("Summary of Pairs found in " + spotData.name_);
+               rt2.show("Summary of Pairs found in " + spotData.getName());
             }
 
             if (showGraph) {
@@ -830,7 +830,7 @@ public class ParticlePairLister {
                      xAxis = "Time (s)";
                   }
                }
-               GaussianUtils.plotData2("Error in " + spotData.name_,
+               GaussianUtils.plotData2("Error in " + spotData.getName(),
                        xData, yData, xAxis, "Error(nm)", 0, 400);
 
                ij.IJ.showStatus("");
@@ -841,7 +841,7 @@ public class ParticlePairLister {
                TextPanel tp;
                TextWindow win;
 
-               String rtName = "Pairs found in " + spotData.name_;
+               String rtName = "Pairs found in " + spotData.getName();
                rt.show(rtName);
                ImagePlus siPlus = ij.WindowManager.getImage(spotData.title_);
                Frame frame = WindowManager.getFrame(rtName);
@@ -874,7 +874,7 @@ public class ParticlePairLister {
                sp.setTitle(spotData.title_);
 
                ImageWindow w = new StackWindow(sp);
-               w.setTitle("Error in " + spotData.name_);
+               w.setTitle("Error in " + spotData.getName());
 
                w.setImage(sp);
                w.setVisible(true);
@@ -883,7 +883,7 @@ public class ParticlePairLister {
             if (savePairs) {
                try {
                   String fileName = filePath + File.separator
-                          + spotData.name_ + "_Pairs.cvs";
+                          + spotData.getName() + "_Pairs.cvs";
                   rt.saveAs(fileName);
                   ij.IJ.log("Saved file: " + fileName);
                } catch (IOException ex) {

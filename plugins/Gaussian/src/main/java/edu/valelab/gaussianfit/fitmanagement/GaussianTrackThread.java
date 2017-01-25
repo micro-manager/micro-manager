@@ -330,15 +330,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
               setCoordinate(DataCollectionForm.Coordinates.NM).
               setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
       DataCollectionForm.getInstance().addSpotData(builder);
-      /*
-      DataCollectionForm dcForm = DataCollectionForm.getInstance();
-      dcForm.addSpotData(name, siPlus.getTitle(), null, "", siPlus.getWidth(), 
-              siPlus.getHeight(),  pixelSize_, (float) 0.0, getShape(),
-              getHalfBoxSize(), siPlus.getNChannels(), siPlus.getNFrames(),
-              siPlus.getNSlices(), 1, resultList.size(), resultList, 
-              timePoints, true, DataCollectionForm.Coordinates.NM, false, 
-              0.0, 0.0);
-      */
+
       DataCollectionForm.getInstance().setVisible(true);
    }
 

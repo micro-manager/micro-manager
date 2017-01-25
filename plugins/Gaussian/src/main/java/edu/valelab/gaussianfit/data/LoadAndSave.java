@@ -430,7 +430,7 @@ public class LoadAndSave {
     */
    public static String saveData(final RowData rowData, boolean bypassFileDialog, 
            String dir, final JFrame caller) {
-      String[] parts = rowData.name_.split(File.separator);
+      String[] parts = rowData.getName().split(File.separator);
       String name = parts[parts.length - 1];
       String fn = name + EXTENSION;
       if (!bypassFileDialog) {
@@ -468,7 +468,7 @@ public class LoadAndSave {
 
             TaggedSpotsProtos.SpotList.Builder tspBuilder = TaggedSpotsProtos.SpotList.newBuilder();
             tspBuilder.setApplicationId(1).
-                    setName(rowData.name_).
+                    setName(rowData.getName()).
                     setFilepath(rowData.title_).
                     setNrPixelsX(rowData.width_).
                     setNrPixelsY(rowData.height_).
@@ -583,7 +583,7 @@ public class LoadAndSave {
     */
    public static void saveDataAsText(final RowData rowData, final JFrame caller) {
       FileDialog fd = new FileDialog(caller, "Save Spot Data", FileDialog.SAVE);
-      String[] parts = rowData.name_.split(File.separator);
+      String[] parts = rowData.getName().split(File.separator);
       String name = parts[parts.length - 1];
       fd.setFile(name + ".txt");
       FilenameFilter fnf = new FilenameFilter() {
@@ -625,7 +625,7 @@ public class LoadAndSave {
                   FileWriter fw = new FileWriter(selectedFile);
                   fw.write(""
                           + "application_id: " + 1 + tab
-                          + "name: " + rowData.name_ + tab
+                          + "name: " + rowData.getName() + tab
                           + "filepath: " + rowData.title_ + tab
                           + "nr_pixels_x: " + rowData.width_ + tab
                           + "nr_pixels_y: " + rowData.height_ + tab

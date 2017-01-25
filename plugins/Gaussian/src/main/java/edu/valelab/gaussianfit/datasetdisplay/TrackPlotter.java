@@ -59,7 +59,7 @@ public class TrackPlotter {
          useShapes = false;
       }
       if (rowDatas.length == 1) {
-         title = rowDatas[0].name_ + " " + PLOTMODES[plotMode];
+         title = rowDatas[0].getName() + " " + PLOTMODES[plotMode];
       }
 
       XYSeries[] datas = new XYSeries[rowDatas.length];

@@ -116,7 +116,7 @@ public class DataTableModel extends AbstractTableModel {
       if (col == 0 && rowData_ != null) {
          return rowData_.get(row).ID_;
       } else if (col == 1 && rowData_ != null) {
-         return rowData_.get(row).name_;
+         return rowData_.get(row).getName();
       } else if (col == 2) {
          return rowData_.get(row).spotList_.size();
       } else if (col == 3) {
@@ -187,7 +187,7 @@ public class DataTableModel extends AbstractTableModel {
    @Override
    public void setValueAt(Object value, int row, int col) {
       if (col == 1) {
-         rowData_.get(row).name_ = (String) value;
+         rowData_.get(row).setName((String) value);
       }
       fireTableCellUpdated(row, col);
    }

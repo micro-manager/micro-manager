@@ -82,14 +82,10 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    private final String positionString_;
    private boolean showDataWindow_ = true;
    private final Studio studio_;
-   
-   //public class Monitor {}
-   
-   //private final Monitor monitor_;
+
 
    public FitAllThread(Studio studio, 
            FindLocalMaxima.FilterType preFilterType, String positions) {
-      //monitor_ = new Monitor();
       studio_ = studio;
       preFilterType_ = preFilterType;
       positionString_ = positions;
@@ -285,15 +281,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
               setHasZ(DataCollectionForm.zc_.hasFitFunctions()).
               setMinZ(zMin).setMaxZ(zMax);
       dcForm.addSpotData(builder);
-      /*
-      dcForm.addSpotData(title, siPlus.getTitle(), dw, "",
-              siPlus.getWidth(), siPlus.getHeight(), pixelSize_,
-              zStackStepSize_, super.getShape(), super.getHalfBoxSize(),
-              nrChannels, nrFrames, nrSlices, nrPositions, resultList_.size(),
-              resultList_, timePoints, false, DataCollectionForm.Coordinates.NM,
-              DataCollectionForm.zc_.hasFitFunctions(),
-              zMin, zMax);
-      */
+
       if (showDataWindow_) {
          dcForm.setVisible(true);
       }
@@ -368,7 +356,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                      Polygon p = new Polygon();
                      synchronized (SpotData.LOCK_IP) {
                         siPlus.setPositionWithoutUpdate(c, z, f);
-                        //siPlus.setPosition(c, z, f);
                         // If ROI manager is used, use RoiManager Rois
                         //  may be dangerous if the user is not aware
                         RoiManager roiM = RoiManager.getInstance();

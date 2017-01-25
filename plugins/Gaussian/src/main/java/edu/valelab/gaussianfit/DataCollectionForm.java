@@ -353,57 +353,18 @@ public class DataCollectionForm extends JFrame {
       formWindowClosing(null);
    }
 
-
-   /**
-    * Adds a spot data set to the form
-    *
-    *
-
-   public void addSpotData(
-           String name,
-           String title,
-           DisplayWindow dw, 
-           String colCorrRef,
-           int width,
-           int height,
-           float pixelSizeUm, 
-           float zStackStepSizeNm,
-           int shape,
-           int halfSize,
-           int nrChannels,
-           int nrFrames,
-           int nrSlices,
-           int nrPositions,
-           int maxNrSpots, 
-           List<SpotData> spotList,
-           ArrayList<Double> timePoints,
-           boolean isTrack, 
-           Coordinates coordinate, 
-           boolean hasZ, 
-           double minZ, 
-           double maxZ) {
-      RowData newRow = new RowData(name, title, dw, colCorrRef, width, height, 
-              pixelSizeUm, zStackStepSizeNm, 
-              shape, halfSize, nrChannels, nrFrames, nrSlices, nrPositions, 
-              maxNrSpots, spotList, timePoints, isTrack, coordinate, 
-              hasZ, minZ, maxZ);
-      addSpotData (newRow);
-   }
-    
- */    
+   
    
    /**
-    * 
-    * @param builder 
+    * Adds a dataset to the data table.  
+    * Data is provided as a builder that is build in this function
+    * @param builder RowData builder
     */
    public void addSpotData(RowData.Builder builder) {
       RowData newRow = builder.build();
-      addSpotData(newRow);
-   }   
-   
-   public void addSpotData(RowData newRow) {
       mainTableModel_.addRowData(newRow);
       fireRowAdded();
+      // attemp to make the newly added row visible.  
       final Rectangle cellRect = mainTable_.getCellRect(mainTableModel_.getRowCount(), 0, false); 
       mainTable_.scrollRectToVisible(cellRect);
       SwingUtilities.invokeLater(new Runnable() {
@@ -1221,7 +1182,7 @@ public class DataCollectionForm extends JFrame {
           
          
          RowData rowData = mainTableModel_.getRow(row);
-         String data = "Name: " + rowData.name_ + "\n" +
+         String data = "Name: " + rowData.getName() + "\n" +
                  "Title: " + rowData.title_ + "\n" + 
                  "BoxSize: " + 2*rowData.halfSize_ + "\n" +
                  "Image Height (pixels): " + rowData.height_ + "\n" + 
@@ -1253,7 +1214,7 @@ public class DataCollectionForm extends JFrame {
                     "StdDev Y: " + stdDev.y;           
          }
          
-         TextWindow tw = new TextWindow("Info for " + rowData.name_, data, 300, 300);
+         TextWindow tw = new TextWindow("Info for " + rowData.getName(), data, 300, 300);
          tw.setVisible(true);
        }
        else
@@ -1290,9 +1251,9 @@ public class DataCollectionForm extends JFrame {
 
                   RowData rowData = mainTableModel_.getRow(row);
                   String fsep = System.getProperty("file.separator");
-                  String ttmp = rowData.name_;
-                  if (rowData.name_.contains(fsep)) {
-                     ttmp = rowData.name_.substring(rowData.name_.lastIndexOf(fsep) + 1);
+                  String ttmp = rowData.getName();
+                  if (rowData.getName().contains(fsep)) {
+                     ttmp = rowData.getName().substring(rowData.getName().lastIndexOf(fsep) + 1);
                   }
                   ttmp += mag + "x";
                   final String title = ttmp;
@@ -1428,18 +1389,10 @@ public class DataCollectionForm extends JFrame {
          // Add transformed data to data overview window
          RowData rowData = myRows[0];
          RowData.Builder builder = rowData.copy();
-         builder.setName(rowData.name_ + " Average").setDisplayWindow(null).
+         builder.setName(rowData.getName() + " Average").setDisplayWindow(null).
                  setColColorRef("").setSpotList(transformedResultList).
                  setIsTrack(true).setHasZ(false);
          addSpotData(builder);
-/*         
-         addSpotData(rowData.name_ + " Average", rowData.title_, null, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, rowData.shape_,
-                 rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                 rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
-                 rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
-
-*/
       }
 
    }
@@ -1496,18 +1449,9 @@ public class DataCollectionForm extends JFrame {
          ij.IJ.showStatus("Finished doing math...");
 
          RowData.Builder builder = source.copy();
-         builder.setName(source.name_ + " Subtracted").setNrPositions(1).
+         builder.setName(source.getName() + " Subtracted").setNrPositions(1).
                  setSpotList(transformedResultList);
          addSpotData(builder);
-         /*
-         addSpotData(rowData.name_ + " Subtracted", rowData.title_, rowData.dw_, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
-                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
-                 rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
-                 transformedResultList,
-                 rowData.timePoints_, rowData.isTrack_, Coordinates.NM, 
-                 rowData.hasZ_, rowData.minZ_, rowData.maxZ_);
-         */
          
       } catch (IndexOutOfBoundsException iobe) {
          JOptionPane.showMessageDialog(getInstance(), "Data sets differ in Size");
@@ -1553,10 +1497,7 @@ public class DataCollectionForm extends JFrame {
          @Override
          public void run() {
             for (int row : rows) {
-               final RowData rowData = mainTableModel_.getRow(row);
-               if (rowData.frameIndexSpotList_ == null) {
-                  rowData.index();
-               }
+               final RowData rowData = mainTableModel_.getRow(row);                    
                SpotLinker.link(rowData, maxDistance);
             }
          }
@@ -1619,11 +1560,11 @@ public class DataCollectionForm extends JFrame {
 
       if (rows == null || rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
-                 "Please select one or more datasets for sub ranging");
+                 "Please select one or more datasets for sub-ranging");
          return;
       }
 
-      range_ = (String) JOptionPane.showInputDialog(this, "Provide desired subrange\n"
+      range_ = (String) JOptionPane.showInputDialog(this, "Provide desired range of Frame numbers\n"
               + "e.g. \"7-50\"", "SubRange", JOptionPane.PLAIN_MESSAGE, null, null, range_);
       ArrayList<Long> desiredFrameNumbers = new ArrayList<Long>(
               (int) mainTableModel_.getRow(rows[0]).maxNrSpots_);
@@ -1649,10 +1590,21 @@ public class DataCollectionForm extends JFrame {
 
             if (rows.length > 0) {
                for (int row : rows) {
-                  RowData newRow =
-                          edu.valelab.gaussianfit.utils.SubRange.subRange(
-                          mainTableModel_.getRow(row), desiredFrameNumbersCopy);
-                  addSpotData(newRow);
+
+                  RowData.Builder output = mainTableModel_.getRow(row).copy();
+                  List<SpotData> outList = new ArrayList<SpotData>();
+                  output.setSpotList(outList);
+
+                  List<SpotData> spots = mainTableModel_.getRow(row).spotList_;
+
+                  Collections.sort(desiredFrameNumbersCopy);
+                  for (SpotData spot : mainTableModel_.getRow(row).spotList_) {
+                     if (desiredFrameNumbersCopy.contains((long) spot.getFrame())) {
+                        outList.add(new SpotData(spot));
+                     }
+                  }
+                  output.setMaxNrSpots(outList.size());
+                  addSpotData(output);
                }
 
             }
@@ -1690,23 +1642,12 @@ public class DataCollectionForm extends JFrame {
                // for now, copy header of first data set
                RowData rowData = mainTableModel_.getRow(rows[0]);
                RowData.Builder builder = rowData.copy();
-               builder.setName(rowData.name_ + "-Combined").
+               builder.setName(rowData.getName() + "-Combined").
                        setColColorRef(reference2CName_.getText()).
                        setSpotList(newData).setIsTrack(false).
                        setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
                addSpotData(builder);
-               /*
-               addSpotData(rowData.name_ + "-Combined",
-                       rowData.title_,
-                       rowData.dw_,
-                       reference2CName_.getText(), rowData.width_,
-                       rowData.height_, rowData.pixelSizeNm_,
-                       rowData.zStackStepSizeNm_, rowData.shape_,
-                       rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                       rowData.nrSlices_, 1, rowData.maxNrSpots_, newData,
-                       rowData.timePoints_,
-                       false, Coordinates.NM, false, 0.0, 0.0);
-               */
+
                semaphore_.release();
             }
          };
@@ -1776,7 +1717,7 @@ public class DataCollectionForm extends JFrame {
       TextPanel tp;
       TextWindow win;
       
-      String name = "Spots from: " + rowData.name_;
+      String name = "Spots from: " + rowData.getName();
       rt.show(name);
       ImagePlus siPlus = ij.WindowManager.getImage(rowData.title_);
       // Attach listener to TextPanel
@@ -1892,24 +1833,12 @@ public class DataCollectionForm extends JFrame {
 
             // Add transformed data to data overview window
             RowData.Builder builder = rowData.copy();
-            builder.setName(rowData.name_ + "-CC-" + reference2CName_.getText() + "-"
+            builder.setName(rowData.getName() + "-CC-" + reference2CName_.getText() + "-"
                     + method2CBox_.getSelectedItem()).
                     setColColorRef(reference2CName_.getText()).
                     setSpotList(correctedData);
             addSpotData(builder);
-            /*
-            addSpotData(rowData.name_ + "-CC-" + reference2CName_.getText() + "-"
-                    + method2CBox_.getSelectedItem(),
-                    rowData.title_,
-                    rowData.dw_,
-                    reference2CName_.getText(), rowData.width_,
-                    rowData.height_, rowData.pixelSizeNm_,
-                    rowData.zStackStepSizeNm_, rowData.shape_,
-                    rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                    rowData.nrSlices_, rowData.nrPositions_, rowData.maxNrSpots_, 
-                    correctedData, rowData.timePoints_,
-                    false, Coordinates.NM, false, 0.0, 0.0);
-            */
+  
             semaphore_.release();
          }
       };
@@ -1956,15 +1885,15 @@ public class DataCollectionForm extends JFrame {
       zc_.clearDataPoints();
       
       // calculate average and stdev per frame
-      if (rd.frameIndexSpotList_ == null) {
-         rd.index();
-      }  
+            
+      Map<Integer, List<SpotData>> frameIndexSpotList = 
+              rd.getSpotListIndexedByFrame();
       
       final int nrImages = rd.nrSlices_;
      
       int frameNr = 0;
       while (frameNr < nrImages) {
-         List<SpotData> frameSpots = rd.frameIndexSpotList_.get(frameNr);
+         List<SpotData> frameSpots = frameIndexSpotList.get(frameNr);
          if (frameSpots != null) {
             double[] xws = new double[frameSpots.size()];
             double[] yws = new double[frameSpots.size()];
@@ -2073,17 +2002,9 @@ public class DataCollectionForm extends JFrame {
          }
          // Add transformed data to data overview window
          RowData.Builder builder = rowData.copy();
-         builder.setName(rowData.name_ + "-Filtered").setMaxNrSpots(filteredData.size()).
+         builder.setName(rowData.getName() + "-Filtered").setMaxNrSpots(filteredData.size()).
                  setSpotList(filteredData);
          addSpotData(builder);
-         /*
-         addSpotData(rowData.name_ + "-Filtered", rowData.title_, rowData.dw_, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
-                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_,
-                 rowData.nrFrames_, rowData.nrSlices_, 1, filteredData.size(),
-                 filteredData, null, false, DataCollectionForm.Coordinates.NM, rowData.hasZ_,
-                 rowData.minZ_, rowData.maxZ_);
-          */
       }
    }
 
