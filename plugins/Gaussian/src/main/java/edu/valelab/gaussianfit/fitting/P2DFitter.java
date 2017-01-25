@@ -40,7 +40,12 @@ import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.SimplexOptimizer;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.nonlinear.scalar.MultivariateFunctionMappingAdapter;
 
-
+/**
+ * Implements fitting of pairwise distribution function as described in
+ *         http://dx.doi.org/10.1529/biophysj.105.065599
+ * 
+ * @author nico
+ */
 class P2DFunc implements MultivariateFunction {
    private final double[] points_;
    private final double sigma_;
