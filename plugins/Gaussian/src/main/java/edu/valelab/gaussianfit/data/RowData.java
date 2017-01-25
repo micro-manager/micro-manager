@@ -47,6 +47,58 @@ import org.micromanager.display.DisplayWindow;
     */
    public class RowData {
      
+      public class Builder {
+         private String name_;
+         private String title_;
+         private DisplayWindow dw_;
+         private String colCorrRef_;
+         private int width_;
+         private int height_;
+         private float pixelSizeNm_;
+         private float zStackStepSizeNm_;
+         private int shape_;
+         private int halfSize_ = 6; 
+         private int nrChannels_ = 1;
+         private int nrFrames_ = 1;
+         private int nrSlices_ = 1;
+         private int nrPositions_ = 1;
+         private int maxNrSpots_; 
+         private List<SpotData> spotList_;
+         private ArrayList<Double> timePoints_;
+         private boolean isTrack_;
+         private Coordinates coordinate_; 
+         private boolean hasZ_; 
+         private double minZ_; 
+         private double maxZ_;
+         
+         public RowData build() {
+            return new RowData(this);
+         }
+         
+         public Builder setName(String name) {name_ = name; return this;}
+         public Builder setTitle(String title) {title_ = title; return this;}
+         public Builder setDisplayWindow(DisplayWindow dw) {dw_ = dw; return this;}
+         public Builder setColColorRef(String colCorrRef) {colCorrRef_ = colCorrRef; return this;}
+         public Builder setWidth(int width) {width_ = width; return this;}
+         public Builder setHeight(int height) {height_ = height; return this;}
+         public Builder setPixelSizeNm(float pixelSizeNm) {pixelSizeNm_ = pixelSizeNm; return this;}
+         public Builder setZStackStepSizeNm(float zStackStepSizeNm) {zStackStepSizeNm_ = zStackStepSizeNm; return this;}
+         public Builder setShape(int shape) {shape_ = shape; return this;}
+         public Builder setHalfSize(int halfSize) {halfSize_ = halfSize; return this;}
+         public Builder setNrChannels(int nrChannels) {nrChannels_ = nrChannels; return this;}
+         public Builder setNrFrames(int nrFrames) {nrFrames_ = nrFrames; return this;}
+         public Builder setNrSlices(int nrSlices) {nrSlices_ = nrSlices; return this;}
+         public Builder setNrPositions(int nrPositions) {nrPositions_ = nrPositions; return this;}
+         public Builder setMaxNrSpots(int maxNrSpots) {maxNrSpots_ = maxNrSpots; return this;}
+         public Builder setSpotList(List<SpotData> spotList) {spotList_ = spotList; return this;}
+         public Builder setTimePoints(ArrayList<Double> timePoints) {timePoints_ = timePoints; return this;}
+         public Builder setIsTrack(boolean isTrack) {isTrack_ = isTrack; return this;}
+         public Builder setCoordinate(Coordinates coordinate) {coordinate_ = coordinate; return this;}
+         public Builder setHasZ(boolean hasZ) {hasZ_ = hasZ; return this;}
+         public Builder setMinZ(double minZ) {minZ_ = minZ; return this;}
+         public Builder setMaxZ(double maxZ) {maxZ_ = maxZ; return this;}
+         
+      }
       
       public final List<SpotData> spotList_;
       public Map<Integer, List<SpotData>> frameIndexSpotList_;
@@ -79,6 +131,52 @@ import org.micromanager.display.DisplayWindow;
       
       private static int rowDataID_ = 1;
       
+      private RowData(Builder b) {
+         name_ = b.name_;
+         title_ = b.title_;
+         dw_ = b.dw_;
+         colCorrRef_ = b.colCorrRef_;
+         width_ =  b.width_;
+         height_ = b.height_;
+         pixelSizeNm_ = b.pixelSizeNm_ ; 
+         zStackStepSizeNm_ = b.zStackStepSizeNm_;
+         shape_ = b.shape_;
+         halfSize_ = b.halfSize_;
+         nrChannels_ = b.nrChannels_;
+         nrFrames_ = b.nrFrames_;
+         nrSlices_ = b.nrSlices_;
+         nrPositions_ = b.nrPositions_;
+         maxNrSpots_ = b.maxNrSpots_;
+         spotList_ = new ArrayList<SpotData> (b.spotList_);
+         if (b.timePoints_ != null)
+            timePoints_ = new ArrayList<Double> (b.timePoints_);
+         else
+            timePoints_ = null;
+         isTrack_ = b.isTrack_;
+         coordinate_ = b.coordinate_; 
+         hasZ_ = b.hasZ_;
+         minZ_ = b.minZ_;
+         maxZ_ = b.maxZ_;
+                 
+         double stdX = 0.0;
+         double stdY = 0.0;
+         double nrPhotons = 0.0;         
+         if (isTrack_) {
+            ArrayList<Point2D.Double> xyList = ListUtils.spotListToPointList(spotList_);
+            Point2D.Double avgPoint = ListUtils.avgXYList(xyList);
+            Point2D.Double stdPoint = ListUtils.stdDevXYList(xyList, avgPoint);
+            stdX = stdPoint.x;
+            stdY = stdPoint.y;
+            for (SpotData spot : spotList_) {
+               nrPhotons += spot.getIntensity();
+            }
+         }
+         stdX_ = stdX;
+         stdY_ = stdY;
+         totalNrPhotons_ = nrPhotons;
+         ID_ = rowDataID_;
+         rowDataID_++;
+      }
 
      public RowData(RowData oldRow) {
          
