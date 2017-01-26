@@ -281,6 +281,10 @@ public: // Action handlers
     */
     int OnPMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
+    * Gets or sets the current ADC offset
+    */
+    int OnAdcOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
     * Gets or sets the current Trigger Mode - i.e. Internal, Bulb, Edge, etc.
     */
     int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -627,14 +631,6 @@ private:
     */
     int revertPostProcValue( long absoluteParamIdx, MM::PropertyBase* pProp);
     /**
-    * Called when Readout Port changes. Handles updating of all depending properties.
-    */
-    int portChanged();
-    /**
-    * Called when Readout Speed changes. Handles updating of all depending properties.
-    */
-    int speedChanged();
-    /**
     * This function is called right after pl_exp_setup_seq() and pl_exp_setup_cont()
     * After setup is called following parameters become available or may change their values:
     *  PARAM_READOUT_TIME - camera calculated readout time.
@@ -667,7 +663,7 @@ private:
     * This function should validate and apply the new acquisition configuration
     * to the camera, if not accepted the setting should be reverted and error returned.
     */
-    int applyAcqConfig(bool forceBufferRealloc = false);
+    int applyAcqConfig();
 
 private: // Static
 
@@ -789,6 +785,7 @@ private: // Static
     PvEnumParam*      prmExposeOutMode_;
     PvParam<uns16>*   prmClearCycles_;
     PvEnumParam*      prmReadoutPort_;
+    PvParam<int16>*   prmSpdTabIndex_;
     PvEnumParam*      prmColorMode_;
     PvParam<ulong64>* prmFrameBufSize_;
 
@@ -801,6 +798,7 @@ private: // Static
     PvEnumParam*      prmTrigTabSignal_;
     PvParam<uns8>*    prmLastMuxedSignal_;
     PvEnumParam*      prmPMode_;
+    PvParam<int16>*   prmAdcOffset_;
 
     // These parameters become valid after calling pl_exp_setup_seq()/pl_exp_setup_cont()
     PvParam<uns32>*   prmReadoutTime_;      // (PARAM_READOUT_TIME)

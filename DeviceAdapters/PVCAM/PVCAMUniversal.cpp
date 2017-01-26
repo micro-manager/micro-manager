@@ -184,7 +184,6 @@ const char* g_Keyword_TimingPreTriggerDelayNs  = "Timing-PreTriggerDelayNs";
 // Do not use these for static camera properties that never changes. It's more efficient to create
 // a simple readonly MM property without a handler (see examples in Initialize())
 ParamNameIdPair g_UniversalParams[] = {
-    {MM::g_Keyword_Offset, "PARAM_ADC_OFFSET",         PARAM_ADC_OFFSET},         // INT16
     {"ClearMode",          "PARAM_CLEAR_MODE",         PARAM_CLEAR_MODE},         // ENUM
     {"PreampDelay",        "PARAM_PREAMP_DELAY",       PARAM_PREAMP_DELAY},       // UNS16
     {"PreampOffLimit",     "PARAM_PREAMP_OFF_CONTROL", PARAM_PREAMP_OFF_CONTROL}, // UNS32 // preamp is off during exposure if exposure time is less than this
@@ -264,6 +263,7 @@ Universal::Universal(short cameraId) :
     prmExposeOutMode_(0),
     prmClearCycles_(0),
     prmReadoutPort_(0),
+    prmSpdTabIndex_(0),
     prmColorMode_(0),
     prmFrameBufSize_(0),
     prmRoiCount_(0),
@@ -275,6 +275,7 @@ Universal::Universal(short cameraId) :
     prmTrigTabSignal_(0),
     prmLastMuxedSignal_(0),
     prmPMode_(0),
+    prmAdcOffset_(0),
     prmReadoutTime_(0),
     prmClearingTime_(0),
     prmPreTriggerDelay_(0),
@@ -347,6 +348,7 @@ Universal::~Universal()
     delete prmTriggerMode_;
     delete prmExposeOutMode_;
     delete prmClearCycles_;
+    delete prmSpdTabIndex_;
     delete prmReadoutPort_;
     delete prmColorMode_;
     delete prmFrameBufSize_;
@@ -359,6 +361,7 @@ Universal::~Universal()
     delete prmTrigTabSignal_;
     delete prmLastMuxedSignal_;
     delete prmPMode_;
+    delete prmAdcOffset_;
     delete prmReadoutTime_;
     delete prmClearingTime_;
     delete prmPreTriggerDelay_;
@@ -473,6 +476,10 @@ int Universal::Initialize()
     nRet = initializeSpeedTable();
     if ( nRet != DEVICE_OK )
         return nRet;
+
+    // TODO: Remove the camCurrentSpeed_ and move port/speed/gain handling to applyAcqConfig()
+    acqCfgNew_.PortId = camCurrentSpeed_.portIndex;
+    acqCfgNew_.SpeedIndex = camCurrentSpeed_.spdIndex;
 
     /// --- DYNAMIC PROPERTIES
     /// are properties that may be updated by a camera or changed by the user during session.
@@ -813,6 +820,42 @@ int Universal::Initialize()
     /// Changing the port resets the speed.
     /// Changing the speed causes change in Gain range, Pixel time and current Bit depth
 
+    /// READOUT PORT
+    prmReadoutPort_ = new PvEnumParam("PARAM_READOUT_PORT", PARAM_READOUT_PORT, this, true );
+    if ( prmReadoutPort_->IsAvailable() )
+    {
+        pAct = new CPropertyAction (this, &Universal::OnReadoutPort);
+        vector<string> portStrings = prmReadoutPort_->GetEnumStrings();
+        // If there is more than 1 port we make it selectable, otherwise just display readonly value
+        if ( portStrings.size() > 1 )
+        {
+            nRet = CreateProperty(g_ReadoutPort, prmReadoutPort_->ToString().c_str(), MM::String, false, pAct);
+            nRet = SetAllowedValues(g_ReadoutPort, prmReadoutPort_->GetEnumStrings());
+        }
+        else
+            nRet = CreateProperty(g_ReadoutPort, prmReadoutPort_->ToString().c_str(), MM::String, true, pAct);
+    }
+
+    /// SPEED
+    /// Note that this can change depending on output port
+    prmSpdTabIndex_ = new PvParam<int16>("PARAM_SPDTAB_INDEX", PARAM_SPDTAB_INDEX, this, true);
+    if (prmSpdTabIndex_->IsAvailable())
+    {
+        pAct = new CPropertyAction (this, &Universal::OnReadoutRate);
+        nRet = CreateProperty(g_ReadoutRate, camCurrentSpeed_.spdString.c_str(), MM::String, false, pAct);
+        if (nRet != DEVICE_OK)
+            return nRet;
+
+        // Fill in the GUI speed choices
+        std::vector<std::string> spdChoices;
+        uns32 curPort = prmReadoutPort_->IsAvailable() ? prmReadoutPort_->Current() : 0;
+        std::map<int16, SpdTabEntry>::iterator i = camSpdTable_[curPort].begin();
+        for( ; i != camSpdTable_[curPort].end(); ++i )
+            spdChoices.push_back(i->second.spdString);
+        // Set the allowed readout rates
+        SetAllowedValues(g_ReadoutRate, spdChoices);
+    }
+
     /// GAIN
     /// Note that this can change depending on output port, and readout rate.
     prmGainIndex_ = new PvParam<int16>( "PARAM_GAIN_INDEX", PARAM_GAIN_INDEX, this, true );
@@ -830,29 +873,6 @@ int Universal::Initialize()
         nRet = CreateProperty(MM::g_Keyword_Gain, gainName.c_str(), MM::String, false, pAct);
         if (nRet != DEVICE_OK)
             return nRet;
-    }
-
-    /// SPEED
-    /// Note that this can change depending on output port, and readout rate.
-    pAct = new CPropertyAction (this, &Universal::OnReadoutRate);
-    nRet = CreateProperty(g_ReadoutRate, camCurrentSpeed_.spdString.c_str(), MM::String, false, pAct);
-    if (nRet != DEVICE_OK)
-        return nRet;
-
-    /// READOUT PORT
-    prmReadoutPort_ = new PvEnumParam("PARAM_READOUT_PORT", PARAM_READOUT_PORT, this, true );
-    if ( prmReadoutPort_->IsAvailable() )
-    {
-        pAct = new CPropertyAction (this, &Universal::OnReadoutPort);
-        vector<string> portStrings = prmReadoutPort_->GetEnumStrings();
-        // If there is more than 1 port we make it selectable, otherwise just display readonly value
-        if ( portStrings.size() > 1 )
-        {
-            nRet = CreateProperty(g_ReadoutPort, prmReadoutPort_->ToString().c_str(), MM::String, false, pAct);
-            nRet = SetAllowedValues(g_ReadoutPort, prmReadoutPort_->GetEnumStrings());
-        }
-        else
-            nRet = CreateProperty(g_ReadoutPort, prmReadoutPort_->ToString().c_str(), MM::String, true, pAct);
     }
 
     /// EXPOSURE RESOLUTION
@@ -1107,6 +1127,16 @@ int Universal::Initialize()
         acqCfgNew_.PMode = cur;
     }
 
+    // ADC Offset parameter
+    prmAdcOffset_ = new PvParam<int16>("PARAM_ADC_OFFSET", PARAM_ADC_OFFSET, this, true);
+    if (prmAdcOffset_->IsAvailable())
+    {
+        pAct = new CPropertyAction(this, &Universal::OnAdcOffset);
+        nRet = CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, prmAdcOffset_->IsReadOnly(), pAct);
+        SetPropertyLimits(MM::g_Keyword_Offset, prmAdcOffset_->Min(), prmAdcOffset_->Max());
+        acqCfgNew_.AdcOffset = prmAdcOffset_->Current();
+    }
+
     nRet = initializePostSetupParams();
     if (nRet != DEVICE_OK)
         return nRet;
@@ -1131,11 +1161,6 @@ int Universal::Initialize()
 
     // Make sure our configs are synchronized
     acqCfgCur_ = acqCfgNew_;
-
-    // Force updating the port. This updates the speed choices (and allowed values for the current port),
-    // gain range, current bit depth, current pix time (readout speed), color and all parameters that depend on speed
-    // table settings. All the MM parameters must be already instantiated so we do at here at the end.
-    portChanged();
 
     initialized_ = true;
     START_METHOD("<<< Universal::Initialize");
@@ -1899,17 +1924,14 @@ int Universal::OnReadoutPort(MM::PropertyBase* pProp, MM::ActionType eAct)
     {
         string portStr;
         pProp->Get( portStr );
-        if ( IsCapturing() )
-            StopSequenceAcquisition();
 
-        prmReadoutPort_->Set( portStr );
-        prmReadoutPort_->Apply();
-        // Update other properties that might have changed because of port change
-        portChanged();
+        acqCfgNew_.PortId = prmReadoutPort_->GetEnumValue(portStr);
+
+        return applyAcqConfig();
     }
     else if (eAct == MM::BeforeGet)
     {
-        pProp->Set(prmReadoutPort_->ToString().c_str());
+        pProp->Set(prmReadoutPort_->GetEnumString(acqCfgCur_.PortId).c_str());
     }
 
     return DEVICE_OK;
@@ -1926,25 +1948,11 @@ int Universal::OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct)
         string selectedSpdString;
         pProp->Get(selectedSpdString);
 
-        if (IsCapturing())
-            StopSequenceAcquisition();
-
         // Find the corresponding speed index from reverse speed table
-        SpdTabEntry selectedSpd = camSpdTableReverse_[currentPort][selectedSpdString];
-        if ( pl_set_param(hPVCAM_, PARAM_SPDTAB_INDEX, (void_ptr)&selectedSpd.spdIndex) != PV_OK )
-        {
-            LogPvcamError(__LINE__, "pl_set_param PARAM_SPDTAB_INDEX");
-            return DEVICE_CAN_NOT_SET_PROPERTY;
-        }
-        // Update the current speed if everything succeed
-        camCurrentSpeed_ = selectedSpd;
-        // Update all speed-dependant variables
-        speedChanged();
+        const SpdTabEntry selectedSpd = camSpdTableReverse_[currentPort][selectedSpdString];
 
-        // TODO: This is a temporary workaround to force buffer reallocation upon speed change.
-        // We need to move port/speed/gain settings into applyAcqConfig() and handle all the
-        // speed and gain resets there.
-        applyAcqConfig(true);
+        acqCfgNew_.SpeedIndex = selectedSpd.spdIndex;
+        return applyAcqConfig();
     }
     else if (eAct == MM::BeforeGet)
     {
@@ -2034,6 +2042,25 @@ int Universal::OnPMode(MM::PropertyBase* pProp, MM::ActionType eAct)
         pProp->Get( valStr );
 
         acqCfgNew_.PMode = prmPMode_->GetEnumValue(valStr);
+        return applyAcqConfig();
+    }
+    return DEVICE_OK;
+}
+
+int Universal::OnAdcOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnAdcOffset", eAct);
+
+    if (eAct == MM::BeforeGet)
+    {
+        pProp->Set((long)acqCfgCur_.AdcOffset);
+    }
+    else if (eAct == MM::AfterSet)
+    {
+        long val;
+        pProp->Get( val );
+
+        acqCfgNew_.AdcOffset = val;
         return applyAcqConfig();
     }
     return DEVICE_OK;
@@ -4702,60 +4729,6 @@ int Universal::revertPostProcValue( long absoluteParamIdx, MM::PropertyBase* pPr
 }
 #endif // WIN32
 
-int Universal::portChanged()
-{
-    std::vector<std::string> spdChoices;
-    uns32 curPort = prmReadoutPort_->Current();
-
-    // Read the available speeds for this port from our speed table
-    std::map<int16, SpdTabEntry>::iterator i = camSpdTable_[curPort].begin();
-    for( ; i != camSpdTable_[curPort].end(); ++i )
-    {
-        spdChoices.push_back(i->second.spdString);
-    }
-
-    // Set the allowed readout rates
-    SetAllowedValues( g_ReadoutRate, spdChoices );
-
-    // Set the current speed to the default rate, this will cause the speedChanged() call.
-    // TODO: This needs to be revisited. When SetProperty is called on a read-only property
-    // the handler is not called at all. If we have port options that have just single speed
-    // and thus we make that property read-only this call will not work properly.
-    const int16 defSpdIdx = camSpdTable_[curPort][0].portDefaultSpdIdx;
-    SetProperty( g_ReadoutRate, spdChoices[defSpdIdx].c_str()); 
-
-    return DEVICE_OK;
-}
-
-int Universal::speedChanged()
-{
-    // Prepare the gain options for the current speed
-    vector<string> gainChoices;
-    for (int16 i = camCurrentSpeed_.gainMin; i <= camCurrentSpeed_.gainMax; i++)
-    {
-        gainChoices.push_back(camCurrentSpeed_.gainNameMapReverse.at(i));
-    }
-    SetAllowedValues(MM::g_Keyword_Gain, gainChoices);
-
-    // If the current gain is applicable for the new speed we want to restore it.
-    // Change in speed automatically resets GAIN in PVCAM, so we want to preserve it.
-    // We can use the prmGainIndex_->Current() because it still contains the previous
-    // cached value (we didn't call Update/Apply yet)
-    int16 curGain = prmGainIndex_->Current();
-    if ( curGain < camCurrentSpeed_.gainMin || curGain > camCurrentSpeed_.gainMax )
-    {
-        // The new speed does not support this gain index, so we reset it to the first available
-        curGain = camCurrentSpeed_.gainDef;
-    }
-
-    // TODO: This needs to be revisited. When SetProperty is called on a read-only property
-    // the handler is not called at all. If we have speed options that have just single gain
-    // and thus we make that property read-only this call will not work properly.
-    SetProperty( MM::g_Keyword_Gain, camCurrentSpeed_.gainNameMapReverse.at(curGain).c_str());
-
-    return DEVICE_OK;
-}
-
 int Universal::postExpSetupInit(unsigned int frameSize)
 {
     int nRet = DEVICE_OK;
@@ -4881,7 +4854,7 @@ int Universal::selectDebayerAlgMask(int xRoiPos, int yRoiPos, int32 pvcamColorMo
         }
 }
 
-int Universal::applyAcqConfig(bool forceBufferRealloc)
+int Universal::applyAcqConfig()
 {
     int nRet = DEVICE_OK;
 
@@ -4897,7 +4870,7 @@ int Universal::applyAcqConfig(bool forceBufferRealloc)
     // Some changes will require reallocation of our buffers
     // TODO: Better name would be "setupRequired" or similar, setting this flag will
     // force the call to pl_exp_setup() functions
-    bool bufferResizeRequired = forceBufferRealloc;
+    bool bufferResizeRequired = false;
     // This function is called on several places. After a change in property and
     // upon starting acquisition. If we are not running live mode the configuration
     // will get applied immediately. To avoid re-applying the configuration in
@@ -5099,6 +5072,108 @@ int Universal::applyAcqConfig(bool forceBufferRealloc)
         bufferResizeRequired = true;
     }
 
+    bool speedReset = false;
+    if (acqCfgNew_.PortId != acqCfgCur_.PortId)
+    {
+        configChanged = true;
+        nRet = prmReadoutPort_->SetAndApply(acqCfgNew_.PortId);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+
+        // Port has changed so we need to reset the speed
+        // Read the available speeds for this port from our speed table
+        std::vector<std::string> spdChoices;
+        const uns32 curPort = prmReadoutPort_->Current();
+        std::map<int16, SpdTabEntry>::iterator i = camSpdTable_[curPort].begin();
+        for(; i != camSpdTable_[curPort].end(); ++i)
+            spdChoices.push_back(i->second.spdString);
+        // Set the allowed readout rates
+        SetAllowedValues(g_ReadoutRate, spdChoices);
+
+        // Set the current speed to the default rate, this will cause the speed to be reset as well call.
+        acqCfgNew_.SpeedIndex = camSpdTable_[curPort][0].portDefaultSpdIdx;
+
+        // Since Port has changed we need to reset the speed, which in turn resets gain
+        speedReset = true;
+        bufferResizeRequired = true;
+    }
+
+    if (acqCfgNew_.SpeedIndex != acqCfgCur_.SpeedIndex || speedReset)
+    {
+        configChanged = true;
+        // TODO: This is not fully implemeneted, we still handle port/gain changes 
+        // directly via properties. We should move it here.
+        nRet = prmSpdTabIndex_->SetAndApply((int16)acqCfgNew_.SpeedIndex);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+
+        // Find the actual speed definition from the speed table
+        SpdTabEntry spd;
+        const int32 curPort = prmReadoutPort_->Current();
+        for (int16 i = 0; i < (int16)camSpdTable_[curPort].size(); ++i)
+        {
+            if (camSpdTable_[curPort][i].spdIndex == acqCfgNew_.SpeedIndex)
+            {
+                spd = camSpdTable_[curPort][i];
+                break;
+            }
+        }
+        camCurrentSpeed_ = spd;
+
+        // When speed changes, the Gain range may need to be updated
+        vector<string> gainChoices;
+        for (int16 i = spd.gainMin; i <= spd.gainMax; i++)
+            gainChoices.push_back(spd.gainNameMapReverse.at(i));
+        SetAllowedValues(MM::g_Keyword_Gain, gainChoices);
+
+        // If the current gain is applicable for the new speed we want to restore it.
+        // Change in speed automatically resets GAIN in PVCAM, so we want to preserve it.
+        // We can use the prmGainIndex_->Current() because it still contains the previous
+        // cached value (we didn't call Update/Apply yet)
+        int16 curGain = prmGainIndex_->Current();
+        if ( curGain < spd.gainMin || curGain > spd.gainMax )
+            curGain = spd.gainDef; // The new speed does not support this gain index, so we reset it to the first available
+        // Re-apply the gain (fixes issues with some cameras that do not reset the gain themselves)
+        nRet = prmGainIndex_->SetAndApply(curGain);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+
+        // When speed changes the ADC offset may change as well, so update it
+        nRet = prmAdcOffset_->Update();
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in Update()
+        }
+        // TODO: Should we try to set the previous ADC offset? This will fail on modern
+        // cameras as they do not allow the ADC offset to be changed.
+        // Set both configurations to the same value to avoid the setter to be called later.
+        acqCfgNew_.AdcOffset = prmAdcOffset_->Current();
+        acqCfgCur_.AdcOffset = prmAdcOffset_->Current();
+        // Speed may cause bit depth change, so buffer reallocation is recommended
+        bufferResizeRequired = true;
+    }
+
+    if (acqCfgNew_.AdcOffset != acqCfgCur_.AdcOffset)
+    {
+        configChanged = true;
+        nRet = prmAdcOffset_->SetAndApply((int16)acqCfgNew_.AdcOffset);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+    }
+
     if (acqCfgNew_.CircBufEnabled != acqCfgCur_.CircBufEnabled)
     {
         configChanged = true;
@@ -5266,6 +5341,9 @@ int Universal::applyAcqConfig(bool forceBufferRealloc)
             singleFrameModeReady_ = false;
             return nRet;
         }
+
+        GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+        GetCoreCallback()->PrepareForAcq(this);
     }
 
     // Update the Device/Property browser UI
