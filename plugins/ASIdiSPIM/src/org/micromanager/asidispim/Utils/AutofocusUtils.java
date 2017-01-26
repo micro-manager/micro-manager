@@ -542,8 +542,6 @@ public class AutofocusUtils {
                   // currently only used by setup panels
                   caller.refreshSelected();
                      
-                  posUpdater_.pauseUpdates(false);
-
                   if (liveModeOriginally) {
                      gui_.getMMCore().waitForDevice(camera);
                      gui_.getMMCore().waitForDevice(originalCamera);
@@ -552,6 +550,9 @@ public class AutofocusUtils {
 
                } catch (Exception ex) {
                   throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
+               }
+               finally {
+                  posUpdater_.pauseUpdates(false);
                }
             }
             ReportingUtils.logMessage("finished autofocus: " + (lastFocusResult_.getFocusSuccess() ? "successful" : "not successful")
