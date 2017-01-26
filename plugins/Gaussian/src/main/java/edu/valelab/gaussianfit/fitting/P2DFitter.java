@@ -77,12 +77,63 @@ class P2DFunc implements MultivariateFunction {
          sigma = doubles[1];
       }
       for (double point : points_) {
-         double predictedValue = p2d(point, doubles[0], sigma);
+         double predictedValue = P2DFitter.p2d(point, doubles[0], sigma);
          sum += Math.log(predictedValue);
       }
       return -sum;
    }
+     
+}
+
+
+class P2D50 implements MultivariateFunction {
+   private final double target_;
+   private final double mu_;
+   private final double sigma_;
+   
+   /**
+    * 
+    * @param points array with measurements
+    * @param fitSigma whether sigma value should be fitted
+    * @param sigma  Fixed sigma, only needed when fitSigma is true
+    */
+   public P2D50(double target, double mu, double sigma) {
+      target_ = target;
+      mu_ = mu;
+      sigma_ = sigma;
+   }
+   
+   /**
+    * Calculates the difference of the likelihood with the target
+    * @param doubles array of size 1 containing r (i.e. we are looking 
+    * for the r that gives a value closest to target_)
+    * @return target - P2D(r, mu, sigma));
+    */
+   @Override
+   public double value(double[] doubles) {
+      double result = target_ - P2DFitter.p2d(doubles[0], mu_, sigma_);
+      return result * result;
+   }
     
+
+   
+}
+
+/**
+ * Class that uses the apache commons math3 library to fit a maximum likelihood
+ * function for the probability density function of the distribution of measured
+ * distances.
+ * @author nico
+ */
+
+public class P2DFitter {
+   private final double[] points_;
+   private double muGuess_ = 0.0;
+   private double sigmaGuess_ = 10.0;
+   private final double upperBound_;
+   private final boolean fitSigma_;
+   
+   
     /**
     * Calculates the probability density function:
     * p2D(r) = (r / sigma2) exp(-(mu2 + r2)/2sigma2) I0(rmu/sigma2)
@@ -101,21 +152,7 @@ class P2DFunc implements MultivariateFunction {
       return first * second * third;
    }
    
-}
-
-/**
- * Class that uses the apache commons math3 library to fit a maximum likelihood
- * function for the probability density function of the distribution of measured
- * distances.
- * @author nico
- */
-
-public class P2DFitter {
-   private final double[] points_;
-   private double muGuess_ = 0.0;
-   private double sigmaGuess_ = 10.0;
-   private final double upperBound_;
-   private final boolean fitSigma_;
+   
    
    /**
     * 
@@ -140,6 +177,18 @@ public class P2DFitter {
    public void setStartParams(double mu, double sigma) {
       muGuess_ = mu;
       sigmaGuess_ = sigma;
+   }
+   
+   /**
+    * Given estimators for mu and sigma, what is the log likelihood for this
+    * distribution of data?
+    * @param estimators - array containing mu, and - if fitSigma is true sigma
+    *       (i.e. the array returned from the solve function can be used here).
+    * @return negative log likelihood for the data set given in the constructor
+    */
+   public double logLikelihood(double[] estimators) {
+      P2DFunc myP2DFunc = new P2DFunc(points_, fitSigma_, sigmaGuess_);
+      return myP2DFunc.value(estimators);
    }
       
    public double[] solve() throws FittingException {
@@ -180,6 +229,59 @@ public class P2DFitter {
          } catch (TooManyEvaluationsException tmee) {
             throw new FittingException("P2D fit faled due to too many Evaluation Exceptions");
          }
+      }
+   }
+
+   public double[] muIntervals(double mu, double sigma) throws FittingException {
+      P2D50 p2d50 = new P2D50(0, mu, sigma);
+      SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
+
+      try {
+         // first get the distance where the likelihood is highest
+         double[] lowerBounds = {0.0};
+         double[] upperBounds = {upperBound_};
+         MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
+              p2d50, lowerBounds, upperBounds);
+         PointValuePair msPVP = optimizer.optimize(
+                 new ObjectiveFunction(mfma),
+                 new MaxEval(500),
+                 GoalType.MAXIMIZE,
+                 new InitialGuess(mfma.boundedToUnbounded(new double[]{mu})),
+                 new NelderMeadSimplex(new double[]{0.2})//,
+         );
+         double[] maxR = mfma.unboundedToBounded(msPVP.getPoint());
+         
+         // given the distance where the likelihood is highest, calculate the likelihood
+         double maxL = p2d(maxR[0], mu, sigma);
+         
+         // Now find the distances where the likelihood is 0.5 * max likelihood
+         
+         P2D50 p2d50b = new P2D50(0.5 * maxL, mu, sigma);
+         mfma = new MultivariateFunctionMappingAdapter(p2d50b, lowerBounds, 
+                 upperBounds);
+         
+         PointValuePair lsPVP = optimizer.optimize(
+                 new ObjectiveFunction(mfma),
+                 new MaxEval(500),
+                 GoalType.MINIMIZE,
+                 new InitialGuess(mfma.boundedToUnbounded(new double[]{0.5 * maxR[0]})),
+                 new NelderMeadSimplex(new double[]{0.2})//,
+         );
+         double[] lowerSolution = mfma.unboundedToBounded(lsPVP.getPoint());
+         
+                 PointValuePair usPVP = optimizer.optimize(
+                 new ObjectiveFunction(mfma),
+                 new MaxEval(500),
+                 GoalType.MINIMIZE,
+                 new InitialGuess(mfma.boundedToUnbounded(new double[]{4.0 * maxR[0]})),
+                 new NelderMeadSimplex(new double[]{0.2})//,
+         );
+         double[] upperSolution = mfma.unboundedToBounded(usPVP.getPoint());
+         
+         return new double[] {lowerSolution[0], upperSolution[0]};      
+         
+      } catch (TooManyEvaluationsException tmee) {
+         throw new FittingException("P2D fit faled due to too many Evaluation Exceptions");
       }
    }
             

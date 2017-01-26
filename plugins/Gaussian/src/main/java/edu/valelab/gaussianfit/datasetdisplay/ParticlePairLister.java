@@ -395,11 +395,6 @@ public class ParticlePairLister {
                         double stdDev = spot.getFirstSpot().getValue("stdDev");
                         rt.addValue("stdDev1", stdDev);
                         SpotData spot2 = spot.getSecondSpot();
-                                /*
-                                dc.getSpotData(row).get(
-                                spot.getFirstSpot().getFrame(),
-                                2, spot.getSecondPoint().x, spot.getSecondPoint().y);
-                        */
                         if (spot2 != null && spot2.hasKey("stdDev")) {
                            double stdDev2 = spot2.getValue("stdDev");
                            rt.addValue("stdDev2", stdDev2);
@@ -615,23 +610,26 @@ public class ParticlePairLister {
                   p2df.setStartParams(distMean, distStd);
                   try {
                      double[] p2dfResult = p2df.solve();
-                     if (p2dfResult.length == 2) {
-                        MMStudio.getInstance().alerts().postAlert(
-                                "P2D fit for " + dc.getSpotData(row).getName(), 
-                                null, 
-                                "n = " + avgToUse.size() + ", mu = "
+                     double logLikelihood = p2df.logLikelihood(p2dfResult);
+                     String msg1 = "P2D fit for " + dc.getSpotData(row).getName();
+                     String msg2 = "n = " + avgToUse.size() + ", mu = "
                                 + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
-                                + " nm, sigma = "
-                                + NumberUtils.doubleToDisplayString(p2dfResult[1], 2)
-                                + " nm");
+                                + " nm, sigma = ";
+                     String msg4 = " nm, " 
+                                + "-Log Likelihood: " 
+                                + NumberUtils.doubleToDisplayString(logLikelihood, 2);
+                     if (p2dfResult.length == 2) {
+                        String msg3 = 
+                               NumberUtils.doubleToDisplayString(p2dfResult[1], 2);
+                        double[] muIntervals = p2df.muIntervals(p2dfResult[0], p2dfResult[1]);
+                        String msg5 = "mu -" + NumberUtils.doubleToDisplayString(muIntervals[0]) + 
+                                "mu +" + NumberUtils.doubleToDisplayString(muIntervals[1]);
+                        MMStudio.getInstance().alerts().postAlert(msg1, null, 
+                                msg2 + msg3 + msg4 + msg5);
                      } else if (p2dfResult.length == 1 && !fitSigma_) {
-                        MMStudio.getInstance().alerts().postAlert(
-                           "P2D fit for " + dc.getSpotData(row).getName(), 
-                           null, 
-                           " n = " + avgToUse.size() + ", mu = "
-                           + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
-                           + " nm, sigma = "
-                           + NumberUtils.doubleToDisplayString(distStd, 2) + " nm");
+                        String msg3 = NumberUtils.doubleToDisplayString(distStd, 2);
+                        MMStudio.getInstance().alerts().postAlert(msg1, null,
+                                msg2 + msg3 + msg4);
                      } else {
                         ReportingUtils.showMessage("Error during p2d fit");
                      }  
