@@ -67,6 +67,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.jfree.data.xy.XYSeries;
 import org.micromanager.internal.MMStudio;
 
@@ -610,29 +611,49 @@ public class ParticlePairLister {
                   p2df.setStartParams(distMean, distStd);
                   try {
                      double[] p2dfResult = p2df.solve();
-                     double logLikelihood = p2df.logLikelihood(p2dfResult);
+                     // Confidence interval calculation as in matlab code by Stirlink Churchman
+                     double mu = p2dfResult[0];
+                     double sigma = sigmaEstimate_;
+                     if (fitSigma_) {
+                        sigma = p2dfResult[1];
+                     }
+                     double sigmaRange = 4.0 * sigma / Math.sqrt(d.length);
+                     double resolution = 0.001 * sigma;
+                     double[] distances;
+                     distances = p2df.getDistances(mu - sigmaRange, resolution, mu + sigmaRange);
+                     double[] logLikelihood = p2df.logLikelihood(p2dfResult, distances);
+                     
+                     // Uncomment the following to plot loglikelihood
+                      XYSeries data = new XYSeries("distances(nm)");
+                      for (int i = 0; i < distances.length && i < logLikelihood.length; i++) {
+                         data.add(distances[i], logLikelihood[i]);
+                      }
+                      GaussianUtils.plotData("Log Likelihood for " + dc.getSpotData(row).getName(), 
+                                      data, "Distance (nm)", "Likelihood", 100, 100);
+                     
+                     int indexOfMaxLogLikelihood = CalcUtils.maxIndex(logLikelihood);
+                     int[] halfMax = CalcUtils.indicesToValuesClosest(logLikelihood, 
+                             logLikelihood[indexOfMaxLogLikelihood] - 0.5);
+                     double dist1 = distances[halfMax[0]];
+                     double dist2 = distances[halfMax[1]];
+                     double lowConflim = mu - dist1;
+                     double highConflim = dist2 - mu;
+                     if (lowConflim < 0.0) {
+                        lowConflim = mu - dist2;
+                        highConflim = dist1 - mu;
+                     }
                      String msg1 = "P2D fit for " + dc.getSpotData(row).getName();
                      String msg2 = "n = " + avgToUse.size() + ", mu = "
-                                + NumberUtils.doubleToDisplayString(p2dfResult[0], 2)
-                                + " nm, sigma = ";
-                     String msg4 = " nm, " 
-                                + "-Log Likelihood: " 
-                                + NumberUtils.doubleToDisplayString(logLikelihood, 2);
-                     if (p2dfResult.length == 2) {
-                        String msg3 = 
-                               NumberUtils.doubleToDisplayString(p2dfResult[1], 2);
-                        double[] muIntervals = p2df.muIntervals(p2dfResult[0], p2dfResult[1]);
-                        String msg5 = "mu -" + NumberUtils.doubleToDisplayString(muIntervals[0]) + 
-                                "mu +" + NumberUtils.doubleToDisplayString(muIntervals[1]);
-                        MMStudio.getInstance().alerts().postAlert(msg1, null, 
-                                msg2 + msg3 + msg4 + msg5);
-                     } else if (p2dfResult.length == 1 && !fitSigma_) {
-                        String msg3 = NumberUtils.doubleToDisplayString(distStd, 2);
-                        MMStudio.getInstance().alerts().postAlert(msg1, null,
-                                msg2 + msg3 + msg4);
-                     } else {
-                        ReportingUtils.showMessage("Error during p2d fit");
-                     }  
+                           + NumberUtils.doubleToDisplayString(mu, 2)
+                           + " - "  
+                           + NumberUtils.doubleToDisplayString(lowConflim, 2)
+                           + " + "
+                           + NumberUtils.doubleToDisplayString(highConflim, 2)
+                           + "  nm, sigma = "
+                           + NumberUtils.doubleToDisplayString(sigma, 2)
+                           + " nm, " ;
+                     MMStudio.getInstance().alerts().postAlert(msg1, null, msg2);
+ 
                      MMStudio.getInstance().alerts().postAlert(
                            "Gaussian distribution for " +  
                                    dc.getSpotData(row).getName(),
@@ -653,6 +674,8 @@ public class ParticlePairLister {
                      
                   } catch (FittingException fe) {
                      ReportingUtils.showError(fe.getMessage());
+                  } catch (TooManyEvaluationsException tmee) {
+                     ReportingUtils.showError(tmee.getMessage());
                   }
                }
 

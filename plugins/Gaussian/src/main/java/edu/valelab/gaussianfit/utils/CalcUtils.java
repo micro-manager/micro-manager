@@ -39,6 +39,11 @@ either expressed or implied, of the FreeBSD Project.
 
 package edu.valelab.gaussianfit.utils;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  *
  * @author nico
@@ -97,6 +102,42 @@ public class CalcUtils {
          ersq += (d - mean) * (d - mean);
       }
       return Math.sqrt( ersq / (data.length - 1));
+   }
+   
+   /**
+    * Find the index of the maximum value in an array
+    * @param data
+    * @return 
+    */
+   public static int maxIndex (double[] data) {
+      if (data == null || data.length < 1) {
+         return -1;
+      }
+      int val = 0;
+      double max = data[0];
+      for (int i = 0; i < data.length; i ++) {
+         if (data[i] > max) {
+            val = i;
+            max = data[i];
+         }
+      }
+      return val;
+   }
+   
+   public static int[] indicesToValuesClosest (double[] data, double target) {
+      Map<Double, Integer> unsortedMap = new HashMap<Double, Integer>();
+      for (int i = 0; i < data.length; i++) {
+         unsortedMap.put( Math.abs(data[i] - target), i);
+      }
+      Map<Double, Integer> sortedMap = new TreeMap<Double, Integer>(unsortedMap);
+      int[] output = new int[sortedMap.size()];
+      Iterator<Map.Entry<Double, Integer>> iterator = sortedMap.entrySet().iterator();
+      int i = 0;
+      for (Map.Entry<Double, Integer> entry : sortedMap.entrySet()) {
+         output[i] = entry.getValue();
+         i++;
+      }
+      return output;
    }
    
 }

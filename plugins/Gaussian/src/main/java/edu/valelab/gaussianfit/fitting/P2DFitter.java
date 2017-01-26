@@ -71,7 +71,7 @@ class P2DFunc implements MultivariateFunction {
     */
    @Override
    public double value(double[] doubles) {
-      double sum = 0;
+      double sum = 0.0;
       double sigma = sigma_;
       if (fitSigma_) {
          sigma = doubles[1];
@@ -80,7 +80,20 @@ class P2DFunc implements MultivariateFunction {
          double predictedValue = P2DFitter.p2d(point, doubles[0], sigma);
          sum += Math.log(predictedValue);
       }
-      return -sum;
+      return sum;
+   }
+   
+   public double nonLogValue(double[] doubles) {
+      double sum = 0;
+      double sigma = sigma_;
+      if (fitSigma_) {
+         sigma = doubles[1];
+      }
+      for (double point : points_) {
+         double predictedValue = P2DFitter.p2d(point, doubles[0], sigma);
+         sum *= predictedValue;
+      }
+      return sum;
    }
      
 }
@@ -180,15 +193,56 @@ public class P2DFitter {
    }
    
    /**
+    * Given a stepsize, generate an array with distances between 0 and upperBound
+    * @param stepSize distance between values in output array
+    * @return array with distances between 0 and upperbound, stepsize apart
+    */
+   public double[] getDistances(double stepSize) {
+      return getDistances(0.0, stepSize, upperBound_);
+   }
+   
+      /**
+    * Given a stepsize, generate an array with distances between 0 and upperBound
+    * @param start first distance in the array
+    * @param stepSize distance between values in output array
+    * @param end last distance in the array
+    * @return array with distances between start and end, stepsize apart
+    */
+   public double[] getDistances(double start, double stepSize, double end) {
+      // instead of being smart, studpidly calculate the size of the output array
+      int count = 0; 
+      for (double val = start; val <= end; val += stepSize) {
+         count++;
+      }
+      double[] output = new double[count];
+      double r = start;
+      for (int i = 0; i < output.length; i++) {
+         output[i] = r;
+         r += stepSize;
+      }
+      return output;
+   }
+   
+   
+   
+   /**
     * Given estimators for mu and sigma, what is the log likelihood for this
     * distribution of data?
     * @param estimators - array containing mu, and - if fitSigma is true sigma
     *       (i.e. the array returned from the solve function can be used here).
-    * @return negative log likelihood for the data set given in the constructor
+    * @param distances distances for which we want to know the likelihood
+     * @return likelihood for the input distances
     */
-   public double logLikelihood(double[] estimators) {
+   public double[] logLikelihood(double[] estimators, double[] distances) {
+      double[] localEstimators = estimators.clone();
       P2DFunc myP2DFunc = new P2DFunc(points_, fitSigma_, sigmaGuess_);
-      return myP2DFunc.value(estimators);
+      double[] output = new double[distances.length];
+      double r = 0.0;
+      for (int i = 0; i < output.length; i++) {
+         localEstimators[0] = distances[i];
+         output[i] = myP2DFunc.value(localEstimators); 
+      }
+      return output;
    }
       
    public double[] solve() throws FittingException {
@@ -203,8 +257,8 @@ public class P2DFitter {
 
          PointValuePair solution = optimizer.optimize(
                  new ObjectiveFunction(mfma),
-                 new MaxEval(500),
-                 GoalType.MINIMIZE,
+                 new MaxEval(1000),
+                 GoalType.MAXIMIZE,
                  new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_, sigmaGuess_})),
                  new NelderMeadSimplex(new double[]{0.2, 0.2})//,
          );
@@ -219,8 +273,8 @@ public class P2DFitter {
          try {
          PointValuePair solution = optimizer.optimize(
                  new ObjectiveFunction(mfma),
-                 new MaxEval(500),
-                 GoalType.MINIMIZE,
+                 new MaxEval(1000),
+                 GoalType.MAXIMIZE,
                  new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_})),
                  new NelderMeadSimplex(new double[]{0.2})//,
          );
