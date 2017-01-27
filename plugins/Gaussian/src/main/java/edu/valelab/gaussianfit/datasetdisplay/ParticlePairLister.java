@@ -701,9 +701,9 @@ public class ParticlePairLister {
                      
                      
                   } catch (FittingException fe) {
-                     ReportingUtils.showError(fe.getMessage());
+                     // ReportingUtils.showError(fe.getMessage());
                   } catch (TooManyEvaluationsException tmee) {
-                     ReportingUtils.showError(tmee.getMessage());
+                     // ReportingUtils.showError(tmee.getMessage());
                   }
                }
 

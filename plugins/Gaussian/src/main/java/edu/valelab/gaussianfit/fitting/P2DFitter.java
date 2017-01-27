@@ -257,7 +257,7 @@ public class P2DFitter {
 
          PointValuePair solution = optimizer.optimize(
                  new ObjectiveFunction(mfma),
-                 new MaxEval(1000),
+                 new MaxEval(10000),
                  GoalType.MAXIMIZE,
                  new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_, sigmaGuess_})),
                  new NelderMeadSimplex(new double[]{0.2, 0.2})//,
@@ -273,7 +273,7 @@ public class P2DFitter {
          try {
          PointValuePair solution = optimizer.optimize(
                  new ObjectiveFunction(mfma),
-                 new MaxEval(1000),
+                 new MaxEval(10000),
                  GoalType.MAXIMIZE,
                  new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_})),
                  new NelderMeadSimplex(new double[]{0.2})//,
