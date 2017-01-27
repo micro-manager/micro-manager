@@ -240,6 +240,11 @@ public class ParticlePairLister {
             ResultsTable rt2 = new ResultsTable();
             rt2.reset();
             rt2.setPrecision(1);
+            
+            // Saves output of P2D fitting            
+            ResultsTable rt3 = new ResultsTable();
+            rt3.reset();
+            rt3.setPrecision(2);
 
             for (int row : rows_) {
                ij.IJ.showStatus("Creating Pairs...");
@@ -624,12 +629,12 @@ public class ParticlePairLister {
                      double[] logLikelihood = p2df.logLikelihood(p2dfResult, distances);
                      
                      // Uncomment the following to plot loglikelihood
-                      XYSeries data = new XYSeries("distances(nm)");
-                      for (int i = 0; i < distances.length && i < logLikelihood.length; i++) {
-                         data.add(distances[i], logLikelihood[i]);
-                      }
-                      GaussianUtils.plotData("Log Likelihood for " + dc.getSpotData(row).getName(), 
-                                      data, "Distance (nm)", "Likelihood", 100, 100);
+                     // XYSeries data = new XYSeries("distances(nm)");
+                     // for (int i = 0; i < distances.length && i < logLikelihood.length; i++) {
+                     //    data.add(distances[i], logLikelihood[i]);
+                     // }
+                     // GaussianUtils.plotData("Log Likelihood for " + dc.getSpotData(row).getName(), 
+                     //                 data, "Distance (nm)", "Likelihood", 100, 100);
                      
                      int indexOfMaxLogLikelihood = CalcUtils.maxIndex(logLikelihood);
                      int[] halfMax = CalcUtils.indicesToValuesClosest(logLikelihood, 
@@ -671,6 +676,29 @@ public class ParticlePairLister {
                      }
                      GaussianUtils.plotP2D(dc.getSpotData(row).getName() + " distances",
                              d, maxDistanceNm_, muSigma);
+                     
+                     // The following is used to output results in a machine readable fashion
+                     // Uncomment when needed:
+                     rt3.incrementCounter();
+                     rt3.addValue("Max. Dist.", maxDistanceNm_);
+                     rt3.addValue("File", dc.getSpotData(row).getName());
+                     String useVect = useVectDistances_ ? "yes" : "no";
+                     rt3.addValue("Vect. Dist.", useVect);
+                     String fittedSigma = fitSigma_ ? "yes" : "no";
+                     rt3.addValue("Fit Sigma", fittedSigma);
+                     String sigmaFromData = useSigmaEstimate_ ? "no" : "yes";
+                     rt3.addValue("Sigma from data", sigmaFromData);
+                     rt3.addValue("n", avgToUse.size());
+                     rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
+                     rt3.addValue("Positions", dc.getSpotData(row).nrPositions_);
+                     rt3.addValue("mu", mu);
+                     rt3.addValue("mu-lowConf", lowConflim);
+                     rt3.addValue("mu-highConf", highConflim);
+                     rt3.addValue("sigma", sigma);
+                     rt3.addValue("mean", distMean);
+                     rt3.addValue("std", distStd);
+                     rt3.show("P2D Summary");
+                     
                      
                   } catch (FittingException fe) {
                      ReportingUtils.showError(fe.getMessage());
