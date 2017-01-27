@@ -2853,7 +2853,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @throws java.lang.InterruptedException
     * @throws org.micromanager.utils.MMScriptException
     */
-   public void addImageToAcquisition(MMAcquisition acq,
+   private void addImageToAcquisition(MMAcquisition acq,
            int frame,
            int channel,
            int slice,
