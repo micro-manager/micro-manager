@@ -69,11 +69,11 @@ public:
 
    void Resize(unsigned xSize, unsigned ySize, unsigned pixDepth);
    void Clear();
-   void Preallocate(unsigned channels, unsigned slices);
+   void Preallocate(unsigned channels);
 
-   ImgBuffer* FindImage(unsigned channel, unsigned slice) const;
-   const unsigned char* GetPixels(unsigned channel, unsigned slice) const;
-   bool SetPixels(unsigned channel, unsigned slice, const unsigned char* pixels);
+   ImgBuffer* FindImage(unsigned channel) const;
+   const unsigned char* GetPixels(unsigned channel) const;
+   bool SetPixels(unsigned channel, const unsigned char* pixels);
    unsigned Width() const {return width_;}
    unsigned Height() const {return height_;}
    unsigned Depth() const {return depth_;}
@@ -82,8 +82,8 @@ private:
    FrameBuffer& operator=(const FrameBuffer&);
 
 private:
-   static unsigned long GetIndex(unsigned channel, unsigned slice);
-   ImgBuffer* InsertNewImage(unsigned channel, unsigned slice);
+   static unsigned long GetIndex(unsigned channel);
+   ImgBuffer* InsertNewImage(unsigned channel);
 };
 
 } // namespace mm

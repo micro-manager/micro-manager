@@ -114,15 +114,14 @@ void FrameBuffer::Clear()
    indexMap_.clear();
 }
 
-void FrameBuffer::Preallocate(unsigned channels, unsigned slices)
+void FrameBuffer::Preallocate(unsigned channels)
 {
    for (unsigned i=0; i<channels; i++)
-      for (unsigned j=0; j<slices; j++)
-      {
-         ImgBuffer* img = FindImage(i, j);
-         if (!img)
-            InsertNewImage(i, j);
-      }
+   {
+      ImgBuffer* img = FindImage(i);
+      if (!img)
+         InsertNewImage(i);
+   }
 }
 
 void FrameBuffer::Resize(unsigned xSize, unsigned ySize, unsigned byteDepth)
@@ -133,9 +132,9 @@ void FrameBuffer::Resize(unsigned xSize, unsigned ySize, unsigned byteDepth)
    depth_ = byteDepth;
 }
 
-bool FrameBuffer::SetPixels(unsigned channel, unsigned slice, const unsigned char* pixels)
+bool FrameBuffer::SetPixels(unsigned channel, const unsigned char* pixels)
 {
-   ImgBuffer* img = FindImage(channel, slice);
+   ImgBuffer* img = FindImage(channel);
 
    if (img)
    {
@@ -145,45 +144,41 @@ bool FrameBuffer::SetPixels(unsigned channel, unsigned slice, const unsigned cha
    else
    {
       // create a new buffer
-      ImgBuffer* img2 = InsertNewImage(channel, slice);
+      ImgBuffer* img2 = InsertNewImage(channel);
       img2->SetPixels(pixels);
    }
 
    return true;
 }
 
-const unsigned char* FrameBuffer::GetPixels(unsigned channel, unsigned slice) const
+const unsigned char* FrameBuffer::GetPixels(unsigned channel) const
 {
-   ImgBuffer* img = FindImage(channel, slice);
+   ImgBuffer* img = FindImage(channel);
    if (img)
       return img->GetPixels();
    else
       return 0;
 }
 
-ImgBuffer* FrameBuffer::FindImage(unsigned channel, unsigned slice) const
+ImgBuffer* FrameBuffer::FindImage(unsigned channel) const
 {
-   std::map<unsigned long, ImgBuffer*>::const_iterator it = indexMap_.find(GetIndex(channel, slice));
+   std::map<unsigned long, ImgBuffer*>::const_iterator it = indexMap_.find(GetIndex(channel));
    if (it != indexMap_.end())
       return it->second;
    else
       return 0;
 }
 
-unsigned long FrameBuffer::GetIndex(unsigned channel, unsigned slice)
+unsigned long FrameBuffer::GetIndex(unsigned channel)
 {
-   // set the slice in the upper and channel in the lower part
-   unsigned long idx((unsigned short)slice);
-   idx = idx << 16;
-   idx = idx | (unsigned short) channel;
-   return idx;
+   return channel;
 }
 
-ImgBuffer* FrameBuffer::InsertNewImage(unsigned channel, unsigned slice)
+ImgBuffer* FrameBuffer::InsertNewImage(unsigned channel)
 {
    ImgBuffer* img = new ImgBuffer(width_, height_, depth_);
    images_.push_back(img);
-   indexMap_[GetIndex(channel, slice)] = img;
+   indexMap_[GetIndex(channel)] = img;
    return img;
 }
 

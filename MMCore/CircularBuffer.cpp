@@ -52,7 +52,7 @@ CircularBuffer::CircularBuffer(unsigned int memorySizeMB) :
 
 CircularBuffer::~CircularBuffer() {}
 
-bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth)
+bool CircularBuffer::Initialize(unsigned channels, unsigned int w, unsigned int h, unsigned int pixDepth)
 {
    MMThreadGuard guard(g_bufferLock);
    imageNumbers_.clear();
@@ -60,10 +60,10 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
    bool ret = true;
    try
    {
-      if (w == 0 || h==0 || pixDepth == 0 || channels == 0 || slices == 0)
+      if (w == 0 || h==0 || pixDepth == 0 || channels == 0)
          return false; // does not make sense
 
-      if (w == width_ && height_ == h && pixDepth_ == pixDepth && channels == numChannels_ && slices == numSlices_)
+      if (w == width_ && height_ == h && pixDepth_ == pixDepth && channels == numChannels_)
          if (frameArray_.size() > 0)
             return true; // nothing to change
 
@@ -71,7 +71,6 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
       height_ = h;
       pixDepth_ = pixDepth;
       numChannels_ = channels;
-      numSlices_ = slices;
 
       insertIndex_ = 0;
       saveIndex_ = 0;
@@ -80,7 +79,7 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
       // calculate the size of the entire buffer array once all images get allocated
       // the actual size at the time of the creation is going to be less, because
       // images are not allocated until pixels become available
-      unsigned long frameSizeBytes = width_ * height_ * pixDepth_ * numChannels_ * numSlices_;
+      unsigned long frameSizeBytes = width_ * height_ * pixDepth_ * numChannels_;
       unsigned long cbSize = (unsigned long) ((memorySizeMB_ * bytesInMB) / frameSizeBytes);
 
       if (cbSize == 0) 
@@ -103,7 +102,7 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
       for (unsigned long i=0; i<frameArray_.size(); i++)
       {
          frameArray_[i].Resize(w, h, pixDepth);
-         frameArray_[i].Preallocate(numChannels_, numSlices_);
+         frameArray_[i].Preallocate(numChannels_);
       }
    }
 
@@ -174,9 +173,8 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
       Metadata md;
       {
          MMThreadGuard guard(g_bufferLock);
-         // check if the requested (channel, slice) combination exists
          // we assume that all buffers are pre-allocated
-         pImg = frameArray_[insertIndex_ % frameArray_.size()].FindImage(i, 0);
+         pImg = frameArray_[insertIndex_ % frameArray_.size()].FindImage(i);
          if (!pImg)
             return false;
 
@@ -241,24 +239,24 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
 
 const unsigned char* CircularBuffer::GetTopImage() const
 {
-   const mm::ImgBuffer* img = GetNthFromTopImageBuffer(0, 0, 0);
+   const mm::ImgBuffer* img = GetNthFromTopImageBuffer(0, 0);
    if (!img)
       return 0;
    return img->GetPixels();
 }
 
-const mm::ImgBuffer* CircularBuffer::GetTopImageBuffer(unsigned channel, unsigned slice) const
+const mm::ImgBuffer* CircularBuffer::GetTopImageBuffer(unsigned channel) const
 {
-   return GetNthFromTopImageBuffer(0, channel, slice);
+   return GetNthFromTopImageBuffer(0, channel);
 }
 
 const mm::ImgBuffer* CircularBuffer::GetNthFromTopImageBuffer(unsigned long n) const
 {
-   return GetNthFromTopImageBuffer(static_cast<long>(n), 0, 0);
+   return GetNthFromTopImageBuffer(static_cast<long>(n), 0);
 }
 
 const mm::ImgBuffer* CircularBuffer::GetNthFromTopImageBuffer(long n,
-      unsigned channel, unsigned slice) const
+      unsigned channel) const
 {
    MMThreadGuard guard(g_bufferLock);
 
@@ -271,18 +269,18 @@ const mm::ImgBuffer* CircularBuffer::GetNthFromTopImageBuffer(long n,
       targetIndex += frameArray_.size();
    targetIndex %= frameArray_.size();
 
-   return frameArray_[targetIndex].FindImage(channel, slice);
+   return frameArray_[targetIndex].FindImage(channel);
 }
 
 const unsigned char* CircularBuffer::GetNextImage()
 {
-   const mm::ImgBuffer* img = GetNextImageBuffer(0, 0);
+   const mm::ImgBuffer* img = GetNextImageBuffer(0);
    if (!img)
       return 0;
    return img->GetPixels();
 }
 
-const mm::ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel, unsigned slice)
+const mm::ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel)
 {
    MMThreadGuard guard(g_bufferLock);
 
@@ -292,5 +290,5 @@ const mm::ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel, unsign
 
    long targetIndex = saveIndex_ % frameArray_.size();
    ++saveIndex_;
-   return frameArray_[targetIndex].FindImage(channel, slice);
+   return frameArray_[targetIndex].FindImage(channel);
 }

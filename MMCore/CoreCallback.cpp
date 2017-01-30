@@ -291,9 +291,14 @@ void CoreCallback::ClearImageBuffer(const MM::Device* /*caller*/)
    core_->cbuf_->Clear();
 }
 
-bool CoreCallback::InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth)
+bool CoreCallback::InitializeImageBuffer(unsigned channels, unsigned slices,
+      unsigned int w, unsigned int h, unsigned int pixDepth)
 {
-   return core_->cbuf_->Initialize(channels, slices, w, h, pixDepth);
+   // Support for multi-slice images has not been implemented
+   if (slices != 1)
+      return false;
+
+   return core_->cbuf_->Initialize(channels, w, h, pixDepth);
 }
 
 int CoreCallback::InsertMultiChannel(const MM::Device* caller,
