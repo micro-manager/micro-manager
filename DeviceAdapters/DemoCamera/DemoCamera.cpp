@@ -65,6 +65,9 @@ const char* g_PixelType_32bit = "32bit";  // floating point greyscale
 // constants for naming camera modes
 const char* g_Sine_Wave = "Artificial Waves";
 const char* g_Norm_Noise = "Noise";
+const char* g_Color_Test = "Color Test Pattern";
+
+enum { MODE_ARTIFICIAL_WAVES, MODE_NOISE, MODE_COLOR_TEST };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -239,7 +242,7 @@ CDemoCamera::CDemoCamera() :
    supportsMultiROI_(false),
    multiROIFillValue_(0),
    nComponents_(1),
-   mode_(0),
+   mode_(MODE_ARTIFICIAL_WAVES),
    imgManpl_(0),
    pcf_(1.0)
 {
@@ -494,6 +497,7 @@ int CDemoCamera::Initialize()
    CreateStringProperty(propName.c_str(), g_Sine_Wave, false, pAct);
    AddAllowedValue(propName.c_str(), g_Sine_Wave);
    AddAllowedValue(propName.c_str(), g_Norm_Noise);
+   AddAllowedValue(propName.c_str(), g_Color_Test);
 
    // Photon Conversion Factor for Noise type camera
    pAct = new CPropertyAction(this, &CDemoCamera::OnPCF);
@@ -1819,24 +1823,37 @@ int CDemoCamera::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    std::string val;
    if (eAct == MM::BeforeGet)
    {
-      if (mode_ == 0)
+      switch (mode_)
       {
-         val = g_Sine_Wave;
-      } else 
-      {
-         val = g_Norm_Noise;
+         case MODE_ARTIFICIAL_WAVES:
+            val = g_Sine_Wave;
+            break;
+         case MODE_NOISE:
+            val = g_Norm_Noise;
+            break;
+         case MODE_COLOR_TEST:
+            val = g_Color_Test;
+            break;
+         default:
+            val = g_Sine_Wave;
+            break;
       }
       pProp->Set(val.c_str());
    }
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(val);
-      if (val == g_Sine_Wave) 
+      if (val == g_Norm_Noise)
       {
-         mode_ = 0;
-      } else
+         mode_ = MODE_NOISE;
+      }
+      else if (val == g_Color_Test)
       {
-         mode_ = 1;
+         mode_ = MODE_COLOR_TEST;
+      }
+      else
+      {
+         mode_ = MODE_ARTIFICIAL_WAVES;
       }
    }
    return DEVICE_OK;
@@ -1953,7 +1970,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
   
    MMThreadGuard g(imgPixelsLock_);
 
-   if (mode_ == 1)
+   if (mode_ == MODE_NOISE)
    {
       double max = 1 << GetBitDepth();
       int offset = 10;
@@ -1969,6 +1986,11 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          imgManpl_->ChangePixels(img);
       }
       return;
+   }
+   else if (mode_ == MODE_COLOR_TEST)
+   {
+      if (GenerateColorTestPattern(img))
+         return;
    }
 
 	//std::string pixelType;
@@ -2333,6 +2355,84 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       }
    }
    dPhase_ += lSinePeriod / 4.;
+}
+
+
+bool CDemoCamera::GenerateColorTestPattern(ImgBuffer& img)
+{
+   unsigned width = img.Width(), height = img.Height();
+   switch (img.Depth())
+   {
+      case 1:
+      {
+         const unsigned long maxVal = 255;
+         unsigned char* rawBytes = img.GetPixelsRW();
+         for (unsigned y = 0; y < height; ++y)
+         {
+            for (unsigned x = 0; x < width; ++x)
+            {
+               if (y == 0)
+               {
+                  rawBytes[x] = maxVal * x / (width - 1);
+               }
+               else {
+                  rawBytes[x + y * width] = rawBytes[x];
+               }
+            }
+         }
+         return true;
+      }
+      case 2:
+      {
+         const unsigned long maxVal = 65535;
+         unsigned short* rawShorts =
+            reinterpret_cast<unsigned short*>(img.GetPixelsRW());
+         for (unsigned y = 0; y < height; ++y)
+         {
+            for (unsigned x = 0; x < width; ++x)
+            {
+               if (y == 0)
+               {
+                  rawShorts[x] = maxVal * x / (width - 1);
+               }
+               else {
+                  rawShorts[x + y * width] = rawShorts[x];
+               }
+            }
+         }
+         return true;
+      }
+      case 4:
+      {
+         const unsigned long maxVal = 255;
+         unsigned* rawPixels = reinterpret_cast<unsigned*>(img.GetPixelsRW());
+         for (unsigned section = 0; section < 8; ++section)
+         {
+            unsigned ystart = section * (height / 8);
+            unsigned ystop = section == 7 ? height : ystart + (height / 8);
+            for (unsigned y = ystart; y < ystop; ++y)
+            {
+               for (unsigned x = 0; x < width; ++x)
+               {
+                  rawPixels[x + y * width] = 0;
+                  for (unsigned component = 0; component < 4; ++component)
+                  {
+                     unsigned sample = 0;
+                     if (component == section ||
+                           (section >= 4 && section - 4 != component))
+                     {
+                        sample = maxVal * x / (width - 1);
+                     }
+                     sample &= 0xff; // Just in case
+                     rawPixels[x + y * width] |= sample << (8 * (3 - component));
+                  }
+               }
+            }
+         }
+         return true;
+      }
+   }
+   return false;
 }
 
 

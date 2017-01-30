@@ -281,6 +281,10 @@ public: // Action handlers
     */
     int OnPMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
+    * Gets or sets the current ADC offset
+    */
+    int OnAdcOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
     * Gets or sets the current Trigger Mode - i.e. Internal, Bulb, Edge, etc.
     */
     int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -428,6 +432,26 @@ public: // Action handlers
     */
     int OnSmartStreamingValues(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
+    /**
+    * Read-only: Shows the camera actual exposure time value in ns.
+    */
+    int OnTimingExposureTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual readout time value in ns.
+    */
+    int OnTimingReadoutTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual clearing time value in ns.
+    */
+    int OnTimingClearingTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual pre-trigger delay value in ns.
+    */
+    int OnTimingPreTriggerDelayNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual post-trigger delay value in ns.
+    */
+    int OnTimingPostTriggerDelayNs(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 public: // Other published methods
     /**
@@ -529,7 +553,10 @@ private:
     * bit depth, readout speed and gain range based on speed index.
     */
     int initializeSpeedTable();
-
+    /**
+    * Initialize all parameters that may change their value after acquisition setup
+    */
+    int initializePostSetupParams();
     /**
     * Resizes the buffer used for continous live acquisition
     */
@@ -603,14 +630,6 @@ private:
     * Reverts a single setting that we know had an error
     */
     int revertPostProcValue( long absoluteParamIdx, MM::PropertyBase* pProp);
-    /**
-    * Called when Readout Port changes. Handles updating of all depending properties.
-    */
-    int portChanged();
-    /**
-    * Called when Readout Speed changes. Handles updating of all depending properties.
-    */
-    int speedChanged();
     /**
     * This function is called right after pl_exp_setup_seq() and pl_exp_setup_cont()
     * After setup is called following parameters become available or may change their values:
@@ -766,6 +785,7 @@ private: // Static
     PvEnumParam*      prmExposeOutMode_;
     PvParam<uns16>*   prmClearCycles_;
     PvEnumParam*      prmReadoutPort_;
+    PvParam<int16>*   prmSpdTabIndex_;
     PvEnumParam*      prmColorMode_;
     PvParam<ulong64>* prmFrameBufSize_;
 
@@ -778,6 +798,13 @@ private: // Static
     PvEnumParam*      prmTrigTabSignal_;
     PvParam<uns8>*    prmLastMuxedSignal_;
     PvEnumParam*      prmPMode_;
+    PvParam<int16>*   prmAdcOffset_;
+
+    // These parameters become valid after calling pl_exp_setup_seq()/pl_exp_setup_cont()
+    PvParam<uns32>*   prmReadoutTime_;      // (PARAM_READOUT_TIME)
+    PvParam<long64>*  prmClearingTime_;     // (PARAM_CLEARING_TIME)
+    PvParam<long64>*  prmPostTriggerDelay_; // (PARAM_POST_TRIGGER_DELAY)
+    PvParam<long64>*  prmPreTriggerDelay_;  // (PARAM_PRE_TRIGGER_DELAY)
 
     // List of post processing features
     std::vector<PpParam> PostProc_;

@@ -29,9 +29,10 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceUtils.h"
+#include "../../MMDevice/DeviceThreads.h"
+#include <algorithm>
 #include <string>
 #include <vector>
-#include <algorithm>
 
 
 using namespace std;
@@ -143,6 +144,7 @@ int ASIHub::QueryCommandUnterminatedResponse(const char *command, const long tim
 
 int ASIHub::QueryCommand(const char *command, const char *replyTerminator, const long delayMs)
 {
+   MMThreadGuard g(threadLock_);
    RETURN_ON_MM_ERROR ( ClearComPort() );
    RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
    serialCommand_ = command;

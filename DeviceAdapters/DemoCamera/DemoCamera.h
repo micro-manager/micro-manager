@@ -213,6 +213,7 @@ private:
    void TestResourceLocking(const bool);
    void GenerateEmptyImage(ImgBuffer& img);
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
+   bool GenerateColorTestPattern(ImgBuffer& img);
    int ResizeImageBuffer();
 
    static const double nominalPixelSizeUm_;

@@ -8,8 +8,6 @@ AM_LDFLAGS = $(BOOST_LDFLAGS) $(MMCORE_APPLEHOST_LDFLAGS)
 
 noinst_LTLIBRARIES = libMMCore.la
 
-# libMMCore currently requires libMMDevice, due to use of CDeviceUtils,
-# ImgBuffer, and FrameBuffer. This dependency should probably be removed.
 libMMCore_la_LIBADD = $(BOOST_SYSTEM_LIB) $(BOOST_DATE_TIME_LIB) $(BOOST_THREAD_LIB) ../MMDevice/libMMDevice.la
 
 libMMCore_la_SOURCES = \
@@ -63,6 +61,8 @@ libMMCore_la_SOURCES = \
 	Error.cpp \
 	Error.h \
 	ErrorCodes.h \
+	FrameBuffer.cpp \
+	FrameBuffer.h \
 	Host.cpp \
 	Host.h \
 	LibraryInfo/LibraryPaths.h \
