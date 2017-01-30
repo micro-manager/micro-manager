@@ -25,14 +25,9 @@
 // 
 #include "CircularBuffer.h"
 #include "CoreUtils.h"
-#include "../MMDevice/DeviceUtils.h"
-#include "../MMDevice/DeviceThreads.h"
-#include "boost/date_time/posix_time/posix_time.hpp"
-#include <cstdio>
 
-#ifdef WIN32
-#undef min // avoid clash with the system defined macros
-#endif
+#include "../MMDevice/DeviceUtils.h"
+
 
 const long long bytesInMB = 1 << 20;
 const long adjustThreshold = LONG_MAX / 2;

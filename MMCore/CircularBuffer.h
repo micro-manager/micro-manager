@@ -22,16 +22,18 @@
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 01/05/2007
 // 
 
-#if !defined(_CIRCULAR_BUFFER_)
-#define _CIRCULAR_BUFFER_
+#pragma once
+
+#include "Error.h"
+#include "ErrorCodes.h"
+#include "FrameBuffer.h"
+
+#include "../MMDevice/DeviceThreads.h"
+#include "../MMDevice/MMDevice.h"
 
 #include <vector>
-#include "FrameBuffer.h"
-#include "../MMDevice/MMDevice.h"
-#include "ErrorCodes.h"
-#include "Error.h"
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #pragma warning( disable : 4290 ) // exception declaration warning
 #endif
 
@@ -86,6 +88,3 @@ private:
    bool overflow_;
    std::vector<mm::FrameBuffer> frameArray_;
 };
-
-
-#endif // !defined(_CIRCULAR_BUFFER_)
