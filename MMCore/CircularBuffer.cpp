@@ -152,7 +152,6 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
 {
    MMThreadGuard guard(g_insertLock);
 
-   bool notOverflowed;
    ImgBuffer* pImg;
    unsigned long singleChannelSize = (unsigned long)width * height * byteDepth;
 
@@ -163,14 +162,11 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
       if (width != width_ || height != height_ || byteDepth != pixDepth_)
          throw CMMError("Incompatible image dimensions in the circular buffer", MMERR_CircularBufferIncompatibleImage);
 
-
-      notOverflowed = (long)frameArray_.size() - (insertIndex_ - saveIndex_) > 0;
-      if (!notOverflowed) {
-         // buffer overflow
+      bool overflowed = (insertIndex_ - saveIndex_) >= static_cast<long>(frameArray_.size());
+      if (overflowed) {
          overflow_ = true;
          return false;
       }
-   
    }
 
    for (unsigned i=0; i<numChannels; i++)
@@ -219,7 +215,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          md.PutImageTag("PixelType","RGB32");
       else if (byteDepth == 8)
          md.PutImageTag("PixelType","RGB64");
-      else                          
+      else
          md.PutImageTag("PixelType","Unknown"); 
 
       pImg->SetMetadata(md);
@@ -245,99 +241,56 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
 
 const unsigned char* CircularBuffer::GetTopImage() const
 {
-   MMThreadGuard guard(g_bufferLock);
-
-   if (frameArray_.size() == 0)
+   ImgBuffer* img = GetNthFromTopImageBuffer(0, 0, 0);
+   if (!img)
       return 0;
-
-   if (insertIndex_ == 0)
-      return frameArray_[0].GetPixels(0, 0);
-   else
-      return frameArray_[(insertIndex_-1) % frameArray_.size()].GetPixels(0, 0);
+   return img->GetPixels();
 }
 
 const ImgBuffer* CircularBuffer::GetTopImageBuffer(unsigned channel, unsigned slice) const
 {
-   MMThreadGuard guard(g_bufferLock);
-
-   if (frameArray_.size() == 0)
-      return 0;
-
-   // TODO: we may return NULL pointer if channel and slice indexes are wrong
-   // this will cause problem in the SWIG - Java layer
-   if (insertIndex_ == 0)
-      return frameArray_[0].FindImage(channel, slice);
-   else
-      return frameArray_[(insertIndex_-1) % frameArray_.size()].FindImage(channel, slice);
+   return GetNthFromTopImageBuffer(0, channel, slice);
 }
 
-/**
-* Returns an ImgBuffer to the image inserted n images before the last one
-*/
 const ImgBuffer* CircularBuffer::GetNthFromTopImageBuffer(unsigned long n) const
+{
+   return GetNthFromTopImageBuffer(static_cast<long>(n), 0, 0);
+}
+
+const ImgBuffer* CircularBuffer::GetNthFromTopImageBuffer(long n,
+      unsigned channel, unsigned slice) const
 {
    MMThreadGuard guard(g_bufferLock);
 
-   if (frameArray_.size() == 0)
+   long availableImages = insertIndex_ - saveIndex_;
+   if (n + 1 > availableImages)
       return 0;
 
-   if (n >= frameArray_.size() )
-      return 0;
+   long targetIndex = insertIndex_ - n - 1L;
+   while (targetIndex < 0)
+      targetIndex += frameArray_.size();
+   targetIndex %= frameArray_.size();
 
-   if ((unsigned long) insertIndex_ <= n)
-   {
-      return frameArray_[(frameArray_.size() - n + insertIndex_ - 1) % frameArray_.size()].FindImage(0, 0);
-   }
-
-   return frameArray_[(insertIndex_-1-n) % frameArray_.size()].FindImage(0, 0);
+   return frameArray_[targetIndex].FindImage(channel, slice);
 }
 
 const unsigned char* CircularBuffer::GetNextImage()
 {
-   MMThreadGuard guard(g_bufferLock);
-
-   if (saveIndex_ < insertIndex_)
-   {
-      const unsigned char* pBuf = frameArray_[(saveIndex_) % frameArray_.size()].GetPixels(0, 0);
-      saveIndex_++;
-      return pBuf;
-   }
-   return 0;
+   ImgBuffer* img = GetNextImageBuffer(0, 0);
+   if (!img)
+      return 0;
+   return img.GetPixels();
 }
 
 const ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel, unsigned slice)
 {
    MMThreadGuard guard(g_bufferLock);
 
-   // TODO: we may return NULL pointer if channel and slice indexes are wrong
-   // this will cause problem in the SWIG - Java layer
-   if (saveIndex_ < insertIndex_)
-   {
-      const ImgBuffer* pBuf = frameArray_[(saveIndex_) % frameArray_.size()].FindImage(channel, slice);
-      saveIndex_++;
-      return pBuf;
-   }
-   return 0;
-}
+   long availableImages = insertIndex_ - saveIndex_;
+   if (availableImages < 1)
+      return 0;
 
-//N.B. an unsigned long millisecond clock tick rolls over in 47 days.
-// millisecond clock tick incrementing from the time first requested
-unsigned long CircularBuffer::GetClockTicksMs() const
-{
-   using namespace boost::posix_time;
-   using namespace boost::gregorian;
-   // use tick from the first time this is call is requested
-   static boost::posix_time::ptime sst(boost::date_time::not_a_date_time);
-   if (boost::posix_time::ptime(boost::date_time::not_a_date_time) == sst)
-   {
-      boost::gregorian::date today( day_clock::local_day());
-      sst = boost::posix_time::ptime(today); 
-   }
-
-   boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
-
-   time_duration diff = t - sst;
-   return static_cast<unsigned long>(diff.total_milliseconds());
-
-
+   long targetIndex = saveIndex_ % frameArray_.size();
+   ++saveIndex_;
+   return frameArray_[targetIndex].FindImage(channel, slice);
 }

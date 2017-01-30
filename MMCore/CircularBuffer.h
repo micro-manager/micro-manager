@@ -66,6 +66,7 @@ public:
    const unsigned char* GetNextImage();
    const ImgBuffer* GetTopImageBuffer(unsigned channel, unsigned slice) const;
    const ImgBuffer* GetNthFromTopImageBuffer(unsigned long n) const;
+   const ImgBuffer* GetNthFromTopImageBuffer(long n, unsigned channel, unsigned slice) const;
    const ImgBuffer* GetNextImageBuffer(unsigned channel, unsigned slice);
    void Clear() {MMThreadGuard guard(g_bufferLock); insertIndex_=0; saveIndex_=0; overflow_ = false;}
 
@@ -77,16 +78,18 @@ private:
    unsigned int pixDepth_;
    long imageCounter_;
    std::map<std::string, long> imageNumbers_;
+
+   // Invariants:
+   // 0 <= saveIndex_ <= insertIndex_
+   // insertIndex_ - saveIndex_ <= frameArray_.size()
    long insertIndex_;
    long saveIndex_;
+
    unsigned long memorySizeMB_;
    unsigned int numChannels_;
    unsigned int numSlices_;
    bool overflow_;
    std::vector<FrameBuffer> frameArray_;
-
-   unsigned long GetClockTicksMs() const;
-
 };
 
 
