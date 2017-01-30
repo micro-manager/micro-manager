@@ -17,31 +17,16 @@
 // NOTE:          Imported from ADVI for use in Micro-Manager
 
 #include "FrameBuffer.h"
+
 #include <math.h>
 
 namespace mm {
-
-using namespace std;
 
 ImgBuffer::ImgBuffer(unsigned xSize, unsigned ySize, unsigned pixDepth) :
    pixels_(0), width_(xSize), height_(ySize), pixDepth_(pixDepth)
 {
    pixels_ = new unsigned char[xSize * ySize * pixDepth];
    memset(pixels_, 0, xSize * ySize * pixDepth);
-}
-
-ImgBuffer::ImgBuffer() :
-   pixels_(0),
-   width_(0),
-   height_(0),
-   pixDepth_(0)
-{
-}
-
-ImgBuffer::ImgBuffer(const ImgBuffer& right)
-{
-   pixels_ = 0;
-   *this = right;
 }
 
 ImgBuffer::~ImgBuffer()
@@ -54,46 +39,9 @@ const unsigned char* ImgBuffer::GetPixels() const
    return pixels_;
 }
 
-unsigned char* ImgBuffer::GetPixelsRW()
-{
-   return pixels_;
-}
-
 void ImgBuffer::SetPixels(const void* pix)
 {
    memcpy((void*)pixels_, pix, width_ * height_ * pixDepth_);
-}
-
-// Set pixels, from a source that has extra bytes at the end of each scanline
-// (row).
-void ImgBuffer::SetPixelsPadded(const void* pixArray, int paddingBytesPerLine)
-{
-   const char* src = reinterpret_cast<const char*>(pixArray);
-   char* dst = reinterpret_cast<char*>(pixels_);
-   const size_t lineSize = width_ * pixDepth_;
-
-   for(size_t i = 0; i < height_; i++)
-   {
-      memcpy(dst, src, lineSize);
-      src += lineSize + paddingBytesPerLine;
-      dst += lineSize;
-   }
-}
-
-void ImgBuffer::ResetPixels()
-{
-   if (pixels_)
-      memset(pixels_, 0, width_ * height_ * pixDepth_);
-}
-
-bool ImgBuffer::Compatible(const ImgBuffer& img) const
-{
-   if (  Height() != img.Height() ||
-         Width() != img.Width() ||
-         Depth() != img.Depth())
-         return false;
-
-   return true;
 }
 
 void ImgBuffer::Resize(unsigned xSize, unsigned ySize, unsigned pixDepth)
@@ -125,32 +73,6 @@ void ImgBuffer::Resize(unsigned xSize, unsigned ySize)
    memset(pixels_, 0, width_ * height_ * pixDepth_);
 }
 
-void ImgBuffer::Copy(const ImgBuffer& right)
-{
-   if (!Compatible(right))
-      Resize(right.width_, right.height_, right.pixDepth_);
-
-   SetPixels((void*)right.GetPixels());
-}
-
-ImgBuffer& ImgBuffer::operator=(const ImgBuffer& img)
-{
-   if(this == &img)
-      return *this;
-
-   if (pixels_)
-      delete[] pixels_;
-
-   width_ = img.Width();
-   height_ = img.Height();
-   pixDepth_ = img.Depth();
-   pixels_ = new unsigned char[width_ * height_ * pixDepth_];
-
-   Copy(img);
-
-   return *this;
-}
-
 void ImgBuffer::SetMetadata(const Metadata& md)
 {
    //metadata_ = md;
@@ -170,8 +92,6 @@ FrameBuffer::FrameBuffer(unsigned xSize, unsigned ySize, unsigned byteDepth)
    width_ = xSize;
    height_ = ySize;
    depth_ = byteDepth;
-   handlePending_ = false;
-   frameID_ = 0;
 }
 
 FrameBuffer::FrameBuffer()
@@ -179,8 +99,6 @@ FrameBuffer::FrameBuffer()
    width_ = 0;
    height_ = 0;
    depth_ = 0;
-   handlePending_ = false;
-   frameID_ = 0;
 }
 
 FrameBuffer::~FrameBuffer()
@@ -194,7 +112,6 @@ void FrameBuffer::Clear()
       delete images_[i];
    images_.clear();
    indexMap_.clear();
-   handlePending_ = false;
 }
 
 void FrameBuffer::Preallocate(unsigned channels, unsigned slices)
@@ -216,42 +133,8 @@ void FrameBuffer::Resize(unsigned xSize, unsigned ySize, unsigned byteDepth)
    depth_ = byteDepth;
 }
 
-bool FrameBuffer::SetImage(unsigned channel, unsigned slice, const ImgBuffer& imgBuf)
-{
-   handlePending_ = false;
-   ImgBuffer* img = FindImage(channel, slice);
-
-   if (img)
-   {
-      // image already exists
-      *img = imgBuf;
-   }
-   else
-   {
-      // create a new buffer
-      ImgBuffer* img2 = InsertNewImage(channel, slice);
-      *img2 = imgBuf;
-   }
-
-   return true;
-}
-
-bool FrameBuffer::GetImage(unsigned channel, unsigned slice, ImgBuffer& img) const
-{
-   ImgBuffer* imgBuf = FindImage(channel, slice);
-
-   if (imgBuf)
-   {
-      img = *imgBuf;
-      return true;
-   }
-   else
-      return false;
-}
-
 bool FrameBuffer::SetPixels(unsigned channel, unsigned slice, const unsigned char* pixels)
 {
-   handlePending_ = false;
    ImgBuffer* img = FindImage(channel, slice);
 
    if (img)
@@ -280,7 +163,7 @@ const unsigned char* FrameBuffer::GetPixels(unsigned channel, unsigned slice) co
 
 ImgBuffer* FrameBuffer::FindImage(unsigned channel, unsigned slice) const
 {
-   map<unsigned long, ImgBuffer*>::const_iterator it = indexMap_.find(GetIndex(channel, slice));
+   std::map<unsigned long, ImgBuffer*>::const_iterator it = indexMap_.find(GetIndex(channel, slice));
    if (it != indexMap_.end())
       return it->second;
    else
