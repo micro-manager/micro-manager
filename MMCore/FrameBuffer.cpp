@@ -108,10 +108,12 @@ FrameBuffer::~FrameBuffer()
 
 void FrameBuffer::Clear()
 {
-   for (unsigned i=0; i<images_.size(); i++)
-      delete images_[i];
-   images_.clear();
-   indexMap_.clear();
+   for (std::vector<ImgBuffer*>::iterator it = channels_.begin(), end = channels_.end();
+         it != end; ++it)
+   {
+      delete *it;
+   }
+   channels_.clear();
 }
 
 void FrameBuffer::Preallocate(unsigned channels)
@@ -162,23 +164,17 @@ const unsigned char* FrameBuffer::GetPixels(unsigned channel) const
 
 ImgBuffer* FrameBuffer::FindImage(unsigned channel) const
 {
-   std::map<unsigned long, ImgBuffer*>::const_iterator it = indexMap_.find(GetIndex(channel));
-   if (it != indexMap_.end())
-      return it->second;
-   else
+   if (channel >= channels_.size())
       return 0;
-}
-
-unsigned long FrameBuffer::GetIndex(unsigned channel)
-{
-   return channel;
+   return channels_[channel];
 }
 
 ImgBuffer* FrameBuffer::InsertNewImage(unsigned channel)
 {
+   if (channel >= channels_.size())
+      channels_.resize(channel + 1, 0);
    ImgBuffer* img = new ImgBuffer(width_, height_, depth_);
-   images_.push_back(img);
-   indexMap_[GetIndex(channel)] = img;
+   channels_[channel] = img;
    return img;
 }
 

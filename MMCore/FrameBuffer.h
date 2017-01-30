@@ -56,8 +56,9 @@ private:
 
 class FrameBuffer
 {
-   std::vector<ImgBuffer*> images_;
-   std::map<unsigned long, ImgBuffer*> indexMap_;
+   // Holds null for any unallocated channels, and is as long as need to
+   // contain the allocated channels.
+   std::vector<ImgBuffer*> channels_;
    unsigned int width_;
    unsigned int height_;
    unsigned int depth_;
@@ -82,7 +83,6 @@ private:
    FrameBuffer& operator=(const FrameBuffer&);
 
 private:
-   static unsigned long GetIndex(unsigned channel);
    ImgBuffer* InsertNewImage(unsigned channel);
 };
 
