@@ -35,13 +35,6 @@
 #pragma warning( disable : 4290 ) // exception declaration warning
 #endif
 
-///////////////////////////////////////////////////////////////////////////////
-//
-// CircularBuffer class
-// ~~~~~~~~~~~~~~~~~~~~
-
-static MMThreadLock g_bufferLock;
-static MMThreadLock g_insertLock;
 
 class CircularBuffer
 {
@@ -71,6 +64,9 @@ public:
    void Clear() {MMThreadGuard guard(g_bufferLock); insertIndex_=0; saveIndex_=0; overflow_ = false;}
 
    bool Overflow() {MMThreadGuard guard(g_bufferLock); return overflow_;}
+
+   mutable MMThreadLock g_bufferLock;
+   mutable MMThreadLock g_insertLock;
 
 private:
    unsigned int width_;
