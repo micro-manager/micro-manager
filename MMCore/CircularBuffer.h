@@ -26,7 +26,7 @@
 #define _CIRCULAR_BUFFER_
 
 #include <vector>
-#include "../MMDevice/ImgBuffer.h"
+#include "FrameBuffer.h"
 #include "../MMDevice/MMDevice.h"
 #include "ErrorCodes.h"
 #include "Error.h"
@@ -64,10 +64,10 @@ public:
    bool InsertMultiChannel(const unsigned char* pixArray, unsigned int numChannels, unsigned int width, unsigned int height, unsigned int byteDepth, const Metadata* pMd) throw (CMMError);
    const unsigned char* GetTopImage() const;
    const unsigned char* GetNextImage();
-   const ImgBuffer* GetTopImageBuffer(unsigned channel, unsigned slice) const;
-   const ImgBuffer* GetNthFromTopImageBuffer(unsigned long n) const;
-   const ImgBuffer* GetNthFromTopImageBuffer(long n, unsigned channel, unsigned slice) const;
-   const ImgBuffer* GetNextImageBuffer(unsigned channel, unsigned slice);
+   const mm::ImgBuffer* GetTopImageBuffer(unsigned channel, unsigned slice) const;
+   const mm::ImgBuffer* GetNthFromTopImageBuffer(unsigned long n) const;
+   const mm::ImgBuffer* GetNthFromTopImageBuffer(long n, unsigned channel, unsigned slice) const;
+   const mm::ImgBuffer* GetNextImageBuffer(unsigned channel, unsigned slice);
    void Clear() {MMThreadGuard guard(g_bufferLock); insertIndex_=0; saveIndex_=0; overflow_ = false;}
 
    bool Overflow() {MMThreadGuard guard(g_bufferLock); return overflow_;}
@@ -89,7 +89,7 @@ private:
    unsigned int numChannels_;
    unsigned int numSlices_;
    bool overflow_;
-   std::vector<FrameBuffer> frameArray_;
+   std::vector<mm::FrameBuffer> frameArray_;
 };
 
 

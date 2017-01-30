@@ -2916,7 +2916,7 @@ void* CMMCore::getLastImage() throw (CMMError)
 
 void* CMMCore::getLastImageMD(unsigned channel, unsigned slice, Metadata& md) const throw (CMMError)
 {
-   const ImgBuffer* pBuf = cbuf_->GetTopImageBuffer(channel, slice);
+   const mm::ImgBuffer* pBuf = cbuf_->GetTopImageBuffer(channel, slice);
    if (pBuf != 0)
    {
       md = pBuf->GetMetadata();
@@ -2941,7 +2941,7 @@ void* CMMCore::getLastImageMD(Metadata& md) const throw (CMMError)
  */
 void* CMMCore::getNBeforeLastImageMD(unsigned long n, Metadata& md) const throw (CMMError)
 {
-   const ImgBuffer* pBuf = cbuf_->GetNthFromTopImageBuffer(n);
+   const mm::ImgBuffer* pBuf = cbuf_->GetNthFromTopImageBuffer(n);
    if (pBuf != 0)
    {
       md = pBuf->GetMetadata();
@@ -2966,7 +2966,7 @@ void* CMMCore::popNextImage() throw (CMMError)
 
 void* CMMCore::popNextImageMD(unsigned channel, unsigned slice, Metadata& md) throw (CMMError)
 {
-   const ImgBuffer* pBuf = cbuf_->GetNextImageBuffer(channel, slice);
+   const mm::ImgBuffer* pBuf = cbuf_->GetNextImageBuffer(channel, slice);
    if (pBuf != 0)
    {
       md = pBuf->GetMetadata();

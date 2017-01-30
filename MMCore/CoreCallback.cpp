@@ -27,6 +27,7 @@
 
 #include "../MMDevice/DeviceThreads.h"
 #include "../MMDevice/DeviceUtils.h"
+#include "../MMDevice/ImgBuffer.h"
 #include "CircularBuffer.h"
 #include "CoreCallback.h"
 #include "DeviceManager.h"

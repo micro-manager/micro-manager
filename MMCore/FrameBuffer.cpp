@@ -1,10 +1,8 @@
-////////////////////////////////////////////////////////////////////////////////
-// MODULE:			ImgBuffer.cpp
-// PROJECT:       Micro-Manager
-// SUBSYSTEM:     MMDevice - Device adapter kit
-// AUTHOR:			Nenad Amodaj, nenad@amodaj.com
+// AUTHOR:        Nenad Amodaj, nenad@amodaj.com
 //
-// COPYRIGHT:     Nenad Amodaj, 2005. All rigths reserved.
+// COPYRIGHT:     2005 Nenad Amodaj
+//                2005-2015 Regents of the University of California
+//                2017 Open Imaging, Inc.
 //
 // LICENSE:       This file is free for use, modification and distribution and
 //                is distributed under terms specified in the BSD license
@@ -17,20 +15,18 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // NOTE:          Imported from ADVI for use in Micro-Manager
-///////////////////////////////////////////////////////////////////////////////
-#include "ImgBuffer.h"
+
+#include "FrameBuffer.h"
 #include <math.h>
-#include <assert.h>
+
+namespace mm {
+
 using namespace std;
 
-///////////////////////////////////////////////////////////////////////////////
-// ImgBuffer class
-//
 ImgBuffer::ImgBuffer(unsigned xSize, unsigned ySize, unsigned pixDepth) :
    pixels_(0), width_(xSize), height_(ySize), pixDepth_(pixDepth)
 {
    pixels_ = new unsigned char[xSize * ySize * pixDepth];
-   assert(pixels_);
    memset(pixels_, 0, xSize * ySize * pixDepth);
 }
 
@@ -42,7 +38,7 @@ ImgBuffer::ImgBuffer() :
 {
 }
 
-ImgBuffer::ImgBuffer(const ImgBuffer& right)                
+ImgBuffer::ImgBuffer(const ImgBuffer& right)
 {
    pixels_ = 0;
    *this = right;
@@ -96,7 +92,7 @@ bool ImgBuffer::Compatible(const ImgBuffer& img) const
          Width() != img.Width() ||
          Depth() != img.Depth())
          return false;
-   
+
    return true;
 }
 
@@ -107,7 +103,6 @@ void ImgBuffer::Resize(unsigned xSize, unsigned ySize, unsigned pixDepth)
    {
       delete[] pixels_;
       pixels_ = new unsigned char [xSize * ySize * pixDepth];
-      assert(pixels_);
    }
 
    width_ = xSize;
@@ -164,3 +159,149 @@ void ImgBuffer::SetMetadata(const Metadata& md)
    // TODO: this is inefficient and should be revised
     metadata_.Restore(md.Serialize().c_str());
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// FrameBuffer class
+///////////////////////////////////////////////////////////////////////////////
+
+FrameBuffer::FrameBuffer(unsigned xSize, unsigned ySize, unsigned byteDepth)
+{
+   width_ = xSize;
+   height_ = ySize;
+   depth_ = byteDepth;
+   handlePending_ = false;
+   frameID_ = 0;
+}
+
+FrameBuffer::FrameBuffer()
+{
+   width_ = 0;
+   height_ = 0;
+   depth_ = 0;
+   handlePending_ = false;
+   frameID_ = 0;
+}
+
+FrameBuffer::~FrameBuffer()
+{
+   Clear();
+}
+
+void FrameBuffer::Clear()
+{
+   for (unsigned i=0; i<images_.size(); i++)
+      delete images_[i];
+   images_.clear();
+   indexMap_.clear();
+   handlePending_ = false;
+}
+
+void FrameBuffer::Preallocate(unsigned channels, unsigned slices)
+{
+   for (unsigned i=0; i<channels; i++)
+      for (unsigned j=0; j<slices; j++)
+      {
+         ImgBuffer* img = FindImage(i, j);
+         if (!img)
+            InsertNewImage(i, j);
+      }
+}
+
+void FrameBuffer::Resize(unsigned xSize, unsigned ySize, unsigned byteDepth)
+{
+   Clear();
+   width_ = xSize;
+   height_ = ySize;
+   depth_ = byteDepth;
+}
+
+bool FrameBuffer::SetImage(unsigned channel, unsigned slice, const ImgBuffer& imgBuf)
+{
+   handlePending_ = false;
+   ImgBuffer* img = FindImage(channel, slice);
+
+   if (img)
+   {
+      // image already exists
+      *img = imgBuf;
+   }
+   else
+   {
+      // create a new buffer
+      ImgBuffer* img2 = InsertNewImage(channel, slice);
+      *img2 = imgBuf;
+   }
+
+   return true;
+}
+
+bool FrameBuffer::GetImage(unsigned channel, unsigned slice, ImgBuffer& img) const
+{
+   ImgBuffer* imgBuf = FindImage(channel, slice);
+
+   if (imgBuf)
+   {
+      img = *imgBuf;
+      return true;
+   }
+   else
+      return false;
+}
+
+bool FrameBuffer::SetPixels(unsigned channel, unsigned slice, const unsigned char* pixels)
+{
+   handlePending_ = false;
+   ImgBuffer* img = FindImage(channel, slice);
+
+   if (img)
+   {
+      // image already exists
+      img->SetPixels(pixels);
+   }
+   else
+   {
+      // create a new buffer
+      ImgBuffer* img2 = InsertNewImage(channel, slice);
+      img2->SetPixels(pixels);
+   }
+
+   return true;
+}
+
+const unsigned char* FrameBuffer::GetPixels(unsigned channel, unsigned slice) const
+{
+   ImgBuffer* img = FindImage(channel, slice);
+   if (img)
+      return img->GetPixels();
+   else
+      return 0;
+}
+
+ImgBuffer* FrameBuffer::FindImage(unsigned channel, unsigned slice) const
+{
+   map<unsigned long, ImgBuffer*>::const_iterator it = indexMap_.find(GetIndex(channel, slice));
+   if (it != indexMap_.end())
+      return it->second;
+   else
+      return 0;
+}
+
+unsigned long FrameBuffer::GetIndex(unsigned channel, unsigned slice)
+{
+   // set the slice in the upper and channel in the lower part
+   unsigned long idx((unsigned short)slice);
+   idx = idx << 16;
+   idx = idx | (unsigned short) channel;
+   return idx;
+}
+
+ImgBuffer* FrameBuffer::InsertNewImage(unsigned channel, unsigned slice)
+{
+   ImgBuffer* img = new ImgBuffer(width_, height_, depth_);
+   images_.push_back(img);
+   indexMap_[GetIndex(channel, slice)] = img;
+   return img;
+}
+
+} // namespace mm
