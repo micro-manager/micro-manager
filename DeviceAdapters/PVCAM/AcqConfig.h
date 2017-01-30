@@ -111,6 +111,18 @@ public:
     */
     int PMode;
     /**
+    * Current ADC offset
+    */
+    int AdcOffset;
+    /**
+    * Current port ID.
+    */
+    int PortId;
+    /**
+    * Current speed index.
+    */
+    int SpeedIndex;
+    /**
     * Whether to use circular buffer for live acquisition or not
     */
     bool CircBufEnabled;

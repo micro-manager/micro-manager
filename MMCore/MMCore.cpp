@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 4, MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 4, MMCore_versionPatch = 1;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2667,7 +2667,7 @@ void CMMCore::startSequenceAcquisition(long numImages, double intervalMs, bool s
 
 		try
 		{
-			if (!cbuf_->Initialize(camera->GetNumberOfChannels(), 1, camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
+			if (!cbuf_->Initialize(camera->GetNumberOfChannels(), camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
 			{
 				logError(getDeviceName(camera).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
 				throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
@@ -2755,7 +2755,7 @@ void CMMCore::initializeCircularBuffer() throw (CMMError)
    if (camera)
    {
       mm::DeviceModuleLockGuard guard(camera);
-      if (!cbuf_->Initialize(camera->GetNumberOfChannels(), 1, camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
+      if (!cbuf_->Initialize(camera->GetNumberOfChannels(), camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
       {
          logError(getDeviceName(camera).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
          throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
@@ -2807,7 +2807,7 @@ void CMMCore::startContinuousSequenceAcquisition(double intervalMs) throw (CMMEr
             ,MMERR_NotAllowedDuringSequenceAcquisition);
       }
 
-      if (!cbuf_->Initialize(camera->GetNumberOfChannels(), 1, camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
+      if (!cbuf_->Initialize(camera->GetNumberOfChannels(), camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
       {
          logError(getDeviceName(camera).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
          throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
@@ -2916,7 +2916,11 @@ void* CMMCore::getLastImage() throw (CMMError)
 
 void* CMMCore::getLastImageMD(unsigned channel, unsigned slice, Metadata& md) const throw (CMMError)
 {
-   const ImgBuffer* pBuf = cbuf_->GetTopImageBuffer(channel, slice);
+   // Slices have never been implemented on the device interface side
+   if (slice != 0)
+      throw CMMError("Slice must be 0");
+
+   const mm::ImgBuffer* pBuf = cbuf_->GetTopImageBuffer(channel);
    if (pBuf != 0)
    {
       md = pBuf->GetMetadata();
@@ -2941,7 +2945,7 @@ void* CMMCore::getLastImageMD(Metadata& md) const throw (CMMError)
  */
 void* CMMCore::getNBeforeLastImageMD(unsigned long n, Metadata& md) const throw (CMMError)
 {
-   const ImgBuffer* pBuf = cbuf_->GetNthFromTopImageBuffer(n);
+   const mm::ImgBuffer* pBuf = cbuf_->GetNthFromTopImageBuffer(n);
    if (pBuf != 0)
    {
       md = pBuf->GetMetadata();
@@ -2966,7 +2970,11 @@ void* CMMCore::popNextImage() throw (CMMError)
 
 void* CMMCore::popNextImageMD(unsigned channel, unsigned slice, Metadata& md) throw (CMMError)
 {
-   const ImgBuffer* pBuf = cbuf_->GetNextImageBuffer(channel, slice);
+   // Slices have never been implemented on the device interface side
+   if (slice != 0)
+      throw CMMError("Slice must be 0");
+
+   const mm::ImgBuffer* pBuf = cbuf_->GetNextImageBuffer(channel);
    if (pBuf != 0)
    {
       md = pBuf->GetMetadata();
@@ -3023,7 +3031,7 @@ void CMMCore::setCircularBufferMemoryFootprint(unsigned sizeMB ///< n megabytes
       if (camera)
 		{
          mm::DeviceModuleLockGuard guard(camera);
-         if (!cbuf_->Initialize(camera->GetNumberOfChannels(), 1, camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
+         if (!cbuf_->Initialize(camera->GetNumberOfChannels(), camera->GetImageWidth(), camera->GetImageHeight(), camera->GetImageBytesPerPixel()))
 				throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
 		}
 
