@@ -80,7 +80,11 @@ public:
    unsigned Depth() const {return depth_;}
 
 private:
-   FrameBuffer& operator=(const FrameBuffer&);
+   // The following line should be uncommented once we upgrade to
+   // VC++ >= 2013. (Or operator= should be declared deleted, C++11-style.)
+   // For the description of the standard library bug necessitating this
+   // workaround, see http://stackoverflow.com/a/25423089
+   // FrameBuffer& operator=(const FrameBuffer&);
 
 private:
    ImgBuffer* InsertNewImage(unsigned channel);
