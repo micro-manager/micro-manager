@@ -254,16 +254,19 @@ public class P2DFitter {
          double[] upperBounds = {upperBound_, upperBound_};
          MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
                  myP2DFunc, lowerBounds, upperBounds);
+         try {
+            PointValuePair solution = optimizer.optimize(
+                    new ObjectiveFunction(mfma),
+                    new MaxEval(10000),
+                    GoalType.MAXIMIZE,
+                    new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_, sigmaGuess_})),
+                    new NelderMeadSimplex(new double[]{0.2, 0.2})//,
+            );
 
-         PointValuePair solution = optimizer.optimize(
-                 new ObjectiveFunction(mfma),
-                 new MaxEval(10000),
-                 GoalType.MAXIMIZE,
-                 new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_, sigmaGuess_})),
-                 new NelderMeadSimplex(new double[]{0.2, 0.2})//,
-         );
-
-         return mfma.unboundedToBounded(solution.getPoint());
+            return mfma.unboundedToBounded(solution.getPoint());
+         } catch (TooManyEvaluationsException tmee) {
+            throw new FittingException("P2D fit failed due to too many Evaluation Exceptions");
+         }
       } else {
          double[] lowerBounds = {0.0};
          double[] upperBounds = {upperBound_};
@@ -271,72 +274,20 @@ public class P2DFitter {
                  myP2DFunc, lowerBounds, upperBounds);
 
          try {
-         PointValuePair solution = optimizer.optimize(
-                 new ObjectiveFunction(mfma),
-                 new MaxEval(10000),
-                 GoalType.MAXIMIZE,
-                 new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_})),
-                 new NelderMeadSimplex(new double[]{0.2})//,
-         );
+            PointValuePair solution = optimizer.optimize(
+                    new ObjectiveFunction(mfma),
+                    new MaxEval(10000),
+                    GoalType.MAXIMIZE,
+                    new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_})),
+                    new NelderMeadSimplex(new double[]{0.2})//,
+            );
 
-         return mfma.unboundedToBounded(solution.getPoint());
+            return mfma.unboundedToBounded(solution.getPoint());
          } catch (TooManyEvaluationsException tmee) {
-            throw new FittingException("P2D fit faled due to too many Evaluation Exceptions");
+            throw new FittingException("P2D fit failed due to too many Evaluation Exceptions");
          }
       }
    }
 
-   public double[] muIntervals(double mu, double sigma) throws FittingException {
-      P2D50 p2d50 = new P2D50(0, mu, sigma);
-      SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
-
-      try {
-         // first get the distance where the likelihood is highest
-         double[] lowerBounds = {0.0};
-         double[] upperBounds = {upperBound_};
-         MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
-              p2d50, lowerBounds, upperBounds);
-         PointValuePair msPVP = optimizer.optimize(
-                 new ObjectiveFunction(mfma),
-                 new MaxEval(500),
-                 GoalType.MAXIMIZE,
-                 new InitialGuess(mfma.boundedToUnbounded(new double[]{mu})),
-                 new NelderMeadSimplex(new double[]{0.2})//,
-         );
-         double[] maxR = mfma.unboundedToBounded(msPVP.getPoint());
-         
-         // given the distance where the likelihood is highest, calculate the likelihood
-         double maxL = p2d(maxR[0], mu, sigma);
-         
-         // Now find the distances where the likelihood is 0.5 * max likelihood
-         
-         P2D50 p2d50b = new P2D50(0.5 * maxL, mu, sigma);
-         mfma = new MultivariateFunctionMappingAdapter(p2d50b, lowerBounds, 
-                 upperBounds);
-         
-         PointValuePair lsPVP = optimizer.optimize(
-                 new ObjectiveFunction(mfma),
-                 new MaxEval(500),
-                 GoalType.MINIMIZE,
-                 new InitialGuess(mfma.boundedToUnbounded(new double[]{0.5 * maxR[0]})),
-                 new NelderMeadSimplex(new double[]{0.2})//,
-         );
-         double[] lowerSolution = mfma.unboundedToBounded(lsPVP.getPoint());
-         
-                 PointValuePair usPVP = optimizer.optimize(
-                 new ObjectiveFunction(mfma),
-                 new MaxEval(500),
-                 GoalType.MINIMIZE,
-                 new InitialGuess(mfma.boundedToUnbounded(new double[]{4.0 * maxR[0]})),
-                 new NelderMeadSimplex(new double[]{0.2})//,
-         );
-         double[] upperSolution = mfma.unboundedToBounded(usPVP.getPoint());
-         
-         return new double[] {lowerSolution[0], upperSolution[0]};      
-         
-      } catch (TooManyEvaluationsException tmee) {
-         throw new FittingException("P2D fit faled due to too many Evaluation Exceptions");
-      }
-   }
             
 }
