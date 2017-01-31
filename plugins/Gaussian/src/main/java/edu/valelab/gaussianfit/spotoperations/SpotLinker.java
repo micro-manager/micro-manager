@@ -228,10 +228,10 @@ public class SpotLinker {
       }
       sp.nrLinks_ = n;     
       
-      sp.addKeyValue("n", n);
-      sp.addKeyValue("stdDev", stdDev);
-      sp.addKeyValue("stdDevX", stdDevX);
-      sp.addKeyValue("stdDevY", stdDevY);
+      sp.addKeyValue(SpotData.Keys.N, n);
+      sp.addKeyValue(SpotData.Keys.STDDEV, stdDev);
+      sp.addKeyValue(SpotData.Keys.STDDEVX, stdDevX);
+      sp.addKeyValue(SpotData.Keys.STDDEVY, stdDevY);
 
       dest.add(sp);
    }

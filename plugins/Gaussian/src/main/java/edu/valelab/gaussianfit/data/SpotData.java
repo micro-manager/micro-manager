@@ -48,8 +48,29 @@ import java.util.Set;
 
 
 public class SpotData {
-
    
+   public class Keys {
+      // total intensity as calculated by the sum of pixel intensities minus background
+      // expressed in photons - See: http://dx.doi.org/10.1038/nmeth.4073
+      public static final String APERTUREINTENSITY = "Int (Apert.)";
+      // Fitted intensity / ApertureIntensity 
+      public static final String INTENSITYRATIO = "Int. (ratio)";
+      // background expressed in photons determined by aprture methord 
+      // (average of outer rows and columns of the box around the spot)
+      public static final String APERTUREBACKGROUND = "Bkr (Apert.)";
+      // Error estimate according to Mortensen et al. 2010 (http://dx.doi.org/10.1038/nmeth.1447
+      // uses aperture method intensity
+      public static final String MSIGMA = "Sigma-alt.";
+      // Number of spots in track or group
+      public static final String N = "n";
+      // Std. Deviation of positions in track or group
+      public static final String STDDEV = "stdDev";
+      // Std Deviation of X values in track or group
+      public static final String STDDEVX = "stdDevX";
+      // Std. Deviation of Y value in track or group
+      public static final String STDDEVY = "stdDevY";
+   }
+
    // lock to avoid clashes during access to image data
    public static final Object LOCK_IP = new Object();
 
@@ -62,11 +83,7 @@ public class SpotData {
    private final int x_;            // x as found by spotfinder
    private final int y_;            // y as found by spotfinder
    private double intensity_; // total intensity expressed in photons
-   private double apertureIntensity_; // total intensity as calculated by the sum of pixel intensities minus background
-                                       // expressed in photons
    private double background_;// background expressed in photons (may or may not be corrected for baseline)
-   private double apertureBackground_; // background expressed in photons determined by aprture methord 
-                              // (average of outer rows and columns of the box around the spot)
    private double xCenter_;      // center of gaussian in Coordinates (image coordinate system)
    private double yCenter_;      // center of gaussian in Coordinates (image coordinate system)
    private double zCenter_;   // estimate of z position in nm
@@ -78,8 +95,7 @@ public class SpotData {
    private double theta_;     // shape factor for spot (rotation of assymetric peak)
    private double sigma_;     // Estimate of error in localization based on Web et al. formula
                               // that uses # of photons, background and width of gaussian
-   private double mSigma_;    // Error estimate according to Mortensen et al. 2010 (http://dx.doi.org/10.1038/nmeth.1447
-                              // uses aperture method intensity
+
    public int nrLinks_;       // number of frames/slices in which this spot was found
    public int originalFrame_; // original first frame/slice in which this spot was found
    private final Map<String, Double> keyValue_; // Map of keys/values taht can be used to extend what we store in the SpotData
@@ -112,9 +128,7 @@ public class SpotData {
       x_ = spot.x_;
       y_ = spot.y_;
       intensity_ = spot.intensity_;
-      apertureIntensity_ = spot.apertureIntensity_;
       background_ = spot.background_;
-      apertureBackground_ = spot.apertureBackground_;
       xCenter_ = spot.xCenter_;
       yCenter_ = spot.yCenter_;
       zCenter_ = spot.zCenter_;
@@ -125,7 +139,6 @@ public class SpotData {
       a_ = spot.a_;
       theta_ = spot.theta_;
       sigma_ = spot.sigma_;  
-      mSigma_ = spot.mSigma_;
       keyValue_ = new HashMap<String, Double>(spot.keyValue_);
    }
 
@@ -147,13 +160,7 @@ public class SpotData {
       theta_ = theta;
       sigma_ = sigma;
    }
-   
-   public void setApertureData(double intensity, double background, double mSigma) {
-      apertureIntensity_ = intensity;
-      apertureBackground_ = background;
-      mSigma_ = mSigma;
-   }
-   
+        
    public void addKeyValue(String key, double value) {
       keyValue_.put(key, value);
    }
@@ -207,14 +214,8 @@ public class SpotData {
    public double getIntensity() {
       return intensity_;
    }
-   public double getApertureIntensity() {
-      return apertureIntensity_;
-   }
    public double getBackground() {
       return background_;
-   }
-   public double getApertureBackground() {
-      return apertureBackground_;
    }
    public double getXCenter() {
       return xCenter_;
