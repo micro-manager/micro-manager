@@ -16,14 +16,13 @@ package org.micromanager.display.internal;
 
 import com.bulenkov.iconloader.IconLoader;
 import ij.ImagePlus;
-import ij.Menus;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
 import java.awt.LayoutManager;
-import java.awt.MenuBar;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
@@ -32,10 +31,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.Closeable;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -48,19 +50,38 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import net.miginfocom.layout.CC;
+import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.ControlsFactory;
+import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.imagej.ImageJBridge;
+import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.internal.utils.GUIUtils;
-import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.internal.utils.Geometry;
 import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
+import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
 import org.micromanager.internal.utils.MustCallOnEDT;
+import org.micromanager.internal.utils.PopupButton;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
@@ -81,6 +102,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       NDScrollBarPanel.Listener
 {
    private final DisplayController displayController_;
+   private final AnimationController animationController_;
 
    // All fields must only be accessed from the EDT unless otherwise noted.
 
@@ -103,8 +125,21 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private JButton zoomInButton_;
    private JButton zoomOutButton_;
    private JLabel pixelInfoLabel_;
+   private JLabel newImageIndicator_;
    private JLabel fpsLabel_;
+   private PopupButton playbackFpsButton_;
+   private JSpinner playbackFpsSpinner_;
    private NDScrollBarPanel scrollBarPanel_;
+   private JButton axisLockButton_;
+
+   // Subcomponents of the N-dimensional scroll bar panel
+   // We need to look up in both directions, and don't need the efficiency of
+   // a map for the small number of elements, so use lists of pairs.
+   private final List<Map.Entry<String, JToggleButton>> axisAnimationButtons_ =
+         new ArrayList<Map.Entry<String, JToggleButton>>();
+   private final List<Map.Entry<String, PopupButton>> axisPositionButtons_ =
+         new ArrayList<Map.Entry<String, PopupButton>>();
+   // TODO Link buttons
 
    private ImageJBridge ijBridge_;
 
@@ -114,12 +149,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private final List<Integer> displayedAxisLengths_ = new ArrayList<Integer>();
    private ImagesAndStats displayedImages_;
 
+   private BoundsRectAndMask lastSeenSelection_;
+
+   private long lastAnimationIntervalAdjustmentNs_;
+
    private final ScheduledExecutorService scheduledExecutor_ =
          Executors.newSingleThreadScheduledExecutor(ThreadFactoryFactory.
                createThreadFactory("DisplayUIController"));
 
    // Display rate estimation
-   private static final int DISPLAY_INTERVAL_SMOOTH_N_SAMPLES = 100;
+   private static final int DISPLAY_INTERVAL_SMOOTH_N_SAMPLES = 50;
    private static final int FPS_DISPLAY_DURATION_MS = 500;
    private static final int FPS_DISPLAY_UPDATE_INTERVAL_MS = 250;
    private final AtomicBoolean repaintScheduledForNewImages_ =
@@ -129,7 +168,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
          new AtomicReference<TimeIntervalRunningQuantile>(
                TimeIntervalRunningQuantile.create(
                      DISPLAY_INTERVAL_SMOOTH_N_SAMPLES));
-   private ScheduledFuture<?> fpsDismissFuture_;
+   private long fpsDisplayedTimeNs_;
+
+   private final CoalescentEDTRunnablePool runnablePool_ =
+         CoalescentEDTRunnablePool.create();
 
    private PerformanceMonitor perfMon_;
 
@@ -141,19 +183,22 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    @MustCallOnEDT
    static DisplayUIController create(DisplayController parent,
-         ControlsFactory controlsFactory)
+         ControlsFactory controlsFactory,
+         AnimationController animationController)
    {
       DisplayUIController instance = new DisplayUIController(parent,
-            controlsFactory);
+            controlsFactory, animationController);
       instance.frame_.addWindowListener(instance);
       return instance;
    }
 
    @MustCallOnEDT
    private DisplayUIController(DisplayController parent,
-         ControlsFactory controlsFactory)
+         ControlsFactory controlsFactory,
+         AnimationController animationController)
    {
       displayController_ = parent;
+      animationController_ = animationController;
       controlsFactory_ = controlsFactory;
       frame_ = makeFrame(false);
       contentPanel_ = buildInitialUI();
@@ -247,7 +292,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             "[] 0 [grow, fill] related []"));
 
       canvasPanel_ = new JPanel(new MigLayout("insets 0, fill"));
-      noImagesMessageLabel_ = new JLabel("Waiting for Images to Display...");
+      noImagesMessageLabel_ = new JLabel("Waiting for Images...");
       noImagesMessageLabel_.setEnabled(false);
       canvasPanel_.add(noImagesMessageLabel_, "align center");
 
@@ -364,37 +409,167 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @MustCallOnEDT
    private JComponent buildBottomControls() {
       JPanel panel = makeValidationRootJPanel(
-            new MigLayout("insets 0, gap 1 1, fillx"));
+            new MigLayout(new LC().insets("1").gridGap("0", "0").fillX()));
 
       pixelInfoLabel_ = new JLabel(" ");
-      panel.add(pixelInfoLabel_, "split 3");
-      panel.add(new JPanel(), "growx");
+      pixelInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
+      panel.add(pixelInfoLabel_, new CC().split(5));
+      panel.add(new JPanel(), new CC().growX());
+      newImageIndicator_ = new JLabel("NEW IMAGE");
+      newImageIndicator_.setFont(newImageIndicator_.getFont().
+            deriveFont(10.0f).deriveFont(Font.BOLD));
+      newImageIndicator_.setVisible(false);
+      panel.add(newImageIndicator_, new CC().hideMode(2));
       fpsLabel_ = new JLabel(" ");
-      panel.add(fpsLabel_, "wrap");
+      fpsLabel_.setFont(fpsLabel_.getFont().deriveFont(10.0f));
+      panel.add(fpsLabel_, new CC());
+      SpinnerModel fpsModel = new SpinnerNumberModel(10.0, 0.1, 1000.0, 5.0);
+      playbackFpsSpinner_ = new JSpinner(fpsModel);
+      playbackFpsSpinner_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            handlePlaybackFpsSpinner(e);
+         }
+      });
+      playbackFpsButton_ = PopupButton.create("", playbackFpsSpinner_);
+      playbackFpsButton_.setFont(playbackFpsButton_.getFont().deriveFont(10.0f));
+      int width = 16 + playbackFpsButton_.getFontMetrics(
+            playbackFpsButton_.getFont()).stringWidth("Playback: 9999.0 fps");
+      Dimension fpsButtonSize = new Dimension(width,
+            fpsLabel_.getPreferredSize().height);
+      playbackFpsButton_.setMinimumSize(fpsButtonSize);
+      playbackFpsButton_.setMaximumSize(fpsButtonSize);
+      playbackFpsButton_.setPreferredSize(fpsButtonSize);
+      playbackFpsButton_.addPopupButtonListener(new PopupButton.Listener() {
+         @Override
+         public void popupButtonWillShowPopup(PopupButton button) {
+            playbackFpsSpinner_.setValue(displayController_.getPlaybackSpeedFps());
+         }
+      });
+      setPlaybackFpsIndicator(displayController_.getPlaybackSpeedFps());
+      playbackFpsButton_.setVisible(false);
+      panel.add(playbackFpsButton_, new CC().hideMode(2).wrap());
 
-      scrollBarPanel_ = NDScrollBarPanel.create();
+      NDScrollBarPanel.ControlsFactory leftFactory =
+            new NDScrollBarPanel.ControlsFactory() {
+               @Override
+               public JComponent getControlsForAxis(String axis, int height) {
+                  return makeScrollBarLeftControls(axis, height);
+               }
+            };
+      NDScrollBarPanel.ControlsFactory rightFactory =
+            new NDScrollBarPanel.ControlsFactory() {
+               @Override
+               public JComponent getControlsForAxis(String axis, int height) {
+                  return makeScrollBarRightControls(axis, height);
+               }
+            };
+      scrollBarPanel_ = NDScrollBarPanel.create(leftFactory, null);
       scrollBarPanel_.addListener(this);
-      panel.add(scrollBarPanel_, "growx, wrap");
+      panel.add(scrollBarPanel_, new CC().growX().pushX().split(2));
+
+      axisLockButton_ = new JButton("F");
+      Dimension size = new Dimension(NDScrollBarPanel.ROW_HEIGHT,
+            NDScrollBarPanel.ROW_HEIGHT);
+      axisLockButton_.setMinimumSize(size);
+      axisLockButton_.setPreferredSize(size);
+      axisLockButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            handleLockButton(e);
+         }
+      });
+      // TODO: Right-click menu
+      axisLockButton_.setComponentPopupMenu(new JPopupMenu());
+      axisLockButton_.setVisible(false);
+      panel.add(axisLockButton_, new CC().gapBefore("0").growY().hideMode(2).wrap());
 
       JPanel customControlsPanel =
-            new JPanel(new MigLayout("insets 0, gap 1 0"));
+            new JPanel(new MigLayout(new LC().insets("0").gridGap("1", "0")));
       if (controlsFactory_ != null) {
          for (Component c : controlsFactory_.makeControls(displayController_)) {
             customControlsPanel.add(c);
          }
       }
 
-      panel.add(customControlsPanel, "split 3");
-      panel.add(new JPanel(), "growx");
-      panel.add(new JLabel("[SAVE] [GEAR]"));
+      panel.add(customControlsPanel, new CC().split(3));
+      panel.add(new JPanel(), new CC().growX());
+      panel.add(new JLabel("[Save As...] [GEAR]"));
 
       return panel;
    }
 
    @MustCallOnEDT
+   private JComponent makeScrollBarLeftControls(String axis, int height) {
+      JPanel ret = new JPanel(new MigLayout(
+            new LC().insets("0").gridGap("0", "0").fillX()));
+
+      JToggleButton animateButton = null;
+      for (Map.Entry<String, JToggleButton> e : axisAnimationButtons_) {
+         if (axis.equals(e.getKey())) {
+            animateButton = e.getValue();
+            break;
+         }
+      }
+      if (animateButton == null) {
+         animateButton = new JToggleButton(axis.substring(0, 1));
+         animateButton.setFont(animateButton.getFont().deriveFont(10.0f));
+         Dimension size = new Dimension(2 * height, height);
+         animateButton.setMinimumSize(size);
+         animateButton.setMaximumSize(size);
+         animateButton.setPreferredSize(size);
+         animateButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               handleAxisAnimateButton(e);
+            }
+         });
+         axisAnimationButtons_.add(new AbstractMap.SimpleEntry(
+               axis, animateButton));
+      }
+      ret.add(animateButton, new CC());
+
+      PopupButton positionButton = null;
+      for (Map.Entry<String, PopupButton> e : axisPositionButtons_) {
+         if (axis.equals(e.getKey())) {
+            positionButton = e.getValue();
+            break;
+         }
+      }
+      if (positionButton == null) {
+         positionButton = PopupButton.create("", new JPanel());
+         positionButton.setFont(positionButton.getFont().deriveFont(10.0f));
+         int width = 8 + positionButton .getFontMetrics(positionButton .getFont()).
+               stringWidth("99999/99999");
+         positionButton.setHorizontalAlignment(SwingConstants.RIGHT);
+         Dimension size = new Dimension(width, height);
+         positionButton.setMinimumSize(size);
+         positionButton.setMaximumSize(size);
+         positionButton.setPreferredSize(size);
+         axisPositionButtons_.add(new AbstractMap.SimpleEntry(
+               axis, positionButton));
+      }
+      ret.add(positionButton, new CC());
+
+      return ret;
+   }
+
+   @MustCallOnEDT
+   private JComponent makeScrollBarRightControls(final String axis, int height) {
+      JPanel ret = new JPanel(new MigLayout(
+            new LC().insets("0").gridGap("0", "0").fillX()));
+      return ret;
+   }
+
+   @MustCallOnEDT
+   void expandDisplayedRangeToInclude(Coords... coords) {
+      expandDisplayedRangeToInclude(Arrays.asList(coords));
+   }
+
+   @MustCallOnEDT
    void expandDisplayedRangeToInclude(Collection<Coords> coords) {
       if (noImagesMessageLabel_ != null) {
-         noImagesMessageLabel_.setText("Found Image(s); Preparing Display...");
+         noImagesMessageLabel_.setText("Preparing to Display...");
       }
 
       for (Coords c : coords) {
@@ -404,6 +579,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             if (axisIndex == -1) {
                displayedAxes_.add(axis);
                displayedAxisLengths_.add(index + 1);
+               axisIndex = displayedAxes_.size() - 1;
             }
             else {
                int oldLength = displayedAxisLengths_.get(axisIndex);
@@ -427,7 +603,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
       for (int i = 0; i < scrollableAxes.size(); ++i) {
          scrollBarPanel_.setAxisLength(scrollableAxes.get(i),
                scrollableLengths.get(i));
+         updateAxisPositionIndicator(scrollableAxes.get(i),
+               -1, scrollableLengths.get(i));
       }
+
+      playbackFpsButton_.setVisible(!scrollableAxes.isEmpty());
+      axisLockButton_.setVisible(!scrollableAxes.isEmpty());
 
       if (ijBridge_ != null) {
          ijBridge_.mm2ijEnsureDisplayAxisExtents();
@@ -437,24 +618,174 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @MustCallOnEDT
    void displayImages(ImagesAndStats images) {
       displayedImages_ = images;
+      Coords nominalCoords = images.getRequest().getNominalCoords();
 
       setupDisplayUI();
 
       // A display request may come in ahead of an expand-range request, so
       // make sure to update our range first
+      expandDisplayedRangeToInclude(nominalCoords);
       expandDisplayedRangeToInclude(getAllDisplayedCoords());
 
       for (String axis : scrollBarPanel_.getAxes()) {
-         Coords c = images.getRequest().getImage(0).getCoords();
-         if (c.hasAxis(axis)) {
-            scrollBarPanel_.setAxisPosition(axis, c.getIndex(axis));
+         if (nominalCoords.hasAxis(axis)) {
+            scrollBarPanel_.setAxisPosition(axis, nominalCoords.getIndex(axis));
+            updateAxisPositionIndicator(axis, nominalCoords.getIndex(axis), -1);
          }
       }
 
-      // TODO Set LUT
+      ijBridge_.mm2ijSetDisplayPosition(nominalCoords);
+      applyAutostretch(images, displayController_.getDisplaySettings());
 
-      ijBridge_.mm2ijSetDisplayPosition(getMMPrincipalDisplayedCoords());
       repaintScheduledForNewImages_.set(true);
+   }
+
+   @MustCallOnEDT
+   public void applyDisplaySettings(DisplaySettings settings) {
+      // Note: This method only looks at changes in color settings. Others
+      // (e.g. zoom) are ignored.
+
+      if (ijBridge_ == null) {
+         return;
+      }
+
+      int nChannels = ijBridge_.getIJNumberOfChannels();
+      boolean autostretch = settings.isAutostretchEnabled()
+            && displayedImages_ != null;
+      boolean isRGB = ijBridge_.isIJRGB();
+
+      switch (settings.getColorMode()) {
+         case COLOR:
+            if (!ijBridge_.isIJColorModeColor()) {
+               ijBridge_.mm2ijSetColorModeColor(settings.getAllChannelColors());
+            }
+            break;
+         case COMPOSITE:
+            if (!ijBridge_.isIJColorModeComposite()) {
+               ijBridge_.mm2ijSetColorModeComposite(settings.getAllChannelColors());
+            }
+            break;
+         case GRAYSCALE:
+            if (!ijBridge_.isIJColorModeGrayscale()) {
+               ijBridge_.mm2ijSetColorModeGrayscale();
+            }
+            ijBridge_.mm2ijSetHighlightSaturatedPixels(false);
+            break;
+         case HIGHLIGHT_LIMITS:
+            if (!ijBridge_.isIJColorModeGrayscale()) {
+               ijBridge_.mm2ijSetColorModeGrayscale();
+            }
+            ijBridge_.mm2ijSetHighlightSaturatedPixels(true);
+            break;
+         case FIRE:
+            ijBridge_.mm2ijSetColorModeLUT(ColorMaps.fireColorMap());
+            break;
+         case RED_HOT:
+            ijBridge_.mm2ijSetColorModeLUT(ColorMaps.redHotColorMap());
+            break;
+         case SPECTRUM:
+         default:
+            ijBridge_.mm2ijSetColorModeGrayscale(); // Fallback
+            break;
+      }
+
+      if (!isRGB) {
+         for (int i = 0; i < nChannels; ++i) {
+            ChannelDisplaySettings channelSettings =
+                  settings.getChannelSettings(i);
+            ComponentDisplaySettings componentSettings =
+                  channelSettings.getComponentSettings(0);
+            ijBridge_.mm2ijSetChannelColor(i, channelSettings.getColor());
+            if (!autostretch) {
+               int max = Math.max(1, (int) Math.min(Integer.MAX_VALUE,
+                     componentSettings.getScalingMaximum()));
+               int min = (int) Math.min(max - 1,
+                     componentSettings.getScalingMinimum());
+               ijBridge_.mm2ijSetIntensityScaling(i, min, max);
+            }
+            double gamma = componentSettings.getScalingGamma();
+            ijBridge_.mm2ijSetIntensityGamma(i, gamma);
+            if (settings.getColorMode() == DisplaySettings.ColorMode.COMPOSITE) {
+               ijBridge_.mm2ijSetVisibleChannels(i, channelSettings.isVisible());
+            }
+         }
+         if (autostretch) {
+            applyAutostretch(displayedImages_, settings);
+         }
+      }
+      else {
+         int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
+         for (int i = 0; i < nComponents; ++i) {
+            ComponentDisplaySettings componentSettings =
+                  settings.getChannelSettings(0).getComponentSettings(i);
+            int max = Math.min(Integer.MAX_VALUE,
+                  (int) componentSettings.getScalingMaximum());
+            int min = Math.max(max - 1,
+                  (int) componentSettings.getScalingMinimum());
+            ijBridge_.mm2ijSetIntensityScaling(i, min, max);
+         }
+      }
+   }
+
+   @MustCallOnEDT
+   private void applyAutostretch(ImagesAndStats images, DisplaySettings settings) {
+      if (images == null || !settings.isAutostretchEnabled()) {
+         return;
+      }
+
+      // TODO RGB
+      // TODO "uniform" scaling
+
+      int nChannels = ijBridge_.getIJNumberOfChannels();
+      double q = settings.getAutoscaleIgnoredQuantile();
+      for (int i = 0; i < nChannels; ++i) {
+         int statsIndex = 0;
+         for (int j = 0; j < images.getRequest().getNumberOfImages(); ++j) {
+            Coords c = images.getRequest().getImage(j).getCoords();
+            if (c.hasAxis(Coords.CHANNEL)) {
+               if (c.getChannel() == i) {
+                  statsIndex = j;
+               }
+            }
+         }
+
+         ImageStats stats = images.getResult().get(statsIndex);
+         long min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
+         long max = Math.min(Integer.MAX_VALUE,
+               stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
+         ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
+      }
+   }
+
+   void setPlaybackFpsIndicator(double fps) {
+      playbackFpsButton_.setText(String.format("Playback: %.1f fps", fps));
+   }
+
+   void setNewImageIndicator(boolean show) {
+      newImageIndicator_.setVisible(show);
+   }
+
+   private void updateAxisPositionIndicator(String axis, int position, int length) {
+      if (length < 0) {
+         int axisIndex = displayedAxes_.indexOf(axis);
+         if (axisIndex < 0) {
+            return;
+         }
+         length = displayedAxisLengths_.get(axisIndex);
+      }
+      if (length <= 1) {
+         return; // Not displayed
+      }
+      if (position < 0) {
+         position = scrollBarPanel_.getAxisPosition(axis);
+      }
+      for (Map.Entry<String, PopupButton> e : axisPositionButtons_) {
+         if (axis.equals(e.getKey())) {
+            e.getValue().setText(String.format("% 5d/% 5d",
+                  position + 1, length));
+            break;
+         }
+      }
    }
 
    @MustCallOnEDT
@@ -557,13 +888,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       else {
          GraphicsConfiguration gConfig = frame_.getGraphicsConfiguration();
-         Rectangle screenBounds = gConfig.getBounds();
-         Insets screenInsets =
-               Toolkit.getDefaultToolkit().getScreenInsets(gConfig);
-         screenBounds.x += screenInsets.left;
-         screenBounds.y += screenInsets.top;
-         screenBounds.width -= screenInsets.left + screenInsets.right;
-         screenBounds.height -= screenInsets.top + screenInsets.bottom;
+         Rectangle screenBounds = Geometry.insettedRectangle(
+               gConfig.getBounds(),
+               Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
 
          Insets frameInsets = frame_.getInsets();
          int newCanvasWidth = Math.min(maxCanvasSize.width,
@@ -588,7 +915,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          frame_.setLocation(newFrameX, newFrameY);
       }
 
-      ijBridge_.repaint();
+      ijBridge_.mm2ijRepaint();
    }
 
    private void updateZoomUIState() {
@@ -600,6 +927,30 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       zoomInButton_.setEnabled(!ijBridge_.isIJZoomedAllTheWayIn());
       zoomOutButton_.setEnabled(!ijBridge_.isIJZoomedAllTheWayOut());
+   }
+
+   public void selectionMayHaveChanged(final BoundsRectAndMask selection) {
+      if (selection != lastSeenSelection_) {
+         if (selection == null || !selection.equals(lastSeenSelection_)) {
+            runnablePool_.invokeAsLateAsPossibleWithCoalescence(new CoalescentRunnable() {
+               @Override
+               public Class<?> getCoalescenceClass() {
+                  return getClass();
+               }
+
+               @Override
+               public CoalescentRunnable coalesceWith(CoalescentRunnable later) {
+                  return later;
+               }
+
+               @Override
+               public void run() {
+                  displayController_.selectionDidChange(selection);
+               }
+            });
+         }
+      }
+      lastSeenSelection_ = selection;
    }
 
    /**
@@ -650,25 +1001,66 @@ public final class DisplayUIController implements Closeable, WindowListener,
       boolean countAsNewDisplayedImage =
             repaintScheduledForNewImages_.compareAndSet(true, false);
       if (countAsNewDisplayedImage) {
-         // TODO XXX If we have been quiescent for a long time, we should
-         // probably reset the interval estimator, at least for display
-         // purposes. Or we should autoscale the history length for the
-         // moving quantile so that the oldest samples are no older than some
-         // threshold (2500 ms?)
+         perfMon_.sampleTimeInterval("Repaint counted as new display");
+
          displayIntervalEstimator_.get().sample();
+         if (displayController_.isAnimating()) {
+            adjustAnimationTickIntervalMs(
+                  displayIntervalEstimator_.get().getQuantile(0.5));
+         }
+         perfMon_.sample("Display interval 25th percentile",
+               displayIntervalEstimator_.get().getQuantile(0.25));
+         perfMon_.sample("Display interval 50th percentile",
+               displayIntervalEstimator_.get().getQuantile(0.5));
+         perfMon_.sample("Display interval 75th percentile",
+               displayIntervalEstimator_.get().getQuantile(0.75));
          showFPS();
       }
    }
 
-   private void showFPS() {
-      if (fpsDismissFuture_ != null) {
-         if (fpsDismissFuture_.getDelay(TimeUnit.MILLISECONDS) >
-               FPS_DISPLAY_DURATION_MS - FPS_DISPLAY_UPDATE_INTERVAL_MS)
-         {
-            return;
-         }
-         fpsDismissFuture_.cancel(true);
+   private void adjustAnimationTickIntervalMs(double achievedMedianMs) {
+      // Avoid adjusting too frequently
+      if (System.nanoTime() - lastAnimationIntervalAdjustmentNs_ < 500000000L) {
+         return;
       }
+
+      // The ideal interval normally matches the animation fps, but at low fps
+      // we get less jitter by using a shorter tick interval. In that case,
+      // the animation controller will skip ticks that don't advance the
+      // animation by at least 1 frame.
+      double animationFPS = animationController_.getAnimationRateFPS();
+      double lowJitterFPS = animationFPS *
+            Math.max(1.0, Math.floor(60.0 / animationFPS));
+      int idealIntervalMs = Math.max(17, (int) Math.round(1000.0 / lowJitterFPS));
+
+      int targetMs;
+      if (achievedMedianMs < 1.1 * 1000.0 / animationFPS) {
+         targetMs = idealIntervalMs;
+      }
+      else {
+         // Aim for a little faster, to allow for adaptive speed-up
+         targetMs= (int) Math.max(idealIntervalMs, 0.9 * achievedMedianMs);
+      }
+
+      // Limit slew rate (25% per 500 ms)
+      int currentSettingMs = animationController_.getTickIntervalMs();
+      targetMs = (int) Math.max(0.75 * currentSettingMs,
+            Math.min(1.25 * currentSettingMs, targetMs));
+
+      animationController_.setTickIntervalMs(targetMs);
+      lastAnimationIntervalAdjustmentNs_ = System.nanoTime();
+   }
+
+   private void showFPS() {
+      long nowNs = System.nanoTime();
+      if (nowNs - fpsDisplayedTimeNs_ < 1000000 * FPS_DISPLAY_UPDATE_INTERVAL_MS) {
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("FPS indicator update skipped");
+         }
+         return;
+      }
+      fpsDisplayedTimeNs_ = nowNs;
+
       double medianIntervalMs =
             displayIntervalEstimator_.get().getQuantile(0.5);
       if (medianIntervalMs <= 1e-3) {
@@ -677,19 +1069,27 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (medianIntervalMs > 0.99 * FPS_DISPLAY_DURATION_MS) {
          return;
       }
+
       double displayFPS = 1000.0 / medianIntervalMs;
-      fpsLabel_.setText(String.format("Display: %.2g fps", displayFPS));
+      fpsLabel_.setText(String.format("Display: %.2g Hz", displayFPS));
       if (perfMon_ != null) {
          perfMon_.sampleTimeInterval("FPS indicator updated");
       }
-      fpsDismissFuture_ = scheduledExecutor_.schedule(new Runnable() {
+
+      scheduledExecutor_.schedule(new Runnable() {
          @Override
          public void run() {
             SwingUtilities.invokeLater(new Runnable() {
                @Override
                public void run() {
+                  long nowNs = System.nanoTime();
+                  if (nowNs - fpsDisplayedTimeNs_ < 1000000 * FPS_DISPLAY_DURATION_MS) {
+                     return;
+                  }
                   fpsLabel_.setText(" ");
-                  fpsDismissFuture_ = null;
+                  if (perfMon_ != null) {
+                     perfMon_.sampleTimeInterval("FPS indicator dismissed");
+                  }
                }
             });
          }
@@ -744,30 +1144,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * @return coords of the selected channel
     */
    public Coords getMMPrincipalDisplayedCoords() {
-      List<Coords> allCoords = getAllDisplayedCoords();
-      if (allCoords.isEmpty()) {
+      if (displayedImages_ == null) {
          return null;
       }
-
-      // Select the smallest channel for now
-      // TODO XXX Reflect the channel selection in the UI
-      int minChannel = Integer.MAX_VALUE;
-      Coords coordsWithMinChannel = null;
-      for (Coords c : allCoords) {
-         if (c.hasAxis(Coords.CHANNEL)) {
-            int ch = c.getChannel();
-            if (ch < minChannel) {
-               minChannel = ch;
-               coordsWithMinChannel = c;
-            }
-         }
-      }
-      if (coordsWithMinChannel != null) {
-         return coordsWithMinChannel;
-      }
-      // If channel axis is not used, return the first image (which, at the
-      // time of this implementation, is expected to be the only image).
-      return allCoords.get(0);
+      return displayedImages_.getRequest().getNominalCoords();
    }
 
    public int getImageWidth() {
@@ -784,32 +1164,50 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
 
    //
+   //
+   //
+
+   private void handleAxisAnimateButton(ActionEvent event) {
+      List<String> animatedAxes = new ArrayList<String>();
+      for (Map.Entry<String, JToggleButton> e : axisAnimationButtons_) {
+         if (e.getValue().isSelected()) {
+            animatedAxes.add(e.getKey());
+         }
+      }
+      displayController_.setPlaybackAnimationAxes(
+            animatedAxes.toArray(new String[] {}));
+   }
+
+   private void handlePlaybackFpsSpinner(ChangeEvent event) {
+      double fps = (Double) playbackFpsSpinner_.getValue();
+      displayController_.setPlaybackSpeedFps(fps);
+   }
+
+   private void handleLockButton(ActionEvent event) {
+      JButton button = (JButton) event.getSource();
+      // TODO This is a string-based prototype; use icons
+      String nextState;
+      if (button.getText().equals("U")) {
+         nextState = "F";
+      }
+      else if (button.getText().equals("F")) {
+         nextState = "S";
+      }
+      else {
+         nextState = "U";
+      }
+      displayController_.setAxisAnimationLock(nextState);
+      button.setText(nextState);
+   }
+
+
+   //
    // WindowListener for the standard and full-screen frames
    //
 
    @Override
    public void windowActivated(WindowEvent e) {
-      // TODO Why do we need this? can we handle it without going to
-      // display controller?
-      DefaultDisplayManager.getInstance().raisedToTop(displayController_);
-
-      // On Mac OS X, where the menu bar is not attached to windows, we need to
-      // switch to ImageJ's menu bar when a viewer window has focus.
-      if (JavaUtils.isMac()) {
-         MenuBar ijMenuBar = Menus.getMenuBar();
-         MenuBar curMenuBar = ((JFrame) e.getWindow()).getMenuBar();
-         // Avoid call to setMenuBar() if our JFrame already has the right
-         // menu bar (e.g. because we are switching between MM and IJ windows),
-         // because setMenuBar() is very, very, slow in at least some Java
-         // versions on OS X. See
-         // http://imagej.1557.x6.nabble.com/java-8-and-OSX-td5016839.html and
-         // links therein (although I note that the slowness is seen even with
-         // Java 6 on Yosemite (10.10)).
-         if (ijMenuBar != null && ijMenuBar != curMenuBar) {
-            ((JFrame) e.getWindow()).setMenuBar(ijMenuBar);
-         }
-      }
-
+      displayController_.frameDidBecomeActive();
       if (ijBridge_ != null) {
          ijBridge_.mm2ijWindowActivated();
       }
@@ -888,6 +1286,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
          builder.index(axis, panel.getAxisPosition(axis));
       }
       Coords position = builder.build();
-      displayController_.setDisplayPosition(position, false);
+      animationController_.forceDataPosition(position);
    }
 }

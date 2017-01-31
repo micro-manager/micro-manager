@@ -20,7 +20,7 @@ import net.imglib2.type.numeric.IntegerType;
  * A {@code BinMapper1d} for use with {@code net.imglib2.histogram.Histogram1d}.
  *
  * Unlike the default {@code Integer1dBinMapper} provided by ImgLib2, which
- * only allows size-1 bins, this allows histograms to have 1, 2, 4, 8, ...
+ * only allows size-1 bins, this allows histograms to have size 1, 2, 4, 8, ...
  * bins. For example, a 256-bin histogram can be created for a 16-bit image.
  * @author Mark A. Tsuchida
  */
@@ -30,6 +30,16 @@ class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<T> {
    private final long binWidth_;
    private final long[] bins_;
 
+   /**
+    * Create a bin mapper covering full range of unsigned integer type.
+    * <p>
+    * Not tested for signed integer types.
+    *
+    * @param <T>
+    * @param sampleDepthPowerOf2
+    * @param binCountPowerOf2
+    * @return
+    */
    static <T extends IntegerType<T>> PowerOf2BinMapper<T>
        create(int sampleDepthPowerOf2, int binCountPowerOf2)
    {
@@ -43,9 +53,9 @@ class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<T> {
       else {
          sampleShift_ = 0;
       }
-      endOfRange_ = ((1L << sampleDepthPowerOf2) >> sampleShift_) - 1;
+      endOfRange_ = (1L << sampleDepthPowerOf2) - 1;
       binWidth_ = 1L << sampleShift_;
-      bins_ = new long[1 << binCountPowerOf2 + 2];
+      bins_ = new long[(1 << binCountPowerOf2) + 2];
    }
 
    private PowerOf2BinMapper(PowerOf2BinMapper<T> other) {
@@ -65,25 +75,40 @@ class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<T> {
       return bins_.length;
    }
 
+   long getEndOfRange() {
+      return endOfRange_;
+   }
+
    @Override
    public long map(T value) {
-      if (value.getIntegerLong() < 0L) {
+      long longValue = value.getIntegerLong();
+      if (longValue < 0L) {
          return 0L;
       }
-      if (value.getIntegerLong() > endOfRange_) {
+      if (longValue > endOfRange_) {
          return bins_.length - 1;
       }
-      return value.getIntegerLong() >> sampleShift_ + 1;
+      return (longValue >> sampleShift_) + 1L;
    }
 
    @Override
    public void getCenterValue(long index, T value) {
-      // Compute (lower + upper) / 2
-      T upper = value.createVariable();
+      if (index <= 0) {
+         value.setInteger(0);
+         return;
+      }
+      if (index > bins_.length - 1) {
+         value.setInteger(endOfRange_);
+         return;
+      }
+
+      // Compute (lower + upper + 1) / 2
       getLowerBound(index, value);
+      T upper = value.createVariable();
       getUpperBound(index, upper);
       value.add(upper);
-      T two = value.createVariable();
+      value.inc();
+      final T two = value.createVariable();
       two.setInteger(2);
       value.div(two);
    }
@@ -91,13 +116,13 @@ class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<T> {
    @Override
    public void getLowerBound(long index, T value) {
       if (index <= 0) {
-         value.setInteger(Long.MIN_VALUE);
+         value.setReal(value.getMinValue());
       }
       else if (index == bins_.length - 1) {
-         value.setInteger(endOfRange_ + 1);
+         value.setInteger(endOfRange_);
       }
-      else if (index > bins_.length - 1) {
-         value.setInteger(Long.MAX_VALUE);
+      else if (index >= bins_.length - 1) {
+         value.setReal(value.getMaxValue());
       }
       else {
          value.setInteger((index - 1) << sampleShift_);
@@ -107,24 +132,28 @@ class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<T> {
    @Override
    public void getUpperBound(long index, T value) {
       if (index >= bins_.length - 1) {
-         value.setInteger(Long.MAX_VALUE);
+         value.setReal(value.getMaxValue());
       }
-      else if (index < 0) {
-         value.setInteger(Long.MIN_VALUE);
+      else if (index == bins_.length - 2) {
+         value.setReal(value.getMaxValue());
+      }
+      else if (index <= 0) {
+         value.setReal(value.getMinValue());
       }
       else {
          getLowerBound(index + 1, value);
+         value.dec();
       }
    }
 
    @Override
    public boolean includesUpperBound(long index) {
-      return false;
+      return index > 0 && index < bins_.length - 1;
    }
 
    @Override
    public boolean includesLowerBound(long index) {
-      return index > 0 && index <= bins_.length - 1;
+      return index > 0 && index < bins_.length - 1;
    }
 
    @Override

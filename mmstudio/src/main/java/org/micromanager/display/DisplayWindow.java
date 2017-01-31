@@ -22,6 +22,7 @@ package org.micromanager.display;
 
 import ij.ImagePlus;
 import java.awt.Window;
+import java.io.Closeable;
 
 
 /**
@@ -31,7 +32,7 @@ import java.awt.Window;
  * want to provide your own custom display then you should implement {@link
  * org.micromanager.display.DataViewer} instead.
  */
-public interface DisplayWindow extends DataViewer {
+public interface DisplayWindow extends DataViewer, Closeable {
    /**
     * Display a custom string in the window.
     *
@@ -159,7 +160,7 @@ public interface DisplayWindow extends DataViewer {
    public boolean requestToClose();
 
    /**
-    * Close this display window immediately, without notifying its owner.
+    * Close this display window unconditionally.
     *
     * This will skip such actions as prompting the user to save the data.
     * Special display windows may skip other special actions.
@@ -172,11 +173,12 @@ public interface DisplayWindow extends DataViewer {
     * may not have closed yet at the moment this method returns if called on
     * another thread.
     */
-   public void forceClose();
+   @Override
+   public void close();
 
    /**
-    * Obsolete equivalent of {@link forceClose}.
-    * @deprecated use {@link forceClose} instead
+    * Obsolete equivalent of {@link close}.
+    * @deprecated use {@link close} instead
     */
    @Deprecated
    public void forceClosed();

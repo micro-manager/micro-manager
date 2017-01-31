@@ -22,7 +22,7 @@ package org.micromanager;
 import java.util.HashMap;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
-import org.micromanager.display.InspectorPlugin;
+import org.micromanager.display.inspector.InspectorPlugin;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 

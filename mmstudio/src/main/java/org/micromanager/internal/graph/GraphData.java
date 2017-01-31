@@ -129,48 +129,6 @@ public final class GraphData {
    }
 
    /**
-    * Generate a new GraphData that sums values together to produce a new graph
-    * with at most the specified number of bins, ranging from the specified min
-    * to max intensities. This is mostly intended for use in drawing
-    * histograms.
-    */
-   public GraphData compress(int numBins, int xMin, int xMax) {
-      double[] newYs;
-      // This is the "compression ratio", or number of bins in the source
-      // data that contribute to a bin in the result data.
-      double ratio = ((double) xMax - xMin) / numBins;
-      if (numBins > xMax - xMin) {
-         // We can use more bins than we actually have; just copy some of our
-         // data across.
-         newYs = new double[xMax - xMin];
-         for (int i = xMin; i < xMax; ++i) {
-            newYs[i - xMin] = yVals_[i];
-         }
-      }
-      else {
-         newYs = new double[numBins];
-         // Initialize to zero.
-         for (int i = 0; i < newYs.length; ++i) {
-            newYs[i] = 0;
-         }
-         double remainder = 0.0;
-         for (int i = 0; i < numBins; ++i) {
-            int sourceOffset = (int) (xMin + ratio * i + remainder);
-            for (int j = 0; j < ratio + remainder; ++j) {
-               if (sourceOffset + j >= yVals_.length) {
-                  break;
-               }
-               newYs[i] += yVals_[sourceOffset + j];
-            }
-            remainder = (ratio + remainder) % 1;
-         }
-      }
-      GraphData result = new GraphData();
-      result.setData(newYs);
-      return result;
-   }
-
-   /**
     * Rescale the Y axis to a logarithmic scale.
     */
    public GraphData logScale() {

@@ -21,6 +21,7 @@
 package org.micromanager.display;
 
 import java.util.List;
+import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -29,7 +30,7 @@ import org.micromanager.data.Image;
  * This interface declares generic display-related methods. You can access
  * a class instance that implements this interface by calling mm.display().
  */
-public interface DisplayManager {
+public interface DisplayManager extends EventPublisher {
    /**
     * Create a new Datastore with an associated DisplayWindow that will
     * display the provided Image. The Datastore will use RAM-based storage,
@@ -38,7 +39,7 @@ public interface DisplayManager {
     * @param image The Image to display.
     * @return The Datastore created to hold the Image.
     */
-   public Datastore show(Image image);
+   Datastore show(Image image);
 
    /**
     * Retrieve a DisplaySettings holding the values the user has saved as their
@@ -46,13 +47,13 @@ public interface DisplayManager {
     * @return The DisplaySettings as of the last time the user clicked the
     *         "Set as default" button in the Settings tab of a DisplayWindow.
     */
-   public DisplaySettings getStandardDisplaySettings();
+   DisplaySettings getStandardDisplaySettings();
 
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.
     * @return A DisplaySettingsBuilder with no pre-set values.
     */
-   public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
+   DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
 
    /**
     * Generate a ContrastSettings object with the provided values. This version
@@ -66,7 +67,7 @@ public interface DisplayManager {
     * @return a DisplaySettings.ContrastSettings object, whose properties are
     *         all length-1 arrays with the provided values.
     */
-   public DisplaySettings.ContrastSettings getContrastSettings(
+   DisplaySettings.ContrastSettings getContrastSettings(
          Integer contrastMin, Integer contrastMax, Double gamma,
          Boolean isVisible);
 
@@ -83,7 +84,7 @@ public interface DisplayManager {
     *        when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object.
     */
-   public DisplaySettings.ContrastSettings getContrastSettings(
+   DisplaySettings.ContrastSettings getContrastSettings(
          Integer[] contrastMins, Integer[] contrastMaxes, Double[] gammas,
          Boolean isVisible);
 
@@ -148,14 +149,15 @@ public interface DisplayManager {
     * Generate a "blank" PropertyMap.PropertyMapBuilder with empty mappings.
     * @return A PropertyMapBuilder with no pre-set values.
     */
-   public PropertyMap.PropertyMapBuilder getPropertyMapBuilder();
+   // TODO Why on earth is this in DisplayManager?
+   PropertyMap.PropertyMapBuilder getPropertyMapBuilder();
 
    /**
     * Create a new DisplayWindow for the specified Datastore and return it.
     * @param store The Datastore whose data should be displayed.
     * @return The created DisplayWindow.
     */
-   public DisplayWindow createDisplay(Datastore store);
+   DisplayWindow createDisplay(Datastore store);
 
    /**
     * Create a new DisplayWindow for the specified Datastore and return it.
@@ -166,7 +168,7 @@ public interface DisplayManager {
     *        the DisplayWindow. May be null.
     * @return The created DisplayWindow.
     */
-   public DisplayWindow createDisplay(Datastore store,
+   DisplayWindow createDisplay(Datastore store,
          ControlsFactory factory);
 
    /**
@@ -175,7 +177,7 @@ public interface DisplayManager {
     * @param display The DataViewer the inspector should show information on,
     *        or null to show information on the topmost window.
     */
-   public void createInspector(DataViewer display);
+   void createInspectorForDataViewer(DataViewer display);
 
    /**
     * Ensure that the "default" Inspector window exists and is visible. This
@@ -185,24 +187,17 @@ public interface DisplayManager {
     * method will not do anything, even if that Inspector is later closed.
     * @return true if an inspector window is created, false otherwise.
     */
-   public boolean createFirstInspector();
+   @Deprecated
+   boolean createFirstInspector();
 
    /**
-    * Signal that the specified DataViewer has been raised to the top, so that
-    * any Inspector windows that show information on the topmost display can
-    * change to show information for that viewer.
-    * @param display The DataViewer that has been raised to top.
-    */
-   public void raisedToTop(DataViewer display);
-
-   /**
-    * Register a DataViewer with Micro-Manager. This makes Micro-Manager
+    * Register a DataViewer with the Display Manager. This makes Micro-Manager
     * aware of the viewer, so that it may be used by Micro-Manager's widgets
     * (chiefly, the Inspector Window). Use removeViewer() to remove a viewer
     * that has been added by this method.
     * @param viewer The new DataViewer that should be tracked.
     */
-   public void addViewer(DataViewer viewer);
+   void addViewer(DataViewer viewer);
 
    /**
     * Cause Micro-Manager to stop tracking a DataViewer that was previously
@@ -210,7 +205,7 @@ public interface DisplayManager {
     * @param viewer The DataViewer that should no longer be tracked.
     * @throws IllegalArgumentException if the viewer is not currently tracked.
     */
-   public void removeViewer(DataViewer viewer);
+   void removeViewer(DataViewer viewer);
 
    /**
     * Load saved DisplayWindows for the given Datastore, which is assumed to
@@ -221,7 +216,7 @@ public interface DisplayManager {
     * @param store The Datastore to load display settings for.
     * @return The list of DisplayWindows that were created by this method.
     */
-   public List<DisplayWindow> loadDisplays(Datastore store);
+   List<DisplayWindow> loadDisplays(Datastore store);
 
    /**
     * Request that MicroManager manage the specified Datastore for you.
@@ -245,21 +240,21 @@ public interface DisplayManager {
     * (e.g. by running an MDA) are automatically managed.
     * @param store The Datastore to manage.
     */
-   public void manage(Datastore store);
+   void manage(Datastore store);
 
    /**
     * Return a list of all Datastores that MicroManager is managing (see the
     * manage() method for more information).
     * @return A list of all Datastores that Micro-Manager is managing.
     */
-   public List<Datastore> getManagedDatastores();
+   List<Datastore> getManagedDatastores();
 
    /**
     * Returns true iff the Datastore is being managed by MicroManager.
     * @param store The Datastore whose management status is under question.
     * @return Whether or not Micro-Manager is managing the Datastore.
     */
-   public boolean getIsManaged(Datastore store);
+   boolean getIsManaged(Datastore store);
 
    /**
     * Return all associated DisplayWindows for the Datastore. Returns null if
@@ -268,15 +263,31 @@ public interface DisplayManager {
     * @return A list of all DisplayWindows Micro-Manager knows are associated
     *         with the specified Datastore, or null.
     */
-   public List<DisplayWindow> getDisplays(Datastore store);
+   List<DisplayWindow> getDisplays(Datastore store);
 
    /**
-    * Return the DisplayWindow for the topmost window. This window is not
-    * guaranteed to have focus as there may be other non-DisplayWindow windows
-    * on top of it. Will be null if there is no open DisplayWindow.
-    * @return The top-level DisplayWindow, or null.
+    * Return the DisplayWindow whose window is front-most.
+    * This window is not guaranteed to have focus as there may be other
+    * non-DisplayWindow windows on top of it. Returns null if there is no open
+    * {@code DisplayWindow}.
+    *
+    * @return The front-most {@code DisplayWindow}, or null.
     */
-   public DisplayWindow getCurrentWindow();
+   @Deprecated
+   DisplayWindow getCurrentWindow();
+
+   /**
+    * Return the currently active data viewer.
+    *
+    * The active data viewer is the data viewer that last became active among
+    * those currently visible. A data viewer may become active because its
+    * window became active (if the viewer is windowed), or because the window
+    * containing it became active (if the viewer is a subcomponent of a larger
+    * window).
+    *
+    * @return the active data viewer, or null if no data viewer is registered
+    */
+   DataViewer getActiveDataViewer();
 
    /**
     * Return all active DisplayWindows. Note this is specifically Micro-
@@ -284,7 +295,7 @@ public interface DisplayManager {
     * any other data-representation windows.
     * @return A list of all DisplayWindows that Micro-Manager knows about.
     */
-   public List<DisplayWindow> getAllImageWindows();
+   List<DisplayWindow> getAllImageWindows();
 
    /**
     * Return all DataViewers that Micro-Manager knows about. This includes
@@ -292,7 +303,7 @@ public interface DisplayManager {
     * that have been registered with Micro-Manager via the addViewer method.
     * @return List with all DataViewers that Micro-Manager knows about
     */
-   public List<DataViewer> getAllDataViewers();
+   List<DataViewer> getAllDataViewers();
 
    /**
     * Display a prompt for the user to save their data. This is the same
@@ -303,13 +314,13 @@ public interface DisplayManager {
     * @return true if saving was successful or the user explicitly declined
     *         to save; false if the user cancelled or if saving failed.
     */
-   public boolean promptToSave(Datastore store, DisplayWindow display);
+   boolean promptToSave(Datastore store, DisplayWindow display);
 
    /**
     * Provide an ImagceExporter for generating image sequences.
     * @return an ImageExporter instance.
     */
-   public ImageExporter createExporter();
+   ImageExporter createExporter();
 
    /**
     * Given a Datastore, close any open DisplayWindows for that Datastore.
@@ -319,7 +330,7 @@ public interface DisplayManager {
     * @return True if all windows were closed; false otherwise (e.g. because
     *         the user cancelled saving).
     */
-   public boolean closeDisplaysFor(Datastore store);
+   boolean closeDisplaysFor(Datastore store);
 
    /**
     * Show a dialog to the user giving them a prompt to close all open windows,
@@ -327,7 +338,7 @@ public interface DisplayManager {
     * unsaved open window (or simply cancel the entire action). Assuming the
     * user does not cancel, this method will then call closeAllDisplayWindows.
     */
-   public void promptToCloseWindows();
+   void promptToCloseWindows();
 
    /**
     * Close all open image windows.
@@ -343,5 +354,5 @@ public interface DisplayManager {
     *        not have that prompt.
     * @return true if all windows are closed; false if any window did not close.
     */
-   public boolean closeAllDisplayWindows(boolean shouldPromptToSave);
+   boolean closeAllDisplayWindows(boolean shouldPromptToSave);
 }

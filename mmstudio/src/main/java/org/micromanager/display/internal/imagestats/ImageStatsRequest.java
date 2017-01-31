@@ -13,38 +13,43 @@
 
 package org.micromanager.display.internal.imagestats;
 
+import com.google.common.base.Preconditions;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 
 /**
  * An image together with parameters for statistics computation.
  * @author Mark A. Tsuchida
  */
-public final class ImageStatsRequest implements BoundedPriorityElement {
+public final class ImageStatsRequest {
+   private final Coords nominalCoords_;
    private final List<Image> images_ = new ArrayList<Image>();
+   private final BoundsRectAndMask roi_;
 
-   // TODO Create this from a builder
-
-   public static ImageStatsRequest create(List<Image> images,
-         Rectangle roiRect, byte[] roiMask)
+   public static ImageStatsRequest create(Coords nominalCoords,
+         List<Image> images,
+         BoundsRectAndMask roi)
    {
-      return new ImageStatsRequest(images, roiRect, roiMask);
+      return new ImageStatsRequest(nominalCoords, images, roi);
    }
 
-   private ImageStatsRequest(List<Image> images, Rectangle roiRect,
-         byte[] roiMask) {
-      // TODO Check paraemters carefully
+   private ImageStatsRequest(Coords nominalCoords,
+         List<Image> images,
+         BoundsRectAndMask roi)
+   {
+      Preconditions.checkNotNull(nominalCoords);
+      Preconditions.checkNotNull(images);
+      nominalCoords_ = nominalCoords;
       images_.addAll(images);
-      // TODO
+      roi_ = roi;
    }
 
-   @Override
-   public int getPriority() {
-      // We prioritize sets with more images.
-      return getNumberOfImages();
+   public Coords getNominalCoords() {
+      return nominalCoords_;
    }
 
    public int getNumberOfImages() {
@@ -60,14 +65,14 @@ public final class ImageStatsRequest implements BoundedPriorityElement {
    }
 
    public int getMaxBinCountPowerOf2() {
-      return 8; // TODO
+      return 16; // TODO Should be configurable
    }
 
-   public Rectangle getROIRect() {
-      return null; // TODO
+   public Rectangle getROIBounds() {
+      return roi_.getBounds();
    }
 
    public byte[] getROIMask() {
-      return null; // TODO
+      return roi_.getMask();
    }
 }

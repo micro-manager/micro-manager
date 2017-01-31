@@ -106,7 +106,7 @@ public final class FPSPopupMenu extends JPopupMenu {
             double newRate = slider.getValue() / FPS_RATIO;
             field.setText(String.format("%.2f", newRate));
             DisplaySettings settings = display.getDisplaySettings();
-            settings = settings.copy().animationFPS(newRate).build();
+            settings = settings.copyBuilder().playbackFPS(newRate).build();
             display.setDisplaySettings(settings);
          }
       });
@@ -120,7 +120,7 @@ public final class FPSPopupMenu extends JPopupMenu {
                slider.setValue((int) (newRate * FPS_RATIO));
                slider.repaint();
                DisplaySettings settings = display.getDisplaySettings();
-               settings = settings.copy().animationFPS(newRate).build();
+               settings = settings.copyBuilder().playbackFPS(newRate).build();
                display.setDisplaySettings(settings);
             }
             catch (NumberFormatException e) {

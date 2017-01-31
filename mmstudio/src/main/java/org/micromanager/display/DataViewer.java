@@ -28,10 +28,9 @@ import org.micromanager.data.Image;
  * rather than directly implementing this interface. That will allow your
  * implementation to continue to work when methods are added to this interface
  * in the future.
- *
- * <b>Warning</b>: Support for custom data viewers should be considered
- * experimental. Future updates may require you to update such code for
- * compatibility.
+ * <p>
+ * <b>Warning</b>: Support for custom data viewers is experimental.
+ * Future updates may require you to update such code for compatibility.
  *
  * @author Chris Weisiger, Mark A. Tsuchida
  */
@@ -45,9 +44,10 @@ public interface DataViewer extends EventPublisher {
     * <p>
     * Events that can be subscribed to include:
     * <ul>
-    * <li>{@link NewDisplaySettingsEvent} (on an arbitrary thread)
-    * <li>{@link NewDataPositionRenderedEvent} (on the EDT)
-    * <li>{@link DisplayDidCloseEvent} (on the EDT)
+    * <li>{@link DisplaySettingsChangedEvent} (on an arbitrary thread)
+    * <li>{@link DisplayPositionChangedEvent} (on an arbitrary thread)
+    * <li>TODO {@link DisplayPositionRenderedEvent} (on the EDT)
+    * <li>TODO {@link DataViewerClosedEvent} (on the EDT)
     * </ul>
     *
     * @param recipient the object to register
@@ -71,17 +71,11 @@ public interface DataViewer extends EventPublisher {
     * This method can be called from any thread. There may be a delay before
     * the new settings are actually reflected in the viewer user interface.
     * However, {@link getDisplaySettings} will always reflect the most recent
-    * settings, even if they have not been applied to the UI.
-    * <p>
-    * Implementers: The implementation of this method must not directly alter
-    * display settings, but should instead just post a
-    * {@link NewDisplaySettingsEvent}. Actual updating of display settings
-    * should be done by subscribing to that event. See {@link
-    * AbstractDataViewer.setDisplaySettings}.
+    * settings, even if they have not yet been applied to the UI.
     *
     * @param settings the new display settings
     */
-   public void setDisplaySettings(DisplaySettings settings);
+   void setDisplaySettings(DisplaySettings settings);
 
    /**
     * Get the current display settings.
@@ -92,7 +86,7 @@ public interface DataViewer extends EventPublisher {
     *
     * @return the current display settings
     */
-   public DisplaySettings getDisplaySettings();
+   DisplaySettings getDisplaySettings();
 
    /**
     * Set the display settings only if the current settings match the expected
@@ -111,15 +105,13 @@ public interface DataViewer extends EventPublisher {
     *          zoom(2.0).build();
     * } while (!viewer.compareAndSetDisplaySettings(oldSettings, newSettings));
     * </code></pre>
-    * <p>
-    * Implementers: See {@link AbstractDataViewer.compareAndSetDisplaySettings}.
     *
     * @param originalSettings apply the new settings only if the current
     * settings match this
     * @param newSettings the new settings
     * @return whether the new settings were applied
     */
-   public boolean compareAndSetDisplaySettings(
+   boolean compareAndSetDisplaySettings(
          DisplaySettings originalSettings, DisplaySettings newSettings);
 
    /**
@@ -133,7 +125,7 @@ public interface DataViewer extends EventPublisher {
     *
     * @return the data provider backing this viewer
     */
-   public DataProvider getDataProvider();
+   DataProvider getDataProvider();
 
    /**
     * Retrieve the datastore backing this viewer.
@@ -143,7 +135,7 @@ public interface DataViewer extends EventPublisher {
     * @deprecated use {@link getDataProvider} instead
     */
    @Deprecated
-   public Datastore getDatastore();
+   Datastore getDatastore();
 
    /**
     * Display the images at the specified coordinates in the data provider.
@@ -161,10 +153,23 @@ public interface DataViewer extends EventPublisher {
     * position, even if it has not been applied to the UI.
     *
     * @param position the coordinates of the images to display
+    * @param forceRedisplay if true, assume the image(s) at the position may
+    * have changed even if the position does not differ from the current one
     *
     * @see compareAndSetDisplayPosition
     */
-   public void setDisplayPosition(Coords position);
+   void setDisplayPosition(Coords position, boolean forceRedisplay);
+
+   /**
+    * Display the images at the specified coordinates in the data provider.
+    * <p>
+    * See {@link setDisplayPosition(Coords, boolean)} for details. This method
+    * does not force a redisplay if {@code position} is the same as the current
+    * display position.
+    *
+    * @param position the coordinates of the images to display
+    */
+   void setDisplayPosition(Coords position);
 
    /**
     * Get the coordinates for the currently displayed images.
@@ -175,7 +180,7 @@ public interface DataViewer extends EventPublisher {
     *
     * @return the current coordinates displayed
     */
-   public Coords getDisplayPosition();
+   Coords getDisplayPosition();
 
    /**
     * Set the display position only if the current position is the expected one.
@@ -194,15 +199,31 @@ public interface DataViewer extends EventPublisher {
     *          channel((oldPos.getChannel() + 1) % nChannels).build();
     * } while (!viewer.compareAndSetDisplayPosition(oldPos, newPos));
     * </code></pre>
-    * <p>
-    * Implementers: See {@link AbstractDataViewer.compareAndSetDisplayPosition}.
     *
     * @param originalPosition apply the new position only if the current
     * position matches this one
     * @param newPosition the new display position
+    * @param forceRedisplay if true, assume the image(s) at the position may
+    * have changed even if the position does not differ from the current one
     * @return whether the new position was applied
     */
-   public boolean compareAndSetDisplayPosition(Coords originalPosition,
+   boolean compareAndSetDisplayPosition(Coords originalPosition,
+         Coords newPosition, boolean forceRedisplay);
+
+   /**
+    * Set the display position only if the current position is the expected one.
+    * <p>
+    * See {@link compareAndSetDisplayPosition(Coords, Coords, boolean)} for
+    * details.
+    * <p>
+    * This method will not force a redisplay if {@code newPosition} is the same
+    * as the current display position.
+    *
+    * @param originalPosition
+    * @param newPosition
+    * @return
+    */
+   boolean compareAndSetDisplayPosition(Coords originalPosition,
          Coords newPosition);
 
    /**
@@ -212,7 +233,7 @@ public interface DataViewer extends EventPublisher {
     * @deprecated use {@link setDisplayPosition} instead
     */
    @Deprecated
-   public void setDisplayedImageTo(Coords position);
+   void setDisplayedImageTo(Coords position);
 
    /**
     * Retrieve the Images currently being displayed.
@@ -221,7 +242,19 @@ public interface DataViewer extends EventPublisher {
     *
     * @return Every image at the currently-displayed image coordinates.
     */
-   public List<Image> getDisplayedImages();
+   List<Image> getDisplayedImages();
+
+   /**
+    * Return true if this viewer is visible.
+    *
+    * It is recommended that this method be called on the Swing/AWT event
+    * dispatch thread. If you call it from another thread, make sure that your
+    * thread is not obstructing the event dispatch thread (i.e. the event
+    * dispatch thread is not waiting for your thread to finish something).
+    *
+    * @return whether the viewer is visible on screen
+    */
+   boolean isVisible();
 
    /**
     * Return true if this viewer has been closed.
@@ -231,9 +264,9 @@ public interface DataViewer extends EventPublisher {
     * thread is not obstructing the event dispatch thread (i.e. the event
     * dispatch thread is not waiting for your thread to finish something).
     *
-    * @return whether the view has been closed
+    * @return whether the viewer has been closed
     */
-   public boolean isClosed();
+   boolean isClosed();
 
    /**
     * Return the name of this viewer.
@@ -248,5 +281,5 @@ public interface DataViewer extends EventPublisher {
     *
     * @return a string labeling this display
     */
-   public String getName();
+   String getName();
 }

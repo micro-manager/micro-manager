@@ -45,6 +45,9 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
    private final CoordsProvider delegate_;
    private Coords animationCoords_ = new DefaultCoords.Builder().build();
 
+   // Fractional part of last advancement, tracked to avoid frame rate error.
+   private double cumulativeFrameCountError_ = 0.0;
+
    public static DataCoordsAnimationState create(CoordsProvider delegate) {
       if (delegate == null) {
          throw new NullPointerException();
@@ -68,6 +71,7 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
    @Override
    public synchronized void setAnimationPosition(Coords position) {
       animationCoords_ = getFullPosition(position);
+      cumulativeFrameCountError_ = 0.0;
    }
 
    @Override
@@ -86,8 +90,17 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
          return animationCoords_;
       }
 
+      // We want to advance by the given fractional frames, but if we just
+      // round to integer, error will accumulate and result in erroneous
+      // framerate. So keep track of the rounding error.
+      frames -= cumulativeFrameCountError_;
+      int framesToAdvance = Math.max(0, (int) Math.round(frames));
+      cumulativeFrameCountError_ = framesToAdvance - frames;
+      if (framesToAdvance == 0) {
+         return null;
+      }
+
       CoordsBuilder cb = new DefaultCoords.Builder();
-      int framesToAdvance = (int) Math.round(frames);
       for (String axis : Lists.reverse(axes)) {
          int prevIndex = prevPos.getIndex(axis);
          if (!animatedAxes.contains(axis) || framesToAdvance == 0) {

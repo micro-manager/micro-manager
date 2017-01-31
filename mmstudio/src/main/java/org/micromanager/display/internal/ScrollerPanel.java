@@ -50,7 +50,6 @@ import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.NewDisplaySettingsEvent;
 import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.display.internal.events.LayoutChangedEvent;
@@ -59,6 +58,7 @@ import org.micromanager.display.internal.link.ImageCoordsLinker;
 import org.micromanager.display.internal.link.LinkButton;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.display.DisplaySettingsChangedEvent;
 
 
 /**
@@ -159,12 +159,12 @@ public final class ScrollerPanel extends JPanel {
 
       // Set up the FPS rate prior to calling addScroller(), below, as
       // that method creates the FPS button which needs animationFPS_ to be set
-      Double fps = display.getDisplaySettings().getAnimationFPS();
+      Double fps = display.getDisplaySettings().getPlaybackFPS();
       // Default to 10 if it's not set.
       if (fps == null) {
          fps = 10.0;
-         display.setDisplaySettings(display.getDisplaySettings().copy()
-               .animationFPS(fps).build());
+         display.setDisplaySettings(display.getDisplaySettings().copyBuilder()
+               .playbackFPS(fps).build());
       }
       animationFPS_ = fps;
       fpsMenu_ = new FPSPopupMenu(display_, animationFPS_);
@@ -374,12 +374,12 @@ public final class ScrollerPanel extends JPanel {
     * @param event - NewDisplaySettingsEvent
     */
    @Subscribe
-   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
+   public void onNewDisplaySettings(DisplaySettingsChangedEvent event) {
       DisplaySettings settings = event.getDisplaySettings();
       // Check for change in FPS.
-      if (settings.getAnimationFPS() != null &&
-            settings.getAnimationFPS() != animationFPS_) {
-         animationFPS_ = settings.getAnimationFPS();
+      if (settings.getPlaybackFPS() != null &&
+            settings.getPlaybackFPS() != animationFPS_) {
+         animationFPS_ = settings.getPlaybackFPS();
          fpsButton_.setText("FPS: " + animationFPS_);
          updateAnimation();
       }

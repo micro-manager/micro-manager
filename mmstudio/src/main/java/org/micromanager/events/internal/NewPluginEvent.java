@@ -1,17 +1,17 @@
 package org.micromanager.events.internal;
 
-import org.micromanager.MMPlugin;
+import org.micromanager.MMGenericPlugin;
 
 /**
  * This class represents the discovery of a new MMPlugin.
  */
 public final class NewPluginEvent {
-   private MMPlugin plugin_;
-   public NewPluginEvent(MMPlugin plugin) {
+   private MMGenericPlugin plugin_;
+   public NewPluginEvent(MMGenericPlugin plugin) {
       plugin_ = plugin;
    }
 
-   public MMPlugin getPlugin() {
+   public MMGenericPlugin getPlugin() {
       return plugin_;
    }
 }

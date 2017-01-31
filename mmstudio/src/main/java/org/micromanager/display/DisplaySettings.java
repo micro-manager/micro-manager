@@ -21,7 +21,7 @@
 package org.micromanager.display;
 
 import java.awt.Color;
-import org.micromanager.PropertyMap;
+import java.util.List;
 
 /**
  * This class defines the parameters that control how a given DisplayWindow
@@ -39,6 +39,62 @@ import org.micromanager.PropertyMap;
  */
 public interface DisplaySettings {
 
+   interface Builder {
+      Builder zoomRatio(double ratio);
+      Builder playbackFPS(double fps);
+
+      /** Color mode or lookup table for displaying the image. */
+      Builder colorMode(ColorMode mode);
+      Builder colorModeComposite();
+      Builder colorModeGrayscale();
+      Builder colorModeSingleColor();
+      Builder colorModeHighlightSaturated();
+
+      /** Whether to use the same intensity scaling for every channel. */
+      Builder uniformChannelScaling(boolean enable);
+      /** Whether to continuously apply autoscale. */
+      Builder autostretch(boolean enable);
+      Builder roiAutoscale(boolean enable);
+      Builder autoscaleIgnoredQuantile(double quantile);
+      Builder autoscaleIgnoredPercentile(double percentile);
+
+      Builder channel(int channel);
+      Builder channel(int channel, ChannelDisplaySettings settings);
+      int getNumberOfChannels();
+      ChannelDisplaySettings getChannelSettings(int channel); // Creates channel if necessary
+
+      DisplaySettings build();
+   }
+
+   double getZoomRatio();
+   double getPlaybackFPS();
+   /** Color mode or lookup table for displaying the image. */
+   ColorMode getColorMode();
+   /** Whether to use the same intensity scaling for every channel. */
+   boolean isUniformChannelScalingEnabled();
+   /** Whether to continuously apply autoscale. */
+   boolean isAutostretchEnabled();
+   boolean isROIAutoscaleEnabled();
+   double getAutoscaleIgnoredQuantile();
+   double getAutoscaleIgnoredPercentile();
+   int getNumberOfChannels();
+   ChannelDisplaySettings getChannelSettings(int channel);
+   List<ChannelDisplaySettings> getAllChannelSettings();
+
+   // Convenience methods
+   List<Color> getAllChannelColors();
+   Color getChannelColor(int channel);
+   List<Boolean> getAllChannelVisibilities();
+   boolean isChannelVisible(int channel);
+
+   Builder copyBuilder();
+   Builder copyBuilderWithChannelSettings(int channel, ChannelDisplaySettings settings);
+   Builder copyBuilderWithComponentSettings(int channel, int component, ComponentDisplaySettings settings);
+
+
+   // TODO Add static builder() in Java 8
+
+
    /**
     * This object contains contrast settings for a single channel. It is used
     * to set the minimum contrast value (treated as black), maximum contrast
@@ -49,6 +105,7 @@ public interface DisplaySettings {
     * You can create a new ContrastSettings object via
     * DisplayManager.createContrastSettings().
     */
+   @Deprecated
    interface ContrastSettings {
       /**
        * Return the array of minimum contrast settings for all components.
@@ -117,13 +174,23 @@ public interface DisplaySettings {
       public Double getSafeContrastGamma(int component, Double defaultVal);
 
       /**
+       * Nonstandard alias for {@code isVisible}.
+       *
+       * @return Flag indicating whether the channel is currently displayed
+       * @deprecated Use {@link isVisible}
+       */
+      @Deprecated
+      public Boolean getIsVisible();
+
+      /**
        * Return true if the channel is currently displayed, and false
        * otherwise. This is only relevant when the display is showing
        * multiple channels at the same time (i.e. ColorMode is COMPOSITE); in
        * all other modes this value is ignored.
        * @return Flag indicating whether the channel is currently displayed
+       * @deprecated Use isVisible
        */
-      public Boolean getIsVisible();
+      Boolean isVisible();
 
       /**
        * Return the number of components this ContrastSettings object has
@@ -136,12 +203,14 @@ public interface DisplaySettings {
       public int getNumComponents();
    }
 
-   interface DisplaySettingsBuilder {
+   @Deprecated
+   interface DisplaySettingsBuilder extends Builder {
       /**
        * Construct a DisplaySettings from the DisplaySettingsBuilder. Call
        * this once you are finished setting all DisplaySettings parameters.
        * @return Build object
        */
+      @Override
       DisplaySettings build();
 
       // The following functions each set the relevant value for the
@@ -180,16 +249,10 @@ public interface DisplaySettings {
       DisplaySettingsBuilder zoom(Double ratio);
       DisplaySettingsBuilder animationFPS(Double animationFPS);
       DisplaySettingsBuilder channelColorMode(ColorMode channelColorMode);
-      DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate);
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
       DisplaySettingsBuilder shouldScaleWithROI(Boolean shouldScaleWithROI);
       DisplaySettingsBuilder extremaPercentage(Double extremaPercentage);
-      DisplaySettingsBuilder bitDepthIndices(Integer[] bitDepthIndices);
-      DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale);
-      DisplaySettingsBuilder shouldCalculateStdDev(Boolean shouldCalculateStdDev);
-
-      DisplaySettingsBuilder userData(PropertyMap userData);
    }
 
    /**
@@ -205,6 +268,7 @@ public interface DisplaySettings {
     * Manager.
     * @return Channel colors
     */
+   @Deprecated
    public Color[] getChannelColors();
 
    /**
@@ -216,6 +280,7 @@ public interface DisplaySettings {
     * @param defaultVal Default value to return if no color is available.
     * @return Channel color
     */
+   @Deprecated
    public Color getSafeChannelColor(int index, Color defaultVal);
 
    /**
@@ -223,6 +288,7 @@ public interface DisplaySettings {
     * @return An array of ContrastSettings objects, one per channel. May
     *         potentially be null or of inadequate length.
     */
+   @Deprecated
    public ContrastSettings[] getChannelContrastSettings();
 
    /**
@@ -235,6 +301,7 @@ public interface DisplaySettings {
     *        available.
     * @return Contrast settings for the specified channel
     */
+   @Deprecated
    public ContrastSettings getSafeContrastSettings(int index, ContrastSettings defaultVal);
 
    /**
@@ -250,6 +317,7 @@ public interface DisplaySettings {
     *        available.
     * @return Black point for the specified channel/component
     */
+   @Deprecated
    public Integer getSafeContrastMin(int index, int component, Integer defaultVal);
 
    /**
@@ -265,6 +333,7 @@ public interface DisplaySettings {
     *        available.
     * @return White point for the specified channel/component
     */
+   @Deprecated
    public Integer getSafeContrastMax(int index, int component, Integer defaultVal);
 
    /**
@@ -280,6 +349,7 @@ public interface DisplaySettings {
     *        available.
     * @return Gamma for the specified channel/component
     */
+   @Deprecated
    public Double getSafeContrastGamma(int index, int component, Double defaultVal);
 
    /**
@@ -292,6 +362,7 @@ public interface DisplaySettings {
     * @param defaultVal Default value to return if no visibility is available.
     * @return Flag indicating visibility of the specified channel
     */
+   @Deprecated
    public Boolean getSafeIsVisible(int index, Boolean defaultVal);
 
    /**
@@ -302,34 +373,31 @@ public interface DisplaySettings {
    @Deprecated
    public Double getMagnification();
 
-   public Double getZoom();
 
    /**
     * Animation speed, when animation of the display is turned on
     * @return Animation speed in frames per second
     */
+   @Deprecated
    public Double getAnimationFPS();
 
-   /**
-    * This enum defines the order in which values in the "color mode"
-    * control are listed. In other words, the value of one of these enums
-    * corresponds to the index of the corresponding entry in the dropdown
-    * menu.
-    */
    public enum ColorMode {
-      // TODO: replace numbers with strings.
+      // TODO Integer indices should be implementation detail of file format
       COLOR(0), COMPOSITE(1), GRAYSCALE(2), HIGHLIGHT_LIMITS(3), FIRE(4),
-         RED_HOT(5), SPECTRUM(6);
+         RED_HOT(5), @Deprecated SPECTRUM(6);
+
       private final int index_;
 
-      ColorMode(int index) {
+      private ColorMode(int index) {
          index_ = index;
       }
 
+      @Deprecated
       public int getIndex() {
          return index_;
       }
 
+      @Deprecated
       public static ColorMode fromInt(int index) {
          for (ColorMode mode : ColorMode.values()) {
             if (mode.getIndex() == index) {
@@ -344,32 +412,28 @@ public interface DisplaySettings {
     * The index into the "Display mode" control.
     * @return index into the "Display mode" control
     */
+   @Deprecated
    public ColorMode getChannelColorMode();
-
-   /**
-    * How much time to allow to pass between updates to the histogram, in
-    * seconds (set to 0 for continuous update, or any negative value to
-    * disable updates altogether)
-    * @return Minimum time between histogram updates in seconds
-    */
-   public Double getHistogramUpdateRate();
 
    /**
     * Whether histogram settings should be synced across channels
     * @return True if histograms should sync between channels
     */
+   @Deprecated
    public Boolean getShouldSyncChannels();
 
    /**
     * Whether each newly-displayed image should be autostretched
     * @return True if new images should be auto-stretched
     */
+   @Deprecated
    public Boolean getShouldAutostretch();
    
    /**
     * Whether histogram calculations should use only the pixels in the current ROI.
     * @return True if ROI should be used
     */
+   @Deprecated
    public Boolean getShouldScaleWithROI();
 
    /**
@@ -378,51 +442,11 @@ public interface DisplaySettings {
     * @return Number used in Autostretch mode to determine where to set the
     * white and black points.  Expressed as percentage.
     */
+   @Deprecated
    public Double getExtremaPercentage();
 
-   /**
-    * The indices into the bit depth drop-down for controlling the X scale of
-    * the histogram, for each channel.
-    * @return Index into dropdown menu
-    */
-   public Integer[] getBitDepthIndices();
-
-   /**
-    * Safely retrieve the bit depth index for the specified channel. If the
-    * bitDepthIndices property is null, is too small to have a value for the
-    * given index, or has a value of null for that index, then the provided
-    * default value will be returned instead.
-    * @param index Channel index to get the bit depth index for
-    * @param defaultVal Default value to return if no bit depth index is
-    *        available.
-    * @return Index into the "bit depth" dropdown menu for the specified
-    *         channel. 0 means that the camera's bit depth is used; otherwise,
-    *         the bit depth is equal to the the index + 3 (so e.g. 1 means a
-    *         bit depth of 4).
-    */
-   public Integer getSafeBitDepthIndex(int index, Integer defaultVal);
-
-   /**
-    * Whether or not to display the histograms using a logarithmic scale
-    * @return True if log scale should be used
-    */
-   public Boolean getShouldUseLogScale();
-
-   /**
-    * Whether or not histograms should calculate the standard deviation of
-    * image pixel data. This costs some amount of CPU time and can slow down
-    * display update rates somewhat.
-    * @return True if the standard deviation should be calculated.
-    */
-   public Boolean getShouldCalculateStdDev();
-
-   /**
-    * Any additional user-supplied data
-    * @return User data
-    */
-   public PropertyMap getUserData();
-
-   public static final String FILENAME = "displaySettings.txt";
+   @Deprecated
+   static final String FILENAME = "displaySettings.txt";
 
    /**
     * Save the DisplaySettings to a file in the specified folder. If the file
@@ -430,5 +454,6 @@ public interface DisplaySettings {
     * @param path Full path to directory in which the DisplaySettings file should
     * be saved
     */
+   @Deprecated
    public void save(String path);
 }

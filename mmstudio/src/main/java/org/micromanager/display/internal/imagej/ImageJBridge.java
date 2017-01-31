@@ -14,23 +14,32 @@
 
 package org.micromanager.display.internal.imagej;
 
+import com.google.common.base.Preconditions;
 import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.Menus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
+import ij.gui.Roi;
 import ij.io.FileInfo;
 import ij.measure.Calibration;
+import ij.process.ByteProcessor;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.MenuBar;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import net.imglib2.display.ColorTable8;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.display.internal.DisplayUIController;
+import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
 /**
@@ -90,6 +99,13 @@ public final class ImageJBridge {
    private ProxyImageWindow proxyWindow_;
    private MMImageCanvas canvas_;
 
+   // How to set up intensity scaling and/or LUT for the current ImagePlus,
+   // which may be monochrome, composite, or RGB.
+   private ColorModeStrategy colorModeStrategy_;
+
+   private Roi lastSeenRoi_;
+   private Rectangle lastSeenRoiRect_;
+
    // Get a copy of ImageCanvas's zoom levels
    private static final List<Double> ijZoomLevels_ = new ArrayList<Double>();
    static {
@@ -122,6 +138,12 @@ public final class ImageJBridge {
 
    private ImageJBridge(DisplayUIController parent) {
       uiController_ = parent;
+      if (uiController_.getDisplayedImages().get(0).getNumComponents() > 1) {
+         colorModeStrategy_ = RGBColorModeStrategy.create();
+      }
+      else {
+         colorModeStrategy_ = GrayscaleColorModeStrategy.create();
+      }
    }
 
    @MustCallOnEDT
@@ -154,9 +176,9 @@ public final class ImageJBridge {
       imagePlus_ = MMImagePlus.create(this);
       // TODO ImageJ Metadata: see old DefaultDisplayWindow.setImagePlusMetadata()
 
-      imagePlus_.setStack(uiController_.getDisplayController().getName(),
-            proxyStack_);
+      imagePlus_.setStack("New µManager-ImageJ Bridge", proxyStack_);
       imagePlus_.setOpenAsHyperStack(true);
+      applyColorMode(colorModeStrategy_);
 
       canvas_ = MMImageCanvas.create(this);
       // TODO Set canvas's zoom to current display settings (1.0 if null).
@@ -198,6 +220,7 @@ public final class ImageJBridge {
       canvas_ = null;
       imagePlus_.close(); // Also closes the window
       imagePlus_ = null;
+      colorModeStrategy_.releaseImagePlus();
       proxyStack_ = null;
    }
 
@@ -208,6 +231,23 @@ public final class ImageJBridge {
 
    @MustCallOnEDT
    public void mm2ijWindowActivated() {
+      // On Mac OS X, where the menu bar is not attached to windows, we need to
+      // switch to ImageJ's menu bar when a viewer window has focus.
+      if (JavaUtils.isMac()) {
+         MenuBar ijMenuBar = Menus.getMenuBar();
+         MenuBar curMenuBar = uiController_.getFrame().getMenuBar();
+         // Avoid call to setMenuBar() if our JFrame already has the right
+         // menu bar (e.g. because we are switching between MM and IJ windows),
+         // because setMenuBar() is very, very, slow in at least some Java
+         // versions on OS X. See
+         // http://imagej.1557.x6.nabble.com/java-8-and-OSX-td5016839.html and
+         // links therein (although I note that the slowness is seen even with
+         // Java 6 on Yosemite (10.10)).
+         if (ijMenuBar != null && ijMenuBar != curMenuBar) {
+            uiController_.getFrame().setMenuBar(ijMenuBar);
+         }
+      }
+
       WindowManager.setCurrentWindow(proxyWindow_);
    }
 
@@ -221,6 +261,11 @@ public final class ImageJBridge {
    void ij2mmSetVisible(boolean visible) {
       // TODO Use listener
       uiController_.setVisible(visible);
+   }
+
+   @MustCallOnEDT
+   public int getIJNumberOfChannels() {
+      return ((IMMImagePlus) imagePlus_).getNChannelsWithoutSideEffect();
    }
 
    @MustCallOnEDT
@@ -242,12 +287,12 @@ public final class ImageJBridge {
       if (imagePlus_ instanceof MMCompositeImage && nChannels != oldNChannels) {
          // Tell ImageJ to update internal data for new channel count
          ((MMCompositeImage) imagePlus_).reset();
+         applyColorMode(colorModeStrategy_);
       }
    }
 
    @MustCallOnEDT
-   public void mm2ijEnsureDisplayAxisExtents()
-   {
+   public void mm2ijEnsureDisplayAxisExtents() {
       int newNChannels = getMMNumberOfChannels();
       int newNSlices = getMMNumberOfZSlices();
       int newNFrames = getMMNumberOfTimePoints();
@@ -281,6 +326,13 @@ public final class ImageJBridge {
       // that method has side effects on the ImagePlus's axis extents.
       imagePlus_.setSliceWithoutUpdate(ijFlatIndex);
 
+      // Since setSliceWithoutUpdate (or setSlice, for that matter) does not
+      // set the TZC coordinates, we need this:
+      int channel = coords.hasAxis(Coords.CHANNEL) ? coords.getChannel() : 0;
+      int slice = coords.hasAxis(Coords.Z) ? coords.getZ() : 0;
+      int timepoint = coords.hasAxis(Coords.TIME) ? coords.getTime() : 0;
+      imagePlus_.updatePosition(channel + 1, slice + 1, timepoint + 1);
+
       // The way to get ImagePlus to repaint even when the position hasn't
       // changed is to refresh its internal ImageProcessor that holds its
       // currently displayed image.
@@ -299,11 +351,115 @@ public final class ImageJBridge {
       }
       else {
          imagePlus_.setProcessor(proxyStack_.getProcessor(ijFlatIndex));
+
+         if (imagePlus_ instanceof CompositeImage) {
+            // This is an incantation to ensure the per-channel ImageProcessor
+            // instances (stored in CompositeImage.cip) get flushed.
+            // Probably not necessary, but harmless.
+            CompositeImage compositeImage = (CompositeImage) imagePlus_;
+            int saveMode = compositeImage.getMode();
+            compositeImage.setMode(CompositeImage.GRAYSCALE);
+            compositeImage.setMode(saveMode);
+         }
       }
+      mm2ijRepaint(); // Redundant, but just in case.
+
+      colorModeStrategy_.displayedImageDidChange();
    }
 
-   public void repaint() {
-      imagePlus_.updateAndRepaintWindow();
+   @MustCallOnEDT
+   public boolean isIJRGB() {
+      return colorModeStrategy_ instanceof RGBColorModeStrategy;
+   }
+
+   @MustCallOnEDT
+   private void applyColorMode(ColorModeStrategy strategy) {
+      Preconditions.checkState(
+            (strategy instanceof RGBColorModeStrategy) == isIJRGB());
+      colorModeStrategy_ = strategy;
+      colorModeStrategy_.applyModeToImagePlus(imagePlus_);
+      mm2ijRepaint();
+   }
+
+   // Does not preserve min/max/gamma
+   @MustCallOnEDT
+   public void mm2ijSetColorModeComposite(List<Color> channelColors) {
+      applyColorMode(CompositeColorModeStrategy.create(channelColors));
+   }
+
+   // Does not preserve min/max/gamma
+   @MustCallOnEDT
+   public void mm2ijSetColorModeGrayscale() {
+      applyColorMode(GrayscaleColorModeStrategy.create());
+   }
+
+   // Does not preserve min/max/gamma
+   @MustCallOnEDT
+   public void mm2ijSetColorModeColor(List<Color> channelColors) {
+      applyColorMode(ColorColorModeStrategy.create(channelColors));
+   }
+
+   // Does not preserve min/max/gamma
+   @MustCallOnEDT
+   public void mm2ijSetColorModeLUT(ColorTable8 lut) {
+      applyColorMode(LUTColorModeStrategy.create(lut));
+   }
+
+   @MustCallOnEDT
+   public void mm2ijSetHighlightSaturatedPixels(boolean enable) {
+      colorModeStrategy_.applyHiLoHighlight(enable);
+   }
+
+   @MustCallOnEDT
+   public boolean isIJColorModeColor() {
+      return colorModeStrategy_.getClass() == ColorColorModeStrategy.class;
+   }
+
+   @MustCallOnEDT
+   public boolean isIJColorModeComposite() {
+      return colorModeStrategy_ instanceof CompositeColorModeStrategy;
+   }
+
+   @MustCallOnEDT
+   public boolean isIJColorModeGrayscale() {
+      return colorModeStrategy_ instanceof GrayscaleColorModeStrategy;
+   }
+
+   @MustCallOnEDT
+   public boolean isIJColorModeLUT() {
+      return colorModeStrategy_ instanceof LUTColorModeStrategy;
+   }
+
+   @MustCallOnEDT
+   public void mm2ijSetChannelColor(int channel, Color color) {
+      colorModeStrategy_.applyColor(channel, color);
+      mm2ijRepaint();
+   }
+
+   @MustCallOnEDT
+   public void mm2ijSetIntensityScaling(int channelOrComponent, int min, int max) {
+      colorModeStrategy_.applyScaling(channelOrComponent, min, max);
+      mm2ijRepaint();
+   }
+
+   @MustCallOnEDT
+   public void mm2ijSetIntensityGamma(int channelOrComponent, double gamma) {
+      colorModeStrategy_.applyGamma(channelOrComponent, gamma);
+      mm2ijRepaint();
+   }
+
+   @MustCallOnEDT
+   public void mm2ijSetVisibleChannels(int channelOrComponent, boolean visible) {
+      colorModeStrategy_.applyVisibleInComposite(channelOrComponent, visible);
+      mm2ijRepaint();
+   }
+
+   @MustCallOnEDT
+   public void mm2ijRepaint() {
+      if (canvas_ != null) {
+         canvas_.setImageUpdated();
+         canvas_.repaint();
+      }
    }
 
    void ijPaintDidFinish() {
@@ -364,22 +520,33 @@ public final class ImageJBridge {
    }
 
    Image getMMImage(Coords coords) {
+      // This is where we map MM images to the TZC coords requested by ImageJ.
       // Normally, return the currently displayed images cached by the UI
-      // controller
+      // controller.
       List<Image> images = uiController_.getDisplayedImages();
-      for (Image image : images) {
-         if (coords.equals(image.getCoords())) {
-            return image;
+      IMAGES: for (Image image : images) {
+         Coords c = image.getCoords();
+         // We are making the assumption that no two displayed images share
+         // the same TZC coordinates. This is true for mono/composite/RGB 2D
+         // viewer, but may need refinement upon future ganaralizations or new
+         // viewers (e.g. a Z-projecting viewer)
+         for (String axis : coords.getAxes()) {
+            if (coords.getIndex(axis) != c.getIndex(axis)) {
+               continue IMAGES;
+            }
          }
+         return image;
       }
-      return getBlankImage(coords);
+      // TODO When enabling missing image strategies, we need to map back to
+      // the image assigned to the nominal coordinates
+      return makeBlankImage(coords);
    }
 
-   private Image getBlankImage(Coords coords) {
+   private Image makeBlankImage(Coords coords) {
       // TODO Clearly this should be factored out as a general utility method
       // in org.micromanager.data.
       Image template =
-            uiController_.getDisplayController().getDatastore().getAnyImage();
+            uiController_.getDisplayController().getDataProvider().getAnyImage();
       if (template == null) {
          throw new IllegalStateException("Image requested from empty dataset");
       }
@@ -449,7 +616,7 @@ public final class ImageJBridge {
    }
 
    @MustCallOnEDT
-   public void setIJZoom(double factor) {
+   public void mm2ijSetZoom(double factor) {
       double originalFactor = getIJZoom();
       if (factor == originalFactor) {
          return;
@@ -484,12 +651,12 @@ public final class ImageJBridge {
 
    @MustCallOnEDT
    public void mm2ijZoomIn() {
-      setIJZoom(ImageCanvas.getHigherZoomLevel(getIJZoom()));
+      mm2ijSetZoom(ImageCanvas.getHigherZoomLevel(getIJZoom()));
    }
 
    @MustCallOnEDT
    public void mm2ijZoomOut() {
-      setIJZoom(ImageCanvas.getLowerZoomLevel(getIJZoom()));
+      mm2ijSetZoom(ImageCanvas.getLowerZoomLevel(getIJZoom()));
    }
 
    void ij2mmZoomDidChange(double factor) {
@@ -570,6 +737,31 @@ public final class ImageJBridge {
       return ret;
    }
 
+   void ij2mmRoiMayHaveChanged() {
+      // Reduce load by eliminating some of the most common unchanged cases
+      Roi roi = imagePlus_.getRoi();
+      if (roi == null) {
+         if (lastSeenRoi_ == null) {
+            return;
+         }
+      }
+      else {
+         if (roi.getType() == Roi.RECTANGLE && roi.getCornerDiameter() == 0) {
+            Rectangle bounds = roi.getBounds();
+            if (bounds.equals(lastSeenRoiRect_)) {
+               return;
+            }
+            lastSeenRoiRect_ = new Rectangle(bounds);
+         }
+         else {
+            lastSeenRoiRect_ = null;
+         }
+         lastSeenRoi_ = roi;
+      }
+
+      uiController_.selectionMayHaveChanged(makeBoundsAndMaskFromIJRoi(roi));
+   }
+
    void ij2mmMouseEnteredCanvas(MouseEvent e) {
       uiController_.updatePixelInfoUI(
             computeImageRectForCanvasPoint(e.getPoint()));
@@ -597,5 +789,51 @@ public final class ImageJBridge {
       double widthAndHeight = 1.0 / zoomRatio;
       return new Rectangle((int) Math.floor(x), (int) Math.floor(y),
             (int) Math.ceil(widthAndHeight), (int) Math.ceil(widthAndHeight));
+   }
+
+   private BoundsRectAndMask makeBoundsAndMaskFromIJRoi(Roi ijRoi) {
+      if (ijRoi == null) {
+         return BoundsRectAndMask.unselected();
+      }
+
+      Rectangle bounds = ijRoi.getBounds();
+
+      if (ijRoi.getType() == Roi.OVAL) {
+         // ImageJ (1.51g) has a bug in OvalRoi that fails to flush its
+         // cached mask while dragging to create the oval. Force recompute.
+         ijRoi = (Roi) ijRoi.clone();
+      }
+      ByteProcessor maskProc = (ByteProcessor) ijRoi.getMask();
+
+      // Sanity check, just in case.
+      if (maskProc != null &&
+            (maskProc.getWidth() != bounds.width ||
+            maskProc.getHeight() != bounds.height))
+      {
+         return BoundsRectAndMask.unselected();
+      }
+
+      switch (ijRoi.getType()) {
+         case Roi.RECTANGLE:
+            if (ijRoi.getCornerDiameter() == 0) {
+               return BoundsRectAndMask.create(bounds, null);
+            }
+            // Fall through for rounded rect
+         case Roi.OVAL:
+         case Roi.POLYGON:
+         case Roi.FREEROI:
+         case Roi.TRACED_ROI:
+         case Roi.COMPOSITE:
+            if (maskProc == null) {
+               return BoundsRectAndMask.unselected();
+            }
+            byte[] mask = ((byte[]) maskProc.getPixels()).clone();
+            return BoundsRectAndMask.create(bounds, mask);
+
+         default:
+            // We do not use lines, points, angles, etc., for histograms.
+            // Any unsupported types should behave as if no Roi is selected.
+            return BoundsRectAndMask.unselected();
+      }
    }
 }

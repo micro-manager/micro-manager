@@ -47,7 +47,7 @@ public abstract class DisplayWindowAPIAdapter extends AbstractDataViewer
    @Override
    @Deprecated
    public void forceClosed() {
-      forceClose();
+      close();
    }
 
    @Override

@@ -29,7 +29,7 @@ public final class PrioritizedEventBus {
    public void register(Object o, Integer priority) {
       EventBus subBus;
       if (!prioritizedBuses_.containsKey(priority)) {
-         subBus = new EventBus();
+         subBus = new EventBus(EventBusExceptionLogger.getInstance());
          prioritizedBuses_.put(priority, subBus);
       }
       else {

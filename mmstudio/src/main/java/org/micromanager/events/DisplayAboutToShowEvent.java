@@ -28,7 +28,11 @@ import org.micromanager.display.DisplayWindow;
  * is at least one image in the Datastore for the DisplayWindow. If you want
  * to be notified of when a DisplayWindow is created, instead, then you should
  * listen for the NewDisplayEvent.
+ * @deprecated "Immediately prior to" is poorly defined, and this event was
+ * clearly intended for internal processing. Besides, {@code DisplayWindow}s
+ * now display their frames upon creation now.
  */
+@Deprecated
 public interface DisplayAboutToShowEvent {
    /**
     * Provides access to the DisplayWindow that is about to be drawn.

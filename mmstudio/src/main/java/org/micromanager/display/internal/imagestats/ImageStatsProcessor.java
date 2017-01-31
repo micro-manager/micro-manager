@@ -13,9 +13,9 @@
 
 package org.micromanager.display.internal.imagestats;
 
+import com.google.common.base.Preconditions;
 import java.awt.Rectangle;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -24,20 +24,22 @@ import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import net.imglib2.Interval;
-import net.imglib2.RandomAccess;
+import net.imglib2.Cursor;
+import net.imglib2.IterableInterval;
 import net.imglib2.histogram.BinMapper1d;
 import net.imglib2.histogram.Histogram1d;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgs;
-import net.imglib2.iterator.ZeroMinIntervalIterator;
+import net.imglib2.transform.integer.MixedTransform;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
+import net.imglib2.util.ConstantUtils;
 import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
+import net.imglib2.view.MixedTransformView;
+import net.imglib2.view.Views;
 import org.micromanager.data.Image;
-import org.micromanager.display.internal.imagestats.ImagesAndStats.ImageStats;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.CPUTimer;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
@@ -47,9 +49,9 @@ import org.micromanager.internal.utils.performance.WallTimer;
  *
  * @author Mark A. Tsuchida
  */
-final class ImageStatsProcessor implements ThrottledProcessQueue.Processor<
-      ImageStatsRequest, ImagesAndStats>
-{
+final class ImageStatsProcessor {
+   private static final int MASK_THRESH = 128;
+
    private final ExecutorService executor_;
 
    private PerformanceMonitor perfMon_;
@@ -74,8 +76,9 @@ final class ImageStatsProcessor implements ThrottledProcessQueue.Processor<
       perfMon_ = perfMon;
    }
 
-   @Override
-   public ImagesAndStats process(final ImageStatsRequest request)
+   public ImagesAndStats process(final long sequenceNumber,
+         final ImageStatsRequest request,
+         boolean interruptible)
          throws InterruptedException
    {
       WallTimer timer = WallTimer.createStarted();
@@ -84,24 +87,30 @@ final class ImageStatsProcessor implements ThrottledProcessQueue.Processor<
       List<Future<ImageStats>> futures = new ArrayList<Future<ImageStats>>();
       for (int i = 0; i < request.getNumberOfImages(); ++i) {
          final Image image = request.getImage(i);
+         final int ii = i;
          futures.add(executor_.submit(new Callable<ImageStats>() {
             @Override
             public ImageStats call() throws Exception {
-               return computeStats(image, request);
+               return computeStats(image, request, ii);
             }
          }));
       }
 
       for (int i = 0; i < request.getNumberOfImages(); ++i) {
          try {
-            results[i] = futures.get(i).get();
+            while (results[i] == null) {
+               try {
+                  results[i] = futures.get(i).get();
+               }
+               catch (InterruptedException ie) {
+                  if (interruptible) {
+                     throw ie;
+                  }
+               }
+            }
          }
          catch (ExecutionException ex) {
-            // This could contain a ClassCastException from computeStats() in
-            // case the image has unexpected format. In any case, we are only
-            // computing stats for display purposes, so should continue if
-            // results are unavailable.
-            results[i] = null;
+            throw new RuntimeException(ex);
          }
       }
 
@@ -110,11 +119,11 @@ final class ImageStatsProcessor implements ThrottledProcessQueue.Processor<
          perfMon_.sampleTimeInterval("Process");
       }
 
-      return ImagesAndStats.create(request, results);
+      return ImagesAndStats.create(sequenceNumber, request, results);
    }
 
    private ImageStats computeStats(Image image,
-         ImageStatsRequest request)
+         ImageStatsRequest request, int index)
          throws ClassCastException
    {
       CPUTimer cpuTimer = CPUTimer.createStarted();
@@ -130,46 +139,99 @@ final class ImageStatsProcessor implements ThrottledProcessQueue.Processor<
       // RGB888 images can come with an extra component in the pixel buffer.
       // TODO XXX Handle this case!
 
+      // Determine the overlap between the ROI rect/mask and the image
+      boolean useROI;
+      Rectangle imageBounds = new Rectangle(0, 0, image.getWidth(), image.getHeight());
+      Rectangle maskBounds = null;
+      byte[] maskBytes = request.getROIMask();
+      if (request.getROIBounds() != null) {
+         maskBounds = new Rectangle(request.getROIBounds());
+         useROI = true;
+      }
+      else {
+         useROI = false;
+      }
+      if (maskBounds == null || maskBounds.width == 0 || maskBounds.height == 0) {
+         maskBounds = imageBounds;
+         maskBytes = null;
+         useROI = false;
+      }
+      Rectangle statsBounds = new Rectangle();
+      Rectangle.intersect(imageBounds, maskBounds, statsBounds);
+      if (statsBounds.width <= 0 || statsBounds.height <= 0) {
+         statsBounds = imageBounds;
+         maskBytes = null;
+         useROI = false;
+      }
+
+      // If (the used part of) the mask has no pixels, revert to full image
+      IterableInterval<UnsignedByteType> mask = wrapROIMask(maskBytes, nComponents, maskBounds, statsBounds);
+      boolean maskEmpty = true;
+      for (Cursor<UnsignedByteType> c = mask.cursor(); c.hasNext(); c.fwd()) {
+         if (c.get().getInteger() >= MASK_THRESH) {
+            maskEmpty = false;
+            break;
+         }
+      }
+      if (maskEmpty) {
+         statsBounds = imageBounds;
+         mask = wrapROIMask(null, nComponents, imageBounds, statsBounds);
+         useROI = false;
+      }
+
       ImageStats result = null;
       if (bytesPerSample == 1) {
          Img<UnsignedByteType> img =
                ArrayImgs.unsignedBytes((byte[]) image.getRawPixels(),
-                     image.getHeight(), image.getWidth(), nComponents);
-         result = compute(applyROIToIterable(img, request.getROIRect(),
-               request.getROIMask()),
-               nComponents, 8 * bytesPerSample, binCountPowerOf2);
+                     nComponents, image.getWidth(), image.getHeight());
+         result = compute(
+               clipToRect(img, nComponents, statsBounds),
+               mask,
+               nComponents, 8 * bytesPerSample, binCountPowerOf2,
+               useROI, index);
       }
       else if (bytesPerSample == 2) {
          Img<UnsignedShortType> img =
                ArrayImgs.unsignedShorts((short[]) image.getRawPixels(),
-                     image.getHeight(), image.getWidth(), nComponents);
-         result = compute(applyROIToIterable(img, request.getROIRect(),
-               request.getROIMask()),
-               nComponents, 8 * bytesPerSample, binCountPowerOf2);
+                     nComponents, image.getWidth(), image.getHeight());
+         result = compute(
+               clipToRect(img, nComponents, statsBounds),
+               mask,
+               nComponents, 8 * bytesPerSample, binCountPowerOf2,
+               useROI, index);
       }
 
       if (perfMon_ != null) {
-         perfMon_.sample("Compute image stats CPU time (ms)", cpuTimer.getMs());
+         perfMon_.sample("Process CPU time (ms)", cpuTimer.getMs());
       }
 
       return result; // null if we don't know how to compute (TODO FIX)
    }
 
-   private <T extends IntegerType<T>> ImageStats compute(Iterable<T> img,
-         int numberOfComponents, int sampleBitDepth, int binCountPowerOf2)
+   private <T extends IntegerType<T>> ImageStats compute(
+         IterableInterval<T> img, IterableInterval<UnsignedByteType> mask,
+         int nComponents, int sampleBitDepth, int binCountPowerOf2,
+         boolean isROI, int index)
    {
+      // It's easier to debug if we check first...
+      Preconditions.checkArgument(img.numDimensions() == 3);
+      Preconditions.checkArgument(img.dimension(0) == nComponents);
+      for (int d = 0; d < 3; ++d) {
+         Preconditions.checkArgument(img.dimension(d) == mask.dimension(d));
+      }
+
       BinMapper1d<T> binMapper =
             PowerOf2BinMapper.create(sampleBitDepth, binCountPowerOf2);
 
       // Some ugliness to allow us to compute stats for multiple components in
       // a single interation over the pixels.
       List<Histogram1d<T>> histograms = new ArrayList<Histogram1d<T>>();
-      long[] counts = new long[numberOfComponents];
-      long[] minima = new long[numberOfComponents];
-      long[] maxima = new long[numberOfComponents];
-      long[] sums = new long[numberOfComponents];
-      long[] sumsOfSquares = new long[numberOfComponents];
-      for (int component = 0; component < numberOfComponents; ++component) {
+      long[] counts = new long[nComponents];
+      long[] minima = new long[nComponents];
+      long[] maxima = new long[nComponents];
+      long[] sums = new long[nComponents];
+      long[] sumsOfSquares = new long[nComponents];
+      for (int component = 0; component < nComponents; ++component) {
          histograms.add(new Histogram1d<T>(binMapper));
          counts[component] = 0;
          minima[component] = Long.MAX_VALUE;
@@ -186,31 +248,39 @@ final class ImageStatsProcessor implements ThrottledProcessQueue.Processor<
       // image.
 
       // Perform the actual computations:
-      Iterator<T> iter = img.iterator();
-      for (int i = 0; iter.hasNext(); ++i) {
-         int component = i % numberOfComponents;
-         T sample = iter.next();
-         long value = sample.getIntegerLong();
+      Cursor<T> dataCursor = img.localizingCursor();
+      Cursor<UnsignedByteType> maskCursor = mask.cursor();
+      for (int i = 0; dataCursor.hasNext(); ++i) {
+         int component = i % nComponents;
+         T dataSample = dataCursor.next();
+         UnsignedByteType maskSample = maskCursor.next();
 
-         histograms.get(component).increment(sample);
+         if (maskSample.getInteger() < MASK_THRESH) {
+            continue;
+         }
+
+         long dataValue = dataSample.getIntegerLong();
+
+         histograms.get(component).increment(dataSample);
          counts[component]++;
-         if (value < minima[component]) {
-            minima[component] = value;
+         if (dataValue < minima[component]) {
+            minima[component] = dataValue;
          }
-         if (value > maxima[component]) {
-            maxima[component] = value;
+         if (dataValue > maxima[component]) {
+            maxima[component] = dataValue;
          }
-         sums[component] += value;
-         sumsOfSquares[component] += value * value;
+         sums[component] += dataValue;
+         sumsOfSquares[component] += dataValue * dataValue;
       }
 
-      ComponentStats[] componentStats =
-            new ComponentStats[numberOfComponents];
-      for (int component = 0; component < numberOfComponents; ++component) {
-         componentStats[component] = ComponentStats.builder().
+      IntegerComponentStats[] componentStats =
+            new IntegerComponentStats[nComponents];
+      for (int component = 0; component < nComponents; ++component) {
+         componentStats[component] = IntegerComponentStats.builder().
                histogram(histograms.get(component).toLongArray(),
                      Math.max(0, sampleBitDepth - binCountPowerOf2)).
                pixelCount(counts[component]).
+               usedROI(isROI).
                minimum(minima[component]).
                maximum(maxima[component]).
                sum(sums[component]).
@@ -218,84 +288,49 @@ final class ImageStatsProcessor implements ThrottledProcessQueue.Processor<
                build();
       }
 
-      return ImageStats.create(componentStats);
+      return ImageStats.create(index, componentStats);
    }
 
-   private <T extends IntegerType<T>> Iterable<T> applyROIToIterable(
-         Img<T> fullImg, Rectangle roiRect, byte[] roiMask)
+   private <T extends IntegerType<T>> IterableInterval<T> clipToRect(
+         Img<T> fullImg, int nComponents, Rectangle statsBounds)
    {
-      if (roiRect == null && roiMask == null) {
-         return fullImg;
-      }
-      else if (roiMask != null) {
-         long[] dims = new long[2];
-         fullImg.dimensions(dims);
-         Img<UnsignedByteType> maskImg = ArrayImgs.unsignedBytes(roiMask, dims);
-         return new MaskedIterable<T>(fullImg, maskImg);
-      }
-      else {
-         @SuppressWarnings("null") // We know roiRect != null here
-         Interval roiInterval = Intervals.createMinSize(
-               roiRect.x, roiRect.width, roiRect.y, roiRect.height);
-         return new IntervalView(fullImg, roiInterval);
-      }
+      Preconditions.checkNotNull(statsBounds);
+      return Views.interval(fullImg,
+            Intervals.createMinSize(
+                  0, statsBounds.x, statsBounds.y,
+                  nComponents, statsBounds.width, statsBounds.height)
+      );
    }
 
-   // This is a kludge for computing the stats for a masked region. Should be
-   // updated to use ImgLib2 ROI API once it's available.
-   private static final class MaskedIterable<T> implements Iterable<T> {
-      private final Img<T> img_;
-      private final Img<UnsignedByteType> mask_;
-
-      private final class MaskIterator implements Iterator<T> {
-         // This iterator is maintained pointing to the _next_ position within
-         // the mask
-         private final ZeroMinIntervalIterator iter_;
-         private final RandomAccess<T> imgAccess_;
-         private final RandomAccess<UnsignedByteType> maskAccess_;
-
-         private MaskIterator() {
-            iter_ = new ZeroMinIntervalIterator(img_);
-            imgAccess_ = img_.randomAccess();
-            maskAccess_ = mask_.randomAccess();
-            skipToNextInMask();
-         }
-
-         private void skipToNextInMask() {
-            while (iter_.hasNext()) {
-               maskAccess_.setPosition(iter_);
-               if (maskAccess_.get().get() != 0) {
-                  break;
-               }
-            }
-         }
-
-         @Override
-         public boolean hasNext() {
-            return iter_.hasNext() && maskAccess_.get().get() != 0;
-         }
-
-         @Override
-         public T next() {
-            imgAccess_.setPosition(iter_);
-            T ret = imgAccess_.get();
-            skipToNextInMask();
-            return ret;
-         }
-
-         @Override
-         public void remove() {
-         }
+   private IterableInterval<UnsignedByteType> wrapROIMask(
+         byte[] rawMask, int nComponents, Rectangle maskBounds, Rectangle statsBounds)
+   {
+      Preconditions.checkNotNull(maskBounds);
+      Preconditions.checkNotNull(statsBounds);
+      if (rawMask == null) {
+         return Views.iterable(
+               ConstantUtils.constantRandomAccessibleInterval(
+                     new UnsignedByteType(255),
+                     3,
+                     Intervals.createMinSize(0, statsBounds.x, statsBounds.y,
+                           nComponents, statsBounds.width, statsBounds.height)));
       }
 
-      private MaskedIterable(Img<T> img, Img<UnsignedByteType> mask) {
-         img_ = img;
-         mask_ = mask;
-      }
+      // The 2D mask, positioned in the image's coordinate system
+      IntervalView<UnsignedByteType> mask = Views.translate(
+            ArrayImgs.unsignedBytes(rawMask,
+                  maskBounds.width, maskBounds.height),
+            maskBounds.x, maskBounds.y);
 
-      @Override
-      public Iterator iterator() {
-         return new MaskIterator();
-      }
+      // Add the component dimension and clip to the intersection with the image
+      long[] min = { 0, statsBounds.x, statsBounds.y };
+      long[] max = { nComponents - 1, statsBounds.x + statsBounds.width - 1,
+         statsBounds.y + statsBounds.height - 1 };
+      MixedTransform t = new MixedTransform(3, 2);
+      t.setComponentMapping(new int[] { 1, 2 });
+      return Views.iterable(Views.interval(
+            new MixedTransformView<UnsignedByteType>(mask, t),
+            min, max
+      ));
    }
 }

@@ -64,6 +64,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIUtils;
@@ -142,7 +143,7 @@ public final class PositionListDlg extends MMDialog implements MouseListener, Ch
       });
       core_ = core;
       studio_ = gui;
-      bus_ = new EventBus();
+      bus_ = new EventBus(EventBusExceptionLogger.getInstance());
       bus_.register(this);
       acqControlDlg_ = acd;
 

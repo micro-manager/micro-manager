@@ -15,31 +15,45 @@
 package org.micromanager.display;
 
 import com.google.common.eventbus.EventBus;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.DefaultCoords;
-import org.micromanager.display.internal.DefaultNewDisplaySettingsEvent;
+import org.micromanager.display.internal.event.DefaultDisplayPositionChangedEvent;
+import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
+import org.micromanager.internal.utils.EventBusExceptionLogger;
+import org.micromanager.internal.utils.ThreadFactoryFactory;
 
 /**
  * Abstract implementation of the {@link DataViewer} interface.
  *
  * Custom data viewer classes should extend this class, rather than directly
  * implement {@code DataViewer}.
- *
- * <b>Warning</b>: Support for custom data viewers should be considered
- * experimental. Future updates may require you to update such code for
- * compatibility.
+ * <p>
+ * <b>Warning</b>: Support for custom data viewers is experimental.
+ * Future updates may require you to update such code for compatibility.
  *
 * @author Mark A. Tsuchida
  */
 public abstract class AbstractDataViewer implements DataViewer {
-   private final EventBus eventBus_ = new EventBus();
+   private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
    // Guarded by monitor on this
    private DisplaySettings displaySettings_;
    // Guarded by monitor on this
    private Coords displayPosition_ = new DefaultCoords.Builder().build();
+
+   // When display settings or display position is changed, we need to post the
+   // notification events in the correct order. One way to do that is to post
+   // those events from a synchronized context, but that is not ideal because
+   // we don't have control over what happens in the event handlers. So instead
+   // we use a single-threaded executor to sequence the event posting.
+   // TODO XXX Need to shut down
+   private final ExecutorService asyncEventPoster_ =
+         Executors.newSingleThreadExecutor(ThreadFactoryFactory.
+               createThreadFactory("AbstractDataViewer Pool"));
 
    /**
     * Construct the abstract viewer implementation.
@@ -65,6 +79,9 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Post an event on the viewer event bus.
+    *
+    * Implementations should call this method to post required notification
+    * events.
     * <p>
     * Some standard viewer events require that they be posted on the Swing/AWT
     * event dispatch thread. Make sure you are on the right thread when posting
@@ -72,9 +89,8 @@ public abstract class AbstractDataViewer implements DataViewer {
     * <p>
     * Viewers are required to post the following events:
     * <ul>
-    * <li>{@link NewDisplaySettingsEvent} (posted by this abstract class)
-    * <li>{@link NewDataPositionRenderedEvent} (on the EDT)
-    * <li>{@link DisplayDidCloseEvent} (on the EDT)
+    * <li>{@link DisplaySettingsChangedEvent} (posted by this abstract class)
+    * <li>{@link DisplayPositionChangedEvent} (posted by this abstract class)
     * </ul>
     *
     * @param event the event to post
@@ -83,28 +99,40 @@ public abstract class AbstractDataViewer implements DataViewer {
       eventBus_.post(event);
    }
 
-   /** Implements {@code setDisplaySettings}.
-    *
+   /**
+    * Implements {@code setDisplaySettings}.
+    * <p>
     * {@inheritDoc}
     * <p>
-    * You cannot override this method. To apply the newly-set settings to your
-    * display, subscribe to {@link NewDisplaySettingsEvent}.
-    *
-    * @param settings
+    * Implementations must override {@code handleNewDisplaySettings} in order
+    * to respond to new display settings.
     */
    @Override
-   public final void setDisplaySettings(DisplaySettings settings) {
+   public final void setDisplaySettings(final DisplaySettings settings) {
       if (settings == null) {
          throw new NullPointerException("Display settings must not be null");
       }
       synchronized (this) {
-         DisplaySettings oldSettings = displaySettings_;
-         displaySettings_ = settings;
-         postEvent(DefaultNewDisplaySettingsEvent.create(this,
-               oldSettings, settings));
+         final DisplaySettings oldSettings = displaySettings_;
+         if (settings == oldSettings) {
+            return;
+         }
+         displaySettings_ = handleDisplaySettings(settings);
+         asyncEventPoster_.submit(new Runnable() {
+            @Override
+            public void run() {
+               postEvent(DefaultDisplaySettingsChangedEvent.create(
+                     AbstractDataViewer.this, oldSettings, displaySettings_));
+            }
+         });
       }
    }
 
+   /**
+    * Implements {@code getDisplaySettings}.
+    * <p>
+    * {@inheritDoc}
+    */
    @Override
    public final DisplaySettings getDisplaySettings() {
       synchronized (this) {
@@ -112,9 +140,17 @@ public abstract class AbstractDataViewer implements DataViewer {
       }
    }
 
+   /**
+    * Implements {@code compareAndSetDisplaySettings}.
+    * <p>
+    * {@inheritDoc}
+    * <p>
+    * Implementations must override {@code handleNewDisplaySettings} in order
+    * to respond to new display settings.
+    */
    @Override
    public final boolean compareAndSetDisplaySettings(
-         DisplaySettings oldSettings, DisplaySettings newSettings)
+         final DisplaySettings oldSettings, final DisplaySettings newSettings)
    {
       if (newSettings == null) {
          throw new NullPointerException("Display settings must not be null");
@@ -125,49 +161,92 @@ public abstract class AbstractDataViewer implements DataViewer {
             // effort; spurious failures should not affect proper usage
             return false;
          }
-         displaySettings_ = newSettings;
-         postEvent(DefaultNewDisplaySettingsEvent.create(this,
-               oldSettings, newSettings));
+         if (newSettings == displaySettings_) {
+            return true;
+         }
+         displaySettings_ = handleDisplaySettings(newSettings);
+         asyncEventPoster_.submit(new Runnable() {
+            @Override
+            public void run() {
+               postEvent(DefaultDisplaySettingsChangedEvent.create(
+                     AbstractDataViewer.this, oldSettings, displaySettings_));
+            }
+         });
          return true;
       }
    }
 
    /**
-    * Implements {@code setDisplayPosition}.
+    * Arrange to apply new display settings.
     *
+    * Override this method to apply new display settings.
+    * <p>
+    * This method is called in a thread-synchronized context, so you should
+    * avoid time-consuming actions. It is safe to call {@code
+    * getDisplaySettings} and compare its return value with {@code
+    * requestedSettings}. However, calling {@code setDisplaySettings} will
+    * result in infinite recursion; if you need to adjust {@code
+    * requestedSettings} before accepting it, do so by returning a modified
+    * copy from this method. This returned settings is what subsequent calls to
+    * {@code getDisplaySettings} will return.
+    * <p>
+    * Typically, the implementation should record all information needed to
+    * make the changes and arrange to apply the changes at a later time
+    * (usually on the Swing/AWT event dispatch thread).
+    *
+    * @param requestedSettings the new display settings requested
+    * @return adjusted display settings that will actually apply
+    */
+   protected abstract DisplaySettings handleDisplaySettings(
+         DisplaySettings requestedSettings);
+
+   /**
+    * Implements {@code setDisplayPosition}.
+    * <p>
     * {@inheritDoc}
     * <p>
-    * You should override this method, but make sure to call {@code super}
-    * (this ensures that {@code getDisplayPosition} and
-    * {@code compareAndSetDispalyPosition} will work).
-    * <p>
-    * You should not perform time-consuming updates in your override. Instead,
-    * you should merely arrange for the display to update on an appropriate
-    * thread (usually the Swing/AWT event dispatch thread) at a later time.
+    * Implementations must override {@code handleNewDisplayPosition} in order
+    * to respond to new display positions.
     */
    @Override
-   public void setDisplayPosition(Coords position) {
+   public final void setDisplayPosition(final Coords position,
+         boolean forceRedisplay)
+   {
       if (position == null) {
          throw new NullPointerException("Position must not be null");
       }
       synchronized (this) {
-         displayPosition_ = position;
+         final Coords oldPosition = getDisplayPosition();
+         if (!forceRedisplay && position.equals(oldPosition)) {
+            return;
+         }
+
+         displayPosition_ = handleDisplayPosition(position);
+
+         if (!position.equals(oldPosition)) {
+            asyncEventPoster_.submit(new Runnable() {
+               @Override
+               public void run() {
+                  postEvent(DefaultDisplayPositionChangedEvent.create(
+                        AbstractDataViewer.this, oldPosition, displayPosition_));
+               }
+            });
+         }
       }
+   }
+
+   @Override
+   public final void setDisplayPosition(Coords position) {
+      setDisplayPosition(position, false);
    }
 
    /**
     * Implements {@code getDisplayPosition}.
     *
     * {@inheritDoc}
-    * <p>
-    * You can override this method (usually should not be necessary), but make
-    * sure to call {@code super} to get the position (this ensures that {@code
-    * setDisplayPosition} and {@code compareAndSetDisplayPosition} will work).
-    * <p>
-    * You should not wait for other threads to fetch data in your override.
     */
    @Override
-   public Coords getDisplayPosition() {
+   public final Coords getDisplayPosition() {
       synchronized (this) {
          return displayPosition_;
       }
@@ -177,29 +256,66 @@ public abstract class AbstractDataViewer implements DataViewer {
     * Implements {@code compareAndSetDisplayPosition}.
     *
     * {@inheritDoc}
-    * <p>
-    * This implementation calls {@code getDisplayPosition} and {@code
-    * setDisplayPosition} with the monitor on this acquired.
     */
    @Override
-   public final boolean compareAndSetDisplayPosition(Coords oldPosition,
-         Coords newPosition)
+   public final boolean compareAndSetDisplayPosition(final Coords oldPosition,
+         final Coords newPosition, boolean forceRedisplay)
    {
       if (newPosition == null) {
          throw new NullPointerException("Position must not be null");
       }
       synchronized (this) {
-         if (!getDisplayPosition().equals(oldPosition)) {
+         if (!displayPosition_.equals(oldPosition)) {
             return false;
          }
-         setDisplayPosition(newPosition);
+         if (!forceRedisplay && newPosition.equals(displayPosition_)) {
+            return true;
+         }
+
+         displayPosition_ = handleDisplayPosition(newPosition);
+
+         if (!newPosition.equals(oldPosition)) {
+            asyncEventPoster_.submit(new Runnable() {
+               @Override
+               public void run() {
+                  postEvent(DefaultDisplayPositionChangedEvent.create(
+                        AbstractDataViewer.this, oldPosition, displayPosition_));
+               }
+            });
+         }
          return true;
       }
+   }
+
+   @Override
+   public final boolean compareAndSetDisplayPosition(Coords oldPosition,
+         Coords newPosition)
+   {
+      return compareAndSetDisplayPosition(oldPosition, newPosition, false);
+   }
+
+   protected abstract Coords handleDisplayPosition(Coords position);
+
+   /**
+    * Must be called by implementation to release resources.
+    * <p>
+    * This is not a "close" method because the {@code DataViewer} interface may
+    * apply to viewers that are not windows (e.g. an embeddable component).
+    * <p>
+    * This method should be called at an appropriate time to release non-memory
+    * resources used by {@code AbstractDataViewer}.
+    */
+   protected void dispose() {
+      asyncEventPoster_.shutdown();
    }
 
    /**
     * Implements {@code setDisplayedImageTo} by calling
     * {@code setDisplayPosition).
+    * <p>
+    * {@inheritDoc}
+    *
+    * @param coords
     * @deprecated user code should call {@code setDisplayPosition}
     */
    @Override
@@ -210,6 +326,7 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Implements {@code getDatastore} by calling {@code getDataProvider}.
+    *
     * @deprecated user code should call {@code getDataProvider}
     */
    @Override

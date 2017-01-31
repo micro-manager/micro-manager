@@ -248,7 +248,7 @@ public final class MMImageCanvas extends ImageCanvas
       // ImageJ's implementation sets the dest size, source rect, and zoom in
       // different orders depending on current state, so cannot be fixed.
       // We implement our own zoom-to-100-percent.
-      parent_.setIJZoom(1.0);
+      parent_.mm2ijSetZoom(1.0);
    }
 
    @Override
@@ -334,5 +334,23 @@ public final class MMImageCanvas extends ImageCanvas
       // 2) Handles ROI construction
       // 3) Notifies ImageWindow, which notifies ImagePlus, which shows
       // ImageJ status line with location and pixel value
+   }
+
+   @Override
+   public void repaint() {
+      // repaint is the easiest place to detect ImageJ ROI change
+      // TODO Also check during mouse drag?
+      if (parent_ != null) {
+         parent_.ij2mmRoiMayHaveChanged();
+      }
+      super.repaint();
+   }
+
+   @Override
+   public void repaint(int x, int y, int w, int h) {
+      if (parent_ != null) {
+         parent_.ij2mmRoiMayHaveChanged();
+      }
+      super.repaint(x, y, w, h);
    }
 }

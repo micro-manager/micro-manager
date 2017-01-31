@@ -348,9 +348,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       hotKeys_.loadSettings();
       zWheelListener_ = new ZWheelListener(core_, studio_);
       getEventManager().registerForEvents(zWheelListener_);
-      snapLiveManager_.addLiveModeListener(zWheelListener_);
+      // TODO snapLiveManager_.addLiveModeListener(zWheelListener_);
       xyzKeyListener_ = new XYZKeyListener(core_, studio_);
-      snapLiveManager_.addLiveModeListener(xyzKeyListener_);
+      // TODO snapLiveManager_.addLiveModeListener(xyzKeyListener_);
 
       // Switch error reporting back on TODO See above where it's turned off
       ReportingUtils.showErrorOn(true);

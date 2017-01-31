@@ -2,6 +2,7 @@ package org.micromanager.events.internal;
 
 import com.google.common.eventbus.EventBus;
 import org.micromanager.events.EventManager;
+import org.micromanager.internal.utils.EventBusExceptionLogger;
 
 // This is a singleton wrapper around the Guava library's EventBus. It exposes
 // a system-wide EventBus for certain general-purpose events.
@@ -14,7 +15,7 @@ public final class DefaultEventManager implements EventManager {
 
    private final EventBus bus_;
    public DefaultEventManager() {
-      bus_ = new EventBus();
+      bus_ = new EventBus(EventBusExceptionLogger.getInstance());
    }
 
    @Override

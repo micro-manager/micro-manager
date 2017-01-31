@@ -13,16 +13,14 @@
 
 package org.micromanager.display.internal.imagestats;
 
-import java.util.Collections;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 
@@ -31,19 +29,64 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
  * @author Mark A. Tsuchida
  */
 public final class StatsComputeQueue {
+   public interface Listener {
+      // Returns min nanoseconds between calls
+      long imageStatsReady(ImagesAndStats result);
+   }
+
+   // Guarded by monitor on this
+   private final EventListenerSupport<Listener> listeners_ =
+         EventListenerSupport.create(Listener.class);
+
+   // Only accessed from compute executor thread
    private final ImageStatsProcessor processor_ = ImageStatsProcessor.create();
-   private final ThrottledProcessQueue<ImageStatsRequest, ImagesAndStats>
-         processQueue_ = ThrottledProcessQueue.create(processor_);
-   private final BoundedOverridingPriorityQueue<ImageStatsRequest>
-         bypassQueue_ = BoundedOverridingPriorityQueue.create();
 
-   private final ExecutorService multiWaitExecutor_;
+   private final ExecutorService computeExecutor_ =
+         Executors.newSingleThreadExecutor(ThreadFactoryFactory.
+               createThreadFactory("Stats Compute Queue Compute"));
 
-   private ImagesAndStats storedStats_;
+   private final ExecutorService bypassExecutor_ =
+         Executors.newSingleThreadExecutor(ThreadFactoryFactory.
+               createThreadFactory("Stats Compute Queue Bypass"));
 
-   private long processIntervalNs_ = 0;
+   private final ExecutorService resultExecutor_ =
+         Executors.newSingleThreadExecutor(ThreadFactoryFactory.
+               createThreadFactory("Stats Compute Queue Result"));
 
-   private boolean shutdown_;
+   // Outstanding compute tasks by priority
+   // Guarded by monitor on this
+   private final List<Future<?>> computeFutures_ =
+         new ArrayList<Future<?>>();
+
+   // Outstanding bypassed data by priority
+   // Guarded by monitor on this
+   private final List<Future<?>> bypassFutures_ =
+         new ArrayList<Future<?>>();
+
+   // Outstanding results by priority. We keep 2 slots per priority, to provide
+   // some buffering (otherwise we'll always be as slow as downstream)
+   // Guarded by monitor on this
+   private final List<Deque<Future<?>>> resultFutures_ =
+         new ArrayList<Deque<Future<?>>>();
+   private static final int RESULT_BUFFER_SIZE = 2;
+
+   // Serial number for each request received
+   private long nextRequestSequenceNumber_ = 0;
+   private long lastResultSequenceNumber_ = -1;
+
+   // The "stale" stats used in lieu of real stats when update interval > 0.
+   // By priority.
+   // Guarded by monitor on this
+   private final List<ImagesAndStats> storedStats_ =
+         new ArrayList<ImagesAndStats>();
+
+   // Guarded by monitor on this
+   private long updateIntervalNs_ = 0;
+
+   // Guarded by monitor on this
+   private long nextStatsReadyCallAllowedNs_ = 0;
+
+   private PerformanceMonitor perfMon_;
 
 
    public static StatsComputeQueue create() {
@@ -51,147 +94,226 @@ public final class StatsComputeQueue {
    }
 
    private StatsComputeQueue() {
-      multiWaitExecutor_ = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-            60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
-            ThreadFactoryFactory.createThreadFactory("StatsComputeQueue"));
    }
 
    public void setPerformanceMonitor(PerformanceMonitor perfMon) {
       processor_.setPerformanceMonitor(perfMon);
+      perfMon_ = perfMon;
    }
 
-   public synchronized void start() {
-      if (shutdown_) {
-         throw new IllegalStateException();
-      }
-      processQueue_.start(processIntervalNs_);
+   public synchronized void addListener(Listener listener) {
+      listeners_.addListener(listener, true);
    }
 
-   public synchronized void stop() throws InterruptedException {
-      if (shutdown_) {
-         return;
-      }
-      processQueue_.stop();
+   public synchronized void removeListener(Listener listener) {
+      listeners_.removeListener(listener);
    }
 
    public synchronized void shutdown() throws InterruptedException {
-      multiWaitExecutor_.shutdown();
-      processQueue_.stop();
-      bypassQueue_.clear();
-      shutdown_ = true;
+      processor_.shutdown();
+      computeExecutor_.shutdown();
+      bypassExecutor_.shutdown();
+      resultExecutor_.shutdown();
    }
 
-   public void submitRequest(ImageStatsRequest request)
-   {
-      // We must not acquire the monitor on this here; that would deadlock with
-      // any thread waiting to retrieve a result.
-      // We need not check shutdown_ here, because it is harmless to submit to
-      // a shut-down process queue and bypass queue.
-      // If submitRequest() is called from multiple threads at the same time,
-      // we could end up with items out of order (which may not be an issue),
-      // but that is not an intended use of this class.
-      processQueue_.submitRequest(request);
-      bypassQueue_.submit(request);
+   public synchronized void submitRequest(ImageStatsRequest request) {
+      long sequenceNumber = nextRequestSequenceNumber_++;
+      long nowNs = System.nanoTime();
+      int priority = request.getNumberOfImages();
+
+      if (updateIntervalNs_ < Long.MAX_VALUE) {
+         final long waitTargetNs = updateIntervalNs_ == Long.MAX_VALUE ?
+               Long.MAX_VALUE :
+               nowNs + updateIntervalNs_ - nowNs % Math.max(1, updateIntervalNs_);
+
+         submitCompute(sequenceNumber, priority, request, waitTargetNs);
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("Compute submitted");
+         }
+      }
+      if (updateIntervalNs_ > 0) {
+         submitBypass(sequenceNumber, priority, request);
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("Bypass submitted");
+         }
+      }
    }
 
-   public synchronized ImagesAndStats waitAndRetrieveResult()
-         throws InterruptedException
+   private void submitCompute(final long sequenceNumber, final int priority,
+         final ImageStatsRequest request, final long waitTargetNs)
    {
-      if (shutdown_) {
-         throw new IllegalStateException();
+      while (computeFutures_.size() <= priority) {
+         computeFutures_.add(null);
       }
-      if (processIntervalNs_ == 0) { // No bypass
-         return processQueue_.waitAndRetrieveResult();
+      for (int p = priority; p >= 0; --p) {
+         if (computeFutures_.get(p) != null) {
+            computeFutures_.get(p).cancel(true);
+         }
       }
+      computeFutures_.set(priority, computeExecutor_.submit(new Runnable() {
+         @Override
+         public void run() {
+            // Interruptible wait for the next 'tick'
+            long nowNs = System.nanoTime();
+            if (waitTargetNs > nowNs) {
+               long waitNs = waitTargetNs - nowNs;
+               try {
+                  if (perfMon_ != null) {
+                     perfMon_.sample("Compute pre-delay (ms)", waitNs / 1000000);
+                  }
+                  Thread.sleep(waitNs / 1000000L, (int) (waitNs % 1000000L));
+               }
+               catch (InterruptedException cancel) {
+                  if (perfMon_ != null) {
+                     perfMon_.sampleTimeInterval("Compute pre-delay interrupted");
+                  }
+                  return;
+               }
+            }
 
-      // Processing in interval mode
+            final ImagesAndStats result;
+            try {
+               result = processor_.process(sequenceNumber, request, false);
+            }
+            catch (InterruptedException shouldNotHappen) {
+               Thread.currentThread().interrupt();
+               if (perfMon_ != null) {
+                  perfMon_.sampleTimeInterval("Compute interrupted (!)");
+               }
+               return;
+            }
+            if (perfMon_ != null) {
+               perfMon_.sampleTimeInterval("Compute submitting result");
+            }
+            synchronized (StatsComputeQueue.this) {
+               submitResult(sequenceNumber, priority, result);
 
-      ImageStatsRequest nextRequest = null;
-      if (storedStats_ == null) {
-         // Always wait until the first ever stats become available.
-         storedStats_ = processQueue_.waitAndRetrieveResult();
-         nextRequest = bypassQueue_.retrieveIfAvailable();
+               while (storedStats_.size() <= priority) {
+                  storedStats_.add(null);
+               }
+               for (int p = priority; p >= 0; --p) {
+                  storedStats_.set(p, null);
+               }
+               storedStats_.set(priority, result);
+            }
+         }
+      }));
+   }
+
+   private void submitBypass(final long sequenceNumber, final int priority,
+         final ImageStatsRequest request)
+   {
+      while (bypassFutures_.size() <= priority) {
+         bypassFutures_.add(null);
+      }
+      for (int p = priority; p >= 0; --p) {
+         if (bypassFutures_.get(p) != null) {
+            bypassFutures_.get(p).cancel(false);
+         }
+      }
+      bypassFutures_.set(priority, bypassExecutor_.submit(new Runnable() {
+         @Override
+         public void run() {
+            ImagesAndStats storedStats = null;
+            synchronized (StatsComputeQueue.this) {
+               for (int p = storedStats_.size() - 1; p >= 0; --p) {
+                  storedStats = storedStats_.get(p);
+                  if (storedStats != null) {
+                     break;
+                  }
+               }
+            }
+            final ImagesAndStats result;
+            if (storedStats == null) {
+               result = ImagesAndStats.create(-1, request);
+            }
+            else {
+               result = storedStats.copyForRequest(request);
+            }
+
+            if (perfMon_ != null) {
+               perfMon_.sampleTimeInterval("Compute submitting bypass result");
+            }
+            submitResult(sequenceNumber, priority, result);
+         }
+      }));
+   }
+
+   private synchronized void submitResult(long sequenceNumber,
+         final int priority, final ImagesAndStats result)
+   {
+      if (sequenceNumber < lastResultSequenceNumber_ &&
+            result.isRealStats())
+      {
+         // Prevent late-arriving stats from causing animation to retrogress.
+         // If this result contains new stats, it will still be applied to the
+         // stored stats to be applied to subsequent bypassed requests.
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("Compute result discarded (retro seq nr)");
+         }
+         return;
+      }
+      else if (sequenceNumber <= lastResultSequenceNumber_ &&
+            !result.isRealStats())
+      {
+         // In the event that the bypasses images arrive after
+         // the computed stats for the same request, discard.
+         if (perfMon_ != null) {
+            perfMon_.sampleTimeInterval("Compute bypass discarded (retro seq nr)");
+         }
+         return;
       }
       else {
-         // We generally retrieve the next bypassed request and combine it with
-         // the last-computed stats, refreshing the latter when possible.
-         // However, we also need to ensure that stats for the last-submitted
-         // request eventually gets returned (so that the stats don't remain
-         // stale when we go quiescent). So we need to wait on both queues at
-         // the same time if neither new stats nor a bypassed request is
-         // immediately available.
-         ImagesAndStats newStats = null;
-         for (;;) {
-            newStats = processQueue_.retrieveResultIfAvailable();
-            nextRequest = bypassQueue_.retrieveIfAvailable();
-            if (newStats != null || nextRequest != null) {
-               break;
+         lastResultSequenceNumber_ = sequenceNumber;
+      }
+
+      while (resultFutures_.size() <= priority) {
+         resultFutures_.add(new ArrayDeque<Future<?>>(RESULT_BUFFER_SIZE));
+      }
+      for (int p = priority; p >= 0; --p) {
+         Deque<Future<?>> buffer = resultFutures_.get(p);
+         while (buffer.peekFirst() != null && buffer.peekFirst().isDone()) {
+            buffer.removeFirst();
+         }
+         if (p == priority && perfMon_ != null) {
+            perfMon_.sample("Compute result queue size at priority " + priority,
+                  resultFutures_.get(priority).size());
+         }
+         if (buffer.size() == RESULT_BUFFER_SIZE) { // full, discard oldest
+            buffer.removeFirst().cancel(false);
+         }
+      }
+      resultFutures_.get(priority).addLast(resultExecutor_.submit(new Runnable() {
+         @Override
+         public void run() {
+            long waitNs;
+            synchronized (StatsComputeQueue.this) {
+               waitNs = nextStatsReadyCallAllowedNs_ - System.nanoTime();
             }
-            waitForStatsOrBypass();
-         }
+            if (perfMon_ != null) {
+               perfMon_.sample("Compute result pre-wait (ms)", Math.max(0, waitNs / 1000000));
+            }
+            try {
+               if (waitNs > 0) {
+                  Thread.sleep(waitNs / 1000000, (int) (waitNs % 1000000));
+               }
+            }
+            catch (InterruptedException unexpected) {
+            }
 
-         if (newStats != null) {
-            storedStats_ = newStats;
+            synchronized (StatsComputeQueue.this) {
+               long intervalNs = listeners_.fire().imageStatsReady(result);
+               nextStatsReadyCallAllowedNs_ = System.nanoTime() + intervalNs;
+            }
          }
-      }
-
-      return combineStatsWithRequest(storedStats_, nextRequest);
+      }));
    }
 
-   public synchronized void setProcessIntervalNs(long intervalNs)
-         throws InterruptedException
-   {
-      if (shutdown_) {
-         return;
-      }
-
-      if (intervalNs == processIntervalNs_) {
-         return;
-      }
-
-      processIntervalNs_ = Math.min(0, intervalNs);
-
-      processQueue_.stop();
-      processQueue_.start(processIntervalNs_);
-
-      // We need to ensure that the last-submitted request is always eventually
-      // processed. If there were any unretrieved items when we entered this
-      // method, they are still in the bypass queue, so we re-submit them.
-      List<ImageStatsRequest> requests = bypassQueue_.drain();
-      Collections.reverse(requests); // Resubmit in high-to-low priority order
-      for (ImageStatsRequest request : requests) {
-         submitRequest(request);
-      }
+   public synchronized void setProcessIntervalNs(long intervalNs) {
+      updateIntervalNs_ = Math.max(0, intervalNs);
    }
 
-   private void waitForStatsOrBypass() throws InterruptedException {
-      CompletionService<Void> completion =
-            new ExecutorCompletionService<Void>(multiWaitExecutor_);
-      Future<Void> waitForStats = completion.submit(new Callable<Void>() {
-         @Override
-         public Void call() throws InterruptedException {
-            processQueue_.awaitResult();
-            return null;
-         }
-      });
-      Future<Void> waitForBypass = completion.submit(new Callable<Void>() {
-         @Override
-         public Void call() throws InterruptedException {
-            bypassQueue_.await();
-            return null;
-         }
-      });
-      completion.take();
-      waitForStats.cancel(true);
-      waitForBypass.cancel(true);
-   }
-
-   private ImagesAndStats combineStatsWithRequest(ImagesAndStats stats,
-         ImageStatsRequest request)
-   {
-      if (request == null || stats.getRequest() == request) {
-         return stats;
-      }
-      return stats.copyForRequest(request);
+   public synchronized long getProcessIntervalNs() {
+      return updateIntervalNs_;
    }
 }

@@ -142,7 +142,7 @@ public final class ButtonPanel extends JPanel {
       // Update the display with the new zoom.
       int nextIndex = Math.max(0, Math.min(bestIndex + indexOffset,
                ALLOWED_ZOOMS.length - 1));
-      display.setDisplaySettings(display.getDisplaySettings().copy()
+      display.setDisplaySettings(display.getDisplaySettings().copyBuilder()
             .magnification(ALLOWED_ZOOMS[nextIndex]).build());
    }
 

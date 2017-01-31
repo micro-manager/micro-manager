@@ -23,11 +23,13 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import org.micromanager.AutofocusPlugin;
 import org.micromanager.IntroPlugin;
+import org.micromanager.MMGenericPlugin;
 import org.micromanager.MMPlugin;
 import org.micromanager.MenuPlugin;
 import org.micromanager.PluginManager;
@@ -35,7 +37,7 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
-import org.micromanager.display.InspectorPlugin;
+import org.micromanager.display.inspector.InspectorPlugin;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.MMStudio;
@@ -46,18 +48,19 @@ import org.micromanager.quickaccess.QuickAccessPlugin;
 public final class DefaultPluginManager implements PluginManager {
 
    // List of the types of plugins we allow.
+   // TODO Remove this list and just load all MMGenericPlugin instances
    private static final ArrayList<Class> VALID_CLASSES = new ArrayList<Class>();
    static {
       VALID_CLASSES.add(AcquisitionDialogPlugin.class);
       VALID_CLASSES.add(AutofocusPlugin.class);
-      VALID_CLASSES.add(ProcessorPlugin.class);
+      VALID_CLASSES.add(DisplayGearMenuPlugin.class);
       VALID_CLASSES.add(InspectorPlugin.class);
-      VALID_CLASSES.add(OverlayPlugin.class);
+      VALID_CLASSES.add(InspectorPlugin.class);
       VALID_CLASSES.add(IntroPlugin.class);
       VALID_CLASSES.add(MenuPlugin.class);
+      VALID_CLASSES.add(OverlayPlugin.class);
+      VALID_CLASSES.add(ProcessorPlugin.class);
       VALID_CLASSES.add(QuickAccessPlugin.class);
-      VALID_CLASSES.add(MMPlugin.class);
-      VALID_CLASSES.add(DisplayGearMenuPlugin.class);
    }
 
    private static final String PROCESSOR_MENU = "On-The-Fly Image Processing";
@@ -65,14 +68,14 @@ public final class DefaultPluginManager implements PluginManager {
    private Studio studio_;
    private Thread loadingThread_;
 
-   private HashMap<Class, ArrayList<MMPlugin>> pluginTypeToPlugins_;
+   private final Map<Class, List<MMGenericPlugin>> pluginTypeToPlugins_ =
+         new HashMap<Class, List<MMGenericPlugin>>();
 
    public DefaultPluginManager(Studio studio) {
       studio_ = studio;
 
-      pluginTypeToPlugins_ = new HashMap<Class, ArrayList<MMPlugin>>();
       for (Class classType : VALID_CLASSES) {
-         pluginTypeToPlugins_.put(classType, new ArrayList<MMPlugin>());
+         pluginTypeToPlugins_.put(classType, new ArrayList<MMGenericPlugin>());
       }
       loadingThread_ = new Thread(new Runnable() {
          @Override
@@ -136,10 +139,10 @@ public final class DefaultPluginManager implements PluginManager {
             // HACK: We can load a bunch of scijava stuff from the MMJ_.jar
             // file, which of course isn't really relevant to our interests, so
             // skip things that aren't actually MMPlugins.
-            if (!MMPlugin.class.isAssignableFrom(pluginClass)) {
+            if (!MMGenericPlugin.class.isAssignableFrom(pluginClass)) {
                continue;
             }
-            MMPlugin plugin = (MMPlugin) pluginClass.newInstance();
+            MMGenericPlugin plugin = (MMGenericPlugin) pluginClass.newInstance();
             ReportingUtils.logMessage("Found plugin " + plugin);
             addPlugin(plugin);
          }
@@ -156,8 +159,10 @@ public final class DefaultPluginManager implements PluginManager {
     * Load the provided plugin. We set its context, add it to our
     * pluginTypeToPlugins_ map, and post a NewPluginEvent.
     */
-   private void addPlugin(final MMPlugin plugin) {
-      plugin.setContext(studio_);
+   private void addPlugin(final MMGenericPlugin plugin) {
+      if (plugin instanceof MMPlugin) { // Legacy plugin base class
+         ((MMPlugin) plugin).setContext(studio_);
+      }
       for (Class pluginClass : VALID_CLASSES) {
          if (pluginClass.isInstance(plugin)) {
             pluginTypeToPlugins_.get(pluginClass).add(plugin);
@@ -226,7 +231,7 @@ public final class DefaultPluginManager implements PluginManager {
    @Override
    public HashMap<String, ProcessorPlugin> getProcessorPlugins() {
       HashMap<String, ProcessorPlugin> result = new HashMap<String, ProcessorPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(ProcessorPlugin.class)) {
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(ProcessorPlugin.class)) {
          result.put(plugin.getClass().getName(), (ProcessorPlugin) plugin);
       }
       return result;
@@ -235,7 +240,7 @@ public final class DefaultPluginManager implements PluginManager {
    @Override
    public HashMap<String, OverlayPlugin> getOverlayPlugins() {
       HashMap<String, OverlayPlugin> result = new HashMap<String, OverlayPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(OverlayPlugin.class)) {
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(OverlayPlugin.class)) {
          result.put(plugin.getClass().getName(), (OverlayPlugin) plugin);
       }
       return result;
@@ -244,7 +249,7 @@ public final class DefaultPluginManager implements PluginManager {
    @Override
    public HashMap<String, IntroPlugin> getIntroPlugins() {
       HashMap<String, IntroPlugin> result = new HashMap<String, IntroPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(IntroPlugin.class)) {
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(IntroPlugin.class)) {
          result.put(plugin.getClass().getName(), (IntroPlugin) plugin);
       }
       return result;
@@ -253,7 +258,7 @@ public final class DefaultPluginManager implements PluginManager {
    @Override
    public HashMap<String, MenuPlugin> getMenuPlugins() {
       HashMap<String, MenuPlugin> result = new HashMap<String, MenuPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(MenuPlugin.class)) {
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(MenuPlugin.class)) {
          result.put(plugin.getClass().getName(), (MenuPlugin) plugin);
       }
       return result;
@@ -262,7 +267,7 @@ public final class DefaultPluginManager implements PluginManager {
    @Override
    public HashMap<String, AutofocusPlugin> getAutofocusPlugins() {
       HashMap<String, AutofocusPlugin> result = new HashMap<String, AutofocusPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(AutofocusPlugin.class)) {
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(AutofocusPlugin.class)) {
          result.put(plugin.getClass().getName(), (AutofocusPlugin) plugin);
       }
       return result;
@@ -271,7 +276,7 @@ public final class DefaultPluginManager implements PluginManager {
    @Override
    public HashMap<String, QuickAccessPlugin> getQuickAccessPlugins() {
       HashMap<String, QuickAccessPlugin> result = new HashMap<String, QuickAccessPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(QuickAccessPlugin.class)) {
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(QuickAccessPlugin.class)) {
          result.put(plugin.getClass().getName(), (QuickAccessPlugin) plugin);
       }
       return result;
@@ -280,7 +285,7 @@ public final class DefaultPluginManager implements PluginManager {
    @Override
    public HashMap<String, InspectorPlugin> getInspectorPlugins() {
       HashMap<String, InspectorPlugin> result = new HashMap<String, InspectorPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(InspectorPlugin.class)) {
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(InspectorPlugin.class)) {
          result.put(plugin.getClass().getName(), (InspectorPlugin) plugin);
       }
       return result;
@@ -288,7 +293,7 @@ public final class DefaultPluginManager implements PluginManager {
 
    public HashMap<String, AcquisitionDialogPlugin> getAcquisitionDialogPlugins() {
       HashMap<String, AcquisitionDialogPlugin> result = new HashMap<String, AcquisitionDialogPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(AcquisitionDialogPlugin.class)) {
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(AcquisitionDialogPlugin.class)) {
          result.put(plugin.getClass().getName(), (AcquisitionDialogPlugin) plugin);
       }
       return result;
@@ -297,7 +302,7 @@ public final class DefaultPluginManager implements PluginManager {
    @Override
    public HashMap<String, DisplayGearMenuPlugin> getDisplayGearMenuPlugins() {
       HashMap<String, DisplayGearMenuPlugin> result = new HashMap<String, DisplayGearMenuPlugin>();
-      for (MMPlugin plugin : pluginTypeToPlugins_.get(DisplayGearMenuPlugin.class)) {
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(DisplayGearMenuPlugin.class)) {
          result.put(plugin.getClass().getName(), (DisplayGearMenuPlugin) plugin);
       }
       return result;

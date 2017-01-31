@@ -20,14 +20,20 @@
 
 package org.micromanager.display.internal;
 
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
+import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import com.google.common.eventbus.SubscriberExceptionContext;
+import com.google.common.eventbus.SubscriberExceptionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
+import java.util.WeakHashMap;
 import javax.swing.JOptionPane;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.Datastore;
@@ -45,20 +51,16 @@ import org.micromanager.display.OverlayPanel;
 import org.micromanager.display.OverlayPanelFactory;
 import org.micromanager.display.OverlayPlugin;
 import org.micromanager.display.RequestToCloseEvent;
-import org.micromanager.display.internal.events.DisplayActivatedEvent;
-import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
-import org.micromanager.display.internal.events.ViewerAddedEvent;
-import org.micromanager.display.internal.events.ViewerRemovedEvent;
-import org.micromanager.display.internal.inspector.InspectorFrame;
-import org.micromanager.display.internal.link.DisplayGroupManager;
+import org.micromanager.display.inspector.internal.InspectorCollection;
+import org.micromanager.display.inspector.internal.InspectorController;
 import org.micromanager.events.DatastoreClosingEvent;
-import org.micromanager.events.DisplayAboutToShowEvent;
-import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
+// TODO Methods must implement correct threading semantics!
 public final class DefaultDisplayManager implements DisplayManager {
    private static final String[] CLOSE_OPTIONS = new String[] {
          "Cancel", "Prompt for each", "Close without save prompt"};
@@ -71,16 +73,23 @@ public final class DefaultDisplayManager implements DisplayManager {
    private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
 
    private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
-   private final Stack<DisplayWindow> displayFocusHistory_;
-   private final HashSet<DataViewer> externalViewers_;
+
+   private final DataViewerCollection viewers_ = DataViewerCollection.create();
+
+   private final WeakHashMap<DataViewer, Boolean> haveAutoCreatedInspector_ =
+         new WeakHashMap<DataViewer, Boolean>();
+
+   private final InspectorCollection inspectors_ = InspectorCollection.create();
+
+   private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
    public DefaultDisplayManager(MMStudio studio) {
       studio_ = studio;
       storeToDisplays_ = new HashMap<Datastore, ArrayList<DisplayWindow>>();
-      displayFocusHistory_ = new Stack<DisplayWindow>();
-      externalViewers_ = new HashSet<DataViewer>();
       studio_.events().registerForEvents(this);
       staticInstance_ = this;
+
+      viewers_.registerForEvents(this);
    }
 
    @Override
@@ -132,6 +141,7 @@ public final class DefaultDisplayManager implements DisplayManager {
     */
    @Subscribe
    public void onDatastoreClosed(DatastoreClosingEvent event) {
+      // TODO XXX This should be done by the individual data viewers
       ArrayList<DisplayWindow> displays = null;
       Datastore store = event.getDatastore();
       synchronized (this) {
@@ -167,7 +177,7 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder() {
-      return new DefaultDisplaySettings.Builder();
+      return new DefaultDisplaySettings.LegacyBuilder();
    }
 
    @Override
@@ -230,56 +240,69 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplayWindow createDisplay(Datastore store) {
-      return new DisplayController.Builder(this, store).build();
+      DisplayWindow ret = new DisplayController.Builder(store).build();
+      addViewer(ret);
+      return ret;
    }
 
    @Override
    public DisplayWindow createDisplay(Datastore store, ControlsFactory factory)
    {
-      return new DisplayController.Builder(this, store).
+      DisplayWindow ret = new DisplayController.Builder(store).
             controlsFactory(factory).build();
+      addViewer(ret);
+      return ret;
    }
 
    @Override
-   public void createInspector(DataViewer display) {
-      InspectorFrame.createInspector(display);
-   }
-
-   @Override
-   public boolean createFirstInspector() {
-      return InspectorFrame.createFirstInspector();
-   }
-
-   @Override
-   public void raisedToTop(DataViewer viewer) {
-      if (viewer instanceof DisplayWindow) {
-         // Update our knowledge of the Z-ordering of the DisplayWindows.
-         DisplayWindow display = (DisplayWindow) viewer;
-         if (displayFocusHistory_.contains(display)) {
-            displayFocusHistory_.remove(display);
-            displayFocusHistory_.push(display);
-         }
+   public void createInspectorForDataViewer(DataViewer viewer) {
+      if (viewer == null || viewer.isClosed()) {
+         return;
       }
-      DefaultEventManager.getInstance().post(
-            new DisplayActivatedEvent(viewer));
+      InspectorController inspector = InspectorController.create(viewers_);
+      inspectors_.addInspector(inspector);
+      inspector.attachToFixedDataViewer(viewer);
+      inspector.setVisible(true);
+   }
+
+   private void createInspectorForFrontmostDataViewer() {
+      if (!inspectors_.hasInspectorForFrontmostDataViewer()) {
+         InspectorController inspector = InspectorController.create(viewers_);
+         inspectors_.addInspector(inspector);
+         inspector.attachToFrontmostDataViewer();
+         inspector.setVisible(true);
+      }
+   }
+
+   @Override
+   @Deprecated
+   public boolean createFirstInspector() {
+      createInspectorForFrontmostDataViewer();
+      return true;
    }
 
    @Override
    public void addViewer(DataViewer viewer) {
-      externalViewers_.add(viewer);
-      DisplayGroupManager.getInstance().addDisplay(viewer);
-      DefaultEventManager.getInstance().post(new ViewerAddedEvent(viewer));
-      createFirstInspector();
+      viewers_.addDataViewer(viewer);
+      if (viewer instanceof DisplayWindow) {
+         // TODO DisplayGroupManager.getInstance().addDisplay(viewer);
+      }
+
+      Datastore store = viewer.getDatastore();
+      synchronized (this) {
+         if (getIsManaged(store) && viewer instanceof DisplayWindow) {
+            DisplayWindow display = (DisplayWindow) viewer;
+            storeToDisplays_.get(store).add(display);
+         }
+      }
    }
 
    @Override
    public void removeViewer(DataViewer viewer) {
-      if (!externalViewers_.contains(viewer)) {
-         throw new IllegalArgumentException("Viewer " + viewer + " is not currently tracked.");
+      if (viewer instanceof DisplayWindow) {
+         // TODO DisplayGroupManager.getInstance().removeDisplay(viewer);
       }
-      externalViewers_.remove(viewer);
-      DisplayGroupManager.getInstance().removeDisplay(viewer);
-      DefaultEventManager.getInstance().post(new ViewerRemovedEvent(viewer));
+      viewers_.removeDataViewer(viewer);
    }
 
    @Override
@@ -294,7 +317,7 @@ public final class DefaultDisplayManager implements DisplayManager {
             result.add(tmp);
          }
       }
-      if (result.size() == 0) {
+      if (result.isEmpty()) {
          // No path, or no display settings at the path.  Just create a blank
          // new display.
          result.add(createDisplay(store));
@@ -316,24 +339,39 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public DisplayWindow getCurrentWindow() {
-      if (displayFocusHistory_.isEmpty()) {
-         return null;
-      }
-      return displayFocusHistory_.peek();
+   public DataViewer getActiveDataViewer() {
+      return viewers_.getActiveDataViewer();
    }
 
    @Override
+   @Deprecated
+   public DisplayWindow getCurrentWindow() {
+      DataViewer viewer = viewers_.getActiveDataViewer();
+      if (viewer instanceof DisplayWindow) {
+         return (DisplayWindow) viewer;
+      }
+      return null;
+   }
+
+   // TODO Deprecate this and provide better-named methods that get (1) all
+   // windows in added order or (2) visible windows in most-recently-activated
+   // order. Note that DataViewers are excluded, since a DataViewer may not
+   // have a window.
+   @Override
    public List<DisplayWindow> getAllImageWindows() {
-      return new ArrayList<DisplayWindow>(displayFocusHistory_);
+      List<DataViewer> viewers = viewers_.getAllDataViewers();
+      List<DisplayWindow> ret = new ArrayList<DisplayWindow>();
+      for (DataViewer viewer : viewers) {
+         if (viewer instanceof DisplayWindow) {
+            ret.add((DisplayWindow) viewer);
+         }
+      }
+      return ret;
    }
 
    @Override
    public List<DataViewer> getAllDataViewers() {
-      ArrayList<DataViewer> result = new ArrayList<DataViewer>(
-            getAllImageWindows());
-      result.addAll(externalViewers_);
-      return result;
+      return viewers_.getAllDataViewers();
    }
 
    @Override
@@ -349,6 +387,7 @@ public final class DefaultDisplayManager implements DisplayManager {
       return true;
    }
 
+   // TODO Why is this in the display manager?
    public OverlayPanel createOverlayPanel(String title) {
       OverlayPanelFactory factory = titleToOverlay_.get(title);
       OverlayPanel panel = factory.createOverlayPanel();
@@ -422,6 +461,7 @@ public final class DefaultDisplayManager implements DisplayManager {
       }
    }
 
+   // TODO Why do we need both store and display?
    @Override
    public boolean promptToSave(Datastore store, DisplayWindow display) {
       String[] options = {"Save", "Discard", "Cancel"};
@@ -449,7 +489,7 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public void promptToCloseWindows() {
-      if (getAllImageWindows().size() == 0) {
+      if (getAllImageWindows().isEmpty()) {
          // No open image windows.
          return;
       }
@@ -492,70 +532,46 @@ public final class DefaultDisplayManager implements DisplayManager {
       display.forceClosed();
    }
 
-   /**
-    * Newly-created DisplayWindows should be associated with their Datastores if
-    * the Datastore is being managed.
-    */
    @Subscribe
-   public void onDisplayAboutToShowEvent(DisplayAboutToShowEvent event) {
-      DisplayWindow display = event.getDisplay();
-      Datastore store = display.getDatastore();
-      synchronized (this) {
-         if (getIsManaged(store)) {
-            storeToDisplays_.get(store).add(display);
-            display.registerForEvents(this);
-         }
+   public void onEvent(DataViewerDidBecomeVisibleEvent e) {
+      // If the viewer has been shown for the first time, we ensure that an
+      // inspector is open, set to display info on the frontmost viewer.
+      Boolean haveCreatedInspector =
+            haveAutoCreatedInspector_.get(e.getDataViewer());
+      if (haveCreatedInspector == null || !haveCreatedInspector) {
+         createInspectorForFrontmostDataViewer();
+         haveAutoCreatedInspector_.put(e.getDataViewer(), true);
       }
-      displayFocusHistory_.push(display);
-      DefaultEventManager.getInstance().post(new ViewerAddedEvent(display));
+      eventBus_.post(e);
    }
 
-   /**
-    * Ensure that we don't think the display still exists. Translate the
-    * display-destroyed event into a viewer-removed event.
-    */
    @Subscribe
-   public void onGlobalDisplayDestroyed(GlobalDisplayDestroyedEvent event) {
-      try {
-         DisplayWindow display = event.getDisplay();
-         Datastore store = display.getDatastore();
-         boolean shouldCloseDatastore = false;
-         synchronized (this) {
-            if (getIsManaged(store)) {
-               List<DisplayWindow> displays = storeToDisplays_.get(store);
-               if (displays.contains(display)) {
-                  displays.remove(display);
-               }
-               if (displays.isEmpty()) {
-                  // No more references to this display exist. Clean it up.
-                  storeToDisplays_.remove(store);
-                  shouldCloseDatastore = true;
-               }
-            }
-         }
-         if (shouldCloseDatastore) {
-            store.close();
-         }
-         if (displayFocusHistory_.contains(display)) {
-            displayFocusHistory_.remove(display);
-            if (displayFocusHistory_.size() > 0) {
-               // The next display in the stack must be on top now.
-               raisedToTop(displayFocusHistory_.peek());
-            }
-         }
-         else {
-            // This should never happen.
-            ReportingUtils.logError("DisplayManager informed of destruction of display it didn't know existed.");
-         }
-         DefaultEventManager.getInstance().post(
-               new ViewerRemovedEvent(event.getDisplay()));
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Error handling destroyed display");
-      }
+   public void onEvent(DataViewerDidBecomeInvisibleEvent e) {
+      eventBus_.post(e);
    }
 
+   @Subscribe
+   public void onEvent(DataViewerDidBecomeActiveEvent e) {
+      eventBus_.post(e);
+   }
+
+   @Subscribe
+   public void onEvent(DataViewerWillCloseEvent e) {
+      eventBus_.post(e);
+   }
+
+   @Deprecated
    public static DefaultDisplayManager getInstance() {
       return staticInstance_;
+   }
+
+   @Override
+   public void registerForEvents(Object recipient) {
+      eventBus_.register(recipient);
+   }
+
+   @Override
+   public void unregisterForEvents(Object recipient) {
+      eventBus_.unregister(recipient);
    }
 }

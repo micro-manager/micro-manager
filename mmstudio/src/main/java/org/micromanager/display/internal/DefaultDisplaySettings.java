@@ -20,6 +20,7 @@
 
 package org.micromanager.display.internal;
 
+import com.google.common.base.Preconditions;
 import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
@@ -34,14 +35,244 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.PropertyMap;
-import org.micromanager.data.internal.DefaultPropertyMap;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.utils.DefaultUserProfile;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultDisplaySettings implements DisplaySettings {
+   private final double zoom_;
+   private final double fps_;
+   private final ColorMode mode_;
+   private final boolean uniformChannelScaling_;
+   private final boolean autostretch_;
+   private final boolean useROI_;
+   private final double extremaQuantile_;
+   private final List<ChannelDisplaySettings> channelSettings_;
+
+   private static class Builder implements DisplaySettings.Builder {
+      private double zoom_ = 1.0;
+      private double fps_ = 10.0;
+      private ColorMode mode_ = ColorMode.GRAYSCALE;
+      private boolean useUniformChannelScaling_ = false;
+      private boolean autostretch_ = true;
+      private boolean useROI_ = true;
+      private double extremaQuantile_ = 0.1;
+      private List<ChannelDisplaySettings> channelSettings_ =
+            new ArrayList<ChannelDisplaySettings>();
+
+      private Builder() {
+         channelSettings_.add(DefaultChannelDisplaySettings.builder().build());
+      }
+
+      @Override
+      public Builder zoomRatio(double ratio) {
+         Preconditions.checkArgument(ratio > 0.0);
+         zoom_ = ratio;
+         return this;
+      }
+
+      @Override
+      public Builder playbackFPS(double fps) {
+         Preconditions.checkArgument(fps >= 0.0);
+         fps_ = fps;
+         return this;
+      }
+
+      @Override
+      public Builder colorMode(ColorMode mode) {
+         mode_ = mode;
+         return this;
+      }
+
+      @Override
+      public Builder colorModeComposite() {
+         return colorMode(ColorMode.COMPOSITE);
+      }
+
+      @Override
+      public Builder colorModeGrayscale() {
+         return colorMode(ColorMode.GRAYSCALE);
+      }
+
+      @Override
+      public Builder colorModeSingleColor() {
+         return colorMode(ColorMode.COLOR);
+      }
+
+      @Override
+      public Builder colorModeHighlightSaturated() {
+         return colorMode(ColorMode.HIGHLIGHT_LIMITS);
+      }
+
+      @Override
+      public Builder uniformChannelScaling(boolean enable) {
+         useUniformChannelScaling_ = enable;
+         return this;
+      }
+
+      @Override
+      public Builder autostretch(boolean enable) {
+         autostretch_ = enable;
+         return this;
+      }
+
+      @Override
+      public Builder roiAutoscale(boolean enable) {
+         useROI_ = enable;
+         return this;
+      }
+
+      @Override
+      public Builder autoscaleIgnoredQuantile(double quantile) {
+         Preconditions.checkArgument(quantile >= 0.0);
+         extremaQuantile_ = quantile;
+         return this;
+      }
+
+      @Override
+      public Builder autoscaleIgnoredPercentile(double percentile) {
+         return autoscaleIgnoredQuantile(0.01 * percentile);
+      }
+
+      @Override
+      public Builder channel(int channel) {
+         Preconditions.checkArgument(channel >= 0);
+         while (channelSettings_.size() <= channel) {
+            channelSettings_.add(DefaultChannelDisplaySettings.builder().build());
+         }
+         return this;
+      }
+
+      @Override
+      public Builder channel(int channel, ChannelDisplaySettings settings) {
+         channel(channel);
+         channelSettings_.set(channel, settings);
+         return this;
+      }
+
+      @Override
+      public int getNumberOfChannels() {
+         return channelSettings_.size();
+      }
+
+      @Override
+      public ChannelDisplaySettings getChannelSettings(int channel) {
+         Preconditions.checkArgument(channel >= 0);
+         channel(channel);
+         return channelSettings_.get(channel);
+      }
+
+      @Override
+      public DisplaySettings build() {
+         return new DefaultDisplaySettings(this);
+      }
+   }
+
+   public static DisplaySettings.Builder builder() {
+      return new Builder();
+   }
+
+   private DefaultDisplaySettings(Builder builder) {
+      zoom_ = builder.zoom_;
+      fps_ = builder.fps_;
+      mode_ = builder.mode_;
+      uniformChannelScaling_ = builder.useUniformChannelScaling_;
+      autostretch_ = builder.autostretch_;
+      useROI_ = builder.useROI_;
+      extremaQuantile_ = builder.extremaQuantile_;
+      channelSettings_ =
+            new ArrayList<ChannelDisplaySettings>(builder.channelSettings_);
+   }
+
+   @Override
+   public double getZoomRatio() {
+      return zoom_;
+   }
+
+   @Override
+   public double getPlaybackFPS() {
+      return fps_;
+   }
+
+   @Override
+   public ColorMode getColorMode() {
+      return mode_;
+   }
+
+   @Override
+   public boolean isUniformChannelScalingEnabled() {
+      return uniformChannelScaling_;
+   }
+
+   @Override
+   public boolean isAutostretchEnabled() {
+      return autostretch_;
+   }
+
+   @Override
+   public boolean isROIAutoscaleEnabled() {
+      return useROI_;
+   }
+
+   @Override
+   public double getAutoscaleIgnoredQuantile() {
+      return extremaQuantile_;
+   }
+
+   @Override
+   public double getAutoscaleIgnoredPercentile() {
+      return 100.0 * extremaQuantile_;
+   }
+
+   @Override
+   public int getNumberOfChannels() {
+      return channelSettings_.size();
+   }
+
+   @Override
+   public ChannelDisplaySettings getChannelSettings(int channel) {
+      if (channel >= channelSettings_.size()) {
+         return DefaultChannelDisplaySettings.builder().build();
+      }
+      return channelSettings_.get(channel);
+   }
+
+   @Override
+   public List<ChannelDisplaySettings> getAllChannelSettings() {
+      return new ArrayList<ChannelDisplaySettings>(channelSettings_);
+   }
+
+   @Override
+   public List<Color> getAllChannelColors() {
+      List<Color> ret = new ArrayList<Color>(getNumberOfChannels());
+      for (ChannelDisplaySettings channelSettings : channelSettings_) {
+         ret.add(channelSettings.getColor());
+      }
+      return ret;
+   }
+
+   @Override
+   public Color getChannelColor(int channel) {
+      return getChannelSettings(channel).getColor();
+   }
+
+   @Override
+   public List<Boolean> getAllChannelVisibilities() {
+      List<Boolean> ret = new ArrayList<Boolean>(getNumberOfChannels());
+      for (ChannelDisplaySettings channelSettings : channelSettings_) {
+         ret.add(channelSettings.isVisible());
+      }
+      return ret;
+   }
+
+   @Override
+   public boolean isChannelVisible(int channel) {
+      return getChannelSettings(channel).isVisible();
+   }
+
 
    /**
     * This string is deprecated; it was used in prior versions of MM2.0 before
@@ -70,7 +301,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     */
    public static DefaultDisplaySettings getStandardSettings(String key) {
       DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      Builder builder = new Builder();
+      LegacyBuilder builder = new LegacyBuilder();
       // We have to convert colors to/from int arrays.
       // Note we assume RGB tuples in the colors array.
       // Seven colors because ImageJ only supports 7 channels; put yellow/cyan
@@ -90,9 +321,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             DefaultDisplaySettings.class,
                key + CHANNEL_COLOR_MODE,
                DisplaySettings.ColorMode.COMPOSITE.getIndex())));
-      builder.histogramUpdateRate(profile.getDouble(
-            DefaultDisplaySettings.class,
-               key + HISTOGRAM_UPDATE_RATE, 0.0));
       builder.zoom(profile.getDouble(
             DefaultDisplaySettings.class,
                key + ZOOM_RATIO, 1.0));
@@ -108,15 +336,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       builder.extremaPercentage(profile.getDouble(
             DefaultDisplaySettings.class,
                key + EXTREMA_PERCENTAGE, 0.0));
-      builder.bitDepthIndices(profile.getIntArray(
-            DefaultDisplaySettings.class,
-               key + BIT_DEPTH_INDICES, null));
-      builder.shouldUseLogScale(profile.getBoolean(
-            DefaultDisplaySettings.class,
-               key + SHOULD_USE_LOG_SCALE, false));
-      builder.shouldCalculateStdDev(profile.getBoolean(
-            DefaultDisplaySettings.class,
-               key + SHOULD_CALCULATE_STD_DEV, false));
       // Note we don't store user data in the prefs explicitly; let third-party
       // code manually access the prefs if they want.
       return builder.build();
@@ -133,16 +352,14 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       key = key + "_";
       profile.setDouble(DefaultDisplaySettings.class,
             key + ANIMATION_FPS_DOUBLE,
-            settings.getAnimationFPS());
+            settings.getPlaybackFPS());
       if (settings.getChannelColorMode() != null) {
          profile.setInt(DefaultDisplaySettings.class,
                key + CHANNEL_COLOR_MODE,
                settings.getChannelColorMode().getIndex());
       }
       profile.setDouble(DefaultDisplaySettings.class,
-            key + HISTOGRAM_UPDATE_RATE, settings.getHistogramUpdateRate());
-      profile.setDouble(DefaultDisplaySettings.class,
-            key + ZOOM_RATIO, settings.getZoom());
+            key + ZOOM_RATIO, settings.getZoomRatio());
       profile.setBoolean(DefaultDisplaySettings.class,
             key + SHOULD_SYNC_CHANNELS, settings.getShouldSyncChannels());
       profile.setBoolean(DefaultDisplaySettings.class,
@@ -151,13 +368,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             key + SHOULD_SCALE_WITH_ROI, settings.getShouldScaleWithROI());
       profile.setDouble(DefaultDisplaySettings.class,
             key + EXTREMA_PERCENTAGE, settings.getExtremaPercentage());
-      profile.setIntArray(DefaultDisplaySettings.class,
-            key + BIT_DEPTH_INDICES, settings.getBitDepthIndices());
-      profile.setBoolean(DefaultDisplaySettings.class,
-            key + SHOULD_USE_LOG_SCALE, settings.getShouldUseLogScale());
-      profile.setBoolean(DefaultDisplaySettings.class,
-            key + SHOULD_CALCULATE_STD_DEV,
-            settings.getShouldCalculateStdDev());
    }
 
    /**
@@ -294,6 +504,11 @@ public final class DefaultDisplaySettings implements DisplaySettings {
 
       @Override
       public Boolean getIsVisible() {
+         return isVisible();
+      }
+
+      @Override
+      public Boolean isVisible() {
          return isVisible_;
       }
 
@@ -340,85 +555,90 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
    }
 
-   public static class Builder implements DisplaySettings.DisplaySettingsBuilder {
-      private Color[] channelColors_ = null;
-      private ContrastSettings[] contrastSettings_ = null;
-      private Double zoom_ = null;
-      private Double animationFPS_ = null;
-      private DisplaySettings.ColorMode channelColorMode_ = null;
-      private Double histogramUpdateRate_ = null;
-      private Boolean shouldSyncChannels_ = null;
-      private Boolean shouldAutostretch_ = null;
-      private Boolean shouldScaleWithROI_ = null;
-      private Double extremaPercentage_ = null;
-      private Integer[] bitDepthIndices_ = null;
-      private Boolean shouldUseLogScale_ = null;
-      private Boolean shouldCalculateStdDev_ = null;
-      private PropertyMap userData_ = null;
-
+   @Deprecated
+   public static class LegacyBuilder extends Builder
+         implements DisplaySettings.DisplaySettingsBuilder
+   {
       @Override
       public DefaultDisplaySettings build() {
          return new DefaultDisplaySettings(this);
       }
-      
+
       @Override
       public DisplaySettingsBuilder channelColors(Color[] channelColors) {
-         channelColors_ = (channelColors == null) ? null : channelColors.clone();
+         for (int i = 0; i < channelColors.length; ++i) {
+            if (channelColors[i] == null) {
+               continue;
+            }
+            channel(i, getChannelSettings(i).copyBuilder().
+                  color(channelColors[i]).build());
+         }
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder safeUpdateChannelColor(Color newColor,
             int channelIndex) {
-         if (channelColors_ == null || channelColors_.length <= channelIndex) {
-            Color[] newArray = new Color[channelIndex + 1];
-            // Fill in nulls to start.
-            for (int i = 0; i < newArray.length; ++i) {
-               newArray[i] = null;
-            }
-            if (channelColors_ != null) {
-               // Copy old values across.
-               for (int i = 0; i < channelColors_.length; ++i) {
-                  newArray[i] = channelColors_[i];
-               }
-            }
-            channelColors_ = newArray;
-         }
-         channelColors_[channelIndex] = newColor;
+         channel(channelIndex, getChannelSettings(channelIndex).copyBuilder().
+               color(newColor).build());
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder channelContrastSettings(ContrastSettings[] contrastSettings) {
-         contrastSettings_ = (contrastSettings == null) ? null : contrastSettings.clone();
+         if (contrastSettings == null) {
+            return this;
+         }
+         for (int i = 0; i < contrastSettings.length; ++i) {
+            if (contrastSettings[i] == null) {
+               continue;
+            }
+            safeUpdateContrastSettings(contrastSettings[i], i);
+         }
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder safeUpdateContrastSettings(
-            ContrastSettings newSettings, int channelIndex) {
-         if (contrastSettings_ == null ||
-               contrastSettings_.length <= channelIndex) {
-            ContrastSettings[] newArray = new ContrastSettings[channelIndex + 1];
-            // Fill in nulls to start.
-            for (int i = 0; i < newArray.length; ++i) {
-               newArray[i] = null;
-            }
-            if (contrastSettings_ != null) {
-               // Copy old values across.
-               for (int i = 0; i < contrastSettings_.length; ++i) {
-                  newArray[i] = contrastSettings_[i];
-               }
-            }
-            contrastSettings_ = newArray;
+            ContrastSettings legacySettings, int channelIndex) {
+         if (legacySettings == null) {
+            return this;
          }
-         contrastSettings_[channelIndex] = newSettings;
+         ChannelDisplaySettings channelSettings = getChannelSettings(channelIndex);
+         ChannelDisplaySettings.Builder channelBuilder =
+               channelSettings.copyBuilder();
+         for (int j = 0; j < legacySettings.getNumComponents(); ++j) {
+            ComponentDisplaySettings.Builder componentBuilder =
+                  channelSettings.getComponentSettings(j).copyBuilder();
+            if (legacySettings.getContrastMins() != null &&
+                  legacySettings.getContrastMins()[j] != null) {
+               componentBuilder = componentBuilder.scalingMinimum(
+                     legacySettings.getContrastMins()[j]);
+            }
+            if (legacySettings.getContrastMaxes() != null &&
+                  legacySettings.getContrastMaxes()[j] != null) {
+               componentBuilder = componentBuilder.scalingMaximum(
+                     legacySettings.getContrastMaxes()[j]);
+            }
+            if (legacySettings.getContrastGammas() != null &&
+                  legacySettings.getContrastGammas()[j] != null) {
+               componentBuilder = componentBuilder.scalingGamma(
+                     legacySettings.getContrastGammas()[j]);
+            }
+            channelBuilder.component(j, componentBuilder.build());
+         }
+         if (legacySettings.getIsVisible() != null) {
+            channelBuilder.visible(legacySettings.getIsVisible());
+         }
+         channel(channelIndex, channelBuilder.build());
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder zoom(Double ratio) {
-         zoom_ = ratio;
+         if (ratio != null) {
+            zoomRatio(ratio.doubleValue());
+         }
          return this;
       }
 
@@ -430,272 +650,227 @@ public final class DefaultDisplaySettings implements DisplaySettings {
 
       @Override
       public DisplaySettingsBuilder animationFPS(Double animationFPS) {
-         animationFPS_ = animationFPS;
+         if (animationFPS != null) {
+            playbackFPS(animationFPS);
+         }
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder channelColorMode(ColorMode channelColorMode) {
-         channelColorMode_ = channelColorMode;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder histogramUpdateRate(Double histogramUpdateRate) {
-         histogramUpdateRate_ = histogramUpdateRate;
+         if (channelColorMode != null) {
+            colorMode(channelColorMode);
+         }
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels) {
-         shouldSyncChannels_ = shouldSyncChannels;
+         if (shouldSyncChannels != null) {
+            uniformChannelScaling(shouldSyncChannels);
+         }
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch) {
-         shouldAutostretch_ = shouldAutostretch;
+         if (shouldAutostretch != null) {
+            autostretch(shouldAutostretch);
+         }
          return this;
       }
-      
+
       @Override
       public DisplaySettingsBuilder shouldScaleWithROI(Boolean shouldScaleWithROI) {
-         shouldScaleWithROI_ = shouldScaleWithROI;
+         if (shouldScaleWithROI != null) {
+            roiAutoscale(shouldScaleWithROI);
+         }
          return this;
       }
 
       @Override
       public DisplaySettingsBuilder extremaPercentage(Double extremaPercentage) {
-         extremaPercentage_ = extremaPercentage;
+         if (extremaPercentage != null) {
+            autoscaleIgnoredPercentile(extremaPercentage);
+         }
          return this;
       }
-
-      @Override
-      public DisplaySettingsBuilder bitDepthIndices(Integer[] bitDepthIndices) {
-         bitDepthIndices_ = bitDepthIndices;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder shouldUseLogScale(Boolean shouldUseLogScale) {
-         shouldUseLogScale_ = shouldUseLogScale;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder shouldCalculateStdDev(Boolean shouldCalculateStdDev) {
-         shouldCalculateStdDev_ = shouldCalculateStdDev;
-         return this;
-      }
-
-      @Override
-      public DisplaySettingsBuilder userData(PropertyMap userData) {
-         userData_ = userData;
-         return this;
-      }
-   }
-
-   private Color[] channelColors_ = null;
-   private ContrastSettings[] contrastSettings_ = null;
-   private Double zoom_ = null;
-   private Double animationFPS_ = null;
-   private DisplaySettings.ColorMode channelColorMode_ = null;
-   private Double histogramUpdateRate_ = null;
-   private Boolean shouldSyncChannels_ = null;
-   private Boolean shouldAutostretch_ = null;
-   private Boolean shouldScaleWithROI_ = null;
-   private Double extremaPercentage_ = null;
-   private Integer[] bitDepthIndices_ = null;
-   private Boolean shouldUseLogScale_ = null;
-   private Boolean shouldCalculateStdDev_ = null;
-   private PropertyMap userData_ = null;
-
-   public DefaultDisplaySettings(Builder builder) {
-      channelColors_ = builder.channelColors_;
-      contrastSettings_ = builder.contrastSettings_;
-      zoom_ = builder.zoom_;
-      animationFPS_ = builder.animationFPS_;
-      channelColorMode_ = builder.channelColorMode_;
-      histogramUpdateRate_ = builder.histogramUpdateRate_;
-      shouldSyncChannels_ = builder.shouldSyncChannels_;
-      shouldAutostretch_ = builder.shouldAutostretch_;
-      shouldScaleWithROI_ = builder.shouldScaleWithROI_;
-      extremaPercentage_ = builder.extremaPercentage_;
-      bitDepthIndices_ = builder.bitDepthIndices_;
-      shouldUseLogScale_ = builder.shouldUseLogScale_;
-      shouldCalculateStdDev_ = builder.shouldCalculateStdDev_;
-      userData_ = builder.userData_;
    }
 
    @Override
+   @Deprecated
    public Color[] getChannelColors() {
-      return channelColors_;
+      Color[] ret = new Color[getNumberOfChannels()];
+      for (int i = 0; i < ret.length; ++i) {
+         ret[i] = getChannelSettings(i).getColor();
+      }
+      return ret;
    }
 
    @Override
+   @Deprecated
    public Color getSafeChannelColor(int index, Color defaultVal) {
-      if (index < 0 || channelColors_ == null ||
-            channelColors_.length <= index ||
-            channelColors_[index] == null) {
+      if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
-      return channelColors_[index];
+      return getChannelSettings(index).getColor();
    }
 
    @Override
    public ContrastSettings[] getChannelContrastSettings() {
-      return contrastSettings_;
+      ContrastSettings[] ret = new ContrastSettings[getNumberOfChannels()];
+      for (int i = 0; i < getNumberOfChannels(); ++i) {
+         ret[i] = getSafeContrastSettings(i, null);
+      }
+      return ret;
    }
 
    @Override
    public ContrastSettings getSafeContrastSettings(int index,
          ContrastSettings defaultVal) {
-      if (index < 0 || contrastSettings_ == null ||
-            contrastSettings_.length <= index ||
-            contrastSettings_[index] == null) {
+      if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
-      return contrastSettings_[index];
+      ChannelDisplaySettings channelSettings = getChannelSettings(index);
+      int nComponents = channelSettings.getNumberOfComponents();
+      Integer[] mins = new Integer[nComponents];
+      Integer[] maxes = new Integer[nComponents];
+      Double[] gammas = new Double[nComponents];
+      for (int j = 0; j < nComponents; ++j) {
+         ComponentDisplaySettings componentSettings =
+               channelSettings.getComponentSettings(j);
+         long min = componentSettings.getScalingMinimum();
+         mins[j] = min > Integer.MAX_VALUE ? null : (int) min;
+         long max = componentSettings.getScalingMaximum();
+         maxes[j] = max > Integer.MAX_VALUE ? null : (int) max;
+         gammas[j] = componentSettings.getScalingGamma();
+      }
+      return new DefaultContrastSettings(mins, maxes, gammas,
+            channelSettings.isVisible());
    }
 
    @Override
    public Integer getSafeContrastMin(int index, int component,
          Integer defaultVal) {
-      if (index < 0 || contrastSettings_ == null ||
-            contrastSettings_.length <= index ||
-            contrastSettings_[index] == null) {
+      if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
-      return contrastSettings_[index].getSafeContrastMin(component, defaultVal);
+      ChannelDisplaySettings channelSettings = getChannelSettings(index);
+      if (component < 0 || component >= channelSettings.getNumberOfComponents()) {
+         return defaultVal;
+      }
+      long min = channelSettings.getComponentSettings(component).getScalingMinimum();
+      return min > Integer.MAX_VALUE ? defaultVal : (int) min;
    }
 
    @Override
    public Integer getSafeContrastMax(int index, int component,
          Integer defaultVal) {
-      if (index < 0 || contrastSettings_ == null ||
-            contrastSettings_.length <= index ||
-            contrastSettings_[index] == null) {
+      if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
-      return contrastSettings_[index].getSafeContrastMax(component, defaultVal);
+      ChannelDisplaySettings channelSettings = getChannelSettings(index);
+      if (component < 0 || component >= channelSettings.getNumberOfComponents()) {
+         return defaultVal;
+      }
+      long max = channelSettings.getComponentSettings(component).getScalingMaximum();
+      return max > Integer.MAX_VALUE ? defaultVal : (int) max;
    }
 
    @Override
    public Double getSafeContrastGamma(int index, int component,
          Double defaultVal) {
-      if (index < 0 || contrastSettings_ == null ||
-            contrastSettings_.length <= index ||
-            contrastSettings_[index] == null) {
+      if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
-      return contrastSettings_[index].getSafeContrastGamma(component, defaultVal);
+      ChannelDisplaySettings channelSettings = getChannelSettings(index);
+      if (component < 0 || component >= channelSettings.getNumberOfComponents()) {
+         return defaultVal;
+      }
+      return channelSettings.getComponentSettings(component).getScalingGamma();
    }
 
    @Override
    public Boolean getSafeIsVisible(int index, Boolean defaultVal) {
-      if (index < 0 || contrastSettings_ == null ||
-            contrastSettings_.length <= index ||
-            contrastSettings_[index] == null ||
-            contrastSettings_[index].getIsVisible() == null) {
+      if (index < 0 || index >= getNumberOfChannels()) {
          return defaultVal;
       }
-      return contrastSettings_[index].getIsVisible();
-   }
-
-   @Override
-   public Double getZoom() {
-      return zoom_;
+      return getChannelSettings(index).isVisible();
    }
 
    @Override
    @Deprecated
    public Double getMagnification() {
-      return getZoom();
+      return getZoomRatio();
    }
 
    @Override
    public Double getAnimationFPS() {
-      return animationFPS_;
+      return getPlaybackFPS();
    }
 
    @Override
    public DisplaySettings.ColorMode getChannelColorMode() {
-      return channelColorMode_;
-   }
-
-   @Override
-   public Double getHistogramUpdateRate() {
-      return histogramUpdateRate_;
+      return getColorMode();
    }
 
    @Override
    public Boolean getShouldSyncChannels() {
-      return shouldSyncChannels_;
+      return null;
    }
 
    @Override
    public Boolean getShouldAutostretch() {
-      return shouldAutostretch_;
+      return isAutostretchEnabled();
    }
-   
+
    @Override
    public Boolean getShouldScaleWithROI() {
-      return shouldScaleWithROI_;
+      return isROIAutoscaleEnabled();
    }
 
    @Override
    public Double getExtremaPercentage() {
-      return extremaPercentage_;
+      return getAutoscaleIgnoredPercentile();
    }
 
    @Override
-   public Integer[] getBitDepthIndices() {
-      return bitDepthIndices_;
-   }
-
-
-   @Override
-   public Integer getSafeBitDepthIndex(int index, Integer defaultVal) {
-      if (index < 0 || bitDepthIndices_ == null ||
-            bitDepthIndices_.length <= index ||
-            bitDepthIndices_[index] == null) {
-         return defaultVal;
+   public DisplaySettings.Builder copyBuilder() {
+      DisplaySettings.Builder ret = builder().zoomRatio(zoom_).playbackFPS(fps_).colorMode(mode_).
+            uniformChannelScaling(uniformChannelScaling_).
+            autostretch(autostretch_).roiAutoscale(useROI_).autoscaleIgnoredQuantile(extremaQuantile_);
+      for (int i = 0; i < getNumberOfChannels(); ++i) {
+         ret.channel(i, channelSettings_.get(i));
       }
-      return bitDepthIndices_[index];
+      return ret;
    }
 
    @Override
-   public Boolean getShouldUseLogScale() {
-      return shouldUseLogScale_;
+   public DisplaySettings.Builder copyBuilderWithChannelSettings(int channel,
+         ChannelDisplaySettings settings)
+   {
+      return copyBuilder().channel(channel, settings);
    }
 
    @Override
-   public Boolean getShouldCalculateStdDev() {
-      return shouldCalculateStdDev_;
-   }
-
-   @Override
-   public PropertyMap getUserData() {
-      return userData_;
+   public DisplaySettings.Builder copyBuilderWithComponentSettings(
+         int channel, int component, ComponentDisplaySettings settings)
+   {
+      return copyBuilder().channel(channel,
+            getChannelSettings(channel).
+                  copyBuilderWithComponentSettings(component, settings).
+                  build());
    }
 
    @Override
    public DisplaySettingsBuilder copy() {
-      return new Builder()
-            .channelColors(channelColors_)
-            .channelContrastSettings(contrastSettings_)
-            .zoom(zoom_)
-            .animationFPS(animationFPS_)
-            .channelColorMode(channelColorMode_)
-            .histogramUpdateRate(histogramUpdateRate_)
-            .shouldSyncChannels(shouldSyncChannels_)
-            .shouldAutostretch(shouldAutostretch_)
-            .shouldScaleWithROI(shouldScaleWithROI_)
-            .extremaPercentage(extremaPercentage_)
-            .bitDepthIndices(bitDepthIndices_)
-            .shouldUseLogScale(shouldUseLogScale_)
-            .shouldCalculateStdDev(shouldCalculateStdDev_)
-            .userData(userData_);
+      DisplaySettings.Builder ret = new LegacyBuilder().zoomRatio(zoom_).playbackFPS(fps_).colorMode(mode_).
+            uniformChannelScaling(uniformChannelScaling_).
+            autostretch(autostretch_).roiAutoscale(useROI_).autoscaleIgnoredQuantile(extremaQuantile_);
+      for (int i = 0; i < getNumberOfChannels(); ++i) {
+         ret.channel(i, channelSettings_.get(i));
+      }
+      return (LegacyBuilder) ret;
    }
 
    /**
@@ -704,10 +879,10 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     */
    public static DefaultDisplaySettings legacyFromJSON(JSONObject tags) {
       if (tags == null) {
-         return new Builder().build();
+         return new LegacyBuilder().build();
       }
       try {
-         Builder builder = new Builder();
+         LegacyBuilder builder = new LegacyBuilder();
          // Check for both methods of storing colors (see toJSON, below)
          if (MDUtils.hasChannelColor(tags)) {
             builder.channelColors(new Color[] {new Color(MDUtils.getChannelColor(tags))});
@@ -761,13 +936,10 @@ public final class DefaultDisplaySettings implements DisplaySettings {
                      tags.getInt(CHANNEL_COLOR_MODE)));
          }
          if (tags.has(ZOOM_RATIO)) {
-            builder.zoom(tags.getDouble(ZOOM_RATIO));
+            builder.zoomRatio(tags.getDouble(ZOOM_RATIO));
          }
          if (tags.has(ANIMATION_FPS_DOUBLE)) {
-            builder.animationFPS(tags.getDouble(ANIMATION_FPS_DOUBLE));
-         }
-         if (tags.has(HISTOGRAM_UPDATE_RATE)) {
-            builder.histogramUpdateRate(tags.getDouble(HISTOGRAM_UPDATE_RATE));
+            builder.playbackFPS(tags.getDouble(ANIMATION_FPS_DOUBLE));
          }
          if (tags.has(SHOULD_SYNC_CHANNELS)) {
             builder.shouldSyncChannels(tags.getBoolean(SHOULD_SYNC_CHANNELS));
@@ -781,25 +953,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          if (tags.has(EXTREMA_PERCENTAGE)) {
             builder.extremaPercentage(tags.getDouble(EXTREMA_PERCENTAGE));
          }
-         if (tags.has(BIT_DEPTH_INDICES)) {
-            JSONArray indices = tags.getJSONArray(BIT_DEPTH_INDICES);
-            Integer[] indicesArr = new Integer[indices.length()];
-            for (int i = 0; i < indicesArr.length; ++i) {
-               indicesArr[i] = indices.getInt(i);
-            }
-            builder.bitDepthIndices(indicesArr);
-         }
-         if (tags.has(SHOULD_USE_LOG_SCALE)) {
-            builder.shouldUseLogScale(tags.getBoolean(SHOULD_USE_LOG_SCALE));
-         }
-         if (tags.has(SHOULD_CALCULATE_STD_DEV)) {
-            builder.shouldCalculateStdDev(
-                  tags.getBoolean(SHOULD_CALCULATE_STD_DEV));
-         }
-         if (tags.has(USER_DATA)) {
-            builder.userData(DefaultPropertyMap.fromJSON(tags.getJSONObject(USER_DATA)));
-         }
-
          return builder.build();
       }
       catch (JSONException e) {
@@ -895,12 +1048,13 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          // We store color in two ways: the backwards-compatible
          // "ChColor" tag (via setChannelColor()), and a method that preserves
          // all channel colors.
-         if (channelColors_ != null && channelColors_.length > 0) {
-            if (channelColors_[0] != null) {
-               MDUtils.setChannelColor(result, channelColors_[0].getRGB());
+         Color[] channelColors = getChannelColors();
+         if (channelColors != null && channelColors.length > 0) {
+            if (channelColors[0] != null) {
+               MDUtils.setChannelColor(result, channelColors[0].getRGB());
             }
             JSONArray colors = new JSONArray();
-            for (Color color : channelColors_) {
+            for (Color color : channelColors) {
                if (color != null) {
                   colors.put(color.getRGB());
                }
@@ -908,36 +1062,24 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             result.put("ChColors", colors);
          }
          // TODO: doesn't handle multi-component images.
-         if (contrastSettings_ != null && contrastSettings_.length > 0) {
+         ContrastSettings[] contrastSettings = getChannelContrastSettings();
+         if (contrastSettings != null && contrastSettings.length > 0) {
             JSONArray mins = new JSONArray();
             JSONArray maxes = new JSONArray();
-            for (int i = 0; i < contrastSettings_.length; ++i) {
+            for (int i = 0; i < contrastSettings.length; ++i) {
                mins.put(getSafeContrastMin(i, 0, -1));
                maxes.put(getSafeContrastMax(i, 0, -1));
             }
             result.put("ChContrastMin", mins);
             result.put("ChContrastMax", maxes);
          }
-         result.put(CHANNEL_COLOR_MODE, channelColorMode_.getIndex());
+         result.put(CHANNEL_COLOR_MODE, mode_.getIndex());
          result.put(ZOOM_RATIO, zoom_);
-         result.put(ANIMATION_FPS_DOUBLE, animationFPS_);
-         result.put(HISTOGRAM_UPDATE_RATE, histogramUpdateRate_);
-         result.put(SHOULD_SYNC_CHANNELS, shouldSyncChannels_);
-         result.put(SHOULD_AUTOSTRETCH, shouldAutostretch_);
-         result.put(SHOULD_SCALE_WITH_ROI, shouldScaleWithROI_);
-         result.put(EXTREMA_PERCENTAGE, extremaPercentage_);
-         if (bitDepthIndices_ != null && bitDepthIndices_.length > 0) {
-            JSONArray indices = new JSONArray();
-            for (int i = 0; i < bitDepthIndices_.length; ++i) {
-               indices.put(bitDepthIndices_[i]);
-            }
-            result.put(BIT_DEPTH_INDICES, indices);
-         }
-         result.put(SHOULD_USE_LOG_SCALE, shouldUseLogScale_);
-         result.put(SHOULD_CALCULATE_STD_DEV, shouldCalculateStdDev_);
-         if (userData_ != null) {
-            result.put(USER_DATA, ((DefaultPropertyMap) userData_).toJSON());
-         }
+         result.put(ANIMATION_FPS_DOUBLE, fps_);
+         result.put(SHOULD_SYNC_CHANNELS, uniformChannelScaling_);
+         result.put(SHOULD_AUTOSTRETCH, autostretch_);
+         result.put(SHOULD_SCALE_WITH_ROI, useROI_);
+         result.put(EXTREMA_PERCENTAGE, 100.0 * extremaQuantile_);
          return result;
       }
       catch (JSONException e) {

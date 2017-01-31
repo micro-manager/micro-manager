@@ -16,19 +16,20 @@ package org.micromanager.display.internal;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import javax.swing.BoundedRangeModel;
-import javax.swing.JButton;
-import javax.swing.JLabel;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
-import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import net.miginfocom.layout.CC;
+import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
 /**
@@ -39,8 +40,8 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  *
  * @author Mark A. Tsuchida, based in part on earlier version by Chris Weisiger
  */
-public class NDScrollBarPanel extends JPanel implements ChangeListener {
-   interface Listener {
+public class NDScrollBarPanel extends JPanel implements AdjustmentListener {
+   public interface Listener {
       void scrollBarPanelHeightWillChange(NDScrollBarPanel panel,
             int currentHeight);
       void scrollBarPanelHeightDidChange(NDScrollBarPanel panel,
@@ -48,14 +49,25 @@ public class NDScrollBarPanel extends JPanel implements ChangeListener {
       void scrollBarPanelDidChangePositionInUI(NDScrollBarPanel panel);
    }
 
-   private final List<Listener> listeners_ = new ArrayList<Listener>();
+   interface ControlsFactory {
+      JComponent getControlsForAxis(String axis, int heightHint);
+   }
+
+   private final EventListenerSupport<Listener> listeners_ =
+         EventListenerSupport.create(Listener.class);
+
+   private final ControlsFactory leftControlsFactory_;
+   private final ControlsFactory rightControlsFactory_;
 
    private final List<String> axes_ = new ArrayList<String>();
    private final List<JPanel> rowPanels_ = new ArrayList<JPanel>();
 
-   private boolean shouldSuppressChangeEvents_ = false;
+   // We need to independently keep track of the last known positions in order
+   // to filter out undesired adjustment events.
+   private final List<Integer> scrollBarPositions_ = new ArrayList<Integer>();
+   private boolean shouldSuppressAdjustmentEvents_ = false;
 
-   private static final int ROW_HEIGHT =
+   public static final int ROW_HEIGHT =
          new JScrollBar(JScrollBar.HORIZONTAL).getPreferredSize().height;
 
    // JScrollBar/BoundedRangeModel mapping to axis position:
@@ -65,23 +77,29 @@ public class NDScrollBarPanel extends JPanel implements ChangeListener {
    // - BoundedRangeModel extent == (axis length > 0 ? 1 : 0)
 
    @MustCallOnEDT
-   static NDScrollBarPanel create() {
-      return new NDScrollBarPanel();
+   static NDScrollBarPanel create(ControlsFactory leftControlsFactory,
+         ControlsFactory rightControlsFactory)
+   {
+      return new NDScrollBarPanel(leftControlsFactory, rightControlsFactory);
    }
 
    @MustCallOnEDT
-   private NDScrollBarPanel() {
-      super(new MigLayout("insets 0, gapy 0, fillx"));
+   private NDScrollBarPanel(ControlsFactory leftControlsFactory,
+         ControlsFactory rightControlsFactory)
+   {
+      super(new MigLayout(new LC().insets("0").gridGap("0", "0").fillX()));
+      leftControlsFactory_ = leftControlsFactory;
+      rightControlsFactory_ = rightControlsFactory;
    }
 
    @MustCallOnEDT
    void addListener(Listener listener) {
-      listeners_.add(listener);
+      listeners_.addListener(listener, true);
    }
 
    @MustCallOnEDT
    void removeListener(Listener listener) {
-      listeners_.remove(listener);
+      listeners_.removeListener(listener);
    }
 
    @MustCallOnEDT
@@ -106,16 +124,19 @@ public class NDScrollBarPanel extends JPanel implements ChangeListener {
          throw new NullPointerException();
       }
 
-      shouldSuppressChangeEvents_ = true;
+      shouldSuppressAdjustmentEvents_ = true;
       try {
          List<JPanel> newPanels = new ArrayList<JPanel>(axes.size());
+         List<Integer> newScrollBarPositions = new ArrayList<Integer>(axes.size());
          for (String axis : axes) {
             int existingIndex = axes_.indexOf(axis);
             if (existingIndex >= 0) {
                newPanels.add(rowPanels_.get(existingIndex));
+               newScrollBarPositions.add(scrollBarPositions_.get(existingIndex));
             }
             else {
                newPanels.add(makeRowPanel(axis, 0));
+               newScrollBarPositions.add(0);
             }
          }
 
@@ -123,19 +144,19 @@ public class NDScrollBarPanel extends JPanel implements ChangeListener {
 
          int oldHeight = getHeight();
          if (isRowCountChanging) {
-            for (Listener l : listeners_) {
-               l.scrollBarPanelHeightWillChange(this, getHeight());
-            }
+            listeners_.fire().scrollBarPanelHeightWillChange(this, getHeight());
          }
 
          axes_.clear();
          axes_.addAll(axes);
          rowPanels_.clear();
          rowPanels_.addAll(newPanels);
+         scrollBarPositions_.clear();
+         scrollBarPositions_.addAll(newScrollBarPositions);
 
          removeAll();
          for (JPanel rowPanel : rowPanels_) {
-            add(rowPanel, "growx, wrap");
+            add(rowPanel, new CC().growX().wrap());
          }
          invalidate();
          setMinimumSize(new Dimension(getMinimumSize().width,
@@ -143,13 +164,12 @@ public class NDScrollBarPanel extends JPanel implements ChangeListener {
 
          if (isRowCountChanging) {
             int newHeight = getPreferredSize().height;
-            for (Listener l : listeners_) {
-               l.scrollBarPanelHeightDidChange(this, oldHeight, newHeight);
-            }
+            listeners_.fire().scrollBarPanelHeightDidChange(this,
+                  oldHeight, newHeight);
          }
       }
       finally {
-         shouldSuppressChangeEvents_ = false;
+         shouldSuppressAdjustmentEvents_ = false;
       }
    }
 
@@ -165,7 +185,7 @@ public class NDScrollBarPanel extends JPanel implements ChangeListener {
 
    @MustCallOnEDT
    void setAxisLength(String axis, int length) {
-      shouldSuppressChangeEvents_ = true;
+      shouldSuppressAdjustmentEvents_ = true;
       try {
          if (length < 0) {
             throw new IllegalArgumentException();
@@ -175,7 +195,7 @@ public class NDScrollBarPanel extends JPanel implements ChangeListener {
                (length > 0 ? 1 : 0), 0, length, false);
       }
       finally {
-         shouldSuppressChangeEvents_ = false;
+         shouldSuppressAdjustmentEvents_ = false;
       }
    }
 
@@ -186,12 +206,16 @@ public class NDScrollBarPanel extends JPanel implements ChangeListener {
 
    @MustCallOnEDT
    void setAxisPosition(String axis, int position) {
-      shouldSuppressChangeEvents_ = true;
+      shouldSuppressAdjustmentEvents_ = true;
       try {
          getScrollBarForAxis(axis).setValue(position);
+         int index = axes_.indexOf(axis);
+         if (index >= 0) { // Should be true
+            scrollBarPositions_.set(index, position);
+         }
       }
       finally {
-         shouldSuppressChangeEvents_ = false;
+         shouldSuppressAdjustmentEvents_ = false;
       }
    }
 
@@ -219,31 +243,49 @@ public class NDScrollBarPanel extends JPanel implements ChangeListener {
    @MustCallOnEDT
    private JPanel makeRowPanel(String axis, int length) {
       JPanel rowPanel = new JPanel(
-            new MigLayout("insets 0, gap 0 0, fillx"));
+            new MigLayout(new LC().insets("0").gridGap("0", "0").fillX()));
 
-      JLabel axisLabel = new JLabel(axis.substring(0, 1)); // Temporary
-      Dimension axisLabelSize = new Dimension(ROW_HEIGHT, ROW_HEIGHT);
-      axisLabel.setMinimumSize(axisLabelSize);
-      axisLabel.setMaximumSize(axisLabelSize);
-      axisLabel.setPreferredSize(axisLabelSize);
-      axisLabel.setHorizontalAlignment(SwingConstants.CENTER);
-      rowPanel.add(axisLabel, "split 2");
+      if (leftControlsFactory_ != null) {
+         JComponent leftControls =
+               leftControlsFactory_.getControlsForAxis(axis, ROW_HEIGHT);
+         rowPanel.add(leftControls, new CC());
+      }
 
       JScrollBar scrollBar = new JScrollBar(JScrollBar.HORIZONTAL,
             0, (length > 0 ? 1 : 0), 0, length);
-      scrollBar.getModel().addChangeListener(this);
-      rowPanel.add(scrollBar, "growx, wrap");
+      scrollBar.addAdjustmentListener(this);
+      rowPanel.add(scrollBar, new CC().growX().pushX());
+
+      if (rightControlsFactory_ != null) {
+         JComponent rightControls =
+               rightControlsFactory_.getControlsForAxis(axis, ROW_HEIGHT);
+         rowPanel.add(rightControls, new CC());
+      }
 
       return rowPanel;
    }
 
-   @Override // ChangeListener
-   public void stateChanged(ChangeEvent e) {
-      if (shouldSuppressChangeEvents_) {
+   @Override
+   public void adjustmentValueChanged(AdjustmentEvent e) {
+      if (shouldSuppressAdjustmentEvents_) {
          return;
       }
-      for (Listener l : listeners_) {
-         l.scrollBarPanelDidChangePositionInUI(this);
+
+      // Skip events that don't actually change the scroll bar position
+      JScrollBar scrollBar = (JScrollBar) e.getSource();
+      ROW_LOOP: for (int i = 0; i < axes_.size(); ++i) {
+         JPanel rowPanel = rowPanels_.get(i);
+         for (Component c : rowPanel.getComponents()) {
+            if (c == scrollBar) {
+               int knownPosition = scrollBarPositions_.get(i);
+               if (e.getValue() == knownPosition) {
+                  return;
+               }
+               break ROW_LOOP;
+            }
+         }
       }
+
+      listeners_.fire().scrollBarPanelDidChangePositionInUI(this);
    }
 }

@@ -21,9 +21,7 @@
 package org.micromanager.data;
 
 import java.awt.Window;
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Datastores provide access to image data and metadata. You are not expected to

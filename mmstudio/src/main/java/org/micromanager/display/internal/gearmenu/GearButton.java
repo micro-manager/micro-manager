@@ -32,7 +32,7 @@ import javax.swing.event.MouseInputAdapter;
 import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.inspector.InspectorFrame;
+import org.micromanager.display.inspector.internal.InspectorController;
 import org.micromanager.internal.utils.SortedMenu;
 import org.micromanager.internal.utils.SortedPopupMenu;
 
@@ -50,7 +50,7 @@ public final class GearButton extends JButton {
       openInspector.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            InspectorFrame.createInspector(display);
+            InspectorController.createInspector(display);
          }
       });
       menu_.addUnsorted(openInspector);

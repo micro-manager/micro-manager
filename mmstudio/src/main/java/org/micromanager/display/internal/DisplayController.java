@@ -14,69 +14,87 @@
 
 package org.micromanager.display.internal;
 
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
-import java.awt.Rectangle;
 import java.awt.Window;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 import javax.swing.SwingUtilities;
-import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.display.ControlsFactory;
-import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.NewDisplaySettingsEvent;
+import org.micromanager.display.inspector.internal.ImageStatsPublisher;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.animate.DataCoordsAnimationState;
+import org.micromanager.display.internal.event.DefaultImagesDidDisplayEvent;
+import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
 import org.micromanager.events.internal.DefaultEventManager;
-import org.micromanager.internal.utils.MMSwingUtilities;
-import org.micromanager.internal.utils.MMSwingUtilities.CoalescentRunnable;
+import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
+import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.WallTimer;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 
 /**
- * Main controller for MMStudio's default image viewer.
+ * Main controller for the standard image viewer.
  *
  * @author Mark A. Tsuchida, parts refactored from code by Chris Weisiger
  */
 public final class DisplayController extends DisplayWindowAPIAdapter
       implements DisplayWindow,
+      ImageStatsPublisher,
       DataCoordsAnimationState.CoordsProvider,
-      AnimationController.Listener<Coords>
+      AnimationController.Listener<Coords>,
+      StatsComputeQueue.Listener
 {
-   private final DefaultDisplayManager parent_;
    private final DataProvider dataProvider_;
+
+   // The actually painted images. Accessed only on EDT.
+   private ImagesAndStats displayedImages_;
+
+   // Accessed only on EDT
+   private long latestStatsSeqNr_ = -1;
 
    // Not final but set only upon creation
    private DataCoordsAnimationState animationState_;
    // Not final but set only upon creation
    private AnimationController<Coords> animationController_;
 
-   private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
+   private final Set<String> playbackAxes_ = new HashSet<String>();
 
+   private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
-   private Thread repaintSchedulerThread_;
 
    // The UI controller manages the actual JFrame and all the components in it,
    // including interaction with ImageJ. After being closed, set to null.
    // Must access on EDT
    private DisplayUIController uiController_;
+
+   private final Object selectionLock_ = new Object();
+   private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
 
    // A way to know from a non-EDT thread that the display has definitely
    // closed (may not be true for a short period after closing)
@@ -91,27 +109,24 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public static final String DEFAULT_SETTINGS_PROFILE_KEY = "Default";
    private String settingsProfileKey_ = DEFAULT_SETTINGS_PROFILE_KEY;
 
+   private final CoalescentEDTRunnablePool runnablePool_ =
+         CoalescentEDTRunnablePool.create();
+
    private final PerformanceMonitor perfMon_ =
          PerformanceMonitor.createWithTimeConstantMs(1000.0);
    private final PerformanceMonitorUI perfMonUI_ =
          PerformanceMonitorUI.create(perfMon_, "Display Performance");
 
-   private static final class RepaintTaskTag {}
-
    public static class Builder {
-      private final DefaultDisplayManager parent_;
       private DataProvider dataProvider_;
       private DisplaySettings displaySettings_;
       private String settingsProfileKey_;
       private boolean shouldShow_;
       private ControlsFactory controlsFactory_;
 
-      public Builder(DefaultDisplayManager parent, DataProvider dataProvider)
+      public Builder(DataProvider dataProvider)
       {
-         if (parent == null || dataProvider == null) {
-            throw new NullPointerException();
-         }
-         parent_ = parent;
+         Preconditions.checkNotNull(dataProvider);
          dataProvider_ = dataProvider;
       }
 
@@ -149,7 +164,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
    }
 
-   // TODO Provide parent display manager or Studio?
    @MustCallOnEDT
    private static DisplayController create(Builder builder)
    {
@@ -162,34 +176,38 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                builder.dataProvider_.getAxisLength(Coords.CHANNEL));
       }
       if (initialDisplaySettings == null) {
-         initialDisplaySettings = new DefaultDisplaySettings.Builder().build();
+         initialDisplaySettings = new DefaultDisplaySettings.LegacyBuilder().build();
       }
 
-      DisplayController instance = new DisplayController(builder.parent_,
-            builder.dataProvider_,
-            initialDisplaySettings, builder.controlsFactory_,
-            builder.settingsProfileKey_);
+      final DisplayController instance =
+            new DisplayController(builder.dataProvider_,
+                  initialDisplaySettings, builder.controlsFactory_,
+                  builder.settingsProfileKey_);
       instance.initialize();
 
-      // Show inspector before our frame for correct window ordering
-      instance.parent_.createFirstInspector();
+      instance.computeQueue_.addListener(instance);
 
       if (builder.shouldShow_) {
-         instance.setFrameVisible(true);
-         instance.toFront();
+         // Show the window in a later event handler in order to give the
+         // calling code a chance to register for events.
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               instance.setFrameVisible(true);
+               instance.toFront();
+            }
+         });
       }
 
       return instance;
    }
 
-   private DisplayController(DefaultDisplayManager parent,
-         DataProvider dataProvider,
+   private DisplayController(DataProvider dataProvider,
          DisplaySettings initialDisplaySettings,
          ControlsFactory controlsFactory,
          String settingsProfileKey)
    {
       super(initialDisplaySettings);
-      parent_ = parent;
       dataProvider_ = dataProvider;
       controlsFactory_ = controlsFactory;
       settingsProfileKey_ = settingsProfileKey != null ? settingsProfileKey :
@@ -204,13 +222,14 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // constructor
       animationState_ = DataCoordsAnimationState.create(this);
       animationController_ = AnimationController.create(animationState_);
+      animationController_.setPerformanceMonitor(perfMon_);
       animationController_.addListener(this);
       // TODO Shut down animation controller
 
-      computeQueue_.start();
-      // TODO Shut down compute queue
+      // TODO compute queue needs shut down
 
-      uiController_ = DisplayUIController.create(this, controlsFactory_);
+      uiController_ = DisplayUIController.create(this, controlsFactory_,
+            animationController_);
       uiController_.setPerformanceMonitor(perfMon_);
       // TODO Make sure frame controller forwards messages to us (e.g.
       // windowClosing() -> requestToClose())
@@ -218,11 +237,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // Start receiving events
       DefaultEventManager.getInstance().registerForEvents(this);
       dataProvider_.registerForEvents(this);
-
-      // TODO Should we add this to DisplayGroupManager, or let DefaultDisplayManager do that?
-
-      // TODO At this point DefaultDisplayWindow would issue a DefaultNewDisplayEvent. However, I think the DisplayManager factory method should be doing that.
-      // TODO Likewise, DisplayManager should ensure the Inspector is created and in focus, if applicable.
    }
 
    @MustCallOnEDT
@@ -230,25 +244,17 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       return uiController_;
    }
 
-   public Studio getStudio() {
-      // TODO
-      return null;
-   }
-
    @MustCallOnEDT
    private void setFrameVisible(boolean visible) {
       uiController_.setVisible(visible);
+      // TODO Post these events based on ComponentListener on the JFrame
+      postEvent(visible ?
+            DataViewerDidBecomeVisibleEvent.create(this) :
+            DataViewerDidBecomeInvisibleEvent.create(this));
    }
 
-   // This is not in the API because it doesn't make sense under the current
-   // implementation where the frame is not shown until the datastore has an
-   // image. In order to allow API clients to show/hide the frame, we need to
-   // first redesign so that the frame can be displayed even for empty data.
-   public void setVisible(boolean visible) {
-      if (uiController_ == null) {
-         return;
-      }
-      uiController_.setVisible(visible);
+   void frameDidBecomeActive() {
+      postEvent(DataViewerDidBecomeActiveEvent.create(this));
    }
 
 
@@ -256,32 +262,19 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // Scheduling images for display
    //
 
-   @SuppressWarnings("SleepWhileInLoop") // We sleep for throttling
-   private void displaySchedulerLoop() throws InterruptedException {
-      long lastIterationStartNs_ = 0;
-      for (;;) {
-         // Wait, so that we don't exceed max display frequency
-         long elapsedNs = System.nanoTime() - lastIterationStartNs_;
-         long sleepDurationNs = MIN_REPAINT_PERIOD_NS - elapsedNs;
-         if (sleepDurationNs > 0) {
-            Thread.sleep(sleepDurationNs / 1000000,
-                  (int) (sleepDurationNs % 1000000));
-         }
-         lastIterationStartNs_ = System.nanoTime();
+   @Override
+   public long imageStatsReady(ImagesAndStats stats) {
+      perfMon_.sampleTimeInterval("Image stats ready");
 
-         perfMon_.sampleTimeInterval("Repaint scheduler");
-         WallTimer retrievalTimer = WallTimer.createStarted();
+      scheduleDisplayInUI(stats);
 
-         ImagesAndStats iamges = computeQueue_.waitAndRetrieveResult();
-
-         perfMon_.sample("Repaint scheduler wait time (ms)",
-               retrievalTimer.getMs());
-
-         scheduleDisplayInUI(iamges);
-      }
+      // Throttle display scheduling
+      return MIN_REPAINT_PERIOD_NS;
    }
 
    private void scheduleDisplayInUI(final ImagesAndStats images) {
+      Preconditions.checkArgument(images.getRequest().getNumberOfImages() > 0);
+
       // A note about congestion of event queue by excessive paint events:
       //
       // We know from experience (since Micro-Manager 1.4) that scheduling
@@ -304,18 +297,17 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // One of the nice things about doing it this way is that we can
       // coalesce the displaying tasks for multiple display windows.
 
-      MMSwingUtilities.invokeAsLateAsPossibleWithCoalescence(
-            new MMSwingUtilities.CoalescentRunnable() {
+      runnablePool_.invokeAsLateAsPossibleWithCoalescence(new CoalescentRunnable() {
          @Override
          public Class<?> getCoalescenceClass() {
-            return RepaintTaskTag.class;
+            return getClass();
          }
 
          @Override
-         public CoalescentRunnable coalesceWith(CoalescentRunnable another) {
+         public CoalescentRunnable coalesceWith(CoalescentRunnable later) {
             // Only the most recent repaint task need be run
-            // TODO XXX We need to keep the most recent for _each_display_!
-            return another;
+            perfMon_.sampleTimeInterval("Scheduling of repaint coalesced");
+            return later;
          }
 
          @Override
@@ -324,15 +316,64 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                return;
             }
 
-            uiController_.displayImages(images);
+            Image primaryImage = images.getRequest().getImage(0);
+            Coords nominalCoords = images.getRequest().getNominalCoords();
+            if (nominalCoords.hasAxis(Coords.CHANNEL)) {
+               int channel = nominalCoords.getChannel();
+               for (Image image : images.getRequest().getImages()) {
+                  if (image.getCoords().hasAxis(Coords.CHANNEL) &&
+                        image.getCoords().getChannel() == channel)
+                  {
+                     primaryImage = image;
+                     break;
+                  }
+               }
+            }
+
+            boolean imagesDiffer = true;
+            if (displayedImages_ != null &&
+                  images.getRequest().getNumberOfImages() ==
+                  displayedImages_.getRequest().getNumberOfImages())
+            {
+               imagesDiffer = false;
+               for (int i = 0; i < images.getRequest().getNumberOfImages(); ++i) {
+                  if (images.getRequest().getImage(i) !=
+                        displayedImages_.getRequest().getImage(i)) {
+                     imagesDiffer = true;
+                  }
+               }
+            }
+
+            perfMon_.sample("Scheduling identical images (%)", imagesDiffer ? 0.0 : 100.0);
+
+            if (imagesDiffer || getDisplaySettings().isAutostretchEnabled()) {
+               uiController_.displayImages(images);
+            }
+
             // TODO Rather than hiding pixel info, update it
+            // (include in displayImages()?)
             uiController_.updatePixelInfoUI(null);
-            // TODO XXX Update inspector for imagesToPaint (if composite,
-            // need to select channel for metadata from ui state)
+
+            postEvent(DefaultImagesDidDisplayEvent.create(
+                  DisplayController.this,
+                  images.getRequest().getImages(),
+                  primaryImage));
+
+            if (images.getStatsSequenceNumber() > latestStatsSeqNr_) {
+               postEvent(ImageStatsChangedEvent.create(images));
+               latestStatsSeqNr_ = images.getStatsSequenceNumber();
+            }
+            displayedImages_ = images;
 
             perfMon_.sampleTimeInterval("Scheduled repaint on EDT");
          }
       });
+   }
+
+   @Override
+   @MustCallOnEDT
+   public ImagesAndStats getCurrentImagesAndStats() {
+      return displayedImages_;
    }
 
    public double getDisplayIntervalQuantile(double q) {
@@ -371,21 +412,87 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public Collection<String> getAnimatedAxes() {
-      // TODO return true state
-      return Collections.emptySet();
+      synchronized (this) {
+         return new ArrayList<String>(playbackAxes_);
+      }
    }
 
-   // A new conceptual display position has been set; arrange for the UI to
-   // eventually display it.
-   private void handleNewDisplayPosition(Coords position) {
-      MMSwingUtilities.invokeLaterWithCoalescence(
-            new ExpandDisplayRangeCoalescentRunnable(position));
-      // TODO Update (later with coalescence) the position indicators in the UI
+   @Override
+   protected DisplaySettings handleDisplaySettings(
+         DisplaySettings requestedSettings)
+   {
+      perfMon_.sampleTimeInterval("Handle display settings");
 
+      final DisplaySettings oldSettings = getDisplaySettings();
+      final DisplaySettings adjustedSettings = requestedSettings;
+      // We don't currently make any adjustments (normalizations) to the
+      // settings, but we probably should check that they are consistent.
+
+      if (adjustedSettings.isROIAutoscaleEnabled() != oldSettings.isROIAutoscaleEnabled()) {
+         // We can't let this coalesce. No need to run on EDT but it's just as
+         // good a thread as any.
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               Coords pos;
+               do {
+                  pos = getDisplayPosition();
+               } while (!compareAndSetDisplayPosition(pos, pos, true));
+            }
+         });
+      }
+
+      runnablePool_.invokeAsLateAsPossibleWithCoalescence(new CoalescentRunnable() {
+         @Override
+         public Class<?> getCoalescenceClass() {
+            return getClass();
+         }
+
+         @Override
+         public CoalescentRunnable coalesceWith(CoalescentRunnable later) {
+            return later;
+         }
+
+         @Override
+         public void run() {
+            if (uiController_ == null) {
+               return;
+            }
+
+            // TODO Apply settings other than image rendering, such as zoom
+
+            uiController_.applyDisplaySettings(adjustedSettings);
+         }
+      });
+      return adjustedSettings;
+   }
+
+   @Override
+   protected Coords handleDisplayPosition(Coords position) {
+      perfMon_.sampleTimeInterval("Handle display position");
+
+      runnablePool_.invokeLaterWithCoalescence(
+            new ExpandDisplayRangeCoalescentRunnable(position));
+
+      // Always compute stats for all channels
       Coords channellessPos = position.hasAxis(Coords.CHANNEL) ?
             position.copy().removeAxis(Coords.CHANNEL).build() :
             position;
       List<Image> images = dataProvider_.getImagesMatching(channellessPos);
+
+      // Images are sorted by channel here, since we don't (yet) have any other
+      // way to correctly recombine stats with newer images (when update rate
+      // is finite).
+      if (images.size() > 1) {
+         Collections.sort(images, new Comparator<Image>() {
+            @Override
+            public int compare(Image o1, Image o2) {
+               return new Integer(o1.getCoords().getChannel()).
+                     compareTo(o2.getCoords().getChannel());
+            }
+         });
+      }
+
       // TODO XXX We need to handle missing images if so requested. User should
       // be able to enable "filling in Z slices" and "filling in time points".
       // If 'images' is empty, search first in Z, then in time, until at least
@@ -394,16 +501,26 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // either direction. For channels still missing, search back in time,
       // looking for the nearest available slice in each time point.
       // Record the substitutions made (requested and provided coords) in to
-      // the ImageStatsRequest!
-      // Consider implementing this substitution mechanism as a utility class
-      // (not a Datastore method, because then every datastore would have to
-      // reinvent the wheel).
+      // the ImageStatsRequest! Then display coords of actual displayed image(s)
+      // The substitution strategy should be pluggable. ("MissingImageStrategy"),
+      // and we should always go through it (default = no substitution)
       // XXX On the other hand, we do NOT want to fill in images if they are
       // about to be acquired! How do we know if this is the case?
-      Rectangle roiRect = null; // TODO XXX
-      byte[] roiMask = null; // TODO XXX
-      computeQueue_.submitRequest(
-            ImageStatsRequest.create(images, roiRect, roiMask));
+      // During acquisition, do not search back in time if newest timepoint.
+      // During acquisition, do not search in Z if newest timepoint.
+
+      BoundsRectAndMask selection = BoundsRectAndMask.unselected();
+      if (getDisplaySettings().isROIAutoscaleEnabled()) {
+         synchronized (selectionLock_) {
+            selection = selection_;
+         }
+      }
+
+      perfMon_.sampleTimeInterval("Submitting compute request");
+      computeQueue_.submitRequest(ImageStatsRequest.create(position, images,
+            selection));
+
+      return position;
    }
 
 
@@ -432,31 +549,122 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // Tell the UI controller to expand the display range to include the
       // newly seen position. But use coalescent invocation to avoid doing
       // too much on the EDT.
-      MMSwingUtilities.invokeLaterWithCoalescence(
+      runnablePool_.invokeLaterWithCoalescence(
             new ExpandDisplayRangeCoalescentRunnable(position));
    }
 
    @Override
    public void animationWillJumpToNewDataPosition(Coords position) {
-      // Nothing to do
    }
 
    @Override
    public void animationDidJumpToNewDataPosition(Coords position) {
-      // TODO Show a visual indicator that the image is new (with a timer to
-      // self-dismiss)
+      perfMon_.sampleTimeInterval("Animation Did Jump To New Data Position");
+      uiController_.setNewImageIndicator(true);
    }
 
    @Override
-   public void animationWillSnapBackFromNewDataPosition() {
-      // TODO Hide any visual indicator displayed in didJumpToNewDataPosition()
+   public void animationNewDataPositionExpired() {
+      perfMon_.sampleTimeInterval("Animation New Data Position Expired");
+      uiController_.setNewImageIndicator(false);
    }
 
-   @Override
-   public void animationDidSnapBackFromNewDataPosition() {
-      // Nothing to do
+
+   //
+   // Misc
+   //
+
+   // Notification from UI controller
+   public void selectionDidChange(BoundsRectAndMask selection) {
+      if (selection == null) {
+         selection = BoundsRectAndMask.unselected();
+      }
+      synchronized (selectionLock_) {
+         selection_ = selection;
+      }
+      if (getDisplaySettings().isROIAutoscaleEnabled()) {
+         // This is the thread-safe way to trigger a redisplay
+         Coords pos;
+         do {
+            pos = getDisplayPosition();
+         } while (!compareAndSetDisplayPosition(pos, pos, true));
+      }
    }
 
+   public void setStatsComputeRateHz(double hz) {
+      hz = Math.max(0.0, hz);
+      long intervalNs;
+      if (hz == 0.0) {
+         intervalNs = Long.MAX_VALUE;
+      }
+      else if (Double.isInfinite(hz)) {
+         intervalNs = 0;
+      }
+      else {
+         intervalNs = (long) Math.round(1e9 / hz);
+      }
+      computeQueue_.setProcessIntervalNs(intervalNs);
+   }
+
+   public double getStatsComputeRateHz() {
+      long intervalNs = computeQueue_.getProcessIntervalNs();
+      if (intervalNs == Long.MAX_VALUE) {
+         return 0.0;
+      }
+      if (intervalNs == 0) {
+         return Double.POSITIVE_INFINITY;
+      }
+      return 1e9 / intervalNs;
+   }
+
+   public void setPlaybackAnimationAxes(String... axes) {
+      synchronized (this) {
+         playbackAxes_.clear();
+         playbackAxes_.addAll(Arrays.asList(axes));
+      }
+      if (axes.length > 0) {
+         resetDisplayIntervalEstimate();
+         int initialTickIntervalMs = Math.max(17, Math.min(500,
+               (int) Math.round(1000.0 / getPlaybackSpeedFps())));
+         animationController_.setTickIntervalMs(initialTickIntervalMs);
+         animationController_.startAnimation();
+      }
+      else {
+         animationController_.stopAnimation();
+      }
+   }
+
+   public boolean isAnimating() {
+      return animationController_.isAnimating();
+   }
+
+   public double getPlaybackSpeedFps() {
+      return animationController_.getAnimationRateFPS();
+   }
+
+   public void setPlaybackSpeedFps(double fps) {
+      animationController_.setAnimationRateFPS(fps);
+      int initialTickIntervalMs = Math.max(17, Math.min(500,
+            (int) Math.round(1000.0 / fps)));
+      animationController_.setTickIntervalMs(initialTickIntervalMs);
+      uiController_.setPlaybackFpsIndicator(fps);
+      resetDisplayIntervalEstimate();
+   }
+
+   public void setAxisAnimationLock(String state) {
+      // TODO This is a string-based prototype
+      AnimationController.NewPositionHandlingMode newMode;
+      if (state.equals("U")) {
+         newMode = AnimationController.NewPositionHandlingMode.JUMP_TO_AND_STAY;
+      }
+      else if (state.equals("F")) {
+         newMode = AnimationController.NewPositionHandlingMode.FLASH_AND_SNAP_BACK;
+      }
+      else {
+         newMode = AnimationController.NewPositionHandlingMode.IGNORE;
+      }
+      animationController_.setNewPositionHandlingMode(newMode);
+   }
 
    //
    // Event handlers
@@ -471,23 +679,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          if (closeCompleted_) {
             return;
          }
-
-         // Kick off the thread to schedule display of the processed images.
-         // TODO Use ScheduledExecutorService for this.
-         if (repaintSchedulerThread_ == null) {
-            repaintSchedulerThread_ =
-                  new Thread("Display Scheduler Thread") {
-               @Override
-               public void run() {
-                  try {
-                     displaySchedulerLoop();
-                  }
-                  catch (InterruptedException exitRequested) {
-                  }
-               }
-            };
-            repaintSchedulerThread_.start(); // TODO XXX Shutdown
-         }
       }
 
       // Generally we want to display new images (if not instructed otherwise
@@ -498,11 +689,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       animationController_.newDataPosition(event.getImage().getCoords());
    }
 
-   @Subscribe
-   public void onNewDisplaySettings(NewDisplaySettingsEvent event) {
-      // TODO Find out diff and invokeLater to apply
-   }
-
 
    //
    //
@@ -511,7 +697,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // A coalescent runnable to avoid excessively frequent update of the data
    // coords range in the UI
    private class ExpandDisplayRangeCoalescentRunnable
-         implements MMSwingUtilities.CoalescentRunnable
+         implements CoalescentRunnable
    {
       private final List<Coords> coords_ = new ArrayList<Coords>();
 
@@ -521,12 +707,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       @Override
       public Class<?> getCoalescenceClass() {
-         return ExpandDisplayRangeCoalescentRunnable.class;
+         return getClass();
       }
 
       @Override
       public CoalescentRunnable coalesceWith(CoalescentRunnable another) {
-         // TODO XXX We must not coalesce with tasks for other displays!
          coords_.addAll(
                ((ExpandDisplayRangeCoalescentRunnable) another).coords_);
          return this;
@@ -553,25 +738,14 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    @Override
-   public void setDisplayPosition(Coords position) {
-      // TODO Make the version with forceRedisplay also official
-      setDisplayPosition(position, true);
-   }
-
-   public void setDisplayPosition(Coords position, boolean forceRedisplay) {
-      // TODO Convert to event bus event in AbstractDataViewer, like settings
-      synchronized (this) {
-         if (!forceRedisplay && getDisplayPosition().equals(position)) {
-            return;
-         }
-         super.setDisplayPosition(position);
-         handleNewDisplayPosition(position);
-      }
+   public List<Image> getDisplayedImages() {
+      // TODO Make sure this is accurate for composite and single-channel
+      return dataProvider_.getImagesMatching(getDisplayPosition());
    }
 
    @Override
-   public List<Image> getDisplayedImages() {
-      throw new UnsupportedOperationException();
+   public boolean isVisible() {
+      return !isClosed() && uiController_.getFrame().isVisible();
    }
 
    @Override
@@ -603,7 +777,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public String getName() {
       // TODO
-      return "NAME-TODO";
+      return "NAME-TODO-" + hashCode();
    }
 
    @Override
@@ -692,15 +866,22 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       forceClose();
       return true;
       */
-      forceClose(); // Temporary
+      close(); // Temporary
       return true;
    }
 
    @Override
-   public void forceClose() {
+   public void close() {
+      postEvent(DataViewerWillCloseEvent.create(this));
+
       uiController_.close();
       uiController_ = null;
       closeCompleted_ = true;
+      dispose();
+
+      // TODO This event should probably be posted in response to window event
+      // (which can be done with a ComponentListener for the JFrame)
+      postEvent(DataViewerDidBecomeInvisibleEvent.create(this));
    }
 
    @Override

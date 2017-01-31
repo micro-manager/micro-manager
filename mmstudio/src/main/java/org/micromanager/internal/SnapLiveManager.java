@@ -82,6 +82,11 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
 
    private static final double MIN_GRAB_DELAY_MS = 1000.0 / 60.0;
    private static final double MAX_GRAB_DELAY_MS = 300.0;
+
+   // What quantile of actual paint interval to use as the interval for image
+   // retrieval. Too high will cause display rate to take a long time to climb
+   // up to optimum. Too low can cause jittery display due to frames being
+   // skipped.
    private static final double DISPLAY_INTERVAL_ESTIMATE_Q = 0.25;
 
    private final Studio studio_;
@@ -455,12 +460,11 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
             return createControls(display);
          }
       };
-      display_ = new DisplayController.Builder(
-            DefaultDisplayManager.getInstance(), // TODO Avoid static access
-            store_).
+      display_ = new DisplayController.Builder(store_).
             controlsFactory(controlsFactory).
             settingsProfileKey(TITLE).
             shouldShow(true).build();
+      DefaultDisplayManager.getInstance().addViewer(display_);
 
       // HACK: coerce single-camera setups to grayscale (instead of the
       // default of composite mode) if there is no existing profile settings
@@ -468,8 +472,8 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
       DisplaySettings.ColorMode mode = DefaultDisplaySettings.getStandardColorMode(TITLE, null);
       if (mode == null && numCameraChannels_ == 1) {
          DisplaySettings settings = display_.getDisplaySettings();
-         settings = settings.copy()
-            .channelColorMode(DisplaySettings.ColorMode.GRAYSCALE)
+         settings = settings.copyBuilder()
+            .colorMode(DisplaySettings.ColorMode.GRAYSCALE)
             .build();
          display_.setDisplaySettings(settings);
       }
@@ -559,7 +563,10 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
          }
          for (int i = 0; i < numCameraChannels_; ++i) {
             String name = makeChannelName(curChannel, i);
-            if (i >= channelNames.length || !name.equals(channelNames[i])) {
+            if (channelNames == null ||
+                  i >= channelNames.length ||
+                  !name.equals(channelNames[i]))
+            {
                // Channel name changed.
                shouldReset = true;
             }
@@ -662,7 +669,7 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
       Point displayLoc = null;
       if (display_ != null && !display_.isClosed()) {
          displayLoc = display_.getWindow().getLocation();
-         display_.forceClose();
+         display_.close();
       }
 
       createDatastore();

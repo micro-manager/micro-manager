@@ -62,7 +62,7 @@ import org.scijava.plugin.SciJavaPlugin;
  *
  * Note that all plugins must have a default (no-argument) constructor.
  */
-public interface MMPlugin extends SciJavaPlugin {
+public interface MMPlugin extends MMGenericPlugin {
    /**
     * Receive the Studio object needed to make API calls.
     * @param studio instance of the Micro-Manager Studio object
