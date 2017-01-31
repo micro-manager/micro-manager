@@ -74,9 +74,9 @@ public class JitterDetector {
          ip.setRoi(brightPix.x - hs, brightPix.y - hs, 2 * hs, 2 * hs);
          ImageProcessor ipc = ip.crop();
 
-         double[] paramsOut = gs.dogaussianfit(ipc, 100);
-         com.x = paramsOut[GaussianFit.XC] - hs + brightPix.x;
-         com.y = paramsOut[GaussianFit.YC] - hs + brightPix.y;
+         GaussianFit.Data fitResult = gs.dogaussianfit(ipc, 100);
+         com.x = fitResult.getParms()[GaussianFit.XC] - hs + brightPix.x;
+         com.y = fitResult.getParms()[GaussianFit.YC] - hs + brightPix.y;
 
       } catch (Exception ex) { 
          // Gaussian fit failed, try second best estimate

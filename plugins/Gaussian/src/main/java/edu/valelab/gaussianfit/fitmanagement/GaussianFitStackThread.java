@@ -105,7 +105,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
          try {
             // Note: the implementation will try to return a cached version of the ImageProcessor
             ImageProcessor ip = spot.getSpotProcessor(siPlus_, super.getHalfBoxSize());
-            double[] paramsOut = gs_.dogaussianfit(ip, maxIterations_);
+            GaussianFit.Data fitResult = gs_.dogaussianfit(ip, maxIterations_);
             // Note that the copy constructor will not copy pixel data, so we loose 
             // those when spot goes out of scope
             SpotData spotData = new SpotData(spot);
@@ -114,19 +114,19 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
             double a = 1;
             double theta = 0;
             double gs = super.getFixedWidthNm() / pixelSize_ / 2;
-            if (paramsOut.length >= 4) {
+            if (fitResult.getParms().length >= 4) {
 
-               double xMax = (paramsOut[GaussianFit.XC] - 
+               double xMax = (fitResult.getParms()[GaussianFit.XC] - 
                        super.getHalfBoxSize() + spot.getX()) * pixelSize_;
-               double yMax = (paramsOut[GaussianFit.YC] - 
+               double yMax = (fitResult.getParms()[GaussianFit.YC] - 
                        super.getHalfBoxSize() + spot.getY()) * pixelSize_; 
                // express background in photons after base level correction
-               double bgr = cPCF * (paramsOut[GaussianFit.BGR] - baseLevel_);
+               double bgr = cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_);
                
-               if (paramsOut.length >= 5) {
-                  gs = paramsOut[GaussianFit.S];
+               if (fitResult.getParms().length >= 5) {
+                  gs = fitResult.getParms()[GaussianFit.S];
                }
-               double N = cPCF * paramsOut[GaussianFit.INT]
+               double N = cPCF * fitResult.getParms()[GaussianFit.INT]
                        * (2 * Math.PI * gs * gs);
                // calculate error using formular from Thompson et al (2002)
                // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
@@ -134,10 +134,20 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                double sigma = (s * s + (pixelSize_ * pixelSize_) / 12) / N
                        + (8 * Math.PI * s * s * s * s * bgr * bgr) / (pixelSize_ * pixelSize_ * N * N);
                sigma = Math.sqrt(sigma);
+               double NAperture = cPCF * fitResult.getApertureIntensity();
+               double bgrAperture = cPCF * (fitResult.getApertureBackground() - baseLevel_);
+               double msasqr = (s * s + (pixelSize_ * pixelSize_) / 12);
+               double mSigma = msasqr / NAperture
+                       * (16/9 + ( (8 * Math.PI * msasqr *  bgr * bgr) / 
+                       (N * pixelSize_ * pixelSize_) ) );
+               if (this.gain_ > 2.0) {
+                  mSigma = 2 * mSigma;
+               }
+               mSigma = Math.sqrt(mSigma);
 
-               if (paramsOut.length >= 6) {
-                  sx = paramsOut[GaussianFit.S1] * pixelSize_;
-                  sy = paramsOut[GaussianFit.S2] * pixelSize_;
+               if (fitResult.getParms().length >= 6) {
+                  sx = fitResult.getParms()[GaussianFit.S1] * pixelSize_;
+                  sy = fitResult.getParms()[GaussianFit.S2] * pixelSize_;
                   a = sx / sy;
                   
                   double z;              
@@ -149,15 +159,14 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                   
                }
 
-               if (paramsOut.length >= 7) {
-                  theta = paramsOut[GaussianFit.S3];
+               if (fitResult.getParms().length >= 7) {
+                  theta = fitResult.getParms()[GaussianFit.S3];
                }
 
                double width = 2 * s;
-               
-               
-               
+
                spotData.setData(N, bgr, xMax, yMax, 0.0, width, a, theta, sigma);
+               spotData.setApertureData(NAperture, bgrAperture, mSigma);
 
                if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))
                        && (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_))) {

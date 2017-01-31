@@ -244,23 +244,24 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          }
             
          spot = new SpotData(ip, ch, 1, i, 1, i, xc,yc);
-         double[] paramsOut = gs.dogaussianfit(ip, maxIterations_);
+         GaussianFit.Data fitResult = gs.dogaussianfit(ip, maxIterations_);
          double sx;
          double sy;
          double a = 1.0;
          double theta = 0.0;
-         if (paramsOut.length >= 4) {
+         if (fitResult.getParms().length >= 4) {
             //anormalize the intensity from the Gaussian fit
-            double N = cPCF * paramsOut[GaussianFit.INT] * (2 * Math.PI * paramsOut[GaussianFit.S] * paramsOut[GaussianFit.S]);           
-            double xpc = paramsOut[GaussianFit.XC];
-            double ypc = paramsOut[GaussianFit.YC];
+            double N = cPCF * fitResult.getParms()[GaussianFit.INT] * 
+                    (2 * Math.PI * fitResult.getParms()[GaussianFit.S] * fitResult.getParms()[GaussianFit.S]);           
+            double xpc = fitResult.getParms()[GaussianFit.XC];
+            double ypc = fitResult.getParms()[GaussianFit.YC];
             double x = (xpc - super.getHalfBoxSize() + xc) * pixelSize_;
             double y = (ypc - super.getHalfBoxSize() + yc) * pixelSize_;
 
                
-            double s = paramsOut[GaussianFit.S] * pixelSize_;
+            double s = fitResult.getParms()[GaussianFit.S] * pixelSize_;
             // express background in photons after base level correction
-            double bgr = cPCF * (paramsOut[GaussianFit.BGR] - baseLevel_);
+            double bgr = cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_);
             // calculate error using formular from Thompson et al (2002)
             // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
             double sigma = (s * s + (pixelSize_ * pixelSize_) / 12) / 
@@ -268,14 +269,14 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             sigma = Math.sqrt(sigma);
 
             double width = 2 * s;
-            if (paramsOut.length >= 6) {
-                sx = paramsOut[GaussianFit.S1] * pixelSize_;
-                sy = paramsOut[GaussianFit.S2] * pixelSize_;
+            if (fitResult.getParms().length >= 6) {
+                sx = fitResult.getParms()[GaussianFit.S1] * pixelSize_;
+                sy = fitResult.getParms()[GaussianFit.S2] * pixelSize_;
                 a = sx/sy;
              }
 
-             if (paramsOut.length >= 7) {
-                theta = paramsOut[GaussianFit.S3];
+             if (fitResult.getParms().length >= 7) {
+                theta = fitResult.getParms()[GaussianFit.S3];
              }
             if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))
                     && (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_))) {

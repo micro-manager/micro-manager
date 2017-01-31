@@ -55,6 +55,28 @@ import org.apache.commons.math.optimization.general.NonLinearConjugateGradientOp
  * @author nico
  */
 public class GaussianFit {
+   
+   public class Data {
+      private final double[] parms_;
+      private final double apertureIntensity_; // in raw units
+      private final double apertureBackground_; // in raw units
+      
+      public Data(double[] parms, double intensity, double background) {
+         parms_ = parms;
+         apertureIntensity_ = intensity;
+         apertureBackground_ = background;
+      }
+      public double[] getParms() {
+         return parms_;
+      }
+      public double getApertureIntensity () {
+         return apertureIntensity_;
+      }
+      public double getApertureBackground() {
+         return apertureBackground_;
+      }
+      
+   } 
 
    public static final int INT = 0;
    public static final int BGR = 1;
@@ -175,11 +197,12 @@ public class GaussianFit {
     *
     * @param siProc - ImageJ ImageProcessor containing image to be fit
     * @param maxIterations - maximum number of iterations for the Nelder Mead
-    *   optimization algorithm
+    *          optimization algorithm
+
     * @return 
     */
-   public double[] dogaussianfit (ImageProcessor siProc, int maxIterations) {
-      estimateParameters(siProc);
+   public Data dogaussianfit (ImageProcessor siProc, int maxIterations) {
+      Data estimate = estimateParameters(siProc);
 
       double[] paramsOut = {0.0};
 
@@ -189,7 +212,8 @@ public class GaussianFit {
          nm_.setMaxIterations(maxIterations);
          mGF_.setImage((short[]) siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
          try {
-            RealPointValuePair result = nm_.optimize(mGF_, GoalType.MINIMIZE, params0_);
+            RealPointValuePair result = nm_.optimize(mGF_, GoalType.MINIMIZE, 
+                    estimate.getParms());
             paramsOut = result.getPoint();
          } catch (java.lang.OutOfMemoryError e) {
             throw(e);
@@ -221,7 +245,7 @@ public class GaussianFit {
          try {
             paramsOut = cF.fit(new ParametricGaussianFunction( 
                     shape_, siProc.getWidth(), fixedWidth_), 
-                  params0_);
+                  estimate.getParms());
          } catch (FunctionEvaluationException ex) {
             ReportingUtils.logError(ex);
          } catch (OptimizationException ex) {
@@ -238,7 +262,8 @@ public class GaussianFit {
          nm_.setMaxIterations(maxIterations);
          mGFMLE_.setImage((short[]) siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
          try {
-            RealPointValuePair result = nm_.optimize(mGFMLE_, GoalType.MINIMIZE, params0_);
+            RealPointValuePair result = nm_.optimize(mGFMLE_, GoalType.MINIMIZE, 
+                    estimate.getParms());
             paramsOut = result.getPoint();
          } catch (java.lang.OutOfMemoryError e) {
             throw(e);
@@ -278,14 +303,15 @@ public class GaussianFit {
             paramsOut[S3] = prms[0];
          }
       }
+      return new Data(paramsOut, estimate.getApertureIntensity(), 
+              estimate.getApertureBackground() );
 
-      return paramsOut;
    }
 
 
-   private void estimateParameters(ImageProcessor siProc) {
+   private Data estimateParameters(ImageProcessor siProc) {
       short[] imagePixels = (short[]) siProc.getPixels();
-
+      
       // Hard code estimate for sigma (expressed in pixels):
       double s = 0.9;
       if (! (fixWidth_ && fixedWidth_ > 0.0) ) {
@@ -314,26 +340,25 @@ public class GaussianFit {
          bg += (imagePixels[(i + 1) * siProc.getWidth() - 1] & 0xffff);
          n += 2;
       }
-      params0_[BGR] = bg / n;
+      double background = bg/n;
+      params0_[BGR] = background;
       // estimate signal by subtracting background from total intensity
-      double mt = 0.0;
+      double totalIntensity = 0.0;
       for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
-         mt += (imagePixels[i] & 0xffff);
+         totalIntensity += (imagePixels[i] & 0xffff);
       }
-      double ti = mt - ((bg / n) * siProc.getHeight() * siProc.getWidth());
-      params0_[INT] = ti / (2 * Math.PI * s * s);
+      double signal = totalIntensity - ((bg / n) * siProc.getHeight() * siProc.getWidth());
+      params0_[INT] = signal / (2 * Math.PI * s * s);
       // print("Total signal: " + ti + "Estimate: " + params0_[0]);
       // estimate center of mass
       double mx = 0.0;
       double my = 0.0;
       for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
-         //mx += (imagePixels[i] - params0_[4]) * (i % siProc.getWidth() );
-         //my += (imagePixels[i] - params0_[4]) * (Math.floor (i / siProc.getWidth()));
          mx += ((imagePixels[i] & 0xffff)) * (i % siProc.getWidth());
          my += ((imagePixels[i] & 0xffff)) * (Math.floor(i / siProc.getWidth()));
       }
-      params0_[XC] = mx / mt;
-      params0_[YC] = my / mt;
+      params0_[XC] = mx / totalIntensity;
+      params0_[YC] = my / totalIntensity;
       //ij.IJ.log("Centroid: " + mx/mt + " " + my/mt);
       // set step size during estimate
       for (int i = 0; i < params0_.length; ++i) {
@@ -341,6 +366,8 @@ public class GaussianFit {
          if (steps_[i] == 0)
             steps_[i] = 0.1;
       }
+      
+      return new Data(params0_, totalIntensity, background);
    }
    
    
