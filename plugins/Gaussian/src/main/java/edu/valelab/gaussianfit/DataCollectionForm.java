@@ -84,6 +84,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.*;
@@ -1681,12 +1683,12 @@ public class DataCollectionForm extends JFrame {
       for (SpotData gd : rowData.spotList_) {
          if (gd != null) {
             rt.incrementCounter();
-            rt.addValue(Terms.FRAME, gd.getFrame());
-            rt.addValue(Terms.SLICE, gd.getSlice());
-            rt.addValue(Terms.CHANNEL, gd.getChannel());
-            rt.addValue(Terms.POSITION, gd.getPosition());
-            rt.addValue(Terms.INT, gd.getIntensity());
-            rt.addValue(Terms.BACKGROUND, gd.getBackground());
+            rt.addValue(Terms.FRAME, ResultsTable.d2s(gd.getFrame(), 0));
+            rt.addValue(Terms.SLICE, ResultsTable.d2s(gd.getSlice(), 0));
+            rt.addValue(Terms.CHANNEL, ResultsTable.d2s(gd.getChannel(), 0));
+            rt.addValue(Terms.POSITION, ResultsTable.d2s(gd.getPosition(), 0));
+            rt.addValue(Terms.XPIX, ResultsTable.d2s(gd.getX(), 0));
+            rt.addValue(Terms.YPIX, ResultsTable.d2s(gd.getY(), 0));
             if (rowData.coordinate_ == Coordinates.NM) {
                rt.addValue(Terms.XNM, gd.getXCenter());
                rt.addValue(Terms.YNM, gd.getYCenter());
@@ -1696,7 +1698,8 @@ public class DataCollectionForm extends JFrame {
                rt.addValue(Terms.XFITPIX, gd.getXCenter());
                rt.addValue(Terms.YFITPIX, gd.getYCenter());
             }
-            rt.addValue(Terms.SIGMA, gd.getSigma());
+            rt.addValue(Terms.INT, gd.getIntensity());
+            rt.addValue(Terms.BACKGROUND, gd.getBackground());
             if (shape >= 1) {
                rt.addValue(Terms.WIDTH, gd.getWidth());
             }
@@ -1706,16 +1709,19 @@ public class DataCollectionForm extends JFrame {
             if (shape == 3) {
                rt.addValue(Terms.THETA, gd.getTheta());
             }
-            rt.addValue(Terms.XPIX, gd.getX());
-            rt.addValue(Terms.YPIX, gd.getY());
+            rt.addValue(Terms.SIGMA, ResultsTable.d2s(gd.getSigma(), 2));
+
             for (String key : gd.getKeys()) {
-               rt.addValue(key, gd.getValue(key));
+               if (key.equals(SpotData.Keys.INTENSITYRATIO) || key.equals(SpotData.Keys.MSIGMA)) {
+                  rt.addValue(key, ResultsTable.d2s(gd.getValue(key), 2));
+               } else {
+                  rt.addValue(key, gd.getValue(key));
+               }
             }
          }
       }
       
       TextPanel tp;
-      TextWindow win;
       
       String name = "Spots from: " + rowData.getName();
       rt.show(name);
@@ -1723,12 +1729,49 @@ public class DataCollectionForm extends JFrame {
       // Attach listener to TextPanel
       Frame frame = WindowManager.getFrame(name);
       if (frame != null && frame instanceof TextWindow && siPlus != null) {
-         win = (TextWindow) frame;
+         final TextWindow win = (TextWindow) frame;
+         win.setSize(studio_.profile().getInt(DataCollectionForm.class, "ResWidth", 550),
+                 studio_.profile().getInt(DataCollectionForm.class, "ResHeight", 300));
+         win.setLocation(studio_.profile().getInt(DataCollectionForm.class, "ResXPos", 100),
+                 studio_.profile().getInt(DataCollectionForm.class, "ResYPos", 100));
+         win.addWindowListener(new WindowListener() {
+            @Override
+            public void windowOpened(WindowEvent we) {
+               }
+
+            @Override
+            public void windowClosing(WindowEvent we) {
+               studio_.profile().setInt(DataCollectionForm.class, "ResWidth", win.getWidth());
+               studio_.profile().setInt(DataCollectionForm.class, "ResHeight", win.getHeight());
+               studio_.profile().setInt(DataCollectionForm.class, "ResXPos", win.getX());
+               studio_.profile().setInt(DataCollectionForm.class, "ResYPos", win.getY());
+            }
+
+            @Override
+            public void windowClosed(WindowEvent we) {
+               }
+
+            @Override
+            public void windowIconified(WindowEvent we) {
+               }
+
+            @Override
+            public void windowDeiconified(WindowEvent we) {
+               }
+
+            @Override
+            public void windowActivated(WindowEvent we) {
+               }
+
+            @Override
+            public void windowDeactivated(WindowEvent we) {
+               }
+         });
+         
          tp = win.getTextPanel();
 
          // TODO: the following does not work, there is some voodoo going on here
          for (MouseListener ms : tp.getMouseListeners()) {
-            
             tp.removeMouseListener(ms);
          }
          for (KeyListener ks : tp.getKeyListeners()) {

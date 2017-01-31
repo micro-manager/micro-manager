@@ -169,12 +169,12 @@ public class ResultsTableListener implements KeyListener, MouseListener {
          } else {
             return;
          }
-         int frame = (int) res_.getValue(Terms.FRAME, row);
-         int slice = (int) res_.getValue(Terms.SLICE, row);
-         int channel = (int) res_.getValue(Terms.CHANNEL, row);
-         int pos = (int) res_.getValue(Terms.POSITION, row);
-         int x = (int) res_.getValue(Terms.XPIX, row);
-         int y = (int) res_.getValue(Terms.YPIX, row);
+         int frame = Integer.parseInt(res_.getStringValue(Terms.FRAME, row));
+         int slice = Integer.parseInt(res_.getStringValue(Terms.SLICE, row));
+         int channel = Integer.parseInt(res_.getStringValue(Terms.CHANNEL, row));
+         int pos = Integer.parseInt(res_.getStringValue(Terms.POSITION, row));
+         int x = Integer.parseInt(res_.getStringValue(Terms.XPIX, row));
+         int y = Integer.parseInt(res_.getStringValue(Terms.YPIX, row));
          
          if (dw_ != null) {
             Coords.CoordsBuilder builder = studio_.data().getCoordsBuilder();
