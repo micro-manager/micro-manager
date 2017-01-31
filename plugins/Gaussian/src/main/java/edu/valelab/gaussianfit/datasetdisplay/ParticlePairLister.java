@@ -246,8 +246,10 @@ public class ParticlePairLister {
             rt3.reset();
             rt3.setPrecision(2);
 
+            int rowCounter = 0;
             for (int row : rows_) {
-               ij.IJ.showStatus("Creating Pairs...");
+               rowCounter++;
+               ij.IJ.showStatus("Creating Pairs for row " + rowCounter);
                
                Map <Integer, ArrayList<ArrayList<GsSpotPair>>> spotPairsByFrame
                        = new HashMap<Integer, ArrayList<ArrayList<GsSpotPair>>>();
@@ -334,7 +336,7 @@ public class ParticlePairLister {
                }
 
                // We have all pairs, assemble in tracks
-               ij.IJ.showStatus("Assembling tracks...");
+               ij.IJ.showStatus("Assembling tracks for row " + rowCounter);
 
                // prepare NearestPoint objects to speed up finding closest pair 
                ArrayList<NearestPointGsSpotPair> npsp = new ArrayList<NearestPointGsSpotPair>();
@@ -707,7 +709,7 @@ public class ParticlePairLister {
                   }
                }
 
-               ij.IJ.showStatus("");
+               ij.IJ.showStatus("Done listing pairs");
 
             }
          }
