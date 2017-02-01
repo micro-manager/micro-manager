@@ -46,7 +46,11 @@ CZStage::CZStage(const char* name) :
    unitMult_(g_StageDefaultUnitMult),  // later will try to read actual setting
    stepSizeUm_(g_StageMinStepSize),    // we'll use 1 nm as our smallest possible step size, this is somewhat arbitrary and doesn't change during the program
    axisLetter_(g_EmptyAxisLetterStr),   // value determined by extended name
-   advancedPropsEnabled_(false)
+   advancedPropsEnabled_(false),
+   ring_buffer_supported_(false),
+   ring_buffer_capacity_(0),
+   ttl_trigger_supported_(false),
+   ttl_trigger_enabled_(false)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -243,6 +247,102 @@ int CZStage::Initialize()
    AddAllowedValue(g_AxisPolarity, g_FocusPolarityMicroManagerDefault);
    UpdateProperty(g_AxisPolarity);
 
+   // get build info so we can add optional properties
+   build_info_type build;
+   RETURN_ON_MM_ERROR( hub_->GetBuildInfo(addressChar_, build) );
+
+   // add single-axis properties if supported
+   // (single-axis support existed prior pre-2.8 firmware, but now we have easier way to tell if it's present using axis properties
+   //   and it wasn't used very much before SPIM)
+   if(build.vAxesProps[0] & BIT5)//      if(hub_->IsDefinePresent(build, g_Define_SINGLEAXIS_FUNCTION))
+   {
+      // copied from ASIMMirror.cpp
+      pAct = new CPropertyAction (this, &CZStage::OnSAAmplitude);
+      CreateProperty(g_SAAmplitudePropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_SAAmplitudePropertyName);
+      pAct = new CPropertyAction (this, &CZStage::OnSAOffset);
+      CreateProperty(g_SAOffsetPropertyName, "0", MM::Float, false, pAct);
+      UpdateProperty(g_SAOffsetPropertyName);
+      pAct = new CPropertyAction (this, &CZStage::OnSAPeriod);
+      CreateProperty(g_SAPeriodPropertyName, "0", MM::Integer, false, pAct);
+      UpdateProperty(g_SAPeriodPropertyName);
+      pAct = new CPropertyAction (this, &CZStage::OnSAMode);
+      CreateProperty(g_SAModePropertyName, g_SAMode_0, MM::String, false, pAct);
+      AddAllowedValue(g_SAModePropertyName, g_SAMode_0);
+      AddAllowedValue(g_SAModePropertyName, g_SAMode_1);
+      AddAllowedValue(g_SAModePropertyName, g_SAMode_2);
+      AddAllowedValue(g_SAModePropertyName, g_SAMode_3);
+      UpdateProperty(g_SAModePropertyName);
+      pAct = new CPropertyAction (this, &CZStage::OnSAPattern);
+      CreateProperty(g_SAPatternPropertyName, g_SAPattern_0, MM::String, false, pAct);
+      AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_0);
+      AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_1);
+      AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_2);
+      UpdateProperty(g_SAPatternPropertyName);
+      // generates a set of additional advanced properties that are rarely used
+      pAct = new CPropertyAction (this, &CZStage::OnSAAdvanced);
+      CreateProperty(g_AdvancedSAPropertiesPropertyName, g_NoState, MM::String, false, pAct);
+      AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_NoState);
+      AddAllowedValue(g_AdvancedSAPropertiesPropertyName, g_YesState);
+      UpdateProperty(g_AdvancedSAPropertiesPropertyName);
+   }
+
+   // add ring buffer properties if supported (starting version 2.81)
+   if (FirmwareVersionAtLeast(2.81) && (build.vAxesProps[0] & BIT1))
+   {
+      // get the number of ring buffer positions from the BU X output
+      string rb_define = hub_->GetDefineString(build, "RING BUFFER");
+
+      ring_buffer_capacity_ = 0;
+      if (rb_define.size() > 12)
+      {
+         ring_buffer_capacity_ = atol(rb_define.substr(11).c_str());
+      }
+
+      if (ring_buffer_capacity_ != 0)
+      {
+         ring_buffer_supported_ = true;
+
+         pAct = new CPropertyAction (this, &CZStage::OnRBMode);
+         CreateProperty(g_RB_ModePropertyName, g_RB_OnePoint_1, MM::String, false, pAct);
+         AddAllowedValue(g_RB_ModePropertyName, g_RB_OnePoint_1);
+         AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayOnce_2);
+         AddAllowedValue(g_RB_ModePropertyName, g_RB_PlayRepeat_3);
+         UpdateProperty(g_RB_ModePropertyName);
+
+         pAct = new CPropertyAction (this, &CZStage::OnRBDelayBetweenPoints);
+         CreateProperty(g_RB_DelayPropertyName, "0", MM::Integer, false, pAct);
+         UpdateProperty(g_RB_DelayPropertyName);
+
+         // "do it" property to do TTL trigger via serial
+         pAct = new CPropertyAction (this, &CZStage::OnRBTrigger);
+         CreateProperty(g_RB_TriggerPropertyName, g_IdleState, MM::String, false, pAct);
+         AddAllowedValue(g_RB_TriggerPropertyName, g_IdleState, 0);
+         AddAllowedValue(g_RB_TriggerPropertyName, g_DoItState, 1);
+         AddAllowedValue(g_RB_TriggerPropertyName, g_DoneState, 2);
+         UpdateProperty(g_RB_TriggerPropertyName);
+
+         pAct = new CPropertyAction (this, &CZStage::OnRBRunning);
+         CreateProperty(g_RB_AutoplayRunningPropertyName, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_NoState);
+         AddAllowedValue(g_RB_AutoplayRunningPropertyName, g_YesState);
+         UpdateProperty(g_RB_AutoplayRunningPropertyName);
+
+         pAct = new CPropertyAction (this, &CZStage::OnUseSequence);
+         CreateProperty(g_UseSequencePropertyName, g_NoState, MM::String, false, pAct);
+         AddAllowedValue(g_UseSequencePropertyName, g_NoState);
+         AddAllowedValue(g_UseSequencePropertyName, g_YesState);
+         ttl_trigger_enabled_ = false;
+      }
+
+   }
+
+   if (FirmwareVersionAtLeast(3.09) && (hub_->IsDefinePresent(build, "IN0_INT"))
+         && ring_buffer_supported_)
+   {
+      ttl_trigger_supported_ = true;
+   }
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -355,6 +455,80 @@ int CZStage::SetOrigin()
    ostringstream command; command.str("");
    command << "H " << axisLetter_ << "=0";
    return hub_->QueryCommandVerify(command.str(),":A");
+}
+
+int CZStage::StopStageSequence()
+// disables TTL triggering; doesn't actually stop anything already happening on controller
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   command << addressChar_ << "TTL X=0";  // switch off TTL triggering
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
+}
+
+int CZStage::StartStageSequence()
+// enables TTL triggering; doesn't actually start anything going on controller
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   // ensure that ringbuffer pointer points to first entry and
+   // that we only trigger the first axis (assume only 1 axis on piezo card)
+   command << addressChar_ << "RM Y=1 Z=0";
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+
+   command.str("");
+   command << addressChar_ << "TTL X=1";  // switch on TTL triggering
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
+}
+
+int CZStage::SendStageSequence()
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   command << addressChar_ << "RM X=0"; // clear ring buffer
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   for (unsigned i=0; i< sequence_.size(); i++)  // send new points
+   {
+      command.str("");
+      command << "LD " << axisLetter_ << "=" << sequence_[i]*unitMult_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   }
+
+   return DEVICE_OK;
+}
+
+int CZStage::ClearStageSequence()
+{
+   ostringstream command; command.str("");
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   sequence_.clear();
+   command << addressChar_ << "RM X=0";  // clear ring buffer
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
+   return DEVICE_OK;
+}
+
+int CZStage::AddToStageSequence(double position)
+{
+   if (!ttl_trigger_supported_)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   sequence_.push_back(position);
+   return DEVICE_OK;
 }
 
 
@@ -1166,4 +1340,582 @@ int CZStage::OnAxisPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CZStage::OnSAAdvanced(MM::PropertyBase* pProp, MM::ActionType eAct)
+// special property, when set to "yes" it creates a set of little-used properties that can be manipulated thereafter
+{
+   if (eAct == MM::BeforeGet)
+   {
+      return DEVICE_OK; // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_YesState) == 0)
+      {
+         CPropertyAction* pAct;
+
+         pAct = new CPropertyAction (this, &CZStage::OnSAClkSrc);
+         CreateProperty(g_SAClkSrcPropertyName, g_SAClkSrc_0, MM::String, false, pAct);
+         AddAllowedValue(g_SAClkSrcPropertyName, g_SAClkSrc_0);
+         AddAllowedValue(g_SAClkSrcPropertyName, g_SAClkSrc_1);
+         UpdateProperty(g_SAClkSrcPropertyName);
+
+         pAct = new CPropertyAction (this, &CZStage::OnSAClkPol);
+         CreateProperty(g_SAClkPolPropertyName, g_SAClkPol_0, MM::String, false, pAct);
+         AddAllowedValue(g_SAClkPolPropertyName, g_SAClkPol_0);
+         AddAllowedValue(g_SAClkPolPropertyName, g_SAClkPol_1);
+         UpdateProperty(g_SAClkPolPropertyName);
+
+         pAct = new CPropertyAction (this, &CZStage::OnSATTLOut);
+         CreateProperty(g_SATTLOutPropertyName, g_SATTLOut_0, MM::String, false, pAct);
+         AddAllowedValue(g_SATTLOutPropertyName, g_SATTLOut_0);
+         AddAllowedValue(g_SATTLOutPropertyName, g_SATTLOut_1);
+         UpdateProperty(g_SATTLOutPropertyName);
+
+         pAct = new CPropertyAction (this, &CZStage::OnSATTLPol);
+         CreateProperty(g_SATTLPolPropertyName, g_SATTLPol_0, MM::String, false, pAct);
+         AddAllowedValue(g_SATTLPolPropertyName, g_SATTLPol_0);
+         AddAllowedValue(g_SATTLPolPropertyName, g_SATTLPol_1);
+         UpdateProperty(g_SATTLPolPropertyName);
+
+         pAct = new CPropertyAction (this, &CZStage::OnSAPatternByte);
+         CreateProperty(g_SAPatternModePropertyName, "0", MM::Integer, false, pAct);
+         SetPropertyLimits(g_SAPatternModePropertyName, 0, 255);
+         UpdateProperty(g_SAPatternModePropertyName);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSAAmplitude(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAA " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp/unitMult_;
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAA " << axisLetter_ << "=" << tmp*unitMult_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSAOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAO " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      tmp = tmp/unitMult_;
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAO " << axisLetter_ << "=" << tmp*unitMult_;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSAPeriod(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAF " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAF " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSAMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   static bool justSet = false;
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !justSet)
+         return DEVICE_OK;
+      command << "SAM " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SAMode_0); break;
+         case 1: success = pProp->Set(g_SAMode_1); break;
+         case 2: success = pProp->Set(g_SAMode_2); break;
+         case 3: success = pProp->Set(g_SAMode_3); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      justSet = false;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SAMode_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SAMode_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_SAMode_2) == 0)
+         tmp = 2;
+      else if (tmpstr.compare(g_SAMode_3) == 0)
+         tmp = 3;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << "SAM " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      // get the updated value right away
+      justSet = true;
+      return OnSAMode(pProp, MM::BeforeGet);
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      tmp = tmp & ((long)(BIT2|BIT1|BIT0));  // zero all but the lowest 3 bits
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SAPattern_0); break;
+         case 1: success = pProp->Set(g_SAPattern_1); break;
+         case 2: success = pProp->Set(g_SAPattern_2); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SAPattern_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SAPattern_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_SAPattern_2) == 0)
+         tmp = 2;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bits 0-2 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
+      current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSAPatternByte(MM::PropertyBase* pProp, MM::ActionType eAct)
+// get every single time
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSAClkSrc(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      tmp = tmp & ((long)(BIT7));  // zero all but bit 7
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SAClkSrc_0); break;
+         case BIT7: success = pProp->Set(g_SAClkSrc_1); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SAClkSrc_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SAClkSrc_1) == 0)
+         tmp = BIT7;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bit 7 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
+      current = current & (~(long)(BIT7));  // clear bit 7
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSAClkPol(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      tmp = tmp & ((long)(BIT6));  // zero all but bit 6
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SAClkPol_0); break;
+         case BIT6: success = pProp->Set(g_SAClkPol_1); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SAClkPol_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SAClkPol_1) == 0)
+         tmp = BIT6;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bit 6 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
+      current = current & (~(long)(BIT6));  // clear bit 6
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSATTLOut(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      tmp = tmp & ((long)(BIT5));  // zero all but bit 5
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SATTLOut_0); break;
+         case BIT5: success = pProp->Set(g_SATTLOut_1); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SATTLOut_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SATTLOut_1) == 0)
+         tmp = BIT5;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bit 5 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
+      current = current & (~(long)(BIT5));  // clear bit 5
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnSATTLPol(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      tmp = tmp & ((long)(BIT4));  // zero all but bit 4
+      switch (tmp)
+      {
+         case 0: success = pProp->Set(g_SATTLPol_0); break;
+         case BIT4: success = pProp->Set(g_SATTLPol_1); break;
+         default:success = 0;                      break;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SATTLPol_0) == 0)
+         tmp = 0;
+      else if (tmpstr.compare(g_SATTLPol_1) == 0)
+         tmp = BIT4;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      // have to get current settings and then modify bit 4 from there
+      command << "SAP " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      long current;
+      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
+      current = current & (~(long)(BIT4));  // clear bit 4
+      tmp += current;
+      command.str("");
+      command << "SAP " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   string pseudoAxisChar = FirmwareVersionAtLeast(2.89) ? "F" : "X";
+   long tmp;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RM " << pseudoAxisChar << "?";
+      response << ":A " << pseudoAxisChar << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (tmp >= 128)
+      {
+         tmp -= 128;  // remove the "running now" code if present
+      }
+      bool success;
+      switch ( tmp )
+      {
+         case 1: success = pProp->Set(g_RB_OnePoint_1); break;
+         case 2: success = pProp->Set(g_RB_PlayOnce_2); break;
+         case 3: success = pProp->Set(g_RB_PlayRepeat_3); break;
+         default: success = false;
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_RB_OnePoint_1) == 0)
+         tmp = 1;
+      else if (tmpstr.compare(g_RB_PlayOnce_2) == 0)
+         tmp = 2;
+      else if (tmpstr.compare(g_RB_PlayRepeat_3) == 0)
+         tmp = 3;
+      else
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      command << addressChar_ << "RM " << pseudoAxisChar << "=" << tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnRBTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(g_IdleState);
+   }
+   else  if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_DoItState) == 0)
+      {
+         command << addressChar_ << "RM";
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         pProp->Set(g_DoneState);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   string pseudoAxisChar = FirmwareVersionAtLeast(2.89) ? "F" : "X";
+   long tmp = 0;
+   static bool justSet;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !justSet)
+         return DEVICE_OK;
+      command << addressChar_ << "RM " << pseudoAxisChar << "?";
+      response << ":A " << pseudoAxisChar << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      bool success;
+      if (tmp >= 128)
+      {
+         success = pProp->Set(g_YesState);
+      }
+      else
+      {
+         success = pProp->Set(g_NoState);
+      }
+      if (!success)
+         return DEVICE_INVALID_PROPERTY_VALUE;
+      justSet = false;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      justSet = true;
+      return OnRBRunning(pProp, MM::BeforeGet);
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnRBDelayBetweenPoints(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << addressChar_ << "RT Z?";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Z="));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << addressChar_ << "RT Z=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}
+
+int CZStage::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   if (eAct == MM::BeforeGet)
+   {
+      if (ttl_trigger_enabled_)
+         pProp->Set(g_YesState);
+      else
+         pProp->Set(g_NoState);
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      ttl_trigger_enabled_ = (ttl_trigger_supported_ && (tmpstr.compare(g_YesState) == 0));
+      return OnUseSequence(pProp, MM::BeforeGet);  // refresh value
+   }
+   return DEVICE_OK;
+}
 
