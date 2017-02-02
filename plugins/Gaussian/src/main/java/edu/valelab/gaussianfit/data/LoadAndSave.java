@@ -29,12 +29,13 @@ either expressed or implied, of the FreeBSD Project.
 
 package edu.valelab.gaussianfit.data;
 
+import com.google.protobuf.ExtensionRegistry;
+import edu.ucsf.tsf.MMLocM;
 import edu.ucsf.tsf.TaggedSpotsProtos;
 import edu.valelab.gaussianfit.DataCollectionForm;
 import static edu.valelab.gaussianfit.DataCollectionForm.EXTENSION;
 import static edu.valelab.gaussianfit.DataCollectionForm.getInstance;
 import edu.valelab.gaussianfit.LittleEndianDataInputStream;
-import ij.gui.YesNoCancelDialog;
 import ij.process.ImageProcessor;
 import java.awt.Cursor;
 import java.awt.FileDialog;
@@ -67,6 +68,9 @@ import javax.swing.JOptionPane;
  * @author nico
  */
 public class LoadAndSave {
+   
+   // Our Tagged Spot Format application ID
+   public static int MMAPPID = 6;
 
    /**
     * Load Gaussian spot data from indicated file. 
@@ -218,6 +222,7 @@ public class LoadAndSave {
          if (test != null && test.equals("true")) {
             hasZ = true;
          }
+         int appId = Integer.parseInt(infoMap.get("application_id"));
 
          String head = fr.readLine();
          String[] headers = head.split("\t");
@@ -251,6 +256,16 @@ public class LoadAndSave {
                     Double.parseDouble(k.get("theta")),
                     Double.parseDouble(k.get("x_precision"))
             );
+            if (appId == MMAPPID) {
+               gsd.addKeyValue(SpotData.Keys.APERTUREINTENSITY, 
+                       Double.parseDouble(k.get("intensity_aperture")));
+               gsd.addKeyValue(SpotData.Keys.APERTUREBACKGROUND, 
+                       Double.parseDouble(k.get("background_aperture")));
+               gsd.addKeyValue(SpotData.Keys.INTENSITYRATIO, 
+                       Double.parseDouble(k.get("intensity_ratio")));
+               gsd.addKeyValue(SpotData.Keys.MSIGMA, 
+                       Double.parseDouble(k.get("m_sigma")));
+            }
             if (hasZ) {
                double zc = Double.parseDouble(k.get("z"));
                gsd.setZCenter(zc);
@@ -339,7 +354,14 @@ public class LoadAndSave {
             fi = new FileInputStream(selectedFile);
             fi.skip(12); // size of int + size of long
          }
-
+         ExtensionRegistry registry = ExtensionRegistry.newInstance();
+         int appId = psl.getApplicationId();
+         if (appId == MMAPPID) {
+            registry.add(MMLocM.intensityAperture);
+            registry.add(MMLocM.intensityBackground);
+            registry.add(MMLocM.intensityRatio);
+            registry.add(MMLocM.mSigma);
+         }
          String name = psl.getName();
          String title = psl.getName();
          int width = psl.getNrPixelsX();
@@ -368,7 +390,7 @@ public class LoadAndSave {
          TaggedSpotsProtos.Spot pSpot;
          while (fi.available() > 0 && (expectedSpots == 0 || maxNrSpots < expectedSpots)) {
 
-            pSpot = TaggedSpotsProtos.Spot.parseDelimitedFrom(fi);
+            pSpot = TaggedSpotsProtos.Spot.parseDelimitedFrom(fi, registry);
 
             SpotData gSpot = new SpotData((ImageProcessor) null, pSpot.getChannel(),
                     pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
@@ -376,6 +398,16 @@ public class LoadAndSave {
             gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
                     pSpot.getY(), 0.0, pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
                     pSpot.getXPrecision());
+            if (appId == MMAPPID) {
+               gSpot.addKeyValue(SpotData.Keys.APERTUREINTENSITY, 
+                       pSpot.getExtension(MMLocM.intensityAperture));
+               gSpot.addKeyValue(SpotData.Keys.APERTUREBACKGROUND, 
+                       pSpot.getExtension(MMLocM.intensityBackground));
+               gSpot.addKeyValue(SpotData.Keys.INTENSITYRATIO, 
+                       pSpot.getExtension(MMLocM.intensityRatio));
+               gSpot.addKeyValue(SpotData.Keys.MSIGMA, 
+                       pSpot.getExtension(MMLocM.mSigma));
+            }
             if (pSpot.hasZ()) {
                double zc = pSpot.getZ();
                gSpot.setZCenter(zc);
@@ -448,18 +480,6 @@ public class LoadAndSave {
          dir = fd.getDirectory();
       }
       final File selectedFile = new File(dir + File.separator + fn);
-      if (selectedFile.exists()) {
-         // this may be superfluous
-         YesNoCancelDialog y = new YesNoCancelDialog(caller, 
-                 "File " + fn + "Exists...", "File exists.  Overwrite?");
-         if (y.cancelPressed()) {
-            return dir;
-         }
-         if (!y.yesPressed()) {
-            saveData(rowData, false, dir, caller);
-            return dir;
-         }
-      }
 
       Runnable doWorkRunnable = new Runnable() {
 
@@ -467,7 +487,7 @@ public class LoadAndSave {
          public void run() {
 
             TaggedSpotsProtos.SpotList.Builder tspBuilder = TaggedSpotsProtos.SpotList.newBuilder();
-            tspBuilder.setApplicationId(1).
+            tspBuilder.setApplicationId(MMAPPID).
                     setName(rowData.getName()).
                     setFilepath(rowData.title_).
                     setNrPixelsX(rowData.width_).
@@ -506,8 +526,6 @@ public class LoadAndSave {
                   fo.write(0);
                }
 
-
-
                int counter = 0;
                for (SpotData gd : rowData.spotList_) {
 
@@ -534,15 +552,21 @@ public class LoadAndSave {
                              setWidth((float) gd.getWidth()).
                              setA((float) gd.getA()).
                              setTheta((float) gd.getTheta()).
-                             setXPrecision((float) gd.getSigma());
+                             setXPrecision((float) gd.getSigma()).
+                             setExtension(MMLocM.intensityAperture, 
+                                  gd.getValue(SpotData.Keys.APERTUREINTENSITY).floatValue()).
+                             setExtension(MMLocM.intensityBackground, 
+                                  gd.getValue(SpotData.Keys.APERTUREBACKGROUND).floatValue()).
+                             setExtension(MMLocM.intensityRatio, 
+                                  gd.getValue(SpotData.Keys.INTENSITYRATIO).floatValue()).
+                             setExtension(MMLocM.mSigma, 
+                                  gd.getValue(SpotData.Keys.MSIGMA).floatValue());
                      if (rowData.hasZ_) {
                         spotBuilder.setZ((float) gd.getZCenter());
                      }
 
-                     double width = gd.getWidth();
-                     double xPrec = gd.getSigma();
-
                      TaggedSpotsProtos.Spot spot = spotBuilder.build();
+                     
                      // write message size and message
                      spot.writeDelimitedTo(fo);
                      counter++;
@@ -602,18 +626,6 @@ public class LoadAndSave {
             fn = fn + ".txt";
          }
          final File selectedFile = new File(fd.getDirectory() + File.separator + fn);
-         if (selectedFile.exists()) {
-            // this may be superfluous
-            YesNoCancelDialog y = new YesNoCancelDialog(caller, "File " + fn + 
-                    "Exists...", "File exists.  Overwrite?");
-            if (y.cancelPressed()) {
-               return;
-            }
-            if (!y.yesPressed()) {
-               saveDataAsText(rowData, caller);
-               return;
-            }
-         }
 
          Runnable doWorkRunnable = new Runnable() {
 
@@ -624,7 +636,7 @@ public class LoadAndSave {
                   caller.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                   FileWriter fw = new FileWriter(selectedFile);
                   fw.write(""
-                          + "application_id: " + 1 + tab
+                          + "application_id: " + MMAPPID + tab
                           + "name: " + rowData.getName() + tab
                           + "filepath: " + rowData.title_ + tab
                           + "nr_pixels_x: " + rowData.width_ + tab
@@ -643,13 +655,14 @@ public class LoadAndSave {
                           + "has_Z: " + rowData.hasZ_ + "\n");
                   fw.write("molecule\tchannel\tframe\tslice\tpos\tx\ty\tintensity\t"
                           + "background\twidth\ta\ttheta\tx_position\ty_position\t"
-                          + "x_precision");
+                          + "x_precision\tintensity_aperture\tbackground_aperture\t"
+                          + "intensity_ratio\tm_sigma");
                   if (rowData.hasZ_) {
                      fw.write("\tz");
                   }
                   fw.write("\n");
 
-                  int counter = 0;
+                  int counter = 1;
                   for (SpotData gd : rowData.spotList_) {
 
                      if ((counter % 1000) == 0) {
@@ -658,7 +671,7 @@ public class LoadAndSave {
                      }
                      
                      if (gd != null) {
-                        fw.write("" + gd.getFrame() + tab +
+                        fw.write("" + counter + tab +
                                 gd.getChannel() + tab +
                                 gd.getFrame() + tab +
                                 gd.getSlice() + tab + 
@@ -672,8 +685,11 @@ public class LoadAndSave {
                                 String.format("%.3f",gd.getTheta()) + tab + 
                                 gd.getX() + tab + 
                                 gd.getY() + tab + 
-                                String.format("%.3f", gd.getSigma()) );
-                        
+                                String.format("%.3f", gd.getSigma()) + tab +
+                                String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREINTENSITY).floatValue()) + tab +
+                                String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREBACKGROUND).floatValue()) + tab + 
+                                String.format("%.3f", gd.getValue(SpotData.Keys.INTENSITYRATIO).floatValue()) + tab +
+                                String.format("%.3f", gd.getValue(SpotData.Keys.MSIGMA).floatValue()));                        
                         if (rowData.hasZ_) {
                            fw.write(tab + String.format("%.2f", gd.getZCenter()));
                         }
