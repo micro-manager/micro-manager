@@ -209,7 +209,8 @@ public class ShadingProcessor extends Processor {
                String value = ps.getPropertyValue();
                if (scopeData.containsKey(key)
                        && scopeData.getPropertyType(key) == String.class) {
-                  if (!value.equals(scopeData.getString(key))) {
+                  String scopeSetting = scopeData.getString(key);
+                  if (!value.equals(scopeSetting)) {
                      presetMatch = false;
                      break;
                   }

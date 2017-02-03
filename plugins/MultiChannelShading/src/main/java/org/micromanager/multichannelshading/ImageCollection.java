@@ -124,6 +124,11 @@ public class ImageCollection {
       try {
          ImageProcessor dp;
          if (bg != null) {
+            if (bg.getWidth() != ip.getWidth() || bg.getHeight() != ip.getHeight()) {
+               gui_.getAlertManager().postAlert("Flatfield Error", this.getClass(), 
+                       preset + " flatfield image size differs from background image size.");
+               throw new ShadingException("Faltfield image and background image differ in size");
+            }
             dp = ImageUtils.subtractImageProcessors(
                     ip.getProcessor(), bg.getProcessor());
          } else {
