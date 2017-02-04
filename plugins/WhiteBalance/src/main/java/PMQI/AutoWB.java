@@ -16,23 +16,25 @@ package PMQI;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.micromanager.internal.MMStudio;
+import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+import org.scijava.plugin.Plugin;
 
 /**
  *
  * @author Andrej
  */
-public class AutoWB implements org.micromanager.MenuPlugin {
+@Plugin(type = MenuPlugin.class)
+public class AutoWB implements MenuPlugin {
 
     public static String menuName = "PM/QI Auto White Balance";
     public static String tooltipDescription = "Runs automatic white balance algorithm";
-    private MMStudio gui_;
+    private Studio gui_;
     private WhiteBalance_UI wbForm_;
 
     @Override
     public void setContext(Studio app) {
-        gui_ = (MMStudio) app;
+        gui_ = app;
     }
 
     @Override
