@@ -18,7 +18,8 @@
 
 #include "FrameBuffer.h"
 
-#include <math.h>
+#include <cmath>
+#include <cstring>
 
 namespace mm {
 

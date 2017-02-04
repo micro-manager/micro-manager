@@ -349,7 +349,8 @@ public:
 
    /** \name Image acquisition. */
    ///@{
-   void setROI(int x, int y, int xSize, int ySize) throw (CMMError); 
+   void setROI(int x, int y, int xSize, int ySize) throw (CMMError);
+   void setROI(const char* label, int x, int y, int xSize, int ySize) throw (CMMError);
    void getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError);
    void getROI(const char* label, int& x, int& y, int& xSize, int& ySize) throw (CMMError);
    void clearROI() throw (CMMError);

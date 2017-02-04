@@ -15,6 +15,8 @@ MCL_NanoDrive_XYStage::MCL_NanoDrive_XYStage():
 	settlingTimeY_ms_(100),
 	curXpos_(0),
 	curYpos_(0),
+	commandedX_(0),
+	commandedY_(0),
 	firstWriteX_(true),
 	firstWriteY_(true),
 	MCLhandle_(0)
@@ -51,8 +53,8 @@ void MCL_NanoDrive_XYStage::GetName(char* name) const
 
 int MCL_NanoDrive_XYStage::Initialize()
 {
-// BEGIN LOCKING
-HandleListLock();
+	// BEGIN LOCKING
+	HandleListLock();
 
    int err = DEVICE_OK;
    int possHandle = 0;
@@ -89,6 +91,7 @@ HandleListLock();
    device->Initialize(possHandle, XY_TYPE);
    for (int i = 0; i < numHandles; i++)
    {   
+	   
 		possHandle = handlesToUseOrRelease[i];
 		device->setHandle(possHandle);
 
@@ -356,6 +359,17 @@ int MCL_NanoDrive_XYStage::SetDeviceProperties()
 	err = SetAllowedValues(g_Keyword_SetOrigin, yesNoList);
 	if (err != DEVICE_OK)
 		return err;
+
+
+	//Current Commanded Position
+	sprintf(iToChar, "%f", commandedX_);
+	pAct = new CPropertyAction(this, &MCL_NanoDrive_XYStage::OnCommandChangedX);
+	err = CreateProperty("CommandedX",iToChar, MM::Float, true, pAct);
+
+	//Current Commanded Position
+	sprintf(iToChar, "%f", commandedY_);
+	pAct = new CPropertyAction(this, &MCL_NanoDrive_XYStage::OnCommandChangedY);
+	err = CreateProperty("CommandedY",iToChar, MM::Float, true, pAct);
 
 	return DEVICE_OK;
 }
@@ -726,4 +740,32 @@ int MCL_NanoDrive_XYStage::OnSetOrigin(MM::PropertyBase* pProp, MM::ActionType e
 	}
 
 	return err;
+}
+
+int MCL_NanoDrive_XYStage::OnCommandChangedX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int err = DEVICE_OK;
+
+   if (eAct == MM::BeforeGet)
+   {
+	   double ignoreZ;
+	   MCL_GetCommandedPosition(&commandedX_, &commandedY_, &ignoreZ, MCLhandle_);
+	   pProp->Set(commandedX_);
+   }
+
+   return err;
+}
+
+int MCL_NanoDrive_XYStage::OnCommandChangedY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int err = DEVICE_OK;
+
+   if (eAct == MM::BeforeGet)
+   {
+	   double ignoreZ;
+	   MCL_GetCommandedPosition(&commandedX_, &commandedY_, &ignoreZ, MCLhandle_);
+	   pProp->Set(commandedY_);
+   }
+
+   return err;
 }

@@ -59,6 +59,8 @@ public:
 	int OnSettlingTimeXMs(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnSettlingTimeYMs(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnSetOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCommandChangedX(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnCommandChangedY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 	int SetDeviceProperties();
@@ -91,6 +93,9 @@ private:
 
 	bool firstWriteX_;
 	bool firstWriteY_;
+
+	double commandedX_;
+	double commandedY_;
 };
 
 #endif // _MCL_NANODRIVE_XYSTAGE_H_
