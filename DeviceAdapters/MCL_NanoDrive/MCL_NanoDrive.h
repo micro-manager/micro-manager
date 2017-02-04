@@ -24,5 +24,7 @@ static const char* g_Keyword_SetPosZUm = "Set position Z (um)";
 static const char* g_Keyword_SetPosXUm = "Set position X (um)";
 static const char* g_Keyword_SetPosYUm = "Set position Y (um)";
 static const char* g_Keyword_SetOrigin = "Set origin here";
+static const char* g_Keyword_SetSequence = "Use Sequence";
+static const char* g_Keyword_ShiftSequence = "Shift sequence by 1";
 
 #endif //_MCL_NANODRIVE_H_

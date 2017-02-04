@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 4, MMCore_versionPatch = 1;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 5, MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4174,6 +4174,54 @@ void CMMCore::getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError)
    y = (int) uY;
    xSize = (int) uXSize;
    ySize = (int) uYSize;
+}
+
+/**
+* Set the hardware region of interest for a specified camera.
+*
+* A successful call to this method will clear any images in the sequence
+* buffer, even if the ROI does not change.
+*
+* Warning: the clearing of the sequence buffer will interfere with any sequence
+* acquisitions currently being performed on other cameras.
+*
+* If multiple ROIs are set prior to this call, they will be replaced by the
+* new single ROI.
+*
+* The coordinates are in units of binned pixels. That is, conceptually,
+* binning is applied before the ROI.
+*
+* @param label  camera label
+* @param x      coordinate of the top left corner
+* @param y      coordinate of the top left corner
+* @param xSize  number of horizontal pixels
+* @param ySize  number of horizontal pixels
+*/
+void CMMCore::setROI(const char* label, int x, int y, int xSize, int ySize) throw (CMMError)
+{
+  boost::shared_ptr<CameraInstance> camera = deviceManager_->GetDeviceOfType<CameraInstance>(label);
+  if (camera)
+  {
+     mm::DeviceModuleLockGuard guard(camera);
+     LOG_DEBUG(coreLogger_) << "Will set ROI of camera " << label <<
+        " to (left = " << x << ", top = " << y <<
+        ", width = " << xSize << ", height = " << ySize << ")";
+     int nRet = camera->SetROI(x, y, xSize, ySize);
+     if (nRet != DEVICE_OK)
+        throw CMMError(getDeviceErrorText(nRet, camera).c_str(), MMERR_DEVICE_GENERIC);
+
+     // Any images left over in the sequence buffer may have sizes
+     // inconsistent with the current image size. There is no way to "fix"
+     // popNextImage() to handle this correctly, so we need to make sure we
+     // discard such images.
+     cbuf_->Clear();
+  }
+  else
+     throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
+
+  LOG_DEBUG(coreLogger_) << "Did set ROI of camera " << label <<
+     " to (left = " << x << ", top = " << y <<
+     ", width = " << xSize << ", height = " << ySize << ")";
 }
 
 /**
