@@ -9,11 +9,11 @@
 //                and used in Matlab by cp2tform
 //-----------------------------------------------------------------------------
 //
-//AUTHOR:         Arthur Edelstein, arthuredelstein@gmail.com, 2012-2017
+//AUTHOR:         Arthur Edelstein, arthuredelstein@gmail.com, 2012
 //
 //COPYRIGHT:      University of California San Francisco
 //
-//LICENSE:        This file is distributed under the BSD 2-clause license.
+//LICENSE:        This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
 //                This file is distributed in the hope that it will be useful,

@@ -1,35 +1,3 @@
-/**
- * @author - Nico Stuurman,  2012
- * 
- * 
-Copyright (c) 2012-2017, Regents of the University of California
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies,
-either expressed or implied, of the FreeBSD Project.
- */
-
 package edu.valelab.gaussianfit.spotoperations;
 
 import edu.valelab.gaussianfit.DataCollectionForm;
@@ -37,7 +5,6 @@ import static edu.valelab.gaussianfit.DataCollectionForm.getInstance;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.data.GsSpotPair;
 import edu.valelab.gaussianfit.data.RowData;
-import edu.valelab.gaussianfit.data.TrackData;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +59,7 @@ public class SpotLinker {
                         if (tracks.size() > 0) {
                            ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
                            for (SpotData spot : spots) {
-                              gsSpots.add(new GsSpotPair(spot, null,
+                              gsSpots.add(new GsSpotPair(spot,
                                       new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
                                       new Point2D.Double(0.0, 0.0)));
                            }
@@ -111,8 +78,8 @@ public class SpotLinker {
                                  // the removal needs to be a two step process
                                  removedTracks.add(track);
                               } else {
-                                 track.add(newSpot.getFirstSpot());
-                                 markedSpots.add(newSpot.getFirstSpot());
+                                 track.add(newSpot.getGSD());
+                                 markedSpots.add(newSpot.getGSD());
                               }
                            }
                            // second part of removing tracks
@@ -142,12 +109,11 @@ public class SpotLinker {
 
       
          // Add destList to rowData
-         RowData.Builder builder = rowData.copy();
-         builder.setName(rowData.getName() + " Linked").
-                 setMaxNrSpots(destList.size()).
-                  setSpotList(destList);
-         DataCollectionForm.getInstance().addSpotData(builder);
-
+         DataCollectionForm.getInstance().addSpotData(rowData.name_ + " Linked", rowData.title_, "", rowData.width_,
+                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
+                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
+                 0, 1, rowData.maxNrSpots_, destList,
+                 rowData.timePoints_, false, DataCollectionForm.Coordinates.NM, false, 0.0, 0.0);
       } catch (OutOfMemoryError oome) {
          JOptionPane.showMessageDialog(getInstance(), "Out of memory");
       }
@@ -228,136 +194,12 @@ public class SpotLinker {
       }
       sp.nrLinks_ = n;     
       
-      sp.addKeyValue(SpotData.Keys.N, n);
-      sp.addKeyValue(SpotData.Keys.STDDEV, stdDev);
-      sp.addKeyValue(SpotData.Keys.STDDEVX, stdDevX);
-      sp.addKeyValue(SpotData.Keys.STDDEVY, stdDevY);
+      sp.addKeyValue("n", n);
+      sp.addKeyValue("stdDev", stdDev);
+      sp.addKeyValue("stdDevX", stdDevX);
+      sp.addKeyValue("stdDevY", stdDevY);
 
       dest.add(sp);
-   }
-
-   
-    /**
-    * Function that executes spot linkage.  Goes through a list of spots
-    * and looks in every consecutive frames for the closest by spot (at a 
-    * maximum distance of maxDistance).  If no spot is found, the link is added
-    * and the track is added as a row.  Only tracks longer then minNr are created.
-    * 
-    * @param rowData - input Spot data (obtained through the "Fit" function
-    * @param minNr - track needs to be larger than this or it will not be saved
-    * @param nrMissing - Continue searching for this many frames if no spot was
-    *                  - found.
-    * @param maxDistance - Maximum distance between spot in consecutive frames
-    *                    - if larger, it will not be added to the tracks
-    * @param minTotalDistance - Minimum distance between first and last point 
-    *                in the track.  Track will only be reported if distance is 
-    *                greater than this number.
-    * @return Number of tracks that were extracted.
-    */
-   public static int extractTracks(final RowData rowData, final int minNr, 
-           final int nrMissing, final double maxDistance, final double minTotalDistance) {
-      
-      int trackNr = 0;
-      try {
-         ij.IJ.showStatus("Extracting tracks...");
-         boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
-         int nr = rowData.nrSlices_;
-         if (useFrames) {
-            nr = rowData.nrFrames_;
-         }
-
-         // maintain active tracks here
-         List<TrackData> tracks = 
-                 new ArrayList<TrackData>();
-         for (int pos = 1; pos <= rowData.nrPositions_; pos++) {
-            for (int ch = 1; ch <= rowData.nrChannels_; ch++) {
-               for (int s = 1; s <= rowData.nrSlices_; s++) {
-                  for (int f = 1; f <= rowData.nrFrames_; f++) {
-                     List<SpotData> spots = rowData.get(f, s, ch, pos);
-                     if (spots != null) {
-                        // keep track of spots in this frame added to tracks 
-                        List<SpotData> markedSpots = new ArrayList<SpotData>();
-                        // go through all tracks to see if they can be extended
-                        if (tracks.size() > 0) {
-                           ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
-                           for (SpotData spot : spots) {
-                              gsSpots.add(new GsSpotPair(spot, null,
-                                      new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
-                                      new Point2D.Double(0.0, 0.0)));
-                           }
-                           NearestPointGsSpotPair nsp = new NearestPointGsSpotPair(gsSpots, maxDistance);
-                           List<TrackData> removedTracks = 
-                                   new ArrayList<TrackData>();
-                           for (TrackData track : tracks) {
-                              SpotData tSpot = track.get(track.size() - 1);
-                              GsSpotPair newSpot = nsp.findKDWSE(new Point2D.Double(
-                                      tSpot.getXCenter(), tSpot.getYCenter()));
-                              if (newSpot == null) {
-                                 track.addMissing();
-                                 if (track.missingMoreThan(nrMissing)) {
-                                    // track could not be extended, finalize it
-                                    // Write out the track:
-                                    if (track.size() > minNr && 
-                                             track.get(0).distance(track.get(track.size() - 1)) > minTotalDistance)  {
-                                       writeTrack(rowData, track.getList(), trackNr);
-                                       trackNr++;
-                                       // and remove from the list of tracks
-                                       // to avoid a concurrent modification exception
-                                       // the removal needs to be a two step process
-                                       removedTracks.add(track);
-                                    }
-                                 }
-                              } else {
-                                 track.resetMissing();
-                                 track.add(newSpot.getFirstSpot());
-                                 markedSpots.add(newSpot.getFirstSpot());
-                              }
-                           }
-                           // second part of removing tracks
-                           for (TrackData track : removedTracks) {
-                              tracks.remove(track);
-                           }
-                        }
-                        // go through spots and start a new track with any spot 
-                        // that was not part of a previous track
-                        for (SpotData spot : spots) {
-                           if (!markedSpots.contains(spot)) {
-                              TrackData track = new TrackData();
-                              track.add(spot);
-                              tracks.add(track);
-                           }
-                        }
-                     }
-                  }
-                  // add tracks that made it to the end to destination list
-                  for (TrackData track : tracks) {
-                     if (track.size() > minNr && 
-                             track.get(0).distance(track.get(track.size() - 1) ) 
-                             > minTotalDistance) {
-                        writeTrack(rowData, track.getList(), trackNr);
-                        trackNr++;
-                     }
-                  }
-                  tracks.clear();
-               }
-            }
-         }
-         ij.IJ.showStatus("Extracted " + trackNr + " tracks");
-      } catch (OutOfMemoryError oome) {
-         JOptionPane.showMessageDialog(getInstance(), "Out of memory");
-      }
-      
-      return trackNr;
-   }
-
-   private static void writeTrack(RowData rowData, List<SpotData> track, int trackNr) {
-      RowData.Builder builder = rowData.copy();
-      builder.setName(rowData.getName() + " Track " + trackNr).
-              setNrSlices(1).setNrPositions(1).
-              setMaxNrSpots(track.size()).
-              setSpotList(track);
-      DataCollectionForm.getInstance().addSpotData(builder);
-
    }
 
 }

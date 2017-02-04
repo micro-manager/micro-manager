@@ -24,13 +24,11 @@ import org.scijava.plugin.SciJavaPlugin;
  */
 @org.scijava.plugin.Plugin(type = MenuPlugin.class)
 public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
-   public static final String MENUNAME = "Localization Microscopy";
-   public static final String TOOLTIPDESCRIPTION =
+    public static final String MENUNAME = "Localization Microscopy";
+    public static final String TOOLTIPDESCRIPTION =
        "Toolbox for analyzing spots using Gaussian fitting";
 
-
    private MainForm theForm_;
-   private Studio studio_;
 
    @Override
    public String getName() {
@@ -42,20 +40,20 @@ public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
       return "Acquisition Tools";
    }
 
-   @Override
-   public void run(String arg) {
+    @Override
+    public void run(String arg) {
       if (!MainForm.WINDOWOPEN) {
-         theForm_ = new MainForm(studio_);
+         theForm_ = new MainForm();
       }
       theForm_.setVisible(true);
       theForm_.formWindowOpened();
       theForm_.toFront();
    }
 
+
    @Override
-   public void setContext(Studio studio) { 
-      studio_ = studio;
-      studio_.events().registerForEvents(this);
+   public void setContext(Studio app) {
+      app.events().registerForEvents(this);
    }
 
    @Override

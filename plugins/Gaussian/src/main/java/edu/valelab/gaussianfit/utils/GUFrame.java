@@ -32,10 +32,9 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.prefs.Preferences;
 
 import javax.swing.JFrame;
-import org.micromanager.Studio;
-import org.micromanager.UserProfile;
 
 
 /**
@@ -46,26 +45,27 @@ import org.micromanager.UserProfile;
  */
 public class GUFrame extends JFrame {
    private static final long serialVersionUID = 1L;
+   private Preferences prefs_;
    private final String prefPrefix_;
-   private final Class<?> caller_;
-   private final Studio studio_;
    private static final String WINDOW_X = "frame_x";
    private static final String WINDOW_Y = "frame_y";
    private static final String WINDOW_WIDTH = "frame_width";
    private static final String WINDOW_HEIGHT = "frame_height";
    
-   public GUFrame(Studio studio, Class<?> caller) {
+   public GUFrame() {
       super();
-      caller_ = caller;
-      studio_ = studio;
+      finishConstructor();
       prefPrefix_ = "";
    }
 
-   public GUFrame(Studio studio, Class<?> caller, String prefPrefix) {
+   public GUFrame(String prefPrefix) {
       super();
-      caller_ = caller;
-      studio_ = studio;
+      finishConstructor();
       prefPrefix_ = prefPrefix;
+   }
+   
+   private void finishConstructor() {
+      prefs_ = Preferences.userNodeForPackage(this.getClass());
    }
 
    /**
@@ -78,36 +78,33 @@ public class GUFrame extends JFrame {
     * @param y new WINDOW_Y position if current value isn't valid
     */
    private void ensureSafeWindowPosition(int x, int y) {
-      UserProfile up = studio_.profile();
-      int prefX = up.getInt(caller_, prefPrefix_ + WINDOW_X, 0);
-      int prefY =up.getInt(caller_, prefPrefix_ + WINDOW_Y, 0);
+      int prefX = prefs_.getInt(prefPrefix_ + WINDOW_X, 0);
+      int prefY = prefs_.getInt(prefPrefix_ + WINDOW_Y, 0);
       if (getGraphicsConfigurationContaining(prefX, prefY) == null) {
          // only reach this code if the pref coordinates are off screen
-         up.setInt(caller_, prefPrefix_ + WINDOW_X, x);
-         up.setInt(caller_, prefPrefix_ + WINDOW_Y, y);
+         prefs_.putInt(prefPrefix_ + WINDOW_X, x);
+         prefs_.putInt(prefPrefix_ + WINDOW_Y, y);
       }
    }
 
    public void loadPosition(int x, int y, int width, int height) {
-      UserProfile up = studio_.profile();
-      if (up == null)
+      if (prefs_ == null)
          return;
 
       ensureSafeWindowPosition(x, y);
-      setBounds(up.getInt(caller_, prefPrefix_ + WINDOW_X, x),
-                up.getInt(caller_, prefPrefix_ + WINDOW_Y, y),
-                up.getInt(caller_, prefPrefix_ + WINDOW_WIDTH, width),
-                up.getInt(caller_, prefPrefix_ + WINDOW_HEIGHT, height));
+      setBounds(prefs_.getInt(prefPrefix_ + WINDOW_X, x),
+                prefs_.getInt(prefPrefix_ + WINDOW_Y, y),
+                prefs_.getInt(prefPrefix_ + WINDOW_WIDTH, width),
+                prefs_.getInt(prefPrefix_ + WINDOW_HEIGHT, height));
    }
 
    public void loadPosition(int x, int y) {
-      UserProfile up = studio_.profile();
-      if (up == null)
+      if (prefs_ == null)
          return;
       
       ensureSafeWindowPosition(x, y);
-      setBounds(up.getInt(caller_, prefPrefix_ + WINDOW_X, x),
-                up.getInt(caller_, prefPrefix_ + WINDOW_Y, y),
+      setBounds(prefs_.getInt(prefPrefix_ + WINDOW_X, x),
+                prefs_.getInt(prefPrefix_ + WINDOW_Y, y),
                 getWidth(),
                 getHeight());
    }
@@ -155,17 +152,16 @@ public class GUFrame extends JFrame {
    
 
    public void savePosition() {
-      UserProfile up = studio_.profile();
-      if (up == null)
+      if (prefs_ == null)
          return;
       
       Rectangle r = getBounds();
       
       // save window position
-      up.setInt(caller_, prefPrefix_ + WINDOW_X, r.x);
-      up.setInt(caller_, prefPrefix_ + WINDOW_Y, r.y);
-      up.setInt(caller_, prefPrefix_ + WINDOW_WIDTH, r.width);
-      up.setInt(caller_, prefPrefix_ + WINDOW_HEIGHT, r.height);
+      prefs_.putInt(prefPrefix_ + WINDOW_X, r.x);
+      prefs_.putInt(prefPrefix_ + WINDOW_Y, r.y);
+      prefs_.putInt(prefPrefix_ + WINDOW_WIDTH, r.width);
+      prefs_.putInt(prefPrefix_ + WINDOW_HEIGHT, r.height);
    }
    
          
@@ -174,7 +170,15 @@ public class GUFrame extends JFrame {
       savePosition();
       super.dispose();
    }
-
+   
+   
+   public Preferences getPrefsNode() {
+      return prefs_;
+   }
+   
+   public void setPrefsNode(Preferences prefs) {
+      prefs_ = prefs;
+   }
   
    public static GraphicsConfiguration getGraphicsConfigurationContaining(
          int x, int y) {

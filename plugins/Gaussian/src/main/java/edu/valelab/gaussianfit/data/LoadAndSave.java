@@ -1,41 +1,12 @@
-/*
-Copyright (c) 2010-2017, Regents of the University of California
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies,
-either expressed or implied, of the FreeBSD Project.
- */
 
 package edu.valelab.gaussianfit.data;
 
-import com.google.protobuf.ExtensionRegistry;
-import edu.ucsf.tsf.MMLocM;
 import edu.ucsf.tsf.TaggedSpotsProtos;
 import edu.valelab.gaussianfit.DataCollectionForm;
 import static edu.valelab.gaussianfit.DataCollectionForm.EXTENSION;
 import static edu.valelab.gaussianfit.DataCollectionForm.getInstance;
 import edu.valelab.gaussianfit.LittleEndianDataInputStream;
+import ij.gui.YesNoCancelDialog;
 import ij.process.ImageProcessor;
 import java.awt.Cursor;
 import java.awt.FileDialog;
@@ -68,14 +39,9 @@ import javax.swing.JOptionPane;
  * @author nico
  */
 public class LoadAndSave {
-   
-   // Our Tagged Spot Format application ID
-   public static int MMAPPID = 6;
 
    /**
-    * Load Gaussian spot data from indicated file. 
-    * This is for the file type developed by Bo Huang and adopted by Nikon
-    * Updates the ImageJ status bar
+    * Load Gaussian spot data from indicated file Updates the ImageJ status bar
     * to show progress
     *
     * @param selectedFile - file that should be in binary format
@@ -170,17 +136,11 @@ public class LoadAndSave {
          }
 
          String name = selectedFile.getName();
-         
-         RowData.Builder builder = new RowData.Builder();
-         builder.setName(name).setTitle(name).setDisplayWindow(null).
-                 setColColorRef("").setWidth(256).setHeight(256).
-                 setPixelSizeNm(pixelSize).setZStackStepSizeNm(0.0f).
-                 setShape(3).setHalfSize(2).setNrFrames(1).setNrSlices(1).
-                 setNrPositions(1).setMaxNrSpots(nr).setSpotList(spotList).
-                 setIsTrack(false).setCoordinate(DataCollectionForm.Coordinates.NM).
-                 setHasZ(hasZ).setMinZ(minZ).setMaxZ(maxZ);
-         DataCollectionForm.getInstance().addSpotData(builder);
 
+         DataCollectionForm.getInstance().addSpotData(
+                 name, name, "", 256, 256, pixelSize, (float) 0.0, 3, 2, 1, 1,
+                 1, 1, nr, spotList, null, false,
+                 DataCollectionForm.Coordinates.NM, hasZ, minZ, maxZ);
 
       } catch (FileNotFoundException ex) {
          JOptionPane.showMessageDialog(getInstance(), "File not found");
@@ -222,7 +182,6 @@ public class LoadAndSave {
          if (test != null && test.equals("true")) {
             hasZ = true;
          }
-         int appId = Integer.parseInt(infoMap.get("application_id"));
 
          String head = fr.readLine();
          String[] headers = head.split("\t");
@@ -256,16 +215,6 @@ public class LoadAndSave {
                     Double.parseDouble(k.get("theta")),
                     Double.parseDouble(k.get("x_precision"))
             );
-            if (appId == MMAPPID) {
-               gsd.addKeyValue(SpotData.Keys.APERTUREINTENSITY, 
-                       Double.parseDouble(k.get("intensity_aperture")));
-               gsd.addKeyValue(SpotData.Keys.APERTUREBACKGROUND, 
-                       Double.parseDouble(k.get("background_aperture")));
-               gsd.addKeyValue(SpotData.Keys.INTENSITYRATIO, 
-                       Double.parseDouble(k.get("intensity_ratio")));
-               gsd.addKeyValue(SpotData.Keys.MSIGMA, 
-                       Double.parseDouble(k.get("m_sigma")));
-            }
             if (hasZ) {
                double zc = Double.parseDouble(k.get("z"));
                gsd.setZCenter(zc);
@@ -285,26 +234,27 @@ public class LoadAndSave {
          if (infoMap.containsKey("z_step_size")) {
             zStepSize = (float) (Double.parseDouble(infoMap.get("z_step_size")));
          }
-         
-         int halfBoxSize = Integer.parseInt(infoMap.get("box_size")) / 2;
-         RowData.Builder builder = new RowData.Builder();
-         builder.setName(infoMap.get("name")).setTitle(infoMap.get("name")).
-                 setWidth(Integer.parseInt(infoMap.get("nr_pixels_x"))).
-                 setHeight(Integer.parseInt(infoMap.get("nr_pixels_y"))).
-                 setPixelSizeNm(Math.round(Double.parseDouble(infoMap.get("pixel_size")))).
-                 setZStackStepSizeNm(zStepSize).
-                 setShape(Integer.parseInt(infoMap.get("fit_mode"))).
-                 setHalfSize(halfBoxSize).
-                 setNrChannels(Integer.parseInt(infoMap.get("nr_channels"))).
-                 setNrFrames(Integer.parseInt(infoMap.get("nr_frames"))).
-                 setNrSlices(Integer.parseInt(infoMap.get("nr_slices"))).
-                 setNrPositions(Integer.parseInt(infoMap.get("nr_pos"))).
-                 setMaxNrSpots(spotList.size()).
-                 setSpotList(spotList).
-                 setCoordinate(DataCollectionForm.Coordinates.NM).
-                 setHasZ(hasZ).setMinZ(minZ).setMaxZ(maxZ);
-         DataCollectionForm.getInstance().addSpotData(builder);
 
+         DataCollectionForm.getInstance().addSpotData(infoMap.get("name"), infoMap.get("name"),
+                 "", Integer.parseInt(infoMap.get("nr_pixels_x")),
+                 Integer.parseInt(infoMap.get("nr_pixels_y")),
+                 Math.round(Double.parseDouble(infoMap.get("pixel_size"))),
+                 zStepSize,
+                 Integer.parseInt(infoMap.get("fit_mode")),
+                 Integer.parseInt(infoMap.get("box_size")) / 2,
+                 Integer.parseInt(infoMap.get("nr_channels")),
+                 Integer.parseInt(infoMap.get("nr_frames")),
+                 Integer.parseInt(infoMap.get("nr_slices")),
+                 Integer.parseInt(infoMap.get("nr_pos")),
+                 spotList.size(),
+                 spotList,
+                 null,
+                 Boolean.parseBoolean(infoMap.get("is_track")),
+                 DataCollectionForm.Coordinates.NM,
+                 hasZ,
+                 minZ,
+                 maxZ
+         );
 
       } catch (NumberFormatException ex) {
          JOptionPane.showMessageDialog(getInstance(), "File format did not meet expectations");
@@ -354,19 +304,12 @@ public class LoadAndSave {
             fi = new FileInputStream(selectedFile);
             fi.skip(12); // size of int + size of long
          }
-         ExtensionRegistry registry = ExtensionRegistry.newInstance();
-         int appId = psl.getApplicationId();
-         if (appId == MMAPPID) {
-            registry.add(MMLocM.intensityAperture);
-            registry.add(MMLocM.intensityBackground);
-            registry.add(MMLocM.intensityRatio);
-            registry.add(MMLocM.mSigma);
-         }
+
          String name = psl.getName();
          String title = psl.getName();
          int width = psl.getNrPixelsX();
          int height = psl.getNrPixelsY();
-         float pixelSize = psl.getPixelSize();
+         float pixelSizeUm = psl.getPixelSize();
          int shape = 1;
          if (psl.getFitMode() == TaggedSpotsProtos.FitMode.TWOAXIS) {
             shape = 2;
@@ -390,7 +333,7 @@ public class LoadAndSave {
          TaggedSpotsProtos.Spot pSpot;
          while (fi.available() > 0 && (expectedSpots == 0 || maxNrSpots < expectedSpots)) {
 
-            pSpot = TaggedSpotsProtos.Spot.parseDelimitedFrom(fi, registry);
+            pSpot = TaggedSpotsProtos.Spot.parseDelimitedFrom(fi);
 
             SpotData gSpot = new SpotData((ImageProcessor) null, pSpot.getChannel(),
                     pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
@@ -398,16 +341,6 @@ public class LoadAndSave {
             gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
                     pSpot.getY(), 0.0, pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
                     pSpot.getXPrecision());
-            if (appId == MMAPPID) {
-               gSpot.addKeyValue(SpotData.Keys.APERTUREINTENSITY, 
-                       pSpot.getExtension(MMLocM.intensityAperture));
-               gSpot.addKeyValue(SpotData.Keys.APERTUREBACKGROUND, 
-                       pSpot.getExtension(MMLocM.intensityBackground));
-               gSpot.addKeyValue(SpotData.Keys.INTENSITYRATIO, 
-                       pSpot.getExtension(MMLocM.intensityRatio));
-               gSpot.addKeyValue(SpotData.Keys.MSIGMA, 
-                       pSpot.getExtension(MMLocM.mSigma));
-            }
             if (pSpot.hasZ()) {
                double zc = pSpot.getZ();
                gSpot.setZCenter(zc);
@@ -427,16 +360,9 @@ public class LoadAndSave {
             spotList.add(gSpot);
          }
 
-         RowData.Builder builder = new RowData.Builder();
-         builder.setName(name).setTitle(title).setWidth(width).setHeight(height).
-                 setPixelSizeNm(pixelSize).setZStackStepSizeNm(0.0f).setShape(shape).
-                 setHalfSize(halfSize).setNrChannels(nrChannels).
-                 setNrFrames(nrFrames).setNrSlices(nrSlices).
-                 setNrPositions(nrPositions).setMaxNrSpots(maxNrSpots).
-                 setSpotList(spotList).setIsTrack(isTrack).
-                 setCoordinate(DataCollectionForm.Coordinates.NM).
-                 setHasZ(hasZ).setMinZ(minZ).setMaxZ(maxZ);
-         DataCollectionForm.getInstance().addSpotData(builder);
+         DataCollectionForm.getInstance().addSpotData(name, title, "", width, height, pixelSizeUm, (float) 0.0, shape, halfSize,
+                 nrChannels, nrFrames, nrSlices, nrPositions, (int) maxNrSpots,
+                 spotList, null, isTrack, DataCollectionForm.Coordinates.NM, hasZ, minZ, maxZ);
 
       } catch (FileNotFoundException ex) {
          JOptionPane.showMessageDialog(getInstance(), "File not found");
@@ -462,9 +388,7 @@ public class LoadAndSave {
     */
    public static String saveData(final RowData rowData, boolean bypassFileDialog, 
            String dir, final JFrame caller) {
-      String[] parts = rowData.getName().split(File.separator);
-      String name = parts[parts.length - 1];
-      String fn = name + EXTENSION;
+      String fn = rowData.name_ + EXTENSION;
       if (!bypassFileDialog) {
          FileDialog fd = new FileDialog(caller, "Save Spot Data", FileDialog.SAVE);
          fd.setFile(fn);
@@ -480,6 +404,18 @@ public class LoadAndSave {
          dir = fd.getDirectory();
       }
       final File selectedFile = new File(dir + File.separator + fn);
+      if (selectedFile.exists()) {
+         // this may be superfluous
+         YesNoCancelDialog y = new YesNoCancelDialog(caller, 
+                 "File " + fn + "Exists...", "File exists.  Overwrite?");
+         if (y.cancelPressed()) {
+            return dir;
+         }
+         if (!y.yesPressed()) {
+            saveData(rowData, false, dir, caller);
+            return dir;
+         }
+      }
 
       Runnable doWorkRunnable = new Runnable() {
 
@@ -487,8 +423,8 @@ public class LoadAndSave {
          public void run() {
 
             TaggedSpotsProtos.SpotList.Builder tspBuilder = TaggedSpotsProtos.SpotList.newBuilder();
-            tspBuilder.setApplicationId(MMAPPID).
-                    setName(rowData.getName()).
+            tspBuilder.setApplicationId(1).
+                    setName(rowData.name_).
                     setFilepath(rowData.title_).
                     setNrPixelsX(rowData.width_).
                     setNrPixelsY(rowData.height_).
@@ -526,6 +462,8 @@ public class LoadAndSave {
                   fo.write(0);
                }
 
+
+
                int counter = 0;
                for (SpotData gd : rowData.spotList_) {
 
@@ -552,21 +490,15 @@ public class LoadAndSave {
                              setWidth((float) gd.getWidth()).
                              setA((float) gd.getA()).
                              setTheta((float) gd.getTheta()).
-                             setXPrecision((float) gd.getSigma()).
-                             setExtension(MMLocM.intensityAperture, 
-                                  gd.getValue(SpotData.Keys.APERTUREINTENSITY).floatValue()).
-                             setExtension(MMLocM.intensityBackground, 
-                                  gd.getValue(SpotData.Keys.APERTUREBACKGROUND).floatValue()).
-                             setExtension(MMLocM.intensityRatio, 
-                                  gd.getValue(SpotData.Keys.INTENSITYRATIO).floatValue()).
-                             setExtension(MMLocM.mSigma, 
-                                  gd.getValue(SpotData.Keys.MSIGMA).floatValue());
+                             setXPrecision((float) gd.getSigma());
                      if (rowData.hasZ_) {
                         spotBuilder.setZ((float) gd.getZCenter());
                      }
 
+                     double width = gd.getWidth();
+                     double xPrec = gd.getSigma();
+
                      TaggedSpotsProtos.Spot spot = spotBuilder.build();
-                     
                      // write message size and message
                      spot.writeDelimitedTo(fo);
                      counter++;
@@ -607,9 +539,7 @@ public class LoadAndSave {
     */
    public static void saveDataAsText(final RowData rowData, final JFrame caller) {
       FileDialog fd = new FileDialog(caller, "Save Spot Data", FileDialog.SAVE);
-      String[] parts = rowData.getName().split(File.separator);
-      String name = parts[parts.length - 1];
-      fd.setFile(name + ".txt");
+      fd.setFile(rowData.name_ + ".txt");
       FilenameFilter fnf = new FilenameFilter() {
 
          @Override
@@ -626,6 +556,18 @@ public class LoadAndSave {
             fn = fn + ".txt";
          }
          final File selectedFile = new File(fd.getDirectory() + File.separator + fn);
+         if (selectedFile.exists()) {
+            // this may be superfluous
+            YesNoCancelDialog y = new YesNoCancelDialog(caller, "File " + fn + 
+                    "Exists...", "File exists.  Overwrite?");
+            if (y.cancelPressed()) {
+               return;
+            }
+            if (!y.yesPressed()) {
+               saveDataAsText(rowData, caller);
+               return;
+            }
+         }
 
          Runnable doWorkRunnable = new Runnable() {
 
@@ -636,8 +578,8 @@ public class LoadAndSave {
                   caller.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
                   FileWriter fw = new FileWriter(selectedFile);
                   fw.write(""
-                          + "application_id: " + MMAPPID + tab
-                          + "name: " + rowData.getName() + tab
+                          + "application_id: " + 1 + tab
+                          + "name: " + rowData.name_ + tab
                           + "filepath: " + rowData.title_ + tab
                           + "nr_pixels_x: " + rowData.width_ + tab
                           + "nr_pixels_y: " + rowData.height_ + tab
@@ -655,14 +597,13 @@ public class LoadAndSave {
                           + "has_Z: " + rowData.hasZ_ + "\n");
                   fw.write("molecule\tchannel\tframe\tslice\tpos\tx\ty\tintensity\t"
                           + "background\twidth\ta\ttheta\tx_position\ty_position\t"
-                          + "x_precision\tintensity_aperture\tbackground_aperture\t"
-                          + "intensity_ratio\tm_sigma");
+                          + "x_precision");
                   if (rowData.hasZ_) {
                      fw.write("\tz");
                   }
                   fw.write("\n");
 
-                  int counter = 1;
+                  int counter = 0;
                   for (SpotData gd : rowData.spotList_) {
 
                      if ((counter % 1000) == 0) {
@@ -671,7 +612,7 @@ public class LoadAndSave {
                      }
                      
                      if (gd != null) {
-                        fw.write("" + counter + tab +
+                        fw.write("" + gd.getFrame() + tab +
                                 gd.getChannel() + tab +
                                 gd.getFrame() + tab +
                                 gd.getSlice() + tab + 
@@ -685,11 +626,8 @@ public class LoadAndSave {
                                 String.format("%.3f",gd.getTheta()) + tab + 
                                 gd.getX() + tab + 
                                 gd.getY() + tab + 
-                                String.format("%.3f", gd.getSigma()) + tab +
-                                String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREINTENSITY).floatValue()) + tab +
-                                String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREBACKGROUND).floatValue()) + tab + 
-                                String.format("%.3f", gd.getValue(SpotData.Keys.INTENSITYRATIO).floatValue()) + tab +
-                                String.format("%.3f", gd.getValue(SpotData.Keys.MSIGMA).floatValue()));                        
+                                String.format("%.3f", gd.getSigma()) );
+                        
                         if (rowData.hasZ_) {
                            fw.write(tab + String.format("%.2f", gd.getZCenter()));
                         }

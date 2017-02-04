@@ -6,34 +6,9 @@
  * Jonas Ries brought this to my attention and send me C code implementing one of the
  * described algorithms
  *
-Copyright (c) 2012-2017, Regents of the University of California
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies,
-either expressed or implied, of the FreeBSD Project.
+ *
+ *
  */
-
 
 package edu.valelab.gaussianfit.algorithm;
 
@@ -50,8 +25,8 @@ import java.awt.Rectangle;
  * @author nico
  */
 public class FindLocalMaxima {
-   private static final GaussianBlur FILTER = new GaussianBlur();
-   private static final ImageCalculator IMAGECALCULATOR = new ImageCalculator();
+   private static final GaussianBlur filter_ = new GaussianBlur();
+   private static final ImageCalculator ic_ = new ImageCalculator();
    
    public enum FilterType {
       NONE,
@@ -73,10 +48,6 @@ public class FindLocalMaxima {
 
       ImageProcessor iProc = iPlus.getProcessor();
       Rectangle roi = iProc.getRoi();
-      // HACK: need to figure out the underlying cause, but make it workable for now
-      if (roi.height == 0 && roi.width ==0) {
-         roi.x = 0; roi.y = 0; roi.height = iProc.getHeight(); roi.width = iProc.getWidth();
-      }
       
       // Prefilter if needed
       switch (filterType) {
@@ -84,11 +55,11 @@ public class FindLocalMaxima {
             // TODO: if there is an ROI, we only need to filter_ in the ROI
             ImageProcessor iProcG1 = iProc.duplicate();
             ImageProcessor iProcG5 = iProc.duplicate();
-            FILTER.blurGaussian(iProcG1, 0.4, 0.4, 0.01); 
-            FILTER.blurGaussian(iProcG5, 2.0, 2.0, 0.01);
+            filter_.blurGaussian(iProcG1, 0.4, 0.4, 0.01); 
+            filter_.blurGaussian(iProcG5, 2.0, 2.0, 0.01);
             ImagePlus p1 = new ImagePlus("G1", iProcG1);
             ImagePlus p5 = new ImagePlus("G5", iProcG5);
-            IMAGECALCULATOR.run("subtract", p1, p5);
+            ic_.run("subtract", p1, p5);
             iProc = p1.getProcessor();
                       
             break;

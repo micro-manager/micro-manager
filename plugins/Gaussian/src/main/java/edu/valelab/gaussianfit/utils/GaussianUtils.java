@@ -1,35 +1,7 @@
 /*
  * Utilities for Gaussian fitting ImageJ plugins
  * Needs org.apache.commons.math and jfreechart
- * @author - Nico Stuurman,  2012
- * 
- * 
-Copyright (c) 2012-2017, Regents of the University of California
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those
-of the authors and should not be interpreted as representing official policies,
-either expressed or implied, of the FreeBSD Project.
+ * Includes the actual Gaussian functions
  */
 
 package edu.valelab.gaussianfit.utils;
@@ -283,18 +255,10 @@ public class GaussianUtils {
          // Since the axis autoscale only on the first dataset, we need to scale ourselves
          NumberAxis yAxis = (NumberAxis) plot.getRangeAxis();
          yAxis.setAutoRangeIncludesZero(false);
-         double yPad = 0.02 * (maxY - minY);
-         if (yPad <= 0.0) {
-            yPad = 1.0;
-         }
-         yAxis.setRangeWithMargins(minY - yPad, maxY + yPad);
+         yAxis.setRangeWithMargins(minY, maxY);
 
          ValueAxis xAxis = plot.getDomainAxis();
-         double xPad = 0.02 * (maxX - minX);
-         if (xPad <= 0.0) {
-            xPad = 1.0;
-         }
-         xAxis.setRangeWithMargins(minX - xPad, maxX + xPad);
+         xAxis.setRangeWithMargins(minX, maxX);
       }
       
       ChartFrame graphFrame = new ChartFrame(title, chart);
@@ -310,15 +274,13 @@ public class GaussianUtils {
     * and plots it
     * @param title - of the plot
     * @param data - distance measurements (in nm)
-    * @param max - highest value in the histogram plot
     * @param fitResult - double[0] is mu, double[1] is sigma
     */
-   public static void plotP2D(final String title, final double[] data, 
-           final double max, double[] fitResult) {
-      final double testNrBins = (data.length / max) * 5.0;
-      final int nrBins = testNrBins > 25 ? (int) testNrBins : 25;
-      final double min = 0.0;
-      final HistogramDataset hds = new HistogramDataset();
+   public static void plotP2D(String title, double[] data, double[] fitResult) {
+      int nrBins = 25;
+      double min =0.0;
+      double max = 50.0;
+      HistogramDataset hds = new HistogramDataset();
       hds.addSeries("Distances", data, nrBins, min, max);
       
       XYSeriesCollection p2dDataSet = new XYSeriesCollection();
@@ -365,8 +327,8 @@ public class GaussianUtils {
          plot.mapDatasetToRangeAxis(1, 1);
          double xAnPos = xAtMaxY + 0.5 * fitResult[1];
          XYPointerAnnotation xypa = new XYPointerAnnotation( 
-                 "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0], 2)  +
-                 " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1], 2),
+                 "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0])  +
+                 " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1]),
                         xAnPos, p1.getValue(xAnPos), 15 * Math.PI / 8 );
          xypa.setLabelOffset(4.0);
          xypa.setTextAnchor(TextAnchor.HALF_ASCENT_LEFT);
@@ -427,30 +389,6 @@ public class GaussianUtils {
    public static double cube(double val) {
       return val * val * val;
    }
-   
-    /**
-    * Gaussian function of the form:
-    * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
-    * A = params[INT]  (amplitude)
-    * b = params[BGR]  (background)
-    * xc = params[XC]
-    * yc = params[YC]
-    * @param params - Parameters to be optimized
-    * @param s - width of Gaussian in pixels
-    * @param x - x position in the image
-    * @param y - y position in the image
-    * @return - array
-    */
-   public static double gaussianFixS(double[] params, double s, int x, int y) {
-      if (params.length < 4) {
-                       // Problem, what do we do???
-                       //MMScriptException e;
-                       //e.message = "Params for Gaussian function has too few values"; //throw (e);
-      }
-      double exponent = (sqr(x - params[XC])  + sqr(y - params[YC])) / (2 * sqr(s));
-      double res = params[INT] * Math.exp(-exponent) + params[BGR];
-      return res;
-   }
 
  /**
     * Gaussian function of the form:
@@ -471,6 +409,7 @@ public class GaussianUtils {
                        //MMScriptException e;
                        //e.message = "Params for Gaussian function has too few values"; //throw (e);
       }
+
       double exponent = (sqr(x - params[XC])  + sqr(y - params[YC])) / (2 * sqr(params[S]));
       double res = params[INT] * Math.exp(-exponent) + params[BGR];
       return res;
@@ -494,31 +433,6 @@ public class GaussianUtils {
          dx * q/sqr(params[S]),
          dy * q/sqr(params[S]),
          (sqr(dx) + sqr(dy)) * q/cube(params[S])
-      };
-      return result;
-   }
-
-   
-   /**
-    * Derivative (Jacobian) of the above function
-    *
-    * @param params - Parameters to be optimized
-    * @param s
-    * @param x - x position in the image
-    * @param y - y position in the image
-    * @return - array with the derivates for each of the parameters
-    */
-   public static double[] gaussianJFixS(double[] params, final double s, 
-           final int x, final int y) {
-      double q = gaussianFixS(params, s, x, y) - params[BGR];
-      double dx = x - params[XC];
-      double dy = y - params[YC];
-      double[] result = {
-         q/params[INT],
-         1.0,
-         dx * q/sqr(s),
-         dy * q/sqr(s),
-         (sqr(dx) + sqr(dy)) * q/cube(s)
       };
       return result;
    }
