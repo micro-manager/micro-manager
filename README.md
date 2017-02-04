@@ -1,5 +1,5 @@
-Micro-Manager source code
-=========================
+# Micro-Manager source code
+[![Build Status](https://travis-ci.org/hadim/micro-manager.svg?branch=travis)](https://travis-ci.org/hadim/micro-manager)
 
 For licensing information, please see doc/copyright.txt.
 
