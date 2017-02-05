@@ -30,8 +30,8 @@ either expressed or implied, of the FreeBSD Project.
 package edu.valelab.gaussianfit.data;
 
 import com.google.protobuf.ExtensionRegistry;
-import edu.ucsf.tsf.MMLocM;
-import edu.ucsf.tsf.TaggedSpotsProtos;
+import edu.ucsf.valelab.tsf.MMLocM;
+import edu.ucsf.valelab.tsf.TaggedSpotsProtos;
 import edu.valelab.gaussianfit.DataCollectionForm;
 import static edu.valelab.gaussianfit.DataCollectionForm.EXTENSION;
 import static edu.valelab.gaussianfit.DataCollectionForm.getInstance;
