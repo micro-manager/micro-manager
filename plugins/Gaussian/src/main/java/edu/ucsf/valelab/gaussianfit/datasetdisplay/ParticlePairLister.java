@@ -696,7 +696,7 @@ public class ParticlePairLister {
                            + NumberUtils.doubleToDisplayString(distStd, 2) + " nm");
 
                      // plot function and histogram
-                     double[] muSigma = {p2dfResult[0], distStd};
+                     double[] muSigma = {p2dfResult[0], sigma};
                      if (fitSigma_) {
                         muSigma = p2dfResult;
                      }
