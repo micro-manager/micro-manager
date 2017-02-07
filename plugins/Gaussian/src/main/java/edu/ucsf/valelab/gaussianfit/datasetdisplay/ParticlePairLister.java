@@ -35,6 +35,7 @@ import edu.ucsf.valelab.gaussianfit.data.GsSpotPair;
 import edu.ucsf.valelab.gaussianfit.data.RowData;
 import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import edu.ucsf.valelab.gaussianfit.fitting.FittingException;
+import edu.ucsf.valelab.gaussianfit.fitting.Gaussian1DFitter;
 import edu.ucsf.valelab.gaussianfit.fitting.P2DFitter;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPointGsSpotPair;
@@ -83,7 +84,7 @@ public class ParticlePairLister {
       final private Boolean showOverlay_;
       final private Boolean saveFile_;
       final private Boolean p2d_;
-      final private Boolean useVectDistances_;
+      final private Boolean doGaussianEstimate_;
       final private Boolean fitSigma_;
       final private Boolean useSigmaEstimate_;
       final private Double sigmaEstimate_;
@@ -99,7 +100,7 @@ public class ParticlePairLister {
       private Boolean showOverlay_;
       private Boolean saveFile_;
       private Boolean p2d_;
-      private Boolean useVectDistances_;
+      private Boolean doGaussianEstimate_;
       private Boolean fitSigma_;
       private Boolean useSigmaEstimate_;
       private Double sigmaEstimate_;
@@ -144,8 +145,8 @@ public class ParticlePairLister {
          return this;
       }
       
-      public Builder useVectDistances(Boolean useVectDistances) {
-         useVectDistances_ = useVectDistances;
+      public Builder doGaussianEstimate(Boolean doGaussianEstimate) {
+         doGaussianEstimate_ = doGaussianEstimate;
          return this;
       } 
       
@@ -179,7 +180,7 @@ public class ParticlePairLister {
       showOverlay_ = builder.showOverlay_;
       saveFile_ = builder.saveFile_;
       p2d_ = builder.p2d_;
-      useVectDistances_ = builder.useVectDistances_;
+      doGaussianEstimate_ = builder.doGaussianEstimate_;
       fitSigma_ = builder.fitSigma_;
       useSigmaEstimate_ = builder.useSigmaEstimate_;
       sigmaEstimate_ = builder.sigmaEstimate_;
@@ -195,7 +196,7 @@ public class ParticlePairLister {
               showOverlay(showOverlay_).
               saveFile(saveFile_).
               p2d(p2d_).
-              useVectDistances(useVectDistances_).
+              doGaussianEstimate(doGaussianEstimate_).
               fitSigma(fitSigma_).
               useSigmaEstimate(useSigmaEstimate_).              
               sigmaEstimate(sigmaEstimate_).
@@ -339,10 +340,6 @@ public class ParticlePairLister {
                ij.IJ.showStatus("Assembling tracks for row " + rowCounter);
 
 
-               
-               for (int pos : positions) {
- 
-               }
 
                ArrayList<ArrayList<GsSpotPair>> tracks = new ArrayList<ArrayList<GsSpotPair>>();
             
@@ -599,11 +596,28 @@ public class ParticlePairLister {
                   }
                }
                
+               if (doGaussianEstimate_) {
+                  // fit vector distances with gaussian function and plot
+                  double[] d = new double[avgVectDistances.size()];
+                  for (int j = 0; j < avgVectDistances.size(); j++) {
+                     d[j] = avgVectDistances.get(j);
+                  }
+                  Gaussian1DFitter gf = new Gaussian1DFitter(d, maxDistanceNm_);
+                  double avg = ListUtils.listAvg(avgVectDistances);
+                  gf.setStartParams(avg, ListUtils.listStdDev(avgVectDistances, avg));
+                  try {
+                     double[] result = gf.solve();
+                     GaussianUtils.plotGaussian("Gaussian fit of: " + 
+                             dc.getSpotData(row).getName() + " distances",
+                             d, maxDistanceNm_, result);
+                  } catch (FittingException ex) {
+                     // TODO
+                  }
+                  
+               }
+               
                if (p2d_) {
                   List<Double> distancesToUse = allDistances; // alternative: avgVectDistances
-                  if (useVectDistances_) {
-                     distancesToUse = avgVectDistances;
-                  }
                   double[] d = new double[distancesToUse.size()];
                   for (int j = 0; j < distancesToUse.size(); j++) {
                      d[j] = distancesToUse.get(j);
@@ -686,7 +700,7 @@ public class ParticlePairLister {
                      if (fitSigma_) {
                         muSigma = p2dfResult;
                      }
-                     GaussianUtils.plotP2D(dc.getSpotData(row).getName() + " distances",
+                     GaussianUtils.plotP2D("P2D fit of: " + dc.getSpotData(row).getName() + " distances",
                              d, maxDistanceNm_, muSigma);
                      
                      // The following is used to output results in a machine readable fashion
@@ -694,7 +708,7 @@ public class ParticlePairLister {
                      rt3.incrementCounter();
                      rt3.addValue("Max. Dist.", maxDistanceNm_);
                      rt3.addValue("File", dc.getSpotData(row).getName());
-                     String useVect = useVectDistances_ ? "yes" : "no";
+                     String useVect = doGaussianEstimate_ ? "yes" : "no";
                      rt3.addValue("Vect. Dist.", useVect);
                      String fittedSigma = fitSigma_ ? "yes" : "no";
                      rt3.addValue("Fit Sigma", fittedSigma);

@@ -387,6 +387,87 @@ public class GaussianUtils {
       
    }
    
+    /**
+    * Plots a histogram of distance data and calculates the Gaussian function
+    * and plots it
+    * @param title - of the plot
+    * @param data - distance measurements (in nm)
+    * @param max - highest value in the histogram plot
+    * @param fitResult - double[0] is mu, double[1] is sigma
+    */
+   public static void plotGaussian(final String title, final double[] data, 
+           final double max, double[] fitResult) {
+      final double testNrBins = (data.length / max) * 5.0;
+      final int nrBins = testNrBins > 25 ? (int) testNrBins : 25;
+      final double min = 0.0;
+      final HistogramDataset hds = new HistogramDataset();
+      hds.addSeries("Distances", data, nrBins, min, max);
+      
+      XYSeriesCollection p2dDataSet = new XYSeriesCollection();
+      
+      NumberAxis xAxis = new NumberAxis("distance(nm)");
+      xAxis.setAutoRangeIncludesZero(true);
+      NumberAxis yAxis = new NumberAxis("n");
+      yAxis.setAutoRangeIncludesZero(true);
+      NumberAxis yAxis2 = new NumberAxis("Gaussian");
+      yAxis2.setAutoRangeIncludesZero(true);
+
+      XYBarRenderer renderer1 = new XYBarRenderer(0);
+      renderer1.setDrawBarOutline(false);
+      renderer1.setBarPainter(new StandardXYBarPainter());
+      renderer1.setShadowVisible(false);
+      Color color1 = new Color(79, 129, 189);
+      renderer1.setSeriesPaint(0, color1);
+
+      XYPlot plot = new XYPlot(hds, xAxis, yAxis, renderer1);
+      plot.setDomainPannable(true);
+      plot.setRangePannable(true);
+      plot.setForegroundAlpha(0.85f);
+      plot.setBackgroundPaint(Color.lightGray);
+      plot.setRangeAxis(0, yAxis);
+
+      if (fitResult.length == 2) {
+         Function2D p1 = new Gaussian1D(fitResult[0], fitResult[1]);
+         XYSeries s1 = DatasetUtilities.sampleFunction2DToSeries(p1, min, 
+                 max, 4 * nrBins, "Gaussian");
+         double xAtMaxY = 0.0;
+         double maxY = s1.getMaxY();
+         for (int i=0; i < s1.getItemCount(); i++) {
+            if (s1.getY(i).doubleValue() == maxY) {
+               xAtMaxY = s1.getX(i).doubleValue();
+            }
+         }
+         p2dDataSet.addSeries(s1);
+         XYItemRenderer renderer2 = new StandardXYItemRenderer();
+         Color color2 = new Color(160, 80, 40);
+         renderer2.setSeriesPaint(0, color2);
+         plot.setDataset(1, p2dDataSet);
+         plot.setRenderer(1, renderer2);
+         plot.setRangeAxis(1, yAxis2);
+         plot.mapDatasetToRangeAxis(1, 1);
+         double xAnPos = xAtMaxY + 0.5 * fitResult[1];
+         XYPointerAnnotation xypa = new XYPointerAnnotation( 
+                 "\u03BC = " + NumberUtils.doubleToDisplayString(fitResult[0], 2)  +
+                 " \u03C3 = " + NumberUtils.doubleToDisplayString(fitResult[1], 2),
+                        xAnPos, p1.getValue(xAnPos), 15 * Math.PI / 8 );
+         xypa.setLabelOffset(4.0);
+         xypa.setTextAnchor(TextAnchor.HALF_ASCENT_LEFT);
+         xypa.setBackgroundPaint(color2);
+         renderer2.addAnnotation(xypa);
+      }
+
+      plot.setDatasetRenderingOrder(DatasetRenderingOrder.FORWARD);
+
+      JFreeChart chart = new JFreeChart(title,
+            JFreeChart.DEFAULT_TITLE_FONT, plot, true);
+           
+      ChartFrame graphFrame = new ChartFrame(title, chart);
+      graphFrame.getChartPanel().setMouseWheelEnabled(true);
+      graphFrame.pack();
+      graphFrame.setLocation(300, 300);
+      graphFrame.setVisible(true);  
+   }
+   
    /**
    * Rotates a set of XY data points such that the direction of largest
    * variance is a line around the X-axis.  Equivalent to total least square

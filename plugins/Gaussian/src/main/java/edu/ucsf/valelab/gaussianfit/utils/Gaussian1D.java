@@ -1,6 +1,6 @@
 /*
  * @author Nico Stuurman
- * Copyright (c) 2015, Regents of the University of California
+ * Copyright (c) 2017, Regents of the University of California
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,33 +26,27 @@
  */
 package edu.ucsf.valelab.gaussianfit.utils;
 
-import edu.ucsf.valelab.gaussianfit.fitting.P2DFitter;
+import edu.ucsf.valelab.gaussianfit.fitting.Gaussian1DFitter;
 import org.jfree.data.function.Function2D;
 
 /**
- * Utility functions to calculate and fit the Probability density function
- * to estimate the distance between two single molecules.
- * Based on: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC1367071/
- * 
- * A Non-Gaussian Distribution Quantifies Distances Measured with Fluorescence Localization Techniques
-L. Stirling Churchman,*† Henrik Flyvbjerg,‡ and James A. Spudich*
-* Biophys J. Jan 15, 2006; 90(2): 668–671. 
-* 
-* 
+ * Utility functions to calculate and fit a 1D Gaussian function
+ *
  * @author nico
  */
-public class P2D implements Function2D {
+public class Gaussian1D implements Function2D {
    private final double mu_;
-   private final double sigma_;
-
-   public P2D(double mu, double sigma) {
+   private final double sigma_;   
+   static double  sqrt2Pi = Math.sqrt(2 * Math.PI);
+  
+   public Gaussian1D(double mu, double sigma) {
       mu_ = mu;
       sigma_ = sigma;
    }
    
    @Override
    public double getValue(double d) {
-      return P2DFitter.p2d(d, mu_, sigma_);
+      return Gaussian1DFitter.gaussian(d, mu_, sigma_);
    }
    
 }
