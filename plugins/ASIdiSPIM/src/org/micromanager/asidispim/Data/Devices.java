@@ -114,6 +114,8 @@ public class Devices {
    public final static Set<Devices.Keys> CAMERAS = EnumSet.of(
          Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
          Devices.Keys.CAMERALOWER);
+   public final static Set<Devices.Keys> SPIM_CAMERAS = EnumSet.of(
+         Devices.Keys.CAMERAA, Devices.Keys.CAMERAB);
 
 
    public static enum Libraries {

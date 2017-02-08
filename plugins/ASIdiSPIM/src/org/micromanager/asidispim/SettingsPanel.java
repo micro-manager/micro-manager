@@ -29,7 +29,6 @@ import java.text.ParseException;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -43,7 +42,6 @@ import java.beans.PropertyChangeListener;
 
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
@@ -71,7 +69,6 @@ public class SettingsPanel extends ListeningJPanel {
    
    private final JFormattedTextField rawPath_;
    private final JSpinner liveScanMs_;
-
    
    /**
     * 
@@ -164,22 +161,7 @@ public class SettingsPanel extends ListeningJPanel {
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
       scannerPanel.add(scannerFilterY, "wrap");
       
-      // end scanner panel
-      
-      
-      // start camera panel
-      
-      final JPanel cameraPanel = new JPanel(new MigLayout(
-            "",
-            "[right]16[left]",
-            "[]8[]"));
-      cameraPanel.setBorder(PanelUtils.makeTitledBorder("Camera"));
-      cameraPanel.add(new JLabel("Acq. Trigger Mode:"));
-      CameraModes camModeObject = new CameraModes(devices_, prefs_);
-      JComboBox camModeCB = camModeObject.getComboBox();
-      cameraPanel.add(camModeCB, "wrap");
-      
-      cameraPanel.add(new JLabel("Live scan time [ms]:"));
+      scannerPanel.add(new JLabel("Live scan period [ms]:"));
       liveScanMs_ = pu.makeSpinnerInteger(1, 10000,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN, 10);
       liveScanMs_.addChangeListener(new ChangeListener() {
@@ -193,9 +175,9 @@ public class SettingsPanel extends ListeningJPanel {
       // set it the first time
       props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SA_PERIOD_X, (Integer) liveScanMs_.getValue(), true);
-      cameraPanel.add(liveScanMs_, "wrap");
+      scannerPanel.add(liveScanMs_, "wrap");
       
-      // end camera panel
+      // end scanner panel
       
       
       // start test acquisition panel
@@ -300,8 +282,7 @@ public class SettingsPanel extends ListeningJPanel {
       
       // construct main panel
       add(guiPanel);
-      add(scannerPanel);
-      add(cameraPanel, "wrap");
+      add(scannerPanel, "wrap");
       add(testAcqPanel);
       add(stageScanPanel, "growx");
       add(imageJPanel, "growx");

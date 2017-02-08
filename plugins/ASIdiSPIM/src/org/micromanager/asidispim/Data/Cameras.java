@@ -29,6 +29,7 @@ import java.util.List;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.CameraPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -682,5 +683,85 @@ public class Cameras {
       return roi;  // only should reach here if there was exception
    }
    
+   /**
+    * Sets the ROI of the specified camera to the provided rectangle
+    * @param camKey
+    * @param roi
+    */
+   public void setCameraROI(Devices.Keys camKey, Rectangle roi) {
+      try {
+         final boolean liveEnabled = gui_.isLiveModeOn();
+         if (liveEnabled) {
+            gui_.enableLiveMode(false);
+         }
+         core_.setROI(devices_.getMMDevice(camKey), roi.x, roi.y, roi.width, roi.height);
+         if (liveEnabled) {
+            gui_.enableLiveMode(true);
+         }
+      }
+      catch (Exception ex) {
+         MyDialogUtils.showError(ex, "Could not set camera ROI to " + roi.toString());
+      }
+   }
+   
+   /**
+    * calculate a new rectangle smaller by the factor scale and centered in the old one 
+    * @param r
+    * @param scale
+    * @return
+    */
+   private Rectangle calculateCenterRectangle(Rectangle r, int scale) {
+      // two sanity checks, maybe not strictly necessary but assumed in calculations below
+      if (scale < 1) {
+         return r;
+      }
+      if (r.x != 0 || r.y != 0) {
+         return r;
+      }
+      final int width = r.width / scale;
+      final int height = r.height / scale;
+      final int x = (r.width - width) / 2;
+      final int y = (r.height - height) / 2;
+      return new Rectangle(x, y, width, height);
+   }
+   
+   /**
+    * Sets the ROI
+    * @param camKey
+    * @param roi
+    */
+   public void setCameraROI(Devices.Keys camKey, CameraPanel.RoiPresets roi) {
+      try {
+         if (devices_.isValidMMDevice(camKey)) {
+            Rectangle size = getSensorSize(camKey);
+            switch (roi) {
+            case FULL:
+               setCameraROI(camKey, size);
+               break;
+            case HALF:
+               setCameraROI(camKey, calculateCenterRectangle(size, 2));
+               break;
+            case QUARTER:
+               setCameraROI(camKey, calculateCenterRectangle(size, 4));
+               break;
+            case EIGHTH:
+               setCameraROI(camKey, calculateCenterRectangle(size, 8));
+               break;
+            case CUSTOM:
+               final int x = prefs_.getInt(MyStrings.PanelNames.CAMERAS.toString(), "OffsetX", 0);
+               final int y = prefs_.getInt(MyStrings.PanelNames.CAMERAS.toString(), "OffsetY", 0);
+               final int height = prefs_.getInt(MyStrings.PanelNames.CAMERAS.toString(), "Height", 0);
+               final int width = prefs_.getInt(MyStrings.PanelNames.CAMERAS.toString(), "Width", 0);
+               setCameraROI(camKey, new Rectangle(x, y, width, height));
+               break;
+            case UNCHANGED:
+               break;
+            }
+         }
+      }
+      catch (Exception ex) {
+         MyDialogUtils.showError(ex, "Could not set camera ROI to value " + roi.toString());
+      }
+   }
 
 }
