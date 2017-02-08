@@ -353,8 +353,7 @@ public class AutofocusUtils {
                   Thread.sleep(5);
                }
                if (now - startTime >= timeout) {
-                  throw new ASIdiSPIMException(
-                          "Camera did not send first image within a reasonable time");
+                  throw new ASIdiSPIMException("Camera did not send first image within a reasonable time");
                }
 
                // calculate focus scores of the acquired images, using the scoring
