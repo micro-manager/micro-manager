@@ -85,9 +85,9 @@ public class ParticlePairLister {
       final private Boolean saveFile_;
       final private Boolean p2d_;
       final private Boolean doGaussianEstimate_;
-      final private Boolean fitSigma_;
-      final private Boolean useSigmaEstimate_;
-      final private Double sigmaEstimate_;
+      final private Boolean fitSigmaInP2D_;
+      final private Boolean useSigmaUserGuess_;
+      final private Double sigmaUserGuess_;
       final private String filePath_;
    
    
@@ -181,9 +181,9 @@ public class ParticlePairLister {
       saveFile_ = builder.saveFile_;
       p2d_ = builder.p2d_;
       doGaussianEstimate_ = builder.doGaussianEstimate_;
-      fitSigma_ = builder.fitSigma_;
-      useSigmaEstimate_ = builder.useSigmaEstimate_;
-      sigmaEstimate_ = builder.sigmaEstimate_;
+      fitSigmaInP2D_ = builder.fitSigma_;
+      useSigmaUserGuess_ = builder.useSigmaEstimate_;
+      sigmaUserGuess_ = builder.sigmaEstimate_;
       filePath_ = builder.filePath_;
    }
    
@@ -197,9 +197,9 @@ public class ParticlePairLister {
               saveFile(saveFile_).
               p2d(p2d_).
               doGaussianEstimate(doGaussianEstimate_).
-              fitSigma(fitSigma_).
-              useSigmaEstimate(useSigmaEstimate_).              
-              sigmaEstimate(sigmaEstimate_).
+              fitSigma(fitSigmaInP2D_).
+              useSigmaEstimate(useSigmaUserGuess_).              
+              sigmaEstimate(sigmaUserGuess_).
               filePath(filePath_);             
    }
    
@@ -622,10 +622,10 @@ public class ParticlePairLister {
                   for (int j = 0; j < distancesToUse.size(); j++) {
                      d[j] = distancesToUse.get(j);
                   }
-                  P2DFitter p2df = new P2DFitter(d, fitSigma_, maxDistanceNm_);
+                  P2DFitter p2df = new P2DFitter(d, fitSigmaInP2D_, maxDistanceNm_);
                   double distMean = ListUtils.listAvg(distancesToUse);
-                  double distStd = sigmaEstimate_;
-                  if (fitSigma_ || !useSigmaEstimate_) {
+                  double distStd = sigmaUserGuess_;
+                  if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
                      // how do we best estimate sigma? If we have multiple
                      // measurements per particle, it seems best to calculate it 
                      // directly from the spread in those measurements
@@ -645,8 +645,8 @@ public class ParticlePairLister {
                      double[] p2dfResult = p2df.solve();
                      // Confidence interval calculation as in matlab code by Stirlink Churchman
                      double mu = p2dfResult[0];
-                     double sigma = sigmaEstimate_;
-                     if (fitSigma_) {
+                     double sigma = distStd;
+                     if (fitSigmaInP2D_) {
                         sigma = p2dfResult[1];
                      }
                      double sigmaRange = 4.0 * sigma / Math.sqrt(d.length);
@@ -697,7 +697,7 @@ public class ParticlePairLister {
 
                      // plot function and histogram
                      double[] muSigma = {p2dfResult[0], sigma};
-                     if (fitSigma_) {
+                     if (fitSigmaInP2D_) {
                         muSigma = p2dfResult;
                      }
                      GaussianUtils.plotP2D("P2D fit of: " + dc.getSpotData(row).getName() + " distances",
@@ -710,9 +710,9 @@ public class ParticlePairLister {
                      rt3.addValue("File", dc.getSpotData(row).getName());
                      String useVect = doGaussianEstimate_ ? "yes" : "no";
                      rt3.addValue("Vect. Dist.", useVect);
-                     String fittedSigma = fitSigma_ ? "yes" : "no";
+                     String fittedSigma = fitSigmaInP2D_ ? "yes" : "no";
                      rt3.addValue("Fit Sigma", fittedSigma);
-                     String sigmaFromData = useSigmaEstimate_ || fitSigma_ ? "no" : "yes";
+                     String sigmaFromData = useSigmaUserGuess_ || fitSigmaInP2D_ ? "no" : "yes";
                      rt3.addValue("Sigma from data", sigmaFromData);
                      rt3.addValue("n", distancesToUse.size());
                      rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
