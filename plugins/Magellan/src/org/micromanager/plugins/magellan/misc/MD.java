@@ -326,8 +326,8 @@ public class MD {
                return ImagePlus.GRAY16;
 //            } else if (pixelType.contentEquals("GRAY32")) {
 //               return ImagePlus.GRAY32;
-//            } else if (pixelType.contentEquals("RGB32")) {
-//               return ImagePlus.COLOR_RGB;
+            } else if (pixelType.contentEquals("RGB32")) {
+               return ImagePlus.GRAY8;
             } else {
                throw new RuntimeException();
             }
@@ -386,9 +386,9 @@ public class MD {
          case 2:
             map.put(PIX_TYPE, PIX_TYPE_GRAY16);
          break;
-//         case 4:
-//            map.put(PIX_TYPE, "RGB32");
-//         break;
+         case 4:
+            map.put(PIX_TYPE, "RGB32");
+         break;
 //         case 8:
 //            map.put(PIX_TYPE, "RGB64");
 //         break;
@@ -403,7 +403,7 @@ public class MD {
        if (isGRAY8(map)) return 1;
        if (isGRAY16(map)) return 2;
 //       if (isGRAY32(map)) return 4;
-//       if (isRGB32(map)) return 4;
+       if (isRGB32(map)) return 4;
 //       if (isRGB64(map)) return 8;
        return 0;
    }
@@ -416,8 +416,8 @@ public class MD {
            return 1;
 //      else if (pixelType.contentEquals("GRAY32"))
 //         return 1;
-//      else if (pixelType.contentEquals("RGB32"))
-//           return 3;
+      else if (pixelType.contentEquals("RGB32"))
+           return 3;
 //      else if (pixelType.contentEquals("RGB64"))
 //           return 3;
       else {
@@ -432,16 +432,16 @@ public class MD {
    public static boolean isGRAY16(JSONObject map) {
          return getPixelType(map).contentEquals(PIX_TYPE_GRAY16);
    }
-   
-//   public static boolean isGRAY32(JSONObject map) throws JSONException {
+    
+//   public static boolean isGRAY32(JSONObject map)  {
 //      return getPixelType(map).contentEquals("GRAY32");
 //   }
 //
-//   public static boolean isRGB32(JSONObject map) throws JSONException {
-//      return getPixelType(map).contentEquals("RGB32");
-//   }
+   public static boolean isRGB32(JSONObject map) {
+      return getPixelType(map).contentEquals("RGB32");
+   }
 
-//   public static boolean isRGB64(JSONObject map) throws JSONException {
+//   public static boolean isRGB64(JSONObject map)  {
 //      return getPixelType(map).contentEquals("RGB64");
 //   }
 
@@ -450,8 +450,8 @@ public class MD {
    }
 
    public static boolean isRGB(JSONObject map)   {
-//      return (isRGB32(map) || isRGB64(map));
-      return false;
+      return (isRGB32(map));
+//              || isRGB64(map));
    }
 
    public static String getLabel(JSONObject md) {

@@ -41,15 +41,17 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    final protected int width_, height_, type_;
    private final int nSlices_;
    private int positionIndex_ = 0;
+   private boolean rgb_;
 
    public AcquisitionVirtualStack(int width, int height, int type,
            ColorModel cm, MMImageCache imageCache, int nSlices,
-           VirtualAcquisitionDisplay acq) {
+           VirtualAcquisitionDisplay acq, boolean rgb) {
       super(width, height, cm, "");
       imageCache_ = imageCache;
       width_ = width;
       height_ = height;
       nSlices_ = nSlices;
+      rgb_ = rgb;
 
       vad_ = acq;
       type_ = type;
@@ -160,17 +162,29 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       if (image == null || image.pix == null) {
          pixels = makeProcessor(type_, width_, height_).getPixels();
       } else if (image != null && image.tags == null) {
-         pixels = image.pix;
+         pixels = rgb_ ? singleChannelFromRGB32((byte[]) image.pix, (flatIndex - 1) % 3) : image.pix;         
       } else if (MD.isGRAY(image.tags)) {
          pixels = image.pix;
+      } else if (MD.isRGB32(image.tags)) {
+          pixels = singleChannelFromRGB32((byte[]) image.pix, (flatIndex - 1) % 3);
       }
-//         else if (MD.isRGB32(image)) {
-//            pixels = ImageUtils.singleChannelFromRGB32((byte[]) image.pix, (flatIndex - 1) % 3);
 //         } else if (MD.isRGB64(image)) {
 //            pixels = ImageUtils.singleChannelFromRGB64((short[]) image.pix, (flatIndex - 1) % 3);
 //         }
 
       return pixels;
+   }
+   
+      public static byte[] singleChannelFromRGB32(byte[] pixels, int channel) {
+      if (channel != 0 && channel != 1 && channel != 2)
+         return null;
+
+      byte [] p = new byte[pixels.length/4];
+
+      for (int i=0;i<p.length;++i) {
+         p[i] = pixels[(2-channel) + 4*i]; //B,G,R
+      }
+      return p;
    }
 
    @Override
@@ -204,7 +218,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          return "";
       }
    }
-   
+     
    public static ImageProcessor makeProcessor(int type, int w, int h, Object imgArray) {
       if (imgArray == null) {
          return makeProcessor(type, w, h);

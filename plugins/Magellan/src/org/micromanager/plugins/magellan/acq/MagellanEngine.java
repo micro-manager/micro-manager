@@ -534,7 +534,7 @@ public class MagellanEngine {
       MD.setZCTOrder(summary, false);
       MD.setPixelTypeFromByteDepth(summary, GlobalSettings.getInstance().isBIDCTwoPhoton()
               ? (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 2 : 1)
-              : core_.getImageBitDepth() > 8 ? 2 : 1);
+              : (int) core_.getBytesPerPixel());
       MD.setBitDepth(summary, GlobalSettings.getInstance().isBIDCTwoPhoton()
               ? (acq.getFilterType() == FrameIntegrationMethod.FRAME_SUMMATION ? 16 : 8)
               : (int) core_.getImageBitDepth());

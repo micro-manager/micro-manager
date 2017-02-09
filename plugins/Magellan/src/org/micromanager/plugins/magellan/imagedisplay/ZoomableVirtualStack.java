@@ -56,7 +56,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
    public ZoomableVirtualStack(int type, int width, int height, MMImageCache imageCache,
            int nSlices, VirtualAcquisitionDisplay vad, MultiResMultipageTiffStorage multiResStorage,
            Acquisition acq) {
-      super(width, height, type, null, imageCache, nSlices, vad);
+      super(width, height, type, null, imageCache, nSlices, vad, multiResStorage.isRGB());
       imageCache_ = imageCache;
       nSlices_ = nSlices;
       disp_ = (DisplayPlus) vad;
@@ -101,7 +101,7 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
     * @param height
     */
    public ZoomableVirtualStack(ZoomableVirtualStack oldStack, int width, int height) {
-      super(width, height, oldStack.type_, null, oldStack.imageCache_, oldStack.nSlices_, oldStack.vad_);
+      super(width, height, oldStack.type_, null, oldStack.imageCache_, oldStack.nSlices_, oldStack.vad_, oldStack.multiResStorage_.isRGB());
       imageCache_ = oldStack.imageCache_;
       nSlices_ = oldStack.nSlices_;
       multiResStorage_ = oldStack.multiResStorage_;

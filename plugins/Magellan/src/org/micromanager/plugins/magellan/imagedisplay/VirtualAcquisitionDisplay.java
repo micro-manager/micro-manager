@@ -116,7 +116,7 @@ public abstract class VirtualAcquisitionDisplay{
     * @param eng
     * @param name
     * @param shouldUseNameAsTitle
-    */
+    */ 
    public VirtualAcquisitionDisplay(MMImageCache imageCache, String name, JSONObject summaryMD) {
       try {
          numComponents_ = Math.max(MD.getNumberOfComponents(summaryMD), 1);

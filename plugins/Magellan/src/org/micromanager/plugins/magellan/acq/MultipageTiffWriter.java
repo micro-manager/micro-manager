@@ -109,7 +109,6 @@ public class MultipageTiffWriter {
    private long ijMetadataTagPosition_;
    //Reader associated with this file
    private MultipageTiffReader reader_;
-   private String summaryMDString_;
    private boolean fastStorageMode_;
    
    public MultipageTiffWriter(String directory, String filename, 
@@ -151,11 +150,6 @@ public class MultipageTiffWriter {
       buffers_ = new LinkedList<ByteBuffer>();
       
       writeMMHeaderAndSummaryMD(summaryMD);
-      try {
-         summaryMDString_ = summaryMD.toString(2);
-      } catch (JSONException ex) {
-         summaryMDString_ = "";
-      }
    }
    
    private ByteBuffer allocateByteBuffer(int capacity) {
@@ -705,9 +699,9 @@ public class MultipageTiffWriter {
     * expanded to write ROIs, file info, slice labels, and overlays
     */
    private void writeImageJMetadata(int numChannels, String summaryComment) throws IOException {
-      String infoString = summaryMDString_;
+      String infoString = masterMPTiffStorage_.getSummaryMetadataString();
       if (summaryComment != null && summaryComment.length() > 0) {
-         infoString = "Acquisition comments: \n" + summaryComment + "\n\n\n" + summaryMDString_;
+         infoString = "Acquisition comments: \n" + summaryComment + "\n\n\n" + infoString;
       }
       char[] infoChars = infoString.toCharArray();
       int infoSize = 2 * infoChars.length;
