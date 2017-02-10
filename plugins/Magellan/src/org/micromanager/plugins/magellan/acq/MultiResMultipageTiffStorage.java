@@ -631,9 +631,9 @@ public class MultiResMultipageTiffStorage {
                     try {
                         int index = (((y + yPos * tileHeight_) / 2) * tileWidth_ + (x + xPos * tileWidth_) / 2)*rgbMultiplier_+compIndex;
                         if (byteDepth_ == 1 || rgb_) {
-                            ((byte[]) currentLevelPix)[index] = (byte) (sum / count);
+                            ((byte[]) currentLevelPix)[index] = (byte) Math.round(sum / count);
                         } else {
-                            ((short[]) currentLevelPix)[index] = (short) (sum / count);
+                            ((short[]) currentLevelPix)[index] = (short) Math.round(sum / count);
                         }
                     } catch (Exception e) {
                         Log.log("Couldn't copy pixels to lower resolution");
