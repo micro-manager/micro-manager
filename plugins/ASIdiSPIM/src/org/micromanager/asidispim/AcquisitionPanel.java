@@ -319,6 +319,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       stepSize_ = pu.makeSpinnerFloat(0, 100, 0.1,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_SLICE_STEP_SIZE,
             1.0);
+      stepSize_.addChangeListener(recalculateTimingDisplayCL);  // needed only for stage scanning b/c acceleration time related to speed
       volPanel_.add(stepSize_, "wrap");
       
       // out of order so we can reference it
@@ -982,8 +983,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.centerAtCurrentZ = false;
       acqSettings.sliceTiming = sliceTiming_;
       acqSettings.cameraMode = getSPIMCameraMode();
-      acqSettings.accelerationX = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
-            Properties.Keys.STAGESCAN_MOTOR_ACCEL);
       acqSettings.hardwareTimepoints = false; //  when running acquisition we check this and set to true if needed
       acqSettings.separateTimepoints = getSavingSeparateFile();
       return acqSettings;
@@ -1239,7 +1238,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // stackDuration is per-side, per-channel, per-position
       final double stackDuration = numCameraTriggers * acqSettings.sliceTiming.sliceDuration;
       if (acqSettings.isStageScanning) {
-         final double rampDuration = delayBeforeSide + acqSettings.accelerationX;
+         final double accelerationX = controller_.computeScanAcceleration(
+               controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller
+         final double rampDuration = delayBeforeSide + accelerationX;
          final double retraceSpeed = 0.67f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);  // retrace speed set to 67% of max speed in firmware
          final double speedFactor = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
          final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
@@ -1295,6 +1296,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // (could be wildly off but was estimated using actual system
             // and then slightly padded to be conservative to avoid errors
             // where positions aren't completed in time for next position)
+            // could estimate the actual time by analyzing the position's relative locations
+            //   and using the motor speed and acceleration time
             return gui_.getPositionList().getNumberOfPositions() *
                   (volumeDuration + 1500 + PanelUtils.getSpinnerFloatValue(positionDelay_));
          } catch (MMScriptException ex) {
@@ -2047,13 +2050,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // initialize stage scanning so we can restore state
       Point2D.Double xyPosUm = new Point2D.Double();
       float origXSpeed = 1f;  // don't want 0 in case something goes wrong
+      float origXAccel = 1f;  // don't want 0 in case something goes wrong
       if (acqSettings.isStageScanning) {
          try {
             xyPosUm = core_.getXYStagePosition(devices_.getMMDevice(Devices.Keys.XYSTAGE));
             origXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_SPEED);
+            origXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                  Properties.Keys.STAGESCAN_MOTOR_ACCEL);
          } catch (Exception ex) {
-            MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
+            MyDialogUtils.showError("Could not get XY stage position, speed, or acceleration for stage scan initialization");
             return false;
          }
       }
@@ -2369,11 +2375,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      // want to move between positions move stage fast, so we 
                      //   will clobber stage scanning setting so need to restore it
                      float scanXSpeed = 1f;
+                     float scanXAccel = 1f;
                      if (acqSettings.isStageScanning) {
                         scanXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_SPEED);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_SPEED, origXSpeed);
+                        scanXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                              Properties.Keys.STAGESCAN_MOTOR_ACCEL);
+                        props_.setPropValue(Devices.Keys.XYSTAGE,
+                              Properties.Keys.STAGESCAN_MOTOR_ACCEL, origXAccel);
                      }
                      
                      // blocking call; will wait for stages to move
@@ -2383,6 +2394,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      if (acqSettings.isStageScanning) {
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_SPEED, scanXSpeed);
+                        props_.setPropValue(Devices.Keys.XYSTAGE,
+                              Properties.Keys.STAGESCAN_MOTOR_ACCEL, scanXAccel);
                      }
                      
                      // setup stage scan at this position
@@ -2709,6 +2722,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   Properties.Values.SPIM_IDLE);
             props_.setPropValue(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_SPEED, origXSpeed);
+            props_.setPropValue(Devices.Keys.XYSTAGE,
+                  Properties.Keys.STAGESCAN_MOTOR_ACCEL, origXAccel);
             core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
                   xyPosUm.x, xyPosUm.y);
          } catch (Exception ex) {
