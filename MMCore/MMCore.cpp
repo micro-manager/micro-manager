@@ -83,7 +83,7 @@ using namespace std;
  *
  * The following (major, minor, patch) triplet is the MMCore API version. Since
  * 3.0.0, this is maintained according to the rules outlined at
- * http://semver.org/ . Briefely,
+ * http://semver.org/ . Briefly,
  *
  * - Increment the major version when making backward-incompatible changes
  *   (changes that will require any existing code to be modified, or that may
@@ -110,7 +110,7 @@ const int MMCore_versionMajor = 8, MMCore_versionMinor = 5, MMCore_versionPatch 
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// CMMcore class
+// CMMCore class
 // -------------
 
 /**
@@ -558,11 +558,11 @@ Configuration CMMCore::getConfigGroupState(const char* group, bool fromCache) th
 
 /**
  * Sets all properties contained in the Configuration object.
- * The procedure will attempt to set each property it enocunters, but won't stop
+ * The procedure will attempt to set each property it encounters, but won't stop
  * if any of the properties fail or if the requested device is not present. It will
  * just quietly continue.
  *
- * @param conf    the configuration object represeting the desired system state
+ * @param conf    the configuration object representing the desired system state
  */
 void CMMCore::setSystemState(const Configuration& conf)
 {
@@ -646,7 +646,7 @@ void CMMCore::addSearchPath(const char *path)
  * Returns a list of library names available in the search path.
  *
  * Do not use in new code. For backward compatibility, this method returns the
- * list of device adapters availbable in the default search path(s) and the
+ * list of device adapters available in the default search path(s) and the
  * paths added via addSearchPath(). For obvious reasons (since this method is
  * static), it will not return device adapters found in the search paths set by
  * setDeviceAdapterSearchPaths(). Thus, this method will only work as expected
@@ -816,7 +816,7 @@ void CMMCore::unloadAllDevices() throw (CMMError)
 }
 
 /**
- * Unloads all devices from the core, clears all configration data and property blocks.
+ * Unloads all devices from the core, clears all configuration data and property blocks.
  */
 void CMMCore::reset() throw (CMMError)
 {
@@ -1220,7 +1220,7 @@ void CMMCore::waitForSystem() throw (CMMError)
 
 /**
  * Checks the busy status for all devices of the specific type.
- * The system will report busy if any of the devices of the spefified type are busy.
+ * The system will report busy if any of the devices of the specified type are busy.
  *
  * @return true on busy
  * @param devType   a constant specifying the device type
@@ -2132,7 +2132,7 @@ long CMMCore::getStageSequenceMaxLength(const char* label) throw (CMMError)
  * Transfer a sequence of events/states/whatever to the device
  * This should only be called for device-properties that are sequenceable
  * @param label              the device label
- * @param positionSequence   a sequence of positions that the stage will execute in reponse to external triggers
+ * @param positionSequence   a sequence of positions that the stage will execute in response to external triggers
  */
 void CMMCore::loadStageSequence(const char* label, std::vector<double> positionSequence) throw (CMMError)
 {
@@ -2239,8 +2239,8 @@ long CMMCore::getXYStageSequenceMaxLength(const char* label) throw (CMMError)
  * xSequence and ySequence must have the same length.
  * This should only be called for XY stages that are sequenceable
  * @param label        the XY stage device label
- * @param xSequence    the sequence of x positions that the stage will execute in reponse to external triggers
- * @param ySequence    the sequence of y positions that the stage will execute in reponse to external triggers
+ * @param xSequence    the sequence of x positions that the stage will execute in response to external triggers
+ * @param ySequence    the sequence of y positions that the stage will execute in response to external triggers
  */
 void CMMCore::loadXYStageSequence(const char* label,
                                   std::vector<double> xSequence,
@@ -2375,7 +2375,7 @@ namespace
 } // anonymous namespace
 
 /**
- * Add device to the image-synchro list. Image acquistion waits for all devices
+ * Add device to the image-synchro list. Image acquisition waits for all devices
  * in this list.
  * @param label   the device label
  */
@@ -2697,9 +2697,9 @@ void CMMCore::startSequenceAcquisition(long numImages, double intervalMs, bool s
 
 /**
  * Starts streaming camera sequence acquisition for a specified camera.
- * This command does not block the calling thread for the uration of the acquisition.
+ * This command does not block the calling thread for the duration of the acquisition.
  * The difference between this method and the one with the same name but operating on the "default"
- * camera is that it does not automatically intitialize the circular buffer.
+ * camera is that it does not automatically initialize the circular buffer.
  */
 void CMMCore::startSequenceAcquisition(const char* label, long numImages, double intervalMs, bool stopOnOverflow) throw (CMMError)
 {
@@ -2770,7 +2770,7 @@ void CMMCore::initializeCircularBuffer() throw (CMMError)
 }
 
 /**
- * Stops streming camera sequence acquisition for a specified camera.
+ * Stops streaming camera sequence acquisition for a specified camera.
  * @param label   The camera name
  */
 void CMMCore::stopSequenceAcquisition(const char* label) throw (CMMError)
@@ -3299,7 +3299,7 @@ void CMMCore::setGalvoDevice(const char* galvoLabel) throw (CMMError)
 }
 
 /**
- * Speficies the group determining the channel selection.
+ * Specifies the group determining the channel selection.
  */
 void CMMCore::setChannelGroup(const char* chGroup) throw (CMMError)
 {
@@ -3514,7 +3514,7 @@ vector<string> CMMCore::getLoadedDevicesOfType(MM::DeviceType devType) const
  * Returns all valid values for the specified property.
  * If the array is empty it means that there are no restrictions for values.
  * However, even if all values are allowed it is not guaranteed that all of them will be
- * acually accepted by the device at run time.
+ * actually accepted by the device at run time.
  *
  * @return the array of values
  * @param label     the device label
@@ -3862,7 +3862,7 @@ void CMMCore::stopPropertySequence(const char* label, const char* propName) thro
  * This should only be called for device-properties that are sequenceable
  * @param label           the device name
  * @param propName        the property label
- * @param eventSequence   the sequence of events/states that the device will execute in reponse to external triggers
+ * @param eventSequence   the sequence of events/states that the device will execute in response to external triggers
  */
 void CMMCore::loadPropertySequence(const char* label, const char* propName, std::vector<std::string> eventSequence) throw (CMMError)
 {
@@ -3920,7 +3920,7 @@ unsigned CMMCore::getImageWidth()
 }
 
 /**
- * Vertical dimentsion of the image buffer in pixels.
+ * Vertical dimension of the image buffer in pixels.
  * @return   the height in pixels (an integer)
  */
 unsigned CMMCore::getImageHeight()
@@ -3954,7 +3954,7 @@ unsigned CMMCore::getBytesPerPixel()
 
 /**
  * How many bits of dynamic range are to be expected from the camera. This value should
- * be used only as a guideline - it does not guarante that image buffer will contain
+ * be used only as a guideline - it does not guarantee that image buffer will contain
  * only values from the returned dynamic range.
  *
  * @return the number of bits
@@ -4307,7 +4307,7 @@ bool CMMCore::isMultiROIEnabled() throw (CMMError)
 
 /**
  * Set multiple ROIs for the current camera device. Will fail if the camera
- * does not support multiple ROIs, any widths or heights are nonpositive,
+ * does not support multiple ROIs, any widths or heights are non-positive,
  * or if the vectors do not all have the same length.
  *
  * @param xs X indices for the upper-left corners of each ROI.
@@ -4812,7 +4812,7 @@ void CMMCore::setPixelSizeUm(const char* resolutionID, double pixSize)  throw (C
 }
 
 /**
- * Applies a Pixel Size Configurdation. The command will fail if the
+ * Applies a Pixel Size Configuration. The command will fail if the
  * configuration was not previously defined.
  * 
  * @param groupName   the configuration group name
@@ -5198,7 +5198,7 @@ string CMMCore::getCurrentPixelSizeConfig(bool cached) throw (CMMError)
 }
 
 /**
- * Returns the curent pixel size in microns.
+ * Returns the current pixel size in microns.
  * This method is based on sensing the current pixel size configuration and adjusting
  * for the binning.
  */
@@ -5208,7 +5208,7 @@ double CMMCore::getPixelSizeUm()
 }
 
 /**
- * Returns the curent pixel size in microns.
+ * Returns the current pixel size in microns.
  * This method is based on sensing the current pixel size configuration and adjusting
  * for the binning.
  */
@@ -5317,7 +5317,7 @@ void CMMCore::definePropertyBlock(const char* blockName, const char* propertyNam
    CheckPropertyName(propertyName);
    CheckPropertyValue(propertyValue);
 
-   // check if the block allready exists
+   // check if the block already exists
    CPropBlockMap::const_iterator it = propBlocks_.find(blockName);
    PropertyBlock* pBlock;
    if (it == propBlocks_.end())
@@ -5408,8 +5408,8 @@ PropertyBlock CMMCore::getData(const char* deviceLabel)
 
    // here we could have written simply: 
    // return getStateLabelData(deviceLabel, getStateLabel(deviceLabel).c_str());
-   // but that would be inefficient beacuse of the multiple index lookup, so we'll
-   // do it explicitely:
+   // but that would be inefficient because of the multiple index lookup, so we'll
+   // do it explicitly:
 
    mm::DeviceModuleLockGuard guard(pStateDev);
 
@@ -5447,7 +5447,7 @@ void CMMCore::setSerialProperties(const char* portName,
 
 /**
  * Send string to the serial device and return an answer.
- * This command blocks until it recives an answer fromt he device terminated by the specified
+ * This command blocks until it receives an answer from the device terminated by the specified
  * sequence.
  */
 void CMMCore::setSerialPortCommand(const char* portLabel, const char* command, const char* term) throw (CMMError)
@@ -6071,7 +6071,7 @@ void CMMCore::loadSystemState(const char* fileName) throw (CMMError)
    }
 
    // Process commands
-   const int maxLineLength = 4 * MM::MaxStrLength + 4; // accomodate up to 4 strings and delimiters
+   const int maxLineLength = 4 * MM::MaxStrLength + 4; // accommodate up to 4 strings and delimiters
    char line[maxLineLength+1];
    vector<string> tokens;
    while(is.getline(line, maxLineLength, '\n'))
@@ -6173,7 +6173,7 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
       }
    }
 
-   // save the pre-initlization properties
+   // save the pre-initialization properties
    os << "# Pre-initialization properties" << endl;
    Configuration config = getSystemState();
    for (size_t i=0; i<config.size(); i++)
@@ -6315,9 +6315,9 @@ void CMMCore::saveSystemConfiguration(const char* fileName) throw (CMMError)
  *
  * Format specification:
  * Each line consists of a number of string fields separated by "," (comma) characters.
- * Lines beggining with "#" are ignored (can be used for comments).
+ * Lines beginning with "#" are ignored (can be used for comments).
  * Each line in the file will be parsed by the system and as a result a corresponding command 
- * will be immediately extecuted.
+ * will be immediately executed.
  * The first field in the line always specifies the command from the following set of values:
  *    Device - executes loadDevice()
  *    Label - executes defineStateLabel() command
@@ -6377,7 +6377,7 @@ void CMMCore::loadSystemConfigurationImpl(const char* fileName) throw (CMMError)
    }
 
    // Process commands
-   const int maxLineLength = 4 * MM::MaxStrLength + 4; // accomodate up to 4 strings and delimiters
+   const int maxLineLength = 4 * MM::MaxStrLength + 4; // accommodate up to 4 strings and delimiters
    char line[maxLineLength+1];
    vector<string> tokens;
 
@@ -6496,7 +6496,7 @@ void CMMCore::loadSystemConfigurationImpl(const char* fileName) throw (CMMError)
             }
             else if(tokens[0].compare(MM::g_CFGCommand_ConfigPixelSize) == 0)
             {
-               // define pxiel size configuration command
+               // define pixel size configuration command
                // ---------------------------------------
                if (tokens.size() == 5)
                   definePixelSizeConfig(tokens[1].c_str(), tokens[2].c_str(), tokens[3].c_str(), tokens[4].c_str());
@@ -6528,7 +6528,7 @@ void CMMCore::loadSystemConfigurationImpl(const char* fileName) throw (CMMError)
             }
             else if(tokens[0].compare(MM::g_CFGCommand_ImageSynchro) == 0)
             {
-               // define image sycnhro
+               // define image synchro
                // --------------------
                if (tokens.size() != 2)
                   throw CMMError(getCoreErrorText(MMERR_InvalidCFGEntry) + " (" +
@@ -6641,7 +6641,7 @@ double CMMCore::getCurrentFocusScore()
 
 
 /**
- * Enables or disables the operation of the continouous focusing hardware device.
+ * Enables or disables the operation of the continuous focusing hardware device.
  */
 void CMMCore::enableContinuousFocus(bool enable) throw (CMMError)
 {
@@ -6671,7 +6671,7 @@ void CMMCore::enableContinuousFocus(bool enable) throw (CMMError)
 }
 
 /**
- * Checks if the continouous focusing hardware device is ON or OFF.
+ * Checks if the continuous focusing hardware device is ON or OFF.
  */
 bool CMMCore::isContinuousFocusEnabled() throw (CMMError)
 {
@@ -7028,7 +7028,7 @@ bool CMMCore::IsCoreDeviceLabel(const char* label) const throw (CMMError)
 /**
  * Set all properties in a configuration
  * Upon error, don't stop, but try to set all failed properties again
- * until all succees or no more change takes place
+ * until all success or no more change takes place
  * If errors remain, throw an error 
  */
 void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
@@ -7087,10 +7087,10 @@ void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
 
 /*
  * Helper function for applyConfiguration
- * It is possible that setting certain properties failed because they are dependend
+ * It is possible that setting certain properties failed because they are dependent
  * on other properties to be set first. As a workaround, continue to apply these failed
  * properties until there are none left or none succeed
- * returns number of properties succefully set
+ * returns number of properties successfully set
  */
 int CMMCore::applyProperties(vector<PropertySetting>& props, string& lastError)
 {
@@ -7286,7 +7286,7 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* label)
  * Performs auto-detection and loading of child devices that are attached to a Hub device.
  * For example, if a motorized microscope is represented by a Hub device, it is capable of
  * discovering what specific child devices are currently attached. In that case this call might 
- * report that Z-stage, filter changer and objective turrent are currently installed and return three
+ * report that Z-stage, filter changer and objective turret are currently installed and return three
  * device names in the string list.
  *
  * Currently, this method can only be called once, right after loading the hub

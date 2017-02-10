@@ -162,7 +162,7 @@ public:
     *
     * Note that, at least for now, these are all non-virtual, because there is
     * no case under which they will be overridden by derived classes. It may
-    * become necessary to make these virtual if the need arrises to e.g. handle
+    * become necessary to make these virtual if the need arises to e.g. handle
     * synchronization with methods specific to derived classes.
     *
     * TODO Error handling

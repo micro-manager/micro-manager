@@ -143,7 +143,7 @@ LoadedDeviceAdapter::LoadDevice(CMMCore* core, const std::string& name,
    }
    catch (const CMMError&)
    {
-      // The type of a device that was not explictily registered (e.g. a
+      // The type of a device that was not explicitly registered (e.g. a
       // peripheral device or a device provided only for backward
       // compatibility) will not be available.
       expectedType = MM::UnknownType;
