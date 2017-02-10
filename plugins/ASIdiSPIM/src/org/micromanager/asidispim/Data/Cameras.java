@@ -216,10 +216,9 @@ public class Cameras {
    }
 
    /**
-    * Internal use only, take care of low-level property setting to make
-    * internal or external depending on camera type (via the DeviceLibrary)
+    * Take care of low-level property setting to make internal trigger
+    * or appropriate external mode depending on camera type (via the DeviceLibrary)
     * currently HamamatsuHam, PCO_Camera, and Andor sCMOS are supported
-    * 
     * @param devKey
     * @param mode enum from this class
     */
@@ -231,18 +230,26 @@ public class Cameras {
                Properties.Keys.TRIGGER_SOURCE,
                ((mode == CameraModes.Keys.INTERNAL) 
                      ? Properties.Values.INTERNAL
-                     : Properties.Values.EXTERNAL), true);
+                     : Properties.Values.EXTERNAL));
+         props_.setPropValue(devKey, Properties.Keys.SENSOR_MODE,
+               ((mode == CameraModes.Keys.LIGHT_SHEET)
+                     ? Properties.Values.PROGRESSIVE
+                     : Properties.Values.AREA));
          switch (mode) {
          case EDGE:
-            props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
+         case LIGHT_SHEET:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_ACTIVE,
                   Properties.Values.EDGE);
             break;
          case LEVEL:
-            props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_ACTIVE,
                   Properties.Values.LEVEL);
             break;
          case OVERLAP:
-            props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_ACTIVE,
                   Properties.Values.SYNCREADOUT);
             break;
          default:
@@ -255,52 +262,58 @@ public class Cameras {
          case PSEUDO_OVERLAP:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE_PCO,
-                  Properties.Values.EXTERNAL_LC, true);
+                  Properties.Values.EXTERNAL_LC);
             break;
          case LEVEL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE_PCO,
-                  Properties.Values.LEVEL_PCO, true);
+                  Properties.Values.LEVEL_PCO);
             break;
          case INTERNAL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE_PCO,
-                  Properties.Values.INTERNAL_LC, true);
+                  Properties.Values.INTERNAL_LC);
             break;
          default:
                break;
          }
          break;
       case ANDORCAM:
+         props_.setPropValue(devKey,
+               Properties.Keys.SENSOR_READOUT_MODE,
+               (mode == CameraModes.Keys.LIGHT_SHEET
+               ? Properties.Values.BOTTOM_UP_ANDOR
+               : Properties.Values.CENTER_OUT_ANDOR));
          switch (mode) {
          case EDGE:
+         case LIGHT_SHEET:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.EXTERNAL_LC, true);
+                  Properties.Values.EXTERNAL_LC);
             props_.setPropValue(devKey,
                   Properties.Keys.ANDOR_OVERLAP,
-                  Properties.Values.OFF, true);
+                  Properties.Values.OFF);
             break;
          case INTERNAL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.INTERNAL_ANDOR, true);
+                  Properties.Values.INTERNAL_ANDOR);
             break;
          case LEVEL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.LEVEL_ANDOR, true);
+                  Properties.Values.LEVEL_ANDOR);
             props_.setPropValue(devKey,
                   Properties.Keys.ANDOR_OVERLAP,
-                  Properties.Values.OFF, true);
+                  Properties.Values.OFF);
             break;
          case OVERLAP:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.LEVEL_ANDOR, true);
+                  Properties.Values.LEVEL_ANDOR);
             props_.setPropValue(devKey,
                   Properties.Keys.ANDOR_OVERLAP,
-                  Properties.Values.ON, true);
+                  Properties.Values.ON);
             break;
          default:
             break;
@@ -311,12 +324,12 @@ public class Cameras {
          case EDGE:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.EDGE_TRIGGER, true);
+                  Properties.Values.EDGE_TRIGGER);
             break;
          case INTERNAL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.INTERNAL_TRIGGER, true);
+                  Properties.Values.INTERNAL_TRIGGER);
             break;
          default:
             break;

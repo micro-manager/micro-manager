@@ -905,13 +905,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * @return CameraModes.Keys value from Settings panel
-    * (internal, edge, overlap, pseudo-overlap) 
+    * @return CameraModes.Keys value from Camera panel
+    * (internal, edge, overlap, pseudo-overlap, light sheet) 
     */
    private CameraModes.Keys getSPIMCameraMode() {
-      return CameraModes.getKeyFromPrefCode(
-            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      CameraModes.Keys val = null;
+      try {
+         val = ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode();
+      } catch (Exception ex) {
+         // this case in for when tab is first created and CameraPanel doesn't yet exist
+         // arguably it's better to use the Java object when possible instead of always going to prefs
+         val = CameraModes.getKeyFromPrefCode(prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      }
+      return val;
    }
    
    /**

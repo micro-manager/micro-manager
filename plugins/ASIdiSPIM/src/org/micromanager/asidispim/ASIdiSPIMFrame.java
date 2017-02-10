@@ -330,6 +330,16 @@ public class ASIdiSPIMFrame extends MMFrame
     */
    public DataAnalysisPanel getDataAnalysisPanel() {
       return dataAnalysisPanel_;
+   }
+   
+   /**
+    * For use of acquisition panel code (getting camera settings)
+    * Do not get into the internals of this plugin without relying on
+    * ASIdiSPIM.api
+    * @return the currently used instance of the CameraPanel;
+    */
+   public CameraPanel getCameraPanel() {
+      return cameraPanel_;
    }   
    
    /**

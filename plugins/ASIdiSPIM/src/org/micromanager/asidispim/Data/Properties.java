@@ -158,6 +158,7 @@ public class Properties {
       CAMERA_NAME("CameraName"),               // for Andor Zyla
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
       ANDOR_OVERLAP("Overlap"),                // for Andor Zyla
+      SENSOR_READOUT_MODE("LightScanPlus-SensorReadoutMode"), // for Andor Zyla
       PIXEL_TYPE("PixelType"),            // for DemoCam
       CAMERA_SIZE_X("OnCameraCCDXSize"),  // for DemoCam
       CAMERA_SIZE_Y("OnCameraCCDYSize"),  // for DemoCam
@@ -237,6 +238,11 @@ public class Properties {
       PLUGIN_DESKEW_INVERT("DeskewInvert"),
       PLUGIN_DESKEW_INTERPOLATE("DeskewInterpolate"),
       PLUGIN_DESKEW_AUTO_TEST("DeskewAutoTest"),
+      PLUGIN_STAGESCAN_ACCEL_FACTOR("StageScanAccelerationFactor"),
+      PLUGIN_LS_SCAN_RESET("LightSheetScanReset"),
+      PLUGIN_LS_SCAN_SETTLE("LightSheetScanSettle"),
+      PLUGIN_LS_SHUTTER_WIDTH("LightSheetShutterWidth"),
+      PLUGIN_LS_SHUTTER_SPEED("LightSheetSpeedFactor"),
       ;
       private final String text;
       private final boolean forceSet;
@@ -303,8 +309,10 @@ public class Properties {
       LEVEL_PCO("External Exp. Ctrl."),
       INTERNAL_ANDOR("Internal (Recommended for fast acquisitions)"),
       LEVEL_ANDOR("External Exposure"),
-      INTERNAL_TRIGGER("Internal Trigger"),
-      EDGE_TRIGGER("Edge Trigger"),
+      CENTER_OUT_ANDOR("Centre Out Simultaneous"),
+      BOTTOM_UP_ANDOR("Bottom Up Sequential"),
+      INTERNAL_TRIGGER("Internal Trigger"),  // for PVCam
+      EDGE_TRIGGER("Edge Trigger"),          // for PVCam
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
       SIXTEENBIT("16bit"),
