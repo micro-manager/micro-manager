@@ -332,7 +332,7 @@ unsigned MM::PropertyCollection::GetSize() const
 
 int MM::PropertyCollection::CreateProperty(const char* pszName, const char* pszValue, MM::PropertyType eType, bool bReadOnly, MM::ActionFunctor* pAct, bool isPreInitProperty)
 {
-   // check if the name allready exists
+   // check if the name already exists
    if (Find(pszName))
       return DEVICE_DUPLICATE_PROPERTY;
 
