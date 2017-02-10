@@ -109,6 +109,34 @@ public class ListUtils {
       return result / vals.size();
    }
    
+   public static double avg(double[] numbers) {
+      double sum = 0.0;
+      for (double num : numbers) {
+         sum += num;
+      }
+      return sum / numbers.length;
+   }
+   
+   public static double stdDev(double[] numbers, double avg) {
+      double result = 0.0;
+      for (double val : numbers) {
+         result += (val - avg) * (val - avg);
+      }
+      if (numbers.length < 2) {
+         return 0.0;
+      }
+      result = result / (numbers.length -1);
+      
+      return Math.sqrt(result);
+   }
+   
+   public static double[] toArray(List<Double> list) {
+      double[] result = new double[list.size()];
+      for (int i = 0; i < list.size(); i++) {
+         result[i] = list.get(i);
+      }
+      return result;
+   }
    
    /**
     * Returns the Standard Deviation as sqrt( 1/(n-1) sum( square(value - avg)) )
@@ -141,4 +169,5 @@ public class ListUtils {
       
       return listStdDev(list, avg);
    }
+   
 }
