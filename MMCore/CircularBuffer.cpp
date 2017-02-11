@@ -5,8 +5,8 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Generic implementation of the circular buffer. The buffer
 //                allows only one thread to enter at a time by using a mutex lock.
-//                This makes the buffer succeptible to race conditions if the
-//                calling threads are mutally dependent.
+//                This makes the buffer susceptible to race conditions if the
+//                calling threads are mutually dependent.
 //              
 // COPYRIGHT:     University of California, San Francisco, 2007,
 //
