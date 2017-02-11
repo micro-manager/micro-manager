@@ -97,6 +97,10 @@ public:
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
    int SetBinning(int bS);
+   int GetBinningX() const;
+   int SetBinningX(int bS);
+   int GetBinningY() const;
+   int SetBinningY(int bS);
    int GetExtTrigger() const;
    int SetExtTrigger(int val);
    double GetFrameRate() const;
@@ -177,6 +181,10 @@ public:
 	// floating point read-only properties for testing
 	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBinningX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBinningY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBinningXY(MM::PropertyBase* pProp, MM::ActionType eAct, bool bBinX);
+
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -278,7 +286,10 @@ private:
 	
 	void SetExtTrigStatus(unsigned char val) const ;
 	int GetBinningFactor() const ;
+	int GetBinningFactorX() const ;
+	int GetBinningFactorY() const ;
 	void SetBinningFactor(int nBin) ;
+	void SetBinningFactorXY(int nBinX, int nBinY) ;
 	void SetMicroReset() const ;
 
 	void SetFPGACtrl(unsigned char val) const ;
@@ -325,7 +336,8 @@ private:
    unsigned roiSnapY_;
    unsigned snapWidth_;
    unsigned snapHeight_;
-   unsigned snapBin_;
+   unsigned snapBinX_;
+   unsigned snapBinY_;
    bool useAOI_;
    bool updatingAOI_;
    unsigned AOILeft_;
@@ -388,6 +400,8 @@ private:
 	double dShutterDelayOpen_;
 	double dShutterDelayClose_;
 
+	long binSizeX_;
+	long binSizeY_;
 
    int serialNum_;
    int buildDateDD_;

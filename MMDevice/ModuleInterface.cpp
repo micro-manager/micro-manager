@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMDevice - Device adapter kit
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   The implemenation for the common plugin functions
+// DESCRIPTION:   The implementation for the common plugin functions
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 08/08/2005
 // NOTE:          Change the implementation of module interface methods in
 //                this file with caution, since the Micro-Manager plugin

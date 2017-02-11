@@ -51,12 +51,20 @@ static const char* g_Gain = "Gain";
 static const char* g_NumberOfTaps = "Taps";
 static const char* g_ColorFilterArray = "SensorArray";
 static const char* g_WhiteBalance = "WhiteBalance";
+static const char* g_TriggerMode = "TriggerMode";
+static const char* g_TriggerPolarity = "TriggerPolarity";
+static const char* g_ColorEnable = "Color";
+
 static const char* g_Set = "SetNow";
 static const char* g_Off = "Off";
 static const char* g_On = "On";
 static const char* g_Yes = "Yes";
 static const char* g_No = "No";
-static const char* g_ColorEnable = "Color";
+static const char* g_Software = "Software";
+static const char* g_HardwareEdge = "HardwareStandard";
+static const char* g_HardwareDuration = "HardwareBulb";
+static const char* g_Positive = "Positive";
+static const char* g_Negative = "Negative";
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -69,6 +77,7 @@ static const char* g_ColorEnable = "Color";
 #define ERR_CAMERA_OPEN_FAILED            10014
 #define ERR_IMAGE_TIMED_OUT               10015
 #define ERR_INVALID_CHANNEL_INDEX         16016
+#define ERR_INTERNAL_ERROR                16017
 
 //////////////////////////////////////////////////////////////////////////////
 // Region of Interest
@@ -85,6 +94,17 @@ struct ROI {
 
    bool isEmpty() {return x==0 && y==0 && xSize==0 && ySize == 0;}
    void clear() {x=0; y=0; xSize=0; ySize=0;}
+};
+
+enum TriggerSource {
+	Software = 0,
+	HardwareEdge,
+	HardwareDuration
+};
+
+enum TriggerPolarity {
+	Positive = 0,
+	Negative
 };
 
 class AcqSequenceThread;
@@ -157,6 +177,7 @@ public:
    int OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFps(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChipName(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMultiplierGain(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -174,6 +195,9 @@ private:
    int ResumeSequence();
    int GetImageParameters();
    int PushImage(unsigned char* imgBuf);
+   bool StopCamera();
+   bool StartCamera();
+
    static void ReadoutComplete(int callback_type_id, TsiImage *tsi_image, void *context);
    TsiColorCamera* getColorCamera();
    static void convertToRGBA32(TsiColorImage& tsiImg, ImgBuffer& img, int bitDepth);
@@ -191,6 +215,8 @@ private:
    int bitDepth;
    TSI_ROI_BIN roiBinData;
    TSI_ROI_BIN fullFrame;
+   TriggerSource trigger;
+   TriggerPolarity triggerPolarity;
 
    // color camera support
    bool bayerMask;

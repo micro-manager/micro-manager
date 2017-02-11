@@ -78,7 +78,7 @@ void ImgBuffer::SetMetadata(const Metadata& md)
 {
    //metadata_ = md;
    // Serialize/Restore instead of =operator used to avoid object new/delete
-   // issues accross the DLL boundary (on Windows)
+   // issues across the DLL boundary (on Windows)
    // TODO: this is inefficient and should be revised
     metadata_.Restore(md.Serialize().c_str());
 }
