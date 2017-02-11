@@ -9,7 +9,7 @@
  */
 
 import com.google.common.eventbus.Subscribe;
-import edu.valelab.gaussianfit.MainForm;
+import edu.ucsf.valelab.gaussianfit.MainForm;
 
 import ij.plugin.*;
 import org.micromanager.MenuPlugin;
@@ -80,7 +80,7 @@ public class GaussianTrack_ implements PlugIn, MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getCopyright() {
-      return "University of California, 2010-2014";
+      return "University of California, 2010-2017";
    }
    
    @Subscribe
