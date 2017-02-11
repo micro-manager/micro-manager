@@ -28,6 +28,7 @@ import org.micromanager.plugins.magellan.acq.MagellanTaggedImage;
 import org.micromanager.plugins.magellan.acq.MultiResMultipageTiffStorage;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Set;
 import org.micromanager.plugins.magellan.misc.LongPoint;
 
@@ -241,40 +242,50 @@ public class ZoomableVirtualStack extends AcquisitionVirtualStack {
       //do all calculations at full resolution
       long newXView = xView_ * getDownsampleFactor();
       long newYView = yView_ * getDownsampleFactor();
+      
       for (Point p : tiles) {
-         //translate row, col to x, y pixel coords of position center
-         long xTileCenter = (long) ((0.5 + p.x) * tileWidth_);
-         long yTileCenter = (long) ((0.5 + p.y) * tileHeight_);
+         //calclcate limits on margin of tile that must remain in view
+         long tileX1 = (long) ((0.1 + p.x) * tileWidth_);
+         long tileX2 = (long) ((0.9 + p.x) * tileWidth_);
+         long tileY1 = (long) ((0.1 + p.y) * tileHeight_);
+         long tileY2 = (long) ((0.9 + p.y) * tileHeight_);     
+         long visibleWidth = (long) (0.8 * tileWidth_);
+         long visibleHeight = (long) (0.8 *tileHeight_);
          //get bounds of viewing area
-         long xMin = getAbsoluteFullResPixelCoordinate(0, 0).x_;
-         long yMin = getAbsoluteFullResPixelCoordinate(0, 0).y_;
-         long xMax = xMin + displayImageWidth_ * getDownsampleFactor();
-         long yMax = yMin + displayImageHeight_ * getDownsampleFactor();
-         boolean xInView = xTileCenter >= xMin && xTileCenter <= xMax;
-         boolean yInView = yTileCenter >= yMin && yTileCenter <= yMax;
-         if (xInView && yInView) {
+         long fovX1 = getAbsoluteFullResPixelCoordinate(0, 0).x_;
+         long fovY1 = getAbsoluteFullResPixelCoordinate(0, 0).y_;
+         long fovX2 = fovX1 + displayImageWidth_ * getDownsampleFactor();
+         long fovY2 = fovY1 + displayImageHeight_ * getDownsampleFactor();
+         
+         //check if tile and fov intersect
+         boolean xInView = fovX1 < tileX2 && fovX2 > tileX1;
+         boolean yInView = fovY1 < tileY2 && fovY2 > tileY1;
+         boolean intersection = xInView && yInView;
+
+         if (intersection) {
             return; //at least one tile is in view, don't need to do anything
          }
-         //calculate min distance from among 4 corners
-         double d1 = Math.sqrt((xTileCenter - xMin) * (xTileCenter - xMin) + (yTileCenter - yMin) * (yTileCenter - yMin)); //top left
-         double d2 = Math.sqrt((xTileCenter - xMax) * (xTileCenter - xMax) + (yTileCenter - yMin) * (yTileCenter - yMin)); // top right
-         double d3 = Math.sqrt((xTileCenter - xMin) * (xTileCenter - xMin) + (yTileCenter - yMax) * (yTileCenter - yMax)); // bottom left
-         double d4 = Math.sqrt((xTileCenter - xMax) * (xTileCenter - xMax) + (yTileCenter - yMax) * (yTileCenter - yMax)); //bottom right
-         double minOf4 = Math.min(Math.min(d1, d2), Math.min(d3, d4));
-         if (minOf4 < minDistance) {
-            minDistance = minOf4;
-            if (d1 <= d2 && d1 <= d3 && d1 <= d4) { //top left
-               newXView = xInView ? newXView : xTileCenter;
-               newYView = yInView ? newYView : yTileCenter;
-            } else if (d2 <= d1 && d2 <= d3 && d2 <= d4) { // top right
-               newXView = xInView ? newXView : xTileCenter - displayImageWidth_ * getDownsampleFactor();
-               newYView = yInView ? newYView : yTileCenter;
-            } else if (d3 <= d1 && d3 <= d2 && d3 <= d4) { // bottom left
-               newXView = xInView ? newXView : xTileCenter;
-               newYView = yInView ? newYView : yTileCenter - displayImageHeight_ * getDownsampleFactor();
-            } else { // bottom right
-               newXView = xInView ? newXView : xTileCenter - displayImageWidth_ * getDownsampleFactor();
-               newYView = yInView ? newYView : yTileCenter - displayImageHeight_ * getDownsampleFactor();
+         //tile to fov corner to corner distances
+         double tl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY1 - fovY2) * (tileY1 - fovY2)); //top left tile, botom right fov
+         double tr = ((tileX2 - fovX1) * (tileX2 - fovX1) + (tileY1 - fovY2) * (tileY1 - fovY2)); // top right tile, bottom left fov
+         double bl = ((tileX1 - fovX2) * (tileX1 - fovX2) + (tileY2 - fovY1) * (tileY2 - fovY1)); // bottom left tile, top right fov
+         double br = ((tileX1 - fovX1) * (tileX1 - fovX1) + (tileY2 - fovY1) * (tileY2 - fovY1)); //bottom right tile, top left fov
+         
+         double closestCornerDistance = Math.min(Math.min(tl, tr), Math.min(bl, br));
+         if (closestCornerDistance < minDistance) {
+            minDistance = closestCornerDistance;
+            if (tl <= tr && tl <= bl && tl <= br) { //top left tile, botom right fov
+               newXView = xInView ? newXView : tileX1 - displayImageWidth_ * getDownsampleFactor();
+               newYView = yInView ? newYView : tileY1 - displayImageHeight_ * getDownsampleFactor();
+            } else if (tr <= tl && tr <= bl && tr <= br) { // top right tile, bottom left fov
+               newXView = xInView ? newXView : tileX2;
+               newYView = yInView ? newYView : tileY1 - displayImageHeight_ * getDownsampleFactor();
+            } else if (bl <= tl && bl <= tr && bl <= br) { // bottom left tile, top right fov
+               newXView = xInView ? newXView : tileX1 - displayImageWidth_ * getDownsampleFactor();
+               newYView = yInView ? newYView : tileY2;
+            } else { //bottom right tile, top left fov
+               newXView = xInView ? newXView : tileX2 ;
+               newYView = yInView ? newYView : tileY2 ;
             }
          }
       }
