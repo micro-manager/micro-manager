@@ -335,7 +335,7 @@ public abstract class VirtualAcquisitionDisplay{
 
    public int rgbToGrayChannel(int channelIndex) {
       if (MD.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
-         return channelIndex * 3;
+         return channelIndex * 3 + 2;
       }
       return channelIndex;
    }
@@ -439,7 +439,7 @@ public abstract class VirtualAcquisitionDisplay{
       // Construct a mapping of axis to position so we can post an 
       // event informing others of the new image.
       HashMap<String, Integer> axisToPosition = new HashMap<String, Integer>();
-      axisToPosition.put("channel", channel);
+      axisToPosition.put("channel", rgbToGrayChannel(channel));
       axisToPosition.put("position", position);
       axisToPosition.put("time", frame);
       if (((DisplayPlus) this).getAcquisition() != null) {
