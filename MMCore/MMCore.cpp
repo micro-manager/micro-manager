@@ -6834,11 +6834,11 @@ void CMMCore::InitializeErrorMessages()
    errorText_[MMERR_SetPropertyFailed] = "Property does not exist, or value not allowed.";
    errorText_[MMERR_LoadLibraryFailed] = "Unable to load library: file not accessible or corrupted.";
    errorText_[MMERR_LibraryFunctionNotFound] =
-      "Unable to identify expected interface: the library is not comaptible or corrupted.";
+      "Unable to identify expected interface: the library is not compatible or corrupted.";
    errorText_[MMERR_CreateNotFound] =
-      "Unable to identify CreateDevice function: the library is not comaptible or corrupted.";
+      "Unable to identify CreateDevice function: the library is not compatible or corrupted.";
    errorText_[MMERR_DeleteNotFound] =
-      "Unable to identify DeleteDevice function: the library is not comaptible or corrupted.";
+      "Unable to identify DeleteDevice function: the library is not compatible or corrupted.";
    errorText_[MMERR_CreateFailed] = "DeviceCreate function failed.";
    errorText_[MMERR_DeleteFailed] = "DeviceDelete function failed.";
    errorText_[MMERR_UnknownModule] = "Current device can't be unloaded: using unknown library.";
@@ -6876,9 +6876,9 @@ void CMMCore::InitializeErrorMessages()
       "Failed to initialize circular buffer - memory requirements not adequate.";
    errorText_[MMERR_CircularBufferEmpty] = "Circular buffer is empty.";
    errorText_[MMERR_ContFocusNotAvailable] = "Auto-focus focus device not defined.";
-   errorText_[MMERR_BadConfigName] = "Configuration name contains illegale characters (/\\*!')";
+   errorText_[MMERR_BadConfigName] = "Configuration name contains illegal characters (/\\*!')";
    errorText_[MMERR_NotAllowedDuringSequenceAcquisition] =
-      "This operation can not be executed while sequence acquisition is runnning.";
+      "This operation can not be executed while sequence acquisition is running.";
    errorText_[MMERR_OutOfMemory] = "Out of memory.";
    errorText_[MMERR_InvalidImageSequence] = "Issue snapImage before getImage.";
    errorText_[MMERR_NullPointerException] = "Null Pointer Exception.";
