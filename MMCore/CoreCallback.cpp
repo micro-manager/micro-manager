@@ -7,7 +7,7 @@
 //                (bottom) internal API for calls going from devices to the 
 //                core.
 //
-//                This class is essentialy an extension of the CMMCore class
+//                This class is essentially an extension of the CMMCore class
 //                and has full access to CMMCore private members.
 //              
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 01/05/2007
@@ -446,7 +446,7 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
 
       // Find all configs that contain this property and callback to indicate 
       // that the config group changed
-      // TODO: Assess whether performace is better by maintaining a map tying 
+      // TODO: Assess whether performance is better by maintaining a map tying
       // property to configurations
       std::vector<std::string> configGroups = 
          core_->getAvailableConfigGroups ();

@@ -87,8 +87,8 @@ private:
 };
 
 /**
- * Property pair defined as dublet:
- * dproperty - value.
+ * Property pair defined as doublet:
+ * property - value.
  */
 struct PropertyPair
 {
@@ -152,7 +152,7 @@ private:
 };
 
 /**
- * Encapsulation of the proeprty collection. Designed to be wrapped
+ * Encapsulation of the property collection. Designed to be wrapped
  * by SWIG. A collection of property pairs.
  */
 class PropertyBlock

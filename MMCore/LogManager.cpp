@@ -94,7 +94,7 @@ LogManager::SetPrimaryLogFilename(const std::string& filename, bool truncate)
    {
       if (primaryFileSink_)
       {
-         LOG_INFO(internalLogger_) << "Disableing primary log file";
+         LOG_INFO(internalLogger_) << "Disabling primary log file";
          loggingCore_->RemoveSink(primaryFileSink_, PrimarySinkMode);
          primaryFileSink_.reset();
       }

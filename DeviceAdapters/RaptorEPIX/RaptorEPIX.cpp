@@ -59,6 +59,7 @@
 #define _RAPTOR_CAMERA_CYGNET				(256 + _RAPTOR_CAMERA_COMMONCMDS1)
 #define _RAPTOR_CAMERA_UNKNOWN1				(512 + _RAPTOR_CAMERA_COMMONCMDS1)
 #define _RAPTOR_CAMERA_EAGLE				(8192 + _RAPTOR_CAMERA_COMMONCMDS1)
+#define _RAPTOR_CAMERA_EAGLE_V				(8192*3 + _RAPTOR_CAMERA_COMMONCMDS1)
 
 #define _RAPTOR_CAMERA_OSPREY_RGB			(_RAPTOR_CAMERA_OSPREY			+ _RAPTOR_CAMERA_RGB)
 #define _RAPTOR_CAMERA_KINGFISHER_674_RGB	(_RAPTOR_CAMERA_KINGFISHER_674	+ _RAPTOR_CAMERA_RGB)
@@ -82,6 +83,7 @@
 using namespace std;
 const double CRaptorEPIX::nominalPixelSizeUm_ = 1.0;
 double g_IntensityFactor_ = 1.0;
+bool bEagle4210 = false;
 
 // External names used used by the rest of the system
 // to load particular device from the "RaptorEPIX.dll" library
@@ -120,6 +122,8 @@ const char* g_RaptorCameraOwl640DeviceName			= RAPTOR SPC OWL SPC CAM " 640";
 const char* g_RaptorCameraOwlNinox640DeviceName		= RAPTOR SPC NINOX SPC CAM " 640";
 const char* g_RaptorCameraFalconDeviceName			= RAPTOR SPC FALCON SPC CAM;
 const char* g_RaptorCameraEagleDeviceName			= RAPTOR SPC EAGLE SPC CAM;
+const char* g_RaptorCameraEagleV4240DeviceName		= RAPTOR SPC EAGLE SPC "V 4240" SPC CAM;
+const char* g_RaptorCameraEagleV4210DeviceName		= RAPTOR SPC EAGLE SPC "V 4210" SPC CAM;
 const char* g_RaptorCameraOspreyDeviceName			= RAPTOR SPC OSPREY SPC CAM;
 const char* g_RaptorCameraOspreyRGBDeviceName		= RAPTOR SPC OSPREY " RGB " CAM;
 const char* g_RaptorCameraKingfisher674DeviceName	= RAPTOR SPC KINGFISHER " 674";
@@ -136,6 +140,8 @@ const char* g_RaptorOwl320 = OWL " 320";
 const char* g_RaptorOwl640 = OWL " 640";
 const char* g_RaptorNinox640 = NINOX " 640";
 const char* g_RaptorEagle = EAGLE;
+const char* g_RaptorEagleV4240 = EAGLE " V 4240";
+const char* g_RaptorEagleV4210 = EAGLE " V 4210";
 const char* g_RaptorFalcon = FALCON;
 const char* g_RaptorOsprey = OSPREY;
 const char* g_RaptorOspreyRGB = OSPREY " RGB";
@@ -297,6 +303,8 @@ const char* g_Keyword_ShutterDelayOpen  = "Shutter Delay Open";
 const char* g_Keyword_ShutterDelayClose = "Shutter Delay Close";
 
 const char* g_Keyword_HighPreAmpGain	   = "High Pre-Amp Gain";
+const char* g_Keyword_BinningX			= "Binning X" ;
+const char* g_Keyword_BinningY			= "Binning Y" ;
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8 bit";
@@ -375,6 +383,11 @@ static	pxvbtime_t  lastcapttime[1] = {0};		// when was image last captured
 	#define FORMATFILE_LOAD_EAGLE_BIN2 "XCAP\xcapRaptorEagle_64A_Bin2.fmt"  // loaded from file during execution
 	#define FORMATFILE_LOAD_EAGLE_BIN4 "XCAP\xcapRaptorEagle_64A_Bin4.fmt"  // loaded from file during execution
 
+	#define FORMATFILE_LOAD_EAGLE_V		 "XCAP\xcapRaptorEagleV_64.fmt"  // loaded from file during execution
+	#define FORMATFILE_LOAD_EAGLE_V_BIN1 "XCAP\xcapRaptorEagleV_64_Bin1.fmt"  // loaded from file during execution
+	#define FORMATFILE_LOAD_EAGLE_V_BIN2 "XCAP\xcapRaptorEagleV_64_Bin1.fmt"  // loaded from file during execution
+	#define FORMATFILE_LOAD_EAGLE_V_BIN4 "XCAP\xcapRaptorEagleV_64_Bin1.fmt"  // loaded from file during execution
+
 	#define FORMATFILE_LOAD_FALCON "XCAP\xcapRaptorFalcon64.fmt"  // loaded from file during execution
 
 	#define FORMATFILE_LOAD_KINGFISHER694	   "XCAP\xcapRaptorKingFisher694_64A.fmt"  // loaded from file during execution
@@ -442,6 +455,12 @@ static	pxvbtime_t  lastcapttime[1] = {0};		// when was image last captured
 	#define FORMATFILE_LOAD_EAGLE_BIN1 "XCAP\xcapRaptorEagle_32_Bin1.fmt"  // loaded from file during execution
 	#define FORMATFILE_LOAD_EAGLE_BIN2 "XCAP\xcapRaptorEagle_32_Bin2.fmt"  // loaded from file during execution
 	#define FORMATFILE_LOAD_EAGLE_BIN4 "XCAP\xcapRaptorEagle_32_Bin4.fmt"  // loaded from file during execution
+
+	#define FORMATFILE_LOAD_EAGLE_V		 "XCAP\xcapRaptorEagleV_64.fmt"  // loaded from file during execution
+	#define FORMATFILE_LOAD_EAGLE_V_BIN1 "XCAP\xcapRaptorEagleV_64_Bin1.fmt"  // loaded from file during execution
+	#define FORMATFILE_LOAD_EAGLE_V_BIN2 "XCAP\xcapRaptorEagleV_64_Bin1.fmt"  // loaded from file during execution
+	#define FORMATFILE_LOAD_EAGLE_V_BIN4 "XCAP\xcapRaptorEagleV_64_Bin1.fmt"  // loaded from file during execution
+
 
 	#define FORMATFILE_LOAD_FALCON "XCAP\xcapRaptorFalcon.fmt"  // loaded from file during execution
 	#define FORMATFILE_LOAD_OSPREY "XCAP\xcapRaptorOsprey.fmt"  // loaded from file during execution
@@ -708,6 +727,8 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_RaptorCameraOwl640DeviceName,       MM::CameraDevice, g_RaptorCameraOwl640DeviceName);
    RegisterDevice(g_RaptorCameraOwlNinox640DeviceName,  MM::CameraDevice, g_RaptorCameraOwlNinox640DeviceName);
    RegisterDevice(g_RaptorCameraEagleDeviceName,        MM::CameraDevice, g_RaptorCameraEagleDeviceName);
+   RegisterDevice(g_RaptorCameraEagleV4240DeviceName,   MM::CameraDevice, g_RaptorCameraEagleV4240DeviceName);
+   RegisterDevice(g_RaptorCameraEagleV4210DeviceName,   MM::CameraDevice, g_RaptorCameraEagleV4210DeviceName);
 
    RegisterDevice(g_RaptorCameraKingfisher674DeviceName, MM::CameraDevice, g_RaptorCameraKingfisher674DeviceName);
    RegisterDevice(g_RaptorCameraKingfisher694DeviceName, MM::CameraDevice, g_RaptorCameraKingfisher694DeviceName);
@@ -751,6 +772,18 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       // create camera
       return new CRaptorEPIX(_RAPTOR_CAMERA_EAGLE);
+   }
+   else if (strcmp(deviceName, g_RaptorCameraEagleV4240DeviceName) == 0)
+   {
+      // create camera
+	   bEagle4210 = false;
+      return new CRaptorEPIX(_RAPTOR_CAMERA_EAGLE_V);
+   }
+  else if (strcmp(deviceName, g_RaptorCameraEagleV4210DeviceName) == 0)
+   {
+      // create camera
+	   bEagle4210 = true;
+      return new CRaptorEPIX(_RAPTOR_CAMERA_EAGLE_V);
    }
    else if (strcmp(deviceName, g_RaptorCameraFalconDeviceName) == 0)
    {
@@ -847,7 +880,8 @@ CRaptorEPIX::CRaptorEPIX(int nCameraType) :
    roiSnapY_(0),
    snapWidth_(0),
    snapHeight_(0),
-   snapBin_(1),
+   snapBinX_(1),
+   snapBinY_(1),
    sequenceStartTime_(0), 
 	binSize_(1),
 	cameraCCDXSize_(888),
@@ -926,7 +960,10 @@ CRaptorEPIX::CRaptorEPIX(int nCameraType) :
 	bHighPreAmpGain_(true),
 	dShutterDelayOpen_(19.66),
 	dShutterDelayClose_(49.15),
-	readoutMode_(0)
+	readoutMode_(0),
+	binSizeX_(1),
+	binSizeY_(1)
+
 {
 
 	cameraType_ = nCameraType;
@@ -944,6 +981,17 @@ CRaptorEPIX::CRaptorEPIX(int nCameraType) :
 		case _RAPTOR_CAMERA_OWL_NINOX_640:    
 			cameraName_ = g_RaptorNinox640;
 			cameraDeviceName_ = g_RaptorCameraOwlNinox640DeviceName; break;
+		case _RAPTOR_CAMERA_EAGLE_V:   
+			if(bEagle4210==false)
+			{
+				cameraName_ = g_RaptorEagleV4240;
+				cameraDeviceName_ = g_RaptorCameraEagleV4240DeviceName; break;
+			}
+			else
+			{
+				cameraName_ = g_RaptorEagleV4210;
+				cameraDeviceName_ = g_RaptorCameraEagleV4210DeviceName; break;
+			}
 		case _RAPTOR_CAMERA_EAGLE:    
 			cameraName_ = g_RaptorEagle;
 			cameraDeviceName_ = g_RaptorCameraEagleDeviceName; break;
@@ -1583,6 +1631,30 @@ int CRaptorEPIX::SetVideoFormat(int cameraType_, char* driverparms)
 				ret = pxd_videoFormatAsIncluded(0);
 			}
 		}
+	}	
+	else if(cameraType_ == _RAPTOR_CAMERA_EAGLE_V)
+	{
+		if(stat(FORMATFILE_LOAD_EAGLE_V,&fileStat) >= 0) 
+			ret = pxd_PIXCIopen(driverparms, "", FORMATFILE_LOAD_EAGLE_V);
+		if(ret<0)
+		{
+			ret = pxd_PIXCIopen(driverparms, "Default", "");
+			if (ret < 0)
+			{
+				pxd_mesgFault(UNITSMAP);
+#if defined (WIN32) || defined(WIN64)		
+					MessageBox(NULL, pxd_mesgErrorCode(ret), "pxd_PIXCIopen", MB_OK|MB_TASKMODAL);
+#endif
+			}
+			//else
+			if(ret!=-24)
+			{ 
+				ret = 0;
+				#include FORMATFILE_LOAD_EAGLE_V
+				pxd_videoFormatAsIncludedInit(0);
+				ret = pxd_videoFormatAsIncluded(0);
+			}
+		}
 	}
 	else if(cameraType_ == _RAPTOR_CAMERA_FALCON)
 	{
@@ -1940,7 +2012,7 @@ int CRaptorEPIX::Initialize()
 	}
 
 	cameraCCDXSize_ = pxd_imageXdim();
-	cameraCCDYSize_ = pxd_imageYdim();
+	cameraCCDYSize_ = bEagle4210 ? pxd_imageYdim()/4 : pxd_imageYdim() ;
 	nBPP_ = 2;
     img2_.Resize(cameraCCDXSize_, cameraCCDYSize_, nBPP_);
 
@@ -2052,7 +2124,7 @@ int CRaptorEPIX::Initialize()
 
    // Description
    //nRet = CreateProperty("Device Adapter", "v1.9.3, 12/18/2014, (OWL 640)", MM::String, true); 
-   nRet = CreateProperty("Device Adapter", "v1.12.7, 9/27/2015", MM::String, true); 
+   nRet = CreateProperty("Device Adapter", "v1.13.3, 2/9/2017", MM::String, true); 
    if (DEVICE_OK != nRet)
       return nRet;
  
@@ -2225,10 +2297,25 @@ int CRaptorEPIX::Initialize()
 		   binning.push_back("5");
 	   }
 
-	   nRet = SetAllowedValues(MM::g_Keyword_Binning, binning);
+	   if(!(cameraType_ & _RAPTOR_CAMERA_EAGLE_BASE))
+		   nRet = SetAllowedValues(MM::g_Keyword_Binning, binning);
+
 	   if (nRet != DEVICE_OK)
 		  return nRet;
 	   SetProperty(MM::g_Keyword_Binning, osBin.str().c_str());
+
+
+	   if(cameraType_ & _RAPTOR_CAMERA_EAGLE_BASE)
+	   {
+	   	   pAct = new CPropertyAction (this, &CRaptorEPIX::OnBinningX);
+		   nRet = CreateProperty(g_Keyword_BinningX, osBin.str().c_str(), MM::Integer, false, pAct);
+		   assert(nRet == DEVICE_OK);
+
+	   	   pAct = new CPropertyAction (this, &CRaptorEPIX::OnBinningY);
+		   nRet = CreateProperty(g_Keyword_BinningY, osBin.str().c_str(), MM::Integer, false, pAct);
+		   assert(nRet == DEVICE_OK);
+		   
+	   }
    }
    else
    {
@@ -3388,8 +3475,8 @@ int CRaptorEPIX::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 
 	  SetROIStatus(cameraCCDXSize_, cameraCCDYSize_, 0, 0);
 
-	  AOIWidth_ = img_.Width()*binSize_;
-	  AOIHeight_= img_.Height()*binSize_;
+	  AOIWidth_ = img_.Width()*binSizeX_;
+	  AOIHeight_= img_.Height()*binSizeY_;
 	  AOILeft_  = 0;
   	  AOITop_   = 0;
 	  useAOI_   = false;
@@ -3427,9 +3514,9 @@ int CRaptorEPIX::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 		  SetROIStatus(xSize*snapBin_, ySize*snapBin_, (roiX_/snapBin_)*snapBin_, (roiY_/snapBin_)*snapBin_);
 */	  
 
-		  roiX_ = x*snapBin_;
-		  roiY_ = y*snapBin_;
-		  SetROIStatus(xSize*snapBin_, ySize*snapBin_, (roiX_), (roiY_));
+		  roiX_ = x*snapBinX_;
+		  roiY_ = y*snapBinY_;
+		  SetROIStatus(xSize*snapBinX_, ySize*snapBinY_, (roiX_), (roiY_));
 	  }
 
 
@@ -3444,10 +3531,10 @@ int CRaptorEPIX::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 	  {
 		  if(PostCaptureROI_)
 		  {
-			AOIWidth_ = xSize*snapBin_;
-			AOIHeight_= ySize*snapBin_;
-			AOILeft_  = (roiX_/snapBin_)*snapBin_;
-			AOITop_   = (roiY_/snapBin_)*snapBin_;
+			AOIWidth_ = xSize*snapBinX_;
+			AOIHeight_= ySize*snapBinY_;
+			AOILeft_  = (roiX_/snapBinX_)*snapBinX_;
+			AOITop_   = (roiY_/snapBinY_)*snapBinY_;
 /*			AOIWidth_ = xSize;
 			AOIHeight_= ySize;
 			AOILeft_  = roiX_;
@@ -3457,10 +3544,10 @@ int CRaptorEPIX::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 		  {
 			GetROIStatus(&xSize, &ySize, &roiX_, &roiY_);
 
-			AOIWidth_ = xSize/binSize_;
-			AOIHeight_= ySize/binSize_;
-			AOILeft_  = roiX_/binSize_;
-			AOITop_   = roiY_/binSize_;
+			AOIWidth_ = xSize/binSizeX_;
+			AOIHeight_= ySize/binSizeY_;
+			AOILeft_  = roiX_/binSizeX_;
+			AOITop_   = roiY_/binSizeY_;
 		  }
 	  }
 
@@ -3516,10 +3603,10 @@ int CRaptorEPIX::ClearROI()
    roiX_ = 0;
    roiY_ = 0;
 
-   SetROIStatus(img_.Width()*binSize_, img_.Height()*binSize_, roiX_, roiY_);
+   SetROIStatus(img_.Width()*binSizeX_, img_.Height()*binSizeY_, roiX_, roiY_);
       
-	AOIWidth_ = img_.Width()*binSize_;
-	AOIHeight_= img_.Height()*binSize_;
+	AOIWidth_ = img_.Width()*binSizeX_;
+	AOIHeight_= img_.Height()*binSizeY_;
 	AOILeft_  = 0;
 	AOITop_   = 0;
 	useAOI_ = false;
@@ -3966,24 +4053,49 @@ void CRaptorEPIX::SetBinningFactor(int nBin)
 		serialWriteRaptorRegister1(UNITMASK, 0xA1, (nBin-1)&0xFF);
 		serialWriteRaptorRegister1(UNITMASK, 0xA2, (nBin-1)&0xFF);
 
-		if(nBin==1)
+		if(cameraType_ == _RAPTOR_CAMERA_EAGLE)
 		{
-			#include FORMATFILE_LOAD_EAGLE_BIN1
-			pxd_videoFormatAsIncludedInit(0);
-			ret = pxd_videoFormatAsIncluded(0);
+			if(nBin==1)
+			{
+				#include FORMATFILE_LOAD_EAGLE_BIN1
+				pxd_videoFormatAsIncludedInit(0);
+				ret = pxd_videoFormatAsIncluded(0);
+			}
+			else if(nBin==2)
+			{
+				#include FORMATFILE_LOAD_EAGLE_BIN2
+				pxd_videoFormatAsIncludedInit(0);
+				ret = pxd_videoFormatAsIncluded(0);
+			}
+			else if(nBin>=4)
+			{
+				#include FORMATFILE_LOAD_EAGLE_BIN4
+				pxd_videoFormatAsIncludedInit(0);
+				ret = pxd_videoFormatAsIncluded(0);
+			}		
 		}
-		else if(nBin==2)
+		else if(cameraType_ == _RAPTOR_CAMERA_EAGLE_V)
 		{
-			#include FORMATFILE_LOAD_EAGLE_BIN2
-			pxd_videoFormatAsIncludedInit(0);
-			ret = pxd_videoFormatAsIncluded(0);
+			if(nBin==1)
+			{
+				#include FORMATFILE_LOAD_EAGLE_V_BIN1
+				pxd_videoFormatAsIncludedInit(0);
+				ret = pxd_videoFormatAsIncluded(0);
+			}
+			else if(nBin==2)
+			{
+				#include FORMATFILE_LOAD_EAGLE_V_BIN2
+				pxd_videoFormatAsIncludedInit(0);
+				ret = pxd_videoFormatAsIncluded(0);
+			}
+			else if(nBin>=4)
+			{
+				#include FORMATFILE_LOAD_EAGLE_V_BIN4
+				pxd_videoFormatAsIncludedInit(0);
+				ret = pxd_videoFormatAsIncluded(0);
+			}		
+
 		}
-		else if(nBin>=4)
-		{
-			#include FORMATFILE_LOAD_EAGLE_BIN4
-			pxd_videoFormatAsIncludedInit(0);
-			ret = pxd_videoFormatAsIncluded(0);
-		}		
 
 		if(((cameraType_ & _RAPTOR_CAMERA_COMMONCMDS1) > 0))
 		{
@@ -4230,6 +4342,65 @@ void CRaptorEPIX::SetBinningFactor(int nBin)
 		serialWriteRaptorRegister1(UNITMASK, 0xEB, val);
 	}
 //	serialWriteReadCmd(UNITSOPENMAP, UNITMASK, bufin1,  6, buf, 256 );
+
+#ifdef _MSC_VER
+#pragma warning (pop)
+#endif
+}
+
+
+void CRaptorEPIX::SetBinningFactorXY(int nBinX, int nBinY) 
+{
+#ifdef _MSC_VER
+#pragma warning (push)
+// Suppress warnings triggered by "-2147483648" in the #included *.fmt files
+// (an MSVC quirk)
+#pragma warning (disable: 4146)
+#endif
+
+//	unsigned char bufin1[] = {0x53, 0xE0, 0x02, 0xEA, 0x00, 0x50};
+//	unsigned char buf[256];
+	unsigned char valx=0,valy=0;
+
+	if(_IS_CAMERA_OWL_FAMILY)
+		return ;	
+
+	valx = (unsigned char) nBinX;
+	valy = (unsigned char) nBinY;
+
+	int ret;
+	if(cameraType_ & _RAPTOR_CAMERA_EAGLE_BASE)
+	{
+		serialWriteRaptorRegister1(UNITMASK, 0xA1, (valx-1)&0xFF);
+		serialWriteRaptorRegister1(UNITMASK, 0xA2, (valy-1)&0xFF);
+
+		if(cameraType_ == _RAPTOR_CAMERA_EAGLE_V)
+		{
+			if(nBinX==1 && nBinY==1)
+			{
+				#include FORMATFILE_LOAD_EAGLE_V_BIN1
+				pxd_videoFormatAsIncludedInit(0);
+				ret = pxd_videoFormatAsIncluded(0);
+			}
+			else 
+			{
+				#include FORMATFILE_LOAD_EAGLE_V_BIN2
+				pxd_videoFormatAsIncludedInit(0);
+				ret = pxd_videoFormatAsIncluded(0);
+			}		
+		}
+
+		if(((cameraType_ & _RAPTOR_CAMERA_COMMONCMDS1) > 0))
+		{
+			unsigned char val1;
+			serialReadRaptorRegister1(UNITMASK, 0xD4, &val1 ) ;
+			val1 |= 0x08;
+			serialWriteRaptorRegister1(UNITMASK, 0xD4, val1 ) ;		
+			if(g_bCheckSum)
+				SetSystemState(0x12);
+		}
+
+	}
 
 #ifdef _MSC_VER
 #pragma warning (pop)
@@ -5552,6 +5723,39 @@ int CRaptorEPIX::GetExtTrigStatus() const
     return (int)val; 
 }
 
+int CRaptorEPIX::GetBinningFactorX() const
+{
+	unsigned char val, valx, valy;
+	int bin=0;
+
+	if(_IS_CAMERA_OWL_FAMILY)
+		return 1;
+
+	if(cameraType_ & _RAPTOR_CAMERA_EAGLE_BASE)
+	{
+		serialReadRaptorRegister1(UNITMASK, 0xA1, &valx ) ;
+		bin = valx+1;
+		return bin;
+	}
+	return 1;
+}
+
+int CRaptorEPIX::GetBinningFactorY() const
+{
+	unsigned char val, valx, valy;
+	int bin=0;
+
+	if(_IS_CAMERA_OWL_FAMILY)
+		return 1;
+
+	if(cameraType_ & _RAPTOR_CAMERA_EAGLE_BASE)
+	{
+		serialReadRaptorRegister1(UNITMASK, 0xA2, &valy ) ;
+		bin = valy+1;
+		return bin;
+	}
+	return 1;
+}
 
 int CRaptorEPIX::GetBinningFactor() const
 {
@@ -5791,10 +5995,10 @@ void CRaptorEPIX::SetROIStatus(unsigned int nWidth, unsigned int nHeight, unsign
 			serialWriteRaptorRegister1(UNITMASK, 0xBB, 0x00 ) ;
 		}
 
-		if(binSize_>2)
+		if(binSize_>2 || binSizeX_>2 || binSizeY_>2 )
 		{
-			nWidth  = (nWidth/binSize_)*binSize_;
-			nHeight = (nHeight/binSize_)*binSize_;
+			nWidth  = (nWidth/binSizeX_)*binSizeX_;
+			nHeight = (nHeight/binSizeY_)*binSizeY_;
 		}
 		else
 		{
@@ -5886,7 +6090,7 @@ void CRaptorEPIX::SetROIStatus(unsigned int nWidth, unsigned int nHeight, unsign
 		if((cameraType_ & (_RAPTOR_CAMERA_RGB)) > 0)
 			err = pxd_setVideoResolution(UNITMASK, nWidth, nHeight, 0, 0);
 		else
-			err = pxd_setVideoResolution(UNITMASK, nWidth/binSize_, nHeight/binSize_, 0, 0);
+			err = pxd_setVideoResolution(UNITMASK, nWidth/binSizeX_, nHeight/binSizeY_, 0, 0);
 
 	   if(liveMode_==0) 
 	   {
@@ -7545,7 +7749,7 @@ int CRaptorEPIX::OnUseDefaults(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 		   /**********************************/
 			cameraCCDXSize_ = pxd_imageXdim();
-			cameraCCDYSize_ = pxd_imageYdim();
+			cameraCCDYSize_ = bEagle4210 ? pxd_imageYdim()/4 : pxd_imageYdim() ;
 		    img2_.Resize(cameraCCDXSize_, cameraCCDYSize_, nBPP_);
 
 			SetROI(0, 0, cameraCCDXSize_, cameraCCDYSize_);
@@ -7735,6 +7939,8 @@ int CRaptorEPIX::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 				img_.Resize(nX/binFactor, nY/binFactor);
 				binSize_ = binFactor;
+				binSizeX_ = binSize_;
+				binSizeY_ = binSize_;
 
 				SetROIStatus(nX, nY, (roiX_/binFactor)*binFactor, (roiY_/binFactor)*binFactor );
 
@@ -7777,8 +7983,18 @@ int CRaptorEPIX::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
          ret=DEVICE_OK;
 		 if(ForceUpdate_)
 		 {
-			int nBin = GetBinningFactor();
-			binSize_ = (nBin & 0x0F);
+			 if(cameraType_ & _RAPTOR_CAMERA_EAGLE_BASE)
+			 {
+				int nBinX = GetBinningFactorX();
+				binSizeX_ = (nBinX & 0x3F);
+				int nBinY = GetBinningFactorY();
+				binSizeY_ = (nBinY & 0x3F);
+			 }
+			 else
+			 {
+				int nBin = GetBinningFactor();
+				binSize_ = (nBin & 0x0F);
+			 }
 		 }
 
  		 pProp->Set(binSize_);
@@ -7787,6 +8003,146 @@ int CRaptorEPIX::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    return ret; 
 }
 
+int CRaptorEPIX::OnBinningX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnBinningXY(pProp, eAct, true);
+}
+
+int CRaptorEPIX::OnBinningY(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnBinningXY(pProp, eAct, false);
+}
+
+/**
+* Handles "Binning" property.
+*/
+int CRaptorEPIX::OnBinningXY(MM::PropertyBase* pProp, MM::ActionType eAct, bool bBinX)
+{
+	//thd_->Suspend(); MMThreadGuard g(imgPixelsLock_);
+
+   int ret = DEVICE_ERR;
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+         // the user just set the new value for the property, so we have to
+         // apply this value to the 'hardware'.
+         long binFactor, binFactorX, binFactorY;
+
+		 binFactorX = binSizeX_;
+		 binFactorY = binSizeY_;
+		 
+		 pProp->Get(binFactor);
+
+			if(binFactor > 0 && binFactor <= 64)
+			{
+				 if(bBinX)
+					 binFactorX = binFactor;
+				 else
+					 binFactorY = binFactor;
+
+				int nX, nY;
+				nX = img_.Width()*binSizeX_;
+				nY = img_.Height()*binSizeY_;
+
+				if(nX+binSizeX_>=cameraCCDXSize_)
+					nX = cameraCCDXSize_;
+				if(nY+binSizeY_>=cameraCCDYSize_)
+					nY = cameraCCDYSize_;
+
+				
+				if((cameraType_ & (_RAPTOR_CAMERA_RGB))>0)
+					SetBinningFactor(1);
+				else 
+					SetBinningFactorXY(binFactorX, binFactorY);
+				//binFactor = GetBinningFactor();
+
+				nX = int(nX/binFactorX)*binFactorX;
+				nY = int(nY/binFactorY)*binFactorY;
+
+				img_.Resize(nX/binFactorX, nY/binFactorY);
+				binSizeX_ = binFactorX;
+				binSizeY_ = binFactorY;
+				if(binSizeX_ > binSizeY_)
+					binSize_ = binSizeX_;
+				else
+					binSize_ = binSizeY_;
+
+				SetROIStatus(nX, nY, (roiX_/binFactorX)*binFactorX, (roiY_/binFactorY)*binFactorY );
+
+				unsigned xSize, ySize;
+				if(PostCaptureROI_)
+				{
+					AOIWidth_  = nX;
+					AOIHeight_ = nY;
+					AOILeft_   = (roiX_/binFactorX)*binFactorX ;
+					AOITop_    = (roiY_/binFactorY)*binFactorY;
+				}
+				else
+				{
+					GetROIStatus(&xSize, &ySize, &roiX_, &roiY_);
+					AOIWidth_  = xSize;
+					AOIHeight_ = ySize;
+					AOILeft_   = roiX_;
+					AOITop_    = roiY_;
+				}
+
+				std::ostringstream os;
+				if(bBinX)
+				{
+					os << binSizeX_;
+					OnPropertyChanged(g_Keyword_BinningX, os.str().c_str());
+				}
+				else
+				{
+					os << binSizeY_;
+					OnPropertyChanged(g_Keyword_BinningY, os.str().c_str());
+				}
+
+
+/*			   if(((cameraType_ & (_RAPTOR_CAMERA_RGB)) > 0) || (cameraType_ == _RAPTOR_CAMERA_KINGFISHER_674 || cameraType_ == _RAPTOR_CAMERA_KINGFISHER_694  ))
+			   {
+					 char str[16];
+					 sprintf_s(str,16,"%02d",binSize_);
+					OnPropertyChanged("Binning", str);
+					ret=DEVICE_OK;
+			   }
+			   else*/
+			   {
+					ret=DEVICE_OK;
+			   }
+			}
+      }break;
+   case MM::BeforeGet:
+      {
+         ret=DEVICE_OK;
+		 if(ForceUpdate_)
+		 {
+			 if(bBinX)
+			 {
+				int nBin = GetBinningFactorX();
+				binSizeX_ = (nBin & 0x3F);
+			 }
+			 else
+			 {
+				int nBin = GetBinningFactorY();
+				binSizeY_ = (nBin & 0x3F);
+			 }
+		 }
+
+		 if(bBinX)
+	 		 pProp->Set(binSizeX_);
+		 else
+			 pProp->Set(binSizeY_);
+
+
+      }break;
+   }
+   return ret; 
+}
 /**
 * Handles "PixelType" property.
 */
@@ -8484,7 +8840,8 @@ void CRaptorEPIX::UpdateAOI()
 {
 	roiSnapX_ = 0;
 	roiSnapY_ = 0;
-	snapBin_  = 1;
+	snapBinX_  = 1;
+	snapBinY_  = 1;
 
 	if(_IS_CAMERA_OWL_FAMILY) 
 	{
@@ -8504,7 +8861,7 @@ void CRaptorEPIX::UpdateAOI()
 	  if(_IS_CAMERA_OWL_FAMILY && PostCaptureROI_==0)
 	      img_.Resize(cameraCCDXSize_, cameraCCDYSize_);
 	  else
-		img_.Resize(AOIWidth_/binSize_, AOIHeight_/binSize_);
+		img_.Resize(AOIWidth_/binSizeX_, AOIHeight_/binSizeY_);
 }
 
 int CRaptorEPIX::OnUseAOI(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -8530,7 +8887,7 @@ int CRaptorEPIX::OnUseAOI(MM::PropertyBase* pProp, MM::ActionType eAct)
 			AOITop_    = LastAOITop_    ;
 	   }
 
-		img_.Resize(AOIWidth_/binSize_, AOIHeight_/binSize_);
+		img_.Resize(AOIWidth_/binSizeX_, AOIHeight_/binSizeY_);
 		UpdateAOI();
 		DisableMicro(); thd_->Resume();
 	  }
@@ -8586,7 +8943,7 @@ int CRaptorEPIX::OnAOILeft(MM::PropertyBase* pProp, MM::ActionType eAct)
 			osXS << xSize;
 			SetProperty(g_Keyword_AOI_Width, osXS.str().c_str());
 			if(useAOI_)
-				img_.Resize(xSize/binSize_,ySize/binSize_);
+				img_.Resize(xSize/binSizeX_,ySize/binSizeY_);
 		}
 		if(useAOI_)
 		{
@@ -8630,7 +8987,7 @@ int CRaptorEPIX::OnAOITop(MM::PropertyBase* pProp, MM::ActionType eAct)
 			osYS << ySize;
 			SetProperty(g_Keyword_AOI_Height, osYS.str().c_str());
 			if(useAOI_)
-				img_.Resize(xSize/binSize_, ySize/binSize_);
+				img_.Resize(xSize/binSizeX_, ySize/binSizeY_);
 		}
 		if(useAOI_)
 		{
@@ -8681,7 +9038,7 @@ int CRaptorEPIX::OnAOIWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 		}
 		if(useAOI_)
 		{
-			img_.Resize(xSize/binSize_,ySize/binSize_);
+			img_.Resize(xSize/binSizeX_,ySize/binSizeY_);
 			UpdateAOI();
 		}
 		DisableMicro(); thd_->Resume();
@@ -8727,7 +9084,7 @@ int CRaptorEPIX::OnAOIHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 		}
 		if(useAOI_)
 		{
-			img_.Resize(xSize/binSize_, ySize/binSize_);
+			img_.Resize(xSize/binSizeX_, ySize/binSizeY_);
 			UpdateAOI();
 		}
 		DisableMicro(); thd_->Resume();
@@ -8782,7 +9139,7 @@ int CRaptorEPIX::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
 		if( value != cameraCCDXSize_)
 		{
 			cameraCCDXSize_ = value;
-			img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_);
+			img_.Resize(cameraCCDXSize_/binSizeX_, cameraCCDYSize_/binSizeY_);
 		}
    }
 	return DEVICE_OK;
@@ -8805,7 +9162,7 @@ int CRaptorEPIX::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if( value != cameraCCDYSize_)
 		{
 			cameraCCDYSize_ = value;
-			img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_);
+			img_.Resize(cameraCCDXSize_/binSizeX_, cameraCCDYSize_/binSizeY_);
 		}
    }
 	return DEVICE_OK;
@@ -8875,7 +9232,7 @@ int CRaptorEPIX::ResizeImageBuffer()
       byteDepth = 8;
 	}
 
-   img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_, byteDepth);
+   img_.Resize(cameraCCDXSize_/binSizeX_, cameraCCDYSize_/binSizeY_, byteDepth);
    return DEVICE_OK;
 }
 
@@ -9032,7 +9389,7 @@ int CRaptorEPIX::GetNewEPIXImage(ImgBuffer& img, double exp)
 	}
 	if((cameraType_ & _RAPTOR_CAMERA_EAGLE_BASE)>0 )
 	{
-		triggerTimeout1 += 3.0*double(binSize_)*double(img_.Width())*double(img_.Height())/(double(readoutRate_)*1e3);
+		triggerTimeout1 += 3.0*double(binSizeX_)*double(img_.Width())*double(img_.Height())/(double(readoutRate_)*1e3);
 	}
 	
 
@@ -9053,7 +9410,7 @@ int CRaptorEPIX::GetNewEPIXImage(ImgBuffer& img, double exp)
 
 		if((cameraType_ & _RAPTOR_CAMERA_EAGLE_BASE)>0 )
 		{
-			timeout += ulong(3.0*double(binSize_)*double(img_.Width())*double(img_.Height())/(double(readoutRate_)));
+			timeout += ulong(3.0*double(binSizeX_)*double(img_.Width())*double(img_.Height())/(double(readoutRate_)));
 		}
 
 		//if(captureMode_==0 || triggerMode_>0)
@@ -9240,7 +9597,7 @@ int CRaptorEPIX::GetNewEPIXImage(ImgBuffer& img, double exp)
 		unsigned nStep;
 		if(PostCaptureROI_) 
 		{
-			nStep = (cameraCCDXSize_/binSize_) ;
+			nStep = (cameraCCDXSize_/binSizeX_) ;
 		}
 		else
 			nStep = img.Width();
@@ -9297,43 +9654,43 @@ int CRaptorEPIX::GetNewEPIXImage(ImgBuffer& img, double exp)
 					if((cameraType_ & _RAPTOR_CAMERA_KINGFISHER_BASE)>0 || (cameraType_ & _RAPTOR_CAMERA_OSPREY_BASE)>0)
 					{
 						if(nDebayerMethod_==2)
-							err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSize_, ySize*binSize_, pBuf3, bufsize3, "BGRx");
+							err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSizeX_, ySize*binSizeY_, pBuf3, bufsize3, "BGRx");
 						else
-							err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSize_, ySize*binSize_, pBuf3, bufsize3, "Bayer");
+							err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSizeX_, ySize*binSizeY_, pBuf3, bufsize3, "Bayer");
 						//err = pxd_readushort(UNITMASK, buf, 0, 0, xSize, ySize, pBuf, bufsize, "BGRx");
 						if(err==-1) // hack for changing binning and ROI without snapping 
 						{
-							xSize /= binSize_;
-							ySize /= binSize_;
+							xSize /= binSizeX_;
+							ySize /= binSizeY_;
 
 							if(nDebayerMethod_==2)
-								err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSize_, ySize*binSize_, pBuf3, bufsize3, "BGRx");
+								err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSizeX_, ySize*binSizeY_, pBuf3, bufsize3, "BGRx");
 							else
-								err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSize_, ySize*binSize_, pBuf3, bufsize3, "Bayer");
+								err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSizeX_, ySize*binSizeY_, pBuf3, bufsize3, "Bayer");
 						}
 					}
 					else
 					{
-						err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSize_, ySize*binSize_, pBuf2, bufsize2, "Grey");
+						err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSizeX_, ySize*binSizeY_, pBuf2, bufsize2, "Grey");
 						if(err==-1) // hack for changing binning and ROI without snapping 
 						{
-							xSize /= binSize_;
-							ySize /= binSize_;
-							err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSize_, ySize*binSize_, pBuf2, bufsize2, "Grey");
+							xSize /= binSizeX_;
+							ySize /= binSizeY_;
+							err = pxd_readushort(UNITMASK, buf, 0, 0, xSize*binSizeX_, ySize*binSizeY_, pBuf2, bufsize2, "Grey");
 						}
 					}
 					if(err>0 && (((cameraType_ & _RAPTOR_CAMERA_KINGFISHER_BASE)>0) || ((cameraType_ & _RAPTOR_CAMERA_OSPREY_BASE)>0)))
 					{
 						if((cameraType_ & _RAPTOR_CAMERA_KINGFISHER_BASE)==0 && ((cameraType_ & _RAPTOR_CAMERA_OSPREY_BASE)==0))
-							MyDebayer((unsigned short*)pBuf2, (unsigned short*)pBuf3, xSize*binSize_, ySize*binSize_, xSize*binSize_*4, nDebayerMethod_);
+							MyDebayer((unsigned short*)pBuf2, (unsigned short*)pBuf3, xSize*binSizeX_, ySize*binSizeY_, xSize*binSizeX_*4, nDebayerMethod_);
 
 						unsigned short *p1, *p2, *p3, *p4, *q1, q2;
 						for(unsigned int yy=0; yy<ySize; yy++)
 						{
-							p1 = &pBuf3[yy*xSize*binSize_*binSize_*4];
-							p2 = &pBuf3[(yy*binSize_+1)*xSize*binSize_*4];
-							p3 = &pBuf3[(yy*binSize_+2)*xSize*binSize_*4];
-							p4 = &pBuf3[(yy*binSize_+3)*xSize*binSize_*4];
+							p1 = &pBuf3[yy*xSize*binSizeX_*binSizeY_*4];
+							p2 = &pBuf3[(yy*binSizeX_+1)*xSize*binSizeY_*4];
+							p3 = &pBuf3[(yy*binSizeX_+2)*xSize*binSizeY_*4];
+							p4 = &pBuf3[(yy*binSizeX_+3)*xSize*binSizeY_*4];
 							q1 = &pBuf[yy*xSize*4];
 							for(unsigned int xx=0; xx<xSize; xx++)
 							{
@@ -9408,10 +9765,10 @@ int CRaptorEPIX::GetNewEPIXImage(ImgBuffer& img, double exp)
 				}
 				else if(PostCaptureROI_) 
 				{
-					nStep = cameraCCDXSize_/binSize_ ;
+					nStep = cameraCCDXSize_/binSizeX_ ;
 
 					for(unsigned int yy=0; yy<img.Height();yy++)
-						memcpy(&pBuf[(yy)*img.Width()], &pBuf2[(yy+(AOITop_/binSize_))*nStep+(AOILeft_/binSize_)], img.Width()*sizeof(unsigned short));
+						memcpy(&pBuf[(yy)*img.Width()], &pBuf2[(yy+(AOITop_/binSizeY_))*nStep+(AOILeft_/binSizeX_)], img.Width()*sizeof(unsigned short));
 				}
 				else 
 				{
@@ -9425,7 +9782,8 @@ int CRaptorEPIX::GetNewEPIXImage(ImgBuffer& img, double exp)
 	    roiSnapY_ = roiY;
 	    snapWidth_ = img.Width();
 	    snapHeight_ = img.Height();
-		snapBin_ = binSize_;
+		snapBinX_ = binSizeX_;
+		snapBinY_ = binSizeY_;
  
 		
 		FrameCount_++;

@@ -716,7 +716,7 @@ public:
    }
 
    /**
-   * Rrefresh the entire state of the device and synchronize property values with
+   * Refresh the entire state of the device and synchronize property values with
    * the actual state of the hardware.
    */
    int UpdateStatus()
@@ -973,7 +973,7 @@ protected:
    
 
    /**
-   * Sends an aray of bytes to the com port.
+   * Sends an array of bytes to the com port.
    */
    int WriteToComPort(const char* portLabel, const unsigned char* buf, unsigned bufLength)
    {

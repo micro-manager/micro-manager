@@ -97,13 +97,85 @@ int TsiCam::OnTaps(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int TsiCam::OnTriggerMode(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
+int TsiCam::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   MM::Property* pPropExt = dynamic_cast<MM::Property*>(pProp);
+   if (pPropExt == nullptr)
+      return ERR_INTERNAL_ERROR;
+
    if (eAct == MM::AfterSet)
    {
+      string val;
+      pPropExt->Get(val);
+      if (val == string(g_Software)) {
+         bool bRet = camHandle_->SetParameter(TSI_PARAM_HW_TRIGGER_ACTIVE, 0);
+         if (!bRet)
+            return camHandle_->GetErrorCode();
+      }
+      else if (val == string(g_HardwareEdge)) {
+         bool bRet = camHandle_->SetParameter(TSI_PARAM_HW_TRIGGER_ACTIVE, 1);
+         if (!bRet)
+            return camHandle_->GetErrorCode();
+         
+         bRet = camHandle_->SetParameter(TSI_PARAM_OP_MODE, TSI_OP_MODE_NORMAL);
+         if (!bRet)
+            return camHandle_->GetErrorCode();
+      }
+      else if (val == string(g_HardwareDuration)) {
+         bool bRet = camHandle_->SetParameter(TSI_PARAM_HW_TRIGGER_ACTIVE, 1);
+         if (!bRet)
+            return camHandle_->GetErrorCode();
+
+         bRet = camHandle_->SetParameter(TSI_PARAM_OP_MODE, TSI_OP_MODE_PDX);
+         if (!bRet)
+            return camHandle_->GetErrorCode();
+      }
+      else {
+         return ERR_INTERNAL_ERROR;
+      }
    }
    else if (eAct == MM::BeforeGet)
    {
+      if (trigger == Software)
+         pProp->Set(g_Software);
+      else if (trigger == HardwareEdge)
+         pProp->Set(g_HardwareEdge);
+      else if (trigger == HardwareDuration)
+         pProp->Set(g_HardwareDuration);
+      else
+         return ERR_INTERNAL_ERROR;
+   }
+   return DEVICE_OK;
+}
+
+int TsiCam::OnTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      if (val == string(g_Positive)) {
+         bool bRet = camHandle_->SetParameter(TSI_PARAM_HW_TRIG_POLARITY, TSI_HW_TRIG_ACTIVE_HIGH);
+         if (!bRet)
+            return camHandle_->GetErrorCode();
+      }
+      else if (val == g_Negative) {
+         bool bRet = camHandle_->SetParameter(TSI_PARAM_HW_TRIG_POLARITY, TSI_HW_TRIG_ACTIVE_LOW);
+         if (!bRet)
+            return camHandle_->GetErrorCode();
+      }
+      else {
+         return ERR_INTERNAL_ERROR;
+      }
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      if (triggerPolarity == Positive)
+         pProp->Set(g_Positive);
+      else if (triggerPolarity == Negative)
+         pProp->Set(g_Negative);
+      else
+         return ERR_INTERNAL_ERROR;
    }
    return DEVICE_OK;
 }

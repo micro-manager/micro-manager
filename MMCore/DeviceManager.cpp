@@ -104,7 +104,7 @@ DeviceManager::UnloadAllDevices()
    // We plan unloading, and then carry it out, so as not to iterate
    // over a changing collection. Down with mutable collections.
    // XXX This ordering should be handled by strong references from device to
-   // device. Also, peripehrals should explicitly be unloaded before hubs
+   // device. Also, peripherals should explicitly be unloaded before hubs
    // instead of relying on the load order.
 
    std::vector< boost::shared_ptr<DeviceInstance> > nonSerialDevices;
@@ -121,7 +121,7 @@ DeviceManager::UnloadAllDevices()
       }
    }
 
-   // Call Shutdown before removing devices from index, so that the deivce's
+   // Call Shutdown before removing devices from index, so that the device's
    // Shutdown() has access (through the CoreCallback) to its own
    // DeviceInstance.
    // TODO We need a mechanism to ensure automatic Shutdown (1:1 with

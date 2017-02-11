@@ -5,7 +5,7 @@
 //
 // DESCRIPTION:	Basic implementation for the raw image buffer data structure.
 //
-// COPYRIGHT:     Nenad Amodaj, 2005. All rigths reserved.
+// COPYRIGHT:     Nenad Amodaj, 2005. All rights reserved.
 //
 // LICENSE:       This file is free for use, modification and distribution and
 //                is distributed under terms specified in the BSD license

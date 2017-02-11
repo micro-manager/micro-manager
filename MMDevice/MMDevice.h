@@ -91,7 +91,7 @@ namespace MM {
 
    /**
     * Utility class used both MMCore and devices to maintain time intervals
-    * in the uniform, platfrom independent way.
+    * in the uniform, platform independent way.
     */
    class MMTime
    {
@@ -256,7 +256,7 @@ namespace MM {
       virtual unsigned GetNumberOfPropertyValues(const char* propertyName) const = 0;
       virtual bool GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const = 0;
       /**
-       * Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+       * Sequences can be used for fast acquisitions, synchronized by TTLs rather than
        * computer commands. 
        * Sequences of states can be uploaded to the device.  The device will cycle through
        * the uploaded list of states (triggered by an external trigger - most often coming 
@@ -371,7 +371,7 @@ namespace MM {
        *
        * SnapImage should start the image exposure in the camera and block until
        * the exposure is finished.  It should not wait for read-out and transfer of data.
-       * Return DEVICE_OK on succes, error code otherwise.
+       * Return DEVICE_OK on success, error code otherwise.
        */
       virtual int SnapImage() = 0;
       /**
@@ -382,8 +382,8 @@ namespace MM {
        * Return a pointer to a buffer containing the image data
        * The calling program will assume the size of the buffer based on the values
        * obtained from GetImageBufferSize(), which in turn should be consistent with
-       * values returned by GetImageWidth(), GetImageHight() and GetImageBytesPerPixel().
-       * The calling program allso assumes that camera never changes the size of
+       * values returned by GetImageWidth(), GetImageHeight() and GetImageBytesPerPixel().
+       * The calling program also assumes that camera never changes the size of
        * the pixel buffer on its own. In other words, the buffer can change only if
        * appropriate properties are set (such as binning, pixel type, etc.)
        * Multi-Channel cameras should return the content of the first channel in this call.
@@ -416,8 +416,8 @@ namespace MM {
        */
       virtual int GetComponentName(unsigned component, char* name) = 0;
       /**
-       * Returns the number of simultaneous channels that camera is capaable of.
-       * This should be used by devices capable of generating mutiple channels of imagedata simultanuously.
+       * Returns the number of simultaneous channels that camera is capable of.
+       * This should be used by devices capable of generating multiple channels of imagedata simultaneously.
        * Note: this should not be used by color cameras (use getNumberOfComponents instead).
        */
       virtual int unsigned GetNumberOfChannels() const = 0;
@@ -524,7 +524,7 @@ namespace MM {
       virtual int PrepareSequenceAcqusition() = 0;
       /**
        * Flag to indicate whether Sequence Acquisition is currently running.
-       * Return true when Sequence acquisition is activce, false otherwise
+       * Return true when Sequence acquisition is active, false otherwise
        */
       virtual bool IsCapturing() = 0;
 
@@ -546,7 +546,7 @@ namespace MM {
       virtual void AddTag(const char* key, const char* deviceLabel, const char* value) = 0;
 
       /**
-       * Removes an existing tag from the metadata assoicated with this device
+       * Removes an existing tag from the metadata associated with this device
        * These tags will automatically be add to the metadata of an image inserted 
        * into the circular buffer
        */
@@ -560,7 +560,7 @@ namespace MM {
       virtual int IsExposureSequenceable(bool& isSequenceable) const = 0;
 
       // Sequence functions
-      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
       // computer commands. 
       // Sequences of exposures can be uploaded to the camera.  The camera will cycle through
       // the uploaded list of exposures (triggered by either an internal or 
@@ -653,7 +653,7 @@ namespace MM {
       virtual bool IsContinuousFocusDrive() const = 0;
 
       // Sequence functions
-      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
       // computer commands. 
       // Sequences of positions can be uploaded to the stage.  The device will cycle through
       // the uploaded list of states (triggered by an external trigger - most often coming 
@@ -738,7 +738,7 @@ namespace MM {
        */
       virtual int IsXYStageSequenceable(bool& isSequenceable) const = 0;     
       // Sequence functions
-      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
       // computer commands. 
       // Sequences of positions can be uploaded to the XY stage.  The device will cycle through
       // the uploaded list of states (triggered by an external trigger - most often coming 
@@ -904,7 +904,7 @@ namespace MM {
        */
       virtual int GetDASequenceMaxLength(long& nrEvents) const = 0; 
       /**
-       * Tells the device to start running a sequnece (i.e. start switching between voltages 
+       * Tells the device to start running a sequence (i.e. start switching between voltages
        * send previously, triggered by a TTL
        * @return errorcode (DEVICE_OK if no error)
        */
@@ -915,7 +915,7 @@ namespace MM {
        */
       virtual int StopDASequence() = 0;
       /**
-       * Clears the DA sequnce from the device and the adapter.
+       * Clears the DA sequence from the device and the adapter.
        * If this functions is not called in between running 
        * two sequences, it is expected that the same sequence will run twice.
        * To upload a new sequence, first call this functions, then call AddToDASequence(double
@@ -925,8 +925,8 @@ namespace MM {
       virtual int ClearDASequence() = 0;
 
       /**
-       * Adds a new data point (voltgae) to the sequence
-       * The data point can eithed be added to a representation of the sequence in the 
+       * Adds a new data point (voltage) to the sequence
+       * The data point can either be added to a representation of the sequence in the
        * adapter, or it can be directly written to the device
        * @return errorcode (DEVICE_OK if no error)
        */
@@ -1055,7 +1055,7 @@ namespace MM {
       virtual int GetSLMSequenceMaxLength(long& nrEvents) const = 0; 
 
       /**
-       * Tells the device to start running a sequnece (i.e. start switching between images 
+       * Tells the device to start running a sequence (i.e. start switching between images
        * sent previously, triggered by a TTL or internal clock).
        * @return errorcode (DEVICE_OK if no error)
        */

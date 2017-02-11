@@ -85,7 +85,7 @@ public:
    ///@}
 
    /**
-    * \brief Get a device by label, requring a specific type.
+    * \brief Get a device by label, requiring a specific type.
     */
    ///@{
    template <class TDeviceInstance>

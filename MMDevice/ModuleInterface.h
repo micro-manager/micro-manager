@@ -8,7 +8,7 @@
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 08/08/2005
 //
 // NOTE:          This file is also used in the main control module MMCore.
-//                Do not change it undless as a part of the MMCore module
+//                Do not change it unless as a part of the MMCore module
 //                revision. Discrepancy between this file and the one used to
 //                build MMCore will cause malfunction and likely crash.
 //
