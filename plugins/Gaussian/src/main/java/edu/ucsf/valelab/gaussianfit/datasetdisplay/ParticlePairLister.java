@@ -86,6 +86,7 @@ public class ParticlePairLister {
    final private Boolean doGaussianEstimate_;
    final private Boolean fitSigmaInP2D_;
    final private Boolean useSigmaUserGuess_;
+   final private Boolean useVectorDistances_;
    final private Double sigmaUserGuess_;
    final private String filePath_;
 
@@ -101,7 +102,8 @@ public class ParticlePairLister {
       private Boolean p2d_;
       private Boolean doGaussianEstimate_;
       private Boolean fitSigma_;
-      private Boolean useSigmaEstimate_;
+      private Boolean useSigmaUserGuess_;
+      private Boolean useVectorDistances_;
       private Double sigmaEstimate_;
       private String filePath_;
 
@@ -155,7 +157,12 @@ public class ParticlePairLister {
       }
 
       public Builder useSigmaEstimate(Boolean useSigmaEstimate) {
-         useSigmaEstimate_ = useSigmaEstimate;
+         useSigmaUserGuess_ = useSigmaEstimate;
+         return this;
+      }
+      
+      public Builder useVectorDistances(Boolean useVectorDistances) {
+         useVectorDistances_ = useVectorDistances;
          return this;
       }
 
@@ -181,7 +188,8 @@ public class ParticlePairLister {
       p2d_ = builder.p2d_;
       doGaussianEstimate_ = builder.doGaussianEstimate_;
       fitSigmaInP2D_ = builder.fitSigma_;
-      useSigmaUserGuess_ = builder.useSigmaEstimate_;
+      useSigmaUserGuess_ = builder.useSigmaUserGuess_;
+      useVectorDistances_ = builder.useVectorDistances_;
       sigmaUserGuess_ = builder.sigmaEstimate_;
       filePath_ = builder.filePath_;
    }
@@ -198,6 +206,7 @@ public class ParticlePairLister {
               doGaussianEstimate(doGaussianEstimate_).
               fitSigma(fitSigmaInP2D_).
               useSigmaEstimate(useSigmaUserGuess_).
+              useVectorDistances(useVectorDistances_).
               sigmaEstimate(sigmaUserGuess_).
               filePath(filePath_);
    }
@@ -590,9 +599,9 @@ public class ParticlePairLister {
                   }
                }
 
-               double[] gResult;
-               double[] avgVectDistancesAsDouble;
-               if (doGaussianEstimate_ || p2d_) {
+               double[] gResult = null;
+               double[] avgVectDistancesAsDouble = null;
+               if (doGaussianEstimate_ || (p2d_ && useVectorDistances_) ) {
                   // fit vector distances with gaussian function and plot
                   try {
                      avgVectDistancesAsDouble = ListUtils.toArray(avgVectDistances);
@@ -609,7 +618,10 @@ public class ParticlePairLister {
                }
 
                if (p2d_) {
-                  List<Double> distancesToUse = allDistances; // alternative: avgVectDistances
+                  List<Double> distancesToUse = allDistances; 
+                  if (useVectorDistances_) {
+                     distancesToUse = avgVectDistances;
+                  }
                   double[] d = new double[distancesToUse.size()];
                   for (int j = 0; j < distancesToUse.size(); j++) {
                      d[j] = distancesToUse.get(j);
@@ -632,7 +644,12 @@ public class ParticlePairLister {
                      distStd = ListUtils.listAvg(allSigmas);
                      //}
                   }
-                  p2df.setStartParams(distMean, distStd);
+                  if (gResult != null && gResult.length == 2 && useVectorDistances_){
+                     p2df.setStartParams(gResult[0], gResult[1]);
+                  } else {
+                     p2df.setStartParams(distMean, distStd);
+                  }
+
                   try {
                      double[] p2dfResult = p2df.solve();
                      // Confidence interval calculation as in matlab code by Stirlink Churchman

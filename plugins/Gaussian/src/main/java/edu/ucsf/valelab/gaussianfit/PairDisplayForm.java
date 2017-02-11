@@ -73,6 +73,7 @@ public class PairDisplayForm extends GUFrame{
    private static final String SHOWOVERLAYPREF = "showoverlay";
    private static final String P2DPREF = "p2d";
    private static final String USEGAUSSIAN = "useGaussianOfVectDistances";
+   private static final String P2DUSEVECTDISTANCE = "p2dUseVectDistances";
    private static final String P2DFIXEDPREF = "p2dFixedSigma";
    private static final String SIGMAPREF = "sigma";
    private static final String SIGMAINPUTFROMDATA = "SigmaInputFromData";
@@ -165,6 +166,9 @@ public class PairDisplayForm extends GUFrame{
       final JCheckBox distanceEstimate =
               makeCheckBox("Estimate average distance (P2D)", P2DPREF);
       
+      final JCheckBox p2dUseVectDistance = 
+              makeCheckBox("Use Vector Dist.", P2DUSEVECTDISTANCE);
+      
       final JCheckBox gaussianEstimate = 
               makeCheckBox("Use gaussian fit of vector distances", USEGAUSSIAN);
       
@@ -225,7 +229,8 @@ public class PairDisplayForm extends GUFrame{
       estimateSigmaValue.setEnabled(distanceEstimate.isSelected()&& 
                     distanceEstimateFixedSigma.isSelected());
       panel.add(gaussianEstimate, "wrap");
-      panel.add(distanceEstimate, "wrap");
+      panel.add(distanceEstimate);
+      panel.add(p2dUseVectDistance, "wrap");
       panel.add(distanceEstimateFixedSigma, "gapleft 60");
       panel.add(useSigmaValue, "split 2");
       panel.add(sigmaTextField, "wrap");
@@ -284,6 +289,7 @@ public class PairDisplayForm extends GUFrame{
                     saveFile(saveTrackSummaryFile.isSelected()).
                     filePath(filePath.getText()).
                     p2d(distanceEstimate.isSelected()).
+                    useVectorDistances(p2dUseVectDistance.isSelected()).
                     doGaussianEstimate(gaussianEstimate.isSelected()).
                     fitSigma(!distanceEstimateFixedSigma.isSelected()).
                     useSigmaEstimate(useSigmaValue.isSelected()).
