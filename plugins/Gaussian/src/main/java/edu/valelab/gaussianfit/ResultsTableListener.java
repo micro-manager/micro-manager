@@ -1,3 +1,32 @@
+/*
+Copyright (c) 2012-2017, Regents of the University of California
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies,
+either expressed or implied, of the FreeBSD Project.
+ */
+
 package edu.valelab.gaussianfit;
 
 import ij.IJ;
@@ -10,11 +39,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.micromanager.Studio;
+import org.micromanager.data.Coords;
+import org.micromanager.display.DisplayWindow;
 
 /**
  *
@@ -29,44 +56,65 @@ import java.util.logging.Logger;
  */
 public class ResultsTableListener implements KeyListener, MouseListener {
 
-   ImagePlus siPlus_;
-   ResultsTable res_;
-   TextWindow win_;
-   TextPanel tp_;
-   int hBS_;
+   private final ImagePlus siPlus_;
+   private final ResultsTable res_;
+   private final TextWindow win_;
+   private final TextPanel tp_;
+   private final DisplayWindow dw_;
+   private final Studio studio_;
+   private final int hBS_;
+   //private final Timer t_;
+   private int key_;
+   private int row_;
 
-   public ResultsTableListener(ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
+   public ResultsTableListener(Studio studio, DisplayWindow dw, ImagePlus siPlus, 
+           ResultsTable res, TextWindow win, int halfBoxSize) {
+      studio_ = studio;
+      dw_ = dw;
       siPlus_ = siPlus;
       res_ = res;
       win_ = win;
       tp_ = win.getTextPanel();
       hBS_ = halfBoxSize;
+      /*
+      t_ = new Timer(200, new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            row_ = tp_.getSelectionStart();
+            if (key_ == KeyEvent.VK_J) {
+               if (row_ > 0) {
+                  row_--;
+                  tp_.setSelection(row_, row_);
+               }
+            } else if (key_ == KeyEvent.VK_K) {
+               if (row_ < tp_.getLineCount() - 1) {
+                  row_++;
+                  tp_.setSelection(row_, row_);
+               }
+            }
+            update();
+         }
+      });
+*/
+
    }
+   
 
    @Override
    public void keyPressed(KeyEvent e) {
-      int key = e.getKeyCode();
-      int row = tp_.getSelectionStart();
-      if (key == KeyEvent.VK_J) {
-         if (row > 0) {
-            row--;
-            tp_.setSelection(row, row);
-         }
-      } else if (key == KeyEvent.VK_K) {
-         if (row < tp_.getLineCount() - 1) {
-            row++;
-            tp_.setSelection(row, row);
-         }
-      }
-      update();
+      key_ = e.getKeyCode();
+      interpretKeyPress();
+      //t_.start();
    }
 
    @Override
    public void keyReleased(KeyEvent e) {
+      //t_.stop();
    }
 
    @Override
    public void keyTyped(KeyEvent e) {
+      //t_.stop();
    }
 
    @Override
@@ -91,10 +139,24 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    public void mouseExited(MouseEvent e) {
    }
 
-   ;
+   private void interpretKeyPress() {
+      row_ = tp_.getSelectionStart();
+      if (key_ == KeyEvent.VK_J) {
+         if (row_ > 0) {
+            row_--;
+            tp_.setSelection(row_, row_);
+         }
+      } else if (key_ == KeyEvent.VK_K) {
+         if (row_ < tp_.getLineCount() - 1) {
+            row_++;
+            tp_.setSelection(row_, row_);
+         }
+      }
+      update();
+   }
 
    private void update() {
-      if (siPlus_ == null) {
+      if (siPlus_ == null && dw_ == null) {
          return;
       }
       int row = tp_.getSelectionStart();
@@ -105,61 +167,21 @@ public class ResultsTableListener implements KeyListener, MouseListener {
                win_.toFront();
             }
          } else {
-            siPlus_ = null;
             return;
          }
-         try {
-            Boolean isMMWindow = false;
-            Class<?> mmWin = Class.forName("org.micromanager.MMWindow");
-            Constructor[] aCTors = mmWin.getDeclaredConstructors();
-            aCTors[0].setAccessible(true);
-            Object mw = aCTors[0].newInstance(siPlus_);
-            Method[] allMethods = mmWin.getDeclaredMethods();
-
-            // assemble all methods we need
-            Method mIsMMWindow = null;
-            Method mSetPosition = null;
-            for (Method m : allMethods) {
-               String mname = m.getName();
-               if (mname.startsWith("isMMWindow")
-                       && m.getGenericReturnType() == boolean.class) {
-                  mIsMMWindow = m;
-                  mIsMMWindow.setAccessible(true);
-               }
-               if (mname.startsWith("setPosition")) {
-                  mSetPosition = m;
-                  mSetPosition.setAccessible(true);
-               }
-
-            }
-
-            if (mIsMMWindow != null && (Boolean) mIsMMWindow.invoke(mw)) {
-               isMMWindow = true;
-            }
-
-            if (isMMWindow) { // MMImageWindow
-               int position = (int) res_.getValue(Terms.POSITION, row);
-               if (mSetPosition != null) {
-                  mSetPosition.invoke(mw, position);
-               }
-            }
-         } catch (ClassNotFoundException ex) {
-         } catch (IllegalAccessException ex) {
-            Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
-         } catch (IllegalArgumentException ex) {
-            Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
-         } catch (InvocationTargetException ex) {
-            Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
-         } catch (InstantiationException ex) {
-            Logger.getLogger(ResultsTableListener.class.getName()).log(Level.SEVERE, null, ex);
-         }
-
-         int frame = (int) res_.getValue(Terms.FRAME, row);
-         int slice = (int) res_.getValue(Terms.SLICE, row);
-         int channel = (int) res_.getValue(Terms.CHANNEL, row);
-         int x = (int) res_.getValue(Terms.XPIX, row);
-         int y = (int) res_.getValue(Terms.YPIX, row);
-         if (siPlus_.isHyperStack()) {
+         int frame = Integer.parseInt(res_.getStringValue(Terms.FRAME, row));
+         int slice = Integer.parseInt(res_.getStringValue(Terms.SLICE, row));
+         int channel = Integer.parseInt(res_.getStringValue(Terms.CHANNEL, row));
+         int pos = Integer.parseInt(res_.getStringValue(Terms.POSITION, row));
+         int x = Integer.parseInt(res_.getStringValue(Terms.XPIX, row));
+         int y = Integer.parseInt(res_.getStringValue(Terms.YPIX, row));
+         
+         if (dw_ != null) {
+            Coords.CoordsBuilder builder = studio_.data().getCoordsBuilder();
+            Coords coords = builder.channel(channel - 1).time(frame - 1).
+                    z(slice - 1).stagePosition(pos - 1).build();
+            dw_.setDisplayedImageTo(coords);
+         } else if (siPlus_.isHyperStack()) {
             siPlus_.setPosition(channel, slice, frame);
          } else {
             siPlus_.setPosition(Math.max(frame, slice));

@@ -1,8 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+/**
+ * Code from stackoverflow:
+ * http://stackoverflow.com/questions/8797722/modified-bessel-functions-of-order-n
+ * License unclear. Remove when an alternative is available
+ *
+ * @author Michael
  */
+
 package edu.valelab.gaussianfit.utils;
 
 /**

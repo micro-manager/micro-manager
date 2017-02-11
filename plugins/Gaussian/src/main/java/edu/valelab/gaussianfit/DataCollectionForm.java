@@ -13,36 +13,67 @@
  * 
  *
  * Created on Nov 20, 2010, 8:52:50 AM
+ * 
+ * Copyright (c) 2010-2017, Regents of the University of California
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies,
+either expressed or implied, of the FreeBSD Project.
  */
+
 
 package edu.valelab.gaussianfit;
 
-import edu.valelab.gaussianfit.algorithm.FFTUtils;
+import com.google.common.eventbus.Subscribe;
 import edu.valelab.gaussianfit.datasetdisplay.ImageRenderer;
 import edu.valelab.gaussianfit.datasettransformations.SpotDataFilter;
 import edu.valelab.gaussianfit.datasettransformations.CoordinateMapper;
 import edu.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.valelab.gaussianfit.utils.DisplayUtils;
 import edu.valelab.gaussianfit.data.SpotData;
-import edu.valelab.gaussianfit.utils.GaussianUtils;
 import edu.valelab.gaussianfit.fitting.ZCalibrator;
 import edu.valelab.gaussianfit.data.LoadAndSave;
 import edu.valelab.gaussianfit.spotoperations.SpotLinker;
 import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.datasetdisplay.ParticlePairLister;
+import edu.valelab.gaussianfit.datasetdisplay.TrackPlotter;
 import edu.valelab.gaussianfit.datasettransformations.DriftCorrector;
 import edu.valelab.gaussianfit.datasettransformations.PairFilter;
 import edu.valelab.gaussianfit.datasettransformations.TrackOperator;
+import edu.valelab.gaussianfit.internal.tabledisplay.DataTable;
+import edu.valelab.gaussianfit.internal.tabledisplay.DataTableModel;
+import edu.valelab.gaussianfit.internal.tabledisplay.DataTableRowSorter;
 import edu.valelab.gaussianfit.utils.ListUtils;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import edu.valelab.gaussianfit.utils.NumberUtils;
 import edu.valelab.gaussianfit.utils.FileDialogs;
 import edu.valelab.gaussianfit.utils.FileDialogs.FileType;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import ij.gui.Roi;
 import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
 import ij.text.TextPanel;
@@ -53,6 +84,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.*;
@@ -60,31 +93,51 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
-import java.util.prefs.Preferences;
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableColumnModel;
+import javax.swing.TransferHandler;
+import javax.swing.WindowConstants;
+import net.miginfocom.swing.MigLayout;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.OptimizationException;
 import org.apache.commons.math.stat.StatUtils;
-import org.jfree.data.xy.XYSeries;
+import org.micromanager.Studio;
+import org.micromanager.UserProfile;
+import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.MMStudio;
 
 
 /**
  *
  * @author Nico Stuurman
  */
-public class DataCollectionForm extends javax.swing.JFrame {
-   AbstractTableModel myTableModel_;
-   private final String[] columnNames_ = {"ID", "Image", "Nr of spots", 
-      "2C Reference", "stdX", "stdY", "nrPhotons"};
-   private final String[] plotModes_ = {"t-X", "t-Y", "t-dist", "t-Int", "X-Y"};
+public class DataCollectionForm extends JFrame {
+   DataTableModel mainTableModel_;
    private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
-   private final String[] renderSizes_  = {"1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x"};
+   private final String[] renderSizes_  = 
+               {"1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x"};
+   private final String[] c2CorrectAlgorithms_ =  
+               { "NR-Similarity", "Affine", "Piecewise-Affine", "LWM" };
+   private final String[] fileFormats_ = { "Binary", "Text" };
+   
    public final static String EXTENSION = ".tsf";
    
-   // Prefs
+   // Pref-keys
    private static final String FRAMEXPOS = "DCXPos";
    private static final String FRAMEYPOS = "DCYPos";
    private static final String FRAMEWIDTH = "DCWidth";
@@ -99,19 +152,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private static final String RENDERMAG = "VisualizationMagnification";
    private static final String PAIRSMAXDISTANCE = "PairsMaxDistance";
    private static final String METHOD2C = "MethodFor2CCorrection";
-   private static final String COL0Width = "Col0Width";  
-   private static final String COL1Width = "Col1Width";
-   private static final String COL2Width = "Col2Width";
-   private static final String COL3Width = "Col3Width";
-   private static final String COL4Width = "Col4Width";
-   private static final String COL5Width = "Col5Width";
-   private static final String COL6Width = "Col6Width";
+   private static final String COL0WIDTH = "Col0Width";  
+   private static final String COL1WIDTH = "Col1Width";
+   private static final String COL2WIDTH = "Col2Width";
+   private static final String COL3WIDTH = "Col3Width";
+   private static final String COL4WIDTH = "Col4Width";
+   private static final String COL5WIDTH = "Col5Width";
+   private static final String COL6WIDTH = "Col6Width";
    
    private static final int OK = 0;
    private static final int FAILEDDONOTINFORM = 1;
    private static final int FAILEDDOINFORM = 2;
    
-   private Preferences prefs_;
    private static final FileType TSF_FILE = new FileType("TSF File",
            "Tagged Spot Format file",
            "./data.tsf",
@@ -124,6 +176,32 @@ public class DataCollectionForm extends javax.swing.JFrame {
    private int jitterMaxFrames_ = 500; 
    private String dir_ = "";   
    public static ZCalibrator zc_ = new ZCalibrator();
+   private static Studio studio_;
+   
+   // GUI elements
+   private DataTable mainTable_;
+   private JComboBox saveFormatBox_;
+   private JTextField pairsMaxDistanceField_;
+   private JComboBox method2CBox_;
+   private JLabel reference2CName_;
+   private JCheckBox logLogCheckBox_;
+   private JComboBox plotComboBox_;
+   private JCheckBox powerSpectrumCheckBox_;
+   private JComboBox visualizationMagnification_;
+   private JComboBox visualizationModel_;
+   private JLabel zCalibrationLabel_;
+   private JCheckBox filterIntensityCheckBox_;
+   private JTextField intensityMax_;
+   private JTextField intensityMin_;
+   private JCheckBox filterSigmaCheckBox_;
+   private JTextField sigmaMax_;
+   private JTextField sigmaMin_;
+       
+   
+   private static DataCollectionForm instance_ = null;
+
+   public enum Coordinates {NM, PIXELS};
+   public enum PlotMode {X, Y, INT};
       
    
    /**
@@ -164,18 +242,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
          return null;
       return c2t_.getAffineTransform();
    }
+
   
    
-   public static DataCollectionForm instance_ = null;
+    /**
+    * Get spotdata for the given row
+    * @param rowNr rowNr (unsorted) for which to return the spotdata
+    * @return 
+    */
+   public RowData getSpotData(int rowNr) {
+      return mainTableModel_.getRow(rowNr);
+   }
    
-   // public since it is used in MathForm.  
-   private ArrayList<RowData> rowData_;
-   public enum Coordinates {NM, PIXELS};
-   public enum PlotMode {X, Y, INT};
-   
-   
-   public ArrayList<RowData> getRowData() {
-      return rowData_;
+   public int getNumberOfSpotData() {
+      return mainTableModel_.getRowCount();
    }
    
 
@@ -186,8 +266,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     */
    public static DataCollectionForm getInstance() {
       if (instance_ == null) {
-         instance_ =  new DataCollectionForm();
-         // MMStudio.getInstance().addMMBackgroundListener(instance_);
+         instance_ =  new DataCollectionForm(MMStudio.getInstance());
+         studio_.events().registerForEvents(instance_);
       }
       return instance_;
    }
@@ -195,99 +275,49 @@ public class DataCollectionForm extends javax.swing.JFrame {
    /** 
     * Creates new form DataCollectionForm
     */
-   private DataCollectionForm() {
+   private DataCollectionForm(Studio studio) {
 
-      rowData_ = new ArrayList<RowData>();
+      studio_ = studio;
 
-      myTableModel_ = new AbstractTableModel() {
-             @Override
-          public String getColumnName(int col) {
-              return columnNames_[col];
-          }
-             @Override
-          public int getRowCount() {
-             if (rowData_ == null)
-                return 0;
-             return rowData_.size();
-          }
-            @Override
-          public int getColumnCount() { 
-             return columnNames_.length;
-          }
-            @Override
-          public Object getValueAt(int row, int col) {
-             if (col == 0 && rowData_ != null)
-                return rowData_.get(row).ID_;
-             else if (col == 1 && rowData_ != null)
-                return rowData_.get(row).name_;
-             else if (col == 2)
-                return rowData_.get(row).spotList_.size();
-             else if (col == 3)
-                return rowData_.get(row).colCorrRef_;
-             else if (col == 4)
-                if (rowData_.get(row).isTrack_)
-                  return String.format("%.2f", rowData_.get(row).stdX_);
-                else return null;
-             else if (col == 5)
-                if (rowData_.get(row).isTrack_)
-                  return String.format("%.2f", rowData_.get(row).stdY_);
-                else 
-                   return null;
-             else if (col == 6)
-                if (rowData_.get(row).isTrack_)
-                  return String.format("%.2f", rowData_.get(row).totalNrPhotons_);
-                else 
-                   return null;
-             else 
-                return getColumnName(col);
-             
-          }
-            @Override
-          public boolean isCellEditable(int row, int col) {
-            return col == 1;
-          }
-             @Override
-          public void setValueAt(Object value, int row, int col) {
-             if (col == 1)
-                rowData_.get(row).name_ = (String) value;
-             fireTableCellUpdated(row, col);
-          }
-       };
-
-       initComponents();
-       referenceName_.setText("  ");
-       plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(plotModes_));
-       visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(renderModes_));
-       visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(renderSizes_));
-       jScrollPane1_.setName("Gaussian Spot Fitting Data Sets");      
+      mainTableModel_ = new DataTableModel();
+      
+      initComponents();
               
-       if (prefs_ == null)
-          prefs_ = Preferences.userNodeForPackage(this.getClass());
-       setBounds(prefs_.getInt(FRAMEXPOS, 50), prefs_.getInt(FRAMEYPOS, 100),
-             prefs_.getInt(FRAMEWIDTH, 800), prefs_.getInt(FRAMEHEIGHT, 250));
-       filterSigmaCheckBox_.setSelected(prefs_.getBoolean(USESIGMA, false));
-       sigmaMin_.setText(prefs_.get(SIGMAMIN, "0.0"));
-       sigmaMax_.setText(prefs_.get(SIGMAMAX, "20.0"));
-       filterIntensityCheckBox_.setSelected(prefs_.getBoolean(USEINT, false));
-       intensityMin_.setText(prefs_.get(INTMIN, "0.0"));
-       intensityMax_.setText(prefs_.get(INTMAX, "20000"));
-       loadTSFDir_ = prefs_.get(LOADTSFDIR, "");
-       visualizationMagnification_.setSelectedIndex(prefs_.getInt(RENDERMAG, 0));
-       pairsMaxDistanceField_.setText(prefs_.get(PAIRSMAXDISTANCE, "500"));
-       method2CBox_.setSelectedItem(prefs_.get(METHOD2C, "LWM"));
+      // Read UI values bakc form Profile
+      UserProfile up = studio_.getUserProfile();
+      Class oc = DataCollectionForm.class;
+      int x = up.getInt(oc, FRAMEXPOS, 50);
+      int y = up.getInt(oc, FRAMEYPOS, 100);
+      int width = up.getInt(oc, FRAMEWIDTH, 800);
+      int height = up.getInt(oc, FRAMEHEIGHT, 250);
+      super.setBounds(x, y, width, height);
+      filterSigmaCheckBox_.setSelected(up.getBoolean(oc, USESIGMA, false));
+      sigmaMin_.setText(up.getString(oc, SIGMAMIN, "0.0"));
+      sigmaMax_.setText(up.getString(oc, SIGMAMAX, "20.0"));
+      filterIntensityCheckBox_.setSelected(up.getBoolean(oc, USEINT, false));
+      intensityMin_.setText(up.getString(oc, INTMIN, "0.0"));
+      intensityMax_.setText(up.getString(oc, INTMAX, "20000"));
+      loadTSFDir_ = up.getString(oc, LOADTSFDIR, "");
+      visualizationMagnification_.setSelectedIndex(up.getInt(oc, RENDERMAG, 0));
+      pairsMaxDistanceField_.setText(up.getString(oc, PAIRSMAXDISTANCE, "500"));
+      method2CBox_.setSelectedItem(up.getString(oc, METHOD2C, "LWM"));
+      
+      mainTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+      TableColumnModel cm = mainTable_.getColumnModel();
+      cm.getColumn(0).setPreferredWidth(up.getInt(oc, COL0WIDTH, 25));
+      cm.getColumn(1).setPreferredWidth(up.getInt(oc, COL1WIDTH, 300));
+      cm.getColumn(2).setPreferredWidth(up.getInt(oc, COL2WIDTH, 150));
+      cm.getColumn(3).setPreferredWidth(up.getInt(oc, COL3WIDTH, 75));
+      cm.getColumn(4).setPreferredWidth(up.getInt(oc, COL4WIDTH, 75));
+      cm.getColumn(5).setPreferredWidth(up.getInt(oc, COL5WIDTH, 75));
+      cm.getColumn(6).setPreferredWidth(up.getInt(oc, COL6WIDTH, 75));
+      
+      DataTableRowSorter sorter = 
+              new DataTableRowSorter(mainTableModel_);
+      mainTable_.setRowSorter(sorter);
        
-       jTable1_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-       TableColumnModel cm = jTable1_.getColumnModel();
-       cm.getColumn(0).setPreferredWidth(prefs_.getInt(COL0Width, 25));
-       cm.getColumn(1).setPreferredWidth(prefs_.getInt(COL1Width, 300));
-       cm.getColumn(2).setPreferredWidth(prefs_.getInt(COL2Width, 150));
-       cm.getColumn(3).setPreferredWidth(prefs_.getInt(COL3Width, 75));
-       cm.getColumn(4).setPreferredWidth(prefs_.getInt(COL4Width, 75));
-       cm.getColumn(5).setPreferredWidth(prefs_.getInt(COL5Width, 75));
-       cm.getColumn(6).setPreferredWidth(prefs_.getInt(COL6Width, 75));
-       
-       // Drag and Drop support for file loading
-       this.setTransferHandler(new TransferHandler() {
+      // Drag and Drop support for file loading
+      super.setTransferHandler(new TransferHandler() {
 
          @Override
          public boolean canImport(TransferHandler.TransferSupport support) {
@@ -317,79 +347,42 @@ public class DataCollectionForm extends javax.swing.JFrame {
          }
       });
 
-      setVisible(true);
+      super.setVisible(true);
+   }
+   
+   @Subscribe
+   public void closeRequested( ShutdownCommencingEvent sce){
+      formWindowClosing(null);
    }
 
-
+   
+   
    /**
-    * Adds a spot data set to the form
-    *
-    *
-    * @param name
-    * @param title
-    * @param colCorrRef
-    * @param width
-    * @param height
-    * @param pixelSizeUm
-    * @param zStackStepSizeNm
-    * @param shape
-    * @param halfSize
-    * @param nrChannels
-    * @param nrFrames
-    * @param nrSlices
-    * @param nrPositions
-    * @param maxNrSpots
-    * @param spotList
-    * @param timePoints
-    * @param isTrack
-    * @param coordinate
-    * @param hasZ
-    * @param minZ
-    * @param maxZ
+    * Adds a dataset to the data table.  
+    * Data is provided as a builder that is build in this function
+    * @param builder RowData builder
     */
-   public void addSpotData(
-           String name,
-           String title,
-           String colCorrRef,
-           int width,
-           int height,
-           float pixelSizeUm, 
-           float zStackStepSizeNm,
-           int shape,
-           int halfSize,
-           int nrChannels,
-           int nrFrames,
-           int nrSlices,
-           int nrPositions,
-           int maxNrSpots, 
-           List<SpotData> spotList,
-           ArrayList<Double> timePoints,
-           boolean isTrack, 
-           Coordinates coordinate, 
-           boolean hasZ, 
-           double minZ, 
-           double maxZ) {
-      RowData newRow = new RowData(name, title, colCorrRef, width, height, 
-              pixelSizeUm, zStackStepSizeNm, 
-              shape, halfSize, nrChannels, nrFrames, nrSlices, nrPositions, 
-              maxNrSpots, spotList, timePoints, isTrack, coordinate, 
-              hasZ, minZ, maxZ);
-      addSpotData (newRow);
-   }
-   
-   public void fireRowAdded() {
-      myTableModel_.fireTableRowsInserted(rowData_.size()-1, rowData_.size());
-   }
-   
-   public void addSpotData(RowData newRow) {
-      rowData_.add(newRow);
+   public void addSpotData(RowData.Builder builder) {
+      RowData newRow = builder.build();
+      mainTableModel_.addRowData(newRow);
       fireRowAdded();
+      // attemp to make the newly added row visible.  
+      final Rectangle cellRect = mainTable_.getCellRect(mainTableModel_.getRowCount(), 0, false); 
+      mainTable_.scrollRectToVisible(cellRect);
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-              formComponentResized(null);
+            formComponentResized(null);
          }
       } );
+   }
+      
+   public void fireRowAdded() {
+      if (mainTable_.getRowSorter() != null) {
+         mainTable_.getRowSorter().allRowsChanged();
+      } else {
+         mainTableModel_.fireRowInserted();
+      }
    }
 
    /**
@@ -397,635 +390,487 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param ID with requested ID.
     * @return RowData with selected ID, or null if not found
     */
-   public RowData getDataSet(int ID) {
-      int i=0;
-      while (i < rowData_.size()) {
-         if (rowData_.get(i).ID_ == ID)
-            return rowData_.get(i);
-      }
-
-      return null;
+   public RowData getDataByID(int ID) {
+      return mainTableModel_.getDataByID(ID);
    }
 
    /**
     * This method is called from within the constructor to
     * initialize the form.
-    * WARNING: Do NOT modify this code. The content of this method is
-    * always regenerated by the Form Editor.
     */
    @SuppressWarnings("unchecked")
-   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
-      jPanel1 = new javax.swing.JPanel();
-      jLabel7 = new javax.swing.JLabel();
-      intensityMax_ = new javax.swing.JTextField();
-      IntLabel2 = new javax.swing.JLabel();
-      SigmaLabel3 = new javax.swing.JLabel();
-      sigmaMax_ = new javax.swing.JTextField();
-      visualizationMagnification_ = new javax.swing.JComboBox();
-      visualizationModel_ = new javax.swing.JComboBox();
-      sigmaMin_ = new javax.swing.JTextField();
-      intensityMin_ = new javax.swing.JTextField();
-      filterIntensityCheckBox_ = new javax.swing.JCheckBox();
-      filterSigmaCheckBox_ = new javax.swing.JCheckBox();
-      jLabel1 = new javax.swing.JLabel();
-      renderButton_ = new javax.swing.JButton();
-      jLabel4 = new javax.swing.JLabel();
-      zCalibrateButton_ = new javax.swing.JButton();
-      zCalibrationLabel_ = new javax.swing.JLabel();
-      unjitterButton_ = new javax.swing.JButton();
-      linkButton_ = new javax.swing.JButton();
-      jSeparator4 = new javax.swing.JSeparator();
-      centerTrackButton_ = new javax.swing.JButton();
-      straightenTrackButton_ = new javax.swing.JButton();
-      logLogCheckBox_ = new javax.swing.JCheckBox();
-      plotComboBox_ = new javax.swing.JComboBox();
-      SubRange = new javax.swing.JButton();
-      mathButton_ = new javax.swing.JButton();
-      averageTrackButton_ = new javax.swing.JButton();
-      powerSpectrumCheckBox_ = new javax.swing.JCheckBox();
-      plotButton_ = new javax.swing.JButton();
-      jLabel6 = new javax.swing.JLabel();
-      jSeparator2 = new javax.swing.JSeparator();
-      SigmaLabel2 = new javax.swing.JLabel();
-      pairsMaxDistanceField_ = new javax.swing.JTextField();
-      referenceName_ = new javax.swing.JLabel();
-      c2CorrectButton = new javax.swing.JButton();
-      method2CBox_ = new javax.swing.JComboBox();
-      c2StandardButton = new javax.swing.JButton();
-      jLabel5 = new javax.swing.JLabel();
-      jSeparator3 = new javax.swing.JSeparator();
-      infoButton_ = new javax.swing.JButton();
-      removeButton = new javax.swing.JButton();
-      saveFormatBox_ = new javax.swing.JComboBox();
-      saveButton = new javax.swing.JButton();
-      loadButton = new javax.swing.JButton();
-      showButton_ = new javax.swing.JButton();
-      jLabel2 = new javax.swing.JLabel();
-      jLabel3 = new javax.swing.JLabel();
-      combineButton_ = new javax.swing.JButton();
-      listButton_1 = new javax.swing.JButton();
-      jPanel2 = new javax.swing.JPanel();
-      jScrollPane1_ = new javax.swing.JScrollPane();
-      jTable1_ = new javax.swing.JTable();
+      intensityMax_ = new JTextField();
+      sigmaMax_ = new JTextField();
+      visualizationMagnification_ = new JComboBox();
+      visualizationModel_ = new JComboBox();
+      sigmaMin_ = new JTextField();
+      intensityMin_ = new JTextField();
+      filterIntensityCheckBox_ = new JCheckBox();
+      filterSigmaCheckBox_ = new JCheckBox();
+      zCalibrationLabel_ = new JLabel();
+      logLogCheckBox_ = new JCheckBox();
+      plotComboBox_ = new JComboBox();
+      powerSpectrumCheckBox_ = new JCheckBox();
+      pairsMaxDistanceField_ = new JTextField();
+      reference2CName_ = new JLabel("  ");
+      method2CBox_ = new JComboBox();
+      saveFormatBox_ = new JComboBox();
+      mainTable_ = new DataTable();
+      
+      
+      final String insets = "insets 3";
+      final Font gFont = new Font("Lucida Grande", 0, 10);
+      final Font hFont = new Font("Lucida Grande", 0, 12);
+      final Dimension buttonSize = new Dimension(100, 20); 
+      final Dimension textFieldSize = new Dimension(50,20);
+      final Dimension dropDownSize = new Dimension(70, 20);
+      final Dimension dropDownSizeMax = new Dimension(100, 20);
 
-      setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
+      setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       setTitle("Gaussian tracking data");
       setMinimumSize(new java.awt.Dimension(450, 80));
       addWindowListener(new java.awt.event.WindowAdapter() {
+         @Override
          public void windowClosing(java.awt.event.WindowEvent evt) {
             formWindowClosing(evt);
          }
       });
       addComponentListener(new java.awt.event.ComponentAdapter() {
+         @Override
          public void componentResized(java.awt.event.ComponentEvent evt) {
             formComponentResized(evt);
          }
       });
 
-      jLabel7.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel7.setText("General");
-
-      intensityMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      intensityMax_.setText("0");
-
-      IntLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      IntLabel2.setText("#");
-
-      SigmaLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      SigmaLabel3.setText("nm");
-
-      sigmaMax_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      sigmaMax_.setText("0");
-
-      visualizationMagnification_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      visualizationMagnification_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x" }));
-
-      visualizationModel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      visualizationModel_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Gaussian" }));
-
-      sigmaMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      sigmaMin_.setText("0");
-
-      intensityMin_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      intensityMin_.setText("0");
-
-      filterIntensityCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      filterIntensityCheckBox_.setText("Intensity");
-      filterIntensityCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            filterIntensityCheckBox_ActionPerformed(evt);
-         }
-      });
-
-      filterSigmaCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      filterSigmaCheckBox_.setText("Sigma");
-      filterSigmaCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            filterSigmaCheckBox_ActionPerformed(evt);
-         }
-      });
-
-      jLabel1.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel1.setText("Filters:");
-
-      renderButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      renderButton_.setText("Render");
-      renderButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            renderButton_ActionPerformed(evt);
-         }
-      });
-
-      jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel4.setText("Localization Microscopy");
-
-      zCalibrateButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      zCalibrateButton_.setText("Z Calibration");
-      zCalibrateButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            zCalibrateButton_ActionPerformed(evt);
-         }
-      });
-
-      zCalibrationLabel_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      zCalibrationLabel_.setText("UnCalibrated");
-
-      unjitterButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      unjitterButton_.setText("Drift Correct");
-      unjitterButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            unjitterButton_ActionPerformed(evt);
-         }
-      });
-
-      linkButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      linkButton_.setText("Link");
-      linkButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            linkButton_ActionPerformed(evt);
-         }
-      });
-
-      jSeparator4.setOrientation(javax.swing.SwingConstants.VERTICAL);
-
-      centerTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      centerTrackButton_.setText("Center");
-      centerTrackButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            centerTrackButton_ActionPerformed(evt);
-         }
-      });
-
-      straightenTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      straightenTrackButton_.setText("Straighten");
-      straightenTrackButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            straightenTrackButton_ActionPerformed(evt);
-         }
-      });
-
-      logLogCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      logLogCheckBox_.setText("log-log");
-      logLogCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            logLogCheckBox_ActionPerformed(evt);
-         }
-      });
-
-      plotComboBox_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      plotComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "t-X", "t-Y", "t-dist.", "t-Int.", "X-Y", " " }));
-
-      SubRange.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      SubRange.setText("SubRange");
-      SubRange.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            SubRangeActionPerformed(evt);
-         }
-      });
-
-      mathButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      mathButton_.setText("Math");
-      mathButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            mathButton_ActionPerformed(evt);
-         }
-      });
-
-      averageTrackButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      averageTrackButton_.setText("Average");
-      averageTrackButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            averageTrackButton_ActionPerformed(evt);
-         }
-      });
-
-      powerSpectrumCheckBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      powerSpectrumCheckBox_.setText("PSD");
-      powerSpectrumCheckBox_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            powerSpectrumCheckBox_ActionPerformed(evt);
-         }
-      });
-
-      plotButton_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      plotButton_.setText("Plot");
-      plotButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            plotButton_ActionPerformed(evt);
-         }
-      });
-
-      jLabel6.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel6.setText("Tracks");
-
-      jSeparator2.setOrientation(javax.swing.SwingConstants.VERTICAL);
-
-      SigmaLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      SigmaLabel2.setText("nm");
-
-      pairsMaxDistanceField_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      pairsMaxDistanceField_.setText("500");
-
-      referenceName_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      referenceName_.setText("JLabel1");
-
-      c2CorrectButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      c2CorrectButton.setText("2C Correct");
-      c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            c2CorrectButtonActionPerformed(evt);
-         }
-      });
-
-      method2CBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      method2CBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "NR-Similarity", "Affine", "Piecewise-Affine", "LWM" }));
-      method2CBox_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            method2CBox_ActionPerformed(evt);
-         }
-      });
-
-      c2StandardButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      c2StandardButton.setText("2C Reference");
-      c2StandardButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            c2StandardButtonActionPerformed(evt);
-         }
-      });
-
-      jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel5.setText("2-Color");
-
-      jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
-
-      infoButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      infoButton_.setText("Info");
-      infoButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            infoButton_ActionPerformed(evt);
-         }
-      });
-
-      removeButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      removeButton.setText("Remove");
-      removeButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            removeButtonActionPerformed(evt);
-         }
-      });
-
-      saveFormatBox_.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      saveFormatBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Binary", "Text" }));
-
-      saveButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      saveButton.setText("Save");
+/***************************    General tab  **********************************/
+      JPanel generalPanel = new JPanel();
+      generalPanel.setLayout(new MigLayout(insets, "[fill]3[fill]", 
+              "[]4[]3[]3[]3[]"));
+      
+      JLabel generalLabel = new JLabel("General");
+      generalLabel.setFont(hFont); 
+      generalPanel.add(generalLabel, "span 2, gapleft 80, wrap");
+      
+      JButton saveButton = new JButton("Save");
+      saveButton.setFont(gFont); 
       saveButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             saveButtonActionPerformed(evt);
          }
       });
+      saveButton.setMaximumSize(buttonSize);
+      generalPanel.add(saveButton);
 
-      loadButton.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      loadButton.setText("Load");
+      saveFormatBox_.setFont(gFont); 
+      saveFormatBox_.setModel(new DefaultComboBoxModel(fileFormats_));
+      saveFormatBox_.setPreferredSize(dropDownSize);
+      saveFormatBox_.setMaximumSize(dropDownSizeMax);
+      generalPanel.add(saveFormatBox_, "wrap");
+      
+      JButton loadButton = new JButton("Load");
+      loadButton.setFont(gFont); 
       loadButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             loadButtonActionPerformed(evt);
          }
       });
+      loadButton.setMaximumSize(buttonSize);
+      generalPanel.add(loadButton);
 
-      showButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      showButton_.setText("Show");
-      showButton_.addActionListener(new java.awt.event.ActionListener() {
+      JButton removeButton = new JButton("Remove");
+      removeButton.setFont(gFont); 
+      removeButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            removeButtonActionPerformed(evt);
+         }
+      });
+      removeButton.setMaximumSize(buttonSize);
+      generalPanel.add(removeButton, "wrap");
+
+      JButton showButton = new JButton("Show");
+      showButton.setFont(gFont); 
+      showButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             showButton_ActionPerformed(evt);
          }
+      }); 
+      showButton.setMaximumSize(buttonSize);
+      generalPanel.add(showButton);
+      
+      JButton infoButton = new JButton("Info");
+      infoButton.setFont(gFont); 
+      infoButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            infoButton_ActionPerformed(evt);
+         }
       });
-
-      jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel2.setText("< spot <");
-
-      jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
-      jLabel3.setText("< spot <");
-
-      combineButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      combineButton_.setText("Combine");
-      combineButton_.addActionListener(new java.awt.event.ActionListener() {
+      infoButton.setMaximumSize(buttonSize);
+      generalPanel.add(infoButton, "wrap");
+         
+      JButton extractTracksButton = new JButton("Extract Tracks");
+      extractTracksButton.setFont(gFont); 
+      extractTracksButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            extractTracksButton_ActionPerformed(evt);
+         }
+      });
+      extractTracksButton.setMaximumSize(buttonSize);
+      generalPanel.add(extractTracksButton);
+           
+      JButton combineButton = new JButton("Combine");
+      combineButton.setFont(gFont); 
+      combineButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             combineButton_ActionPerformed(evt);
          }
       });
+      combineButton.setMaximumSize(buttonSize);
+      generalPanel.add(combineButton, "wrap");
 
-      listButton_1.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
-      listButton_1.setText("List Pairs");
-      listButton_1.addActionListener(new java.awt.event.ActionListener() {
+      
+/**********************  2-Color tab    ***************************************/
+      JPanel c2Panel = new JPanel(new MigLayout(insets, "[fill]3[fill]", 
+               "[]4[]3[]3[]3[]"));
+      
+      JLabel c2olorLabel = new JLabel("2-Color");
+      c2olorLabel.setFont(hFont);
+      c2Panel.add(c2olorLabel, "span 2, gapleft 60, wrap");
+      
+      JButton c2StandardButton = new JButton("2C Reference");
+      c2StandardButton.setFont(gFont);
+      c2StandardButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            c2StandardButtonActionPerformed(evt);
+         }
+      });
+      c2StandardButton.setMaximumSize(buttonSize);
+      c2Panel.add(c2StandardButton, "width 90:90:95");
+           
+      reference2CName_.setFont(gFont);
+      c2Panel.add(reference2CName_, "width 50:50:60, wrap");
+          
+      method2CBox_.setFont(gFont); 
+      method2CBox_.setModel(new DefaultComboBoxModel(c2CorrectAlgorithms_));
+      method2CBox_.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            method2CBox_ActionPerformed(evt);
+         }
+      });
+      method2CBox_.setPreferredSize(dropDownSize);
+      method2CBox_.setMaximumSize(dropDownSizeMax);
+      c2Panel.add(method2CBox_);
+           
+      pairsMaxDistanceField_.setFont(gFont); 
+      pairsMaxDistanceField_.setText("500");
+      pairsMaxDistanceField_.setPreferredSize(textFieldSize);
+      pairsMaxDistanceField_.setMinimumSize(textFieldSize);
+      c2Panel.add(pairsMaxDistanceField_, "split 2");
+      
+      JLabel nmLabel = new JLabel("nm");
+      nmLabel.setFont(gFont); 
+      c2Panel.add(nmLabel, "wrap");
+      
+      JButton c2CorrectButton = new JButton("2C Correct");
+      c2CorrectButton.setFont(gFont);
+      c2CorrectButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            c2CorrectButtonActionPerformed(evt);
+         }
+      });
+      c2CorrectButton.setMaximumSize(buttonSize);
+      c2Panel.add(c2CorrectButton, "span 2, gapleft 40, gapright 40, wrap");
+
+      JButton listPairsButton = new JButton("List Pairs");
+      listPairsButton.setFont(gFont); 
+      listPairsButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             listButton_1ActionPerformed(evt);
          }
       });
+      listPairsButton.setMaximumSize(buttonSize);
+      c2Panel.add(listPairsButton, "span 2, gapleft 40, gapright 40, wrap");
 
-      javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-      jPanel1.setLayout(jPanel1Layout);
-      jPanel1Layout.setHorizontalGroup(
-         jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(68, 68, 68)
-                        .addComponent(jLabel7))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap(33, Short.MAX_VALUE)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                           .addComponent(saveButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addComponent(loadButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addComponent(showButton_, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(4, 4, 4)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                           .addComponent(saveFormatBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addGroup(jPanel1Layout.createSequentialGroup()
-                              .addGap(6, 6, 6)
-                              .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                 .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                 .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE))))))
-                  .addGap(7, 7, 7))
-               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                  .addGap(0, 0, Short.MAX_VALUE)
-                  .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)))
-            .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(84, 84, 84)
-                  .addComponent(jLabel5))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(14, 14, 14)
-                        .addComponent(c2StandardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(16, 16, 16)
-                        .addComponent(c2CorrectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                  .addGap(18, 18, 18)
-                  .addComponent(referenceName_, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(11, 11, 11)
-                  .addComponent(method2CBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(pairsMaxDistanceField_, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(8, 8, 8)
-                  .addComponent(SigmaLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(listButton_1, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(10, 10, 10)
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(plotButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(2, 2, 2)
-                        .addComponent(powerSpectrumCheckBox_))
-                     .addComponent(averageTrackButton_)
-                     .addComponent(mathButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(SubRange, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel1Layout.createSequentialGroup()
-                           .addGap(4, 4, 4)
-                           .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                              .addComponent(logLogCheckBox_)
-                              .addComponent(plotComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                           .addGap(15, 15, 15))
-                        .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                           .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                           .addComponent(straightenTrackButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(6, 6, 6)
-                        .addComponent(centerTrackButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE))))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(83, 83, 83)
-                  .addComponent(jLabel6)))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jSeparator4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(zCalibrateButton_)
-                     .addComponent(unjitterButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(linkButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(zCalibrationLabel_, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(7, 7, 7)
-                        .addComponent(jLabel1)
-                        .addGap(4, 4, 4)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                           .addComponent(filterSigmaCheckBox_)
-                           .addGroup(jPanel1Layout.createSequentialGroup()
-                              .addGap(1, 1, 1)
-                              .addComponent(filterIntensityCheckBox_)))
-                        .addGap(1, 1, 1)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                           .addComponent(sigmaMin_, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addGroup(jPanel1Layout.createSequentialGroup()
-                              .addGap(1, 1, 1)
-                              .addComponent(intensityMin_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(1, 1, 1)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                           .addComponent(jLabel3)
-                           .addComponent(jLabel2))
-                        .addGap(3, 3, 3)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                           .addComponent(sigmaMax_, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addComponent(intensityMax_, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(renderButton_)
-                        .addGap(4, 4, 4)
-                        .addComponent(visualizationModel_, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(6, 6, 6)
-                        .addComponent(visualizationMagnification_, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                  .addGap(4, 4, 4)
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(SigmaLabel3)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(1, 1, 1)
-                        .addComponent(IntLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE))))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(137, 137, 137)
-                  .addComponent(jLabel4))))
-      );
-      jPanel1Layout.setVerticalGroup(
-         jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(jPanel1Layout.createSequentialGroup()
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(jLabel7)
-                     .addComponent(jLabel5))
-                  .addGap(5, 5, 5))
-               .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.TRAILING)
-                     .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.TRAILING))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
-            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(3, 3, 3)
-                  .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(25, 25, 25)
-                  .addComponent(loadButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(1, 1, 1)
-                  .addComponent(showButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(1, 1, 1)
-                  .addComponent(saveFormatBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(21, 21, 21)
-                  .addComponent(removeButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(1, 1, 1)
-                  .addComponent(infoButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(combineButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addComponent(c2StandardButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(33, 33, 33)
-                  .addComponent(c2CorrectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addComponent(referenceName_)
-                  .addGap(12, 12, 12)
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(pairsMaxDistanceField_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(method2CBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                     .addComponent(SigmaLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addGap(28, 28, 28)
-                  .addComponent(listButton_1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(1, 1, 1)
-                  .addComponent(plotButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 18, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(2, 2, 2)
-                  .addComponent(powerSpectrumCheckBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(2, 2, 2)
-                  .addComponent(averageTrackButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(2, 2, 2)
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(mathButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(centerTrackButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addGap(2, 2, 2)
-                  .addComponent(SubRange, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(1, 1, 1)
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(17, 17, 17)
-                        .addComponent(logLogCheckBox_))
-                     .addComponent(plotComboBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addGap(2, 2, 2)
-                  .addComponent(straightenTrackButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                     .addComponent(zCalibrateButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(renderButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addGap(7, 7, 7)
-                  .addComponent(zCalibrationLabel_))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(1, 1, 1)
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(visualizationModel_, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(visualizationMagnification_, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
-                  .addGap(16, 16, 16)
-                  .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(1, 1, 1)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                           .addComponent(jLabel1)
-                           .addComponent(unjitterButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(filterSigmaCheckBox_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                           .addComponent(filterIntensityCheckBox_)
-                           .addComponent(linkButton_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(sigmaMin_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                           .addComponent(intensityMin_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addComponent(jLabel2)))
-                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                           .addComponent(sigmaMax_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                           .addComponent(jLabel3))
-                        .addGap(1, 1, 1)
-                        .addComponent(intensityMax_, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))))
-               .addGroup(jPanel1Layout.createSequentialGroup()
-                  .addGap(41, 41, 41)
-                  .addComponent(SigmaLabel3)
-                  .addGap(7, 7, 7)
-                  .addComponent(IntLabel2)))
-            .addContainerGap())
-         .addComponent(jSeparator3)
-         .addComponent(jSeparator2)
-         .addComponent(jSeparator4)
-      );
+/************************* Tracks ***************************/      
+      JPanel tracksPanel = new JPanel(new MigLayout(insets, "[fill]3[fill]", 
+               "[]4[]3[]3[]3[]"));
+      
+      JLabel trackLabel = new JLabel("Tracks");
+      trackLabel.setFont(hFont); 
+      tracksPanel.add(trackLabel, "span 2, gapleft 60, wrap");
 
-      jPanel2.setLayout(new java.awt.BorderLayout());
+      JButton plotButton = new JButton("Plot");
+      plotButton.setFont(gFont); 
+      plotButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            plotButton_ActionPerformed(evt);
+         }
+      });
+      plotButton.setMaximumSize(buttonSize);
+      tracksPanel.add(plotButton);
+      
+      plotComboBox_.setFont(gFont); 
+      plotComboBox_.setModel(new DefaultComboBoxModel(TrackPlotter.PLOTMODES));
+      plotComboBox_.setMaximumSize(dropDownSizeMax);
+      tracksPanel.add(plotComboBox_, "wrap");
 
-      jScrollPane1_.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
-      jScrollPane1_.setVerticalScrollBarPolicy(javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+      powerSpectrumCheckBox_.setFont(gFont); 
+      powerSpectrumCheckBox_.setText("PSD");
+      powerSpectrumCheckBox_.setMaximumSize(buttonSize);
+      tracksPanel.add(powerSpectrumCheckBox_);
+      
+      logLogCheckBox_.setFont(gFont); 
+      logLogCheckBox_.setText("log-log");
+      logLogCheckBox_.setMaximumSize(buttonSize);
+      tracksPanel.add(logLogCheckBox_, "wrap");
 
-      jTable1_.setModel(myTableModel_);
-      jTable1_.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-      jScrollPane1_.setViewportView(jTable1_);
+      JButton averageTrackButton = new JButton("Average");
+      averageTrackButton.setFont(gFont);
+      averageTrackButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            averageTrackButton_ActionPerformed(evt);
+         }
+      });
+      averageTrackButton.setMaximumSize(buttonSize);
+      tracksPanel.add(averageTrackButton);
+      
+      JButton straightenTrackButton = new JButton("Straighten");
+      straightenTrackButton.setFont(gFont); 
+      straightenTrackButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            straightenTrackButton_ActionPerformed(evt);
+         }
+      });
+      straightenTrackButton.setMaximumSize(buttonSize);
+      tracksPanel.add(straightenTrackButton, "wrap");
 
-      jPanel2.add(jScrollPane1_, java.awt.BorderLayout.CENTER);
+      JButton mathButton = new JButton("Math");
+      mathButton.setFont(gFont); 
+      mathButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            mathButton_ActionPerformed(evt);
+         }
+      });
+      mathButton.setMaximumSize(buttonSize);
+      tracksPanel.add(mathButton);
+      
+      JButton centerTrackButton = new JButton("Center");
+      centerTrackButton.setFont(gFont);
+      centerTrackButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            centerTrackButton_ActionPerformed(evt);
+         }
+      });
+      centerTrackButton.setMaximumSize(buttonSize);
+      tracksPanel.add(centerTrackButton, "wrap");
+      
+      JButton subRangeButton = new JButton("SubRange");
+      subRangeButton.setFont(gFont); 
+      subRangeButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            SubRangeActionPerformed(evt);
+         }
+      });
+      subRangeButton.setMaximumSize(buttonSize);
+      tracksPanel.add(subRangeButton);
 
-      javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-      getContentPane().setLayout(layout);
-      layout.setHorizontalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-         .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-      );
-      layout.setVerticalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, 404, Short.MAX_VALUE)
-            .addGap(0, 0, 0))
-      );
+/************************** Filters ***************************/    
+      JPanel filterPanel = new JPanel(new MigLayout(insets, 
+              "[fill]0[fill]0[fill]0[fill]0[fill]", 
+              "[]3[]0[]0[]0[]"));
+      
+      JLabel filterLabel = new JLabel("Filters:");
+      filterLabel.setFont(hFont); 
+      filterPanel.add(filterLabel, "span 5, gapleft 90, wrap");
+           
+      filterIntensityCheckBox_.setFont(gFont);
+      filterIntensityCheckBox_.setText("Intensity");
+      filterPanel.add(filterIntensityCheckBox_);
+      
+      intensityMin_.setFont(gFont);
+      intensityMin_.setText("0");
+      intensityMin_.setPreferredSize(textFieldSize);
+      intensityMin_.setMinimumSize(textFieldSize);
+      filterPanel.add(intensityMin_);
+      
+      JLabel spotCompLabel1 = new JLabel("< spot <");
+      spotCompLabel1.setFont(gFont); 
+      filterPanel.add(spotCompLabel1);
+      
+      intensityMax_.setFont(gFont);
+      intensityMax_.setText("0");
+      filterPanel.add(intensityMax_);
+      
+      JLabel intensityUnitLabel = new JLabel("#");
+      intensityUnitLabel.setFont(gFont); 
+      filterPanel.add(intensityUnitLabel, "wrap");
+      
+      filterSigmaCheckBox_.setFont(gFont); 
+      filterSigmaCheckBox_.setText("Sigma");     
+      filterPanel.add(filterSigmaCheckBox_);
+              
+      sigmaMin_.setFont(gFont);
+      sigmaMin_.setText("0");
+      sigmaMin_.setMinimumSize(textFieldSize);
+      filterPanel.add(sigmaMin_);
+              
+      JLabel spotCompLabel2 = new JLabel("< spot <");
+      spotCompLabel2.setFont(gFont);
+      filterPanel.add(spotCompLabel2);
+              
+      sigmaMax_.setFont(gFont);
+      sigmaMax_.setText("0");
+      sigmaMax_.setMinimumSize(textFieldSize);
+      filterPanel.add(sigmaMax_);
+              
+      JLabel sigmaUnitLabel = new JLabel("nm");
+      sigmaUnitLabel.setFont(gFont);
+      filterPanel.add(sigmaUnitLabel, "wrap");
+      
+      JButton filterNowButton = new JButton("Filter Now");
+            filterNowButton.setFont(gFont); 
+      filterNowButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            filterNow_ActionPerformed();
+         }
+      });
+      filterNowButton.setMaximumSize(buttonSize);
+      filterPanel.add(filterNowButton, "span 5, center, wrap");
+
+      
+/************************* Localization Microscopy *******************/  
+      JPanel visualizationPanel = new JPanel(new MigLayout(insets, 
+              "[fill]3[fill]3[fill]", 
+              "[]4[]3[]3[]3[]"));
+      
+      JLabel lmLabel = new JLabel("Localization Microscopy");
+      lmLabel.setFont(hFont);
+      visualizationPanel.add(lmLabel, "span 3, gapleft 70, wrap");
+
+      JButton renderButton = new JButton("Render");
+      renderButton.setFont(gFont); 
+      renderButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            renderButton_ActionPerformed(evt);
+         }
+      });
+      renderButton.setMaximumSize(buttonSize);
+      visualizationPanel.add(renderButton);
+      
+      visualizationModel_.setFont(gFont);
+      visualizationModel_.setModel(new DefaultComboBoxModel(renderModes_));
+      visualizationModel_.setPreferredSize(dropDownSize);
+      visualizationModel_.setMaximumSize(dropDownSizeMax);
+      visualizationPanel.add(visualizationModel_);
+
+      visualizationMagnification_.setFont(gFont); 
+      visualizationMagnification_.setModel(new DefaultComboBoxModel(renderSizes_));
+      visualizationMagnification_.setPreferredSize(dropDownSize);
+      visualizationMagnification_.setMaximumSize(dropDownSizeMax);
+      visualizationPanel.add(visualizationMagnification_, "wrap");
+    
+      
+      JButton zCalibrateButton = new JButton("Z Calibration");
+      zCalibrateButton.setFont(gFont); 
+      zCalibrateButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            zCalibrateButton_ActionPerformed(evt);
+         }
+      });
+      zCalibrateButton.setMaximumSize(buttonSize);
+      visualizationPanel.add(zCalibrateButton);
+
+      JButton unjitterButton = new JButton("Drift Correct");
+      unjitterButton.setFont(gFont); 
+      unjitterButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            unjitterButton_ActionPerformed(evt);
+         }
+      });
+      unjitterButton.setMaximumSize(buttonSize);
+      visualizationPanel.add(unjitterButton);
+
+      JButton linkButton = new JButton("Link");
+      linkButton.setFont(gFont);
+      linkButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            linkButton_ActionPerformed(evt);
+         }
+      });
+      linkButton.setMaximumSize(buttonSize);
+      visualizationPanel.add(linkButton, "wrap");
+      
+      zCalibrationLabel_.setFont(gFont); 
+      zCalibrationLabel_.setText("UnCalibrated");
+      visualizationPanel.add(zCalibrationLabel_, "gapleft 10");
+
+   
+/************************* Assemble the complete window  *******************/      
+      Dimension vLineMinSize = new Dimension(6, 60);
+
+      getContentPane().setLayout(new MigLayout(insets, 
+              "[fill]0[]0[fill]2[]2[fill]2[]2[fill]", "[top]2[fill, grow 1]"));
+      getContentPane().add(generalPanel);
+      getContentPane().add(getVLine(vLineMinSize), "growy");
+      getContentPane().add(c2Panel);
+      getContentPane().add(getVLine(vLineMinSize), "growy");
+      getContentPane().add(tracksPanel);
+      getContentPane().add(getVLine(vLineMinSize), "growy");
+      getContentPane().add(filterPanel);
+      getContentPane().add(getVLine(vLineMinSize), "growy");
+      getContentPane().add(visualizationPanel, "wrap");
+      
+      JScrollPane tableScrollPane = new JScrollPane();      
+      tableScrollPane.setHorizontalScrollBarPolicy(
+              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      tableScrollPane.setVerticalScrollBarPolicy(
+              ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+      mainTable_.setModel(mainTableModel_);
+      mainTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+      mainTable_.setPreferredScrollableViewportSize(new Dimension(10000, 10000));
+      tableScrollPane.setViewportView(mainTable_);
+
+      getContentPane().add(tableScrollPane, "span 9, wrap");
+
 
       pack();
-   }// </editor-fold>//GEN-END:initComponents
+   }
+   
+   /**
+    * Helper function to facilitate the UI
+    * @param minSize minimumSize of the Separator
+    * @return vertical separator with the desired minimum size
+    */
+   private JSeparator getVLine(Dimension minSize) {
+      JSeparator vLine = new JSeparator();
+      vLine.setOrientation(SwingConstants.VERTICAL);
+      vLine.setMinimumSize(minSize); 
+      return vLine;
+   }
 
    /**
     * Loads data saved in TSF format (Tagged Spot File Format)
@@ -1035,7 +880,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
     *
     * @evt
     */
-    private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButtonActionPerformed
+    private void loadButtonActionPerformed(java.awt.event.ActionEvent evt) {
 
        int modifiers = evt.getModifiers();
               
@@ -1069,7 +914,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          (new Thread(loadFile)).start();
 
       }
-    }//GEN-LAST:event_loadButtonActionPerformed
+    }
 
     /**
      * Given an array of files, tries to import them all 
@@ -1092,65 +937,72 @@ public class DataCollectionForm extends javax.swing.JFrame {
    }
     
                   
-    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-       int rows[] = jTable1_.getSelectedRows();
+    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {
+       int rows[] = mainTable_.getSelectedRowsSorted();
        if (rows.length > 0) {
           for (int i = 0; i < rows.length; i++) {
              if (saveFormatBox_.getSelectedIndex() == 0) {
                 if (i == 0)
-                   dir_ = LoadAndSave.saveData(rowData_.get(rows[i]), false, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), false, 
                            dir_, this);
                 else
-                   dir_ = LoadAndSave.saveData(rowData_.get(rows[i]), true, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), true, 
                            dir_, this);
              } else {
-                LoadAndSave.saveDataAsText(rowData_.get(rows[i]), this);
+                LoadAndSave.saveDataAsText(mainTableModel_.getRow(i), this);
              }
           }
        } else {
           JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to save");
        }
-    }//GEN-LAST:event_saveButtonActionPerformed
+    }
 
-    private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButtonActionPerformed
-       int rows[] = jTable1_.getSelectedRows();
+    private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {
+       int rows[] = mainTable_.getSelectedRowsSorted();
        if (rows.length > 0) {
           for (int row = rows.length - 1; row >= 0; row--) {
-             rowData_.remove(rows[row]);
-             myTableModel_.fireTableRowsDeleted(rows[row], rows[row]);
+             mainTableModel_.removeRow(rows[row]);
           }
        } else {
           JOptionPane.showMessageDialog(getInstance(), "No dataset selected");
        }
-    }//GEN-LAST:event_removeButtonActionPerformed
+    }
 
-    private void showButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showButton_ActionPerformed
-       int row = jTable1_.getSelectedRow();
+    private void showButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+       int row = mainTable_.getSelectedRowSorted();
        if (row > -1) {
           try {
-          showResults(rowData_.get(row));
+            showResults(mainTableModel_.getRow(row));
           } catch (OutOfMemoryError ome) {
              JOptionPane.showMessageDialog(getInstance(), "Not enough memory to show data");
           }
        } else {
           JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to show");
        }
-    }//GEN-LAST:event_showButton_ActionPerformed
+    }
 
-   private void formComponentResized(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentResized
-      //jScrollPane1.setSize(this.getSize());
-      Dimension d = getSize();
-      d.height -= 155;
-      jScrollPane1_.setSize(d);
-      jScrollPane1_.getViewport().setViewSize(d);
-   }//GEN-LAST:event_formComponentResized
+   private void extractTracksButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      int row = mainTable_.getSelectedRowSorted();
+      if (row > -1) {
+         Point s = MouseInfo.getPointerInfo().getLocation();
+         ExtractTracksDialog extractTracksDialog = 
+                 new ExtractTracksDialog(studio_, mainTableModel_.getRow(row), s);
+      } else {
+         JOptionPane.showMessageDialog(getInstance(), "No Data Rows selected");
+      }
+   }
+    
+   private void formComponentResized(java.awt.event.ComponentEvent evt) {
+      mainTable_.update();
+      super.repaint();
+   }
 
    /**
     * Use the selected data set as the reference for 2-channel color correction
     * @param evt 
     */
-   private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2StandardButtonActionPerformed
-      int rows[] = jTable1_.getSelectedRows();
+   private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets as color reference");
       } else {
@@ -1161,7 +1013,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
             // Get points from both channels in first frame as ArrayLists        
             ArrayList<Point2D.Double> xyPointsCh1 = new ArrayList<Point2D.Double>();
             ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-            for (SpotData gs : rowData_.get(row).spotList_) {
+            for (SpotData gs : mainTableModel_.getRow(row).spotList_) {
                if (gs.getFrame() == 1) {
                   Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                   if (gs.getChannel() == 1) {
@@ -1208,70 +1060,29 @@ public class DataCollectionForm extends javax.swing.JFrame {
          try {
             c2t_ = new CoordinateMapper(points, 2, 1);
             
-            /*
-            boolean continueQualityCheck = true;
-            int nrOfRemovedSpots = 0;
-
-            while (continueQualityCheck && points.size() > 4) {
-               // quality control on our new coordinate mapper.  
-               // Apply an affine transform on our data and check distribution 
-               int method = CoordinateMapper.AFFINE;
-               c2t_.setMethod(method);
-               CoordinateMapper.PointMap corPoints = new CoordinateMapper.PointMap();
-               List<Double> distances = new ArrayList<Double>();
-               double maxDistance = 0.0;
-               Point2D.Double maxPairKey = null;
-               for (Map.Entry pair : points.entrySet()) {
-                  Point2D.Double uPt = (Point2D.Double) pair.getValue();
-                  Point2D.Double otherPt = (Point2D.Double) pair.getKey();
-                  Point2D.Double corPt = c2t_.transform(otherPt);
-                  corPoints.put(uPt, corPt);
-                  double distance = Math.sqrt(NearestPoint2D.distance2(uPt, corPt));
-                  if (distance > maxDistance) {
-                     maxDistance = distance;
-                     maxPairKey = otherPt;
-                  }
-                  distances.add(distance);
-               }
-               Double avg = ListUtils.listAvg(distances);
-               Double stdDev = ListUtils.listStdDev(distances, avg);
-
-               // Quality control check
-               if (2 * stdDev > avg) {
-                  nrOfRemovedSpots+=1;
-                  points.remove(maxPairKey);
-                  c2t_ = new CoordinateMapper(points, 2, 1);
-               } else {
-                  continueQualityCheck = false;
-                  ij.IJ.log("Removed " + nrOfRemovedSpots + " pairs, " + ", avg. distance: " +
-                    avg + ", std. dev: " + stdDev);
-               }
-            }
-            */
-            ij.IJ.log("Used " + points.size() + " spot pairs to calculate 2C Reference");
+            studio_.alerts().postAlert("2C Reference", DataCollectionForm.class , 
+                    "Used " + points.size() + " spot pairs to calculate 2C Reference");
             
-            //ij.IJ.showMessage("Corrected data have average of: " + avg + ",  std. dev. of: " + stdDev);
-            
-            String name = "ID: " + rowData_.get(rows[0]).ID_;
+            String name = "ID: " + mainTableModel_.getRow(rows[0]).ID_;
             if (rows.length > 1) {
                for (int i = 1; i < rows.length; i++) {
-                  name += "," + rowData_.get(rows[i]).ID_;
+                  name += "," + mainTableModel_.getRow(rows[i]).ID_;
                }
             }
-            referenceName_.setText(name);
+            reference2CName_.setText(name);
          } catch (Exception ex) {
             JOptionPane.showMessageDialog(getInstance(), 
                "Error setting color reference.  Did you have enough input points?");
          }
          
       }
-   }//GEN-LAST:event_c2StandardButtonActionPerformed
+   }
 
   
    public void listPairs(double maxDistance, boolean showPairs, 
            boolean showImage, boolean savePairs, String filePath, 
            boolean showSummary, boolean showGraph) {
-      final int[] rows = jTable1_.getSelectedRows();
+      final int[] rows = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select a dataset");
@@ -1285,101 +1096,95 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
    }
    
-   public void listPairTracks(double maxDistance, boolean showTrack, 
-           boolean showSummary, boolean showOverlay, boolean saveFile, 
-           String filePath, boolean p2d) {
-      final int[] rows = jTable1_.getSelectedRows();
+   public void listPairTracks(ParticlePairLister.Builder builder) {
+      final int[] rows = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select a dataset");
          return;
       }
-      if (showTrack || showSummary || showOverlay || saveFile || p2d) {
-         ParticlePairLister.listParticlePairTracks(rows, maxDistance, showTrack, 
-                 showSummary, showOverlay, saveFile, p2d, filePath);
-      }
+      ParticlePairLister ppl = builder.rows(rows).build();
+      ppl.listParticlePairTracks();
    }
    
-   private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_c2CorrectButtonActionPerformed
-      int[] rows = jTable1_.getSelectedRows();
+   private void c2CorrectButtonActionPerformed(java.awt.event.ActionEvent evt) {
+      int[] rows = mainTable_.getSelectedRowsSorted();
       if (rows.length > 0) {     
          try {
             for (int row : rows) {
-               correct2C(rowData_.get(row));
+               correct2C(mainTableModel_.getRow(row));
             }
          } catch (InterruptedException ex) {
             ReportingUtils.showError(ex);
          }
       } else
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to color correct");
-   }//GEN-LAST:event_c2CorrectButtonActionPerformed
+   }
 
-   private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_unjitterButton_ActionPerformed
-      final int row = jTable1_.getSelectedRow();
+   private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      final int row = mainTable_.getSelectedRowSorted();
       if (row > -1) {
          Runnable doWorkRunnable = new Runnable() {
             @Override
             public void run() {
                if (jitterMethod_ == 0)
-                  DriftCorrector.unJitter(rowData_.get(row));
+                  DriftCorrector.unJitter(mainTableModel_.getRow(row));
                else
-                  new DriftCorrector().unJitter2(rowData_.get(row), jitterMaxFrames_, jitterMaxSpots_);
+                  new DriftCorrector().unJitter2(mainTableModel_.getRow(row), 
+                          jitterMaxFrames_, jitterMaxSpots_);
             }
          };
          (new Thread(doWorkRunnable)).start();
       } else {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to unjitter");
       }
-   }//GEN-LAST:event_unjitterButton_ActionPerformed
+   }
 
-   private void filterSigmaCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterSigmaCheckBox_ActionPerformed
-      // TODO add your handling code here:
-   }//GEN-LAST:event_filterSigmaCheckBox_ActionPerformed
 
-   private void filterIntensityCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filterIntensityCheckBox_ActionPerformed
-      // TODO add your handling code here:
-   }//GEN-LAST:event_filterIntensityCheckBox_ActionPerformed
+   private void formWindowClosing(java.awt.event.WindowEvent evt) {
+      UserProfile up = studio_.profile();
+      Class oc = DataCollectionForm.class;
+      up.setInt(oc, FRAMEXPOS, getX());
+      up.setInt(oc, FRAMEYPOS, getY());
+      up.setInt(oc, FRAMEWIDTH, getWidth());
+      up.setInt(oc, FRAMEHEIGHT, getHeight());
+       
+      up.setBoolean(oc, USESIGMA, filterSigmaCheckBox_.isSelected());
+      up.setString(oc, SIGMAMIN, sigmaMin_.getText());
+      up.setString(oc, SIGMAMAX, sigmaMax_.getText());
+      up.setBoolean(oc, USEINT, filterIntensityCheckBox_.isSelected());
+      up.setString(oc, INTMIN, intensityMin_.getText());
+      up.setString(oc, INTMAX, intensityMax_.getText());
+      up.setString(oc, LOADTSFDIR, loadTSFDir_);
+      up.setInt(oc, RENDERMAG, visualizationMagnification_.getSelectedIndex());
+      up.setString(oc, PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
+       
+      TableColumnModel cm = mainTable_.getColumnModel();
+      up.setInt(oc, COL0WIDTH, cm.getColumn(0).getWidth());
+      up.setInt(oc, COL1WIDTH, cm.getColumn(1).getWidth());
+      up.setInt(oc, COL2WIDTH, cm.getColumn(2).getWidth());
+      up.setInt(oc, COL3WIDTH, cm.getColumn(3).getWidth());
+      up.setInt(oc, COL4WIDTH, cm.getColumn(4).getWidth());
+      up.setInt(oc, COL5WIDTH, cm.getColumn(5).getWidth());
+      up.setInt(oc, COL6WIDTH, cm.getColumn(6).getWidth());
 
-   private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-       prefs_.putInt(FRAMEXPOS, getX());
-       prefs_.putInt(FRAMEYPOS, getY());
-       prefs_.putInt(FRAMEWIDTH, getWidth());
-       prefs_.putInt(FRAMEHEIGHT, getHeight());
-       
-       prefs_.putBoolean(USESIGMA, filterSigmaCheckBox_.isSelected());
-       prefs_.put(SIGMAMIN, sigmaMin_.getText());
-       prefs_.put(SIGMAMAX, sigmaMax_.getText());
-       prefs_.putBoolean(USEINT, filterIntensityCheckBox_.isSelected());
-       prefs_.put(INTMIN, intensityMin_.getText());
-       prefs_.put(INTMAX, intensityMax_.getText());
-       prefs_.put(LOADTSFDIR, loadTSFDir_);
-       prefs_.putInt(RENDERMAG, visualizationMagnification_.getSelectedIndex());
-       prefs_.put(PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
-       
-       TableColumnModel cm = jTable1_.getColumnModel();
-       prefs_.putInt(COL0Width, cm.getColumn(0).getWidth());
-       prefs_.putInt(COL1Width, cm.getColumn(1).getWidth());
-       prefs_.putInt(COL2Width, cm.getColumn(2).getWidth());
-       prefs_.putInt(COL3Width, cm.getColumn(3).getWidth());
-       prefs_.putInt(COL4Width, cm.getColumn(4).getWidth());
-       prefs_.putInt(COL5Width, cm.getColumn(5).getWidth());
-       prefs_.putInt(COL6Width, cm.getColumn(6).getWidth());
-       
-       setVisible(false);
-   }//GEN-LAST:event_formWindowClosing
+      studio_.events().unregisterForEvents(this);
+      this.dispose();
+      instance_ = null;
+   }
 
    /**
     * Present user with summary data of this dataset.
     * 
     * @param evt 
     */
-   private void infoButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoButton_ActionPerformed
-      int row = jTable1_.getSelectedRow();
+   private void infoButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      int row = mainTable_.getSelectedRowSorted();
       if (row > -1) {
           
          
-         RowData rowData = rowData_.get(row);
-         String data = "Name: " + rowData.name_ + "\n" +
+         RowData rowData = mainTableModel_.getRow(row);
+         String data = "Name: " + rowData.getName() + "\n" +
                  "Title: " + rowData.title_ + "\n" + 
                  "BoxSize: " + 2*rowData.halfSize_ + "\n" +
                  "Image Height (pixels): " + rowData.height_ + "\n" + 
@@ -1411,20 +1216,20 @@ public class DataCollectionForm extends javax.swing.JFrame {
                     "StdDev Y: " + stdDev.y;           
          }
          
-         TextWindow tw = new TextWindow("Info for " + rowData.name_, data, 300, 300);
+         TextWindow tw = new TextWindow("Info for " + rowData.getName(), data, 300, 300);
          tw.setVisible(true);
        }
        else
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset first");
-   }//GEN-LAST:event_infoButton_ActionPerformed
+   }
 
    /**
     * Renders dataset 
     * 
     * @param evt 
     */
-   private void renderButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_renderButton_ActionPerformed
-      final int row = jTable1_.getSelectedRow();
+   private void renderButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      final int row = mainTable_.getSelectedRowSorted();
       if (row < 0) {
          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to render");
       } else {
@@ -1446,11 +1251,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
                              Double.parseDouble(intensityMax_.getText()));
                   }
 
-                  RowData rowData = rowData_.get(row);
+                  RowData rowData = mainTableModel_.getRow(row);
                   String fsep = System.getProperty("file.separator");
-                  String ttmp = rowData.name_;
-                  if (rowData.name_.contains(fsep)) {
-                     ttmp = rowData.name_.substring(rowData.name_.lastIndexOf(fsep) + 1);
+                  String ttmp = rowData.getName();
+                  if (rowData.getName().contains(fsep)) {
+                     ttmp = rowData.getName().substring(rowData.getName().lastIndexOf(fsep) + 1);
                   }
                   ttmp += mag + "x";
                   final String title = ttmp;
@@ -1468,7 +1273,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                              visualizationModel_.getSelectedIndex(), mag, null, sf);
                      sp = new ImagePlus(title, ip);
 
-                     GaussCanvas gs = new GaussCanvas(sp, rowData_.get(row),
+                     GaussCanvas gs = new GaussCanvas(sp, mainTableModel_.getRow(row),
                              visualizationModel_.getSelectedIndex(), mag, sf);
                      DisplayUtils.AutoStretch(sp);
                      DisplayUtils.SetCalibration(sp, (rowData.pixelSizeNm_ / mag));
@@ -1484,20 +1289,24 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          (new Thread(doWorkRunnable)).start();
       }
-   }//GEN-LAST:event_renderButton_ActionPerformed
+   }
 
-   private void plotButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_plotButton_ActionPerformed
-      int rows[] = jTable1_.getSelectedRows();
+   private void plotButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets to plot");
       } else {
          RowData[] myRows = new RowData[rows.length];
          // TODO: check that these are tracks 
          for (int i = 0; i < rows.length; i++)
-            myRows[i] = rowData_.get(rows[i]);
-         plotData(myRows, plotComboBox_.getSelectedIndex());
+            myRows[i] = mainTableModel_.getRow(rows[i]);
+         TrackPlotter.plotData(myRows, 
+                 plotComboBox_.getSelectedIndex(), 
+                 logLogCheckBox_.isSelected(), 
+                 powerSpectrumCheckBox_.isSelected(),
+                 this);
       }
-   }//GEN-LAST:event_plotButton_ActionPerformed
+   }
 
    
    public class TrackAnalysisData {
@@ -1517,8 +1326,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * 
     * @param evt 
     */
-   private void averageTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_averageTrackButton_ActionPerformed
-      int rows[] = jTable1_.getSelectedRows();
+   private void averageTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Please select one or more datasets to average");
@@ -1527,7 +1336,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          ArrayList<Point2D.Double> listAvgs = new ArrayList<Point2D.Double>();
          
          for (int i = 0; i < rows.length; i++) {
-            myRows[i] = rowData_.get(rows[i]);
+            myRows[i] = mainTableModel_.getRow(rows[i]);
             ArrayList<Point2D.Double> xyPoints = ListUtils.spotListToPointList(myRows[i].spotList_);
             Point2D.Double listAvg = ListUtils.avgXYList(xyPoints);
             listAvgs.add(listAvg);
@@ -1556,10 +1365,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
                           
          List<SpotData> transformedResultList =
                  Collections.synchronizedList(new ArrayList<SpotData>());
-         //List<TrackAnalysisData> avgTrackData = new ArrayList<TrackAnalysisData>();
          
          // for each frame in the collection, calculate the average
-         for (int i = 1; i <= allData.size(); i++) {
+         for (int i : allData.keySet()) {
             List<SpotData> frameList = allData.get(i);
             TrackAnalysisData tad = new TrackAnalysisData();
             tad.frame = i;
@@ -1573,41 +1381,23 @@ public class DataCollectionForm extends javax.swing.JFrame {
             tad.yAvg = listAvg.y;
             tad.xStdDev = stdDev.x;
             tad.yStdDev = stdDev.y;
-            //avgTrackData.add(tad);
              
             avgFrame.setXCenter(listAvg.x);
             avgFrame.setYCenter(listAvg.y);
             
             transformedResultList.add(avgFrame);
          }
-         
 
          // Add transformed data to data overview window
          RowData rowData = myRows[0];
-         addSpotData(rowData.name_ + " Average", rowData.title_, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, rowData.shape_,
-                 rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                 rowData.nrSlices_, 1, rowData.maxNrSpots_, transformedResultList,
-                 rowData.timePoints_, true, Coordinates.NM, false, 0.0, 0.0);
-/*
-         // show resultsTable
-         ResultsTable rt = new ResultsTable();
-         for (int i = 0; i < avgTrackData.size(); i++) {
-            rt.incrementCounter();
-            TrackAnalysisData trackData = avgTrackData.get(i);
-            rt.addValue("Frame", trackData.frame);
-            rt.addValue("n", trackData.n);
-            rt.addValue("XAvg", trackData.xAvg);
-            rt.addValue("XStdev", trackData.xStdDev);
-            rt.addValue("YAvg", trackData.yAvg);
-            rt.addValue("YStdev", trackData.yStdDev);
-         }
-         rt.show("Averaged Tracks");
-*/
-
+         RowData.Builder builder = rowData.copy();
+         builder.setName(rowData.getName() + " Average").setDisplayWindow(null).
+                 setColColorRef("").setSpotList(transformedResultList).
+                 setIsTrack(true).setHasZ(false);
+         addSpotData(builder);
       }
 
-   }//GEN-LAST:event_averageTrackButton_ActionPerformed
+   }
 
    public void doMathOnRows(RowData source, RowData operand, int action) {
       // create a copy of the dataset and copy in the corrected data
@@ -1660,15 +1450,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
          
          ij.IJ.showStatus("Finished doing math...");
 
-         RowData rowData = source;
-         
-         addSpotData(rowData.name_ + " Subtracted", rowData.title_, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_, 
-                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_, 
-                 rowData.nrFrames_, rowData.nrSlices_, 1, rowData.maxNrSpots_, 
-                 transformedResultList,
-                 rowData.timePoints_, rowData.isTrack_, Coordinates.NM, 
-                 rowData.hasZ_, rowData.minZ_, rowData.maxZ_);
+         RowData.Builder builder = source.copy();
+         builder.setName(source.getName() + " Subtracted").setNrPositions(1).
+                 setSpotList(transformedResultList);
+         addSpotData(builder);
          
       } catch (IndexOutOfBoundsException iobe) {
          JOptionPane.showMessageDialog(getInstance(), "Data sets differ in Size");
@@ -1676,17 +1461,18 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    }
 
-   private void mathButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mathButton_ActionPerformed
-      int[] rows = new int[jTable1_.getRowCount()];
+   private void mathButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      int[] rows = new int[mainTable_.getRowCount()];
 
       for (int i = 0; i < rows.length; i++) {
-         rows[i] = (Integer) jTable1_.getValueAt(i, 0);
+         Integer j =  (Integer) mainTable_.getValueAt(mainTable_.convertRowIndexToModel(i), 0);
+         rows[i] = j;
       }
 
-      MathForm mf = new MathForm(rows, rows);
+      MathForm mf = new MathForm(studio_.getUserProfile(), rows, rows);
 
       mf.setVisible(true);
-   }//GEN-LAST:event_mathButton_ActionPerformed
+   }
 
    /**
     * Links spots by checking in consecutive frames whether the spot is still present
@@ -1696,8 +1482,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * The Frame number of the linked spot list will be 0
     * @param evt - ignored...
     */
-   private void linkButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_linkButton_ActionPerformed
-      final int rows[] = jTable1_.getSelectedRows();
+   private void linkButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      final int rows[] = mainTable_.getSelectedRowsSorted();
 
       final double maxDistance;
       try {
@@ -1713,64 +1499,43 @@ public class DataCollectionForm extends javax.swing.JFrame {
          @Override
          public void run() {
             for (int row : rows) {
-               final RowData rowData = rowData_.get(row);
-               if (rowData.frameIndexSpotList_ == null) {
-                  rowData.index();
-               }
+               final RowData rowData = mainTableModel_.getRow(row);                    
                SpotLinker.link(rowData, maxDistance);
             }
          }
       };
 
       (new Thread(doWorkRunnable)).start();
-   }//GEN-LAST:event_linkButton_ActionPerformed
+   }
 
-   private void straightenTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_straightenTrackButton_ActionPerformed
-      int rows[] = jTable1_.getSelectedRows();
+   private void straightenTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
                  "Please select one or more datasets to straighten");
       } else {
          for (int row : rows) {
-            RowData r = rowData_.get(row);
-            if (evt.getModifiers() > 0) {
-               if (r.title_.equals(ij.IJ.getImage().getTitle())) {
-                  ImagePlus ip = ij.IJ.getImage();
-                  Roi roi = ip.getRoi();
-                  if (roi.isLine()) {
-                     Polygon pol = roi.getPolygon();
-
-                  }
-
-               }
-            }
+            RowData r = mainTableModel_.getRow(row);
             TrackOperator.straightenTrack(r);
          }
       }
-   }//GEN-LAST:event_straightenTrackButton_ActionPerformed
+   }
 
-   private void centerTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerTrackButton_ActionPerformed
-      int rows[] = jTable1_.getSelectedRows();
+   private void centerTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
                  "Please select one or more datasets to center");
       } else {
          for (int row : rows) {
-            TrackOperator.centerTrack(rowData_.get(row));
+            TrackOperator.centerTrack(mainTableModel_.getRow(row));
          }
       }
-   }//GEN-LAST:event_centerTrackButton_ActionPerformed
+   }
 
-   private void powerSpectrumCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_powerSpectrumCheckBox_ActionPerformed
 
-   }//GEN-LAST:event_powerSpectrumCheckBox_ActionPerformed
-
-   private void logLogCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logLogCheckBox_ActionPerformed
-
-   }//GEN-LAST:event_logLogCheckBox_ActionPerformed
-
-   private void zCalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zCalibrateButton_ActionPerformed
-      int rows[] = jTable1_.getSelectedRows();
+   private void zCalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+      int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length != 1) {
          JOptionPane.showMessageDialog(getInstance(),
                  "Please select one datasets for Z Calibration");
@@ -1782,33 +1547,34 @@ public class DataCollectionForm extends javax.swing.JFrame {
             ReportingUtils.showError("Z-Calibration failed");
          }
       }
-   }//GEN-LAST:event_zCalibrateButton_ActionPerformed
+   }
 
-   private void method2CBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_method2CBox_ActionPerformed
-      prefs_.put(METHOD2C, (String) method2CBox_.getSelectedItem());
-   }//GEN-LAST:event_method2CBox_ActionPerformed
+   private void method2CBox_ActionPerformed(java.awt.event.ActionEvent evt) {
+      studio_.profile().setString(DataCollectionForm.class, METHOD2C, 
+              (String) method2CBox_.getSelectedItem());
+   }
 
    private String range_ = "";
 
-   private void SubRangeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SubRangeActionPerformed
+   private void SubRangeActionPerformed(java.awt.event.ActionEvent evt) {
 
-      final int[] rows = jTable1_.getSelectedRows();
+      final int[] rows = mainTable_.getSelectedRowsSorted();
 
       if (rows == null || rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
-                 "Please select one or more datasets for sub ranging");
+                 "Please select one or more datasets for sub-ranging");
          return;
       }
 
-      range_ = (String) JOptionPane.showInputDialog(this, "Provide desired subrange\n"
+      range_ = (String) JOptionPane.showInputDialog(this, "Provide desired range of Frame numbers\n"
               + "e.g. \"7-50\"", "SubRange", JOptionPane.PLAIN_MESSAGE, null, null, range_);
-      ArrayList<Integer> desiredFrameNumbers = new ArrayList<Integer>(
-              rowData_.get(rows[0]).maxNrSpots_);
+      ArrayList<Long> desiredFrameNumbers = new ArrayList<Long>(
+              (int) mainTableModel_.getRow(rows[0]).maxNrSpots_);
       String[] parts = range_.split(",");
       try {
          for (String part : parts) {
             String[] tokens = part.split("-");
-            for (int i = Integer.parseInt(tokens[0].trim());
+            for (long i = Integer.parseInt(tokens[0].trim());
                     i <= Integer.parseInt(tokens[1].trim()); i++) {
                desiredFrameNumbers.add(i);
             }
@@ -1817,7 +1583,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
          ReportingUtils.showError(ex, "Could not parse input");
       }
 
-      final ArrayList<Integer> desiredFrameNumbersCopy = desiredFrameNumbers;          
+      final ArrayList<Long> desiredFrameNumbersCopy = desiredFrameNumbers;          
       
       Runnable doWorkRunnable = new Runnable() {
 
@@ -1826,10 +1592,21 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
             if (rows.length > 0) {
                for (int row : rows) {
-                  RowData newRow =
-                          edu.valelab.gaussianfit.utils.SubRange.subRange(
-                          rowData_.get(row), desiredFrameNumbersCopy);
-                  addSpotData(newRow);
+
+                  RowData.Builder output = mainTableModel_.getRow(row).copy();
+                  List<SpotData> outList = new ArrayList<SpotData>();
+                  output.setSpotList(outList);
+
+                  List<SpotData> spots = mainTableModel_.getRow(row).spotList_;
+
+                  Collections.sort(desiredFrameNumbersCopy);
+                  for (SpotData spot : mainTableModel_.getRow(row).spotList_) {
+                     if (desiredFrameNumbersCopy.contains((long) spot.getFrame())) {
+                        outList.add(new SpotData(spot));
+                     }
+                  }
+                  output.setMaxNrSpots(outList.size());
+                  addSpotData(output);
                }
 
             }
@@ -1837,17 +1614,17 @@ public class DataCollectionForm extends javax.swing.JFrame {
       };
       doWorkRunnable.run();
 
-   }//GEN-LAST:event_SubRangeActionPerformed
+   }
 
-   private void combineButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_combineButton_ActionPerformed
+   private void combineButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       try {
-         final int[] rows = jTable1_.getSelectedRows();
+         final int[] rows = mainTable_.getSelectedRowsSorted();
          
          if (rows == null || rows.length < 2) {
             JOptionPane.showMessageDialog(getInstance(), 
                     "Please select two or more datasets to combine");
             return;
-         }
+         }               
          semaphore_.acquire();
 
          Runnable doWorkRunnable = new Runnable() {
@@ -1857,7 +1634,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
                List<SpotData> newData =
                        Collections.synchronizedList(new ArrayList<SpotData>());
                for (int i = 0; i < rows.length; i++) {
-                  RowData rowData = rowData_.get(rows[i]);
+                  RowData rowData = mainTableModel_.getRow(rows[i]);
                   for (SpotData gs : rowData.spotList_) {
                      newData.add(gs);
                   }
@@ -1865,16 +1642,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
                // Add transformed data to data overview window
                // for now, copy header of first data set
-               RowData rowData = rowData_.get(rows[0]);
-               addSpotData(rowData.name_ + "-Combined",
-                       rowData.title_,
-                       referenceName_.getText(), rowData.width_,
-                       rowData.height_, rowData.pixelSizeNm_,
-                       rowData.zStackStepSizeNm_, rowData.shape_,
-                       rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                       rowData.nrSlices_, 1, rowData.maxNrSpots_, newData,
-                       rowData.timePoints_,
-                       false, Coordinates.NM, false, 0.0, 0.0);
+               RowData rowData = mainTableModel_.getRow(rows[0]);
+               RowData.Builder builder = rowData.copy();
+               builder.setName(rowData.getName() + "-Combined").
+                       setColColorRef(reference2CName_.getText()).
+                       setSpotList(newData).setIsTrack(false).
+                       setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
+               addSpotData(builder);
 
                semaphore_.release();
             }
@@ -1885,106 +1659,14 @@ public class DataCollectionForm extends javax.swing.JFrame {
          ReportingUtils.showError(ex, "Data set combiner got interupted");
       }
       
-   }//GEN-LAST:event_combineButton_ActionPerformed
-
-   private void listButton_1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_listButton_1ActionPerformed
-      PairDisplayForm pdf = new PairDisplayForm();
-      pdf.setVisible(true);
-   }//GEN-LAST:event_listButton_1ActionPerformed
-
-   
-   // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JLabel IntLabel2;
-   private javax.swing.JLabel SigmaLabel2;
-   private javax.swing.JLabel SigmaLabel3;
-   private javax.swing.JButton SubRange;
-   private javax.swing.JButton averageTrackButton_;
-   private javax.swing.JButton c2CorrectButton;
-   private javax.swing.JButton c2StandardButton;
-   private javax.swing.JButton centerTrackButton_;
-   private javax.swing.JButton combineButton_;
-   private javax.swing.JCheckBox filterIntensityCheckBox_;
-   private javax.swing.JCheckBox filterSigmaCheckBox_;
-   private javax.swing.JButton infoButton_;
-   private javax.swing.JTextField intensityMax_;
-   private javax.swing.JTextField intensityMin_;
-   private javax.swing.JLabel jLabel1;
-   private javax.swing.JLabel jLabel2;
-   private javax.swing.JLabel jLabel3;
-   private javax.swing.JLabel jLabel4;
-   private javax.swing.JLabel jLabel5;
-   private javax.swing.JLabel jLabel6;
-   private javax.swing.JLabel jLabel7;
-   private javax.swing.JPanel jPanel1;
-   private javax.swing.JPanel jPanel2;
-   private javax.swing.JScrollPane jScrollPane1_;
-   private javax.swing.JSeparator jSeparator2;
-   private javax.swing.JSeparator jSeparator3;
-   private javax.swing.JSeparator jSeparator4;
-   private javax.swing.JTable jTable1_;
-   private javax.swing.JButton linkButton_;
-   private javax.swing.JButton listButton_1;
-   private javax.swing.JButton loadButton;
-   private javax.swing.JCheckBox logLogCheckBox_;
-   private javax.swing.JButton mathButton_;
-   private javax.swing.JComboBox method2CBox_;
-   private javax.swing.JTextField pairsMaxDistanceField_;
-   private javax.swing.JButton plotButton_;
-   private javax.swing.JComboBox plotComboBox_;
-   private javax.swing.JCheckBox powerSpectrumCheckBox_;
-   private javax.swing.JLabel referenceName_;
-   private javax.swing.JButton removeButton;
-   private javax.swing.JButton renderButton_;
-   private javax.swing.JButton saveButton;
-   private javax.swing.JComboBox saveFormatBox_;
-   private javax.swing.JButton showButton_;
-   private javax.swing.JTextField sigmaMax_;
-   private javax.swing.JTextField sigmaMin_;
-   private javax.swing.JButton straightenTrackButton_;
-   private javax.swing.JButton unjitterButton_;
-   private javax.swing.JComboBox visualizationMagnification_;
-   private javax.swing.JComboBox visualizationModel_;
-   private javax.swing.JButton zCalibrateButton_;
-   private javax.swing.JLabel zCalibrationLabel_;
-   // End of variables declaration//GEN-END:variables
-
-
-   /**
-    * Renders button with appropriate names
-    */
-   class ButtonRenderer extends JButton implements TableCellRenderer {
-
-      public ButtonRenderer() {
-         setOpaque(true);
-      }
-
-      @Override
-      public Component getTableCellRendererComponent(JTable table, Object value,
-          boolean isSelected, boolean hasFocus, int row, int column) {
-
-         setForeground(table.getForeground());
-         setBackground(UIManager.getColor("Button.background"));
-
-         if (rowData_.get(row).isTrack_) {
-            if (column == 4)
-               setText((value == null ? "" : "Center"));
-            else {
-               if (column == 5)
-                  setText((value == null ? "" : "Straighten"));
-               else
-                  setText((value == null ? "" : value.toString()));
-            }
-         } else {
-            return null;
-            //if (column == 4)
-            //   setText((value == null ? "" : "Render"));
-            //if (column == 5)
-            //   return null;     
-         }
-             
-         return this;
-      }
    }
+
+   private void listButton_1ActionPerformed(java.awt.event.ActionEvent evt) {
+      PairDisplayForm pdf = new PairDisplayForm(studio_);
+      pdf.setVisible(true);
+   }
+
+
 
    /**
     * Shows dataset in ImageJ Results Table
@@ -2001,12 +1683,12 @@ public class DataCollectionForm extends javax.swing.JFrame {
       for (SpotData gd : rowData.spotList_) {
          if (gd != null) {
             rt.incrementCounter();
-            rt.addValue(Terms.FRAME, gd.getFrame());
-            rt.addValue(Terms.SLICE, gd.getSlice());
-            rt.addValue(Terms.CHANNEL, gd.getChannel());
-            rt.addValue(Terms.POSITION, gd.getPosition());
-            rt.addValue(Terms.INT, gd.getIntensity());
-            rt.addValue(Terms.BACKGROUND, gd.getBackground());
+            rt.addValue(Terms.FRAME, ResultsTable.d2s(gd.getFrame(), 0));
+            rt.addValue(Terms.SLICE, ResultsTable.d2s(gd.getSlice(), 0));
+            rt.addValue(Terms.CHANNEL, ResultsTable.d2s(gd.getChannel(), 0));
+            rt.addValue(Terms.POSITION, ResultsTable.d2s(gd.getPosition(), 0));
+            rt.addValue(Terms.XPIX, ResultsTable.d2s(gd.getX(), 0));
+            rt.addValue(Terms.YPIX, ResultsTable.d2s(gd.getY(), 0));
             if (rowData.coordinate_ == Coordinates.NM) {
                rt.addValue(Terms.XNM, gd.getXCenter());
                rt.addValue(Terms.YNM, gd.getYCenter());
@@ -2016,7 +1698,8 @@ public class DataCollectionForm extends javax.swing.JFrame {
                rt.addValue(Terms.XFITPIX, gd.getXCenter());
                rt.addValue(Terms.YFITPIX, gd.getYCenter());
             }
-            rt.addValue(Terms.SIGMA, gd.getSigma());
+            rt.addValue(Terms.INT, gd.getIntensity());
+            rt.addValue(Terms.BACKGROUND, gd.getBackground());
             if (shape >= 1) {
                rt.addValue(Terms.WIDTH, gd.getWidth());
             }
@@ -2026,24 +1709,65 @@ public class DataCollectionForm extends javax.swing.JFrame {
             if (shape == 3) {
                rt.addValue(Terms.THETA, gd.getTheta());
             }
-            rt.addValue(Terms.XPIX, gd.getX());
-            rt.addValue(Terms.YPIX, gd.getY());
+            rt.addValue(Terms.SIGMA, ResultsTable.d2s(gd.getSigma(), 2));
+
             for (String key : gd.getKeys()) {
-               rt.addValue(key, gd.getValue(key));
+               if (key.equals(SpotData.Keys.INTENSITYRATIO) || key.equals(SpotData.Keys.MSIGMA)) {
+                  rt.addValue(key, ResultsTable.d2s(gd.getValue(key), 2));
+               } else {
+                  rt.addValue(key, gd.getValue(key));
+               }
             }
          }
       }
       
       TextPanel tp;
-      TextWindow win;
       
-      String name = "Spots from: " + rowData.name_;
+      String name = "Spots from: " + rowData.getName();
       rt.show(name);
       ImagePlus siPlus = ij.WindowManager.getImage(rowData.title_);
       // Attach listener to TextPanel
       Frame frame = WindowManager.getFrame(name);
       if (frame != null && frame instanceof TextWindow && siPlus != null) {
-         win = (TextWindow) frame;
+         final TextWindow win = (TextWindow) frame;
+         win.setSize(studio_.profile().getInt(DataCollectionForm.class, "ResWidth", 550),
+                 studio_.profile().getInt(DataCollectionForm.class, "ResHeight", 300));
+         win.setLocation(studio_.profile().getInt(DataCollectionForm.class, "ResXPos", 100),
+                 studio_.profile().getInt(DataCollectionForm.class, "ResYPos", 100));
+         win.addWindowListener(new WindowListener() {
+            @Override
+            public void windowOpened(WindowEvent we) {
+               }
+
+            @Override
+            public void windowClosing(WindowEvent we) {
+               studio_.profile().setInt(DataCollectionForm.class, "ResWidth", win.getWidth());
+               studio_.profile().setInt(DataCollectionForm.class, "ResHeight", win.getHeight());
+               studio_.profile().setInt(DataCollectionForm.class, "ResXPos", win.getX());
+               studio_.profile().setInt(DataCollectionForm.class, "ResYPos", win.getY());
+            }
+
+            @Override
+            public void windowClosed(WindowEvent we) {
+               }
+
+            @Override
+            public void windowIconified(WindowEvent we) {
+               }
+
+            @Override
+            public void windowDeiconified(WindowEvent we) {
+               }
+
+            @Override
+            public void windowActivated(WindowEvent we) {
+               }
+
+            @Override
+            public void windowDeactivated(WindowEvent we) {
+               }
+         });
+         
          tp = win.getTextPanel();
 
          // TODO: the following does not work, there is some voodoo going on here
@@ -2053,8 +1777,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
          for (KeyListener ks : tp.getKeyListeners()) {
             tp.removeKeyListener(ks);
          }
+         for (KeyListener ks : win.getKeyListeners()) {
+            win.removeKeyListener(ks);
+         }
          
-         ResultsTableListener myk = new ResultsTableListener(siPlus, rt, win, rowData.halfSize_);
+         ResultsTableListener myk = new ResultsTableListener(studio_, rowData.dw_, siPlus, 
+                 rt, win, rowData.halfSize_);
+         
+         tp.removeKeyListener(IJ.getInstance());
+         win.removeKeyListener(IJ.getInstance());
          tp.addKeyListener(myk);
          tp.addMouseListener(myk);
          frame.toFront();
@@ -2064,7 +1795,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
 
    
    public JTable getResultsTable() {
-      return jTable1_;
+      return mainTable_;
    }
 
  
@@ -2144,17 +1875,13 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
 
             // Add transformed data to data overview window
-            addSpotData(rowData.name_ + "-CC-" + referenceName_.getText() + "-"
-                    + method2CBox_.getSelectedItem(),
-                    rowData.title_,
-                    referenceName_.getText(), rowData.width_,
-                    rowData.height_, rowData.pixelSizeNm_,
-                    rowData.zStackStepSizeNm_, rowData.shape_,
-                    rowData.halfSize_, rowData.nrChannels_, rowData.nrFrames_,
-                    rowData.nrSlices_, 1, rowData.maxNrSpots_, correctedData,
-                    rowData.timePoints_,
-                    false, Coordinates.NM, false, 0.0, 0.0);
-
+            RowData.Builder builder = rowData.copy();
+            builder.setName(rowData.getName() + "-CC-" + reference2CName_.getText() + "-"
+                    + method2CBox_.getSelectedItem()).
+                    setColColorRef(reference2CName_.getText()).
+                    setSpotList(correctedData);
+            addSpotData(builder);
+  
             semaphore_.release();
          }
       };
@@ -2162,263 +1889,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
       (new Thread(doWorkRunnable)).start();
    }
 
-   /**
-    * Plots Tracks using JFreeChart
-    *
-    * @rowData
-    * @plotMode - Index of plotMode in array {"t-X", "t-Y", "X-Y", "t-Int"};
-    * @plotMode - Index of plotMode in array {"t-X", "t-Y", "t-dist.", "t-Int.",
-    * "X-Y"};
-    */
-   private void plotData(RowData[] rowDatas, int plotMode) {
-      String title = plotModes_[plotMode];
-      boolean logLog = logLogCheckBox_.isSelected();
-      boolean doPSD = powerSpectrumCheckBox_.isSelected();
-      boolean useShapes = true;
-      if (logLog || doPSD) {
-         useShapes = false;
-      }
-      if (rowDatas.length == 1) {
-         title = rowDatas[0].name_ + " " + plotModes_[plotMode];
-      }
-
-      XYSeries[] datas = new XYSeries[rowDatas.length];
-
-             
-      // Todo: check all rows and throw an error when there is a difference
-      boolean useS = useSeconds(rowDatas[0]);
-      boolean hasTimeInfo = hasTimeInfo(rowDatas[0]);
-
-      String xAxis = null;
-
-      switch (plotMode) {
-
-         case (0): { // t-X
-            if (doPSD) {
-               FFTUtils.calculatePSDs(rowDatas, datas, PlotMode.X);
-               xAxis = "Freq (Hz)";
-               GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
-                       0, 400, useShapes, logLog);
-
-            } else {
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-               }
-
-               for (int index = 0; index < rowDatas.length; index++) {
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     if (hasTimeInfo) {
-                        double timePoint = rowDatas[index].timePoints_.get(i);
-                        if (useS) {
-                           timePoint /= 1000;
-                        }
-                        datas[index].add(timePoint, spot.getXCenter());
-                     } else {
-                        datas[index].add(i, spot.getXCenter());
-                     }
-                  }
-                  xAxis = "Time (frameNr)";
-                  if (hasTimeInfo) {
-                     xAxis = "Time (ms)";
-                     if (useS) {
-                        xAxis = "Time(s)";
-                     }
-                  }
-               }
-               GaussianUtils.plotDataN(title, datas, xAxis, "X(nm)", 0, 400, useShapes, logLog);
-            }
-         }
-         break;
-
-         case (1): { // t-Y
-            if (doPSD) {
-               FFTUtils.calculatePSDs(rowDatas, datas, PlotMode.Y);
-               xAxis = "Freq (Hz)";
-               GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
-                       0, 400, useShapes, logLog);
-            } else {
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-               }
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     if (hasTimeInfo) {
-                        double timePoint = rowDatas[index].timePoints_.get(i);
-                        if (useS) {
-                           timePoint /= 1000;
-                        }
-                        datas[index].add(timePoint, spot.getYCenter());
-                     } else {
-                        datas[index].add(i, spot.getYCenter());
-                     }
-                  }
-                  xAxis = "Time (frameNr)";
-                  if (hasTimeInfo) {
-                     xAxis = "Time (ms)";
-                     if (useS) {
-                        xAxis = "Time(s)";
-                     }
-                  }
-               }
-               GaussianUtils.plotDataN(title, datas, xAxis, "Y(nm)", 0, 400, useShapes, logLog);
-            }
-         }
-         break;
-
-
-         case (2): { // t-dist.
-            if (doPSD) {
-               /*
-               FFTUtils.calculatePSDs(rowDatas, datas, PlotMode.Y);
-               xAxis = "Freq (Hz)";
-               GaussianUtils.plotDataN(title + " PSD", datas, xAxis, "Strength",
-                       0, 400, useShapes, logLog);
-                       * */
-            } else {
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-               }
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-                  SpotData sp = rowDatas[index].spotList_.get(0);
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     double distX = (sp.getXCenter() - spot.getXCenter())
-                             * (sp.getXCenter() - spot.getXCenter());
-                     double distY = (sp.getYCenter() - spot.getYCenter())
-                             * (sp.getYCenter() - spot.getYCenter());
-                     double dist = Math.sqrt(distX + distY);
-                     if (hasTimeInfo) {
-                        double timePoint = rowDatas[index].timePoints_.get(i);
-                        if (useS) {
-                           timePoint /= 1000.0;
-                        }
-                        datas[index].add(timePoint, dist);
-                     } else {
-                        datas[index].add(i, dist);
-                     }
-                  }
-                  xAxis = "Time (frameNr)";
-                  if (hasTimeInfo) {
-                     xAxis = "Time (ms)";
-                     if (useS) {
-                        xAxis = "Time (s)";
-                     }
-                  }
-               }
-               GaussianUtils.plotDataN(title, datas, xAxis, " distance (nm)", 0, 400, useShapes, logLog);
-            }
-         }
-         break;
-
-         case (3): { // t-Int
-            if (doPSD) {
-                JOptionPane.showMessageDialog(this, "Function is not implemented");
-            } else {
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-               }
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_);
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     if (hasTimeInfo) {
-                        double timePoint = rowDatas[index].timePoints_.get(i);
-                        if (useS) {
-                           timePoint /= 1000;
-                        }
-                        datas[index].add(timePoint, spot.getIntensity());
-                     } else {
-                        datas[index].add(i, spot.getIntensity());
-                     }
-                  }
-                  xAxis = "Time (frameNr)";
-                  if (hasTimeInfo) {
-                     xAxis = "Time (ms)";
-                     if (useS) {
-                        xAxis = "Time (s)";
-                     }
-
-                  }
-               }
-               GaussianUtils.plotDataN(title, datas, xAxis, "Intensity (#photons)",
-                       0, 400, useShapes, logLog);
-            }
-         }
-         break;
-
-         case (4): { // X-Y
-            if (doPSD) {
-               JOptionPane.showMessageDialog(this, "Function is not implemented");
-            } else {
-               double minX = Double.MAX_VALUE; double minY = Double.MAX_VALUE;
-               double maxX = Double.MIN_VALUE; double maxY = Double.MIN_VALUE;
-               for (int index = 0; index < rowDatas.length; index++) {
-                  datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
-                  for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                     SpotData spot = rowDatas[index].spotList_.get(i);
-                     datas[index].add(spot.getXCenter(), spot.getYCenter());
-                     minX = Math.min(minX, spot.getXCenter());
-                     minY = Math.min(minY, spot.getYCenter());
-                     maxX = Math.max(maxX, spot.getXCenter());
-                     maxY = Math.max(maxY, spot.getYCenter());
-                  }
-               }
-               double xDivisor = 1.0;
-               double yDivisor = 1.0;
-               String xAxisTitle = "X(nm)";
-               String yAxisTitle = "Y(nm)";
-               if (maxX - minX > 10000) {
-                  xAxisTitle = "X(micron)";
-                  xDivisor = 1000;
-               }
-               if (maxY - minY > 10000) {
-                  yAxisTitle = "Y(micron)";
-                  yDivisor = 1000;
-               } 
-               if (xDivisor != 1.0 || yDivisor != 1.0) {  
-                  for (int index = 0; index < rowDatas.length; index++) {
-                     datas[index] = new XYSeries(rowDatas[index].ID_, false, true);
-                     for (int i = 0; i < rowDatas[index].spotList_.size(); i++) {
-                        SpotData spot = rowDatas[index].spotList_.get(i);
-                        datas[index].add(spot.getXCenter() / xDivisor, 
-                                spot.getYCenter() / yDivisor);
-                     }
-                  }
-               }
-
-               GaussianUtils.plotDataN(title, datas, xAxisTitle, yAxisTitle, 0, 400, useShapes, logLog);
-            }
-         }
-         break;
-      }
-   }
-   
-   public boolean useSeconds(RowData row) {
-      boolean useS = false;
-      if (row.timePoints_ != null) {
-         if (row.timePoints_.get(row.timePoints_.size() - 1)
-                 - row.timePoints_.get(0) > 10000) {
-            useS = true;
-         }
-      }
-      return useS;
-   }
-   
-   private boolean hasTimeInfo(RowData row) {
-      boolean hasTimeInfo = false;
-      if (row.timePoints_ != null) {
-         if (row.timePoints_.get(row.timePoints_.size() - 1)
-                 - row.timePoints_.get(0) > 0) {
-            hasTimeInfo = true;
-         }
-      }
-      return hasTimeInfo;
-   }
-   
    /**
     * Performs Z-calibration
     * 
@@ -2436,7 +1906,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
       
       zc_.clearDataPoints();
       
-      RowData rd = rowData_.get(rowNr);
+      RowData rd = mainTableModel_.getRow(rowNr);
       if (rd.shape_ < 2) {
          JOptionPane.showMessageDialog(getInstance(), 
                  "Use Fit Parameters Dimension 2 or 3 for Z-calibration");
@@ -2458,15 +1928,15 @@ public class DataCollectionForm extends javax.swing.JFrame {
       zc_.clearDataPoints();
       
       // calculate average and stdev per frame
-      if (rd.frameIndexSpotList_ == null) {
-         rd.index();
-      }  
+            
+      Map<Integer, List<SpotData>> frameIndexSpotList = 
+              rd.getSpotListIndexedByFrame();
       
       final int nrImages = rd.nrSlices_;
      
       int frameNr = 0;
       while (frameNr < nrImages) {
-         List<SpotData> frameSpots = rd.frameIndexSpotList_.get(frameNr);
+         List<SpotData> frameSpots = frameIndexSpotList.get(frameNr);
          if (frameSpots != null) {
             double[] xws = new double[frameSpots.size()];
             double[] yws = new double[frameSpots.size()];
@@ -2480,9 +1950,6 @@ public class DataCollectionForm extends javax.swing.JFrame {
             double meanY = StatUtils.mean(yws);
             double varX = StatUtils.variance(xws, meanX);
             double varY = StatUtils.variance(yws, meanY);
-            
-            //System.out.println("Frame: " + frameNr + ", X: " + (int) meanX + ", " + (int) varX + 
-            //        ", Y: " + (int) meanY + ", " + (int) varY);
             
             if (frameSpots.size() >= minNrSpots && 
                     meanX < widthCutoff &&
@@ -2520,7 +1987,7 @@ public class DataCollectionForm extends javax.swing.JFrame {
    
    public void filterPairs(final double maxDistance, final double deviationMax,
            final int nrQuadrants) {
-      final int[] rows = jTable1_.getSelectedRows();
+      final int[] rows = mainTable_.getSelectedRowsSorted();
       
       if (rows == null || rows.length < 1) {
          JOptionPane.showMessageDialog(getInstance(),
@@ -2529,9 +1996,37 @@ public class DataCollectionForm extends javax.swing.JFrame {
       }
       
       for (int i = 0; i < rows.length; i++) {
-         RowData rowData = rowData_.get(rows[i]);
+         RowData rowData = mainTableModel_.getRow(rows[i]);
          PairFilter.filter(rowData, maxDistance, deviationMax, nrQuadrants);
       }
+   }
+   
+   public void filterNow_ActionPerformed() {
+            
+      Runnable doWorkRunnable = new Runnable() {
+
+         @Override
+         public void run() {
+            
+            SpotDataFilter sdf = new SpotDataFilter();  
+            try {
+               if (filterIntensityCheckBox_.isSelected()) {
+                  sdf.setIntensity(true,
+                       NumberUtils.displayStringToDouble(intensityMin_.getText()),
+                       NumberUtils.displayStringToDouble(intensityMax_.getText()) );
+               }
+               if (filterSigmaCheckBox_.isSelected()) {
+                  sdf.setSigma(true, 
+                       NumberUtils.displayStringToDouble(sigmaMin_.getText()), 
+                       NumberUtils.displayStringToDouble(sigmaMax_.getText()) );
+               }
+               filterSpots(sdf);
+            } catch (ParseException ex) {
+              ReportingUtils.showError("Filter inputs are not all numeric");
+            }
+         }
+      };
+      doWorkRunnable.run();
    }
    
    /**
@@ -2539,9 +2034,9 @@ public class DataCollectionForm extends javax.swing.JFrame {
     * @param sf SpotDataFilter used to filter the selected dataset
     */
    public void filterSpots(SpotDataFilter sf) {
-      final int[] rows = jTable1_.getSelectedRows();
+      final int[] rows = mainTable_.getSelectedRowsSorted();
       for (int i = 0; i < rows.length; i++) {
-         RowData rowData = rowData_.get(rows[i]);
+         RowData rowData = mainTableModel_.getRow(rows[i]);
          List<SpotData> filteredData = new ArrayList<SpotData>();
          for (SpotData spot : rowData.spotList_) {
             if (sf.filter(spot)) {
@@ -2549,13 +2044,10 @@ public class DataCollectionForm extends javax.swing.JFrame {
             }
          }
          // Add transformed data to data overview window
-         addSpotData(rowData.name_ + "-Filtered", rowData.title_, "", rowData.width_,
-                 rowData.height_, rowData.pixelSizeNm_, rowData.zStackStepSizeNm_,
-                 rowData.shape_, rowData.halfSize_, rowData.nrChannels_,
-                 rowData.nrFrames_, rowData.nrSlices_, 1, filteredData.size(),
-                 filteredData, null, false, DataCollectionForm.Coordinates.NM, rowData.hasZ_,
-                 rowData.minZ_, rowData.maxZ_);
-
+         RowData.Builder builder = rowData.copy();
+         builder.setName(rowData.getName() + "-Filtered").setMaxNrSpots(filteredData.size()).
+                 setSpotList(filteredData);
+         addSpotData(builder);
       }
    }
 

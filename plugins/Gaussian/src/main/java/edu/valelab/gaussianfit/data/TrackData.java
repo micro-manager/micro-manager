@@ -1,5 +1,10 @@
 /*
-Copyright (c) 2010-2017, Regents of the University of California
+ * This class stores data specific to tracks
+ * 
+ * Author: Nico Stuurman, nico.stuurman at ucsf.edu
+ * 
+
+Copyright (c) 2016-2017, Regents of the University of California
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,46 +31,49 @@ The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies,
 either expressed or implied, of the FreeBSD Project.
  */
-
 package edu.valelab.gaussianfit.data;
 
-import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author nico
  */
-public class GsSpotPair {
-   private final SpotData firstSpot_;
-   private final SpotData secondSpot_;
-   private final Point2D.Double firstPoint_; 
-   private final Point2D.Double secondPoint_;
-
-   public GsSpotPair(SpotData fgs, SpotData sgs, Point2D.Double fp, Point2D.Double sp) {
-      firstSpot_ = fgs;
-      secondSpot_ = sgs;
-      firstPoint_ = fp;
-      secondPoint_ = sp;
-   }
-
-   public SpotData getFirstSpot() {
-      return firstSpot_;
-   }
-   
-   public SpotData getSecondSpot() {
-      return secondSpot_;
-   }
-
-   public Point2D.Double getFirstPoint() {
-      return firstPoint_;
-   }
-
-   public Point2D.Double getSecondPoint() {
-      return secondPoint_;
-   }
-   
-   public GsSpotPair copy() {
-      return new GsSpotPair(firstSpot_, secondSpot_, firstPoint_, secondPoint_);
-   }
-   
+public class TrackData {
+    private final List<SpotData> spotList_;
+    private int missingAtEnd_;
+    
+    public TrackData() {
+       spotList_ = new ArrayList<SpotData>();
+       missingAtEnd_ = 0;
+    }
+    
+    public void addMissing() {
+       missingAtEnd_++;
+    } 
+    
+    public void resetMissing() {
+       missingAtEnd_ = 0;
+    }
+    
+    public boolean missingMoreThan(int thisMany) {
+       return missingAtEnd_ > thisMany;
+    }
+    
+    public int size() {
+       return spotList_.size();
+    }
+    
+    public SpotData get(int index) {
+       return spotList_.get(index);
+    }
+    
+    public void add(SpotData item) {
+       spotList_.add(item);
+    }
+    
+    public List<SpotData> getList() {
+       return spotList_;
+    }
 }

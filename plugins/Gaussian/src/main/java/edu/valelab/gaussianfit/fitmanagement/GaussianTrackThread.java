@@ -8,13 +8,44 @@
  * to either TRACK or FIDUCIAL.  GaussianTrackForm has the UI element that invokes
  * these functions.
  *
+ *  Author: Nico Stuurman
+ *
+Copyright (c) 2010-2017, Regents of the University of California
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies,
+either expressed or implied, of the FreeBSD Project.
  */
 
-package edu.valelab.gaussianfit;
 
+package edu.valelab.gaussianfit.fitmanagement;
+
+import edu.valelab.gaussianfit.DataCollectionForm;
 import edu.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.valelab.gaussianfit.algorithm.GaussianFit;
 import edu.valelab.gaussianfit.data.GaussianInfo;
+import edu.valelab.gaussianfit.data.RowData;
 import edu.valelab.gaussianfit.data.SpotData;
 import edu.valelab.gaussianfit.utils.ReportingUtils;
 import java.awt.geom.Point2D;
@@ -100,7 +131,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
            ArrayList<Double> timePoints) {
 
 
-      GaussianFit gs = new GaussianFit(shape_, fitMode_);
+      GaussianFit gs = new GaussianFit(super.getShape(), super.getFitMode());
      
       double cPCF = photonConversionFactor_ / gain_;
 
@@ -114,7 +145,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          return false;
       }
       
-      Polygon pol = FindLocalMaxima.FindMax(siPlus, halfSize_, noiseTolerance_, preFilterType_);
+      Polygon pol = FindLocalMaxima.FindMax(siPlus, super.getHalfBoxSize(), 
+              super.getNoiseTolerance(), preFilterType_);
       if (pol.npoints == 0) {
          if (!silent_)
             ReportingUtils.showError("No local maxima found in ROI" );
@@ -155,7 +187,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
       }
       boolean stop = false;
       int missedFrames = 0;
-      int size = 2 * halfSize_;
+      int size = 2 * super.getHalfBoxSize();
 
       
       for (int i = n; i <= nMax && !stop; i++) {
@@ -176,7 +208,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          siPlus.setRoi(searchRoi, false);
 
          // Find maximum in Roi, might not be needed....
-         pol = FindLocalMaxima.FindMax(siPlus, 2 * halfSize_, noiseTolerance_, preFilterType_);
+         pol = FindLocalMaxima.FindMax(siPlus, size, noiseTolerance_, preFilterType_);
 
          // do not stray more than 2 pixels in x or y.  
          // This velocity maximum parameter should be tunable by the user
@@ -194,7 +226,8 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          }
 
          // Set Roi for fitting centered around maximum
-         Roi spotRoi = new Roi(xc - halfSize_, yc - halfSize_, 2 * halfSize_, 2*halfSize_);
+         Roi spotRoi = new Roi(xc - super.getHalfBoxSize(), yc - super.getHalfBoxSize(), 
+                 size, size);
          siPlus.setRoi(spotRoi, false);
          ImageProcessor ip;
          try {
@@ -211,23 +244,24 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          }
             
          spot = new SpotData(ip, ch, 1, i, 1, i, xc,yc);
-         double[] paramsOut = gs.dogaussianfit(ip, maxIterations_);
+         GaussianFit.Data fitResult = gs.dogaussianfit(ip, maxIterations_);
          double sx;
          double sy;
          double a = 1.0;
          double theta = 0.0;
-         if (paramsOut.length >= 4) {
+         if (fitResult.getParms().length >= 4) {
             //anormalize the intensity from the Gaussian fit
-            double N = cPCF * paramsOut[GaussianFit.INT] * (2 * Math.PI * paramsOut[GaussianFit.S] * paramsOut[GaussianFit.S]);           
-            double xpc = paramsOut[GaussianFit.XC];
-            double ypc = paramsOut[GaussianFit.YC];
-            double x = (xpc - halfSize_ + xc) * pixelSize_;
-            double y = (ypc - halfSize_ + yc) * pixelSize_;
+            double N = cPCF * fitResult.getParms()[GaussianFit.INT] * 
+                    (2 * Math.PI * fitResult.getParms()[GaussianFit.S] * fitResult.getParms()[GaussianFit.S]);           
+            double xpc = fitResult.getParms()[GaussianFit.XC];
+            double ypc = fitResult.getParms()[GaussianFit.YC];
+            double x = (xpc - super.getHalfBoxSize() + xc) * pixelSize_;
+            double y = (ypc - super.getHalfBoxSize() + yc) * pixelSize_;
 
                
-            double s = paramsOut[GaussianFit.S] * pixelSize_;
+            double s = fitResult.getParms()[GaussianFit.S] * pixelSize_;
             // express background in photons after base level correction
-            double bgr = cPCF * (paramsOut[GaussianFit.BGR] - baseLevel_);
+            double bgr = cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_);
             // calculate error using formular from Thompson et al (2002)
             // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
             double sigma = (s * s + (pixelSize_ * pixelSize_) / 12) / 
@@ -235,21 +269,21 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             sigma = Math.sqrt(sigma);
 
             double width = 2 * s;
-            if (paramsOut.length >= 6) {
-                sx = paramsOut[GaussianFit.S1] * pixelSize_;
-                sy = paramsOut[GaussianFit.S2] * pixelSize_;
+            if (fitResult.getParms().length >= 6) {
+                sx = fitResult.getParms()[GaussianFit.S1] * pixelSize_;
+                sy = fitResult.getParms()[GaussianFit.S2] * pixelSize_;
                 a = sx/sy;
              }
 
-             if (paramsOut.length >= 7) {
-                theta = paramsOut[GaussianFit.S3];
+             if (fitResult.getParms().length >= 7) {
+                theta = fitResult.getParms()[GaussianFit.S3];
              }
             if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))
                     && (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_))) {
                // If we have a good fit, update position of the box
-               if (xpc > 0 && xpc < (2 * halfSize_) && ypc > 0 && ypc < (2 * halfSize_)) {
-                  xc += (int) xpc - halfSize_;
-                  yc += (int) ypc - halfSize_;
+               if (xpc > 0 && xpc < (size) && ypc > 0 && ypc < (size)) {
+                  xc += (int) xpc - getHalfBoxSize();
+                  yc += (int) ypc - getHalfBoxSize();
                }
                spot.setData(N, bgr, x, y, 0.0, 2 * s, a, theta, sigma);
                xyPoints.add(new Point2D.Double(x, y));
@@ -285,14 +319,20 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
 
    private void addListToForm(String name, List<SpotData> resultList, ImagePlus siPlus, ArrayList<Double> timePoints) {
       // Add data to data overview window
-      DataCollectionForm dcForm = DataCollectionForm.getInstance();
-      dcForm.addSpotData(name, siPlus.getTitle(), "", siPlus.getWidth(), 
-              siPlus.getHeight(),  pixelSize_, (float) 0.0, shape_,
-              halfSize_, siPlus.getNChannels(), siPlus.getNFrames(),
-              siPlus.getNSlices(), 1, resultList.size(), resultList, 
-              timePoints, true, DataCollectionForm.Coordinates.NM, false, 
-              0.0, 0.0);
-      dcForm.setVisible(true);
+           RowData.Builder builder = new RowData.Builder();
+      builder.setName(name).setTitle(siPlus.getTitle()).
+              setWidth(siPlus.getWidth()).setHeight(siPlus.getHeight()).
+              setPixelSizeNm(pixelSize_).setZStackStepSizeNm(0.0f).
+              setShape(super.getShape()).setHalfSize(super.getHalfBoxSize()).
+              setNrChannels(siPlus.getNChannels()).setNrFrames(siPlus.getNFrames()).
+              setNrSlices(siPlus.getNSlices()).setNrPositions(1).
+              setMaxNrSpots(resultList.size()).setSpotList(resultList).
+              setTimePoints(timePoints).setIsTrack(true).
+              setCoordinate(DataCollectionForm.Coordinates.NM).
+              setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
+      DataCollectionForm.getInstance().addSpotData(builder);
+
+      DataCollectionForm.getInstance().setVisible(true);
    }
 
   

@@ -1,7 +1,32 @@
 /**
  * Class that implements Gaussian fitting using the apache commons math library
  *
- * September 2010, Nico Stuurman
+Copyright (c) 2010-2017, Regents of the University of California
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The views and conclusions contained in the software and documentation are those
+of the authors and should not be interpreted as representing official policies,
+either expressed or implied, of the FreeBSD Project.
  */
 
 package edu.valelab.gaussianfit.algorithm;
@@ -30,6 +55,28 @@ import org.apache.commons.math.optimization.general.NonLinearConjugateGradientOp
  * @author nico
  */
 public class GaussianFit {
+   
+   public class Data {
+      private final double[] parms_;
+      private final double apertureIntensity_; // in raw units
+      private final double apertureBackground_; // in raw units
+      
+      public Data(double[] parms, double intensity, double background) {
+         parms_ = parms;
+         apertureIntensity_ = intensity;
+         apertureBackground_ = background;
+      }
+      public double[] getParms() {
+         return parms_;
+      }
+      public double getApertureIntensity () {
+         return apertureIntensity_;
+      }
+      public double getApertureBackground() {
+         return apertureBackground_;
+      }
+      
+   } 
 
    public static final int INT = 0;
    public static final int BGR = 1;
@@ -49,8 +96,10 @@ public class GaussianFit {
    int nx_;
    int ny_;
    int count_ = 0;
-   int mode_ = 1;
+   int shape_ = 1;
    int fitMode_ = 1;
+   boolean fixWidth_ = false;
+   double fixedWidth_ = 0.9;
 
    NelderMead nm_;
    SimpleScalarValueChecker convergedChecker_;
@@ -59,36 +108,53 @@ public class GaussianFit {
    NonLinearConjugateGradientOptimizer nlcgo_;
    LevenbergMarquardtOptimizer lMO_;
 
+   
    /**
     * Gaussian fit can be run by estimating parameter c (width of Gaussian)
     * as 1 (circle), 2 (width varies in x and y), or 3 (ellipse) parameters
     * 
-    * @param mode - fit circle (1) ellipse(2), or ellipse with varying angle (3)
+    * @param shape - fit circle (1) ellipse(2), or ellipse with varying angle (3)
     * @param fitMode - algorithm use: NelderMead (1), Levenberg Marquard (2), 
     *                   NelderMean MLE (3), LevenberMarquard MLE(4)
+    * @param fixWidth - if true, do not fit the width
+    * @param fixedWidth - width of the Gaussian in pixels
     */
-   public GaussianFit(int mode, int fitMode) {
+   public GaussianFit(int shape, final int fitMode, final boolean fixWidth, 
+           final double fixedWidth) {
       super();
       fitMode_ = fitMode;
-      if (mode == 1) {
-         mode_ = 1;
+      fixWidth_ = fixWidth;
+      fixedWidth_ = fixedWidth;
+      // There is no point to fix the width of the Gaussian in modes other than 1:
+      if (fixWidth_ && fixedWidth_ > 0.0) {
+         shape = 1;
+      } else {
+         fixedWidth_ = -1.0;
+         fixWidth_ = false;
+      }
+      if (shape == 1) {
+         shape_ = 1;
          paramNames_ = new String[] {"A", "b", "x_c", "y_c", "sigma"};
       }
-      if (mode == 2) {
-         mode_ = 2;
+      if (shape == 2) {
+         shape_ = 2;
          paramNames_ = new String[] {"A", "b", "x_c", "y_c", "sigmaX", "sigmaY"};
       }
-      if (mode == 3) {
-         mode_ = 3;
+      if (shape == 3) {
+         shape_ = 3;
          paramNames_ = new String[] {"A", "b", "x_c", "y_c", "sigmaX", "sigmaY", "theta"};
       }
-      params0_ = new double [mode_ + 4] ;
-      steps_ = new double[mode_ + 4];
+      int paramSize = shape_ + 3;
+      if (! (fixWidth_ && fixedWidth_ > 0.0) ) {
+         paramSize += 1;
+      }
+      params0_ = new double [paramSize] ;
+      steps_ = new double[paramSize];
 
       if (fitMode_ == 1) {
          nm_ = new NelderMead();
          convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
-         mGF_ = new MultiVariateGaussianFunction(mode_);
+         mGF_ = new MultiVariateGaussianFunction(shape_, fixedWidth_);
       }
       // Levenberg-Marquardt and weighted Levenberg-Marquardt
       if (fitMode_ == 2 || fitMode == 4) {
@@ -99,7 +165,7 @@ public class GaussianFit {
       if (fitMode_ == 3) {
          nm_ = new NelderMead();
          convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
-         mGFMLE_ = new MultiVariateGaussianMLE(mode_);
+         mGFMLE_ = new MultiVariateGaussianMLE(shape_, fixedWidth_);
       }
       /*
        * Gradient MLE, not working very well
@@ -114,11 +180,16 @@ public class GaussianFit {
       }
       */
    }
+   
+   
+   public GaussianFit(int mode, int fitMode) {
+       this(mode, fitMode, false, 0.0);
+   }
 
  
    /**
     * Performs Gaussian Fit on a given ImageProcessor
-    * Estimates initial values for the fit and sends of to Apache fitting code
+    * Estimates initial values for the fit and sends off to Apache fitting code
     * Background is estimated by averaging the outer rows and columns
     * Sigma estimate is hardcoded to 1.115 pixels
     * Signal estimate is derived from total signal - total background estimate
@@ -126,11 +197,12 @@ public class GaussianFit {
     *
     * @param siProc - ImageJ ImageProcessor containing image to be fit
     * @param maxIterations - maximum number of iterations for the Nelder Mead
-    *   optimization algorithm
+    *          optimization algorithm
+
     * @return 
     */
-   public double[] dogaussianfit (ImageProcessor siProc, int maxIterations) {
-      estimateParameters(siProc);
+   public Data dogaussianfit (ImageProcessor siProc, int maxIterations) {
+      Data estimate = estimateParameters(siProc);
 
       double[] paramsOut = {0.0};
 
@@ -140,19 +212,17 @@ public class GaussianFit {
          nm_.setMaxIterations(maxIterations);
          mGF_.setImage((short[]) siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
          try {
-            RealPointValuePair result = nm_.optimize(mGF_, GoalType.MINIMIZE, params0_);
+            RealPointValuePair result = nm_.optimize(mGF_, GoalType.MINIMIZE, 
+                    estimate.getParms());
             paramsOut = result.getPoint();
          } catch (java.lang.OutOfMemoryError e) {
             throw(e);
          } catch (FunctionEvaluationException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          } catch (OptimizationException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          } catch (IllegalArgumentException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          }
       }
 
@@ -173,12 +243,13 @@ public class GaussianFit {
             }
          }
          try {
-            paramsOut = cF.fit(new ParametricGaussianFunction( mode_, siProc.getWidth(), siProc.getHeight() ),
-                    params0_);
+            paramsOut = cF.fit(new ParametricGaussianFunction( 
+                    shape_, siProc.getWidth(), fixedWidth_), 
+                  estimate.getParms());
          } catch (FunctionEvaluationException ex) {
             ReportingUtils.logError(ex);
          } catch (OptimizationException ex) {
-            // Logger.getLogger(gaussianfit.class.getName()).log(Level.SEVERE, null, ex);
+            ReportingUtils.logError(ex);
          } catch (IllegalArgumentException ex) {
             ReportingUtils.logError(ex);
          }
@@ -191,19 +262,17 @@ public class GaussianFit {
          nm_.setMaxIterations(maxIterations);
          mGFMLE_.setImage((short[]) siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
          try {
-            RealPointValuePair result = nm_.optimize(mGFMLE_, GoalType.MINIMIZE, params0_);
+            RealPointValuePair result = nm_.optimize(mGFMLE_, GoalType.MINIMIZE, 
+                    estimate.getParms());
             paramsOut = result.getPoint();
          } catch (java.lang.OutOfMemoryError e) {
             throw(e);
          } catch (FunctionEvaluationException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          } catch (OptimizationException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          } catch (IllegalArgumentException e) {
-            ij.IJ.log(" " + e.toString());
-            //e.printStackTrace();
+            ReportingUtils.logError(e);
          }
       }
       
@@ -226,7 +295,7 @@ public class GaussianFit {
          
      
       
-      if (mode_ == 3) {
+      if (shape_ == 3) {
          if (paramsOut.length > S3) {
             double[] prms = GaussianUtils.ellipseParmConversion(paramsOut[S1], paramsOut[S2], paramsOut[S3]);
             paramsOut[S1] = prms[1];
@@ -234,20 +303,26 @@ public class GaussianFit {
             paramsOut[S3] = prms[0];
          }
       }
+      return new Data(paramsOut, estimate.getApertureIntensity(), 
+              estimate.getApertureBackground() );
 
-      return paramsOut;
    }
 
 
-   private void estimateParameters(ImageProcessor siProc) {
+   private Data estimateParameters(ImageProcessor siProc) {
       short[] imagePixels = (short[]) siProc.getPixels();
-
+      
       // Hard code estimate for sigma (expressed in pixels):
-      params0_[S] = 0.9;
-      if (mode_ >= 2) {
+      double s = 0.9;
+      if (! (fixWidth_ && fixedWidth_ > 0.0) ) {
+         params0_[S] = s;
+      } else {
+         s = fixedWidth_;
+      }
+      if (shape_ >= 2) {
          params0_[S2] = 0.9;
       }
-      if (mode_ == 3) {
+      if (shape_ == 3) {
          params0_[S1] = 1;
          params0_[S2] = 0;
          params0_[S3] = 1;
@@ -265,26 +340,25 @@ public class GaussianFit {
          bg += (imagePixels[(i + 1) * siProc.getWidth() - 1] & 0xffff);
          n += 2;
       }
-      params0_[BGR] = bg / n;
+      double background = bg/n;
+      params0_[BGR] = background;
       // estimate signal by subtracting background from total intensity
-      double mt = 0.0;
+      double totalIntensity = 0.0;
       for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
-         mt += (imagePixels[i] & 0xffff);
+         totalIntensity += (imagePixels[i] & 0xffff);
       }
-      double ti = mt - ((bg / n) * siProc.getHeight() * siProc.getWidth());
-      params0_[INT] = ti / (2 * Math.PI * params0_[S] * params0_[S]);
+      double signal = totalIntensity - ((bg / n) * siProc.getHeight() * siProc.getWidth());
+      params0_[INT] = signal / (2 * Math.PI * s * s);
       // print("Total signal: " + ti + "Estimate: " + params0_[0]);
       // estimate center of mass
       double mx = 0.0;
       double my = 0.0;
       for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
-         //mx += (imagePixels[i] - params0_[4]) * (i % siProc.getWidth() );
-         //my += (imagePixels[i] - params0_[4]) * (Math.floor (i / siProc.getWidth()));
          mx += ((imagePixels[i] & 0xffff)) * (i % siProc.getWidth());
          my += ((imagePixels[i] & 0xffff)) * (Math.floor(i / siProc.getWidth()));
       }
-      params0_[XC] = mx / mt;
-      params0_[YC] = my / mt;
+      params0_[XC] = mx / totalIntensity;
+      params0_[YC] = my / totalIntensity;
       //ij.IJ.log("Centroid: " + mx/mt + " " + my/mt);
       // set step size during estimate
       for (int i = 0; i < params0_.length; ++i) {
@@ -292,14 +366,18 @@ public class GaussianFit {
          if (steps_[i] == 0)
             steps_[i] = 0.1;
       }
+      
+      return new Data(params0_, totalIntensity, background);
    }
    
    
    private class LMChecker implements VectorialConvergenceChecker {
+      
       int iteration_ = 0;
       boolean lastResult_ = false;
       @Override
-      public boolean converged(int i, VectorialPointValuePair previous, VectorialPointValuePair current) {
+      public boolean converged(int i, VectorialPointValuePair previous, 
+              VectorialPointValuePair current) {
          if (i == iteration_)
             return lastResult_;
          
@@ -307,11 +385,16 @@ public class GaussianFit {
          double[] p = previous.getPoint();
          double[] c = current.getPoint();
          
+         boolean sOK = true;
+         if (!fixWidth_) {
+            sOK = Math.abs(p[S] - c[S]) < 5;
+         }
+         
          if ( Math.abs(p[INT] - c[INT]) < 10  &&
                  Math.abs(p[BGR] - c[BGR]) < 2 &&
                  Math.abs(p[XC] - c[XC]) < 0.1 &&
                  Math.abs(p[YC] - c[YC]) < 0.1 &&
-                 Math.abs(p[S] - c[S]) < 5 ) {
+                  sOK) {
             lastResult_ = true;
             return true;
          }
