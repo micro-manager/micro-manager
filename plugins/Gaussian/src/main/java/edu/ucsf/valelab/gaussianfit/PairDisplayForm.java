@@ -162,15 +162,17 @@ public class PairDisplayForm extends GUFrame{
               makeCheckBox("Show Pair Track Arrow overlay", SHOWOVERLAYPREF);
       panel.add(showOverlay, "wrap");
       
+      // Calculate Gaussian fit of vector distances (calculate distance from average x position and average y position)
+      final JCheckBox gaussianEstimate = 
+              makeCheckBox("Use Gaussian fit of Vector distances", USEGAUSSIAN);
+      
       // Distance estimate
-      final JCheckBox distanceEstimate =
+      final JCheckBox p2dDistanceEstimate =
               makeCheckBox("Estimate average distance (P2D)", P2DPREF);
       
+      // Use vector distances (calculate distance from average x position and average y position) in p2d
       final JCheckBox p2dUseVectDistance = 
-              makeCheckBox("Use Vector Dist.", P2DUSEVECTDISTANCE);
-      
-      final JCheckBox gaussianEstimate = 
-              makeCheckBox("Use gaussian fit of vector distances", USEGAUSSIAN);
+              makeCheckBox("Use Vector distances", P2DUSEVECTDISTANCE);
       
       // Distance estimate with fixed sigma
       final JCheckBox distanceEstimateFixedSigma =
@@ -201,15 +203,18 @@ public class PairDisplayForm extends GUFrame{
       
       sigmaTextField.getDocument().addDocumentListener(
               makeDocumentListener(SIGMAPREF, sigmaTextField));
-      distanceEstimate.addActionListener(new ActionListener() {
+      
+      p2dUseVectDistance.setEnabled(p2dDistanceEstimate.isSelected());
+      p2dDistanceEstimate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            distanceEstimateFixedSigma.setEnabled(distanceEstimate.isSelected());
-            sigmaTextField.setEnabled(distanceEstimate.isSelected() && 
+            p2dUseVectDistance.setEnabled(p2dDistanceEstimate.isSelected());
+            distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected());
+            sigmaTextField.setEnabled(p2dDistanceEstimate.isSelected() && 
                     distanceEstimateFixedSigma.isSelected());
-            useSigmaValue.setEnabled(distanceEstimate.isSelected() && 
+            useSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
                     distanceEstimateFixedSigma.isSelected());
-            estimateSigmaValue.setEnabled(distanceEstimate.isSelected()&& 
+            estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
                     distanceEstimateFixedSigma.isSelected());
          }
       });
@@ -221,15 +226,15 @@ public class PairDisplayForm extends GUFrame{
             estimateSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());           
          }
       });
-      distanceEstimateFixedSigma.setEnabled(distanceEstimate.isSelected());
-      sigmaTextField.setEnabled(distanceEstimate.isSelected() && 
+      distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected());
+      sigmaTextField.setEnabled(p2dDistanceEstimate.isSelected() && 
                     distanceEstimateFixedSigma.isSelected());
-      useSigmaValue.setEnabled(distanceEstimate.isSelected()&& 
+      useSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
                     distanceEstimateFixedSigma.isSelected());
-      estimateSigmaValue.setEnabled(distanceEstimate.isSelected()&& 
+      estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
                     distanceEstimateFixedSigma.isSelected());
       panel.add(gaussianEstimate, "wrap");
-      panel.add(distanceEstimate);
+      panel.add(p2dDistanceEstimate);
       panel.add(p2dUseVectDistance, "wrap");
       panel.add(distanceEstimateFixedSigma, "gapleft 60");
       panel.add(useSigmaValue, "split 2");
@@ -288,7 +293,7 @@ public class PairDisplayForm extends GUFrame{
                     showOverlay(showOverlay.isSelected()).
                     saveFile(saveTrackSummaryFile.isSelected()).
                     filePath(filePath.getText()).
-                    p2d(distanceEstimate.isSelected()).
+                    p2d(p2dDistanceEstimate.isSelected()).
                     useVectorDistances(p2dUseVectDistance.isSelected()).
                     doGaussianEstimate(gaussianEstimate.isSelected()).
                     fitSigma(!distanceEstimateFixedSigma.isSelected()).
