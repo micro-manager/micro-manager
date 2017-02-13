@@ -281,13 +281,18 @@ public class PairDisplayForm extends GUFrame{
             } else {
                sigmaValue = -1.0;
             }
+            /*
             DataCollectionForm.getInstance().listPairs(maxDistance, 
                     showPairList.isSelected(), showImage.isSelected(),
                     savePairTextFile.isSelected(), filePath.getText(),
                     showSummary.isSelected(), showGraph.isSelected() );
-            
+            */
             ParticlePairLister.Builder ppb = new ParticlePairLister.Builder();
             ppb.maxDistanceNm(maxDistance).
+                    showPairs(showPairList.isSelected()).
+                    showImage(showImage.isSelected()).
+                    savePairs(savePairTextFile.isSelected()).
+                    showGraph(showGraph.isSelected()).
                     showTrack(showTracks.isSelected()).
                     showSummary(showTrackSummary.isSelected()).
                     showOverlay(showOverlay.isSelected()).

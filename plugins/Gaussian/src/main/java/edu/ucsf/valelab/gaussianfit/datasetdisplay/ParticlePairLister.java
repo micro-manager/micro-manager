@@ -77,7 +77,12 @@ import org.micromanager.internal.MMStudio;
 public class ParticlePairLister {
 
    final private int[] rows_;
-   final private Double maxDistanceNm_;
+   final private Double maxDistanceNm_; //maximum distance in nm for two spots in different
+                                        // channels to be considered a pair
+   final private Boolean showPairs_;
+   final private Boolean showImage_;
+   final private Boolean savePairs_;
+   final private Boolean showGraph_;
    final private Boolean showTrack_;
    final private Boolean showSummary_;
    final private Boolean showOverlay_;
@@ -89,12 +94,16 @@ public class ParticlePairLister {
    final private Boolean useVectorDistances_;
    final private Double sigmaUserGuess_;
    final private String filePath_;
+   
 
    public static class Builder {
 
       private int[] rows_;
-      private Double maxDistanceNm_; //maximum distance in nm for two spots in different
-      // channels to be considered a pair
+      private Double maxDistanceNm_; 
+      private Boolean showPairs_;
+      private Boolean showImage_;
+      private Boolean savePairs_;
+      private Boolean showGraph_;
       private Boolean showTrack_;
       private Boolean showSummary_;
       private Boolean showOverlay_;
@@ -106,7 +115,8 @@ public class ParticlePairLister {
       private Boolean useVectorDistances_;
       private Double sigmaEstimate_;
       private String filePath_;
-
+       
+      
       public ParticlePairLister build() {
          return new ParticlePairLister(this);
       }
@@ -118,6 +128,26 @@ public class ParticlePairLister {
 
       public Builder maxDistanceNm(Double maxDistanceNm) {
          maxDistanceNm_ = maxDistanceNm;
+         return this;
+      }
+      
+      public Builder showPairs(Boolean showPairs) {
+         showPairs_ = showPairs;
+         return this;
+      }
+      
+      public Builder showImage(final Boolean showImage) {
+         showImage_ = showImage;
+         return this;
+      }
+      
+      public Builder savePairs(final Boolean savePairs) {
+         savePairs_ = savePairs;
+         return this;
+      }
+      
+      public Builder showGraph(final Boolean showGraph) {
+         showGraph_ = showGraph;
          return this;
       }
 
@@ -181,6 +211,10 @@ public class ParticlePairLister {
    public ParticlePairLister(Builder builder) {
       rows_ = builder.rows_;
       maxDistanceNm_ = builder.maxDistanceNm_;
+      showPairs_ = builder.showPairs_;
+      showImage_ = builder.showImage_;
+      savePairs_ = builder.savePairs_;
+      showGraph_ = builder.showGraph_;
       showTrack_ = builder.showTrack_;
       showSummary_ = builder.showSummary_;
       showOverlay_ = builder.showOverlay_;
@@ -198,6 +232,10 @@ public class ParticlePairLister {
       return new Builder().
               rows(rows_).
               maxDistanceNm(maxDistanceNm_).
+              showPairs(showPairs_).
+              showImage(showImage_).
+              savePairs(savePairs_).
+              showGraph(showGraph_).
               showTrack(showTrack_).
               showSummary(showSummary_).
               showOverlay(showOverlay_).
@@ -339,6 +377,123 @@ public class ParticlePairLister {
                         }
                      }
                   }
+               }
+
+               if (showPairs_ || savePairs_) {
+                  ResultsTable pairTable = new ResultsTable();
+                  pairTable.setPrecision(2);
+                  for (int pos : positions) {
+                     for (ArrayList<GsSpotPair> pairList : spotPairsByFrame.get(pos)) {
+                        for (GsSpotPair pair : pairList) {
+                           pairTable.incrementCounter();
+                           pairTable.addValue(Terms.FRAME, pair.getFirstSpot().getFrame());
+                           pairTable.addValue(Terms.SLICE, pair.getFirstSpot().getSlice());
+                           pairTable.addValue(Terms.CHANNEL, pair.getFirstSpot().getSlice());
+                           pairTable.addValue(Terms.POSITION, pair.getFirstSpot().getPosition());
+                           pairTable.addValue(Terms.XPIX, pair.getFirstSpot().getX());
+                           pairTable.addValue(Terms.YPIX, pair.getFirstSpot().getY());
+                           pairTable.addValue("X1", pair.getFirstSpot().getXCenter());
+                           pairTable.addValue("Y1", pair.getFirstSpot().getYCenter());
+                           pairTable.addValue("Sigma1", pair.getFirstSpot().getSigma());
+                           pairTable.addValue("X2", pair.getSecondSpot().getX());
+                           pairTable.addValue("Y2", pair.getSecondSpot().getY());
+                           pairTable.addValue("Sigma2", pair.getSecondSpot().getSigma());
+                           double d2 = NearestPoint2D.distance2(pair.getFirstPoint(), pair.getSecondPoint());
+                           double d = Math.sqrt(d2);
+                           pairTable.addValue("Distance", d);
+                           pairTable.addValue("Orientation (sine)",
+                                   NearestPoint2D.orientation(pair.getFirstPoint(), pair.getSecondPoint()));
+                        }
+                     }
+                  }
+
+                  if (showPairs_) {
+                     //  show Pairs panel and attach listener
+                     TextPanel tp;
+                     TextWindow win;
+
+                     String rtName = "Pairs found in " + dc.getSpotData(row).getName();
+                     pairTable.show(rtName);
+                     ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
+                     Frame frame = WindowManager.getFrame(rtName);
+                     if (frame != null && frame instanceof TextWindow && siPlus != null) {
+                        win = (TextWindow) frame;
+                        tp = win.getTextPanel();
+
+                        // TODO: the following does not work, there is some voodoo going on here
+                        for (MouseListener ms : tp.getMouseListeners()) {
+                           tp.removeMouseListener(ms);
+                        }
+                        for (KeyListener ks : tp.getKeyListeners()) {
+                           tp.removeKeyListener(ks);
+                        }
+
+                        ResultsTableListener myk = new ResultsTableListener(
+                                MMStudio.getInstance(), dc.getSpotData(row).dw_, siPlus,
+                                pairTable, win, dc.getSpotData(row).halfSize_);
+                        tp.addKeyListener(myk);
+                        tp.addMouseListener(myk);
+                        frame.toFront();
+                     }
+                  }
+
+                  if (savePairs_) {
+                     try {
+                        String fileName = filePath_ + File.separator
+                                + dc.getSpotData(row).getName() + "_Pairs.cvs";
+                        pairTable.saveAs(fileName);
+                        ij.IJ.log("Saved file: " + fileName);
+                     } catch (IOException ex) {
+                        ReportingUtils.showError(ex, "Failed to save file");
+                     }
+                  }
+               }
+
+               if (showSummary_) {
+                  ResultsTable summaryTable = new ResultsTable();
+                  summaryTable.setPrecision(2);
+                  List<Double> distances = new ArrayList<Double>();
+                  List<Double> errorX = new ArrayList<Double>();
+                  List<Double> errorY = new ArrayList<Double>();
+                  for (int pos : positions) {
+                     for (ArrayList<GsSpotPair> pairList : spotPairsByFrame.get(pos)) {
+                        for (GsSpotPair pair : pairList) {
+                           distances.add(pair.getFirstPoint().distance(pair.getSecondPoint()));
+                           errorX.add(pair.getFirstPoint().getX() - pair.getSecondPoint().getX());
+                           errorY.add(pair.getFirstPoint().getY() - pair.getSecondPoint().getY());
+                        }
+                     }
+                  }
+                  Double avg = ListUtils.listAvg(distances);
+                  Double stdDev = ListUtils.listStdDev(distances, avg);
+                  Double avgX = ListUtils.listAvg(errorX);
+                  Double stdDevX = ListUtils.listStdDev(errorX, avgX);
+                  Double avgY = ListUtils.listAvg(errorY);
+                  Double stdDevY = ListUtils.listStdDev(errorY, avgY);
+                  summaryTable.incrementCounter();
+                  summaryTable.addValue("Avg. distance", avg);
+                  summaryTable.addValue("StdDev distance", stdDev);
+                  summaryTable.addValue("X", avgX);
+                  summaryTable.addValue("StdDev X", stdDevX);
+                  summaryTable.addValue("Y", avgY);
+                  summaryTable.addValue("StdDevY", stdDevY);
+               }
+               
+               if (showImage_) {
+                  /*
+                                             distances.add(d);
+
+                           ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
+
+                           double ex = pCh2.getX() - pCh1.getX();
+                           //double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
+                           //ex = Math.sqrt(ex);
+                           errorX.add(ex);
+                           //double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
+                           //ey = Math.sqrt(ey);
+                           double ey = pCh2.getY() - pCh1.getY();
+                           errorY.add(ey);
+                  */
                }
 
                // We have all pairs, assemble in tracks
@@ -600,7 +755,7 @@ public class ParticlePairLister {
                }
 
                double[] gResult = null;
-               double[] avgVectDistancesAsDouble = null;
+               double[] avgVectDistancesAsDouble;
                if (doGaussianEstimate_ || (p2d_ && useVectorDistances_) ) {
                   // fit vector distances with gaussian function and plot
                   try {
@@ -746,11 +901,9 @@ public class ParticlePairLister {
          }
       };
 
-      if (showTrack_ || showSummary_ || showOverlay_ || saveFile_ || p2d_
-              || doGaussianEstimate_) {
-         (new Thread(doWorkRunnable)).start();
-      }
-
+      
+      (new Thread(doWorkRunnable)).start();
+      
    }
 
    /**
