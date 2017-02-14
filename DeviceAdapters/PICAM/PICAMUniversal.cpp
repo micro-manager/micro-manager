@@ -315,9 +315,14 @@ PicamError Universal::AcquisitionUpdated(
       const PicamAvailableData* available,
       const PicamAcquisitionStatus* status )
 {
-   // Not sure if all of the following needs to be within lock acquisition, but
-   // keeping it that way for now.
-   MMThreadGuard g(g_picamLock);
+   // NS 2017-02-14:  It was reported on the mailing list 2016-06-15 that 
+   // this lock caused live mode to hang and that commenting out the lock
+   // made it work.  Indeed, it seems that this function is called from 
+   // within a thread starting in the driver, and the possibilities
+   // for deadlock are extensive.  Like Toshio Suzuki, I do not oversee
+   // the repercussion of removing this lock, but leaving it simply does not 
+   // work.
+   // MMThreadGuard g(g_picamLock);
 
    int ret;
 
