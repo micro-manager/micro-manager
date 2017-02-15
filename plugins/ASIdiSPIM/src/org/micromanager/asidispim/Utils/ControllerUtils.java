@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim.Utils;
 
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 
 import mmcorej.CMMCore;
@@ -140,10 +141,7 @@ public class ControllerUtils {
                MyDialogUtils.showError("Interleaved stage scan only possible for 2-sided acquisition.");
                return false;
             }
-            CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
-                  prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-                        Properties.Keys.PLUGIN_CAMERA_MODE, 0));
-            if (cameraMode == CameraModes.Keys.OVERLAP) {
+            if (settings.cameraMode == CameraModes.Keys.OVERLAP) {
                MyDialogUtils.showError("Interleaved stage scan not compatible with overlap camera mode");
                return false;
             }
@@ -365,9 +363,7 @@ public class ControllerUtils {
       // tweak the parameters if we are using synchronous/overlap mode
       // object is to get exact same piezo/scanner positions in first
       // N frames (piezo/scanner will move to N+1st position but no image taken)
-      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
-            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      final CameraModes.Keys cameraMode = settings.cameraMode;
       if (cameraMode == CameraModes.Keys.OVERLAP) {
          piezoAmplitude *= ((float)numSlices)/((float)numSlices-1f);
          piezoCenter += piezoAmplitude/(2*numSlices);
@@ -509,6 +505,35 @@ public class ControllerUtils {
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
                Properties.Values.NO, true);  // ignore errors b/c older firmware won't have it
       }
+      
+      // send sheet width/offset
+      float sheetWidth;
+      float sheetOffset;
+      if (settings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+         final float sheetSlope = prefs_.getFloat(
+               MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+               Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE, 2);
+         Rectangle roi;
+         try {
+            roi = core_.getROI(devices_.getMMDevice(cameraDevice));
+         } catch (Exception e) {
+            ReportingUtils.showError(e, "Could not get camera ROI for light sheet mode");
+            return false;
+         }
+         sheetWidth = (float) (roi.height * sheetSlope / 1e6f);  // in microdegrees per pixel, convert to degrees
+         sheetOffset = prefs_.getFloat(
+               MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+               Properties.Keys.PLUGIN_LIGHTSHEET_OFFSET, 0) / 1000f;  // in millidegrees, convert to degrees
+      } else {
+         final Properties.Keys widthProp = (side == Devices.Sides.A) ?
+               Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_A : Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_B;
+         final Properties.Keys offsetProp = (side == Devices.Sides.A) ?
+               Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_A : Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_B;
+         sheetWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, widthProp);
+         sheetOffset = props_.getPropValueFloat(Devices.Keys.PLUGIN, offsetProp); 
+      }
+      props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
+      props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
       
       return true;
    }

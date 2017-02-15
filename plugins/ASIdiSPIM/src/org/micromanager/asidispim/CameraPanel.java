@@ -182,13 +182,14 @@ public class CameraPanel extends ListeningJPanel{
       
       final JPanel triggerPanel = new JPanel(new MigLayout(
             "",
-            "[right]16[left]",
-            "[]8[]"));
+            "[]16[]",
+            "[]"));
       triggerPanel.setBorder(PanelUtils.makeTitledBorder("Acq. Trigger mode"));
       CameraModes camModeObject = new CameraModes(devices_, prefs_);
       // access using pref node MyStrings.PanelNames.SETTINGS.toString() with pref key Properties.Keys.PLUGIN_CAMERA_MODE
       //     (used to be on Settings panel, now moved but pref location kept the same)
       camModeCB_ = camModeObject.getComboBox();
+      triggerPanel.add(new JLabel(""));  // add extra space for layout uniformity, can remove without problem
       triggerPanel.add(camModeCB_, "wrap");
       
       // end camera trigger mode subpanel
@@ -200,7 +201,7 @@ public class CameraPanel extends ListeningJPanel{
             "[right]10[center]",
             "[]8[]"));
       
-      lightSheetPanel.setBorder(PanelUtils.makeTitledBorder("Light Sheet Mode"));
+      lightSheetPanel.setBorder(PanelUtils.makeTitledBorder("Light Sheet Settings"));
       
       lightSheetPanel.add(new JLabel("Scan reset time [ms]:"));
       JSpinner lsScanReset = pu.makeSpinnerFloat(0, 100, 0.25,
@@ -239,9 +240,11 @@ public class CameraPanel extends ListeningJPanel{
       });
       
       // construct the main panel
+      JPanel secondCol = new JPanel(new MigLayout("", "[]0[]", "[]0[]"));
+      secondCol.add(triggerPanel, "growx, wrap");
+      secondCol.add(lightSheetPanel, "wrap");
       add(roiPanel);
-      add(triggerPanel);
-      add(lightSheetPanel);
+      add(secondCol, "top");
    }//constructor
    
    

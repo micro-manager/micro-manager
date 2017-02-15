@@ -190,7 +190,7 @@ public class Properties {
       PLUGIN_PIEZO_START_POS ("PiezoStartPosition"),  // Piezo start position for internal use
       PLUGIN_PIEZO_END_POS ("PiezoEndPosition"),      // Piezo end position for internal use
       PLUGIN_PIEZO_CENTER_POS ("PiezoCenterPosition"), // Piezo center position for acquisition
-      PLUGIN_SLOPE_SHEET_WIDTH ("SlopeSheetWidth"),    // Rate in sheet generating axis in degrees/1000px 
+      PLUGIN_SLOPE_SHEET_WIDTH ("SlopeSheetWidth"),    // Rate in sheet generating axis in degrees/1000px
       PLUGIN_EXPORT_DATA_DIR ("ExportDataDirectory"),  // Place data are saved in mipav/multiview format 
       PLUGIN_EXPORT_TRANSFORM_OPTION("ExportTransformOption"), // Transform to be applied when exporting data
       PLUGIN_EXPORT_FORMAT("ExportFormatOption"), // Output format of export pane
@@ -243,6 +243,12 @@ public class Properties {
       PLUGIN_LS_SCAN_SETTLE("LightSheetScanSettle"),
       PLUGIN_LS_SHUTTER_WIDTH("LightSheetShutterWidth"),
       PLUGIN_LS_SHUTTER_SPEED("LightSheetSpeedFactor"),
+      PLUGIN_SHEET_WIDTH_EDGE_A("SheetWidthEdgeSideA"),  // hack to have separate properties for different panels when used as a property and is exposing flaws in the bipartate property/pref scheme, maybe would make sense to just use preferences directly but rest of infrastructure isn't set up for that at the moment
+      PLUGIN_SHEET_WIDTH_EDGE_B("SheetWidthEdgeSideB"),
+      PLUGIN_SHEET_OFFSET_EDGE_A("SheetOffsetEdgeSideA"),
+      PLUGIN_SHEET_OFFSET_EDGE_B("SheetOffsetEdgeSideB"),
+      PLUGIN_LIGHTSHEET_SLOPE("LightSheetSlope"),
+      PLUGIN_LIGHTSHEET_OFFSET("LightSheetOffset"),
       ;
       private final String text;
       private final boolean forceSet;
