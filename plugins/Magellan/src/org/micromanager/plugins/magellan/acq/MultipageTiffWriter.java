@@ -477,9 +477,9 @@ public class MultipageTiffWriter {
          }
       }
       if (pixelOffset == -1 || bytesPerImage == -1) {
-//         IJ.log("couldn't overwrite pixel data\n");
-//         IJ.log("pixel offset " + pixelOffset);
-//         IJ.log("bytes per image " + bytesPerImage);
+         IJ.log("couldn't overwrite pixel data\n");
+         IJ.log("pixel offset " + pixelOffset);
+         IJ.log("bytes per image " + bytesPerImage);
          return;
       }
       
@@ -598,47 +598,40 @@ public class MultipageTiffWriter {
 
    private ByteBuffer getPixelBuffer(Object pixels) throws IOException {
       if (rgb_) {
-         if (byteDepth_ == 1) {
+//         if (byteDepth_ == 1) {
+            //Original pix in RGBA format, convert to rgb for storage
             byte[] originalPix = (byte[]) pixels;
-            byte[] rgbaPix = new byte[originalPix.length * 3 / 4];
-            int count = 0;
-            for (int i = 0; i < originalPix.length; i++) {
-               //skip alpha channel
-               if ((i + 1) % 4 != 0) {
-                  //swap R and B for correct format
-                  if ((i + 1) % 4 == 1 ) {
-                     rgbaPix[count] = originalPix[i + 2];
-                  } else if ((i + 1) % 4 == 3) {
-                     rgbaPix[count] = originalPix[i - 2];
-                  } else {                      
-                     rgbaPix[count] = originalPix[i];
-                  }
-                  count++;
-               }
+            byte[] rgbPix = new byte[originalPix.length * 3 / 4];
+            int numPix = originalPix.length / 4;
+            for (int tripletIndex = 0; tripletIndex < numPix; tripletIndex++) {
+               rgbPix[tripletIndex * 3 ] = originalPix[tripletIndex * 4];
+               rgbPix[tripletIndex * 3 + 1] = originalPix[tripletIndex * 4 + 1];
+               rgbPix[tripletIndex * 3 + 2] = originalPix[tripletIndex * 4 + 2];
             }
-            return ByteBuffer.wrap(rgbaPix);
-         } else {
-            short[] originalPix = (short[]) pixels;
-            short[] rgbaPix = new short[originalPix.length * 3 / 4];
-            int count = 0;
-            for (int i = 0; i < originalPix.length; i++) {
-               if ((i + 1) % 4 != 0) {
-                  //swap R and B for correct format
-                  if ((i + 1) % 4 == 1 ) {
-                     rgbaPix[count] = originalPix[i + 2];
-                  } else if ((i + 1) % 4 == 3) {
-                     rgbaPix[count] = originalPix[i - 2];
-                  } else {                      
-                     rgbaPix[count] = originalPix[i];
-                  }
-                  count++;
-               }
-            }
-            ByteBuffer buffer = allocateByteBufferMemo(rgbaPix.length * 2);
-            buffer.rewind();
-            buffer.asShortBuffer().put(rgbaPix);
-            return buffer;
-         }
+            return ByteBuffer.wrap(rgbPix);
+//         } 
+//         else {
+//            short[] originalPix = (short[]) pixels;
+//            short[] rgbaPix = new short[originalPix.length * 3 / 4];
+//            int count = 0;
+//            for (int i = 0; i < originalPix.length; i++) {
+//               if ((i + 1) % 4 != 0) {
+//                  //swap R and B for correct format
+//                  if ((i + 1) % 4 == 1 ) {
+//                     rgbaPix[count] = originalPix[i + 2];
+//                  } else if ((i + 1) % 4 == 3) {
+//                     rgbaPix[count] = originalPix[i - 2];
+//                  } else {                      
+//                     rgbaPix[count] = originalPix[i];
+//                  }
+//                  count++;
+//               }
+//            }
+//            ByteBuffer buffer = allocateByteBufferMemo(rgbaPix.length * 2);
+//            buffer.rewind();
+//            buffer.asShortBuffer().put(rgbaPix);
+//            return buffer;
+//         }
       } else {
          if (byteDepth_ == 1) {
             return ByteBuffer.wrap((byte[]) pixels);

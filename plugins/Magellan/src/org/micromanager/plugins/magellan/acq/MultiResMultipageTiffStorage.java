@@ -569,7 +569,7 @@ public class MultiResMultipageTiffStorage {
                //average a square of 4 pixels from previous level
                //edges: if odd number of pixels in tile, round to determine which
                //tiles pixels make it to next res level
-               int count = 1; //count is number of pixels (out of 4) used to create a pixel at this level
+               
                //these are the indices of pixels at the previous res level, which are offset
                //when moving from res level 0 to one as we throw away the overlapped image edges
                int pixelX, pixelY, previousLevelWidth, previousLevelHeight; 
@@ -587,7 +587,8 @@ public class MultiResMultipageTiffStorage {
 
                }
                 int rgbMultiplier_ = rgb_ ? 4 : 1;
-                for (int compIndex = 0; compIndex < (rgb_ ? 4 : 1); compIndex++) {
+                for (int compIndex = 0; compIndex < (rgb_ ? 3 : 1); compIndex++) {
+                    int count = 1; //count is number of pixels (out of 4) used to create a pixel at this level
                     //always take top left pixel, maybe take others depending on whether at image edge
                     int sum = 0;
                     if (byteDepth_ == 1 || rgb_) {
@@ -599,7 +600,7 @@ public class MultiResMultipageTiffStorage {
                     //pixel index can be different from index in tile at resolution level 0 if there is nonzero overlap
                     if (x < previousLevelWidth - 1 && y < previousLevelHeight - 1) { //if not bottom right corner, add three more pix
                         count += 3;
-                        if (byteDepth_ == 1 | rgb_) {
+                        if (byteDepth_ == 1 || rgb_) {
                             sum += (((byte[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xff)
                                     + (((byte[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xff)
                                     + (((byte[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX)*rgbMultiplier_+compIndex] & 0xff);
@@ -608,14 +609,14 @@ public class MultiResMultipageTiffStorage {
                                     + (((short[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xffff)
                                     + (((short[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX)*rgbMultiplier_+compIndex] & 0xffff);
                         }
-                    } else if (x < previousLevelWidth - 1) { //if not right edge, add two more pix
+                    } else if (x < previousLevelWidth - 1) { //if not right edge, add one more pix
                         count++;
                         if (byteDepth_ == 1 || rgb_) {
                             sum += ((byte[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xff;
                         } else {
                             sum += ((short[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xffff;
                         }
-                    } else if (y < previousLevelHeight - 1) { // if not bottom edge, add two more pix
+                    } else if (y < previousLevelHeight - 1) { // if not bottom edge, add one more pix
                         count++;
                         if (byteDepth_ == 1 || rgb_) {
                             sum += ((byte[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX)*rgbMultiplier_+compIndex] & 0xff;
