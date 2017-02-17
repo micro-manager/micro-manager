@@ -871,7 +871,7 @@ public class ParticlePairLister {
                      rt3.incrementCounter();
                      rt3.addValue("Max. Dist.", maxDistanceNm_);
                      rt3.addValue("File", dc.getSpotData(row).getName());
-                     String useVect = doGaussianEstimate_ ? "yes" : "no";
+                     String useVect = useVectorDistances_ ? "yes" : "no";
                      rt3.addValue("Vect. Dist.", useVect);
                      String fittedSigma = fitSigmaInP2D_ ? "yes" : "no";
                      rt3.addValue("Fit Sigma", fittedSigma);
