@@ -452,8 +452,9 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       while (positionIndex < positions_.size()) {
          //add events for all slices/channels at this position
          XYStagePosition position = positions_.get(positionIndex);
-
-         if (settings_.channelsAtEverySlice_) {
+         boolean tiltedPlane2D = settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D && settings_.collectionPlane_ != null;
+         
+         if (settings_.channelsAtEverySlice_ && !tiltedPlane2D) {
 
             int sliceIndex = (int) Math.round((getZTopCoordinate() - zOrigin_) / zStep_);
             while (true) {
@@ -513,12 +514,24 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
                if (!settings_.channels_.get(channelIndex).uniqueEvent_ || !settings_.channels_.get(channelIndex).use_) {
                   continue;
                }
+               //Special case: 2D tilted plane
+               if (tiltedPlane2D) {
+                  //index all slcies as 0, even though they may nto be in the same plane
+                  int sliceIndex = 0;
+                  double zPos = settings_.collectionPlane_.getExtrapolatedValue(position.getCenter().x, position.getCenter().y);
+                  AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
+                          positionIndex, zPos, position, settings_.covariantPairings_);
+                  events_.put(event);
+                  continue;
+               }
+               
+               
                int sliceIndex = (int) Math.round((getZTopCoordinate() - zOrigin_) / zStep_);
                while (true) {
                   if (eventGenerator_.isShutdown()) { // check for aborts
                      throw new InterruptedException();
                   }
-                  double zPos = zOrigin_ + sliceIndex * zStep_;
+                  double zPos = zOrigin_ + sliceIndex * zStep_;        
                   if ((settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings_.spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE)
                           && sliceIndex > 0) {
                      break; //2D regions only have 1 slice

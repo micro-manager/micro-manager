@@ -57,7 +57,7 @@ public class FixedAreaAcquisitionSettings  {
    public double zStep_, zStart_, zEnd_, distanceBelowFixedSurface_, distanceAboveFixedSurface_,
            distanceAboveTopSurface_, distanceBelowBottomSurface_;
    public int spaceMode_;
-   public SurfaceInterpolator topSurface_, bottomSurface_, fixedSurface_;
+   public SurfaceInterpolator topSurface_, bottomSurface_, fixedSurface_, collectionPlane_;
    public XYFootprint footprint_;
    public int useTopOrBottomFootprint_;
    public double tileOverlap_; //stored as percent * 100, i.e. 55 => 55%
