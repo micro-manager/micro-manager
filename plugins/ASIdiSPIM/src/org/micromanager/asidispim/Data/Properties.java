@@ -242,7 +242,7 @@ public class Properties {
       PLUGIN_LS_SCAN_RESET("LightSheetScanReset"),
       PLUGIN_LS_SCAN_SETTLE("LightSheetScanSettle"),
       PLUGIN_LS_SHUTTER_WIDTH("LightSheetShutterWidth"),
-      PLUGIN_LS_SHUTTER_SPEED("LightSheetSpeedFactor"),
+//      PLUGIN_LS_SHUTTER_SPEED("LightSheetSpeedFactor"),
       PLUGIN_SHEET_WIDTH_EDGE_A("SheetWidthEdgeSideA"),  // hack to have separate properties for different panels when used as a property and is exposing flaws in the bipartate property/pref scheme, maybe would make sense to just use preferences directly but rest of infrastructure isn't set up for that at the moment
       PLUGIN_SHEET_WIDTH_EDGE_B("SheetWidthEdgeSideB"),
       PLUGIN_SHEET_OFFSET_EDGE_A("SheetOffsetEdgeSideA"),

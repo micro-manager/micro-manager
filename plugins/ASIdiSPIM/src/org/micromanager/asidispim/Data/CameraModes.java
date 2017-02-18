@@ -205,6 +205,8 @@ public class CameraModes {
             p.cameraModeChange();
             p =  ASIdiSPIM.getFrame().getSetupPanel(Devices.Sides.B);
             p.cameraModeChange();
+            p = ASIdiSPIM.getFrame().getAcquisitionPanel();
+            p.cameraModeChange();
          } catch (Exception ex) {
             // do nothing
          }

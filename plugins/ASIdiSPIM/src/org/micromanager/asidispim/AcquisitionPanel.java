@@ -163,7 +163,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JToggleButton buttonStart_;
    private final JButton buttonTestAcq_;
    private final JPanel volPanel_;
-   private final JPanel slicePanel_;
+   private final JPanel sliceAdvancedPanel_;
    private final JPanel timepointPanel_;
    private final JPanel savePanel_;
    private final JPanel durationPanel_;
@@ -203,6 +203,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private String[] channelNames_;
    private int nrRepeats_;  // how many separate acquisitions to perform
    private final AcquisitionPanel acquisitionPanel_;
+   private final JComponent[] simpleTimingComponents_;
+   private final JPanel slicePanel_;
+   private final JPanel slicePanelContainer_;
+   private final JPanel lightSheetPanel_;
+   private final JPanel normalPanel_;
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -260,12 +265,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       };
       
-      // start volume (main) sub-panel
+      // start volume sub-panel
 
       volPanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
-              "[]8[]"));
+              "4[]8[]"));
 
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
 
@@ -322,6 +327,55 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       stepSize_.addChangeListener(recalculateTimingDisplayCL);  // needed only for stage scanning b/c acceleration time related to speed
       volPanel_.add(stepSize_, "wrap");
       
+      // end volume sub-panel
+      
+      
+      // start slice timing controls, have 2 options with advanced timing checkbox shared
+      slicePanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]10[center]",
+            "0[]0[]"));
+      
+      slicePanel_.setBorder(PanelUtils.makeTitledBorder("Slice Settings"));
+      
+      
+      // start light sheet controls
+      lightSheetPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]10[center]",
+            "4[]8"));
+      
+      lightSheetPanel_.add(new JLabel("Scan reset time [ms]:"));
+      JSpinner lsScanReset = pu.makeSpinnerFloat(1, 100, 0.25,  // practical lower limit of 1ms
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_RESET, 3);
+      lsScanReset.addChangeListener(PanelUtils.coerceToQuarterIntegers(lsScanReset));
+      lightSheetPanel_.add(lsScanReset, "wrap");
+      
+      lightSheetPanel_.add(new JLabel("Scan settle time [ms]:"));
+      JSpinner lsScanSettle = pu.makeSpinnerFloat(0.25, 100, 0.25,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE, 1);
+      lsScanSettle.addChangeListener(PanelUtils.coerceToQuarterIntegers(lsScanSettle));
+      lightSheetPanel_.add(lsScanSettle, "wrap");
+      
+      lightSheetPanel_.add(new JLabel("Shutter width [\u00B5m]:"));
+      JSpinner lsShutterWidth = pu.makeSpinnerFloat(0.1, 100, 1,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH, 5);
+      lightSheetPanel_.add(lsShutterWidth);
+      
+//      lightSheetPanel_.add(new JLabel("1 / (shutter speed):"));
+//      JSpinner lsShutterSpeed = pu.makeSpinnerInteger(1, 10,
+//            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED, 1);
+//      lightSheetPanel_.add(lsShutterSpeed, "wrap");
+      
+      // end light sheet controls
+      
+      // start "normal" (not light sheet) controls
+      
+      normalPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]10[center]",
+            "4[]8"));
+      
       // out of order so we can reference it
       desiredSlicePeriod_ = pu.makeSpinnerFloat(1, 1000, 0.25,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_SLICE_PERIOD, 30);
@@ -337,31 +391,38 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             recalculateSliceTiming(false);
          }
       });
-      volPanel_.add(minSlicePeriodCB_, "span 2, wrap");
+      normalPanel_.add(minSlicePeriodCB_, "span 2, wrap");
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
       desiredSlicePeriodLabel_ = new JLabel("Slice period [ms]:"); 
-      volPanel_.add(desiredSlicePeriodLabel_);
-      volPanel_.add(desiredSlicePeriod_, "wrap");
+      normalPanel_.add(desiredSlicePeriodLabel_);
+      normalPanel_.add(desiredSlicePeriod_, "wrap");
       desiredSlicePeriod_.addChangeListener(PanelUtils.coerceToQuarterIntegers(desiredSlicePeriod_));
       desiredSlicePeriod_.addChangeListener(recalculateTimingDisplayCL);
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
       desiredLightExposureLabel_ = new JLabel("Sample exposure [ms]:"); 
-      volPanel_.add(desiredLightExposureLabel_);
+      normalPanel_.add(desiredLightExposureLabel_);
       desiredLightExposure_ = pu.makeSpinnerFloat(1.0, 1000, 0.25,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_EXPOSURE, 8.5);
       desiredLightExposure_.addChangeListener(PanelUtils.coerceToQuarterIntegers(desiredLightExposure_));
       desiredLightExposure_.addChangeListener(recalculateTimingDisplayCL);
-      volPanel_.add(desiredLightExposure_, "wrap");
+      normalPanel_.add(desiredLightExposure_);
+      
+      // end normal simple slice timing controls
+      
+      slicePanelContainer_ = new JPanel(new MigLayout("", "0[center]0", "0[]0"));
+      slicePanelContainer_.add(getSPIMCameraMode() == CameraModes.Keys.LIGHT_SHEET ?
+            lightSheetPanel_ : normalPanel_, "growx");
+      slicePanel_.add(slicePanelContainer_, "span 2, center, wrap");
       
       // special checkbox to use the advanced timing settings
       // action handler added below after defining components it enables/disables
       advancedSliceTimingCB_ = pu.makeCheckBox("Use advanced timing settings",
             Properties.Keys.PREFS_ADVANCED_SLICE_TIMING, panelName_, false);
-      volPanel_.add(advancedSliceTimingCB_, "left, span 2, wrap");
+      slicePanel_.add(advancedSliceTimingCB_, "span 2, left");
       
-      // end volume sub-panel
+      // end slice sub-panel
       
       
       // start advanced slice timing frame
@@ -372,11 +433,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceFrameAdvanced_.setTitle("Advanced timing");
       sliceFrameAdvanced_.loadPosition(100, 100);
 
-      slicePanel_ = new JPanel(new MigLayout(
+      sliceAdvancedPanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
               "[]8[]"));
-      sliceFrameAdvanced_.add(slicePanel_);
+      sliceFrameAdvanced_.add(sliceAdvancedPanel_);
       
       class SliceFrameAdapter extends WindowAdapter {
          @Override
@@ -389,80 +450,80 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceFrameAdvanced_.addWindowListener(new SliceFrameAdapter());
       
       JLabel scanDelayLabel =  new JLabel("Delay before scan [ms]:");
-      slicePanel_.add(scanDelayLabel);
+      sliceAdvancedPanel_.add(scanDelayLabel);
       delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_SCAN, 0);
       delayScan_.addChangeListener(PanelUtils.coerceToQuarterIntegers(delayScan_));
       delayScan_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(delayScan_, "wrap");
+      sliceAdvancedPanel_.add(delayScan_, "wrap");
 
       JLabel lineScanLabel = new JLabel("Lines scans per slice:");
-      slicePanel_.add(lineScanLabel);
+      sliceAdvancedPanel_.add(lineScanLabel);
       numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SCANSPERSLICE, 1);
       numScansPerSlice_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(numScansPerSlice_, "wrap");
+      sliceAdvancedPanel_.add(numScansPerSlice_, "wrap");
 
       JLabel lineScanPeriodLabel = new JLabel("Line scan duration [ms]:");
-      slicePanel_.add(lineScanPeriodLabel);
+      sliceAdvancedPanel_.add(lineScanPeriodLabel);
       lineScanDuration_ = pu.makeSpinnerFloat(1, 10000, 0.25,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_DURATION_SCAN, 10);
       lineScanDuration_.addChangeListener(PanelUtils.coerceToQuarterIntegers(lineScanDuration_));
       lineScanDuration_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(lineScanDuration_, "wrap");
+      sliceAdvancedPanel_.add(lineScanDuration_, "wrap");
       
       JLabel delayLaserLabel = new JLabel("Delay before laser [ms]:");
-      slicePanel_.add(delayLaserLabel);
+      sliceAdvancedPanel_.add(delayLaserLabel);
       delayLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_LASER, 0);
       delayLaser_.addChangeListener(PanelUtils.coerceToQuarterIntegers(delayLaser_));
       delayLaser_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(delayLaser_, "wrap");
+      sliceAdvancedPanel_.add(delayLaser_, "wrap");
       
       JLabel durationLabel = new JLabel("Laser trig duration [ms]:");
-      slicePanel_.add(durationLabel);
+      sliceAdvancedPanel_.add(durationLabel);
       durationLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_LASER, 1);
       durationLaser_.addChangeListener(PanelUtils.coerceToQuarterIntegers(durationLaser_));
       durationLaser_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(durationLaser_, "span 2, wrap");
+      sliceAdvancedPanel_.add(durationLaser_, "span 2, wrap");
       
       JLabel delayLabel = new JLabel("Delay before camera [ms]:");
-      slicePanel_.add(delayLabel);
+      sliceAdvancedPanel_.add(delayLabel);
       delayCamera_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_CAMERA, 0);
       delayCamera_.addChangeListener(PanelUtils.coerceToQuarterIntegers(delayCamera_));
       delayCamera_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(delayCamera_, "wrap");
+      sliceAdvancedPanel_.add(delayCamera_, "wrap");
       
       JLabel cameraLabel = new JLabel("Camera trig duration [ms]:");
-      slicePanel_.add(cameraLabel);
+      sliceAdvancedPanel_.add(cameraLabel);
       durationCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_CAMERA, 0);
       durationCamera_.addChangeListener(PanelUtils.coerceToQuarterIntegers(durationCamera_));
       durationCamera_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(durationCamera_, "wrap");
+      sliceAdvancedPanel_.add(durationCamera_, "wrap");
       
       JLabel exposureLabel = new JLabel("Camera exposure [ms]:");
-      slicePanel_.add(exposureLabel);
+      sliceAdvancedPanel_.add(exposureLabel);
       exposureCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_ADVANCED_CAMERA_EXPOSURE, 10f);
       exposureCamera_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(exposureCamera_, "wrap");
+      sliceAdvancedPanel_.add(exposureCamera_, "wrap");
       
       alternateBeamScanCB_ = pu.makeCheckBox("Alternate scan direction",
             Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, panelName_, false);
-      slicePanel_.add(alternateBeamScanCB_, "center, span 2, wrap");
+      sliceAdvancedPanel_.add(alternateBeamScanCB_, "center, span 2, wrap");
       
-      final JComponent[] simpleTimingComponents = { desiredLightExposure_,
+      simpleTimingComponents_ = new JComponent[]{ desiredLightExposure_,
             minSlicePeriodCB_, desiredSlicePeriodLabel_,
             desiredLightExposureLabel_};
       final JComponent[] advancedTimingComponents = {
@@ -470,7 +531,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             delayLaser_, durationLaser_, delayCamera_,
             durationCamera_, exposureCamera_, alternateBeamScanCB_};
       PanelUtils.componentsSetEnabled(advancedTimingComponents, advancedSliceTimingCB_.isSelected());
-      PanelUtils.componentsSetEnabled(simpleTimingComponents, !advancedSliceTimingCB_.isSelected());
+      PanelUtils.componentsSetEnabled(simpleTimingComponents_, !advancedSliceTimingCB_.isSelected());
       
       // this action listener takes care of enabling/disabling inputs
       // of the advanced slice timing window
@@ -482,7 +543,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // set other components in this advanced timing frame
             PanelUtils.componentsSetEnabled(advancedTimingComponents, enabled);
             // also control some components in main volume settings sub-panel
-            PanelUtils.componentsSetEnabled(simpleTimingComponents, !enabled);
+            PanelUtils.componentsSetEnabled(simpleTimingComponents_, !enabled);
             desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
             desiredSlicePeriodLabel_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
             updateDurationLabels();
@@ -818,22 +879,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       leftColumnPanel_.add(new JLabel("Status:"), "split 2, left");
       leftColumnPanel_.add(acquisitionStatusLabel_);
       
-      centerColumnPanel_ = new JPanel(new MigLayout(
-            "",
-            "[]",
-            "[]"));
+      centerColumnPanel_ = new JPanel(new MigLayout("", "[]", "[]"));
       
       centerColumnPanel_.add(positionPanel, "growx, wrap");
       centerColumnPanel_.add(multiChannelPanel_, "wrap");
       centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
       centerColumnPanel_.add(useAutofocusCB_);
       
-      rightColumnPanel_ = new JPanel(new MigLayout(
-            "",
-            "[]",
-            "[]"));
+      rightColumnPanel_ = new JPanel(new MigLayout("", "[center]0", "[]0[]"));
       
-      rightColumnPanel_.add(volPanel_);
+      rightColumnPanel_.add(volPanel_, "growx, wrap");
+      rightColumnPanel_.add(slicePanel_, "growx");
       
       // add the column panels to the main panel
       this.add(leftColumnPanel_);
@@ -1033,7 +1089,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * 
     * @param showWarnings true to warn user about needing to change slice period
     * @return
     */
@@ -1045,15 +1100,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // 4. start scan 0.25ms before camera global exposure and shifted up in time to account for delay introduced by Bessel filter
       // 5. turn on laser as soon as camera global exposure, leave laser on for desired light exposure time
       // 7. end camera exposure in final 0.25ms, post-filter scan waveform also ends now
-      
       final float scanLaserBufferTime = MyNumberUtils.roundToQuarterMs(0.25f);  // below assumed to be multiple of 0.25ms
       final Color foregroundColorOK = Color.BLACK;
       final Color foregroundColorError = Color.RED;
       final Component elementToColor  = desiredSlicePeriod_.getEditor().getComponent(0);
       
       SliceTiming s = new SliceTiming();
-      final float cameraResetTime = computeCameraResetTime();      // recalculate for safety
-      final float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety
+      final float cameraResetTime = computeCameraResetTime();      // recalculate for safety, 0 for light sheet
+      final float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety, 0 for overlap
       
       // can we use acquisition settings directly? because they may be in flux
       final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
@@ -1133,6 +1187,30 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          break;
       case LIGHT_SHEET:
+         // each slice period goes like this:
+         // 1. scan reset time (use to add any extra settling time to the start of each slice)
+         // 2. start scan, wait scan settle time
+         // 3. trigger camera/laser when scan settle time elapses
+         // 4. scan for total of exposure time plus readout time (total time some row is exposing) plus settle time plus extra 0.25ms to prevent artifacts
+         // 5. laser turns on 0.25ms before camera trigger and stays on until exposure is ending
+         // TODO revisit this after further experimentation
+         s.cameraDuration = 1;  // only need to trigger camera
+         final float shutterWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH);
+         final int shutterSpeed = 1;  // props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+         float pixelSize = (float) core_.getPixelSizeUm();
+         if (pixelSize < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
+            pixelSize = 0.1625f;  // default to pixel size of 40x with sCMOS = 6.5um/40
+         }
+         final double rowReadoutTime = getRowReadoutTime();
+         s.cameraExposure = (float) (rowReadoutTime * shutterWidth / pixelSize * shutterSpeed);
+         final float totalExposure_max = MyNumberUtils.ceilToQuarterMs(cameraReadoutTime + s.cameraExposure + 0.05f);  // 50-300us extra cushion time
+         final float scanSettle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE);
+         final float scanReset = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_RESET);
+         s.scanDelay = scanReset - scanDelayFilter;
+         s.scanPeriod = scanSettle + totalExposure_max + scanLaserBufferTime;
+         s.cameraDelay = scanReset + scanSettle;
+         s.laserDelay = s.cameraDelay - scanLaserBufferTime;  // trigger laser just before camera to make sure it's on already
+         s.laserDuration = totalExposure_max + scanLaserBufferTime;  // laser will turn off as exposure is ending
          break;
       case INTERNAL:
       default:
@@ -1153,14 +1231,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // if a specific slice period was requested, add corresponding delay to scan/laser/camera
       elementToColor.setForeground(foregroundColorOK);
       if (!acqSettings.minimizeSlicePeriod) {
-         float globalDelay = acqSettings.desiredSlicePeriod - getSliceDuration(s);  // both should be in 0.25ms increments // TODO fix
+         float globalDelay = acqSettings.desiredSlicePeriod - getSliceDuration(s);  // both should be in 0.25ms increments // TODO fix;
+         if (acqSettings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+            globalDelay = 0;
+         }
          if (globalDelay < 0) {
             globalDelay = 0;
             if (showWarnings) {  // only true when user has specified period that is unattainable
-               MyDialogUtils.showError(
-                     "Increasing slice period to meet laser exposure constraint\n"
-                           + "(time required for camera readout; readout time depends on ROI).");
-               elementToColor.setForeground(foregroundColorError);
+                  MyDialogUtils.showError(
+                        "Increasing slice period to meet laser exposure constraint\n"
+                              + "(time required for camera readout; readout time depends on ROI).");
+                  elementToColor.setForeground(foregroundColorError);
             }
          }
          s.scanDelay += globalDelay;
@@ -1370,24 +1451,42 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
+    * Computes the per-row readout time of the SPIM cameras set on Devices panel.
+    * Handles single-side operation.
+    * Needed for computing camera exposure in light sheet mode
+    * @return
+    */
+   private double getRowReadoutTime() {
+      if (getNumSides() > 1) {
+         return Math.max(cameras_.getRowReadoutTime(Devices.Keys.CAMERAA),
+               cameras_.getRowReadoutTime(Devices.Keys.CAMERAB));
+      } else {
+         if (isFirstSideA()) {
+            return cameras_.getRowReadoutTime(Devices.Keys.CAMERAA);
+         } else {
+            return cameras_.getRowReadoutTime(Devices.Keys.CAMERAB);
+         }
+      }
+   }
+   
+   /**
     * Computes the reset time of the SPIM cameras set on Devices panel.
     * Handles single-side operation.
     * Needed for computing (semi-)optimized slice timing in "easy timing" mode.
     * @return
     */
    private float computeCameraResetTime() {
-      float resetTime;
+      CameraModes.Keys camMode = getSPIMCameraMode();
       if (getNumSides() > 1) {
-         resetTime = Math.max(cameras_.computeCameraResetTime(Devices.Keys.CAMERAA),
-               cameras_.computeCameraResetTime(Devices.Keys.CAMERAB));
+         return Math.max(cameras_.computeCameraResetTime(Devices.Keys.CAMERAA, camMode),
+               cameras_.computeCameraResetTime(Devices.Keys.CAMERAB, camMode));
       } else {
          if (isFirstSideA()) {
-            resetTime = cameras_.computeCameraResetTime(Devices.Keys.CAMERAA);
+            return cameras_.computeCameraResetTime(Devices.Keys.CAMERAA, camMode);
          } else {
-            resetTime = cameras_.computeCameraResetTime(Devices.Keys.CAMERAB);
+            return cameras_.computeCameraResetTime(Devices.Keys.CAMERAB, camMode);
          }
       }
-      return resetTime;
    }
    
    /**
@@ -1621,6 +1720,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       AcquisitionSettings acqSettingsOrig = getCurrentAcquisitionSettings();
+      
+      if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET
+            && core_.getPixelSizeUm() < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
+         ReportingUtils.showError("Need to configure pixel size in Micro-Manager to use light sheet mode.");
+         return false;
+      }
       
       // if a test acquisition then only run single timpoint, no autofocus
       // allow multi-positions for test acquisition for now, though perhaps this is not desirable
@@ -2846,6 +2951,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    @Override
    public void refreshDisplay() {
       updateDurationLabels();
+   }
+   
+   @Override
+   // Used to re-layout portion of window depending when camera mode changes, in
+   //   particular light sheet mode needs different set of controls.
+   public void cameraModeChange() {
+      CameraModes.Keys key = getSPIMCameraMode();
+      slicePanelContainer_.removeAll();
+      slicePanelContainer_.add((key == CameraModes.Keys.LIGHT_SHEET) ?
+         lightSheetPanel_ : normalPanel_, "growx");
+      slicePanelContainer_.revalidate();
+      slicePanelContainer_.repaint();
    }
 
    private void setRootDirectory(JTextField rootField) {

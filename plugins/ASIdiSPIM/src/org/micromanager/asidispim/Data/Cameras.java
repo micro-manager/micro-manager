@@ -481,7 +481,7 @@ public class Cameras {
     * @param camKey
     * @return
     */
-   private double getRowReadoutTime(Devices.Keys camKey) {
+   public double getRowReadoutTime(Devices.Keys camKey) {
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
          if (isSlowReadout(camKey)) {
@@ -535,56 +535,60 @@ public class Cameras {
     * Gets an estimate of a specific camera's time between trigger and global
     * exposure, i.e. how long it takes for reset. Will depend on whether we
     * have/use global reset, the ROI size, etc.  To first order this is the same
-    * as the camera readout time in edge-trigger mode so we utilize that.
-    * 
-    * @param camKey
-    * @return
+    * as the camera readout time in edge-trigger mode so we utilize that (exception
+    * is for light sheet mode, when reset time is 0).
+    * @param camKey device key for camera in question
+    * @param camMode camera mode
+    * @return reset time in ms
     */
-   public float computeCameraResetTime(Devices.Keys camKey) {
-      float resetTimeMs = 10;
-      double rowReadoutTime = getRowReadoutTime(camKey);
-      float camReadoutTime = computeCameraReadoutTime(camKey, CameraModes.Keys.EDGE);
-      int numRowsOverhead;
-      switch (devices_.getMMDeviceLibrary(camKey)) {
-      case HAMCAM:
-         // global reset mode not yet exposed in Micro-manager
-         // it will be 17+1 rows of overhead but nothing else
-         if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE)
-               .equals(Properties.Values.SYNCREADOUT.toString())) {
-            numRowsOverhead = 18; // overhead of 17 rows plus jitter of 1 row
-         } else { // for EDGE and LEVEL trigger modes
-            numRowsOverhead = 10; // overhead of 9 rows plus jitter of 1 row
+   public float computeCameraResetTime(Devices.Keys camKey,  CameraModes.Keys camMode) {
+      if (camMode == CameraModes.Keys.LIGHT_SHEET) {
+         return 0f;
+      } else {
+         float resetTimeMs = 10;
+         double rowReadoutTime = getRowReadoutTime(camKey);
+         float camReadoutTime = computeCameraReadoutTime(camKey, CameraModes.Keys.EDGE);
+         int numRowsOverhead;
+         switch (devices_.getMMDeviceLibrary(camKey)) {
+         case HAMCAM:
+            // global reset mode not yet exposed in Micro-manager
+            // it will be 17+1 rows of overhead but nothing else
+            if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE)
+                  .equals(Properties.Values.SYNCREADOUT.toString())) {
+               numRowsOverhead = 18; // overhead of 17 rows plus jitter of 1 row
+            } else { // for EDGE and LEVEL trigger modes
+               numRowsOverhead = 10; // overhead of 9 rows plus jitter of 1 row
+            }
+            resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+            break;
+         case PCOCAM:
+            numRowsOverhead = 1;
+            resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+            break;
+         case ANDORCAM:
+            numRowsOverhead = 1;
+            resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+            break;
+         case PVCAM:
+            // TODO get this correct; currently just draft for testing
+            numRowsOverhead = 1;
+            resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+            break;
+         case DEMOCAM:
+            resetTimeMs = camReadoutTime;
+            break;
+         default:
+            break;
          }
-         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-         break;
-      case PCOCAM:
-         numRowsOverhead = 1;
-         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-         break;
-      case ANDORCAM:
-         numRowsOverhead = 1;
-         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-         break;
-      case PVCAM:
-         // TODO get this correct; currently just draft for testing
-         numRowsOverhead = 1;
-         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-         break;
-      case DEMOCAM:
-         resetTimeMs = camReadoutTime;
-         break;
-      default:
-         break;
+         ReportingUtils.logDebugMessage("camera reset time computed as " + resetTimeMs + 
+               " for camera " + devices_.getMMDevice(camKey));
+         return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
       }
-      ReportingUtils.logDebugMessage("camera reset time computed as " + resetTimeMs + 
-            " for camera " + devices_.getMMDevice(camKey));
-      return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
    
    /**
     * Gets an estimate of a specific camera's readout time based on ROI and 
     * other settings.  Returns 0 for overlap mode and 0.25ms pseudo-overlap mode.
-    * 
     * @param camKey device key for camera in question
     * @param camMode camera mode
     * @return readout time in ms
@@ -600,9 +604,17 @@ public class Cameras {
          readoutTimeMs = 0.0f;
       } else if (camMode == CameraModes.Keys.PSEUDO_OVERLAP) {
          readoutTimeMs = 0.25f;
+      } else if (camMode == CameraModes.Keys.LIGHT_SHEET) {
+         Rectangle roi = getCameraROI(camKey);
+         final double rowReadoutTime = getRowReadoutTime(camKey);
+         int speedFactor = 1; // props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+         if (speedFactor < 1) {
+            speedFactor = 1;
+         }
+         readoutTimeMs = (float) rowReadoutTime * roi.height * speedFactor;
       } else {
          
-         // below code only applies to non-overlap
+         // below code only applies to non-overlap, non-light sheet
          double rowReadoutTime = getRowReadoutTime(camKey);
          int numReadoutRows;
 
@@ -644,8 +656,8 @@ public class Cameras {
             break;
          default:
             break;
-         }//switch
-      }//else
+         }//end switch
+      }//end else
       
       ReportingUtils.logDebugMessage("camera readout time computed as " + readoutTimeMs + 
             " for camera " + devices_.getMMDevice(camKey));
@@ -661,6 +673,10 @@ public class Cameras {
       if (acq) {
          CameraModes.Keys cameraMode = ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode();
          setCameraTriggerMode(camKey, cameraMode);
+//         if (cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+//            int shutterSpeed = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+//            
+//         }
          // exposure time set by acquisition setup code
       } else { // for Live mode
          setCameraTriggerMode(camKey, CameraModes.Keys.INTERNAL);

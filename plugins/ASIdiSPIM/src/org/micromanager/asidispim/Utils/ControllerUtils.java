@@ -512,7 +512,7 @@ public class ControllerUtils {
       if (settings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
          final float sheetSlope = prefs_.getFloat(
                MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-               Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE, 2);
+               Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE, 2000);
          Rectangle roi;
          try {
             roi = core_.getROI(devices_.getMMDevice(cameraDevice));
@@ -537,7 +537,6 @@ public class ControllerUtils {
       
       return true;
    }
-   
    
    /**
     * Returns the controller to "normal" state after an acquisition

@@ -32,7 +32,6 @@ import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 
 import net.miginfocom.swing.MigLayout;
@@ -69,7 +68,7 @@ public class CameraPanel extends ListeningJPanel{
               new MigLayout(
               "",
               "[center]8[center]",
-              "[]16[]16[]"));
+              "[]8[]"));
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
@@ -194,57 +193,10 @@ public class CameraPanel extends ListeningJPanel{
       
       // end camera trigger mode subpanel
       
-      
-      // start light sheet options subpanel
-      final JPanel lightSheetPanel = new JPanel(new MigLayout(
-            "",
-            "[right]10[center]",
-            "[]8[]"));
-      
-      lightSheetPanel.setBorder(PanelUtils.makeTitledBorder("Light Sheet Settings"));
-      
-      lightSheetPanel.add(new JLabel("Scan reset time [ms]:"));
-      JSpinner lsScanReset = pu.makeSpinnerFloat(0, 100, 0.25,
-            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_RESET, 3);
-      lsScanReset.addChangeListener(PanelUtils.coerceToQuarterIntegers(lsScanReset));
-      lightSheetPanel.add(lsScanReset, "wrap");
-      
-      lightSheetPanel.add(new JLabel("Scan settle time [ms]:"));
-      JSpinner lsScanSettle = pu.makeSpinnerFloat(0, 100, 0.25,
-            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE, 1);
-      lsScanSettle.addChangeListener(PanelUtils.coerceToQuarterIntegers(lsScanSettle));
-      lightSheetPanel.add(lsScanSettle, "wrap");
-      
-      lightSheetPanel.add(new JLabel("Shutter width [\u00B5m]:"));
-      JSpinner lsShutterWidth = pu.makeSpinnerFloat(0, 100, 1,
-            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH, 5);
-      lightSheetPanel.add(lsShutterWidth, "wrap");
-      
-      lightSheetPanel.add(new JLabel("1 / (shutter speed):"));
-      JSpinner lsShutterSpeed = pu.makeSpinnerInteger(1, 10,
-            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED, 1);
-      lightSheetPanel.add(lsShutterSpeed, "wrap");
-      
-      // end light sheet subpanel
-      
 
-      // disable controls specific to light sheet when light sheet isn't selected
-      final JComponent[] lsComponents = {lsScanReset, lsScanSettle, lsShutterWidth, lsShutterSpeed};
-      PanelUtils.componentsSetEnabled(lsComponents, getSPIMCameraMode() == CameraModes.Keys.LIGHT_SHEET);
-      
-      camModeCB_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            PanelUtils.componentsSetEnabled(lsComponents, getSPIMCameraMode() == CameraModes.Keys.LIGHT_SHEET); 
-         }
-      });
-      
       // construct the main panel
-      JPanel secondCol = new JPanel(new MigLayout("", "[]0[]", "[]0[]"));
-      secondCol.add(triggerPanel, "growx, wrap");
-      secondCol.add(lightSheetPanel, "wrap");
       add(roiPanel);
-      add(secondCol, "top");
+      add(triggerPanel, "growx, wrap");
    }//constructor
    
    
