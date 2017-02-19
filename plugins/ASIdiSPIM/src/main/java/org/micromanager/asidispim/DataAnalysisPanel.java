@@ -48,6 +48,9 @@ import org.micromanager.display.DisplayWindow;
  * mipav likes data in a folder as follows:
  * folder - SPIMA - name_SPIMA-0.tif, name_SPIMA-x.tif, name_SPIMA-n.tif
  *        - SPIMB - name_SPIMB-0.tif, name_SPIMB-x.tif, name_SPIMB-n.tif
+ * 
+ * TODO: make mipav export work for single sided acquisitions
+ * TODO: make mipav export work for multi-position acquisitions
  * @author Nico
  */
 @SuppressWarnings("serial")
