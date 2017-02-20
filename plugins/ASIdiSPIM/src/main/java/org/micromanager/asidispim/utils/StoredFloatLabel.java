@@ -43,12 +43,13 @@ public class StoredFloatLabel extends JLabel {
     * Creates a JLabel and overrides the setText methods so that 
     * changed in the Label will be written to the preferences
     * Adds a setFloat method for convenience
+    * TODO consider storing float value instead of string. 
+ 	 * TODO specify number of decimal points to display/store => could store as fixed-point value 
     * 
     * @param prefNode - Node used to store the value in preferences
     * @param prefKey - Key used to store the value in preferences
     * @param defaultValue - default value in case nothing is found in prefs
     * @param prefs - Global preferences object used in this plugin
-    * @param gui - MM ScriptInterface instance
     * @param units - string to be displayed after the float, usually containing units
     */
    public StoredFloatLabel(String prefNode, String prefKey, float defaultValue, 
