@@ -386,6 +386,11 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       stagePosUpdater_.stop();
       saveSettings();
       windowClosing();
+      gui_.events().unregisterForEvents(setupPanelA_);
+      if (!ASIdiSPIM.OSPIM) {
+         gui_.events().unregisterForEvents(setupPanelB_);
+      }
+      gui_.events().unregisterForEvents(navigationPanel_);
       super.dispose();
    }
   
