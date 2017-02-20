@@ -26,7 +26,17 @@ import org.micromanager.PositionList;
 import org.micromanager.asidispim.data.Devices;
 
 /**
- * This interface defines an API for interfacing with the ASIdiSPIM plugin.
+ * This interface defines an API for interfacing with the ASIdiSPIM plugin.* To
+ * avoid depending on the internals restrict yourself to the ASIdiSPIMInterface;
+ * always cast the instance the class to ASIdiSPIMInterface, e.g.:
+ *
+ * import org.micromanager.asidispim.api.ASIdiSPIMInterface; import
+ * org.micromanager.asidispim.api.ASIdiSPIMImplementation;
+ *
+ * ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
+ * diSPIM.runAcquisition(); // or other API methods in ASIdiSPIMInterface
+ *
+ *
  */
 
 /**
