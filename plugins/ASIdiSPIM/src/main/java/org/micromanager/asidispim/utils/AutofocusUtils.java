@@ -252,6 +252,7 @@ public class AutofocusUtils {
             acqSettings.numSides = 1;
             acqSettings.firstSideIsA = side.equals(Sides.A);
             acqSettings.useTimepoints = false;
+            acqSettings.useMultiPositions = false;
             acqSettings.spimMode = isPiezoScan? AcquisitionModes.Keys.PIEZO_SCAN_ONLY : AcquisitionModes.Keys.SLICE_SCAN_ONLY;
             acqSettings.centerAtCurrentZ = centerAtCurrentZ;
             acqSettings.stepSizeUm = piezoStepSize;

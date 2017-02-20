@@ -88,6 +88,7 @@ import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 
 import org.micromanager.MultiStagePosition;
+import org.micromanager.StagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMap.PropertyMapBuilder;
@@ -2159,8 +2160,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         throw new IllegalMonitorStateException("User stopped the acquisition");
                      }
 
-                     // between positions move stage fast
-                     // this will clobber stage scanning setting so need to restore it
+                     // want to move between positions move stage fast, so we  
+ 	                  //   will clobber stage scanning setting so need to restore it 
                      float scanXSpeed = 1f;
                      if (acqSettings.isStageScanning) {
                         scanXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
@@ -2178,6 +2179,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                 Properties.Keys.STAGESCAN_MOTOR_SPEED, scanXSpeed);
                      }
 
+                     // setup stage scan at this position 
+                     if (acqSettings.isStageScanning) {
+                        StagePosition pos = positionList.getPosition(positionNum).get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                        controller_.prepareStageScanForAcquisition(pos.x, pos.y);
+                     }
+                     
                      // wait any extra time the user requests
                      Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
                   }
