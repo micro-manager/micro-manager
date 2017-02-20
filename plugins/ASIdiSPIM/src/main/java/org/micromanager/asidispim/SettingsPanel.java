@@ -52,7 +52,6 @@ import org.micromanager.asidispim.utils.StagePositionUpdater;
 
 import net.miginfocom.swing.MigLayout;
 
-import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.asidispim.utils.ImageJUtils;
 import org.micromanager.asidispim.utils.MyDialogUtils;
@@ -64,8 +63,7 @@ import org.micromanager.internal.utils.FileDialogs;
  */
 @SuppressWarnings("serial")
 public class SettingsPanel extends ListeningJPanel {
-   
-   private final CMMCore core_;
+
    private final Devices devices_;
    private final Properties props_;
    private final Prefs prefs_;
@@ -91,7 +89,6 @@ public class SettingsPanel extends ListeningJPanel {
               "[right]16[center]16[center]",
               "[]16[]"));
      
-      core_ = gui.getCMMCore();
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
@@ -184,22 +181,6 @@ public class SettingsPanel extends ListeningJPanel {
       CameraModes camModeObject = new CameraModes(devices_, props_, prefs_);
       JComboBox camModeCB = camModeObject.getComboBox();
       cameraPanel.add(camModeCB, "wrap");
-      
-      cameraPanel.add(new JLabel("Live exposure [ms]:"));
-      JFormattedTextField liveExposureMs = pu.makeFloatEntryField(panelName_, 
-            Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(), 100, 6);
-      liveExposureMs.addPropertyChangeListener("value", new PropertyChangeListener() {
-         @Override
-         public void propertyChange(PropertyChangeEvent evt) {
-            try {
-               core_.setExposure((Double)evt.getNewValue());
-            } catch (Exception e) {
-               MyDialogUtils.showError("Could not change exposure setting for live mode");
-            }
-         }
-      });
-      cameraPanel.add(liveExposureMs, "wrap");
-      
       
       cameraPanel.add(new JLabel("Live scan time [ms]:"));
       liveScanMs_ = pu.makeSpinnerInteger(1, 10000,
