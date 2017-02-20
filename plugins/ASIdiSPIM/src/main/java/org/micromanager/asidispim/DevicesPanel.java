@@ -89,6 +89,13 @@ public class DevicesPanel extends ListeningJPanel {
             Devices.Keys.UPPERZDRIVE, MAX_SELECTOR_WIDTH*2);
       super.add(boxUpperZ_, "span 2, center, wrap");
       
+      if (ASIdiSPIM.OSPIM) {
+         super.add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERHDRIVE) + ":"));
+         final JComboBox boxUpperH_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+                 Devices.Keys.UPPERHDRIVE, MAX_SELECTOR_WIDTH * 2);
+         super.add(boxUpperH_, "span 2, center, wrap");
+      }
+  
       super.add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PLOGIC) + ":"));
       final JComboBox boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
             Devices.Keys.PLOGIC, MAX_SELECTOR_WIDTH*2);
@@ -107,7 +114,12 @@ public class DevicesPanel extends ListeningJPanel {
       super.add (label);
       final JComboBox boxScannerA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
             Devices.Keys.GALVOA, MAX_SELECTOR_WIDTH);
-      super.add(boxScannerA_);
+      if (!ASIdiSPIM.OSPIM) {
+         super.add(boxScannerA_);
+      } else {
+         boxScannerA_.setSelectedIndex(0);  // clear setting 
+ 	      super.add(new JLabel("")); 
+      }
       final JComboBox boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
             Devices.Keys.GALVOB, MAX_SELECTOR_WIDTH);
       super.add(boxScannerB_, "wrap");
@@ -123,7 +135,12 @@ public class DevicesPanel extends ListeningJPanel {
 
       super.add(new JLabel("Camera:"));
       final JComboBox boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA, MAX_SELECTOR_WIDTH);
-      super.add(boxCameraA_);
+      if (!ASIdiSPIM.OSPIM) {
+         super.add(boxCameraA_);
+      } else {
+         boxCameraA_.setSelectedIndex(0); // clear setting
+         super.add (new JLabel(""));
+      }
       final JComboBox boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, MAX_SELECTOR_WIDTH);
       super.add(boxCameraB_, "wrap");
       

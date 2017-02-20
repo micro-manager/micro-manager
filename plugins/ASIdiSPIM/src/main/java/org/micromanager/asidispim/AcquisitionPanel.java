@@ -260,6 +260,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings", volPanel_));
 
+      if (ASIdiSPIM.OSPIM) {
+         props_.setPropValue(Devices.Keys.PLUGIN,
+                 Properties.Keys.PLUGIN_NUM_SIDES, "1");
+      }
+    
       volPanel_.add(new JLabel("Number of sides:"));
       String [] str12 = {"1", "2"};
       numSides_ = pu.makeDropDownBox(str12, Devices.Keys.PLUGIN,
@@ -269,8 +274,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       volPanel_.add(new JLabel("First side:"));
       String[] ab = {Devices.Sides.A.toString(), Devices.Sides.B.toString()};
+      if (ASIdiSPIM.OSPIM) {
+         props_.setPropValue(Devices.Keys.PLUGIN,
+                 Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.B.toString());
+      }
       firstSide_ = pu.makeDropDownBox(ab, Devices.Keys.PLUGIN,
-            Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.A.toString());
+              Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.A.toString());
+      if (ASIdiSPIM.OSPIM) {
+         firstSide_.setEnabled(false);
+      }
       volPanel_.add(firstSide_, "wrap");
       
       volPanel_.add(new JLabel("Delay before side [ms]:"));

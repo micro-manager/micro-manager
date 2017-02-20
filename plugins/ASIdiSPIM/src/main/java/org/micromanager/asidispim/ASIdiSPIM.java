@@ -36,8 +36,9 @@ import org.scijava.plugin.SciJavaPlugin;
  */
 @Plugin(type = MenuPlugin.class)
 public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
-   public final static String MENUNAME = "ASI diSPIM";
-   public final static String TOOLTIPDESCRIPTION = "Control the ASI diSPIM";
+   public static final boolean OSPIM = false;
+   public final static String MENUNAME = "ASI " + (OSPIM ? "oSPIM" : "diSPIM");
+   public final static String TOOLTIPDESCRIPTION = "Control the " + MENUNAME; 
    public final static Color BORDERCOLOR = Color.gray;
 
    private Studio gui_;
@@ -55,7 +56,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getCopyright() {
-      return "University of California and ASI, 2013-2016";
+      return "University of California and Applied Scientific Precision(ASI), 2013-2017";
    }
 
    @Override
@@ -89,7 +90,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getName() {
-      return "ASI diSPIM";
+      return MENUNAME;
    }
 
    @Override
