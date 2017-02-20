@@ -1641,17 +1641,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && sideActiveA)
               || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && sideActiveB);
 
-      final int nrSides = acqSettings.numSides;
-      final int nrSlices = acqSettings.numSlices;
-      final int nrChannels = acqSettings.numChannels;
 
       // set up channels
-      int nrChannelsSoftware = nrChannels;  // how many times we trigger the controller per stack
-      int nrSlicesSoftware = nrSlices;
+      int nrChannelsSoftware = acqSettings.numChannels;  // how many times we trigger the controller per stack 
+      int nrSlicesSoftware = acqSettings.numSlices;
       String originalChannelConfig = "";
       boolean changeChannelPerVolumeSoftware = false;
       if (acqSettings.useChannels) {
-         if (nrChannels < 1) {
+         if (acqSettings.numChannels < 1) {
             MyDialogUtils.showError("\"Channels\" is checked, but no channels are selected");
             return false;
          }
@@ -1664,7 +1661,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                break;
             case VOLUME_HW:
             case SLICE_HW:
-               if (nrChannels == 1) {  // only 1 channel selected so don't have to really use hardware switching
+               if (acqSettings.numChannels == 1) {  // only 1 channel selected so don't have to really use hardware switching
                   multiChannelPanel_.initializeChannelCycle();
                   multiChannelPanel_.selectNextChannel();
                } else {  // we have at least 2 channels
@@ -1674,7 +1671,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      return false;
                   }
                   nrChannelsSoftware = 1;
-                  nrSlicesSoftware = nrSlices * nrChannels;
+                  nrSlicesSoftware = acqSettings.numSlices * acqSettings.numChannels;
                }
                break;
             default:
@@ -1692,9 +1689,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             //   and one extra trigger be channel per side for volume-switching (both PLogic and not). 
             // Very last trigger won't ever return a frame so subtract 1. 
             if (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-               nrSlicesSoftware = (((nrSlices * nrChannels) + 1) * acqSettings.numTimepoints) - 1;
+               nrSlicesSoftware = (((acqSettings.numSlices * acqSettings.numChannels) + 1) * acqSettings.numTimepoints) - 1;
             } else {
-               nrSlicesSoftware = ((nrSlices + 1) * nrChannels * acqSettings.numTimepoints) - 1;
+               nrSlicesSoftware = ((acqSettings.numSlices + 1) * 
+                       acqSettings.numChannels * 
+                       acqSettings.numTimepoints) - 1;
             }
          } else {
             // we get back one image per trigger for all trigger modes other than OVERLAP 
@@ -1800,7 +1799,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
          if (spimMode == AcquisitionModes.Keys.NO_SCAN) {
-            MyDialogUtils.showError("Cannot do timepoints when no scan mode is used."
+            MyDialogUtils.showError("Cannot do hardware timepoints when no scan mode is used."
                     + " Use the number of slices to set the number of images to acquire.");
             return false;
          }
@@ -1965,7 +1964,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                core_.setExposure(secondCamera, exposureTime);
             }
 
-            channelNames_ = new String[nrSides * nrChannels];
+            channelNames_ = new String[acqSettings.numSides * acqSettings.numChannels];
 
             // generate channel names and colors
             // also builds viewString for MultiViewRegistration metadata
@@ -2030,7 +2029,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
             smb = smb.intendedDimensions(gui_.data().getCoordsBuilder().
                     channel(channelNr).
-                    z(nrSlices).
+                    z(acqSettings.numSlices).
                     time(nrFrames).
                     stagePosition(nrPositions).                    
                     build());
@@ -2239,9 +2238,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
 
                         // grab all the images from the cameras, put them into the acquisition
-                        int[] frNumber = new int[2 * nrChannels];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
+                        int[] frNumber = new int[2 * acqSettings.numChannels];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
                         int[] cameraFrNumber = new int[2];       // keep track of how many frames we have received from the camera
-                        int[] tpNumber = new int[2 * nrChannels];  // keep track of which timepoint we are on for hardware timepoints
+                        int[] tpNumber = new int[2 * acqSettings.numChannels];  // keep track of which timepoint we are on for hardware timepoints
                         boolean skipNextImage = false;  // hardware timepoints with overlap mode sometimes have to drop spurious image 
                         final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP); 
  	                     final boolean skipPerSide = acqSettings.useChannels && (acqSettings.numChannels > 1) 
@@ -2279,10 +2278,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                        channelIndex_tmp = channelNum;
                                        break;
                                     case VOLUME_HW:
-                                       channelIndex_tmp = cameraFrNumber[cameraIndex] / nrSlices;  // want quotient only
+                                       channelIndex_tmp = cameraFrNumber[cameraIndex] / 
+                                               acqSettings.numSlices;  // want quotient only
                                        break;
                                     case SLICE_HW:
-                                       channelIndex_tmp = cameraFrNumber[cameraIndex] % nrChannels;  // want modulo arithmetic
+                                       channelIndex_tmp = cameraFrNumber[cameraIndex] % 
+                                               acqSettings.numChannels;  // want modulo arithmetic
                                        break;
                                     default:
                                        // should never get here
@@ -2318,7 +2319,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  // if hardware timepoints then we only send one trigger
                                  //   manually keep track of which channel/timepoint comes next
                                  if (acqSettings.hardwareTimepoints
-                                         && frNumber[channelIndex] >= nrSlices) {   // only do this if we are done with the slices in this MM channel 
+                                         && frNumber[channelIndex] >= acqSettings.numSlices) {   // only do this if we are done with the slices in this MM channel 
  	                                 // we just finished filling one MM channel with all its slices so go to next timepoint for this channel          
                                     frNumber[channelIndex] = 0;
                                     tpNumber[channelIndex]++;
@@ -2326,10 +2327,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     // see if we are supposed to skip next image 
  		                              if (checkForSkips) { 
  		                                 if (skipPerSide) {  // one extra image per side, only happens with per-slice HW switching 
- 	                                       if ((channelIndex == (nrChannels - 1))  // final channel index is last one of side 
- 	                                          || (twoSided && (channelIndex == (nrChannels - 2)))) {  // 2nd-to-last channel index for two-sided is also last one of side                        skipNextImage = true; 
+ 	                                       if ((channelIndex == (acqSettings.numChannels - 1))  // final channel index is last one of side 
+ 	                                          || (twoSided && (channelIndex == (acqSettings.numChannels - 2)))) {  // 2nd-to-last channel index for two-sided is also last one of side                        skipNextImage = true; 
  		                                    } 
- 		                                 } else {  // one extra image per MM channel (color and side), this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected) 
+ 		                                 } else {  // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected) 
  		                                    skipNextImage = true; 
  		                                 } 
  		                              }
