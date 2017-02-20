@@ -117,14 +117,15 @@ public final class BeamSubPanel extends ListeningJPanel {
             Properties.Keys.SA_MODE_X, instanceLabel_, Prefs.Keys.EPI_SCAN_ENABLED);
       
       if (noSide) {
+         super.add(new JLabel("Path A:"));
+         super.add(beamABox_);
+         super.add(sheetABox_, "wrap");
          if (!ASIdiSPIM.OSPIM) {
-            super.add(new JLabel("Path A:"));
-            super.add(beamABox_);
-            super.add(sheetABox_, "wrap");
+            super.add(new JLabel("Path B:"));
+            super.add(beamBBox_);
+            super.add(sheetBBox_, "wrap");  
          }
-         super.add(new JLabel("Path B:"));
-         super.add(beamBBox_);
-         super.add(sheetBBox_, "wrap");         
+                
       } else {
          super.add(new JLabel("Excitation side:"));
          super.add(beamABox_);

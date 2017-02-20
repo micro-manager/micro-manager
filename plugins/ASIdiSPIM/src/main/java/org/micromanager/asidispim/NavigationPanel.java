@@ -292,45 +292,46 @@ public class NavigationPanel extends ListeningJPanel  {
 
       galvoAxPositionLabel_ = new JLabel("");
       galvoAyPositionLabel_ = new JLabel("");
-      if (!ASIdiSPIM.OSPIM) {
-         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Directions.X) + ":"));
-         navPanel.add(galvoAxPositionLabel_);
-         navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOA, Directions.X, positions_));
-         JFormattedTextField deltaAField = pu.makeFloatEntryField(panelName_, "DeltaA", 0.2, 3);
-         navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.X, deltaAField, "-", -1));
-         navPanel.add(deltaAField);
-         navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.X, deltaAField, "+", 1));
-         navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOA, Directions.X), "wrap");
-
-         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Directions.Y) + ":"));
-         navPanel.add(galvoAyPositionLabel_);
-         navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOA, Directions.Y, positions_));
-         JFormattedTextField deltaBField = pu.makeFloatEntryField(panelName_, "DeltaB", 0.2, 3);
-         navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.Y, deltaBField, "-", -1));
-         navPanel.add(deltaBField);
-         navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.Y, deltaBField, "+", 1));
-         navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOA, Directions.Y), "wrap");
-      }
-
-      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Directions.X) + ":"));
       galvoBxPositionLabel_ = new JLabel("");
-      navPanel.add(galvoBxPositionLabel_);
-      navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOB, Directions.X, positions_));
-      JFormattedTextField deltaCField = pu.makeFloatEntryField(panelName_, "DeltaC", 0.2, 3);
-      navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.X, deltaCField, "-", -1));
-      navPanel.add(deltaCField);
-      navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.X, deltaCField, "+", 1));
-      navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Directions.X), "wrap");
-      
-      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Directions.Y) + ":"));
       galvoByPositionLabel_ = new JLabel("");
-      navPanel.add(galvoByPositionLabel_);
-      navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOB, Directions.Y, positions_));
-      JFormattedTextField deltaDField = pu.makeFloatEntryField(panelName_, "DeltaD", 0.2, 3);
-      navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.Y, deltaDField, "-", -1));
-      navPanel.add(deltaDField);
-      navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.Y, deltaDField, "+", 1));
-      navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Directions.Y), "wrap");
+      
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Directions.X) + ":"));
+      navPanel.add(galvoAxPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOA, Directions.X, positions_));
+      JFormattedTextField deltaAField = pu.makeFloatEntryField(panelName_, "DeltaA", 0.2, 3);
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.X, deltaAField, "-", -1));
+      navPanel.add(deltaAField);
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.X, deltaAField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOA, Directions.X), "wrap");
+      
+      navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOA, Directions.Y) + ":"));
+      navPanel.add(galvoAyPositionLabel_);
+      navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOA, Directions.Y, positions_));
+      JFormattedTextField deltaBField = pu.makeFloatEntryField(panelName_, "DeltaB", 0.2, 3);
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.Y, deltaBField, "-", -1));
+      navPanel.add(deltaBField);
+      navPanel.add(makeIncrementButton(Devices.Keys.GALVOA, Directions.Y, deltaBField, "+", 1));
+      navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOA, Directions.Y), "wrap");
+
+      if (!ASIdiSPIM.OSPIM) {
+         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Directions.X) + ":"));
+         navPanel.add(galvoBxPositionLabel_);
+         navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOB, Directions.X, positions_));
+         JFormattedTextField deltaCField = pu.makeFloatEntryField(panelName_, "DeltaC", 0.2, 3);
+         navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.X, deltaCField, "-", -1));
+         navPanel.add(deltaCField);
+         navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.X, deltaCField, "+", 1));
+         navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Directions.X), "wrap");
+      
+         navPanel.add(new JLabel(devices_.getDeviceDisplayVerbose(Devices.Keys.GALVOB, Directions.Y) + ":"));
+         navPanel.add(galvoByPositionLabel_);
+         navPanel.add(pu.makeSetPositionField(Devices.Keys.GALVOB, Directions.Y, positions_));
+         JFormattedTextField deltaDField = pu.makeFloatEntryField(panelName_, "DeltaD", 0.2, 3);
+         navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.Y, deltaDField, "-", -1));
+         navPanel.add(deltaDField);
+         navPanel.add(makeIncrementButton(Devices.Keys.GALVOB, Directions.Y, deltaDField, "+", 1));
+         navPanel.add(makeMoveToOriginButton(Devices.Keys.GALVOB, Directions.Y), "wrap");
+      }
 
       if (!ASIdiSPIM.OSPIM) {
          navPanel.add(loadPanel, "cell 7 4, span 2 6, center, wrap");
