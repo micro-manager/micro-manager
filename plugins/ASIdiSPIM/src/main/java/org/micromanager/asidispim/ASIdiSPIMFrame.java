@@ -156,6 +156,7 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       
       acquisitionPanel_ = new AcquisitionPanel(gui_, devices_, props_, cameras_, 
             prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
+      // TODO change default single path for oSPIM to be path A 
       if (!ASIdiSPIM.OSPIM) { 
       setupPanelA_ = new SetupPanel(gui_, devices_, props_, joystick_, 
             Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
