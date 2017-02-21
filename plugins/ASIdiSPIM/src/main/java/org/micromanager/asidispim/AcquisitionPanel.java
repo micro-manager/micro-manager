@@ -1799,6 +1799,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Must have stage with scan-enabled firmware for stage scanning.");
             return false;
          }
+         if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+                 && acqSettings.numSides < 2) {
+            MyDialogUtils.showError("Interleaved mode requires two sides.");
+         }
       }
 
       double sliceDuration = acqSettings.sliceTiming.sliceDuration;
