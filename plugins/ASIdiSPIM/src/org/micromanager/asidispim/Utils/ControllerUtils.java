@@ -512,6 +512,16 @@ public class ControllerUtils {
       // send sheet width/offset
       float sheetWidth = getSheetWidth(settings.cameraMode, cameraDevice, side);
       float sheetOffset = getSheetOffset(settings.cameraMode, side);
+      if (settings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+         // adjust sheet width and offset to account for settle time where scan is going but we aren't imaging yet
+         final float settleTime = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE);
+         // infer the main scan time (during imaging) from the laser duration
+         final float readoutTime = settings.sliceTiming.laserDuration - 0.25f;  // -0.25 is for scanLaserBufferTime
+         // offset should be decreased by half of the distance traveled during settle time (instead of re-extracting slope use existing sheetWidth/readoutTime)
+         sheetOffset -= (sheetWidth * settleTime/readoutTime)/2;
+         // width should be increased by ratio (1 + settle_fraction) 
+         sheetWidth += (sheetWidth * settleTime/readoutTime);
+      }
       props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
       props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
       
