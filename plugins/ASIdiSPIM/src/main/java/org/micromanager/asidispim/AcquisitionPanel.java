@@ -2141,6 +2141,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // note that these SequenceSettings are quite incomplete
             SequenceSettings settings = acqSettings.getSequenceSettings();
+            // TODO replace original "SetAcquisitionProperty" code!!
             
             gui_.events().post(new SPIMAcquisitionStartedEvent(store, settings, this));
 

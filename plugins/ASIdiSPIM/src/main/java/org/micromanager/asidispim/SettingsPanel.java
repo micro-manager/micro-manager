@@ -287,13 +287,13 @@ public class SettingsPanel extends ListeningJPanel {
             "[]8[]"));
       imageJPanel.setBorder(PanelUtils.makeTitledBorder("ImageJ", imageJPanel));
       
-      final JCheckBox useToolset = pu.makeCheckBox("Load diSPIM toolset on launch",
-            Properties.Keys.PLUGIN_USE_TOOLSET, panelName_, true);
-      useToolset.setToolTipText("places icons in ImageJ toolbar for quick access of commonly-used image manipulation tasks");
-      if (useToolset.isSelected()) {
-         ImageJUtils.loadToolset();
-      }
-      imageJPanel.add(useToolset, "span 2, wrap");
+//      final JCheckBox useToolset = pu.makeCheckBox("Load diSPIM toolset on launch",
+//            Properties.Keys.PLUGIN_USE_TOOLSET, panelName_, true);
+//      useToolset.setToolTipText("places icons in ImageJ toolbar for quick access of commonly-used image manipulation tasks");
+//      if (useToolset.isSelected()) {
+//         ImageJUtils.loadToolset();
+//      }
+//      imageJPanel.add(useToolset, "span 2, wrap");
       
       // end ImageJ settings panel
       
