@@ -52,12 +52,15 @@ import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.asidispim.Utils.StoredFloatLabel;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.Utils.ControllerUtils;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.internalinterfaces.LiveModeListener;
 import org.micromanager.utils.MMFrame;
@@ -80,6 +83,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final AutofocusUtils autofocus_;
    private final Prefs prefs_;
    private final StagePositionUpdater posUpdater_;
+   private final ControllerUtils controller_;
    private final ScriptInterface gui_;
    private final JoystickSubPanel joystickPanel_;
    private final CameraSubPanel cameraPanel_;
@@ -96,6 +100,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private double imagingCenterPos_;
    private double sliceStartPos_;
    private double sliceStopPos_;
+   private final Properties.Keys widthPropNormal_;
    private final JCheckBox illumPiezoHomeEnable_;
    private final JCheckBox illumPiezoHomeEnable2_;
    private final JCheckBox autoSheetWidth_; 
@@ -116,6 +121,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final JButton sheetIncButton_;
    private final JButton sheetDecButton_;
    private final JSlider sheetWidthSlider_;
+   private final JSlider sheetOffsetSlider_;
    private final JPanel sheetPanelNormal_;
    private final JPanel sheetPanelLightSheet_;
    private final JPanel sheetPanelContainer_;
@@ -129,7 +135,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
            Cameras cameras,
            Prefs prefs,
            StagePositionUpdater posUpdater,
-           AutofocusUtils autofocus) {
+           AutofocusUtils autofocus,
+           ControllerUtils controller) {
       super(MyStrings.PanelNames.SETUP.toString() + side.toString(),
               new MigLayout(
               "",
@@ -145,6 +152,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       autofocus_ = autofocus;
       prefs_ = prefs;
       posUpdater_ = posUpdater;
+      controller_ = controller;
       gui_ = gui;
       PanelUtils pu = new PanelUtils(prefs_, props_, devices);
       final SetupPanel setupPanel = this;
@@ -209,7 +217,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       calibrationPanel.add(new JSeparator(SwingConstants.VERTICAL), "span 1 3, growy, shrinkx, center");
       calibrationPanel.add(new JLabel("Step"), "wrap");
       
-      calibrationPanel.add(new JLabel("Slope: "));
+      calibrationPanel.add(new JLabel("Slope:"));
       calibrationPanel.add(rateField_, "span 2, right");
       // TODO consider making calibration be in degrees instead of um
       // originally thought it was best, now not sure because um gives
@@ -230,7 +238,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
       calibrationPanel.add(upButton, "growy, wrap");
       
-      calibrationPanel.add(new JLabel("Offset: "));
+      calibrationPanel.add(new JLabel("Offset:"));
       calibrationPanel.add(offsetField_, "span 2, right");
       // calibrationPanel.add(new JLabel("\u00B0"));
       calibrationPanel.add(new JLabel("\u00B5m"));
@@ -564,16 +572,12 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanelNormal_.add(new JLabel("Sheet width:"));
       autoSheetWidth_ = pu.makeCheckBox("Automatic",
             Properties.Keys.PREFS_AUTO_SHEET_WIDTH, panelName_, false);
-      final Properties.Keys widthPropNormal = (side == Devices.Sides.A) ?
+      widthPropNormal_ = (side == Devices.Sides.A) ?
             Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_A : Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_B;
       autoSheetWidth_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            if (autoSheetWidth_.isSelected()) {
-               updateSheetWidthROI();
-            } else {
-               props_.setPropValue(Devices.Keys.PLUGIN, widthPropNormal, sheetWidthSlider_.getValue()/1000f);
-            }
+            updateSheetWidth();
          }
       });
       sheetPanelNormal_.add(autoSheetWidth_, "span 2, right");
@@ -582,32 +586,38 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetWidthSlope_.addPropertyChangeListener("value", new PropertyChangeListener() {
          @Override
          public void propertyChange(PropertyChangeEvent evt) {
-            updateSheetWidthROI();
+            updateSheetWidth();
          }
       });
-      // initialize sheet width if needed
-      if (autoSheetWidth_.isSelected()) {
-         updateSheetWidthROI();
-      }
+      
       sheetPanelNormal_.add(sheetWidthSlope_, "right");
       sheetWidthSlopeUnits_ = new JLabel("m\u00B0/px"); 
       sheetPanelNormal_.add(sheetWidthSlopeUnits_, "left");
       sheetIncButton_ = makeIncrementButton(Devices.Keys.PLUGIN,
-            widthPropNormal, "-", (float)-0.01);
+            widthPropNormal_, "-", (float)-0.01);
       sheetPanelNormal_.add(sheetIncButton_, "split 2");
       sheetDecButton_ = makeIncrementButton(Devices.Keys.PLUGIN,
-            widthPropNormal, "+", (float)0.01);
+            widthPropNormal_, "+", (float)0.01);
       sheetPanelNormal_.add(sheetDecButton_);
       // make sure our internal-use property is initialized
-      if (props_.getPropValueFloat(Devices.Keys.PLUGIN, widthPropNormal) == 0) {
-       props_.setPropValue(Devices.Keys.PLUGIN, widthPropNormal,
+      if (props_.getPropValueFloat(Devices.Keys.PLUGIN, widthPropNormal_) == 0) {
+       props_.setPropValue(Devices.Keys.PLUGIN, widthPropNormal_,
              props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG));  
       }
       sheetWidthSlider_ = pu.makeSlider(0, // 0 is min amplitude
               props_.getPropValueFloat(micromirrorDeviceKey_,Properties.Keys.MAX_DEFLECTION_X) - 
               props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X), // compute max amplitude
               1000, // the scale factor between internal integer representation and float representation
-              Devices.Keys.PLUGIN, widthPropNormal);
+              Devices.Keys.PLUGIN, widthPropNormal_);
+      pu.addListenerLast(sheetWidthSlider_, new ChangeListener() {  // make sure to update the controller value whenever the slider is changed
+         @Override
+         public void stateChanged(ChangeEvent ce) {
+            JSlider source = (JSlider) ce.getSource();
+            if(!source.getValueIsAdjusting()) {
+               updateSheetWidth();
+            }
+         }
+      });
       sheetPanelNormal_.add(sheetWidthSlider_, "span 3, growx, center, wrap");
       final JComponent[] autoSheetWidthComponents = { sheetWidthSlope_, sheetWidthSlopeUnits_ };
       final JComponent[] manualSheetWidthComponents = { sheetIncButton_, sheetDecButton_, sheetWidthSlider_ };
@@ -644,15 +654,28 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
        props_.setPropValue(Devices.Keys.PLUGIN, offsetProp,
              props_.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG));  
       }
-      JSlider tmp_sl = pu.makeSlider(
+      sheetOffsetSlider_ = pu.makeSlider(
               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MIN_DEFLECTION_X)/4, // min value
               props.getPropValueFloat(micromirrorDeviceKey_, Properties.Keys.MAX_DEFLECTION_X)/4, // max value
               1000, // the scale factor between internal integer representation and float representation
               Devices.Keys.PLUGIN, offsetProp);
-      sheetPanelNormal_.add(tmp_sl, "span 4, growx, center");
+      pu.addListenerLast(sheetOffsetSlider_, new ChangeListener() {  // make sure to update the controller value whenever the slider is changed
+         @Override
+         public void stateChanged(ChangeEvent ce) {
+            JSlider source = (JSlider) ce.getSource();
+            if(!source.getValueIsAdjusting()) {
+               updateSheetOffset();
+            }
+         }
+      });
+      sheetPanelNormal_.add(sheetOffsetSlider_, "span 4, growx, center");
 
       // end "normal" or original sheet controls
       
+      
+      // make sure sheet width/offset are initialized
+      updateSheetWidth();
+      updateSheetOffset();
       
       // layout light sheet controls
       // we can't copy relevant elements from other panel because Java swing components can only have one container
@@ -726,8 +749,28 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       sheetPanelLightSheet_.add(new JLabel("Light sheet calibration:"), "span 3, wrap");
       JFormattedTextField lightSheetSlope = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE.toString(), 2000, 5);
+      lightSheetSlope.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            CameraModes.Keys key = getSPIMCameraMode();
+            if (key == CameraModes.Keys.LIGHT_SHEET) {
+               float width = controller_.getSheetWidth(CameraModes.Keys.LIGHT_SHEET, cameraDeviceKey_, side_);
+               props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, width, true);  // ignore missing device
+            }
+         }
+      });
       JFormattedTextField lightSheetOffset = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_LIGHTSHEET_OFFSET.toString(), 0, 5);
+      lightSheetOffset.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            CameraModes.Keys key = getSPIMCameraMode();
+            if (key == CameraModes.Keys.LIGHT_SHEET) {
+               float offset = controller_.getSheetOffset(CameraModes.Keys.LIGHT_SHEET, side_);
+               props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offset, true);  // ignore missing device
+            }
+         }
+      });
       
       sheetPanelLightSheet_.add(new JLabel("Slope:"));
       sheetPanelLightSheet_.add(lightSheetSlope);
@@ -918,19 +961,41 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       }
    }
    
-   private void updateSheetWidthROI() {
-      updateSheetWidthROI(cameraDeviceKey_);
+   /**
+    * Updates the controllers SAA setting for the scan axis based on the settings
+    * (slider setting for "normal" mode, ROI and slope for light sheet mode
+    */
+   private void updateSheetWidth() {
+      CameraModes.Keys key = getSPIMCameraMode();
+      float width = controller_.getSheetWidth(key, cameraDeviceKey_, side_);
+      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, width, true);  // ignore missing device
    }
    
-   public void updateSheetWidthROI(Devices.Keys cameraKey) {
-      Rectangle roi = cameras_.getCameraROI(cameraKey);
-      float width = (float) (roi.height * (Double) sheetWidthSlope_.getValue() / 1000f);
-      // TODO add extra width to compensate for filter depending on sweep rate and filter freq
-      // TODO calculation should account for sample exposure to make sure 0.25ms edges get appropriately compensated for
-      width *= 1.1f;  // 10% extra width just to be sure
-      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_AMPLITUDE_X_DEG, width);
+   /**
+    * Updates the controllers SAO setting for the scan axis based on the settings
+    * (slider setting for "normal" mode, ROI and slope for light sheet mode
+    */
+   private void updateSheetOffset() {
+      CameraModes.Keys key = getSPIMCameraMode();
+      float offset = controller_.getSheetOffset(key, side_);
+      props_.setPropValue(micromirrorDeviceKey_, Properties.Keys.SA_OFFSET_X_DEG, offset, true);  // ignore missing device
    }
-
+   
+   /**
+    * @return CameraModes.Keys value from Camera panel
+    * (internal, edge, overlap, pseudo-overlap, light sheet) 
+    */
+   private CameraModes.Keys getSPIMCameraMode() {
+      CameraModes.Keys val = null;
+      try {
+         val = ASIdiSPIM.getFrame().getSPIMCameraMode();
+      } catch (Exception ex) {
+         val = CameraModes.getKeyFromPrefCode(prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+            Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      }
+      return val;
+   }
+   
    @Override
    public void saveSettings() {
       beamPanel_.saveSettings();
@@ -1041,12 +1106,14 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    // Used to re-layout portion of window depending when camera mode changes, in
    //   particular light sheet mode needs different set of controls.
    public void cameraModeChange() {
-      CameraModes.Keys key = ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode();
+      CameraModes.Keys key = getSPIMCameraMode();
       sheetPanelContainer_.removeAll();
       sheetPanelContainer_.add((key == CameraModes.Keys.LIGHT_SHEET) ?
          sheetPanelLightSheet_ : sheetPanelNormal_);
       sheetPanelContainer_.revalidate();
       sheetPanelContainer_.repaint();
+      updateSheetWidth();
+      updateSheetOffset();
    }
    
    private void updateKeyAssignments() {

@@ -967,12 +967,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private CameraModes.Keys getSPIMCameraMode() {
       CameraModes.Keys val = null;
       try {
-         val = ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode();
+         val = ASIdiSPIM.getFrame().getSPIMCameraMode();
       } catch (Exception ex) {
-         // this case in for when tab is first created and CameraPanel doesn't yet exist
-         // arguably it's better to use the Java object when possible instead of always going to prefs
          val = CameraModes.getKeyFromPrefCode(prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-               Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+            Properties.Keys.PLUGIN_CAMERA_MODE, 0));
       }
       return val;
    }
@@ -2134,7 +2132,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       } catch (Exception ex) {
          MyDialogUtils.showError(ex, "could not cache exposure");
       }
-
+      
       try {
          core_.setExposure(firstCamera, exposureTime);
          if (twoSided) {

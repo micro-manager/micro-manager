@@ -292,6 +292,17 @@ public class ControllerUtils {
       
       boolean skipScannerWarnings = getSkipScannerWarnings(galvoDevice);
       
+      Properties.Keys widthProp = (side == Devices.Sides.A) ?
+            Properties.Keys.PLUGIN_SHEET_WIDTH_A : Properties.Keys.PLUGIN_SHEET_WIDTH_B;
+      Properties.Keys offsetProp = (side == Devices.Sides.A) ?
+            Properties.Keys.PLUGIN_SHEET_OFFSET_A : Properties.Keys.PLUGIN_SHEET_OFFSET_B;
+      
+      // save sheet width and offset which may get clobbered
+      props_.setPropValue(Devices.Keys.PLUGIN, widthProp, 
+            props_.getPropValueFloat(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG), skipScannerWarnings);
+      props_.setPropValue(Devices.Keys.PLUGIN, offsetProp, 
+            props_.getPropValueFloat(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG), skipScannerWarnings);
+      
       // if we are changing color slice by slice then set controller to do multiple slices per piezo move
       // otherwise just set to 1 slice per piezo move
       int numSlicesPerPiezo = 1;
@@ -427,14 +438,6 @@ public class ControllerUtils {
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_FIRSTSIDE,
             settings.firstSideIsA ? "A" : "B", skipScannerWarnings);
       
-      final boolean autoSheet = prefs_.getBoolean(
-            MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-            Properties.Keys.PREFS_AUTO_SHEET_WIDTH, false);
-      if (autoSheet) {
-         ASIdiSPIM.getFrame().getSetupPanel(side).updateSheetWidthROI(cameraDevice);
-      }
-      // if not autoSheet, then we just use the existing SAA settings
-      
       // get the piezo card ready; skip if no piezo specified
       if (devices_.isValidMMDevice(piezoDevice)) {
          // if mode SLICE_SCAN_ONLY we have computed slice movement as if we
@@ -507,31 +510,8 @@ public class ControllerUtils {
       }
       
       // send sheet width/offset
-      float sheetWidth;
-      float sheetOffset;
-      if (settings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
-         final float sheetSlope = prefs_.getFloat(
-               MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-               Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE, 2000);
-         Rectangle roi;
-         try {
-            roi = core_.getROI(devices_.getMMDevice(cameraDevice));
-         } catch (Exception e) {
-            ReportingUtils.showError(e, "Could not get camera ROI for light sheet mode");
-            return false;
-         }
-         sheetWidth = (float) (roi.height * sheetSlope / 1e6f);  // in microdegrees per pixel, convert to degrees
-         sheetOffset = prefs_.getFloat(
-               MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-               Properties.Keys.PLUGIN_LIGHTSHEET_OFFSET, 0) / 1000f;  // in millidegrees, convert to degrees
-      } else {
-         final Properties.Keys widthProp = (side == Devices.Sides.A) ?
-               Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_A : Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_B;
-         final Properties.Keys offsetProp = (side == Devices.Sides.A) ?
-               Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_A : Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_B;
-         sheetWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, widthProp);
-         sheetOffset = props_.getPropValueFloat(Devices.Keys.PLUGIN, offsetProp); 
-      }
+      float sheetWidth = getSheetWidth(settings.cameraMode, cameraDevice, side);
+      float sheetOffset = getSheetOffset(settings.cameraMode, side);
       props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
       props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
       
@@ -592,6 +572,18 @@ public class ControllerUtils {
       
       Devices.Keys piezoDevice = Devices.getSideSpecificKey(Devices.Keys.PIEZOA, side);
       Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
+      boolean skipScannerWarnings = getSkipScannerWarnings(galvoDevice);
+      
+      Properties.Keys widthProp = (side == Devices.Sides.A) ?
+            Properties.Keys.PLUGIN_SHEET_WIDTH_A : Properties.Keys.PLUGIN_SHEET_WIDTH_B;
+      Properties.Keys offsetProp = (side == Devices.Sides.A) ?
+            Properties.Keys.PLUGIN_SHEET_OFFSET_A : Properties.Keys.PLUGIN_SHEET_OFFSET_B;
+      
+      // restore sheet width and offset in case they got clobbered
+      props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG,
+            props_.getPropValueFloat(Devices.Keys.PLUGIN, widthProp), skipScannerWarnings);
+      props_.setPropValue(Devices.Keys.PLUGIN, offsetProp, 
+            props_.getPropValueFloat(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG), skipScannerWarnings);
       
       // move piezo back to desired position
       if (movePiezo) {
@@ -807,6 +799,68 @@ public class ControllerUtils {
          MyDialogUtils.showError(e, "Could not get PLogic output from channel");
          return 0;
       }
+   }
+   
+   /**
+    * gets the sheet width for the specified settings in units of degrees
+    * @param cameraMode
+    * @param cameraDevice
+    * @param side
+    * @return 0 if camera isn't assigned
+    */
+   public float getSheetWidth(CameraModes.Keys cameraMode, Devices.Keys cameraDevice, Devices.Sides side) {
+      float sheetWidth;
+      if (cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+         final float sheetSlope = prefs_.getFloat(
+               MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+               Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE, 2000);
+         Rectangle roi = null;
+         try {
+            roi = core_.getROI(devices_.getMMDevice(cameraDevice));
+         } catch (Exception e) {
+            ReportingUtils.logDebugMessage("Could not get camera ROI for light sheet mode");
+            return 0f;
+         }
+         sheetWidth = (float) (roi.height * sheetSlope / 1e6f);  // in microdegrees per pixel, convert to degrees
+      } else {
+         final boolean autoSheet = prefs_.getBoolean(
+               MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+               Properties.Keys.PREFS_AUTO_SHEET_WIDTH, false);
+         if (autoSheet) {
+            Rectangle roi = null;
+            try {
+               roi = core_.getROI(devices_.getMMDevice(cameraDevice));
+            } catch (Exception e) {
+               ReportingUtils.logDebugMessage("Could not get camera ROI for auto sheet mode");
+               return 0f;
+            }
+            final float sheetSlope = prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+            Properties.Keys.PLUGIN_SLOPE_SHEET_WIDTH.toString(), 2);
+            sheetWidth = roi.height * (float) sheetSlope / 1000f;  // in millidegrees per pixel, convert to degrees
+            // TODO add extra width to compensate for filter depending on sweep rate and filter freq
+            // TODO calculation should account for sample exposure to make sure 0.25ms edges get appropriately compensated for
+            sheetWidth *= 1.1f;  // 10% extra width just to be sure
+         } else {
+            final Properties.Keys widthProp = (side == Devices.Sides.A) ?
+                  Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_A : Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_B;
+            sheetWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, widthProp);
+         }
+      }
+      return sheetWidth;
+   }
+   
+   public float getSheetOffset(CameraModes.Keys cameraMode, Devices.Sides side) {
+      float sheetOffset;
+      if (cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+         sheetOffset = prefs_.getFloat(
+               MyStrings.PanelNames.SETUP.toString() + side.toString(), 
+               Properties.Keys.PLUGIN_LIGHTSHEET_OFFSET, 0) / 1000f;  // in millidegrees, convert to degrees
+      } else {
+         final Properties.Keys offsetProp = (side == Devices.Sides.A) ?
+               Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_A : Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_B;
+         sheetOffset = props_.getPropValueFloat(Devices.Keys.PLUGIN, offsetProp); 
+      }
+      return sheetOffset;
    }
 
 }

@@ -207,6 +207,10 @@ public class Properties {
       PLUGIN_CAMERA_MODE("CameraMode"),
       PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST("CameraLiveExposureMs_First"),  // used internally to save/restore live exposure time
       PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND("CameraLiveExposureMs_Second"),  // used internally to save/restore live exposure time
+      PLUGIN_SHEET_WIDTH_A("SheetWidthOrig_A"),  // used internally to save/restore sheet width when acquisition changes it
+      PLUGIN_SHEET_WIDTH_B("SheetWidthOrig_B"),  // used internally to save/restore sheet width when acquisition changes it
+      PLUGIN_SHEET_OFFSET_A("SheetOffsetOrig_A"),  // used internally to save/restore sheet offset when acquisition changes it
+      PLUGIN_SHEET_OFFSET_B("SheetOffsetOrig_B"),  // used internally to save/restore sheet offset when acquisition changes it
       PLUGIN_CAMERA_LIVE_SCAN("CameraLiveScanMs"),
       PREFS_ENABLE_POSITION_UPDATES("EnablePositionUpdates"),
       PREFS_AUTO_SHEET_WIDTH("AutomaticSheetWidth"),

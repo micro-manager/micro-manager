@@ -823,6 +823,31 @@ public class PanelUtils {
    }
    
    /**
+    * takes a JSlider and adds a listener that is guaranteed to be called 
+    * after the other listeners.
+    * Modifies the JSlider!!
+    * @param jcb - combo box to which listener will be added
+    * @param lastListener - listener that will be added at the end
+    */
+   public void addListenerLast(JSlider jsl, final ChangeListener lastListener) {
+      final ChangeListener [] origListeners = jsl.getChangeListeners();
+      for (ChangeListener list : origListeners) {
+         jsl.removeChangeListener(list);
+      }
+
+      ChangeListener newListener = new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            for (ChangeListener list : origListeners) {
+               list.stateChanged(e);
+            }
+            lastListener.stateChanged(e);
+         }
+      };
+      jsl.addChangeListener(newListener);
+   }
+   
+   /**
     * creates change listener for float-based spinner that will coerce the value
     * to quarter integers (e.g. 1.00, 1.25, 1.50, 1.75, 2.00, etc.)
     * @param sp

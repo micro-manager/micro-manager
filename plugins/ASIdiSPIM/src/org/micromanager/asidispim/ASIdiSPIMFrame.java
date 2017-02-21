@@ -23,9 +23,11 @@ package org.micromanager.asidispim;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
@@ -75,12 +77,17 @@ import org.micromanager.utils.MMFrame;
 //TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
 //TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
 //TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
+//TODO separate properties into true hardware-related properties and plugin settings (maybe store plugin settings directly in prefs?)
+//TODO have per-tab way of creating and accessing plugin settings in prefs
+//TODO with prefs, make sure there is good way of specifying default value
 //TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
 //TODO improve efficiency of camera code by pre-calculating key factors and updating when needed instead of calculating every time
 //TODO add check for correct Hamamatsu model
 //TODO fix slightly incorrect Hamamatsu timing calculation (apparent at small ROI)
 //TODO execute autofocus during acquisition before the desired time point is reached instead of waiting until a timepoint should be collected
 //       or else do autofocus after acquisition instead of before
+//TODO merge all acquisition code instead of autofocus having its own version
+//TODO better separate GUI from function!!
 //TODO smart default joystick settings (e.g. different defaults different panels/wheels)
 //TODO calculate and show estimated disk space as part of "durations"
 //TODO Make it easier to adjust stack center (or start and end) including autodetect start/end based on content
@@ -160,11 +167,11 @@ public class ASIdiSPIMFrame extends MMFrame
             prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
       setupPanelA_ = new SetupPanel(gui_, devices_, props_, joystick_,
             Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
-            autofocus_);
+            autofocus_, controller_);
       if (!ASIdiSPIM.oSPIM) {
          setupPanelB_ = new SetupPanel(gui_, devices_, props_, joystick_,
                Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_,
-               autofocus_);
+               autofocus_, controller_);
       } else {
          setupPanelB_ = null;
       }
@@ -301,6 +308,23 @@ public class ASIdiSPIMFrame extends MMFrame
    
    public void tabsSetEnabled(boolean enabled) {
       tabbedPane_.setEnabled(enabled);
+   }
+   
+   /**
+    * @return CameraModes.Keys value from Camera panel
+    * (internal, edge, overlap, pseudo-overlap, light sheet) 
+    */
+   public CameraModes.Keys getSPIMCameraMode() {
+      CameraModes.Keys val = null;
+      try {
+         val = ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode();
+      } catch (Exception ex) {
+         // this case in for when tab is first created and CameraPanel doesn't yet exist
+         // arguably it's better to use the Java object when possible instead of always going to prefs
+         val = CameraModes.getKeyFromPrefCode(prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      }
+      return val;
    }
    
    /**
