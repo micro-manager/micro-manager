@@ -17,6 +17,7 @@ import java.io.File;
 import java.util.concurrent.ExecutionException;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField; 
 import javax.swing.JLabel;
@@ -70,7 +71,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JPanel imageJPanel_;
    private final JTextField saveDestinationField_;
    private final JTextField baseNameField_;
-    private final JFormattedTextField deskewFactor_; 
+   private final JFormattedTextField deskewFactor_; 
    
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
@@ -286,6 +287,10 @@ public class DataAnalysisPanel extends ListeningJPanel {
       deskewFactor_ = pu.makeFloatEntryField(panelName_,
               Properties.Keys.PLUGIN_DESKEW_FACTOR.toString(), 1.0, 5);
       deskewPanel_.add(deskewFactor_, "wrap");
+      
+      final JCheckBox deskewInvert = pu.makeCheckBox("Invert direction", 
+ 		          Properties.Keys.PLUGIN_DESKEW_INVERT, panelName_, false); 
+ 		deskewPanel_.add(deskewInvert, "wrap"); 
 
       JButton deskewButton = new JButton("Deskew Open Dataset");
       deskewButton.addActionListener(new ActionListener() {
@@ -303,6 +308,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
                         throw new Exception("No Micro-Manager display open");
                      }
                      final ImagePlus ip = currentWindow.getImagePlus();
+                     boolean firstSideIsA = true;
+                     
                      final Datastore datastore = currentWindow.getDatastore();
                      final SummaryMetadata summaryMetadata = datastore.getSummaryMetadata();
 
@@ -310,24 +317,21 @@ public class DataAnalysisPanel extends ListeningJPanel {
                              equals("Stage scan")) {
                         throw new Exception("Can only deskew stage scanning data");
                      }
+                     if (summaryMetadata.getUserData().getString("FirstSide").equals("B")) { 
+ 		                  firstSideIsA = false; 
+ 		               } 
+                     
+                     if (deskewInvert.isSelected()) { 
+ 		                  // "spread" the stack in the other direction  
+ 		                  firstSideIsA = ! firstSideIsA; 
+                     }
 
                      // for 45 degrees we shift the same amount as the interplane spacing, so factor of 1.0 
                      // assume diSPIM unless marked specifically otherwise 
-                     double angleFactor = 1.0;
-                     if (summaryMetadata.getUserData().containsKey("SPIMtype") &&
-                             summaryMetadata.getUserData().getString("SPIMtype").equals("oSPIM")) {
-                        angleFactor = 1.73205080757;  // tan(60 degrees) = sqrt(3) 
-                     }
-                     double zStepPx;
-                     try {
-                        zStepPx = summaryMetadata.getZStepUm()
-                                / datastore.getAnyImage().getMetadata().getPixelSizeUm();
-                     } catch (Exception ex) {
-                        ReportingUtils.logError("Couldn't get deskew parameters from metadata");
-                        zStepPx = 1.0;
-                     }
-
-                     final double dx = zStepPx * angleFactor * (Double) deskewFactor_.getValue();
+                     // I don't understand why mathematically but it seems that for oSPIM the factor is 1.0 
+ 	                  //   too instead of being tan(60 degrees) due to the rotation 
+ 	                  final double zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth; 
+ 	                  final double dx = zStepPx * (Double) deskewFactor_.getValue(); 
 
                      final int sc = ip.getNChannels();
                      final int sx = ip.getWidth();
@@ -336,12 +340,19 @@ public class DataAnalysisPanel extends ListeningJPanel {
                      final String title = ip.getTitle() + "-deskewed";
                      final int sx_new = sx + (int) Math.abs(Math.ceil(dx * ss));
 
-                     IJ.run("Duplicate...", "title=" + title + " duplicate");
-                     IJ.run("Split Channels");
+                     if (sc > 1) {
+                        IJ.run("Duplicate...", "title=" + title + " duplicate");
+                        IJ.run("Split Channels");
+                     } else {
+                        IJ.run("Duplicate...", "title=C1-" + title + " duplicate");  // make it named as 1st channel would be 
+                     }
                      String mergeCmd = "";
                      for (int c = 0; c < sc; c++) {    // loop over channels 
                         IJ.selectWindow("C" + (c + 1) + "-" + title);
                         int dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, -1 for path B 
+                        if (!firstSideIsA) { 
+ 		                     dir *= -1; 
+ 	                     } 
                         IJ.run("Canvas Size...", "width=" + sx_new + " height=" + sy + " position=Center-"
                                 + (dir < 0 ? "Right" : "Left") + " zero");
                         for (int s = 0; s < ss; s++) {  // loop over slices in stack 
@@ -351,6 +362,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
                         mergeCmd += ("c" + (c + 1) + "=C" + (c + 1) + "-" + title + " ");
                      }
                      IJ.run("Merge Channels...", mergeCmd + "create");
+                     if (sc > 1) {
+                        IJ.run("Merge Channels...", mergeCmd + "create");
+                     } else {
+                        IJ.run("Rename...", "title=" + title);
+                     }
                      long finishTime = System.currentTimeMillis();
                      ReportingUtils.logDebugMessage("Deskew operation took " + (finishTime - startTime)
                              + " milliseconds with total of " + (sc * ss) + " images");
