@@ -27,8 +27,6 @@ import javax.swing.SwingWorker;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.json.JSONObject; 
-
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.FileDialogs;
 
@@ -302,25 +300,34 @@ public class DataAnalysisPanel extends ListeningJPanel {
                      long startTime = System.currentTimeMillis();
                      final DisplayWindow currentWindow = gui_.displays().getCurrentWindow();
                      if (currentWindow == null) {
-                        throw new Exception ("No Micro-Manager display open");
+                        throw new Exception("No Micro-Manager display open");
                      }
                      final ImagePlus ip = currentWindow.getImagePlus();
                      final Datastore datastore = currentWindow.getDatastore();
                      final SummaryMetadata summaryMetadata = datastore.getSummaryMetadata();
-                     
+
                      if (!summaryMetadata.getUserData().getString("SPIMmode").
                              equals("Stage scan")) {
                         throw new Exception("Can only deskew stage scanning data");
                      }
 
-                     final double dx = NumberUtils.coreStringToDouble(
-                             summaryMetadata.getUserData().getString("z-step_um"))
-                             / NumberUtils.coreStringToDouble(
-                                     summaryMetadata.getUserData().getString("PixelSize_um"))
-                             * (Double) deskewFactor_.getValue();
-                     if (!(dx > -100 && dx < 100)) {
-                        throw new Exception("Couldn't get deskew parameters from metadata");
+                     // for 45 degrees we shift the same amount as the interplane spacing, so factor of 1.0 
+                     // assume diSPIM unless marked specifically otherwise 
+                     double angleFactor = 1.0;
+                     if (summaryMetadata.getUserData().containsKey("SPIMtype") &&
+                             summaryMetadata.getUserData().getString("SPIMtype").equals("oSPIM")) {
+                        angleFactor = 1.73205080757;  // tan(60 degrees) = sqrt(3) 
                      }
+                     double zStepPx;
+                     try {
+                        zStepPx = summaryMetadata.getZStepUm()
+                                / datastore.getAnyImage().getMetadata().getPixelSizeUm();
+                     } catch (Exception ex) {
+                        ReportingUtils.logError("Couldn't get deskew parameters from metadata");
+                        zStepPx = 1.0;
+                     }
+
+                     final double dx = zStepPx * angleFactor * (Double) deskewFactor_.getValue();
 
                      final int sc = ip.getNChannels();
                      final int sx = ip.getWidth();
@@ -332,12 +339,12 @@ public class DataAnalysisPanel extends ListeningJPanel {
                      IJ.run("Duplicate...", "title=" + title + " duplicate");
                      IJ.run("Split Channels");
                      String mergeCmd = "";
-                     for (int c = 0; c < sc; c++) {
+                     for (int c = 0; c < sc; c++) {    // loop over channels 
                         IJ.selectWindow("C" + (c + 1) + "-" + title);
                         int dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, -1 for path B 
                         IJ.run("Canvas Size...", "width=" + sx_new + " height=" + sy + " position=Center-"
                                 + (dir < 0 ? "Right" : "Left") + " zero");
-                        for (int s = 0; s < ss; s++) {
+                        for (int s = 0; s < ss; s++) {  // loop over slices in stack 
                            IJ.setSlice(s + 1);
                            IJ.run("Translate...", "x=" + (dx * s * dir) + " y=0 interpolation=Bilinear slice");
                         }
