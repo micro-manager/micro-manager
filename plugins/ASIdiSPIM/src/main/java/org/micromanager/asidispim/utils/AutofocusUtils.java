@@ -210,9 +210,11 @@ public class AutofocusUtils {
             );
 
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+            Devices.Keys cameraDevice = Devices.Keys.CAMERAA;
             boolean usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM);
             if (side.equals(Devices.Sides.B)) {
                camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+               cameraDevice = Devices.Keys.CAMERAB; 
                usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM);
             }
             Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
@@ -345,7 +347,12 @@ public class AutofocusUtils {
                }
                gui_.core().clearCircularBuffer();
                gui_.core().initializeCircularBuffer();
-               cameras_.setSPIMCamerasForAcquisition(true);
+               cameras_.setCameraForAcquisition(cameraDevice, true);
+               prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                       Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(),
+                       (float) gui_.core().getExposure());
+               gui_.core().setExposure((double) sliceTiming.cameraExposure);
+               gui_.app().refreshGUIFromCache();
 
                gui_.core().setExposure((double) sliceTiming.cameraExposure);
                gui_.core().startSequenceAcquisition(camera, nrImages, 0, true);
@@ -520,23 +527,28 @@ public class AutofocusUtils {
             } finally {
                
                ASIdiSPIM.getFrame().setHardwareInUse(false);
-               
+
                // set result to be a dummy value for now; we will overwrite it later
                // unless we encounter an exception in the meantime
-               lastFocusResult_ = new FocusResult(false, 
+               lastFocusResult_ = new FocusResult(false,
                        galvoPosition, piezoPosition, 0.0);
-               
+
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
 
                   gui_.core().stopSequenceAcquisition(camera);
                   gui_.core().setCameraDevice(originalCamera);
 
-                  controller_.cleanUpControllerAfterAcquisition(1, 
+                  controller_.cleanUpControllerAfterAcquisition(1,
                           acqSettings.firstSideIsA, false);
-                  
-                  if (runAsynchronously)
-                     cameras_.setSPIMCamerasForAcquisition(false);
+
+                  if (runAsynchronously) // when run from Setup panels then put things back to live mode settings, but not if run during acquisition 
+                  {
+                     cameras_.setCameraForAcquisition(cameraDevice, false);
+                  }
+                  gui_.core().setExposure(camera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                          Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 10f));
+                  gui_.app().refreshGUIFromCache();
 
                   // move back to original position if needed
                   if (!centerAtCurrentZ) {

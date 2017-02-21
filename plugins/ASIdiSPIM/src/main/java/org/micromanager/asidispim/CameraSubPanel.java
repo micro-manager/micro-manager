@@ -158,7 +158,7 @@ public final class CameraSubPanel extends ListeningJPanel  {
          @Override
          public void actionPerformed(ActionEvent e) {
             setLiveButtonAppearance(!gui_.live().getIsLiveModeOn());
-            cameras_.enableLiveMode(!gui_.live().getIsLiveModeOn());
+            gui_.live().setLiveMode(!gui_.live().getIsLiveModeOn());
          }
       });
       super.add(toggleButtonLive_, "center, width " + columnWidth + "px, span 2");

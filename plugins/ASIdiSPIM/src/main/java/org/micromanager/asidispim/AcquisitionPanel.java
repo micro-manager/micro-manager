@@ -1622,17 +1622,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // get MM device names for first/second cameras to acquire
       String firstCamera, secondCamera;
+      Devices.Keys firstCameraKey, secondCameraKey;
       boolean firstSideA = acqSettings.firstSideIsA; 
       if (firstSideA) {
          firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+         firstCameraKey = Devices.Keys.CAMERAA;
          secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+         secondCameraKey = Devices.Keys.CAMERAB;
       } else {
          firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+         firstCameraKey = Devices.Keys.CAMERAB; 
          secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+         secondCameraKey = Devices.Keys.CAMERAA; 
       }
       
       boolean sideActiveA, sideActiveB;
-      boolean twoSided = acqSettings.numSides > 1;
+      final boolean twoSided = acqSettings.numSides > 1;
       if (twoSided) {
          sideActiveA = true;
          sideActiveB = true;
@@ -1732,8 +1737,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
 
-      float cameraReadoutTime = computeCameraReadoutTime();
-      double exposureTime = acqSettings.sliceTiming.cameraExposure;
+      final float cameraReadoutTime = computeCameraReadoutTime();
+      final double exposureTime = acqSettings.sliceTiming.cameraExposure;
 
       final boolean save = saveCB_.isSelected() && !testAcq;
       final String rootDir = rootField_.getText();
@@ -1903,6 +1908,40 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError(ex, "Problem getting camera ROIs");
          }
       }
+      
+       cameras_.setCameraForAcquisition(firstCameraKey, true); 
+ 		      if (twoSided) { 
+ 		         cameras_.setCameraForAcquisition(secondCameraKey, true); 
+ 		      } 
+ 		 
+ 		      // save exposure time, will restore at end of acquisition 
+ 		      // TODO use new getExposure(label) method once it's in MMCore to avoid having to set active camera 
+ 		      try { 
+ 		         cameras_.setCamera(firstCameraKey); 
+ 		         gui_.app().refreshGUIFromCache(); 
+ 		         prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(), 
+ 		               Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 
+ 		               (float)core_.getExposure()); 
+ 		         if (twoSided) { 
+ 		            cameras_.setCamera(secondCameraKey); 
+ 		            gui_.app().refreshGUIFromCache(); 
+ 		            prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(), 
+ 		                  Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND.toString(), 
+ 		                  (float)core_.getExposure()); 
+ 		         } 
+ 		      } catch (Exception ex) { 
+ 		         MyDialogUtils.showError(ex, "could not cache exposure"); 
+ 		      } 
+ 		 
+ 		      try { 
+ 		         core_.setExposure(firstCamera, exposureTime); 
+ 		         if (twoSided) { 
+ 		            core_.setExposure(secondCamera, exposureTime); 
+ 		         } 
+ 		         gui_.app().refreshGUIFromCache(); 
+ 		      } catch (Exception ex) { 
+ 		         MyDialogUtils.showError(ex, "could not get set exposure"); 
+ 		      } 
 
       // seems to have a problem if the core's camera has been set to some other
       // camera before we start doing things, so set to a SPIM camera
@@ -1933,8 +1972,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
-
-      cameras_.setSPIMCamerasForAcquisition(true);
 
       numTimePointsDone_ = 0;
 
@@ -1995,16 +2032,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
             if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                ReportingUtils.logMessage("Need to implements this mode");
-            }
-
-            // save exposure time, will restore at end of acquisition 
- 		      prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(), 
- 		               Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(), 
- 		               (float)core_.getExposure()); 
-            
-            core_.setExposure(firstCamera, exposureTime);
-            if (twoSided) {
-               core_.setExposure(secondCamera, exposureTime);
             }
 
             channelNames_ = new String[acqSettings.numSides * acqSettings.numChannels];
@@ -2486,10 +2513,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // TODO be more careful and always do these if we actually started acquisition, 
       // even if exception happened
       // restore camera
+      cameras_.setCameraForAcquisition(firstCameraKey, false);
+      if (twoSided) {
+         cameras_.setCameraForAcquisition(secondCameraKey, false);
+      }
+
+      // restore exposure times of SPIM cameras
       try {
-         core_.setCameraDevice(originalCamera);
+         core_.setExposure(firstCamera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                 Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 10f));
+         if (twoSided) {
+            core_.setExposure(secondCamera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                    Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND.toString(), 10f));
+         }
+         gui_.app().refreshGUIFromCache();
       } catch (Exception ex) {
-         MyDialogUtils.showError("Could not restore camera after acquisition");
+         MyDialogUtils.showError("Could not restore exposure after acquisition");
       }
 
       // reset channel to original if we clobbered it
@@ -2535,7 +2574,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
 
-      cameras_.setSPIMCamerasForAcquisition(false);
+      // restore camera 
+      try {
+         core_.setCameraDevice(originalCamera);
+      } catch (Exception ex) {
+         MyDialogUtils.showError("Could not restore camera after acquisition");
+      }
       gui_.live().setLiveMode(liveModeOriginally);
 
       if (nonfatalError) {
