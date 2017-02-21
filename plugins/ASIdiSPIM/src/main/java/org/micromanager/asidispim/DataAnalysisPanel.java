@@ -44,7 +44,6 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -72,6 +71,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JTextField saveDestinationField_;
    private final JTextField baseNameField_;
    private final JFormattedTextField deskewFactor_; 
+   private final JCheckBox deskewInvert_; 
+ 	private final JCheckBox deskewInterpolate_; 
    
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
@@ -288,9 +289,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
               Properties.Keys.PLUGIN_DESKEW_FACTOR.toString(), 1.0, 5);
       deskewPanel_.add(deskewFactor_, "wrap");
       
-      final JCheckBox deskewInvert = pu.makeCheckBox("Invert direction", 
- 		          Properties.Keys.PLUGIN_DESKEW_INVERT, panelName_, false); 
- 		deskewPanel_.add(deskewInvert, "wrap"); 
+      deskewInvert_ = pu.makeCheckBox("Invert direction",
+              Properties.Keys.PLUGIN_DESKEW_INVERT, panelName_, false);
+      deskewPanel_.add(deskewInvert_, "left, span 2, wrap");
+
+      deskewInterpolate_ = pu.makeCheckBox("Interpolate",
+              Properties.Keys.PLUGIN_DESKEW_INTERPOLATE, panelName_, false);
+      deskewPanel_.add(deskewInterpolate_, "left, span 2, wrap");
 
       JButton deskewButton = new JButton("Deskew Open Dataset");
       deskewButton.addActionListener(new ActionListener() {
@@ -321,7 +326,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
  		                  firstSideIsA = false; 
  		               } 
                      
-                     if (deskewInvert.isSelected()) { 
+                     if (deskewInvert_.isSelected()) { 
  		                  // "spread" the stack in the other direction  
  		                  firstSideIsA = ! firstSideIsA; 
                      }
@@ -357,7 +362,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
                                 + (dir < 0 ? "Right" : "Left") + " zero");
                         for (int s = 0; s < ss; s++) {  // loop over slices in stack 
                            IJ.setSlice(s + 1);
-                           IJ.run("Translate...", "x=" + (dx * s * dir) + " y=0 interpolation=Bilinear slice");
+                           IJ.run("Translate...", "x=" + (dx*s*dir) + " y=0 interpolation=" 
+ 	                              + (deskewInterpolate_.isSelected() ? "Bilinear slice" : "None")); 
                         }
                         mergeCmd += ("c" + (c + 1) + "=C" + (c + 1) + "-" + title + " ");
                      }
