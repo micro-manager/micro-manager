@@ -310,21 +310,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // used to read/write directly to galvo/micro-mirror firmware, but want different stage scan behavior
       delaySide_ = pu.makeSpinnerFloat(0, 10000, 0.25,
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DELAY_BEFORE_SIDE, 50);
-      delaySide_.addChangeListener(recalculateTimingDisplayCL);
+      pu.addListenerLast(delaySide_, recalculateTimingDisplayCL);
       volPanel_.add(delaySide_, "wrap");
 
       volPanel_.add(new JLabel("Slices per side:"));
       numSlices_ = pu.makeSpinnerInteger(1, 65000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_SLICES, 20);
-      numSlices_.addChangeListener(recalculateTimingDisplayCL);
+      pu.addListenerLast(numSlices_, recalculateTimingDisplayCL);
       volPanel_.add(numSlices_, "wrap");
       
       volPanel_.add(new JLabel("Slice step size [\u00B5m]:"));
       stepSize_ = pu.makeSpinnerFloat(0, 100, 0.1,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_SLICE_STEP_SIZE,
             1.0);
-      stepSize_.addChangeListener(recalculateTimingDisplayCL);  // needed only for stage scanning b/c acceleration time related to speed
+      pu.addListenerLast(stepSize_, recalculateTimingDisplayCL);  // needed only for stage scanning b/c acceleration time related to speed
       volPanel_.add(stepSize_, "wrap");
       
       // end volume sub-panel
@@ -349,17 +349,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       JSpinner lsScanReset = pu.makeSpinnerFloat(1, 100, 0.25,  // practical lower limit of 1ms
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_RESET, 3);
       lsScanReset.addChangeListener(PanelUtils.coerceToQuarterIntegers(lsScanReset));
+      pu.addListenerLast(lsScanReset, recalculateTimingDisplayCL);
       lightSheetPanel_.add(lsScanReset, "wrap");
       
       lightSheetPanel_.add(new JLabel("Scan settle time [ms]:"));
       JSpinner lsScanSettle = pu.makeSpinnerFloat(0.25, 100, 0.25,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE, 1);
       lsScanSettle.addChangeListener(PanelUtils.coerceToQuarterIntegers(lsScanSettle));
+      pu.addListenerLast(lsScanSettle, recalculateTimingDisplayCL);
       lightSheetPanel_.add(lsScanSettle, "wrap");
       
       lightSheetPanel_.add(new JLabel("Shutter width [\u00B5m]:"));
       JSpinner lsShutterWidth = pu.makeSpinnerFloat(0.1, 100, 1,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH, 5);
+      pu.addListenerLast(lsShutterWidth, recalculateTimingDisplayCL);
       lightSheetPanel_.add(lsShutterWidth);
       
 //      lightSheetPanel_.add(new JLabel("1 / (shutter speed):"));
