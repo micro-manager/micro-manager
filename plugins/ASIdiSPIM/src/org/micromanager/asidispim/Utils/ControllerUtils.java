@@ -200,12 +200,13 @@ public class ControllerUtils {
          // set the scan pattern and number of scans appropriately
          int numLines = settings.numSides;
          if (isInterleaved) {
-            numLines = 1;  // can't have 1 side interleaved
+            numLines = 1;  // assure in acquisition code that we can't have single-sided interleaved
          }
          numLines *= (settings.numChannels / computeScanChannelsPerPass(settings));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, numLines);
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
-               (!isInterleaved && (settings.numSides == 2) ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
+               ((settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN) && (settings.numSides == 2)
+                     ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, settings.delayBeforeSide);
          
          // TODO handle other multichannel modes with stage scanning (what does this mean??)
@@ -361,6 +362,7 @@ public class ControllerUtils {
       case NO_SCAN:
       case STAGE_SCAN:
       case STAGE_SCAN_INTERLEAVED:
+      case STAGE_SCAN_UNIDIRECTIONAL:
          piezoAmplitude = 0.0f;
          break;
       default:
@@ -756,6 +758,7 @@ public class ControllerUtils {
       switch (spimMode) {
       case STAGE_SCAN:
       case STAGE_SCAN_INTERLEAVED:
+      case STAGE_SCAN_UNIDIRECTIONAL:
          // for stage scan we send trigger to stage card, which sends
          //    hardware trigger to the micro-mirror card
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,

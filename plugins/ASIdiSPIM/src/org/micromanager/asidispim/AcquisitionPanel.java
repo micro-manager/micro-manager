@@ -1025,7 +1025,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       AcquisitionSettings acqSettings = new AcquisitionSettings();
       acqSettings.spimMode = getAcquisitionMode();
       acqSettings.isStageScanning = (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN
-            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
+            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL);
       acqSettings.useTimepoints = useTimepointsCB_.isSelected();
       acqSettings.numTimepoints = getNumTimepoints();
       acqSettings.timepointInterval = getTimepointInterval();
@@ -1349,6 +1350,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   return retraceTime + (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
                }
             }
+         } else if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
+            if (channelMode == MultichannelModes.Keys.SLICE_HW) {
+               return ((rampDuration * 2) + (stackDuration * numChannels) + retraceTime) * numSides;
+            } else {  // "normal" stage scan with volume channel switching
+               return ((rampDuration * 2) + stackDuration + retraceTime) * numChannels * numSides;
+            }
          } else {  // interleaved mode => one-way pass collecting both sides
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
                // single pass with all sides and channels
@@ -1596,6 +1603,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       case NONE:
       case SLICE_SCAN_ONLY:
       case STAGE_SCAN_INTERLEAVED:
+      case STAGE_SCAN_UNIDIRECTIONAL:
       case NO_SCAN:
          return false;
       case PIEZO_SCAN_ONLY:
@@ -1629,7 +1637,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateStartButton();
       // deskew automatically if we were supposed to
       AcquisitionModes.Keys spimMode = getAcquisitionMode();
-      if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+      if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+            || spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
          if (prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(), 
                Properties.Keys.PLUGIN_DESKEW_AUTO_TEST, false)) {
             ASIdiSPIM.getFrame().getDataAnalysisPanel().runDeskew(acquisitionPanel_);

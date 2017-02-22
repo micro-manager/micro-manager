@@ -51,8 +51,9 @@ public class AcquisitionModes {
    public static enum Keys { 
       PIEZO_SLICE_SCAN("Synchronous piezo/slice scan", 1),
       NO_SCAN(         "No scan (fixed sheet)", 3),
-      STAGE_SCAN(      "Stage scan", 4),
+      STAGE_SCAN(      "Stage scan", 4),  // path A and B scanning opposite directions
       STAGE_SCAN_INTERLEAVED("Stage scan interleaved", 5),
+      STAGE_SCAN_UNIDIRECTIONAL("Stage scan unidirectional", 7),
       SLICE_SCAN_ONLY( "Slice scan only (unusual)", 2),
       PIEZO_SCAN_ONLY("Piezo scan only (unusual)", 6),
       NONE(            "None", 0);
@@ -170,6 +171,7 @@ public class AcquisitionModes {
          keyList.add(Keys.NO_SCAN);
          keyList.add(Keys.STAGE_SCAN);
          keyList.add(Keys.STAGE_SCAN_INTERLEAVED);
+         keyList.add(Keys.STAGE_SCAN_UNIDIRECTIONAL);
          keyList.add(Keys.SLICE_SCAN_ONLY);
          keyList.add(Keys.PIEZO_SCAN_ONLY);
          return keyList;
