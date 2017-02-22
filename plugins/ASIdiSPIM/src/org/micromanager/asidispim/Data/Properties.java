@@ -321,6 +321,7 @@ public class Properties {
       LEVEL_ANDOR("External Exposure"),
       CENTER_OUT_ANDOR("Centre Out Simultaneous"),
       BOTTOM_UP_ANDOR("Bottom Up Sequential"),
+      BOTTOM_UP_SIM_ANDOR("Bottom Up Simultaneous"),
       INTERNAL_TRIGGER("Internal Trigger"),  // for PVCam
       EDGE_TRIGGER("Edge Trigger"),          // for PVCam
       POSITIVE("POSITIVE"),
