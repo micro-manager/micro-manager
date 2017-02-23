@@ -73,6 +73,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JFormattedTextField deskewFactor_; 
    private final JCheckBox deskewInvert_; 
  	private final JCheckBox deskewInterpolate_; 
+   private final JCheckBox deskewAutoTest_; 
    
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
@@ -100,6 +101,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       props_ = props; 
  	   devices_ = devices; 
  	   PanelUtils pu = new PanelUtils(prefs_, props_, devices); 
+      final DataAnalysisPanel dataAnalysisPanel = this; 
       
       int textFieldWidth = 35;
 
@@ -297,93 +299,15 @@ public class DataAnalysisPanel extends ListeningJPanel {
               Properties.Keys.PLUGIN_DESKEW_INTERPOLATE, panelName_, false);
       deskewPanel_.add(deskewInterpolate_, "left, span 2, wrap");
 
+      deskewAutoTest_ = pu.makeCheckBox("Auto-deskew test acquisitions", 
+ 		        Properties.Keys.PLUGIN_DESKEW_AUTO_TEST, panelName_, false); 
+ 		deskewPanel_.add(deskewAutoTest_, "left, span 2, wrap"); 
+            
       JButton deskewButton = new JButton("Deskew Open Dataset");
       deskewButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(final ActionEvent e) {
-
-            class MyThread extends Thread {
-
-               @Override
-               public void run() {
-                  try {
-                     long startTime = System.currentTimeMillis();
-                     final DisplayWindow currentWindow = gui_.displays().getCurrentWindow();
-                     if (currentWindow == null) {
-                        throw new Exception("No Micro-Manager display open");
-                     }
-                     final ImagePlus ip = currentWindow.getImagePlus();
-                     boolean firstSideIsA = true;
-                     
-                     final Datastore datastore = currentWindow.getDatastore();
-                     final SummaryMetadata summaryMetadata = datastore.getSummaryMetadata();
-
-                     if (!summaryMetadata.getUserData().getString("SPIMmode").
-                             equals("Stage scan")) {
-                        throw new Exception("Can only deskew stage scanning data");
-                     }
-                     if (summaryMetadata.getUserData().getString("FirstSide").equals("B")) { 
- 		                  firstSideIsA = false; 
- 		               } 
-                     
-                     if (deskewInvert_.isSelected()) { 
- 		                  // "spread" the stack in the other direction  
- 		                  firstSideIsA = ! firstSideIsA; 
-                     }
-
-                     // for 45 degrees we shift the same amount as the interplane spacing, so factor of 1.0 
-                     // assume diSPIM unless marked specifically otherwise 
-                     // I don't understand why mathematically but it seems that for oSPIM the factor is 1.0 
- 	                  //   too instead of being tan(60 degrees) due to the rotation 
- 	                  final double zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth; 
- 	                  final double dx = zStepPx * (Double) deskewFactor_.getValue(); 
-
-                     final int sc = ip.getNChannels();
-                     final int sx = ip.getWidth();
-                     final int sy = ip.getHeight();
-                     final int ss = ip.getNSlices();
-                     final String title = ip.getTitle() + "-deskewed";
-                     final int sx_new = sx + (int) Math.abs(Math.ceil(dx * ss));
-
-                     if (sc > 1) {
-                        IJ.run("Duplicate...", "title=" + title + " duplicate");
-                        IJ.run("Split Channels");
-                     } else {
-                        IJ.run("Duplicate...", "title=C1-" + title + " duplicate");  // make it named as 1st channel would be 
-                     }
-                     String mergeCmd = "";
-                     for (int c = 0; c < sc; c++) {    // loop over channels 
-                        IJ.selectWindow("C" + (c + 1) + "-" + title);
-                        int dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, -1 for path B 
-                        if (!firstSideIsA) { 
- 		                     dir *= -1; 
- 	                     } 
-                        IJ.run("Canvas Size...", "width=" + sx_new + " height=" + sy + " position=Center-"
-                                + (dir < 0 ? "Right" : "Left") + " zero");
-                        for (int s = 0; s < ss; s++) {  // loop over slices in stack 
-                           IJ.setSlice(s + 1);
-                           IJ.run("Translate...", "x=" + (dx*s*dir) + " y=0 interpolation=" 
- 	                              + (deskewInterpolate_.isSelected() ? "Bilinear slice" : "None")); 
-                        }
-                        mergeCmd += ("c" + (c + 1) + "=C" + (c + 1) + "-" + title + " ");
-                     }
-                     IJ.run("Merge Channels...", mergeCmd + "create");
-                     if (sc > 1) {
-                        IJ.run("Merge Channels...", mergeCmd + "create");
-                     } else {
-                        IJ.run("Rename...", "title=" + title);
-                     }
-                     long finishTime = System.currentTimeMillis();
-                     ReportingUtils.logDebugMessage("Deskew operation took " + (finishTime - startTime)
-                             + " milliseconds with total of " + (sc * ss) + " images");
-                  } catch (Exception ex) {
-                     MyDialogUtils.showError(ex, "Could not deskew data");
-                  }
-               }
-            }
-
-            MyThread t = new MyThread();
-            t.start();
+            runDeskew(dataAnalysisPanel);
          }
       });
       deskewPanel_.add(deskewButton, "span 2, wrap");
@@ -391,8 +315,127 @@ public class DataAnalysisPanel extends ListeningJPanel {
       super.add(deskewPanel_);
    }
 
-   @Override
-   public void gotSelected() {
+   public void runDeskew (final ListeningJPanel caller) {
+      /** 
+ 		       * Worker thread to execute deskew. 
+ 		       * Patterned after Nico's ExportTask SwingWorker code but updating progress bar wasn't working 
+ 		       *   and task is pretty quick so I removed that code. 
+ 		       * @author Jon 
+             * 
+             */
+   class DeskewTask extends SwingWorker<Void,Void>  {
+      
+      DeskewTask() {
+         // empty constructor for now
+      }
+      
+      @Override
+      public Void doInBackground() throws  Exception {
+         setProgress(0);
+         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+         long startTime = System.currentTimeMillis();
+         final DisplayWindow currentWindow = gui_.displays().getCurrentWindow();
+         if (currentWindow == null) {
+            throw new Exception("No Micro-Manager display open");
+         }
+            final ImagePlus ip = currentWindow.getImagePlus();
+            boolean firstSideIsA = true;
+
+            final Datastore datastore = currentWindow.getDatastore();
+            final SummaryMetadata summaryMetadata = datastore.getSummaryMetadata();
+
+            if (!summaryMetadata.getUserData().getString("SPIMmode").
+                    equals("Stage scan")) {
+               throw new Exception("Can only deskew stage scanning data");
+            }
+            if (summaryMetadata.getUserData().getString("FirstSide").equals("B")) {
+               firstSideIsA = false;
+            }
+
+            if (deskewInvert_.isSelected()) {
+               // "spread" the stack in the other direction  
+               firstSideIsA = !firstSideIsA;
+            }
+
+            // for 45 degrees we shift the same amount as the interplane spacing, so factor of 1.0 
+            // assume diSPIM unless marked specifically otherwise 
+            // I don't understand why mathematically but it seems that for oSPIM the factor is 1.0 
+            //   too instead of being tan(60 degrees) due to the rotation 
+            final double zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth;
+            final double dx = zStepPx * (Double) deskewFactor_.getValue();
+
+            final int sc = ip.getNChannels();
+            final int sx = ip.getWidth();
+            final int sy = ip.getHeight();
+            final int ss = ip.getNSlices();
+            final String title = ip.getTitle() + "-deskewed";
+            final int sx_new = sx + (int) Math.abs(Math.ceil(dx * ss));
+
+            if (sc > 1) {
+               IJ.run("Duplicate...", "title=" + title + " duplicate");
+               IJ.run("Split Channels");
+            } else {
+               IJ.run("Duplicate...", "title=C1-" + title + " duplicate");  // make it named as 1st channel would be 
+            }
+            String mergeCmd = "";
+            for (int c = 0; c < sc; c++) {    // loop over channels 
+               IJ.selectWindow("C" + (c + 1) + "-" + title);
+               int dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, -1 for path B 
+               if (!firstSideIsA) {
+                  dir *= -1;
+               }
+               IJ.run("Canvas Size...", "width=" + sx_new + " height=" + sy + " position=Center-"
+                       + (dir < 0 ? "Right" : "Left") + " zero");
+               for (int s = 0; s < ss; s++) {  // loop over slices in stack 
+                  IJ.setSlice(s + 1);
+                  IJ.run("Translate...", "x=" + (dx * s * dir) + " y=0 interpolation="
+                          + (deskewInterpolate_.isSelected() ? "Bilinear slice" : "None"));
+               }
+               mergeCmd += ("c" + (c + 1) + "=C" + (c + 1) + "-" + title + " ");
+            }
+            IJ.run("Merge Channels...", mergeCmd + "create");
+            if (sc > 1) {
+               IJ.run("Merge Channels...", mergeCmd + "create");
+            } else {
+               IJ.run("Rename...", "title=" + title);
+            }
+            long finishTime = System.currentTimeMillis();
+            ReportingUtils.logDebugMessage("Deskew operation took " + (finishTime - startTime)
+                    + " milliseconds with total of " + (sc * ss) + " images");
+
+            return null;
+         }
+
+         @Override
+         public void done() {
+            setCursor(null);
+            try {
+               get();
+               setProgress(100);
+            } catch (ExecutionException ex) {
+               Throwable cause = ex.getCause();
+               if (!cause.getMessage().equals("Macro canceled")) {
+                  if (cause instanceof SaveTaskException) {
+                     MyDialogUtils.showError(cause, "Deskew error");
+                  } else {
+                     MyDialogUtils.showError(ex);
+                  }
+               }
+            } catch (InterruptedException ex) {
+               MyDialogUtils.showError(ex, "Interrupted while deskewing data");
+            }
+         }
+      }
+
+      // runDeskew() code goes here
+      (new DeskewTask()).execute();
+   }
+
+   
+
+@Override
+        public void gotSelected() {
       proposeBaseFieldText();
    }
 
@@ -402,7 +445,9 @@ public class DataAnalysisPanel extends ListeningJPanel {
          String baseName = ip.getShortTitle();
          baseName = baseName.replaceAll("[^a-zA-Z0-9_\\.\\-]", "_");
          baseNameField_.setText(baseName);
-      }
+      
+
+}
    }
    
    

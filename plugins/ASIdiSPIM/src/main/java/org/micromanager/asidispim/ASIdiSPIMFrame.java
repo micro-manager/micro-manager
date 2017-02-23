@@ -304,7 +304,17 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
    public NavigationPanel getNavigationPanel() {
       return navigationPanel_;
    }
-   
+
+   /**
+    * For use of data analysis panel code (running deskew) Do not get into the
+    * internals of this plugin without relying on ASIdiSPIM.api
+    *
+    * @return the currently used instance of the DataAnalysisPanel;
+    */
+   public DataAnalysisPanel getDataAnalysisPanel() {
+      return dataAnalysisPanel_;
+   }
+
    /**
     * For use by the acquisition panel code (to update offset setting)
     * Do not get into the internals of this plugin without relying on

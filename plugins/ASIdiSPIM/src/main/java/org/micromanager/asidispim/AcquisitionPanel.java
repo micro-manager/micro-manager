@@ -199,6 +199,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final String lastAcquisitionName_;
    private String[] channelNames_;
    private int nrRepeats_;  // how many separate acquisitions to perform
+   private final AcquisitionPanel acquisitionPanel_;
    
    public AcquisitionPanel(Studio gui, 
            Devices devices, 
@@ -229,6 +230,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       lastAcquisitionPath_ = "";
       lastAcquisitionName_ = "";
       channelNames_ = null;
+      acquisitionPanel_ = this;
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
@@ -948,7 +950,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    public AcquisitionSettings getCurrentAcquisitionSettings() {
       AcquisitionSettings acqSettings = new AcquisitionSettings();
-      acqSettings.spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
+      acqSettings.spimMode = getAcquisitionMode();
       acqSettings.isStageScanning = (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN
             || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
       acqSettings.useTimepoints = useTimepointsCB_.isSelected();
@@ -1509,10 +1511,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          acquisitionRequested_.set(false);
          acquisitionRunning_.set(false);
          updateStartButton();
+         // deskew automatically if we were supposed to 
+         AcquisitionModes.Keys spimMode = getAcquisitionMode();
+         if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+            if (prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(),
+                    Properties.Keys.PLUGIN_DESKEW_AUTO_TEST, false)) {
+               ASIdiSPIM.getFrame().getDataAnalysisPanel().runDeskew(acquisitionPanel_);
+            }
+         }
       } catch (DatastoreRewriteException ex) {
-         
+
       } catch (Exception ex) {
-         
+
       }
    }
 
