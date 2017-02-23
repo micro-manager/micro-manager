@@ -341,6 +341,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
          }
             final ImagePlus ip = currentWindow.getImagePlus();
             boolean firstSideIsA = true;
+            String windowTitle = "";
 
             final Datastore datastore = currentWindow.getDatastore();
             final SummaryMetadata summaryMetadata = datastore.getSummaryMetadata();
@@ -351,6 +352,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
             }
             if (summaryMetadata.getUserData().getString("FirstSide").equals("B")) {
                firstSideIsA = false;
+            }
+            if (summaryMetadata.getUserData().containsKey("AcquisitionName")) {
+               windowTitle = summaryMetadata.getUserData().getString("AcquisitionName");
+            }
+            
+            if (windowTitle.equals("")) {
+               windowTitle = ip.getTitle();
             }
 
             if (deskewInvert_.isSelected()) {
