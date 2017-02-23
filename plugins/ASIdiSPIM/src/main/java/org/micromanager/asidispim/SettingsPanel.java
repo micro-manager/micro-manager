@@ -267,9 +267,14 @@ public class SettingsPanel extends ListeningJPanel {
             && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
          stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
          final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,
-               Devices.Keys.XYSTAGE,
-               Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
+               Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50); 
          stageScanPanel.add(stageAccelTime, "wrap");
+         if (props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST)) {  // present in 3.17 and above 
+            stageScanPanel.add(new JLabel("Scan overshoot distance [" + "\u00B5" + "m]:"));
+            final JSpinner scanOvershootDistance = pu.makeSpinnerInteger(0, 1000,
+                    Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST, 0);
+            stageScanPanel.add(scanOvershootDistance, "wrap");
+         }
       } else {
          stageScanPanel.add(new JLabel("Stage scanning not supported by your firmware."), "left, wrap");
          stageScanPanel.add(new JLabel("See http://dispim.org for further information."), "left, wrap");
