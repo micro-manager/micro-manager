@@ -306,7 +306,22 @@ public class Cameras {
             break;
          }
          break;
-      case DEMOCAM:
+         case PVCAM:
+            switch (mode) {
+               case EDGE:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_MODE,
+                          Properties.Values.EDGE_TRIGGER, true);
+                  break;
+               case INTERNAL:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_MODE,
+                          Properties.Values.INTERNAL_TRIGGER, true);
+                  break;
+               default:
+                  break;
+            }
+         case DEMOCAM:
          // do nothing
          break;
       default:
@@ -426,6 +441,10 @@ public class Cameras {
             y = 2048;
          }
          break;
+      case PVCAM: 
+ 		         x = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_X_DIMENSION); 
+ 		         y = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_Y_DIMENSION); 
+ 	      break; 
       case DEMOCAM:
          x = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_SIZE_X);
          y = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_SIZE_Y);
@@ -484,6 +503,9 @@ public class Cameras {
                return (2592 * 2 / 540e3);
             }
          }
+      case PVCAM: 
+ 		         // TODO get this correct; currently just draft for testing 
+ 		         return 20e-3;
       case DEMOCAM:
          return(10e-3);  // dummy 10us row time
       default:
@@ -526,6 +548,11 @@ public class Cameras {
          resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
          break;
       case ANDORCAM:
+         numRowsOverhead = 1;
+         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+         break;
+      case PVCAM:
+         // TODO get this correct; currently just draft for testing 
          numRowsOverhead = 1;
          resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
          break;
@@ -592,6 +619,11 @@ public class Cameras {
             numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
             readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
             break;
+         case PVCAM: 
+ 		      // TODO get this correct; currently just draft for testing 
+ 		      numReadoutRows = roi.height; 
+ 		      readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime)); 
+ 		      break; 
          case DEMOCAM:
             numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
             readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
