@@ -5,6 +5,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
+//import ij.gui.NewImage;
 import ij.process.ImageProcessor;
 
 import java.awt.Cursor;
@@ -30,6 +31,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.json.JSONObject;
 import org.micromanager.api.MMWindow;
+import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
@@ -56,6 +58,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final Prefs prefs_;
    private final JPanel exportPanel_;
    private final JPanel deskewPanel_;
+//   private final JPanel otherPanel_;
    private final JTextField saveDestinationField_;
    private final JTextField baseNameField_;
    private final JFormattedTextField deskewFactor_;
@@ -64,7 +67,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JCheckBox deskewAutoTest_;
    
    public static final String[] TRANSFORMOPTIONS = 
-      {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
+      {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward", "Rotate 180\u00B0"};
    public static final String[] EXPORTFORMATS = 
       {"mipav GenerateFusion", "Multiview Reconstruction (deprecated)"};
    public static FileDialogs.FileType EXPORT_DATA_SET 
@@ -223,7 +226,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       // start deskew sub-panel
       deskewPanel_ = new JPanel(new MigLayout(
               "",
-              "[right]4[center]",
+              "[right]4[center]4[left]",
               "[]8[]"));
       
       deskewPanel_.setBorder(PanelUtils.makeTitledBorder("Deskew stage scanning data"));
@@ -252,9 +255,95 @@ public class DataAnalysisPanel extends ListeningJPanel {
             runDeskew(dataAnalysisPanel);
          }
       });
-      deskewPanel_.add(deskewButton, "span 2, wrap");
+      deskewPanel_.add(deskewButton, "span 3, center, wrap");
       
       this.add(deskewPanel_);
+      
+//      // start "other" sub-panel
+//      otherPanel_ = new JPanel(new MigLayout(
+//              "",
+//              "[right]4[center]",
+//              "[]8[]"));
+//      
+//      otherPanel_.setBorder(PanelUtils.makeTitledBorder("Other"));
+//      
+//      JButton collapse2DButton = new JButton("Collapse 2D");
+//      collapse2DButton.addActionListener(new ActionListener() {
+//         @Override
+//         public void actionPerformed(final ActionEvent e) {
+//            final ImagePlus ip = IJ.getImage();
+//            final int height = ip.getHeight();
+//            final int width = ip.getWidth();
+//            final int slices = ip.getNSlices();
+//            final int frames = ip.getNFrames();
+//            final String title = ip.getTitle();
+//            final boolean useFrames = !(slices > 1);
+//            final int nrImages = useFrames ? frames : slices;
+//            ImagePlus averaged = NewImage.createShortImage(title + "-averaged", width, height, nrImages, NewImage.GRAY16);
+//            for (int slice = 0; slice < nrImages; slice++) {
+//               if (useFrames) {
+//                  ip.setT(slice + 1);
+//               } else {
+//                  ip.setZ(slice + 1);  // slices are 1-indexed
+//               }
+//               averaged.setZ(slice + 1);
+//               final ImageProcessor proc = ip.getProcessor();
+//               final ImageProcessor procAveraged = averaged.getProcessor();
+//               for (int y = 0; y < height; y++) {
+//                  double sum = 0.0;
+//                  for (int x = 0; x < width; x++) {
+//                     sum += proc.getPixel(x, y);
+//                  }
+//                  int avg = (int) Math.round(sum/width);
+//                  for (int x = 0; x < width; x++) {
+//                     procAveraged.putPixel(x, y, avg);
+//                  }
+//               }
+//            }
+//            averaged.show();
+//            IJ.run(averaged, "Enhance Contrast", "saturated=0.35");
+//         }
+//      });
+//      otherPanel_.add(collapse2DButton, "span 2, wrap");
+//      
+//      JButton collapse1DButton = new JButton("Collapse 1D");
+//      collapse1DButton.addActionListener(new ActionListener() {
+//         @Override
+//         public void actionPerformed(final ActionEvent e) {
+//            final ImagePlus ip = IJ.getImage();
+//            final int height = ip.getHeight();
+//            final int width = ip.getWidth();
+//            final int slices = ip.getNSlices();
+//            final int frames = ip.getNFrames();
+//            final String title = ip.getTitle();
+//            final boolean useFrames = !(slices > 1);
+//            final int nrImages = useFrames ? frames : slices;
+//            ImagePlus averaged = NewImage.createShortImage(title + "-averaged", 1, height, nrImages, NewImage.GRAY16);
+//            for (int slice = 0; slice < nrImages; slice++) {
+//               if (useFrames) {
+//                  ip.setT(slice + 1);
+//               } else {
+//                  ip.setZ(slice + 1);  // slices are 1-indexed
+//               }
+//               averaged.setZ(slice + 1);
+//               final ImageProcessor proc = ip.getProcessor();
+//               final ImageProcessor procAveraged = averaged.getProcessor();
+//               for (int y = 0; y < height; y++) {
+//                  double sum = 0.0;
+//                  for (int x = 0; x < width; x++) {
+//                     sum += proc.getPixel(x, y);
+//                  }
+//                  int avg = (int) Math.round(sum/width);
+//                  procAveraged.putPixel(0, y, avg);
+//               }
+//            }
+//            averaged.show();
+//            IJ.run(averaged, "Enhance Contrast", "saturated=0.35");
+//         }
+//      });
+//      otherPanel_.add(collapse1DButton, "span 2, wrap");
+//      
+//      this.add(otherPanel_);
    }
    
    public void runDeskew(final ListeningJPanel caller) {
@@ -279,30 +368,31 @@ public class DataAnalysisPanel extends ListeningJPanel {
             long startTime = System.currentTimeMillis();
             final ImagePlus ip = IJ.getImage();
             final MMWindow mmW = new MMWindow(ip);
-            boolean firstSideIsA = true;
-            String windowTitle = "";
+            final boolean firstSideIsA;
+            final String windowTitle;
+            final AcquisitionModes.Keys acqMode;
             if (mmW.isMMWindow()) {  // have Micro-Manager dataset
                final JSONObject metadata = mmW.getSummaryMetaData();
-               if (!metadata.getString("SPIMmode").equals("Stage scan")) {
-                  throw new Exception("Can only deskew stage scanning data; support for stage scanning interleaved needs to be added");
+               acqMode = AcquisitionModes.getKeyFromString(metadata.getString("SPIMmode"));
+               if (!( acqMode == AcquisitionModes.Keys.STAGE_SCAN
+                     || acqMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+                     || acqMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL )) {
+                  throw new Exception("Can only deskew stage scanning data");
                }
-               if (metadata.getString("FirstSide").equals("B")) {
-                  firstSideIsA = false;
-               }
+               firstSideIsA = !metadata.getString("FirstSide").equals("B");
                if (metadata.has("AcquisitionName")) {
                   windowTitle = metadata.getString("AcqusitionName");
+               } else {
+                  windowTitle = ip.getTitle();
                }
+            } else {
+               // guess at settings since we can't access MM metadata
+               firstSideIsA = true;
+               acqMode = AcquisitionModes.Keys.STAGE_SCAN;
+               windowTitle = ip.getTitle();
+               ReportingUtils.logDebugMessage("Deskew may be incorrect because don't have Micro-Manager dataset with metadata");
             }
             
-            if (windowTitle.equals("")) {
-               windowTitle = ip.getTitle();
-            }
-
-            if (deskewInvert_.isSelected()) {
-               // "spread" the stack in the other direction 
-               firstSideIsA = ! firstSideIsA;
-            }
-
             // for 45 degrees we shift the same amount as the interplane spacing, so factor of 1.0
             // assume diSPIM unless marked specifically otherwise
             // I don't understand why mathematically but it seems that for oSPIM the factor is 1.0
@@ -324,12 +414,29 @@ public class DataAnalysisPanel extends ListeningJPanel {
                IJ.run("Duplicate...", "title=C1-" + title + " duplicate");  // make it named as 1st channel would be
             }
             String mergeCmd = "";
+            int dir;
             for (int c=0; c<sc; c++) {  // loop over channels
                IJ.selectWindow("C" + (c+1) + "-" + title);
-               int dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, -1 for path B
-               if (!firstSideIsA) {
+               switch (acqMode) {
+               case STAGE_SCAN:
+                  dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B
+                  if (!firstSideIsA) {
+                     dir *= -1;
+                  }
+                  break;
+               case STAGE_SCAN_INTERLEAVED:
+               case STAGE_SCAN_UNIDIRECTIONAL:
+                  // always the same direction
+                  dir = -1;
+                  break;
+               default:
+                  // should never make it here
+                  throw new Exception("Can only deskew stage scanning data");
+               }
+               if (deskewInvert_.isSelected()) {
                   dir *= -1;
                }
+
                IJ.run("Canvas Size...", "width=" + sx_new + " height=" + sy + " position=Center-" 
                      + (dir < 0 ? "Right" : "Left") + " zero");
                for (int s=0; s<ss; s++) {  // loop over slices in stack
@@ -502,8 +609,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
                            iProc2.rotate(((c % 2) == 1) ? 90 : -90);
                            break;
                         }
+                        case 4: {
+                           iProc2.rotate(180);
+                           break;
                         }
-
+                        }
                         stack.addSlice(iProc2);
                         counter++;
                         double rate = ((double) counter / (double) totalNr) * 100.0;
