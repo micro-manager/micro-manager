@@ -25,7 +25,7 @@ package org.micromanager.asidispim.api;
  *
  * @author nico
  */
-public class ASIdiSPIMException  extends Exception {
+public class ASIdiSPIMException extends Exception {
    private static final long serialVersionUID = -8472385639461107821L;
    private Throwable cause;
    private static final String MSG_PREFIX = "Error in ASIdiSPIM Interface: ";
