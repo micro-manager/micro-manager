@@ -576,8 +576,7 @@ public class GUI extends javax.swing.JFrame {
 
         //2photon
         settings.imageFilterType_ = frameAverageRadioButton_.isSelected() ? FrameIntegrationMethod.FRAME_AVERAGE :
-                (rankFilterRadioButton_.isSelected() ? FrameIntegrationMethod.RANK_FILTER : 
-                (frameSummationButton_.isSelected() ? FrameIntegrationMethod.FRAME_SUMMATION : FrameIntegrationMethod.BURST_MODE));
+                (rankFilterRadioButton_.isSelected() ? FrameIntegrationMethod.RANK_FILTER : FrameIntegrationMethod.FRAME_SUMMATION );
         settings.rank_ = ((Number) rankSpinner_.getValue()).doubleValue();
 
         settings.storePreferedValues();
@@ -923,7 +922,6 @@ public class GUI extends javax.swing.JFrame {
       ch5OffsetLabel_ = new javax.swing.JLabel();
       ch5OffsetSpinner_ = new javax.swing.JSpinner();
       frameSummationButton_ = new javax.swing.JRadioButton();
-      burstModeButton_ = new javax.swing.JRadioButton();
       runAcqButton_ = new javax.swing.JButton();
       configPropsButton_ = new javax.swing.JButton();
       jButton1 = new javax.swing.JButton();
@@ -2388,15 +2386,6 @@ public class GUI extends javax.swing.JFrame {
          }
       });
 
-      filterMethodButtonGroup_.add(burstModeButton_);
-      burstModeButton_.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-      burstModeButton_.setText("Burst mode");
-      burstModeButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            burstModeButton_ActionPerformed(evt);
-         }
-      });
-
       javax.swing.GroupLayout imageFilteringTab_Layout = new javax.swing.GroupLayout(imageFilteringTab_);
       imageFilteringTab_.setLayout(imageFilteringTab_Layout);
       imageFilteringTab_Layout.setHorizontalGroup(
@@ -2407,9 +2396,8 @@ public class GUI extends javax.swing.JFrame {
                .addGroup(imageFilteringTab_Layout.createSequentialGroup()
                   .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addComponent(frameAverageRadioButton_)
-                     .addComponent(burstModeButton_)
                      .addComponent(frameSummationButton_))
-                  .addGap(0, 0, Short.MAX_VALUE))
+                  .addGap(0, 794, Short.MAX_VALUE))
                .addGroup(imageFilteringTab_Layout.createSequentialGroup()
                   .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addComponent(jLabel10)
@@ -2423,7 +2411,7 @@ public class GUI extends javax.swing.JFrame {
                      .addGroup(imageFilteringTab_Layout.createSequentialGroup()
                         .addGap(71, 71, 71)
                         .addComponent(offsetsLabel_)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addGap(0, 670, Short.MAX_VALUE))
                      .addGroup(imageFilteringTab_Layout.createSequentialGroup()
                         .addGap(55, 55, 55)
                         .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
@@ -2442,8 +2430,7 @@ public class GUI extends javax.swing.JFrame {
                            .addComponent(ch5OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                            .addComponent(ch4OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
                            .addComponent(ch0OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(13, 366, Short.MAX_VALUE)))))
-            .addGap(174, 174, 174))
+                        .addGap(187, 644, Short.MAX_VALUE))))))
       );
       imageFilteringTab_Layout.setVerticalGroup(
          imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2476,8 +2463,7 @@ public class GUI extends javax.swing.JFrame {
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(ch4OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(ch4OffsetLabel_)
-               .addComponent(burstModeButton_))
+               .addComponent(ch4OffsetLabel_))
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
             .addGroup(imageFilteringTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                .addComponent(ch5OffsetSpinner_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -3071,10 +3057,6 @@ public class GUI extends javax.swing.JFrame {
       new StartupHelpWindow();
    }//GEN-LAST:event_helpButton_ActionPerformed
 
-    private void burstModeButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_burstModeButton_ActionPerformed
-        acquisitionSettingsChanged();
-    }//GEN-LAST:event_burstModeButton_ActionPerformed
-
    private void saveSurfacesButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveSurfacesButton_ActionPerformed
       surfaceManager_.saveSurfaces(this);
    }//GEN-LAST:event_saveSurfacesButton_ActionPerformed
@@ -3129,7 +3111,6 @@ public class GUI extends javax.swing.JFrame {
    private javax.swing.JLabel autofocusZLabel_;
    private javax.swing.JComboBox bottomSurfaceCombo_;
    private javax.swing.JLabel bottomSurfaceLabel_;
-   private javax.swing.JRadioButton burstModeButton_;
    private javax.swing.JLabel ch0OffsetLabel_;
    private javax.swing.JSpinner ch0OffsetSpinner_;
    private javax.swing.JLabel ch1OffsetLabel_;

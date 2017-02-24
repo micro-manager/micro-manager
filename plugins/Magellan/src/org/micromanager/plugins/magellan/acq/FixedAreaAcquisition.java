@@ -66,7 +66,6 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
    final private CrossCorrelationAutofocus autofocus_;
    private int maxSliceIndex_ = 0, minSliceIndex_ = 0;
    private double zOrigin_;
-   private final boolean burstMode_;
    private final boolean towardsSampleIsPositive_;
    private volatile boolean acqSettingsUpdated_ = false;
    private volatile boolean tpImagesFinishedWriting_ = false;
@@ -120,11 +119,6 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       } else {
          autofocus_ = null;
       }
-      //if a 2D, single xy position, no covariants, no autofocus: activate burst mode
-      burstMode_ = getFilterType() == FrameIntegrationMethod.BURST_MODE;
-      if (burstMode_) {
-         Log.log("Burst mode activated");
-      }
    }
 
    @Override
@@ -154,9 +148,6 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       tpImagesFinishedWritingLatch_.countDown();
    }
 
-   public boolean burstModeActive() {
-      return burstMode_;
-   }
 
    private void setupXYPositions() {
       try {

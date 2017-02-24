@@ -29,7 +29,6 @@ public class TaggedImageSink  {
 
    private final BlockingQueue<MagellanTaggedImage> imageProducingQueue_;
    private MMImageCache imageCache_ = null;
-   private volatile String lastImageLabel_;
    private Thread savingThread_;
    private Acquisition acq_;
    
@@ -38,10 +37,6 @@ public class TaggedImageSink  {
       imageProducingQueue_ = imageProducingQueue;
       imageCache_ = imageCache;
       acq_ = acq;
-   }
-   
-   public String getLastImageLabel() {
-      return lastImageLabel_;
    }
    
    public void waitToDie() {
@@ -80,7 +75,6 @@ public class TaggedImageSink  {
                      } catch (Exception ex) {
                         Log.log("Couldn't add image to storage");
                      }
-                     lastImageLabel_ = MD.getLabel(image.tags);
                   }
                } 
             }

@@ -86,7 +86,7 @@ public class RawBufferWrapper {
     * warped pixel values
     * Warped indices are spaced equally in time. Unwarped indices are spaced equally in space
     */
-     public static int[] getCosineWarpLUT() {
+     private static int[] getCosineWarpLUT() {
       int interlacedWidth = TOTAL_BITFLOW_PIXELS_PER_ROW / 2;
         
       int[] unwarpedFromWarped = new int[interlacedWidth];
@@ -109,11 +109,6 @@ public class RawBufferWrapper {
       return warpedFromUnwarped;
   }
      
-     public static void main(String[] args) {
-         getCosineWarpLUT();
-     }
-   
-
    /**
     * @param array
     * @param val
