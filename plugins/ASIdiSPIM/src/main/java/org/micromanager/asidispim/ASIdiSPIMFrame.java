@@ -112,11 +112,12 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
    private final SettingsPanel settingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
    private final AutofocusPanel autofocusPanel_;
+   private final CameraPanel cameraPanel_;
    private final HelpPanel helpPanel_;
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
-   private PiezoSleepPreventer piezoSleepPreventer_;
+   private final PiezoSleepPreventer piezoSleepPreventer_;
    
    private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
@@ -169,6 +170,7 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
 
       dataAnalysisPanel_ = new DataAnalysisPanel(gui_, prefs_, props_, devices_);
       autofocusPanel_ = new AutofocusPanel(gui_, devices_, props_, prefs_, autofocus_);
+      cameraPanel_ = new CameraPanel(gui_, devices_, props_, prefs_, cameras_);
       settingsPanel_ = new SettingsPanel(gui_, devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       helpPanel_ = new HelpPanel();
@@ -193,8 +195,9 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
       final int deviceTabIndex = tabbedPane_.getTabCount() - 1;
       tabbedPane_.addLTab(autofocusPanel_);   // tabIndex = 6
-      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
-      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
+      tabbedPane_.addLTab(cameraPanel_);      // tabIndex = 7 
+      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 8
+      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 9
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
 
       // make taller tabs for easier navigation between them 

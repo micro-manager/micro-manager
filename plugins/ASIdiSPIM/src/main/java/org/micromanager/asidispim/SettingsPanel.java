@@ -168,21 +168,7 @@ public class SettingsPanel extends ListeningJPanel {
       // end scanner panel
       
       
-      // start camera panel
-      
-      final JPanel cameraPanel = new JPanel(new MigLayout(
-            "",
-            "[right]16[left]",
-            "[]8[]"));
-
-      cameraPanel.setBorder(PanelUtils.makeTitledBorder("Camera", cameraPanel));
-      cameraPanel.add(new JLabel("Acq. Trigger Mode:"));
-        
-      CameraModes camModeObject = new CameraModes(devices_, prefs_);
-      JComboBox camModeCB = camModeObject.getComboBox();
-      cameraPanel.add(camModeCB, "wrap");
-      
-      cameraPanel.add(new JLabel("Live scan time [ms]:"));
+      scannerPanel.add(new JLabel("Live scan period [ms]:"));
       liveScanMs_ = pu.makeSpinnerInteger(1, 10000,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN, 10);
       liveScanMs_.addChangeListener(new ChangeListener() {
@@ -196,9 +182,9 @@ public class SettingsPanel extends ListeningJPanel {
       // set it the first time
       props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SA_PERIOD_X, (Integer) liveScanMs_.getValue(), true);
-      cameraPanel.add(liveScanMs_, "wrap");
+      scannerPanel.add(liveScanMs_, "wrap");
       
-      // end camera panel
+      // end scanner panel
       
       
       // start test acquisition panel
@@ -306,8 +292,7 @@ public class SettingsPanel extends ListeningJPanel {
       
       // construct main panel
       super.add(guiPanel);
-      super.add(scannerPanel);
-      super.add(cameraPanel, "wrap");
+      super.add(scannerPanel, "wrap");
       super.add(testAcqPanel);
       super.add(stageScanPanel, "growx");
       super.add(imageJPanel, "growx");
