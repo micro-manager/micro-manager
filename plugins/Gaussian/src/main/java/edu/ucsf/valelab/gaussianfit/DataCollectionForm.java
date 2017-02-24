@@ -1196,7 +1196,8 @@ public class DataCollectionForm extends JFrame {
                     "Average X: " + avg.x + "\n" +
                     "StdDev X: " + stdDev.x + "\n" + 
                     "Average Y: " + avg.y + "\n" +
-                    "StdDev Y: " + stdDev.y;           
+                    "StdDev Y: " + stdDev.y + "\n" +
+                    "StdDev: " + rowData.std_;           
          }
          
          TextWindow tw = new TextWindow("Info for " + rowData.getName(), data, 300, 300);

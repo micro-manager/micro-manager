@@ -210,6 +210,7 @@ public class RowData {
    public final boolean isTrack_;
    public final double stdX_;
    public final double stdY_;
+   public final double std_;
    public final int ID_;
    public final Coordinates coordinate_;
    public final boolean hasZ_;
@@ -249,6 +250,7 @@ public class RowData {
 
       double stdX = 0.0;
       double stdY = 0.0;
+      double std = 0.0;
       double nrPhotons = 0.0;
       if (isTrack_) {
          ArrayList<Point2D.Double> xyList = ListUtils.spotListToPointList(spotList_);
@@ -256,12 +258,14 @@ public class RowData {
          Point2D.Double stdPoint = ListUtils.stdDevsXYList(xyList, avgPoint);
          stdX = stdPoint.x;
          stdY = stdPoint.y;
+         std = Math.sqrt(stdX * stdX + stdY * stdY);
          for (SpotData spot : spotList_) {
             nrPhotons += spot.getIntensity();
          }
       }
       stdX_ = stdX;
       stdY_ = stdY;
+      std_ = std;
       totalNrPhotons_ = nrPhotons;
       ID_ = rowDataID_;
       rowDataID_++;

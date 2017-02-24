@@ -95,7 +95,7 @@ public class ListUtils {
          double yDiff = point.y - avg.y;
          sum += xDiff * xDiff + yDiff * yDiff;
       }
-      return Math.sqrt(sum / xyPoints.size());
+      return Math.sqrt(sum / (xyPoints.size() -1));
       
    }
    
