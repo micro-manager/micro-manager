@@ -37,6 +37,7 @@ import mmcorej.StrVector;
 
 
 import org.micromanager.Studio;
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.utils.DevicesListenerInterface;
 import org.micromanager.asidispim.utils.MyDialogUtils;
@@ -115,6 +116,9 @@ public class Devices {
    public final static Set<Devices.Keys> CAMERAS = EnumSet.of(
          Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
          Devices.Keys.CAMERALOWER);
+   public final static Set<Devices.Keys> SPIM_CAMERAS = 
+         ASIdiSPIM.OSPIM ? EnumSet.of(Devices.Keys.CAMERAA) :  
+            EnumSet.of(Devices.Keys.CAMERAA, Devices.Keys.CAMERAB);
 
 
    public static enum Libraries {

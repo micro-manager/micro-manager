@@ -265,7 +265,7 @@ public class PanelUtils {
       try {
          f = (float) ((Double) sp.getValue()).doubleValue();
       } catch (Exception ex) {
-         f = ((Float) sp.getValue()).floatValue();
+         f = ((Float) sp.getValue());
       }
       return f;
    }
@@ -872,6 +872,19 @@ public class PanelUtils {
       label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
       return new ComponentTitledBorder(label, comp,
               BorderFactory.createEtchedBorder());
+   }
+   
+      /**
+    * makes border with centered title text
+    * @param title
+    * @return
+    */
+   public static TitledBorder makeTitledBorder(String title) {
+      TitledBorder myBorder = BorderFactory.createTitledBorder(
+              BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR), " " + 
+                      title + " ");
+      myBorder.setTitleJustification(TitledBorder.CENTER);
+      return myBorder;
    }
 
    
