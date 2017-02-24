@@ -68,7 +68,7 @@ public class ListUtils {
       return myAvg;
    }
    
-   public static Point2D.Double stdDevXYList(ArrayList<Point2D.Double> xyPoints, 
+   public static Point2D.Double stdDevsXYList(ArrayList<Point2D.Double> xyPoints, 
            Point2D.Double avg) {
       Point2D.Double myStdDev = new Point2D.Double(0.0, 0.0);
       for (Point2D.Double point : xyPoints) {
@@ -80,6 +80,23 @@ public class ListUtils {
       myStdDev.y = Math.sqrt(myStdDev.y / (xyPoints.size() - 1) ) ;
       
       return myStdDev;
+   }
+   
+   public static double stdDevXYList(ArrayList<Point2D.Double> xyPoints, Point2D.Double avg) {
+      /* method 1
+      Point2D.Double xyStdDevs = stdDevsXYList(xyPoints, avg);
+      double result = Math.sqrt(xyStdDevs.x * xyStdDevs.x + xyStdDevs.y * xyStdDevs.y);
+      return result;
+      */
+      // method 2: http://stats.stackexchange.com/questions/65640/how-to-calculate-2d-standard-deviation-with-0-mean-bounded-by-limits
+      double sum = 0.0;
+      for (Point2D.Double point : xyPoints) {
+         double xDiff = point.x - avg.x;
+         double yDiff = point.y - avg.y;
+         sum += xDiff * xDiff + yDiff * yDiff;
+      }
+      return Math.sqrt(sum / xyPoints.size());
+      
    }
    
     /**

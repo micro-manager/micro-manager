@@ -30,7 +30,6 @@ import edu.ucsf.valelab.gaussianfit.DataCollectionForm;
 import edu.ucsf.valelab.gaussianfit.ResultsTableListener;
 import edu.ucsf.valelab.gaussianfit.Terms;
 import edu.ucsf.valelab.gaussianfit.data.GsSpotPair;
-import edu.ucsf.valelab.gaussianfit.data.RowData;
 import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import edu.ucsf.valelab.gaussianfit.fitting.FittingException;
 import edu.ucsf.valelab.gaussianfit.fitting.Gaussian1DFitter;
@@ -45,12 +44,8 @@ import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Arrow;
-import ij.gui.ImageWindow;
 import ij.gui.MessageDialog;
-import ij.gui.StackWindow;
 import ij.measure.ResultsTable;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import java.awt.Color;
@@ -67,7 +62,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
-import org.jfree.data.xy.XYSeries;
 import org.micromanager.internal.MMStudio;
 
 /**
@@ -637,10 +631,8 @@ public class ParticlePairLister {
                   ArrayList<Double> xDiff = new ArrayList<Double>();
                   ArrayList<Double> yDiff = new ArrayList<Double>();
                   ArrayList<Double> sigmas = new ArrayList<Double>();
-                  ArrayList<Double> x1s = new ArrayList<Double>();
-                  ArrayList<Double> y1s = new ArrayList<Double>();
-                  ArrayList<Double> x2s = new ArrayList<Double>();
-                  ArrayList<Double> y2s = new ArrayList<Double>();
+                  ArrayList<Point2D.Double> firstPoints = new ArrayList<Point2D.Double>();
+                  ArrayList<Point2D.Double> secondPoints = new ArrayList<Point2D.Double>();
                   for (GsSpotPair pair : track) {
                      double distance = Math.sqrt(
                              NearestPoint2D.distance2(pair.getFirstPoint(), pair.getSecondPoint()));
@@ -657,10 +649,8 @@ public class ParticlePairLister {
                              * pair.getSecondSpot().getSigma());
                      sigmas.add(sigma);
                      allSigmas.add(sigma);
-                     x1s.add(pair.getFirstPoint().x);
-                     y1s.add(pair.getFirstPoint().y);
-                     x2s.add(pair.getSecondPoint().x);
-                     y2s.add(pair.getSecondPoint().y);
+                     firstPoints.add(pair.getFirstPoint());
+                     secondPoints.add(pair.getSecondPoint());
                   }
                   GsSpotPair pair = track.get(0);
                   rt2.incrementCounter();
@@ -673,13 +663,14 @@ public class ParticlePairLister {
                   rt2.addValue(Terms.XPIX, pair.getFirstSpot().getX());
                   rt2.addValue(Terms.YPIX, pair.getFirstSpot().getY());
                   rt2.addValue("n", track.size());
-                
-                  double x1Avg = ListUtils.listAvg(x1s);
-                  double y1Avg = ListUtils.listAvg(y1s);
-                  double x2Avg = ListUtils.listAvg(x2s);
-                  double y2Avg = ListUtils.listAvg(y2s);
                   
+                  Point2D.Double avgPositionFirstSpot = ListUtils.avgXYList(firstPoints);
+                  Point2D.Double avgPositionSecondSpot = ListUtils.avgXYList(secondPoints);
+                  double stdDevFirstSpot = ListUtils.stdDevXYList(firstPoints, avgPositionFirstSpot);
+                  double stdDevSecondSpot = ListUtils.stdDevXYList(secondPoints, avgPositionSecondSpot);
                   
+                  rt2.addValue("StdDev-1", stdDevFirstSpot);
+                  rt2.addValue("StdDev-2", stdDevSecondSpot);
                   
                   // Average of Euclidean distances in this strack
                   double avg = ListUtils.listAvg(distances);
@@ -934,7 +925,7 @@ public class ParticlePairLister {
     * @param filePath
     * @param showSummary
     * @param showGraph
-    */
+    *
    public static void ListParticlePairs(final int row, final double maxDistance,
            final boolean showPairs, final boolean showImage,
            final boolean savePairs, final String filePath,
@@ -1145,6 +1136,7 @@ public class ParticlePairLister {
       (new Thread(doWorkRunnable)).start();
 
    }
+   */
 
    /**
     * Fits a list of numbers to a Gaussian function using Maximum Likelihood

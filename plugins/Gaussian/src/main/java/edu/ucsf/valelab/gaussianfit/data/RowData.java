@@ -253,7 +253,7 @@ public class RowData {
       if (isTrack_) {
          ArrayList<Point2D.Double> xyList = ListUtils.spotListToPointList(spotList_);
          Point2D.Double avgPoint = ListUtils.avgXYList(xyList);
-         Point2D.Double stdPoint = ListUtils.stdDevXYList(xyList, avgPoint);
+         Point2D.Double stdPoint = ListUtils.stdDevsXYList(xyList, avgPoint);
          stdX = stdPoint.x;
          stdY = stdPoint.y;
          for (SpotData spot : spotList_) {
