@@ -31,14 +31,14 @@ public abstract class FrameIntegrationMethod {
    protected int doubleWidth_, numFrames_;
    private int offset_;
 
-
+   
    public FrameIntegrationMethod(int doubleWidth, int offset, int numFrames) {
-      offset_ = offset;
-      numFrames_ = numFrames;
-      doubleWidth_ = doubleWidth;
-      rawBuffers_ = new ArrayList<RawBufferWrapper>();
-      width_ = RawBufferWrapper.getWidth();
-      height_ = RawBufferWrapper.getHeight();
+//      offset_ = offset;
+//      numFrames_ = numFrames;
+//      doubleWidth_ = doubleWidth;
+//      rawBuffers_ = new ArrayList<RawBufferWrapper>();
+//      width_ = RawBufferWrapper.getWidth();
+//      height_ = RawBufferWrapper.getHeight();
    }
 
    
