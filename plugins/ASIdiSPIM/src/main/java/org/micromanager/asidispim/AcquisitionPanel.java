@@ -2791,7 +2791,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @throws org.micromanager.data.DatastoreFrozenException
      * @throws org.micromanager.data.DatastoreRewriteException
     */
-   public void addImageToAcquisition(Datastore store, int frame, int channel, 
+   private void addImageToAcquisition(Datastore store, int frame, int channel, 
            int slice, int position, long ms, TaggedImage taggedImg) throws
            JSONException, DatastoreFrozenException, 
            DatastoreRewriteException, Exception
