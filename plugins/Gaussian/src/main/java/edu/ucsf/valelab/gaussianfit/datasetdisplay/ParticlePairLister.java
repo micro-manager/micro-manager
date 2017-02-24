@@ -557,23 +557,18 @@ public class ParticlePairLister {
                      double distance = Math.sqrt(
                              NearestPoint2D.distance2(spot.getFirstPoint(), spot.getSecondPoint()));
                      rt.addValue("Distance", distance);
-                     if (spot.getFirstSpot().hasKey("stdDev")) {
-                        double stdDev = spot.getFirstSpot().getValue("stdDev");
-                        rt.addValue("stdDev1", stdDev);
-                        SpotData spot2 = spot.getSecondSpot();
-                        if (spot2 != null && spot2.hasKey("stdDev")) {
-                           double stdDev2 = spot2.getValue("stdDev");
-                           rt.addValue("stdDev2", stdDev2);
-                           double distanceStdDev = CalcUtils.stdDev(
+
+                     rt.addValue("sigma1", spot.getFirstSpot().getSigma());
+                     rt.addValue("sigma2", spot.getSecondSpot().getSigma());
+                     double distanceStdDev = CalcUtils.stdDev(
                                    spot.getFirstPoint().x, spot.getSecondPoint().x,
                                    spot.getFirstPoint().y, spot.getSecondPoint().y,
-                                   spot.getFirstSpot().getValue("stdDevX"),
-                                   spot2.getValue("stdDevX"),
-                                   spot.getFirstSpot().getValue("stdDevY"),
-                                   spot2.getValue("stdDevY"));
-                           rt.addValue("stdDev-distance", distanceStdDev);
-                        }
-                     }
+                                   spot.getFirstSpot().getSigma(),
+                                   spot.getFirstSpot().getSigma(),
+                                   spot.getFirstSpot().getSigma(),
+                                   spot.getFirstSpot().getSigma() );
+                     rt.addValue("stdDev-distance", distanceStdDev);
+                     
                      rt.addValue("Orientation (sine)",
                              NearestPoint2D.orientation(spot.getFirstPoint(), spot.getSecondPoint()));
                   }
@@ -583,6 +578,7 @@ public class ParticlePairLister {
                TextPanel tp;
                TextWindow win;
                String rtName = dc.getSpotData(row).getName() + " Particle List";
+               
                if (showTrack_) {
                   rt.show(rtName);
                   ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
@@ -629,15 +625,11 @@ public class ParticlePairLister {
 
                itTracks = tracks.iterator();
                spotId = 0;
-               List<Double> avgDistances = new ArrayList<Double>(tracks.size());
                List<Double> avgVectDistances = new ArrayList<Double>(tracks.size());
                List<Double> allDistances = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
-               List<Double> stdDevs = new ArrayList<Double>(tracks.size());
-               List<Double> avgSigmas = new ArrayList<Double>(tracks.size());
                List<Double> allSigmas = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
-               List<Integer> trackLengths = new ArrayList<Integer>(tracks.size());
                while (itTracks.hasNext()) {
                   ArrayList<GsSpotPair> track = itTracks.next();
                   ArrayList<Double> distances = new ArrayList<Double>();
@@ -645,6 +637,10 @@ public class ParticlePairLister {
                   ArrayList<Double> xDiff = new ArrayList<Double>();
                   ArrayList<Double> yDiff = new ArrayList<Double>();
                   ArrayList<Double> sigmas = new ArrayList<Double>();
+                  ArrayList<Double> x1s = new ArrayList<Double>();
+                  ArrayList<Double> y1s = new ArrayList<Double>();
+                  ArrayList<Double> x2s = new ArrayList<Double>();
+                  ArrayList<Double> y2s = new ArrayList<Double>();
                   for (GsSpotPair pair : track) {
                      double distance = Math.sqrt(
                              NearestPoint2D.distance2(pair.getFirstPoint(), pair.getSecondPoint()));
@@ -661,6 +657,10 @@ public class ParticlePairLister {
                              * pair.getSecondSpot().getSigma());
                      sigmas.add(sigma);
                      allSigmas.add(sigma);
+                     x1s.add(pair.getFirstPoint().x);
+                     y1s.add(pair.getFirstPoint().y);
+                     x2s.add(pair.getSecondPoint().x);
+                     y2s.add(pair.getSecondPoint().y);
                   }
                   GsSpotPair pair = track.get(0);
                   rt2.incrementCounter();
@@ -672,31 +672,43 @@ public class ParticlePairLister {
                   rt2.addValue(Terms.POSITION, pair.getFirstSpot().getPosition());
                   rt2.addValue(Terms.XPIX, pair.getFirstSpot().getX());
                   rt2.addValue(Terms.YPIX, pair.getFirstSpot().getY());
-                  trackLengths.add(track.size());
                   rt2.addValue("n", track.size());
-
+                
+                  double x1Avg = ListUtils.listAvg(x1s);
+                  double y1Avg = ListUtils.listAvg(y1s);
+                  double x2Avg = ListUtils.listAvg(x2s);
+                  double y2Avg = ListUtils.listAvg(y2s);
+                  
+                  
+                  
+                  // Average of Euclidean distances in this strack
                   double avg = ListUtils.listAvg(distances);
-                  avgDistances.add(avg);
                   rt2.addValue("Distance-Avg", avg);
+                  // Standard Deviation of Euclidean distances in this track
                   double std = ListUtils.listStdDev(distances, avg);
-                  stdDevs.add(std);
                   rt2.addValue("Distance-StdDev", std);
+                  // Average of weighted sigmas: Sqrt(sigma1(^2) + sigma2(^2) in this track
                   double avgSigma = ListUtils.listAvg(sigmas);
-                  avgSigmas.add(avgSigma);
                   rt2.addValue("Sigma", avgSigma);
                   double oAvg = ListUtils.listAvg(orientations);
                   rt2.addValue("Orientation-Avg", oAvg);
                   rt2.addValue("Orientation-StdDev",
                           ListUtils.listStdDev(orientations, oAvg));
 
+                  // average x position differential
                   double xDiffAvg = ListUtils.listAvg(xDiff);
+                  // average y position differential
                   double yDiffAvg = ListUtils.listAvg(yDiff);
+                  // Std Dev. in x position differentials
                   double xDiffAvgStdDev = ListUtils.listStdDev(xDiff, xDiffAvg);
+                  // Std. Dev. in y position differentials
                   double yDiffAvgStdDev = ListUtils.listStdDev(yDiff, yDiffAvg);
+                  // Distance based on x and y position differentials
                   double vectAvg = Math.sqrt(
                           (xDiffAvg * xDiffAvg) + (yDiffAvg * yDiffAvg));
                   avgVectDistances.add(vectAvg);
                   rt2.addValue("Dist.Vect.Avg", vectAvg);
+                  // Std Dev. based on x and y differentials
                   rt2.addValue("Dist.Vect.StdDev", Math.sqrt(
                           (xDiffAvgStdDev * xDiffAvgStdDev)
                           + (yDiffAvgStdDev * yDiffAvgStdDev)));
