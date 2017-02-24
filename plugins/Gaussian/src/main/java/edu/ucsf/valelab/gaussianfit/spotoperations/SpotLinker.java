@@ -353,8 +353,10 @@ public class SpotLinker {
    private static void writeTrack(RowData rowData, List<SpotData> track, int trackNr) {
       RowData.Builder builder = rowData.copy();
       builder.setName(rowData.getName() + " Track " + trackNr).
-              setNrSlices(1).setNrPositions(1).
+              setNrSlices(1).
+              setNrPositions(1).
               setMaxNrSpots(track.size()).
+              setIsTrack(true).
               setSpotList(track);
       DataCollectionForm.getInstance().addSpotData(builder);
 
