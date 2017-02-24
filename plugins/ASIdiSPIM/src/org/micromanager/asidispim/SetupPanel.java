@@ -213,9 +213,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          }
       });
       
-      calibrationPanel.add(new JLabel("Piezo/Slice Calibration"), "span 5, center");
+      calibrationPanel.add(new JLabel("<html><u>Piezo/Slice Calibration</u></html>"), "span 5, center");
       calibrationPanel.add(new JSeparator(SwingConstants.VERTICAL), "span 1 3, growy, shrinkx, center");
-      calibrationPanel.add(new JLabel("Step"), "wrap");
+      calibrationPanel.add(new JLabel("<html><u>Step</u></html>"), "wrap");
       
       calibrationPanel.add(new JLabel("Slope:"));
       calibrationPanel.add(rateField_, "span 2, right");
@@ -746,7 +746,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       // now the unique tidbits for the light sheet
       
-      sheetPanelLightSheet_.add(new JLabel("Light sheet calibration:"), "span 3, wrap");
+      sheetPanelLightSheet_.add(new JLabel("<html><u>Light Sheet Synchronization</u></html>"), "span 3, center, wrap");
       JFormattedTextField lightSheetSlope = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE.toString(), 2000, 5);
       lightSheetSlope.addActionListener(new ActionListener() {
@@ -772,10 +772,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
          }
       });
       
-      sheetPanelLightSheet_.add(new JLabel("Slope:"));
+      sheetPanelLightSheet_.add(new JLabel("Speed / slope:"));
       sheetPanelLightSheet_.add(lightSheetSlope);
       sheetPanelLightSheet_.add(new JLabel("\u00B5\u00B0/px"), "left, wrap");
-      sheetPanelLightSheet_.add(new JLabel("Offset:"));
+      sheetPanelLightSheet_.add(new JLabel("Start / offset:"));
       sheetPanelLightSheet_.add(lightSheetOffset);
       sheetPanelLightSheet_.add(new JLabel("m\u00B0"), "left");
       
