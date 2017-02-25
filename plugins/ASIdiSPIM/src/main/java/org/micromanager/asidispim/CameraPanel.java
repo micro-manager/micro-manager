@@ -204,7 +204,7 @@ public class CameraPanel extends ListeningJPanel{
                   "[right]10[center]", 
 		            "[]8[]"));
       
-      lightSheetPanel.setBorder(PanelUtils.makeTitledBorder("Light Sheet Mode"));
+      lightSheetPanel.setBorder(PanelUtils.makeTitledBorder("Light Sheet Settings"));
 
       lightSheetPanel.add(new JLabel("Scan reset time [ms]:"));
       JSpinner lsScanReset = pu.makeSpinnerFloat(0, 100, 0.25,
@@ -242,8 +242,11 @@ public class CameraPanel extends ListeningJPanel{
       });
   
       // construct the main panel
+      JPanel secondCol = new JPanel(new MigLayout("", "[]0[]", "[]0[]")); 
+ 	   secondCol.add(triggerPanel, "growx, wrap"); 
+ 	   secondCol.add(lightSheetPanel, "wrap"); 
       super.add(roiPanel);
-      super.add(triggerPanel, "growx, wrap");
+      super.add(secondCol, "top");
    }//constructor
 
    /**

@@ -30,6 +30,7 @@ import mmcorej.CMMCore;
 
 
 import org.micromanager.Studio;
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.CameraPanel;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -660,10 +661,8 @@ public class Cameras {
     */
    public void setCameraForAcquisition(Devices.Keys camKey, boolean acq) {
       if (acq) {
-         CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
-               // could also get from props_ with PLUGIN device
-               prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-                     Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+         CameraModes.Keys cameraMode = 
+                 ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode(); 
          setCameraTriggerMode(camKey, cameraMode);
          // exposure time set by acquisition setup code
       } else { // for Live mode

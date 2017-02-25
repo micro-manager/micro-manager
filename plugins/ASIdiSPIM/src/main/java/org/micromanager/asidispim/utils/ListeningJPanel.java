@@ -88,6 +88,17 @@ public class ListeningJPanel extends JPanel {
     * Called when the Panel loses focus but then regains it and certain
     * tasks need to be accomplished. For example after autofocus.
     */
-   public void refreshSelected() {};
+   public void refreshSelected() {
+   }
+
+   ;
    
+   /** 
+    * Called when acquisition camera trigger mode changes (not between live and acquisition, 
+    *   but e.g. between edge and overlap) 
+    */ 
+   public void cameraModeChange() {
+   }
+;
+
 }

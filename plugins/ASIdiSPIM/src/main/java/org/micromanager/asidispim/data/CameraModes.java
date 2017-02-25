@@ -28,8 +28,10 @@ import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
+import org.micromanager.asidispim.ASIdiSPIM;
 
 import org.micromanager.asidispim.utils.DevicesListenerInterface;
+import org.micromanager.asidispim.utils.ListeningJPanel;
 import org.micromanager.asidispim.utils.MyDialogUtils;
 
 
@@ -200,10 +202,19 @@ public class CameraModes {
       @Override
       public void actionPerformed(ActionEvent ae) {
          prefs_.putInt(MyStrings.PanelNames.SETTINGS.toString(),
-               Properties.Keys.PLUGIN_CAMERA_MODE,
-               ((Keys) jcb_.getSelectedItem()).getPrefCode());
+                 Properties.Keys.PLUGIN_CAMERA_MODE,
+                 ((Keys) jcb_.getSelectedItem()).getPrefCode());
+         // notify listeners of this change, at present just the two setup panels 
+         try {
+            ListeningJPanel p = ASIdiSPIM.getFrame().getSetupPanel(Devices.Sides.A);
+            p.cameraModeChange();
+            p = ASIdiSPIM.getFrame().getSetupPanel(Devices.Sides.B);
+            p.cameraModeChange();
+         } catch (Exception ex) {
+            // do nothing 
+         }
       }
-      
+
       /**
        * called whenever one of the devices is changed in the "Devices" tab
        */

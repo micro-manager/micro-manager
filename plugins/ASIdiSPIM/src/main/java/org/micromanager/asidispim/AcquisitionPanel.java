@@ -1124,6 +1124,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Camera delay should be 0.25ms for pseudo-overlap mode.");
          }
          break;
+      case LIGHT_SHEET:
+         break;
       case INTERNAL:
       default:
          if (showWarnings) {

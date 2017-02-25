@@ -20,6 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.asidispim.utils;
 
+import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -135,18 +136,15 @@ public class ControllerUtils {
       }
       
       if (settings.isStageScanning &&  
-          settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
-            if (settings.numSides != 2) {
-               MyDialogUtils.showError("Interleaved stage scan only possible for 2-sided acquisition.");
-               return false;
-            }
-            CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
-                  prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-                        Properties.Keys.PLUGIN_CAMERA_MODE, 0));
-            if (cameraMode == CameraModes.Keys.OVERLAP) {
-               MyDialogUtils.showError("Interleaved stage scan not compatible with overlap camera mode");
-               return false;
-            }
+            settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+         if (settings.numSides != 2) {
+            MyDialogUtils.showError("Interleaved stage scan only possible for 2-sided acquisition.");
+            return false;
+         }
+         if (settings.cameraMode == CameraModes.Keys.OVERLAP) { 
+            MyDialogUtils.showError("Interleaved stage scan not compatible with overlap camera mode");
+            return false;
+         }
       }
       
       // set up stage scan parameters if necessary
@@ -175,6 +173,9 @@ public class ControllerUtils {
             return false;
          }
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float) requestedMotorSpeed);
+         
+         // ask for the actual speed and calculate the actual step size
+         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
          final double actualStepSizeUm = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
 
          // cache how far we scan each pass for later use 
@@ -183,9 +184,7 @@ public class ControllerUtils {
          // set the acceleration to a reasonable value for the (usually very slow) scan speed 
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL, (float) computeScanAcceleration(actualMotorSpeed));
        
-         // ask for the actual speed and calculate the actual step size
-         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
-     
+         
          if (!settings.useMultiPositions) {
             // use current position as center position for stage scanning 
             // multi-position situation is handled in position-switching code instead 
@@ -369,9 +368,7 @@ public class ControllerUtils {
       // tweak the parameters if we are using synchronous/overlap mode
       // object is to get exact same piezo/scanner positions in first
       // N frames (piezo/scanner will move to N+1st position but no image taken)
-      CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
-            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      final CameraModes.Keys cameraMode = settings.cameraMode;
       if (cameraMode == CameraModes.Keys.OVERLAP) {
          piezoAmplitude *= ((float)numSlices)/((float)numSlices-1f);
          piezoCenter += piezoAmplitude/(2*numSlices);
@@ -512,9 +509,36 @@ public class ControllerUtils {
       } else {
          props_.setPropValue(galvoDevice, Properties.Keys.SPIM_INTERLEAVE_SIDES,
                  Properties.Values.NO, true);  // ignore errors b/c older firmware won't have it 
-
       }
 
+      // send sheet width/offset 
+      float sheetWidth;
+      float sheetOffset;
+      if (settings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+         final float sheetSlope = prefs_.getFloat(
+                 MyStrings.PanelNames.SETUP.toString() + side.toString(),
+                 Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE, 2);
+         Rectangle roi;
+         try {
+            roi = core_.getROI(devices_.getMMDevice(cameraDevice));
+         } catch (Exception e) {
+            ReportingUtils.showError(e, "Could not get camera ROI for light sheet mode");
+            return false;
+         }
+         sheetWidth = (float) (roi.height * sheetSlope / 1e6f);  // in microdegrees per pixel, convert to degrees 
+         sheetOffset = prefs_.getFloat(
+                 MyStrings.PanelNames.SETUP.toString() + side.toString(),
+                 Properties.Keys.PLUGIN_LIGHTSHEET_OFFSET, 0) / 1000f;  // in millidegrees, convert to degrees 
+      } else {
+         final Properties.Keys widthProp = (side == Devices.Sides.A)
+                 ? Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_A : Properties.Keys.PLUGIN_SHEET_WIDTH_EDGE_B;
+         final Properties.Keys offsetProp = (side == Devices.Sides.A)
+                 ? Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_A : Properties.Keys.PLUGIN_SHEET_OFFSET_EDGE_B;
+         sheetWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, widthProp);
+         sheetOffset = props_.getPropValueFloat(Devices.Keys.PLUGIN, offsetProp);
+      }
+      props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
+      props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
       return true;
    }
 
