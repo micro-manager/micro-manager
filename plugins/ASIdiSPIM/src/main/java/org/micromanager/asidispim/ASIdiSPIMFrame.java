@@ -319,6 +319,16 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
    }
 
    /**
+    * For use of acquisition panel code (getting camera settings) Do not get
+    * into the internals of this plugin without relying on ASIdiSPIM.api
+    *
+    * @return the currently used instance of the CameraPanel;
+    */
+   public CameraPanel getCameraPanel() {
+      return cameraPanel_;
+   }
+
+   /**
     * For use by the acquisition panel code (to update offset setting)
     * Do not get into the internals of this plugin without relying on
     * ASIdiSPIM.api

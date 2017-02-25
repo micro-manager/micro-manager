@@ -53,6 +53,7 @@ public class CameraModes {
       OVERLAP("Overlap/synchronous", 2),
       LEVEL("Level trigger", 3),
       PSEUDO_OVERLAP("Pseudo Overlap", 4),
+      LIGHT_SHEET("Light sheet", 5),
       INTERNAL("Internal", 0);
       private final String text;
       private final int prefCode;
@@ -126,6 +127,19 @@ public class CameraModes {
    }
 
    /**
+    * Does camera support light sheet mode?
+    *
+    * @param devKey
+    * @return
+    */
+   private static boolean cameraSupportsLightSheetTrigger(Devices.Libraries camLib) {
+      return (camLib == Devices.Libraries.HAMCAM
+              || camLib == Devices.Libraries.ANDORCAM
+              || camLib == Devices.Libraries.DEMOCAM // for testing only 
+              );
+   }
+
+   /**
     * Does the camera exist and is it from a known camera library?
     *
     * @param devKey
@@ -157,6 +171,9 @@ public class CameraModes {
          if (cameraSupportsPseudoOverlap(camLib)) {
             keyList.add(Keys.PSEUDO_OVERLAP);
          }
+         if (cameraSupportsLightSheetTrigger(camLib)) { 
+ 		      keyList.add(Keys.LIGHT_SHEET); 
+	      } 
       }
       return keyList;
    }
@@ -242,7 +259,7 @@ public class CameraModes {
        */
       private List<Keys> getValidModeKeys() {
          List<Keys> keyList = CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA));
-         List<Keys> keyListB = CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA));
+         List<Keys> keyListB = CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB));
          for (Keys k : keyListB) {
             if (!keyList.contains(k)) {
                keyList.add(k);
