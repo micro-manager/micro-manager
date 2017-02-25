@@ -238,6 +238,7 @@ public class Properties {
       PLUGIN_DESKEW_INVERT("DeskewInvert"), 
       PLUGIN_DESKEW_INTERPOLATE("DeskewInterpolate"),
       PLUGIN_DESKEW_AUTO_TEST("DeskewAutoTest"),
+      PLUGIN_STAGESCAN_ACCEL_FACTOR("StageScanAccelerationFactor"),
       ;
       private final String text;
       private final boolean forceSet;
