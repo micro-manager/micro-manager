@@ -511,14 +511,14 @@ public final class SetupPanel extends ListeningJPanel {
       
       sheetPanelContainer_ = new JPanel(new MigLayout( 
  		            "", 
- 		            "[]0[]", 
- 		            "[]0[]"));
+ 		            "0[]0", 
+ 		            "0[]0"));
       
       // Create sheet controls
       sheetPanelNormal_ = new JPanel(new MigLayout(
             "",
             "[" + labelWidth + "px!,right]8[" + positionWidth + "px!,center]8[center]8[center]",
-            "[]8[]8[]"));
+            "[]2[]2[]"));
       
       tmp_lbl = new JLabel("Illum. piezo:", JLabel.RIGHT);
       tmp_lbl.setMaximumSize(new Dimension(labelWidth, 20));
@@ -730,7 +730,7 @@ public final class SetupPanel extends ListeningJPanel {
       // now the unique tidbits for the light sheet 
       sheetPanelLightSheet_.add(new JLabel("Light sheet calibration:"), "span 3, wrap");
       JFormattedTextField lightSheetSlope = pu.makeFloatEntryField(panelName_,
-              Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE.toString(), 2, 5);
+              Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE.toString(), 2000, 5);
       JFormattedTextField lightSheetOffset = pu.makeFloatEntryField(panelName_,
               Properties.Keys.PLUGIN_LIGHTSHEET_OFFSET.toString(), 0, 5);
 
@@ -739,7 +739,7 @@ public final class SetupPanel extends ListeningJPanel {
       sheetPanelLightSheet_.add(new JLabel("\u00B5\u00B0/px"), "left, wrap");
       sheetPanelLightSheet_.add(new JLabel("Offset:"));
       sheetPanelLightSheet_.add(lightSheetOffset);
-      sheetPanelLightSheet_.add(new JLabel("m\u00B0"), "left, wrap");
+      sheetPanelLightSheet_.add(new JLabel("m\u00B0"), "left");
 
       JButton profileButton = new JButton("Plot Profile");
       profileButton.addActionListener(new ActionListener() {
