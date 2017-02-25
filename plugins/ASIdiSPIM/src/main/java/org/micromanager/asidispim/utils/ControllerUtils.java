@@ -39,7 +39,8 @@ import org.micromanager.asidispim.data.Properties;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- * @author Nico & Jon
+ * @author Nico 
+ * @author Jon
  */
 public class ControllerUtils {
 
@@ -51,6 +52,11 @@ public class ControllerUtils {
    final CMMCore core_;
    double scanDistance_;  // cached value from last call to prepareControllerForAquisition() 
 
+   // stage has to go faster than the slice spacing because viewing at an angle 
+ 	// with diSPIM, angle is 45 degrees so go 1.41x faster 
+ 	// with oSPIM, angle is 60 degrees so go 1.15x faster 
+   final double geometricSpeedFactor_ = ASIdiSPIM.OSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
+   
    public ControllerUtils(Studio gui, final Properties props,
            final Prefs prefs, final Devices devices, final Positions positions) {
       gui_ = gui;
@@ -162,29 +168,24 @@ public class ControllerUtils {
          //    scan settling time = delay before side
          final boolean isInterleaved = (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
-         double sliceDuration = settings.sliceTiming.sliceDuration;
-         if (isInterleaved) {
-            // pretend like our slice takes twice as long so that we move the correct speed
-            // this has the effect of halving the motor speed
-            // but keeping the scan distance the same
-            sliceDuration *= 2;
+	
+         final double requestedMotorSpeed = computeScanSpeed(settings);
+         if (requestedMotorSpeed > props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED)) {
+            MyDialogUtils.showError("Required stage speed is too fast, please reduce step size or increase sample exposure.");
+            return false;
          }
-         
-         // stage has to go faster than the slice spacing because viewing at an angle 
- 	      // with diSPIM, angle is 45 degrees so go 1.4x faster 
- 	      // with oSPIM, angle is 60 degrees so go 1.15x faster 
- 	      final double speedFactor = ASIdiSPIM.OSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.); 
- 	
-         double requestedMotorSpeed = settings.stepSizeUm * speedFactor / sliceDuration / settings.numChannels;
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float) requestedMotorSpeed);
+         final double actualStepSizeUm = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
 
+         // cache how far we scan each pass for later use 
+         scanDistance_ = settings.numSlices * actualStepSizeUm * geometricSpeedFactor_;
+
+         // set the acceleration to a reasonable value for the (usually very slow) scan speed 
+         props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL, (float) computeScanAcceleration(actualMotorSpeed));
+       
          // ask for the actual speed and calculate the actual step size
          final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
-         final double actualStepSizeUm = actualMotorSpeed / speedFactor * sliceDuration * settings.numChannels;
-
-         // cache this value for later use 
-         scanDistance_ = settings.numSlices * actualStepSizeUm * speedFactor;
-
+     
          if (!settings.useMultiPositions) {
             // use current position as center position for stage scanning 
             // multi-position situation is handled in position-switching code instead 
@@ -198,6 +199,7 @@ public class ControllerUtils {
             prepareStageScanForAcquisition(posUm.x, posUm.y);
          }
 
+         // set the scan pattern and number of scans appropriately 
          int numLines = settings.numSides;
          if (isInterleaved) {
             numLines = 1;  // can't have 1 side interleaved 
@@ -205,6 +207,7 @@ public class ControllerUtils {
          if (settings.numChannels < 1 && settings.channelMode == MultichannelModes.Keys.VOLUME) {
             numLines *= settings.numChannels;
          }
+         numLines *= (settings.numChannels / computeScanChannelsPerPass(settings)); 
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_NUMLINES, numLines);
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_PATTERN,
                  (!isInterleaved && (settings.numSides == 2) ? Properties.Values.SERPENTINE : Properties.Values.RASTER));
@@ -212,14 +215,57 @@ public class ControllerUtils {
          
          // TODO handle other multichannel modes with stage scanning (what does this mean??)
       }
-      
+
       // sets PLogic "acquisition running" flag
-      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET, 
-            Properties.Values.PLOGIC_PRESET_3, true);
-      
+      props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_PRESET,
+              Properties.Values.PLOGIC_PRESET_3, true);
+
       return true;
    }
-   
+
+   /**
+    * Compute appropriate motor speed in mm/s for the given stage scanning
+    * settings
+    *
+    * @param settings
+    * @return
+    */
+   public double computeScanSpeed(AcquisitionSettings settings) {
+      double sliceDuration = settings.sliceTiming.sliceDuration;
+      if (settings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+         // pretend like our slice takes twice as long so that we move the correct speed 
+         // this has the effect of halving the motor speed 
+         // but keeping the scan distance the same 
+         sliceDuration *= 2;
+      }
+      final int channelsPerPass = computeScanChannelsPerPass(settings);
+      return settings.stepSizeUm * geometricSpeedFactor_ / sliceDuration / channelsPerPass;
+   }
+
+   /**
+    * compute how many channels we do in each one-way scan
+    *
+    * @param settings
+    * @return
+    */
+   private int computeScanChannelsPerPass(AcquisitionSettings settings) {
+      return settings.channelMode == MultichannelModes.Keys.SLICE_HW ? settings.numChannels : 1;
+   }
+
+   /**
+    * Compute appropriate acceleration time in ms for the specified motor speed.
+    * Set to be 10ms + 0-100ms depending on relative speed to max, all scaled by
+    * factor specified on the settings panel
+    *
+    * @param motorSpeed
+    * @return
+    */
+   public double computeScanAcceleration(double motorSpeed) {
+      final double maxMotorSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);
+      final double accelFactor = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ACCEL_FACTOR);
+      return (10 + 100 * (motorSpeed / maxMotorSpeed)) * accelFactor;
+   }
+
    private boolean getSkipScannerWarnings(Devices.Keys galvoDevice) {
       boolean ignoreMissingScanner = prefs_.getBoolean(
             MyStrings.PanelNames.SETTINGS.toString(),  
