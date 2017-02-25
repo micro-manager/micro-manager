@@ -112,14 +112,13 @@ public class Devices {
    public final static Set<Devices.Keys> STAGES2D = EnumSet.of(
          Devices.Keys.XYSTAGE, Devices.Keys.GALVOA, Devices.Keys.GALVOB);
    public final static Set<Devices.Keys> GALVOS = EnumSet.of(
-         Devices.Keys.GALVOA, Devices.Keys.GALVOB);
+           Devices.Keys.GALVOA, Devices.Keys.GALVOB);
    public final static Set<Devices.Keys> CAMERAS = EnumSet.of(
-         Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
-         Devices.Keys.CAMERALOWER);
-   public final static Set<Devices.Keys> SPIM_CAMERAS = 
-         ASIdiSPIM.OSPIM ? EnumSet.of(Devices.Keys.CAMERAA) :  
-            EnumSet.of(Devices.Keys.CAMERAA, Devices.Keys.CAMERAB);
-
+           Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
+           Devices.Keys.CAMERALOWER);
+   public final static Set<Devices.Keys> SPIM_CAMERAS
+           = ASIdiSPIM.OSPIM ? EnumSet.of(Devices.Keys.CAMERAA)
+                   : EnumSet.of(Devices.Keys.CAMERAA, Devices.Keys.CAMERAB);
 
    public static enum Libraries {
       NODEVICE("NoDevice"), // if the device doesn't exist in Micro-manager
