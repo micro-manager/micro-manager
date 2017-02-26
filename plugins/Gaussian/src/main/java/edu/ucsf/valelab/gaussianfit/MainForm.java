@@ -61,6 +61,8 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -172,6 +174,9 @@ public class MainForm extends JFrame {
    
    private JButton fitAllButton_;
    private JButton mTrackButton_;
+   
+   private final int nrThreads_;
+   private final ExecutorService threadPool_;
 
 
     /**
@@ -179,10 +184,17 @@ public class MainForm extends JFrame {
      * 
      * @param studio Instance of the Micro-Manager 2.0 api
      */
-    public MainForm(Studio studio) {
-       initComponents();
-
-       studio_ = studio;
+   public MainForm(Studio studio) {
+       
+      studio_ = studio;
+      int nrThreads = ij.Prefs.getThreads();
+      if (nrThreads > 8) {
+         nrThreads = 8;
+      }
+      nrThreads_ = nrThreads;
+      threadPool_ = Executors.newFixedThreadPool(nrThreads_);
+       
+      initComponents();
        
        UserProfile up = studio_.getUserProfile();
        Class oc = MainForm.class;
@@ -751,7 +763,10 @@ public class MainForm extends JFrame {
 
     private void fitAllButton_ActionPerformed(java.awt.event.ActionEvent evt) {
        if (ft_ == null || !ft_.isRunning()) {
-          ft_ = new FitAllThread(studio_, preFilterType_, 
+          ft_ = new FitAllThread(studio_, 
+                  nrThreads_,
+                  threadPool_,
+                  preFilterType_, 
                   posTextField_.getText());
           updateValues(ft_);
           ft_.init();
@@ -811,6 +826,8 @@ public class MainForm extends JFrame {
       } catch (ParseException ex) {
          ReportingUtils.logError(ex, "Error while closing Localization Microscopy plugin");
       }
+      
+      threadPool_.shutdownNow();
 
       WINDOWOPEN = false;
 

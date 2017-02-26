@@ -62,6 +62,12 @@ import ij.ImageStack;
 import ij.plugin.HyperStackConverter;
 import ij.process.ShortProcessor;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
@@ -82,13 +88,19 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    private final String positionString_;
    private boolean showDataWindow_ = true;
    private final Studio studio_;
-
+   private final ExecutorService threadPool_;
+   private final int nrThreads_;
 
    public FitAllThread(Studio studio, 
-           FindLocalMaxima.FilterType preFilterType, String positions) {
+           int nrThreads,
+           ExecutorService threadPool,
+           FindLocalMaxima.FilterType preFilterType, 
+           String positions) {
       studio_ = studio;
       preFilterType_ = preFilterType;
       positionString_ = positions;
+      nrThreads_ = nrThreads;
+      threadPool_ = threadPool;
    }
 
    
@@ -148,11 +160,6 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
       
       DisplayWindow dw = studio_.displays().getCurrentWindow();
-
-      int nrThreads = ij.Prefs.getThreads();
-      if (nrThreads > 8) {
-         nrThreads = 8;
-      }
 
       Roi originalRoi = siPlus.getRoi();
 
@@ -215,7 +222,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
             siPlus.deleteRoi();
 
-            analyzeImagePlus(tmpSP, p + 1, nrThreads, originalRoi);
+            analyzeImagePlus(tmpSP, p + 1, originalRoi);
 
             siPlus.setRoi(originalRoi);
          }
@@ -223,7 +230,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
 
       if (dw == null || siPlus != dw.getImagePlus()) {
-         analyzeImagePlus(siPlus, 1, nrThreads, originalRoi);
+         analyzeImagePlus(siPlus, 1, originalRoi);
       }
 
       long endTime = System.nanoTime();
@@ -299,15 +306,16 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
    }
 
    @SuppressWarnings("unchecked")
-   private int analyzeImagePlus(ImagePlus siPlus, int position, int nrThreads, Roi originalRoi) {
+   private int analyzeImagePlus(ImagePlus siPlus, int position, Roi originalRoi) {
       int halfSize = super.getHalfBoxSize();
       int nrSpots = 0;
       // Start up IJ.Prefs.getThreads() threads for gaussian fitting
-      gfsThreads_ = new GaussianFitStackThread[nrThreads];
-      for (int i = 0; i < nrThreads; i++) {
+      gfsThreads_ = new GaussianFitStackThread[nrThreads_];
+      Future<?>[] futures = new Future<?>[nrThreads_];
+      for (int i = 0; i < nrThreads_; i++) {
          gfsThreads_[i] = new GaussianFitStackThread(sourceList_, resultList_, siPlus);
          gfsThreads_[i].copy(this);
-         gfsThreads_[i].init();
+         futures[i] = threadPool_.submit(gfsThreads_[i]);
       }
       int shownChannel = siPlus.getChannel();
       int shownSlice = siPlus.getSlice();
@@ -439,11 +447,12 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       }
 
       // wait for worker threads to finish
-      for (int i=0; i<nrThreads; i++) {
+      for (int i=0; i<nrThreads_; i++) {
          try {
-            gfsThreads_[i].join();
+            futures[i].get();
             gfsThreads_[i] = null;
-         } catch (InterruptedException ie) {
+         } catch (ExecutionException ie) {
+         } catch (InterruptedException ex) {
          }
       }
 
