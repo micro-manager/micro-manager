@@ -90,6 +90,18 @@ public class AcquisitionModes {
       return null;
    }
    
+      /**
+    * @param str string to search for amon textual key representations
+    * @return null if prefCode not found, or the Key if it is
+    */
+   public static Keys getKeyFromString(String str) {
+      for (Keys k : Keys.values()) {
+         if (k.toString().equals(str)) {
+            return k;
+         }
+      }
+      return null;
+   }
    
    public JComboBox getComboBox() {
       JComboBox jcb = new JComboBox();

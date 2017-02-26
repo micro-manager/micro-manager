@@ -27,8 +27,10 @@ import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.PropertyMap;
 
 import org.micromanager.Studio;
+import org.micromanager.asidispim.data.AcquisitionModes;
 import org.micromanager.internal.utils.FileDialogs;
 
 import org.micromanager.asidispim.data.Devices; 
@@ -76,7 +78,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JCheckBox deskewAutoTest_; 
    
    public static final String[] TRANSFORMOPTIONS = 
-      {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward"};
+      {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward",
+       "Rotate 180\u00B0"};
    public static final String[] EXPORTFORMATS = 
       {"mipav GenerateFusion", "Multiview Reconstruction (deprecated)"};
    public static FileDialogs.FileType EXPORT_DATA_SET 
@@ -281,7 +284,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
       // start deskew sub-panel 
       deskewPanel_ = new JPanel(new MigLayout(
               "",
-              "[right]4[center]",
+              "[right]4[center]4[left]",
               "[]8[]"));
 
       deskewPanel_.setBorder(PanelUtils.makeTitledBorder("Deskew stage scanning data", this));
@@ -310,60 +313,67 @@ public class DataAnalysisPanel extends ListeningJPanel {
             runDeskew(dataAnalysisPanel);
          }
       });
-      deskewPanel_.add(deskewButton, "span 2, wrap");
+      deskewPanel_.add(deskewButton, "span 3, center, wrap");
 
       super.add(deskewPanel_);
    }
 
-   public void runDeskew (final ListeningJPanel caller) {
-      /** 
- 		       * Worker thread to execute deskew. 
- 		       * Patterned after Nico's ExportTask SwingWorker code but updating progress bar wasn't working 
- 		       *   and task is pretty quick so I removed that code. 
- 		       * @author Jon 
-             * 
-             */
-   class DeskewTask extends SwingWorker<Void,Void>  {
-      
-      DeskewTask() {
-         // empty constructor for now
-      }
-      
-      @Override
-      public Void doInBackground() throws  Exception {
-         setProgress(0);
-         setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+   public void runDeskew(final ListeningJPanel caller) {
+      /**
+       * Worker thread to execute deskew. Patterned after Nico's ExportTask
+       * SwingWorker code but updating progress bar wasn't working and task is
+       * pretty quick so I removed that code.
+       *
+       * @author Jon
+       *
+       */
+      class DeskewTask extends SwingWorker<Void, Void> {
 
-         long startTime = System.currentTimeMillis();
-         final DisplayWindow currentWindow = gui_.displays().getCurrentWindow();
-         if (currentWindow == null) {
-            throw new Exception("No Micro-Manager display open");
+         DeskewTask() {
+            // empty constructor for now
          }
-            final ImagePlus ip = currentWindow.getImagePlus();
-            boolean firstSideIsA = true;
-            String windowTitle = "";
 
-            final Datastore datastore = currentWindow.getDatastore();
-            final SummaryMetadata summaryMetadata = datastore.getSummaryMetadata();
+         @Override
+         public Void doInBackground() throws Exception {
+            setProgress(0);
+            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 
-            if (!summaryMetadata.getUserData().getString("SPIMmode").
-                    equals("Stage scan")) {
-               throw new Exception("Can only deskew stage scanning data");
-            }
-            if (summaryMetadata.getUserData().getString("FirstSide").equals("B")) {
-               firstSideIsA = false;
-            }
-            if (summaryMetadata.getUserData().containsKey("AcquisitionName")) {
-               windowTitle = summaryMetadata.getUserData().getString("AcquisitionName");
-            }
-            
-            if (windowTitle.equals("")) {
-               windowTitle = ip.getTitle();
-            }
+            long startTime = System.currentTimeMillis();
+            final DisplayWindow currentWindow = gui_.displays().getCurrentWindow();
+            final ImagePlus ip;
+            boolean firstSideIsA;
+            String windowTitle;
+            final AcquisitionModes.Keys acqMode;
+            if (currentWindow != null) {
+               ip = currentWindow.getImagePlus();
 
-            if (deskewInvert_.isSelected()) {
-               // "spread" the stack in the other direction  
-               firstSideIsA = !firstSideIsA;
+               final Datastore datastore = currentWindow.getDatastore();
+               final SummaryMetadata summaryMetadata = datastore.getSummaryMetadata();
+               PropertyMap metadata = summaryMetadata.getUserData();
+
+               acqMode = AcquisitionModes.getKeyFromString(metadata.getString("SPIMmode"));
+               if (!(acqMode == AcquisitionModes.Keys.STAGE_SCAN
+                       || acqMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+                       || acqMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL)) {
+                  throw new Exception("Can only deskew stage scanning data");
+               }
+               firstSideIsA = !metadata.getString("FirstSide").equals("B");
+
+               if (metadata.containsKey("AcquisitionName")) {
+                  windowTitle = metadata.getString("AcquisitionName");
+               } else {
+                  windowTitle = ip.getTitle();
+               }
+            } else {
+               ip = IJ.getImage();
+               if (ip == null) {
+                  throw new Exception("No display open");
+               }
+               // guess at settings since we can't access MM metadata 
+               firstSideIsA = true;
+               acqMode = AcquisitionModes.Keys.STAGE_SCAN;
+               windowTitle = ip.getTitle(); 
+ 	            ReportingUtils.logDebugMessage("Deskew may be incorrect because don't have Micro-Manager dataset with metadata");
             }
 
             // for 45 degrees we shift the same amount as the interplane spacing, so factor of 1.0 
@@ -387,12 +397,29 @@ public class DataAnalysisPanel extends ListeningJPanel {
                IJ.run("Duplicate...", "title=C1-" + title + " duplicate");  // make it named as 1st channel would be 
             }
             String mergeCmd = "";
+            int dir;
             for (int c = 0; c < sc; c++) {    // loop over channels 
                IJ.selectWindow("C" + (c + 1) + "-" + title);
-               int dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, -1 for path B 
-               if (!firstSideIsA) {
+               switch (acqMode) {
+                  case STAGE_SCAN:
+                     dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B 
+                     if (!firstSideIsA) {
+                        dir *= -1;
+                     }
+                     break;
+                  case STAGE_SCAN_INTERLEAVED:
+                  case STAGE_SCAN_UNIDIRECTIONAL:
+                     // always the same direction 
+                     dir = -1;
+                     break;
+                  default:
+                     // should never make it here 
+                     throw new Exception("Can only deskew stage scanning data");
+               }
+               if (deskewInvert_.isSelected()) {
                   dir *= -1;
                }
+               
                IJ.run("Canvas Size...", "width=" + sx_new + " height=" + sy + " position=Center-"
                        + (dir < 0 ? "Right" : "Left") + " zero");
                for (int s = 0; s < ss; s++) {  // loop over slices in stack 
@@ -554,6 +581,10 @@ public class DataAnalysisPanel extends ListeningJPanel {
                                 case 3: {
                                     iProc2.rotate(((c % 2) == 1) ? 90 : -90);
                                     break;
+                                }
+                                case 4: { 
+                                    iProc2.rotate(180); 
+                                    break; 
                                 }
                             }
 
