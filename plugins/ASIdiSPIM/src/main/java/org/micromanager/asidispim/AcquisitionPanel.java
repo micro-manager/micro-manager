@@ -1729,10 +1729,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          gui_.live().setLiveMode(false);
       }
       
-      // stop the serial traffic for position updates during acquisition
-      posUpdater_.pauseUpdates(true);
-      
-      // make sure slice timings are up to date
+     // make sure slice timings are up to date
       // do this automatically; we used to prompt user if they were out of date
       // do this before getting snapshot of sliceTiming_ in acqSettings
       recalculateSliceTiming(!minSlicePeriodCB_.isSelected());
@@ -2185,6 +2182,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          MyDialogUtils.showError(ex, "Error emptying out the circular buffer");
          return false;
       }
+      
+      // stop the serial traffic for position updates during acquisition
+      // if we return from this function (including aborting) we need to unpause
+      posUpdater_.pauseUpdates(true);
+      
+ 
 
       // initialize stage scanning so we can restore state
       Point2D.Double xyPosUm = new Point2D.Double();
@@ -2199,6 +2202,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
  	                 Properties.Keys.STAGESCAN_MOTOR_ACCEL);
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not get XY stage position, speed, or acceleration for stage scan initialization");
+            posUpdater_.pauseUpdates(false);
             return false;
          }
       }
@@ -2208,6 +2212,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
       if (!controller_.prepareControllerForAquisition(acqSettings)) {
+         posUpdater_.pauseUpdates(false);
          return false;
       }
 
