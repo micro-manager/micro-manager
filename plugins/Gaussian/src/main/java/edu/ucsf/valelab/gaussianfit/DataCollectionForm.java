@@ -943,13 +943,13 @@ public class DataCollectionForm extends JFrame {
           for (int i = 0; i < rows.length; i++) {
              if (saveFormatBox_.getSelectedIndex() == 0) {
                 if (i == 0)
-                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), false, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(rows[i]), false, 
                            dir_, this);
                 else
-                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), true, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(rows[i]), true, 
                            dir_, this);
              } else {
-                LoadAndSave.saveDataAsText(mainTableModel_.getRow(i), this);
+                LoadAndSave.saveDataAsText(mainTableModel_.getRow(rows[i]), this);
              }
           }
        } else {
