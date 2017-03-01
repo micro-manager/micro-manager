@@ -7,7 +7,7 @@
 //                
 // AUTHOR:        David Goosen & Athabasca Witschi (contact@zaber.com)
 //                
-// COPYRIGHT:     Zaber Technologies, 2014
+// COPYRIGHT:     Zaber Technologies, 2017
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -71,15 +71,23 @@ public:
 	int OnSpeedY        (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAccelX        (MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnAccelY        (MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnDeviceAddress (MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnDeviceAddress (MM::PropertyBase* pProp, MM::ActionType eAct); // Single controller
+	int OnDeviceAddressY (MM::PropertyBase* pProp, MM::ActionType eAct); // Composite XY (two controllers)
 
 private:
 	int SendXYMoveCommand(std::string type, long x, long y) const;
-	int OnSpeed(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) const;
-	int OnAccel(long axis, MM::PropertyBase* pProp, MM::ActionType eAct) const;
+	int OnSpeed(long address, long axis, MM::PropertyBase* pProp, MM::ActionType eAct) const;
+	int OnAccel(long address, long axis, MM::PropertyBase* pProp, MM::ActionType eAct) const;
 	void GetOrientation(bool& mirrorX, bool& mirrorY);
 
-	long deviceAddress_;
+	inline bool IsSingleController() const
+	{
+		return (deviceAddressX_ == deviceAddressY_);
+	}
+
+	long deviceAddressX_;
+	long deviceAddressY_;
+	bool deviceAddressYInitialized_;
 	bool rangeMeasured_;
 	int homingTimeoutMs_;
 	double stepSizeXUm_;
@@ -87,7 +95,6 @@ private:
 	double convFactor_; // not very informative name
 	long axisX_;
 	long axisY_;
-	std::string cmdPrefix_;
 	long resolutionX_;
 	long resolutionY_;
 	long motorStepsX_;
