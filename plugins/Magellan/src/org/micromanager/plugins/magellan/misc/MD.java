@@ -64,6 +64,8 @@ public class MD {
    private static final String GRID_ROW = "GridRowIndex";
    private static final String AFFINE_TRANSFORM = "AffineTransform";
    private static final String EXPLORE_ACQ = "MagellanExploreAcquisition";
+   private static final String IMAGE_CONSTRUCTION_FILTER = "ImageConstruction";
+   private static final String RANK_FILTER_RANK = "RankFilterRank";
    private static final String PIX_TYPE_GRAY8 = "GRAY8";
    private static final String PIX_TYPE_GRAY16 = "GRAY16";
    private static final String IJ_TYPE = "IJType";
@@ -713,6 +715,24 @@ public class MD {
    public static void setExploreAcq(JSONObject smd, boolean explore) {
       try {
          smd.put(EXPLORE_ACQ, explore);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set pixel overlap tag");
+         throw new RuntimeException();
+      }
+   }
+   
+   public static void setImageConstructionFilter(JSONObject smd, String type) {
+      try {
+         smd.put(IMAGE_CONSTRUCTION_FILTER, type);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set pixel overlap tag");
+         throw new RuntimeException();
+      }
+   }
+   
+    public static void setRankFilterRank(JSONObject smd, double rank) {
+      try {
+         smd.put(RANK_FILTER_RANK, rank);
       } catch (JSONException ex) {
          Log.log("Couldnt set pixel overlap tag");
          throw new RuntimeException();

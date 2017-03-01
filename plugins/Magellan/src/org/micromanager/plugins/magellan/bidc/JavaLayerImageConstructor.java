@@ -40,14 +40,12 @@ import org.micromanager.plugins.magellan.acq.Acquisition;
 
 public class JavaLayerImageConstructor {
 
-   private static final int IMAGE_CONSTRUCTION_QUEUE_SIZE = 150;
-   private static final int IMAGE_CONSTRUCTION_THREADS = 5;
+   private static final int IMAGE_CONSTRUCTION_THREADS = 8;
    private static JavaLayerImageConstructor singleton_;
    private static CMMCore core_ = Magellan.getCore();
    private ExecutorService imageConstructionExecutor_;
    private boolean javaLayerConstruction_ = false;
    private volatile AtomicInteger numImagesConstructing_ = new AtomicInteger(0);
-   private LinkedBlockingQueue<ProtoTaggedImage> imagesToConstruct_ = new LinkedBlockingQueue<ProtoTaggedImage>(IMAGE_CONSTRUCTION_QUEUE_SIZE);
 
    public JavaLayerImageConstructor() {
       singleton_ = this;
@@ -55,7 +53,7 @@ public class JavaLayerImageConstructor {
       //start up image construction thread
       javaLayerConstruction_ = GlobalSettings.getInstance().isBIDCTwoPhoton();
       if (javaLayerConstruction_) {
-         imageConstructionExecutor_ = Executors.newFixedThreadPool(5, new ThreadFactory() {
+         imageConstructionExecutor_ = Executors.newFixedThreadPool(IMAGE_CONSTRUCTION_THREADS, new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
                return new Thread(r, "Image construction thread");
@@ -121,8 +119,8 @@ public class JavaLayerImageConstructor {
          final int numCamChannels = (int) core_.getNumberOfCameraChannels();
 
          //get frames of all channels
-         final LinkedList<ImageAndInfo> imageList = new LinkedList<ImageAndInfo>();
          for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
+            final LinkedList<ImageAndInfo> imageList = new LinkedList<ImageAndInfo>();
             for (int framesBack = numFrames - 1; framesBack >= 0; framesBack--) {
                //channel 0 is farthest back
                int backIndex = framesBack * numCamChannels + (numCamChannels - 1 - c);
@@ -133,35 +131,40 @@ public class JavaLayerImageConstructor {
             numImagesConstructing_.incrementAndGet();
             imageConstructionExecutor_.submit(new Runnable() {
                @Override
-               public void run() {
-                  ImageAndInfo firstIAI = imageList.getFirst();
+                public void run() {         
+                    try {
+                        ImageAndInfo firstIAI = imageList.getFirst();
 
-                  //Create appropriate image construction class
-                  final FrameIntegrationMethod integrator;
-                  if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.FRAME_AVERAGE) {
-                     integrator = new FrameAverageWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
-                             MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
-                  } else if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.RANK_FILTER) {
-                     integrator = new RankFilterWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
-                             MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_, firstIAI.event_.acquisition_.getRank());
-                  } else { //frame summation
-                     integrator = new FrameSummationWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
-                             MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
-                  }
-                  //add frames to integrator
-                  for (int i = 0; i < firstIAI.numFrames_; i++) {
-                     integrator.addBuffer((byte[]) imageList.removeFirst().img_.pix);
-                  }
-                  //add metadata 
-                  MD.setWidth(firstIAI.img_.tags, integrator.getConstructedImageWidth());
-                  MD.setHeight(firstIAI.img_.tags, integrator.getConstructedImageHeight());
-                  if (integrator instanceof FrameSummationWrapper) {
-                     MD.setPixelTypeFromByteDepth(firstIAI.img_.tags, 2);
-                  }
-                  MagellanEngine.addImageMetadata(firstIAI.img_.tags, firstIAI.event_, firstIAI.event_.timeIndex_,
-                          firstIAI.camChannelIndex_, firstIAI.currentTime_ - firstIAI.event_.acquisition_.getStartTime_ms(),
-                          firstIAI.numFrames_);
-                  new ProtoTaggedImage(integrator, firstIAI.img_.tags, firstIAI.event_.acquisition_).integrateAndAddToAcq();
+                        //Create appropriate image construction class
+                        final FrameIntegrationMethod integrator;
+                        if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.FRAME_AVERAGE) {
+                            integrator = new FrameAverageWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
+                                    MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
+                        } else if (firstIAI.event_.acquisition_.getFilterType() == FrameIntegrationMethod.RANK_FILTER) {
+                            integrator = new RankFilterWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
+                                    MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_, firstIAI.event_.acquisition_.getRank());
+                        } else { //frame summation
+                            integrator = new FrameSummationWrapper(GlobalSettings.getInstance().getChannelOffset(firstIAI.camChannelIndex_),
+                                    MD.getWidth(firstIAI.img_.tags), firstIAI.numFrames_);
+                        }
+                        //add frames to integrator
+                        for (int i = 0; i < firstIAI.numFrames_; i++) {
+                            integrator.addBuffer((byte[]) imageList.removeFirst().img_.pix);
+                        }
+                        //add metadata 
+                        MD.setWidth(firstIAI.img_.tags, integrator.getConstructedImageWidth());
+                        MD.setHeight(firstIAI.img_.tags, integrator.getConstructedImageHeight());
+                        if (integrator instanceof FrameSummationWrapper) {
+                            MD.setPixelTypeFromByteDepth(firstIAI.img_.tags, 2);
+                        }
+                        MagellanEngine.addImageMetadata(firstIAI.img_.tags, firstIAI.event_, firstIAI.event_.timeIndex_,
+                                firstIAI.camChannelIndex_, firstIAI.currentTime_ - firstIAI.event_.acquisition_.getStartTime_ms(),
+                                firstIAI.numFrames_);
+                        new ProtoTaggedImage(integrator, firstIAI.img_.tags, firstIAI.event_.acquisition_).integrateAndAddToAcq();
+                    } catch (Exception e) {
+                       e.printStackTrace();
+                       Log.log(e);
+                   }
                   numImagesConstructing_.decrementAndGet();
                }
             });
