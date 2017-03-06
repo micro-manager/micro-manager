@@ -639,8 +639,6 @@ int PointGrey::Initialize()
    if (ret != DEVICE_OK) {
       return ret;
    }
-   // needed to stop sequence
-   GetImageBuffer();
 
 
 	// -------------------------------------------------------------------------------------
@@ -672,6 +670,13 @@ int PointGrey::Shutdown()
 * This function should block during the actual exposure and return immediately afterwards 
 * (i.e., before readout).  This behavior is needed for proper synchronization with the shutter.
 * Required by the MM::Camera API.
+*
+* Note 03/06/2017: with FlyCapture SDK version 2.10.3.266, it looks like the camera is always capturing
+*  This may have been the fix for the problem that stopping capture took so long.
+*  It also seems that the timing is off, and that the intensity of the image varies, 
+*  indicating that the exposure possibly started before the shutter even opened. 
+*  Work around this by taking the second image.  This is not very clean as the exposure
+*  may take up to 2 x longer than desired, but is better than getting irregular exposures.
 */
 int PointGrey::SnapImage()
 {
@@ -692,9 +697,18 @@ int PointGrey::SnapImage()
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
-   // Since stopping takes a long time, do it in the GetImageBuffer function
-   // This is a bit ugly since it relies on the calling code calling SnapImage 
-   // and GetImageBuffer in sequence
+   error = cam_.RetrieveBuffer(&image_);
+   if (error != PGRERROR_OK)
+   {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+   error = cam_.StopCapture();
+   if (error != PGRERROR_OK)
+   {
+      LogMessage(error.GetDescription(), false);
+   }
+   isCapturing_ = false;
   
    return DEVICE_OK;
 }
@@ -711,14 +725,6 @@ int PointGrey::SnapImage()
 */
 const unsigned char* PointGrey::GetImageBuffer()
 {
-   if (IsCapturing()) {
-      Error error = cam_.StopCapture();
-      if (error != PGRERROR_OK)
-      {
-         LogMessage(error.GetDescription(), false);
-      }
-      isCapturing_ = false;
-   }
    // This seems to work without a DeepCopy first
    return image_.GetData();
 }
