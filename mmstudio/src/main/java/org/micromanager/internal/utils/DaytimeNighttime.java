@@ -85,8 +85,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    // Keys that we have to specify manually; nothing will be appended to them.
    private static final String[] MANUAL_TEXT_COLOR_KEYS = new String[] {
-      "Tree.textForeground", "TitledBorder.titleColor", "OptionPane.messageForeground", 
-      "OptionPane.foreground"
+      "Tree.textForeground", "TitledBorder.titleColor", "OptionPane.messageForeground"
    };
 
    // As above, but for background color.
