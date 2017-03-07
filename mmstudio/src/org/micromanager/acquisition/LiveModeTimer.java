@@ -471,7 +471,21 @@ public class LiveModeTimer {
                   String camera = core_.getCameraDevice();
                   Set<String> cameraChannelsAcquired = new HashSet<String>();
                   for (int i = 0; i < 2 * multiChannelCameraNrCh_; ++i) {
-                     TaggedImage ti = core_.getNBeforeLastTaggedImage(i);
+                     TaggedImage ti = null;
+                     long start = System.currentTimeMillis();
+                     while (ti == null) {
+                        try {
+                           ti = core_.getNBeforeLastTaggedImage(i);
+                        } catch (Exception e) {
+                           if (!e.getMessage().equals("Circular buffer is empty.")) {
+                              throw e;
+                           }
+                        }
+                        // if we time out, have the function throw the error so that we can exit
+                        if (System.currentTimeMillis() > 20 * fpsInterval_ + start) {
+                           ti = core_.getNBeforeLastTaggedImage(i);
+                        }
+                     }
                      String channelName;
                      if (ti.tags.has(camera + "-CameraChannelName")) {
                         channelName = ti.tags.getString(camera + "-CameraChannelName");
