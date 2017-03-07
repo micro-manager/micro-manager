@@ -54,7 +54,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
          "OptionPane", "Panel", "PasswordField", "ProgressBar",
          "RadioButton", "ScrollBar", "ScrollPane", "Slider", "Spinner",
          "SplitPane", "Table", "TableHeader", "TextArea",
-         "TextField", "TextPane", "ToggleButton", "TollBar", "Tree",
+         "TextField", "TextPane", "ToggleButton", "ToolBar", "Tree",
          "Viewport"
    };
 
@@ -74,7 +74,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
          "OptionPane", "Panel", "ProgressBar",
          "RadioButton", "ScrollPane", "Separator", "Slider", "Spinner",
          "SplitPane", "Table", "TableHeader", "TextArea", "TextField",
-         "TollBar", "Tree", "Viewport"
+         "TextPane", "ToolBar", "Tree", "Viewport"
    };
 
    // As above, but for disabled text; each of these keys will have
@@ -85,7 +85,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
 
    // Keys that we have to specify manually; nothing will be appended to them.
    private static final String[] MANUAL_TEXT_COLOR_KEYS = new String[] {
-      "Tree.textForeground", "TitledBorder.titleColor"
+      "Tree.textForeground", "TitledBorder.titleColor", "OptionPane.messageForeground"
    };
 
    // As above, but for background color.
