@@ -449,7 +449,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceAdvancedPanel_.add(delayScan_, "wrap");
 
       JLabel lineScanLabel = new JLabel("Lines scans per slice:");
-      slicePanel_.add(lineScanLabel);
+      sliceAdvancedPanel_.add(lineScanLabel);
       numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SCANSPERSLICE, 1);
@@ -457,7 +457,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceAdvancedPanel_.add(numScansPerSlice_, "wrap");
 
       JLabel lineScanPeriodLabel = new JLabel("Line scan duration [ms]:");
-      slicePanel_.add(lineScanPeriodLabel);
+      sliceAdvancedPanel_.add(lineScanPeriodLabel);
       lineScanDuration_ = pu.makeSpinnerFloat(1, 10000, 0.25,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_DURATION_SCAN, 10);
@@ -466,7 +466,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceAdvancedPanel_.add(lineScanDuration_, "wrap");
       
       JLabel delayLaserLabel = new JLabel("Delay before laser [ms]:");
-      slicePanel_.add(delayLaserLabel);
+      sliceAdvancedPanel_.add(delayLaserLabel);
       delayLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_LASER, 0);
@@ -475,7 +475,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceAdvancedPanel_.add(delayLaser_, "wrap");
       
       JLabel durationLabel = new JLabel("Laser trig duration [ms]:");
-      slicePanel_.add(durationLabel);
+      sliceAdvancedPanel_.add(durationLabel);
       durationLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_LASER, 1);
@@ -484,7 +484,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceAdvancedPanel_.add(durationLaser_, "span 2, wrap");
       
       JLabel delayLabel = new JLabel("Delay before camera [ms]:");
-      slicePanel_.add(delayLabel);
+      sliceAdvancedPanel_.add(delayLabel);
       delayCamera_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_CAMERA, 0);
@@ -493,7 +493,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceAdvancedPanel_.add(delayCamera_, "wrap");
       
       JLabel cameraLabel = new JLabel("Camera trig duration [ms]:");
-      slicePanel_.add(cameraLabel);
+      sliceAdvancedPanel_.add(cameraLabel);
       durationCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_CAMERA, 0);
@@ -502,7 +502,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceAdvancedPanel_.add(durationCamera_, "wrap");
       
       JLabel exposureLabel = new JLabel("Camera exposure [ms]:");
-      slicePanel_.add(exposureLabel);
+      sliceAdvancedPanel_.add(exposureLabel);
       exposureCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_ADVANCED_CAMERA_EXPOSURE, 10f);
