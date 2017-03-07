@@ -68,7 +68,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getSubMenu() {
-      return "Device Control";
+      return "Beta";
    }
 
    @Override
