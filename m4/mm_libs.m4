@@ -40,6 +40,13 @@ AC_DEFUN([MM_LIB_GPHOTO2], [
 ])
 
 
+AC_DEFUN([MM_LIB_MODBUS], [
+   MM_LIB_WITH_PKG_CONFIG([MODBUS], [libmodbus], [libmodbus >= 3.0.6], [],
+      [$1], [-lmodbus], [modbus.h], [modbus_connect],
+      [$2], [$3])
+])
+
+
 # Check for HIDAPI library
 #
 # MM_LIB_HIDAPI([HIDAPI prefix], [action-if-found], [action-if-not-found])

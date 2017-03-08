@@ -29,6 +29,9 @@ endif
 if BUILD_OPENCV
    OPENCVGRABBER = OpenCVgrabber
 endif
+if BUILD_MODBUS
+   MODBUS = Modbus
+endif
 if BUILD_PVCAM
    PVCAM = PVCAM PrincetonInstruments
 endif
@@ -68,6 +71,7 @@ SUBDIRS = \
 	$(IIDC) \
 	$(ITC) \
 	$(NIDAQ) \
+	$(MODBUS) \
 	$(OPENCVGRABBER) \
 	$(PVCAM) \
 	$(QCAM) \

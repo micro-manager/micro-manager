@@ -239,6 +239,23 @@ AS_IF([test "x$want_gphoto2" != xno],
 [use_gphoto2=no])
 
 
+MM_ARG_WITH_OPTIONAL_LIB([libmodbus], [modbus], [MODBUS])
+AS_IF([test "x$want_modbus" != xno],
+[
+   MM_LIB_MODBUS([$MODBUS_PREFIX],
+   [
+      use_modbus=yes
+   ],
+   [
+      use_modbus=no
+      AS_IF([test "x$want_modbus" = xyes],
+            [MM_MSG_OPTIONAL_LIB_FAILURE([libmodbus], [modbus])])
+   ])
+],
+[use_modbus=no])
+AM_CONDITIONAL([BUILD_MODBUS], [test "x$use_modbus" = xyes])
+
+
 MM_ARG_WITH_OPTIONAL_LIB([FreeImagePlus], [freeimageplus], [FREEIMAGEPLUS])
 AS_IF([test "x$want_freeimageplus" != xno],
 [
@@ -440,6 +457,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Marzhauser-LStep
    MarzhauserLStepOld
    MicroPoint
+   Modbus
    Motic_mac
    Neos
    NewportCONEX
