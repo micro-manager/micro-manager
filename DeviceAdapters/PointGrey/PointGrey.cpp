@@ -725,8 +725,18 @@ int PointGrey::SnapImage()
 */
 const unsigned char* PointGrey::GetImageBuffer()
 {
-   // This seems to work without a DeepCopy first
-   return image_.GetData();
+   if (nComponents_ == 1) {
+      // This seems to work without a DeepCopy first
+      return image_.GetData();
+   } 
+   // nComponents must be 4
+   Image convertedImage;
+   Error error = image_.Convert ( PIXEL_FORMAT_RGBU , &convertedImage );
+   if (error != PGRERROR_OK) {
+      LogMessage(error.GetDescription(), false);
+      return 0;
+   }
+   return convertedImage.GetData();
 }
 
 /***********************************************************************
@@ -1476,6 +1486,12 @@ int PointGrey::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
          SetErrorText(ALLERRORS, "Failed to generate valid Format 7 settings");
          return ALLERRORS;
       }
+      if (format7ImageSettings.pixelFormat == PIXEL_FORMAT_RGB8) {
+         nComponents_ = 4;
+      } else {
+         nComponents_ = 1;
+      }
+            
       // if we do not snap an image, MM 2.0 gets the bitdepths wrong. Delete once fixed upstream
       SnapImage();
       // make sure that sequence acquisition stops
@@ -1841,4 +1857,63 @@ const char* PointGrey::GetBusSpeedAsString(BusSpeed speed)
    default:
       return "Unknown bus speed";
    }
+}
+
+int PointGrey::CheckSoftwareTriggerPresence(FlyCapture2::Camera* pCam, bool& result)
+{
+	const unsigned int k_triggerInq = 0x530;
+	Error error;
+	unsigned int regVal = 0;
+
+	error = pCam->ReadRegister( k_triggerInq, &regVal );
+
+	if (error != PGRERROR_OK)
+	{
+		return ERR_IN_READ_REGISTER;
+	}
+
+   result = true;
+	if( ( regVal & 0x10000 ) != 0x10000 )
+	{
+		result = false;
+	} 
+
+   return DEVICE_OK;
+}
+
+// TODO Add timout
+int PointGrey::PollForTriggerReady(FlyCapture2::Camera* pCam, bool& result)
+{
+   result = true;
+
+	const unsigned int k_softwareTrigger = 0x62C;
+	Error error;
+	unsigned int regVal = 0;
+
+	do
+	{
+		error = pCam->ReadRegister( k_softwareTrigger, &regVal );
+		if (error != PGRERROR_OK)
+		{
+			return ERR_IN_READ_REGISTER;
+		}
+
+	} while ( (regVal >> 31) != 0 );
+
+	return DEVICE_OK;
+}
+
+bool PointGrey::FireSoftwareTrigger(FlyCapture2::Camera* pCam )
+{
+	const unsigned int k_softwareTrigger = 0x62C;
+	const unsigned int k_fireVal = 0x80000000;
+	Error error;
+
+	error = pCam->WriteRegister( k_softwareTrigger, k_fireVal );
+	if (error != PGRERROR_OK)
+	{
+		return false;
+	}
+
+	return true;
 }

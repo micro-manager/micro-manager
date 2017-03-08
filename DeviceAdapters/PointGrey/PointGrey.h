@@ -28,6 +28,11 @@
 
 #include "FlyCapture2.h"
 
+//////////////////////////////////////////////////////////////////////////////
+// Error codes
+//
+#define ERR_IN_READ_REGISTER         12300
+
 using namespace FlyCapture2;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -103,6 +108,9 @@ private:
    void updatePixelFormats(unsigned int pixelFormatBitField);
    int SetEndianess(bool little);
    const char* GetBusSpeedAsString(BusSpeed speed);
+   int CheckSoftwareTriggerPresence(FlyCapture2::Camera* pCam, bool& result);
+   int PollForTriggerReady(FlyCapture2::Camera* pCam, bool& result);
+   bool FireSoftwareTrigger(FlyCapture2::Camera* pCam);
 
    FlyCapture2::PGRGuid guid_;
    FlyCapture2::Camera cam_;
