@@ -53,11 +53,17 @@ public final class DefaultImageExporter implements ImageExporter {
     */
    public static class ExporterLoop {
       private Datastore store_;
-      private String axis_;
-      private int startIndex_;
-      private int stopIndex_;
+      private final String axis_;
+      private final int startIndex_;
+      private final int stopIndex_;
       private ExporterLoop child_;
 
+      /**
+       * 
+       * @param axis Axis over which to iterate
+       * @param start First coordinate to be exported
+       * @param stop Last coordinate to be exported (will be included!)
+       */
       public ExporterLoop(String axis, int start, int stop) {
          axis_ = axis;
          startIndex_ = start;
@@ -67,6 +73,7 @@ public final class DefaultImageExporter implements ImageExporter {
       /**
        * Insert a new innermost ExporterLoop -- recursively propagates the
        * provided child to the end of the list.
+       * @param child
        */
       public void setInnermostLoop(ExporterLoop child) {
          if (child_ == null) {
@@ -79,6 +86,7 @@ public final class DefaultImageExporter implements ImageExporter {
 
       /**
        * Recursively propagate a display through the list.
+       * @param display
        */
       public void setDisplay(DisplayWindow display) {
          if (display != null) {
@@ -93,10 +101,12 @@ public final class DefaultImageExporter implements ImageExporter {
        * Iterate over our specified axis, while running any inner loop(s),
        * determining which images will be exported. Use the provided
        * base coordinates to cover for any coords we aren't iterating over.
+       * @param baseCoords
+       * @param result
        */
       public void selectImageCoords(Coords baseCoords,
             ArrayList<Coords> result) {
-         for (int i = startIndex_; i < stopIndex_; ++i) {
+         for (int i = startIndex_; i <= stopIndex_; ++i) {
             Coords newCoords = baseCoords.copy().index(axis_, i).build();
             if (child_ == null) {
                // Add the corresponding image, if any.
@@ -120,9 +130,8 @@ public final class DefaultImageExporter implements ImageExporter {
 
    private int sequenceNum_ = 0;
    private ImageStack stack_;
-   private String mode_;
-   private AtomicBoolean drawFlag_;
-   private AtomicBoolean doneFlag_;
+   private final AtomicBoolean drawFlag_;
+   private final AtomicBoolean doneFlag_;
    private boolean isSingleShot_;
    private int jpegQuality_ = 10;
 
@@ -185,6 +194,7 @@ public final class DefaultImageExporter implements ImageExporter {
     * This method gets called twice for each image we export: once for the
     * display responding to our request to set the image coordinates, and
     * then once for the display painting to our provided Graphics object.
+    * @param event
     */
    @Subscribe
    public void onDrawComplete(CanvasDrawCompleteEvent event) {
@@ -296,7 +306,7 @@ public final class DefaultImageExporter implements ImageExporter {
       ArrayList<Coords> coords = new ArrayList<Coords>();
       outerLoop_.selectImageCoords(
             display_.getDisplayedImages().get(0).getCoords(), coords);
-      if (coords.size() == 0) {
+      if (coords.isEmpty()) {
          // Nothing to do.
          return coords;
       }
@@ -365,12 +375,11 @@ public final class DefaultImageExporter implements ImageExporter {
          return;
       }
       final ArrayList<Coords> coords = prepAndSanityCheck();
-      if (coords.size() == 0) {
+      if (coords.isEmpty()) {
          // Nothing to do.
          return;
       }
       display_.registerForEvents(this);
-      File outputDir = null;
 
       // This thread will handle telling the display window to display new
       // images.
@@ -428,8 +437,10 @@ public final class DefaultImageExporter implements ImageExporter {
             }
             display_.unregisterForEvents(DefaultImageExporter.this);
             if (stack_ != null) {
+               File f = new File(display_.getName());
+               String shortName = f.getName();
                // Show the ImageJ stack.
-               ImagePlus plus = new ImagePlus("MM export results", stack_);
+               ImagePlus plus = new ImagePlus(shortName + "MM-export", stack_);
                plus.show();
             }
          }
