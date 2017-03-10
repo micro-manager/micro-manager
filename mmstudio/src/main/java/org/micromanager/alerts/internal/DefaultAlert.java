@@ -38,7 +38,7 @@ import org.micromanager.alerts.UpdatableAlert;
 public class DefaultAlert extends JPanel implements UpdatableAlert {
 
    protected AlertsWindow parent_;
-   private String title_;
+   private final String title_;
    private JLabel textLabel_ = null;
    protected String text_;
    protected JComponent contents_;
@@ -49,7 +49,7 @@ public class DefaultAlert extends JPanel implements UpdatableAlert {
     */
    protected DefaultAlert(AlertsWindow parent, String title, JComponent contents) {
       super();
-      setLayout(new MigLayout("flowx, fill, insets 1, gap 0", "[]2[]"));
+      super.setLayout(new MigLayout("flowx, fill, insets 1, gap 0", "[]2[]"));
 
       parent_ = parent;
       title_ = title;
@@ -92,10 +92,10 @@ public class DefaultAlert extends JPanel implements UpdatableAlert {
          }
       });
       header.add(closeButton, "width 32!, height 32!");
-      add(header, "growx, pushx 100, span, wrap");
+      super.add(header, "growx, pushx 100, span, wrap");
 
       contents.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-      add(contents_, "grow, pushx 100");
+      super.add(contents_, "grow, pushx 100");
 
    }
 
@@ -107,6 +107,7 @@ public class DefaultAlert extends JPanel implements UpdatableAlert {
 
    /**
     * Returns whether or not this alert can have more content added to it.
+    * @return true if more content can be added
     */
    @Override
    public boolean isUsable() {

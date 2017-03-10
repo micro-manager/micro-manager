@@ -57,8 +57,14 @@ public final class AlertsWindow extends MMFrame {
     */
    public static void show(Studio studio) {
       ensureWindowExists(studio);
-      staticInstance_.setVisible(true);
-      staticInstance_.toFront();
+      if (!staticInstance_.isVisible()) {
+         // both of the following methods bing the focus to the Alerts Window,
+         // which is highly annoying while working on something else.
+         // At the risk of making it harder to notice new alerts, I prefer 
+         // to call these only when the window is not yet visible.
+         staticInstance_.setVisible(true);
+         staticInstance_.toFront();
+      }
    }
 
    /**
@@ -123,7 +129,7 @@ public final class AlertsWindow extends MMFrame {
 
       super.loadAndRestorePosition(300, 100);
       
-      setLayout(new MigLayout("fill, insets 2, gap 0"));
+      super.setLayout(new MigLayout("fill, insets 2, gap 0"));
 
       Font defaultFont = new Font("Arial", Font.PLAIN, 10);
 
@@ -140,7 +146,7 @@ public final class AlertsWindow extends MMFrame {
                SHOULD_SHOW_WINDOW, shouldShowOnMessage_);
          }
       });
-      add(showWindowCheckBox, "split, span");
+      super.add(showWindowCheckBox, "split, span");
 
       JButton clearAllButton = new JButton("Clear All");
       clearAllButton.setFont(defaultFont);
@@ -155,15 +161,15 @@ public final class AlertsWindow extends MMFrame {
             }
          }
       });
-      add(clearAllButton, "gapleft push, wrap");
+      super.add(clearAllButton, "gapleft push, wrap");
 
       JScrollPane scroller = new JScrollPane(alertsPanel_,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       scroller.setBorder(null);
       alertsPanel_.add(new JLabel(NO_ALERTS_MSG));
-      add(scroller, "push, grow");
-      pack();
+      super.add(scroller, "push, grow");
+      super.pack();
    }
 
    public void addAlert(DefaultAlert alert) {
