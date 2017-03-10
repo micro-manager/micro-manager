@@ -46,6 +46,9 @@ public class DefaultAlert extends JPanel implements UpdatableAlert {
    private boolean isUsable_ = true;
 
    /**
+    * @param parent Alerts Window that created this alert
+    * @param title  Title of the alert
+    * @param contents contents to be added to the alert
     */
    protected DefaultAlert(AlertsWindow parent, String title, JComponent contents) {
       super();

@@ -39,6 +39,9 @@ import net.miginfocom.swing.MigLayout;
  * broken out into subcategories and using a scrollpane if necessary.
  */
 public final class CategorizedAlert extends DefaultAlert {
+   
+   private String historyText_ = "";
+   
    /**
     * This class represents one row in the display, one category of alert type.
     */
@@ -93,6 +96,7 @@ public final class CategorizedAlert extends DefaultAlert {
             historyPanel_.add(newHistory, "growx, alignx left, width 0:250:");
          }
          mostRecentText_.setText(text);
+         historyText_ += text + System.getProperty("line.separator");
          numMessages_++;
          if (numMessages_ > 2) {
             showAllButton_.setText((showAllButton_.isSelected() ?
@@ -161,4 +165,9 @@ public final class CategorizedAlert extends DefaultAlert {
       });
       parent_.textUpdated(this);
    }
+   
+   public String getAllText() {
+      return historyText_;
+   }
+   
 }
