@@ -202,6 +202,8 @@ PointGrey::PointGrey(const char* deviceName) :
    AddAllowedValue(g_AdvancedMode, "No");
    AddAllowedValue(g_AdvancedMode, "Yes");
 
+   SetErrorText(ERR_NOT_READY_FOR_SOFTWARE_TRIGGER, "Camera not ready for software trigger");
+
 }
 
 /***********************************************************************
@@ -626,6 +628,13 @@ int PointGrey::Initialize()
    CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnBinning);
    CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct, false);
    AddAllowedValue(MM::g_Keyword_Binning, "1");
+ 
+   error = cam_.StartCapture();
+   if (error != PGRERROR_OK)
+	{
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
 
    // Determined which trigger modes are available
    availableTriggerModes_.push_back(TRIGGER_INTERNAL);  // seems to be always present
@@ -679,13 +688,6 @@ int PointGrey::Initialize()
    ret = SetEndianess(true);
    if (ret != DEVICE_OK)
       return ret;
-
-   error = cam_.StartCapture();
-   if (error != PGRERROR_OK)
-	{
-      SetErrorText(ALLERRORS, error.GetDescription());
-      return ALLERRORS;
-   }
 
    // Make sure that we have an image so that 
    // things like bitdepth are set correctly
