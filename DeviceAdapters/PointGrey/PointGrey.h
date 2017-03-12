@@ -31,7 +31,15 @@
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_IN_READ_REGISTER         12300
+#define ERR_IN_READ_REGISTER                    12300
+#define ERR_NOT_READY_FOR_SOFTWARE_TRIGGER      12301
+#define ERR_UNAVAILABLE_TRIGGER_MODE_REQUESTED  12302
+#define ERR_UNKNOWN_TRIGGER_MODE_STRING         12303
+
+// Trigger modes
+#define TRIGGER_INTERNAL   0
+#define TRIGGER_EXTERNAL   1
+#define TRIGGER_SOFTWARE   2
 
 using namespace FlyCapture2;
 
@@ -103,14 +111,20 @@ public:
    int OnVideoModeAndFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    void updatePixelFormats(unsigned int pixelFormatBitField);
    int SetEndianess(bool little);
    const char* GetBusSpeedAsString(BusSpeed speed);
    int CheckSoftwareTriggerPresence(FlyCapture2::Camera* pCam, bool& result);
-   int PollForTriggerReady(FlyCapture2::Camera* pCam, bool& result);
+   int PollForTriggerReady(FlyCapture2::Camera* pCam, const unsigned long timeoutMs);
    bool FireSoftwareTrigger(FlyCapture2::Camera* pCam);
+   int SetTriggerMode(FlyCapture2::Camera* pCam, const unsigned short newMode);
+   int SetGrabTimeout(FlyCapture2::Camera* pCam, const unsigned long timeoutMs);
+   int TriggerModeFromString(std::string mode, unsigned short& tMode);
+   std::string TriggerModeAsString(const unsigned short mode) const;
+
 
    FlyCapture2::PGRGuid guid_;
    FlyCapture2::Camera cam_;
@@ -129,8 +143,12 @@ private:
    std::map<long, std::string> bin2Mode_;
    std::map<const std::string, long> mode2Bin_;
    std::vector<FlyCapture2::Mode> availableFormat7Modes_;
+   std::vector<unsigned short> availableTriggerModes_;
    bool f7InUse_;
    double exposureTimeMs_;
+   unsigned short triggerMode_;
+   unsigned short snapTriggerMode_;
+   unsigned long externalTriggerGrabTimeout_;
    FlyCapture2::PixelFormat pixelFormat8Bit_;
    FlyCapture2::PixelFormat pixelFormat16Bit_;
 };

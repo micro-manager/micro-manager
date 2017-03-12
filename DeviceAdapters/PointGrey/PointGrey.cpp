@@ -24,6 +24,7 @@
 #include <string>
 #include <map>
 #include <iterator>
+#include <algorithm>
 
 #include "PointGrey.h"
 #include "../../MMDevice/ModuleInterface.h"
@@ -54,6 +55,9 @@ const char* g_AdvancedMode             = "Use Advanced Mode?";
 const char* g_VideoModeAndFrameRate    = "Video Mode and Frame Rate";
 const char* g_NotSet                   = "Not set";
 const char* g_Format7Mode              = "Format-7 Mode";
+const char* g_InternalTrigger          = "Internal";
+const char* g_ExternalTrigger          = "External";
+const char* g_SoftwareTrigger          = "Software";
 
 /////////////////////////////////////////////////////
 
@@ -70,11 +74,11 @@ const char* g_PixelType_RGB32  = "RGB 32";
 
 /////////////////////////////////////////////////////
 
-const int g_NumProps = 12;
+const int g_NumProps = 11;
 const PropertyType g_PropertyTypes [g_NumProps] = { SHARPNESS, HUE, SATURATION, IRIS, 
-   FOCUS, ZOOM, PAN, TILT, GAIN,TRIGGER_MODE, TRIGGER_DELAY, TEMPERATURE };
+   FOCUS, ZOOM, PAN, TILT, GAIN, TRIGGER_DELAY, TEMPERATURE };
 const std::string g_PropertyNames [g_NumProps] = { "Sharpness", "Hue", "Saturation", 
-   "Iris", "Focus", "Zoom", "Pan", "Tilt", "Gain", "Trigger Mode", "Trigger Delay", 
+   "Iris", "Focus", "Zoom", "Pan", "Tilt", "Gain", "Trigger Delay", 
    "Temperature"};
 
 const int g_NumOffProps = 4;
@@ -184,7 +188,9 @@ PointGrey::PointGrey(const char* deviceName) :
    imageCounter_(0),
    stopOnOverflow_(false),
    isCapturing_(false),
-   f7InUse_(false)
+   f7InUse_(false),
+   triggerMode_(TRIGGER_INTERNAL),
+   externalTriggerGrabTimeout_(60000)
 
 	
 {
@@ -613,18 +619,60 @@ int PointGrey::Initialize()
 
    // TODO: check for the AutoExpose property and switch it off
 
-   // Binning property is just a stub.  It is kind of disappointing to see that Micro-Manager GUI does not function
-   // without it
+   // Binning property is just a stub.  The Micro-Manager GUI does not function
+   // without it.
+   // User can associate Format7 modes with binning using the 
+   // "Format 7 Mode for binning" property
    CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnBinning);
    CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct, false);
    AddAllowedValue(MM::g_Keyword_Binning, "1");
 
-   FC2Config config;
-   error = cam_.GetConfiguration( &config );
-   if (error != PGRERROR_OK)
-   {
+   // Determined which trigger modes are available
+   availableTriggerModes_.push_back(TRIGGER_INTERNAL);  // seems to be always present
+   // Check for external trigger support
+	TriggerModeInfo triggerModeInfo;
+	error = cam_.GetTriggerModeInfo( &triggerModeInfo );
+	if (error != PGRERROR_OK)
+	{
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
+   }
+	if ( triggerModeInfo.present == true )
+	{
+		// this seems to guarantee that external trigger is present
+      // the code example is a bit ambiguous about what that means
+      availableTriggerModes_.push_back(TRIGGER_EXTERNAL);
+      bool softwareTriggerPresent = false;
+      int result =  CheckSoftwareTriggerPresence(&cam_, softwareTriggerPresent);
+      if (result != DEVICE_OK) 
+      {
+         return result;
+      }
+      if (softwareTriggerPresent) 
+      {
+         availableTriggerModes_.push_back(TRIGGER_SOFTWARE);
+         result = SetTriggerMode(&cam_, TRIGGER_SOFTWARE);
+         if (result != DEVICE_OK)
+         {
+            return result;
+         }
+      }
+	}
+   if (availableTriggerModes_.size() > 1)
+   {
+      CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnTriggerMode);
+      CreateProperty("TriggerMode", g_InternalTrigger, MM::String, false, pAct, false);
+      for (std::vector<unsigned short>::const_iterator i = availableTriggerModes_.begin();
+         i != availableTriggerModes_.end(); i++)
+      {
+         AddAllowedValue("TriggerMode", TriggerModeAsString(*i).c_str());
+      }
+   }
+
+   ret = SetGrabTimeout(&cam_, (unsigned long) (3 * exposureTimeMs_) + 50);
+   if (ret != DEVICE_OK) 
+   {
+      return ret;
    }
 
    // We most likely want little endian bit order
@@ -632,6 +680,12 @@ int PointGrey::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   error = cam_.StartCapture();
+   if (error != PGRERROR_OK)
+	{
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
 
    // Make sure that we have an image so that 
    // things like bitdepth are set correctly
@@ -640,8 +694,6 @@ int PointGrey::Initialize()
       return ret;
    }
 
-
-	// -------------------------------------------------------------------------------------
 
 	//-------------------------------------------------------------------------------------
 	// synchronize all properties
@@ -658,7 +710,8 @@ int PointGrey::Initialize()
 */
 int PointGrey::Shutdown()
 {
-	if(initialized_){
+   cam_.StopCapture();
+	if(initialized_) {
       cam_.Disconnect();
 	}
 	initialized_ = false;
@@ -671,44 +724,54 @@ int PointGrey::Shutdown()
 * (i.e., before readout).  This behavior is needed for proper synchronization with the shutter.
 * Required by the MM::Camera API.
 *
-* Note 03/06/2017: with FlyCapture SDK version 2.10.3.266, it looks like the camera is always capturing
-*  This may have been the fix for the problem that stopping capture took so long.
-*  It also seems that the timing is off, and that the intensity of the image varies, 
-*  indicating that the exposure possibly started before the shutter even opened. 
-*  Work around this by taking the second image.  This is not very clean as the exposure
-*  may take up to 2 x longer than desired, but is better than getting irregular exposures.
+* Camera is continuously capturing.  In software trigger mode, we wait for the camera to be
+* ready for a trigger, then send the software trigger, then wait to retrieve the image.
+* it is potentially possible to skip the wait for the image itself, but some heuristics would
+* be needed (at least, I could not find anything in the API about this).  
+* Readout times have gotten pretty short, so this issues is only important for very short
+* exposure times.
+* In external trigger mode, the code simply waits for the image.  The grabtimeout that was previously
+* set determines whether or not the camera gives up.  
+* In internal trigger mode, the first received image is discarded and we wait for a second one.
+* Exposure of the first one most likely was started before the shutter opened.
 */
 int PointGrey::SnapImage()
 {
-   if (!IsCapturing()) {
-      Error error = cam_.StartCapture();
+   if (triggerMode_ == TRIGGER_SOFTWARE)
+   {
+      int ret = PollForTriggerReady(&cam_, (unsigned long) exposureTimeMs_ + 50);
+      if (ret != DEVICE_OK) 
+      {
+         return ret;
+      }
+      FireSoftwareTrigger(&cam_);
+      Error error = cam_.RetrieveBuffer(&image_);
       if (error != PGRERROR_OK)
       {
          SetErrorText(ALLERRORS, error.GetDescription());
          return ALLERRORS;
-      }  
-      isCapturing_ = true;
-   } else {
-      CDeviceUtils::SleepMs( (long) (exposureTimeMs_ + 0.5) );
+      }
    }
-   Error error = cam_.RetrieveBuffer(&image_);
-   if (error != PGRERROR_OK)
+   else 
    {
-      SetErrorText(ALLERRORS, error.GetDescription());
-      return ALLERRORS;
+      // for extenral capture, we may need to wait longer than the timeout set so far
+      Error error = cam_.RetrieveBuffer(&image_);
+      if (error != PGRERROR_OK)
+      {
+         SetErrorText(ALLERRORS, error.GetDescription());
+         return ALLERRORS;
+      }
+      if (triggerMode_ == TRIGGER_INTERNAL) 
+         // since the first image may have been started before the shutter opened, grab a second one
+      {
+         error = cam_.RetrieveBuffer(&image_);
+         if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+      }
    }
-   error = cam_.RetrieveBuffer(&image_);
-   if (error != PGRERROR_OK)
-   {
-      SetErrorText(ALLERRORS, error.GetDescription());
-      return ALLERRORS;
-   }
-   error = cam_.StopCapture();
-   if (error != PGRERROR_OK)
-   {
-      LogMessage(error.GetDescription(), false);
-   }
-   isCapturing_ = false;
   
    return DEVICE_OK;
 }
@@ -1019,6 +1082,12 @@ void PointGrey::SetExposure(double exp)
       }
 
    }
+   unsigned long timeout = (unsigned long) (3.0 * exp) + 50;
+   if (triggerMode_ == TRIGGER_EXTERNAL)
+   {
+      timeout = externalTriggerGrabTimeout_;
+   }
+   SetGrabTimeout(&cam_, timeout );
 
 }
 
@@ -1089,6 +1158,12 @@ int PointGrey::StopSequenceAcquisition()
       SetErrorText(ALLERRORS, error.GetDescription());
       ret = ALLERRORS;
    }
+   ret = SetTriggerMode(&cam_, snapTriggerMode_);
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+   error = cam_.StartCapture();
    return GetCoreCallback()->AcqFinished(this, ret);                                                      
 } 
 
@@ -1111,11 +1186,30 @@ int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */
 	if (IsCapturing())
 		return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-	int ret = GetCoreCallback()->PrepareForAcq(this);
+   snapTriggerMode_ = triggerMode_;
+   Error error = cam_.StopCapture();
+   if (error != PGRERROR_OK)
+   {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+   int ret = SetTriggerMode(&cam_, TRIGGER_INTERNAL);
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+
+	ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK)
 		return ret;
 
-   Error error = cam_.StartCapture( PGCallback, this);
+   error = cam_.StartCapture( PGCallback, this);
+   if (error != PGRERROR_OK)
+   {
+      cam_.StopCapture();
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
    isCapturing_ = true;
 
 	return DEVICE_OK;
@@ -1476,8 +1570,14 @@ int PointGrey::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
       Format7PacketInfo format7PacketInfo;
       error = cam_.ValidateFormat7Settings(&format7ImageSettings, &valid, &format7PacketInfo);
       if (valid) {
+         cam_.StopCapture();
          error = cam_.SetFormat7Configuration(&format7ImageSettings,
                         format7PacketInfo.recommendedBytesPerPacket);
+         if (error != PGRERROR_OK) {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+         error = cam_.StartCapture();
          if (error != PGRERROR_OK) {
             SetErrorText(ALLERRORS, error.GetDescription());
             return ALLERRORS;
@@ -1557,9 +1657,18 @@ int PointGrey::OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct)
       error = cam_.ValidateFormat7Settings(&newF7Settings, &valid, &format7PacketInfo);
       if (valid) {
          // Set the settings to the camera
+         error = cam_.StopCapture();  // do not check for error, since the camera 
+         // may not be capturing because of previous errors
          error = cam_.SetFormat7Configuration(&newF7Settings,
                      format7PacketInfo.recommendedBytesPerPacket);
-         if (error != PGRERROR_OK) {
+         if (error != PGRERROR_OK) 
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+         error = cam_.StartCapture();
+         if (error != PGRERROR_OK) 
+         {
             SetErrorText(ALLERRORS, error.GetDescription());
             return ALLERRORS;
          }
@@ -1581,6 +1690,52 @@ int PointGrey::OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 
 	return DEVICE_OK;
+}
+
+/***************************************************************
+* Handles Trigger Modes
+*
+*/
+int PointGrey::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+	{
+      std::string mode;
+      pProp->Get(mode);
+      unsigned short tMode;
+      int ret = TriggerModeFromString(mode, tMode);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+      Error error = cam_.StopCapture();
+      // if camera is not capturing, StopCapture will return an error.
+      // probably safe to ignore, it is bad to return
+      if (error != PGRERROR_OK && error != PGRERROR_ISOCH_NOT_STARTED)
+      {
+         SetErrorText(ALLERRORS, error.GetDescription());
+         return ALLERRORS;
+      }
+      ret = SetTriggerMode(&cam_, tMode);
+      if (ret != DEVICE_OK)
+      {
+         return DEVICE_OK;
+      }
+      error = cam_.StartCapture();
+      if (error != PGRERROR_OK)
+      {
+         SetErrorText(ALLERRORS, error.GetDescription());
+         return ALLERRORS;
+      }
+
+      triggerMode_ = tMode;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(TriggerModeAsString(triggerMode_).c_str());
+   }
+
+   return DEVICE_OK;
 }
 
 /***********************************************************************
@@ -1814,6 +1969,20 @@ std::string PointGrey::Format7ModeAsString(Mode mode) const
    return os.str();
 }
 
+std::string PointGrey::TriggerModeAsString(const unsigned short mode) const
+{
+   switch (mode) 
+   {
+   case TRIGGER_INTERNAL:
+      return g_InternalTrigger;
+   case TRIGGER_EXTERNAL:
+      return g_ExternalTrigger;
+   case TRIGGER_SOFTWARE:
+      return g_SoftwareTrigger;
+   }
+   return "Unknown Trigger Mode";
+}
+
 int PointGrey::Format7ModeFromString(std::string modeString, Mode* mode) const
 {
    // Split the mode string by "-"
@@ -1829,6 +1998,27 @@ int PointGrey::Format7ModeFromString(std::string modeString, Mode* mode) const
 
    int iMode = atol(parts[1].c_str());
    *mode = (Mode) iMode;
+
+   return DEVICE_OK;
+}
+
+int PointGrey::TriggerModeFromString(std::string mode, unsigned short& tMode)
+{
+   if (mode == g_InternalTrigger)
+   {
+      tMode = TRIGGER_INTERNAL;
+   } else 
+   if (mode == g_ExternalTrigger)
+   {
+      tMode = TRIGGER_EXTERNAL;
+   } else 
+   if (mode == g_SoftwareTrigger)
+   {
+      tMode = TRIGGER_SOFTWARE;
+   } else 
+   {
+      return ERR_UNKNOWN_TRIGGER_MODE_STRING;
+   }
 
    return DEVICE_OK;
 }
@@ -1881,10 +2071,13 @@ int PointGrey::CheckSoftwareTriggerPresence(FlyCapture2::Camera* pCam, bool& res
    return DEVICE_OK;
 }
 
-// TODO Add timout
-int PointGrey::PollForTriggerReady(FlyCapture2::Camera* pCam, bool& result)
+/**
+ * Blocks until the camera is ready for a software trigger
+ * or given timeout expired
+ */
+int PointGrey::PollForTriggerReady(FlyCapture2::Camera* pCam, const unsigned long timeoutMs)
 {
-   result = true;
+   MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
 
 	const unsigned int k_softwareTrigger = 0x62C;
 	Error error;
@@ -1897,8 +2090,13 @@ int PointGrey::PollForTriggerReady(FlyCapture2::Camera* pCam, bool& result)
 		{
 			return ERR_IN_READ_REGISTER;
 		}
+	} while ( (regVal >> 31) != 0  && !timerOut.expired(GetCurrentMMTime() ) );
 
-	} while ( (regVal >> 31) != 0 );
+   if ( (regVal >> 31) != 0) 
+   {
+      return ERR_NOT_READY_FOR_SOFTWARE_TRIGGER;
+   }
+
 
 	return DEVICE_OK;
 }
@@ -1916,4 +2114,89 @@ bool PointGrey::FireSoftwareTrigger(FlyCapture2::Camera* pCam )
 	}
 
 	return true;
+}
+
+int PointGrey::SetTriggerMode(FlyCapture2::Camera* pCam, const unsigned short newMode) 
+{
+   if ( std::find(availableTriggerModes_.begin(), availableTriggerModes_.end(), newMode) == 
+            availableTriggerModes_.end() )
+   {
+      return ERR_UNAVAILABLE_TRIGGER_MODE_REQUESTED;
+   }
+
+   if (triggerMode_ != newMode) // no need to do anything
+   {
+      // Get current trigger settings
+      TriggerMode triggerMode;
+      Error error = pCam->GetTriggerMode( &triggerMode );
+      if (error != PGRERROR_OK) {
+         // software trigger mode not supported
+      } else {
+         // assume that triggerMode off is internal trigger
+         if (newMode == TRIGGER_INTERNAL)
+         {
+            triggerMode.onOff = false;
+         } else
+         {
+            triggerMode.onOff = true;
+         }
+         triggerMode.mode = 0;
+         triggerMode.parameter = 0;
+         triggerMode.source = 0;   // 7 for Software trigger, 0 for external
+         if (newMode == TRIGGER_SOFTWARE) 
+         {
+            triggerMode.source = 7;
+         }
+         error = pCam->SetTriggerMode( &triggerMode );
+         if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+
+         if (newMode == TRIGGER_SOFTWARE)
+         {
+            // Poll to ensure camera is ready
+            int ret = PollForTriggerReady( pCam, 2000);
+            if (ret != DEVICE_OK) 
+            {
+               return ret;
+            }
+         }
+         triggerMode_ = newMode;
+      }
+   }
+
+   // we only need to change the grabtimeout when switching between external trigger
+   // and other modes.  Assume that this operation is not too costly.
+   unsigned long timeout = (unsigned long) (3.0 * exposureTimeMs_) + 50;
+   if (triggerMode_ == TRIGGER_EXTERNAL)
+   {
+      timeout = externalTriggerGrabTimeout_;
+   }
+   SetGrabTimeout(&cam_, timeout );
+
+   return DEVICE_OK;
+}
+
+int PointGrey::SetGrabTimeout(FlyCapture2::Camera* pCam, const unsigned long timeoutMs)
+{
+   FC2Config config;
+   Error error = pCam->GetConfiguration( &config );
+   if (error != PGRERROR_OK)
+   {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+	
+	config.grabTimeout = timeoutMs;
+
+	error = pCam->SetConfiguration( &config );
+	if (error != PGRERROR_OK)
+	{
+		SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+
+   return DEVICE_OK;
 }
