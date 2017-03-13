@@ -117,13 +117,14 @@ private:
    void updatePixelFormats(unsigned int pixelFormatBitField);
    int SetEndianess(bool little);
    const char* GetBusSpeedAsString(BusSpeed speed);
-   int CheckSoftwareTriggerPresence(FlyCapture2::Camera* pCam, bool& result);
-   int PollForTriggerReady(FlyCapture2::Camera* pCam, const unsigned long timeoutMs);
-   bool FireSoftwareTrigger(FlyCapture2::Camera* pCam);
-   int SetTriggerMode(FlyCapture2::Camera* pCam, const unsigned short newMode);
-   int SetGrabTimeout(FlyCapture2::Camera* pCam, const unsigned long timeoutMs);
+   int CheckSoftwareTriggerPresence(bool& result);
+   int PollForTriggerReady(const unsigned long timeoutMs);
+   bool FireSoftwareTrigger();
+   int SetTriggerMode(const unsigned short newMode);
+   int SetGrabTimeout(const unsigned long timeoutMs);
    int TriggerModeFromString(std::string mode, unsigned short& tMode);
    std::string TriggerModeAsString(const unsigned short mode) const;
+   const unsigned char* RGBToRGBA(const unsigned char* img) const;
 
 
    FlyCapture2::PGRGuid guid_;
@@ -149,6 +150,10 @@ private:
    unsigned short triggerMode_;
    unsigned short snapTriggerMode_;
    unsigned long externalTriggerGrabTimeout_;
+   unsigned short bytesPerPixel_;
+   MMThreadLock imgBuffLock_;
+   const unsigned char* imgBuf_;
+   const unsigned long bufSize_;
    FlyCapture2::PixelFormat pixelFormat8Bit_;
    FlyCapture2::PixelFormat pixelFormat16Bit_;
 };

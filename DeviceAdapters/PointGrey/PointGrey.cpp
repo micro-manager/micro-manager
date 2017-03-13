@@ -190,8 +190,10 @@ PointGrey::PointGrey(const char* deviceName) :
    isCapturing_(false),
    f7InUse_(false),
    triggerMode_(TRIGGER_INTERNAL),
-   externalTriggerGrabTimeout_(60000)
-
+   externalTriggerGrabTimeout_(60000),
+   bytesPerPixel_(2),
+   imgBuf_(0),
+   bufSize_(0)
 	
 {
 	// call the base class method to set-up default error codes/messages
@@ -652,7 +654,7 @@ int PointGrey::Initialize()
       // the code example is a bit ambiguous about what that means
       availableTriggerModes_.push_back(TRIGGER_EXTERNAL);
       bool softwareTriggerPresent = false;
-      int result =  CheckSoftwareTriggerPresence(&cam_, softwareTriggerPresent);
+      int result =  CheckSoftwareTriggerPresence(softwareTriggerPresent);
       if (result != DEVICE_OK) 
       {
          return result;
@@ -660,7 +662,7 @@ int PointGrey::Initialize()
       if (softwareTriggerPresent) 
       {
          availableTriggerModes_.push_back(TRIGGER_SOFTWARE);
-         result = SetTriggerMode(&cam_, TRIGGER_SOFTWARE);
+         result = SetTriggerMode(TRIGGER_SOFTWARE);
          if (result != DEVICE_OK)
          {
             return result;
@@ -678,7 +680,7 @@ int PointGrey::Initialize()
       }
    }
 
-   ret = SetGrabTimeout(&cam_, (unsigned long) (3 * exposureTimeMs_) + 50);
+   ret = SetGrabTimeout( (unsigned long) (3 * exposureTimeMs_) + 50);
    if (ret != DEVICE_OK) 
    {
       return ret;
@@ -741,12 +743,12 @@ int PointGrey::SnapImage()
 {
    if (triggerMode_ == TRIGGER_SOFTWARE)
    {
-      int ret = PollForTriggerReady(&cam_, (unsigned long) exposureTimeMs_ + 50);
+      int ret = PollForTriggerReady( (unsigned long) exposureTimeMs_ + 50);
       if (ret != DEVICE_OK) 
       {
          return ret;
       }
-      FireSoftwareTrigger(&cam_);
+      FireSoftwareTrigger();
       Error error = cam_.RetrieveBuffer(&image_);
       if (error != PGRERROR_OK)
       {
@@ -794,14 +796,11 @@ const unsigned char* PointGrey::GetImageBuffer()
       // This seems to work without a DeepCopy first
       return image_.GetData();
    } 
-   // nComponents must be 4
-   Image convertedImage;
-   Error error = image_.Convert ( PIXEL_FORMAT_RGBU , &convertedImage );
-   if (error != PGRERROR_OK) {
-      LogMessage(error.GetDescription(), false);
-      return 0;
+   else if (nComponents_ == 4) {
+      return RGBToRGBA( image_.GetData());
    }
-   return convertedImage.GetData();
+   return 0;
+
 }
 
 /***********************************************************************
@@ -829,12 +828,15 @@ unsigned int PointGrey::GetImageHeight() const
 unsigned int PointGrey::GetImageBytesPerPixel() const
 {
    //PixelFormat pf =  image_.GetPixelFormat();
+   /*
    int bpp = image_.GetBitsPerPixel();
    unsigned int bytespp = (bpp/8);
    if ( (bpp % 8) > 0) {
       bytespp += 1;
    }
-   return bytespp;
+   return bytespp * nComponents_;
+   */
+   return bytesPerPixel_;
 } 
 
 /***********************************************************************
@@ -845,6 +847,10 @@ unsigned int PointGrey::GetImageBytesPerPixel() const
 */
 unsigned int PointGrey::GetBitDepth() const
 {
+   if (image_.GetPixelFormat() == FlyCapture2::PIXEL_FORMAT_RGB) 
+   {
+      return 8;
+   }
    unsigned int bpp = image_.GetBitsPerPixel();
    return bpp;
 }
@@ -900,10 +906,23 @@ int PointGrey::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
       SetErrorText(ALLERRORS, "Error setting ROI");
       return ALLERRORS;
    }
+   cam_.StopCapture();
    error = cam_.SetFormat7Configuration(&format7ImageSettings, f7pInfo.recommendedBytesPerPacket);
    if (error != PGRERROR_OK) {
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
+   }
+   cam_.StartCapture();
+   if (error != PGRERROR_OK) {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+
+   // Make sure that we have an image so that 
+   // things like bitdepth are set correctly
+   int ret = SnapImage();
+   if (ret != DEVICE_OK) {
+      return ret;
    }
 
 	return DEVICE_OK;;
@@ -984,10 +1003,22 @@ int PointGrey::ClearROI()
       SetErrorText(ALLERRORS, "Error clearing ROI");
       return ALLERRORS;
    }
+   cam_.StopCapture();
    error = cam_.SetFormat7Configuration(&format7ImageSettings, f7pInfo.recommendedBytesPerPacket);
    if (error != PGRERROR_OK) {
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
+   }
+   error = cam_.StartCapture();
+   if (error != PGRERROR_OK) {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+   // Make sure that we have an image so that 
+   // things like bitdepth are set correctly
+   int ret = SnapImage();
+   if (ret != DEVICE_OK) {
+      return ret;
    }
 
 	return DEVICE_OK;
@@ -1089,7 +1120,7 @@ void PointGrey::SetExposure(double exp)
    {
       timeout = externalTriggerGrabTimeout_;
    }
-   SetGrabTimeout(&cam_, timeout );
+   SetGrabTimeout( timeout );
 
 }
 
@@ -1160,7 +1191,7 @@ int PointGrey::StopSequenceAcquisition()
       SetErrorText(ALLERRORS, error.GetDescription());
       ret = ALLERRORS;
    }
-   ret = SetTriggerMode(&cam_, snapTriggerMode_);
+   ret = SetTriggerMode( snapTriggerMode_);
    if (ret != DEVICE_OK)
    {
       return ret;
@@ -1195,7 +1226,7 @@ int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
-   int ret = SetTriggerMode(&cam_, TRIGGER_INTERNAL);
+   int ret = SetTriggerMode( TRIGGER_INTERNAL);
    if (ret != DEVICE_OK)
    {
       return ret;
@@ -1261,14 +1292,19 @@ int PointGrey::InsertImage(Image* pImg) const
 
    unsigned int w = pImg->GetCols();
    unsigned int h = pImg->GetRows();
-   unsigned int b = pImg->GetDataSize() / (w * h);
+   unsigned int b = GetImageBytesPerPixel();
 
-   ret = GetCoreCallback()->InsertImage(this, pImg->GetData(), w, h, b, md.Serialize().c_str(), false);
+   const unsigned char* pData = pImg->GetData();
+   if (b == 4) // RGB Image
+   {
+      pData = RGBToRGBA(pImg->GetData());
+   }
+   ret = GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
 	if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
 	{
 		// do not stop on overflow - just reset the buffer
 		GetCoreCallback()->ClearImageBuffer(this);
-		GetCoreCallback()->InsertImage(this, pImg->GetData(), w, h, b, md.Serialize().c_str(), false);
+		GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
       return DEVICE_OK;
 	} 
 
@@ -1590,8 +1626,14 @@ int PointGrey::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (format7ImageSettings.pixelFormat == PIXEL_FORMAT_RGB8) {
          nComponents_ = 4;
+         bytesPerPixel_ = 4;
       } else {
          nComponents_ = 1;
+         bytesPerPixel_ = 1;
+         if (format7ImageSettings.pixelFormat == pixelFormat16Bit_)
+         {
+            bytesPerPixel_ = 2;
+         }
       }
             
       // if we do not snap an image, MM 2.0 gets the bitdepths wrong. Delete once fixed upstream
@@ -1718,7 +1760,7 @@ int PointGrey::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          SetErrorText(ALLERRORS, error.GetDescription());
          return ALLERRORS;
       }
-      ret = SetTriggerMode(&cam_, tMode);
+      ret = SetTriggerMode(tMode);
       if (ret != DEVICE_OK)
       {
          return DEVICE_OK;
@@ -2051,13 +2093,13 @@ const char* PointGrey::GetBusSpeedAsString(BusSpeed speed)
    }
 }
 
-int PointGrey::CheckSoftwareTriggerPresence(FlyCapture2::Camera* pCam, bool& result)
+int PointGrey::CheckSoftwareTriggerPresence(bool& result)
 {
 	const unsigned int k_triggerInq = 0x530;
 	Error error;
 	unsigned int regVal = 0;
 
-	error = pCam->ReadRegister( k_triggerInq, &regVal );
+	error = cam_.ReadRegister( k_triggerInq, &regVal );
 
 	if (error != PGRERROR_OK)
 	{
@@ -2077,7 +2119,7 @@ int PointGrey::CheckSoftwareTriggerPresence(FlyCapture2::Camera* pCam, bool& res
  * Blocks until the camera is ready for a software trigger
  * or given timeout expired
  */
-int PointGrey::PollForTriggerReady(FlyCapture2::Camera* pCam, const unsigned long timeoutMs)
+int PointGrey::PollForTriggerReady(const unsigned long timeoutMs)
 {
    MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
 
@@ -2087,7 +2129,7 @@ int PointGrey::PollForTriggerReady(FlyCapture2::Camera* pCam, const unsigned lon
 
 	do
 	{
-		error = pCam->ReadRegister( k_softwareTrigger, &regVal );
+		error = cam_.ReadRegister( k_softwareTrigger, &regVal );
 		if (error != PGRERROR_OK)
 		{
 			return ERR_IN_READ_REGISTER;
@@ -2103,13 +2145,13 @@ int PointGrey::PollForTriggerReady(FlyCapture2::Camera* pCam, const unsigned lon
 	return DEVICE_OK;
 }
 
-bool PointGrey::FireSoftwareTrigger(FlyCapture2::Camera* pCam )
+bool PointGrey::FireSoftwareTrigger()
 {
 	const unsigned int k_softwareTrigger = 0x62C;
 	const unsigned int k_fireVal = 0x80000000;
 	Error error;
 
-	error = pCam->WriteRegister( k_softwareTrigger, k_fireVal );
+	error = cam_.WriteRegister( k_softwareTrigger, k_fireVal );
 	if (error != PGRERROR_OK)
 	{
 		return false;
@@ -2118,7 +2160,7 @@ bool PointGrey::FireSoftwareTrigger(FlyCapture2::Camera* pCam )
 	return true;
 }
 
-int PointGrey::SetTriggerMode(FlyCapture2::Camera* pCam, const unsigned short newMode) 
+int PointGrey::SetTriggerMode(const unsigned short newMode) 
 {
    if ( std::find(availableTriggerModes_.begin(), availableTriggerModes_.end(), newMode) == 
             availableTriggerModes_.end() )
@@ -2130,7 +2172,7 @@ int PointGrey::SetTriggerMode(FlyCapture2::Camera* pCam, const unsigned short ne
    {
       // Get current trigger settings
       TriggerMode triggerMode;
-      Error error = pCam->GetTriggerMode( &triggerMode );
+      Error error = cam_.GetTriggerMode( &triggerMode );
       if (error != PGRERROR_OK) {
          // software trigger mode not supported
       } else {
@@ -2149,7 +2191,7 @@ int PointGrey::SetTriggerMode(FlyCapture2::Camera* pCam, const unsigned short ne
          {
             triggerMode.source = 7;
          }
-         error = pCam->SetTriggerMode( &triggerMode );
+         error = cam_.SetTriggerMode( &triggerMode );
          if (error != PGRERROR_OK)
          {
             SetErrorText(ALLERRORS, error.GetDescription());
@@ -2159,7 +2201,7 @@ int PointGrey::SetTriggerMode(FlyCapture2::Camera* pCam, const unsigned short ne
          if (newMode == TRIGGER_SOFTWARE)
          {
             // Poll to ensure camera is ready
-            int ret = PollForTriggerReady( pCam, 2000);
+            int ret = PollForTriggerReady(2000);
             if (ret != DEVICE_OK) 
             {
                return ret;
@@ -2176,15 +2218,15 @@ int PointGrey::SetTriggerMode(FlyCapture2::Camera* pCam, const unsigned short ne
    {
       timeout = externalTriggerGrabTimeout_;
    }
-   SetGrabTimeout(&cam_, timeout );
+   SetGrabTimeout(timeout );
 
    return DEVICE_OK;
 }
 
-int PointGrey::SetGrabTimeout(FlyCapture2::Camera* pCam, const unsigned long timeoutMs)
+int PointGrey::SetGrabTimeout(const unsigned long timeoutMs)
 {
    FC2Config config;
-   Error error = pCam->GetConfiguration( &config );
+   Error error = cam_.GetConfiguration( &config );
    if (error != PGRERROR_OK)
    {
       SetErrorText(ALLERRORS, error.GetDescription());
@@ -2193,12 +2235,39 @@ int PointGrey::SetGrabTimeout(FlyCapture2::Camera* pCam, const unsigned long tim
 	
 	config.grabTimeout = timeoutMs;
 
-	error = pCam->SetConfiguration( &config );
+	error = cam_.SetConfiguration( &config );
 	if (error != PGRERROR_OK)
 	{
 		SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
-
+    
    return DEVICE_OK;
+}
+
+const unsigned char* PointGrey::RGBToRGBA(const unsigned char* img) const
+{
+  
+   const unsigned long newImageSize = GetImageWidth() * GetImageHeight() * GetImageBytesPerPixel();
+   if (newImageSize > bufSize_)
+   {
+      if (imgBuf_ != 0) 
+      {
+         delete[](imgBuf_);
+      }
+      unsigned long* b;
+      b = (unsigned long*) &bufSize_;
+      *b = GetImageWidth() * GetImageHeight() * GetImageBytesPerPixel();
+      unsigned char** c;
+      c = (unsigned char**) &imgBuf_;
+      *c = new unsigned char[bufSize_];
+   }
+   // go from RGB to ABGR, there may be a more efficient way
+   for (unsigned long i = 0; i < GetImageWidth() * GetImageHeight(); i++) 
+   {
+      memcpy ( (void*) (imgBuf_ +  (4 * i) ), img + (i * 3) + 2, 1) ;
+      memcpy ( (void*) (imgBuf_ +  (4 * i) + 1), img + (i * 3) + 1, 1) ;
+      memcpy ( (void*) (imgBuf_ +  (4 * i) + 2), img + (i * 3), 1) ;
+   }
+   return imgBuf_;
 }
