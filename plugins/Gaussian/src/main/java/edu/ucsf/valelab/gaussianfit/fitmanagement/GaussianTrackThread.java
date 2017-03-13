@@ -260,6 +260,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
 
                
             double s = fitResult.getParms()[GaussianFit.S] * pixelSize_;
+            double sasqr = s * s + (pixelSize_ * pixelSize_) / 12;
             // express background in photons after base level correction
             double bgr = cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_);
             // calculate error using formular from Thompson et al (2002)
@@ -267,17 +268,37 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             double sigma = (s * s + (pixelSize_ * pixelSize_) / 12) / 
                     N + (8 * Math.PI * s * s * s * s * bgr * bgr) / (pixelSize_ * pixelSize_ * N * N);
             sigma = Math.sqrt(sigma);
-
+            
+            // # of photons and background as calculated using the method by
+            // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
+            double NAperture = cPCF * fitResult.getApertureIntensity();
+            double bgrAperture = cPCF * (fitResult.getApertureBackground() - baseLevel_);
+            // Calculate error using the method by Mortenson et al.
+            // http://dx.doi.org/10.1038/nmeth.1447
+            // sasqr = s * s + (a * a)/12
+            // d(x)2 = (sasqr /N) (16/9 + 8 * pi * sasqr * b * b / N * a * a)
+            double mVarX = sasqr / N
+                    * (16/9 + ( (8 * Math.PI * sasqr *  bgr * bgr) / 
+                    (N * pixelSize_ * pixelSize_) ) );
+            // If EM gain was used, add uncertainty due to Poisson distributed noise
+            if (this.gain_ > 2.0) {
+               mVarX = 2 * mVarX;
+            }
+            // Assume that the variance in X and Y are uncorrelated
+            // shortcut: Do not calculate variane in Y, but use the variance in X twice
+            double mSigma = Math.sqrt(mVarX + mVarX);
+            
             double width = 2 * s;
             if (fitResult.getParms().length >= 6) {
                 sx = fitResult.getParms()[GaussianFit.S1] * pixelSize_;
                 sy = fitResult.getParms()[GaussianFit.S2] * pixelSize_;
                 a = sx/sy;
-             }
+            }
 
-             if (fitResult.getParms().length >= 7) {
+            if (fitResult.getParms().length >= 7) {
                 theta = fitResult.getParms()[GaussianFit.S3];
-             }
+            }
+            
             if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))
                     && (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_))) {
                // If we have a good fit, update position of the box
@@ -286,6 +307,11 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
                   yc += (int) ypc - getHalfBoxSize();
                }
                spot.setData(N, bgr, x, y, 0.0, 2 * s, a, theta, sigma);
+               spot.addKeyValue(SpotData.Keys.APERTUREINTENSITY, NAperture);
+               // Ratio of # of photons measured by Gaussian fit and Aperture method
+               spot.addKeyValue(SpotData.Keys.INTENSITYRATIO, N / NAperture);
+               spot.addKeyValue(SpotData.Keys.APERTUREBACKGROUND, bgrAperture);
+               spot.addKeyValue(SpotData.Keys.MSIGMA, mSigma);
                xyPoints.add(new Point2D.Double(x, y));
                timePoints.add(i * timeIntervalMs_);
                resultList_.add(spot);

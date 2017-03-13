@@ -685,11 +685,25 @@ public class LoadAndSave {
                                 String.format("%.3f",gd.getTheta()) + tab + 
                                 gd.getX() + tab + 
                                 gd.getY() + tab + 
-                                String.format("%.3f", gd.getSigma()) + tab +
-                                String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREINTENSITY).floatValue()) + tab +
-                                String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREBACKGROUND).floatValue()) + tab + 
-                                String.format("%.3f", gd.getValue(SpotData.Keys.INTENSITYRATIO).floatValue()) + tab +
-                                String.format("%.3f", gd.getValue(SpotData.Keys.MSIGMA).floatValue()));                        
+                                String.format("%.3f", gd.getSigma()) + tab);
+                        String remainder = "";
+                        if (gd.hasKey(SpotData.Keys.APERTUREINTENSITY)) {
+                           remainder += String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREINTENSITY).floatValue());
+                        }
+                        remainder += tab;
+                        if (gd.hasKey(SpotData.Keys.APERTUREBACKGROUND)) {
+                           remainder += String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREBACKGROUND).floatValue());
+                        }
+                        
+                        remainder += tab;
+                        if (gd.hasKey(SpotData.Keys.INTENSITYRATIO)) {
+                           remainder += String.format("%.3f", gd.getValue(SpotData.Keys.INTENSITYRATIO).floatValue());
+                        }
+                        remainder += tab;
+                        if (gd.hasKey(SpotData.Keys.MSIGMA)) {
+                           remainder += String.format("%.3f", gd.getValue(SpotData.Keys.MSIGMA).floatValue());
+                        }
+                        fw.write(remainder);                     
                         if (rowData.hasZ_) {
                            fw.write(tab + String.format("%.2f", gd.getZCenter()));
                         }
