@@ -191,7 +191,7 @@ PointGrey::PointGrey(const char* deviceName) :
    f7InUse_(false),
    triggerMode_(TRIGGER_INTERNAL),
    externalTriggerGrabTimeout_(60000),
-   bytesPerPixel_(2),
+   bytesPerPixel_(1),
    imgBuf_(0),
    bufSize_(0)
 	
@@ -405,8 +405,10 @@ int PointGrey::Initialize()
          updatePixelFormats(format7Info.pixelFormatBitField);
          if (format7Info.pixelFormatBitField & pixelFormat16Bit_) {
             fmt7ImageSettings.pixelFormat = pixelFormat16Bit_;
+            bytesPerPixel_ = 2;
          } else if (format7Info.pixelFormatBitField & pixelFormat8Bit_) {
             fmt7ImageSettings.pixelFormat = pixelFormat8Bit_;
+            bytesPerPixel_ = 1;
          }
          // TODO: preference order for pixelFormat: RGB > 16bit > 8bit
          bool valid;
@@ -680,7 +682,8 @@ int PointGrey::Initialize()
       }
    }
 
-   ret = SetGrabTimeout( (unsigned long) (3 * exposureTimeMs_) + 50);
+   // first snap may take a while..
+   ret = SetGrabTimeout( (unsigned long) (5000));
    if (ret != DEVICE_OK) 
    {
       return ret;
@@ -695,6 +698,17 @@ int PointGrey::Initialize()
    // things like bitdepth are set correctly
    ret = SnapImage();
    if (ret != DEVICE_OK) {
+      return ret;
+   }
+   unsigned int size = image_.GetDataSize();
+   unsigned int width = image_.GetCols();
+   unsigned int height = image_.GetRows();
+   unsigned int pixels = width * height;
+   bytesPerPixel_ = unsigned short (size / pixels); 
+
+   ret = SetGrabTimeout( (unsigned long) (3 * exposureTimeMs_) + 50);
+   if (ret != DEVICE_OK) 
+   {
       return ret;
    }
 
@@ -1157,6 +1171,11 @@ int PointGrey::GetBinning() const
 */
 int PointGrey::SetBinning(int binF)
 {
+   if (!f7InUse_) 
+   {
+      binF = 1;
+      return DEVICE_OK;
+   }
    if (HasProperty(g_Format7Mode) )
    {
       std::map<long, std::string>::iterator it = bin2Mode_.find(binF);
@@ -1545,6 +1564,7 @@ int PointGrey::OnVideoModeAndFrameRate(MM::PropertyBase* pProp, MM::ActionType e
          return ALLERRORS;
       }
       // Note: Format 7 can not be set using this function!
+      cam_.StopCapture();
       Error error = cam_.SetVideoModeAndFrameRate(vm, fr);
       if (error != PGRERROR_OK) {
          SetErrorText(ALLERRORS, error.GetDescription());
@@ -1552,9 +1572,13 @@ int PointGrey::OnVideoModeAndFrameRate(MM::PropertyBase* pProp, MM::ActionType e
       }
       // Work around an issue in the Micro-Manager GUI: If we do not snap an image
       // here, the bitdepth information can easily go stale
+      cam_.StartCapture();
       SnapImage();
-      // make sure that sequence acquisition stops
-      GetImageBuffer();
+      unsigned int size = image_.GetDataSize();
+      unsigned int width = image_.GetCols();
+      unsigned int height = image_.GetRows();
+      unsigned int pixels = width * height;
+      bytesPerPixel_ = unsigned short (size / pixels);    
    } 
    else if (eAct == MM::BeforeGet) {
       // Find current video mode and frame rate
