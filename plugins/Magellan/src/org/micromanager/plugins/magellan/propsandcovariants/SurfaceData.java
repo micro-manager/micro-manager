@@ -25,6 +25,7 @@ import java.awt.geom.Point2D;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.Log;
 import org.micromanager.plugins.magellan.surfacesandregions.CurvedSurfaceCovariantCreationDialog;
@@ -168,7 +169,6 @@ public class SurfaceData implements Covariant {
         }
     }
     
-
     public double[] curvedSurfacePower(AcquisitionEvent event) {
         XYStagePosition xyPos = event.xyPosition_;
         double zPosition = event.zPosition_;
@@ -223,7 +223,7 @@ public class SurfaceData implements Covariant {
         return relativePower;
     }
 
-    /**
+   /**
      *
      * @param corners
      * @param min true to get min, false to get max

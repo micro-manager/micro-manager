@@ -78,9 +78,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
@@ -92,6 +95,7 @@ import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
+import org.micromanager.plugins.magellan.propsandcovariants.LaserPredNet;
 
 
 /**
@@ -137,6 +141,15 @@ public class GUI extends javax.swing.JFrame {
       if (GlobalSettings.getInstance().firstMagellanOpening()) {
          new StartupHelpWindow();
       }
+      //TODO: put this where it actually belongs
+      if  (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
+         try {
+            new LaserPredNet("model.csv");
+         } catch (FileNotFoundException ex) {
+            Log.log(ex);
+         }
+      }
+      
    }
    
    public static GUI getInstance() {
