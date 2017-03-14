@@ -7,6 +7,8 @@ package org.micromanager.plugins.magellan.propsandcovariants;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.rmi.activation.ActivationSystem;
+import java.util.Arrays;
 import java.util.Scanner;
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.MatrixUtils;
@@ -24,21 +26,24 @@ public class LaserPredNet {
    }
    
  public byte[] forwardPass(double[][] x) {
+     double[] ones = new double[x.length];
+     Arrays.fill(ones, 1.0);
+     Array2DRowRealMatrix onesMat = new Array2DRowRealMatrix(ones);
       //assume x is properly normalized
       Array2DRowRealMatrix xMat = (Array2DRowRealMatrix) MatrixUtils.createRealMatrix(x);
-      Array2DRowRealMatrix h = xMat.multiply(W1_).add(B1_);
+      Array2DRowRealMatrix h = xMat.multiply(W1_).add(onesMat.multiply(B1_));
       relu(h);
-      Array2DRowRealMatrix z = h.multiply(W2_).add(B1_);
+      Array2DRowRealMatrix z = (Array2DRowRealMatrix) h.multiply(W2_.transpose()).add(onesMat.multiply(B2_));
       byte[] powers = new byte[z.getRowDimension()*z.getColumnDimension()];
       for (int i = 0; i < powers.length; i++) {
          powers[i] = (byte) Math.max(0, Math.min(255, z.getEntry(i, 0)));
       }
-      return powers;
+      return powers;  
    }
-
-  private static void relu(Array2DRowRealMatrix activations) {
+   
+  private static void relu(Array2DRowRealMatrix activations) {      
       for (int r = 0; r < activations.getRowDimension(); r++) {
-         for (int c = 0; c < activations.getRowDimension(); c++) {
+         for (int c = 0; c < activations.getColumnDimension(); c++) {
             if (activations.getEntry(r, c) < 0) {
                activations.setEntry(r, c, 0.0);
             }
