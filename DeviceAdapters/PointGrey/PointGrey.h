@@ -122,6 +122,7 @@ private:
    bool FireSoftwareTrigger();
    int SetTriggerMode(const unsigned short newMode);
    int SetGrabTimeout(const unsigned long timeoutMs);
+   int PowerCameraOn(const unsigned int timeoutMs);
    int TriggerModeFromString(std::string mode, unsigned short& tMode);
    std::string TriggerModeAsString(const unsigned short mode) const;
    const unsigned char* RGBToRGBA(const unsigned char* img) const;
