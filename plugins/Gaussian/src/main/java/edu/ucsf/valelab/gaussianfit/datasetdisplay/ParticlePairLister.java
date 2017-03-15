@@ -500,7 +500,7 @@ public class ParticlePairLister {
                }
 
                // We have all pairs, assemble in tracks
-               ij.IJ.showStatus("Assembling tracks for row " + rowCounter);
+               ij.IJ.showStatus("Analyzing pairs for row " + rowCounter);
 
                ArrayList<ArrayList<GsSpotPair>> tracks = new ArrayList<ArrayList<GsSpotPair>>();
 
@@ -793,7 +793,8 @@ public class ParticlePairLister {
                   for (int j = 0; j < distancesToUse.size(); j++) {
                      d[j] = distancesToUse.get(j);
                   }
-                  P2DFitter p2df = new P2DFitter(d, fitSigmaInP2D_, maxDistanceNm_);
+                  P2DFitter p2df = new P2DFitter(d, 
+                          fitSigmaInP2D_ || useVectorDistances_, maxDistanceNm_);
                   double distMean = ListUtils.listAvg(distancesToUse);
                   double distStd = sigmaUserGuess_;
                   if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
@@ -822,7 +823,7 @@ public class ParticlePairLister {
                      // Confidence interval calculation as in matlab code by Stirling Churchman
                      double mu = p2dfResult[0];
                      double sigma = distStd;
-                     if (fitSigmaInP2D_) {
+                     if (fitSigmaInP2D_ || useVectorDistances_) {
                         sigma = p2dfResult[1];
                      }
                      double sigmaRange = 4.0 * sigma / Math.sqrt(d.length);
@@ -898,6 +899,10 @@ public class ParticlePairLister {
                      rt3.addValue("sigma", muSigma[1]);
                      rt3.addValue("mean", distMean);
                      rt3.addValue("std", distStd);
+                     if (gResult != null) {
+                        rt3.addValue("Gaussian-center", gResult[0]);
+                        rt3.addValue("Gaussian-std", gResult[1]);
+                     }
                      
                      
                      if (estimateP2DError_) {
@@ -922,8 +927,8 @@ public class ParticlePairLister {
                               d[j] = distancesToUse.get( randomIndex );
                               s[j] = allSigmas.get(randomIndex);
                            }
-                           p2df = new P2DFitter(d, fitSigmaInP2D_, maxDistanceNm_);
-                           // is it worth calculating these every time again?
+                           p2df = new P2DFitter(d, 
+                                   fitSigmaInP2D_ || useVectorDistances_, maxDistanceNm_);
                            distMean = ListUtils.avg(d);
                            distStd = sigmaUserGuess_;
                            if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
@@ -950,6 +955,7 @@ public class ParticlePairLister {
                               }
                               lastMu = cmu;
                               lastSem = sem;
+                              ij.IJ.showProgress(test, maxRepeats);
                            }
                            test++;
                         }
@@ -970,7 +976,7 @@ public class ParticlePairLister {
                      // ReportingUtils.showError(tmee.getMessage());
                   }
                }
-
+               ij.IJ.showProgress(100.0);
                ij.IJ.showStatus("Done listing pairs");
 
             }

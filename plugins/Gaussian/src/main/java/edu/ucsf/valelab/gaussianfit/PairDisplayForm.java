@@ -185,7 +185,7 @@ public class PairDisplayForm extends GUFrame{
       sigmaTextField.setText(up_.getString(this.getClass(), SIGMAPREF, "10.0"));
       
       // Select fixed sigma
-      final JRadioButton useSigmaValue = new JRadioButton("");
+      final JRadioButton useUserSigmaValue = new JRadioButton("");
       
       // Select Sigma from data
       final JRadioButton estimateSigmaValue = new JRadioButton("from data");
@@ -195,15 +195,15 @@ public class PairDisplayForm extends GUFrame{
               makeCheckBox("Estimate Error (slow!)", P2DERRORESTIMATE);
      
       ButtonGroup group = new ButtonGroup();
-      group.add(useSigmaValue);
+      group.add(useUserSigmaValue);
       group.add(estimateSigmaValue);     
   
-      useSigmaValue.setSelected(up_.getBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, false) == false);
+      useUserSigmaValue.setSelected(up_.getBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, false) == false);
       estimateSigmaValue.setSelected(up_.getBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, false));
-      useSigmaValue.addActionListener(new ActionListener() {
+      useUserSigmaValue.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            up_.setBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, !useSigmaValue.isSelected());
+            up_.setBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, !useUserSigmaValue.isSelected());
          }
       });
       estimateSigmaValue.addActionListener(new ActionListener() {
@@ -222,36 +222,60 @@ public class PairDisplayForm extends GUFrame{
          @Override
          public void actionPerformed(ActionEvent ae) {
             p2dUseVectDistance.setEnabled(p2dDistanceEstimate.isSelected());
-            distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected());
+            distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected() &&
+                    !p2dUseVectDistance.isSelected() );
             sigmaTextField.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected());
-            useSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected());
-            estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
-                    distanceEstimateFixedSigma.isSelected());
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected() );
+            useUserSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected());
+            estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected() );
             estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
          }
       });
       distanceEstimateFixedSigma.addActionListener(new ActionListener(){
          @Override
          public void actionPerformed(ActionEvent ae){
-            useSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());
+            useUserSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());
             sigmaTextField.setEnabled(distanceEstimateFixedSigma.isSelected());
             estimateSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());           
          }
       });
-      distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected());
+      p2dUseVectDistance.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected() &&
+                    !p2dUseVectDistance.isSelected() );
+            sigmaTextField.setEnabled(p2dDistanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected() );
+            useUserSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected());
+            estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected() );
+         }
+      });
+      distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected() && 
+                    !p2dUseVectDistance.isSelected());
       sigmaTextField.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected());
-      useSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
-                    distanceEstimateFixedSigma.isSelected());
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected());
+      useUserSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected());
       estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
-                    distanceEstimateFixedSigma.isSelected());
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected());
       panel.add(gaussianEstimate, "wrap");
       panel.add(p2dDistanceEstimate);
       panel.add(p2dUseVectDistance, "wrap");
       panel.add(distanceEstimateFixedSigma, "gapleft 60");
-      panel.add(useSigmaValue, "split 2");
+      panel.add(useUserSigmaValue, "split 2");
       panel.add(sigmaTextField, "wrap");
       panel.add(estimateSigmaValue, "skip 1, wrap");
       panel.add(estimateP2DError, "gapleft 60, wrap");
@@ -308,11 +332,11 @@ public class PairDisplayForm extends GUFrame{
                     showOverlay(showOverlay.isSelected()).
                     saveFile(saveTrackSummaryFile.isSelected()).
                     filePath(filePath.getText()).
+                    doGaussianEstimate(gaussianEstimate.isSelected()).
                     p2d(p2dDistanceEstimate.isSelected()).
                     useVectorDistances(p2dUseVectDistance.isSelected()).
-                    doGaussianEstimate(gaussianEstimate.isSelected()).
                     fitSigma(!distanceEstimateFixedSigma.isSelected()).
-                    useSigmaEstimate(useSigmaValue.isSelected()).
+                    useSigmaEstimate(useUserSigmaValue.isSelected()).
                     sigmaEstimate(sigmaValue).
                     estimateP2DError(estimateP2DError.isSelected());
             DataCollectionForm.getInstance().listPairTracks(ppb);
