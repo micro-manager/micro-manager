@@ -75,6 +75,7 @@ public class PairDisplayForm extends GUFrame{
    private static final String USEGAUSSIAN = "useGaussianOfVectDistances";
    private static final String P2DUSEVECTDISTANCE = "p2dUseVectDistances";
    private static final String P2DFIXEDPREF = "p2dFixedSigma";
+   private static final String P2DERRORESTIMATE = "p2dEstimateError";
    private static final String SIGMAPREF = "sigma";
    private static final String SIGMAINPUTFROMDATA = "SigmaInputFromData";
    public static FileDialogs.FileType PAIR_DATA 
@@ -178,14 +179,25 @@ public class PairDisplayForm extends GUFrame{
       final JCheckBox distanceEstimateFixedSigma =
               makeCheckBox("P2D with fixed sigma: ", P2DFIXEDPREF);
       
+      // Sigma to use when doing P2D fit with fixed sigma
       final JTextField sigmaTextField = new JTextField();
       sigmaTextField.setMinimumSize(new Dimension(60, 20));
       sigmaTextField.setText(up_.getString(this.getClass(), SIGMAPREF, "10.0"));
+      
+      // Select fixed sigma
       final JRadioButton useSigmaValue = new JRadioButton("");
+      
+      // Select Sigma from data
       final JRadioButton estimateSigmaValue = new JRadioButton("from data");
+ 
+           // Whether or not to estimae the SEM of the P2D
+      final JCheckBox estimateP2DError = 
+              makeCheckBox("Estimate Error (slow!)", P2DERRORESTIMATE);
+     
       ButtonGroup group = new ButtonGroup();
       group.add(useSigmaValue);
-      group.add(estimateSigmaValue);
+      group.add(estimateSigmaValue);     
+  
       useSigmaValue.setSelected(up_.getBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, false) == false);
       estimateSigmaValue.setSelected(up_.getBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, false));
       useSigmaValue.addActionListener(new ActionListener() {
@@ -205,6 +217,7 @@ public class PairDisplayForm extends GUFrame{
               makeDocumentListener(SIGMAPREF, sigmaTextField));
       
       p2dUseVectDistance.setEnabled(p2dDistanceEstimate.isSelected());
+      estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
       p2dDistanceEstimate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
@@ -216,6 +229,7 @@ public class PairDisplayForm extends GUFrame{
                     distanceEstimateFixedSigma.isSelected());
             estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
                     distanceEstimateFixedSigma.isSelected());
+            estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
          }
       });
       distanceEstimateFixedSigma.addActionListener(new ActionListener(){
@@ -240,6 +254,7 @@ public class PairDisplayForm extends GUFrame{
       panel.add(useSigmaValue, "split 2");
       panel.add(sigmaTextField, "wrap");
       panel.add(estimateSigmaValue, "skip 1, wrap");
+      panel.add(estimateP2DError, "gapleft 60, wrap");
       
       
       // basepath for the text file
@@ -281,12 +296,7 @@ public class PairDisplayForm extends GUFrame{
             } else {
                sigmaValue = -1.0;
             }
-            /*
-            DataCollectionForm.getInstance().listPairs(maxDistance, 
-                    showPairList.isSelected(), showImage.isSelected(),
-                    savePairTextFile.isSelected(), filePath.getText(),
-                    showSummary.isSelected(), showGraph.isSelected() );
-            */
+            
             ParticlePairLister.Builder ppb = new ParticlePairLister.Builder();
             ppb.maxDistanceNm(maxDistance).
                     showPairs(showPairList.isSelected()).
@@ -303,7 +313,8 @@ public class PairDisplayForm extends GUFrame{
                     doGaussianEstimate(gaussianEstimate.isSelected()).
                     fitSigma(!distanceEstimateFixedSigma.isSelected()).
                     useSigmaEstimate(useSigmaValue.isSelected()).
-                    sigmaEstimate(sigmaValue);
+                    sigmaEstimate(sigmaValue).
+                    estimateP2DError(estimateP2DError.isSelected());
             DataCollectionForm.getInstance().listPairTracks(ppb);
 
             myFrame.dispose();

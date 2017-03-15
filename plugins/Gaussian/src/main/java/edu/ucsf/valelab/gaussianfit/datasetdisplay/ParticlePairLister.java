@@ -86,6 +86,7 @@ public class ParticlePairLister {
    final private Boolean fitSigmaInP2D_;
    final private Boolean useSigmaUserGuess_;
    final private Boolean useVectorDistances_;
+   final private Boolean estimateP2DError_;
    final private Double sigmaUserGuess_;
    final private String filePath_;
    
@@ -107,6 +108,7 @@ public class ParticlePairLister {
       private Boolean fitSigma_;
       private Boolean useSigmaUserGuess_;
       private Boolean useVectorDistances_;
+      private Boolean estimateP2DError_;
       private Double sigmaEstimate_;
       private String filePath_;
        
@@ -199,6 +201,11 @@ public class ParticlePairLister {
          filePath_ = filePath;
          return this;
       }
+      
+      public Builder estimateP2DError(Boolean estimateP2DError) {
+         estimateP2DError_ = estimateP2DError;
+         return this;
+      }
 
    }
 
@@ -220,6 +227,7 @@ public class ParticlePairLister {
       useVectorDistances_ = builder.useVectorDistances_;
       sigmaUserGuess_ = builder.sigmaEstimate_;
       filePath_ = builder.filePath_;
+      estimateP2DError_ = builder.estimateP2DError_;
    }
 
    public Builder copy() {
@@ -240,7 +248,8 @@ public class ParticlePairLister {
               useSigmaEstimate(useSigmaUserGuess_).
               useVectorDistances(useVectorDistances_).
               sigmaEstimate(sigmaUserGuess_).
-              filePath(filePath_);
+              filePath(filePath_).
+              estimateP2DError(estimateP2DError_);
    }
 
    /**
@@ -810,7 +819,7 @@ public class ParticlePairLister {
 
                   try {
                      double[] p2dfResult = p2df.solve();
-                     // Confidence interval calculation as in matlab code by Stirlink Churchman
+                     // Confidence interval calculation as in matlab code by Stirling Churchman
                      double mu = p2dfResult[0];
                      double sigma = distStd;
                      if (fitSigmaInP2D_) {
@@ -889,6 +898,70 @@ public class ParticlePairLister {
                      rt3.addValue("sigma", muSigma[1]);
                      rt3.addValue("mean", distMean);
                      rt3.addValue("std", distStd);
+                     
+                     
+                     if (estimateP2DError_) {
+                        // use bootstrapping to estimate the error
+                        final int maxRepeats = 10000;
+                        final double maxErrorFrac = 0.001;  // 0.1 % error allowed
+                        final double checkEach = 50;  // check Each x runs 
+                        
+                        final int size = distancesToUse.size();
+                        List<Double> bootsTrapMus = new ArrayList<Double>();
+                        double[] s = new double[distancesToUse.size()];
+                        boolean done = false;
+                        double lastMu = -1.0;
+                        double lastSem = -1.0;
+                        int test = 0;
+                        int randomIndex;
+                        while (test < maxRepeats && !done) {
+                           // create a new data set, same size as original
+                           // by randomly drawing from original distances
+                           for (int j = 0; j < size; j++) {
+                              randomIndex = (int) (Math.random() * size);
+                              d[j] = distancesToUse.get( randomIndex );
+                              s[j] = allSigmas.get(randomIndex);
+                           }
+                           p2df = new P2DFitter(d, fitSigmaInP2D_, maxDistanceNm_);
+                           // is it worth calculating these every time again?
+                           distMean = ListUtils.avg(d);
+                           distStd = sigmaUserGuess_;
+                           if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
+                              distStd = ListUtils.avg(s);
+                           }
+                           if (useVectorDistances_) {
+                              gResult = fitGaussianToData(d, maxDistanceNm_);
+                              p2df.setStartParams(gResult[0], gResult[1]);
+                           } else {
+                              p2df.setStartParams(distMean, distStd);
+                           }
+                 
+                           p2dfResult = p2df.solve();
+                           
+                           bootsTrapMus.add(p2dfResult[0]);
+                           
+                           if (test % checkEach == 0  && test != 0) {
+                              double cmu = ListUtils.listAvg(bootsTrapMus);
+                              double sem = ListUtils.listStdDev(bootsTrapMus, cmu);
+                              if (lastMu > 0.0 && 
+                                      Math.abs(cmu - lastMu) / cmu < maxErrorFrac &&
+                                      Math.abs(sem - lastSem) / sem < maxErrorFrac) {
+                                 done = true;
+                              }
+                              lastMu = cmu;
+                              lastSem = sem;
+                           }
+                           test++;
+                        }
+                        
+                        double realMu = ListUtils.listAvg(bootsTrapMus);
+                        double finalSem = ListUtils.listStdDev(bootsTrapMus, realMu);
+                        
+                        rt3.addValue("BootsTrap mu", realMu);
+                        rt3.addValue("BootsTrap sem", finalSem);
+                        rt3.addValue("BootsTrap nrTries", --test);
+                        
+                     }
                      rt3.show("P2D Summary");
 
                   } catch (FittingException fe) {
