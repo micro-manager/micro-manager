@@ -100,7 +100,7 @@ public final class ScaleBarPanel extends OverlayPanel {
             }
          }
       };
-      super.setLayout(new MigLayout("flowx"));
+      super.setLayout(new MigLayout("ins 2, flowx"));
 
       super.add(new JLabel("Color: "), "span 3, split 2");
       color_ = new JComboBox(COLORNAMES);

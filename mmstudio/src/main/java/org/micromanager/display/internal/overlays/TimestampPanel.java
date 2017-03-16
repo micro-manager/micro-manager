@@ -80,7 +80,7 @@ public final class TimestampPanel extends OverlayPanel {
 
    public TimestampPanel(Studio studio) {
       studio_ = studio;
-      super.setLayout(new MigLayout("flowx"));
+      super.setLayout(new MigLayout("ins 2, flowx"));
 
       ActionListener redrawListener = new ActionListener() {
          @Override
@@ -101,9 +101,9 @@ public final class TimestampPanel extends OverlayPanel {
       position_ = new JComboBox(new String[] {
             UPPER_LEFT, UPPER_RIGHT, LOWER_RIGHT, LOWER_LEFT});
       position_.addActionListener(redrawListener);
-      super.add(position_);
+      super.add(position_, "wrap");
 
-      super.add(new JLabel("Format:"), "gapleft 10");
+      super.add(new JLabel("Format:"));
       format_ = new JComboBox(new String[] {RELATIVE_TIME, ABSOLUTE_TIME});
       format_.addActionListener(redrawListener);
       super.add(format_, "wrap");

@@ -43,7 +43,7 @@ public class PatternOverlayPanel extends OverlayPanel {
     * @param studio Micro-Manager Interface
     */
    public PatternOverlayPanel(final Studio studio) {
-      super.setLayout(new MigLayout(""));
+      super.setLayout(new MigLayout("ins 0, flowx"));
       overlaySelector_ = new JComboBox(OverlayOptions.OPTIONS);
       overlaySelector_.addActionListener(new ActionListener() {
          @Override
