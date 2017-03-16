@@ -131,17 +131,17 @@ public final class ScaleBarPanel extends OverlayPanel {
       fontSize_.addKeyListener(keyAdapter);
       super.add(fontSize_);
       
-      super.add(new JLabel("Bar height: "));
+      super.add(new JLabel("Bar height: "), "gapleft 10");
       barWidth_ = new JTextField("5", 3);
       barWidth_.addKeyListener(keyAdapter);
       super.add(barWidth_);
 
-      super.add(new JLabel("X offset: "));
+      super.add(new JLabel("X offset: "), "gapleft 10");
       xOffset_ = new JTextField("0", 3);
       xOffset_.addKeyListener(keyAdapter);
       super.add(xOffset_);
             
-      super.add(new JLabel("Y offset: "));
+      super.add(new JLabel("Y offset: "), "gapleft 10");
       yOffset_ = new JTextField("0", 3);
       yOffset_.addKeyListener(keyAdapter);
       super.add(yOffset_, "wrap");

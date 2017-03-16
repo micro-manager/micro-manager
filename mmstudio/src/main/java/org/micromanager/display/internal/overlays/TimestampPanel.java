@@ -97,13 +97,13 @@ public final class TimestampPanel extends OverlayPanel {
       color_.addActionListener(redrawListener);
       super.add(color_);
 
-      super.add(new JLabel("Position: "));
+      super.add(new JLabel("Position: "), "gapleft 10");
       position_ = new JComboBox(new String[] {
             UPPER_LEFT, UPPER_RIGHT, LOWER_RIGHT, LOWER_LEFT});
       position_.addActionListener(redrawListener);
       super.add(position_);
 
-      super.add(new JLabel("Format:"));
+      super.add(new JLabel("Format:"), "gapleft 10");
       format_ = new JComboBox(new String[] {RELATIVE_TIME, ABSOLUTE_TIME});
       format_.addActionListener(redrawListener);
       super.add(format_, "wrap");
@@ -116,10 +116,10 @@ public final class TimestampPanel extends OverlayPanel {
       amMultiChannel_ = new JCheckBox("Per-channel");
       amMultiChannel_.setToolTipText("Draw one timestamp per channel in the display.");
       amMultiChannel_.addActionListener(redrawListener);
-      super.add(amMultiChannel_);
+      super.add(amMultiChannel_, "gapleft 10");
 
 
-      super.add(new JLabel("X offset: "));
+      super.add(new JLabel("X offset: "), "gapleft 10");
       xOffset_ = new JTextField("0", 3);
       xOffset_.addKeyListener(new KeyAdapter() {
          @Override
@@ -129,7 +129,7 @@ public final class TimestampPanel extends OverlayPanel {
       });
       super.add(xOffset_);
 
-      super.add(new JLabel("Y offset: "));
+      super.add(new JLabel("Y offset: "), "gapleft 10" );
       yOffset_ = new JTextField("0", 3);
       yOffset_.addKeyListener(new KeyAdapter() {
          @Override
