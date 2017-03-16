@@ -38,7 +38,6 @@ import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -53,6 +52,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -60,7 +60,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This dialog provides an interface for exporting (a portion of) a dataset
  * to an image sequence, complete with all MicroManager overlays.
  */
-public final class ExportMovieDlg extends JDialog {
+public final class ExportMovieDlg extends MMDialog {
    private static final Icon ADD_ICON =
                IconLoader.getIcon("/org/micromanager/icons/plus_green.png");
    private static final Icon DELETE_ICON =
@@ -81,8 +81,7 @@ public final class ExportMovieDlg extends JDialog {
     * panel, to represent the nested-loop nature of the export process.
     */
    public static class AxisPanel extends JPanel {
-      private Datastore store_;
-      private DisplayWindow display_;
+      private final Datastore store_;
       private JComboBox axisSelector_;
       private JSpinner minSpinner_;
       private SpinnerNumberModel minModel_ = null;
@@ -97,7 +96,6 @@ public final class ExportMovieDlg extends JDialog {
       public AxisPanel(DisplayWindow display, final ExportMovieDlg parent) {
          super(new MigLayout("flowx"));
          setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-         display_ = display;
          store_ = display.getDatastore();
          ArrayList<String> axes = new ArrayList<String>(
                parent.getNonZeroAxes());
@@ -113,7 +111,7 @@ public final class ExportMovieDlg extends JDialog {
                   setAxis(newAxis);
                }
             }
-         });;
+         });
          minSpinner_ = new JSpinner();
          minSpinner_.addChangeListener(new ChangeListener() {
             @Override
@@ -205,6 +203,7 @@ public final class ExportMovieDlg extends JDialog {
       /**
        * Apply our configuration to the provided ImageExporter, and recurse
        * if appropriate to any contained AxisPanel.
+       * @param exporter
        */
       public void configureExporter(ImageExporter exporter) {
          // Correct for the 1-indexed GUI values, since coords are 0-indexed.
@@ -222,10 +221,10 @@ public final class ExportMovieDlg extends JDialog {
       }
    }
 
-   private DisplayWindow display_;
-   private Datastore store_;
-   private ArrayList<AxisPanel> axisPanels_;
-   private JPanel contentsPanel_;
+   private final DisplayWindow display_;
+   private final Datastore store_;
+   private final ArrayList<AxisPanel> axisPanels_;
+   private final JPanel contentsPanel_;
    private JComboBox outputFormatSelector_;
    private JLabel prefixLabel_;
    private JTextField prefixText_;
@@ -234,14 +233,18 @@ public final class ExportMovieDlg extends JDialog {
 
    /**
     * Show the dialog.
+    * @param display display showing the data to be exported
     */
    public ExportMovieDlg(DisplayWindow display) {
-      super(display.getAsWindow());
+      super();
+      super.loadAndRestorePosition(100, 100);
       display_ = display;
       store_ = display.getDatastore();
       axisPanels_ = new ArrayList<AxisPanel>();
 
-      setTitle("Export Image Series");
+      File file = new File(display.getName());
+      String shortName = file.getName();
+      setTitle("Export Image Series: " + shortName);
 
       contentsPanel_ = new JPanel(new MigLayout("flowy"));
 
@@ -289,7 +292,7 @@ public final class ExportMovieDlg extends JDialog {
 
       contentsPanel_.add(jpegPanel_);
 
-      if (getNonZeroAxes().size() == 0) {
+      if (getNonZeroAxes().isEmpty()) {
          // No iteration available.
          contentsPanel_.add(
                new JLabel("There is only one image available to export."),
@@ -391,7 +394,11 @@ public final class ExportMovieDlg extends JDialog {
       }
 
       exporter.setOutputQuality((Integer) jpegQualitySpinner_.getValue());
-      axisPanels_.get(0).configureExporter(exporter);
+      if (axisPanels_.size() > 0) {
+         axisPanels_.get(0).configureExporter(exporter);
+      } else {
+         exporter.loop(store_.getAxes().get(0), 0, 0);
+      }
       exporter.setDisplay(display_);
 
       setDefaultExportFormat(mode);
@@ -410,13 +417,14 @@ public final class ExportMovieDlg extends JDialog {
    /**
     * Create a row of controls for iterating over an axis. Pick an axis from
     * those not yet being used.
+    * @return 
     */
    public AxisPanel createAxisPanel() {
       HashSet<String> axes = new HashSet<String>(getNonZeroAxes());
       for (AxisPanel panel : axisPanels_) {
          axes.remove(panel.getAxis());
       }
-      if (axes.size() == 0) {
+      if (axes.isEmpty()) {
          ReportingUtils.logError("Asked to create axis control when no more valid axes remain.");
          return null;
       }
@@ -432,6 +440,8 @@ public final class ExportMovieDlg extends JDialog {
     * One of our panels is changing from the old axis to the new axis; if the
     * new axis is represented in any other panel, it must be swapped with the
     * old one.
+    * @param oldAxis
+    * @param newAxis
     */
    public void changeAxis(String oldAxis, String newAxis) {
       for (AxisPanel panel : axisPanels_) {
@@ -445,6 +455,7 @@ public final class ExportMovieDlg extends JDialog {
     * Remove all AxisPanels after the specified panel. Note that the AxisPanel
     * passed into this method is responsible for removing the following panels
     * from the GUI.
+    * @param last
     */
    public void deleteFollowing(AxisPanel last) {
       boolean shouldRemove = false;
@@ -478,6 +489,7 @@ public final class ExportMovieDlg extends JDialog {
    /**
     * Return the available axes (that exist in the datastore and have nonzero
     * length).
+    * @return 
     */
    public ArrayList<String> getNonZeroAxes() {
       ArrayList<String> result = new ArrayList<String>();
@@ -494,6 +506,7 @@ public final class ExportMovieDlg extends JDialog {
    /**
     * Return the number of axes that are not currently being used and that
     * have a nonzero length.
+    * @return 
     */
    public int getNumSpareAxes() {
       return getNonZeroAxes().size() - axisPanels_.size();
