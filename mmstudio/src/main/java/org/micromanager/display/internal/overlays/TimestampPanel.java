@@ -69,7 +69,7 @@ public final class TimestampPanel extends OverlayPanel {
    private static final String COLOR_INDEX = "color";
    private static final String FORMAT_INDEX = "format";
 
-   private Studio studio_;
+   private final Studio studio_;
    private final JCheckBox amMultiChannel_;
    private final JCheckBox shouldDrawBackground_;
    private final JTextField xOffset_;
@@ -80,7 +80,7 @@ public final class TimestampPanel extends OverlayPanel {
 
    public TimestampPanel(Studio studio) {
       studio_ = studio;
-      setLayout(new MigLayout("flowx"));
+      super.setLayout(new MigLayout("ins 2, flowx"));
 
       ActionListener redrawListener = new ActionListener() {
          @Override
@@ -89,35 +89,37 @@ public final class TimestampPanel extends OverlayPanel {
             redraw();
          }
       };
+      
+      
+      super.add(new JLabel("Color: "));
+      color_ = new JComboBox(new String[] {
+            "White", "Black", "Channel color"});
+      color_.addActionListener(redrawListener);
+      super.add(color_);
 
-      add(new JLabel("Position: "), "split 2, flowy");
+      super.add(new JLabel("Position: "), "gapleft 10");
       position_ = new JComboBox(new String[] {
             UPPER_LEFT, UPPER_RIGHT, LOWER_RIGHT, LOWER_LEFT});
       position_.addActionListener(redrawListener);
-      add(position_);
+      super.add(position_, "wrap");
 
-      add(new JLabel("Time format:"), "split 2, flowy");
+      super.add(new JLabel("Format:"));
       format_ = new JComboBox(new String[] {RELATIVE_TIME, ABSOLUTE_TIME});
       format_.addActionListener(redrawListener);
-      add(format_, "wrap");
+      super.add(format_, "wrap");
 
       shouldDrawBackground_ = new JCheckBox("Draw background");
       shouldDrawBackground_.setToolTipText("Draw a background (black, unless black text is selected) underneath the timestamp(s) to improve contrast");
       shouldDrawBackground_.addActionListener(redrawListener);
-      add(shouldDrawBackground_, "wrap");
+      super.add(shouldDrawBackground_, "span 6, split 6");
 
       amMultiChannel_ = new JCheckBox("Per-channel");
       amMultiChannel_.setToolTipText("Draw one timestamp per channel in the display.");
       amMultiChannel_.addActionListener(redrawListener);
-      add(amMultiChannel_);
+      super.add(amMultiChannel_, "gapleft 10");
 
-      add(new JLabel("Text color: "), "split 2, flowy");
-      color_ = new JComboBox(new String[] {
-            "White", "Black", "Channel color"});
-      color_.addActionListener(redrawListener);
-      add(color_, "wrap");
 
-      add(new JLabel("X offset: "), "split 2");
+      super.add(new JLabel("X offset: "), "gapleft 10");
       xOffset_ = new JTextField("0", 3);
       xOffset_.addKeyListener(new KeyAdapter() {
          @Override
@@ -125,9 +127,9 @@ public final class TimestampPanel extends OverlayPanel {
             redraw();
          }
       });
-      add(xOffset_);
+      super.add(xOffset_);
 
-      add(new JLabel("Y offset: "), "split 2");
+      super.add(new JLabel("Y offset: "), "gapleft 10" );
       yOffset_ = new JTextField("0", 3);
       yOffset_.addKeyListener(new KeyAdapter() {
          @Override
@@ -135,7 +137,7 @@ public final class TimestampPanel extends OverlayPanel {
             redraw();
          }
       });
-      add(yOffset_, "wrap");
+      super.add(yOffset_, "wrap");
    }
 
    @Override
@@ -291,7 +293,7 @@ public final class TimestampPanel extends OverlayPanel {
 
       String formatMode = (String) format_.getSelectedItem();
       Metadata metadata = image.getMetadata();
-      String text = null;
+      String text;
       if (formatMode.equals(ABSOLUTE_TIME)) {
          text = metadata.getReceivedTime();
          if (text == null) {

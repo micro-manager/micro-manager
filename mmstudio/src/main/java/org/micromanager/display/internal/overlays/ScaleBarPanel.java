@@ -64,16 +64,16 @@ public final class ScaleBarPanel extends OverlayPanel {
          "Blue", "Cyan", "Green"
    };
 
-   private Studio studio_;
+   private final Studio studio_;
 
    private final JCheckBox shouldDrawText_;
    private final JCheckBox isBarFilled_;
    private final JComboBox color_;
-   private JTextField fontSize_;
+   private final JTextField fontSize_;
    private final JTextField xOffset_;
    private final JTextField yOffset_;
    private final JTextField scaleSize_;
-   private JTextField barWidth_;
+   private final JTextField barWidth_;
    private final JComboBox position_;
 
    private boolean haveLoggedError_ = false;
@@ -100,51 +100,55 @@ public final class ScaleBarPanel extends OverlayPanel {
             }
          }
       };
-      setLayout(new MigLayout("flowy"));
+      super.setLayout(new MigLayout("ins 2, flowx"));
 
-      add(new JLabel("Color: "));
+      super.add(new JLabel("Color: "), "span 3, split 2");
       color_ = new JComboBox(COLORNAMES);
       color_.addActionListener(changeListener);
-      add(color_);
-
-      shouldDrawText_ = new JCheckBox("Show scale text");
-      shouldDrawText_.addActionListener(changeListener);
-      add(shouldDrawText_);
-
-      add(new JLabel("Font size: "), "split 2, flowx");
-      fontSize_ = new JTextField("14", 3);
-      fontSize_.addKeyListener(keyAdapter);
-      add(fontSize_);
-
-      add(new JLabel("X offset: "), "split 2, flowx");
-      xOffset_ = new JTextField("0", 3);
-      xOffset_.addKeyListener(keyAdapter);
-      add(xOffset_, "wrap");
-
-      isBarFilled_ = new JCheckBox("Solid scale bar");
-      isBarFilled_.addActionListener(changeListener);
-      add(isBarFilled_);
-
-      add(new JLabel("Bar thickness: "), "split 2, flowx");
-      barWidth_ = new JTextField("5", 3);
-      barWidth_.addKeyListener(keyAdapter);
-      add(barWidth_);
-
-      add(new JLabel("Position: "));
+      super.add(color_);
+      
+      super.add(new JLabel("Position: "), "span 4, split 2");
       position_ = new JComboBox(new String[] {
             "Upper left", "Upper right", "Lower right", "Lower left"});
       position_.addActionListener(changeListener);
-      add(position_);
+      super.add(position_, "wrap");
 
-      add(new JLabel("Size (\u00B5m):"), "split 2, flowx");
+      shouldDrawText_ = new JCheckBox("Show text");
+      shouldDrawText_.addActionListener(changeListener);
+      super.add(shouldDrawText_, "span 2");     
+      
+      isBarFilled_ = new JCheckBox("Solid scale bar");
+      isBarFilled_.addActionListener(changeListener);
+      super.add(isBarFilled_, "span 2");
+            
+      super.add(new JLabel("Size (\u00B5m):") );
       scaleSize_ = new JTextField("80", 3);
       scaleSize_.addActionListener(changeListener);
-      add(scaleSize_);
+      super.add(scaleSize_, "wrap");
 
-      add(new JLabel("Y offset: "), "split 2, flowx");
+      super.add(new JLabel("Font size: "));
+      fontSize_ = new JTextField("14", 3);
+      fontSize_.addKeyListener(keyAdapter);
+      super.add(fontSize_);
+      
+      super.add(new JLabel("Bar height: "), "gapleft 10");
+      barWidth_ = new JTextField("5", 3);
+      barWidth_.addKeyListener(keyAdapter);
+      super.add(barWidth_);
+
+      super.add(new JLabel("X offset: "), "gapleft 10");
+      xOffset_ = new JTextField("0", 3);
+      xOffset_.addKeyListener(keyAdapter);
+      super.add(xOffset_);
+            
+      super.add(new JLabel("Y offset: "), "gapleft 10");
       yOffset_ = new JTextField("0", 3);
       yOffset_.addKeyListener(keyAdapter);
-      add(yOffset_);
+      super.add(yOffset_, "wrap");
+
+
+
+
    }
 
    /**
@@ -226,28 +230,33 @@ public final class ScaleBarPanel extends OverlayPanel {
       int width = (int) (scaleSize / pixelSize * canvas.getMagnification());
       g.setColor(COLORS[color_.getSelectedIndex()]);
       int fontSize = getText(fontSize_, 14);
-      int xOffset = getText(xOffset_, 0);
-      int yOffset = getText(yOffset_, 0);
-      int barWidth = getText(barWidth_, 5);
+      int xOffset = getText(xOffset_, 10);
+      int yOffset = getText(yOffset_, 10);
+      int barHeight = getText(barWidth_, 5);
+      Font ourFont = new Font("Arial", Font.PLAIN, fontSize);
+      int stringHeight = g.getFontMetrics(g.getFont()).getHeight();
+      yOffset += stringHeight;
 
       String position = (String) position_.getSelectedItem();
       Dimension canvasSize = canvas.getPreferredSize();
       if (position.equals("Upper right") || position.equals("Lower right")) {
-         xOffset = canvasSize.width - xOffset - 80;
+         xOffset = canvasSize.width - xOffset - width;
       }
       if (position.equals("Lower left") || position.equals("Lower right")) {
-         yOffset = canvasSize.height - yOffset - 13;
+         yOffset = canvasSize.height - yOffset - barHeight + stringHeight - 6;
       }
 
       if (shouldDrawText_.isSelected()) {
-         g.setFont(new Font("Arial", Font.PLAIN, fontSize));
-         g.drawString(String.format("%dum", scaleSize), xOffset, yOffset);
+         g.setFont(ourFont);
+         int stringWidth = g.getFontMetrics(g.getFont()).stringWidth(String.format("%dum", scaleSize));
+         int xPosition = xOffset + (int) (0.5 * width) - (int) (0.5 * stringWidth);
+         g.drawString(String.format("%dum", scaleSize), xPosition, yOffset);
       }
       if (isBarFilled_.isSelected()) {
-         g.fillRect(xOffset, yOffset + 6, width, barWidth);
+         g.fillRect(xOffset, yOffset + 6, width, barHeight);
       }
       else {
-         g.drawRect(xOffset, yOffset + 6, width, barWidth);
+         g.drawRect(xOffset, yOffset + 6, width, barHeight);
       }
    }
 
