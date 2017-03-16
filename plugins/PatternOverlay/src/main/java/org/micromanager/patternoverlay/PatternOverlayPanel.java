@@ -12,7 +12,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
-import javax.swing.JToggleButton;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -28,7 +27,6 @@ import org.micromanager.Studio;
  */
 public class PatternOverlayPanel extends OverlayPanel {
    private static final String OVERLAY_MODE = "selected overlay mode";
-   private static final String IS_DISPLAYED = "is the overlay displayed";
    private static final String OVERLAY_SIZE = "size of overlay";
    private static final String OVERLAY_COLOR = "color of overlay";
    private static final String DRAW_SIZE = "draw size";
@@ -45,7 +43,7 @@ public class PatternOverlayPanel extends OverlayPanel {
     * @param studio Micro-Manager Interface
     */
    public PatternOverlayPanel(final Studio studio) {
-      setLayout(new MigLayout("", "[right]10[center]", "[]8[]"));
+      super.setLayout(new MigLayout(""));
       overlaySelector_ = new JComboBox(OverlayOptions.OPTIONS);
       overlaySelector_.addActionListener(new ActionListener() {
          @Override
@@ -56,9 +54,21 @@ public class PatternOverlayPanel extends OverlayPanel {
             redraw();
          }
       });
+      
+      colorSelector_ = new JComboBox(OverlayOptions.COLOR_NAMES);
+      colorSelector_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            studio.profile().setString(PatternOverlayPanel.class,
+               OVERLAY_COLOR, (String) colorSelector_.getSelectedItem());
+            redraw();
+         }
+      });
+      super.add(new JLabel("Color:"));
+      super.add(colorSelector_);
 
-      add(new JLabel("Type:"));
-      add(overlaySelector_, "wrap");
+      super.add(new JLabel("Type:"), "gapleft 10");
+      super.add(overlaySelector_);
 
       sizeSlider_ = new JSlider();
       sizeSlider_.addChangeListener(new ChangeListener() {
@@ -69,20 +79,8 @@ public class PatternOverlayPanel extends OverlayPanel {
             redraw();
          }
       });
-      add(new JLabel("Size:"));
-      add(sizeSlider_, "wrap, width ::80");
-
-      colorSelector_ = new JComboBox(OverlayOptions.COLOR_NAMES);
-      colorSelector_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            studio.profile().setString(PatternOverlayPanel.class,
-               OVERLAY_COLOR, (String) colorSelector_.getSelectedItem());
-            redraw();
-         }
-      });
-      add(new JLabel("Color:"));
-      add(colorSelector_, "wrap");
+      super.add(new JLabel("Size:"), "gapleft 10");
+      super.add(sizeSlider_, "wrap, width ::80");
 
       shouldDrawSize_ = new JCheckBox("Show pattern size");
       shouldDrawSize_.addActionListener(new ActionListener() {
@@ -93,7 +91,7 @@ public class PatternOverlayPanel extends OverlayPanel {
             redraw();
          }
       });
-      add(shouldDrawSize_, "wrap");
+      super.add(shouldDrawSize_, "span 6, wrap");
 
       // Load initial settings from the profile.
       overlaySelector_.setSelectedItem(studio.profile().getString(
