@@ -30,6 +30,7 @@ public class LaserPredNet {
      Arrays.fill(ones, 1.0);
      Array2DRowRealMatrix onesMat = new Array2DRowRealMatrix(ones);
       //assume x is properly normalized
+      new Array2DRowRealMatrix(x[0]);
       Array2DRowRealMatrix xMat = (Array2DRowRealMatrix) MatrixUtils.createRealMatrix(x);
       Array2DRowRealMatrix h = xMat.multiply(W1_).add(onesMat.multiply(B1_));
       relu(h);

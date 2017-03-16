@@ -17,9 +17,6 @@
 
 package org.micromanager.plugins.magellan.acq;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.process.ByteProcessor;
 import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import org.micromanager.plugins.magellan.coordinates.PositionManager;
 import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
@@ -28,14 +25,15 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.micromanager.plugins.magellan.json.JSONArray;
@@ -285,6 +283,39 @@ public class MultiResMultipageTiffStorage {
          //highest pixel is -1 for tile indexed -1, so need to add one to pixel values before dividing
          return (i +  1) / (xDirection ? tileWidth_ : tileHeight_) - 1;
       }
+   }
+   
+   public int[] readBackgroundPixelValues() {
+      //grab 5 random images from each channel to estiamte background
+      Set<String> keys  = imageKeys();
+      int numChannels = fullResStorage_.getNumChannels();
+      int[] backgroundVals = new int[numChannels];
+      int pixPerImage = tileWidth_*tileHeight_;
+      ArrayList<String> keyList = new ArrayList<String>(keys);
+      Collections.shuffle(keyList);
+      for (int c = 0; c < numChannels; c++) {
+         int count = 0;
+         ArrayList<Integer> pixels = new ArrayList<Integer>();
+         for (String key : keyList) {
+            //channel slice frame position
+            int[] indices = MD.getIndices(key);
+            if (indices[0] != c) {
+               continue;
+            } 
+            //correct channel
+            byte[] pix = (byte[]) fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]).pix;
+            for (byte b : pix) {
+               pixels.add( b & 0xff);
+            }
+            count++;
+            if (count == 5) {
+               break;
+            }
+         }
+         Collections.sort(pixels);
+         backgroundVals[c] = pixels.get((int)(pixels.size() * 0.15));
+      }
+      return backgroundVals;
    }
    
    public int getBackgroundPixelValue(int channelIndex) {
