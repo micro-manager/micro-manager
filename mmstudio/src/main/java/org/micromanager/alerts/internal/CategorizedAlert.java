@@ -39,13 +39,16 @@ import net.miginfocom.swing.MigLayout;
  * broken out into subcategories and using a scrollpane if necessary.
  */
 public final class CategorizedAlert extends DefaultAlert {
+   
+   private String historyText_ = "";
+   
    /**
     * This class represents one row in the display, one category of alert type.
     */
    private class CategoryDisplay extends JPanel {
       private int numMessages_ = 0;
       private JToggleButton showAllButton_ = new JToggleButton("Show All");
-      private JTextArea mostRecentText_ = new JTextArea("");
+      private final JTextArea mostRecentText_ = new JTextArea("");
       private JPanel historyPanel_ = new JPanel(
             new MigLayout("fillx, insets 0, gap 0, flowy"));
 
@@ -54,7 +57,7 @@ public final class CategorizedAlert extends DefaultAlert {
          // These are only shown once we have at least 2 messages.
          showAllButton_.setVisible(false);
          historyPanel_.setVisible(false);
-         add(historyPanel_, "growx, wrap, hidemode 2");
+         super.add(historyPanel_, "growx, wrap, hidemode 2");
 
          showAllButton_.setFont(new Font("Arial", Font.PLAIN, 10));
          showAllButton_.addActionListener(new ActionListener() {
@@ -74,10 +77,10 @@ public final class CategorizedAlert extends DefaultAlert {
          // needed to work around issues with how JTextAreas grow/shrink when
          // placed inside of JScrollPanes. See
          // http://stackoverflow.com/questions/6023145/line-wrap-in-a-jtextarea-causes-jscrollpane-to-missbehave-with-miglayout
-         add(mostRecentText_, "growx, pushx, alignx left, width 0:250:");
+         super.add(mostRecentText_, "growx, pushx, alignx left, width 0:250:");
          // This will always be invisible if showOnlyText is true, as it means
          // that addText will only ever be called once for us.
-         add(showAllButton_, "gapleft 2, width 70!, height 20!, hidemode 2");
+         super.add(showAllButton_, "gapleft 2, width 90!, height 20!, hidemode 2");
       }
 
       /**
@@ -93,21 +96,26 @@ public final class CategorizedAlert extends DefaultAlert {
             historyPanel_.add(newHistory, "growx, alignx left, width 0:250:");
          }
          mostRecentText_.setText(text);
+         historyText_ += text + System.getProperty("line.separator");
          numMessages_++;
          if (numMessages_ > 2) {
             showAllButton_.setText((showAllButton_.isSelected() ?
                      "Hide" :
                      "Show All " + numMessages_));
-            showAllButton_.setVisible(true);
+            if (!showAllButton_.isVisible()) {
+               showAllButton_.setVisible(true);
+            }
          }
       }
    }
 
    // This tracks all of our different categories and the message history for
    // each.
-   private final HashMap<Class<?>, CategoryDisplay> categories_ = new HashMap<Class<?>, CategoryDisplay>();
+   private final HashMap<Class<?>, CategoryDisplay> categories_ = 
+           new HashMap<Class<?>, CategoryDisplay>();
    // CategoryDisplays that have a null category.
-   private final ArrayList<CategoryDisplay> nullCategories_ = new ArrayList<CategoryDisplay>();
+   private final ArrayList<CategoryDisplay> nullCategories_ = 
+           new ArrayList<CategoryDisplay>();
 
    /**
     * Sets up the contents of the alert before passing them to the constructor,
@@ -157,4 +165,9 @@ public final class CategorizedAlert extends DefaultAlert {
       });
       parent_.textUpdated(this);
    }
+   
+   public String getAllText() {
+      return historyText_;
+   }
+   
 }

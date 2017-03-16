@@ -24,6 +24,9 @@ package org.micromanager.alerts.internal;
 
 import com.google.common.eventbus.Subscribe;
 import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -57,12 +60,20 @@ public final class AlertsWindow extends MMFrame {
     */
    public static void show(Studio studio) {
       ensureWindowExists(studio);
-      staticInstance_.setVisible(true);
-      staticInstance_.toFront();
+      if (!staticInstance_.isVisible()) {
+         // both of the following methods bring focus to the Alerts Window,
+         // which is highly annoying while working on something else.
+         // At the risk of making it harder to notice new alerts, I prefer 
+         // to call these only when the window is not yet visible.
+         staticInstance_.setVisible(true);
+         staticInstance_.toFront();
+      }
    }
 
    /**
     * Display the AlertsWindow, if the given alert is not muted.
+    * @param studio Studio instance
+    * @param alert  Alert to be shown
     */
    public static void showWindowUnlessMuted(Studio studio, DefaultAlert alert) {
       ensureWindowExists(studio);
@@ -74,6 +85,10 @@ public final class AlertsWindow extends MMFrame {
 
    /**
     * Create a simple alert with a text message.
+    * @param studio Studio instance
+    * @param title  Title of the alert
+    * @param text   Text of the alert
+    * @return       Alert
     */
    public static DefaultAlert addUpdatableAlert(Studio studio, String title,
          String text) {
@@ -87,6 +102,10 @@ public final class AlertsWindow extends MMFrame {
 
    /**
     * Create a custom alert with any contents
+    * @param studio Studio instance
+    * @param title  Title of the alert
+    * @param contents Content to be added to the alert
+    * @return 
     */
    public static DefaultAlert addCustomAlert(Studio studio, String title,
          JComponent contents) {
@@ -99,6 +118,9 @@ public final class AlertsWindow extends MMFrame {
 
    /**
     * Create an alert that can contain multiple categories of messages.
+    * @param studio Studio instance
+    * @param title  Title of the alert
+    * @return   Categorized alert
     */
    public static CategorizedAlert addCategorizedAlert(Studio studio, String title) {
       ensureWindowExists(studio);
@@ -123,7 +145,7 @@ public final class AlertsWindow extends MMFrame {
 
       super.loadAndRestorePosition(300, 100);
       
-      setLayout(new MigLayout("fill, insets 2, gap 0"));
+      super.setLayout(new MigLayout("fill, insets 2, gap 0"));
 
       Font defaultFont = new Font("Arial", Font.PLAIN, 10);
 
@@ -140,7 +162,7 @@ public final class AlertsWindow extends MMFrame {
                SHOULD_SHOW_WINDOW, shouldShowOnMessage_);
          }
       });
-      add(showWindowCheckBox, "split, span");
+      super.add(showWindowCheckBox, "split, span");
 
       JButton clearAllButton = new JButton("Clear All");
       clearAllButton.setFont(defaultFont);
@@ -155,15 +177,41 @@ public final class AlertsWindow extends MMFrame {
             }
          }
       });
-      add(clearAllButton, "gapleft push, wrap");
+      super.add(clearAllButton, "split 2, gapleft push");
+      
+      // not great to put this next to the Clear button....
+      JButton copyButton = new JButton("Copy All");
+      copyButton.setFont(defaultFont);
+      copyButton.setToolTipText("Copies the content of all alerts");
+      copyButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            String text = "";
+            for (DefaultAlert alert : allAlerts_) {
+               text += alert.getTitle() + System.getProperty("line.separator");
+               if (alert instanceof CategorizedAlert) {
+                  CategorizedAlert cAlert = (CategorizedAlert) alert;
+                  text += cAlert.getAllText();
+               } else {
+                  text += alert.getText();
+               }
+               text += System.getProperty("line.separator");
+            }
+            StringSelection stringSelection = new StringSelection(text);
+            Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+            clpbrd.setContents(stringSelection, null);
+         }
+      } );
+      
+      super.add(copyButton, "wrap");
 
       JScrollPane scroller = new JScrollPane(alertsPanel_,
             JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
             JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
       scroller.setBorder(null);
       alertsPanel_.add(new JLabel(NO_ALERTS_MSG));
-      add(scroller, "push, grow");
-      pack();
+      super.add(scroller, "push, grow");
+      super.pack();
    }
 
    public void addAlert(DefaultAlert alert) {
@@ -205,6 +253,8 @@ public final class AlertsWindow extends MMFrame {
 
    /**
     * Muted alerts won't cause the window to be shown when they appear.
+    * @param alert  Alert to be muted or unmuted
+    * @param isMuted  Whether or not we want this alert to be muted
     */
    public void setMuted(DefaultAlert alert, boolean isMuted) {
       if (isMuted) {

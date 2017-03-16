@@ -30,14 +30,16 @@ import org.micromanager.internal.MMStudio;
 
 public final class DefaultAlertManager implements AlertManager {
 
-   private static DefaultAlertManager staticInstance_;
+   private static final DefaultAlertManager staticInstance_;
    static {
       staticInstance_ = new DefaultAlertManager(MMStudio.getInstance());
    }
 
-   private Studio studio_;
-   private HashMap<String, CategorizedAlert> titleToCategorizedAlert_ = new HashMap<String, CategorizedAlert>();
-   private HashMap<String, DefaultAlert> titleToCustomAlert_ = new HashMap<String, DefaultAlert>();
+   private final Studio studio_;
+   private final HashMap<String, CategorizedAlert> titleToCategorizedAlert_ = 
+           new HashMap<String, CategorizedAlert>();
+   private final HashMap<String, DefaultAlert> titleToCustomAlert_ = 
+           new HashMap<String, DefaultAlert>();
 
    private DefaultAlertManager(Studio studio) {
       studio_ = studio;
