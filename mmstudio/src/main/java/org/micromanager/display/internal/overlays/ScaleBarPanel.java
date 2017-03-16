@@ -102,34 +102,39 @@ public final class ScaleBarPanel extends OverlayPanel {
       };
       super.setLayout(new MigLayout("flowx"));
 
-      super.add(new JLabel("Color: "), "span 2");
+      super.add(new JLabel("Color: "), "span 3, split 2");
       color_ = new JComboBox(COLORNAMES);
       color_.addActionListener(changeListener);
-      super.add(color_, "span 2, wrap");
+      super.add(color_);
       
-      super.add(new JLabel("Position: "), "span 2");
+      super.add(new JLabel("Position: "), "span 4, split 2");
       position_ = new JComboBox(new String[] {
             "Upper left", "Upper right", "Lower right", "Lower left"});
       position_.addActionListener(changeListener);
-      super.add(position_, "span 2, wrap");
+      super.add(position_, "wrap");
 
-      shouldDrawText_ = new JCheckBox("Show scale text");
+      shouldDrawText_ = new JCheckBox("Show text");
       shouldDrawText_.addActionListener(changeListener);
       super.add(shouldDrawText_, "span 2");     
       
       isBarFilled_ = new JCheckBox("Solid scale bar");
       isBarFilled_.addActionListener(changeListener);
-      super.add(isBarFilled_, "span 2, wrap");
+      super.add(isBarFilled_, "span 2");
+            
+      super.add(new JLabel("Size (\u00B5m):") );
+      scaleSize_ = new JTextField("80", 3);
+      scaleSize_.addActionListener(changeListener);
+      super.add(scaleSize_, "wrap");
 
       super.add(new JLabel("Font size: "));
       fontSize_ = new JTextField("14", 3);
       fontSize_.addKeyListener(keyAdapter);
       super.add(fontSize_);
       
-      super.add(new JLabel("Size (\u00B5m):") );
-      scaleSize_ = new JTextField("80", 3);
-      scaleSize_.addActionListener(changeListener);
-      super.add(scaleSize_, "wrap");
+      super.add(new JLabel("Bar height: "));
+      barWidth_ = new JTextField("5", 3);
+      barWidth_.addKeyListener(keyAdapter);
+      super.add(barWidth_);
 
       super.add(new JLabel("X offset: "));
       xOffset_ = new JTextField("0", 3);
@@ -141,10 +146,7 @@ public final class ScaleBarPanel extends OverlayPanel {
       yOffset_.addKeyListener(keyAdapter);
       super.add(yOffset_, "wrap");
 
-      super.add(new JLabel("Bar height: "));
-      barWidth_ = new JTextField("5", 3);
-      barWidth_.addKeyListener(keyAdapter);
-      super.add(barWidth_, "wrap");
+
 
 
    }
