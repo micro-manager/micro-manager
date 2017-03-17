@@ -27,14 +27,14 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
@@ -77,6 +77,8 @@ public final class TimestampPanel extends OverlayPanel {
    private final JComboBox position_;
    private final JComboBox color_;
    private final JComboBox format_;
+   
+   private boolean shouldIgnoreEvents_ = false;
 
    public TimestampPanel(Studio studio) {
       studio_ = studio;
@@ -85,9 +87,36 @@ public final class TimestampPanel extends OverlayPanel {
       ActionListener redrawListener = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent event) {
-            saveSettings();
-            redraw();
+            if (!shouldIgnoreEvents_) {
+               saveSettings();
+               redraw();
+            }
          }
+      };
+      
+      DocumentListener docListener = new DocumentListener() {
+         @Override
+         public void insertUpdate(DocumentEvent e) {
+            update();
+         }
+
+         @Override
+         public void removeUpdate(DocumentEvent e) {
+            update();
+         }
+
+         @Override
+         public void changedUpdate(DocumentEvent e) {
+            update();
+         }
+         
+         public void update() {
+            if (!shouldIgnoreEvents_) {
+               saveSettings();
+               redraw();
+            }
+         }
+         
       };
       
       
@@ -121,22 +150,12 @@ public final class TimestampPanel extends OverlayPanel {
 
       super.add(new JLabel("X offset: "), "gapleft 10");
       xOffset_ = new JTextField("0", 3);
-      xOffset_.addKeyListener(new KeyAdapter() {
-         @Override
-         public void keyPressed(KeyEvent event) {
-            redraw();
-         }
-      });
+      xOffset_.getDocument().addDocumentListener(docListener);
       super.add(xOffset_);
 
       super.add(new JLabel("Y offset: "), "gapleft 10" );
       yOffset_ = new JTextField("0", 3);
-      yOffset_.addKeyListener(new KeyAdapter() {
-         @Override
-         public void keyPressed(KeyEvent event) {
-            redraw();
-         }
-      });
+      yOffset_.getDocument().addDocumentListener(docListener);
       super.add(yOffset_, "wrap");
    }
 
@@ -146,6 +165,9 @@ public final class TimestampPanel extends OverlayPanel {
       if (display == null) {
          return;
       }
+      
+      // Don't cause redraws while we're busy resetting our values.
+      shouldIgnoreEvents_ = true;
       position_.setSelectedIndex(studio_.profile().getInt(
                TimestampPanel.class, POSITION_INDEX, 0));
       format_.setSelectedIndex(studio_.profile().getInt(
@@ -162,6 +184,8 @@ public final class TimestampPanel extends OverlayPanel {
                TimestampPanel.class, X_OFFSET, "0"));
       yOffset_.setText(studio_.profile().getString(
                TimestampPanel.class, Y_OFFSET, "0"));
+      
+      shouldIgnoreEvents_ = false;
    }
 
    /**
@@ -172,8 +196,9 @@ public final class TimestampPanel extends OverlayPanel {
             IS_MULTI_CHANNEL, amMultiChannel_.isSelected());
       studio_.profile().setBoolean(TimestampPanel.class,
             INCLUDE_BACKGROUND, shouldDrawBackground_.isSelected());
+      String xo = xOffset_.getText();
       studio_.profile().setString(TimestampPanel.class,
-            X_OFFSET, xOffset_.getText());
+            X_OFFSET, xo);
       studio_.profile().setString(TimestampPanel.class,
             Y_OFFSET, yOffset_.getText());
       studio_.profile().setInt(TimestampPanel.class,

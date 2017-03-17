@@ -27,12 +27,12 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Image;
@@ -91,15 +91,32 @@ public final class ScaleBarPanel extends OverlayPanel {
                }
             }
       };
-      KeyAdapter keyAdapter = new KeyAdapter() {
+      
+      DocumentListener docListener = new DocumentListener() {
          @Override
-         public void keyPressed(KeyEvent event) {
+         public void insertUpdate(DocumentEvent e) {
+            update();
+         }
+
+         @Override
+         public void removeUpdate(DocumentEvent e) {
+            update();
+         }
+
+         @Override
+         public void changedUpdate(DocumentEvent e) {
+            update();
+         }
+         
+         public void update() {
             if (!shouldIgnoreEvents_) {
                saveSettings();
                redraw();
             }
          }
       };
+      
+
       super.setLayout(new MigLayout("ins 2, flowx"));
 
       super.add(new JLabel("Color: "), "span 3, split 2");
@@ -128,26 +145,23 @@ public final class ScaleBarPanel extends OverlayPanel {
 
       super.add(new JLabel("Font size: "));
       fontSize_ = new JTextField("14", 3);
-      fontSize_.addKeyListener(keyAdapter);
+      fontSize_.getDocument().addDocumentListener(docListener);
       super.add(fontSize_);
       
       super.add(new JLabel("Bar height: "), "gapleft 10");
       barWidth_ = new JTextField("5", 3);
-      barWidth_.addKeyListener(keyAdapter);
+      barWidth_.getDocument().addDocumentListener(docListener);
       super.add(barWidth_);
 
       super.add(new JLabel("X offset: "), "gapleft 10");
       xOffset_ = new JTextField("0", 3);
-      xOffset_.addKeyListener(keyAdapter);
+      xOffset_.getDocument().addDocumentListener(docListener);
       super.add(xOffset_);
             
       super.add(new JLabel("Y offset: "), "gapleft 10");
       yOffset_ = new JTextField("0", 3);
-      yOffset_.addKeyListener(keyAdapter);
+      yOffset_.getDocument().addDocumentListener(docListener);
       super.add(yOffset_, "wrap");
-
-
-
 
    }
 

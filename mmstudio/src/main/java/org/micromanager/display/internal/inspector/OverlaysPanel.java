@@ -21,6 +21,9 @@
 package org.micromanager.display.internal.inspector;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -58,12 +61,12 @@ class OverlaysPanel extends InspectorPanel {
    public OverlaysPanel() {
       overlays_ = new ArrayList<OverlayPanel>();
       overlayToEnabled_ = new HashMap<OverlayPanel, Boolean>();
-      setLayout(new MigLayout("flowy"));
+      super.setLayout(new MigLayout("flowy"));
       // Provide a button that, when clicked, shows a popup menu of overlays
       // that can be added.
       // Icon is public domain, taken from
       // https://openclipart.org/detail/16950/add
-      JButton adder = new JButton("Add overlay...",
+       JButton adder = new JButton("Add...", 
             new ImageIcon(getClass().getResource("/org/micromanager/icons/plus_green.png")));
       adder.addMouseListener(new MouseAdapter() {
          @Override
@@ -71,7 +74,10 @@ class OverlaysPanel extends InspectorPanel {
             showPopup(e);
          }
       });
-      add(adder);
+      Dimension buttonSize = new Dimension(90, 20);
+      adder.setFont(new Font("Arial", Font.PLAIN, 9));
+      adder.setMaximumSize(buttonSize);
+      super.add(adder);
    }
 
    private void showPopup(MouseEvent event) {
@@ -125,6 +131,8 @@ class OverlaysPanel extends InspectorPanel {
             display_.requestRedraw();
          }
       });
+      closeButton.setFont(new Font("Arial", Font.PLAIN, 9));
+      closeButton.setMaximumSize(new Dimension(90, 20));
       container.add(closeButton, "gap 0");
 
       final JCheckBox enabledBox = new JCheckBox("Enabled");
