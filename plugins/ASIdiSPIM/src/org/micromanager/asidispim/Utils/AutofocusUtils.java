@@ -136,7 +136,7 @@ public class AutofocusUtils {
     * @param sliceTiming - Data structure with current device timing setting
     * @param runAsynchronously - whether or not to run the function asynchronously (in own thread)
     *          (true when run from Setup panel and false when run during acquisition)
-    * @return FocusResult object.  Will be bogus  if runAsynchronously is true, but in that case the
+    * @return FocusResult object.  Will be bogus if runAsynchronously is true, but in that case the
     *          actual result can be accessed via getLastFocusResult() in the caller's refreshSelected() method
     *
     */
