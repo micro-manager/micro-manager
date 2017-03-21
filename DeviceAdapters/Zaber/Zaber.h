@@ -40,6 +40,7 @@
 #define ERR_COMMAND_REJECTED         10032
 #define	ERR_NO_REFERENCE_POS         10064
 #define	ERR_SETTING_FAILED           10128
+#define	ERR_INVALID_DEVICE_NUM       10256
 
 extern const char* g_Msg_PORT_CHANGE_FORBIDDEN;
 extern const char* g_Msg_DRIVER_DISABLED;
@@ -48,6 +49,7 @@ extern const char* g_Msg_AXIS_COUNT;
 extern const char* g_Msg_COMMAND_REJECTED;
 extern const char* g_Msg_NO_REFERENCE_POS;
 extern const char* g_Msg_SETTING_FAILED;
+extern const char* g_Msg_INVALID_DEVICE_NUM;
 
 // N.B. Concrete device classes deriving ZaberBase must set core_ in
 // Initialize().

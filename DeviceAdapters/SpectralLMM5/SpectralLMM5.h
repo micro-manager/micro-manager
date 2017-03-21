@@ -29,6 +29,8 @@
 #include <cstdio>
 #include <string>
 
+class SpectralLMM5Interface;
+
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
@@ -60,14 +62,14 @@ class LMM5Hub : public CGenericBase<LMM5Hub>
       int OnTriggerOutConfig(MM::PropertyBase* pProp, MM::ActionType eAct);
       int OnTriggerOutExposureTime(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+      SpectralLMM5Interface* pInterface_;
+
    private:
       void IntToPerc(uint16_t value, std::string& result);
       void PercToInt(std::string in, uint16_t& result);
-      unsigned char majorFWV_, minorFWV_;
       std::map<std::string, uint16_t> triggerConfigMap_;
       uint16_t triggerOutConfig_;
       uint16_t triggerOutExposureTime_;
-      uint16_t flicrMaxValue_;
       std::string port_;
       bool initialized_;
       bool flicrAvailable_;
@@ -104,6 +106,7 @@ public:
    std::string StateToLabel(int state);
 
 private:
+   LMM5Hub* pHub_;
    MM::MMTime changedTime_;
    std::string name_;
    int state_;
