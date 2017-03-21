@@ -480,6 +480,8 @@ public final class SetupPanel extends ListeningJPanel {
          public void actionPerformed(ActionEvent e) {
             ASIdiSPIM.getFrame().getAcquisitionPanel().runTestAcquisition(side_);
             refreshCameraBeamSettings();
+            centerPiezoAndGalvo();  // put piezo and galvo back to the imaging center 
+                                    // acquisition code puts them back to zero, this is better and maybe should be done globally 
          }
       });
       slicePanel.add(testAcqButton, "center, span 2, wrap");
@@ -990,7 +992,7 @@ public final class SetupPanel extends ListeningJPanel {
  	  * (internal, edge, overlap, pseudo-overlap, light sheet)  
  	  */ 
  	private CameraModes.Keys getSPIMCameraMode() { 
- 	   CameraModes.Keys val = null; 
+ 	   CameraModes.Keys val; 
  	   try { 
  	      val = ASIdiSPIM.getFrame().getSPIMCameraMode(); 
  	   } catch (Exception ex) { 
