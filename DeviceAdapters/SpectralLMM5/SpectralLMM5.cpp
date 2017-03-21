@@ -44,7 +44,12 @@ const char* g_DeviceNameLMM5Hub = "LMM5-Hub";
 const char* g_DeviceNameLMM5Shutter = "LMM5-Shutter";
 const char* g_DeviceNameLMM5Switch = "LMM5-Switch";
 
-SpectralLMM5Interface* g_Interface = NULL;
+// A somewhat nasty hack to allow multiple hubs to coexist (some systems have
+// two LMM5s or ILEs). The hardware config should load the devices in the order
+// [hub1, shutter1, hub2, shutter2]. The LMM5Shutter device will then remember
+// the most recently loaded hub, through which it can access the correct
+// serial/HID port. May not work with multiple HID connections.
+LMM5Hub* g_LastLoadedHub = 0;
 
 ////////////////////////////////
 // Exported MMDevice API
@@ -78,13 +83,14 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 ////////////////////////////////
 
 LMM5Hub::LMM5Hub() :
-majorFWV_('0'),
-minorFWV_('0'),
+pInterface_(0),
 triggerOutConfig_ (0),
 port_ ("Undefined"),
 initialized_ (false),
 flicrAvailable_(false)
 {
+   g_LastLoadedHub = this;
+
    InitializeDefaultErrorMessages();
 
    // SetErrorText(ERR_UNEXPECTED_ANSWER, "Unexpected answer.  Is the LMM5 controller connected and switched on?");
@@ -96,6 +102,7 @@ flicrAvailable_(false)
 LMM5Hub::~LMM5Hub()
 {
    Shutdown();
+   delete pInterface_;
 }
 
 void LMM5Hub::GetName(char* name) const
@@ -105,11 +112,11 @@ void LMM5Hub::GetName(char* name) const
 
 int LMM5Hub::Initialize()
 {
-   if (g_Interface == NULL)
+   if (pInterface_ == NULL)
       return DEVICE_NOT_CONNECTED;
 
-   int ret = g_Interface->DetectLaserLines(*this, *GetCoreCallback());
-   nrLines_= g_Interface->GetNrLines();
+   int ret = pInterface_->DetectLaserLines(*this, *GetCoreCallback());
+   nrLines_= pInterface_->GetNrLines();
    if (ret != DEVICE_OK)
       return ret;
 
@@ -120,7 +127,7 @@ int LMM5Hub::Initialize()
 
    // Firmware version
    std::string version;
-   ret = g_Interface->GetFirmwareVersion(*this, *GetCoreCallback(), version);
+   ret = pInterface_->GetFirmwareVersion(*this, *GetCoreCallback(), version);
    if (ret != DEVICE_OK)
       return ret;
    ret = CreateStringProperty("Firmware Version", version.c_str(), true);
@@ -128,7 +135,7 @@ int LMM5Hub::Initialize()
       return ret;
 
    // Does this controller support FLICR (i.e PWM)?
-   ret = g_Interface->GetFLICRAvailable(*this, *GetCoreCallback(), flicrAvailable_);
+   ret = pInterface_->GetFLICRAvailable(*this, *GetCoreCallback(), flicrAvailable_);
    if (ret != DEVICE_OK)
       return ret;
    std::string msg = "This controller does not support FLICR";
@@ -139,7 +146,7 @@ int LMM5Hub::Initialize()
    LogMessage(msg.c_str());
 
    // For each laser line, create transmission properties 
-   availableLines* lines = g_Interface->getAvailableLaserLines();
+   availableLines* lines = pInterface_->getAvailableLaserLines();
    for (int i=0; i < nrLines_; i++) 
    {
       if (lines[i].present) 
@@ -157,13 +164,13 @@ int LMM5Hub::Initialize()
          if (flicrAvailable_) 
          {
             // check if this line has flicr available
-            ret = g_Interface->GetFLICRAvailableByLine(*this, *GetCoreCallback(), i, lines[i].flicrAvailable);
+            ret = pInterface_->GetFLICRAvailableByLine(*this, *GetCoreCallback(), i, lines[i].flicrAvailable);
             if (ret != DEVICE_OK)
                return ret;
             if (lines[i].flicrAvailable) 
             {
                // check for maximum FLICR value
-               ret = g_Interface->GetMaxFLICRValue(*this, *GetCoreCallback(), i, lines[i].maxFLICR);
+               ret = pInterface_->GetMaxFLICRValue(*this, *GetCoreCallback(), i, lines[i].maxFLICR);
                if (ret != DEVICE_OK)
                   return ret;
                std::ostringstream os;
@@ -201,7 +208,7 @@ int LMM5Hub::Initialize()
    // respond correctly when querying the trigger-out config. Only provide the
    // trigger-out properties when it appears to be working.
    unsigned char dummy[5];
-   ret = g_Interface->GetTriggerOutConfig(*this, *GetCoreCallback(), dummy);
+   ret = pInterface_->GetTriggerOutConfig(*this, *GetCoreCallback(), dummy);
    if (ret == DEVICE_OK) {
       // Trigger configuration
       CPropertyAction *pAct = new CPropertyAction(this, &LMM5Hub::OnTriggerOutConfig);
@@ -251,7 +258,7 @@ int LMM5Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
    {
       pProp->Get(port_);
       MM::PortType portType = GetSerialPortType(port_.c_str());
-      g_Interface = new SpectralLMM5Interface(port_, portType);
+      pInterface_ = new SpectralLMM5Interface(port_, portType);
    }
    return DEVICE_OK;
 }
@@ -261,7 +268,7 @@ int LMM5Hub::OnTransmission(MM::PropertyBase* pProp, MM::ActionType pAct, long l
    double transmission;
    if (pAct == MM::BeforeGet)
    {
-      int ret = g_Interface->GetTransmission(*this, *GetCoreCallback(), line, transmission);
+      int ret = pInterface_->GetTransmission(*this, *GetCoreCallback(), line, transmission);
       if (ret != DEVICE_OK)
          return ret;
       pProp->Set(transmission);
@@ -269,7 +276,7 @@ int LMM5Hub::OnTransmission(MM::PropertyBase* pProp, MM::ActionType pAct, long l
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(transmission);
-      int ret = g_Interface->SetTransmission(*this, *GetCoreCallback(), line, transmission);
+      int ret = pInterface_->SetTransmission(*this, *GetCoreCallback(), line, transmission);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -282,7 +289,7 @@ int LMM5Hub::OnFlicr(MM::PropertyBase* pProp, MM::ActionType pAct, long line)
    uint16_t flicr;
    if (pAct == MM::BeforeGet)
    {
-      int ret = g_Interface->GetFLICRValue(*this, *GetCoreCallback(), line, flicr);
+      int ret = pInterface_->GetFLICRValue(*this, *GetCoreCallback(), line, flicr);
       if (ret != DEVICE_OK)
          return ret;
       // present to the user as a fraction
@@ -296,7 +303,7 @@ int LMM5Hub::OnFlicr(MM::PropertyBase* pProp, MM::ActionType pAct, long line)
       pProp->Get(val);
       uint16_t flicr;
       PercToInt(val, flicr); 
-      int ret = g_Interface->SetFLICRValue(*this, *GetCoreCallback(), line, flicr);
+      int ret = pInterface_->SetFLICRValue(*this, *GetCoreCallback(), line, flicr);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -331,7 +338,7 @@ int LMM5Hub::OnExposureConfig(MM::PropertyBase* pProp, MM::ActionType pAct)
    std::string exposureConfig;
    if (pAct == MM::BeforeGet)
    {
-      int ret = g_Interface->GetExposureConfig(*this, *GetCoreCallback(), exposureConfig);
+      int ret = pInterface_->GetExposureConfig(*this, *GetCoreCallback(), exposureConfig);
       if (ret != DEVICE_OK)
          return ret;
       pProp->Set(exposureConfig.c_str());
@@ -339,7 +346,7 @@ int LMM5Hub::OnExposureConfig(MM::PropertyBase* pProp, MM::ActionType pAct)
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(exposureConfig);
-      int ret = g_Interface->SetExposureConfig(*this, *GetCoreCallback(), exposureConfig);
+      int ret = pInterface_->SetExposureConfig(*this, *GetCoreCallback(), exposureConfig);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -352,7 +359,7 @@ int LMM5Hub::OnTriggerOutConfig(MM::PropertyBase* pProp, MM::ActionType pAct)
    if (pAct == MM::BeforeGet)
    {
       unsigned char buffer[4];
-      int ret = g_Interface->GetTriggerOutConfig(*this, *GetCoreCallback(), buffer);
+      int ret = pInterface_->GetTriggerOutConfig(*this, *GetCoreCallback(), buffer);
       if (ret != DEVICE_OK)
          return ret;
       uint16_t config;
@@ -380,7 +387,7 @@ int LMM5Hub::OnTriggerOutConfig(MM::PropertyBase* pProp, MM::ActionType pAct)
       unsigned char buf[4];
       memcpy(buf, &config, 2);
       memcpy(buf + 2, &time, 2);
-      int ret = g_Interface->SetTriggerOutConfig(*this, *GetCoreCallback(), buf);
+      int ret = pInterface_->SetTriggerOutConfig(*this, *GetCoreCallback(), buf);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -393,7 +400,7 @@ int LMM5Hub::OnTriggerOutExposureTime(MM::PropertyBase* pProp, MM::ActionType pA
    {
 
       unsigned char buffer[4];
-      int ret = g_Interface->GetTriggerOutConfig(*this, *GetCoreCallback(), buffer);
+      int ret = pInterface_->GetTriggerOutConfig(*this, *GetCoreCallback(), buffer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -417,7 +424,7 @@ int LMM5Hub::OnTriggerOutExposureTime(MM::PropertyBase* pProp, MM::ActionType pA
       unsigned char buf[4];
       memcpy(buf, &config, 2);
       memcpy(buf + 2, &time, 2);
-      int ret = g_Interface->SetTriggerOutConfig(*this, *GetCoreCallback(), buf);
+      int ret = pInterface_->SetTriggerOutConfig(*this, *GetCoreCallback(), buf);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -436,11 +443,15 @@ int LMM5Hub::OnPowerMonitor(MM::PropertyBase* pProp, MM::ActionType eAct)
 /////////////////// LMM5 Shutter /////////////////
 
 LMM5Shutter::LMM5Shutter() :
+   pHub_(0),
    changedTime_(0.0),
    state_(0),
    open_ (false),
    nrOutputs_(0)
 {
+   // Hack to allow multiple "hubs" that are just generic devices
+   pHub_ = g_LastLoadedHub;
+
    InitializeDefaultErrorMessages();
 
    EnableDelay();
@@ -452,7 +463,7 @@ LMM5Shutter::~LMM5Shutter()
 
 int LMM5Shutter::Initialize()
 {
-   if (g_Interface == NULL)
+   if (pHub_ == NULL)
       return DEVICE_NOT_CONNECTED;
 
    // Name                                                                   
@@ -461,12 +472,12 @@ int LMM5Shutter::Initialize()
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "Spectral LMM5 Shutter", MM::String, true);
 
-   int ret = g_Interface->DetectLaserLines(*this, *GetCoreCallback()); 
-   nrLines_= g_Interface->GetNrLines();
+   int ret = pHub_->pInterface_->DetectLaserLines(*this, *GetCoreCallback()); 
+   nrLines_= pHub_->pInterface_->GetNrLines();
    if (ret != DEVICE_OK)
       return ret;
 
-   availableLines* lines = g_Interface->getAvailableLaserLines();
+   availableLines* lines = pHub_->pInterface_->getAvailableLaserLines();
    unsigned long lineMask = 0;
    for (int i=0; i < nrLines_; i++) 
       if (lines[i].present) 
@@ -474,7 +485,7 @@ int LMM5Shutter::Initialize()
    
    
    // outputs are available only since firmware 1.30.  Our interface will always return 1 for firmware that is older
-   ret = g_Interface->GetNumberOfOutputs(*this, *GetCoreCallback(), nrOutputs_);
+   ret = pHub_->pInterface_->GetNumberOfOutputs(*this, *GetCoreCallback(), nrOutputs_);
    if (nrOutputs_ > 1) 
    {
       CPropertyAction *pAct = new CPropertyAction(this, &LMM5Shutter::OnOutputSelect);
@@ -563,7 +574,7 @@ int LMM5Shutter::SetOpen(bool open)
    if (open)
       state = state_;
    changedTime_ = GetCurrentMMTime();
-   int ret = g_Interface->SetShutterState(*this, *GetCoreCallback(), state);
+   int ret = pHub_->pInterface_->SetShutterState(*this, *GetCoreCallback(), state);
    if (ret == DEVICE_OK)
       open_ = open;
    return ret;
@@ -572,7 +583,7 @@ int LMM5Shutter::SetOpen(bool open)
 int LMM5Shutter::GetOpen(bool& open)
 {
    int state;
-   int ret = g_Interface->GetShutterState(*this, *GetCoreCallback(), state);
+   int ret = pHub_->pInterface_->GetShutterState(*this, *GetCoreCallback(), state);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -599,7 +610,7 @@ int LMM5Shutter::Fire(double deltaT)
 std::string LMM5Shutter::StateToLabel(int state)
 {
    std::string label;
-   availableLines* lines = g_Interface->getAvailableLaserLines();
+   availableLines* lines = pHub_->pInterface_->getAvailableLaserLines();
    for (int j=0; j<nrLines_; j++)
    {
       if (state & (1 << j)) 
@@ -613,7 +624,7 @@ int LMM5Shutter::LabelToState(std::string label)
 {
    // printf ("LabelToState!!!!!!!!!!!!!!!!!!!!!!!!: label %s\n", label.c_str());
    int state = 0;
-   availableLines* lines = g_Interface->getAvailableLaserLines();
+   availableLines* lines = pHub_->pInterface_->getAvailableLaserLines();
    // tokenize the label string on "/"
    std::string::size_type lastPos = label.find_first_not_of("_", 0);
    std::string::size_type pos     = label.find_first_of("_", lastPos);
@@ -702,7 +713,7 @@ int LMM5Shutter::OnOutputSelect(MM::PropertyBase* pProp, MM::ActionType pAct)
    uint16_t output;
    if (pAct == MM::BeforeGet)
    {
-      int ret = g_Interface->GetOutput(*this, *GetCoreCallback(), output);
+      int ret = pHub_->pInterface_->GetOutput(*this, *GetCoreCallback(), output);
       if (ret != DEVICE_OK)
          return ret;
       pProp->Set((long) output);
@@ -711,7 +722,7 @@ int LMM5Shutter::OnOutputSelect(MM::PropertyBase* pProp, MM::ActionType pAct)
    {
       long output;
       pProp->Get(output);
-      int ret = g_Interface->SetOutput(*this, *GetCoreCallback(), (uint16_t) output);
+      int ret = pHub_->pInterface_->SetOutput(*this, *GetCoreCallback(), (uint16_t) output);
       if (ret != DEVICE_OK)
          return ret;
    }
