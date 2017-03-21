@@ -52,7 +52,7 @@ public class AcquisitionSettings {
    // if true, use multiple positions
    public boolean useMultiPositions;
    
-   // if true, use channels
+   // if true, use channels is enabled (but may only have single channel) 
    public boolean useChannels;
    
    // MultiChannel mode
@@ -103,9 +103,6 @@ public class AcquisitionSettings {
    
    // camera in overlap, edge, etc. mode
    public CameraModes.Keys cameraMode;
-   
-   // acceleration time of X axis (only applies to stage scanning)
-   public float accelerationX;
 
    // if true, the tiger controller will coordinate multiple timepoints
    // instead of having plugin trigger each one

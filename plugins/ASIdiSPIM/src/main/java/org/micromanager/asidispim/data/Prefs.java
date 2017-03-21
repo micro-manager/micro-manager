@@ -174,7 +174,15 @@ public class Prefs {
    public String getString(String node, String strKey, String defaultValue) {
       return myPrefs_.get(getPrefKey(node, strKey), defaultValue);
    }
-   
+
+   public void putInt(String node, String strKey, int value) {
+      myPrefs_.putInt(getPrefKey(node, strKey), value);
+   }
+
+   public int getInt(String node, String strKey, int defaultValue) {
+      return myPrefs_.getInt(getPrefKey(node, strKey), defaultValue);
+   }
+
    public void putFloat(String node, String strKey, float value) {
       myPrefs_.putFloat(getPrefKey(node, strKey), value);
    }

@@ -265,7 +265,7 @@ public class PanelUtils {
       try {
          f = (float) ((Double) sp.getValue()).doubleValue();
       } catch (Exception ex) {
-         f = ((Float) sp.getValue()).floatValue();
+         f = ((Float) sp.getValue());
       }
       return f;
    }
@@ -661,9 +661,54 @@ public class PanelUtils {
       return tf;
    }
    
-   
    /**
-    * Creates field for user to type in new position for an axis, with default value of 0.
+    * Creates formatted text field for user to enter integer values.
+    *
+    * @param prefNode - String identifying preference node where this variable
+    * be store such that its value can be retrieved on restart
+    * @param prefKey - String used to identify this preference
+    * @param defaultValue - initial (default) value. Will be overwritten by
+    * value in Preferences
+    * @param numColumns - width of the GUI element
+    * @return - JFormattedTextField element
+    */
+   public JFormattedTextField makeIntEntryField(String prefNode, String prefKey,
+           int defaultValue, int numColumns) {
+
+      class FieldListener implements PropertyChangeListener {
+
+         private final JFormattedTextField tf_;
+         private final String prefNode_;
+         private final String prefKey_;
+
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            try {
+               prefs_.putInt(prefNode_, prefKey_, ((Integer) tf_.getValue()).intValue());
+            } catch (Exception e) {
+               MyDialogUtils.showError(e);
+            }
+         }
+
+         public FieldListener(JFormattedTextField tf, String prefNode, String prefKey) {
+            prefNode_ = prefNode;
+            prefKey_ = prefKey;
+            tf_ = tf;
+         }
+      }
+
+      JFormattedTextField tf = new JFormattedTextField();
+      tf.setValue((int) prefs_.getInt(prefNode, prefKey, defaultValue));
+      tf.setColumns(numColumns);
+      PropertyChangeListener listener = new FieldListener(tf, prefNode, prefKey);
+      tf.addPropertyChangeListener("value", listener);
+      return tf;
+   }
+
+   /**
+    * Creates field for user to type in new position for an axis, with default
+    * value of 0.
+    *
     * @param key
     * @param dir
     * @param positions
@@ -671,7 +716,8 @@ public class PanelUtils {
     */
    public JFormattedTextField makeSetPositionField(Devices.Keys key, Joystick.Directions dir, Positions positions) {
 
-      class setPositionListener implements PropertyChangeListener { 
+      class setPositionListener implements PropertyChangeListener {
+
          private final Devices.Keys key_;
          private final Joystick.Directions dir_;
          private final Positions positions_;
@@ -781,6 +827,31 @@ public class PanelUtils {
       jcb.addActionListener(newListener);
    }
    
+    /** 
+ 		    * takes a JSlider and adds a listener that is guaranteed to be called  
+ 		    * after the other listeners. 
+ 		    * Modifies the JSlider!! 
+ 		    * @param jsl - slider to which listener will be added 
+ 		    * @param lastListener - listener that will be added at the end 
+ 		    */ 
+ 		   public void addListenerLast(JSlider jsl, final ChangeListener lastListener) { 
+ 		      final ChangeListener [] origListeners = jsl.getChangeListeners(); 
+ 		      for (ChangeListener list : origListeners) { 
+ 		         jsl.removeChangeListener(list); 
+ 		      } 
+ 		 
+ 		      ChangeListener newListener = new ChangeListener() { 
+ 		         @Override 
+ 		         public void stateChanged(ChangeEvent e) { 
+ 		            for (ChangeListener list : origListeners) { 
+ 		               list.stateChanged(e); 
+ 		            } 
+ 		            lastListener.stateChanged(e); 
+ 		         } 
+ 		      }; 
+ 		      jsl.addChangeListener(newListener); 
+   }
+   
    /**
     * creates change listener for float-based spinner that will coerce the value
     * to quarter integers (e.g. 1.00, 1.25, 1.50, 1.75, 2.00, etc.)
@@ -826,6 +897,19 @@ public class PanelUtils {
       label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
       return new ComponentTitledBorder(label, comp,
               BorderFactory.createEtchedBorder());
+   }
+   
+      /**
+    * makes border with centered title text
+    * @param title
+    * @return
+    */
+   public static TitledBorder makeTitledBorder(String title) {
+      TitledBorder myBorder = BorderFactory.createTitledBorder(
+              BorderFactory.createLineBorder(ASIdiSPIM.BORDERCOLOR), " " + 
+                      title + " ");
+      myBorder.setTitleJustification(TitledBorder.CENTER);
+      return myBorder;
    }
 
    

@@ -23,7 +23,9 @@ package org.micromanager.asidispim.api;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.Studio;
+import java.rmi.RemoteException;
+import java.util.List;
+
 import org.micromanager.PositionList;
 import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.ASIdiSPIMFrame;
@@ -36,7 +38,8 @@ import org.micromanager.asidispim.data.AcquisitionModes.Keys;
 import org.micromanager.asidispim.data.AcquisitionSettings;
 import org.micromanager.asidispim.data.Devices;
 import org.micromanager.asidispim.data.Devices.Sides;
-import org.micromanager.asidispim.data.MultichannelModes;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMScriptException;
 
 /**
@@ -49,7 +52,30 @@ import org.micromanager.internal.utils.MMScriptException;
  * import org.micromanager.asidispim.api.ASIdiSPIMImplementation;
  *
  * ASIdiSPIMInterface diSPIM = new ASIdiSPIMImplementation();
- * diSPIM.runAcquisition(); 
+ * diSPIM.runAcquisition(); // or other API methods in ASIdiSPIMInterface
+ * 
+ * 
+ * Another approach is to use Java RMI with the name "ASIdiSPIM_API".
+ * e.g.:
+ * 
+ *  public class AsiRmiClientStub {
+ *  public final static String rmiName = "ASIdiSPIM_API";
+ *  private AsiRmiClientStub() {}
+ *  public static void main(String[] args) {
+ *     String host = (args.length < 1) ? null : args[0];
+ *     {
+ *        Registry registry;
+ *        try {
+ *           registry = LocateRegistry.getRegistry(host);
+ *           ASIdiSPIMInterface stub = (ASIdiSPIMInterface) registry.lookup(rmiName);
+ *           stub.runAcquisition(); // or other API methods in ASIdiSPIMInterface
+ *        } catch (Exception e) {
+ *           e.printStackTrace();
+ *        }
+ *     } 
+ *  }
+ * }
+ * 
  * 
  * @author nico
  * @author Jon
@@ -57,7 +83,7 @@ import org.micromanager.internal.utils.MMScriptException;
 public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
 
    @Override
-   public void runAcquisition() throws ASIdiSPIMException {
+   public void runAcquisition() throws ASIdiSPIMException, RemoteException {
       if (isAcquisitionRequested()) {
          throw new ASIdiSPIMException("another acquisition ongoing");
       }
@@ -65,7 +91,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
 
    @Override
-   public ij.ImagePlus runAcquisitionBlocking() throws ASIdiSPIMException {
+   public ij.ImagePlus runAcquisitionBlocking() throws ASIdiSPIMException, RemoteException {
       if (isAcquisitionRequested()) {
          throw new ASIdiSPIMException("another acquisition ongoing");
       }
@@ -82,174 +108,201 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
-   public ij.ImagePlus runAcquisitionBlocking(CMMCore core, double x, double y, double f) throws ASIdiSPIMException {
-      setXYPosition(core, x, y);
-      setSPIMHeadPosition(core, f);
+   public ij.ImagePlus runAcquisitionBlocking(double x, double y, double f) 
+           throws ASIdiSPIMException, RemoteException {
+      setXYPosition(x, y);
+      setSPIMHeadPosition(f);
       return runAcquisitionBlocking();
    }
    
    @Override
-   public void stopAcquisition() throws ASIdiSPIMException {
+   public void stopAcquisition() throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().stopAcquisition();
    }
    
    @Override
-   public boolean isAcquisitionRunning() throws ASIdiSPIMException {
+   public boolean isAcquisitionRunning() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().isAcquisitionRunning();
    }
    
    @Override
-   public boolean isAcquisitionRequested() throws ASIdiSPIMException {
+   public boolean isAcquisitionRequested() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().isAcquisitionRequested();
    }
    
    @Override
-   public ij.ImagePlus getLastAcquisitionImagePlus() throws ASIdiSPIMException {
+   public ij.ImagePlus getLastAcquisitionImagePlus() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getLastAcquisitionImagePlus();
    }
 
    
    @Override
-   public String getLastAcquisitionPath() throws ASIdiSPIMException {
+   public String getLastAcquisitionPath() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getLastAcquisitionPath();
    }
    
    @Override
-   public String getLastAcquisitionName() throws ASIdiSPIMException {
+   public String getLastAcquisitionName() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getLastAcquisitionName();
    }
 
    @Override
-   public void setAcquisitionNamePrefix(String acqName) throws ASIdiSPIMException {
+   public void closeLastAcquisitionWindow() throws ASIdiSPIMException, RemoteException {
+      closeAcquisitionWindow(getLastAcquisitionName());
+   }
+
+   @Override
+   public void closeAcquisitionWindow(String acquisitionName) throws ASIdiSPIMException, RemoteException {
+      // TODO: It looks like there is no association between a Strings and a Display window in 2.0
+      /*
+      try {
+        
+         getGui().displays()..closeAcquisitionWindow(acquisitionName);
+      } catch (MMScriptException e) {
+         throw new ASIdiSPIMException(e);
+      }
+      */
+   }
+   
+   @Override
+   public void setAcquisitionNamePrefix(String acqName) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setAcquisitionNamePrefix(acqName);
    }
    
    @Override
-   public String getSavingDirectoryRoot() throws ASIdiSPIMException {
+   public String getSavingDirectoryRoot() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getSavingDirectoryRoot();
    }
    
    @Override
-   public void setSavingDirectoryRoot(String directory) throws ASIdiSPIMException {
+   public void setSavingDirectoryRoot(String directory) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setSavingDirectoryRoot(directory);
    }
    
    @Override
-   public String getSavingNamePrefix() throws ASIdiSPIMException {
+   public String getSavingNamePrefix() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getSavingNamePrefix();
    }
 
    @Override
-   public void setSavingNamePrefix(String acqPrefix) throws ASIdiSPIMException {
+   public void setSavingNamePrefix(String acqPrefix) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setSavingNamePrefix(acqPrefix);
    }
    
    @Override
-   public boolean getSavingSeparateFile() throws ASIdiSPIMException {
+   public boolean getSavingSeparateFile() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getSavingSeparateFile();
    }
 
    @Override
-   public void setSavingSeparateFile(boolean separate) throws ASIdiSPIMException {
+   public void setSavingSeparateFile(boolean separate) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setSavingSeparateFile(separate);
    }
    
    @Override
-   public boolean getSavingSaveWhileAcquiring() throws ASIdiSPIMException {
+   public boolean getSavingSaveWhileAcquiring() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getSavingSaveWhileAcquiring();
    }
 
    @Override
-   public void setSavingSaveWhileAcquiring(boolean save) throws ASIdiSPIMException {
+   public void setSavingSaveWhileAcquiring(boolean save) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setSavingSaveWhileAcquiring(save);
    }
    
    @Override
-   public Keys getAcquisitionMode() throws ASIdiSPIMException {
+   public Keys getAcquisitionMode() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getAcquisitionMode();
    }
 
    @Override
-   public void setAcquisitionMode(org.micromanager.asidispim.data.AcquisitionModes.Keys mode) throws ASIdiSPIMException {
+   public void setAcquisitionMode(org.micromanager.asidispim.data.AcquisitionModes.Keys mode) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setAcquisitionMode(mode);
    }
    
    @Override
-   public boolean getTimepointsEnabled() throws ASIdiSPIMException {
+   public boolean getTimepointsEnabled() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getTimepointsEnabled();
    }
 
    @Override
-   public void setTimepointsEnabled(boolean enabled) throws ASIdiSPIMException {
+   public void setTimepointsEnabled(boolean enabled) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setTimepointsEnabled(enabled);
    }
    
    @Override
-   public int getTimepointsNumber() throws ASIdiSPIMException {
+   public int getTimepointsNumber() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getNumberOfTimepoints();
    }
 
    @Override
-   public void setTimepointsNumber(int numTimepoints) throws ASIdiSPIMException {
+   public void setTimepointsNumber(int numTimepoints) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setNumberOfTimepoints(numTimepoints);
    }
    
    @Override
-   public double getTimepointInterval() throws ASIdiSPIMException {
+   public double getTimepointInterval() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getTimepointInterval();
    }
 
    @Override
-   public void setTimepointInterval(double intervalTimepoints) throws ASIdiSPIMException {
+   public void setTimepointInterval(double intervalTimepoints) throws ASIdiSPIMException, RemoteException {
       // range checking done later
       getAcquisitionPanel().setTimepointInterval(intervalTimepoints);
    }
    
    @Override
-   public boolean getMultiplePositionsEnabled() throws ASIdiSPIMException {
+   public boolean getMultiplePositionsEnabled() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getMultiplePositionsEnabled();
    }
 
    @Override
-   public void setMultiplePositionsEnabled(boolean enabled) throws ASIdiSPIMException {
+   public void setMultiplePositionsEnabled(boolean enabled) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setMultiplePositionsEnabled(enabled);
    }
    
    @Override
-   public double getMultiplePositionsDelay() throws ASIdiSPIMException {
+   public double getMultiplePositionsDelay() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getMultiplePositionsPostMoveDelay();
    }
 
    @Override
-   public void setMultiplePositionsDelay(double delayMs) throws ASIdiSPIMException {
+   public void setMultiplePositionsDelay(double delayMs) throws ASIdiSPIMException, RemoteException {
       // range checking done later
       getAcquisitionPanel().setMultiplePositionsDelay(delayMs);
    }
    
+   @Override
+   public PositionList getPositionList() throws ASIdiSPIMException, RemoteException {
+      try {
+         return getGui().getPositionList();
+      } catch (Exception ex) {
+         throw new ASIdiSPIMException(ex);
+      }
+   }
    
    @Override
-   public boolean getChannelsEnabled() throws ASIdiSPIMException {
+   public boolean getChannelsEnabled() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getChannelsEnabled();
    }
 
    @Override
-   public void setChannelsEnabled(boolean enabled) throws ASIdiSPIMException {
+   public void setChannelsEnabled(boolean enabled) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setChannelsEnabled(enabled);
       
    }
 
    @Override
-   public String[] getAvailableChannelGroups() throws ASIdiSPIMException {
+   public String[] getAvailableChannelGroups() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getAvailableChannelGroups();
    }
    
    @Override
-   public String getChannelGroup() throws ASIdiSPIMException {
+   public String getChannelGroup() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getChannelGroup();
    }
 
    @Override
-   public void setChannelGroup(String channelGroup) throws ASIdiSPIMException {
+   public void setChannelGroup(String channelGroup) throws ASIdiSPIMException, RemoteException {
       String[] availableGroups = getAvailableChannelGroups();
       for (String gr : availableGroups) {
          if (gr.equals(channelGroup)) {
@@ -261,12 +314,12 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
 
    @Override
-   public String[] getAvailableChannels() throws ASIdiSPIMException {
+   public String[] getAvailableChannels() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getAvailableChannels();
    }
    
    @Override
-   public boolean getChannelEnabled(String channel) throws ASIdiSPIMException {
+   public boolean getChannelEnabled(String channel) throws ASIdiSPIMException, RemoteException {
       if (!getChannelsEnabled()) {
          return false;
       }
@@ -280,7 +333,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
 
    @Override
-   public void setChannelEnabled(String channel, boolean enabled) throws ASIdiSPIMException {
+   public void setChannelEnabled(String channel, boolean enabled) throws ASIdiSPIMException, RemoteException {
       String[] availableChannels = getAvailableChannels();
       for (String ch : availableChannels) {
          if (ch.equals(channel)) {
@@ -292,24 +345,24 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
-   public org.micromanager.asidispim.data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException {
+   public org.micromanager.asidispim.data.MultichannelModes.Keys getChannelChangeMode() throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setChannelChangeMode(org.micromanager.asidispim.data.MultichannelModes.Keys mode) throws ASIdiSPIMException {
+   public void setChannelChangeMode(org.micromanager.asidispim.data.MultichannelModes.Keys mode) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public int getVolumeNumberOfSides() throws ASIdiSPIMException {
+   public int getVolumeNumberOfSides() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getNumSides();
    }
 
    @Override
-   public void setVolumeNumberOfSides(int numSides) throws ASIdiSPIMException {
+   public void setVolumeNumberOfSides(int numSides) throws ASIdiSPIMException, RemoteException {
       if (numSides < 1 || numSides > 2) {
          throw new ASIdiSPIMException("number of sides can only be 1 or 2");
       }
@@ -317,16 +370,16 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
-   public Devices.Sides getVolumeFirstSide() throws ASIdiSPIMException {
+   public Devices.Sides getVolumeFirstSide() throws ASIdiSPIMException, RemoteException {
       if (getAcquisitionPanel().isFirstSideA()) {
          return Devices.Sides.A;
       } else {
          return Devices.Sides.B;
       }
    }
-
+   
    @Override
-   public void setVolumeFirstSide(Devices.Sides firstSide) throws ASIdiSPIMException {
+   public void setVolumeFirstSide(Devices.Sides firstSide) throws ASIdiSPIMException, RemoteException {
       if (firstSide == Devices.Sides.A) {
          getAcquisitionPanel().setFirstSideIsA(true);
       } else if (firstSide == Devices.Sides.B) {
@@ -334,399 +387,396 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       } else {
          throw new ASIdiSPIMException("invalid value of firstSide");
       }
-   }
+}
    
    @Override
-   public double getVolumeDelayBeforeSide() throws ASIdiSPIMException {
+   public double getVolumeDelayBeforeSide() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getVolumeDelayBeforeSide();
    }
 
    @Override
-   public void setVolumeDelayBeforeSide(double delayMs) throws ASIdiSPIMException {
+   public void setVolumeDelayBeforeSide(double delayMs) throws ASIdiSPIMException, RemoteException {
       // range checking done later
       getAcquisitionPanel().setVolumeDelayBeforeSide(delayMs);
    }
    
    @Override
-   public int getVolumeSlicesPerVolume() throws ASIdiSPIMException {
+   public int getVolumeSlicesPerVolume() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getVolumeSlicesPerVolume();
    }
 
    @Override
-   public void setVolumeSlicesPerVolume(int slices) throws ASIdiSPIMException {
+   public void setVolumeSlicesPerVolume(int slices) throws ASIdiSPIMException, RemoteException {
       // range checking done later
       getAcquisitionPanel().setVolumeSlicesPerVolume(slices);
    }
    
    @Override
-   public double getVolumeSliceStepSize() throws ASIdiSPIMException {
+   public double getVolumeSliceStepSize() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getVolumeSliceStepSize();
    }
 
    @Override
-   public void setVolumeSliceStepSize(double stepSizeUm) throws ASIdiSPIMException {
+   public void setVolumeSliceStepSize(double stepSizeUm) throws ASIdiSPIMException, RemoteException {
       // range checking done later
       getAcquisitionPanel().setVolumeSliceStepSize(stepSizeUm);
    }
    
    @Override
-   public boolean getVolumeMinimizeSlicePeriod() throws ASIdiSPIMException {
+   public boolean getVolumeMinimizeSlicePeriod() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getVolumeMinimizeSlicePeriod();
    }
 
    @Override
-   public void setVolumeMinimizeSlicePeriod(boolean minimize) throws ASIdiSPIMException {
+   public void setVolumeMinimizeSlicePeriod(boolean minimize) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setVolumeMinimizeSlicePeriod(minimize);
    }
    
    @Override
-   public double getVolumeSlicePeriod() throws ASIdiSPIMException {
+   public double getVolumeSlicePeriod() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getVolumeSlicePeriod();
    }
 
    @Override
-   public void setVolumeSlicePeriod(double periodMs) throws ASIdiSPIMException {
+   public void setVolumeSlicePeriod(double periodMs) throws ASIdiSPIMException, RemoteException {
       // range checking done later
       getAcquisitionPanel().setVolumeSlicePeriod(periodMs);
    }
 
    @Override
-   public double getVolumeSampleExposure() throws ASIdiSPIMException {
+   public double getVolumeSampleExposure() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getVolumeSampleExposure();
    }
 
    @Override
-   public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException {
+   public void setVolumeSampleExposure(double exposureMs) throws ASIdiSPIMException, RemoteException {
       // range checking done later
       getAcquisitionPanel().setVolumeSampleExposure(exposureMs);
    }
    
    @Override
-   public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException {
+   public boolean getAutofocusDuringAcquisition() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getAutofocusDuringAcquisition();
    }
 
    @Override
-   public void setAutofocusDuringAcquisition(boolean enable) throws ASIdiSPIMException {
+   public void setAutofocusDuringAcquisition(boolean enable) throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().setAutofocusDuringAcquisition(enable);
    }
    
    @Override
-   public double getSideImagingCenter(Sides side) throws ASIdiSPIMException {
+   public double getSideImagingCenter(org.micromanager.asidispim.data.Devices.Sides side) throws ASIdiSPIMException, RemoteException {
       return getSetupPanel(side).getImagingCenter();
    }
 
    @Override
-   public void setSideImagingCenter(Sides side, double center) throws ASIdiSPIMException {
+   public void setSideImagingCenter(org.micromanager.asidispim.data.Devices.Sides side, double center) throws ASIdiSPIMException, RemoteException {
       getSetupPanel(side).setImagingCenter(center);
    }
    
    @Override
-   public double getSideSlicePosition(Sides side) throws ASIdiSPIMException {
+   public double getSideSlicePosition(org.micromanager.asidispim.data.Devices.Sides side) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setSideSlicePosition(Sides side, double position) throws ASIdiSPIMException {
+   public void setSideSlicePosition(org.micromanager.asidispim.data.Devices.Sides side, double position) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public double getSideImagingPiezoPosition(Sides side) throws ASIdiSPIMException {
+   public double getSideImagingPiezoPosition(org.micromanager.asidispim.data.Devices.Sides side) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setSideImagingPiezoPosition(Sides side, double position) throws ASIdiSPIMException {
+   public void setSideImagingPiezoPosition(Sides side, double position) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public double getSideIlluminationPiezoPosition(Sides side) throws ASIdiSPIMException {
+   public double getSideIlluminationPiezoPosition(Sides side) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setSideIlluminationPiezoPosition(Sides side, double position) throws ASIdiSPIMException {
+   public void setSideIlluminationPiezoPosition(Sides side, double position) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setSideIlluminationPiezoHome(Sides side) throws ASIdiSPIMException {
+   public void setSideIlluminationPiezoHome(Sides side) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public double getSideSheetWidth(Sides side) throws ASIdiSPIMException {
+   public double getSideSheetWidth(Sides side) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setSideSheetWidth(Sides side, double width) throws ASIdiSPIMException {
+   public void setSideSheetWidth(Sides side, double width) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
    
    @Override
-   public double getSideSheetOffset(Sides side) throws ASIdiSPIMException {
+   public double getSideSheetOffset(Sides side) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setSideSheetOffset(Sides side, double width) throws ASIdiSPIMException {
+   public void setSideSheetOffset(Sides side, double width) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public double getSideCalibrationSlope(Sides side) throws ASIdiSPIMException {
+   public double getSideCalibrationSlope(Sides side) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setSideCalibrationSlope(Sides side, double slope) throws ASIdiSPIMException {
+   public void setSideCalibrationSlope(Sides side, double slope) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();      
    }
    
    @Override
-   public double getSideCalibrationOffset(Sides side) throws ASIdiSPIMException {
+   public double getSideCalibrationOffset(Sides side) throws ASIdiSPIMException, RemoteException {
       return getSetupPanel(side).getSideCalibrationOffset();
    }
 
    @Override
-   public void setSideCalibrationOffset(Sides side, double offset) throws ASIdiSPIMException {
+   public void setSideCalibrationOffset(Sides side, double offset) throws ASIdiSPIMException, RemoteException {
       getSetupPanel(side).setSideCalibrationOffset(offset);
    }
    
    @Override
-   public void updateSideCalibrationOffset(Sides side) throws ASIdiSPIMException {
+   public void updateSideCalibrationOffset(Sides side) throws ASIdiSPIMException, RemoteException {
       getSetupPanel(side).updateCalibrationOffset();
    }
    
    @Override
-   public void runAutofocusSide(Sides side) throws ASIdiSPIMException {
+   public void runAutofocusSide(Sides side) throws ASIdiSPIMException, RemoteException {
       getSetupPanel(side).runAutofocus();
    }
    
    @Override
-   public int getAutofocusNumImages() throws ASIdiSPIMException {
+   public int getAutofocusNumImages() throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setAutofocusNumImages(int numImages) throws ASIdiSPIMException {
+   public void setAutofocusNumImages(int numImages) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();      
    }
 
    @Override
-   public double getAutofocusStepSize() throws ASIdiSPIMException {
+   public double getAutofocusStepSize() throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setAutofocusStepSize(double stepSizeUm) throws ASIdiSPIMException {
+   public void setAutofocusStepSize(double stepSizeUm) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public Modes getAutofocusMode() throws ASIdiSPIMException {
+   public Modes getAutofocusMode() throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setAutofocusMode(Modes mode) throws ASIdiSPIMException {
+   public void setAutofocusMode(Modes mode) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
    
    @Override
-   public boolean getAutofocusBeforeAcquisition() throws ASIdiSPIMException {
+   public boolean getAutofocusBeforeAcquisition() throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setAutofocusBeforeAcquisition(boolean enable) throws ASIdiSPIMException {
+   public void setAutofocusBeforeAcquisition(boolean enable) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
    
    @Override
-   public int getAutofocusTimepointInterval() throws ASIdiSPIMException {
+   public int getAutofocusTimepointInterval() throws ASIdiSPIMException, RemoteException {
       return getAutofocusPanel().getAutofocusTimepointInterval();
    }
 
    @Override
-   public void setAutofocusTimepointInterval(int numTimepoints) throws ASIdiSPIMException {
+   public void setAutofocusTimepointInterval(int numTimepoints) throws ASIdiSPIMException, RemoteException {
       getAutofocusPanel().setAutofocusTimepointInterval(numTimepoints);
    }
    
    @Override
-   public String getAutofocusChannel() throws ASIdiSPIMException {
+   public String getAutofocusChannel() throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
 
    @Override
-   public void setAutofocusChannel(String channel) throws ASIdiSPIMException {
+   public void setAutofocusChannel(String channel) throws ASIdiSPIMException, RemoteException {
       // @deprecated out of laziness, can add if needed
       throw new UnsupportedOperationException();
    }
    
    @Override
-   public void setXYPosition(CMMCore core, double x, double y) throws ASIdiSPIMException {
+   public void setXYPosition(double x, double y) throws ASIdiSPIMException, RemoteException {
       try {
-         core.setXYPosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE), x, y);
+         getCore().setXYPosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE), x, y);
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public java.awt.geom.Point2D.Double getXYPosition(CMMCore core) throws ASIdiSPIMException {
+   public java.awt.geom.Point2D.Double getXYPosition() throws ASIdiSPIMException, RemoteException {
       try {
-         return core.getXYStagePosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE));
+         return getCore().getXYStagePosition(getDevices().getMMDevice(Devices.Keys.XYSTAGE));
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public void setLowerZPosition(CMMCore core, double z) throws ASIdiSPIMException {
+   public void setLowerZPosition(double z) throws ASIdiSPIMException, RemoteException {
       try {
-         core.setPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE), z);
+         getCore().setPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE), z);
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public double getLowerZPosition(CMMCore core) throws ASIdiSPIMException {
+   public double getLowerZPosition() throws ASIdiSPIMException, RemoteException {
       try {
-         return core.getPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE));
+         return getCore().getPosition(getDevices().getMMDevice(Devices.Keys.LOWERZDRIVE));
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public void setSPIMHeadPosition(CMMCore core, double z) throws ASIdiSPIMException {
+   public void setSPIMHeadPosition(double z) throws ASIdiSPIMException, RemoteException {
       try {
-         core.setPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE), z);
+         getCore().setPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE), z);
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public double getSPIMHeadPosition(CMMCore core) throws ASIdiSPIMException {
+   public double getSPIMHeadPosition() throws ASIdiSPIMException, RemoteException {
       try {
-         return core.getPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE));
+         return getCore().getPosition(getDevices().getMMDevice(Devices.Keys.UPPERZDRIVE));
       } catch (Exception e) {
          throw new ASIdiSPIMException(e);
       }
    }
 
    @Override
-   public void raiseSPIMHead() throws ASIdiSPIMException {
+   public void raiseSPIMHead() throws ASIdiSPIMException, RemoteException {
       getNavigationPanel().raiseSPIMHead();
    }
 
    @Override
-   public void setSPIMHeadRaisedPosition(double raised) throws ASIdiSPIMException {
+   public void setSPIMHeadRaisedPosition(double raised) throws ASIdiSPIMException, RemoteException {
       getNavigationPanel().setSPIMHeadRaisedPosition(raised);
    }
 
    @Override
-   public double getSPIMHeadRaisedPosition() throws ASIdiSPIMException {
+   public double getSPIMHeadRaisedPosition() throws ASIdiSPIMException, RemoteException {
       return getNavigationPanel().getSPIMHeadRaisedPosition();
    }
 
    @Override
-   public void lowerSPIMHead() throws ASIdiSPIMException {
+   public void lowerSPIMHead() throws ASIdiSPIMException, RemoteException {
       getNavigationPanel().lowerSPIMHead();
    }
 
    @Override
-   public void setSPIMHeadLoweredPosition(double lowered) throws ASIdiSPIMException {
+   public void setSPIMHeadLoweredPosition(double lowered) throws ASIdiSPIMException, RemoteException {
       getNavigationPanel().setSPIMHeadLoweredPosition(lowered);
    }
 
    @Override
-   public double getSPIMHeadLoweredPosition() throws ASIdiSPIMException {
+   public double getSPIMHeadLoweredPosition() throws ASIdiSPIMException, RemoteException {
       return getNavigationPanel().getSPIMHeadLoweredPosition();
    }
    
    @Override
-   public void haltAllMotion() throws ASIdiSPIMException {
+   public void haltAllMotion() throws ASIdiSPIMException, RemoteException {
       getNavigationPanel().haltAllMotion();
    }
    
    @Override
-   public AcquisitionSettings getAcquisitionSettings() throws ASIdiSPIMException {
+   public AcquisitionSettings getAcquisitionSettings() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getCurrentAcquisitionSettings();
    }
 
    @Override
-   public double getEstimatedSliceDuration() throws ASIdiSPIMException {
+   public double getEstimatedSliceDuration() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getEstimatedSliceDuration();
    }
 
    @Override
-   public double getEstimatedVolumeDuration() throws ASIdiSPIMException {
+   public double getEstimatedVolumeDuration() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getEstimatedVolumeDuration();
    }
 
    @Override
-   public double getEstimatedAcquisitionDuration() throws ASIdiSPIMException {
+   public double getEstimatedAcquisitionDuration() throws ASIdiSPIMException, RemoteException {
       return getAcquisitionPanel().getEstimatedAcquisitionDuration();
    }
 
    @Override
-   public void refreshEstimatedTiming() throws ASIdiSPIMException {
+   public void refreshEstimatedTiming() throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().updateDurationLabels();
    }
    
    
    
    //** Private methods.  Only for internal use **//
-/*
-   private Studio getGui() throws ASIdiSPIMException {
-       
-      Studio studio = Studio.getInstance();
+
+   private MMStudio getGui() throws ASIdiSPIMException, RemoteException {
+      MMStudio studio = MMStudio.getInstance();
       if (studio == null) {
          throw new ASIdiSPIMException ("MM Studio is not open"); 
       }
       return studio;
   }
    
-   
-   private CMMCore getCore() throws ASIdiSPIMException {
+  private CMMCore getCore() throws ASIdiSPIMException, RemoteException {
        CMMCore core = getGui().getCore();
        if (core == null) {
           throw new ASIdiSPIMException("Core is not open");
        }
        return core;
    }
-*/
    
-   private ASIdiSPIMFrame getFrame() throws ASIdiSPIMException {
+   private ASIdiSPIMFrame getFrame() throws ASIdiSPIMException, RemoteException {
       ASIdiSPIMFrame frame = ASIdiSPIM.getFrame();
       if (frame == null) {
          throw new ASIdiSPIMException ("Plugin is not open");
@@ -734,7 +784,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       return frame;
    }
    
-   private AcquisitionPanel getAcquisitionPanel() throws ASIdiSPIMException {
+   private AcquisitionPanel getAcquisitionPanel() throws ASIdiSPIMException, RemoteException {
       AcquisitionPanel acquisitionPanel = getFrame().getAcquisitionPanel();
       if (acquisitionPanel == null) {
          throw new ASIdiSPIMException ("AcquisitionPanel is not open");
@@ -742,7 +792,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       return acquisitionPanel;
    }
    
-   private SetupPanel getSetupPanel(Devices.Sides side) throws ASIdiSPIMException {
+   private SetupPanel getSetupPanel(Devices.Sides side) throws ASIdiSPIMException, RemoteException {
       SetupPanel setupPanel = getFrame().getSetupPanel(side);
       if (setupPanel == null) {
          throw new ASIdiSPIMException ("SetupPanel is not open");
@@ -750,7 +800,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       return setupPanel;
    }
    
-   private NavigationPanel getNavigationPanel() throws ASIdiSPIMException {
+   private NavigationPanel getNavigationPanel() throws ASIdiSPIMException, RemoteException {
       NavigationPanel navigationPanel = getFrame().getNavigationPanel();
       if (navigationPanel == null) {
          throw new ASIdiSPIMException ("NavigationPanel is not open");
@@ -758,7 +808,7 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       return navigationPanel;
    }
    
-   private AutofocusPanel getAutofocusPanel() throws ASIdiSPIMException {
+   private AutofocusPanel getAutofocusPanel() throws ASIdiSPIMException, RemoteException {
       AutofocusPanel autofocusPanel = getFrame().getAutofocusPanel();
       if (autofocusPanel == null) {
          throw new ASIdiSPIMException ("AutofocusPanel is not open");
@@ -766,13 +816,12 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       return autofocusPanel;
    }
    
-   private Devices getDevices() throws ASIdiSPIMException {
+   private Devices getDevices() throws ASIdiSPIMException, RemoteException {
       Devices devices = getFrame().getDevices();
       if (devices == null) {
          throw new ASIdiSPIMException ("Devices object does not exist");
       }
       return devices;
    }
-
 
 }

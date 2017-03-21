@@ -89,6 +89,13 @@ public class DevicesPanel extends ListeningJPanel {
             Devices.Keys.UPPERZDRIVE, MAX_SELECTOR_WIDTH*2);
       super.add(boxUpperZ_, "span 2, center, wrap");
       
+      if (ASIdiSPIM.OSPIM) {
+         super.add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.UPPERHDRIVE) + ":"));
+         final JComboBox boxUpperH_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
+                 Devices.Keys.UPPERHDRIVE, MAX_SELECTOR_WIDTH * 2);
+         super.add(boxUpperH_, "span 2, center, wrap");
+      }
+  
       super.add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.PLOGIC) + ":"));
       final JComboBox boxPLogic_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
             Devices.Keys.PLOGIC, MAX_SELECTOR_WIDTH*2);
@@ -99,6 +106,11 @@ public class DevicesPanel extends ListeningJPanel {
             MAX_SELECTOR_WIDTH*2);
       super.add(boxLowerCam_, "span 2, center, wrap");
       
+      add(new JLabel(devices_.getDeviceDisplay(Devices.Keys.SHUTTERLOWER) + ":"));
+      final JComboBox boxLowerShutter_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.ShutterDevice,
+              Devices.Keys.SHUTTERLOWER, MAX_SELECTOR_WIDTH * 2);
+      add(boxLowerShutter_, "span 2, center, wrap");
+
       super.add(new JLabel("Imaging Path A"), "skip 1");
       super.add(new JLabel("Imaging Path B"), "wrap");
       
@@ -110,23 +122,37 @@ public class DevicesPanel extends ListeningJPanel {
       super.add(boxScannerA_);
       final JComboBox boxScannerB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.GalvoDevice,
             Devices.Keys.GALVOB, MAX_SELECTOR_WIDTH);
-      super.add(boxScannerB_, "wrap");
+      if (!ASIdiSPIM.OSPIM) {
+         super.add(boxScannerB_, "wrap");
+      } else {
+         boxScannerB_.setSelectedIndex(0);  // clear setting 
+ 	      super.add(new JLabel("")); 
+      }
       
       super.add(new JLabel(devices_.getDeviceDisplayGeneric(Devices.Keys.PIEZOA) + ":"));
       final JComboBox boxPiezoA_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
-            Devices.Keys.PIEZOA, MAX_SELECTOR_WIDTH);
-      
+            Devices.Keys.PIEZOA, MAX_SELECTOR_WIDTH);     
       super.add(boxPiezoA_);
       final JComboBox boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
             Devices.Keys.PIEZOB, MAX_SELECTOR_WIDTH);
-      super.add(boxPiezoB_, "wrap");
+      if (!ASIdiSPIM.OSPIM) {
+         super.add(boxPiezoB_, "wrap");
+      } else {
+         boxPiezoB_.setSelectedIndex(0);  // clear setting
+         super.add(new JLabel(""), "wrap");
+      }
 
       super.add(new JLabel("Camera:"));
       final JComboBox boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA, MAX_SELECTOR_WIDTH);
       super.add(boxCameraA_);
       final JComboBox boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, MAX_SELECTOR_WIDTH);
-      super.add(boxCameraB_, "wrap");
-      
+      if (!ASIdiSPIM.OSPIM) {
+         super.add(boxCameraB_, "wrap");  
+      } else {
+         boxCameraB_.setSelectedIndex(0); // clear setting
+         super.add (new JLabel(""));
+      }
+         
       super.add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
 
       super.add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 11");

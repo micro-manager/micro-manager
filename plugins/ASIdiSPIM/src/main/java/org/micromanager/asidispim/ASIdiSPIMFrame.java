@@ -30,6 +30,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import com.google.common.eventbus.Subscribe;
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
+import javax.swing.border.Border;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.asidispim.data.Cameras;
@@ -49,6 +52,8 @@ import org.micromanager.asidispim.utils.StagePositionUpdater;
 import org.micromanager.asidispim.utils.SPIMFrame;
 
 import org.micromanager.Studio;
+import org.micromanager.asidispim.data.CameraModes;
+import org.micromanager.asidispim.data.MyStrings;
 import org.micromanager.events.LiveModeEvent;
 
 
@@ -70,14 +75,23 @@ import org.micromanager.events.LiveModeEvent;
 //TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
 //TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
 //TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
+//TODO separate properties into true hardware-related properties and plugin settings (maybe store plugin settings directly in prefs?) 
+//TODO have per-tab way of creating and accessing plugin settings in prefs 
+//TODO with prefs, make sure there is good way of specifying default value
 //TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
 //TODO improve efficiency of camera code by pre-calculating key factors and updating when needed instead of calculating every time
 //TODO add check for correct Hamamatsu model
+//TODO fix slightly incorrect Hamamatsu timing calculation (apparent at small ROI)
 //TODO execute autofocus during acquisition before the desired time point is reached instead of waiting until a timepoint should be collected
 //       or else do autofocus after acquisition instead of before
+//TODO merge all acquisition code instead of autofocus having its own version 
+//TODO better separate GUI from function!! 
 //TODO smart default joystick settings (e.g. different defaults different panels/wheels)
 //TODO calculate and show estimated disk space as part of "durations"
-
+//TODO Make it easier to adjust stack center (or start and end) including autodetect start/end based on content 
+//TODO allow different stack center, number of slices, offset, or other settings for each XY position 
+//TODO iconify tab labels and/or other parts of plugin
+//TODO use new J *=0 to more efficiently clear joystick settings (require comm card version 3.1) 
 
 /**
  *
@@ -105,11 +119,12 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
    private final SettingsPanel settingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
    private final AutofocusPanel autofocusPanel_;
+   private final CameraPanel cameraPanel_;
    private final HelpPanel helpPanel_;
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
-   private PiezoSleepPreventer piezoSleepPreventer_;
+   private final PiezoSleepPreventer piezoSleepPreventer_;
    
    private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
@@ -133,14 +148,9 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       cameras_ = new Cameras(gui_, devices_, props_, prefs_);
       controller_ = new ControllerUtils(gui_, props_, prefs_, devices_, positions_);
       
-      // make sure Live mode is turned off (panels assume it can manipulate
-      //   cameras which requires live mode to be turned off)
-      boolean liveModeOriginally = gui_.live().getIsLiveModeOn();
-      String cameraOriginal = gui_.getCMMCore().getCameraDevice();
-      if (liveModeOriginally) {
-         gui_.live().setLiveMode(false);
-      }
-      
+      // make sure Live mode is turned off 
+      gui_.live().setLiveMode(false);
+ 
       // create the panels themselves
       // in some cases dependencies create required ordering
       devicesPanel_ = new DevicesPanel(gui_, devices_, props_);
@@ -153,15 +163,21 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
             prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
       setupPanelA_ = new SetupPanel(gui_, devices_, props_, joystick_, 
             Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
-            autofocus_);
-      setupPanelB_ = new SetupPanel(gui_, devices_, props_, joystick_,
+            autofocus_, controller_);
+      if (!ASIdiSPIM.OSPIM) { 
+         setupPanelB_ = new SetupPanel(gui_, devices_, props_, joystick_,
             Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_,
-            autofocus_);
+            autofocus_, controller_);
+      } else {
+         setupPanelB_ = null;
+      }
+      
       navigationPanel_ = new NavigationPanel(gui_, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
 
-      dataAnalysisPanel_ = new DataAnalysisPanel(gui_, prefs_);
+      dataAnalysisPanel_ = new DataAnalysisPanel(gui_, prefs_, props_, devices_);
       autofocusPanel_ = new AutofocusPanel(gui_, devices_, props_, prefs_, autofocus_);
+      cameraPanel_ = new CameraPanel(gui_, devices_, props_, prefs_, cameras_);
       settingsPanel_ = new SettingsPanel(gui_, devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       helpPanel_ = new HelpPanel();
@@ -178,16 +194,28 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       }
       tabbedPane_.addLTab(navigationPanel_);  // tabIndex = 0
       tabbedPane_.addLTab(setupPanelA_);      // tabIndex = 1
-      tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
+      if (!ASIdiSPIM.OSPIM) {
+         tabbedPane_.addLTab(setupPanelB_);      // tabIndex = 2
+      }      
       tabbedPane_.addLTab(acquisitionPanel_); // tabIndex = 3
       tabbedPane_.addLTab(dataAnalysisPanel_);// tabIndex = 4
       tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
       final int deviceTabIndex = tabbedPane_.getTabCount() - 1;
       tabbedPane_.addLTab(autofocusPanel_);   // tabIndex = 6
-      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
-      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
+      tabbedPane_.addLTab(cameraPanel_);      // tabIndex = 7 
+      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 8
+      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 9
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
-      
+
+      // make taller tabs for easier navigation between them 
+      // we create own labels instead of having JTabbedPane do it from titles 
+      final Border paddingBorder = BorderFactory.createEmptyBorder(4, 0, 4, 0);
+      for (int i = 0; i < tabbedPane_.getTabCount(); i++) {
+         JLabel lab = new JLabel(((ListeningJPanel) tabbedPane_.getComponentAt(i)).getPanelName());
+         lab.setBorder(paddingBorder);
+         tabbedPane_.setTabComponentAt(i, lab);
+      }
+
       // add the testing panel explicitly by uncommenting following lines
       // intended to only be done in short term for testing
       // TestingPanel testingPanel = new TestingPanel();
@@ -195,7 +223,9 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
 
       // attach position updaters
       stagePosUpdater_.addPanel(setupPanelA_);
-      stagePosUpdater_.addPanel(setupPanelB_);
+      if (!ASIdiSPIM.OSPIM) {
+         stagePosUpdater_.addPanel(setupPanelB_);
+      }
       stagePosUpdater_.addPanel(navigationPanel_);
       stagePosUpdater_.addPanel(statusSubPanel_);
       
@@ -203,7 +233,9 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
 
       // attach live mode listeners
       gui_.events().registerForEvents(setupPanelA_);
-      gui_.events().registerForEvents(setupPanelB_);
+      if (!ASIdiSPIM.OSPIM) {
+         gui_.events().registerForEvents(setupPanelB_);
+      }
       gui_.events().registerForEvents(navigationPanel_);
       
       // set scan for live mode to be triangle 
@@ -234,7 +266,7 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
 
       // set up the window
       super.add(tabbedPane_);  // add the pane to the GUI window
-      super.setTitle("ASI diSPIM Control"); 
+      super.setTitle(ASIdiSPIM.MENUNAME + " Control"); 
       super.pack();           // shrinks the window as much as it can
       super.setResizable(false);
       
@@ -250,15 +282,6 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
             "[" + super.getHeight() + "]"));
       glassPane.add(statusSubPanel_, "dock south");
       
-      // restore live mode and camera
-      if (liveModeOriginally) {
-         gui_.live().setLiveMode(true);
-      }
-      try {
-         gui_.getCMMCore().setCameraDevice(cameraOriginal);
-      } catch (Exception ex) {
-         // do nothing
-      }
    }
    
    public void setHardwareInUse(boolean inuse) {
@@ -272,6 +295,23 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
    public void tabsSetEnabled(boolean enabled) {
       tabbedPane_.setEnabled(enabled);
    }
+   
+   /**
+    * @return CameraModes.Keys value from Camera panel 
+ 	 * (internal, edge, overlap, pseudo-overlap, light sheet)  
+ 	*/ 
+ 	public CameraModes.Keys getSPIMCameraMode() { 
+ 	   CameraModes.Keys val = null; 
+ 	   try { 
+ 	      val = ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode(); 
+ 	   } catch (Exception ex) { 
+ 	   // this case in for when tab is first created and CameraPanel doesn't yet exist 
+ 	   // arguably it's better to use the Java object when possible instead of always going to prefs 
+ 	   val = CameraModes.getKeyFromPrefCode(prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(), 
+ 	             Properties.Keys.PLUGIN_CAMERA_MODE, 0)); 
+ 	   } 
+ 	   return val; 
+ 	} 
    
    /**
     * Do not get into the internals of this plugin without relying on
@@ -291,7 +331,27 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
    public NavigationPanel getNavigationPanel() {
       return navigationPanel_;
    }
-   
+
+   /**
+    * For use of data analysis panel code (running deskew) Do not get into the
+    * internals of this plugin without relying on ASIdiSPIM.api
+    *
+    * @return the currently used instance of the DataAnalysisPanel;
+    */
+   public DataAnalysisPanel getDataAnalysisPanel() {
+      return dataAnalysisPanel_;
+   }
+
+   /**
+    * For use of acquisition panel code (getting camera settings) Do not get
+    * into the internals of this plugin without relying on ASIdiSPIM.api
+    *
+    * @return the currently used instance of the CameraPanel;
+    */
+   public CameraPanel getCameraPanel() {
+      return cameraPanel_;
+   }
+
    /**
     * For use by the acquisition panel code (to update offset setting)
     * Do not get into the internals of this plugin without relying on
@@ -333,7 +393,9 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       // save selections as needed
       devices_.saveSettings();
       setupPanelA_.saveSettings();
-      setupPanelB_.saveSettings();
+      if (!ASIdiSPIM.OSPIM) {
+         setupPanelB_.saveSettings();
+      }      
       navigationPanel_.saveSettings();
       acquisitionPanel_.saveSettings();
       settingsPanel_.saveSettings();
@@ -347,7 +409,9 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       // TODO force user to cancel any ongoing acquisition before closing
       acquisitionPanel_.windowClosing();
       setupPanelA_.windowClosing();
-      setupPanelB_.windowClosing();
+      if (!ASIdiSPIM.OSPIM) {
+         setupPanelB_.windowClosing();
+      }      
    }
    
    @Override
@@ -355,6 +419,11 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
       stagePosUpdater_.stop();
       saveSettings();
       windowClosing();
+      gui_.events().unregisterForEvents(setupPanelA_);
+      if (!ASIdiSPIM.OSPIM) {
+         gui_.events().unregisterForEvents(setupPanelB_);
+      }
+      gui_.events().unregisterForEvents(navigationPanel_);
       super.dispose();
    }
   

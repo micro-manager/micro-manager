@@ -23,9 +23,15 @@ package org.micromanager.asidispim;
 
 import java.awt.Color;
 import java.awt.event.WindowEvent;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+import org.micromanager.asidispim.api.ASIdiSPIMImplementation;
+import org.micromanager.asidispim.api.ASIdiSPIMInterface;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -36,13 +42,15 @@ import org.scijava.plugin.SciJavaPlugin;
  */
 @Plugin(type = MenuPlugin.class)
 public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
-   public final static String MENUNAME = "ASI diSPIM";
-   public final static String TOOLTIPDESCRIPTION = "Control the ASI diSPIM";
+   public static final boolean OSPIM = false;
+   public final static String MENUNAME = "ASI " + (OSPIM ? "oSPIM" : "diSPIM");
+   public final static String RMINAME = "ASIdiSPIM_API"; 
+   public final static String TOOLTIPDESCRIPTION = "Control the " + MENUNAME; 
    public final static Color BORDERCOLOR = Color.gray;
 
    private Studio gui_;
    private static ASIdiSPIMFrame myFrame_ = null;
-
+   private static Registry registry_ = null;
   
    public static ASIdiSPIMFrame getFrame() {
       return myFrame_;
@@ -55,7 +63,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getCopyright() {
-      return "University of California and ASI, 2013-2016";
+      return "University of California and Applied Scientific Precision(ASI), 2013-2017";
    }
 
    @Override
@@ -79,6 +87,18 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
          gui_.logs().showError(e);
       }
       myFrame_.setVisible(true);
+
+      // create and publish object to allow remote invocation of API methods 
+      // see documentation of Java RMI 
+      try {
+         ASIdiSPIMInterface api = new ASIdiSPIMImplementation();
+         ASIdiSPIMInterface stub = (ASIdiSPIMInterface) UnicastRemoteObject.exportObject(api, 0);
+         // Bind the remote object's stub in the registry 
+         registry_ = LocateRegistry.createRegistry(Registry.REGISTRY_PORT);  // maybe we need getRegistry() instead? 
+         registry_.rebind(RMINAME, stub);
+      } catch (RemoteException ex) {
+         throw new RuntimeException("Error registering API for RMI access", ex);
+      }
    }
 
    @Override
@@ -89,7 +109,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getName() {
-      return "ASI diSPIM";
+      return MENUNAME;
    }
 
    @Override

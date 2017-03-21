@@ -37,6 +37,7 @@ import mmcorej.StrVector;
 
 
 import org.micromanager.Studio;
+import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.utils.DevicesListenerInterface;
 import org.micromanager.asidispim.utils.MyDialogUtils;
@@ -54,6 +55,9 @@ import org.micromanager.asidispim.utils.MyDialogUtils;
  */
 public class Devices {
 
+   // TODO would like to be able to use static methods on devices (e.g. to see whether a camera supports a particular triggering mode) 
+ 	//   but it isn't possible as presently implemented  => consider other architectures 
+   
    private final List<String> loadedDevices_;
    private final Prefs prefs_;
    private final CMMCore core_;
@@ -93,24 +97,28 @@ public class Devices {
       // SOURCE_SPIM, SOURCE_LOWER,
       PLOGIC,
       TIGERCOMM,
+      UPPERHDRIVE, // horizontal drive for oSPIM head 
+      SHUTTERLOWER,  // shutter to be used with lower camera 
       // ASGALVOA, ASGALVOB,
       // when adding new devices update Devices constructor, 
       // getDefaultDeviceData(), and Libraries enum
    };
    
    public final static Set<Devices.Keys> STAGES1D = EnumSet.of(
-         Devices.Keys.LOWERZDRIVE, Devices.Keys.UPPERZDRIVE,
-         Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
+         Devices.Keys.LOWERZDRIVE, Devices.Keys.UPPERZDRIVE, 
+         Devices.Keys.UPPERHDRIVE, Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
    public final static Set<Devices.Keys> PIEZOS = EnumSet.of(
          Devices.Keys.PIEZOA, Devices.Keys.PIEZOB);
    public final static Set<Devices.Keys> STAGES2D = EnumSet.of(
          Devices.Keys.XYSTAGE, Devices.Keys.GALVOA, Devices.Keys.GALVOB);
    public final static Set<Devices.Keys> GALVOS = EnumSet.of(
-         Devices.Keys.GALVOA, Devices.Keys.GALVOB);
+           Devices.Keys.GALVOA, Devices.Keys.GALVOB);
    public final static Set<Devices.Keys> CAMERAS = EnumSet.of(
-         Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
-         Devices.Keys.CAMERALOWER);
-
+           Devices.Keys.CAMERAA, Devices.Keys.CAMERAB, Devices.Keys.MULTICAMERA,
+           Devices.Keys.CAMERALOWER);
+   public final static Set<Devices.Keys> SPIM_CAMERAS
+           = ASIdiSPIM.OSPIM ? EnumSet.of(Devices.Keys.CAMERAA)
+                   : EnumSet.of(Devices.Keys.CAMERAA, Devices.Keys.CAMERAB);
 
    public static enum Libraries {
       NODEVICE("NoDevice"), // if the device doesn't exist in Micro-manager
@@ -118,7 +126,8 @@ public class Devices {
       ASITIGER("ASITiger"), // ASI TG-1000 controller
       HAMCAM("HamamatsuHam"), 
       PCOCAM("PCO_Camera"), 
-      ANDORCAM("AndorSDK3"),
+      ANDORCAM("AndorSDK3"), 
+ 	   PVCAM("PVCAM"), 
       DEMOCAM("DemoCamera"),
       UTILITIES("Utilities"),
       UNKNOWN("Unknown") // if the device is valid but not one we know about
@@ -704,6 +713,9 @@ public class Devices {
       case UPPERZDRIVE:
          return new DeviceData(key, "SPIM Head Height",
                Sides.NONE, true);
+         case UPPERHDRIVE:
+            return new DeviceData(key, "SPIM Head Horzntl",
+                    Sides.NONE, true);
          // case ASGALVOA: return new DeviceData(Keys.ASGALVOA,
          // "Anti-striping Micromirror", Sides.A, true);
          // case ASGALVOB: return new DeviceData(Keys.ASGALVOB,
@@ -716,6 +728,8 @@ public class Devices {
          return new DeviceData(key, "PLogic Card", Sides.NONE, true);
       case TIGERCOMM:
          return new DeviceData(key, "TigerComm", Sides.NONE, false);
+      case SHUTTERLOWER: 
+ 	      return new DeviceData(key, "Lower Shutter", Sides.NONE, true); 
       case CORE: // special case
          d_new = new DeviceData(key, "Core", Sides.NONE, false);
          d_new.mmDevice = "Core";
@@ -765,7 +779,9 @@ public class Devices {
       deviceInfo_.put(Keys.LOWERZDRIVE, getDefaultDeviceData(Keys.LOWERZDRIVE));
       deviceInfo_.put(Keys.UPPERZDRIVE, getDefaultDeviceData(Keys.UPPERZDRIVE));
       deviceInfo_.put(Keys.PLOGIC, getDefaultDeviceData(Keys.PLOGIC));
+      deviceInfo_.put(Keys.SHUTTERLOWER, getDefaultDeviceData(Keys.SHUTTERLOWER));
       deviceInfo_.put(Keys.TIGERCOMM, getDefaultDeviceData(Keys.TIGERCOMM));
+      deviceInfo_.put(Keys.UPPERHDRIVE, getDefaultDeviceData(Keys.UPPERHDRIVE)); 
       // deviceInfo_.put(Keys.SOURCE_SPIM,  getDefaultDeviceData(Keys.SOURCE_SPIM));
       // deviceInfo_.put(Keys.SOURCE_LOWER,  getDefaultDeviceData(Keys.SOURCE_LOWER));
       // deviceInfo_.put(Keys.ASGALVOA, getDefaultDeviceData(Keys.ASGALVOA));
