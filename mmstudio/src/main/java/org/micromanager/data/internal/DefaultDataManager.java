@@ -112,6 +112,14 @@ public final class DefaultDataManager implements DataManager {
       if (path == null) {
          return null;
       }
+      
+      // Remove trailing file system separator from argument because
+      // this method assumes input does not end in separator character
+      String lastChar = path.substring(path.length() - 1);
+      if (lastChar.equals(File.separator)) {
+	  path = path.substring(0, path.length() - 1);
+      }
+	  
       File dir = new File(path);
       if (!(dir.exists())) {
          // Path is already unique
