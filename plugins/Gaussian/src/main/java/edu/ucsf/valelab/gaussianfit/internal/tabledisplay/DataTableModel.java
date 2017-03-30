@@ -7,10 +7,10 @@
  * Model for the data shown in the Data window in Localization microscopy
  * plugin
  * 
- * @author - Nico Stuurman, September 2017
+ * @author - Nico Stuurman, September 2016
  * 
  * 
-Copyright (c) 2017-2017, Regents of the University of California
+Copyright (c) 2016-2017, Regents of the University of California
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ import javax.swing.table.AbstractTableModel;
 public class DataTableModel extends AbstractTableModel {
    
    private final String[] columnNames_ = {"ID", "Image", "Nr of spots",
-      "2C Reference", "Ch.", "X", "Y", "stdX", "stdY", "nrPhotons"};
+      "2C Reference", "Ch.", "X", "Y", "std", "nrPhotons"};
    private final ArrayList<RowData> rowData_;
    public final static NullClass NULLINSTANCE = new NullClass();
 
@@ -141,17 +141,11 @@ public class DataTableModel extends AbstractTableModel {
          }
       } else if (col == 7) {
          if (rowData_.get(row).isTrack_) {
-            return rowData_.get(row).stdX_;
+            return rowData_.get(row).std_;
          } else {
             return NULLINSTANCE;
          }
       } else if (col == 8) {
-         if (rowData_.get(row).isTrack_) {
-            return rowData_.get(row).stdY_;
-         } else {
-            return NULLINSTANCE;
-         }
-      } else if (col == 9) {
          if (rowData_.get(row).isTrack_) {
             return Math.round(rowData_.get(row).totalNrPhotons_);
          } else {
@@ -177,7 +171,7 @@ public class DataTableModel extends AbstractTableModel {
          case 0:
          case 2:
          case 4:
-         case 9:
+         case 8:
             return Integer.class;
          default:  
             return Double.class;

@@ -943,13 +943,13 @@ public class DataCollectionForm extends JFrame {
           for (int i = 0; i < rows.length; i++) {
              if (saveFormatBox_.getSelectedIndex() == 0) {
                 if (i == 0)
-                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), false, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(rows[i]), false, 
                            dir_, this);
                 else
-                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(i), true, 
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(rows[i]), true, 
                            dir_, this);
              } else {
-                LoadAndSave.saveDataAsText(mainTableModel_.getRow(i), this);
+                LoadAndSave.saveDataAsText(mainTableModel_.getRow(rows[i]), this);
              }
           }
        } else {
@@ -1078,23 +1078,6 @@ public class DataCollectionForm extends JFrame {
       }
    }
 
-  
-   public void listPairs(double maxDistance, boolean showPairs, 
-           boolean showImage, boolean savePairs, String filePath, 
-           boolean showSummary, boolean showGraph) {
-      final int[] rows = mainTable_.getSelectedRowsSorted();
-      if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), 
-                 "Please select a dataset");
-         return;
-      }
-      if (showPairs || showImage || savePairs || showSummary || showGraph) {
-         for (int row : rows) {
-            ParticlePairLister.ListParticlePairs(row, maxDistance, showPairs, 
-                   showImage, savePairs, filePath, showSummary, showGraph);
-         }
-      }
-   }
    
    public void listPairTracks(ParticlePairLister.Builder builder) {
       final int[] rows = mainTable_.getSelectedRowsSorted();
@@ -1207,13 +1190,14 @@ public class DataCollectionForm extends JFrame {
          if (rowData.isTrack_) {
             ArrayList<Point2D.Double> xyList = ListUtils.spotListToPointList(rowData.spotList_);
             Point2D.Double avg = ListUtils.avgXYList(xyList);
-            Point2D.Double stdDev = ListUtils.stdDevXYList(xyList, avg);
+            Point2D.Double stdDev = ListUtils.stdDevsXYList(xyList, avg);
             
             data += "\n" + 
                     "Average X: " + avg.x + "\n" +
                     "StdDev X: " + stdDev.x + "\n" + 
                     "Average Y: " + avg.y + "\n" +
-                    "StdDev Y: " + stdDev.y;           
+                    "StdDev Y: " + stdDev.y + "\n" +
+                    "StdDev: " + rowData.std_;           
          }
          
          TextWindow tw = new TextWindow("Info for " + rowData.getName(), data, 300, 300);
@@ -1376,7 +1360,7 @@ public class DataCollectionForm extends JFrame {
             
             ArrayList<Point2D.Double> xyPoints = ListUtils.spotListToPointList(frameList);
             Point2D.Double listAvg = ListUtils.avgXYList(xyPoints);
-            Point2D.Double stdDev = ListUtils.stdDevXYList(xyPoints, listAvg);
+            Point2D.Double stdDev = ListUtils.stdDevsXYList(xyPoints, listAvg);
             tad.xAvg = listAvg.x;
             tad.yAvg = listAvg.y;
             tad.xStdDev = stdDev.x;
