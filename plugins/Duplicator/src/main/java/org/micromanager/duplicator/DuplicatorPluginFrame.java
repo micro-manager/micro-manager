@@ -75,7 +75,8 @@ public class DuplicatorPluginFrame extends MMDialog {
       
       // Not sure if this is needed, be safe for now
       if (!ourStore_.getIsFrozen()) {
-         studio_.logs().showMessage("Can not duplicate ongoing acquisitions");
+         studio_.logs().showMessage("Can not duplicate ongoing acquisitions", 
+                 window.getAsWindow());
          super.dispose();
          return;
       }
