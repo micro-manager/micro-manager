@@ -671,9 +671,10 @@ public class LoadAndSave {
                           + "fit_mode: " + rowData.shape_ + tab
                           + "is_track: " + rowData.isTrack_ + tab
                           + "has_Z: " + rowData.hasZ_ + "\n");
-                  fw.write("molecule\tchannel\tframe\tslice\tpos\tx\ty\tintensity\t"
-                          + "background\twidth\ta\ttheta\tx_position\ty_position\t"
-                          + "x_precision\tintensity_aperture\tbackground_aperture\t"
+                  fw.write("molecule\tframe\tslice\tchannel\tpos\tx_position\t" 
+                          + "y_position\tx\ty\tintensity\t"
+                          + "background\twidth\ta\ttheta\t"
+                          + "sigma\tintensity_aperture\tbackground_aperture\t"
                           + "intensity_ratio\tm_sigma");
                   if (rowData.hasZ_) {
                      fw.write("\tz");
@@ -690,10 +691,12 @@ public class LoadAndSave {
                      
                      if (gd != null) {
                         fw.write("" + counter + tab +
-                                gd.getChannel() + tab +
                                 gd.getFrame() + tab +
                                 gd.getSlice() + tab + 
+                                gd.getChannel() + tab +
                                 gd.getPosition() + tab + 
+                                gd.getX() + tab + 
+                                gd.getY() + tab + 
                                 String.format("%.2f", gd.getXCenter()) + tab + 
                                 String.format("%.2f", gd.getYCenter()) + tab +
                                 String.format("%.2f", gd.getIntensity()) + tab +
@@ -701,8 +704,6 @@ public class LoadAndSave {
                                 String.format("%.2f",gd.getWidth()) + tab +
                                 String.format("%.3f", gd.getA()) + tab + 
                                 String.format("%.3f",gd.getTheta()) + tab + 
-                                gd.getX() + tab + 
-                                gd.getY() + tab + 
                                 String.format("%.3f", gd.getSigma()) + tab);
                         String remainder = "";
                         if (gd.hasKey(SpotData.Keys.APERTUREINTENSITY)) {
