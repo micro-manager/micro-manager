@@ -363,6 +363,10 @@ public final class OMEMetadata {
                   new Time(MDUtils.getElapsedTimeMs(tags), UNITS.MS),
                   position, indices.planeIndex_);
          }
+         if (MDUtils.hasPositionName(tags)) {
+            metadata_.setStageLabelName(
+                    MDUtils.getPositionName(tags), position);
+         }
 
       } catch (JSONException e) {
          ReportingUtils.logError("Problem adding tags to OME Metadata");
