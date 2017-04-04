@@ -169,7 +169,7 @@ public class SurfaceData implements Covariant {
         }
     }
     
-    public double[] curvedSurfacePower(AcquisitionEvent event) {
+    public double[] curvedSurfacePower(AcquisitionEvent event, double multiplier) {
         XYStagePosition xyPos = event.xyPosition_;
         double zPosition = event.zPosition_;
         Point2D.Double[] corners = xyPos.getFullTileCorners();
@@ -211,7 +211,7 @@ public class SurfaceData implements Covariant {
                         float interpVal = surface_.waitForCurentInterpolation().getInterpolatedValue(stageCoords.x, stageCoords.y);
                         float normalAngle = surface_.waitForCurentInterpolation().getNormalAngleToVertical(stageCoords.x, stageCoords.y);
                         relativePower[flatIndex] = basePower_ * CurvedSurfaceCalculations.getRelativePower(meanFreePath_,
-                                Math.max(0, zPosition - interpVal), normalAngle, radiusOfCurvature_);
+                                Math.max(0, zPosition - interpVal), normalAngle, radiusOfCurvature_) * multiplier;
                     }
                 } catch (InterruptedException ex) {
                     Log.log("Couldn't calculate curved surface power");

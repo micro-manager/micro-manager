@@ -44,6 +44,9 @@ public class CovariantPairing {
    private IdentityHashMap<Acquisition, Object> excludedAcqs_; //not actually a map, but theres no IdentityHashSet
    private PolynomialSplineFunction interpolant_;
    private LinearInterpolator interpolator_;
+   //for randomizing excitaitions
+   public static String lastPositionName_ = "None";
+    public static double powerMultipler_ = 1.0;
    
    public CovariantPairing(Covariant independent, Covariant dependent) {
       independent_ = independent;
@@ -65,20 +68,35 @@ public class CovariantPairing {
             return interpolant_.value(indVal);
         }
     }
-
+   
    public void updateHardwareBasedOnPairing(AcquisitionEvent event) throws Exception {
       //special behavior for curved surface calcualtions
       if (independent_ instanceof SurfaceData && ((SurfaceData) independent_).isCurvedSurfaceCalculation()) {
+         //randomize excitaitons
+         String  posName = event.xyPosition_.getName();
+         if (!posName.equals(lastPositionName_)) {
+            double minMult = 0.5;
+            double maxMult = 2.0;
+            lastPositionName_ = event.xyPosition_.getName();
+            powerMultipler_ = Math.random() * (maxMult - minMult) + minMult;
+         }
+         
          if (dependent_.getName().startsWith("TeensySLM1")) {
-            String name = "TeensySLM1";
             //get learned excitations
-            byte[] eomSettings = SurfaceMorphologyLearningUtil.getExcitations(event, ((SurfaceData)independent_).getSurface());
-            
+//            byte[] eomSettings = SurfaceMorphologyLearningUtil.getExcitations(event, ((SurfaceData)independent_).getSurface());
+
+            double[] powers = ((SurfaceData) independent_).curvedSurfacePower(event, powerMultipler_);
+            byte[] eomSettings = new byte[powers.length];
+            for (int i = 0; i < powers.length; i++) {
+               eomSettings[i] = (byte) (0xff & ((int) getInterpolatedNumericalValue(new CovariantValue(powers[i]))));
+            }
+
+            String name = "TeensySLM1";
             Magellan.getCore().setSLMImage(name, eomSettings);
             Magellan.getCore().displaySLMImage(name);
          } else if (dependent_.getName().startsWith("TeensySLM2")) {
             //current value is a string, even though stored values 
-            double[] powers = ((SurfaceData) independent_).curvedSurfacePower(event);
+            double[] powers = ((SurfaceData) independent_).curvedSurfacePower(event, powerMultipler_);
             byte[] eomSettings = new byte[powers.length];
             for (int i = 0; i < powers.length; i++) {
                eomSettings[i] = (byte) (0xff & ((int) getInterpolatedNumericalValue(new CovariantValue(powers[i]))));
