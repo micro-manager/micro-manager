@@ -946,19 +946,16 @@ public class DataCollectionForm extends JFrame {
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {
        int rows[] = mainTable_.getSelectedRowsSorted();
        if (rows.length > 0) {
+          RowData[] rowData = new RowData[rows.length];
           for (int i = 0; i < rows.length; i++) {
-             if (saveFormatBox_.getSelectedIndex() == 0) {
-                if (i == 0) {
-                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(rows[i]), false, 
-                           dir_, this);
-                } else {
-                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(rows[i]), true,
-                           dir_, this);
-                }
-             } else {
-                LoadAndSave.saveDataAsText(mainTableModel_.getRow(rows[i]), this);
-             }
+             rowData[i] = mainTableModel_.getRow(rows[i]);
           }
+             if (saveFormatBox_.getSelectedIndex() == 0) {
+                dir_ = LoadAndSave.saveData(rowData, false, dir_, this);
+             } else {
+                dir_ = LoadAndSave.saveDataAsText(rowData, dir_, this);
+             }
+          
        } else {
           JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to save");
        }
