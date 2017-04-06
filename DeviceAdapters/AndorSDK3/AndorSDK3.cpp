@@ -38,6 +38,7 @@
 #include "FloatProperty.h"
 #include "AOIProperty.h"
 #include "BooleanProperty.h"
+#include "BooleanPropertyWithPoiseControl.h"
 #include "ExposureProperty.h"
 
 #ifdef _WINDOWS
@@ -590,7 +591,7 @@ int CAndorSDK3Camera::Initialize()
                                                  cameraDevice->GetFloat(L"SensorTemperature"), 
                                                  callbackManager_, true, false);
 
-   overlap_property = new TBooleanProperty(TAndorSDK3Strings::OVERLAP, cameraDevice->GetBool(L"Overlap"),
+   overlap_property = new TBooleanPropertyWithPoiseControl(TAndorSDK3Strings::OVERLAP, cameraDevice->GetBool(L"Overlap"),
                                            callbackManager_, false);
 
    exposureTime_property = new TExposureProperty(MM::g_Keyword_Exposure,
