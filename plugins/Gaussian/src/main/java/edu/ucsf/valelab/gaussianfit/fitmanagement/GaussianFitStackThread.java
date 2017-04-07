@@ -128,19 +128,20 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                }
                double N = cPCF * fitResult.getParms()[GaussianFit.INT]
                        * (2 * Math.PI * gs * gs);
-               // calculate error using formular from Thompson et al (2002)
+               
+               // calculate error using formula from Thompson et al (2002)
                // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
                double s = gs * pixelSize_;
                double sasqr = s * s + (pixelSize_ * pixelSize_) / 12;
                double varX = sasqr / N
                        + (8 * Math.PI * s * s * s * s * bgr * bgr) / (pixelSize_ * pixelSize_ * N * N);
-               // Assume that the variance in X and Y are uncorrelated
-               // shortcut: Do not calculate variane in Y, but use the variance in X twice
-               double sigma = Math.sqrt(varX + varX);
+               double sigma = Math.sqrt(varX);
+               
                // # of photons and background as calculated using the method by
                // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
                double NAperture = cPCF * fitResult.getApertureIntensity();
                double bgrAperture = cPCF * (fitResult.getApertureBackground() - baseLevel_);
+               
                // Calculate error using the method by Mortenson et al.
                // http://dx.doi.org/10.1038/nmeth.1447
                // sasqr = s * s + (a * a)/12
@@ -152,9 +153,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                if (this.gain_ > 2.0) {
                   mVarX = 2 * mVarX;
                }
-               // Assume that the variance in X and Y are uncorrelated
-               // shortcut: Do not calculate variane in Y, but use the variance in X twice
-               double mSigma = Math.sqrt(mVarX + mVarX);
+               double mSigma = Math.sqrt(mVarX);
 
                if (fitResult.getParms().length >= 6) {
                   sx = fitResult.getParms()[GaussianFit.S1] * pixelSize_;
