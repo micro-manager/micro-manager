@@ -273,6 +273,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
             double NAperture = cPCF * fitResult.getApertureIntensity();
             double bgrAperture = cPCF * (fitResult.getApertureBackground() - baseLevel_);
+            
             // Calculate error using the method by Mortenson et al.
             // http://dx.doi.org/10.1038/nmeth.1447
             // sasqr = s * s + (a * a)/12
@@ -284,9 +285,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             if (this.gain_ > 2.0) {
                mVarX = 2 * mVarX;
             }
-            // Assume that the variance in X and Y are uncorrelated
-            // shortcut: Do not calculate variane in Y, but use the variance in X twice
-            double mSigma = Math.sqrt(mVarX + mVarX);
+            double mSigma = Math.sqrt(mVarX);
             
             double width = 2 * s;
             if (fitResult.getParms().length >= 6) {
