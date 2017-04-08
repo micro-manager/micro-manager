@@ -121,7 +121,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                double yMax = (fitResult.getParms()[GaussianFit.YC] - 
                        super.getHalfBoxSize() + spot.getY()) * pixelSize_; 
                // express background in photons after base level correction
-               double bgr = cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_);
+               double bgr = Math.sqrt(cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_));
                
                if (fitResult.getParms().length >= 5) {
                   gs = fitResult.getParms()[GaussianFit.S];
@@ -140,7 +140,7 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
                // # of photons and background as calculated using the method by
                // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
                double NAperture = cPCF * fitResult.getApertureIntensity();
-               double bgrAperture = cPCF * (fitResult.getApertureBackground() - baseLevel_);
+               double bgrAperture = Math.sqrt(cPCF * (fitResult.getApertureBackground() - baseLevel_));
                
                // Calculate error using the method by Mortenson et al.
                // http://dx.doi.org/10.1038/nmeth.1447

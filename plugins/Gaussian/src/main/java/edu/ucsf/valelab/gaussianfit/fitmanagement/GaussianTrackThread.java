@@ -262,7 +262,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             double s = fitResult.getParms()[GaussianFit.S] * pixelSize_;
             double sasqr = s * s + (pixelSize_ * pixelSize_) / 12;
             // express background in photons after base level correction
-            double bgr = cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_);
+            double bgr = Math.sqrt(cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_));
             // calculate error using formular from Thompson et al (2002)
             // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
             double sigma = (s * s + (pixelSize_ * pixelSize_) / 12) / 
@@ -272,7 +272,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             // # of photons and background as calculated using the method by
             // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
             double NAperture = cPCF * fitResult.getApertureIntensity();
-            double bgrAperture = cPCF * (fitResult.getApertureBackground() - baseLevel_);
+            double bgrAperture = Math.sqrt(cPCF * (fitResult.getApertureBackground() - baseLevel_));
             
             // Calculate error using the method by Mortenson et al.
             // http://dx.doi.org/10.1038/nmeth.1447
