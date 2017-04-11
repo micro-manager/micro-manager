@@ -7,6 +7,9 @@
 
 class ICallBackManager;
 
+static const char * const g_StatusON = "On";
+static const char * const g_StatusOFF = "Off";
+
 class TBooleanProperty : public andor::IObserver
 {
 public:
@@ -19,13 +22,15 @@ protected:
    void Update(andor::ISubject* Subject);
    int OnBoolean(MM::PropertyBase* pProp, MM::ActionType eAct);
    typedef MM::Action<TBooleanProperty> CPropertyAction;
-
-private:
    void setFeature(const std::string & value);
+   void initialise(bool readOnly);
+   virtual MM::ActionFunctor* CreatePropertyAction();
 
-private:
+   TBooleanProperty(){};
+
    andor::IBool* boolean_feature_;
    ICallBackManager* callback_;
+   std::string MM_name_;
 };
 
 #endif // include only once

@@ -68,6 +68,22 @@ int CTigerCommHub::Initialize()
    command << firmwareVersion_;
    RETURN_ON_MM_ERROR ( CreateProperty(g_FirmwareVersionPropertyName, command.str().c_str(), MM::Float, true) );
 
+   // get compile date information from the controller, this is just for TigerComm (hub/serial card)
+   ret = QueryCommand("0 CD");  // N.B. this is different for non-Tiger controllers like MS/WK-2000
+   if(ret == ERR_UNRECOGNIZED_ANSWER)
+      ret = DEVICE_NOT_SUPPORTED;
+   RETURN_ON_MM_ERROR (ret);
+   firmwareDate_ = LastSerialAnswer();
+   RETURN_ON_MM_ERROR ( CreateProperty(g_FirmwareDatePropertyName, firmwareDate_.c_str(), MM::String, true) );
+
+   // get build name information from the controller, this is just for TigerComm (hub/serial card)
+   ret = QueryCommand("0 BU");  // N.B. this is different for non-Tiger controllers like MS/WK-2000
+   if(ret == ERR_UNRECOGNIZED_ANSWER)
+      ret = DEVICE_NOT_SUPPORTED;
+   RETURN_ON_MM_ERROR (ret);
+   firmwareBuild_ = LastSerialAnswer();
+   RETURN_ON_MM_ERROR ( CreateProperty(g_FirmwareBuildPropertyName, firmwareBuild_.c_str(), MM::String, true) );
+
    // add a description
    RETURN_ON_MM_ERROR ( CreateProperty(MM::g_Keyword_Description, g_TigerCommHubDescription, MM::String, true) );
 

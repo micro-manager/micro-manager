@@ -53,6 +53,7 @@ class TExposureProperty;
 class TFloatStringProperty;
 class TBooleanProperty;
 class TAOIProperty;
+class TBooleanPropertyWithPoiseControl;
 class SnapShotControl;
 class TAndorEnumValueMapper;
 class TTriggerRemapper;
@@ -179,7 +180,7 @@ private:
    TFloatProperty* readTemperature_property;
    TEnumProperty* temperatureStatus_property;
    TBooleanProperty* sensorCooling_property;
-   TBooleanProperty* overlap_property;
+   TBooleanPropertyWithPoiseControl* overlap_property;
    TBooleanProperty* pretrigger_property;
    TBooleanProperty* piv_property;
    TBooleanProperty* MCPIntelligate_property;
