@@ -26,12 +26,14 @@ public class SpotDataConverter {
            GaussianFit.Data fitResult, 
            GaussianInfo info,
            ZCalibrator zc) {
+      
       SpotData spotData = new SpotData(spot);
       double sx;
       double sy;
       double a = 1;
       double theta = 0;
       double gs = info.getFixedWidthNm() / info.getPixelSize() / 2;
+      double cPCF = info.getPhotonConversionFactor() / info.getGain();
       if (fitResult.getParms().length >= 4) {
 
          double xMax = (fitResult.getParms()[GaussianFit.XC]
@@ -39,14 +41,17 @@ public class SpotDataConverter {
          double yMax = (fitResult.getParms()[GaussianFit.YC]
                  - info.getHalfBoxSize() + spot.getY()) * info.getPixelSize();
          // express background in photons after base level correction
-         double bgr = Math.sqrt(
-                 info.getPhotonConversionFactor()
-                 * (fitResult.getParms()[GaussianFit.BGR] - info.getBaseLevel()));
+         double bInElectrons = 
+                 cPCF * (fitResult.getParms()[GaussianFit.BGR] - info.getBaseLevel());
+         // Add the read-noise of the camera (expressed in electrons
+         double bgr = Math.sqrt( bInElectrons + (info.getReadNoise() * info.getReadNoise()));
 
          if (fitResult.getParms().length >= 5) {
             gs = fitResult.getParms()[GaussianFit.S];
          }
-         double N = info.getPhotonConversionFactor() * fitResult.getParms()[GaussianFit.INT];
+         double N = cPCF * fitResult.getParms()[GaussianFit.INT]
+                       * (2 * Math.PI * gs * gs);
+         // double N = info.getPhotonConversionFactor() * fitResult.getParms()[GaussianFit.INT];
 
          // calculate error using formula from Thompson et al (2002)
          // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
@@ -62,8 +67,8 @@ public class SpotDataConverter {
 
          // # of photons and background as calculated using the method by
          // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
-         double NAperture = info.getPhotonConversionFactor() * fitResult.getApertureIntensity();
-         double bgrAperture = Math.sqrt( info.getPhotonConversionFactor() * 
+         double NAperture = cPCF * fitResult.getApertureIntensity();
+         double bgrAperture = Math.sqrt( cPCF * 
                  (fitResult.getApertureBackground() - info.getBaseLevel() ) );
 
          // Calculate error using the method by Mortenson et al.
