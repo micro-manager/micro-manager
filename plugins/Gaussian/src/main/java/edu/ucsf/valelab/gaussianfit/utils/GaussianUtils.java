@@ -86,6 +86,8 @@ public class GaussianUtils {
    public static final int S1 = 4;
    public static final int S2 = 5;
    public static final int S3 = 6;
+   
+   // private static final double ONEOVER2PI = 1.0 / (2.0 * Math.PI);
 
    /**
     * Create a frame with a plot of the data given in XYSeries
@@ -554,6 +556,12 @@ public class GaussianUtils {
       }
       double exponent = (sqr(x - params[XC])  + sqr(y - params[YC])) / (2 * sqr(params[S]));
       double res = params[INT] * Math.exp(-exponent) + params[BGR];
+      /*
+      // alt. weigh intensity with 1/ s^2
+      double exponent = (sqr( (x + 0.5) - params[XC])  + sqr( (y + 0.5) - params[YC])) / (2 * sqr(params[S]));
+      double res = params[INT] * ONEOVER2PI * ( 1/ ( params[S] * params[S])) * 
+              Math.exp(-exponent) + params[BGR];
+      */
       return res;
    }
 
