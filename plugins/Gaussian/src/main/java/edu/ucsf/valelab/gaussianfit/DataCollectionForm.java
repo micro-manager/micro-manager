@@ -1707,7 +1707,9 @@ public class DataCollectionForm extends JFrame {
             rt.addValue(Terms.SIGMA, ResultsTable.d2s(gd.getSigma(), 2));
 
             for (String key : gd.getKeys()) {
-               if (key.equals(SpotData.Keys.INTENSITYRATIO) || key.equals(SpotData.Keys.MSIGMA)) {
+               if (key.equals(SpotData.Keys.INTENSITYRATIO) || 
+                       key.equals(SpotData.Keys.MSIGMA) || 
+                       key.equals(SpotData.Keys.INTEGRALSIGMA) ) {
                   rt.addValue(key, ResultsTable.d2s(gd.getValue(key), 2));
                } else {
                   rt.addValue(key, gd.getValue(key));
