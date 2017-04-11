@@ -167,6 +167,7 @@
     <ClCompile Include="AndorSDK3.cpp" />
     <ClCompile Include="AOIProperty.cpp" />
     <ClCompile Include="BooleanProperty.cpp" />
+    <ClCompile Include="BooleanPropertyWithPoiseControl.cpp" />
     <ClCompile Include="CallBackManager.cpp" />
     <ClCompile Include="EnumProperty.cpp" />
     <ClCompile Include="EventsManager.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="AOIStrings.h" />
     <ClInclude Include="atunpacker.h" />
     <ClInclude Include="BooleanProperty.h" />
+    <ClInclude Include="BooleanPropertyWithPoiseControl.h" />
     <ClInclude Include="CallBackManager.h" />
     <ClInclude Include="EnumProperty.h" />
     <ClInclude Include="EventsManager.h" />

@@ -43,7 +43,7 @@ void SnapShotControl::setupTriggerModeSilently()
    }
    else if (temp_ws.compare(L"External Start") == 0)
    {
-      triggerMode->Set(L"External");
+      triggerMode->Set(L"Software");
       set_internal_ = false;
       in_software_ = true;
       in_external_ = true;
