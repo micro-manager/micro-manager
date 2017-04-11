@@ -59,8 +59,9 @@ public class SpotData {
       // (average of outer rows and columns of the box around the spot)
       public static final String APERTUREBACKGROUND = "Bkr (Apert.)";
       // Error estimate according to Mortensen et al. 2010 (http://dx.doi.org/10.1038/nmeth.1447
-      // uses aperture method intensity
       public static final String MSIGMA = "Sigma-alt.";
+      // integral method sigma estimate from Mortenson et al. paper
+      public static final String INTEGRALSIGMA = "Sigma-integral";
       // Number of spots in track or group
       public static final String N = "n";
       // Std. Deviation of positions in track or group
