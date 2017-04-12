@@ -2377,7 +2377,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
             gui_.setAcquisitionProperty(acqName, "SPIMAcqSettings", acqSettingsJSON);
             gui_.setAcquisitionProperty(acqName, "SPIMtype", ASIdiSPIM.oSPIM ? "oSPIM" : "diSPIM");
-            gui_.setAcquisitionProperty(acqName, "AcqusitionName", acqName);
+            gui_.setAcquisitionProperty(acqName, "AcquisitionName", acqName);
                       
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered

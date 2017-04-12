@@ -41,6 +41,7 @@ import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.NumberUtils;
 
 
 /**
@@ -371,6 +372,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             final boolean firstSideIsA;
             final String windowTitle;
             final AcquisitionModes.Keys acqMode;
+            double zStepPx = 0;
             if (mmW.isMMWindow()) {  // have Micro-Manager dataset
                final JSONObject metadata = mmW.getSummaryMetaData();
                acqMode = AcquisitionModes.getKeyFromString(metadata.getString("SPIMmode"));
@@ -381,9 +383,14 @@ public class DataAnalysisPanel extends ListeningJPanel {
                }
                firstSideIsA = !metadata.getString("FirstSide").equals("B");
                if (metadata.has("AcquisitionName")) {
-                  windowTitle = metadata.getString("AcqusitionName");
+                  windowTitle = metadata.getString("AcquisitionName");
                } else {
                   windowTitle = ip.getTitle();
+               }
+               if (metadata.has("PixelSize_um") && metadata.has("z-step_um")) {
+                  // with test acquisitions ip.getCalibration() isn't correct for some reason so prefer metadata
+                  zStepPx = NumberUtils.coreStringToDouble(metadata.getString("PixelSize_um")) / 
+                     NumberUtils.coreStringToDouble(metadata.getString("z-step_um"));
                }
             } else {
                // guess at settings since we can't access MM metadata
@@ -393,11 +400,15 @@ public class DataAnalysisPanel extends ListeningJPanel {
                ReportingUtils.logDebugMessage("Deskew may be incorrect because don't have Micro-Manager dataset with metadata");
             }
             
+            // if zStepPx wasn't set from MM metadata then get value from ImagePlus object 
+            if (zStepPx < 1e-6) {
+               zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth;
+            }
+            
             // for 45 degrees we shift the same amount as the interplane spacing, so factor of 1.0
             // assume diSPIM unless marked specifically otherwise
             // I don't understand why mathematically but it seems that for oSPIM the factor is 1.0
             //   too instead of being tan(60 degrees) due to the rotation
-            final double zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth;
             final double dx = zStepPx * (Double) deskewFactor_.getValue();
 
             final int sc = ip.getNChannels();
