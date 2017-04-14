@@ -389,8 +389,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
                }
                if (metadata.has("PixelSize_um") && metadata.has("z-step_um")) {
                   // with test acquisitions ip.getCalibration() isn't correct for some reason so prefer metadata
-                  zStepPx = NumberUtils.coreStringToDouble(metadata.getString("PixelSize_um")) / 
-                     NumberUtils.coreStringToDouble(metadata.getString("z-step_um"));
+                  zStepPx = NumberUtils.coreStringToDouble(metadata.getString("z-step_um")) /
+                        NumberUtils.coreStringToDouble(metadata.getString("PixelSize_um"));
                }
             } else {
                // guess at settings since we can't access MM metadata
