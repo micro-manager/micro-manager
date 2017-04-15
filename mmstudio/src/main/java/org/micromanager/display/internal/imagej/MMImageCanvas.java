@@ -46,6 +46,9 @@ public final class MMImageCanvas extends ImageCanvas
    static MMImageCanvas create(ImageJBridge parent) {
       final MMImageCanvas instance = new MMImageCanvas(parent);
 
+      // Initialize min/max/pref sizes for the initial zoom ratio set by super
+      instance.setMagnification(instance.getMagnification());
+
       // Listen for size changes; without this, we are unaware of resizing that
       // occurs due to window resizing
       instance.addComponentListener(new ComponentAdapter() {
@@ -69,12 +72,14 @@ public final class MMImageCanvas extends ImageCanvas
    private MMImageCanvas(ImageJBridge parent) {
       super(parent.getIJImagePlus());
       parent_ = parent;
-      // Initialize min/max/pref sizes for the initial zoom ratio set by super
-      setMagnification(getMagnification());
    }
 
    @Override
    public void paint(Graphics g) {
+      // Really, this should be implemented using VolatileImage. Unfortunately,
+      // ij.gui.ImageCanvas is not written in a way that allows us to easily
+      // override paint() without reimplementing a whole bunch of stuff.
+
       // Let ImageJ draw the image, selection, zoom indicator, etc.
       super.paint(g);
       parent_.ijPaintDidFinish();
@@ -338,8 +343,8 @@ public final class MMImageCanvas extends ImageCanvas
 
    @Override
    public void repaint() {
-      // repaint is the easiest place to detect ImageJ ROI change
-      // TODO Also check during mouse drag?
+      // repaint is the easiest (and only practical) place to detect ImageJ
+      // ROI change
       if (parent_ != null) {
          parent_.ij2mmRoiMayHaveChanged();
       }

@@ -25,6 +25,7 @@ import java.awt.Color;
 import java.util.Arrays;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.DefaultUserProfile;
 
 /**
@@ -220,10 +221,7 @@ public final class RememberedChannelSettings {
          String channel = summary.getSafeChannelName(i);
          DisplaySettings.ContrastSettings contrast = settings.getSafeContrastSettings(i,
                new DefaultDisplaySettings.DefaultContrastSettings(0, 0, 1.0, true));
-         Color defaultColor = Color.WHITE;
-         if (i < ColorSets.COLORBLIND_COLORS.length) {
-            defaultColor = ColorSets.COLORBLIND_COLORS[i];
-         }
+         Color defaultColor = ColorPalettes.getFromDefaultPalette(i);
          Color color = settings.getSafeChannelColor(i,
                getColorForChannel(channel, group, defaultColor));
          new RememberedChannelSettings(channel, group, color,

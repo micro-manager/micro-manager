@@ -16,7 +16,7 @@ import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
-import org.micromanager.display.internal.ColorSets;
+import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -111,7 +111,7 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
                channel_.color = new Color(AcqControlDlg.getChannelColor(
                      acqEng_.getChannelGroup(),
                      (String) channelSelect_.getSelectedItem(),
-                     ColorSets.COLORBLIND_COLORS[editRow_].getRGB()));
+                     ColorPalettes.getFromDefaultPalette(editRow_).getRGB()));
                channel_.exposure = AcqControlDlg.getChannelExposure(
                   acqEng_.getChannelGroup(),
                   (String) channelSelect_.getSelectedItem(), 10.0);
@@ -141,11 +141,10 @@ public final class ChannelCellEditor extends AbstractCellEditor implements Table
             // As a side effect, change to the color and exposure of the new
             // channel. If no color is available, use the "next" colorblind-
             // friendly color, based on our row index.
-            int colorIndex = editRow_ % ColorSets.COLORBLIND_COLORS.length;
             channel_.color = new Color(AcqControlDlg.getChannelColor(
                      acqEng_.getChannelGroup(),
                      (String) channelSelect_.getSelectedItem(),
-                     ColorSets.COLORBLIND_COLORS[colorIndex].getRGB()));
+                     ColorPalettes.getFromDefaultPalette(editRow_).getRGB()));
             channel_.exposure = AcqControlDlg.getChannelExposure(
                   acqEng_.getChannelGroup(), channel_.config, 10.0);
             return channelSelect_.getSelectedItem();

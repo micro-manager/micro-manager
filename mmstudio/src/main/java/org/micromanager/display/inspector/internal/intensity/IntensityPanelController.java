@@ -42,6 +42,7 @@ import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
+import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
 /**
@@ -49,29 +50,6 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  * @author mark
  */
 public class IntensityPanelController extends AbstractInspectorPanelController {
-   // TODO These palettes should probably live somewhere else for reuse.
-   private static final Color[] RGB_COLORS = new Color[] {
-      Color.RED, Color.GREEN, Color.BLUE,
-      Color.CYAN, Color.MAGENTA, Color.YELLOW,
-      Color.WHITE
-   };
-
-   // Colors optimized for colorblind individuals, from
-   // Bang Wong, 2011. Nature Methods 8, 441. Points of view: Color blindness.
-   // http://dx.doi.org/10.1038/nmeth.1618
-   // Selection of the first three colors based on recommendations from
-   // Ankur Jain at the Vale lab.
-   private static final Color[] COLORBLIND_COLORS = new Color[] {
-      new Color(  0, 114, 178), // Blue
-      new Color(213,  94,   0), // Vermillion
-      new Color(  0, 158, 115), // Bluish Green
-      new Color(230, 159,   0), // Orange
-      new Color( 86, 180, 233), // Sky Blue
-      new Color(240, 228,  66), // Yellow
-      new Color(204, 121, 167), // Reddish Purple
-   };
-
-
    private final JPanel panel_ = new JPanel();
 
    private final JPopupMenu gearMenu_ = new JPopupMenu();
@@ -150,13 +128,13 @@ public class IntensityPanelController extends AbstractInspectorPanelController {
       gearMenuRGBCMYWItem_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            handleColorPalette(RGB_COLORS);
+            handleColorPalette(ColorPalettes.getPrimaryColorPalette());
          }
       });
       gearMenuColorblindFriendlyItem_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            handleColorPalette(COLORBLIND_COLORS);
+            handleColorPalette(ColorPalettes.getColorblindFriendlyPalette());
          }
       });
       gearMenuCustomColorItem_.setEnabled(false);
@@ -302,7 +280,7 @@ public class IntensityPanelController extends AbstractInspectorPanelController {
       }
    }
 
-   private void handleColorPalette(Color[] colors) {
+   private void handleColorPalette(List<Color> colors) {
       // TODO
    }
 

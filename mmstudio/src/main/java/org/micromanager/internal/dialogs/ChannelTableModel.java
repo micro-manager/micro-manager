@@ -11,6 +11,7 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.internal.AcquisitionEngine;
 import org.micromanager.display.inspector.internal.todo.HistogramsPanel;
+import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
 
@@ -202,10 +203,7 @@ public final class ChannelTableModel extends AbstractTableModel implements Table
             ReportingUtils.showMessage("No more channels are available\nin this channel group.");
          } else {
             // Pick a non-white default color if possible.
-            Color defaultColor = Color.WHITE;
-            if (channels_.size() < HistogramsPanel.COLORBLIND_COLORS.length) {
-               defaultColor = HistogramsPanel.COLORBLIND_COLORS[channels_.size()];
-            }
+            Color defaultColor = ColorPalettes.getFromDefaultPalette(channels_.size());
             channel.color = new Color(AcqControlDlg.getChannelColor(
                      acqEng_.getChannelGroup(), channel.config,
                      defaultColor.getRGB()));

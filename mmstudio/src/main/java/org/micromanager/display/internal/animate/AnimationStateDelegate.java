@@ -55,15 +55,18 @@ public interface AnimationStateDelegate<P> {
    /**
     * Advance the current (last rendered) data position by the given number of
     * frames.
-    *
+    * <p>
     * The number of frames can be theoretical and thus need not be an integer,
     * but should correspond to number of data points.
+    * <p>
+    * If the position is not to change (because {@code frames} is less than
+    * 0.5), then null should be returned.
     * <p>
     * The current data position held by this object does not change other than
     * by this method and {@code setAnimationPosition}.
     *
     * @param frames frames to advance
-    * @return the new data position
+    * @return the new data position, or null if no change
     */
    P advanceAnimationPosition(double frames);
 
