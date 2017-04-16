@@ -347,9 +347,9 @@ public class GaussianFit {
       for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
          totalIntensity += (imagePixels[i] & 0xffff);
       }
-      double signal = totalIntensity - ((bg / n) * siProc.getHeight() * siProc.getWidth());
+      double signal = totalIntensity - (background * siProc.getHeight() * siProc.getWidth());
       params0_[INT] = signal / (2 * Math.PI * s * s);
-      // print("Total signal: " + ti + "Estimate: " + params0_[0]);
+      
       // estimate center of mass
       double mx = 0.0;
       double my = 0.0;
@@ -367,7 +367,7 @@ public class GaussianFit {
             steps_[i] = 0.1;
       }
       
-      return new Data(params0_, totalIntensity, background);
+      return new Data(params0_, signal, background);
    }
    
    
