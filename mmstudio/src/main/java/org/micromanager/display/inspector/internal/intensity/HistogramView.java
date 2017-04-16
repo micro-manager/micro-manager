@@ -221,6 +221,14 @@ public final class HistogramView extends JPanel {
       repaint();
    }
 
+   public void clearComponentHighlights() {
+      for (int i = 0; i < componentStates_.size(); ++i) {
+         ComponentState state = componentStates_.get(i);
+         state.highlightIntensity_ = -1;
+      }
+      repaint();
+   }
+
    public void setComponentHighlight(int component, long intensityValue) {
       Preconditions.checkArgument(component >= 0);
       addComponentIfNecessary(component);

@@ -220,4 +220,6 @@ public interface Coords {
     * @return new CoordsBuilder based on the values for this Coords
     */
    public CoordsBuilder copy();
+
+   Coords copyRetainingAxes(String... axes);
 }

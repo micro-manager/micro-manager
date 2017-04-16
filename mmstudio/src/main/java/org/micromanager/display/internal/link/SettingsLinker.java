@@ -29,7 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.DisplayDestroyedEvent;
+import org.micromanager.display.internal.event.DisplayDestroyedEvent;
 
 /**
  * This class is for setting up links across DataViewers for specific

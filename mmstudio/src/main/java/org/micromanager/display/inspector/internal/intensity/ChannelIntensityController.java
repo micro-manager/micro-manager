@@ -6,6 +6,7 @@
 package org.micromanager.display.inspector.internal.intensity;
 
 import com.bulenkov.iconloader.IconLoader;
+import com.google.common.eventbus.Subscribe;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -26,10 +27,12 @@ import javax.swing.JToggleButton;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.data.Coords;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.internal.utils.MustCallOnEDT;
@@ -629,6 +632,36 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          if (stats_ != null) {
             IntegerComponentStats componentStats = stats_.getComponentStats(comp);
             updateScalingIndicators(settings, componentStats, comp);
+         }
+      }
+   }
+
+   @Subscribe
+   public void onEvent(DataViewerMousePixelInfoChangedEvent e) {
+      histogram_.clearComponentHighlights();
+      if (!e.isInfoAvailable()) {
+         return;
+      }
+
+      // Channel-less case
+      if (channelIndex_ == 0 && e.getNumberOfCoords() == 1) {
+         Coords coords = e.getAllCoords().get(0);
+         if (!coords.hasAxis(Coords.CHANNEL)) {
+            long[] values = e.getComponentValuesForCoords(coords);
+            for (int component = 0; component < values.length; ++component) {
+               histogram_.setComponentHighlight(component, values[component]);
+            }
+            return;
+         }
+      }
+
+      for (Coords coords : e.getAllCoords()) {
+         if (coords.getChannel() == channelIndex_) {
+            long[] values = e.getComponentValuesForCoords(coords);
+            for (int component = 0; component < values.length; ++component) {
+               histogram_.setComponentHighlight(component, values[component]);
+            }
+            return;
          }
       }
    }

@@ -21,6 +21,7 @@
 
 package org.micromanager.display.internal;
 
+import org.micromanager.display.internal.displaywindow.DisplayController;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import ij.ImageStack;

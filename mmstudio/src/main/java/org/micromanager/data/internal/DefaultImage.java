@@ -348,6 +348,16 @@ public final class DefaultImage implements Image {
    }
 
    @Override
+   public long[] getComponentIntensitiesAt(int x, int y) {
+      int n = getNumComponents();
+      long[] ret = new long[n];
+      for (int i = 0; i < n; ++i) {
+         ret[i] = getComponentIntensityAt(x, y, i);
+      }
+      return ret;
+   }
+
+   @Override
    public String getIntensityStringAt(int x, int y) {
       if (numComponents_ == 1) {
          return String.format("%d", getIntensityAt(x, y));

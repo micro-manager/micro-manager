@@ -29,7 +29,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.event.MouseInputAdapter;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.ColorMaps;
+import org.micromanager.internal.utils.ColorMaps;
 
 /**
  * This module provides a button with a dropdown menu, allowing the user to

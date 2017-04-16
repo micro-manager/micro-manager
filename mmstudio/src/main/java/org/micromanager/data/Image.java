@@ -117,6 +117,8 @@ public interface Image {
     */
    public long getComponentIntensityAt(int x, int y, int component);
 
+   public long[] getComponentIntensitiesAt(int x, int y);
+
    /**
     * Returns the ImageJ pixel type indicator, e.g. ij.ImagePlus.GRAY16 or
     * ij.ImagePlus.COLOR_RGB, etc.

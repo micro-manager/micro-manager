@@ -37,7 +37,7 @@ import org.micromanager.display.DisplaySettingsChangedEvent;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
 import org.micromanager.display.inspector.internal.ImageStatsPublisher;
 import org.micromanager.display.inspector.internal.ImageStatsPublisher.ImageStatsChangedEvent;
-import org.micromanager.display.internal.DisplayController;
+import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool;

@@ -18,18 +18,17 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.internal.utils;
 
 import net.imglib2.display.ColorTable8;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
-import org.micromanager.internal.utils.ImageUtils;
 
 public final class ColorMaps {
    private ColorMaps() { }
 
-   private static ColorTable8 FIRE_MAP = makeFireColorMap();
-   private static ColorTable8 RED_HOT_MAP = makeRedHotColorMap();
+   private static final ColorTable8 FIRE_MAP = makeFireColorMap();
+   private static final ColorTable8 RED_HOT_MAP = makeRedHotColorMap();
 
    public static ColorTable8 fireColorMap() {
       return FIRE_MAP;

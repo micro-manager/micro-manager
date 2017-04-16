@@ -30,7 +30,7 @@ import ij.plugin.PlugIn;
 import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import org.micromanager.display.internal.imagej.MMVirtualStack;
+import org.micromanager.display.internal.displaywindow.imagej.MMVirtualStack;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.JavaUtils;

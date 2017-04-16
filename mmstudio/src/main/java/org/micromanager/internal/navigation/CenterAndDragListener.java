@@ -15,7 +15,7 @@ import java.util.Arrays;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-import org.micromanager.display.internal.DisplayController;
+import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 

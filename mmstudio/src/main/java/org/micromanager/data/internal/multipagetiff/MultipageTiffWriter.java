@@ -52,7 +52,7 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.DisplayController;
+import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ImageUtils;

@@ -181,6 +181,17 @@ public final class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       return result;
    }
 
+   @Override
+   public Coords copyRetainingAxes(String... axes) {
+      Builder b = new Builder();
+      for (String axis : axes) {
+         if (hasAxis(axis)) {
+            b.index(axis, getIndex(axis));
+         }
+      }
+      return b.build();
+   }
+
    /**
     * Compare us to the other DefaultCoords; useful for sorting. We go through
     * our axes in alphabetical order and compare positions. Axes that we have

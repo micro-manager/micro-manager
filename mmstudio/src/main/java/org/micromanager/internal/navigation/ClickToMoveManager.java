@@ -27,7 +27,7 @@ import java.util.HashMap;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.display.DisplayDestroyedEvent;
-import org.micromanager.display.internal.DisplayController;
+import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.MMStudio;
 

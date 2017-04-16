@@ -12,7 +12,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal.imagej;
+package org.micromanager.display.internal.displaywindow.imagej;
 
 import com.google.common.base.Preconditions;
 import ij.CompositeImage;
@@ -35,9 +35,10 @@ import java.util.List;
 import net.imglib2.display.ColorTable8;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
+import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
-import org.micromanager.display.internal.DisplayUIController;
+import org.micromanager.display.internal.displaywindow.DisplayUIController;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MustCallOnEDT;
@@ -138,7 +139,8 @@ public final class ImageJBridge {
 
    private ImageJBridge(DisplayUIController parent) {
       uiController_ = parent;
-      if (uiController_.getDisplayedImages().get(0).getNumComponents() > 1) {
+      if (!uiController_.getDisplayedImages().isEmpty() &&
+            uiController_.getDisplayedImages().get(0).getNumComponents() > 1) {
          colorModeStrategy_ = RGBColorModeStrategy.create();
       }
       else {
@@ -472,8 +474,12 @@ public final class ImageJBridge {
       int zSlice = ijPos3d[1] - 1;
       int timePoint = ijPos3d[2] - 1;
 
-      Coords.CoordsBuilder cb =
-            uiController_.getMMPrincipalDisplayedCoords().copy();
+      Coords position = uiController_.getMMPrincipalDisplayedCoords();
+      if (position == null) {
+         return new DefaultCoords.Builder().build();
+      }
+
+      Coords.CoordsBuilder cb = position.copy();
       if (uiController_.isAxisDisplayed(Coords.CHANNEL)) {
          cb.channel(channel);
       }
@@ -763,21 +769,21 @@ public final class ImageJBridge {
    }
 
    void ij2mmMouseEnteredCanvas(MouseEvent e) {
-      uiController_.updatePixelInfoUI(
+      uiController_.mouseLocationOnImageChanged(
             computeImageRectForCanvasPoint(e.getPoint()));
    }
 
    void ij2mmMouseExitedCanvas(MouseEvent e) {
-      uiController_.updatePixelInfoUI(null);
+      uiController_.mouseLocationOnImageChanged(null);
    }
 
    void ij2mmMouseDraggedOnCanvas(MouseEvent e) {
-      uiController_.updatePixelInfoUI(
+      uiController_.mouseLocationOnImageChanged(
             computeImageRectForCanvasPoint(e.getPoint()));
    }
 
    void ij2mmMouseMovedOnCanvas(MouseEvent e) {
-      uiController_.updatePixelInfoUI(
+      uiController_.mouseLocationOnImageChanged(
             computeImageRectForCanvasPoint(e.getPoint()));
    }
 

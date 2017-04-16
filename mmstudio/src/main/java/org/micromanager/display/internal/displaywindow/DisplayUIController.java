@@ -12,9 +12,13 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.displaywindow;
 
+import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEvent;
+import org.micromanager.internal.utils.ColorMaps;
 import com.bulenkov.iconloader.IconLoader;
+import com.google.common.base.Joiner;
+import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import java.awt.Color;
 import java.awt.Component;
@@ -40,11 +44,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -71,7 +75,7 @@ import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.animate.AnimationController;
-import org.micromanager.display.internal.imagej.ImageJBridge;
+import org.micromanager.display.internal.displaywindow.imagej.ImageJBridge;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
@@ -141,6 +145,18 @@ public final class DisplayUIController implements Closeable, WindowListener,
          new ArrayList<Map.Entry<String, PopupButton>>();
    // TODO Link buttons
 
+   private static final Icon PLAY_ICON = IconLoader.getIcon(
+         "/org/micromanager/icons/play.png");
+   private static final Icon PAUSE_ICON = IconLoader.getIcon(
+         "/org/micromanager/icons/pause.png");
+   private static final Icon UNLOCKED_ICON = IconLoader.getIcon(
+         "/org/micromanager/icons/lock_open.png");
+   private static final Icon BLACK_LOCKED_ICON = IconLoader.getIcon(
+         "/org/micromanager/icons/lock_locked.png");
+   private static final Icon RED_LOCKED_ICON = IconLoader.getIcon(
+         "/org/micromanager/icons/lock_super.png");
+
+
    private ImageJBridge ijBridge_;
 
    // Data display state of the UI (which may lag behind the display
@@ -150,6 +166,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private ImagesAndStats displayedImages_;
 
    private BoundsRectAndMask lastSeenSelection_;
+
+   private Rectangle mouseLocationOnImage_; // null if mouse outside of canvas
 
    private long lastAnimationIntervalAdjustmentNs_;
 
@@ -188,6 +206,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    {
       DisplayUIController instance = new DisplayUIController(parent,
             controlsFactory, animationController);
+      parent.registerForEvents(instance);
       instance.frame_.addWindowListener(instance);
       return instance;
    }
@@ -468,11 +487,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
       scrollBarPanel_.addListener(this);
       panel.add(scrollBarPanel_, new CC().growX().pushX().split(2));
 
-      axisLockButton_ = new JButton("F");
-      Dimension size = new Dimension(NDScrollBarPanel.ROW_HEIGHT,
-            NDScrollBarPanel.ROW_HEIGHT);
+      axisLockButton_ = new JButton();
+      Dimension size = new Dimension(NDScrollBarPanel.ROW_HEIGHT, NDScrollBarPanel.ROW_HEIGHT);
       axisLockButton_.setMinimumSize(size);
       axisLockButton_.setPreferredSize(size);
+      axisLockButton_.setIcon(UNLOCKED_ICON);
       axisLockButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -518,6 +537,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.setMinimumSize(size);
          animateButton.setMaximumSize(size);
          animateButton.setPreferredSize(size);
+         animateButton.setHorizontalAlignment(SwingConstants.LEFT);
+         animateButton.setHorizontalTextPosition(SwingConstants.RIGHT);
+         animateButton.setIcon(PLAY_ICON);
+         animateButton.setSelectedIcon(PAUSE_ICON);
          animateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -617,10 +640,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    @MustCallOnEDT
    void displayImages(ImagesAndStats images) {
+      setupDisplayUI();
+
       displayedImages_ = images;
       Coords nominalCoords = images.getRequest().getNominalCoords();
-
-      setupDisplayUI();
 
       // A display request may come in ahead of an expand-range request, so
       // make sure to update our range first
@@ -636,6 +659,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       ijBridge_.mm2ijSetDisplayPosition(nominalCoords);
       applyAutostretch(images, displayController_.getDisplaySettings());
+
+      if (mouseLocationOnImage_ != null) {
+         updatePixelInformation(); // TODO Can skip if identical images
+      }
 
       repaintScheduledForNewImages_.set(true);
    }
@@ -954,49 +981,73 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    /**
-    * Updates the pixel position and intensity indicator.
+    * Notify the UI controller that the mouse has moved on the image canvas.
     *
     * If {@code imageLocation} is null or empty, the indicator is hidden. The
     * {@code imageLocation} parameter can be a rectangle containing more than
-    * 1 pixel, for example if the point comes from a zoomed-out canvas.
+    * one pixel, for example if the point comes from a zoomed-out canvas.
     *
     * @param imageLocation the image coordinates of the pixel for which
-    * information should be displayed
+    * information should be displayed (in image coordinates)
     */
-   public void updatePixelInfoUI(Rectangle imageLocation) {
-      // TODO We need to split this into a set-location call and an update-only
-      // call, so that animation can update the intensity indicators
+   public void mouseLocationOnImageChanged(Rectangle imageLocation) {
       if (imageLocation == null ||
             imageLocation.width == 0 || imageLocation.height == 0)
       {
-         if (pixelInfoLabel_ != null) {
-            pixelInfoLabel_.setText(" ");
+         if (mouseLocationOnImage_ == null) {
+            return;
          }
-         // TODO Broadcast (to hide indicators in histograms)
+         mouseLocationOnImage_ = null;
+         updatePixelInformation();
+      }
+      else {
+         if (imageLocation.equals(mouseLocationOnImage_)) {
+            return;
+         }
+         mouseLocationOnImage_ = new Rectangle(imageLocation);
+         updatePixelInformation();
+      }
+   }
+
+   private void updatePixelInformation() {
+      if (displayedImages_ == null || mouseLocationOnImage_ == null) {
+         displayController_.postDisplayEvent(
+               DataViewerMousePixelInfoChangedEvent.createUnavailable());
+         return;
+      }
+
+      List<Image> images = new ArrayList<Image>(
+            displayedImages_.getRequest().getImages());
+      if (images.isEmpty()) {
+         displayController_.postDisplayEvent(
+               DataViewerMousePixelInfoChangedEvent.createUnavailable());
          return;
       }
 
       // Perhaps we could compute the mean or median pixel info for the rect.
       // But for now we just use the center point.
-      final Point center = new Point(imageLocation.x + imageLocation.width / 2,
-            imageLocation.y + imageLocation.height / 2);
+      final Point center = new Point(
+            mouseLocationOnImage_.x + mouseLocationOnImage_.width / 2,
+            mouseLocationOnImage_.y + mouseLocationOnImage_.height / 2);
 
-      // TODO Setting the label text interferes with canvas animation, despite
-      // the label being in a different valudate root from the canvas. Fixing
-      // the minimum and preferred size of the label did not appear to help.
-      // There might be some hacks (like overriding revalidate or invalidate
-      // somewhere) to get around this. Also should test on Windows.
-      pixelInfoLabel_.setText(String.format("%d, %d", center.x, center.y));
-
-      // TODO Show physical units and pixel intensity
-      // TODO Broadcast (to show indicators in histograms)
+      if (images.get(0).getCoords().hasAxis(Coords.CHANNEL)) {
+         displayController_.postDisplayEvent(
+               DataViewerMousePixelInfoChangedEvent.
+               fromAxesAndImages(center.x, center.y,
+                     new String[] { Coords.CHANNEL }, images));
+      }
+      else {
+         displayController_.postDisplayEvent(
+               DataViewerMousePixelInfoChangedEvent.fromImage(
+                     center.x, center.y, images.get(0)));
+      }
    }
 
    public void paintDidFinish() {
       perfMon_.sampleTimeInterval("Repaint completed");
 
       // Paints occur both by our requesting a new image to be displayed and
-      // for other reasons. To compute the frame rate, we want to count only
+      // for other reasons. To compute the display rate, we want to count only
       // the former case.
       boolean countAsNewDisplayedImage =
             repaintScheduledForNewImages_.compareAndSet(true, false);
@@ -1071,6 +1122,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
 
       double displayFPS = 1000.0 / medianIntervalMs;
+      // We call it "Hz", rather than "fps", since this rate is a refresh rate
+      // rather than the rate of different images appearing.
       fpsLabel_.setText(String.format("Display: %.2g Hz", displayFPS));
       if (perfMon_ != null) {
          perfMon_.sampleTimeInterval("FPS indicator updated");
@@ -1159,12 +1212,15 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    public List<Image> getDisplayedImages() {
+      if (displayedImages_ == null) {
+         return Collections.emptyList();
+      }
       return displayedImages_.getRequest().getImages();
    }
 
 
    //
-   //
+   // User input handlers
    //
 
    private void handleAxisAnimateButton(ActionEvent event) {
@@ -1185,19 +1241,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    private void handleLockButton(ActionEvent event) {
       JButton button = (JButton) event.getSource();
-      // TODO This is a string-based prototype; use icons
-      String nextState;
-      if (button.getText().equals("U")) {
-         nextState = "F";
+      // TODO This is a string-based prototype; also we need to correctly init
+      // the button icon
+      if (button.getIcon() == UNLOCKED_ICON) {
+         displayController_.setAxisAnimationLock("F");
+         button.setIcon(BLACK_LOCKED_ICON);
       }
-      else if (button.getText().equals("F")) {
-         nextState = "S";
+      else if (button.getIcon() == BLACK_LOCKED_ICON) {
+         displayController_.setAxisAnimationLock("S");
+         button.setIcon(RED_LOCKED_ICON);
       }
       else {
-         nextState = "U";
+         displayController_.setAxisAnimationLock("U");
+         button.setIcon(UNLOCKED_ICON);
       }
-      displayController_.setAxisAnimationLock(nextState);
-      button.setText(nextState);
    }
 
 
@@ -1287,5 +1344,45 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       Coords position = builder.build();
       animationController_.forceDataPosition(position);
+   }
+
+   @Subscribe
+   public void onEvent(DataViewerMousePixelInfoChangedEvent e) {
+      if (pixelInfoLabel_ == null) {
+         return;
+      }
+      if (!e.isInfoAvailable()) {
+         pixelInfoLabel_.setText(" ");
+         return;
+      }
+
+      List<String> chStrings = new ArrayList<String>();
+      List<Coords> coords = e.getAllCoordsSorted();
+      if (coords.isEmpty()) {
+         chStrings.add("NA"); // Shouldn't normally happen
+      }
+      else if (coords.size() == 1) {
+         chStrings.add(e.getComponentValuesStringForCoords(coords.get(0)));
+      }
+      else {
+         int lastChannel = 0;
+         for (Coords c : coords) {
+            while (c.getChannel() > lastChannel++) {
+               chStrings.add("_");
+            }
+            chStrings.add(e.getComponentValuesStringForCoords(c));
+         }
+      }
+
+      String valuesString;
+      if (chStrings.size() == 1) {
+         valuesString = chStrings.get(0);
+      }
+      else {
+         valuesString = "[" + Joiner.on(", ").join(chStrings) + "]";
+      }
+
+      pixelInfoLabel_.setText(String.format("%s = %s",
+            e.getXYString(), valuesString));
    }
 }

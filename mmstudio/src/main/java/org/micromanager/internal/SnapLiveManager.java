@@ -57,7 +57,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.DisplayController;
+import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;

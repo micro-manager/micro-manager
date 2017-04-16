@@ -17,7 +17,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import net.imglib2.display.ColorTable8;
-import org.micromanager.display.internal.ColorMaps;
+import org.micromanager.internal.utils.ColorMaps;
 
 /**
  *
@@ -158,7 +158,7 @@ final class ColorModeCell extends DefaultListCellRenderer {
 
    private Icon getColorIcon(int maxColors) {
       // Show gradient of the first 1 to 3 colors.
-      List<Color> sixColors = new ArrayList<Color>();
+      List<Color> sixColors = new ArrayList<Color>(6);
       switch (Math.min(maxColors, channelColors_.size())) {
          case 1:
             sixColors.addAll(Collections.nCopies(6, channelColors_.get(0)));
@@ -168,7 +168,7 @@ final class ColorModeCell extends DefaultListCellRenderer {
             sixColors.addAll(Collections.nCopies(3, channelColors_.get(1)));
             break;
          default:
-            sixColors = Collections.nCopies(2, channelColors_.get(0));
+            sixColors.addAll(Collections.nCopies(2, channelColors_.get(0)));
             sixColors.addAll(Collections.nCopies(2, channelColors_.get(1)));
             sixColors.addAll(Collections.nCopies(2, channelColors_.get(2)));
             break;

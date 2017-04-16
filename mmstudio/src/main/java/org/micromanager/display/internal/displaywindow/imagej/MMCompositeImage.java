@@ -12,7 +12,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal.imagej;
+package org.micromanager.display.internal.displaywindow.imagej;
 
 import ij.CompositeImage;
 import ij.ImagePlus;

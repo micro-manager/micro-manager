@@ -12,7 +12,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.displaywindow;
 
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -43,6 +44,8 @@ import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.internal.ImageStatsPublisher;
+import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.animate.DataCoordsAnimationState;
 import org.micromanager.display.internal.event.DefaultImagesDidDisplayEvent;
@@ -55,7 +58,6 @@ import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
-import org.micromanager.internal.utils.performance.WallTimer;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 
 /**
@@ -239,6 +241,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       dataProvider_.registerForEvents(this);
    }
 
+   // Allow internal objects (in particular, UI controller) to post events
+   void postDisplayEvent(Object event) {
+      postEvent(event);
+   }
+
    @MustCallOnEDT
    public DisplayUIController getUIController() {
       return uiController_;
@@ -349,10 +356,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
             if (imagesDiffer || getDisplaySettings().isAutostretchEnabled()) {
                uiController_.displayImages(images);
             }
-
-            // TODO Rather than hiding pixel info, update it
-            // (include in displayImages()?)
-            uiController_.updatePixelInfoUI(null);
 
             postEvent(DefaultImagesDidDisplayEvent.create(
                   DisplayController.this,
