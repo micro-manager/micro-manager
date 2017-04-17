@@ -241,22 +241,22 @@ public class LoadAndSave {
             }
 
             SpotData gsd = new SpotData(null,
-                    Integer.parseInt(k.get("channel")),
-                    Integer.parseInt(k.get("slice")),
-                    Integer.parseInt(k.get("frame")),
-                    Integer.parseInt(k.get("pos")),
-                    Integer.parseInt(k.get("molecule")),
-                    Integer.parseInt(k.get("x_position")),
-                    Integer.parseInt(k.get("y_position"))
+                    Integer.parseInt(k.get(headers[3])),
+                    Integer.parseInt(k.get(headers[2])),
+                    Integer.parseInt(k.get(headers[1])),
+                    Integer.parseInt(k.get(headers[4])),
+                    Integer.parseInt(k.get(headers[0])),
+                    Integer.parseInt(k.get(headers[5])),
+                    Integer.parseInt(k.get(headers[6]))
             );
-            gsd.setData(Double.parseDouble(k.get("intensity")),
-                    Double.parseDouble(k.get("background")),
-                    Double.parseDouble(k.get("x")),
-                    Double.parseDouble(k.get("y")), 0.0,
-                    Double.parseDouble(k.get("width")),
-                    Double.parseDouble(k.get("a")),
-                    Double.parseDouble(k.get("theta")),
-                    Double.parseDouble(k.get("x_precision"))
+            gsd.setData(Double.parseDouble(k.get(headers[9])),
+                    Double.parseDouble(k.get(headers[10])),
+                    Double.parseDouble(k.get(headers[7])),
+                    Double.parseDouble(k.get(headers[8])), 0.0,
+                    Double.parseDouble(k.get(headers[11])),
+                    Double.parseDouble(k.get(headers[12])),
+                    Double.parseDouble(k.get(headers[13])),
+                    Double.parseDouble(k.get(headers[14]))
             );
             if (appId == MMAPPID) {
                gsd.addKeyValue(SpotData.Keys.APERTUREINTENSITY, 
