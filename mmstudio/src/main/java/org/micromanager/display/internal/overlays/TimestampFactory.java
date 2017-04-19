@@ -21,17 +21,17 @@
 package org.micromanager.display.internal.overlays;
 
 import org.micromanager.Studio;
-import org.micromanager.display.OverlayPanel;
-import org.micromanager.display.OverlayPanelFactory;
+import org.micromanager.display.OverlayInspectorSubpanel;
+import org.micromanager.display.overlay.Overlay;
 
-public final class TimestampFactory implements OverlayPanelFactory {
+public final class TimestampFactory implements Overlay {
    private Studio studio_;
    public TimestampFactory(Studio studio) {
       studio_ = studio;
    }
 
    @Override
-   public OverlayPanel createOverlayPanel() {
+   public OverlayInspectorSubpanel getConfigurationComponent() {
       return new TimestampPanel(studio_);
    }
 }

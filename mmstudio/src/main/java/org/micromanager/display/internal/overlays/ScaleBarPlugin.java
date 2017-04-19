@@ -20,43 +20,18 @@
 
 package org.micromanager.display.internal.overlays;
 
-import org.micromanager.Studio;
-import org.micromanager.display.OverlayPanelFactory;
-import org.micromanager.display.OverlayPlugin;
+import org.micromanager.display.overlay.OverlayPlugin;
+import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
-import org.scijava.plugin.SciJavaPlugin;
+import org.micromanager.display.overlay.Overlay;
 
-@Plugin(type = OverlayPlugin.class)
-public final class ScaleBarPlugin implements OverlayPlugin, SciJavaPlugin {
-   private Studio studio_;
-
+@Plugin(type = OverlayPlugin.class,
+      priority = Priority.HIGH_PRIORITY,
+      name = "Scale Bar",
+      description = "Display a scale bar")
+public final class ScaleBarPlugin implements OverlayPlugin {
    @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-   }
-
-   @Override
-   public OverlayPanelFactory createFactory() {
-      return new ScaleBarFactory(studio_);
-   }
-
-   @Override
-   public String getName() {
-      return "Scale Bar";
-   }
-
-   @Override
-   public String getHelpText() {
-      return "Display a scale bar on the image";
-   }
-
-   @Override
-   public String getVersion() {
-      return "Version 1.0";
-   }
-
-   @Override
-   public String getCopyright() {
-      return "Copyright 2015 Regents of the University of California; Open Imaging Inc.";
+   public Overlay createOverlay() {
+      return ScaleBarOverlay.create();
    }
 }

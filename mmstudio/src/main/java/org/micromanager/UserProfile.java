@@ -242,7 +242,11 @@ public interface UserProfile {
     * the key points to null.
     * @return The stored object, or the fallback if that value is not found.
     * @throws IOException if deserialization of the object fails
+    * @deprecated it's too hard to maintain backward compatibility if this
+    * method is used. This method should be kept for a while after setObject is
+    * deleted.
     */
+   @Deprecated
    public <T> T getObject(Class<?> c, String key, T fallback) throws IOException;
 
    /**
@@ -255,8 +259,12 @@ public interface UserProfile {
     * @param key Identifier for the parameter
     * @param value Object to be stored
     * @throws IOException if the serialization fails for any reason
+    * @deprecated it's too hard to maintain backward compatibility if this
+    * method is used.
     */
+   @Deprecated
    public <T> void setObject(Class<?> c, String key, T value) throws IOException;
+
 
    /**
     * The UserProfile normally routinely saves changes
@@ -268,7 +276,9 @@ public interface UserProfile {
     * automatically selected (stored in an OS-appropriate location for user
     * data).
     * @throws IOException if the file cannot be written for any reason.
+    * @deprecated there should be no reason to call this manually
     */
+   @Deprecated
    public void syncToDisk() throws IOException;
 
    /**
@@ -357,7 +367,9 @@ public interface UserProfile {
     * profile. All keys specified in the file will overwrite keys in the
     * active profile.
     * @param path file to which the profile should be appended
+    * @deprecated This is not part of the API.
     */
+   @Deprecated
    public void appendFile(String path);
 
    /**
@@ -368,6 +380,8 @@ public interface UserProfile {
     *        which case a "blank" user with no profile data is created.
     * @throws IllegalArgumentException if a user of that name already exists.
     * @throws IOException if there was an error in copying the profile file.
+    * @deprecated This is not part of the API.
     */
+   @Deprecated
    public void createUser(String username, String path) throws IllegalArgumentException, IOException;
 }

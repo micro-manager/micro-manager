@@ -21,17 +21,17 @@
 package org.micromanager.display.internal.overlays;
 
 import org.micromanager.Studio;
-import org.micromanager.display.OverlayPanel;
-import org.micromanager.display.OverlayPanelFactory;
+import org.micromanager.display.OverlayInspectorSubpanel;
+import org.micromanager.display.overlay.Overlay;
 
-public final class ScaleBarFactory implements OverlayPanelFactory {
+public final class ScaleBarFactory implements Overlay {
    private Studio studio_;
    public ScaleBarFactory(Studio studio) {
       studio_ = studio;
    }
 
    @Override
-   public OverlayPanel createOverlayPanel() {
+   public OverlayInspectorSubpanel getConfigurationComponent() {
       return new ScaleBarPanel(studio_);
    }
 }

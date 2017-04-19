@@ -153,6 +153,7 @@ public interface PropertyMap {
        * @param value Object to serialize and associate with the key.
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
+      @Deprecated
       PropertyMapBuilder putObject(String key, Object value);
    }
 
@@ -377,6 +378,7 @@ public interface PropertyMap {
     * @return the T corresponding to the provided key, or defaultVal if the
     *         key is not found.
     */
+   @Deprecated
    public <T> T getObject(String key, T defaultVal);
 
    /**

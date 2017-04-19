@@ -43,7 +43,7 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
-import org.micromanager.display.OverlayPanel;
+import org.micromanager.display.OverlayInspectorSubpanel;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.events.CanvasDrawEvent;
 import org.micromanager.display.inspector.InspectorPanelListener;
@@ -53,14 +53,14 @@ import org.micromanager.display.inspector.InspectorPanelListener;
  */
 class OverlaysPanel extends AbstractInspectorPanelController {
    private static final String NO_OVERLAY = "   ";
-   private final ArrayList<OverlayPanel> overlays_;
-   private final HashMap<OverlayPanel, Boolean> overlayToEnabled_;
+   private final ArrayList<OverlayInspectorSubpanel> overlays_;
+   private final HashMap<OverlayInspectorSubpanel, Boolean> overlayToEnabled_;
    private DisplayWindow display_;
    private InspectorPanelListener inspector_;
    
    public OverlaysPanel() {
-      overlays_ = new ArrayList<OverlayPanel>();
-      overlayToEnabled_ = new HashMap<OverlayPanel, Boolean>();
+      overlays_ = new ArrayList<OverlayInspectorSubpanel>();
+      overlayToEnabled_ = new HashMap<OverlayInspectorSubpanel, Boolean>();
       super.setLayout(new MigLayout("flowy"));
       // Provide a button that, when clicked, shows a popup menu of overlays
       // that can be added.
@@ -109,7 +109,7 @@ class OverlaysPanel extends AbstractInspectorPanelController {
     * titled border that includes a close button.
     */
    private void addNewPanel(String title) {
-      final OverlayPanel panel = DefaultDisplayManager.getInstance().createOverlayPanel(title);
+      final OverlayInspectorSubpanel panel = DefaultDisplayManager.getInstance().createOverlayPanel(title);
       panel.setDisplay(display_);
       overlays_.add(panel);
       overlayToEnabled_.put(panel, true);
@@ -163,7 +163,7 @@ class OverlaysPanel extends AbstractInspectorPanelController {
          return;
       }
       Image image = images.get(0);
-      for (OverlayPanel overlay : overlays_) {
+      for (OverlayInspectorSubpanel overlay : overlays_) {
          if (overlayToEnabled_.get(overlay)) {
             overlay.drawOverlay(event.getGraphics(), display_, image,
                   event.getCanvas());
@@ -185,7 +185,7 @@ class OverlaysPanel extends AbstractInspectorPanelController {
          }
       }
       display_ = display;
-      for (OverlayPanel overlay : overlays_) {
+      for (OverlayInspectorSubpanel overlay : overlays_) {
          overlay.setDisplay(display);
       }
       if (display_ != null) {

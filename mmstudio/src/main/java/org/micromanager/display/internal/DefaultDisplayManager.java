@@ -48,9 +48,8 @@ import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
-import org.micromanager.display.OverlayPanel;
-import org.micromanager.display.OverlayPanelFactory;
-import org.micromanager.display.OverlayPlugin;
+import org.micromanager.display.OverlayInspectorSubpanel;
+import org.micromanager.display.overlay.OverlayPlugin;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.inspector.internal.InspectorCollection;
 import org.micromanager.display.inspector.internal.InspectorController;
@@ -59,6 +58,7 @@ import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.display.overlay.Overlay;
 
 
 // TODO Methods must implement correct threading semantics!
@@ -73,7 +73,7 @@ public final class DefaultDisplayManager implements DisplayManager {
    // monitor on 'this'.
    private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
 
-   private LinkedHashMap<String, OverlayPanelFactory> titleToOverlay_;
+   private LinkedHashMap<String, Overlay> titleToOverlay_;
 
    private final DataViewerCollection viewers_ = DataViewerCollection.create();
 
@@ -389,9 +389,9 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    // TODO Why is this in the display manager?
-   public OverlayPanel createOverlayPanel(String title) {
-      OverlayPanelFactory factory = titleToOverlay_.get(title);
-      OverlayPanel panel = factory.createOverlayPanel();
+   public OverlayInspectorSubpanel createOverlayPanel(String title) {
+      Overlay factory = titleToOverlay_.get(title);
+      OverlayInspectorSubpanel panel = factory.getConfigurationComponent();
       panel.setManager(this);
       return panel;
    }
@@ -410,11 +410,11 @@ public final class DefaultDisplayManager implements DisplayManager {
    public String[] getOverlayTitles() {
       if (titleToOverlay_ == null) {
          // Time to load overlays now.
-         titleToOverlay_ = new LinkedHashMap<String, OverlayPanelFactory>();
+         titleToOverlay_ = new LinkedHashMap<String, Overlay>();
          loadOverlayPlugins();
       }
       ArrayList<String> result = new ArrayList<String>();
-      for (Map.Entry<String, OverlayPanelFactory> entry : titleToOverlay_.entrySet()) {
+      for (Map.Entry<String, Overlay> entry : titleToOverlay_.entrySet()) {
          result.add(entry.getKey());
       }
       return result.toArray(new String[result.size()]);

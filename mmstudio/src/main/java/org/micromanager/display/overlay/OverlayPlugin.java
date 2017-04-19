@@ -17,9 +17,10 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display;
+package org.micromanager.display.overlay;
 
-import org.micromanager.MMPlugin;
+import org.micromanager.display.overlay.Overlay;
+import org.micromanager.MMGenericPlugin;
 
 /**
  * This interface must be implemented by plugins that want to appear in the
@@ -28,10 +29,10 @@ import org.micromanager.MMPlugin;
  * annotation; see the MMPlugin documentation for more information.
  * Note: names of overlay plugins must be unique.
  */
-public interface OverlayPlugin extends MMPlugin {
+public interface OverlayPlugin extends MMGenericPlugin {
    /**
     * Create a new OverlayPanelFactory object for creating OverlayPanels.
     * @return new OverlayPanelFactory object for creating OverlayPanels.
     */
-   public OverlayPanelFactory createFactory();
+   public Overlay createFactory();
 }

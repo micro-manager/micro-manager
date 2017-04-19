@@ -38,7 +38,7 @@ import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.inspector.InspectorPlugin;
-import org.micromanager.display.OverlayPlugin;
+import org.micromanager.display.overlay.OverlayPlugin;
 import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;

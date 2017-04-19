@@ -21,10 +21,10 @@
 package org.micromanager.display.internal.overlays;
 
 import org.micromanager.Studio;
-import org.micromanager.display.OverlayPanelFactory;
-import org.micromanager.display.OverlayPlugin;
+import org.micromanager.display.overlay.OverlayPlugin;
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
+import org.micromanager.display.overlay.Overlay;
 
 @Plugin(type = OverlayPlugin.class)
 public final class TimestampPlugin implements OverlayPlugin, SciJavaPlugin {
@@ -36,7 +36,7 @@ public final class TimestampPlugin implements OverlayPlugin, SciJavaPlugin {
    }
 
    @Override
-   public OverlayPanelFactory createFactory() {
+   public Overlay createFactory() {
       return new TimestampFactory(studio_);
    }
 

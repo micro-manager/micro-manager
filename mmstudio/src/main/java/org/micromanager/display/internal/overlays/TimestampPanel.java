@@ -43,12 +43,12 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.OverlayPanel;
+import org.micromanager.display.OverlayInspectorSubpanel;
 
 /**
  * This overlay draws the timestamps of the currently-displayed images.
  */
-public final class TimestampPanel extends OverlayPanel {
+public final class TimestampPanel extends OverlayInspectorSubpanel {
 
    // Position options
    private static final String UPPER_LEFT = "Upper left";

@@ -130,7 +130,8 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private static final String SHOULD_DELETE_OLD_CORE_LOGS = "whether or not to delete old MMCore log files";
    private static final String CORE_LOG_LIFETIME_DAYS = "how many days to keep MMCore log files, before they get deleted";
    private static final String CIRCULAR_BUFFER_SIZE = "size, in megabytes of the circular buffer used to temporarily store images before they are written to disk";
-   private static final String AFFINE_TRANSFORM = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
+   private static final String AFFINE_TRANSFORM_LEGACY = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
+   private static final String AFFINE_TRANSFORM = "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
 
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
@@ -1693,32 +1694,53 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public AffineTransform getCameraTransform(String config) {
-      // Look in the profile first.
+      // Try the modern way first
+      Double[] params = DefaultUserProfile.getInstance().getDoubleArray(
+            MMStudio.class, AFFINE_TRANSFORM + config, null);
+      if (params != null && params.length == 6) {
+         double[] unboxed = new double[6];
+         for (int i = 0; i < 6; ++i) {
+            unboxed[i] = params[i];
+         }
+         return new AffineTransform(unboxed);
+      }
+
+      // The early 2.0-beta way of storing as a serialized object.
       try {
          AffineTransform result = (AffineTransform)
             (DefaultUserProfile.getInstance().getObject(
-               MMStudio.class, AFFINE_TRANSFORM + config, null));
+               MMStudio.class, AFFINE_TRANSFORM_LEGACY + config, null));
          if (result != null) {
+            // Save it the new way
+            setCameraTransform(result, config);
             return result;
          }
       }
       catch (IOException e) {
          ReportingUtils.logError(e, "Error retrieving camera transform");
       }
+
       // For backwards compatibility, try retrieving it from the 1.4
       // Preferences instead.
-      return org.micromanager.internal.utils.UnpleasantLegacyCode.legacyRetrieveTransformFromPrefs("affine_transform_" + config);
+      AffineTransform tfm = org.micromanager.internal.utils.UnpleasantLegacyCode.legacyRetrieveTransformFromPrefs("affine_transform_" + config);
+      if (tfm != null) {
+         // Save it the new way.
+         setCameraTransform(tfm, config);
+      }
+      return tfm;
    }
 
    @Override
    public void setCameraTransform(AffineTransform transform, String config) {
-      try {
-         DefaultUserProfile.getInstance().setObject(MMStudio.class,
-               AFFINE_TRANSFORM + config, transform);
+      // TODO These values should be tied to the hardware config, but before we
+      // do that we need to have a way of chainging config files.
+      double[] params = new double[6];
+      transform.getMatrix(params);
+      Double[] boxed = new Double[6];
+      for (int i = 0; i < 6; ++i) {
+         boxed[i] = params[i];
       }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Error setting camera transform");
-      }
+      DefaultUserProfile.getInstance().setDoubleArray(MMStudio.class, AFFINE_TRANSFORM + config, boxed);
    }
 
    public double getCachedXPosition() {

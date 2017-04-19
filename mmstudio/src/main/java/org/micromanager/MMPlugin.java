@@ -19,9 +19,6 @@
 
 package org.micromanager;
 
-
-import org.scijava.plugin.SciJavaPlugin;
-
 /**
  * This interface is the base interface for all Micro-Manager plugins. In
  * practice, you will not use this interface directly, rather using one of the
