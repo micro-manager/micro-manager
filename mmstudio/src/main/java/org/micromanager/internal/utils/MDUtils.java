@@ -877,6 +877,7 @@ public final class MDUtils {
       RESERVED_KEYS.add("XPositionUm");
       RESERVED_KEYS.add("YPositionUm");
       RESERVED_KEYS.add("ZPositionUm");
+      RESERVED_KEYS.add("StateCache-keys");
    }
 
    /**
