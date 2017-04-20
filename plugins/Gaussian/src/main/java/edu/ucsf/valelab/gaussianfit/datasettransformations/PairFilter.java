@@ -127,6 +127,7 @@ public class PairFilter {
                   // find each matching partner, and do statistics on each quadrant
                   // only keep pairs that match what was requested
                   for (int q = 0; q < nrQuadrants; q++) {
+                     ij.IJ.showProgress( (q+1) * frame, (nrQuadrants + 1) * rowData.nrFrames_);
                      // Find matching points in the two ArrayLists
                      Iterator it2 = gsCh1.get(q).iterator();
                      NearestPoint2D np = new NearestPoint2D(xyPointsCh2,
