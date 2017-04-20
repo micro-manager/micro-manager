@@ -41,12 +41,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
  * @author nico
  */
 public class PairFilter {
+   
+   public static AtomicBoolean isRunning_ = new AtomicBoolean(false);
 
    /**
     * Creates a new data set that only contains spot pairs that match our
@@ -188,11 +191,16 @@ public class PairFilter {
                System.gc();
                ij.IJ.error("Out of Memory");
             }
+            isRunning_.set(false);
          }
       };
 
-       
-      (new Thread(doWorkRunnable)).start();
+      if (!isRunning_.get()) {
+         isRunning_.set(true);
+         (new Thread(doWorkRunnable)).start();
+      } else {
+         // TODO: let the user know
+      }
    }
 
 }
