@@ -109,8 +109,11 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
             // those when spot goes out of scope
             SpotData spotData = SpotDataConverter.convert(spot, fitResult, this, zc);
             
-            if ((!useWidthFilter_ || (spotData.getWidth() > widthMin_ && spotData.getWidth() < widthMax_))
-                    && (!useNrPhotonsFilter_ || (spotData.getIntensity() > nrPhotonsMin_ && spotData.getIntensity() < nrPhotonsMax_))) {
+            if ( fitResult.getParms().length > 1 &&
+                    (!useWidthFilter_ || 
+                    (spotData.getWidth() > widthMin_ && spotData.getWidth() < widthMax_))
+                    && (!useNrPhotonsFilter_ || 
+                    (spotData.getIntensity() > nrPhotonsMin_ && spotData.getIntensity() < nrPhotonsMax_))) {
                resultList_.add(spotData);
             }
 
