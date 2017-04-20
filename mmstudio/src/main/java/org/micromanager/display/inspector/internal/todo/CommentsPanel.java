@@ -38,12 +38,11 @@ import org.micromanager.data.Image;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
-import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.inspector.InspectorPanelListener;
 
 
-public final class CommentsPanel extends AbstractInspectorPanelController {
+public final class CommentsPanel /*extends AbstractInspectorPanelController*/ {
    private JTextArea imageCommentsTextArea_;
    private JTextArea summaryCommentsTextArea_;
    private boolean shouldIgnoreUpdates_ = false;
@@ -93,13 +92,13 @@ public final class CommentsPanel extends AbstractInspectorPanelController {
 
       commentsPanel.add(new JScrollPane(imageCommentsTextArea_), "grow, pushy 100");
 
-      setLayout(new MigLayout("fill"));
+      //setLayout(new MigLayout("fill"));
       JSplitPane splitter = new JSplitPane(JSplitPane.VERTICAL_SPLIT, 
             summaryPanel, commentsPanel);
       // Don't draw a border around the outside of the SplitPane.
       splitter.setBorder(null);
       splitter.setResizeWeight(.5);
-      add(splitter, "grow");
+      //add(splitter, "grow");
    }
 
    private JTextArea makeTextArea() {
@@ -213,17 +212,6 @@ public final class CommentsPanel extends AbstractInspectorPanelController {
       });
    }
 
-   @Subscribe
-   public void onPixelsSet(PixelsSetEvent event) {
-      try {
-         updateQueue_.put(event.getImage());
-      }
-      catch (InterruptedException e) {
-         ReportingUtils.logError(e, "Interrupted when enqueueing image for comments update");
-      }
-   }
-
-   @Override
    public synchronized void setDataViewer(DataViewer display) {
       if (display_ != null) {
          try {
@@ -254,12 +242,6 @@ public final class CommentsPanel extends AbstractInspectorPanelController {
       }
    }
 
-   @Override
-   public void setInspector(InspectorPanelListener inspector) {
-      // We don't care.
-   }
-
-   @Override
    public synchronized void cleanup() {
       if (display_ != null) {
          try {

@@ -17,17 +17,22 @@ import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DisplaySettings;
 
 /**
+ * Abstract implementation of {@link Overlay}.
  *
- * @author mark
+ * Custom overlays should extend this class.
+ *
+ * @author Mark A. Tsuchida
  */
 public abstract class AbstractOverlay implements Overlay {
+   private boolean visible_ = true;
    private final EventListenerSupport<OverlayListener> listeners_ =
          EventListenerSupport.create(OverlayListener.class);
 
    /**
     * {@inheritDoc}
     * <p>
-    * This default implementation draws nothing.
+    * This default implementation draws nothing. Override to draw the overlay
+    * graphics.
     */
    @Override
    public void paintOverlay(Graphics2D graphicsContext, Rectangle screenRect,
@@ -41,7 +46,8 @@ public abstract class AbstractOverlay implements Overlay {
    /**
     * {@inheritDoc}
     * <p>
-    * This default implementation returns null.
+    * This default implementation returns null. Override to provide a user
+    * interface.
     */
    @Override
    public JComponent getConfigurationComponent() {
@@ -51,7 +57,8 @@ public abstract class AbstractOverlay implements Overlay {
    /**
     * {@inheritDoc}
     * <p>
-    * This default implementation returns an empty property map.
+    * This default implementation returns an empty property map. Override to
+    * implement custom settings.
     */
    @Override
    public PropertyMap getConfiguration() {
@@ -61,7 +68,8 @@ public abstract class AbstractOverlay implements Overlay {
    /**
     * {@inheritDoc}
     * <p>
-    * This default implementation does nothing.
+    * This default implementation does nothing. Override to implement custom
+    * settings.
     */
    @Override
    public void setConfiguration(PropertyMap config) {
@@ -71,8 +79,32 @@ public abstract class AbstractOverlay implements Overlay {
    /**
     * {@inheritDoc}
     * <p>
+    * This implementation takes care of visibility management.
+    */
+   @Override
+   public final boolean isVisible() {
+      return visible_;
+   }
+
+   /**
+    * {@inheritDoc}
+    * <p>
+    * This implementation takes care of visibility management.
+    */
+   @Override
+   public final void setVisible(boolean visible) {
+      if (visible == visible_) {
+         return;
+      }
+      visible_ = visible;
+      listeners_.fire().overlayVisibleChanged(this);
+   }
+
+   /**
+    * {@inheritDoc}
+    * <p>
     * This implementation takes care of managing listeners.
-    * @see #fireOverlayNeedsRepaint
+    * @see #fireOverlayConfigurationChanged
     */
    @Override
    public final void addOverlayListener(OverlayListener listener) {
@@ -83,11 +115,22 @@ public abstract class AbstractOverlay implements Overlay {
     * {@inheritDoc}
     * <p>
     * This implementation takes care of managing listeners.
-    * @see #fireOverlayNeedsRepaint
+    * @see #fireOverlayConfigurationChanged
     */
    @Override
    public final void removeOverlayListener(OverlayListener listener) {
       listeners_.removeListener(listener);
+   }
+
+   /**
+    * Call this method to notify the system that the overlay title has changed.
+    * <p>
+    * If the overlay has a fixed title, this method need not ever be called.
+    *
+    * @see OverlayListener#overlayTitleChanged
+    */
+   protected final void fireOverlayTitleChanged() {
+      listeners_.fire().overlayTitleChanged(this);
    }
 
    /**
@@ -97,9 +140,9 @@ public abstract class AbstractOverlay implements Overlay {
     * configuration changing. The case when the displayed image has changed is
     * automatically handled by the system.
     *
-    * @see OverlayListener#overlayNeedsRepaint
+    * @see OverlayListener#overlayConfigurationChanged
     */
-   protected final void fireOverlayNeedsRepaint() {
-      listeners_.fire().overlayNeedsRepaint(this);
+   protected final void fireOverlayConfigurationChanged() {
+      listeners_.fire().overlayConfigurationChanged(this);
    }
 }

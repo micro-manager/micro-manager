@@ -102,10 +102,15 @@ final class InspectorSectionController implements InspectorPanelListener {
       if (initiallyExpanded) {
          panel_.add(contentPanel_, new CC().grow().push());
       }
+      panel_.validate();
    }
 
    public JPanel getSectionPanel() {
       return panel_;
+   }
+
+   boolean isVerticallyResizableByUser() {
+      return panelController_.isVerticallyResizableByUser();
    }
 
    boolean isExpanded() {

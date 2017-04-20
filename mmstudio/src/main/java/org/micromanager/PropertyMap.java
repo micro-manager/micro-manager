@@ -18,12 +18,15 @@ import java.util.Set;
  */
 public interface PropertyMap {
    /**
-    * This exception is thrown when an incorrect get* method of a PropertyMap
-    * is called. For example, if the key "foo" maps to a String value, and you
-    * call PropertyMap.getInt("foo") instead of PropertyMap.getString("foo"),
-    * then this exception will be thrown.
+    * @deprecated If necessary, catch ClassCastException instead.
     */
-   class TypeMismatchException extends RuntimeException {
+   @Deprecated
+   class TypeMismatchException extends ClassCastException {
+      /**
+       * @param desc
+       * @deprecated Constructor should not have been part of API.
+       */
+      @Deprecated
       public TypeMismatchException(String desc) {
          super(desc);
       }
@@ -93,6 +96,25 @@ public interface PropertyMap {
        * @return The PropertyMapBuilder, so that puts can be chained together
        */
       PropertyMapBuilder putLongArray(String key, Long[] values);
+
+      /**
+       * Put a new Float value into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param value the value to associate with the key.
+       * @return The PropertyMapBuilder, so that puts can be chained together
+       */
+      PropertyMapBuilder putFloat(String key, Float value);
+      /**
+       * Put an array of Floats into the mapping.
+       * @param key a string identifying this property. If there is already
+       *        a property with this key in the builder, that property will
+       *        be overwritten.
+       * @param values values to associate with the key.
+       * @return The PropertyMapBuilder, so that puts can be chained together
+       */
+      PropertyMapBuilder putFloatArray(String key, Float[] values);
 
       /**
        * Put a new Double value into the mapping.
@@ -171,6 +193,7 @@ public interface PropertyMap {
     * will be thrown.
     * @param key
     * @return the String corresponding to the specified key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public String getString(String key);
    /**
@@ -181,6 +204,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return the String corresponding to the specified key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public String getString(String key, String defaultVal);
    /**
@@ -189,6 +213,7 @@ public interface PropertyMap {
     * will be thrown.
     * @param key
     * @return the String array corresponding to the specified key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public String[] getStringArray(String key);
    /**
@@ -199,6 +224,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return the String array corresponding to the specified key, or
     *         defaultVal if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public String[] getStringArray(String key, String[] defaultVal);
 
@@ -208,6 +234,7 @@ public interface PropertyMap {
     * TypeMismatchException will be thrown.
     * @param key
     * @return The Integer corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Integer getInt(String key);
    /**
@@ -218,6 +245,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return The Integer corresponding to the provided key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Integer getInt(String key, Integer defaultVal);
    /**
@@ -226,6 +254,7 @@ public interface PropertyMap {
     * TypeMismatchException will be thrown.
     * @param key
     * @return The Integer[] corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Integer[] getIntArray(String key);
    /**
@@ -236,6 +265,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return The Integer[] corresponding to the provided key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Integer[] getIntArray(String key, Integer[] defaultVal);
 
@@ -245,6 +275,7 @@ public interface PropertyMap {
     * will be thrown.
     * @param key
     * @return The Long corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Long getLong(String key);
    /**
@@ -255,6 +286,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return The Long corresponding to the provided key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Long getLong(String key, Long defaultVal);
    /**
@@ -263,6 +295,7 @@ public interface PropertyMap {
     * will be thrown.
     * @param key
     * @return The Long[] corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Long[] getLongArray(String key);
    /**
@@ -273,8 +306,50 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return The Long[] corresponding to the provided key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Long[] getLongArray(String key, Long[] defaultVal);
+
+   /**
+    * Retrieve a Float value from the mapping. Will return null if the key
+    * is not found. If the mapped value is not a Float, a
+    * TypeMismatchException will be thrown.
+    * @param key
+    * @return The Float corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
+    */
+   public Float getFloat(String key);
+   /**
+    * Retrieve a Float value from the mapping. If the key is not found, then
+    * the provided default value will be returned. If the mapped value is
+    * not a Float, a TypeMismatchException will be thrown.
+    * @param key
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Float corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
+    */
+   public Float getFloat(String key, Float defaultVal);
+   /**
+    * Retrieve a Float array from the mapping. Will return null if the key
+    * is not found. If the mapped value is not an Float, a
+    * TypeMismatchException will be thrown.
+    * @param key
+    * @return The Float[] corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
+    */
+   public Float[] getFloatArray(String key);
+   /**
+    * Retrieve a Float array from the mapping. If the key is not found, then
+    * the provided default value will be returned. If the mapped value is
+    * not an Float, a TypeMismatchException will be thrown.
+    * @param key
+    * @param defaultVal the default value to use if the key is not found.
+    * @return The Float[] corresponding to the provided key, or defaultVal
+    *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
+    */
+   public Float[] getFloatArray(String key, Float[] defaultVal);
 
    /**
     * Retrieve a Double value from the mapping. Will return null if the key
@@ -282,6 +357,7 @@ public interface PropertyMap {
     * TypeMismatchException will be thrown.
     * @param key
     * @return The Double corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Double getDouble(String key);
    /**
@@ -292,6 +368,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return The Double corresponding to the provided key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Double getDouble(String key, Double defaultVal);
    /**
@@ -300,6 +377,7 @@ public interface PropertyMap {
     * TypeMismatchException will be thrown.
     * @param key
     * @return The Double[] corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Double[] getDoubleArray(String key);
    /**
@@ -310,6 +388,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return The Double[] corresponding to the provided key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Double[] getDoubleArray(String key, Double[] defaultVal);
 
@@ -319,6 +398,7 @@ public interface PropertyMap {
     * TypeMismatchException will be thrown.
     * @param key
     * @return The Boolean corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Boolean getBoolean(String key);
    /**
@@ -329,6 +409,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return The Boolean corresponding to the provided key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Boolean getBoolean(String key, Boolean defaultVal);
    /**
@@ -337,6 +418,7 @@ public interface PropertyMap {
     * TypeMismatchException will be thrown.
     * @param key
     * @return The Boolean[] corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Boolean[] getBooleanArray(String key);
    /**
@@ -347,6 +429,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return The Boolean[] corresponding to the provided key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public Boolean[] getBooleanArray(String key, Boolean[] defaultVal);
 
@@ -356,6 +439,7 @@ public interface PropertyMap {
     * TypeMismatchException will be thrown.
     * @param key
     * @return The PropertyMap corresponding to the provided key.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public PropertyMap getPropertyMap(String key);
    /**
@@ -366,6 +450,7 @@ public interface PropertyMap {
     * @param defaultVal the default value to use if the key is not found.
     * @return The PropertyMap corresponding to the provided key, or defaultVal
     *         if the key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    public PropertyMap getPropertyMap(String key, PropertyMap defaultVal);
 
@@ -377,6 +462,7 @@ public interface PropertyMap {
     * @param defaultVal the default vaule to use if the key is not found.
     * @return the T corresponding to the provided key, or defaultVal if the
     *         key is not found.
+    * @throws ClassCastException if the key is present but has the wrong type
     */
    @Deprecated
    public <T> T getObject(String key, T defaultVal);

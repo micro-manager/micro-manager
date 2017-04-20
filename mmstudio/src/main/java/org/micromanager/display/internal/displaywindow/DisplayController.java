@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -40,7 +39,6 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
-import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.internal.ImageStatsPublisher;
@@ -59,9 +57,18 @@ import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunna
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
+import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
+import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
+import org.micromanager.display.overlay.Overlay;
+import org.micromanager.display.overlay.OverlayListener;
 
 /**
  * Main controller for the standard image viewer.
+ *
+ * This is also the implementation for the DisplayWindow API, for now (it might
+ * make sense to refactor and separate API support from controller
+ * implementation).
  *
  * @author Mark A. Tsuchida, parts refactored from code by Chris Weisiger
  */
@@ -70,7 +77,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       ImageStatsPublisher,
       DataCoordsAnimationState.CoordsProvider,
       AnimationController.Listener<Coords>,
-      StatsComputeQueue.Listener
+      StatsComputeQueue.Listener,
+      OverlayListener
 {
    private final DataProvider dataProvider_;
 
@@ -98,6 +106,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private final Object selectionLock_ = new Object();
    private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
 
+   private final List<Overlay> overlays_ = new ArrayList<Overlay>();
+
    // A way to know from a non-EDT thread that the display has definitely
    // closed (may not be true for a short period after closing)
    // Guarded by monitor on this
@@ -106,7 +116,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // Guarded by monitor on this
    private String customTitle_; // TODO Use
 
-   private final ControlsFactory controlsFactory_;
+   private final DisplayWindowControlsFactory controlsFactory_;
 
    public static final String DEFAULT_SETTINGS_PROFILE_KEY = "Default";
    private String settingsProfileKey_ = DEFAULT_SETTINGS_PROFILE_KEY;
@@ -124,7 +134,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       private DisplaySettings displaySettings_;
       private String settingsProfileKey_;
       private boolean shouldShow_;
-      private ControlsFactory controlsFactory_;
+      private DisplayWindowControlsFactory controlsFactory_;
 
       public Builder(DataProvider dataProvider)
       {
@@ -155,7 +165,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          return this;
       }
 
-      public Builder controlsFactory(ControlsFactory factory) {
+      public Builder controlsFactory(DisplayWindowControlsFactory factory) {
          controlsFactory_ = factory;
          return this;
       }
@@ -206,7 +216,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    private DisplayController(DataProvider dataProvider,
          DisplaySettings initialDisplaySettings,
-         ControlsFactory controlsFactory,
+         DisplayWindowControlsFactory controlsFactory,
          String settingsProfileKey)
    {
       super(initialDisplaySettings);
@@ -572,6 +582,93 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       uiController_.setNewImageIndicator(false);
    }
 
+
+   //
+   // Overlay support
+   //
+
+   @Override
+   public void addOverlay(final Overlay overlay) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               addOverlay(overlay);
+            }
+         });
+         return;
+      }
+
+      overlays_.add(overlay);
+      overlay.addOverlayListener(this);
+      if (overlay.isVisible() && uiController_ != null) {
+         uiController_.overlaysChanged();
+      }
+      postEvent(DisplayWindowDidAddOverlayEvent.create(this, overlay));
+   }
+
+   @Override
+   public void removeOverlay(final Overlay overlay) {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               removeOverlay(overlay);
+            }
+         });
+         return;
+      }
+
+      overlay.removeOverlayListener(this);
+      overlays_.remove(overlay);
+      if (overlay.isVisible() && uiController_ != null) {
+         uiController_.overlaysChanged();
+      }
+      postEvent(DisplayWindowDidRemoveOverlayEvent.create(this, overlay));
+   }
+
+   @Override
+   public List<Overlay> getOverlays() {
+      if (!SwingUtilities.isEventDispatchThread()) {
+         RunnableFuture<List<Overlay>> edtFuture = new FutureTask(
+               new Callable<List<Overlay>>() {
+            @Override
+            public List<Overlay> call() throws Exception {
+               return getOverlays();
+            }
+         });
+         SwingUtilities.invokeLater(edtFuture);
+         try {
+            return edtFuture.get();
+         }
+         catch (InterruptedException notUsedByUs) {
+            Thread.currentThread().interrupt();
+            return getOverlays(); // Bad
+         }
+         catch (ExecutionException unexpected) {
+            throw new RuntimeException(unexpected);
+         }
+      }
+
+      return new ArrayList<Overlay>(overlays_);
+   }
+
+   @Override
+   public void overlayTitleChanged(Overlay overlay) {
+      // Nothing to do
+   }
+
+   @Override
+   public void overlayConfigurationChanged(Overlay overlay) {
+      if (overlay.isVisible()) {
+         uiController_.overlaysChanged();
+      }
+   }
+
+   @Override
+   public void overlayVisibleChanged(Overlay overlay) {
+      uiController_.overlaysChanged();
+   }
 
    //
    // Misc

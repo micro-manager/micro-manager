@@ -35,12 +35,22 @@ import org.micromanager.display.DisplaySettings;
  * <p>
  * To implement a new overlay, you should extend {@link AbstractOverlay} rather
  * than directly implementing this interface.
+ * <p>
+ * Overlays are not thread safe. In a GUI, all methods must be called on the
+ * Swing/AWT event dispatch thread. (This means that Overlay implementations do
+ * not need to worry about threading.)
  *
  * @see OverlayPlugin
  *
  * @author Mark A. Tsuchida, based on earlier version by Chris Weisiger
  */
 public interface Overlay {
+   /**
+    * Return a human-readable name for this overlay.
+    * @return the overlay title
+    */
+   String getTitle();
+
    /**
     * Paint the overlay to the given graphics context.
     *
@@ -99,13 +109,37 @@ public interface Overlay {
    void setConfiguration(PropertyMap config);
 
    /**
+    * Return whether this overlay is shown.
+    * <p>
+    * Note: {@link AbstractOverlay} implements this method.
+    *
+    * @return true if overlay is visible
+    */
+   boolean isVisible();
+
+   /**
+    * Show or hide this overlay.
+    * <p>
+    * Note: {@link AbstractOverlay} implements this method.
+    *
+    * @param visible whether to show the overlay
+    */
+   void setVisible(boolean visible);
+
+   /**
     * Add a listener.
+    * <p>
+    * Note: {@link AbstractOverlay} implements this method.
+    *
     * @param listener the listener to add
     */
    void addOverlayListener(OverlayListener listener);
 
    /**
     * Remove a listener.
+    * <p>
+    * Note: {@link AbstractOverlay} implements this method.
+    *
     * @param listener the listener to remove
     */
    void removeOverlayListener(OverlayListener listener);

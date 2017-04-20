@@ -51,7 +51,6 @@ import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.StorageRAM;
-import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
@@ -70,6 +69,7 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
+import org.micromanager.display.DisplayWindowControlsFactory;
 
 /**
  * This class is responsible for all logic surrounding live mode and the
@@ -454,7 +454,7 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
    }
 
    private void createDisplay() {
-      ControlsFactory controlsFactory = new ControlsFactory() {
+      DisplayWindowControlsFactory controlsFactory = new DisplayWindowControlsFactory() {
          @Override
          public List<Component> makeControls(DisplayWindow display) {
             return createControls(display);

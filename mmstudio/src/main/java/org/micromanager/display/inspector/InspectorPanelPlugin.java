@@ -18,7 +18,7 @@ import org.micromanager.MMGenericPlugin;
 import org.micromanager.display.DataViewer;
 
 /**
- * InspectorPlugins provide new panels in the Inspector window(s).
+ * A plugin providing a panel in the Inspector window.
  *
  * To create an inspector plugin, annotate your class like this:
  * <pre><code>
@@ -31,7 +31,7 @@ import org.micromanager.display.DataViewer;
  * }
  * </code></pre>
  */
-public interface InspectorPlugin extends MMGenericPlugin {
+public interface InspectorPanelPlugin extends MMGenericPlugin {
    /**
     * Tell whether the InspectorPanel provided by this plugin is applicable to
     * a given DataViewer.
@@ -41,16 +41,5 @@ public interface InspectorPlugin extends MMGenericPlugin {
     */
    boolean isApplicableToDataViewer(DataViewer viewer);
 
-   /**
-    * Create a new InspectorPanel for use in an Inspector window.
-    * <p>
-    * The panel is typically implemented by extending
-    * {@link AbstractInspectorPanel}.
-    * <p>
-    * This method is guaranteed to be called on the Swing/AWT event dispatch
-    * thread.
-    *
-    * @return the new inspector panel
-    */
-   InspectorPanelController createPanel();
+   InspectorPanelController createPanelController();
 }

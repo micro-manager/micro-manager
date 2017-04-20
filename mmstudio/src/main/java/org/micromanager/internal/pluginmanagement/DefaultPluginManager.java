@@ -37,13 +37,13 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.internal.AcquisitionDialogPlugin;
 import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.display.DisplayGearMenuPlugin;
-import org.micromanager.display.inspector.InspectorPlugin;
 import org.micromanager.display.overlay.OverlayPlugin;
 import org.micromanager.events.internal.NewPluginEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.SortedMenu;
 import org.micromanager.quickaccess.QuickAccessPlugin;
+import org.micromanager.display.inspector.InspectorPanelPlugin;
 
 public final class DefaultPluginManager implements PluginManager {
 
@@ -54,8 +54,8 @@ public final class DefaultPluginManager implements PluginManager {
       VALID_CLASSES.add(AcquisitionDialogPlugin.class);
       VALID_CLASSES.add(AutofocusPlugin.class);
       VALID_CLASSES.add(DisplayGearMenuPlugin.class);
-      VALID_CLASSES.add(InspectorPlugin.class);
-      VALID_CLASSES.add(InspectorPlugin.class);
+      VALID_CLASSES.add(InspectorPanelPlugin.class);
+      VALID_CLASSES.add(InspectorPanelPlugin.class);
       VALID_CLASSES.add(IntroPlugin.class);
       VALID_CLASSES.add(MenuPlugin.class);
       VALID_CLASSES.add(OverlayPlugin.class);
@@ -283,10 +283,10 @@ public final class DefaultPluginManager implements PluginManager {
    }
 
    @Override
-   public HashMap<String, InspectorPlugin> getInspectorPlugins() {
-      HashMap<String, InspectorPlugin> result = new HashMap<String, InspectorPlugin>();
-      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(InspectorPlugin.class)) {
-         result.put(plugin.getClass().getName(), (InspectorPlugin) plugin);
+   public HashMap<String, InspectorPanelPlugin> getInspectorPlugins() {
+      HashMap<String, InspectorPanelPlugin> result = new HashMap<String, InspectorPanelPlugin>();
+      for (MMGenericPlugin plugin : pluginTypeToPlugins_.get(InspectorPanelPlugin.class)) {
+         result.put(plugin.getClass().getName(), (InspectorPanelPlugin) plugin);
       }
       return result;
    }

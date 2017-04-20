@@ -19,20 +19,25 @@
 
 package org.micromanager.display.overlay;
 
-import org.micromanager.display.overlay.Overlay;
 import org.micromanager.MMGenericPlugin;
 
+
 /**
- * This interface must be implemented by plugins that want to appear in the
- * menu of pattern overlays available in image display windows.
- * Additionally, the plugin class must be annotated with the @Plugin
- * annotation; see the MMPlugin documentation for more information.
- * Note: names of overlay plugins must be unique.
+ * A plugin providing overlays.
+ *
+ * To create an overlay plugin, annotate your class like this:
+ * <pre><code>
+ * {@literal @}Plugin(type = OverlayPlugin.class,
+ *       priority = Prioroty.NORMAL_PRIORITY,      // Suggests order in menu
+ *       name = "My Overlay",                      // User-visible name
+ *       description = "Show Wonderful Indicator") // Tooltip
+ * public class MyOverlayPlugin implements OverlayPlugin {
+ *    // ...
+ * }
+ * </code></pre>
+ *
+ * @author Chris Weisiger, Mark A. Tsuchida
  */
 public interface OverlayPlugin extends MMGenericPlugin {
-   /**
-    * Create a new OverlayPanelFactory object for creating OverlayPanels.
-    * @return new OverlayPanelFactory object for creating OverlayPanels.
-    */
-   public Overlay createFactory();
+   public Overlay createOverlay();
 }

@@ -23,6 +23,8 @@ import org.micromanager.display.DisplayWindow;
  * This is to {@code DisplayWindow} what {@code AbstractDataViewer} is to
  * {@code DataViewer}.
  *
+ * Segregate support of deprecated methods from the main implementation.
+ *
  * @author Mark A. Tsuchida
  */
 public abstract class DisplayWindowAPIAdapter extends AbstractDataViewer

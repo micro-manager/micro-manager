@@ -42,7 +42,6 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.EventPublisher;
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.inspector.InspectorPlugin;
 import org.micromanager.display.internal.DataViewerCollection;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
@@ -57,6 +56,7 @@ import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.WindowPositioning;
 import org.scijava.plugin.Plugin;
 import org.micromanager.display.inspector.InspectorPanelController;
+import org.micromanager.display.inspector.InspectorPanelPlugin;
 
 
 /**
@@ -256,11 +256,11 @@ public final class InspectorController
       sections_.clear();
 
       if (viewer != null && !viewer.isClosed()) {
-         List<InspectorPlugin> plugins = new ArrayList<InspectorPlugin>(
+         List<InspectorPanelPlugin> plugins = new ArrayList<InspectorPanelPlugin>(
                MMStudio.getInstance().plugins().getInspectorPlugins().values());
-         Collections.sort(plugins, new Comparator<InspectorPlugin>() {
+         Collections.sort(plugins, new Comparator<InspectorPanelPlugin>() {
             @Override
-            public int compare(InspectorPlugin o1, InspectorPlugin o2) {
+            public int compare(InspectorPanelPlugin o1, InspectorPanelPlugin o2) {
                Plugin p1 = o1.getClass().getAnnotation(Plugin.class);
                Plugin p2 = o2.getClass().getAnnotation(Plugin.class);
                return -Double.compare(p1.priority(), p2.priority());
@@ -268,13 +268,14 @@ public final class InspectorController
          });
 
          boolean isFirst = true;
-         for (InspectorPlugin plugin : plugins) {
+         for (InspectorPanelPlugin plugin : plugins) {
             if (plugin.isApplicableToDataViewer(viewer)) {
-               InspectorPanelController panel = plugin.createPanel();
+               InspectorPanelController panelController =
+                     plugin.createPanelController();
                InspectorSectionController section =
-                     InspectorSectionController.create(this, panel, isFirst);
-               panel.addInspectorPanelListener(section);
-               panel.attachDataViewer(viewer);
+                     InspectorSectionController.create(this, panelController, isFirst);
+               panelController.addInspectorPanelListener(section);
+               panelController.attachDataViewer(viewer);
                sections_.add(section);
                isFirst = false;
             }
@@ -283,10 +284,12 @@ public final class InspectorController
 
       sectionsPane_ = VerticalMultiSplitPane.create(sections_.size(), true);
       for (int i = 0; i < sections_.size(); ++i) {
+         InspectorSectionController sectionController = sections_.get(i);
          sectionsPane_.setComponentAtIndex(i,
-               sections_.get(i).getSectionPanel());
+               sectionController.getSectionPanel());
          sectionsPane_.setComponentResizeEnabled(i,
-               sections_.get(i).isExpanded());
+               sectionController.isVerticallyResizableByUser() &&
+               sectionController.isExpanded());
       }
       scrollPane_.setViewportView(sectionsPane_);
 
@@ -316,7 +319,8 @@ public final class InspectorController
       section.getSectionPanel().setPreferredSize(null);
 
       sectionsPane_.resizeToFitPreferredSizes();
-      sectionsPane_.setComponentResizeEnabled(index, section.isExpanded());
+      sectionsPane_.setComponentResizeEnabled(index,
+            section.isVerticallyResizableByUser() && section.isExpanded());
       sectionsPane_.revalidate();
       sectionsPane_.repaint();
 

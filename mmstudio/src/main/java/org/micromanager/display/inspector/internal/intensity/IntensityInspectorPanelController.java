@@ -49,7 +49,9 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  *
  * @author mark
  */
-public class IntensityPanelController extends AbstractInspectorPanelController {
+public class IntensityInspectorPanelController
+      extends AbstractInspectorPanelController
+{
    private final JPanel panel_ = new JPanel();
 
    private final JPopupMenu gearMenu_ = new JPopupMenu();
@@ -95,11 +97,11 @@ public class IntensityPanelController extends AbstractInspectorPanelController {
    private final CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
 
-   public static IntensityPanelController create() {
-      return new IntensityPanelController();
+   public static IntensityInspectorPanelController create() {
+      return new IntensityInspectorPanelController();
    }
 
-   private IntensityPanelController() {
+   private IntensityInspectorPanelController() {
       setUpGearMenu();
       setUpGeneralControlPanel();
       setUpChannelHistogramsPanel(0);

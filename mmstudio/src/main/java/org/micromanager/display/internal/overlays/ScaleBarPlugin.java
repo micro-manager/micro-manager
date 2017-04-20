@@ -25,6 +25,11 @@ import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 import org.micromanager.display.overlay.Overlay;
 
+/**
+ * The scale bar overlay plugin.
+ *
+ * @author Chris Weisiger, Mark A. Tsuchida
+ */
 @Plugin(type = OverlayPlugin.class,
       priority = Priority.HIGH_PRIORITY,
       name = "Scale Bar",

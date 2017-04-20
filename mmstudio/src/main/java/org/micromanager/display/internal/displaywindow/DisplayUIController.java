@@ -18,12 +18,14 @@ import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEv
 import org.micromanager.internal.utils.ColorMaps;
 import com.bulenkov.iconloader.IconLoader;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.Insets;
 import java.awt.LayoutManager;
@@ -34,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.geom.Rectangle2D;
 import java.io.Closeable;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -72,7 +75,6 @@ import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
-import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.displaywindow.imagej.ImageJBridge;
@@ -89,6 +91,8 @@ import org.micromanager.internal.utils.PopupButton;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
+import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.overlay.Overlay;
 
 /**
  * Manages the JFrame(s) for image displays.
@@ -110,7 +114,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    // All fields must only be accessed from the EDT unless otherwise noted.
 
-   private final ControlsFactory controlsFactory_;
+   private final DisplayWindowControlsFactory controlsFactory_;
 
    private JFrame frame_; // Not null iff not closed
    private JFrame fullScreenFrame_; // Not null iff in full-screen mode
@@ -201,7 +205,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    @MustCallOnEDT
    static DisplayUIController create(DisplayController parent,
-         ControlsFactory controlsFactory,
+         DisplayWindowControlsFactory controlsFactory,
          AnimationController animationController)
    {
       DisplayUIController instance = new DisplayUIController(parent,
@@ -213,7 +217,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    @MustCallOnEDT
    private DisplayUIController(DisplayController parent,
-         ControlsFactory controlsFactory,
+         DisplayWindowControlsFactory controlsFactory,
          AnimationController animationController)
    {
       displayController_ = parent;
@@ -784,6 +788,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
    }
 
+   @MustCallOnEDT
+   public void overlaysChanged() {
+      if (ijBridge_ == null) {
+         return;
+      }
+      ijBridge_.mm2ijRepaint();
+   }
+
    void setPlaybackFpsIndicator(double fps) {
       playbackFpsButton_.setText(String.format("Playback: %.1f fps", fps));
    }
@@ -1040,6 +1052,29 @@ public final class DisplayUIController implements Closeable, WindowListener,
          displayController_.postDisplayEvent(
                DataViewerMousePixelInfoChangedEvent.fromImage(
                      center.x, center.y, images.get(0)));
+      }
+   }
+
+   public void paintOverlays(Graphics2D g, Rectangle destRect,
+         Rectangle2D.Float viewPort)
+   {
+      Preconditions.checkState(displayedImages_ != null);
+
+      DisplaySettings displaySettings = displayController_.getDisplaySettings();
+      List<Image> images = displayedImages_.getRequest().getImages();
+      Coords nominalCoords = displayedImages_.getRequest().getNominalCoords();
+      Image primaryImage = null;
+      for (Image image : images) {
+         if (image.getCoords().getChannel() == nominalCoords.getChannel()) {
+            primaryImage = image;
+         }
+      }
+      List<Overlay> overlays = displayController_.getOverlays();
+      for (Overlay overlay : overlays) {
+         if (overlay.isVisible()) {
+            overlay.paintOverlay(g, destRect, displaySettings,
+                  images, primaryImage, viewPort);
+         }
       }
    }
 

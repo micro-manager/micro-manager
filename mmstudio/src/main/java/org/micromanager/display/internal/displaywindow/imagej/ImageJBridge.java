@@ -26,10 +26,12 @@ import ij.measure.Calibration;
 import ij.process.ByteProcessor;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.MenuBar;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import net.imglib2.display.ColorTable8;
@@ -462,6 +464,15 @@ public final class ImageJBridge {
          canvas_.setImageUpdated();
          canvas_.repaint();
       }
+   }
+
+   void paintMMOverlays(Graphics2D g, int canvasWidth, int canvasHeight,
+         Rectangle sourceRect)
+   {
+      Rectangle canvasBounds = new Rectangle(0, 0, canvasWidth, canvasHeight);
+      Rectangle2D.Float viewPort = new Rectangle2D.Float(
+            sourceRect.x, sourceRect.y, sourceRect.width, sourceRect.height);
+      uiController_.paintOverlays(g, canvasBounds, viewPort);
    }
 
    void ijPaintDidFinish() {

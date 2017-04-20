@@ -169,7 +169,7 @@ public interface DisplayManager extends EventPublisher {
     * @return The created DisplayWindow.
     */
    DisplayWindow createDisplay(Datastore store,
-         ControlsFactory factory);
+         DisplayWindowControlsFactory factory);
 
    /**
     * Create a new Inspector window that shows information for the specified

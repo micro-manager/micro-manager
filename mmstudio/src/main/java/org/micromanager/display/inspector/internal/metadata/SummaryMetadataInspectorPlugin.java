@@ -14,20 +14,20 @@
 package org.micromanager.display.inspector.internal.metadata;
 
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.inspector.InspectorPlugin;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 import org.micromanager.display.inspector.InspectorPanelController;
+import org.micromanager.display.inspector.InspectorPanelPlugin;
 
 /**
  *
  * @author Mark A. Tsuchida
  */
-@Plugin(type = InspectorPlugin.class,
+@Plugin(type = InspectorPanelPlugin.class,
       priority = Priority.HIGH_PRIORITY + 200,
       name = "Summary Metadata",
       description = "View dataset metadata")
-public class SummaryMetadataInspectorPlugin implements InspectorPlugin {
+public class SummaryMetadataInspectorPlugin implements InspectorPanelPlugin {
    @Override
    public boolean isApplicableToDataViewer(DataViewer viewer) {
       // This should always be true; just a sanity check
@@ -35,7 +35,7 @@ public class SummaryMetadataInspectorPlugin implements InspectorPlugin {
    }
 
    @Override
-   public InspectorPanelController createPanel() {
+   public InspectorPanelController createPanelController() {
       return SummaryMetadataPanelController.create();
    }
 }

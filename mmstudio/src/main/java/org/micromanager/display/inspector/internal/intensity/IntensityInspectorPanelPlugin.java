@@ -6,21 +6,21 @@
 package org.micromanager.display.inspector.internal.intensity;
 
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.inspector.InspectorPlugin;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
 import org.micromanager.display.inspector.InspectorPanelController;
 import org.micromanager.display.inspector.internal.ImageStatsPublisher;
+import org.micromanager.display.inspector.InspectorPanelPlugin;
 
 /**
  *
  * @author mark
  */
-@Plugin(type = InspectorPlugin.class,
+@Plugin(type = InspectorPanelPlugin.class,
       priority = Priority.VERY_HIGH_PRIORITY,
       name = "Intensity Scaling",
       description = "View and adjust intensity scaling")
-public class IntensityInspectorPlugin implements InspectorPlugin {
+public class IntensityInspectorPanelPlugin implements InspectorPanelPlugin {
    @Override
    public boolean isApplicableToDataViewer(DataViewer viewer) {
       return viewer.getDataProvider() != null &&
@@ -28,7 +28,7 @@ public class IntensityInspectorPlugin implements InspectorPlugin {
    }
 
    @Override
-   public InspectorPanelController createPanel() {
-      return IntensityPanelController.create();
+   public InspectorPanelController createPanelController() {
+      return IntensityInspectorPanelController.create();
    }
 }

@@ -27,7 +27,9 @@ import java.util.Arrays;
  * of an int-based image, and some related statistics. You can generate new
  * HistogramData objects yourself, or use DisplayManager.calculateHistogram()
  * and related methods to generate a HistogramData based off of an Image.
+ * @deprecated an improved API will be provided soon
  */
+@Deprecated
 public class HistogramData {
    private final int[] histogram_;
    private final int numSamples_;

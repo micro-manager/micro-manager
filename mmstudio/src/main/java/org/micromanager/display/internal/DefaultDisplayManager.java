@@ -27,8 +27,6 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.google.common.eventbus.SubscriberExceptionContext;
-import com.google.common.eventbus.SubscriberExceptionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -42,13 +40,11 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultPropertyMap;
-import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
-import org.micromanager.display.OverlayInspectorSubpanel;
 import org.micromanager.display.overlay.OverlayPlugin;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.inspector.internal.InspectorCollection;
@@ -59,6 +55,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.overlay.Overlay;
+import org.micromanager.display.DisplayWindowControlsFactory;
 
 
 // TODO Methods must implement correct threading semantics!
@@ -247,7 +244,7 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public DisplayWindow createDisplay(Datastore store, ControlsFactory factory)
+   public DisplayWindow createDisplay(Datastore store, DisplayWindowControlsFactory factory)
    {
       DisplayWindow ret = new DisplayController.Builder(store).
             controlsFactory(factory).build();
@@ -386,38 +383,6 @@ public final class DefaultDisplayManager implements DisplayManager {
          }
       }
       return true;
-   }
-
-   // TODO Why is this in the display manager?
-   public OverlayInspectorSubpanel createOverlayPanel(String title) {
-      Overlay factory = titleToOverlay_.get(title);
-      OverlayInspectorSubpanel panel = factory.getConfigurationComponent();
-      panel.setManager(this);
-      return panel;
-   }
-
-   /**
-    * Load all plugins of the OverlayPlugin type.
-    */
-   private void loadOverlayPlugins() {
-      HashMap<String, OverlayPlugin> plugins = studio_.plugins().getOverlayPlugins();
-      for (String key : plugins.keySet()) {
-         OverlayPlugin plugin = plugins.get(key);
-         titleToOverlay_.put(plugin.getName(), plugin.createFactory());
-      }
-   }
-
-   public String[] getOverlayTitles() {
-      if (titleToOverlay_ == null) {
-         // Time to load overlays now.
-         titleToOverlay_ = new LinkedHashMap<String, Overlay>();
-         loadOverlayPlugins();
-      }
-      ArrayList<String> result = new ArrayList<String>();
-      for (Map.Entry<String, Overlay> entry : titleToOverlay_.entrySet()) {
-         result.add(entry.getKey());
-      }
-      return result.toArray(new String[result.size()]);
    }
 
    /**

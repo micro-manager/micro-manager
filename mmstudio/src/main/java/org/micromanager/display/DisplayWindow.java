@@ -23,6 +23,8 @@ package org.micromanager.display;
 import ij.ImagePlus;
 import java.awt.Window;
 import java.io.Closeable;
+import java.util.List;
+import org.micromanager.display.overlay.Overlay;
 
 
 /**
@@ -124,6 +126,44 @@ public interface DisplayWindow extends DataViewer, Closeable {
    public void autostretch();
 
    /**
+    * Add a graphical overlay.
+    *
+    * This method can be called from any thread. However, you should call it
+    * from the Swing/AWT event dispatch thread if you want to correctly
+    * synchronize with other user interface changes.
+    *
+    * @param overlay the overlay to add
+    * @throws NullPointerException if {@code overlay} is null
+    * @see #removeOverlay
+    * @see #getOverlays
+    */
+   void addOverlay(Overlay overlay);
+
+   /**
+    * Remove a graphical overlay.
+    *
+    * This method can be called from any thread. However, you should call it
+    * from the Swing/AWT event dispatch thread if you want to correctly
+    * synchronize with other user interface changes.
+    *
+    * @param overlay the overlay to remove
+    * @see #addOverlay
+    */
+   void removeOverlay(Overlay overlay);
+
+   /**
+    * Get the overlays attached to this display.
+    *
+    * This method can be called from any thread. However, you should call it
+    * from the Swing/AWT event dispatch thread if you want to correctly
+    * synchronize with other user interface changes.
+    *
+    * @return the overlays
+    * @see #addOverlay
+    */
+   List<Overlay> getOverlays();
+
+   /**
     * Return the ImageJ {@code ImagePlus} object used by the display window.
     *
     * Note that the {@code ImagePlus} may be replaced with a new one during the
@@ -138,10 +178,10 @@ public interface DisplayWindow extends DataViewer, Closeable {
     * {@code CompositeImage}, or {@code null} if none has been created or if
     * the display has closed.
     *
-    * @deprecated Directly accessing the {@code ImagePlus} if an MMStudio
-    * display window will generally result in fragile code. Consider accessing
-    * image data through the MMStudio API. For drawing overlays, use MMStudio's
-    * overlay API.
+    * @deprecated Directly accessing the {@code ImagePlus} of an MMStudio
+    * display window will generally result in very fragile code. Consider
+    * accessing image data through {@link #getDataProvider}. For drawing
+    * overlay graphics, see {@link #addOverlay}.
     */
    @Deprecated
    public ImagePlus getImagePlus();

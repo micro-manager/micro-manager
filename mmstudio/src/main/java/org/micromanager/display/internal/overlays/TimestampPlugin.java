@@ -20,43 +20,19 @@
 
 package org.micromanager.display.internal.overlays;
 
-import org.micromanager.Studio;
-import org.micromanager.display.overlay.OverlayPlugin;
-import org.scijava.plugin.Plugin;
-import org.scijava.plugin.SciJavaPlugin;
 import org.micromanager.display.overlay.Overlay;
+import org.micromanager.display.overlay.OverlayPlugin;
+import org.scijava.Priority;
+import org.scijava.plugin.Plugin;
 
-@Plugin(type = OverlayPlugin.class)
-public final class TimestampPlugin implements OverlayPlugin, SciJavaPlugin {
-   private Studio studio_;
 
+@Plugin(type = OverlayPlugin.class,
+      priority = Priority.HIGH_PRIORITY,
+      name = "Timestamp",
+      description = "Display timestamps")
+public final class TimestampPlugin implements OverlayPlugin {
    @Override
-   public void setContext(Studio studio) {
-      studio_ = studio;
-   }
-
-   @Override
-   public Overlay createFactory() {
-      return new TimestampFactory(studio_);
-   }
-
-   @Override
-   public String getName() {
-      return "Timestamp";
-   }
-
-   @Override
-   public String getHelpText() {
-      return "Display the time of acquisition of the image";
-   }
-
-   @Override
-   public String getVersion() {
-      return "Version 1.0";
-   }
-
-   @Override
-   public String getCopyright() {
-      return "Copyright 2015 Regents of the University of California; Open Imaging Inc.";
+   public Overlay createOverlay() {
+      return TimestampOverlay.create();
    }
 }

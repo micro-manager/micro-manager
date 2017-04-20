@@ -52,6 +52,8 @@ public final class DefaultPropertyMap implements PropertyMap {
    private static final String INTEGER_ARRAY = "Integer array";
    private static final String LONG = "Long";
    private static final String LONG_ARRAY = "Long array";
+   private static final String FLOAT = "Float";
+   private static final String FLOAT_ARRAY = "Float array";
    private static final String DOUBLE = "Double";
    private static final String DOUBLE_ARRAY = "Double array";
    private static final String BOOLEAN = "Boolean";
@@ -91,6 +93,15 @@ public final class DefaultPropertyMap implements PropertyMap {
       public PropertyValue(Long[] val) {
          val_ = val;
          type_ = Long[].class;
+      }
+
+      public PropertyValue(Float val) {
+         val_ = val;
+         type_ = Float.class;
+      }
+      public PropertyValue(Float[] val) {
+         val_ = val;
+         type_ = Float[].class;
       }
 
       public PropertyValue(Double val) {
@@ -159,6 +170,19 @@ public final class DefaultPropertyMap implements PropertyMap {
             throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Long[]");
          }
          return (Long[]) val_;
+      }
+
+      public Float getAsFloat() {
+         if (type_ != Float.class) {
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Float");
+         }
+         return (Float) val_;
+      }
+      public Float[] getAsFloatArray() {
+         if (type_ != Float[].class) {
+            throw new PropertyMap.TypeMismatchException("Type of value is " + type_.getName() + ", not Float[]");
+         }
+         return (Float[]) val_;
       }
 
       public Double getAsDouble() {
@@ -241,6 +265,19 @@ public final class DefaultPropertyMap implements PropertyMap {
                result.put(TYPE, LONG_ARRAY);
                JSONArray tmp = new JSONArray();
                Long[] vals = (Long[]) val_;
+               for (int i = 0; i < vals.length; ++i) {
+                  tmp.put(vals[i]);
+               }
+               result.put(VALUE, tmp);
+            }
+            else if (type_ == Float.class) {
+               result.put(TYPE, FLOAT);
+               result.put(VALUE, (Float) val_);
+            }
+            else if (type_ == Float[].class) {
+               result.put(TYPE, FLOAT_ARRAY);
+               JSONArray tmp = new JSONArray();
+               Float[] vals = (Float[]) val_;
                for (int i = 0; i < vals.length; ++i) {
                   tmp.put(vals[i]);
                }
@@ -362,6 +399,17 @@ public final class DefaultPropertyMap implements PropertyMap {
       }
       @Override
       public PropertyMap.PropertyMapBuilder putLongArray(String key, Long[] values) {
+         propMap_.put(key, new PropertyValue(values));
+         return this;
+      }
+
+      @Override
+      public PropertyMap.PropertyMapBuilder putFloat(String key, Float value) {
+         propMap_.put(key, new PropertyValue(value));
+         return this;
+      }
+      @Override
+      public PropertyMap.PropertyMapBuilder putFloatArray(String key, Float[] values) {
          propMap_.put(key, new PropertyValue(values));
          return this;
       }
@@ -537,6 +585,35 @@ public final class DefaultPropertyMap implements PropertyMap {
    public Long[] getLongArray(String key, Long[] defaultVal) {
       if (propMap_.containsKey(key)) {
          return propMap_.get(key).getAsLongArray();
+      }
+      return defaultVal;
+   }
+
+   @Override
+   public Float getFloat(String key) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsFloat();
+      }
+      return null;
+   }
+   @Override
+   public Float getFloat(String key, Float defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsFloat();
+      }
+      return defaultVal;
+   }
+   @Override
+   public Float[] getFloatArray(String key) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsFloatArray();
+      }
+      return null;
+   }
+   @Override
+   public Float[] getFloatArray(String key, Float[] defaultVal) {
+      if (propMap_.containsKey(key)) {
+         return propMap_.get(key).getAsFloatArray();
       }
       return defaultVal;
    }
@@ -755,6 +832,17 @@ public final class DefaultPropertyMap implements PropertyMap {
                   valArr[j] = tmp.getLong(j);
                }
                builder.putLongArray(key, valArr);
+            }
+            else if (type.contentEquals(FLOAT)) {
+               builder.putFloat(key, (float) property.getDouble(VALUE));
+            }
+            else if (type.contentEquals(FLOAT_ARRAY)) {
+               JSONArray tmp = property.getJSONArray(VALUE);
+               Float[] valArr = new Float[tmp.length()];
+               for (int j = 0; j < tmp.length(); ++j) {
+                  valArr[j] = (float) tmp.getDouble(j);
+               }
+               builder.putFloatArray(key, valArr);
             }
             else if (type.contentEquals(DOUBLE)) {
                builder.putDouble(key, property.getDouble(VALUE));

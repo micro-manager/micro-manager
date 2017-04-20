@@ -55,7 +55,6 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-import org.micromanager.display.ControlsFactory;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.RequestToCloseEvent;
@@ -64,6 +63,7 @@ import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.display.DisplayWindowControlsFactory;
 
 /**
  * This class is used to execute most of the acquisition and image display
@@ -253,8 +253,8 @@ public final class MMAcquisition {
     * TODO: remove these special controls (or at least hide them) when the
     * acquisition ends.
     */
-   private ControlsFactory makeControlsFactory() {
-      return new ControlsFactory() {
+   private DisplayWindowControlsFactory makeControlsFactory() {
+      return new DisplayWindowControlsFactory() {
          @Override
          public List<Component> makeControls(final DisplayWindow display) {
             ArrayList<Component> result = new ArrayList<Component>();

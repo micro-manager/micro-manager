@@ -11,6 +11,13 @@ package org.micromanager.display.overlay;
  */
 public interface OverlayListener {
    /**
+    * Called by the overlay when its title has changed.
+    * @param overlay the caller
+    * @see AbstractOverlay#fireOverlayTitleChanged
+    */
+   void overlayTitleChanged(Overlay overlay);
+
+   /**
     * Called by the overlay when a repaint is required.
     * <p>
     * This method should be called to notify that the overlay needs a repaint
@@ -19,5 +26,12 @@ public interface OverlayListener {
     * @param overlay the caller
     * @see AbstractOverlay#fireOverlayNeedsRepaint
     */
-   void overlayNeedsRepaint(Overlay overlay);
+   void overlayConfigurationChanged(Overlay overlay);
+
+   /**
+    * Called by the overlay when it is shown or hidden.
+    *
+    * @param overlay the caller
+    */
+   void overlayVisibleChanged(Overlay overlay);
 }
