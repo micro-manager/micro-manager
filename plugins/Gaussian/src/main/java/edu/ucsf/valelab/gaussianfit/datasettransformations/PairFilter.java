@@ -112,8 +112,11 @@ public class PairFilter {
                   // index channel 2 by position
                   ArrayList<List<Point2D.Double>> xyPointsCh2 = 
                           new ArrayList<List<Point2D.Double>>(rowData.nrPositions_);
+                  ArrayList<List<SpotData>> xySpotsCh2 = 
+                          new ArrayList<List<SpotData>>(rowData.nrPositions_);
                   for (int position = 1; position <= rowData.nrPositions_; position++) {
                      xyPointsCh2.add(position - 1, new ArrayList<Point2D.Double>());
+                     xySpotsCh2.add(position - 1, new ArrayList<SpotData>());
                   }
 
                   for (SpotData gs : rowData.spotList_) {
@@ -126,6 +129,7 @@ public class PairFilter {
                               gsCh1.get(q).add(gs);
                            }
                         } else if (gs.getChannel() == 2) {
+                           xySpotsCh2.get(gs.getPosition() - 1).add(gs);
                            Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
                            xyPointsCh2.get(gs.getPosition() - 1).add(point);
                         }
@@ -184,7 +188,7 @@ public class PairFilter {
                                    && d < distAvg + deviationMax * distStd) {
                               correctedData.add(gs);
                               // we have to find the matching spot in channel 2!
-                              for (SpotData gsCh2 : rowData.spotList_) {
+                              for (SpotData gsCh2 : xySpotsCh2.get(gs.getPosition() - 1)) {
                                  if (gsCh2.getFrame() == frame) {
                                     if (gsCh2.getChannel() == 2) {
                                        if (gsCh2.getXCenter() == pCh2.x && gsCh2.getYCenter() == pCh2.y) {
