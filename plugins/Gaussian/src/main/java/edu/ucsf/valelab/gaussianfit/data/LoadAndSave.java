@@ -37,6 +37,7 @@ import edu.ucsf.valelab.gaussianfit.DataCollectionForm;
 import static edu.ucsf.valelab.gaussianfit.DataCollectionForm.EXTENSION;
 import static edu.ucsf.valelab.gaussianfit.DataCollectionForm.getInstance;
 import edu.ucsf.valelab.gaussianfit.LittleEndianDataInputStream;
+import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.process.ImageProcessor;
 import java.awt.Cursor;
 import java.awt.FileDialog;
@@ -235,6 +236,10 @@ public class LoadAndSave {
 
          while ((spot = fr.readLine()) != null) {
             String[] spotTags = spot.split("\t");
+            if (spotTags.length != headers.length) {
+               ReportingUtils.logError("Failed to import spot " + spotTags[0]);
+               continue;
+            }
             HashMap<String, String> k = new HashMap<String, String>();
             for (int i = 0; i < headers.length; i++) {
                k.put(headers[i], spotTags[i]);
