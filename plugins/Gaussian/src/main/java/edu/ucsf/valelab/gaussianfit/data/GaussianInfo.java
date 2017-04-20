@@ -183,6 +183,9 @@ public class GaussianInfo {
    public void setMaxIterations(int maxIter) {
       maxIterations_ = maxIter;
    }
+   public int getMaxIterations() {
+      return maxIterations_;
+   }
    public void setShape(int shape) {
       shape_ = shape;
    }
@@ -268,6 +271,7 @@ public class GaussianInfo {
       setUseNrPhotonsFilter(source.getUseNrPhotonsFilter());
       setUseWidthFilter(source.getUseWidthFilter());
       setZStackStepSize(source.getZStackStepSize());
+      setMaxIterations(source.getMaxIterations());
    }
    
 }
