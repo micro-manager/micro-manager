@@ -92,7 +92,9 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
+import org.micromanager.internal.MMStudio;
 
 /**
  * Manages the JFrame(s) for image displays.
@@ -107,7 +109,7 @@ import org.micromanager.display.overlay.Overlay;
  * @author Mark A. Tsuchida
  */
 public final class DisplayUIController implements Closeable, WindowListener,
-      NDScrollBarPanel.Listener
+      MDScrollBarPanel.Listener
 {
    private final DisplayController displayController_;
    private final AnimationController animationController_;
@@ -137,7 +139,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private JLabel fpsLabel_;
    private PopupButton playbackFpsButton_;
    private JSpinner playbackFpsSpinner_;
-   private NDScrollBarPanel scrollBarPanel_;
+   private MDScrollBarPanel scrollBarPanel_;
    private JButton axisLockButton_;
 
    // Subcomponents of the N-dimensional scroll bar panel
@@ -147,7 +149,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          new ArrayList<Map.Entry<String, JToggleButton>>();
    private final List<Map.Entry<String, PopupButton>> axisPositionButtons_ =
          new ArrayList<Map.Entry<String, PopupButton>>();
-   // TODO Link buttons
+   private final List<Map.Entry<String, PopupButton>> axisLinkButtons_ =
+         new ArrayList<Map.Entry<String, PopupButton>>();
 
    private static final Icon PLAY_ICON = IconLoader.getIcon(
          "/org/micromanager/icons/play.png");
@@ -315,7 +318,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             "[] 0 [grow, fill] related []"));
 
       canvasPanel_ = new JPanel(new MigLayout("insets 0, fill"));
-      noImagesMessageLabel_ = new JLabel("Waiting for Images...");
+      noImagesMessageLabel_ = new JLabel("Waiting for Image...");
       noImagesMessageLabel_.setEnabled(false);
       canvasPanel_.add(noImagesMessageLabel_, "align center");
 
@@ -473,26 +476,26 @@ public final class DisplayUIController implements Closeable, WindowListener,
       playbackFpsButton_.setVisible(false);
       panel.add(playbackFpsButton_, new CC().hideMode(2).wrap());
 
-      NDScrollBarPanel.ControlsFactory leftFactory =
-            new NDScrollBarPanel.ControlsFactory() {
+      MDScrollBarPanel.ControlsFactory leftFactory =
+            new MDScrollBarPanel.ControlsFactory() {
                @Override
                public JComponent getControlsForAxis(String axis, int height) {
                   return makeScrollBarLeftControls(axis, height);
                }
             };
-      NDScrollBarPanel.ControlsFactory rightFactory =
-            new NDScrollBarPanel.ControlsFactory() {
+      MDScrollBarPanel.ControlsFactory rightFactory =
+            new MDScrollBarPanel.ControlsFactory() {
                @Override
                public JComponent getControlsForAxis(String axis, int height) {
                   return makeScrollBarRightControls(axis, height);
                }
             };
-      scrollBarPanel_ = NDScrollBarPanel.create(leftFactory, null);
+      scrollBarPanel_ = MDScrollBarPanel.create(leftFactory, rightFactory);
       scrollBarPanel_.addListener(this);
       panel.add(scrollBarPanel_, new CC().growX().pushX().split(2));
 
       axisLockButton_ = new JButton();
-      Dimension size = new Dimension(NDScrollBarPanel.ROW_HEIGHT, NDScrollBarPanel.ROW_HEIGHT);
+      Dimension size = new Dimension(MDScrollBarPanel.ROW_HEIGHT, MDScrollBarPanel.ROW_HEIGHT);
       axisLockButton_.setMinimumSize(size);
       axisLockButton_.setPreferredSize(size);
       axisLockButton_.setIcon(UNLOCKED_ICON);
@@ -515,9 +518,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
 
-      panel.add(customControlsPanel, new CC().split(3));
+      panel.add(customControlsPanel, new CC().split());
       panel.add(new JPanel(), new CC().growX());
-      panel.add(new JLabel("[Save As...] [GEAR]"));
+      panel.add(new JLabel("[Save As...]"));
+      // TODO Avoid static studio
+      panel.add(new GearButton(displayController_, MMStudio.getInstance()));
 
       return panel;
    }
@@ -585,6 +590,34 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private JComponent makeScrollBarRightControls(final String axis, int height) {
       JPanel ret = new JPanel(new MigLayout(
             new LC().insets("0").gridGap("0", "0").fillX()));
+
+      PopupButton linkButton = null;
+      for (Map.Entry<String, PopupButton> e : axisLinkButtons_) {
+         if (axis.equals(e.getKey())) {
+            linkButton = e.getValue();
+            break;
+         }
+      }
+      if (linkButton == null) {
+         final AxisLinker linker = AxisLinker.create(displayController_, axis);
+         final JPopupMenu linkPopup = new JPopupMenu();
+         linkButton = PopupButton.create(IconLoader.getIcon("/org/micromanager/icons/linkflat.png"), linkPopup);
+         linkButton.addPopupButtonListener(new PopupButton.Listener() {
+            @Override
+            public void popupButtonWillShowPopup(PopupButton button) {
+               linker.updatePopupMenu(linkPopup);
+            }
+         });
+         linkButton.setDisabledIcon(IconLoader.getDisabledIcon(linkButton.getIcon()));
+         Dimension size = new Dimension(3 * height / 2, height);
+         linkButton.setMinimumSize(size);
+         linkButton.setMaximumSize(size);
+         linkButton.setPreferredSize(size);
+         axisLinkButtons_.add(new AbstractMap.SimpleEntry<String, PopupButton>(
+               axis, linkButton));
+      }
+      ret.add(linkButton, new CC());
+
       return ret;
    }
 
@@ -1342,14 +1375,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
    //
 
    @Override
-   public void scrollBarPanelHeightWillChange(NDScrollBarPanel panel,
+   public void scrollBarPanelHeightWillChange(MDScrollBarPanel panel,
          int currentHeight)
    {
       panel.setVisible(false);
    }
 
    @Override
-   public void scrollBarPanelHeightDidChange(NDScrollBarPanel panel,
+   public void scrollBarPanelHeightDidChange(MDScrollBarPanel panel,
          int oldHeight, int newHeight)
    {
       if (isFullScreenMode()) {
@@ -1369,7 +1402,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @Override
-   public void scrollBarPanelDidChangePositionInUI(NDScrollBarPanel panel) {
+   public void scrollBarPanelDidChangePositionInUI(MDScrollBarPanel panel) {
       // TODO We might want to leave out animated axes when setting the display
       // position based on user input. Also consider disabling scroll bars that
       // are being animated.

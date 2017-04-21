@@ -41,7 +41,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.inspector.internal.ImageStatsPublisher;
+import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.display.internal.animate.AnimationController;
@@ -58,6 +58,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
 import org.micromanager.display.overlay.Overlay;
@@ -209,6 +210,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                instance.toFront();
             }
          });
+      }
+
+      if (instance.dataProvider_.getNumImages() > 0) {
+         // TODO Get _first_ image, not just any
+         instance.setDisplayPosition(instance.dataProvider_.getAnyImage().getCoords());
       }
 
       return instance;
@@ -1001,7 +1007,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public DisplayWindow duplicate() {
-      throw new UnsupportedOperationException();
+      return DefaultDisplayManager.getInstance().createDisplay(dataProvider_);
    }
 
    @Override

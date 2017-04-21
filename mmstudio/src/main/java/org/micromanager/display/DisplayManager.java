@@ -23,6 +23,7 @@ package org.micromanager.display;
 import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 
@@ -154,21 +155,21 @@ public interface DisplayManager extends EventPublisher {
 
    /**
     * Create a new DisplayWindow for the specified Datastore and return it.
-    * @param store The Datastore whose data should be displayed.
+    * @param dataProvider The Datastore whose data should be displayed.
     * @return The created DisplayWindow.
     */
-   DisplayWindow createDisplay(Datastore store);
+   DisplayWindow createDisplay(DataProvider dataProvider);
 
    /**
     * Create a new DisplayWindow for the specified Datastore and return it.
     * This version allows you to add your own custom controls to the display
     * that will appear underneath the axis scrollbars.
-    * @param store The Datastore whose data should be displayed.
+    * @param dataProvider The Datastore whose data should be displayed.
     * @param factory A ControlsFactory used to create custom controls for
     *        the DisplayWindow. May be null.
     * @return The created DisplayWindow.
     */
-   DisplayWindow createDisplay(Datastore store,
+   DisplayWindow createDisplay(DataProvider dataProvider,
          DisplayWindowControlsFactory factory);
 
    /**

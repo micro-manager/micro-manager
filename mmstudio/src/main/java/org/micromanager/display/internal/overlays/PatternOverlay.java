@@ -351,11 +351,13 @@ public class PatternOverlay extends AbstractOverlay {
       double umPerImagePixel = pixelSize != null ? pixelSize : Double.NaN;
       final double zoomRatio = imageViewPort.width / screenRect.width;
 
+      // Draw the pattern in image pixel coordinates by applying a transform
       Graphics2D gTfm = (Graphics2D) g.create();
       gTfm.transform(AffineTransform.
             getScaleInstance(1.0 / zoomRatio, 1.0 / zoomRatio));
       gTfm.transform(AffineTransform.
             getTranslateInstance(-imageViewPort.x, -imageViewPort.y));
+      // Stroke width should be 1.0 in screen coordinates
       gTfm.setStroke(new BasicStroke((float) zoomRatio));
       patternType_.draw(gTfm, patternSize_,
             primaryImage.getWidth(), primaryImage.getHeight());

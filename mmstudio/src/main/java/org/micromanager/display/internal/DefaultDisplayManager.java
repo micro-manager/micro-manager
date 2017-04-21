@@ -31,10 +31,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.WeakHashMap;
 import javax.swing.JOptionPane;
 import org.micromanager.PropertyMap;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
@@ -45,7 +45,6 @@ import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
-import org.micromanager.display.overlay.OverlayPlugin;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.inspector.internal.InspectorCollection;
 import org.micromanager.display.inspector.internal.InspectorController;
@@ -237,16 +236,17 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public DisplayWindow createDisplay(Datastore store) {
-      DisplayWindow ret = new DisplayController.Builder(store).build();
+   public DisplayWindow createDisplay(DataProvider provider) {
+      DisplayWindow ret = new DisplayController.Builder(provider).shouldShow(true).build();
       addViewer(ret);
       return ret;
    }
 
    @Override
-   public DisplayWindow createDisplay(Datastore store, DisplayWindowControlsFactory factory)
+   public DisplayWindow createDisplay(DataProvider provider,
+         DisplayWindowControlsFactory factory)
    {
-      DisplayWindow ret = new DisplayController.Builder(store).
+      DisplayWindow ret = new DisplayController.Builder(provider).shouldShow(true).
             controlsFactory(factory).build();
       addViewer(ret);
       return ret;

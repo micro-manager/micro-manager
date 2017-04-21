@@ -43,19 +43,18 @@ import org.micromanager.internal.utils.SortedPopupMenu;
 public final class GearButton extends JButton {
    private SortedPopupMenu menu_;
 
-   public GearButton(final DisplayWindow display, Studio studio) {
-      setToolTipText("Access additional commands");
+   public GearButton(final DisplayWindow display, final Studio studio) {
       menu_ = new SortedPopupMenu();
-      JMenuItem openInspector = new JMenuItem("New Inspector Window");
+      JMenuItem openInspector = new JMenuItem("Image Inspector...");
       openInspector.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            InspectorController.createInspector(display);
+            studio.displays().createInspectorForDataViewer(display);
          }
       });
       menu_.addUnsorted(openInspector);
 
-      JMenuItem duplicate = new JMenuItem("New Window For This Data");
+      JMenuItem duplicate = new JMenuItem("New Window for This Data");
       duplicate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
