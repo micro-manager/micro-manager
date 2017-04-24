@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.rmi.activation.ActivationSystem;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.Scanner;
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.MatrixUtils;
@@ -45,7 +46,7 @@ public class LaserPredNet {
    private double brightness_;
    private double[] binedges_;
    
-   public LaserPredNet(String filename) throws FileNotFoundException {
+   public LaserPredNet(String filename, double brightness) throws FileNotFoundException {
       readModel(filename);
       //init log bins
       double binmax = 350;
@@ -54,13 +55,10 @@ public class LaserPredNet {
          double linearBin = (1.0 / (double) N_HIST_BINS) * b;
          binedges_[b] = Math.pow(linearBin, 1.5) * binmax;
       }
+      brightness_ = brightness;
    }
-   
-  public static void main (String[] args) throws FileNotFoundException {
-     new LaserPredNet("./maitaimodel.csv");
-  }
-   
-   public  byte[] getExcitations(AcquisitionEvent e, SurfaceInterpolator surf) throws InterruptedException {
+
+    public byte[] getExcitations(AcquisitionEvent e, SurfaceInterpolator surf) throws InterruptedException {
       XYStagePosition xyPos = e.xyPosition_;
       double zPos = e.zPosition_;
       Point2D.Double[] corners = xyPos.getFullTileCorners();
@@ -70,7 +68,7 @@ public class LaserPredNet {
       AffineTransform posTransform = AffineUtils.getAffineTransform(getCurrentPixelSizeConfig(), xyPos.getCenter().x, xyPos.getCenter().y);
 
       
-      double[][] designMat = new double[FOV_LASER_MODULATION_RESOLUTION*FOV_LASER_MODULATION_RESOLUTION][12];
+      double[][] designMat = new double[FOV_LASER_MODULATION_RESOLUTION*FOV_LASER_MODULATION_RESOLUTION][N_HIST_BINS+3];
 //      designMatrix = [designMatrix tilePosition brightness];
        for (int r = 0; r < designMat.length; r++) {
           //calculate position for this point in FOV

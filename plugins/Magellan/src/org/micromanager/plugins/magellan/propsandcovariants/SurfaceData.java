@@ -22,9 +22,12 @@ import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.io.FileNotFoundException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.Log;
@@ -98,11 +101,16 @@ public class SurfaceData implements Covariant {
         }
     }
     
-    public void initializeNeuralNetControl() throws Exception {
+    public void initializeNeuralNetControl() {
         if (category_.equals(NEURAL_NET_CONTROL)) {
-            //TODO: get power
-            nn1_ = new LaserPredNet("./maitaimodel.csv");
-            nn2_ = new LaserPredNet("./chameleonmodel.csv");
+            try {
+                NeuralNetInitDialog dlg = new NeuralNetInitDialog();
+                double[] powers = dlg.getBrightnessWhenFinished();
+                nn1_ = new LaserPredNet("./maitaimodel.csv", powers[0]);
+                nn2_ = new LaserPredNet("./chameleonmodel.csv", powers[1]);
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException("Couldn't find Neural net model files");
+            }
         }
     }
 
@@ -135,7 +143,7 @@ public class SurfaceData implements Covariant {
         } else if (category_.equals(CURVED_SURFACE_RELATIVE_POWER)) {
            return "Relative power for " + surface_.getName() + " R" + radiusOfCurvature_ + " MFP" + meanFreePath_ + " Base" + basePower_;
         } else if (category_.equals(NEURAL_NET_CONTROL)) {
-           return "Relative power for " + surface_.getName() + " brightness1: " + nn1_.getBrightness() + "  brightness2: " + nn2_.getBrightness();
+           return "Neural net control for  " + surface_.getName();
         } else {
            Log.log("Unknown Surface data type");
             throw new RuntimeException();

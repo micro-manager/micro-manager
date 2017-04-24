@@ -47,11 +47,18 @@ public class CovariantPairing {
    //for randomizing excitaitions
    public static String lastPositionName_ = "None";
     public static double powerMultipler_ = 1.0;
-   
+     
    public CovariantPairing(Covariant independent, Covariant dependent) {
       independent_ = independent;
       dependent_ = dependent;
       excludedAcqs_ = new IdentityHashMap<Acquisition, Object>();
+      if (independent instanceof SurfaceData && ((SurfaceData)independent).isNeuralNetControl()) {
+         new Thread(new Runnable() {
+             @Override
+             public void run() {
+                ((SurfaceData)independent_).initializeNeuralNetControl();             }
+         }).start();   
+      }
    }
    
     public double getInterpolatedNumericalValue(CovariantValue independentValue) {
@@ -72,22 +79,18 @@ public class CovariantPairing {
    public void updateHardwareBasedOnPairing(AcquisitionEvent event) throws Exception {
       //special behavior for curved surface calcualtions or neural net
       if (independent_ instanceof SurfaceData && ((SurfaceData) independent_).isNeuralNetControl()) {
-         //get learned excitations
-         //TODO: moce this to a different thread for imporved performance
-         if (dependent_.getName().startsWith("TeensySLM1")) {            
-            byte[] eomSettings = ((SurfaceData) independent_).getNN(0).getExcitations(event, ((SurfaceData) independent_).getSurface());
-            String name = "TeensySLM1";
-         Magellan.getCore().setSLMImage(name, eomSettings);
-         Magellan.getCore().displaySLMImage(name);
-         } else if (dependent_.getName().startsWith("TeensySLM2")) {
-            byte[] eomSettings = ((SurfaceData) independent_).getNN(1).getExcitations(event, ((SurfaceData) independent_).getSurface());
-            String name = "TeensySLM2";
-         Magellan.getCore().setSLMImage(name, eomSettings);
-         Magellan.getCore().displaySLMImage(name);
-         } else {
-            Log.log("Unrecognized SLM name");
-            throw new Exception();
-         }
+          //TODO: moce this to a different thread for imporved performance
+          //First EOM           
+          byte[] eomSettings = ((SurfaceData) independent_).getNN(0).getExcitations(event, ((SurfaceData) independent_).getSurface());
+          String name = "TeensySLM1";
+          Magellan.getCore().setSLMImage(name, eomSettings);
+          Magellan.getCore().displaySLMImage(name);
+          //Second EOM
+          byte[] eomSettings2 = ((SurfaceData) independent_).getNN(1).getExcitations(event, ((SurfaceData) independent_).getSurface());
+          String name2 = "TeensySLM2";
+          Magellan.getCore().setSLMImage(name2, eomSettings2);
+          Magellan.getCore().displaySLMImage(name2);
+          return;
       } else if (independent_ instanceof SurfaceData && ((SurfaceData) independent_).isCurvedSurfaceCalculation()) {
          //randomize excitaitons
          String posName = event.xyPosition_.getName();
