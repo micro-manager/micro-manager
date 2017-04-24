@@ -140,16 +140,7 @@ public class GUI extends javax.swing.JFrame {
       storeCurrentAcqSettings();
       if (GlobalSettings.getInstance().firstMagellanOpening()) {
          new StartupHelpWindow();
-      }
-      //TODO: put this where it actually belongs
-      if  (GlobalSettings.getInstance().isBIDCTwoPhoton()) {
-         try {
-            new LaserPredNet("model.csv");
-         } catch (FileNotFoundException ex) {
-            Log.log(ex);
-         }
-      }
-      
+      }      
    }
    
    public static GUI getInstance() {

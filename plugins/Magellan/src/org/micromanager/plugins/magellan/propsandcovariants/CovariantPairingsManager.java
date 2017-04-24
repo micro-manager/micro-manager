@@ -191,7 +191,11 @@ public class CovariantPairingsManager {
                     }
                     try {
                         SurfaceData ind = new SurfaceData(surface, type);
-                        ind.initializeCurvedSurfaceData();
+                        if (ind.isCurvedSurfaceCalculation()) {
+                           ind.initializeCurvedSurfaceData();
+                        } else if (ind.isNeuralNetControl()) {
+                           ind.initializeNeuralNetControl();
+                        }
                         //Get reverse pairing (EOM voltage -> Relative power) to convert entered base EOM to bae power
                         CovariantPairing reversePairing = createCovariantAndAddValues(ind, dependentName, lines);
                         ind.setBasePowerFromBaseVoltage(reversePairing);

@@ -50,12 +50,15 @@ public class SurfaceData implements Covariant {
     public static String DISTANCE_BELOW_SURFACE_MINIMUM = "Minimum vertical distance below at XY position";
     public static String DISTANCE_BELOW_SURFACE_MAXIMUM = "Maximum vertical distance below at XY position";
     public static String CURVED_SURFACE_RELATIVE_POWER = "Relative power for curved surface";
+    public static String NEURAL_NET_CONTROL = "Neural net controlled excitaiton";
     private String category_;
     private SurfaceInterpolator surface_;
     //used for curved surface calculations
     private int radiusOfCurvature_, meanFreePath_;
     private int baseVoltage_;
     private double basePower_;
+    //used for neural net control
+    private LaserPredNet nn1_, nn2_;
 
     public SurfaceData(SurfaceInterpolator surface, String type) throws Exception {
         category_ = type;
@@ -64,6 +67,18 @@ public class SurfaceData implements Covariant {
             //not a recognized type
             throw new Exception();
         }
+    }
+    
+    public LaserPredNet getNN(int index) {
+       if (index == 0) { 
+          return nn1_;
+       } else {
+          return nn2_;
+       }
+    }
+    
+    public boolean isNeuralNetControl() {
+       return category_.equals(NEURAL_NET_CONTROL);
     }
     
     public boolean isCurvedSurfaceCalculation() {
@@ -82,6 +97,14 @@ public class SurfaceData implements Covariant {
             baseVoltage_ = creator.getBaseVoltage();
         }
     }
+    
+    public void initializeNeuralNetControl() throws Exception {
+        if (category_.equals(NEURAL_NET_CONTROL)) {
+            //TODO: get power
+            nn1_ = new LaserPredNet("./maitaimodel.csv");
+            nn2_ = new LaserPredNet("./chameleonmodel.csv");
+        }
+    }
 
     public void setBasePowerFromBaseVoltage(CovariantPairing reversePairing) {
         basePower_ = reversePairing.getInterpolatedNumericalValue(new CovariantValue(baseVoltage_));
@@ -92,7 +115,7 @@ public class SurfaceData implements Covariant {
     }
 
     public static String[] enumerateDataTypes() {
-        return new String[]{CURVED_SURFACE_RELATIVE_POWER, DISTANCE_BELOW_SURFACE_CENTER, DISTANCE_BELOW_SURFACE_MINIMUM,
+        return new String[]{NEURAL_NET_CONTROL, CURVED_SURFACE_RELATIVE_POWER, DISTANCE_BELOW_SURFACE_CENTER, DISTANCE_BELOW_SURFACE_MINIMUM,
             DISTANCE_BELOW_SURFACE_MAXIMUM};
     }
 
@@ -108,11 +131,13 @@ public class SurfaceData implements Covariant {
         } else if (category_.equals(DISTANCE_BELOW_SURFACE_MINIMUM)) {
             return "Min vertical distance to " + surface_.getName();
         } else if (category_.equals(DISTANCE_BELOW_SURFACE_MAXIMUM)) {
-            return "Min distance to " + surface_.getName();
+           return "Min distance to " + surface_.getName();
         } else if (category_.equals(CURVED_SURFACE_RELATIVE_POWER)) {
-            return "Relative power for " + surface_.getName() + " R" + radiusOfCurvature_ + " MFP" + meanFreePath_ + " Base" + basePower_;
+           return "Relative power for " + surface_.getName() + " R" + radiusOfCurvature_ + " MFP" + meanFreePath_ + " Base" + basePower_;
+        } else if (category_.equals(NEURAL_NET_CONTROL)) {
+           return "Relative power for " + surface_.getName() + " brightness1: " + nn1_.getBrightness() + "  brightness2: " + nn2_.getBrightness();
         } else {
-            Log.log("Unknown Surface data type");
+           Log.log("Unknown Surface data type");
             throw new RuntimeException();
         }
     }
