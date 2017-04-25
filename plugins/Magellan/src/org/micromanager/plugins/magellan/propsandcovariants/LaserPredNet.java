@@ -108,7 +108,7 @@ public class LaserPredNet {
             }
          }
        }
-       //use NN to predict
+       //use NN to predict       
        return forwardPass(designMat);
    }
    

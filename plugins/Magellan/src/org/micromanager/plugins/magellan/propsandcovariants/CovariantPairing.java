@@ -20,6 +20,7 @@ package org.micromanager.plugins.magellan.propsandcovariants;
 import org.micromanager.plugins.magellan.acq.Acquisition;
 import org.micromanager.plugins.magellan.acq.AcquisitionEvent;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
@@ -79,7 +80,7 @@ public class CovariantPairing {
    public void updateHardwareBasedOnPairing(AcquisitionEvent event) throws Exception {
       //special behavior for curved surface calcualtions or neural net
       if (independent_ instanceof SurfaceData && ((SurfaceData) independent_).isNeuralNetControl()) {
-          //TODO: moce this to a different thread for imporved performance
+          //TODO: move this to a different thread for imporved performance
           //First EOM           
           byte[] eomSettings = ((SurfaceData) independent_).getNN(0).getExcitations(event, ((SurfaceData) independent_).getSurface());
           String name = "TeensySLM1";
@@ -93,14 +94,14 @@ public class CovariantPairing {
           return;
       } else if (independent_ instanceof SurfaceData && ((SurfaceData) independent_).isCurvedSurfaceCalculation()) {
          //randomize excitaitons
-         String posName = event.xyPosition_.getName();
-         if (!posName.equals(lastPositionName_)) {
-            double minMult = 0.5;
-            double maxMult = 2.0;
-            lastPositionName_ = event.xyPosition_.getName();
-            powerMultipler_ = Math.random() * (maxMult - minMult) + minMult;
-         }
-         
+//         String posName = event.xyPosition_.getName();
+//         if (!posName.equals(lastPositionName_)) {
+//            double minMult = 0.5;
+//            double maxMult = 2.0;
+//            lastPositionName_ = event.xyPosition_.getName();
+//            powerMultipler_ = Math.random() * (maxMult - minMult) + minMult;
+//         }
+//         
          if (dependent_.getName().startsWith("TeensySLM1")) {
             double[] powers = ((SurfaceData) independent_).curvedSurfacePower(event, powerMultipler_);
             byte[] eomSettings = new byte[powers.length];
