@@ -224,6 +224,13 @@ public class AutofocusUtils {
                     Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
             final float minimumRSquare =  props_.getPropValueFloat(Devices.Keys.PLUGIN,
                      Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2);
+            
+            // make sure we start with the beam on, but we will restore its state later
+            // if the beam is off then we will get an erroneous value for the slice position
+            final boolean beamOff = props_.getPropValueString(galvoDevice, Properties.Keys.BEAM_ENABLED)
+                  .equals(Properties.Values.NO.toString());
+            props_.setPropValue(galvoDevice, Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
+            
             final double originalPiezoPosition = positions_.getUpdatedPosition(piezoDevice);
             final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice, Directions.Y);
             final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
@@ -468,7 +475,7 @@ public class AutofocusUtils {
             } finally {
                
                ASIdiSPIM.getFrame().setHardwareInUse(false);
-               
+
                // set result to be a dummy value for now; we will overwrite it later
                //  unless we encounter an exception in the meantime
                lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0);
@@ -490,6 +497,11 @@ public class AutofocusUtils {
                      gui_.getMMCore().setExposure(camera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
                            Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 10f));
                      gui_.refreshGUIFromCache();
+                  }
+                  
+                  // turn the beam off it started out that way
+                  if (beamOff) {
+                     props_.setPropValue(galvoDevice, Properties.Keys.BEAM_ENABLED, Properties.Values.NO);
                   }
 
                   // move back to original position if needed
