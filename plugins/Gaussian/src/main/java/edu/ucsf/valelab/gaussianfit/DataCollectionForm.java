@@ -79,10 +79,15 @@ import ij.process.ImageProcessor;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.ActionEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -93,6 +98,7 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import javax.swing.AbstractAction;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -100,8 +106,10 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTable;
@@ -858,6 +866,7 @@ public class DataCollectionForm extends JFrame {
       mainTable_.setModel(mainTableModel_);
       mainTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
       mainTable_.setPreferredScrollableViewportSize(new Dimension(10000, 10000));
+      mainTable_.addMouseListener(new PopClickListener());
       tableScrollPane.setViewportView(mainTable_);
 
       getContentPane().add(tableScrollPane, "span 9, wrap");
@@ -866,6 +875,67 @@ public class DataCollectionForm extends JFrame {
       pack();
    }
    
+   /**
+    * Class to create a popupmenu for shortcuts to estoric functions
+    */
+   
+   private class PopupMenu extends JPopupMenu {
+
+      public PopupMenu() {
+         JMenuItem copySummaryItem = new JMenuItem(new AbstractAction("Copy Summary") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+               String txt1 = getSummaryOfSelectedTracks(false);
+               String txt2 = getSummarizedTrackData(false);
+               Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+               clpbrd.setContents(new StringSelection(txt1 + "\t" + txt2), null);
+            }
+         });
+         super.add(copySummaryItem);
+         JMenuItem copyHeadersItem = new JMenuItem(new AbstractAction("Copy Headers") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+               String txt1 = getSummaryOfSelectedTracks(true);
+               String txt2 = getSummarizedTrackData(true);
+               Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+               clpbrd.setContents(new StringSelection(txt1 + "\t" + txt2), null);
+            }
+         });
+         super.add(copyHeadersItem);
+         JMenuItem selectAllRowsItem = new JMenuItem(new AbstractAction("Select all") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+               mainTable_.selectAll();
+            }
+         });
+         super.add(selectAllRowsItem);
+      }
+      
+   }
+   
+   private class PopClickListener extends MouseAdapter {
+
+      @Override
+      public void mousePressed(MouseEvent e) {
+         if (e.isPopupTrigger()) {
+            doPop(e);
+         }
+      }
+
+      @Override
+      public void mouseReleased(MouseEvent e) {
+         if (e.isPopupTrigger()) {
+            doPop(e);
+         }
+      }
+
+      private void doPop(MouseEvent e) {
+         PopupMenu menu = new PopupMenu();
+         menu.show(e.getComponent(), e.getX(), e.getY());
+      }
+   }
+
+
    /**
     * Helper function to facilitate the UI
     * @param minSize minimumSize of the Separator
@@ -1466,6 +1536,75 @@ public class DataCollectionForm extends JFrame {
       MathForm mf = new MathForm(studio_.getUserProfile(), rows, rows);
 
       mf.setVisible(true);
+   }
+   
+   public String getSummaryOfSelectedTracks(boolean header) {
+      if (header) {
+         return "name\tn\tNr of Spots\tCh.\tstd\tnrPhotons";
+      }
+      
+      class Data {
+         int n = 0;
+         long numberOfSpots = 0;;
+         Integer channelNr = 0;
+         Double nrPhotons = 0.0;
+         Double std = 0.0;
+      }
+      
+      final int rows[] = mainTable_.getSelectedRowsSorted();
+      Data data = new Data();
+      for (int row : rows) {
+         final RowData rowData = mainTableModel_.getRow(row);
+         if (rowData.isTrack_) {
+            data.n += 1;
+            data.numberOfSpots += rowData.maxNrSpots_;
+            data.channelNr += rowData.spotList_.get(0).getChannel();
+            data.std += rowData.std_;
+            data.nrPhotons += rowData.totalNrPhotons_;
+         } 
+      }
+      Data result = new Data();
+      result.n = data.n;
+      result.numberOfSpots = data.numberOfSpots / data.n;
+      result.channelNr = data.channelNr / data.n;
+      result.std = data.std / data.n;
+      result.nrPhotons = data.nrPhotons / data.n;
+      
+      String output = mainTableModel_.getRow(rows[0]).getName() + "\t" +
+              result.n + "\t" + result.numberOfSpots + "\t" + result.channelNr +
+              "\t" + result.std + "\t" +  result.nrPhotons;
+      
+      return output;
+
+   }
+   
+   /**
+    * For the selected tracks, average the various stdDev estimates
+    * and place on the clipboard
+    * @param header when true only return the headers (explaining the data)
+    * @return Header or values
+    */
+   public String getSummarizedTrackData(boolean header) {
+      if (header) {
+         return "Avg. Sigma\tAvg. Mortenson Sigmas\tAvg. integral Sigma";
+      }
+      final int rows[] = mainTable_.getSelectedRowsSorted();
+      List<Double> sigmas = new ArrayList<Double>();
+      List<Double> mSigmas = new ArrayList<Double>();
+      List<Double> iSigmas = new ArrayList<Double>();
+      for (int row : rows) {
+         final RowData rowData = mainTableModel_.getRow(row);
+         for (SpotData spotData : rowData.spotList_) {
+            sigmas.add(spotData.getSigma());
+            mSigmas.add(spotData.getValue(SpotData.Keys.MSIGMA));
+            iSigmas.add(spotData.getValue(SpotData.Keys.INTEGRALSIGMA));
+         }
+      }
+      
+      String output = ListUtils.listAvg(sigmas) + "\t" + ListUtils.listAvg(mSigmas) +
+              "\t" + ListUtils.listAvg(iSigmas);
+      
+      return output;
    }
 
    /**
