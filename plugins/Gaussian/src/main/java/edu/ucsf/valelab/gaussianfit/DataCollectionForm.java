@@ -1590,23 +1590,46 @@ public class DataCollectionForm extends JFrame {
     */
    public String getSummarizedTrackData(boolean header) {
       if (header) {
-         return "Avg. Sigma\tAvg. Mortenson Sigmas\tAvg. integral Sigma";
+         return "Avg.Sigma\tAvg.Mortenson Sigmas\tAvg.integral Sigma\tAvg.Intensity\t" +
+                 "Avg.Background\tAvg.AptBackground\tAvg.Width";
       }
       final int rows[] = mainTable_.getSelectedRowsSorted();
       List<Double> sigmas = new ArrayList<Double>();
       List<Double> mSigmas = new ArrayList<Double>();
       List<Double> iSigmas = new ArrayList<Double>();
+      List<Double> intensities = new ArrayList<Double>();
+      List<Double> backgrounds = new ArrayList<Double>();
+      List<Double> aptBackgrounds = new ArrayList<Double>();
+      List<Double> widths = new ArrayList<Double>();
       for (int row : rows) {
          final RowData rowData = mainTableModel_.getRow(row);
          for (SpotData spotData : rowData.spotList_) {
             sigmas.add(spotData.getSigma());
-            mSigmas.add(spotData.getValue(SpotData.Keys.MSIGMA));
-            iSigmas.add(spotData.getValue(SpotData.Keys.INTEGRALSIGMA));
+            if (spotData.getValue(SpotData.Keys.MSIGMA) != null && 
+                  !spotData.getValue(SpotData.Keys.MSIGMA).equals(Double.NaN) ) {
+               mSigmas.add(spotData.getValue(SpotData.Keys.MSIGMA));
+            }
+            if (spotData.getValue(SpotData.Keys.INTEGRALSIGMA) != null &&
+                  !spotData.getValue(SpotData.Keys.INTEGRALSIGMA).equals(Double.NaN) ) {
+               iSigmas.add(spotData.getValue(SpotData.Keys.INTEGRALSIGMA));
+            }
+            intensities.add(spotData.getIntensity());
+            backgrounds.add(spotData.getBackground());
+            Double tmp = spotData.getValue(SpotData.Keys.APERTUREBACKGROUND);
+            if (tmp != null && !tmp.equals(Double.NaN)) {
+               aptBackgrounds.add(tmp);
+            }
+            widths.add(spotData.getWidth());
          }
       }
       
-      String output = ListUtils.listAvg(sigmas) + "\t" + ListUtils.listAvg(mSigmas) +
-              "\t" + ListUtils.listAvg(iSigmas);
+      String output = ListUtils.listAvg(sigmas) + 
+              "\t" + ListUtils.listAvg(mSigmas) +
+              "\t" + ListUtils.listAvg(iSigmas) + 
+              "\t" + ListUtils.listAvg(intensities) + 
+              "\t" + ListUtils.listAvg(backgrounds) +
+              "\t" + ListUtils.listAvg(aptBackgrounds) + 
+              "\t" + ListUtils.listAvg(widths);
       
       return output;
    }
