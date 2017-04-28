@@ -114,6 +114,7 @@ public class ExtractTracksDialog  {
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
+               int start = DataCollectionForm.getInstance().getNumberOfSpotData();
                int minFrames = (Integer) minFramesSp.getValue();
                up.setInt(us, MINIMUM_NUMBER_OF_FRAMES, minFrames);
                int maxMissing = (Integer) maxMissingSp.getValue();
@@ -128,6 +129,9 @@ public class ExtractTracksDialog  {
                        minTotalDistance);
                if (nrExtractedTracks == 0) {
                   studio.logs().showMessage("No tracks found with current settings");
+               } else {
+                  int end = DataCollectionForm.getInstance().getNumberOfSpotData();
+                  DataCollectionForm.getInstance().setSelectedRows(start, end - 1);
                }
                jf.dispose();
             } catch (ParseException pe) {

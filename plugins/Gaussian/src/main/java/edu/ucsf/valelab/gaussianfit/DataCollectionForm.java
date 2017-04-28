@@ -136,7 +136,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * @author Nico Stuurman
  */
 public class DataCollectionForm extends JFrame {
-   DataTableModel mainTableModel_;
+   private DataTableModel mainTableModel_;
    private final String[] renderModes_ = {"Points", "Gaussian", "Norm. Gaussian"};
    private final String[] renderSizes_  = 
                {"1x", "2x", "4x", "8x", "16x", "32x", "64x", "128x"};
@@ -269,6 +269,10 @@ public class DataCollectionForm extends JFrame {
    
    public int getNumberOfSpotData() {
       return mainTableModel_.getRowCount();
+   }
+   
+   public void setSelectedRows(int start, int end) {
+      mainTable_.setRowSelectionInterval(start, end);
    }
    
 
@@ -1660,9 +1664,12 @@ public class DataCollectionForm extends JFrame {
          JOptionPane.showMessageDialog(getInstance(),
                  "Please select one or more datasets to center");
       } else {
+         int start = mainTable_.getRowCount();
          for (int row : rows) {
             TrackOperator.centerTrack(mainTableModel_.getRow(row));
          }
+         int end = mainTable_.getRowCount();
+         mainTable_.setRowSelectionInterval(start, end - 1);
       }
    }
 

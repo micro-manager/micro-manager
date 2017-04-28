@@ -95,8 +95,8 @@ public class MathForm extends JFrame {
       for (int i : dataSets2) {
          dataSet2ComboBox_.addItem(i);
       }
-      index = profile_.getInt(this.getClass(), DATASET1, 0);
-      if (index >= dataSet2ComboBox_.getItemCount()) {
+      index = dataSet2ComboBox_.getItemCount() - 1;
+      if (index < 0) {
          index = 0;
       }
       if (dataSet2ComboBox_.getItemCount() > 0) {
@@ -211,9 +211,10 @@ public class MathForm extends JFrame {
          @Override
          public void run() {
             DataCollectionForm df = DataCollectionForm.getInstance();
-            //ArrayList<RowData> rowData = df.getRowData();
+            
             RowData rd1 = null;
             RowData rd2 = null;
+            int start = df.getNumberOfSpotData();
             
             if (!useSelectedRows) {
                for (int i = 0; i < df.getNumberOfSpotData(); i++) {
@@ -238,12 +239,20 @@ public class MathForm extends JFrame {
                   }
                }
             }
+            
+            int end = df.getNumberOfSpotData();
+            if (end > start) {
+               df.setSelectedRows(start, end - 1);
+            }
       
                
          }
       };
       
       (new Thread(doWorkRunnable)).start();
+      
+      formWindowClosing(null);
+      dispose();
                   
    }
 
