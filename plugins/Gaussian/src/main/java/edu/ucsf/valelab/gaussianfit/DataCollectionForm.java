@@ -1591,13 +1591,14 @@ public class DataCollectionForm extends JFrame {
    public String getSummarizedTrackData(boolean header) {
       if (header) {
          return "Avg.Sigma\tAvg.Mortenson Sigmas\tAvg.integral Sigma\tAvg.Intensity\t" +
-                 "Avg.Background\tAvg.AptBackground\tAvg.Width";
+                 "Avg.AptIntensity\tAvg.Background\tAvg.AptBackground\tAvg.Width";
       }
       final int rows[] = mainTable_.getSelectedRowsSorted();
       List<Double> sigmas = new ArrayList<Double>();
       List<Double> mSigmas = new ArrayList<Double>();
       List<Double> iSigmas = new ArrayList<Double>();
       List<Double> intensities = new ArrayList<Double>();
+      List<Double> aptIntensities = new ArrayList<Double>();
       List<Double> backgrounds = new ArrayList<Double>();
       List<Double> aptBackgrounds = new ArrayList<Double>();
       List<Double> widths = new ArrayList<Double>();
@@ -1614,6 +1615,10 @@ public class DataCollectionForm extends JFrame {
                iSigmas.add(spotData.getValue(SpotData.Keys.INTEGRALSIGMA));
             }
             intensities.add(spotData.getIntensity());
+            if (spotData.getValue(SpotData.Keys.APERTUREINTENSITY) != null &&
+                    !spotData.getValue(SpotData.Keys.APERTUREINTENSITY).equals(Double.NaN) ) {
+               aptIntensities.add(spotData.getValue(SpotData.Keys.APERTUREINTENSITY));
+            }
             backgrounds.add(spotData.getBackground());
             Double tmp = spotData.getValue(SpotData.Keys.APERTUREBACKGROUND);
             if (tmp != null && !tmp.equals(Double.NaN)) {
@@ -1627,6 +1632,7 @@ public class DataCollectionForm extends JFrame {
               "\t" + ListUtils.listAvg(mSigmas) +
               "\t" + ListUtils.listAvg(iSigmas) + 
               "\t" + ListUtils.listAvg(intensities) + 
+              "\t" + ListUtils.listAvg(aptIntensities) +
               "\t" + ListUtils.listAvg(backgrounds) +
               "\t" + ListUtils.listAvg(aptBackgrounds) + 
               "\t" + ListUtils.listAvg(widths);
