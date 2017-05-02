@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
+//SUBSYSTEM:     Display implementation
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,17 +18,25 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.data.internal;
+package org.micromanager.display.overlay.internal.overlays;
 
-public final class DefaultDatastoreSavePathEvent implements org.micromanager.data.DatastoreSavePathEvent {
-   private String path_;
+import org.micromanager.display.overlay.OverlayPlugin;
+import org.scijava.Priority;
+import org.scijava.plugin.Plugin;
+import org.micromanager.display.overlay.Overlay;
 
-   public DefaultDatastoreSavePathEvent(String path) {
-      path_ = path;
-   }
-
+/**
+ * The scale bar overlay plugin.
+ *
+ * @author Chris Weisiger, Mark A. Tsuchida
+ */
+@Plugin(type = OverlayPlugin.class,
+      priority = Priority.HIGH_PRIORITY,
+      name = "Scale Bar",
+      description = "Display a scale bar")
+public final class ScaleBarPlugin implements OverlayPlugin {
    @Override
-   public String getPath() {
-      return path_;
+   public Overlay createOverlay() {
+      return ScaleBarOverlay.create();
    }
 }

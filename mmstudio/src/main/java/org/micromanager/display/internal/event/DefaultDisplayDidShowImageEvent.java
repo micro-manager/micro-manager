@@ -9,25 +9,25 @@ import java.util.ArrayList;
 import java.util.List;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.ImageDidDisplayEvent;
+import org.micromanager.display.DisplayDidShowImageEvent;
 
 /**
  *
  * @author mark
  */
-public class DefaultImagesDidDisplayEvent implements ImageDidDisplayEvent {
+public class DefaultDisplayDidShowImageEvent implements DisplayDidShowImageEvent {
    private final DataViewer viewer_;
    private final List<Image> images_;
    private final Image primaryImage_;
 
-   public static DefaultImagesDidDisplayEvent create(DataViewer viewer,
+   public static DefaultDisplayDidShowImageEvent create(DataViewer viewer,
          List<Image> images, Image primaryImage)
    {
-      return new DefaultImagesDidDisplayEvent(viewer, images,
+      return new DefaultDisplayDidShowImageEvent(viewer, images,
       primaryImage);
    }
 
-   private DefaultImagesDidDisplayEvent(DataViewer viewer,
+   private DefaultDisplayDidShowImageEvent(DataViewer viewer,
          List<Image> images, Image primaryImage)
    {
       viewer_ = viewer;

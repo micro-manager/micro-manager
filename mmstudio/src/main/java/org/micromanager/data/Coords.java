@@ -23,175 +23,228 @@ package org.micromanager.data;
 import java.util.List;
 
 /**
- * The Coords class tracks the position of an image in the dataset. This
- * position is represented as a mapping of Strings to non-negative ints. Coords
- * are immutable; construct a Coords using a CoordsBuilder. You are not expected
- * to implement your own Coords class.
- * Coords can be compared to each other using &lt;, &gt;, ==, etc. Axes are
- * compared in alphabetical order, and the indices of the respective Coords
- * will determine which one is "less" or "greater".
- * 
- * If you need to generate a new Coords, use the getCoordsBuilder() method of
- * the DataManager class, or call the copy() method of an existing Coords
- * instance.
+ * The multi-dimensional coordinate of a 2D image within a dataset.
  *
- * This class uses a Builder pattern. Please see
- * https://micro-manager.org/wiki/Using_Builders
- * for more information.
+ * This is typically used to represent the time point, stage position, z slice,
+ * and channel indices of images.
+ * <p>
+ * The {@code Coords} object is a mapping from axes (represented by strings) to
+ * non-negative integer indices.
+ * <p>
+ * Although methods are included to support any arbitrary axes, such usage is
+ * not yet fully supported. <strong>If you do use custom axes, give them names
+ * that include upper case letters</strong> so that they do not clash with
+ * standard axes added in the future.
+ * <p>
+ * {@code Coords} objects are immutable.
+ *
+ * @Author Chris Weisiger, Mark A. Tsuchida
  */
 public interface Coords {
+   /** Axis label for the time point (frame) axis. */
+   public static final String TIME_POINT = "time";
+
+   /**
+    * Same as {@code TIME_POINT} or {@code T}.
+    * @deprecated Use discouraged because it reads like a physical time rather
+    * than the time point index that it is.
+    */
+   @Deprecated public static final String TIME = TIME_POINT;
+
+   /** Axis label for the time point (frame) axis (short form).
+    * Same as {@code TIME_POINT}. */
+   public static final String T = TIME_POINT;
+
+   /** Axis label for the stage position axis. */
+   public static final String STAGE_POSITION = "position";
+
+   /** Axis label for the stage position axis (short form).
+    * Same as {@code STAGE_POSTITION}. */
+   public static final String P = STAGE_POSITION;
+
+   /** Axis label for the Z slice axis. */
+   public static final String Z_SLICE = "z";
+
+   /** Axis label for the Z slice axis (short form).
+    * Same as {@code Z_SLICE}. */
+   public static final String Z = Z_SLICE;
 
    /** Axis label for the channel axis. */
    public static final String CHANNEL = "channel";
-   /** Axis label for the time axis. */
-   public static final String TIME = "time";
-   /** Axis label for the stage position axis. */
-   public static final String STAGE_POSITION = "position";
-   /** Axis label for the Z axis. */
-   public static final String Z = "z";
 
-   /**
-     * Shorthand axis label for the channel axis, usable only when generating
-     * Coords from normalized strings as described in
-     * DataManager.createCoords().
-     */
-   public static final String CHANNEL_SHORT = "c";
-   /**
-     * Shorthand axis label for the time axis, usable only when generating
-     * Coords from normalized strings as described in
-     * DataManager.createCoords().
-     */
-   public static final String TIME_SHORT = "t";
-   /**
-     * Shorthand axis label for the stage position axis, usable only when
-     * generating Coords from normalized strings as described in
-     * DataManager.createCoords().
-     */
-   public static final String STAGE_POSITION_SHORT = "p";
+   /** Axis label for the channel axis (short form). Same as {@code CHANNEL}. */
+   public static final String C = CHANNEL;
+
+   interface Builder extends CoordsBuilder {
+      @Override Coords build();
+
+      /**
+       * Set the channel index.
+       * Equivalent to {@code index(Coords.CHANNEL, channel)}.
+       *
+       * @param channel channel index (0-based)
+       * @return this
+       */
+      @Override Builder channel(int channel);
+
+      /** Shorthand for {@link channel}. */
+      Builder c(int channel);
+
+      /**
+       * Set the time point (frame) index.
+       * Equivalent to {@code index(Coords.TIME_POINT, frame)}.
+       *
+       * @param frame time point (frame) index (0-based)
+       * @return this
+       */
+      Builder timePoint(int frame);
+
+      /**
+       * Same as {@link timePoint}.
+       * @deprecated Due to being confusing with physical time.
+       */
+      @Override @Deprecated Builder time(int timepoint);
+
+      /** Shorthand for {@link time}. */
+      Builder t(int timepoint);
+
+      /**
+       * Set the Z slice index.
+       * Equivalent to {@code index(Coords.Z_SLICE, slice)}.
+       *
+       * @param slice z slice index (0-based)
+       * @return this
+       */
+      Builder zSlice(int slice);
+
+      /** Shorthand for {@link zSlice}. */
+      @Override Builder z(int slice);
+
+      /**
+       * Set the stage position index.
+       * Equivalent to {@code index(Coords.STAGE_POSITION, index)}.
+       *
+       * @param index stage position index (0-based)
+       * @return this
+       */
+      @Override Builder stagePosition(int index);
+
+      /** Shorthand for {@link stagePosition}. */
+      Builder p(int index);
+
+      /**
+       * Set the index along a given axis.
+       *
+       * If you set a negative value, the axis will be removed.
+       *
+       * @param axis coordinate axis, such as {@code Coords.CHANNEL}
+       * @param index 0-based index
+       * @return this
+       */
+      @Override Builder index(String axis, int index);
+
+      /**
+       * Remove the specified axis.
+       *
+       * @param axis coordinate axis, such as {@code Coords.CHANNEL}
+       * @return this
+       */
+      @Override Builder removeAxis(String axis);
+
+      /**
+       * Offset the given axis by a given count.
+       *
+       * @param axis coordinate axis, such as {@code Coords.CHANNEL}
+       * @param offset offset to be applied to {@code axis}
+       * @return this
+       * @throws IllegalArgumentException if {@code axis} does not exist
+       * @throws IndexOutOfBoundsException if applying the offset would result
+       * in a negative index.
+       */
+      @Override Builder offset(String axis, int offset)
+            throws IllegalArgumentException, IndexOutOfBoundsException;
+   }
 
    interface CoordsBuilder {
-
-      /**
-       * Construct a Coords from the CoordsBuilder. Call this once you have set
-       * all properties for the Coords.
-       * 
-       * @return newly build Coords object
-       */
       Coords build();
-
-      /**
-       * Convenience function, equivalent to index(Coords.CHANNEL, channel)
-       * 
-       * @param channel channel number (0-based)
-       * @return this instance of the CoordsBuilder, so that you can chain 
-       * function calls
-       */
       CoordsBuilder channel(int channel);
-
-      /**
-       * Convenience function, equivalent to index(Coords.TIME, time)
-       * 
-       * @param time time (frame) number (0-based)
-       * @return this instance of the CoordsBuilder, so that you can chain 
-       * function calls
-       */
       CoordsBuilder time(int time);
-
-      /**
-       * Convenience function, equivalent to index(Coords.Z, z)
-       * 
-       * @param z z slice number (0-based)
-       * @return this instance of the CoordsBuilder, so that you can chain 
-       * function calls      */
       CoordsBuilder z(int z);
-
-      /**
-       * Convenience function, equivalent to index(Coords.STAGE_POSITION,
-       * 
-       * @param stagePosition position number (0-based)
-       * @return this instance of the CoordsBuilder, so that you can chain 
-       * function calls
-       */
       CoordsBuilder stagePosition(int stagePosition);
-
-      /**
-       * Set the index of the Coords along the provided axis to the specified
-       * value. If you set a negative value, then the axis will be removed from
-       * the Coords.
-       * 
-       * @param axis Coords axis, such as Coords.CHANNEL
-       * @param index 0-based position index
-       * @return this instance of the CoordsBuilder, so that you can chain 
-       * function calls
-       */
       CoordsBuilder index(String axis, int index);
-
-      /**
-       * Removes the specified axis from the Coords. Equivalent to calling
-       * index(axis, -1).
-       * 
-       * @param axis Coords axis such as Coords.CHANNEL
-       * @return this instance of the CoordsBuilder, so that you can chain 
-       * function calls
-       */
       CoordsBuilder removeAxis(String axis);
-
-      /**
-       * Apply an offset to a pre-existing index.
-       *
-       * @param axis Coords axis such as Coords.CHANNEL
-       * @param offset offset to be applied to the current index
-       * @throws IllegalArgumentException If there is no pre-existing value for
-       * this axis, or if adding the offset would result in a negative index.
-       * @return this instance of the CoordsBuilder, so that you can chain 
-       * function calls
-       */
       CoordsBuilder offset(String axis, int offset) throws IllegalArgumentException;
    }
 
    /**
-    * Given an axis label (for example "t" or "z" or "polarization"), returns
-    * the index of this Coords along that axis. Returns -1 if this Coords has
-    * no defined index along the axis; otherwise, values are assumed to be
-    * non-negative integers.
+    * Get the index for the given axis.
     * 
-    * @param axis Coords axis such as Coords.CHANNEL
-    * @return index at that axis in this Coords
+    * @param axis coordinate axis such as {@code Coords.CHANNEL}
+    * @return index along {@code axis}, or {@code -1} if {@code axis} does not
+    * exist
     */
    public int getIndex(String axis);
 
    /**
-    * Convenience function, equivalent to getIndex(Coords.CHANNEL)
+    * Get the channel index.
+    *
+    * Equivalent to {@code getIndex(Coords.CHANNEL)}.
     * 
-    * @return position of of this Coords at the Channel axis
+    * @return channel index, or {@code -1} if this {@code Coords} doesn't
+    * contain a channel index.
     */
    public int getChannel();
 
-   /**
-    * Convenience function, equivalent to getIndex(Coords.TIME)
-    * 
-    * @return position of this Coords at the axis Coords.TIME
-    */
-   public int getTime();
+   /** Shorthand for {@link getChannel}. */
+   public int getC();
 
    /**
-    * Convenience function, equivalent to getIndex(Coords.Z)
-    * 
-    * @return position of this Coords at the axis Coords.TZ
+    * Get the time point (frame) index.
+    *
+    * Equivalent to {@code getIndex(Coords.TIME_POINT)}.
+    *
+    * @return time point index, or {@code -1} if this {@code Coords} doesn't
+    * contain a time point index.
     */
+   public int getTimePoint();
+
+   /** Same as {@link getTimePoint}.
+    * @Deprecated Due to looking like the physical time rather than an index. */
+   public int getTime();
+
+   /** Shorthand for {@link getTimePoint}. */
+   public int getT();
+
+   /**
+    * Get the Z slice index.
+    * 
+    * Equivalent to {@code getIndex(Coords.Z_SLICE)}.
+    * 
+    * @return Z slice index, or {@code -1} if this {@code Coords} doesn't
+    * contain a Z slice index.
+    */
+   public int getZSlice();
+
+   /** Shorthand for {@link getZSlice} */
    public int getZ();
 
    /**
-    * Convenience function, equivalent to getIndex(Coords.STAGE_POSITION)
+    * Get the stage position index.
+    *
+    * Equivalent to {@code getIndex(Coords.STAGE_POSITION)}.
     * 
-    * @return position of this Coords at the axis Coords.POSITION
+    * @return stage position index, or {@code -1} if this {@code Coords}
+    * doesn't contain a stage position index.
     */
    public int getStagePosition();
 
+   /** Shorthand for {@link getStagePosition}. */
+   public int getP();
+
    /**
-    * Returns a list of all axes that this Coords has an index for.
-    * 
-    * @return List with String representing all axis in this Coords
+    * Return all axes that this {@code Coords} has an index for.
+    *
+    * @return List of all axis
     */
    public List<String> getAxes();
 
@@ -202,24 +255,42 @@ public interface Coords {
     */
    public boolean hasAxis(String axis);
 
+   public boolean hasTimePointAxis();
+   public boolean hasT();
+   public boolean hasStagePositionAxis();
+   public boolean hasP();
+   public boolean hasZSliceAxis();
+   public boolean hasZ();
+   public boolean hasChannelAxis();
+   public boolean hasC();
+
    /**
-    * Return true if, for every index in the provided Coords, we have a
-    * matching and equal index in ourself. Returns false if either any
-    * index in the provided Coords differs from our own index, or we have
-    * no index for an axis that is specified in the provided Coords.
-    * 
-    * @param alt Coords to be compared with the current one
-    * @return true if it contains the same axis and all axis are at the same 
-    * position
+    * Return true if this instance contains equal indices for every axis in the
+    * given instance.
+    *
+    * @param other the instance to compare with
+    * @return whether this instance is a superspace coords of {@code other}
     */
+   public boolean isSuperspaceCoordsOf(Coords other);
+
+   /**
+    * Return true if the given instance contains equal indices for every axis
+    * in this instance.
+    *
+    * @param other the instance to compare with
+    * @return whether this instance is a subspace coords of {@code other}
+    */
+   public boolean isSubspaceCoordsOf(Coords other);
+
+   /** @deprecated Use the equivalent {@link isSubspaceCoordsOf} instead. */
+   @Deprecated
    public boolean matches(Coords alt);
 
-   /**
-    * Generate a new CoordsBuilder based on the values for this Coords.
-    * 
-    * @return new CoordsBuilder based on the values for this Coords
-    */
+   public Builder copyBuilder();
+
+   @Deprecated
    public CoordsBuilder copy();
 
+   Coords copyRemovingAxes(String... axes);
    Coords copyRetainingAxes(String... axes);
 }

@@ -20,6 +20,8 @@
 
 package org.micromanager.internal.utils;
 
+import org.micromanager.UserProfile;
+
 /**
  * Utility class for the PropertyBrowser to specify which devices
  * are currently visible.
@@ -40,7 +42,7 @@ public final class ShowFlags {
    private static final String SEARCH_FILTER = "search_filter";
 
    public void load(Class<?> c) {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       cameras_ = profile.getBoolean(c, SHOW_CAMERAS, cameras_);
       shutters_ = profile.getBoolean(c, SHOW_SHUTTERS, shutters_);
       stages_ = profile.getBoolean(c, SHOW_STAGES, stages_);
@@ -50,7 +52,7 @@ public final class ShowFlags {
    }
 
    public void save(Class<?> c) {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       profile.setBoolean(c, SHOW_CAMERAS, cameras_);
       profile.setBoolean(c, SHOW_SHUTTERS, shutters_);
       profile.setBoolean(c, SHOW_STAGES, stages_);

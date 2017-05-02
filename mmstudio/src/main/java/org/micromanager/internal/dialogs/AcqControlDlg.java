@@ -39,6 +39,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.table.*;
 import mmcorej.CMMCore;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.UserProfile;
 import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.acquisition.internal.AcquisitionWrapperEngine;
@@ -54,7 +55,7 @@ import org.micromanager.internal.utils.AcqOrderMode;
 import org.micromanager.internal.utils.ColorEditor;
 import org.micromanager.internal.utils.ColorRenderer;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.GUIUtils;
@@ -1174,7 +1175,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       // load acquisition engine preferences
       acqEng_.clear();
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       int numFrames = profile.getInt(this.getClass(), ACQ_NUMFRAMES, 1);
       double interval = profile.getDouble(this.getClass(), ACQ_INTERVAL, 0.0);
 
@@ -1274,7 +1275,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    public synchronized void saveAcqSettings() {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
 
       applySettings();
 
@@ -1457,7 +1458,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       int numFrames = Math.max(1, (Integer) numFrames_.getValue());
       if (acqEng_.customTimeIntervalsEnabled()) {
          int h = 0;
-         while (DefaultUserProfile.getInstance().getDouble(this.getClass(),
+         while (UserProfileStaticInterface.getInstance().getDouble(this.getClass(),
                   CUSTOM_INTERVAL_PREFIX + h, -1.0) >= 0.0) {
             h++;
          }
@@ -2069,14 +2070,14 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public static Double getChannelExposure(String channelGroup,
          String channel, double defaultVal) {
-      return DefaultUserProfile.getInstance().getDouble(
+      return UserProfileStaticInterface.getInstance().getDouble(
             AcqControlDlg.class, "Exposure_" + channelGroup + "_" + channel,
             defaultVal);
    }
 
    public static void storeChannelExposure(String channelGroup,
          String channel, double exposure) {
-      DefaultUserProfile.getInstance().setDouble(AcqControlDlg.class,
+      UserProfileStaticInterface.getInstance().setDouble(AcqControlDlg.class,
             "Exposure_" + channelGroup + "_" + channel, exposure);
    }
 
@@ -2099,32 +2100,32 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    public static boolean getShouldSyncExposure() {
-      return DefaultUserProfile.getInstance().getBoolean(AcqControlDlg.class,
+      return UserProfileStaticInterface.getInstance().getBoolean(AcqControlDlg.class,
             SHOULD_SYNC_EXPOSURE, true);
    }
 
    public static void setShouldSyncExposure(boolean shouldSync) {
-      DefaultUserProfile.getInstance().setBoolean(AcqControlDlg.class,
+      UserProfileStaticInterface.getInstance().setBoolean(AcqControlDlg.class,
             SHOULD_SYNC_EXPOSURE, shouldSync);
    }
 
    public static boolean getShouldHideMDADisplay() {
-      return DefaultUserProfile.getInstance().getBoolean(AcqControlDlg.class,
+      return UserProfileStaticInterface.getInstance().getBoolean(AcqControlDlg.class,
             SHOULD_HIDE_DISPLAY, false);
    }
 
    public static void setShouldHideMDADisplay(boolean shouldHide) {
-      DefaultUserProfile.getInstance().setBoolean(AcqControlDlg.class,
+      UserProfileStaticInterface.getInstance().setBoolean(AcqControlDlg.class,
             SHOULD_HIDE_DISPLAY, shouldHide);
    }
 
    public static boolean getShouldCheckExposureSanity() {
-      return DefaultUserProfile.getInstance().getBoolean(AcqControlDlg.class,
+      return UserProfileStaticInterface.getInstance().getBoolean(AcqControlDlg.class,
             SHOULD_CHECK_EXPOSURE_SANITY, true);
    }
 
    public static void setShouldCheckExposureSanity(boolean shouldCheck) {
-      DefaultUserProfile.getInstance().setBoolean(AcqControlDlg.class,
+      UserProfileStaticInterface.getInstance().setBoolean(AcqControlDlg.class,
             SHOULD_CHECK_EXPOSURE_SANITY, shouldCheck);
    }
 }

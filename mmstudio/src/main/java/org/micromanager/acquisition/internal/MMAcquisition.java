@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.Icon;
@@ -49,6 +51,7 @@ import org.micromanager.data.NewImageEvent;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.Storage;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
@@ -64,6 +67,7 @@ import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 
 /**
  * This class is used to execute most of the acquisition and image display
@@ -145,7 +149,9 @@ public final class MMAcquisition {
       }
 
       try {
-         pipeline_.insertSummaryMetadata(DefaultSummaryMetadata.legacyFromJSON(summaryMetadata));
+         // Compatibility hack: serialize to JSON, then parse as summary metadata JSON format
+         SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(NonPropertyMapJSONFormats.summaryMetadata().fromJSON(summaryMetadata.toString()));
+         pipeline_.insertSummaryMetadata(summary);
       }
       catch (DatastoreFrozenException e) {
          ReportingUtils.logError(e, "Datastore is frozen; can't set summary metadata");
@@ -155,6 +161,9 @@ public final class MMAcquisition {
       }
       catch (PipelineErrorException e) {
          ReportingUtils.logError(e, "Can't insert summary metadata: processing already started.");
+      }
+      catch (IOException e) {
+         throw new RuntimeException("Failed to parse summary metadata", e);
       }
       // Calculate expected images from dimensionality in summary metadata.
       if (store_.getSummaryMetadata().getIntendedDimensions() != null) {

@@ -37,6 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -55,6 +56,7 @@ import org.micromanager.LogManager;
 import org.micromanager.PluginManager;
 import org.micromanager.PositionList;
 import org.micromanager.PositionListManager;
+import org.micromanager.PropertyMap;
 import org.micromanager.ScriptController;
 import org.micromanager.ShutterManager;
 import org.micromanager.Studio;
@@ -75,7 +77,6 @@ import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.events.ChannelExposureEvent;
 import org.micromanager.events.EventManager;
 import org.micromanager.events.ExposureChangedEvent;
-import org.micromanager.events.ForcedShutdownEvent;
 import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
@@ -102,15 +103,19 @@ import org.micromanager.internal.navigation.ZWheelListener;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.internal.positionlist.PositionListDlg;
+import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.DefaultAutofocusManager;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UIMonitor;
 import org.micromanager.internal.utils.WaitDialog;
+import org.micromanager.profile.internal.DefaultUserProfile;
+import org.micromanager.profile.internal.UserProfileAdmin;
+import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 
@@ -283,20 +288,33 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       ttManager.setDismissDelay(TOOLTIP_DISPLAY_DURATION_MILLISECONDS);
       ttManager.setInitialDelay(TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS);
 
-      // Show the intro dialog if not disabled (possibly switches the user
-      // profile)
-      sysConfigFile_ = IntroDlg.getMostRecentlyUsedConfig();
-      if (IntroDlg.getShouldAskForConfigFile() ||
-            !DefaultUserProfile.getShouldAlwaysUseDefaultProfile()) {
-         // Ask the user for a configuration file and/or user profile.
-         IntroDlg introDlg = new IntroDlg(this, sysConfigFile_,
-               MMVersion.VERSION_STRING);
-         if (!introDlg.okChosen()) {
-            // User aborted; close the program down.
-            closeSequence(false);
-            return;
+
+      UserProfileAdmin profileAdmin = UserProfileStaticInterface.getAdmin();
+      UUID profileUUID = profileAdmin.getUUIDOfDefaultProfile();
+      try {
+         if (StartupSettings.create(profileAdmin.getNonSavingProfile(profileUUID)).
+               shouldSkipUserInteractionWithSplashScreen()) {
+            List<String> recentConfigs = HardwareConfigurationManager.
+                  getRecentlyUsedConfigFilesFromProfile(
+                        UserProfileStaticInterface.getInstance());
+            sysConfigFile_ = recentConfigs.isEmpty() ? null : recentConfigs.get(0);
          }
-         sysConfigFile_ = introDlg.getConfigFile();
+         else {
+            IntroDlg introDlg = new IntroDlg(this, MMVersion.VERSION_STRING);
+            if (!introDlg.okChosen()) {
+               closeSequence(false);
+               return;
+            }
+
+            profileUUID = introDlg.getSelectedProfileUUID();
+            profileAdmin.setCurrentUserProfile(profileUUID);
+
+            sysConfigFile_ = introDlg.getSelectedConfigFilePath();
+         }
+      }
+      catch (IOException ex) {
+         // TODO We should fall back to virtual profile
+         ReportingUtils.showError(ex, "Error accessing user profiles");
       }
 
       // Profile may have been switched in Intro Dialog, so reflect its setting
@@ -1146,7 +1164,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       isProgramRunning_ = false;
-      events().post(new ForcedShutdownEvent());
 
       saveSettings();
       try {
@@ -1157,18 +1174,24 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             ReportingUtils.logError(e);
       }
       try {
-         profile().syncToDisk();
+         UserProfileStaticInterface.shutdown();
       }
-      catch (IOException e) {
-         if (core_ != null) {
-            ReportingUtils.logError(e);
-         }
+      catch (InterruptedException notExpected) {
+         Thread.currentThread().interrupt();
       }
 
       if (frame_ != null) {
          frame_.dispose();
          frame_ = null;
       }
+
+      try {
+         ((DefaultUserProfile) UserProfileStaticInterface.getInstance()).close();
+      }
+      catch (InterruptedException notUsedByUs) {
+         Thread.currentThread().interrupt();
+      }
+      UserProfileStaticInterface.getAdmin().shutdownAutosaves();
 
       boolean shouldCloseWholeApp = OptionsDlg.getShouldCloseOnExit();
       if (shouldCloseWholeApp && !quitInitiatedByImageJ) {
@@ -1238,14 +1261,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          frame_.setEnabled(false);
       }
 
-      IntroDlg.addRecentlyUsedConfig(sysConfigFile_);
-
       try {
          if (sysConfigFile_.length() > 0) {
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
             coreCallback_.setIgnoring(true);
-            core_.loadSystemConfiguration(sysConfigFile_);
+            HardwareConfigurationManager.
+                  create(UserProfileStaticInterface.getInstance(), core_).
+                  loadHardwareConfiguration(sysConfigFile_);
             coreCallback_.setIgnoring(false);
             GUIUtils.preventDisplayAdapterChangeExceptions();
             events().post(new AutofocusPluginShouldInitializeEvent());
@@ -1545,7 +1568,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
 
    @Override
    public UserProfile profile() {
-      return DefaultUserProfile.getInstance();
+      return UserProfileStaticInterface.getInstance();
    }
    @Override
    public UserProfile getUserProfile() {
@@ -1695,7 +1718,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public AffineTransform getCameraTransform(String config) {
       // Try the modern way first
-      Double[] params = DefaultUserProfile.getInstance().getDoubleArray(
+      Double[] params = UserProfileStaticInterface.getInstance().getDoubleArray(
             MMStudio.class, AFFINE_TRANSFORM + config, null);
       if (params != null && params.length == 6) {
          double[] unboxed = new double[6];
@@ -1706,18 +1729,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       // The early 2.0-beta way of storing as a serialized object.
-      try {
-         AffineTransform result = (AffineTransform)
-            (DefaultUserProfile.getInstance().getObject(
-               MMStudio.class, AFFINE_TRANSFORM_LEGACY + config, null));
-         if (result != null) {
-            // Save it the new way
-            setCameraTransform(result, config);
-            return result;
-         }
-      }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Error retrieving camera transform");
+      PropertyMap studioSettings = UserProfileStaticInterface.getInstance().
+            getSettings(MMStudio.class).toPropertyMap();
+      AffineTransform result = (AffineTransform)
+         ((DefaultPropertyMap) studioSettings).getLegacySerializedObject(
+               AFFINE_TRANSFORM_LEGACY + config, null);
+      if (result != null) {
+         // Save it the new way
+         setCameraTransform(result, config);
+         return result;
       }
 
       // For backwards compatibility, try retrieving it from the 1.4
@@ -1740,7 +1760,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       for (int i = 0; i < 6; ++i) {
          boxed[i] = params[i];
       }
-      DefaultUserProfile.getInstance().setDoubleArray(MMStudio.class, AFFINE_TRANSFORM + config, boxed);
+      UserProfileStaticInterface.getInstance().setDoubleArray(MMStudio.class, AFFINE_TRANSFORM + config, boxed);
    }
 
    public double getCachedXPosition() {
@@ -1764,34 +1784,34 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public static boolean getShouldDeleteOldCoreLogs() {
-      return DefaultUserProfile.getInstance().getBoolean(MMStudio.class,
+      return UserProfileStaticInterface.getInstance().getBoolean(MMStudio.class,
             SHOULD_DELETE_OLD_CORE_LOGS, false);
    }
 
    public static void setShouldDeleteOldCoreLogs(boolean shouldDelete) {
-      DefaultUserProfile.getInstance().setBoolean(MMStudio.class,
+      UserProfileStaticInterface.getInstance().setBoolean(MMStudio.class,
             SHOULD_DELETE_OLD_CORE_LOGS, shouldDelete);
    }
 
    public static int getCoreLogLifetimeDays() {
-      return DefaultUserProfile.getInstance().getInt(MMStudio.class,
+      return UserProfileStaticInterface.getInstance().getInt(MMStudio.class,
             CORE_LOG_LIFETIME_DAYS, 7);
    }
 
    public static void setCoreLogLifetimeDays(int days) {
-      DefaultUserProfile.getInstance().setInt(MMStudio.class,
+      UserProfileStaticInterface.getInstance().setInt(MMStudio.class,
             CORE_LOG_LIFETIME_DAYS, days);
    }
 
    public static int getCircularBufferSize() {
       // Default to more MB for 64-bit systems.
       int defaultVal = System.getProperty("sun.arch.data.model", "32").equals("64") ? 250 : 25;
-      return DefaultUserProfile.getInstance().getInt(MMStudio.class,
+      return UserProfileStaticInterface.getInstance().getInt(MMStudio.class,
             CIRCULAR_BUFFER_SIZE, defaultVal);
    }
 
    public static void setCircularBufferSize(int newSize) {
-      DefaultUserProfile.getInstance().setInt(MMStudio.class,
+      UserProfileStaticInterface.getInstance().setInt(MMStudio.class,
             CIRCULAR_BUFFER_SIZE, newSize);
    }
 }

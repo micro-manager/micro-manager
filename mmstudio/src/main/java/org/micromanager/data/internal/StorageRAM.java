@@ -151,7 +151,6 @@ public final class StorageRAM implements RewritableStorage {
 
    @Override
    public void close() {
-      // Nothing to be done; we get GC'd automatically when all references are
-      // gone.
+      coordsToImage_ = null;
    }
 }

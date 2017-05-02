@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.micromanager.display.internal.overlays;
+package org.micromanager.display.overlay.internal.overlays;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -57,8 +57,8 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Image;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.overlay.AbstractOverlay;
 
@@ -314,10 +314,13 @@ public class PatternOverlay extends AbstractOverlay {
    private boolean showSize_ = true;
 
 
-   private static final String CONFIG_PATTERN_TYPE = "pattern type";
-   private static final String CONFIG_PATTERN_SIZE = "pattern size";
-   private static final String CONFIG_COLOR = "color";
-   private static final String CONFIG_SHOW_SIZE = "show size";
+   // Keys for saving configuration
+   private static enum Key {
+      PATTERN_TYPE,
+      PATTERN_SIZE,
+      COLOR,
+      SHOW_SIZE,
+   }
 
    private JPanel configUI_;
    private JComboBox patternTypeComboBox_;
@@ -380,20 +383,21 @@ public class PatternOverlay extends AbstractOverlay {
 
    @Override
    public PropertyMap getConfiguration() {
-      return new DefaultPropertyMap.Builder().
-            putString(CONFIG_PATTERN_TYPE, patternType_.name()).
-            putInt(CONFIG_PATTERN_SIZE, patternSize_).
-            putString(CONFIG_COLOR, color_.name()).
-            putBoolean(CONFIG_SHOW_SIZE, showSize_).
+      return PropertyMaps.builder().
+            putEnumAsString(Key.PATTERN_TYPE.name(), patternType_).putInteger(Key.PATTERN_SIZE.name(), patternSize_).
+            putEnumAsString(Key.COLOR.name(), color_).
+            putBoolean(Key.SHOW_SIZE.name(), showSize_).
             build();
    }
 
    @Override
    public void setConfiguration(PropertyMap config) {
-      patternType_ = PatternType.valueOf(config.getString(CONFIG_PATTERN_TYPE, patternType_.name()));
-      patternSize_ = config.getInt(CONFIG_PATTERN_SIZE, patternSize_);
-      color_ = PatternColor.valueOf(config.getString(CONFIG_COLOR, color_.name()));
-      showSize_ = config.getBoolean(CONFIG_SHOW_SIZE, showSize_);
+      patternType_ = config.getStringAsEnum(Key.PATTERN_TYPE.name(),
+            PatternType.class, patternType_);
+      patternSize_ = config.getInteger(Key.PATTERN_SIZE.name(), patternSize_);
+      color_ = config.getStringAsEnum(Key.COLOR.name(),
+            PatternColor.class, color_);
+      showSize_ = config.getBoolean(Key.SHOW_SIZE.name(), showSize_);
 
       updateUI();
       fireOverlayConfigurationChanged();

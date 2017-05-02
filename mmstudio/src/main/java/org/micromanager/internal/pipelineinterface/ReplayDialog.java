@@ -39,7 +39,6 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.events.GlobalDisplayDestroyedEvent;
 import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;

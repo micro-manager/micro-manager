@@ -46,11 +46,12 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyNameCellRenderer;
@@ -117,7 +118,7 @@ public final class PropertyEditor extends MMFrame {
    }
 
    private void createComponents() {
-      final DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      final UserProfile profile = UserProfileStaticInterface.getInstance();
 
       setIconImage(Toolkit.getDefaultToolkit().getImage(
               getClass().getResource("/org/micromanager/icons/microscope.gif") ) );

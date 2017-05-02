@@ -54,7 +54,7 @@ import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.HttpUtils;
 import org.micromanager.internal.utils.MMDialog;
@@ -144,8 +144,7 @@ public final class ConfigWizard extends MMDialog {
 
       // Create microscope model used by pages.
       microModel_ = new MicroscopeModel();
-      microModel_.setSendConfiguration(
-            DefaultUserProfile.getInstance().getBoolean(
+      microModel_.setSendConfiguration(UserProfileStaticInterface.getInstance().getBoolean(
               ConfigWizard.class, CFG_OKAY_TO_SEND, true));
       microModel_.loadAvailableDeviceList(core_);
       microModel_.setFileName(defaultPath_);
@@ -384,7 +383,7 @@ public final class ConfigWizard extends MMDialog {
          }
       }
 
-      DefaultUserProfile.getInstance().setBoolean(
+      UserProfileStaticInterface.getInstance().setBoolean(
            ConfigWizard.class, CFG_OKAY_TO_SEND,
            microModel_.getSendConfiguration());
 

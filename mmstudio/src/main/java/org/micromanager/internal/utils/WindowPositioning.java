@@ -31,6 +31,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.WeakHashMap;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
+import org.micromanager.UserProfile;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Save and restore window locations and sizes; cascade windows.
@@ -51,18 +55,6 @@ public final class WindowPositioning {
          new HashMap<Class<?>, WindowCascade>();
    private static final Map<Window, WindowCascade> windowCascades_ =
          new WeakHashMap<Window, WindowCascade>();
-
-   private static String makeProfileKey(Class<?> positioningClass,
-         String positioningKey)
-   {
-      if (positioningClass == null) {
-         throw new NullPointerException("Positioning class must not be null");
-      }
-      return String.format("last_seen_window_bounds_" + "%s%s%s",
-            positioningClass.getName(),
-            positioningKey != null ? ":" : "",
-            positioningKey != null ? positioningKey : "");
-   }
 
    /**
     * Set the window bounds to the last saved ones, and arrange to save the
@@ -106,7 +98,7 @@ public final class WindowPositioning {
          Class<?> positioningClass, String positioningKey)
    {
       GeometrySaver.createAndRestoreBounds(window,
-            makeProfileKey(positioningClass, positioningKey));
+            positioningClass, positioningKey);
    }
 
    /**
@@ -127,7 +119,7 @@ public final class WindowPositioning {
    public static void setUpLocationMemory(Window window,
          Class<?> positioningClass, String positioningKey) {
       GeometrySaver.createAndRestoreLocation(window,
-            makeProfileKey(positioningClass, positioningKey));
+            positioningClass, positioningKey);
    }
 
    /**
@@ -296,36 +288,50 @@ public final class WindowPositioning {
          MEMORIZE_BOUNDS,
          MEMORIZE_LOCATION,
       }
+
+      // The profile settings for this class stores nested property maps for
+      // positioning class and then positioning key. Each of those pmaps can
+      // contain these keys:
+      private static enum ProfileKey {
+         WINDOW_LOCATION,
+         WINDOW_BOUNDS,
+      }
+
       private final Mode mode_;
-      private final String profileKey_;
+      private final Class<?> positioningClass_;
+      private final String positioningKey_;
       private final Window window_;
 
       static GeometrySaver createAndRestoreBounds(Window window,
-            String profileKey)
+            Class<?> positioningClass, String positioningKey)
       {
          GeometrySaver saver =
-               new GeometrySaver(window, profileKey, Mode.MEMORIZE_BOUNDS);
+               new GeometrySaver(window, positioningClass, positioningKey,
+                     Mode.MEMORIZE_BOUNDS);
          saver.restoreGeometry();
          saver.attachToWindow();
          return saver;
       }
 
       static GeometrySaver createAndRestoreLocation(Window window,
-            String profileKey)
+            Class<?> positioningClass, String positioningKey)
       {
          GeometrySaver saver =
-               new GeometrySaver(window, profileKey, Mode.MEMORIZE_LOCATION);
+               new GeometrySaver(window, positioningClass, positioningKey,
+                     Mode.MEMORIZE_LOCATION);
          saver.restoreGeometry();
          saver.attachToWindow();
          return saver;
       }
 
-      private GeometrySaver(Window window, String profileKey, Mode mode) {
+      private GeometrySaver(Window window, Class<?> positioningClass,
+            String positioningKey, Mode mode) {
          if (window == null) {
             throw new NullPointerException("Window must not be null");
          }
          window_ = window;
-         profileKey_ = profileKey;
+         positioningClass_ = positioningClass;
+         positioningKey_ = positioningKey;
          mode_ = mode;
       }
 
@@ -348,46 +354,57 @@ public final class WindowPositioning {
          }
 
          Rectangle bounds = window.getBounds();
-         DefaultUserProfile profile = DefaultUserProfile.getInstance();
+         MutablePropertyMapView settings = UserProfileStaticInterface.
+               getInstance().getSettings(getClass());
+         PropertyMap classPmap = settings.getPropertyMap(
+               positioningClass_.getCanonicalName(),
+               PropertyMaps.emptyPropertyMap());
+         PropertyMap keyPmap = classPmap.getPropertyMap(positioningKey_,
+               PropertyMaps.emptyPropertyMap());
+
+         PropertyMap.Builder builder = keyPmap.copyBuilder();
          switch (mode_) {
             case MEMORIZE_BOUNDS:
-               profile.setInt(WindowPositioning.class, profileKey_ + ":width",
-                     bounds.width);
-               profile.setInt(WindowPositioning.class, profileKey_ + ":height",
-                     bounds.height);
-               // Fallthrough
+               builder.putRectangle(ProfileKey.WINDOW_BOUNDS.name(), bounds);
+               break;
+
             case MEMORIZE_LOCATION:
-               profile.setInt(WindowPositioning.class, profileKey_ + ":x",
-                     bounds.x);
-               profile.setInt(WindowPositioning.class, profileKey_ + ":y",
-                     bounds.y);
+               builder.putPoint(ProfileKey.WINDOW_LOCATION.name(),
+                     bounds.getLocation());
                break;
+
             default:
-               break;
+               throw new AssertionError(mode_);
          }
+         keyPmap = builder.build();
+         classPmap = classPmap.copyBuilder().
+               putPropertyMap(positioningKey_, keyPmap).build();
+         settings.putPropertyMap(positioningClass_.getCanonicalName(),
+               classPmap);
       }
 
       private void restoreGeometry() {
-         DefaultUserProfile profile = DefaultUserProfile.getInstance();
+         PropertyMap pmap = UserProfileStaticInterface.getInstance().
+               getSettings(getClass()).
+               getPropertyMap(positioningClass_.getCanonicalName(),
+                     PropertyMaps.emptyPropertyMap()).
+               getPropertyMap(positioningKey_,
+                     PropertyMaps.emptyPropertyMap());
+
          switch (mode_) {
             case MEMORIZE_BOUNDS:
-               Dimension size = new Dimension(
-                     profile.getInt(WindowPositioning.class,
-                           profileKey_ + ":width", window_.getWidth()),
-                     profile.getInt(WindowPositioning.class,
-                           profileKey_ + ":height", window_.getHeight()));
-               window_.setSize(size);
-               // Fallthrough
+               window_.setBounds(pmap.getRectangle(
+                     ProfileKey.WINDOW_BOUNDS.name(), window_.getBounds()));
+               break;
+
             case MEMORIZE_LOCATION:
-               Point location = new Point(
-                     profile.getInt(WindowPositioning.class,
-                           profileKey_ + ":x", window_.getX()),
-                     profile.getInt(WindowPositioning.class,
-                           profileKey_ + ":y", window_.getY()));
-               window_.setLocation(location);
+               window_.setLocation(pmap.getPoint(
+                     ProfileKey.WINDOW_LOCATION.name(),
+                     window_.getLocation()));
                break;
+
             default:
-               break;
+               throw new AssertionError(mode_);
          }
          fitWindowInScreen(window_);
       }

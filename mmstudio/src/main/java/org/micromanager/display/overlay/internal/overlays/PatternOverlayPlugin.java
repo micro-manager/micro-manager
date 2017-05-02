@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.micromanager.display.internal.overlays;
+package org.micromanager.display.overlay.internal.overlays;
 
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayPlugin;

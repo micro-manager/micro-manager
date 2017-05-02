@@ -14,12 +14,16 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.internal.pipelineinterface;
 
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorPlugin;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -76,15 +80,14 @@ public final class ConfiguratorWrapper {
    /**
     * Serialize ourselves into JSON for storage.
     */
-   @Override
-   public String toString() {
+   public String toJSON() {
       try {
          JSONObject json = new JSONObject();
          json.put("name", name_);
          json.put("isEnabled", isEnabled_);
          json.put("isEnabledInLive", isEnabledInLive_);
          json.put("pluginName", plugin_.getClass().getName());
-         json.put("configSettings", configurator_.getSettings().toString());
+         json.put("configSettings", configurator_.getSettings().toJSON());
          return json.toString();
       }
       catch (JSONException e) {
@@ -101,8 +104,13 @@ public final class ConfiguratorWrapper {
          JSONObject json = new JSONObject(contents);
          ProcessorPlugin plugin = studio.plugins().getProcessorPlugins().get(
                json.getString("pluginName"));
-         DefaultPropertyMap settings = DefaultPropertyMap.fromJSON(
-               new JSONObject(json.getString("configSettings")));
+         PropertyMap settings;
+         try {
+            settings = PropertyMaps.fromJSON(json.getString("configSettings"));
+         }
+         catch (IOException ex) {
+            throw new RuntimeException("Failed to parse pipeline config pmap JSON", ex);
+         }
          ProcessorConfigurator configurator = plugin.createConfigurator(settings);
          ConfiguratorWrapper result = new ConfiguratorWrapper(plugin,
                configurator, json.getString("name"));

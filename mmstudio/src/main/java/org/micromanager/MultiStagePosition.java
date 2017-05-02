@@ -25,11 +25,13 @@
 //
 package org.micromanager;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import mmcorej.CMMCore;
+import org.micromanager.data.internal.PropertyKey;
 
 public final class MultiStagePosition {
    private ArrayList<StagePosition> stagePosList_;
@@ -38,8 +40,8 @@ public final class MultiStagePosition {
    private String defaultXYStage_;
    private int gridRow_ = 0;
    private int gridCol_ = 0;
-   private Hashtable<String, String> properties_;
-   
+   private HashMap<String, String> properties_;
+
    /**
     * Default constructor.
     */
@@ -48,7 +50,7 @@ public final class MultiStagePosition {
       label_ = "Undefined";
       defaultZStage_ = "";
       defaultXYStage_ = "";
-      properties_ = new Hashtable<String, String>();
+      properties_ = new HashMap<String, String>();
    }
    
    /**
@@ -90,19 +92,13 @@ public final class MultiStagePosition {
       mps.label_ = aMps.label_;
       mps.defaultXYStage_ = aMps.defaultXYStage_;
       mps.defaultZStage_ = aMps.defaultZStage_;
-      for (Enumeration<String> e = aMps.properties_.keys(); e.hasMoreElements();) {
-         String key = e.nextElement();
-         String val = aMps.properties_.get(key);
-         mps.properties_.put(key, val);
+      mps.properties_.putAll(aMps.properties_);
+      for (StagePosition sp : aMps.stagePosList_) {
+         mps.add(StagePosition.newInstance(sp));
       }
-      
-      Iterator<StagePosition> it = aMps.stagePosList_.iterator();
-      while(it.hasNext()) {
-         mps.add(StagePosition.newInstance(it.next()));
-      }  
       return mps;
    }
-   
+
    /**
     * Add one stage position point
     * @param sp Stageposition to be added
@@ -146,11 +142,8 @@ public final class MultiStagePosition {
     * @return array with property names
     */
    public String[] getPropertyNames() {
-      String keys[] = new String[properties_.size()];
-      int i=0;
-      for (Enumeration<String> e = properties_.keys(); e.hasMoreElements();)
-         keys[i++] = e.nextElement();
-      return keys;
+      return new ArrayList<String>(properties_.keySet()).
+            toArray(new String[properties_.size()]);
    }
    
    /**
@@ -360,5 +353,57 @@ public final class MultiStagePosition {
       return String.format("<MultiStagePosition %s with defaults XY %s, Z %s; grid %d/%d, properties %s>",
             label_, defaultXYStage_, defaultZStage_, gridCol_, gridRow_,
             properties_);
+   }
+
+   public PropertyMap toPropertyMap() {
+      PropertyMap.Builder properties = PropertyMaps.builder();
+      for (Map.Entry<String, String> e : properties_.entrySet()) {
+         properties.putString(e.getKey(), e.getValue());
+      }
+      List<PropertyMap> positions = new ArrayList<PropertyMap>();
+      for (StagePosition sp : stagePosList_) {
+         positions.add(sp.toPropertyMap());
+      }
+      return PropertyMaps.builder().
+            putString(PropertyKey.MULTI_STAGE_POSITION__LABEL.key(), label_).
+            putString(PropertyKey.MULTI_STAGE_POSITION__DEFAULT_XY_STAGE.key(),
+                  defaultXYStage_).
+            putString(PropertyKey.MULTI_STAGE_POSITION__DEFAULT_Z_STAGE.key(),
+                  defaultZStage_).
+            putInteger(PropertyKey.MULTI_STAGE_POSITION__GRID_ROW.key(),
+                  gridRow_).
+            putInteger(PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN.key(),
+                  gridCol_).
+            putPropertyMap(PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key(),
+                  properties.build()).
+            putPropertyMapList(
+                  PropertyKey.MULTI_STAGE_POSITION__DEVICE_POSITIONS.key(),
+                  positions).build();
+   }
+
+   public static MultiStagePosition fromPropertyMap(PropertyMap pmap) {
+      MultiStagePosition ret = new MultiStagePosition();
+      ret.label_ = pmap.getString(PropertyKey.MULTI_STAGE_POSITION__LABEL.
+            key(), null);
+      ret.defaultXYStage_ = pmap.getString(
+            PropertyKey.MULTI_STAGE_POSITION__DEFAULT_XY_STAGE.key(), null);
+      ret.defaultZStage_ = pmap.getString(
+            PropertyKey.MULTI_STAGE_POSITION__DEFAULT_Z_STAGE.key(), null);
+      ret.gridRow_ = pmap.getInteger(
+            PropertyKey.MULTI_STAGE_POSITION__GRID_ROW.key(), 0);
+      ret.gridCol_ = pmap.getInteger(
+            PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN.key(), 0);
+      ret.properties_ = new HashMap<String, String>();
+      for (String key : pmap.getPropertyMap(
+            PropertyKey.MULTI_STAGE_POSITION__PROPERTIES.key(),
+            PropertyMaps.emptyPropertyMap()).keySet()) {
+         ret.properties_.put(key, pmap.getString(key, ""));
+      }
+      ret.stagePosList_ = new ArrayList<StagePosition>();
+      for (PropertyMap spmap : pmap.getPropertyMapList(
+            PropertyKey.MULTI_STAGE_POSITION__DEVICE_POSITIONS.key())) {
+         ret.stagePosList_.add(StagePosition.fromPropertyMap(spmap));
+      }
+      return ret;
    }
 }

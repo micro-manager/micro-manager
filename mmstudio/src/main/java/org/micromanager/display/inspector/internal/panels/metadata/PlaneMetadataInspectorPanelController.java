@@ -22,26 +22,23 @@ import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.table.AbstractTableModel;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.internal.DefaultMetadata;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.ImageDidDisplayEvent;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
+import org.micromanager.display.DisplayDidShowImageEvent;
 
 /**
  *
@@ -212,42 +209,28 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       }
       metadata_ = metadata;
 
-      if (metadata == null) {
-         metadata = new DefaultMetadata.Builder().build();
-      }
-
-      // TODO Use more efficient conversion (avoid JSONObject)
-      JSONObject metadataJSON = ((DefaultMetadata) metadata).toJSON();
+      PropertyMap metadataMap = metadata == null ?
+            PropertyMaps.emptyPropertyMap() :
+            ((DefaultMetadata) metadata).toPropertyMap();
 
       final TreeMap<String, String> data = new TreeMap<String, String>();
-      for (String key : MDUtils.getKeys(metadataJSON)) {
-         try {
-            data.put(key, metadataJSON.getString(key));
+      for (String key : metadataMap.keySet()) {
+         if ("ScopeData".equals(key)) {
+            PropertyMap scopeData = metadataMap.getPropertyMap(key, null);
+            for (String subkey : scopeData.keySet()) {
+               data.put("device:" + subkey, scopeData.getValueAsString(subkey, ""));
+            }
          }
-         catch (JSONException programmingError) {
-            throw new RuntimeException(programmingError);
+         else if ("UserData".equals(key)) {
+            PropertyMap userData = metadataMap.getPropertyMap(key, null);
+            for (String subkey : userData.keySet()) {
+               data.put("user:" + subkey, userData.getValueAsString(subkey, ""));
+            }
          }
-      }
-
-      // Flatten scope and user data
-      DefaultPropertyMap scopeData =
-            (DefaultPropertyMap) metadata.getScopeData();
-      if (scopeData != null && !scopeData.isEmpty()) {
-         for (String key : scopeData.getKeys()) {
-            data.put("device:" + key, scopeData.getString(key));
-            data.remove(key);
-         }
-      }
-      data.remove("scopeDataKeys");
-
-      DefaultPropertyMap userData =
-            (DefaultPropertyMap) metadata.getUserData();
-      if (userData != null && !userData.isEmpty()) {
-         for (String key : userData.getKeys()) {
-            data.put("user:" + key, userData.getString(key));
+         else {
+            data.put(key, metadataMap.getValueAsString(key, ""));
          }
       }
-      data.remove("userData");
 
       boolean changedOnly;
       synchronized (this) {
@@ -300,7 +283,7 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
    private final class UpdateTag { }
 
    @Subscribe
-   public void onEvent(final ImageDidDisplayEvent e) {
+   public void onEvent(final DisplayDidShowImageEvent e) {
       background_.submit(new Runnable() {
          @Override
          public void run() {

@@ -198,6 +198,8 @@ public class IntensityInspectorPanelController
       colorModeComboBox_.addItem(ColorModeCell.Item.HILIGHT_SAT);
       colorModeComboBox_.addItem(ColorModeCell.Item.FIRE_LUT);
       colorModeComboBox_.addItem(ColorModeCell.Item.RED_HOT_LUT);
+      // Prevent "Composite" from slowly flashing
+      colorModeComboBox_.getModel().setSelectedItem(null);
       colorModeComboBox_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {

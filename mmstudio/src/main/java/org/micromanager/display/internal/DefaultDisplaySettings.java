@@ -35,10 +35,11 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.UserProfile;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -300,7 +301,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     *        different "types" of displays can have different default settings.
     */
    public static DefaultDisplaySettings getStandardSettings(String key) {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       LegacyBuilder builder = new LegacyBuilder();
       // We have to convert colors to/from int arrays.
       // Note we assume RGB tuples in the colors array.
@@ -348,7 +349,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     */
    public static void setStandardSettings(DisplaySettings settings,
          String key) {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       key = key + "_";
       profile.setDouble(DefaultDisplaySettings.class,
             key + ANIMATION_FPS_DOUBLE,
@@ -379,7 +380,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     */
    public static ColorMode getStandardColorMode(String key,
          DisplaySettings.ColorMode defaultVal) {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       key = key + "_";
       Integer mode = profile.getInt(DefaultDisplaySettings.class,
             CHANNEL_COLOR_MODE, null);

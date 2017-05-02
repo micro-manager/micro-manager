@@ -78,9 +78,10 @@ import org.fife.ui.rtextarea.SearchContext;
 import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rtextarea.SearchResult;
 import org.micromanager.ScriptController;
+import org.micromanager.UserProfile;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.internal.utils.HotKeysDialog;
@@ -370,7 +371,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       // Needed when Cancel button is pressed upon save file warning
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-      final DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      final UserProfile profile = UserProfileStaticInterface.getInstance();
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
@@ -876,7 +877,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
          File curFile = FileDialogs.openFile(this, "Select a Beanshell script", BSH_FILE);
 
          if (curFile != null) {
-               DefaultUserProfile.getInstance().setString(ScriptPanel.class,
+               UserProfileStaticInterface.getInstance().setString(ScriptPanel.class,
                      SCRIPT_FILE, curFile.getAbsolutePath());
                // only creates a new file when a file with this name does not exist
                addScriptToModel(curFile);
@@ -967,7 +968,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
             fw.write(scriptArea_.getText());
             fw.close();
             scriptFile_ = saveFile;
-            DefaultUserProfile.getInstance().setString(ScriptPanel.class,
+            UserProfileStaticInterface.getInstance().setString(ScriptPanel.class,
                   SCRIPT_FILE, saveFile.getAbsolutePath());
             scriptPaneSaved_ = true;
             this.setTitle(saveFile.getName());
@@ -1130,7 +1131,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
 
       if (curFile != null) {
          try {
-            DefaultUserProfile.getInstance().setString(ScriptPanel.class,
+            UserProfileStaticInterface.getInstance().setString(ScriptPanel.class,
                   SCRIPT_FILE, curFile.getAbsolutePath());
             int row = scriptTable_.getSelectedRow();
             int column = scriptTable_.getSelectedColumn();
@@ -1272,7 +1273,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       int j = 0;
       String script;
       boolean isFile = false;
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       model_.RemoveAllScripts();
       do {
          script = profile.getString(ScriptPanel.class, SCRIPT_FILE + j, null);
@@ -1298,7 +1299,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    { 
       File file;
       ArrayList<File> scriptFileArray = model_.getFileArray();
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       for (int i = 0; i < scriptFileArray.size(); i ++) 
       {
          file = scriptFileArray.get(i);
@@ -1317,7 +1318,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
       if (!promptToSave(-1)) {
          return;
       }
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       profile.setInt(ScriptPanel.class, RIGHT_DIVIDER_LOCATION,
             rightSplitPane_.getDividerLocation());
       profile.setInt(ScriptPanel.class, DIVIDER_LOCATION,
@@ -1429,12 +1430,12 @@ public final class ScriptPanel extends MMFrame implements MouseListener, ScriptC
    }
 
    public static String getStartupScript() {
-      return DefaultUserProfile.getInstance().getString(ScriptPanel.class,
+      return UserProfileStaticInterface.getInstance().getString(ScriptPanel.class,
             STARTUP_SCRIPT, "MMStartup.bsh");
    }
 
    public static void setStartupScript(String path) {
-      DefaultUserProfile.getInstance().setString(ScriptPanel.class,
+      UserProfileStaticInterface.getInstance().setString(ScriptPanel.class,
             STARTUP_SCRIPT, path);
    }
 

@@ -30,6 +30,7 @@ import javax.swing.ProgressMonitor;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Datastore;
@@ -260,7 +261,7 @@ public final class DefaultDataManager implements DataManager {
 
    @Override
    public PropertyMap loadPropertyMap(String path) throws IOException {
-      return DefaultPropertyMap.loadPropertyMap(path);
+      return PropertyMaps.loadJSON(new File(path));
    }
 
    @Override

@@ -13,7 +13,7 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import org.micromanager.data.Datastore;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -186,12 +186,12 @@ public final class FileMenu {
    }
 
    private static String[] getRecentFiles() {
-      return DefaultUserProfile.getInstance().getStringArray(
+      return UserProfileStaticInterface.getInstance().getStringArray(
             FileMenu.class, FILE_HISTORY, new String[] {});
    }
 
    private static void setRecentFiles(String[] files) {
-      DefaultUserProfile.getInstance().setStringArray(
+      UserProfileStaticInterface.getInstance().setStringArray(
             FileMenu.class, FILE_HISTORY, files);
    }
 }

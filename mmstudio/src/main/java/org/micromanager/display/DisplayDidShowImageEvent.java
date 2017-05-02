@@ -12,7 +12,7 @@ import org.micromanager.data.Image;
  *
  * @author mark
  */
-public interface ImageDidDisplayEvent {
+public interface DisplayDidShowImageEvent {
    DataViewer getDataViewer();
    List<Image> getImages();
    Image getPrimaryImage();

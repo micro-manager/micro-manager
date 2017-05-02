@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -51,7 +52,7 @@ public final class DefaultAnnotation implements Annotation {
       File target = getFile(store, filename);
       if (target.exists()) {
          try {
-            PropertyMap data = DefaultPropertyMap.loadPropertyMap(target.getAbsolutePath());
+            PropertyMap data = PropertyMaps.loadJSON(new File(target.getAbsolutePath()));
             // Load general annotations.
             if (data.containsKey(GENERAL_KEY)) {
                generalAnnotation_ = data.getPropertyMap(GENERAL_KEY,

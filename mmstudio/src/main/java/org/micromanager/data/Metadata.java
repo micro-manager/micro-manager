@@ -41,7 +41,47 @@ import org.micromanager.PropertyMap;
  * for more information.
  */
 public interface Metadata {
+   interface Builder extends MetadataBuilder {
+      @Override Builder binning(Integer binning);
+      @Override Builder bitDepth(Integer bitDepth);
+      @Override Builder camera(String camera);
+      @Override Builder elapsedTimeMs(Double elapsedTimeMs);
+      @Override Builder exposureMs(Double exposureMs);
+      @Override Builder imageNumber(Long imageNumber);
+      @Override Builder pixelAspect(Double pixelAspect);
+      @Override Builder pixelSizeUm(Double pixelSizeUm);
+      @Override Builder positionName(String positionName);
+      @Override Builder receivedTime(String receivedTime);
+      /** Same as {@link #roi}. Use {@code roi} in new code. */
+      @Override Builder ROI(Rectangle roi);
+      Builder roi(Rectangle roi);
+      /**
+       * Add device property data.
+       * This method will remove all previously added scope data from this
+       * builder.
+       * @param scopeData device properties; keys should be in
+       * "DeviceLabel-PropertyName" format, and values should be strings
+       * (numbers will be converted to strings)
+       */
+      @Override Builder scopeData(PropertyMap scopeData);
+      /**
+       * Add user-defined data.
+       * This method will remove all previously added user data from this
+       * builder.
+       * @param userData any valid (potentially nested) property map containing
+       * user data
+       */
+      @Override Builder userData(PropertyMap userData);
+      /** @deprecated Use {@link #generateUUID}. */
+      @Deprecated @Override Builder uuid();
+      Builder generateUUID();
+      @Override Builder uuid(UUID uuid);
+      @Override Builder xPositionUm(Double xPositionUm);
+      @Override Builder yPositionUm(Double yPositionUm);
+      @Override Builder zPositionUm(Double zPositionUm);
+   }
 
+   @Deprecated
    interface MetadataBuilder {
       /**
        * Construct a Metadata from the MetadataBuilder. Call this once you are
@@ -66,9 +106,7 @@ public interface Metadata {
       MetadataBuilder ROI(Rectangle ROI);
       MetadataBuilder scopeData(PropertyMap scopeData);
       MetadataBuilder userData(PropertyMap userData);
-      /**
-       * Generate a new UUID for this Metadata instance.
-       */
+      @Deprecated
       MetadataBuilder uuid();
       MetadataBuilder uuid(UUID uuid);
       MetadataBuilder xPositionUm(Double xPositionUm);
@@ -76,11 +114,20 @@ public interface Metadata {
       MetadataBuilder zPositionUm(Double zPositionUm);
    }
 
+   /** Return a builder with the same content, preserving the image UUID. */
+   Builder copyBuilderPreservingUUID();
+   /** Return a builder with the same content, assigning a new image UUID. */
+   Builder copyBuilderWithNewUUID();
+   /** Return a builder with the same content but removing the image UUID. */
+   Builder copyBuilderRemovingUUID();
+
    /**
-    * Generate a new MetadataBuilder whose values are initialized to be
-    * the values of this Metadata.
-    * @return a MetadataBuilder based on this Metadata.
+    * @deprecated Use the appropriate of the following:
+    * {@link #copyBuilderPreservingUUID}, {@link #copyBuilderWithNewUUID},
+    * {@link #copyBuilderRemovingUUID}. This method is equivalent to
+    * {@code copyBuilderPreservingUUID}.
     */
+   @Deprecated
    MetadataBuilder copy();
 
    /** 
@@ -158,7 +205,7 @@ public interface Metadata {
     * each image, for performance reasons.
     * @return Miscellaneous medatada provided by the microscope.
     */
-   public PropertyMap getScopeData();
+   PropertyMap getScopeData();
 
    /** 
     * Arbitrary additional metadata added by third-party code 

@@ -55,6 +55,8 @@ import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.link.LinkManager;
+import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 
 
 // TODO Methods must implement correct threading semantics!
@@ -77,6 +79,8 @@ public final class DefaultDisplayManager implements DisplayManager {
          new WeakHashMap<DataViewer, Boolean>();
 
    private final InspectorCollection inspectors_ = InspectorCollection.create();
+
+   private final LinkManager linkManager_ = DefaultLinkManager.create();
 
    private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
@@ -168,8 +172,7 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplaySettings getStandardDisplaySettings() {
-      return DefaultDisplaySettings.getStandardSettings(
-            DisplayController.DEFAULT_SETTINGS_PROFILE_KEY);
+      return DefaultDisplaySettings.getStandardSettings(null);
    }
 
    @Override
@@ -237,7 +240,8 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    @Override
    public DisplayWindow createDisplay(DataProvider provider) {
-      DisplayWindow ret = new DisplayController.Builder(provider).shouldShow(true).build();
+      DisplayWindow ret = new DisplayController.Builder(provider).
+            linkManager(linkManager_).shouldShow(true).build();
       addViewer(ret);
       return ret;
    }
@@ -246,7 +250,8 @@ public final class DefaultDisplayManager implements DisplayManager {
    public DisplayWindow createDisplay(DataProvider provider,
          DisplayWindowControlsFactory factory)
    {
-      DisplayWindow ret = new DisplayController.Builder(provider).shouldShow(true).
+      DisplayWindow ret = new DisplayController.Builder(provider).
+            linkManager(linkManager_).shouldShow(true).
             controlsFactory(factory).build();
       addViewer(ret);
       return ret;

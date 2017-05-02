@@ -75,7 +75,7 @@ import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.menus.MMMenuBar;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -642,7 +642,7 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
       if (configFile.equals("")) {
          configFile = "(none)";
       }
-      configFile_.setText("Config file: " + configFile);
+      configFile_.setText("Config File: " + configFile);
    }
 
    public final void setExitStrategy(boolean closeOnExit) {
@@ -848,7 +848,7 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
     */
    public void savePrefs() {
       this.savePosition();
-      DefaultUserProfile.getInstance().setString(MainFrame.class,
+      UserProfileStaticInterface.getInstance().setString(MainFrame.class,
             MAIN_EXPOSURE, textFieldExp_.getText());
    }
 

@@ -462,7 +462,6 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
       };
       display_ = new DisplayController.Builder(store_).
             controlsFactory(controlsFactory).
-            settingsProfileKey(TITLE).
             shouldShow(true).build();
       DefaultDisplayManager.getInstance().addViewer(display_);
 

@@ -18,25 +18,21 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal.overlays;
+package org.micromanager.display.overlay.internal.overlays;
 
+import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayPlugin;
 import org.scijava.Priority;
 import org.scijava.plugin.Plugin;
-import org.micromanager.display.overlay.Overlay;
 
-/**
- * The scale bar overlay plugin.
- *
- * @author Chris Weisiger, Mark A. Tsuchida
- */
+
 @Plugin(type = OverlayPlugin.class,
       priority = Priority.HIGH_PRIORITY,
-      name = "Scale Bar",
-      description = "Display a scale bar")
-public final class ScaleBarPlugin implements OverlayPlugin {
+      name = "Timestamp",
+      description = "Display timestamps")
+public final class TimestampPlugin implements OverlayPlugin {
    @Override
    public Overlay createOverlay() {
-      return ScaleBarOverlay.create();
+      return TimestampOverlay.create();
    }
 }

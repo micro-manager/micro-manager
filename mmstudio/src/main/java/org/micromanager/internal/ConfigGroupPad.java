@@ -36,7 +36,7 @@ import mmcorej.StrVector;
 import org.micromanager.Studio;
 import org.micromanager.internal.dialogs.PresetEditor;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.StateGroupCellRenderer;
@@ -82,7 +82,7 @@ public final class ConfigGroupPad extends JScrollPane {
       table_.addColumn(new TableColumn(0,200,new StateGroupCellRenderer(),null));
       table_.addColumn(new TableColumn(1,200,new StatePresetCellRenderer(), new StatePresetCellEditor()));
       
-      int colWidth = DefaultUserProfile.getInstance().getInt(
+      int colWidth = UserProfileStaticInterface.getInstance().getInt(
             this.getClass(), COLUMN_WIDTH , 0);
       if (colWidth > 0) {
          table_.getColumnModel().getColumn(0).setPreferredWidth(colWidth);
@@ -91,7 +91,7 @@ public final class ConfigGroupPad extends JScrollPane {
    
    public void saveSettings() {
       if (table_ != null) {
-           DefaultUserProfile.getInstance().setInt(this.getClass(),
+           UserProfileStaticInterface.getInstance().setInt(this.getClass(),
                  COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
       }
    }

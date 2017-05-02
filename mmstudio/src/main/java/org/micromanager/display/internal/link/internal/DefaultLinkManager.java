@@ -14,15 +14,19 @@ import org.micromanager.display.internal.link.LinkManager;
 
 
 public class DefaultLinkManager implements LinkManager {
-   // TODO Temporary for testing!
-   public static final LinkManager instance = new DefaultLinkManager();
-
    private final LinkEndpointManager endpointManager_ =
          LinkEndpointManager.create();
    private final LinkageFactory linkageFactory_ =
          LinkageFactory.create();
    private final Map<LinkAnchor<?>, LinkEndpoint> endpoints_ =
          new HashMap<LinkAnchor<?>, LinkEndpoint>();
+
+   public static LinkManager create() {
+      return new DefaultLinkManager();
+   }
+
+   private DefaultLinkManager() {
+   }
 
    @Override
    public void registerAnchor(LinkAnchor<?> anchor) {

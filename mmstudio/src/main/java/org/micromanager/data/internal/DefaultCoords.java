@@ -20,32 +20,37 @@
 
 package org.micromanager.data.internal;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.regex.Pattern;
+import org.apache.commons.lang3.ArrayUtils;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
-import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.ReportingUtils;
+import static org.micromanager.data.Coords.CHANNEL;
+import static org.micromanager.data.Coords.STAGE_POSITION;
+import static org.micromanager.data.Coords.TIME_POINT;
+import static org.micromanager.data.Coords.Z_SLICE;
 
-/**
- * DefaultCoords indicate the position of a given image within a dataset.
- * They are immutable, constructed using a Builder pattern.
- */
-public final class DefaultCoords implements Coords, Comparable<DefaultCoords> {
 
-   public static class Builder implements Coords.CoordsBuilder {
-      // Maps axis labels to our index along those axes.
-      private HashMap<String, Integer> axisToPos_;
-      // Convenience/optimization: we maintain a sorted list of our axes.
-      private ArrayList<String> sortedAxes_;
+public final class DefaultCoords implements Coords {
+   public static class Builder implements Coords.Builder {
+      // Since we only hold several axes, array lists are likely more efficient
+      // than a LinkedHashMap
+      private final List<String> axes_;
+      private final List<Integer> indices_;
 
       public Builder() {
-         axisToPos_ = new HashMap<String, Integer>();
-         sortedAxes_ = new ArrayList<String>();
+         axes_ = new ArrayList<String>(5);
+         indices_ = new ArrayList<Integer>(5);
+      }
+
+      private Builder(List<String> axes, List<Integer> indices) {
+         axes_ = new ArrayList<String>(axes);
+         indices_ = new ArrayList<Integer>(indices);
       }
 
       @Override
@@ -54,118 +59,114 @@ public final class DefaultCoords implements Coords, Comparable<DefaultCoords> {
       }
 
       @Override
-      public CoordsBuilder time(int time) {
-         return index(Coords.TIME, time);
-      }
-
-      @Override
-      public CoordsBuilder channel(int channel) {
-         return index(Coords.CHANNEL, channel);
-      }
-
-      @Override
-      public CoordsBuilder stagePosition(int stagePosition) {
-         return index(Coords.STAGE_POSITION, stagePosition);
-      }
-
-      @Override
-      public CoordsBuilder z(int z) {
-         return index(Coords.Z, z);
-      }
-      
-      @Override
-      public CoordsBuilder index(String axis, int index) {
-         if (index < 0 && axisToPos_.containsKey(axis)) {
-            // Delete the axis instead.
-            axisToPos_.remove(axis);
-            sortedAxes_.remove(axis);
-            return this;
+      public Builder index(String axis, int index) {
+         Preconditions.checkArgument(isValidAxis(axis), "Invalid axis name");
+         if (index < 0) {
+            return removeAxis(axis);
          }
 
-         axisToPos_.put(axis, new Integer(index));
-         if (!sortedAxes_.contains(axis)) {
-            sortedAxes_.add(axis);
-            try {
-               Collections.sort(sortedAxes_);
-            }
-            catch (UnsupportedOperationException e) {
-               ReportingUtils.logError(e, "Unable to sort coordinate axes");
-            }
+         removeAxis(axis);
+         axes_.add(axis);
+         indices_.add(index);
+         return this;
+      }
+
+      @Override
+      public Builder removeAxis(String axis) {
+         int i = axes_.indexOf(axis);
+         if (i >= 0) {
+            axes_.remove(i);
+            indices_.remove(i);
          }
          return this;
       }
 
       @Override
-      public CoordsBuilder removeAxis(String axis) {
-         return index(axis, -1);
-      }
-
-      @Override
-      public CoordsBuilder offset(String axis, int offset) throws IllegalArgumentException {
-         if (!axisToPos_.containsKey(axis)) {
-            throw new IllegalArgumentException("Axis " + axis + " is not a part of this CoordsBuilder.");
+      public Builder offset(String axis, int offset)
+            throws IllegalArgumentException, IndexOutOfBoundsException
+      {
+         int i = axes_.indexOf(axis);
+         if (i < 0) {
+            throw new IllegalArgumentException(
+                  "Coords does not have index for axis \"" + axis + "\"");
          }
-         int curVal = axisToPos_.get(axis);
-         if (curVal + offset < 0) {
-            throw new IllegalArgumentException("Adding offset " + offset + " to current index " + curVal + " for axis " + axis + " would result in a negative index.");
+         int newIndex = indices_.get(i) + offset;
+         if (newIndex < 0) {
+            throw new IndexOutOfBoundsException(
+                  "Offset would make Coords have negative index for axis \"" +
+                        axis + "\"");
          }
-         index(axis, curVal + offset);
+         indices_.set(i, newIndex);
          return this;
       }
+
+      @Override public Builder timePoint(int frame) { return index(TIME_POINT, frame); }
+      @Override @Deprecated public Builder time(int frame) { return timePoint(frame); }
+      @Override public Builder t(int frame) { return timePoint(frame); }
+
+      @Override public Builder stagePosition(int index) { return index(STAGE_POSITION, index); }
+      @Override public Builder p(int index) { return stagePosition(index); }
+
+      @Override public Builder zSlice(int slice) { return index(Z_SLICE, slice); }
+      @Override public Builder z(int slice) { return zSlice(slice); }
+
+      @Override public Builder channel(int channel) { return index(CHANNEL, channel); }
+      @Override public Builder c(int channel) { return channel(channel); }
    }
 
-   // Maps axis labels to our index along those axes.
-   private HashMap<String, Integer> axisToPos_;
-   // Convenience/optimization: we maintain a sorted list of our axes.
-   private ArrayList<String> sortedAxes_;
+   // Since we only hold several axes, array lists are likely more efficient
+   // than a LinkedHashMap
+   private final List<String> axes_;
+   private final List<Integer> indices_;
 
    public DefaultCoords(Builder builder) {
-      axisToPos_ = new HashMap<String, Integer>(builder.axisToPos_);
-      sortedAxes_ = new ArrayList<String>(builder.sortedAxes_);
+      axes_ = ImmutableList.copyOf(builder.axes_);
+      indices_ = ImmutableList.copyOf(builder.indices_);
    }
-   
+
    @Override
    public int getIndex(String axis) {
-      if (axisToPos_.containsKey(axis)) {
-         return axisToPos_.get(axis);
+      int i = axes_.indexOf(axis);
+      if (i < 0) {
+         return -1;
       }
-      return -1;
+      return indices_.get(i);
    }
 
-   @Override
-   public int getChannel() {
-      return getIndex(Coords.CHANNEL);
-   }
-   
-   @Override
-   public int getTime() {
-      return getIndex(Coords.TIME);
-   }
+   @Override public int getTimePoint() { return getIndex(TIME_POINT); }
+   @Override public int getT() { return getTimePoint(); }
+   @Override public int getStagePosition() { return getIndex(STAGE_POSITION); }
+   @Override public int getP() { return getStagePosition(); }
+   @Override public int getZSlice() { return getIndex(Z_SLICE); }
+   @Override public int getZ() { return getZSlice(); }
+   @Override public int getChannel() { return getIndex(Coords.CHANNEL); }
+   @Override public int getC() { return getChannel(); }
+   @Override @Deprecated public int getTime() { return getTimePoint(); }
 
-   @Override
-   public int getZ() {
-      return getIndex(Coords.Z);
-   }
-
-   @Override
-   public int getStagePosition() {
-      return getIndex(Coords.STAGE_POSITION);
-   }
-   
    @Override
    public List<String> getAxes() {
-      return new ArrayList<String>(sortedAxes_);
+      return new ArrayList<String>(axes_);
    }
 
    @Override
    public boolean hasAxis(String axis) {
-      return sortedAxes_.contains(axis);
+      return axes_.contains(axis);
    }
 
+   @Override public boolean hasTimePointAxis() { return hasAxis(TIME_POINT); }
+   @Override public boolean hasT() { return hasTimePointAxis(); }
+   @Override public boolean hasStagePositionAxis() { return hasAxis(STAGE_POSITION); }
+   @Override public boolean hasP() { return hasStagePositionAxis(); }
+   @Override public boolean hasZSliceAxis() { return hasAxis(Z_SLICE); }
+   @Override public boolean hasZ() { return hasZSliceAxis(); }
+   @Override public boolean hasChannelAxis() { return hasAxis(Coords.CHANNEL); }
+   @Override public boolean hasC() { return hasChannelAxis(); }
+
    @Override
-   public boolean matches(Coords alt) {
-      for (String axis : alt.getAxes()) {
-         if (getIndex(axis) != alt.getIndex(axis)) {
+   public boolean isSuperspaceCoordsOf(Coords other) {
+      for (String axis : axes_) {
+         // If other doesn't have axis, -1 != this.getIndex(axis)
+         if (other.getIndex(axis) != getIndex(axis)) {
             return false;
          }
       }
@@ -173,162 +174,136 @@ public final class DefaultCoords implements Coords, Comparable<DefaultCoords> {
    }
 
    @Override
-   public CoordsBuilder copy() {
-      Builder result = new Builder();
-      for (String axis : axisToPos_.keySet()) {
-         result.index(axis, axisToPos_.get(axis));
+   public boolean isSubspaceCoordsOf(Coords other) {
+      return other.isSuperspaceCoordsOf(this);
+   }
+
+   @Override
+   @Deprecated
+   public boolean matches(Coords other) {
+      return isSubspaceCoordsOf(other);
+   }
+
+   @Override
+   public Builder copyBuilder() {
+      return new Builder(axes_, indices_);
+   }
+
+   @Override
+   @Deprecated
+   public Builder copy() {
+      return copyBuilder();
+   }
+
+   @Override
+   public Coords copyRemovingAxes(String... axes) {
+      Builder b = copyBuilder();
+      for (String axis : axes) {
+         b.removeAxis(axis);
       }
-      return result;
+      return b.build();
    }
 
    @Override
    public Coords copyRetainingAxes(String... axes) {
       Builder b = new Builder();
-      for (String axis : axes) {
-         if (hasAxis(axis)) {
+      for (String axis : getAxes()) {
+         if (ArrayUtils.contains(axes, axis)) {
             b.index(axis, getIndex(axis));
          }
       }
       return b.build();
    }
 
-   /**
-    * Compare us to the other DefaultCoords; useful for sorting. We go through
-    * our axes in alphabetical order and compare positions. Axes that we have
-    * and it does not are presumed "less than", so a DefaultCoords with no
-    * axes should be "greater than" all others.
-    */
    @Override
-   public int compareTo(DefaultCoords alt) {
-      for (String axis : sortedAxes_) {
-         int ourPosition = getIndex(axis);
-         int altPosition = alt.getIndex(axis);
-         if (altPosition == -1) {
-            // They have no index along this axis, so we come first.
-            return -1;
-         }
-         else if (altPosition != ourPosition) {
-            // They have a index on this axis and it's different from ours.
-            return (ourPosition < altPosition) ? -1 : 1;
-         }
-      }
-      // Equal for all axes we care about.
-      return 0;
-   }
-
-   /**
-    * Generate a hash of this DefaultCoords. We want to be able to refer to
-    * images by their coordinates (e.g. in HashMaps), which requires a 
-    * consistent mechanism for identifying a specific coordinate value.
-    */
-   @Override
-   public int hashCode() {
-      int result = 0;
-      int multiplier = 23; // Semi-randomly-chosen prime number
-      for (String axis : sortedAxes_) {
-         result = result * multiplier + axis.hashCode();
-         result = result * multiplier + getIndex(axis);
-      }
-      return result;
-   }
-
-   /**
-    * Since we override hashCode, we should override equals as well.
-    */
-   @Override
-   public boolean equals(Object alt) {
-      if (!(alt instanceof DefaultCoords) || 
-            compareTo((DefaultCoords) alt) != 0) {
+   public boolean equals(Object other) {
+      if (!(other instanceof Coords)) {
          return false;
       }
-      // Manually verify that we have the same set of axes.
-      HashSet<String> ourAxes = new HashSet<String>(sortedAxes_);
-      HashSet<String> altAxes = new HashSet<String>(((DefaultCoords) alt).getAxes());
-      return ourAxes.equals(altAxes);
+      // Axis order is not considered for equality
+      List<String> thisAxes = getAxes();
+      List<String> otherAxes = ((Coords) other).getAxes();
+      if (thisAxes.size() != otherAxes.size()) {
+         return false;
+      }
+      for (String axis : thisAxes) {
+         if (!otherAxes.contains(axis)) {
+            return false;
+         }
+         if (((Coords) other).getIndex(axis) != getIndex(axis)) {
+            return false;
+         }
+      }
+      return true;
    }
 
-   /**
-    * Convert to string. Should only be used for debugging (?).
-    */
+   @Override
+   public int hashCode() {
+      // Axis order is not considered for equality
+      List<String> axes = getAxes();
+      Collections.sort(axes);
+      List<Integer> indices = new ArrayList<Integer>(axes.size());
+      for (String axis : axes) {
+         indices.add(getIndex(axis));
+      }
+      int hash = 3;
+      hash = 23 * hash + axes.hashCode();
+      hash = 23 * hash + indices.hashCode();
+      return hash;
+   }
+
+   @Override
    public String toString() {
-      String result = "<";
+      StringBuilder sb = new StringBuilder().append("<");
       boolean isFirst = true;
-      for (String axis : sortedAxes_) {
+      for (String axis : axes_) {
          if (!isFirst) {
-            result += ", ";
+            sb.append(" ");
          }
          isFirst = false;
-         result += String.format("%s: %d", axis, getIndex(axis));
+         sb.append(String.format("%s=%d", axis, getIndex(axis)));
       }
-      result += ">";
-      return result;
+      return sb.append(">").toString();
    }
 
-   /**
-    * Legacy method: convert from the index information in the JSONObject
-    * of a TaggedImage. This is pretty messy with all the try/catches, but we
-    * don't want to lose all the positions just because a single one is
-    * unavailable.
-    */
-   public static DefaultCoords legacyFromJSON(JSONObject tags) {
-      Builder builder = new Builder();
-      try {
-         if (MDUtils.hasChannelIndex(tags)) {
-            builder.channel(MDUtils.getChannelIndex(tags));
-         }
+   public PropertyMap toPropertyMap() {
+      PropertyMap.Builder b = PropertyMaps.builder();
+      for (String axis : axes_) {
+         b.putInteger(axis, getIndex(axis));
       }
-      catch (JSONException e) {
-         ReportingUtils.logError("Couldn't extract channel coordinate from tags");
-      }
-      try {
-         if (MDUtils.hasSliceIndex(tags)) {
-            builder.z(MDUtils.getSliceIndex(tags));
-         }
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError("Couldn't extract z coordinate from tags");
-      }
-      try {
-         if (MDUtils.hasFrameIndex(tags)) {
-            builder.time(MDUtils.getFrameIndex(tags));
-         }
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError("Couldn't extract time coordinate from tags");
-      }
-      try {
-         if (MDUtils.hasPositionIndex(tags)) {
-            builder.stagePosition(MDUtils.getPositionIndex(tags));
-         }
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError("Couldn't extract position coordinate from tags");
-      }
-      return builder.build();
+      return b.build();
    }
+
+   public static Coords fromPropertyMap(PropertyMap pmap) {
+      Builder b = new Builder();
+      for (String axis : pmap.keySet()) {
+         b.index(axis, pmap.getInteger(axis, -1));
+      }
+      return b.build();
+   }
+
 
    /**
     * Generate a normalized string representation of this Coords, that we can
-    * later parse out using fromNormalizedString().
+    * later parse out using {@link #fromNormalizedString}.
     */
+   @Deprecated
    public String toNormalizedString() {
-      String result = "";
-      ArrayList<String> axes = new ArrayList<String>(axisToPos_.keySet());
-      Collections.sort(axes);
-      for (String axis : axes) {
-         result += String.format("%s=%d,", axis, axisToPos_.get(axis));
+      StringBuilder sb = new StringBuilder();
+      for (String axis : axes_) {
+         // Trailing commas are allowed
+         sb.append(String.format("%s=%d,", axis, getIndex(axis)));
       }
-      return result;
+      return sb.toString();
    }
 
    /**
-    * Generate a DefaultCoords from a string using our normalized string
-    * format.
+    * Generate a Coords from a string using the normalized string format.
     */
    public static DefaultCoords fromNormalizedString(String def) throws IllegalArgumentException {
       Builder builder = new Builder();
 
-      def = def.replaceAll("\\s+", "");
+      def = def.replaceAll("\\s+", ""); // Ignore all whitespace
       for (String token : def.split(",")) {
          if (token.equals("")) {
             // Either a trailing comma or an "empty" entry; either way we'll
@@ -343,31 +318,30 @@ public final class DefaultCoords implements Coords, Comparable<DefaultCoords> {
          if (!isValidAxis(axis)) {
             throw new IllegalArgumentException("Malformatted coords string: axis " + axis + " is not a valid name");
          }
-         // Convert shorthands of standard axes into long forms.
-         if (axis.equals(Coords.CHANNEL_SHORT)) {
-            axis = Coords.CHANNEL;
-         }
-         else if (axis.equals(Coords.TIME_SHORT)) {
-            axis = Coords.TIME;
-         }
-         else if (axis.equals(Coords.STAGE_POSITION_SHORT)) {
-            axis = Coords.STAGE_POSITION;
-         }
+
+         // Shorthands allowed for axis names
+         if (axis.equals("t")) axis = TIME_POINT;
+         if (axis.equals("p")) axis = STAGE_POSITION;
+         if (axis.equals("z")) axis = Z_SLICE;
+         if (axis.equals("c")) axis = CHANNEL;
+
+         int index;
          try {
-            int position = Integer.parseInt(components[1]);
-            builder.index(axis, position);
+            index = Integer.parseInt(components[1]);
          }
          catch (NumberFormatException e) {
             throw new IllegalArgumentException("Malformatted coords string: position of axis " + axis + " is not an integer");
          }
+
+         builder.index(axis, index);
       }
+
       return builder.build();
    }
 
-   /**
-    * Utility method to declare if an axis label is valid.
-    */
+   private static Pattern AXIS_NAME_PATTERN =
+         Pattern.compile("[A-Za-z]+[A-Za-z0-9_]*");
    public static boolean isValidAxis(String axis) {
-      return axis.matches("[A-Za-z]+[A-Za-z0-9_]*");
+      return AXIS_NAME_PATTERN.matcher(axis).matches();
    }
 }

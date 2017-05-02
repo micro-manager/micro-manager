@@ -51,6 +51,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import org.micromanager.UserProfile;
 
 /**
  * JFrame based component for generic manipulation of device properties.
@@ -92,7 +93,7 @@ public final class AutofocusPropertyEditor extends MMDialog {
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       setSize(551, 514);
-      final DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      final UserProfile profile = UserProfileStaticInterface.getInstance();
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
@@ -257,7 +258,7 @@ public final class AutofocusPropertyEditor extends MMDialog {
          
 
    public void cleanup() {
-      DefaultUserProfile.getInstance().setBoolean(
+      UserProfileStaticInterface.getInstance().setBoolean(
             AutofocusPropertyEditor.class, PREF_SHOW_READONLY, 
               showReadonlyCheckBox_.isSelected());
       if (afMgr_ != null)

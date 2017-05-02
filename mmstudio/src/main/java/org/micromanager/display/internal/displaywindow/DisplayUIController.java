@@ -599,7 +599,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
       if (linkButton == null) {
-         final AxisLinker linker = AxisLinker.create(displayController_, axis);
+         final AxisLinker linker = AxisLinker.create(
+               displayController_.getLinkManager(),
+               displayController_, axis);
          final JPopupMenu linkPopup = new JPopupMenu();
          linkButton = PopupButton.create(IconLoader.getIcon("/org/micromanager/icons/linkflat.png"), linkPopup);
          linkButton.addPopupButtonListener(new PopupButton.Listener() {
@@ -639,7 +641,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
             if (axisIndex == -1) {
                displayedAxes_.add(axis);
                displayedAxisLengths_.add(index + 1);
-               axisIndex = displayedAxes_.size() - 1;
             }
             else {
                int oldLength = displayedAxisLengths_.get(axisIndex);

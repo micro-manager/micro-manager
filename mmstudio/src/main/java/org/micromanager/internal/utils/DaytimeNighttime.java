@@ -232,7 +232,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
     * @param mode new default background mode
     */
    private void storeSkin(SkinMode mode) {
-      DefaultUserProfile.getInstance().setString(DaytimeNighttime.class,
+      UserProfileStaticInterface.getInstance().setString(DaytimeNighttime.class,
             BACKGROUND_MODE, mode.getDesc());
    }
 
@@ -242,7 +242,7 @@ public final class DaytimeNighttime implements ApplicationSkin {
     */
    @Override
    public SkinMode getSkin() {
-      return SkinMode.fromString(DefaultUserProfile.getInstance().getString(
+      return SkinMode.fromString(UserProfileStaticInterface.getInstance().getString(
                DaytimeNighttime.class,
             BACKGROUND_MODE, SkinMode.NIGHT.getDesc()));
    }

@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import org.micromanager.profile.internal.LegacyMM1Preferences;
 
 /**
  * This package is here for old code we can't wait to get rid of but need to
@@ -14,7 +15,7 @@ import java.util.prefs.Preferences;
 @Deprecated
 public final class UnpleasantLegacyCode {
    public static AffineTransform legacyRetrieveTransformFromPrefs(String key) {
-      Preferences prefs = DefaultUserProfile.getInstance().getLegacyUserPreferences14();
+      Preferences prefs = LegacyMM1Preferences.getUserRoot();
       try {
          if (prefs == null || !prefs.nodeExists(key)) {
             // No prefs, or key not found.

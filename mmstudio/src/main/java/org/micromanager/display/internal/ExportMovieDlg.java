@@ -51,7 +51,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -516,7 +516,7 @@ public final class ExportMovieDlg extends MMDialog {
     * Get the default mode the user wants to use for exporting movies.
     */
    private static String getDefaultExportFormat() {
-      return DefaultUserProfile.getInstance().getString(ExportMovieDlg.class,
+      return UserProfileStaticInterface.getInstance().getString(ExportMovieDlg.class,
             DEFAULT_EXPORT_FORMAT, FORMAT_PNG);
    }
 
@@ -524,7 +524,7 @@ public final class ExportMovieDlg extends MMDialog {
     * Set the default mode to use for exporting movies.
     */
    private static void setDefaultExportFormat(String format) {
-      DefaultUserProfile.getInstance().setString(ExportMovieDlg.class,
+      UserProfileStaticInterface.getInstance().setString(ExportMovieDlg.class,
             DEFAULT_EXPORT_FORMAT, format);
    }
 
@@ -532,7 +532,7 @@ public final class ExportMovieDlg extends MMDialog {
     * Get the default filename prefix.
     */
    private static String getDefaultPrefix() {
-      return DefaultUserProfile.getInstance().getString(ExportMovieDlg.class,
+      return UserProfileStaticInterface.getInstance().getString(ExportMovieDlg.class,
             DEFAULT_FILENAME_PREFIX, "exported");
    }
 
@@ -540,7 +540,7 @@ public final class ExportMovieDlg extends MMDialog {
     * Set a new default filename prefix.
     */
    private static void setDefaultPrefix(String prefix) {
-      DefaultUserProfile.getInstance().setString(ExportMovieDlg.class,
+      UserProfileStaticInterface.getInstance().setString(ExportMovieDlg.class,
             DEFAULT_FILENAME_PREFIX, prefix);
    }
 }

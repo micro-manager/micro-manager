@@ -23,10 +23,11 @@ package org.micromanager.display.internal;
 
 import java.awt.Color;
 import java.util.Arrays;
+import org.micromanager.UserProfile;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.utils.ColorPalettes;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 
 /**
  * This container class stores histogram and color settings for a specific
@@ -101,7 +102,7 @@ public final class RememberedChannelSettings {
     */
    public void saveToProfile() {
       synchronized(profileLock_) {
-         DefaultUserProfile profile = DefaultUserProfile.getInstance();
+         UserProfile profile = UserProfileStaticInterface.getInstance();
          String ourKey = genKey(channelName_, channelGroup_);
          if (color_ != null) {
             profile.setInt(RememberedChannelSettings.class,
@@ -133,7 +134,7 @@ public final class RememberedChannelSettings {
       // Don't try to do this when someone else is (potentially) modifying the
       // profile.
       synchronized(profileLock_) {
-         DefaultUserProfile profile = DefaultUserProfile.getInstance();
+         UserProfile profile = UserProfileStaticInterface.getInstance();
          String key = genKey(channelName, channelGroup);
          defaultColor = new Color(profile.getInt(
                   RememberedChannelSettings.class, key + ":" + COLOR,
@@ -157,7 +158,7 @@ public final class RememberedChannelSettings {
    public static Color getColorForChannel(String channelName,
          String channelGroup, Color defaultColor) {
       synchronized(profileLock_) {
-         DefaultUserProfile profile = DefaultUserProfile.getInstance();
+         UserProfile profile = UserProfileStaticInterface.getInstance();
          String key = genKey(channelName, channelGroup);
          Integer rgb = profile.getInt(
                RememberedChannelSettings.class, key + ":" + COLOR, null);

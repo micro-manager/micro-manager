@@ -29,8 +29,11 @@ import org.micromanager.internal.MMStudio;
  *
  * By using this module, type safety is enforced, redundant tags can be 
  * identified (e.g. "Frame" vs. "FrameIndex"), and it becomes much easier to
- * track which bits of code are relying on which tags. 
+ * track which bits of code are relying on which tags.
+ *
+ * @deprecated Don't use this in new code!
  */
+@Deprecated
 public final class MDUtils {
    private final static SimpleDateFormat IMAGEDATEFORMAT =
            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
@@ -585,20 +588,6 @@ public final class MDUtils {
       tags.put("ROI", roiString);
    }
 
-   public static int getDepth(JSONObject tags) throws IllegalArgumentException, JSONException {
-      String pixelType = getPixelType(tags);
-      if (pixelType.contains(MMTags.Values.PIX_TYPE_GRAY_8))
-         return 1;
-      else if (pixelType.contains(MMTags.Values.PIX_TYPE_GRAY_16))
-         return 2;
-      else if (pixelType.contains(MMTags.Values.PIX_TYPE_RGB_32))
-         return 4;
-      else if (pixelType.contains(MMTags.Values.PIX_TYPE_RGB_64))
-         return 8;
-      else
-         return 0;
-   }
-   
    public static int getNumFrames(JSONObject tags) throws JSONException {
       if (tags.has("Summary")) {
          JSONObject summary = tags.getJSONObject("Summary");
@@ -777,173 +766,5 @@ public final class MDUtils {
    }
    public static void setComments(JSONObject map, String comments) throws JSONException {
       map.put("Comment", comments);
-   }
-
-   /**
-    * Given a JSONObject that is a TaggedImage's tags, extract all the
-    * properties that start with the name of a device adapter, and convert the
-    * lot into a PropertyMap.
-    * @param tags TaggedImage's tags
-    * @return PropertyMap with all properties that start with the name of a device adapter
-    */
-   public static PropertyMap extractScopeData(JSONObject tags) {
-      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
-      if (tags.has("StateCache-keys")) {
-         // Rely on the specified scope data values.
-         try {
-            JSONArray keys = tags.getJSONArray("StateCache-keys");
-            for (int i = 0; i < keys.length(); ++i) {
-               String key = keys.getString(i);
-               putProperty(builder, key, tags.get(key));
-            }
-         }
-         catch (JSONException e) {
-            // This should never happen.
-            ReportingUtils.logError(e, "Error extracting specified scope data values");
-         }
-      }
-      else {
-         // Determine valid device names and extract values by examining
-         // property names.
-         HashSet<String> devices = new HashSet<String>();
-         for (String device : MMStudio.getInstance().getCore().getLoadedDevices()) {
-            devices.add(device + "-");
-         }
-
-         for (String key : getKeys(tags)) {
-            boolean shouldKeep = false;
-            for (String device : devices) {
-               if (key.startsWith(device)) {
-                  shouldKeep = true;
-                  break;
-               }
-            }
-            if (shouldKeep) {
-               try {
-                  putProperty(builder, key, tags.get(key));
-               }
-               catch (JSONException e) {
-                  // This should never happen.
-                  ReportingUtils.logError(e, "Error extracting key " + key + " from JSON tags");
-               }
-            }
-         }
-      }
-      return builder.build();
-   }
-
-   /**
-    * Set of keys that are known to not be user-data metadata properties. See
-    * extractUserData, below.
-    */
-   public static HashSet<String> RESERVED_KEYS = new HashSet<String>();
-   static {
-      RESERVED_KEYS.add("Binning");
-      RESERVED_KEYS.add("BitDepth");
-      RESERVED_KEYS.add("Camera");
-      RESERVED_KEYS.add("CameraChannelIndex");
-      RESERVED_KEYS.add("Channel");
-      RESERVED_KEYS.add("channelName");
-      RESERVED_KEYS.add("ChannelIndex");
-      RESERVED_KEYS.add("Comment");
-      RESERVED_KEYS.add("ElapsedTime-ms");
-      RESERVED_KEYS.add("Exposure-ms");
-      RESERVED_KEYS.add("Frame");
-      RESERVED_KEYS.add("FrameIndex");
-      RESERVED_KEYS.add("gridColumn");
-      RESERVED_KEYS.add("gridRow");
-      RESERVED_KEYS.add("Height");
-      RESERVED_KEYS.add("IJType");
-      RESERVED_KEYS.add("ImageNumber");
-      RESERVED_KEYS.add("keepShutterOpenChannels");
-      RESERVED_KEYS.add("keepShutterOpenSlices");
-      RESERVED_KEYS.add("NextFrame");
-      RESERVED_KEYS.add("pixelAspect");
-      RESERVED_KEYS.add("PixelSizeUm");
-      RESERVED_KEYS.add("PixelType");
-      RESERVED_KEYS.add("Position");
-      RESERVED_KEYS.add("PositionIndex");
-      RESERVED_KEYS.add("PositionName");
-      RESERVED_KEYS.add("receivedTime");
-      RESERVED_KEYS.add("ROI");
-      RESERVED_KEYS.add("Slice");
-      RESERVED_KEYS.add("SliceIndex");
-      RESERVED_KEYS.add("SlicePosition");
-      RESERVED_KEYS.add("Summary");
-      RESERVED_KEYS.add("Time");
-      RESERVED_KEYS.add("userData");
-      RESERVED_KEYS.add("UUID");
-      RESERVED_KEYS.add("Width");
-      RESERVED_KEYS.add("XPositionUm");
-      RESERVED_KEYS.add("YPositionUm");
-      RESERVED_KEYS.add("ZPositionUm");
-      RESERVED_KEYS.add("StateCache-keys");
-   }
-
-   /**
-    * Given a JSONObject that is a TaggedImage's tags, and a set of strings of
-    * keys we are to ignore, import all non-Metadata, non-ignored keys into
-    * a new PropertyMap.
-    * @param tags TaggedImage's tags
-    * @param ignoredKeys Keys of properties we don't care about. May be null.
-    * @return Resulting Property Map
-    */
-   public static PropertyMap extractUserData(JSONObject tags,
-         Set<String> ignoredKeys) {
-      // HACK: we handle two use cases here. In one, the user data is
-      // segregated into a separate component of the tags. In the other, the
-      // user data is "flat" in the tags. The latter occurs for images fresh
-      // from the core, the former for images loaded from files.
-      DefaultPropertyMap.Builder builder = new DefaultPropertyMap.Builder();
-      JSONObject source = tags;
-      if (tags.has("userData")) {
-         try {
-            source = tags.getJSONObject("userData");
-         }
-         catch (JSONException e) {
-            // This should never happen with well-formatted JSON.
-            ReportingUtils.logError("Unable to separate user data sub-component from tags: " + e);
-         }
-      }
-      for (String key : getKeys(source)) {
-         if ((ignoredKeys == null || !ignoredKeys.contains(key)) &&
-               !RESERVED_KEYS.contains(key)) {
-            try {
-               putProperty(builder, key, source.get(key));
-            }
-            catch (JSONException e) {
-               ReportingUtils.logError(e, "Error extracting user-data property with key " + key);
-            }
-         }
-      }
-      return builder.build();
-   }
-
-   /**
-    * Helper method for extractScopeProperties, to add a single property to the
-    * map by inspecting the property's type.
-    * TODO: this currently only supports scalar values (i.e. no arrays).
-    */
-   private static DefaultPropertyMap.Builder putProperty(
-         DefaultPropertyMap.Builder builder, String key, Object val) {
-      if (val instanceof String) {
-         builder.putString(key, (String) val);
-      }
-      else if (val instanceof Integer) {
-         builder.putInt(key, (Integer) val);
-      }
-      else if (val instanceof Long) {
-         builder.putLong(key, (Long) val);
-      }
-      else if (val instanceof Boolean) {
-         builder.putBoolean(key, (Boolean) val);
-      }
-      else if (val instanceof Double) {
-         builder.putDouble(key, (Double) val);
-      }
-      else {
-         ReportingUtils.logDebugMessage("Unrecognized object type for key " + key + ": " + val);
-      }
-      return builder;
    }
 }

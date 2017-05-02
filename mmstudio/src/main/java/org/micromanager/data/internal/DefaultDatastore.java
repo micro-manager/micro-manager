@@ -320,7 +320,6 @@ public class DefaultDatastore implements Datastore {
    @Override
    public void setSavePath(String path) {
       savePath_ = path;
-      bus_.post(new DefaultDatastoreSavePathEvent(path));
    }
 
    @Override

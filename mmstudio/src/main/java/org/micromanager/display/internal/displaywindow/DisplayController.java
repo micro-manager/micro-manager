@@ -46,7 +46,7 @@ import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.display.internal.animate.AnimationController;
 import org.micromanager.display.internal.animate.DataCoordsAnimationState;
-import org.micromanager.display.internal.event.DefaultImagesDidDisplayEvent;
+import org.micromanager.display.internal.event.DefaultDisplayDidShowImageEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
@@ -61,6 +61,7 @@ import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
 import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
+import org.micromanager.display.internal.link.LinkManager;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayListener;
 
@@ -99,6 +100,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private final StatsComputeQueue computeQueue_ = StatsComputeQueue.create();
    private static final long MIN_REPAINT_PERIOD_NS = Math.round(1e9 / 60.0);
 
+   private final LinkManager linkManager_;
+
    // The UI controller manages the actual JFrame and all the components in it,
    // including interaction with ImageJ. After being closed, set to null.
    // Must access on EDT
@@ -119,9 +122,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    private final DisplayWindowControlsFactory controlsFactory_;
 
-   public static final String DEFAULT_SETTINGS_PROFILE_KEY = "Default";
-   private String settingsProfileKey_ = DEFAULT_SETTINGS_PROFILE_KEY;
-
    private final CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
 
@@ -133,7 +133,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public static class Builder {
       private DataProvider dataProvider_;
       private DisplaySettings displaySettings_;
-      private String settingsProfileKey_;
+      private LinkManager linkManager_;
       private boolean shouldShow_;
       private DisplayWindowControlsFactory controlsFactory_;
 
@@ -156,8 +156,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          return this;
       }
 
-      public Builder settingsProfileKey(String key) {
-         settingsProfileKey_ = key;
+      public Builder linkManager(LinkManager manager) {
+         linkManager_ = manager;
          return this;
       }
 
@@ -184,8 +184,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (initialDisplaySettings == null) {
          initialDisplaySettings = RememberedChannelSettings.updateSettings(
                builder.dataProvider_.getSummaryMetadata(),
-               DefaultDisplaySettings.getStandardSettings(
-                     builder.settingsProfileKey_),
+               DefaultDisplaySettings.getStandardSettings(null), // TODO Standard settings should be handled elsewhere!
                builder.dataProvider_.getAxisLength(Coords.CHANNEL));
       }
       if (initialDisplaySettings == null) {
@@ -195,7 +194,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       final DisplayController instance =
             new DisplayController(builder.dataProvider_,
                   initialDisplaySettings, builder.controlsFactory_,
-                  builder.settingsProfileKey_);
+                  builder.linkManager_);
       instance.initialize();
 
       instance.computeQueue_.addListener(instance);
@@ -215,6 +214,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (instance.dataProvider_.getNumImages() > 0) {
          // TODO Get _first_ image, not just any
          instance.setDisplayPosition(instance.dataProvider_.getAnyImage().getCoords());
+         // TODO Cleaner
+         instance.animationAcknowledgeDataPosition(instance.getDataProvider().getMaxIndices());
       }
 
       return instance;
@@ -223,13 +224,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private DisplayController(DataProvider dataProvider,
          DisplaySettings initialDisplaySettings,
          DisplayWindowControlsFactory controlsFactory,
-         String settingsProfileKey)
+         LinkManager linkManager)
    {
       super(initialDisplaySettings);
       dataProvider_ = dataProvider;
       controlsFactory_ = controlsFactory;
-      settingsProfileKey_ = settingsProfileKey != null ? settingsProfileKey :
-            DEFAULT_SETTINGS_PROFILE_KEY;
+      linkManager_ = linkManager;
 
       computeQueue_.setPerformanceMonitor(perfMon_);
    }
@@ -373,7 +373,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                uiController_.displayImages(images);
             }
 
-            postEvent(DefaultImagesDidDisplayEvent.create(
+            postEvent(DefaultDisplayDidShowImageEvent.create(
                   DisplayController.this,
                   images.getRequest().getImages(),
                   primaryImage));

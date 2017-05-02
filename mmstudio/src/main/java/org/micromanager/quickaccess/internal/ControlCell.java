@@ -21,14 +21,16 @@ package org.micromanager.quickaccess.internal;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.io.IOException;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import net.miginfocom.swing.MigLayout;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
-import org.micromanager.data.internal.DefaultPropertyMap;
+import org.micromanager.internal.propertymap.DefaultPropertyMap;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.WidgetPlugin;
 
@@ -99,7 +101,8 @@ public final class ControlCell {
       JSONObject result = new JSONObject();
       result.put("pluginName", plugin_.getClass().getName());
       if (config_ != null) {
-         result.put("config", ((DefaultPropertyMap) config_).toJSON());
+         // Compatibility hack - serialized to JSON string and parse with JSON.org
+         result.put("config", new JSONObject(((DefaultPropertyMap) config_).toJSON()));
       }
       result.put("rectX", rect_.x);
       result.put("rectY", rect_.y);
@@ -122,7 +125,13 @@ public final class ControlCell {
          QuickAccessPlugin plugin = studio.plugins().getQuickAccessPlugins().get(pluginName);
          PropertyMap config = null;
          if (json.has("config")) {
-            config = DefaultPropertyMap.fromJSON(json.getJSONObject("config"));
+            try {
+               // Compatibility hack - serialize to JSON string and parse as pmap JSON
+               config = PropertyMaps.fromJSON(json.getJSONObject("config").toString());
+            }
+            catch (IOException unexpected) {
+               throw new RuntimeException("Failed to parse pmap JSON created by JSON.org", unexpected);
+            }
          }
          Rectangle rect = new Rectangle(
                json.getInt("rectX"), json.getInt("rectY"),

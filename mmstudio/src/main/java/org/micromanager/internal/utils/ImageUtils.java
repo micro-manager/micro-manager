@@ -603,41 +603,6 @@ public final class ImageUtils {
       return null;
    }
 
-   public static TaggedImage makeTaggedImage(ImageProcessor proc) {
-      JSONObject tags = new JSONObject();
-      try {
-         MDUtils.setChannelIndex(tags, 0);
-         MDUtils.setSliceIndex(tags, 0);
-         MDUtils.setPositionIndex(tags, 0);
-         MDUtils.setFrameIndex(tags, 0);
-         MDUtils.setWidth(tags, proc.getWidth());
-         MDUtils.setHeight(tags, proc.getHeight());
-         MDUtils.setPixelType(tags, getImageProcessorType(proc));
-      } catch (Exception e) {
-         return null;
-      }
-      return new TaggedImage(proc.getPixels(), tags);
-   }
-
-
-   public static TaggedImage makeTaggedImage(Object pixels, int channelIndex,
-           int sliceIndex, int positionIndex, int frameIndex, int width,
-           int height, int numberOfBytesPerPixel) {
-      JSONObject tags = new JSONObject();
-      try {
-         MDUtils.setChannelIndex(tags, channelIndex);
-         MDUtils.setSliceIndex(tags, sliceIndex);
-         MDUtils.setPositionIndex(tags, positionIndex);
-         MDUtils.setFrameIndex(tags, frameIndex);
-         MDUtils.setWidth(tags, width);
-         MDUtils.setHeight(tags, height);
-         MDUtils.setPixelTypeFromByteDepth(tags, numberOfBytesPerPixel);
-      } catch (Exception e) {
-         return null;
-      }
-      return new TaggedImage(pixels, tags);
-   }
-
    /**
     * Generate a new TaggedImage off of the provided one, with copied metadata
     * so that changes elsewhere in the program won't affect this one.

@@ -35,7 +35,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -56,6 +55,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
@@ -63,7 +63,7 @@ import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.FileDialogs.FileType;
@@ -134,7 +134,7 @@ public final class PositionListDlg extends MMDialog implements MouseListener, Ch
    public PositionListDlg(CMMCore core, Studio gui,
                      PositionList posList, AcqControlDlg acd) {
       super("position list");
-      final DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      final UserProfile profile = UserProfileStaticInterface.getInstance();
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {

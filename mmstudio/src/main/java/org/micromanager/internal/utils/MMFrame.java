@@ -28,8 +28,11 @@ import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import javax.swing.JFrame;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.menus.MMMenuBar;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Base class for Micro-Manager frame windows.
@@ -37,21 +40,23 @@ import org.micromanager.internal.menus.MMMenuBar;
  */
 public class MMFrame extends JFrame {
    private static final long serialVersionUID = 1L;
-   private final String prefPrefix_;
-   private static final String WINDOW_X = "frame_x";
-   private static final String WINDOW_Y = "frame_y";
-   private static final String WINDOW_WIDTH = "frame_width";
-   private static final String WINDOW_HEIGHT = "frame_height";
-   
+   private final String profileKey_;
+
+   // MMFrame profile settings contain a key for each frame subtype (defined
+   // by subclass), whose value is a property map containing these key(s):
+   private static enum ProfileKey {
+      WINDOW_BOUNDS,
+   }
+
    public MMFrame() {
       super();
-      prefPrefix_ = "";
+      profileKey_ = "";
       setupMenus();
    }
 
-   public MMFrame(String prefPrefix) {
+   public MMFrame(String profileKeyForSavingBounds) {
       super();
-      prefPrefix_ = prefPrefix;
+      profileKey_ = profileKeyForSavingBounds;
       setupMenus();
    }
 
@@ -60,9 +65,9 @@ public class MMFrame extends JFrame {
     * when the frame has focus. Is effectively true by default for the other
     * constructors.
     */
-   public MMFrame(String prefPrefix, boolean usesMMMenus) {
+   public MMFrame(String profileKeyForSavingBounds, boolean usesMMMenus) {
       super();
-      prefPrefix_ = prefPrefix;
+      profileKey_ = profileKeyForSavingBounds;
       if (usesMMMenus) {
          setupMenus();
       }
@@ -78,43 +83,33 @@ public class MMFrame extends JFrame {
       }
    }
 
-   /**
-    * Checks whether WINDOW_X and WINDOW_Y coordinates are on the screen(s).
-    * If not then it sets the prefs to the values specified.
-    * Accounts for screen size changes between invocations or if screen
-    * is removed (e.g. had 2 monitors and go to 1).
-    * TODO: this code is duplicated between here and MMDialog.
-    * @param x new WINDOW_X position if current value isn't valid
-    * @param y new WINDOW_Y position if current value isn't valid
-    */
-   private void ensureSafeWindowPosition(int x, int y) {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      int prefX = profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, 0);
-      int prefY = profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, 0);
-      if (GUIUtils.getGraphicsConfigurationContaining(prefX, prefY) == null) {
-         // only reach this code if the pref coordinates are off screen
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_X, x);
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_Y, y);
-      }
-   }
-
    public void loadPosition(int x, int y, int width, int height) {
-      ensureSafeWindowPosition(x, y);
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      setBounds(profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, x),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_WIDTH, width),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_HEIGHT, height));
+      MutablePropertyMapView settings =
+            UserProfileStaticInterface.getInstance().getSettings(getClass());
+      PropertyMap pmap = settings.getPropertyMap(profileKey_,
+            PropertyMaps.emptyPropertyMap());
+      Rectangle bounds = pmap.getRectangle(ProfileKey.WINDOW_BOUNDS.name(),
+            new Rectangle(x, y, width, height));
+      if (GUIUtils.getGraphicsConfigurationBestMatching(bounds) == null) {
+         bounds.x = x;
+         bounds.y = y;
+      }
+      setBounds(bounds);
       offsetIfNecessary();
    }
 
    public void loadPosition(int x, int y) {
-      ensureSafeWindowPosition(x, y);
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      setBounds(profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, x),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y),
-                getWidth(),
-                getHeight());
+      MutablePropertyMapView settings =
+            UserProfileStaticInterface.getInstance().getSettings(getClass());
+      PropertyMap pmap = settings.getPropertyMap(profileKey_,
+            PropertyMaps.emptyPropertyMap());
+      Rectangle bounds = pmap.getRectangle(ProfileKey.WINDOW_BOUNDS.name(),
+            new Rectangle(x, y, getWidth(), getHeight()));
+      if (GUIUtils.getGraphicsConfigurationBestMatching(bounds) == null) {
+         bounds.x = x;
+         bounds.y = y;
+      }
+      setBounds(bounds);
       offsetIfNecessary();
    }
 
@@ -183,17 +178,16 @@ public class MMFrame extends JFrame {
    
 
    public void savePosition() {
-      Rectangle r = getBounds();
-      
-      // save window position
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
-      profile.setInt(this.getClass(), prefPrefix_ + WINDOW_X, r.x);
-      profile.setInt(this.getClass(), prefPrefix_ + WINDOW_Y, r.y);
-      profile.setInt(this.getClass(), prefPrefix_ + WINDOW_WIDTH, r.width);
-      profile.setInt(this.getClass(), prefPrefix_ + WINDOW_HEIGHT, r.height);
+      Rectangle bounds = getBounds();
+      MutablePropertyMapView settings =
+            UserProfileStaticInterface.getInstance().getSettings(getClass());
+      PropertyMap pmap = settings.getPropertyMap(profileKey_,
+            PropertyMaps.emptyPropertyMap());
+      pmap = pmap.copyBuilder().
+            putRectangle(ProfileKey.WINDOW_BOUNDS.name(), bounds).build();
+      settings.putPropertyMap(profileKey_, pmap);
    }
-   
-         
+
    @Override
    public void dispose() {
       savePosition();

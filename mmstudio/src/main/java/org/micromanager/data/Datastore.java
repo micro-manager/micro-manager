@@ -120,8 +120,7 @@ public interface Datastore extends DataProvider {
 
 
    /**
-    * Tell the Datastore where on disk it is being saved to. This will post a
-    * DatastoreSavePathEvent to the datastore's EventBus.
+    * Tell the Datastore where on disk it is being saved to.
     * 
     * @param path The location on disk at which the data has been stored.
     */

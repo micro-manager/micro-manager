@@ -23,13 +23,10 @@ package org.micromanager.internal;
 
 import com.google.common.eventbus.Subscribe;
 import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
 import org.micromanager.events.PixelSizeChangedEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
 
@@ -160,16 +157,6 @@ class StaticInfo {
                TextUtils.removeNegativeZero(TextUtils.FMT2.format(y_)));
       }
       frame_.updateInfoDisplay(text);
-   }
-
-   public void addStagePositionToTags(TaggedImage ti) throws JSONException {
-      if (xyStageLabel_.length() > 0) {
-         MDUtils.setXPositionUm(ti.tags, x_);
-         MDUtils.setYPositionUm(ti.tags, y_);
-      }
-      if (zStageLabel_.length() > 0) {
-         MDUtils.setZPositionUm(ti.tags, zPos_);
-      }
    }
 
    public double getStageX() {

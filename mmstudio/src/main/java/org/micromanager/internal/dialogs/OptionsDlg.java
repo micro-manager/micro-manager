@@ -37,13 +37,15 @@ import javax.swing.WindowConstants;
 import mmcorej.CMMCore;
 import org.micromanager.ApplicationSkin.SkinMode;
 import org.micromanager.Studio;
+import org.micromanager.UserProfile;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.display.inspector.internal.InspectorController;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.StartupSettings;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.script.ScriptPanel;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -65,6 +67,7 @@ public final class OptionsDlg extends MMDialog {
 
    private CMMCore core_;
    private Studio parent_;
+   private final UserProfile profile_;
 
    /**
     * Create the dialog
@@ -75,6 +78,9 @@ public final class OptionsDlg extends MMDialog {
       super("global micro-manager options");
       parent_ = parent;
       core_ = core;
+
+      profile_ = parent.profile();
+      final StartupSettings startupSettings = StartupSettings.create(profile_);
 
       super.setResizable(false);
       super.setModal(true);
@@ -107,24 +113,29 @@ public final class OptionsDlg extends MMDialog {
 
       final JCheckBox askForConfigFileCheckBox = new JCheckBox();
       askForConfigFileCheckBox.setText("Ask for config file at startup");
-      askForConfigFileCheckBox.setSelected(IntroDlg.getShouldAskForConfigFile());
+      askForConfigFileCheckBox.setSelected(!startupSettings.shouldSkipConfigSelectionAtStartup());
       askForConfigFileCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            IntroDlg.setShouldAskForConfigFile(askForConfigFileCheckBox.isSelected());
+            startupSettings.setSkipConfigSelectionAtStartup(
+                  !askForConfigFileCheckBox.isSelected());
          }
       });
 
       final JCheckBox alwaysUseDefaultProfileCheckBox = new JCheckBox(
             "Always use the default user profile");
-      alwaysUseDefaultProfileCheckBox.setToolTipText("Always use the default user profile; no prompt will be displayed to select a profile at startup. Won't take effect until after a restart.");
-      alwaysUseDefaultProfileCheckBox.setSelected(
-            DefaultUserProfile.getShouldAlwaysUseDefaultProfile());
+      alwaysUseDefaultProfileCheckBox.setToolTipText("Always use the default user profile; no prompt will be displayed to select a profile at startup.");
+      alwaysUseDefaultProfileCheckBox.setSelected(startupSettings.shouldSkipProfileSelectionAtStartup());
       alwaysUseDefaultProfileCheckBox.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            DefaultUserProfile.setShouldAlwaysUseDefaultProfile(
-               alwaysUseDefaultProfileCheckBox.isSelected());
+            boolean checked = alwaysUseDefaultProfileCheckBox.isSelected();
+            startupSettings.setSkipProfileSelectionAtStartup(checked);
+            askForConfigFileCheckBox.setEnabled(!checked);
+            if (checked) {
+               askForConfigFileCheckBox.setSelected(true);
+               startupSettings.setSkipConfigSelectionAtStartup(true);
+            }
          }
       });
 
@@ -191,7 +202,7 @@ public final class OptionsDlg extends MMDialog {
             // Clear everything except whether or not this user has
             // registered.
             boolean haveRegistered = RegistrationDlg.getHaveRegistered();
-            DefaultUserProfile.getInstance().clearProfile();
+            profile_.clearSettingsForAllClasses();
             RegistrationDlg.setHaveRegistered(haveRegistered);
             // Rather than updating all the GUI elements, let's just close
             // the dialog.
@@ -271,17 +282,6 @@ public final class OptionsDlg extends MMDialog {
             AcqControlDlg.setShouldHideMDADisplay(hideMDAdisplay.isSelected());
          }
       });
-      
-      final JCheckBox inspectorOnTop = new JCheckBox();
-      inspectorOnTop.setText("Inspector Window always on top");
-      inspectorOnTop.setToolTipText("This choice applies to all new Inspector Windows (existing ones will not change behavior)");
-      inspectorOnTop.setSelected(InspectorController.getShouldBeAlwaysOnTop());
-      inspectorOnTop.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            InspectorController.setShouldBeAlwaysOnTop(inspectorOnTop.isSelected());
-         }
-      });
 
       final JButton closeButton = new JButton();
       closeButton.setText("Close");
@@ -313,8 +313,8 @@ public final class OptionsDlg extends MMDialog {
 
       super.add(new JSeparator(), "wrap");
 
-      super.add(askForConfigFileCheckBox, "wrap");
       super.add(alwaysUseDefaultProfileCheckBox, "wrap");
+      super.add(askForConfigFileCheckBox, "wrap");
 
       super.add(new JLabel("Startup Script:"), "split 2, grow 0, gapright related");
       super.add(startupScriptFile_, "wrap");
@@ -336,7 +336,6 @@ public final class OptionsDlg extends MMDialog {
 
       super.add(syncExposureMainAndMDA, "wrap");
       super.add(hideMDAdisplay, "wrap");
-      super.add(inspectorOnTop, "wrap");
 
       super.add(new JSeparator(), "wrap");
 
@@ -376,22 +375,22 @@ public final class OptionsDlg extends MMDialog {
    }
 
    public static boolean getIsDebugLogEnabled() {
-      return DefaultUserProfile.getInstance().getBoolean(OptionsDlg.class,
+      return UserProfileStaticInterface.getInstance().getBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, false);
    }
 
    public static void setIsDebugLogEnabled(boolean isEnabled) {
-      DefaultUserProfile.getInstance().setBoolean(OptionsDlg.class,
+      UserProfileStaticInterface.getInstance().setBoolean(OptionsDlg.class,
             IS_DEBUG_LOG_ENABLED, isEnabled);
    }
 
    public static boolean getShouldCloseOnExit() {
-      return DefaultUserProfile.getInstance().getBoolean(OptionsDlg.class,
+      return UserProfileStaticInterface.getInstance().getBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, true);
    }
 
    public static void setShouldCloseOnExit(boolean shouldClose) {
-      DefaultUserProfile.getInstance().setBoolean(OptionsDlg.class,
+      UserProfileStaticInterface.getInstance().setBoolean(OptionsDlg.class,
             SHOULD_CLOSE_ON_EXIT, shouldClose);
    }
 }

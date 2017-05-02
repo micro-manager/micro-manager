@@ -22,366 +22,110 @@
 
 package org.micromanager;
 
-import java.io.IOException;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
- * This interface provides a way to save and recall parameters across multiple
- * sessions of the program. These parameters are specific to the selected user
- * at login time, and thus allow multiple users of a microscope (who all use
- * the same system-level user account) to have different customizations of the
- * program.
- * You can access this object via Studio.profile() or Studio.getUserProfile().
+ * A user profile, where user preferences can be stored.
+ *
+ * In MMStudio and its plugins, <em>all</em> user preferences should be stored
+ * in the current user profile, <em>not in the standard Java preferences</em>.
+ * <p>
+ * This works similarly to {@link java.util.prefs.Preferences}, except that
+ * it is possible to switch between multiple profiles within a single operating
+ * system user account. This is provided because sharing an OS account by all
+ * users is a widespread practice on computers attached to scientific equipment.
+ * <p>
+ * The user profile stores the same kinds of values as {@link PropertyMap},
+ * but is mutable and periodically saves any modifications (if  thus set up by
+ * the system).
+ *
+ * @author Chris Weisiger, Mark A. Tsuchida
  */
 public interface UserProfile {
    /**
-    * The profile found in this file provide default values for all users;
-    * these values will be used only if the user has not set their own values
-    * for a key (and such values are often set automatically as a side-effect
-    * of interacting with the program).
-    */
-   public static final String GLOBAL_SETTINGS_FILE = "GlobalUserProfile.txt";
-
-   /**
-    * Return the name of the profile currently being used.
-    * @return The selected profile name.
+    * Return the name of this profile as displayed to the user
+    * @return the profile name
     */
    public String getProfileName();
 
    /**
-    * Retrieves a specific value from the parameter storage, as a String.
-    * @param c A <code>Class</code> which provides scope for where to look for
-    *          the key; this is analogous to the parameter to
-    *          <code>java.util.prefs.Preferences.userNodeForPackage()</code>,
-    *          except that the scope is specific to the class, not the package
-    *          the class is in.
-    * @param key The identifier for the parameter.
-    * @param fallback Value that will be returned if the key is not found or the
-    *          key points to null.
-    * @return The value in storage, or null if the value does not exist.
+    * Get an interface to save and retrieve settings.
+    * <p>
+    * This is the main interface to the user profile.
+    *
+    * @param owner the class that "owns" the settings
+    * @return an object allowing settings to be set and retrieved
     */
+   public MutablePropertyMapView getSettings(Class<?> owner);
+
+   /**
+    * Reset this user profile, deleting all settings.
+    * <p>
+    * Do not confuse with {@code getSettings(owner).clear()}!
+    */
+   public void clearSettingsForAllClasses();
+
+
+   // Old methods with weird types
+
+   /** @deprecated use {@code getSettings(c).getString(key, fallback)} instead */
+   @Deprecated
    public String getString(Class<?> c, String key, String fallback);
-
-   /**
-    * Retrieve a specific value from the parameter storage, as a String array.
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the
-    * key points to null.
-    * @return Stored value, or null if the value does not exist
-    */
+   /** @deprecated use {@code getSettings(c).getStringList(key, fallback)} instead */
+   @Deprecated
    public String[] getStringArray(Class<?> c, String key, String[] fallback);
-
-   /**
-    * Sets a String value in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value String value to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putString(key, value)} instead */
+   @Deprecated
    public void setString(Class<?> c, String key, String value);
-
-   /**
-    * Sets a String Array in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value String Array to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putStringList(key, value)} instead */
+   @Deprecated
    public void setStringArray(Class<?> c, String key, String[] value);
-
-   /**
-    * Retrieves a specific value from the parameter storage, as an Integer.
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the
-    * key points to null.
-    * @return Stored value, or null if the value does not exist
-    */
+   /** @deprecated use {@code getSettings(c).getInteger(key, fallback)} instead */
+   @Deprecated
    public Integer getInt(Class<?> c, String key, Integer fallback);
-
-   /**
-    * Retrieves a specific value from the parameter storage, as an Array of
-    * Integers.
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the
-    * key points to null.
-    * @return Stored value, or null if the value does not exist
-    */
+   /** @deprecated use {@code getSettings(c).getIntegerList(key, fallback)} instead */
+   @Deprecated
    public Integer[] getIntArray(Class<?> c, String key, Integer[] fallback);
-
-   /**
-    * Sets an Integer in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value Integer to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putInteger(key, value)} instead */
+   @Deprecated
    public void setInt(Class<?> c, String key, Integer value);
-
-   /**
-    * Sets a new Integer Array in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value Integer Array to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putIntegerList(key, value)} instead */
+   @Deprecated
    public void setIntArray(Class<?> c, String key, Integer[] value);
-
-   /**
-    * Retrieves a specific value from the parameter storage, as a Long.
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the
-    * key points to null.
-    * @return Stored value, or null if the value does not exist
-    */
+   /** @deprecated use {@code getSettings(c).getLong(key, fallback)} instead */
+   @Deprecated
    public Long getLong(Class<?> c, String key, Long fallback);
-
-   /**
-    * Retrieves a specific value from the parameter storage, as an Array of
-    * Longs.
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the
-    * key points to null.
-    * @return Stored value, or null if the value does not exist
-    */
+   /** @deprecated use {@code getSettings(c).getLongList(key, fallback)} instead */
+   @Deprecated
    public Long[] getLongArray(Class<?> c, String key, Long[] fallback);
-
-   /**
-    * Sets a Long in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value Long to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putLong(key, value)} instead */
+   @Deprecated
    public void setLong(Class<?> c, String key, Long value);
-
-   /**
-    * Sets a new Long Array in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value Long Array to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putLongList(key, value)} instead */
+   @Deprecated
    public void setLongArray(Class<?> c, String key, Long[] value);
-
-   /**
-    * Retrieves a specific value from the parameter storage, as a Double.
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the
-    * key points to null.
-    * @return Stored value, or null if the value does not exist
-    */
+   /** @deprecated use {@code getSettings(c).getDouble(key, fallback)} instead */
+   @Deprecated
    public Double getDouble(Class<?> c, String key, Double fallback);
-
-   /**
-    * Retrieves a specific value from the parameter storage, as anArray of
-    * Doubles.
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the
-    * key points to null.
-    * @return Stored value, or null if the value does not exist
-    */
+   /** @deprecated use {@code getSettings(c).getDoubleList(key, fallback)} instead */
+   @Deprecated
    public Double[] getDoubleArray(Class<?> c, String key, Double[] fallback);
-
-   /**
-    * Sets a Double in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value Double to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putDouble(key, value)} instead */
+   @Deprecated
    public void setDouble(Class<?> c, String key, Double value);
-
-   /**
-    * Sets a Double Array in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value Double Array to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putDoubleList(key, value)} instead */
+   @Deprecated
    public void setDoubleArray(Class<?> c, String key, Double[] value);
-
-   /**
-    * Retrieves a specific value from the parameter storage, as a Boolean
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the
-    * key points to null.
-    * @return Stored value, or null if the value does not exist
-    */
+   /** @deprecated use {@code getSettings(c).getBoolean(key, fallback)} instead */
+   @Deprecated
    public Boolean getBoolean(Class<?> c, String key, Boolean fallback);
-
-   /**
-    * Retrieves a specific value from the parameter storage, as a Boolean Array
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or the
-    * key points to null.
-    * @return Stored value, or null if the value does not exist
-    */
+   /** @deprecated use {@code getSettings(c).getBooleanList(key, fallback)} instead */
+   @Deprecated
    public Boolean[] getBooleanArray(Class<?> c, String key, Boolean[] fallback);
-
-   /**
-    * Sets a Boolean value in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value Boolean to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putBoolean(key, value)} instead */
+   @Deprecated
    public void setBoolean(Class<?> c, String key, Boolean value);
-
-   /**
-    * Sets a Boolean Array in the storage. 
-    * @param c class providing scope for the key
-    * @param key  Identifier for the parameter
-    * @param value Boolean Array to be stored
-    */
+   /** @deprecated use {@code getSettings(c).putBooleanList(key, value)} instead */
+   @Deprecated
    public void setBooleanArray(Class<?> c, String key, Boolean[] value);
-
-   /**
-    * Retrieve a serialized object from the profile.
-    * @param c class providing scope for the key
-    * @param key Identifier for the parameter
-    * @param fallback Value that will be returned if the key is not found or
-    * the key points to null.
-    * @return The stored object, or the fallback if that value is not found.
-    * @throws IOException if deserialization of the object fails
-    * @deprecated it's too hard to maintain backward compatibility if this
-    * method is used. This method should be kept for a while after setObject is
-    * deleted.
-    */
-   @Deprecated
-   public <T> T getObject(Class<?> c, String key, T fallback) throws IOException;
-
-   /**
-    * Save a serializable object in the profile. The object will be serialized
-    * and converted into base64 for storage.
-    * NOTE: it is recommended that you avoid storing large objects in the
-    * profile, as they can take up a substantial amount of space and be slow
-    * to save/load.
-    * @param c class providing scope for the key
-    * @param key Identifier for the parameter
-    * @param value Object to be stored
-    * @throws IOException if the serialization fails for any reason
-    * @deprecated it's too hard to maintain backward compatibility if this
-    * method is used.
-    */
-   @Deprecated
-   public <T> void setObject(Class<?> c, String key, T value) throws IOException;
-
-
-   /**
-    * The UserProfile normally routinely saves changes
-    * to disk on a periodic basis; calling this method will force a save to
-    * happen immediately, and this method will wait until saving is completed.
-    * The saved file contains all values specific to this user (i.e. not
-    * "inherited" from the global profile). The contents of the file are
-    * identical to those generated by exportProfileToFile(), but the file is
-    * automatically selected (stored in an OS-appropriate location for user
-    * data).
-    * @throws IOException if the file cannot be written for any reason.
-    * @deprecated there should be no reason to call this manually
-    */
-   @Deprecated
-   public void syncToDisk() throws IOException;
-
-   /**
-    * Exports the current user's profile to the specified file. This will not
-    * include any "inherited" values from the global defaults.
-    * @param path file path for user profile file
-    * @throws IOException if the file cannot be written for any reason.
-    */
-   public void exportProfileToFile(String path) throws IOException;
-
-   /**
-    * Exports the current "combined profile" state to the specified file. This
-    * includes both values in the current user profile and values "inherited"
-    * from the global defaults.
-    * @param path file path to save to
-    * @throws IOException if the file cannot be written for any reason.
-    */
-   public void exportCombinedProfileToFile(String path) throws IOException;
-
-   /**
-    * Exports a portion of the current user's profile to the specified file.
-    * This will not include any "inherited" values from the global defaults,
-    * and only keys that are specific to the provided class are preserved.
-    * This can be useful if you want to be able to save/load your settings, in
-    * conjunction with appendFile(), below.
-    * @param c only setting belonging to this class will be saved
-    * @param path file path where the data will be saved
-    * @throws IOException if the file cannot be written for any reason.
-    */
-   public void exportProfileSubsetToFile(Class<?> c, String path) throws IOException;
-
-   /**
-    * Export a portion of the user's profile to the specified file. This works
-    * like exportProfileSubsetToFile(), except that all classes under the
-    * provided package name will be exported. For example, using a package of
-    * "org.micromanager.display" would grab all portions of the profile that
-    * are in the org.micromanager.display package or any of its child packages.
-    * @param packageName Package name indicating subset of profile to be saved
-    * @param path file path to save to
-    * @throws IOException if the file cannot be written for any reason.
-    */
-   public void exportPackageProfileToFile(String packageName, String path) throws IOException;
-
-   /**
-    * Extract a portion of the current user's profile and provide it in the
-    * form of a PropertyMap. This works like exportProfileSubsetToFile,
-    * except that the result is made immediately available instead of being
-    * saved to disk.
-    * @param c Class whose key-value pairs will be extracted.
-    * @return A PropertyMap containing all keys associated with the given
-    *         class.
-    */
-   public PropertyMap extractProfileSubset(Class<?> c);
-
-   /**
-    * Load the provided PropertyMap (e.g. as provided by
-    * extractProfileSubset()) and insert all keys it contains into the current
-    * user's profile.
-    * @param c Class to associate with all keys in the PropertyMap.
-    * @param properties PropertyMap containing keys and values to insert into
-    *        the current user's profile.
-    */
-   public void insertProperties(Class<?> c, PropertyMap properties);
-
-   /**
-    * Remove all keys from the profile that are associated with the provided
-    * class. This functionally allows you to reset the profile to use the
-    * default values (or the values specified in the global settings file).
-    * @param c Key-values belonging to this class will be removed
-    */
-   public void clearProfileSubset(Class<?> c);
-
-   /**
-    * Remove all keys from the profile that are associated with the provided
-    * package. For example, using a package of "org.micromanager.display" would
-    * cause the user's saved settings relating to the org.micromanager.display
-    * package to be lost, and the next time those settings would be read,
-    * default values would be used instead.
-    * @param packageName Package name indicating subset of the profile to be
-    *        cleared.
-    */
-   public void clearPackageProfile(String packageName);
-
-   /**
-    * Merge the profile at the specified path into the current active user
-    * profile. All keys specified in the file will overwrite keys in the
-    * active profile.
-    * @param path file to which the profile should be appended
-    * @deprecated This is not part of the API.
-    */
-   @Deprecated
-   public void appendFile(String path);
-
-   /**
-    * Create a new user using the provided profile file as a basis.
-    * @param username Name for the new user.
-    * @param path File generated by one of the export methods; its contents
-    *        will be used to pre-populate the user's profile. May be null, in
-    *        which case a "blank" user with no profile data is created.
-    * @throws IllegalArgumentException if a user of that name already exists.
-    * @throws IOException if there was an error in copying the profile file.
-    * @deprecated This is not part of the API.
-    */
-   @Deprecated
-   public void createUser(String username, String path) throws IllegalArgumentException, IOException;
 }

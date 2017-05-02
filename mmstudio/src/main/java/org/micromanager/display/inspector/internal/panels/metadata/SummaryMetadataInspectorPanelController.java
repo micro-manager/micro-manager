@@ -33,16 +33,15 @@ import javax.swing.table.AbstractTableModel;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
-import org.micromanager.internal.utils.MDUtils;
 
 /**
  * @author Mark A. Tsuchida, in part based on original by Chris Weisiger
@@ -149,33 +148,26 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
       }
       previousMetadataRef_ = new WeakReference<SummaryMetadata>(summaryMetadata);
 
-      if (summaryMetadata == null) {
-         summaryMetadata = new DefaultSummaryMetadata.Builder().build();
-      }
-
-      // TODO Use more efficient conversion (avoid JSONObject)
-      JSONObject summaryJSON =
-            ((DefaultSummaryMetadata) summaryMetadata).toJSON();
+      PropertyMap metadataMap = summaryMetadata == null ?
+            PropertyMaps.emptyPropertyMap() :
+            ((DefaultSummaryMetadata) summaryMetadata).toPropertyMap();
 
       final TreeMap<String, String> data = new TreeMap<String, String>();
-      for (String key : MDUtils.getKeys(summaryJSON)) {
-         try {
-            data.put(key, summaryJSON.getString(key));
+      for (String key : metadataMap.keySet()) {
+         if (PropertyKey.USER_DATA.key().equals(key)) {
+            PropertyMap userData = metadataMap.getPropertyMap(key, null);
+            for (String subkey : userData.keySet()) {
+               data.put("user:" + subkey, userData.getValueAsString(subkey, ""));
+            }
          }
-         catch (JSONException programmingError) {
-            throw new RuntimeException(programmingError);
+         else if (PropertyKey.STAGE_POSITIONS.key().equals(key)) {
+            data.put(key, String.format("<%d positions>",
+                  metadataMap.getPropertyMapList(PropertyKey.STAGE_POSITIONS.key()).size()));
          }
-      }
-
-      // Flatten user data
-      DefaultPropertyMap userData =
-            (DefaultPropertyMap) summaryMetadata.getUserData();
-      if (userData != null && !userData.isEmpty()) {
-         for (String key : userData.getKeys()) {
-            data.put("user:" + key, userData.getString(key));
+         else {
+            data.put(key, metadataMap.getValueAsString(key, ""));
          }
       }
-      data.remove("userData");
 
       SwingUtilities.invokeLater(new Runnable() {
          @Override

@@ -20,6 +20,7 @@
 
 package org.micromanager.data;
 
+import java.util.List;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PropertyMap;
 
@@ -38,50 +39,64 @@ import org.micromanager.PropertyMap;
  * for more information.
  */
 public interface SummaryMetadata {
+   interface Builder extends SummaryMetadataBuilder {
+      @Override Builder prefix(String prefix);
+      @Override Builder userName(String userName);
+      @Override Builder profileName(String profileName);
 
+      @Override Builder computerName(String computerName);
+      @Override Builder directory(String directory);
+
+      @Override Builder channelGroup(String channelGroup);
+      @Override Builder channelNames(String... channelNames);
+      Builder channelNames(Iterable<String> channelNames);
+      @Override Builder zStepUm(Double zStepUm);
+      @Override Builder waitInterval(Double waitInterval);
+      Builder customIntervalsMs(double... customIntervalsMs);
+      Builder customIntervalsMs(Iterable<Double> customIntervalsMs);
+
+      @Override Builder axisOrder(String... axisOrder);
+      Builder axisOrder(Iterable<String> axisOrder);
+      @Override Builder intendedDimensions(Coords intendedDimensions);
+      @Override Builder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
+      @Override Builder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
+
+      @Override Builder startDate(String startDate);
+      @Override Builder stagePositions(MultiStagePosition... stagePositions);
+      Builder stagePositions(Iterable<MultiStagePosition> stagePositions);
+      @Override Builder userData(PropertyMap userData);
+   }
+
+   @Deprecated
    interface SummaryMetadataBuilder {
-
-      /**
-       * Construct a SummaryMetadata from the SummaryMetadataBuilder. Call this
-       * once you are finished setting all SummaryMetadata parameters.
-       *
-       * @return object containing summary metadata
-       */
       SummaryMetadata build();
 
-      // The following functions each set the relevant value for the 
-      // SummaryMetadata. See the corresponding getter methods of
-      // SummaryMetadata, below, for the meaning of these properties.
       SummaryMetadataBuilder prefix(String prefix);
       SummaryMetadataBuilder userName(String userName);
       SummaryMetadataBuilder profileName(String profileName);
 
-      SummaryMetadataBuilder microManagerVersion(String microManagerVersion);
-      SummaryMetadataBuilder metadataVersion(String metadataVersion);
       SummaryMetadataBuilder computerName(String computerName);
       SummaryMetadataBuilder directory(String directory);
 
       SummaryMetadataBuilder channelGroup(String channelGroup);
-      SummaryMetadataBuilder channelNames(String[] channelNames);
+      SummaryMetadataBuilder channelNames(String... channelNames);
       SummaryMetadataBuilder zStepUm(Double zStepUm);
       SummaryMetadataBuilder waitInterval(Double waitInterval);
+      @Deprecated
       SummaryMetadataBuilder customIntervalsMs(Double[] customIntervalsMs);
-      SummaryMetadataBuilder axisOrder(String[] axisOrder);
+      SummaryMetadataBuilder axisOrder(String... axisOrder);
       SummaryMetadataBuilder intendedDimensions(Coords intendedDimensions);
       SummaryMetadataBuilder keepShutterOpenSlices(Boolean keepShutterOpenSlices);
       SummaryMetadataBuilder keepShutterOpenChannels(Boolean keepShutterOpenChannels);
 
       SummaryMetadataBuilder startDate(String startDate);
-      SummaryMetadataBuilder stagePositions(MultiStagePosition[] stagePositions);
+      SummaryMetadataBuilder stagePositions(MultiStagePosition... stagePositions);
       SummaryMetadataBuilder userData(PropertyMap userData);
    }
 
-   /**
-    * Generate a new SummaryMetadataBuilder whose values are initialized to be
-    * the values of this SummaryMetadata.
-    * @return new SummaryMetadataBuilder whose values are initialized to be
-    * the values of this SummaryMetadata
-    */
+   Builder copyBuilder();
+
+   @Deprecated
    SummaryMetadataBuilder copy();
 
    /**
@@ -90,55 +105,54 @@ public interface SummaryMetadata {
     * name of the directory that the data is saved in.
     * @return user-supplied portion of the filename.
     */
-   public String getPrefix();
+   String getPrefix();
 
    /**
     * The signed-in user of the machine that collected this data
     * @return signed-in user of the machine that collected this data
     */
-   public String getUserName();
+   String getUserName();
 
    /**
     * The name of the Micro-Manager profile used to collect this data.
     * @return name of the micro-Manager profile used to collect this data
     */
-   public String getProfileName();
+   String getProfileName();
 
    /**
     * The version of Micro-Manager used to collect the data
     * @return version of Micro-Manager used to collect the data
     */
-   public String getMicroManagerVersion();
+   String getMicroManagerVersion();
 
    /**
     * The version of the metadata when the data was collected
     * @return version of the metadata when the data was collected
     */
-   public String getMetadataVersion();
+   String getMetadataVersion();
 
    /**
     * The name of the computer the data was collected on
     * @return name of the computer the data was collected on
     */
-   public String getComputerName();
+   String getComputerName();
 
    /**
     * The directory the data was originally saved to
     * @return directory the data was originally saved to
     */
-   public String getDirectory();
+   String getDirectory();
 
    /**
     * The config group that was used to switch between channels.
     * @return name of the channel config group
     */
-   public String getChannelGroup();
+   String getChannelGroup();
 
-   /**
-    * Array of names of channels
-    * @return names of Channels
-    */
-   public String[] getChannelNames();
+   List<String> getChannelNameList();
+
+   @Deprecated
+   String[] getChannelNames();
 
    /**
     * Retrieve the name of the specified channel. Ordinarily this is simply
@@ -149,26 +163,29 @@ public interface SummaryMetadata {
     * @param index Channel index to get the name for.
     * @return Name of the channel.
     */
-   public String getSafeChannelName(int index);
+   String getSafeChannelName(int index);
 
    /**
     * Distance between slices in a volume of data, in microns
     * @return distance between slices in a volume of data, in microns
     */
-   public Double getZStepUm();
+   Double getZStepUm();
 
    /**
     * Amount of time to wait between timepoints
     * @return amount of time to wait between timepoints
     */
-   public Double getWaitInterval();
+   Double getWaitInterval();
 
    /**
     * When using a variable amount of time between timepoints, this array has
     * the list of wait times
     * @return list of wait times between timepoints
     */
-   public Double[] getCustomIntervalsMs();
+   List<Double> getCustomIntervalsMsList();
+   double[] getCustomIntervalsMsArray();
+   @Deprecated
+   Double[] getCustomIntervalsMs();
 
    /**
     * The order in which axes changed when adding images to the dataset. The
@@ -182,7 +199,10 @@ public interface SummaryMetadata {
     * thus this property will need to be set manually in those cases.
     * @return Axis names in order of change rate.
     */
-   public String[] getAxisOrder();
+   List<String> getOrderedAxes();
+
+   @Deprecated
+   String[] getAxisOrder();
 
    /**
     * The expected number of images along each axis that were to be collected.
@@ -190,38 +210,41 @@ public interface SummaryMetadata {
     * through for any reason.
     * @return expected number of images along each axis that were to be collected
     */
-   public Coords getIntendedDimensions();
+   Coords getIntendedDimensions();
 
    /**
     * For acquisitions with more than one Z slice, whether or not the shutter
     * was left open in between each slice.
     * @return whether shutter was left open between Z slices.
     */
-   public Boolean getKeepShutterOpenSlices();
+   Boolean getKeepShutterOpenSlices();
 
    /**
     * For acquisitions with more than one channel, whether or not the shutter
     * was left open in between each channel.
     * @return whether shutter was left open between channels.
     */
-   public Boolean getKeepShutterOpenChannels();
+   Boolean getKeepShutterOpenChannels();
 
    /**
     * The date and time at which the acquisition started
     * @return date and time at which the acquisition started
     */
-   public String getStartDate();
+   String getStartDate();
 
    /**
     * The stage positions that were to be visited in the acquisition
     * @return stage positions that were to be visited in the acquisition
     */
-   public MultiStagePosition[] getStagePositions();
+   List<MultiStagePosition> getStagePositionList();
+
+   @Deprecated
+   MultiStagePosition[] getStagePositions();
 
    /**
     * Any general-purpose user meta data
     *
     * @return Any general-purpose user meta data
     */
-   public PropertyMap getUserData();
+   PropertyMap getUserData();
 }

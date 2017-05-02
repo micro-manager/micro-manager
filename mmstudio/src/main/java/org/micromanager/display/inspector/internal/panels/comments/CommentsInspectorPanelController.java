@@ -23,8 +23,8 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.ImageDidDisplayEvent;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
+import org.micromanager.display.DisplayDidShowImageEvent;
 
 /**
  *
@@ -173,7 +173,7 @@ public final class CommentsInspectorPanelController
    }
 
    @Subscribe
-   public void onEvent(ImageDidDisplayEvent e) {
+   public void onEvent(DisplayDidShowImageEvent e) {
       savePlaneComments();
       editingCoords_ = e.getPrimaryImage().getCoords();
       Datastore store = (Datastore) viewer_.getDataProvider();

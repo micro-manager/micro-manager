@@ -12,7 +12,6 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.PixelsSetEvent;
 import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.GraphFrame;
 

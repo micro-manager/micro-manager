@@ -6,6 +6,7 @@
 package org.micromanager.display.internal.link.internal;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.eventbus.EventBus;
 import java.util.Collections;
 import java.util.HashSet;
@@ -60,10 +61,10 @@ public final class LinkEndpointPool {
    /**
     * Return all peer endpoints in this pool, including the caller.
     * @param caller the calling endpoint
-    * @return an unmodifiable set containing the peers
+    * @return an immutable set containing the peers
     */
    synchronized Set<LinkEndpoint> getPeers(LinkEndpoint caller) {
       Preconditions.checkArgument(endpoints_.contains(caller));
-      return Collections.unmodifiableSet(endpoints_);
+      return ImmutableSet.<LinkEndpoint>builder().addAll(endpoints_).build();
    }
 }

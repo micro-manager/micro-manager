@@ -16,6 +16,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayPositionChangedEvent;
 import org.micromanager.display.internal.link.AbstractLinkAnchor;
 import org.micromanager.display.internal.link.LinkAnchor;
+import org.micromanager.display.internal.link.LinkManager;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 
 /**
@@ -67,18 +68,21 @@ class AxisLinker {
       }
    }
 
-   public static AxisLinker create(DisplayController viewer, String axis) {
-      return new AxisLinker(viewer, axis);
+   public static AxisLinker create(LinkManager linkManager,
+         DisplayController viewer, String axis)
+   {
+      AxisLinker instance = new AxisLinker(linkManager, viewer, axis);
+      viewer.registerForEvents(instance);
+      return instance;
    }
 
-   private AxisLinker(DisplayController viewer, String axis) {
+   private AxisLinker(LinkManager linkManager, DisplayController viewer,
+         String axis)
+   {
       viewer_ = viewer;
       axis_ = axis;
       anchor_ = new AxisLinkAnchor();
-      DefaultLinkManager.instance.registerAnchor(anchor_);
-
-      // TODO Don't leak this
-      viewer.registerForEvents(this);
+      linkManager.registerAnchor(anchor_);
    }
 
    void updatePopupMenu(JPopupMenu menu) {

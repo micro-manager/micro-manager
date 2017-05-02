@@ -18,7 +18,7 @@ import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.HotKeysDialog;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -252,12 +252,12 @@ public final class ToolsMenu {
    }
 
    public static boolean getMouseMovesStage() {
-      return DefaultUserProfile.getInstance().getBoolean(
+      return UserProfileStaticInterface.getInstance().getBoolean(
             ToolsMenu.class, MOUSE_MOVES_STAGE, false);
    }
 
    public static void setMouseMovesStage(boolean doesMove) {
-      DefaultUserProfile.getInstance().setBoolean(
+      UserProfileStaticInterface.getInstance().setBoolean(
             ToolsMenu.class, MOUSE_MOVES_STAGE, doesMove);
    }
 }

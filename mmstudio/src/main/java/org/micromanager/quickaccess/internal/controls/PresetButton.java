@@ -106,7 +106,7 @@ public final class PresetButton extends WidgetPlugin implements SciJavaPlugin {
          }
       };
       result.setOpaque(true);
-      result.setBackground(new Color(config.getInt("backgroundColor",
+      result.setBackground(new Color(config.getInteger("backgroundColor",
                   Color.GREEN.getRGB())));
       result.setFont(GUIUtils.buttonFont);
       result.setMargin(new Insets(0, 0, 0, 0));

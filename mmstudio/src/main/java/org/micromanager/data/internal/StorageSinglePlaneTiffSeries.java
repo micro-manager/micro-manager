@@ -433,12 +433,9 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          ImageProcessor proc;
          if (numComponents == 3 && bytesPerPixel == 4) {
             // 32-bit RGB
-            // TODO: can we just use setPixels() here?
             proc = new ColorProcessor(width, height);
-            ((ColorProcessor) proc).setRGB(
-                  (byte[]) image.getRawPixelsForComponent(0),
-                  (byte[]) image.getRawPixelsForComponent(1),
-                  (byte[]) image.getRawPixelsForComponent(2));
+            // TODO XXX Probably need to change this!
+            ((ColorProcessor) proc).setPixels(pixels);
          }
          else if (numComponents == 1 && bytesPerPixel == 1) {
             // Byte

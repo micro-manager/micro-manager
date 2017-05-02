@@ -19,6 +19,8 @@ import org.micromanager.internal.hcwizard.ConfigWizard;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
+import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 
 public final class ConfigMenu {
 
@@ -34,7 +36,7 @@ public final class ConfigMenu {
       core_ = studio_.core();
       switchConfigurationMenu_ = new JMenu();
 
-      configMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Config");
+      configMenu_ = GUIUtils.createMenuInMenuBar(menuBar, "Devices");
 
       GUIUtils.addMenuItem(configMenu_, "Device Property Browser...",
             "View and set device states and features",
@@ -191,7 +193,10 @@ public final class ConfigMenu {
    public void onSystemConfigurationLoaded(SystemConfigurationLoadedEvent event) {
       switchConfigurationMenu_.removeAll();
       HashSet<String> seenConfigs = new HashSet<String>();
-      for (final String configFile : IntroDlg.getRecentlyUsedConfigs()) {
+
+      for (final String configFile : HardwareConfigurationManager.
+            getRecentlyUsedConfigFilesFromProfile(
+                  UserProfileStaticInterface.getInstance())) {
          if (configFile.equals(studio_.getSysConfigFile()) ||
                seenConfigs.contains(configFile)) {
             continue;

@@ -18,7 +18,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.display.internal.overlays;
+package org.micromanager.display.overlay.internal.overlays;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -44,10 +44,10 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.overlay.AbstractOverlay;
 import org.micromanager.internal.utils.DynamicTextField;
@@ -199,13 +199,16 @@ public final class TimestampOverlay extends AbstractOverlay {
    private int yOffset_ = 0;
 
 
-   private static final String CONFIG_FORMAT = "format";
-   private static final String CONFIG_PER_CHANNEL = "per channel";
-   private static final String CONFIG_COLOR = "color";
-   private static final String CONFIG_ADD_BACKGROUND = "add background";
-   private static final String CONFIG_POSITION = "position";
-   private static final String CONFIG_X_OFFSET = "x offset";
-   private static final String CONFIG_Y_OFFSET = "y offset";
+   // Keys for saving settings
+   private static enum Key {
+      FORMAT,
+      PER_CHANNEL,
+      COLOR,
+      ADD_BACKGROUND,
+      POSITION,
+      X_OFFSET,
+      Y_OFFSET,
+   }
 
    private JPanel configUI_;
    private JComboBox formatComboBox_;
@@ -323,26 +326,27 @@ public final class TimestampOverlay extends AbstractOverlay {
 
    @Override
    public PropertyMap getConfiguration() {
-      return new DefaultPropertyMap.Builder().
-            putString(CONFIG_FORMAT, format_.name()).
-            putBoolean(CONFIG_PER_CHANNEL, perChannel_).
-            putString(CONFIG_COLOR, color_.name()).
-            putBoolean(CONFIG_ADD_BACKGROUND, addBackground_).
-            putString(CONFIG_POSITION, position_.name()).
-            putInt(CONFIG_X_OFFSET, xOffset_).
-            putInt(CONFIG_Y_OFFSET, yOffset_).
+      return PropertyMaps.builder().
+            putEnumAsString(Key.FORMAT.name(), format_).
+            putBoolean(Key.PER_CHANNEL.name(), perChannel_).
+            putEnumAsString(Key.COLOR.name(), color_).
+            putBoolean(Key.ADD_BACKGROUND.name(), addBackground_).
+            putEnumAsString(Key.POSITION.name(), position_).putInteger(Key.X_OFFSET.name(), xOffset_).putInteger(Key.Y_OFFSET.name(), yOffset_).
             build();
    }
 
    @Override
    public void setConfiguration(PropertyMap config) {
-      format_ = TSFormat.valueOf(config.getString(CONFIG_FORMAT, format_.name()));
-      perChannel_ = config.getBoolean(CONFIG_PER_CHANNEL, perChannel_);
-      color_ = TSColor.valueOf(config.getString(CONFIG_COLOR, color_.name()));
-      addBackground_ = config.getBoolean(CONFIG_ADD_BACKGROUND, addBackground_);
-      position_ = TSPosition.valueOf(config.getString(CONFIG_POSITION, position_.name()));
-      xOffset_ = config.getInt(CONFIG_X_OFFSET, xOffset_);
-      yOffset_ = config.getInt(CONFIG_Y_OFFSET, yOffset_);
+      format_ = config.getStringAsEnum(Key.FORMAT.name(),
+            TSFormat.class, format_);
+      perChannel_ = config.getBoolean(Key.PER_CHANNEL.name(), perChannel_);
+      color_ = config.getStringAsEnum(Key.COLOR.name(),
+            TSColor.class, color_);
+      addBackground_ = config.getBoolean(Key.ADD_BACKGROUND.name(), addBackground_);
+      position_ = config.getStringAsEnum(Key.POSITION.name(),
+            TSPosition.class, position_);
+      xOffset_ = config.getInteger(Key.X_OFFSET.name(), xOffset_);
+      yOffset_ = config.getInteger(Key.Y_OFFSET.name(), yOffset_);
 
       updateUI();
       fireOverlayConfigurationChanged();

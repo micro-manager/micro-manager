@@ -216,7 +216,7 @@ public final class PipelineTableModel extends AbstractTableModel {
    public void savePipelineToProfile(Studio studio) {
       ArrayList<String> serializedConfigs = new ArrayList<String>();
       for (ConfiguratorWrapper config : pipelineConfigs_) {
-         serializedConfigs.add(config.toString());
+         serializedConfigs.add(config.toJSON());
       }
       studio.profile().setStringArray(PipelineTableModel.class,
             SAVED_PIPELINE, serializedConfigs.toArray(new String[] {}));

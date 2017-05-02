@@ -260,8 +260,6 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       return new DefaultSummaryMetadata.Builder()
          .userName(System.getProperty("user.name"))
          .profileName(studio_.profile().getProfileName())
-         .microManagerVersion(studio_.compat().getVersion())
-         .metadataVersion(DefaultSummaryMetadata.METADATA_VERSION)
          .computerName(computerName)
          .build();
    }

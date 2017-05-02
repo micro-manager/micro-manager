@@ -118,12 +118,7 @@ public final class MMVirtualStack extends VirtualStack {
    public Object getPixels(int flatIndex) {
       Coords coords = parent_.getMMCoordsForIJFlatIndex(flatIndex);
       Image image = parent_.getMMImage(coords);
-      if (image.getNumComponents() == 1) {
-         return image.getRawPixels();
-      }
-      // TODO XXX Is this correct handling of RGB images?
-      int component = (flatIndex - 1) % image.getNumComponents();
-      return image.getRawPixelsForComponent(component);
+      return image.getRawPixelsCopy();
    }
 
    @Override

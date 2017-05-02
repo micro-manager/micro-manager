@@ -45,9 +45,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.UserProfile;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.DefaultUserProfile;
+import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.profile.internal.LegacyMM1Preferences;
 
 // TODO: the change to the Profile system (away from Preferences) has caused
 // registration state to be lost.
@@ -145,7 +147,7 @@ public final class RegistrationDlg extends JDialog {
                   BufferedReader br;
 
                   // save registration information to profile
-                  DefaultUserProfile profile = DefaultUserProfile.getInstance();
+                  UserProfile profile = UserProfileStaticInterface.getInstance();
                   profile.setString(RegistrationDlg.class, REGISTRATION_NAME,
                      name_.getText());
                   profile.setString(RegistrationDlg.class, REGISTRATION_INST,
@@ -241,7 +243,7 @@ public final class RegistrationDlg extends JDialog {
    }
 
    private int incrementRegistrationAttempts() {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       int attempts = getNumRegistrationAttempts() + 1;
       profile.setInt(RegistrationDlg.class, REGISTRATION_ATTEMPTS, attempts);
       return attempts;
@@ -249,13 +251,13 @@ public final class RegistrationDlg extends JDialog {
 
    public static boolean getHaveRegistered() {
       // HACK: if there's no entry, we also check the 1.4 Preferences.
-      Boolean result = DefaultUserProfile.getInstance().getBoolean(
+      Boolean result = UserProfileStaticInterface.getInstance().getBoolean(
             RegistrationDlg.class, HAVE_REGISTERED, null);
       if (result != null) {
          return result;
       }
-      Preferences user = DefaultUserProfile.getLegacyUserPreferences14();
-      Preferences system = DefaultUserProfile.getLegacySystemPreferences14();
+      Preferences user = LegacyMM1Preferences.getUserRoot();
+      Preferences system = LegacyMM1Preferences.getSystemRoot();
       if (user != null) {
          if (user.getBoolean("registered", false)) {
             setHaveRegistered(true);
@@ -281,22 +283,22 @@ public final class RegistrationDlg extends JDialog {
    }
 
    public static void setHaveRegistered(boolean haveRegistered) {
-      DefaultUserProfile.getInstance().setBoolean(
+      UserProfileStaticInterface.getInstance().setBoolean(
             RegistrationDlg.class, HAVE_REGISTERED, haveRegistered);
    }
 
    public static boolean getShouldNeverRegister() {
-      return DefaultUserProfile.getInstance().getBoolean(
+      return UserProfileStaticInterface.getInstance().getBoolean(
             RegistrationDlg.class, SHOULD_NEVER_REGISTER, false);
    }
 
    public static void setShouldNeverRegister(boolean haveRegistered) {
-      DefaultUserProfile.getInstance().setBoolean(
+      UserProfileStaticInterface.getInstance().setBoolean(
             RegistrationDlg.class, SHOULD_NEVER_REGISTER, haveRegistered);
    }
 
    private static int getNumRegistrationAttempts() {
-      return DefaultUserProfile.getInstance().getInt(
+      return UserProfileStaticInterface.getInstance().getInt(
             RegistrationDlg.class, REGISTRATION_ATTEMPTS, 0);
    }
 }
