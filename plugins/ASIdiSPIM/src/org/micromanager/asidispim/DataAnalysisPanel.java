@@ -347,7 +347,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
 //      this.add(otherPanel_);
    }
    
-   public void runDeskew(final ListeningJPanel caller) {
+   
+public void runDeskew(final ListeningJPanel caller) {
       
       /**
        * Worker thread to execute deskew.
@@ -364,7 +365,6 @@ public class DataAnalysisPanel extends ListeningJPanel {
 
          @Override
          protected Void doInBackground() throws Exception {
-            setProgress(0);
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             long startTime = System.currentTimeMillis();
             final ImagePlus ip = IJ.getImage();
@@ -411,23 +411,29 @@ public class DataAnalysisPanel extends ListeningJPanel {
             //   too instead of being tan(60 degrees) due to the rotation
             final double dx = zStepPx * (Double) deskewFactor_.getValue();
 
-            final int sc = ip.getNChannels();
-            final int sx = ip.getWidth();
-            final int sy = ip.getHeight();
-            final int ss = ip.getNSlices();
+            final int nrChannels = ip.getNChannels();
+            final int width = ip.getWidth();
+            final int height = ip.getHeight();
+            final int nrSlices = ip.getNSlices();
+            final int nrImages = nrChannels * nrSlices;
             final String title = windowTitle + "-deskewed";
-            final int sx_new = sx + (int) Math.abs(Math.ceil(dx*ss));
-
-            if (sc > 1) {
-               IJ.run("Duplicate...", "title=" + title + " duplicate");
-               IJ.run("Split Channels");
+            final int width_expansion = (int) Math.abs(Math.ceil(dx*(nrSlices-1)));
+            
+            // create duplicate stack to avoid manipulating original data
+            // split into separate channels because have to treat each channel a bit differently
+            IJ.showProgress(0.0);
+            ImagePlus[] channels = new ImagePlus[nrChannels];
+            if (nrChannels > 1) {
+                channels = ij.plugin.ChannelSplitter.split(ip.duplicate());
             } else {
-               IJ.run("Duplicate...", "title=C1-" + title + " duplicate");  // make it named as 1st channel would be
+               channels[0] = ip.duplicate();
             }
-            String mergeCmd = "";
+            
+            ij.Prefs.set("resizer.zero", true);
+            ij.plugin.CanvasResizer resize = new ij.plugin.CanvasResizer();
             int dir;
-            for (int c=0; c<sc; c++) {  // loop over channels
-               IJ.selectWindow("C" + (c+1) + "-" + title);
+            int nrImagesProcessed = 0;
+            for (int c=0; c<nrChannels; c++) {  // loop over channels
                switch (acqMode) {
                case STAGE_SCAN:
                   dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B
@@ -447,24 +453,32 @@ public class DataAnalysisPanel extends ListeningJPanel {
                if (deskewInvert_.isSelected()) {
                   dir *= -1;
                }
-
-               IJ.run("Canvas Size...", "width=" + sx_new + " height=" + sy + " position=Center-" 
-                     + (dir < 0 ? "Right" : "Left") + " zero");
-               for (int s=0; s<ss; s++) {  // loop over slices in stack
-                  IJ.setSlice(s+1);
-                  IJ.run("Translate...", "x=" + (dx*s*dir) + " y=0 interpolation="
-                        + (deskewInterpolate_.isSelected() ? "Bilinear slice" : "None"));
+               ImagePlus i = channels[c];
+               i.setStack(resize.expandStack(i.getImageStack(), width + width_expansion, height, (dir < 0 ? width_expansion : 0), 0));
+               for (int s=0; s<nrSlices; s++) {  // loop over slices in stack and shift each by an appropriate amount
+                  i.setSlice(s+1);
+                  ImageProcessor proc = i.getProcessor();
+                  proc.setInterpolate(false);
+                  proc.translate(dx*s*dir, 0);
+                  nrImagesProcessed++;
+                  IJ.showProgress(nrImagesProcessed, nrImages);
                }
-               mergeCmd += ("c" + (c+1) + "=C" + (c+1) + "-" + title + " ");  
             }
-            if (sc > 1) {
-               IJ.run("Merge Channels...", mergeCmd + "create");
+            
+            // merge the channels back together to display final image
+            ImagePlus deskewed;
+            if (nrChannels > 1) {
+               deskewed = ij.plugin.RGBStackMerge.mergeChannels(channels, false);
             } else {
-               IJ.run("Rename...", "title=" + title);
+               deskewed = channels[0];
             }
+            
+            deskewed.setTitle(title);
+            deskewed.show();
+            
             long finishTime = System.currentTimeMillis();
             ReportingUtils.logDebugMessage("Deskew operation took " + (finishTime - startTime) + 
-                  " milliseconds with total of " + (sc*ss) + " images");
+                  " milliseconds with total of " + nrImages + " images");
 
             return null;
          }
@@ -474,7 +488,6 @@ public class DataAnalysisPanel extends ListeningJPanel {
             setCursor(null);
             try {
                get();
-               setProgress(100);
             } catch (ExecutionException ex) {
                Throwable cause = ex.getCause();
                if (!cause.getMessage().equals("Macro canceled")) {
