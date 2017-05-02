@@ -32,6 +32,7 @@ import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.asidispim.api.ASIdiSPIMImplementation;
 import org.micromanager.asidispim.api.ASIdiSPIMInterface;
+import org.micromanager.utils.ReportingUtils;
 
 
 public class ASIdiSPIM implements MMPlugin {
@@ -78,6 +79,8 @@ public class ASIdiSPIM implements MMPlugin {
       } catch (RemoteException ex) {
          throw new RuntimeException("Error registering API for RMI access", ex);
       }
+      
+      ReportingUtils.logDebugMessage("finished initializing plugin " + getInfo() + " version " + getVersion());
    }
    
    public static ASIdiSPIMFrame getFrame() {

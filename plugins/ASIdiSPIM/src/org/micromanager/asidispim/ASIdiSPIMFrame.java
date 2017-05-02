@@ -80,20 +80,21 @@ import org.micromanager.utils.MMFrame;
 //TODO separate properties into true hardware-related properties and plugin settings (maybe store plugin settings directly in prefs?)
 //TODO have per-tab way of creating and accessing plugin settings in prefs
 //TODO with prefs, make sure there is good way of specifying default value
-//TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
+//TODO save/load plugin settings from file (or image metadata) instead of from registry (nice to also include controller settings)
 //TODO improve efficiency of camera code by pre-calculating key factors and updating when needed instead of calculating every time
 //TODO add check for correct Hamamatsu model
 //TODO fix slightly incorrect Hamamatsu timing calculation (apparent at small ROI)
 //TODO execute autofocus during acquisition before the desired time point is reached instead of waiting until a timepoint should be collected
 //       or else do autofocus after acquisition instead of before
 //TODO merge all acquisition code instead of autofocus having its own version
-//TODO better separate GUI from function!!
+//TODO better separate GUI from function!!, e.g. similar to MM's core/gui separation (~MVC framework)
 //TODO smart default joystick settings (e.g. different defaults different panels/wheels)
 //TODO calculate and show estimated disk space as part of "durations"
 //TODO Make it easier to adjust stack center (or start and end) including autodetect start/end based on content
 //TODO allow different stack center, number of slices, offset, or other settings for each XY position
 //TODO iconify tab labels and/or other parts of plugin
-//TODO use new J *=0 to more efficiently clear joystick settings (require comm card version 3.1)
+//TODO use new J *=0 to more efficiently clear joystick settings (require comm card version 3.1)\
+//TODO be more efficient in serial commands, including not resending same commands (largely obviated once shared properties on same card are implemented)
 
 /**
  *
