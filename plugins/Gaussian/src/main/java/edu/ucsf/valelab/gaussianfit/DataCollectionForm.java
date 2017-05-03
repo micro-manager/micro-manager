@@ -1020,7 +1020,7 @@ public class DataCollectionForm extends JFrame {
          } else if (selectedFile.getName().endsWith(".bin")) {
             LoadAndSave.loadBin(selectedFile, this);
          } else {
-            JOptionPane.showMessageDialog(getInstance(), "Unrecognized file extension");
+            JOptionPane.showMessageDialog(this, "Unrecognized file extension");
          }
       }
    }
@@ -1040,7 +1040,7 @@ public class DataCollectionForm extends JFrame {
              }
           
        } else {
-          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to save");
+          JOptionPane.showMessageDialog(this, "Please select a dataset to save");
        }
     }
 
@@ -1051,7 +1051,7 @@ public class DataCollectionForm extends JFrame {
              mainTableModel_.removeRow(rows[row]);
           }
        } else {
-          JOptionPane.showMessageDialog(getInstance(), "No dataset selected");
+          JOptionPane.showMessageDialog(this, "No dataset selected");
        }
     }
 
@@ -1061,10 +1061,10 @@ public class DataCollectionForm extends JFrame {
           try {
             showResults(mainTableModel_.getRow(row));
           } catch (OutOfMemoryError ome) {
-             JOptionPane.showMessageDialog(getInstance(), "Not enough memory to show data");
+             JOptionPane.showMessageDialog(this, "Not enough memory to show data");
           }
        } else {
-          JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to show");
+          JOptionPane.showMessageDialog(this, "Please select a dataset to show");
        }
     }
 
@@ -1075,7 +1075,7 @@ public class DataCollectionForm extends JFrame {
          ExtractTracksDialog extractTracksDialog = 
                  new ExtractTracksDialog(studio_, mainTableModel_.getRow(row), s);
       } else {
-         JOptionPane.showMessageDialog(getInstance(), "No Data Rows selected");
+         JOptionPane.showMessageDialog(this, "No Data Rows selected");
       }
    }
     
@@ -1091,7 +1091,7 @@ public class DataCollectionForm extends JFrame {
    private void c2StandardButtonActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets as color reference");
+         JOptionPane.showMessageDialog(this, "Please select one or more datasets as color reference");
       } else {
          
          CoordinateMapper.PointMap points = new CoordinateMapper.PointMap();
@@ -1112,7 +1112,7 @@ public class DataCollectionForm extends JFrame {
             }
 
             if (xyPointsCh2.isEmpty()) {
-               JOptionPane.showMessageDialog(getInstance(), 
+               JOptionPane.showMessageDialog(this, 
                        "No points found in second channel.  Is this a dual channel dataset?");
                return;
             }
@@ -1158,7 +1158,7 @@ public class DataCollectionForm extends JFrame {
             }
             reference2CName_.setText(name);
          } catch (Exception ex) {
-            JOptionPane.showMessageDialog(getInstance(), 
+            JOptionPane.showMessageDialog(this, 
                "Error setting color reference.  Did you have enough input points?");
          }
          
@@ -1169,7 +1169,7 @@ public class DataCollectionForm extends JFrame {
    public void listPairTracks(ParticlePairLister.Builder builder) {
       final int[] rows = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), 
+         JOptionPane.showMessageDialog(this, 
                  "Please select a dataset");
          return;
       }
@@ -1188,7 +1188,7 @@ public class DataCollectionForm extends JFrame {
             ReportingUtils.showError(ex);
          }
       } else
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to color correct");
+         JOptionPane.showMessageDialog(this, "Please select a dataset to color correct");
    }
 
    private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1206,7 +1206,7 @@ public class DataCollectionForm extends JFrame {
          };
          (new Thread(doWorkRunnable)).start();
       } else {
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to unjitter");
+         JOptionPane.showMessageDialog(this, "Please select a dataset to unjitter");
       }
    }
 
@@ -1291,7 +1291,7 @@ public class DataCollectionForm extends JFrame {
          tw.setVisible(true);
        }
        else
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset first");
+         JOptionPane.showMessageDialog(this, "Please select a dataset first");
    }
 
    /**
@@ -1302,7 +1302,7 @@ public class DataCollectionForm extends JFrame {
    private void renderButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       final int row = mainTable_.getSelectedRowSorted();
       if (row < 0) {
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to render");
+         JOptionPane.showMessageDialog(this, "Please select a dataset to render");
       } else {
 
          Runnable doWorkRunnable = new Runnable() {
@@ -1365,7 +1365,7 @@ public class DataCollectionForm extends JFrame {
    private void plotButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), "Please select one or more datasets to plot");
+         JOptionPane.showMessageDialog(this, "Please select one or more datasets to plot");
       } else {
          RowData[] myRows = new RowData[rows.length];
          // TODO: check that these are tracks 
@@ -1400,7 +1400,7 @@ public class DataCollectionForm extends JFrame {
    private void averageTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(), 
+         JOptionPane.showMessageDialog(this, 
                  "Please select one or more datasets to average");
       } else {
          RowData[] myRows = new RowData[rows.length];
@@ -1527,7 +1527,7 @@ public class DataCollectionForm extends JFrame {
          addSpotData(builder);
          
       } catch (IndexOutOfBoundsException iobe) {
-         JOptionPane.showMessageDialog(getInstance(), "Data sets differ in Size");
+         JOptionPane.showMessageDialog(this, "Data sets differ in Size");
       }
 
    }
@@ -1807,7 +1807,7 @@ public class DataCollectionForm extends JFrame {
    private void straightenTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(),
+         JOptionPane.showMessageDialog(this,
                  "Please select one or more datasets to straighten");
       } else {
          for (int row : rows) {
@@ -1820,7 +1820,7 @@ public class DataCollectionForm extends JFrame {
    private void centerTrackButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(),
+         JOptionPane.showMessageDialog(this,
                  "Please select one or more datasets to center");
       } else {
          int start = mainTable_.getRowCount();
@@ -1836,7 +1836,7 @@ public class DataCollectionForm extends JFrame {
    private void zCalibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {
       int rows[] = mainTable_.getSelectedRowsSorted();
       if (rows.length != 1) {
-         JOptionPane.showMessageDialog(getInstance(),
+         JOptionPane.showMessageDialog(this,
                  "Please select one datasets for Z Calibration");
       } else {
          int result = zCalibrate(rows[0]);
@@ -1860,7 +1860,7 @@ public class DataCollectionForm extends JFrame {
       final int[] rows = mainTable_.getSelectedRowsSorted();
 
       if (rows == null || rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(),
+         JOptionPane.showMessageDialog(this,
                  "Please select one or more datasets for sub-ranging");
          return;
       }
@@ -1920,7 +1920,7 @@ public class DataCollectionForm extends JFrame {
          final int[] rows = mainTable_.getSelectedRowsSorted();
          
          if (rows == null || rows.length < 2) {
-            JOptionPane.showMessageDialog(getInstance(), 
+            JOptionPane.showMessageDialog(this, 
                     "Please select two or more datasets to combine");
             return;
          }               
@@ -2111,11 +2111,11 @@ public class DataCollectionForm extends JFrame {
     */
    private void correct2C(final RowData rowData) throws InterruptedException {
       if (rowData.spotList_.size() <= 1) {
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to Color correct");
+         JOptionPane.showMessageDialog(this, "Please select a dataset to Color correct");
          return;
       }
       if (c2t_ == null) {
-         JOptionPane.showMessageDialog(getInstance(), 
+         JOptionPane.showMessageDialog(this, 
                  "No calibration data available.  First Calibrate using 2C Reference");
          return;
       }
@@ -2209,7 +2209,7 @@ public class DataCollectionForm extends JFrame {
       
       RowData rd = mainTableModel_.getRow(rowNr);
       if (rd.shape_ < 2) {
-         JOptionPane.showMessageDialog(getInstance(), 
+         JOptionPane.showMessageDialog(this, 
                  "Use Fit Parameters Dimension 2 or 3 for Z-calibration");
          return FAILEDDONOTINFORM;
       }
@@ -2291,7 +2291,7 @@ public class DataCollectionForm extends JFrame {
       final int[] rows = mainTable_.getSelectedRowsSorted();
       
       if (rows == null || rows.length < 1) {
-         JOptionPane.showMessageDialog(getInstance(),
+         JOptionPane.showMessageDialog(this,
                  "Please select a dataset to filter");
          return;
       }
