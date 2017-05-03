@@ -37,7 +37,6 @@ import edu.ucsf.valelab.gaussianfit.DataCollectionForm;
 import static edu.ucsf.valelab.gaussianfit.DataCollectionForm.EXTENSION;
 import static edu.ucsf.valelab.gaussianfit.DataCollectionForm.getInstance;
 import edu.ucsf.valelab.gaussianfit.LittleEndianDataInputStream;
-import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.process.ImageProcessor;
 import java.awt.Cursor;
 import java.awt.FileDialog;
