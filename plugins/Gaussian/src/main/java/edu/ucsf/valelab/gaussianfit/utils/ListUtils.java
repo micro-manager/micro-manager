@@ -181,10 +181,12 @@ public class ListUtils {
     * @param list - List of doubles 
     * @return stdev
     */
-   private static double listStdDev (List<Double> list) {
+   public static double listStdDev (List<Double> list) {
       double avg = listAvg(list);
       
       return listStdDev(list, avg);
    }
+   
+   
    
 }

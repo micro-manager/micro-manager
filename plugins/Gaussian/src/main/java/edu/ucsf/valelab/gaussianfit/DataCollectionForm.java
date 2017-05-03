@@ -61,6 +61,7 @@ import edu.ucsf.valelab.gaussianfit.datasetdisplay.TrackPlotter;
 import edu.ucsf.valelab.gaussianfit.datasettransformations.DriftCorrector;
 import edu.ucsf.valelab.gaussianfit.datasettransformations.PairFilter;
 import edu.ucsf.valelab.gaussianfit.datasettransformations.TrackOperator;
+import edu.ucsf.valelab.gaussianfit.fitmanagement.SpotDataConverter;
 import edu.ucsf.valelab.gaussianfit.internal.tabledisplay.DataTable;
 import edu.ucsf.valelab.gaussianfit.internal.tabledisplay.DataTableModel;
 import edu.ucsf.valelab.gaussianfit.internal.tabledisplay.DataTableRowSorter;
@@ -69,6 +70,7 @@ import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
 import edu.ucsf.valelab.gaussianfit.utils.FileDialogs;
 import edu.ucsf.valelab.gaussianfit.utils.FileDialogs.FileType;
+import edu.ucsf.valelab.gaussianfit.utils.MapUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -896,6 +898,7 @@ public class DataCollectionForm extends JFrame {
             }
          });
          super.add(copySummaryItem);
+         
          JMenuItem copyHeadersItem = new JMenuItem(new AbstractAction("Copy Headers") {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -906,6 +909,18 @@ public class DataCollectionForm extends JFrame {
             }
          });
          super.add(copyHeadersItem);
+         
+         JMenuItem getInterTrackDistancesItem = new JMenuItem(new AbstractAction("Inter Track Distances") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+               String header = getInterTrackDistances(true);
+               String interTrackDistances = getInterTrackDistances(false);
+               Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+               clpbrd.setContents(new StringSelection(header + "\n" + interTrackDistances), null);
+            }
+         });
+         super.add(getInterTrackDistancesItem);
+         
          JMenuItem selectAllRowsItem = new JMenuItem(new AbstractAction("Select all") {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -1637,6 +1652,133 @@ public class DataCollectionForm extends JFrame {
               "\t" + ListUtils.listAvg(aptBackgrounds) + 
               "\t" + ListUtils.listAvg(widths);
       
+      return output;
+   }
+   
+   /**
+    * Returns a data describing the distances between spots in input tracks
+    * This is used to determine the experimental sigma of the fitted positions
+    * The tracks should be of stationary spots, the function determines the 
+    * distance between a spot and the corresponding spots in all other tracks.
+    * 
+    * @param header
+    * @return 
+    */
+   public String getInterTrackDistances(boolean header) {
+      
+      if (header) {
+         return "ID\tn1\tn2\tstdDev\tCalc.Sigma";
+      }
+         
+      final int rows[] = mainTable_.getSelectedRowsSorted();
+      final double sqrt2 = Math.sqrt(2);
+      
+      // First go through all tracks and calculate the stdDev in the distance
+      // to all other spots.  Then throw out the top x (25) %, since we have
+      // noticed that there are usually badly behaving spots.
+      // Go through the cleaned up list and report the avg. sigmas
+      
+      Map<Integer, Double> stdDevMap = new HashMap<Integer, Double>();
+      for (int row : rows) {
+         final RowData rowData = mainTableModel_.getRow(row);
+         List<Double> stdDevs = new ArrayList<Double>();
+         for (int sRow : rows) {
+            if (row != sRow) {
+               List<Double> dists = new ArrayList<Double>();
+               final RowData sRowData = mainTableModel_.getRow(sRow);
+               for (SpotData spotData : rowData.spotList_) {
+                  Iterator<SpotData> iterator = sRowData.spotList_.iterator();
+                  SpotData sSpotData = null;
+                  boolean found = false;
+                  while (iterator.hasNext() && !found) {
+                     sSpotData = iterator.next();
+                     if (spotData.getFrame() == sSpotData.getFrame()) {
+                        found = true;
+                     }
+                  }
+                  if (found && sSpotData != null) {
+                     double xDiff = spotData.getXCenter() - sSpotData.getXCenter();
+                     double yDiff = spotData.getYCenter() - sSpotData.getYCenter();
+                     dists.add(Math.sqrt(xDiff * xDiff + yDiff * yDiff));
+                  }
+               }
+               stdDevs.add(ListUtils.listStdDev(dists));
+            }
+         }
+         stdDevMap.put(row, ListUtils.listAvg(stdDevs));
+      }
+      Map<Integer, Double> sortedStdDevMap = MapUtils.sortByValue(stdDevMap);
+      List<Integer> cleanedRows = new ArrayList<Integer>();
+      Set<Map.Entry<Integer, Double>> entrySet = sortedStdDevMap.entrySet();
+      Iterator<Map.Entry<Integer, Double>> eIterator = entrySet.iterator();
+      int cutOff = (int) (0.75 * (double) sortedStdDevMap.size());
+      while (eIterator.hasNext() && cleanedRows.size() < cutOff) {
+         Map.Entry<Integer, Double> next = eIterator.next();
+         cleanedRows.add(next.getKey());
+      }
+      
+      
+      String output = "";
+      
+      for (int row : cleanedRows) {
+         final RowData rowData = mainTableModel_.getRow(row);
+         List<Double> xStdDevs = new ArrayList<Double>();
+         List<Double> yStdDevs = new ArrayList<Double>();
+         List<Double> stdDevs = new ArrayList<Double>();
+         for (int sRow : cleanedRows) {
+            if (row != sRow) {
+               List<Double> xDist = new ArrayList<Double>();
+               List<Double> yDist = new ArrayList<Double>();
+               List<Double> dists = new ArrayList<Double>();
+               final RowData sRowData = mainTableModel_.getRow(sRow);
+               for (SpotData spotData : rowData.spotList_) {
+                  Iterator<SpotData> iterator = sRowData.spotList_.iterator();
+                  SpotData sSpotData = null;
+                  boolean found = false;
+                  while (iterator.hasNext() && !found) {
+                     sSpotData = iterator.next();
+                     if (spotData.getFrame() == sSpotData.getFrame()) {
+                        found = true;
+                     }
+                  }
+                  if (found && sSpotData != null) {
+                     double xDiff = spotData.getXCenter() - sSpotData.getXCenter();
+                     xDist.add(xDiff);
+                     double yDiff = spotData.getYCenter() - sSpotData.getYCenter();
+                     yDist.add(yDiff);
+                     dists.add(Math.sqrt(xDiff * xDiff + yDiff * yDiff));
+                  }
+                  
+               }
+               xStdDevs.add(ListUtils.listStdDev(xDist));
+               yStdDevs.add(ListUtils.listStdDev(yDist));
+               stdDevs.add(ListUtils.listStdDev(dists));
+            }
+         }
+
+         List<Double> intSigmas = new ArrayList<Double>();
+         for (SpotData spotData : rowData.spotList_) {
+            // calculate sigma using Mortenson integral method
+            double s = spotData.getWidth() / 2;
+            double pixelSize = rowData.pixelSizeNm_;
+            double sasqr = s * s + (pixelSize * pixelSize) / 12;
+            double integral = SpotDataConverter.calcIntegral(
+                    spotData.getIntensity(), pixelSize, sasqr, spotData.getBackground());
+            double altVarX = sasqr / spotData.getIntensity() * (1 / (1 + integral));
+            // If EM gain was used, add uncertainty due to Poisson distributed noise
+            //if (rowData. > 2.0) {
+            //   altVarX = 2 * altVarX;
+           // }
+            intSigmas.add(Math.sqrt(altVarX));
+         }
+         double xStdDev = ListUtils.listAvg(xStdDevs);
+         double yStdDev = ListUtils.listAvg(yStdDevs);
+         double stdDev = ListUtils.listAvg(stdDevs) / sqrt2;
+         double intSigma = ListUtils.listAvg(intSigmas);
+         output += rowData.ID_ + "\t" + rowData.spotList_.size() + "\t" + xStdDevs.size() + "\t"
+                 + stdDev + "\t" + intSigma + "\n";
+      }
+
       return output;
    }
 
