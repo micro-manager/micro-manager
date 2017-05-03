@@ -447,13 +447,4 @@ public interface DisplaySettings {
 
    @Deprecated
    static final String FILENAME = "displaySettings.txt";
-
-   /**
-    * Save the DisplaySettings to a file in the specified folder. If the file
-    * already exists, then the settings will be appended to it.
-    * @param path Full path to directory in which the DisplaySettings file should
-    * be saved
-    */
-   @Deprecated
-   public void save(String path);
 }

@@ -20,6 +20,7 @@
 
 package org.micromanager.data.internal;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.micromanager.data.Coords;
@@ -57,13 +58,24 @@ public final class DefaultRewritableDatastore extends DefaultDatastore implement
          super.putImage(image);
       }
       catch (DatastoreRewriteException e) {
-         Image oldImage = storage_.getImage(image.getCoords());
+         Image oldImage;
+         try {
+            oldImage = storage_.getImage(image.getCoords());
+         }
+         catch (IOException e) {
+            exceptionListeners_.fire().exceptionThrown(e);
+         }
          // We call the storage's method directly instead of using our
          // deleteImage() method, to avoid posting an ImageDeletedEvent.
          ((RewritableStorage) storage_).deleteImage(image.getCoords());
          try {
             super.putImage(image);
-            bus_.post(new DefaultImageOverwrittenEvent(image, oldImage, this));
+            try {
+               bus_.post(new DefaultImageOverwrittenEvent(image, oldImage, this));
+            }
+            catch (IOException e) {
+               exceptionListeners_.fire().exceptionThrown(e);
+            }
          }
          catch (DatastoreRewriteException e2) {
             // This should never happen.

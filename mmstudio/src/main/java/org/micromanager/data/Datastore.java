@@ -20,30 +20,60 @@
 
 package org.micromanager.data;
 
-import java.awt.Window;
+import java.awt.Component;
+import java.beans.ExceptionListener;
 import java.io.IOException;
 
 /**
- * Datastores provide access to image data and metadata. You are not expected to
- * implement this interface; it is here to describe how you can interact with
- * Datastores created by Micro-Manager itself.
+ * Datastores provide read/write access to images and metadata.
+ *
+ * <strong>Important</strong>: Custom Datastore implementations are not
+ * supported.
  */
 public interface Datastore extends DataProvider {
+   /**
+    * Registers an object that will be notified if there is an error during
+    * file input and output.
+    * <p>
+    * The listener is notified of IOException and other errors encountered
+    * while loading and saving images. It is not called for parameter errors,
+    * which are reported as unchecked exceptions to the method caller.
+    * <p>
+    * When an error occurs while storing an image (usually a file system error,
+    * such as insufficient disk space), the storage may be in an inconsistent
+    * state. Therefore it is advisable for image saving code to register an
+    * exception listener to handle the error and stop storing.
+    * <p>
+    * When an error occurs while retrieving an image (usually either a file
+    * system error, or a file in an unrecognized format), the Datastore will
+    * behave as if the requested data doesn't exist (e.g. by returning null).
+    * But it is advisable for image reading code to register an exception to
+    * notify the user.
+    * <p>
+    * If the exception listener throws an (unchecked) exception, it will be
+    * propagated back to the caller. This can be used to handle input/output
+    * errors in a traditional way by catching exceptions at the call site.
+    * However, this method should be avoided when the Datastore is shared with
+    * other objects.
+    *
+    * @param listener an exception listener
+    * @see #removeExceptionListener
+    */
+   void addExceptionListener(ExceptionListener listener);
 
    /**
-    * Sets the source for data for this Datastore.
+    * Unregister an exception listener.
+    * @param listener an exception listener
+    * @see #addExceptionListener
+    */
+   void removeExceptionListener(ExceptionListener listener);
+
+   /**
+    * Sets the data storage implementation for this Datastore.
     * 
     * @param storage source of data to be used henceforth
     */
-   public void setStorage(Storage storage);
-
-
-   /**
-    * Publish the given event on the Datastore's event bus.
-    * 
-    * @param obj Event that will be published on this Datastore's event bus
-    */
-   public void publishEvent(Object obj);
+   void setStorage(Storage storage);
 
 
    /**
@@ -59,7 +89,8 @@ public interface Datastore extends DataProvider {
     *         in a Datastore are required to have the same set of axes in
     *         their Coords objects.
     */
-   public void putImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, IllegalArgumentException;
+   void putImage(Image image)
+         throws DatastoreFrozenException, DatastoreRewriteException;
 
 
    /**
@@ -71,52 +102,52 @@ public interface Datastore extends DataProvider {
     * @throws DatastoreRewriteException if the Datastore already has
     *         SummaryMetadata.
     */
-   public void setSummaryMetadata(SummaryMetadata metadata)
+   void setSummaryMetadata(SummaryMetadata metadata)
            throws DatastoreFrozenException, DatastoreRewriteException;
 
    /**
-    * Create a Annotation, whose data is stored in the specified file alongside
-    * the Datastore's own data. If a Annotation already exists for the
-    * Datastore, using that filename, then it will be returned instead.
-    * Alternatively, if the Datastore has been saved to disk, and the filename
-    * parameter indicates a file that already exists, then it will be loaded
-    * and a new Annotation with the loaded data will be returned.
-    * This method will always succeed: either it creates a new "empty"
-    * Annotation, returns an existing already-loaded Annotation, or it loads a
-    * Annotation's data from disk and returns the result.
-    * @param filename Filename to use to save and load the Annotation's data.
-    * @throws IOException if there is a file for this Annotation already, but
-    *         we are unable to load its contents.
+    * Return whether an annotation with the given tag exists.
+    *
+    * @param tag the tag for the annotation
+    * @return true if the annotation exists; false otherwise
     */
-   public Annotation loadAnnotation(String filename) throws IOException;
+   boolean hasAnnotation(String tag);
 
    /**
-    * Return true if there is an existing Annotation using the specified
-    * filename. This does not necessarily indicate that a file using the
-    * provided filename exists; the Annotation may not yet have saved data to
-    * the file, but it has still "reserved" the file for use.
-    * @param filename Filename the Annotation would use if it exists.
-    * @return true if the Annotation exists.
+    * Get an annotation, creating it if it doesn't exist
+    * @param tag
+    * @return
     */
-   public boolean hasAnnotation(String filename);
+   Annotation getAnnotation(String tag);
 
    /**
-    * Create a new, empty Annotation, whose data is to be saved to disk at the
-    * specified filename alongside the Datastore's own data.
-    * @param filename Filename to use to save the Annotation's data.
-    * @throws IllegalArgumentException if the filename is already claimed
-    *         (either a file of that name exists on disk where the Datastore
-    *         is saved, or we already have a Annotation in memory using that
-    *         filename).
+    * Get an annotation, creating it if it doesn't exist.
+    *
+    * @param tag the tag for the annotation
+    * @return the annotation
+    * @deprecated use {@link #createAnnotation} instead
     */
-   public Annotation createNewAnnotation(String filename) throws IllegalArgumentException;
+   @Deprecated
+   Annotation loadAnnotation(String tag);
+
+   /**
+    * Create a new annotation.
+    *
+    * @param tag the tag for the annotation
+    * @return the created annotation
+    * @throws IllegalArgumentException if an annotation with {@code tag}
+    * already exists
+    * @deprecated use {@link #hasAnnotation} and {@link #getAnnotation}
+    */
+   @Deprecated
+   Annotation createNewAnnotation(String tag);
 
    /**
     * Freeze the Datastore. Methods that modify its contents will throw
     * DatastoreFrozenExceptions, and a DatastoreFrozenEvent() will be posted to
     * any subscribers.
     */
-   public void freeze();
+   void freeze();
 
 
    /**
@@ -124,7 +155,7 @@ public interface Datastore extends DataProvider {
     * 
     * @param path The location on disk at which the data has been stored.
     */
-   public void setSavePath(String path);
+   void setSavePath(String path);
 
    /**
     * Return the path for where the data has been saved to disk. Will be null
@@ -132,7 +163,7 @@ public interface Datastore extends DataProvider {
     * 
     * @return The directory path to the saved data.
     */
-   public String getSavePath();
+   String getSavePath();
 
    /**
     * These are the valid inputs to the save() methods. 
@@ -142,11 +173,13 @@ public interface Datastore extends DataProvider {
     * limit of 4GB/file, after which point the images will be split into 
     * a second file).
     * 
-    * This enum will likely be expanded in the future
+    * @deprecated because it doesn't make sense to define this for general
+    * Datastores
     */
-   public enum SaveMode {
+   @Deprecated
+   enum SaveMode {
       SINGLEPLANE_TIFF_SERIES,
-      MULTIPAGE_TIFF
+      MULTIPAGE_TIFF,
    }
 
    /**
@@ -157,11 +190,11 @@ public interface Datastore extends DataProvider {
     * format selector in the save dialog, which defaults to the last format
     * the user used.
     *
-    * @param window Window  on top of which to display the dialog prompt; 
+    * @param parent Window  on top of which to display the dialog prompt;
     *        may be null.
     * @return TODO WHAT DOES THE RETURN BOOLEAN MEAN?
     */
-   public boolean save(Window window);
+   boolean save(Component parent);
 
    /**
     * As above, except uses the provided path (the last element of which is
@@ -172,7 +205,9 @@ public interface Datastore extends DataProvider {
     * @param mode
     * @param path
     * @return true if saving succeeded, false otherwise.
+    * @deprecated because it doesn't make sense to define this for general
+    * Datastores
     */
-   public boolean save(SaveMode mode, String path);
-
+   @Deprecated
+   boolean save(SaveMode mode, String path);
 }

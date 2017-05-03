@@ -6,6 +6,8 @@
 package org.micromanager.display.internal;
 
 import com.google.common.base.Preconditions;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.display.ComponentDisplaySettings;
 
 /**
@@ -90,5 +92,13 @@ public final class DefaultComponentDisplaySettings
       builder.scalingMax_ = scalingMax_;
       builder.gamma_ = gamma_;
       return builder;
+   }
+
+   public PropertyMap toPropertyMap() {
+      return PropertyMaps.builder().
+            putLong("ScalingMin", scalingMin_).
+            putLong("ScalingMax", scalingMax_).
+            putDouble("Gamma", gamma_).
+            build();
    }
 }

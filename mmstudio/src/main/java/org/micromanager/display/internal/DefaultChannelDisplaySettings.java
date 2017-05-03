@@ -9,6 +9,8 @@ import com.google.common.base.Preconditions;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 
@@ -202,5 +204,18 @@ public final class DefaultChannelDisplaySettings
          int component, ComponentDisplaySettings settings)
    {
       return copyBuilder().component(component, settings);
+   }
+
+   public PropertyMap toPropertyMap() {
+      List<PropertyMap> componentSettings = new ArrayList<PropertyMap>();
+      for (ComponentDisplaySettings cs : componentSettings_) {
+         componentSettings.add(((DefaultComponentDisplaySettings) cs).toPropertyMap());
+      }
+      return PropertyMaps.builder().
+            putColor("Color", color_).
+            putBoolean("UniformComponentScaling", useUniformComponentScaling_).
+            putBoolean("Visible", visible_).
+            putPropertyMapList("ComponentSettings", componentSettings).
+            build();
    }
 }

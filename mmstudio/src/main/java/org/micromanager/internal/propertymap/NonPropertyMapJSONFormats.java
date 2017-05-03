@@ -6,7 +6,6 @@
 package org.micromanager.internal.propertymap;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -15,11 +14,10 @@ import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Set;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
-import org.micromanager.data.Coords;
 import org.micromanager.data.internal.PropertyKey;
+import static org.micromanager.data.internal.PropertyKey.*;
 
 /**
  * High-level format conversion between MM1-style JSON and modern property maps.
@@ -79,13 +77,20 @@ public abstract class NonPropertyMapJSONFormats {
    public final String toJSON(PropertyMap canonical) {
       Gson gson = new GsonBuilder().
             disableHtmlEscaping().
+            setPrettyPrinting().
             create();
       return gson.toJson(toGson(canonical));
    }
 
    public abstract PropertyMap fromGson(JsonElement je);
 
-   public JsonElement toGson(PropertyMap pmap) {
+   public final JsonElement toGson(PropertyMap pmap) {
+      JsonObject jo = new JsonObject();
+      addToGson(jo, pmap);
+      return jo;
+   }
+
+   public void addToGson(JsonObject jo, PropertyMap pmap) {
       throw new UnsupportedOperationException(getClass().getSimpleName() +
             "should be written as standard PropertyMap JSON, not MM1-style JSON");
    }
@@ -96,22 +101,24 @@ public abstract class NonPropertyMapJSONFormats {
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (PropertyKey key : ImmutableList.of(
                PropertyKey.UUID,
-               PropertyKey.CAMERA,
-               PropertyKey.BINNING,
-               PropertyKey.ROI,
-               PropertyKey.BIT_DEPTH,
-               PropertyKey.EXPOSURE_MS,
-               PropertyKey.ELAPSED_TIME_MS,
-               PropertyKey.IMAGE_NUMBER,
-               PropertyKey.RECEIVED_TIME,
-               PropertyKey.PIXEL_SIZE_UM,
-               PropertyKey.PIXEL_ASPECT,
-               PropertyKey.POSITION_NAME,
-               PropertyKey.X_POSITION_UM,
-               PropertyKey.Y_POSITION_UM,
-               PropertyKey.Z_POSITION_UM,
-               PropertyKey.SCOPE_DATA,
-               PropertyKey.USER_DATA))
+               CAMERA,
+               BINNING,
+               ROI,
+               BIT_DEPTH,
+               EXPOSURE_MS,
+               ELAPSED_TIME_MS,
+               IMAGE_NUMBER,
+               RECEIVED_TIME,
+               PIXEL_SIZE_UM,
+               PIXEL_ASPECT,
+               POSITION_NAME,
+               X_POSITION_UM,
+               Y_POSITION_UM,
+               Z_POSITION_UM,
+               PIXEL_TYPE, // Needed due to MultipageTiffReader design
+               SCOPE_DATA,
+               USER_DATA,
+               FILE_NAME))
          {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
          }
@@ -119,30 +126,30 @@ public abstract class NonPropertyMapJSONFormats {
       }
 
       @Override
-      public JsonElement toGson(PropertyMap pmap) {
-         JsonObject jo = new JsonObject();
+      public void addToGson(JsonObject jo, PropertyMap pmap) {
          for (PropertyKey key : ImmutableList.of(
                PropertyKey.UUID,
-               PropertyKey.CAMERA,
-               PropertyKey.BINNING,
-               PropertyKey.ROI,
-               PropertyKey.BIT_DEPTH,
-               PropertyKey.EXPOSURE_MS,
-               PropertyKey.ELAPSED_TIME_MS,
-               PropertyKey.IMAGE_NUMBER,
-               PropertyKey.RECEIVED_TIME,
-               PropertyKey.PIXEL_SIZE_UM,
-               PropertyKey.PIXEL_ASPECT,
-               PropertyKey.POSITION_NAME,
-               PropertyKey.X_POSITION_UM,
-               PropertyKey.Y_POSITION_UM,
-               PropertyKey.Z_POSITION_UM,
-               PropertyKey.SCOPE_DATA,
-               PropertyKey.USER_DATA))
+               CAMERA,
+               BINNING,
+               ROI,
+               BIT_DEPTH,
+               EXPOSURE_MS,
+               ELAPSED_TIME_MS,
+               IMAGE_NUMBER,
+               RECEIVED_TIME,
+               PIXEL_SIZE_UM,
+               PIXEL_ASPECT,
+               POSITION_NAME,
+               X_POSITION_UM,
+               Y_POSITION_UM,
+               Z_POSITION_UM,
+               SCOPE_DATA,
+               SCOPE_DATA_KEYS,
+               USER_DATA,
+               FILE_NAME))
          {
             key.storeInGsonObject(pmap, jo);
          }
-         return jo;
       }
    }
 
@@ -151,25 +158,26 @@ public abstract class NonPropertyMapJSONFormats {
       public PropertyMap fromGson(JsonElement je) {
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (PropertyKey key : ImmutableList.of(
-               PropertyKey.PREFIX,
-               PropertyKey.USER_NAME,
-               PropertyKey.PROFILE_NAME,
-               PropertyKey.MICRO_MANAGER_VERSION,
-               PropertyKey.METADATA_VERSION,
-               PropertyKey.COMPUTER_NAME,
-               PropertyKey.DIRECTORY,
-               PropertyKey.CHANNEL_GROUP,
-               PropertyKey.CHANNEL_NAMES,
-               PropertyKey.Z_STEP_UM,
-               PropertyKey.INTERVAL_MS,
-               PropertyKey.CUSTOM_INTERVALS_MS,
-               PropertyKey.AXIS_ORDER,
-               PropertyKey.INTENDED_DIMENSIONS,
-               PropertyKey.START_TIME,
-               PropertyKey.STAGE_POSITIONS,
-               PropertyKey.KEEP_SHUTTER_OPEN_SLICES,
-               PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS,
-               PropertyKey.USER_DATA))
+               PREFIX,
+               USER_NAME,
+               PROFILE_NAME,
+               MICRO_MANAGER_VERSION,
+               METADATA_VERSION,
+               COMPUTER_NAME,
+               DIRECTORY,
+               CHANNEL_GROUP,
+               CHANNEL_NAMES,
+               Z_STEP_UM,
+               INTERVAL_MS,
+               CUSTOM_INTERVALS_MS,
+               AXIS_ORDER,
+               INTENDED_DIMENSIONS,
+               START_TIME,
+               STAGE_POSITIONS,
+               KEEP_SHUTTER_OPEN_SLICES,
+               KEEP_SHUTTER_OPEN_CHANNELS,
+               PIXEL_TYPE, // Needed due to MultipageTiffReader design
+               USER_DATA))
          {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
          }
@@ -177,38 +185,40 @@ public abstract class NonPropertyMapJSONFormats {
       }
 
       @Override
-      public JsonElement toGson(PropertyMap pmap) {
-         JsonObject jo = new JsonObject();
+      public void addToGson(JsonObject jo, PropertyMap pmap) {
          for (PropertyKey key : ImmutableList.of(
-               PropertyKey.PREFIX,
-               PropertyKey.USER_NAME,
-               PropertyKey.PROFILE_NAME,
-               PropertyKey.MICRO_MANAGER_VERSION,
-               PropertyKey.METADATA_VERSION,
-               PropertyKey.COMPUTER_NAME,
-               PropertyKey.DIRECTORY,
-               PropertyKey.CHANNEL_GROUP,
-               PropertyKey.CHANNEL_NAMES,
-               PropertyKey.Z_STEP_UM,
-               PropertyKey.INTERVAL_MS,
-               PropertyKey.CUSTOM_INTERVALS_MS,
-               PropertyKey.AXIS_ORDER,
-               PropertyKey.TIME_FIRST, // compat
-               PropertyKey.SLICES_FIRST, // compat
-               PropertyKey.INTENDED_DIMENSIONS,
-               PropertyKey.FRAMES, // compat
-               PropertyKey.POSITIONS, // compat
-               PropertyKey.SLICES, // compat
-               PropertyKey.CHANNELS, // compat
-               PropertyKey.START_TIME,
-               PropertyKey.STAGE_POSITIONS,
-               PropertyKey.KEEP_SHUTTER_OPEN_SLICES,
-               PropertyKey.KEEP_SHUTTER_OPEN_CHANNELS,
-               PropertyKey.USER_DATA))
+               PREFIX,
+               USER_NAME,
+               PROFILE_NAME,
+               MICRO_MANAGER_VERSION,
+               METADATA_VERSION,
+               COMPUTER_NAME,
+               DIRECTORY,
+               CHANNEL_GROUP,
+               CHANNEL_NAMES,
+               Z_STEP_UM,
+               INTERVAL_MS,
+               CUSTOM_INTERVALS_MS,
+               AXIS_ORDER,
+               TIME_FIRST, // compat
+               SLICES_FIRST, // compat
+               INTENDED_DIMENSIONS,
+               FRAMES, // compat
+               POSITIONS, // compat
+               SLICES, // compat
+               CHANNELS, // compat
+               START_TIME,
+               STAGE_POSITIONS,
+               KEEP_SHUTTER_OPEN_SLICES,
+               KEEP_SHUTTER_OPEN_CHANNELS,
+               PIXEL_TYPE, // compat
+               WIDTH, // compat
+               HEIGHT, // compat
+               USER_DATA,
+               DISPLAY_SETTINGS))
          {
             key.storeInGsonObject(pmap, jo);
          }
-         return jo;
       }
    }
 
@@ -227,9 +237,9 @@ public abstract class NonPropertyMapJSONFormats {
       public PropertyMap fromGson(JsonElement je) {
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (PropertyKey key : ImmutableList.of(
-               PropertyKey.POSITION_LIST__ID,
-               PropertyKey.POSITION_LIST__VERSION,
-               PropertyKey.STAGE_POSITIONS))
+               POSITION_LIST__ID,
+               POSITION_LIST__VERSION,
+               STAGE_POSITIONS))
          {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
          }
@@ -242,13 +252,13 @@ public abstract class NonPropertyMapJSONFormats {
       public PropertyMap fromGson(JsonElement je) {
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (PropertyKey key : ImmutableList.of(
-               PropertyKey.MULTI_STAGE_POSITION__LABEL,
-               PropertyKey.MULTI_STAGE_POSITION__DEFAULT_XY_STAGE,
-               PropertyKey.MULTI_STAGE_POSITION__DEFAULT_Z_STAGE,
-               PropertyKey.MULTI_STAGE_POSITION__GRID_ROW,
-               PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN,
-               PropertyKey.MULTI_STAGE_POSITION__PROPERTIES,
-               PropertyKey.MULTI_STAGE_POSITION__DEVICE_POSITIONS))
+               MULTI_STAGE_POSITION__LABEL,
+               MULTI_STAGE_POSITION__DEFAULT_XY_STAGE,
+               MULTI_STAGE_POSITION__DEFAULT_Z_STAGE,
+               MULTI_STAGE_POSITION__GRID_ROW,
+               MULTI_STAGE_POSITION__GRID_COLUMN,
+               MULTI_STAGE_POSITION__PROPERTIES,
+               MULTI_STAGE_POSITION__DEVICE_POSITIONS))
          {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
          }
@@ -256,20 +266,18 @@ public abstract class NonPropertyMapJSONFormats {
       }
 
       @Override
-      public JsonElement toGson(PropertyMap pmap) {
-         JsonObject jo = new JsonObject();
+      public void addToGson(JsonObject jo, PropertyMap pmap) {
          for (PropertyKey key : ImmutableList.of(
-               PropertyKey.MULTI_STAGE_POSITION__LABEL,
-               PropertyKey.MULTI_STAGE_POSITION__DEFAULT_XY_STAGE,
-               PropertyKey.MULTI_STAGE_POSITION__DEFAULT_Z_STAGE,
-               PropertyKey.MULTI_STAGE_POSITION__GRID_ROW,
-               PropertyKey.MULTI_STAGE_POSITION__GRID_COLUMN,
-               PropertyKey.MULTI_STAGE_POSITION__PROPERTIES,
-               PropertyKey.MULTI_STAGE_POSITION__DEVICE_POSITIONS))
+               MULTI_STAGE_POSITION__LABEL,
+               MULTI_STAGE_POSITION__DEFAULT_XY_STAGE,
+               MULTI_STAGE_POSITION__DEFAULT_Z_STAGE,
+               MULTI_STAGE_POSITION__GRID_ROW,
+               MULTI_STAGE_POSITION__GRID_COLUMN,
+               MULTI_STAGE_POSITION__PROPERTIES,
+               MULTI_STAGE_POSITION__DEVICE_POSITIONS))
          {
             key.storeInGsonObject(pmap, jo);
          }
-         return jo;
       }
    }
 
@@ -281,11 +289,11 @@ public abstract class NonPropertyMapJSONFormats {
       public PropertyMap fromGson(JsonElement je) {
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (PropertyKey key : ImmutableList.of(
-               PropertyKey.STAGE_POSITION__DEVICE,
-               PropertyKey.STAGE_POSITION__NUMAXES,
-               PropertyKey.STAGE_POSITION__COORD1_UM,
-               PropertyKey.STAGE_POSITION__COORD2_UM,
-               PropertyKey.STAGE_POSITION__COORD3_UM))
+               STAGE_POSITION__DEVICE,
+               STAGE_POSITION__NUMAXES,
+               STAGE_POSITION__COORD1_UM,
+               STAGE_POSITION__COORD2_UM,
+               STAGE_POSITION__COORD3_UM))
          {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
          }
@@ -299,24 +307,21 @@ public abstract class NonPropertyMapJSONFormats {
          // Note that the property map format for Coords uses axis names as
          // keys, not the canonical MetadataKey keys.
          PropertyMap.Builder builder = PropertyMaps.builder();
-         PropertyKey.COMPLETE_COORDS.
-               extractFromGsonObject(je.getAsJsonObject(), builder);
+         COMPLETE_COORDS.extractFromGsonObject(je.getAsJsonObject(), builder);
          return builder.build();
       }
 
       @Override
-      public JsonElement toGson(PropertyMap pmap) {
-         JsonObject jo = new JsonObject();
+      public void addToGson(JsonObject jo, PropertyMap pmap) {
          for (PropertyKey key : ImmutableList.of(
-               PropertyKey.COMPLETE_COORDS,
-               PropertyKey.FRAME_INDEX,
-               PropertyKey.POSITION_INDEX,
-               PropertyKey.SLICE_INDEX,
-               PropertyKey.CHANNEL_INDEX))
+               COMPLETE_COORDS,
+               FRAME_INDEX,
+               POSITION_INDEX,
+               SLICE_INDEX,
+               CHANNEL_INDEX))
          {
             key.storeInGsonObject(pmap, jo);
          }
-         return jo;
       }
    }
 
@@ -325,9 +330,9 @@ public abstract class NonPropertyMapJSONFormats {
       public PropertyMap fromGson(JsonElement je) {
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (PropertyKey key : ImmutableList.of(
-               PropertyKey.WIDTH,
-               PropertyKey.HEIGHT,
-               PropertyKey.PIXEL_TYPE))
+               WIDTH,
+               HEIGHT,
+               PIXEL_TYPE))
          {
             key.extractFromGsonObject(je.getAsJsonObject(), builder);
          }
@@ -335,28 +340,30 @@ public abstract class NonPropertyMapJSONFormats {
       }
 
       @Override
-      public JsonElement toGson(PropertyMap pmap) {
-         JsonObject jo = new JsonObject();
+      public void addToGson(JsonObject jo, PropertyMap pmap) {
          for (PropertyKey key : ImmutableList.of(
-               PropertyKey.WIDTH,
-               PropertyKey.HEIGHT,
-               PropertyKey.PIXEL_TYPE))
+               WIDTH,
+               HEIGHT,
+               PIXEL_TYPE))
          {
             key.storeInGsonObject(pmap, jo);
          }
-         return jo;
       }
    }
 
    private static final class Annotation extends NonPropertyMapJSONFormats {
       @Override
       public PropertyMap fromGson(JsonElement je) {
+         // TODO parse 2.0beta format
+         return PropertyMaps.emptyPropertyMap();
       }
    }
 
    private static final class DisplaySettings extends NonPropertyMapJSONFormats {
       @Override
       public PropertyMap fromGson(JsonElement je) {
+         // TODO parse 1.4 and 2.0beta formats
+         return PropertyMaps.emptyPropertyMap();
       }
    }
 }

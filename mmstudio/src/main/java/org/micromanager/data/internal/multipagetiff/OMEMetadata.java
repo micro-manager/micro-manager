@@ -24,6 +24,7 @@ package org.micromanager.data.internal.multipagetiff;
 // Note: java.awt.Color and ome.xml.model.primitives.Color used with
 // fully-qualified class names
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TreeMap;
@@ -40,6 +41,7 @@ import ome.xml.model.primitives.PositiveInteger;
 import ome.xml.model.primitives.Timestamp;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.PropertyMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -100,8 +102,7 @@ public final class OMEMetadata {
       metadata_.setPixelsSizeT(new PositiveInteger(numFrames), seriesIndex);
    }
 
-   private void startSeriesMetadata(JSONObject firstImageTags, int seriesIndex, String baseFileName) 
-           throws JSONException, MMScriptException {
+   private void startSeriesMetadata(int seriesIndex, String baseFileName) {
       Indices indices = new Indices();
       indices.planeIndex_ = 0;
       indices.tiffDataIndex_ = 0;
@@ -175,25 +176,16 @@ public final class OMEMetadata {
       metadata_.setImageDescription(CommentsHelper.getSummaryComment(
                mptStorage_.getDatastore()), seriesIndex);
 
-      // TODO these don't necessarily have anything to do with how the user is
-      // viewing data in Micro-Manager.
-      DisplaySettings displaySettings = DefaultDisplaySettings.getStandardSettings(DisplayController.DEFAULT_SETTINGS_KEY);
-      String[] names = mptStorage_.getSummaryMetadata().getChannelNames();
-      java.awt.Color[] colors = displaySettings.getChannelColors();
+      // TODO Also save channel colors (need display settings...)
+      List<String> names = mptStorage_.getSummaryMetadata().getChannelNameList();
       for (int channel = 0; channel < mptStorage_.getIntendedSize(Coords.CHANNEL);
             channel++) {
-         if (colors != null && colors.length > channel) {
-            java.awt.Color color = colors[channel];
-            metadata_.setChannelColor(new ome.xml.model.primitives.Color(
-                     color.getRed(), color.getGreen(), color.getBlue(), 1),
-                  seriesIndex, channel);
-         }
-         if (names != null && names.length > channel) {
-            metadata_.setChannelName(names[channel], seriesIndex, channel);
+         if (names != null && names.size() > channel) {
+            metadata_.setChannelName(names.get(channel), seriesIndex, channel);
          }
       }
    }
-   
+
    /*
     * Method called when numC*numZ*numT != total number of planes
     */
@@ -266,27 +258,22 @@ public final class OMEMetadata {
       }
    }
 
-   public void addImageTagsToOME(JSONObject tags, int ifdCount, String baseFileName, String currentFileName,
-           String uuid)
-           throws JSONException, MMScriptException {
-      int position;
-      try {
-         position = MDUtils.getPositionIndex(tags);
-      } catch (Exception e) {
-         position = 0;
-      }
+   public void addImageTagsToOME(Coords coords, Metadata metadata, int ifdCount,
+         String baseFileName, String currentFileName, String uuid) {
+      int position = coords.getStagePosition();
       if (!seriesIndices_.containsKey(position)) {
-         startSeriesMetadata(tags, position, baseFileName);
+         startSeriesMetadata(position, baseFileName);
          try {
             //Add these tags in only once, but need to get them from image rather than summary metadata
-            setOMEDetectorMetadata(tags);
-            if (MDUtils.hasImageTime(tags)) {
+            setOMEDetectorMetadata(metadata);
+
+            String imageTime = metadata.getReceivedTime();
+            if (imageTime != null) {
                // Alas, the metadata "Time" field is in one of two formats.
-               String imageDate = MDUtils.getImageTime(tags);
-               String reformattedDate = DateTools.formatDate(imageDate,
+               String reformattedDate = DateTools.formatDate(imageTime,
                        "yyyy-MM-dd HH:mm:ss Z", true);
                if (reformattedDate == null) {
-                  reformattedDate = DateTools.formatDate(imageDate,
+                  reformattedDate = DateTools.formatDate(imageTime,
                           "yyyy-MM-dd E HH:mm:ss Z", true);
                }
                if (reformattedDate != null) {
@@ -302,120 +289,115 @@ public final class OMEMetadata {
       Indices indices = seriesIndices_.get(position);
 
       //Required tags: Channel, slice, and frame index
-      try {
-         int slice = MDUtils.getSliceIndex(tags);
-         int frame = MDUtils.getFrameIndex(tags);
-         int channel = MDUtils.getChannelIndex(tags);
+      int slice = coords.getZSlice();
+      int frame = coords.getTimePoint();
+      int channel = coords.getChannel();
 
-         // ifdCount is 0 when a new file started, tiff data plane count is 0 at a new position
-         metadata_.setTiffDataFirstZ(new NonNegativeInteger(slice), position, indices.tiffDataIndex_);         
-         metadata_.setTiffDataFirstC(new NonNegativeInteger(channel), position, indices.tiffDataIndex_);
-         metadata_.setTiffDataFirstT(new NonNegativeInteger(frame), position, indices.tiffDataIndex_);
-         metadata_.setTiffDataIFD(new NonNegativeInteger(ifdCount), position, indices.tiffDataIndex_);
-         metadata_.setUUIDFileName(currentFileName, position, indices.tiffDataIndex_);
-         metadata_.setUUIDValue(uuid, position, indices.tiffDataIndex_);
-         tiffDataIndexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), indices.tiffDataIndex_);
-         metadata_.setTiffDataPlaneCount(new NonNegativeInteger(1), position, indices.tiffDataIndex_);
+      // ifdCount is 0 when a new file started, tiff data plane count is 0 at a new position
+      metadata_.setTiffDataFirstZ(new NonNegativeInteger(slice), position, indices.tiffDataIndex_);         
+      metadata_.setTiffDataFirstC(new NonNegativeInteger(channel), position, indices.tiffDataIndex_);
+      metadata_.setTiffDataFirstT(new NonNegativeInteger(frame), position, indices.tiffDataIndex_);
+      metadata_.setTiffDataIFD(new NonNegativeInteger(ifdCount), position, indices.tiffDataIndex_);
+      metadata_.setUUIDFileName(currentFileName, position, indices.tiffDataIndex_);
+      metadata_.setUUIDValue(uuid, position, indices.tiffDataIndex_);
+      tiffDataIndexMap_.put(MDUtils.generateLabel(channel, slice, frame, position), indices.tiffDataIndex_);
+      metadata_.setTiffDataPlaneCount(new NonNegativeInteger(1), position, indices.tiffDataIndex_);
 
-         metadata_.setPlaneTheZ(new NonNegativeInteger(slice), position, indices.planeIndex_);
-         metadata_.setPlaneTheC(new NonNegativeInteger(channel), position, indices.planeIndex_);
-         metadata_.setPlaneTheT(new NonNegativeInteger(frame), position, indices.planeIndex_);
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Image Metadata missing ChannelIndex, SliceIndex, or FrameIndex");
-      } catch (Exception e) {
-         ReportingUtils.logError("Couldn't add to OME metadata");
-      }
+      metadata_.setPlaneTheZ(new NonNegativeInteger(slice), position, indices.planeIndex_);
+      metadata_.setPlaneTheC(new NonNegativeInteger(channel), position, indices.planeIndex_);
+      metadata_.setPlaneTheT(new NonNegativeInteger(frame), position, indices.planeIndex_);
 
       //Optional tags
-      try {
-
-         if (MDUtils.hasExposureMs(tags)) {
-            metadata_.setPlaneExposureTime(
-                  new Time(MDUtils.getExposureMs(tags), UNITS.MS),
-                  position, indices.planeIndex_);
+      Double exposureMs = metadata.getExposureMs();
+      if (exposureMs != null) {
+         metadata_.setPlaneExposureTime(new Time(exposureMs, UNITS.MS),
+               position, indices.planeIndex_);
+      }
+      Double xPositionUm = metadata.getXPositionUm();
+      if (xPositionUm != null) {
+         final Length xPosition =
+               new Length(xPositionUm, UNITS.MICROM);
+         metadata_.setPlanePositionX(xPosition, position, indices.planeIndex_);
+         if (indices.planeIndex_ == 0) { //should be set at start, but dont have position coordinates then
+            metadata_.setStageLabelX(xPosition, position);
          }
-         if (MDUtils.hasXPositionUm(tags)) {
-            final Length xPosition =
-                  new Length(MDUtils.getXPositionUm(tags), UNITS.MICROM);
-            metadata_.setPlanePositionX(xPosition, position,
-                  indices.planeIndex_);
-            if (indices.planeIndex_ == 0) { //should be set at start, but dont have position coordinates then
-               metadata_.setStageLabelX(xPosition, position);
-            }
+      }
+      Double yPositionUm = metadata.getYPositionUm();
+      if (yPositionUm != null) {
+         final Length yPosition =
+               new Length(yPositionUm, UNITS.MICROM);
+         metadata_.setPlanePositionY(yPosition, position, indices.planeIndex_);
+         if (indices.planeIndex_ == 0) {
+            metadata_.setStageLabelY(yPosition, position);
          }
-         if (MDUtils.hasYPositionUm(tags)) {
-            final Length yPosition =
-                  new Length(MDUtils.getYPositionUm(tags), UNITS.MICROM);
-            metadata_.setPlanePositionY(yPosition, position,
-                  indices.planeIndex_);
-            if (indices.planeIndex_ == 0) {
-               metadata_.setStageLabelY(yPosition, position);
-            }
-         }
-         if (MDUtils.hasZPositionUm(tags)) {
-            metadata_.setPlanePositionZ(
-                  new Length(MDUtils.getZPositionUm(tags), UNITS.MICROM),
-                  position, indices.planeIndex_);
-         }
-         if (MDUtils.hasElapsedTimeMs(tags)) {
-            metadata_.setPlaneDeltaT(
-                  new Time(MDUtils.getElapsedTimeMs(tags), UNITS.MS),
-                  position, indices.planeIndex_);
-         }
-         if (MDUtils.hasPositionName(tags)) {
-            metadata_.setStageLabelName(
-                    MDUtils.getPositionName(tags), position);
-         }
-
-      } catch (JSONException e) {
-         ReportingUtils.logError("Problem adding tags to OME Metadata");
+      }
+      Double zPositionUm = metadata.getZPositionUm();
+      if (zPositionUm != null) {
+         metadata_.setPlanePositionZ(new Length(zPositionUm, UNITS.MICROM),
+               position, indices.planeIndex_);
+      }
+      Double elapsedTimeMs = metadata.getElapsedTimeMs();
+      if (elapsedTimeMs != null) {
+         metadata_.setPlaneDeltaT(new Time(elapsedTimeMs, UNITS.MS),
+               position, indices.planeIndex_);
+      }
+      String positionName = metadata.getPositionName();
+      if (positionName != null) {
+         metadata_.setStageLabelName(positionName, position);
       }
 
       indices.planeIndex_++;
       indices.tiffDataIndex_++;
    }
 
-   private void setOMEDetectorMetadata(JSONObject tags) throws JSONException {
-      if (!MDUtils.hasCoreCamera(tags)) {
+   private void setOMEDetectorMetadata(Metadata metadata) throws JSONException {
+      PropertyMap scopeData = metadata.getScopeData();
+      if (scopeData == null || !scopeData.containsString("Core-Camera")) {
          return;
       }
-      String coreCam = MDUtils.getCoreCamera(tags);
-      String[] cameras;
-      if (tags.has(coreCam + "-Physical Camera 1")) {       //Multicam mode
-         int numCams = 1;
-         if (!tags.getString(coreCam + "-Physical Camera 3").equals("Undefined")) {
-            numCams = 3;
-         } else if (!tags.getString(coreCam + "-Physical Camera 2").equals("Undefined")) {
-            numCams = 2;
+      String coreCam = scopeData.getString("Core-Camera", null);
+      List<String> cameras = new ArrayList<String>();
+      // TODO This is really fragile and incorrect!
+      for (int i = 0; i < 32; ++i) {
+         String multiCamKey = coreCam + "-Physical Camera " + i;
+         if (scopeData.containsKey(multiCamKey)) {
+            String physCam = scopeData.getString(multiCamKey, null);
+            if ("Undefined".equals(physCam)) {
+               continue;
+            }
+            cameras.add(physCam);
          }
-         cameras = new String[numCams];
-         for (int i = 0; i < numCams; i++) {
-            cameras[i] = tags.getString(coreCam + "-Physical Camera " + (1 + i));
+         else {
+            break;
          }
-      } else { //Single camera mode
-         cameras = new String[1];
-         cameras[0] = coreCam;
+      }
+      if (cameras.isEmpty()) {
+         cameras.add(coreCam);
       }
 
-      for (int detectorIndex = 0; detectorIndex < cameras.length; detectorIndex++) {
-         String camera = cameras[detectorIndex];
+      for (int i = 0; i < cameras.size(); i++) {
+         String camera = cameras.get(i);
          String detectorID = MetadataTools.createLSID(camera);
-         //Instrument index, detector index
-         metadata_.setDetectorID(detectorID, 0, detectorIndex);
-         if (tags.has(camera + "-Name") && !tags.isNull(camera + "-Name")) {
-            metadata_.setDetectorManufacturer(tags.getString(camera + "-Name"), 0, detectorIndex);
-         }
-         if (tags.has(camera + "-CameraName") && !tags.isNull(camera + "-CameraName")) {
-            metadata_.setDetectorModel(tags.getString(camera + "-CameraName"), 0, detectorIndex);
-         }
-         if (tags.has(camera + "-Offset") && !tags.isNull(camera + "-Offset")) {
-            metadata_.setDetectorOffset(Double.parseDouble(tags.getString(camera + "-Offset")), 0, detectorIndex);
-         }
-         if (tags.has(camera + "-CameraID") && !tags.isNull(camera + "-CameraID")) {
-            metadata_.setDetectorSerialNumber(tags.getString(camera + "-CameraID"), 0, detectorIndex);
-         }
 
+         //Instrument index, detector index
+         metadata_.setDetectorID(detectorID, 0, i);
+
+         String name = scopeData.getString(camera + "-Name", "");
+         if (!name.isEmpty()) {
+            metadata_.setDetectorManufacturer(name, 0, i);
+         }
+         String cameraName = scopeData.getString(camera + "-CameraName", "");
+         if (!cameraName.isEmpty()) {
+            metadata_.setDetectorModel(cameraName, 0, i);
+         }
+         String offset = scopeData.getValueAsString(camera + "-Offset", "");
+         if (!offset.isEmpty()) {
+            metadata_.setDetectorOffset(Double.parseDouble(offset), 0, i);
+         }
+         String cameraId = scopeData.getString(camera + "-CameraID", "");
+         if (!cameraId.isEmpty()) {
+            metadata_.setDetectorSerialNumber(cameraId, 0, i);
+         }
       }
    }
 }
-

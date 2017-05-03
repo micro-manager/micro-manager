@@ -146,4 +146,14 @@ public final class DefaultAnnotation implements Annotation {
          String filename) {
       return getFile(store, filename).exists();
    }
+
+   @Override
+   public String getTag() {
+      return getFilename();
+   }
+
+   @Override
+   public Datastore getDatastore() {
+      return store_;
+   }
 }

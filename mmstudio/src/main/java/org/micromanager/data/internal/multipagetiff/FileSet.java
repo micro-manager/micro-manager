@@ -27,12 +27,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.UUID;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.micromanager.PropertyMap;
 import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -62,7 +64,7 @@ class FileSet {
    int currentFrame_ = 0;
 
    
-   public FileSet(JSONObject firstImageTags, StorageMultipageTiff masterStorage,
+   public FileSet(Image firstImage, StorageMultipageTiff masterStorage,
          OMEMetadata omeMetadata,
          boolean splitByXYPosition, boolean separateMetadataFile)
       throws IOException {
@@ -73,19 +75,15 @@ class FileSet {
       separateMetadataFile_ = separateMetadataFile;
 
       //get file path and name
-      baseFilename_ = createBaseFilename(firstImageTags);
+      baseFilename_ = createBaseFilename(firstImage);
       currentTiffFilename_ = baseFilename_ + ".ome.tif";
       currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
       //make first writer
       tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
-            firstImageTags, currentTiffFilename_));
+            firstImage, currentTiffFilename_));
 
-      try {
-         if (separateMetadataFile_) {
-            startMetadataFile();
-         }
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Problem with summary metadata");
+      if (separateMetadataFile_) {
+         startMetadataFile();
       }
    }
 
@@ -105,15 +103,11 @@ class FileSet {
       if (finished_) {
          return;
       }
-      
+
       if (separateMetadataFile_) {
-         try {
-            finishMetadataFile();
-         } catch (JSONException ex) {
-            ReportingUtils.logError("Problem finishing metadata.txt");
-         }
+         finishMetadataFile();
       }
-      
+
       //only need to finish last one here because previous ones in set are finished as they fill up with images
       tiffWriters_.getLast().finish();
       //close all
@@ -142,7 +136,7 @@ class FileSet {
       return currentFrame_;
    }
 
-   public void writeImage(TaggedImage img) throws IOException {
+   public void writeImage(Image img) throws IOException {
       //check if current writer is out of space, if so, make a new one
       if (!tiffWriters_.getLast().hasSpaceToWrite(img, SPACE_FOR_PARTIAL_OME_MD)) {
          //write index map here but still need to call close() at end of acq
@@ -152,22 +146,20 @@ class FileSet {
          currentTiffUUID_ = "urn:uuid:" + UUID.randomUUID().toString();
          ifdCount_ = 0;
          tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
-               img.tags, currentTiffFilename_));
+               img, currentTiffFilename_));
       }      
 
       //Add filename to image tags
-      try {
-         img.tags.put("FileName", currentTiffFilename_);
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Error adding filename to metadata");
-      }
+      img = img.copyWithMetadata(img.getMetadata().
+            copyBuilderPreservingUUID().fileName(currentTiffFilename_).
+            build());
 
       //write image
-      tiffWriters_.getLast().writeImage(img);  
+      tiffWriters_.getLast().writeImage(img);
 
       if (expectedImageOrder_) {
          if (splitByXYPosition_) {
-            checkForExpectedImageOrder(img.tags);
+            checkForExpectedImageOrder(img.getCoords());
          } else {
             expectedImageOrder_ = false;
          }
@@ -176,73 +168,62 @@ class FileSet {
       //write metadata
       try {
          //Check if missing planes need to be added OME metadata
-         int frame = MDUtils.getFrameIndex(img.tags);
-         int position;
-         try {
-            position = MDUtils.getPositionIndex(img.tags);
-         } catch (Exception e) {
-            position = 0;
-         }
+         int frame = img.getCoords().getTimePoint();
+         int position = img.getCoords().getStagePosition();
          if (frame > currentFrame_) {
             //check previous frame for missing IFD's in OME metadata
             omeMetadata_.fillInMissingTiffDatas(currentFrame_, position);
          }
          //reset in case acquisitin order is position then time and all files not split by position
          currentFrame_ = frame;
-         
-         omeMetadata_.addImageTagsToOME(img.tags, ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
+
+         omeMetadata_.addImageTagsToOME(img.getCoords(), img.getMetadata(),
+               ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
       } catch (Exception ex) {
          ReportingUtils.logError(ex, "Problem writing OME metadata");
       }
-   
-      try {
-         int frame = MDUtils.getFrameIndex(img.tags);
-         masterStorage_.updateLastFrame(frame);
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Couldn't find frame index in image tags");
-      }   
-      try {
-         int pos = MDUtils.getPositionIndex(img.tags);
-         masterStorage_.updateLastPosition(pos);
-      } catch (JSONException ex) {
-         ReportingUtils.showError("Couldn't find position index in image tags");
-      }  
-      
-      
-      try {
-         if (separateMetadataFile_) {
-            writeToMetadataFile(img.tags);
-         }
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Problem with image metadata");
+
+      int frame = img.getCoords().getTimePoint();
+      masterStorage_.updateLastFrame(frame);
+      int pos = img.getCoords().getStagePosition();
+      masterStorage_.updateLastPosition(pos);
+
+      if (separateMetadataFile_) {
+         writeToMetadataFile(img.getCoords(), img.getMetadata());
       }
       ifdCount_++;
    }
 
-   private void writeToMetadataFile(JSONObject md) throws JSONException {
+   private void writeToMetadataFile(Coords coords, Metadata md) {
       try {
-         mdWriter_.write(",\n\"FrameKey-" + MDUtils.getFrameIndex(md)
-                 + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md) + "\": ");
-         mdWriter_.write(md.toString(2));
+         mdWriter_.write(",\n\"FrameKey-" + coords.getTimePoint() +
+               "-" + coords.getChannel() + "-" + coords.getZSlice() + "\": ");
+         PropertyMap pmap = ((DefaultMetadata) md).toPropertyMap();
+         mdWriter_.write(NonPropertyMapJSONFormats.metadata().toJSON(pmap));
       } catch (IOException ex) {
          ReportingUtils.logError("Problem writing to metadata.txt file");
       }
    }
 
-   private void startMetadataFile() throws JSONException {
-         metadataFileFullPath_ = masterStorage_.getDiskLocation() + "/" +
+   private void startMetadataFile() {
+      metadataFileFullPath_ = masterStorage_.getDiskLocation() + "/" +
             baseFilename_ + "_metadata.txt";
-         try {
-            mdWriter_ = new FileWriter(metadataFileFullPath_);
-            mdWriter_.write("{" + "\n");
-            mdWriter_.write("\"Summary\": ");
-            mdWriter_.write(((DefaultSummaryMetadata) masterStorage_.getSummaryMetadata()).toJSON().toString(2));
-         } catch (IOException ex) {
-            ReportingUtils.logError("Problem creating metadata.txt file");
-         }
+      PropertyMap summaryPmap = ((DefaultSummaryMetadata) masterStorage_.
+            getSummaryMetadata()).toPropertyMap();
+      String summaryJSON = NonPropertyMapJSONFormats.summaryMetadata().toJSON(
+            summaryPmap);
+      try {
+         mdWriter_ = new FileWriter(metadataFileFullPath_);
+         mdWriter_.write("{" + "\n");
+         mdWriter_.write("\"Summary\": ");
+         mdWriter_.write(summaryJSON);
+      }
+      catch (IOException ex) {
+         ReportingUtils.logError("Problem creating metadata.txt file");
+      }
    }
 
-   private void finishMetadataFile() throws JSONException {
+   private void finishMetadataFile() {
       try {
          mdWriter_.write("\n}\n");
          mdWriter_.close();
@@ -251,7 +232,7 @@ class FileSet {
       }
    }
 
-   private String createBaseFilename(JSONObject firstImageTags) {
+   private String createBaseFilename(Image firstImage) {
       String baseFilename;
       String prefix = masterStorage_.getSummaryMetadata().getPrefix();
       if (prefix == null || prefix.length() == 0) {
@@ -261,15 +242,16 @@ class FileSet {
       }
 
       if (splitByXYPosition_) {
-         try {
-            if (MDUtils.hasPositionName(firstImageTags)) {
-               baseFilename += "_" + MDUtils.getPositionName(firstImageTags);
-            }
-            else {
-               baseFilename += "_" + "Pos" + MDUtils.getPositionIndex(firstImageTags);
-            }
-         } catch (JSONException ex) {
-            ReportingUtils.showError("No position name or index in metadata");
+         String posName = firstImage.getMetadata().getPositionName();
+         int posIndex = firstImage.getCoords().getStagePosition();
+         if (posIndex == -1) {
+            posIndex = 0;
+         }
+         if (posName != null) {
+            baseFilename += "_" + posName;
+         }
+         else {
+            baseFilename += "_" + "Pos" + posIndex;
          }
       }
       return baseFilename;
@@ -297,8 +279,7 @@ class FileSet {
     * Completes the current time point of an aborted acquisition with blank
     * images, so that it can be opened correctly by ImageJ/BioForamts
     */
-   private void completeFrameWithBlankImages(int frame) throws JSONException, MMScriptException {
-      
+   private void completeFrameWithBlankImages(int frame) {
       int numFrames = masterStorage_.getIntendedSize(Coords.TIME);
       int numSlices = masterStorage_.getIntendedSize(Coords.Z);
       int numChannels = masterStorage_.getIntendedSize(Coords.CHANNEL);
@@ -325,13 +306,9 @@ class FileSet {
          try {
             for (Coords coords : lastFrameCoords) {
                tiffWriters_.getLast().writeBlankImage();
-               JSONObject dummyTags = new JSONObject();
-               int channel = coords.getChannel();
-               int slice = coords.getZ();
-               MDUtils.setChannelIndex(dummyTags, channel);
-               MDUtils.setFrameIndex(dummyTags, frame);
-               MDUtils.setSliceIndex(dummyTags, slice);
-               omeMetadata_.addImageTagsToOME(dummyTags, ifdCount_, baseFilename_, currentTiffFilename_, currentTiffUUID_);
+               Metadata dummyMD = new DefaultMetadata.Builder().build();
+               omeMetadata_.addImageTagsToOME(coords, dummyMD, ifdCount_,
+                     baseFilename_, currentTiffFilename_, currentTiffUUID_);
             }
          } catch (IOException ex) {
             ReportingUtils.logError("problem writing dummy image");
@@ -339,47 +316,41 @@ class FileSet {
       }
    }
    
-   void checkForExpectedImageOrder(JSONObject tags) {
-      try {
-         //Determine next expected indices
-         int channel = MDUtils.getChannelIndex(tags), frame = MDUtils.getFrameIndex(tags),
-                 slice = MDUtils.getSliceIndex(tags);
-         if (slice != nextExpectedSlice_ || channel != nextExpectedChannel_ ||
-                 frame != nextExpectedFrame_) {
-            expectedImageOrder_ = false;
-         }
-         //Figure out next expected indices
-         boolean areSlicesFirst = true;
-         if (masterStorage_.getSummaryMetadata().getAxisOrder() != null) {
-            List<String> order = Arrays.asList(masterStorage_.getSummaryMetadata().getAxisOrder());
-            areSlicesFirst = order.indexOf(Coords.Z) < order.indexOf(Coords.CHANNEL);
-         }
-         if (areSlicesFirst) {
-            nextExpectedSlice_ = slice + 1;
-            if (nextExpectedSlice_ == masterStorage_.getIntendedSize(Coords.Z)) {
-               nextExpectedSlice_ = 0;
-               nextExpectedChannel_ = channel + 1;
-               if (nextExpectedChannel_ == masterStorage_.getIntendedSize(Coords.CHANNEL)) {
-                  nextExpectedChannel_ = 0;
-                  nextExpectedFrame_ = frame + 1;
-               }
-            }
-         } else {
+   void checkForExpectedImageOrder(Coords coords) {
+      //Determine next expected indices
+      int channel = coords.getChannel();
+      int frame = coords.getTimePoint();
+      int slice = coords.getZSlice();
+      if (slice != nextExpectedSlice_ || channel != nextExpectedChannel_ ||
+              frame != nextExpectedFrame_) {
+         expectedImageOrder_ = false;
+      }
+      //Figure out next expected indices
+      boolean areSlicesFirst = true;
+      List<String> order = masterStorage_.getSummaryMetadata().getOrderedAxes();
+      if (order != null) {
+         areSlicesFirst = order.indexOf(Coords.Z) < order.indexOf(Coords.CHANNEL);
+      }
+      if (areSlicesFirst) {
+         nextExpectedSlice_ = slice + 1;
+         if (nextExpectedSlice_ == masterStorage_.getIntendedSize(Coords.Z)) {
+            nextExpectedSlice_ = 0;
             nextExpectedChannel_ = channel + 1;
             if (nextExpectedChannel_ == masterStorage_.getIntendedSize(Coords.CHANNEL)) {
                nextExpectedChannel_ = 0;
-               nextExpectedSlice_ = slice + 1;
-               if (nextExpectedSlice_ == masterStorage_.getIntendedSize(Coords.Z)) {
-                  nextExpectedSlice_ = 0;
-                  nextExpectedFrame_ = frame + 1;
-               }
+               nextExpectedFrame_ = frame + 1;
             }
          }
-      } catch (JSONException ex) {
-         ReportingUtils.logError("Couldnt find channel, slice, or frame index in Image tags");
-         expectedImageOrder_ = false;
+      } else {
+         nextExpectedChannel_ = channel + 1;
+         if (nextExpectedChannel_ == masterStorage_.getIntendedSize(Coords.CHANNEL)) {
+            nextExpectedChannel_ = 0;
+            nextExpectedSlice_ = slice + 1;
+            if (nextExpectedSlice_ == masterStorage_.getIntendedSize(Coords.Z)) {
+               nextExpectedSlice_ = 0;
+               nextExpectedFrame_ = frame + 1;
+            }
+         }
       }
    }
-
-}    
-
+}

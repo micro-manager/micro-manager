@@ -160,5 +160,4 @@ public interface DataProvider extends Closeable {
     * Datastore's event bus
     */
    void unregisterForEvents(Object obj);
-
 }

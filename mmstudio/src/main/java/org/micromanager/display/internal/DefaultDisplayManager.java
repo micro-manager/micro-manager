@@ -45,7 +45,6 @@ import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
-import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.inspector.internal.InspectorCollection;
 import org.micromanager.display.inspector.internal.InspectorController;
 import org.micromanager.events.DatastoreClosingEvent;

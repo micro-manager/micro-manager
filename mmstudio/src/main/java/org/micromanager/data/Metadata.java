@@ -79,6 +79,7 @@ public interface Metadata {
       @Override Builder xPositionUm(Double xPositionUm);
       @Override Builder yPositionUm(Double yPositionUm);
       @Override Builder zPositionUm(Double zPositionUm);
+      Builder fileName(String filename);
    }
 
    @Deprecated
@@ -251,4 +252,10 @@ public interface Metadata {
     * @return Unique identifier
     */
    UUID getUUID();
+
+   /**
+    * The name of the file from which the image was loaded, if applicable.
+    * @return
+    */
+   String getFileName();
 }

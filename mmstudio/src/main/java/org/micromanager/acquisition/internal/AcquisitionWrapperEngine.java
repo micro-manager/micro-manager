@@ -19,7 +19,6 @@ import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
-import org.micromanager.data.internal.IncomingImageEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
@@ -1049,13 +1048,6 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public String getComment() {
        return this.comment_;
-   }
-
-   @Subscribe
-   public void onAcquisitionSleep(AcquisitionSleepEvent event) {
-      if (curStore_ != null) {
-         curStore_.publishEvent(new IncomingImageEvent(event.getWakeTime()));
-      }
    }
 
    @Subscribe

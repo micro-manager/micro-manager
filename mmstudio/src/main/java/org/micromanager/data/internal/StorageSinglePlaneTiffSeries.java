@@ -20,7 +20,14 @@
 
 package org.micromanager.data.internal;
 
+import com.google.common.base.Splitter;
 import com.google.common.eventbus.Subscribe;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.io.Opener;
@@ -32,6 +39,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,21 +47,22 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.micromanager.PropertyMap;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.propertymap.MM1JSONSerializer;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.JavaUtils;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
-import org.micromanager.internal.utils.VersionUtils;
 
 /**
  * This class provides Image storage backed by a file system in which each
@@ -64,7 +73,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
          Arrays.asList(Coords.CHANNEL, Coords.TIME, Coords.Z,
             Coords.STAGE_POSITION));
-   private DefaultDatastore store_;
+   private final DefaultDatastore store_;
    private final String dir_;
    private boolean firstElement_;
    private boolean amLoading_;
@@ -165,8 +174,20 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             }
          }
 
-         saveImageFile(image, dir_, fileName);
-         writeFrameMetadata(image);
+         JsonObject jo = new JsonObject();
+         NonPropertyMapJSONFormats.imageFormat().addToGson(jo,
+               ((DefaultImage) image).formatToPropertyMap());
+         NonPropertyMapJSONFormats.coords().addToGson(jo,
+               ((DefaultCoords) image.getCoords()).toPropertyMap());
+         NonPropertyMapJSONFormats.metadata().addToGson(jo,
+               ((DefaultMetadata) image.getMetadata()).toPropertyMap());
+
+         Gson gson = new GsonBuilder().disableHtmlEscaping().
+               setPrettyPrinting().create();
+         String metadataJSON = gson.toJson(jo);
+
+         saveImageFile(image, dir_, fileName, metadataJSON);
+         writeFrameMetadata(image, metadataJSON);
       }
 
       Coords coords = image.getCoords();
@@ -189,8 +210,6 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       isDatasetWritable_ = false;
    }
 
-   // TODO: consider caching frequently-requested images to cut down on
-   // disk accesses.
    @Override
    public Image getImage(Coords coords) {
       if (coordsToFilename_.get(coords) == null) {
@@ -209,26 +228,12 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          // Assemble an Image out of the pixels and JSON-ified metadata.
          ImageProcessor proc = imp.getProcessor();
          Metadata metadata = null;
-         int width = -1;
-         int height = -1;
          if (imp.getProperty("Info") != null) {
             try {
-               JSONObject jsonMeta = new JSONObject((String) imp.getProperty("Info"));
-               metadata = DefaultMetadata.legacyFromJSON(jsonMeta);
-               if (summaryMetadata_.getMetadataVersion() != null &&
-                     metadata.getUserData() == null &&
-                     VersionUtils.isOlderVersion(
-                        summaryMetadata_.getMetadataVersion(), "11")) {
-                  ReportingUtils.logDebugMessage("Importing \"flat\" miscellaneous metadata into the userData structure");
-                  // These older versions don't have a separate location for
-                  // the scope data, so we just stuff all unused tags into
-                  // the userData section for lack of any better place to
-                  // put them.
-                  metadata = metadata.copy().userData(
-                        MDUtils.extractUserData(jsonMeta, null)).build();
-               }
-               width = MDUtils.getWidth(jsonMeta);
-               height = MDUtils.getHeight(jsonMeta);
+               String metadataJSON = (String) imp.getProperty("Info");
+               metadata = DefaultMetadata.fromPropertyMap(
+                     NonPropertyMapJSONFormats.metadata().
+                           fromJSON(metadataJSON));
             }
             catch (Exception e) {
                ReportingUtils.logError(e, "Unable to extract image dimensions from JSON metadata");
@@ -239,9 +244,10 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             ReportingUtils.logError("Unable to reconstruct metadata for image at " + coords);
          }
 
-         Object pixels = proc.getPixels();
-         int bytesPerPixel = -1;
-         int numComponents = -1;
+         int width = proc.getWidth();
+         int height = proc.getHeight();
+         int bytesPerPixel;
+         int numComponents;
          if (proc instanceof ByteProcessor) {
             bytesPerPixel = 1;
             numComponents = 1;
@@ -258,6 +264,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             ReportingUtils.logError("Received an ImageProcessor of unrecognized type " + proc);
             return null;
          }
+         Object pixels = proc.getPixels();
          DefaultImage result = new DefaultImage(pixels, width, height,
                bytesPerPixel, numComponents, coords, metadata);
          return result;
@@ -269,7 +276,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public Image getAnyImage() {
-      if (coordsToFilename_.size() == 0) {
+      if (coordsToFilename_.isEmpty()) {
          return null;
       }
       Coords coords = new ArrayList<Coords>(coordsToFilename_.keySet()).get(0);
@@ -388,22 +395,24 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       Collections.sort(orderedChannelNames_);
    }
 
-   private void writeFrameMetadata(Image image) {
+   private void writeFrameMetadata(Image image, String metadataJSON) {
       try {
-         String title = "Coords-" + createFileName(image.getCoords());
+         String filename = createFileName(image.getCoords());
+         String coordsKey = "Coords-" + filename;
          // Use 0 for situations where there's no index information.
          int pos = Math.max(0, image.getCoords().getStagePosition());
-         JSONObject coords = new JSONObject();
-         for (String axis : image.getCoords().getAxes()) {
-            coords.put(axis, image.getCoords().getIndex(axis));
-         }
-         writeJSONMetadata(pos, coords, title);
+         String coordsJSON = ((DefaultCoords) image.getCoords()).
+               toPropertyMap().toJSON();
+         writeJSONMetadata(pos, coordsJSON, coordsKey);
+
+         String mdKey = "Metadata-" + filename;
+         writeJSONMetadata(pos, metadataJSON, mdKey);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
    }
 
-   private void writeJSONMetadata(int pos, JSONObject metadata, String title) {
+   private void writeJSONMetadata(int pos, String json, String title) {
       try {
          Writer metadataStream = metadataStreams_.get(pos);
          if (metadataStream == null) {
@@ -413,7 +422,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             metadataStream.write(",\n");
          }
          metadataStream.write("\"" + title + "\": ");
-         metadataStream.write(metadata.toString(2));
+         metadataStream.write(json);
          metadataStream.flush();
          firstElement_ = false;
       } catch (Exception e) {
@@ -421,7 +430,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       }
    }
 
-   private void saveImageFile(Image image, String path, String tiffFileName) {
+   private void saveImageFile(Image image, String path, String tiffFileName,
+         String metadataJSON) {
       ImagePlus imp;
       try {
          ImageProcessor ip;
@@ -450,7 +460,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          else {
             throw new IllegalArgumentException(String.format("Unexpected image format with %d bytes per pixel and %d components", bytesPerPixel, numComponents));
          }
-         saveImageProcessor(proc, image, path, tiffFileName);
+         saveImageProcessor(proc, image, path, tiffFileName, metadataJSON);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -458,14 +468,14 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
 
    private void saveImageProcessor(ImageProcessor ip, Image image,
-         String path, String tiffFileName) {
+         String path, String tiffFileName, String metadataJSON) {
       // TODO: why is this check here?
       if (ip == null) {
          return;
       }
       ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
       applyPixelSizeCalibration(imp, image.getMetadata());
-      saveImagePlus(imp, image, path, tiffFileName);
+      saveImagePlus(imp, image, path, tiffFileName, metadataJSON);
    }
 
    private void applyPixelSizeCalibration(final ImagePlus ip,
@@ -476,11 +486,9 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          cal.setUnit("um");
          cal.pixelWidth = pixSizeUm;
          cal.pixelHeight = pixSizeUm;
-         String intMs = "Interval_ms";
          if (summaryMetadata_.getWaitInterval() != null) {
             cal.frameInterval = summaryMetadata_.getWaitInterval() / 1000.0;
          }
-         String zStepUm = "z-step_um";
          if (summaryMetadata_.getZStepUm() != null) {
             cal.pixelDepth = summaryMetadata_.getZStepUm();
          }
@@ -490,17 +498,9 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
 
    public void saveImagePlus(ImagePlus imp, Image image,
-         String path, String tiffFileName) {
-      try {
-         JSONObject imageJSON = ((DefaultMetadata) image.getMetadata()).toJSON();
-         // Augment the JSON with image property info.
-         imageJSON.put("Width", image.getWidth());
-         imageJSON.put("Height", image.getHeight());
-         MDUtils.setPixelType(imageJSON, image.getImageJPixelType());
-         imp.setProperty("Info", imageJSON.toString(2));
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      }
+      String path, String tiffFileName, String metadataJSON) {
+      imp.setProperty("Info", metadataJSON);
+
       FileSaver fs = new FileSaver(imp);
       fs.saveAsTiff(path + "/" + tiffFileName);
    }
@@ -536,15 +536,20 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       // TODO: should we log if the date isn't available?
       SummaryMetadata summary = summaryMetadata_;
       if (time != null && summary.getStartDate() == null) {
-         summary = summary.copy().startDate(time.split(" ")[0]).build();
+         summary = summary.copyBuilder().startDate(time.split(" ")[0]).build();
       }
-      JSONObject json = ((DefaultSummaryMetadata) summary).toJSON();
+
+      JsonObject jo = new JsonObject();
+      NonPropertyMapJSONFormats.summaryMetadata().addToGson(jo,
+            ((DefaultSummaryMetadata) summary).toPropertyMap());
       // Augment the JSON with pixel type information, for backwards
       // compatibility.
-      json.put("IJType", image.getImageJPixelType());
-      json.put("PixelType",
-            (image.getNumComponents() == 1 ? "GRAY" : "RGB") + (8 * image.getBytesPerPixel()));
-      writeJSONMetadata(pos, json, "Summary");
+      PropertyMap formatPmap = ((DefaultImage) image).formatToPropertyMap();
+      PropertyKey.IJ_TYPE.storeInGsonObject(formatPmap, jo);
+      PropertyKey.PIXEL_TYPE.storeInGsonObject(formatPmap, jo);
+      Gson gson = new GsonBuilder().disableHtmlEscaping().
+            setPrettyPrinting().create();
+      writeJSONMetadata(pos, gson.toJson(jo), "Summary");
    }
 
    private void closeMetadataStreams() {
@@ -590,17 +595,18 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       for (int positionIndex = 0; positionIndex < positions.size();
             ++positionIndex) {
          String position = positions.get(positionIndex);
-         JSONObject data = readJSONMetadata(position);
+         JsonObject data = readJSONMetadata(position);
          if (data == null) {
             ReportingUtils.logError("Couldn't load metadata for position " + position + " in directory " + dir_);
             continue;
          }
          try {
-            if (data.has("Summary")) {
-               summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(
-                     data.getJSONObject("Summary"));
+            if (data.has(PropertyKey.SUMMARY.key())) {
+               summaryMetadata_ = DefaultSummaryMetadata.fromPropertyMap(
+                     NonPropertyMapJSONFormats.summaryMetadata().fromGson(
+                           data.get(PropertyKey.SUMMARY.key())));
             }
-            DefaultCoords.Builder builder = new DefaultCoords.Builder();
+
             // We have two methods to recover the image coordinates from the
             // metadata. The old 1.4 method uses a "FrameKey" key that holds
             // the time, channel, and Z indices specifically, and stows all
@@ -612,37 +618,51 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             // "data" variable directly is a bunch of FrameKeys -- the summary
             // metadata is duplicated within each JSONObject the FrameKeys
             // point to.
-            for (String key : MDUtils.getKeys(data)) {
+            // Note: We skip the bulk of metadata stored in metadata.txt and
+            // instead use the metadata stored in the TIFF as ImagePlus Info.
+            for (Map.Entry<String, JsonElement> entry : data.entrySet()) {
+               String key = entry.getKey();
                String fileName = null;
-               DefaultCoords coords = null;
-               if (key.contains("Coords-")) {
+               Coords coords = null;
+               if (key.startsWith("Coords-")) {
                   // 2.0 method. SummaryMetadata is already valid.
-                  JSONObject chunk = data.getJSONObject(key);
-                  for (String axis : MDUtils.getKeys(chunk)) {
-                     builder.index(axis, chunk.getInt(axis));
-                  }
-                  coords = builder.build();
+                  PropertyMap coordsPmap =
+                        MM1JSONSerializer.fromGson(entry.getValue());
+                  coords = DefaultCoords.fromPropertyMap(coordsPmap);
+                  // TODO Filename should be read from JSON key instead of
+                  // using fixed rule!
                   fileName = createFileName(coords);
                }
-               else if (key.contains("FrameKey-")) {
+               else if (key.startsWith("FrameKey-")) {
                   // 1.4 method. SummaryMetadata must be reconstructed.
-                  String[] items = key.split("-");
-                  builder.time(new Integer(items[1]));
-                  builder.channel(new Integer(items[2]));
-                  builder.z(new Integer(items[3]));
-                  JSONObject innerMetadata = data.getJSONObject(key);
-                  summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(
-                        innerMetadata.getJSONObject("Summary"));
-                  builder.stagePosition(
-                        MDUtils.getPositionIndex(innerMetadata));
-                  coords = builder.build();
+                  JsonObject jo = entry.getValue().getAsJsonObject();
+                  if (jo.has(PropertyKey.SUMMARY.key())) {
+                     summaryMetadata_ = DefaultSummaryMetadata.fromPropertyMap(
+                           NonPropertyMapJSONFormats.summaryMetadata().
+                                 fromGson(jo.get(PropertyKey.SUMMARY.key())));
+                  }
+
+                  // Extract what coords are available in the metadata, which
+                  // should include the stage position if available.
+                  Coords c = DefaultCoords.fromPropertyMap(
+                        NonPropertyMapJSONFormats.coords().fromGson(jo));
+
+                  List<String> items = Splitter.on("-").splitToList(key);
+                  coords = Coordinates.builder().
+                        timePoint(Integer.parseInt(items.get(1))).
+                        channel(Integer.parseInt(items.get(2))).
+                        zSlice(Integer.parseInt(items.get(3))).
+                        stagePosition(c.getStagePosition()).
+                        build();
+
                   assignChannelsToIndices(position);
                   fileName = create14FileName(coords);
                }
-               else {
+               else { // Posibly "Metadata-*"
                   // Not a key we can extract useful information from.
                   continue;
                }
+
                try {
                   // TODO: omitting pixel type information.
                   if (position.length() > 0 &&
@@ -662,7 +682,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                   ReportingUtils.showError(ex);
                }
             }
-         } catch (JSONException ex) {
+         } catch (Exception ex) {
             ReportingUtils.showError(ex);
          }
       }
@@ -681,9 +701,10 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       return result;
    }
 
-   private JSONObject readJSONMetadata(String pos) {
+   private JsonObject readJSONMetadata(String pos) {
       String fileStr;
       String path = new File(new File(dir_, pos), "metadata.txt").getPath();
+
       try {
          fileStr = TextUtils.readTextFile(path);
       }
@@ -691,16 +712,22 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          ReportingUtils.logError(e, "Unable to read text file at " + path);
          return null;
       }
+
+      JsonReader reader = new JsonReader(new StringReader(fileStr));
+      reader.setLenient(true);
+      JsonParser parser = new JsonParser();
       try {
-         return new JSONObject(fileStr);
+         return parser.parse(reader).getAsJsonObject();
       }
-      catch (JSONException e) {
-         // HACK: try again with a manually-added curly brace.
-         // TODO: why do we do this?
+      catch (Exception e) {
+         // Try again with an added curly brace because some old versions
+         // failed to write the final '}' under some circumstances.
          try {
-            return new JSONObject(fileStr.concat("}"));
+            reader = new JsonReader(new StringReader(fileStr + "}"));
+            reader.setLenient(true);
+            return parser.parse(reader).getAsJsonObject();
          }
-         catch (JSONException e2) {
+         catch (Exception e2) {
             // Give up.
             return null;
          }
@@ -715,11 +742,6 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
    @Subscribe
    public void onNewSummaryMetadata(NewSummaryMetadataEvent event) {
       summaryMetadata_ = event.getSummaryMetadata();
-      // HACK: ensure the metadata version is valid.
-      if (summaryMetadata_.getMetadataVersion() == null) {
-         summaryMetadata_ = summaryMetadata_.copy().metadataVersion(
-               DefaultSummaryMetadata.METADATA_VERSION).build();
-      }
    }
 
    @Override

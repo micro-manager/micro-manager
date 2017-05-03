@@ -20,6 +20,7 @@ import com.google.gson.JsonPrimitive;
 import java.awt.Rectangle;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -135,6 +136,14 @@ public enum PropertyKey {
                   Integer.parseInt(jp.getAsString().split("x", 2)[0]));
          }
       }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getInteger(key(), 0));
+         }
+         return null;
+      }
    },
 
    BIT_DEPTH("BitDepth", Metadata.class) {
@@ -160,6 +169,14 @@ public enum PropertyKey {
             }
          }
          return false;
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getInteger(key(), 0));
+         }
+         return null;
       }
    },
 
@@ -346,6 +363,8 @@ public enum PropertyKey {
       }
    },
 
+   DISPLAY_SETTINGS("DisplaySettings", SummaryMetadata.class),
+
    ELAPSED_TIME_MS("ElapsedTime-ms", Metadata.class) {
       @Override
       public String getDescription() {
@@ -355,6 +374,14 @@ public enum PropertyKey {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putDouble(key(), je.getAsDouble());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getDouble(key(), Double.NaN));
+         }
+         return null;
       }
    },
 
@@ -368,9 +395,27 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putDouble(key(), je.getAsDouble());
       }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getDouble(key(), Double.NaN));
+         }
+         return null;
+      }
    },
 
-   FILE_NAME("FileName"),
+   FILE_NAME("FileName", Metadata.class) {
+      @Override
+      protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
+         dest.putString(key(), je.getAsString());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         return new JsonPrimitive(pmap.getString(key(), null));
+      }
+   },
 
    FRAME_INDEX("Frame", "FrameIndex", Coords.class) {
       @Override
@@ -422,6 +467,17 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
       }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         PixelType pixelType = pmap.getStringAsEnum(PIXEL_TYPE.key(),
+               PixelType.class, null);
+         if (pixelType == null) {
+            return null;
+         }
+
+         return new JsonPrimitive(pixelType.imageJConstant());
+      }
    },
 
    IMAGE_NUMBER("ImageNumber", Metadata.class) {
@@ -433,6 +489,14 @@ public enum PropertyKey {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putLong(key(), je.getAsLong());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getInteger(key(), 0));
+         }
+         return null;
       }
    },
 
@@ -660,6 +724,14 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putDouble(key(), je.getAsDouble());
       }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getDouble(key(), Double.NaN));
+         }
+         return null;
+      }
    },
 
    PIXEL_SIZE_UM("PixelSizeUm", "PixelSize_um", Metadata.class) {
@@ -671,6 +743,14 @@ public enum PropertyKey {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putDouble(key(), je.getAsDouble());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getDouble(key(), Double.NaN));
+         }
+         return null;
       }
    },
 
@@ -752,6 +832,11 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         return new JsonPrimitive(pmap.getString(key(), null));
+      }
    },
 
    PREFIX("Prefix", SummaryMetadata.class) {
@@ -788,6 +873,11 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         return new JsonPrimitive(pmap.getString(key(), null));
+      }
    },
 
    ROI("ROI", Metadata.class) {
@@ -819,6 +909,17 @@ public enum PropertyKey {
          Rectangle roi = new Rectangle(x, y, w, h);
 
          dest.putRectangle(key(), roi);
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (!pmap.containsKey(key())) {
+            return null;
+         }
+         Rectangle rect = pmap.getRectangle(key(), null);
+         String hyphenated = Joiner.on("-").join(
+               rect.x, rect.y, rect.width, rect.height);
+         return new JsonPrimitive(hyphenated);
       }
    },
 
@@ -860,8 +961,17 @@ public enum PropertyKey {
       }
 
       @Override
-      public JsonElement convertToGson(PropertyMap pmap) {
-         return MM1JSONSerializer.toGson(pmap);
+      public boolean storeInGsonObject(PropertyMap pmap, JsonObject dest) {
+         // For MM1 compatibility, store as flat keys, to be read later with
+         // the help of SCOPE_DATA_KEYS
+         if (!pmap.containsKey(key())) {
+            return false;
+         }
+         PropertyMap scopeData = pmap.getPropertyMap(key(), null);
+         for (String key : scopeData.keySet()) {
+            dest.addProperty(key, scopeData.getValueAsString(key, null));
+         }
+         return true;
       }
    },
 
@@ -880,6 +990,20 @@ public enum PropertyKey {
             keys.add(kje.getAsString());
          }
          dest.putStringList(key(), keys);
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (!pmap.containsKey(SCOPE_DATA.key())) {
+            return null;
+         }
+         List<String> keys = Lists.newArrayList(
+               pmap.getPropertyMap(SCOPE_DATA.key(), null).keySet());
+         JsonArray ja = new JsonArray();
+         for (String key : keys) {
+            ja.add(new JsonPrimitive(key));
+         }
+         return ja;
       }
    },
 
@@ -1066,11 +1190,22 @@ public enum PropertyKey {
          if (super.extractFromGsonObject(jo, dest)) {
             return true;
          }
-         // If MM1 file, treat flat keys that are not standard fields as user
-         // data (includes device properties)
+
+         // In the absence of explicitly saved user data, we treat all flat
+         // keys as user data, excluding known standard keys and scope data
+         // keys (to the extent possible).
+
+         Set<String> scopeDataKeys = new HashSet<String>();
+         PropertyMap.Builder tmp = PropertyMaps.builder();
+         if (SCOPE_DATA_KEYS.extractFromGsonObject(jo, tmp)) {
+            scopeDataKeys.addAll(tmp.build().getStringList(SCOPE_DATA_KEYS.key()));
+         }
+
+         // Treat flat keys that are not standard fields as user data
+         // (includes device properties if SCOPE_DATA_KEYS unavailable)
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (Map.Entry<String, JsonElement> e : jo.entrySet()) {
-            if (!isKnownKey(e.getKey())) {
+            if (!isKnownKey(e.getKey()) && !scopeDataKeys.contains(e.getKey())) {
                builder.putString(e.getKey(), e.getValue().getAsString());
             }
          }
@@ -1107,6 +1242,14 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putString(key(), je.getAsString());
       }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getUUID(key(), null).toString());
+         }
+         return null;
+      }
    },
 
    WIDTH("Width", Image.class) {
@@ -1126,6 +1269,14 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putDouble(key(), je.getAsDouble());
       }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getDouble(key(), Double.NaN));
+         }
+         return null;
+      }
    },
 
    Y_POSITION_UM("YPositionUm", Metadata.class) {
@@ -1138,6 +1289,14 @@ public enum PropertyKey {
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putDouble(key(), je.getAsDouble());
       }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getDouble(key(), Double.NaN));
+         }
+         return null;
+      }
    },
 
    Z_POSITION_UM("ZPositionUm", Metadata.class) {
@@ -1149,6 +1308,14 @@ public enum PropertyKey {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putDouble(key(), je.getAsDouble());
+      }
+
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         if (pmap.containsKey(key())) {
+            return new JsonPrimitive(pmap.getDouble(key(), Double.NaN));
+         }
+         return null;
       }
    },
 
@@ -1318,7 +1485,7 @@ public enum PropertyKey {
     * @return true if the key was found in {@code source} and was added to
     * {@code destination}; false otherwise
     */
-   public final boolean storeInGsonObject(PropertyMap source,
+   public boolean storeInGsonObject(PropertyMap source,
          JsonObject destination) {
       JsonElement e = convertToGson(source);
       if (e != null) {

@@ -22,6 +22,9 @@
 package org.micromanager.data.internal.multipagetiff;
 
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import ij.ImageJ;
 import ij.io.TiffDecoder;
 import ij.process.LUT;
@@ -39,9 +42,8 @@ import java.util.LinkedList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import mmcorej.TaggedImage;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -49,15 +51,16 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.RememberedChannelSettings;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.propertymap.MM1JSONSerializer;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class MultipageTiffWriter {
@@ -75,7 +78,7 @@ public final class MultipageTiffWriter {
    public static final int COMMENTS_HEADER = 84720485;
   
    public static final char ENTRIES_PER_IFD = 13;
-   //Required tags
+   //Required TIFF tags
    public static final char WIDTH = 256;
    public static final char HEIGHT = 257;
    public static final char BITS_PER_SAMPLE = 258;
@@ -100,19 +103,19 @@ public final class MultipageTiffWriter {
    private StorageMultipageTiff masterStorage_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_; 
-   private ThreadPoolExecutor writingExecutor_;
+   private final ThreadPoolExecutor writingExecutor_;
    private long filePosition_ = 0;
    private long indexMapPosition_; //current position of the dynamically written index map
    private long indexMapFirstEntry_; // mark position of first entry so that number of entries can be written at end
    private int bufferPosition_;
    private int numChannels_ = 1, numFrames_ = 1, numSlices_ = 1;
-   private HashMap<Coords, Long> coordsToOffset_;
+   private final HashMap<Coords, Long> coordsToOffset_;
    private long nextIFDOffsetLocation_ = -1;
    private boolean rgb_ = false;
    private int byteDepth_, imageWidth_, imageHeight_, bytesPerImagePixels_;
    private long resNumerator_ = 1, resDenomenator_ = 1;
    private double zStepUm_ = 1;
-   private LinkedList<ByteBuffer> buffers_;
+   private final LinkedList<ByteBuffer> buffers_;
    private boolean firstIFD_ = true;
    private long omeDescriptionTagPosition_;
    private long ijDescriptionTagPosition_;
@@ -123,21 +126,15 @@ public final class MultipageTiffWriter {
    private long blankPixelsOffset_ = -1;
    
    public MultipageTiffWriter(StorageMultipageTiff masterStorage,
-         JSONObject firstImageTags, String filename)
+         Image firstImage, String filename)
          throws IOException {
       masterStorage_ = masterStorage;
       // TODO: casting to DefaultSummaryMetadata here.
       DefaultSummaryMetadata summary = (DefaultSummaryMetadata) masterStorage.getSummaryMetadata();
       File f = new File(masterStorage.getDiskLocation() + "/" + filename);
 
-      try {
-         processSummaryMD(summary);
-      } catch (MMScriptException ex1) {
-         ReportingUtils.logError(ex1);
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-      }
-      
+      processSummaryMD(summary);
+
       // We need to convert the summary metadata into an extended version that
       // includes information that isn't in SummaryMetadata but that prior
       // versions of MicroManager used to include (that information is either
@@ -146,33 +143,39 @@ public final class MultipageTiffWriter {
       // Additionally, in MM2.0 we store display settings in a separate file;
       // the settings we save here are solely to preserve backwards
       // compatibility with MM1.x.
-      JSONObject summaryJSON = summary.toJSON();
-      augmentWithImageMetadata(summaryJSON,
+      PropertyMap summaryPmap = summary.toPropertyMap();
+      summaryPmap = augmentWithImageMetadata(summaryPmap,
             (DefaultImage) masterStorage_.getAnyImage());
-      augmentWithDisplaySettings(summaryJSON,
-            DefaultDisplaySettings.getStandardSettings(DisplayFacade.DEFAULT_SETTINGS_KEY));
-      reader_ = new MultipageTiffReader(masterStorage_, summary, summaryJSON,
-            firstImageTags);
+      summaryPmap = augmentWithDisplaySettings(summaryPmap,
+            DefaultDisplaySettings.builder().build());
+      reader_ = new MultipageTiffReader(masterStorage_, summary, summaryPmap,
+            firstImage);
 
       //This is an overestimate of file size because file gets truncated at end
       long fileSize = Math.min(MAX_FILE_SIZE,
-            summaryJSON.toString().length() + 2000000 +
+            NonPropertyMapJSONFormats.summaryMetadata().toJSON(summaryPmap).length() +
+            2000000 +
             numFrames_ * numChannels_ * numSlices_ * ((long) bytesPerImagePixels_ + 2000));
 
       f.createNewFile();
       raFile_ = new RandomAccessFile(f, "rw");
       try {
          raFile_.setLength(fileSize);
-      } catch (IOException e) {       
-       new Thread(new Runnable() {
-             @Override
-             public void run() {
-                 try {
-                     Thread.sleep(1000);
-                 } catch (InterruptedException ex) {}
-                 MMStudio.getInstance().getAcquisitionEngine().abortRequest();
-             } }).start();     
-             ReportingUtils.showError("Insufficent space on disk: no room to write data");
+      }
+      catch (IOException e) {
+         new Thread(new Runnable() {
+            @Override
+            public void run() {
+               try {
+                  Thread.sleep(1000);
+               }
+               catch (InterruptedException ex) {
+               }
+               MMStudio.getInstance().getAcquisitionEngine().abortRequest();
+            }
+         }).start();
+         ReportingUtils.showError(
+               "Insufficent space on disk: no room to write data");
       }
       fileChannel_ = raFile_.getChannel();
       writingExecutor_ = masterStorage_.getWritingExecutor();
@@ -181,47 +184,33 @@ public final class MultipageTiffWriter {
       reader_.setIndexMap(coordsToOffset_);
       buffers_ = new LinkedList<ByteBuffer>();
       
-      writeMMHeaderAndSummaryMD(summaryJSON);
+      writeMMHeaderAndSummaryMD(summaryPmap);
    }
 
    /**
     * Insert certain fields into the provided JSONObject that are stored in
     * the Image or its Metadata.
     */
-   private void augmentWithImageMetadata(JSONObject summary,
+   private PropertyMap augmentWithImageMetadata(PropertyMap summary,
          DefaultImage image) {
-      try {
-         MDUtils.setPixelType(summary, image.getImageJPixelType());
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Couldn't set image pixel type");
-      }
-      try {
-         MDUtils.setWidth(summary, image.getWidth());
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Couldn't set image width");
-      }
-      try {
-         MDUtils.setHeight(summary, image.getHeight());
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Couldn't set image height");
-      }
+      return summary.copyBuilder().
+            putEnumAsString(PropertyKey.PIXEL_TYPE.key(),
+                  image.getPixelType()).
+            putInteger(PropertyKey.WIDTH.key(), image.getWidth()).
+            putInteger(PropertyKey.HEIGHT.key(), image.getHeight()).
+            build();
    }
 
    /**
     * Insert certain fields into the provided JSONObject that are stored
     * in the given DisplaySettings.
     */
-   private void augmentWithDisplaySettings(JSONObject summary,
-         DefaultDisplaySettings settings) {
-      try {
-         summary.put("DisplaySettings", settings.toJSON());
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Couldn't add display settings to summary");
-      }
+   private PropertyMap augmentWithDisplaySettings(PropertyMap summary,
+         DisplaySettings settings) {
+      return summary.copyBuilder().
+            putPropertyMap(PropertyKey.DISPLAY_SETTINGS.key(),
+                  ((DefaultDisplaySettings) settings).toPropertyMap()).
+            build();
    }
 
    private ByteBuffer allocateByteBuffer(int capacity) {
@@ -296,12 +285,9 @@ public final class MultipageTiffWriter {
       return coordsToOffset_;
    }
    
-   private void writeMMHeaderAndSummaryMD(JSONObject summaryMD) throws IOException {      
-      if (summaryMD.has("Comment")) {
-         ReportingUtils.logError("TODO: removing summary comment");
-         summaryMD.remove("Comment");
-      }
-      byte[] summaryMDBytes = getBytesFromString(summaryMD.toString());
+   private void writeMMHeaderAndSummaryMD(PropertyMap summaryMD) throws IOException {
+      String summaryJSON = NonPropertyMapJSONFormats.summaryMetadata().toJSON(summaryMD);
+      byte[] summaryMDBytes = getBytesFromString(summaryJSON);
       int mdLength = summaryMDBytes.length;
       //20 bytes plus 8 header for index map
       long maxImagesInFile = MAX_FILE_SIZE / bytesPerImagePixels_;
@@ -394,7 +380,6 @@ public final class MultipageTiffWriter {
             } catch (IOException ex) {
                ReportingUtils.logError(ex);
             }
-            reader_.finishedWriting();
             // Dont close file channel and random access file becase Tiff
             // reader still using them
             fileChannel_ = null;
@@ -413,8 +398,9 @@ public final class MultipageTiffWriter {
       return true;
    }
    
-   public boolean hasSpaceToWrite(TaggedImage img, int omeMDLength) {
-      int mdLength = img.tags.toString().length();
+   public boolean hasSpaceToWrite(Image img, int omeMDLength) {
+      PropertyMap mdPmap = ((DefaultMetadata) img.getMetadata()).toPropertyMap();
+      int mdLength = NonPropertyMapJSONFormats.metadata().toJSON(mdPmap).length();
       int IFDSize = ENTRIES_PER_IFD*12 + 4 + 16;
       //5 MB extra padding...just to be safe...
       int extraPadding = 5000000; 
@@ -436,8 +422,8 @@ public final class MultipageTiffWriter {
       writeBlankIFD();
       writeBuffers();
    }
-        
-   public void writeImage(TaggedImage img) throws IOException {
+
+   public void writeImage(Image img) throws IOException {
       if (writingExecutor_ != null) {
          int queueSize = writingExecutor_.getQueue().size();
          int attemptCount = 0;
@@ -456,15 +442,10 @@ public final class MultipageTiffWriter {
       }
       long offset = filePosition_;
       writeIFD(img);
-      addToIndexMap(DefaultCoords.legacyFromJSON(img.tags), offset);
+      addToIndexMap(img.getCoords(), offset);
       writeBuffers();
-      //wait until image has finished writing to return
-//      int size = writingExecutor_.getQueue().size();
-//      while (size > 0) {
-//         size = writingExecutor_.getQueue().size();
-//      }
    }
-   
+ 
    private void addToIndexMap(Coords coords, long offset) {
       //If a duplicate key is received, forget about the previous one
       //this allows overwriting of images without loss of data
@@ -504,12 +485,20 @@ public final class MultipageTiffWriter {
       return val;
    }
 
-   private void writeIFD(TaggedImage img) throws IOException {
+   private void writeIFD(Image img) throws IOException {
       char numEntries = ((firstIFD_  ? ENTRIES_PER_IFD + 4 : ENTRIES_PER_IFD));
-      if (img.tags.has("Summary")) {
-         img.tags.remove("Summary");
-      }
-      byte[] mdBytes = getBytesFromString(img.tags.toString() + " ");
+
+      JsonObject jo = new JsonObject();
+      NonPropertyMapJSONFormats.imageFormat().addToGson(jo,
+            ((DefaultImage) img).formatToPropertyMap());
+      NonPropertyMapJSONFormats.coords().addToGson(jo,
+            ((DefaultCoords) img.getCoords()).toPropertyMap());
+      NonPropertyMapJSONFormats.metadata().addToGson(jo,
+            ((DefaultMetadata) img.getMetadata()).toPropertyMap());
+      Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+      String mdJSON = gson.toJson(jo);
+
+      byte[] mdBytes = getBytesFromString(mdJSON + " "); // Space for null
       // Null-terminate buffer.
       mdBytes[mdBytes.length - 1] = 0;
 
@@ -572,7 +561,7 @@ public final class MultipageTiffWriter {
          charView.put(bufferPosition_/2+2,(char) (byteDepth_*8));
       }
       buffers_.add(ifdBuffer);
-      buffers_.add(getPixelBuffer(img.pix));
+      buffers_.add(getPixelBuffer(img.getRawPixels()));
       buffers_.add(getResolutionValuesBuffer());   
       buffers_.add(ByteBuffer.wrap(mdBytes));
       
@@ -662,14 +651,13 @@ public final class MultipageTiffWriter {
       }
    }
 
-   private void processSummaryMD(SummaryMetadata summaryMD)
-         throws MMScriptException, JSONException {
+   private void processSummaryMD(SummaryMetadata summaryMD) {
       Image repImage = masterStorage_.getAnyImage();
       Metadata repMetadata = repImage.getMetadata();
       rgb_ = repImage.getNumComponents() > 1;
       numChannels_ = masterStorage_.getIntendedSize(Coords.CHANNEL);
-      numFrames_ = masterStorage_.getIntendedSize(Coords.TIME);
-      numSlices_ = masterStorage_.getIntendedSize(Coords.Z);
+      numFrames_ = masterStorage_.getIntendedSize(Coords.TIME_POINT);
+      numSlices_ = masterStorage_.getIntendedSize(Coords.Z_SLICE);
       imageWidth_ = repImage.getWidth();
       imageHeight_ = repImage.getHeight();
       byteDepth_ = repImage.getBytesPerPixel() / repImage.getNumComponents();
@@ -687,7 +675,6 @@ public final class MultipageTiffWriter {
          resNumerator_ = (long) (1 / cmPerPixel);
          resDenomenator_ = 1;
       }
-      
       if (summaryMD.getZStepUm() != null) {
          zStepUm_ = summaryMD.getZStepUm();
       }
@@ -848,7 +835,7 @@ public final class MultipageTiffWriter {
          sb.append("spacing=").append(zStepUm_).append("\n");
       }
       //write single channel contrast settings or display mode if multi channel
-      DisplaySettings settings = DefaultDisplaySettings.getStandardSettings(DisplayFacade.DEFAULT_SETTINGS_KEY);
+      DisplaySettings settings = DefaultDisplaySettings.builder().build();
       if (numChannels_ == 1) {
          sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
          sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
@@ -899,53 +886,48 @@ public final class MultipageTiffWriter {
    }
 
    private void writeComments() throws IOException {
-      try {
-         // Get the summary comments, then comments for each image.
-         JSONObject comments = new JSONObject();
-         String summaryComments = CommentsHelper.getSummaryComment(
-               masterStorage_.getDatastore());
-         comments.put("Summary", summaryComments);
-         for (Coords coords : masterStorage_.getUnorderedImageCoords()) {
-            String imageComments = CommentsHelper.getImageComment(
-                  masterStorage_.getDatastore(), coords);
-            // HACK: produce a 1.4-style "coordinate string" to use as a key.
-            // See also MDUtils.getLabel(), though we can't use it directly.
-            int channel = coords.getChannel() < 0 ? 0 : coords.getChannel();
-            int z = coords.getZ() < 0 ? 0 : coords.getZ();
-            int time = coords.getTime() < 0 ? 0 : coords.getTime();
-            int stagePos = coords.getStagePosition() < 0 ? 0 : coords.getStagePosition();
-            String key = String.format("%d_%d_%d_%d", channel, z, time, stagePos);
-            comments.put(key, imageComments);
-         }
-
-         String commentStr = comments.toString();
-         //Write 4 byte header, 4 byte number of bytes
-         byte[] commentsBytes = getBytesFromString(commentStr);
-         ByteBuffer header = allocateByteBuffer(8);
-         header.putInt(0, COMMENTS_HEADER);
-         header.putInt(4, commentsBytes.length);
-         ByteBuffer buffer = ByteBuffer.wrap(commentsBytes);
-         fileChannelWrite(header, filePosition_);
-         fileChannelWrite(buffer, filePosition_ + 8);
-
-         ByteBuffer offsetHeader = allocateByteBuffer(8);
-         offsetHeader.putInt(0, COMMENTS_OFFSET_HEADER);
-         offsetHeader.putInt(4, (int) filePosition_);
-         fileChannelWrite(offsetHeader, 24);
-         filePosition_ += 8 + commentsBytes.length;
+      // Get the summary comments, then comments for each image.
+      PropertyMap.Builder comments = PropertyMaps.builder();
+      String summaryComments = CommentsHelper.getSummaryComment(
+            masterStorage_.getDatastore());
+      comments.putString("Summary", summaryComments);
+      for (Coords coords : masterStorage_.getUnorderedImageCoords()) {
+         String imageComments = CommentsHelper.getImageComment(
+               masterStorage_.getDatastore(), coords);
+         // HACK: produce a 1.4-style "coordinate string" to use as a key.
+         // See also MDUtils.getLabel(), though we can't use it directly.
+         int channel = coords.getChannel() < 0 ? 0 : coords.getChannel();
+         int z = coords.getZ() < 0 ? 0 : coords.getZ();
+         int time = coords.getTime() < 0 ? 0 : coords.getTime();
+         int stagePos = coords.getStagePosition() < 0 ? 0 : coords.getStagePosition();
+         String key = String.format("%d_%d_%d_%d", channel, z, time, stagePos);
+         comments.putString(key, imageComments);
       }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Unable to convert comments to JSON");
-      }
+
+      String commentStr = MM1JSONSerializer.toJSON(comments.build());
+      //Write 4 byte header, 4 byte number of bytes
+      byte[] commentsBytes = getBytesFromString(commentStr);
+      ByteBuffer header = allocateByteBuffer(8);
+      header.putInt(0, COMMENTS_HEADER);
+      header.putInt(4, commentsBytes.length);
+      ByteBuffer buffer = ByteBuffer.wrap(commentsBytes);
+      fileChannelWrite(header, filePosition_);
+      fileChannelWrite(buffer, filePosition_ + 8);
+
+      ByteBuffer offsetHeader = allocateByteBuffer(8);
+      offsetHeader.putInt(0, COMMENTS_OFFSET_HEADER);
+      offsetHeader.putInt(4, (int) filePosition_);
+      fileChannelWrite(offsetHeader, 24);
+      filePosition_ += 8 + commentsBytes.length;
    }
 
-   // TODO: is this identical to a similar function in the Reader?
+   // TODO: There is a very similar but not identical method in the Reader
    private void writeDisplaySettings() throws IOException {
-      DefaultDisplaySettings settings = DefaultDisplaySettings.getStandardSettings(DisplayController.DEFAULT_SETTINGS_KEY);
+      DisplaySettings settings = DefaultDisplaySettings.builder().build();
+      String settingsJSON = ((DefaultDisplaySettings) settings).toPropertyMap().toJSON();
       int numReservedBytes = numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = allocateByteBuffer(8);
-      ByteBuffer buffer = ByteBuffer.wrap(
-            getBytesFromString(settings.toJSON().toString()));
+      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settingsJSON));
       header.putInt(0, DISPLAY_SETTINGS_HEADER);
       header.putInt(4, numReservedBytes);
       fileChannelWrite(header, filePosition_);

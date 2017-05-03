@@ -20,7 +20,8 @@
 
 package org.micromanager.data.internal;
 
-import java.awt.Window;
+import java.awt.Component;
+import java.beans.ExceptionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.filechooser.FileFilter;
+import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -79,8 +81,21 @@ public class DefaultDatastore implements Datastore {
    private String savePath_ = null;
    private boolean haveSetSummary_ = false;
 
+   protected final EventListenerSupport<ExceptionListener> exceptionListeners_ =
+         EventListenerSupport.create(ExceptionListener.class);
+
    public DefaultDatastore() {
       bus_ = new PrioritizedEventBus();
+   }
+
+   @Override
+   public void addExceptionListener(ExceptionListener listener) {
+      exceptionListeners_.addListener(listener, true);
+   }
+
+   @Override
+   public void removeExceptionListener(ExceptionListener listener) {
+      exceptionListeners_.removeListener(listener);
    }
 
    /**
@@ -134,14 +149,14 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void publishEvent(Object obj) {
-      bus_.post(obj);
-   }
-
-   @Override
    public Image getImage(Coords coords) {
       if (storage_ != null) {
-         return storage_.getImage(coords);
+         try {
+            return storage_.getImage(coords);
+         }
+         catch (IOException ex) {
+            exceptionListeners_.fire().exceptionThrown(ex);
+         }
       }
       return null;
    }
@@ -157,7 +172,12 @@ public class DefaultDatastore implements Datastore {
    @Override
    public List<Image> getImagesMatching(Coords coords) {
       if (storage_ != null) {
-         return storage_.getImagesMatching(coords);
+         try {
+            return storage_.getImagesMatching(coords);
+         }
+         catch (IOException ex) {
+            exceptionListeners_.fire().exceptionThrown(ex);
+         }
       }
       return null;
    }
@@ -197,7 +217,12 @@ public class DefaultDatastore implements Datastore {
       }
 
       if (storage_ != null) {
-         storage_.putImage(image);
+         try {
+            storage_.putImage(image);
+         }
+         catch (IOException ex) {
+            exceptionListeners_.fire().exceptionThrown(ex);
+         }
       }
       bus_.post(new NewImageEvent(image, this));
    }
@@ -257,20 +282,45 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public Annotation loadAnnotation(String filename) throws IOException {
-      if (annotations_.containsKey(filename)) {
+   public Annotation getAnnotation(String tag) {
+      if (annotations_.containsKey(tag)) {
          // We already have an Annotation for this store/filename combo.
-         return annotations_.get(filename);
+         return annotations_.get(tag);
       }
-      DefaultAnnotation result = new DefaultAnnotation(this, filename);
-      annotations_.put(filename, result);
-      return result;
+      DefaultAnnotation result;
+      try {
+         result = new DefaultAnnotation(this, tag);
+         annotations_.put(tag, result);
+         return result;
+      }
+      catch (IOException ex) {
+         exceptionListeners_.fire().exceptionThrown(ex);
+      }
+      return null;
    }
 
    @Override
-   public boolean hasAnnotation(String filename) {
-      return (annotations_.containsKey(filename) ||
-            DefaultAnnotation.isAnnotationOnDisk(this, filename));
+   public Annotation loadAnnotation(String tag) {
+      if (annotations_.containsKey(tag)) {
+         // We already have an Annotation for this store/filename combo.
+         return annotations_.get(tag);
+      }
+      DefaultAnnotation result;
+      try {
+         result = new DefaultAnnotation(this, tag);
+         annotations_.put(tag, result);
+         return result;
+      }
+      catch (IOException ex) {
+         exceptionListeners_.fire().exceptionThrown(ex);
+      }
+      return null;
+   }
+
+   @Override
+   public boolean hasAnnotation(String tag) {
+      return (annotations_.containsKey(tag) ||
+            DefaultAnnotation.isAnnotationOnDisk(this, tag));
    }
 
    @Override
@@ -297,7 +347,12 @@ public class DefaultDatastore implements Datastore {
       if (!isFrozen_) {
          isFrozen_ = true;
          if (storage_ != null) {
-            storage_.freeze();
+            try {
+               storage_.freeze();
+            }
+            catch (IOException ex) {
+               exceptionListeners_.fire().exceptionThrown(ex);
+            }
          }
          bus_.post(new DefaultDatastoreFrozenEvent());
       }
@@ -313,7 +368,12 @@ public class DefaultDatastore implements Datastore {
       DefaultEventManager.getInstance().post(
             new DefaultDatastoreClosingEvent(this));
       if (storage_ != null) {
-         storage_.close();
+         try {
+            storage_.close();
+         }
+         catch (IOException ex) {
+            exceptionListeners_.fire().exceptionThrown(ex);
+         }
       }
    }
 
@@ -328,7 +388,7 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public boolean save(Window window) {
+   public boolean save(Component parent) {
       // This replicates some logic from the FileDialogs class, but we want to
       // use non-file-extension-based "filters" to let the user select the
       // savefile format to use, and FileDialogs doesn't play nicely with that.
@@ -344,7 +404,7 @@ public class DefaultDatastore implements Datastore {
       }
       chooser.setSelectedFile(
             new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET)));
-      int option = chooser.showSaveDialog(window);
+      int option = chooser.showSaveDialog(parent);
       if (option != JFileChooser.APPROVE_OPTION) {
          // User cancelled.
          return false;

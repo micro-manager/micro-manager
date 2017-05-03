@@ -167,6 +167,24 @@ public final class DefaultImage implements Image {
       }
    }
 
+   public DefaultImage(Object pixels, PropertyMap format, Coords coords,
+         Metadata metadata) throws IllegalArgumentException {
+      Preconditions.checkNotNull(pixels);
+      Preconditions.checkNotNull(format);
+      metadata_ = metadata == null ? new DefaultMetadata.Builder().build() :
+            (DefaultMetadata) metadata;
+      coords_ = coords == null ? Coordinates.builder().build() : coords;
+      rawPixels_ = DirectBuffers.bufferFromArray(pixels);
+      pixelWidth_ = format.getInteger(PropertyKey.WIDTH.key(), 0);
+      pixelHeight_ = format.getInteger(PropertyKey.HEIGHT.key(), 0);
+      pixelType_ = format.getStringAsEnum(PropertyKey.PIXEL_TYPE.key(),
+            PixelType.class, null);
+      if (pixelWidth_ * pixelHeight_ * pixelType_.getBytesPerPixel() !=
+            rawPixels_.capacity() * pixelType_.getBytesPerComponent()) {
+         throw new IllegalArgumentException("Image width, height, and pixel type do not match pixel array size");
+      }
+   }
+
    /**
     * @param pixels Assumed to be a Java array of either bytes or shorts.
     */
@@ -366,7 +384,7 @@ public final class DefaultImage implements Image {
       }
    }
 
-   private PropertyMap formatToPropertyMap() {
+   public PropertyMap formatToPropertyMap() {
       return PropertyMaps.builder().
             putInteger(PropertyKey.WIDTH.key(), getWidth()).
             putInteger(PropertyKey.HEIGHT.key(), getHeight()).
@@ -374,30 +392,18 @@ public final class DefaultImage implements Image {
             build();
    }
 
-   /**
-    * Needed for file I/O code.
+   /*
+    * Needed for file I/O code. TODO Delete
     */
+   @Deprecated
    public TaggedImage legacyToTaggedImage() {
       JsonObject jo = new JsonObject();
-
-      for (Map.Entry<String, JsonElement> e : NonPropertyMapJSONFormats.
-            imageFormat().toGson(formatToPropertyMap()).getAsJsonObject().
-            entrySet()) {
-         jo.add(e.getKey(), e.getValue());
-      }
-
-      PropertyMap coords = ((DefaultCoords) coords_).toPropertyMap();
-      for (Map.Entry<String, JsonElement> e : NonPropertyMapJSONFormats.
-            coords().toGson(coords).getAsJsonObject().entrySet()) {
-         jo.add(e.getKey(), e.getValue());
-      }
-
-      for (Map.Entry<String, JsonElement> e : NonPropertyMapJSONFormats.
-            metadata().toGson(metadata_.toPropertyMap()).getAsJsonObject().
-            entrySet()) {
-         jo.add(e.getKey(), e.getValue());
-      }
-
+      NonPropertyMapJSONFormats.imageFormat().addToGson(jo,
+            formatToPropertyMap());
+      NonPropertyMapJSONFormats.coords().addToGson(jo,
+            ((DefaultCoords) coords_).toPropertyMap());
+      NonPropertyMapJSONFormats.metadata().addToGson(jo,
+            metadata_.toPropertyMap());
       Gson gson = new GsonBuilder().disableHtmlEscaping().create();
       String json = gson.toJson(jo);
 
@@ -409,6 +415,10 @@ public final class DefaultImage implements Image {
          throw new AssertionError("Json.org failed to parse Gson-generated JSON");
       }
       return new TaggedImage(getRawPixels(), tags);
+   }
+
+   public PixelType getPixelType() {
+      return pixelType_;
    }
 
    @Override

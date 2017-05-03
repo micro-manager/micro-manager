@@ -20,6 +20,7 @@
 
 package org.micromanager.data;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -39,21 +40,21 @@ public interface Storage {
    /**
     * Freeze the Storage, preventing any changes to its contents.
     */
-   public void freeze();
+   public void freeze() throws IOException;
 
    /**
     * Insert an Image into the Storage, so that it may be returned by later
     * getImage() calls.
     * @param image Image to be inserted.
     */
-   public void putImage(Image image);
+   public void putImage(Image image) throws IOException;
 
    /**
     * Retrieve the Image located at the specified coordinates.
     * @param coords Coordinates specifying which image to retrieve
     * @return desired Image
     */
-   public Image getImage(Coords coords);
+   public Image getImage(Coords coords) throws IOException;
 
    /**
     * Returns whether or not an image exists at the specified coordinates.
@@ -87,7 +88,7 @@ public interface Storage {
     * @param coords Coordinates specifying images to match
     * @return List with matching Images
     */
-   public List<Image> getImagesMatching(Coords coords);
+   public List<Image> getImagesMatching(Coords coords) throws IOException;
 
    /**
     * Return the largest stored position along the specified axis. Will be -1
@@ -126,5 +127,5 @@ public interface Storage {
     * Release any resources used by the Storage, for example open file
     * descriptors.
     */
-   public void close();
+   public void close() throws IOException;
 }

@@ -22,84 +22,78 @@
 package org.micromanager.data.internal.multipagetiff;
 
 import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.swing.SwingUtilities;
-import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.PropertyMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.CommentsHelper;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.data.internal.PixelType;
+import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.VersionUtils;
 
 public final class MultipageTiffReader {
 
    private static final long BIGGEST_INT_BIT = (long) Math.pow(2, 31);
-   public static final char BITS_PER_SAMPLE = MultipageTiffWriter.BITS_PER_SAMPLE;
-   public static final char STRIP_OFFSETS = MultipageTiffWriter.STRIP_OFFSETS;    
-   public static final char SAMPLES_PER_PIXEL = MultipageTiffWriter.SAMPLES_PER_PIXEL;
-   public static final char STRIP_BYTE_COUNTS = MultipageTiffWriter.STRIP_BYTE_COUNTS;
-   public static final char IMAGE_DESCRIPTION = MultipageTiffWriter.IMAGE_DESCRIPTION;
+   private static final char STRIP_OFFSETS = MultipageTiffWriter.STRIP_OFFSETS;
+   private static final char STRIP_BYTE_COUNTS = MultipageTiffWriter.STRIP_BYTE_COUNTS;
 
-   public static final char MM_METADATA = MultipageTiffWriter.MM_METADATA;
+   private static final char MM_METADATA = MultipageTiffWriter.MM_METADATA;
+
    // Note: ordering of axes here matches that in MDUtils.getLabel().
    // If you change this, you will need to track down places where the size of
    // the position list is implicitly kept (e.g. in the size of a single index
    // map entry, 20 bytes) and update those locations.
-   public static final ImmutableList<String> ALLOWED_AXES = ImmutableList.of("channel", "z", "time", "position");
+   static final List<String> ALLOWED_AXES = ImmutableList.of("channel", "z", "time", "position");
 
-   private ByteOrder byteOrder_;  
+   private ByteOrder byteOrder_;
    private File file_;
    private RandomAccessFile raFile_;
    private FileChannel fileChannel_;
 
    private StorageMultipageTiff masterStorage_;
    private SummaryMetadata summaryMetadata_;
-   private JSONObject summaryJSON_;
-   private int byteDepth_ = 0;
-   private boolean rgb_;
-   private boolean writingFinished_;
+   private PropertyMap imageFormatReadFromSummary_;
 
    private HashMap<Coords, Long> coordsToOffset_;
 
    /**
     * This constructor is used for a file that is currently being written.
-    * \param summaryJSON As per DefaultSummaryMetadat.toJSON(), except
-    *        augmented with display settings and values that are normally
-    *        only stored in image metadata. See the
-    *        MultipageTiffWriter.augmentWithImageMetadata() method.
     */
    public MultipageTiffReader(StorageMultipageTiff masterStorage,
-         SummaryMetadata summaryMD, JSONObject summaryJSON,
-         JSONObject firstImageTags) {
+         SummaryMetadata summaryMD, PropertyMap summaryPmap,
+         Image firstImage) {
       masterStorage_ = masterStorage;
       summaryMetadata_ = summaryMD;
-      summaryJSON_ = summaryJSON;
       byteOrder_ = MultipageTiffWriter.BYTE_ORDER;
-      getRGBAndByteDepth(firstImageTags);
-      writingFinished_ = false;
    }
 
    public void setIndexMap(HashMap<Coords, Long> indexMap) {
@@ -113,33 +107,28 @@ public final class MultipageTiffReader {
    /**
     * This constructor is used for opening datasets that have already been saved
     */
-   public MultipageTiffReader(StorageMultipageTiff masterStorage, File file) throws IOException, InvalidIndexMapException {
+   public MultipageTiffReader(StorageMultipageTiff masterStorage, File file)
+         throws IOException, InvalidIndexMapException {
       masterStorage_ = masterStorage;
       file_ = file;
       try {
          createFileChannel(false);
       } catch (Exception ex) {
-         ReportingUtils.showError("Can't successfully open file: " +  file_.getName());
+         ReportingUtils.showError(ex, "Cannot open file: " +  file_.getName());
+         throw ex instanceof IOException ? (IOException) ex : new IOException(ex);
       }
-      writingFinished_ = true;
-      long firstIFD = readHeader();
-      summaryJSON_ = readSummaryMD();
-      summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(summaryJSON_);
+      readHeader(); // Determine byte order
+      readSummaryMD();
 
       try {
          readIndexMap();
       }
       catch (IOException e) {
-         // Normally I'd frown on converting exception types like this, but we
-         // want to differentiate index map errors from other errors.
+         // Unlike other IOErrors, this is a potentially recoverable error.
          throw new InvalidIndexMapException(e);
       }
 
       readComments();
-
-      if (summaryMetadata_ != null) {
-         getRGBAndByteDepth(summaryJSON_);
-      }
    }
 
    /**
@@ -154,12 +143,11 @@ public final class MultipageTiffReader {
          createFileChannel(true);
       }
       catch (Exception ex) {
-         ReportingUtils.showError("Can't successfully open file: " +  file_.getName());
+         ReportingUtils.showError(ex, "Cannot open file: " +  file_.getName());
+         throw ex instanceof IOException ? (IOException) ex : new IOException(ex);
       }
-      writingFinished_ = true;
       long firstIFD = readHeader();
-      summaryJSON_ = readSummaryMD();
-      summaryMetadata_ = DefaultSummaryMetadata.legacyFromJSON(summaryJSON_);
+      readSummaryMD();
 
       fixIndexMap(firstIFD, file.getName());
    }
@@ -168,7 +156,7 @@ public final class MultipageTiffReader {
       File dir = new File(directory);
       File[] children = dir.listFiles();
       if (children == null) {
-         throw new IOException(directory + " does not appear to be a directory; is this an MM dataset?");
+         throw new IOException(directory + " does not appear to be a directory; is this a \u00B5Manager dataset?");
       }
       File testFile = null;
       for (File child : children) {
@@ -186,7 +174,7 @@ public final class MultipageTiffReader {
          }
       }
       if (testFile == null) {
-         throw new IOException("Unable to find any TIFs in " + directory + "; is this an MM dataset?");
+         throw new IOException("Unable to find any .tif files in " + directory + "; is this a \u00B5Manager dataset?");
       }
       RandomAccessFile ra;
       try {
@@ -205,7 +193,7 @@ public final class MultipageTiffReader {
       } else if (zeroOne == 0x4d4d ) {
          bo = ByteOrder.BIG_ENDIAN;
       } else {
-         throw new IOException("Error reading Tiff header");
+         throw new IOException("Error reading TIFF header");
       }
       tiffHeader.order(bo);
       int summaryMDHeader = tiffHeader.getInt(32);
@@ -217,30 +205,11 @@ public final class MultipageTiffReader {
       return false;
    }
 
-
-   public void finishedWriting() {
-      writingFinished_ = true;
-   }
-
-   private void getRGBAndByteDepth(JSONObject md) {
-      try {
-         String pixelType = MDUtils.getPixelType(md);
-         rgb_ = pixelType.startsWith("RGB");
-         if (pixelType.equals("RGB32") || pixelType.equals("GRAY8")) {
-            byteDepth_ = 1;
-         } else {
-            byteDepth_ = 2;
-         }
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-   }
-
    public SummaryMetadata getSummaryMetadata() {
       return summaryMetadata_;
    }
 
-   public DefaultImage readImage(Coords coords) {
+   public DefaultImage readImage(Coords coords) throws IOException {
       if (!coordsToOffset_.containsKey(coords)) {
          // Coordinates not in our map; maybe the writer hasn't finished
          // writing it?
@@ -250,84 +219,10 @@ public final class MultipageTiffReader {
          ReportingUtils.logError("Attempted to read image on FileChannel that is null");
          return null;
       }
-      try {
-         long byteOffset = coordsToOffset_.get(coords);
+      long byteOffset = coordsToOffset_.get(coords);
 
-         IFDData data = readIFD(byteOffset);
-         TaggedImage tagged = readTaggedImage(data);
-         // The metadata in the TaggedImage needs to be augmented with
-         // fields from the summary JSON, or else we won't be able to
-         // construct a DefaultImage from it.
-         augmentWithSummaryMetadata(tagged.tags);
-         // Manually create new Metadata for the image we're about to
-         // create. Just passing the bare TaggedImage in would make
-         // Micro-Manager assume that the image was created by the scope
-         // this instance of the program is running, which has ramifications
-         // for the scope data properties.
-         Metadata metadata = DefaultMetadata.legacyFromJSON(tagged.tags);
-         // All keys that are part of the scope data cannot be part of
-         // the user data.
-         // TODO: assumes knowledge of how DefaultMetadata serializes
-         // scope data.
-         HashSet<String> blockedKeys = new HashSet<String>();
-         if (metadata.getScopeData() != null) {
-            blockedKeys.add("scopeDataKeys");
-            for (String key : ((DefaultPropertyMap) metadata.getScopeData()).getKeys()) {
-               blockedKeys.add(key);
-            }
-         }
-         if (summaryMetadata_.getMetadataVersion() != null &&
-               metadata.getUserData() == null &&
-               VersionUtils.isOlderVersion(
-                  summaryMetadata_.getMetadataVersion(), "11")) {
-            // These older versions of the metadata don't have a separate
-            // location for scope data or user data, so we just stuff all
-            // unused tags into the userData section.
-            metadata = metadata.copy().userData(
-                  MDUtils.extractUserData(tagged.tags, blockedKeys)).build();
-         }
-         return new DefaultImage(tagged, null, metadata);
-      }
-      catch (IOException ex) {
-         ReportingUtils.logError(ex);
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e,
-               "Couldn't convert TaggedImage to DefaultImage");
-      }
-      return null;
-   }
-
-   /**
-    * Given the metadata for a TaggedImage, augment it with fields from the
-    * summary JSON that are needed for our DefaultImage class to parse the
-    * metadata and image data properly.
-    */
-   private void augmentWithSummaryMetadata(JSONObject tags) {
-      if (!MDUtils.hasWidth(tags)) {
-         try {
-            MDUtils.setWidth(tags, MDUtils.getWidth(summaryJSON_));
-         }
-         catch (JSONException e) {
-            ReportingUtils.logError(e, "Failed to get image width from summary JSON");
-         }
-      }
-      if (!MDUtils.hasHeight(tags)) {
-         try {
-            MDUtils.setHeight(tags, MDUtils.getHeight(summaryJSON_));
-         }
-         catch (JSONException e) {
-            ReportingUtils.logError(e, "Failed to get image height from summary JSON");
-         }
-      }
-      if (!MDUtils.hasPixelType(tags)) {
-         try {
-            MDUtils.setPixelType(tags, MDUtils.getSingleChannelType(summaryJSON_));
-         }
-         catch (JSONException e) {
-            ReportingUtils.logError(e, "Failed to get image pixel type from summary JSON");
-         }
-      }
+      IFDData data = readIFD(byteOffset);
+      return (DefaultImage) readImage(data);
    }
 
    public Set<Coords> getIndexKeys() {
@@ -336,27 +231,29 @@ public final class MultipageTiffReader {
       return coordsToOffset_.keySet();
    }
 
-   private JSONObject readSummaryMD() {
-      try {
-         ByteBuffer mdInfo = ByteBuffer.allocate(8).order(byteOrder_);
-         fileChannel_.read(mdInfo, 32);
-         int header = mdInfo.getInt(0);
-         int length = mdInfo.getInt(4);
+   private void readSummaryMD() throws IOException {
+      ByteBuffer mdInfo = ByteBuffer.allocate(8).order(byteOrder_);
+      fileChannel_.read(mdInfo, 32);
+      int header = mdInfo.getInt(0);
+      int length = mdInfo.getInt(4);
 
-         if (header != MultipageTiffWriter.SUMMARY_MD_HEADER) {
-            ReportingUtils.logError("Summary Metadata Header Incorrect");
-            return null;
-         }
-
-         ByteBuffer mdBuffer = ByteBuffer.allocate(length).order(byteOrder_);
-         fileChannel_.read(mdBuffer, 40);
-         JSONObject summaryMD = new JSONObject(getString(mdBuffer));
-
-         return summaryMD;
-      } catch (Exception ex) {
-         ReportingUtils.showError("Couldn't read summary Metadata from file: " + file_.getName());
-         return null;
+      if (header != MultipageTiffWriter.SUMMARY_MD_HEADER) {
+         ReportingUtils.logError("Summary Metadata Header Incorrect");
       }
+
+      ByteBuffer mdBuffer = ByteBuffer.allocate(length).order(byteOrder_);
+      fileChannel_.read(mdBuffer, 40);
+      String summaryJSON = getString(mdBuffer);
+
+      JsonParser parser = new JsonParser();
+      JsonReader reader = new JsonReader(new StringReader(summaryJSON));
+      reader.setLenient(true);
+      JsonElement summaryGson = parser.parse(reader);
+
+      imageFormatReadFromSummary_ = NonPropertyMapJSONFormats.imageFormat().
+            fromGson(summaryGson);
+      summaryMetadata_ = DefaultSummaryMetadata.fromPropertyMap(
+            NonPropertyMapJSONFormats.summaryMetadata().fromGson(summaryGson));
    }
 
    /**
@@ -368,7 +265,7 @@ public final class MultipageTiffReader {
     * Annotation storing comment data for this Datastore, we should convert
     * any comments we find here into an Annotation.
     */
-   private void readComments()  {
+   private void readComments() throws IOException {
       Datastore store = masterStorage_.getDatastore();
       if (CommentsHelper.hasAnnotation(store)) {
          // Already have a comments annotation set up; bail.
@@ -500,58 +397,85 @@ public final class MultipageTiffReader {
       }
    }
 
-   private TaggedImage readTaggedImage(IFDData data) throws IOException {
+   private Image readImage(IFDData data) throws IOException {
       ByteBuffer pixelBuffer = ByteBuffer.allocate( (int) data.bytesPerImage).order(byteOrder_);
       ByteBuffer mdBuffer = ByteBuffer.allocate((int) data.mdLength).order(byteOrder_);
       fileChannel_.read(pixelBuffer, data.pixelOffset);
       fileChannel_.read(mdBuffer, data.mdOffset);
-      JSONObject md = new JSONObject();
-      try {
-         md = new JSONObject(getString(mdBuffer));
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex, "Couldn't convert file image metadata to JSON");
+
+      String mdJSON = getString(mdBuffer);
+      JsonParser parser = new JsonParser();
+      JsonReader reader = new JsonReader(new StringReader(mdJSON));
+      reader.setLenient(true);
+      JsonElement mdGson = parser.parse(reader);
+
+      PropertyMap formatPmap = NonPropertyMapJSONFormats.imageFormat().
+            fromGson(mdGson);
+      Coords coords = DefaultCoords.fromPropertyMap(
+            NonPropertyMapJSONFormats.coords().fromGson(mdGson));
+      Metadata metadata = DefaultMetadata.fromPropertyMap(
+            NonPropertyMapJSONFormats.metadata().fromGson(mdGson));
+
+      // Usually we get the width, height, and pixel type from the image (plane)
+      // metadata. If it's not there, we use the values found in the summary
+      // metadata.
+
+      int width = formatPmap.getInteger(PropertyKey.WIDTH.key(), 0);
+      int height = formatPmap.getInteger(PropertyKey.HEIGHT.key(), 0);
+      if (width < 1 || height < 1) {
+         width = imageFormatReadFromSummary_.getInteger(PropertyKey.WIDTH.key(), 0);
+         height = imageFormatReadFromSummary_.getInteger(PropertyKey.HEIGHT.key(), 0);
+         if (width < 1 || height < 1) {
+            // TODO We should probably try the IFD before giving up
+            throw new IOException("Cannot find image width and height");
+         }
+         formatPmap = formatPmap.copyBuilder().
+               putInteger(PropertyKey.WIDTH.key(), width).
+               putInteger(PropertyKey.HEIGHT.key(), height).
+               build();
       }
 
-      if (byteDepth_ == 0) {
-         getRGBAndByteDepth(md);
+      PixelType pixelType = formatPmap.getStringAsEnum(
+            PropertyKey.PIXEL_TYPE.key(), PixelType.class, null);
+      if (pixelType == null) {
+         pixelType = imageFormatReadFromSummary_.getStringAsEnum(
+               PropertyKey.PIXEL_TYPE.key(), PixelType.class, null);
+         if (pixelType == null) {
+            // TODO We should probably try the IFD before giving up
+            throw new IOException("Cannot find image width and height");
+         }
+         formatPmap = formatPmap.copyBuilder().putEnumAsString(
+               PropertyKey.PIXEL_TYPE.key(), pixelType).build();
       }
 
-      if (rgb_) {
-         if (byteDepth_ == 1) {
-            byte[] pixels = new byte[(int) (4 * data.bytesPerImage / 3)];
+      // TODO We should avoid converting to Java array and back, instead using
+      // a nio buffer directly as the Image storage (even better if memory
+      // mapped).
+
+      switch (pixelType) {
+         case GRAY8:
+            return new DefaultImage(pixelBuffer.array(), formatPmap,
+                  coords, metadata);
+         case GRAY16:
+            short[] pixels16 = new short[pixelBuffer.capacity() / 2];
+            for (int i = 0; i < pixels16.length; i++ ) {
+               pixels16[i] = pixelBuffer.getShort(i * 2);
+            }
+            return new DefaultImage(pixels16, formatPmap, coords, metadata);
+         case RGB32:
+            byte[] pixelsARGB = new byte[(int) (4 * data.bytesPerImage / 3)];
             int i = 0;
             for (byte b : pixelBuffer.array()) {
-               pixels[i] = b;
+               pixelsARGB[i] = b;
                i++;
                if ((i + 1) % 4 == 0) {
-                  pixels[i] = 0;
+                  pixelsARGB[i] = 0;
                   i++;
                }
             }
-            return new TaggedImage(pixels, md);
-         } else {
-             short[] pixels = new short[(int) (2 * (data.bytesPerImage/3))];
-            int i = 0;           
-            while ( i < pixels.length) {                
-               pixels[i] = pixelBuffer.getShort( 2*((i/4)*3 + (i%4)) );        
-               i++;
-               if ((i + 1) % 4 == 0) {
-                  pixels[i] = 0;
-                  i++;
-               }
-            }
-            return new TaggedImage(pixels, md);
-         }
-      } else {
-         if (byteDepth_ == 1) {
-            return new TaggedImage(pixelBuffer.array(), md);
-         } else {
-            short[] pix = new short[pixelBuffer.capacity()/2];
-            for (int i = 0; i < pix.length; i++ ) {
-               pix[i] = pixelBuffer.getShort(i*2);
-            }
-            return new TaggedImage(pix, md);
-         }
+            return new DefaultImage(pixelsARGB, formatPmap, coords, metadata);
+         default:
+            throw new IOException("Unknown pixel type: " + pixelType.name());
       }
    }
 
@@ -642,14 +566,15 @@ public final class MultipageTiffReader {
             if (data.nextIFD == 0) {
                break;
             }
-            TaggedImage ti = readTaggedImage(data);
-            if (ti.tags == null || ti.tags.length() == 0) {  //Blank placeholder image, dont add to index map
+            Image image = readImage(data);
+            if (((DefaultMetadata) image.getMetadata()).toPropertyMap().equals(
+                  new DefaultMetadata.Builder().build())) {
+               //Blank placeholder image, dont add to index map
                filePosition = data.nextIFD;
                nextIFDOffsetLocation = data.nextIFDOffsetLocation;
                continue;
             }
-            coordsToOffset_.put(DefaultCoords.legacyFromJSON(ti.tags),
-                  filePosition);
+            coordsToOffset_.put(image.getCoords(), filePosition);
 
             final int progress = (int) (filePosition/2L);
             SwingUtilities.invokeLater(new Runnable() {
@@ -676,7 +601,8 @@ public final class MultipageTiffReader {
       buffer.putInt(0, 0);
       fileChannel_.write(buffer, nextIFDOffsetLocation); 
 
-      filePosition += writeDisplaySettings(DefaultDisplaySettings.getStandardSettings(DisplayController.DEFAULT_SETTINGS_KEY), filePosition);
+      filePosition += writeDisplaySettings(
+            DefaultDisplaySettings.builder().build(), filePosition);
 
       fileChannel_.close();
       raFile_.close();
@@ -684,11 +610,12 @@ public final class MultipageTiffReader {
       createFileChannel(false);
    }
 
-   private int writeDisplaySettings(DefaultDisplaySettings settings, long filePosition) throws IOException {
-      JSONObject settingsJSON = settings.toJSON();
+   // TODO: There is a very similar but not identical method in the Writer
+   private int writeDisplaySettings(DisplaySettings settings, long filePosition) throws IOException {
+      String settingsJSON = ((DefaultDisplaySettings) settings).toPropertyMap().toJSON();
       int numReservedBytes = settingsJSON.length() * MultipageTiffWriter.DISPLAY_SETTINGS_BYTES_PER_CHANNEL;
       ByteBuffer header = ByteBuffer.allocate(8).order(MultipageTiffWriter.BYTE_ORDER);
-      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settingsJSON.toString()));
+      ByteBuffer buffer = ByteBuffer.wrap(getBytesFromString(settingsJSON));
       header.putInt(0, MultipageTiffWriter.DISPLAY_SETTINGS_HEADER);
       header.putInt(4, numReservedBytes);
       fileChannel_.write(header, filePosition);
@@ -744,6 +671,7 @@ public final class MultipageTiffReader {
 
       public IFDData() {}
 
+      @Override
       public String toString() {
          return String.format("<IFDData offset %d, bytes %d, metadata offset %d, metadata length %d, next %d, next offset %d>",
                pixelOffset, bytesPerImage, mdOffset, mdLength, nextIFD,
@@ -762,6 +690,7 @@ public final class MultipageTiffReader {
          value = val;
       }
 
+      @Override
       public String toString() {
          return String.format("<IFDEntry tag 0x%s, type 0x%s, count %d, value %d>",
                Integer.toHexString((int) tag),
@@ -769,6 +698,3 @@ public final class MultipageTiffReader {
       }
    }
 }
-
-
-

@@ -22,12 +22,6 @@ package org.micromanager.display.internal;
 
 import com.google.common.base.Preconditions;
 import java.awt.Color;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +29,8 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
@@ -638,7 +634,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       @Override
       public DisplaySettingsBuilder zoom(Double ratio) {
          if (ratio != null) {
-            zoomRatio(ratio.doubleValue());
+            zoomRatio(ratio);
          }
          return this;
       }
@@ -864,6 +860,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
+   @Deprecated
    public DisplaySettingsBuilder copy() {
       DisplaySettings.Builder ret = new LegacyBuilder().zoomRatio(zoom_).playbackFPS(fps_).colorMode(mode_).
             uniformChannelScaling(uniformChannelScaling_).
@@ -874,10 +871,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       return (LegacyBuilder) ret;
    }
 
-   /**
-    * For backwards compatibility, generate a DefaultDisplaySettings from
-    * a JSONObject.
-    */
+   // TODO This should go in NonPropertyMapJSONFormats.DisplaySettings
    public static DefaultDisplaySettings legacyFromJSON(JSONObject tags) {
       if (tags == null) {
          return new LegacyBuilder().build();
@@ -962,137 +956,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
    }
 
-   private static final String RECORD_DELIMETER = "==============END OF RECORD==============";
-
-   @Override
-   public void save(String path) {
-      File file = new File(path, DisplaySettings.FILENAME);
-      FileWriter writer = null;
-      try {
-         writer = new FileWriter(file, true);
-         writer.write(toJSON().toString(1));
-         writer.write("\n" + RECORD_DELIMETER + "\n");
-         writer.close();
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Unable to convert DisplaySettings into JSON for saving");
-      }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Error while saving DisplaySettings");
-      }
-      finally {
-         if (writer != null) {
-            try {
-               writer.close();
-            }
-            catch (IOException e) {
-               ReportingUtils.logError(e, "Error while closing writer");
-            }
-         }
-      }
-   }
-
-   /**
-    * Load the displaySettings.txt file and create a DefaultDisplaySettings
-    * for each record in the file.
-    * TODO: our mechanism for splitting apart JSON records is rather hacky.
-    */
-   public static List<DisplaySettings> load(String path) {
-      ArrayList<DisplaySettings> result = new ArrayList<DisplaySettings>();
-      File file = new File(path, DisplaySettings.FILENAME);
-      BufferedReader reader = null;
-      try {
-         reader = new BufferedReader(new FileReader(file));
-         String curSettings = "";
-         String curLine = reader.readLine();
-         while (curLine != null) {
-            if (curLine.contentEquals(RECORD_DELIMETER)) {
-               // Ending a record; create a DisplaySettings from it.
-               result.add(legacyFromJSON(new JSONObject(curSettings)));
-               curSettings = "";
-            }
-            else {
-               curSettings += curLine;
-            }
-            curLine = reader.readLine();
-         }
-      }
-      catch (FileNotFoundException e) {
-         // Then we'll just make do with defaults.
-      }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Error while reading display settings file");
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Error while converting saved settings into JSON");
-      }
-      finally {
-         if (reader != null) {
-            try {
-               reader.close();
-            }
-            catch (IOException e) {
-               ReportingUtils.logError(e, "Error while closing reader");
-            }
-         }
-      }
-      return result;
-   }
-
-   /**
-    * For backwards compatibility, generate a JSONObject representing this
-    * DefaultDisplaySettings.
-    */
-   public JSONObject toJSON() {
-      try {
-         JSONObject result = new JSONObject();
-         // We store color in two ways: the backwards-compatible
-         // "ChColor" tag (via setChannelColor()), and a method that preserves
-         // all channel colors.
-         Color[] channelColors = getChannelColors();
-         if (channelColors != null && channelColors.length > 0) {
-            if (channelColors[0] != null) {
-               MDUtils.setChannelColor(result, channelColors[0].getRGB());
-            }
-            JSONArray colors = new JSONArray();
-            for (Color color : channelColors) {
-               if (color != null) {
-                  colors.put(color.getRGB());
-               }
-            }
-            result.put("ChColors", colors);
-         }
-         // TODO: doesn't handle multi-component images.
-         ContrastSettings[] contrastSettings = getChannelContrastSettings();
-         if (contrastSettings != null && contrastSettings.length > 0) {
-            JSONArray mins = new JSONArray();
-            JSONArray maxes = new JSONArray();
-            for (int i = 0; i < contrastSettings.length; ++i) {
-               mins.put(getSafeContrastMin(i, 0, -1));
-               maxes.put(getSafeContrastMax(i, 0, -1));
-            }
-            result.put("ChContrastMin", mins);
-            result.put("ChContrastMax", maxes);
-         }
-         result.put(CHANNEL_COLOR_MODE, mode_.getIndex());
-         result.put(ZOOM_RATIO, zoom_);
-         result.put(ANIMATION_FPS_DOUBLE, fps_);
-         result.put(SHOULD_SYNC_CHANNELS, uniformChannelScaling_);
-         result.put(SHOULD_AUTOSTRETCH, autostretch_);
-         result.put(SHOULD_SCALE_WITH_ROI, useROI_);
-         result.put(EXTREMA_PERCENTAGE, 100.0 * extremaQuantile_);
-         return result;
-      }
-      catch (JSONException e) {
-         ReportingUtils.logError(e, "Couldn't convert DefaultDisplaySettings to JSON");
-         return null;
-      }
-   }
-
-   /**
-    * Generate a textual description of this object. For debugging purposes
-    * only.
-    */
    @Override
    public String toString() {
       Field[] fields = getClass().getDeclaredFields();
@@ -1114,5 +977,23 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
       result += ">";
       return result;
+   }
+
+   public PropertyMap toPropertyMap() {
+      List<PropertyMap> channelSettings = new ArrayList<PropertyMap>();
+      for (ChannelDisplaySettings cs : channelSettings_) {
+         channelSettings.add(((DefaultChannelDisplaySettings) cs).toPropertyMap());
+      }
+      // TODO Define keys
+      return PropertyMaps.builder().
+            putDouble("ZoomRatio", zoom_).
+            putDouble("PlaybackFPS", fps_).
+            putEnumAsString("ColorMode", mode_).
+            putBoolean("UniformChannelScaling", uniformChannelScaling_).
+            putBoolean("Autostretch", autostretch_).
+            putBoolean("ROIAutoscale", useROI_).
+            putDouble("AutoscaleIgnoredQuantile", extremaQuantile_).
+            putPropertyMapList("ChannelSettings", channelSettings).
+            build();
    }
 }

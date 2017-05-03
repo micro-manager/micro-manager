@@ -42,36 +42,26 @@ public final class CommentsHelper {
     */
    public static String getSummaryComment(Datastore store) {
       if (!store.hasAnnotation(COMMENTS_FILE)) {
-         return "";      }
-      try {
-         Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
-         if (annotation.getGeneralAnnotation() == null) {
-            return "";
-         }
-         return annotation.getGeneralAnnotation().getString(COMMENTS_KEY, "");
-      }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Error accessing comments annotation");
          return "";
       }
+      Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
+      if (annotation.getGeneralAnnotation() == null) {
+         return "";
+      }
+      return annotation.getGeneralAnnotation().getString(COMMENTS_KEY, "");
    }
 
    /**
     * Write a new summary comment for the given Datastore.
     */
    public static void setSummaryComment(Datastore store, String comment) {
-      try {
-         Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
-         PropertyMap prop = annotation.getGeneralAnnotation();
-         if (prop == null) {
-            prop = new DefaultPropertyMap.Builder().build();
-         }
-         prop = prop.copy().putString(COMMENTS_KEY, comment).build();
-         annotation.setGeneralAnnotation(prop);
+      Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
+      PropertyMap prop = annotation.getGeneralAnnotation();
+      if (prop == null) {
+         prop = new DefaultPropertyMap.Builder().build();
       }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Error setting summary comment");
-      }
+      prop = prop.copy().putString(COMMENTS_KEY, comment).build();
+      annotation.setGeneralAnnotation(prop);
    }
 
    /**
@@ -82,18 +72,12 @@ public final class CommentsHelper {
       if (!store.hasAnnotation(COMMENTS_FILE)) {
          return "";
       }
-      try {
-         Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
-         if (annotation.getImageAnnotation(coords) == null) {
-            return "";
-         }
-         return annotation.getImageAnnotation(coords).getString(COMMENTS_KEY,
-               "");
-      }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Error accessing comments annotation");
+      Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
+      if (annotation.getImageAnnotation(coords) == null) {
          return "";
       }
+      return annotation.getImageAnnotation(coords).getString(COMMENTS_KEY,
+            "");
    }
 
    /**
@@ -101,18 +85,13 @@ public final class CommentsHelper {
     */
    public static void setImageComment(Datastore store, Coords coords,
          String comment) {
-      try {
-         Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
-         PropertyMap prop = annotation.getImageAnnotation(coords);
-         if (prop == null) {
-            prop = new DefaultPropertyMap.Builder().build();
-         }
-         prop = prop.copy().putString(COMMENTS_KEY, comment).build();
-         annotation.setImageAnnotation(coords, prop);
+      Annotation annotation = store.loadAnnotation(COMMENTS_FILE);
+      PropertyMap prop = annotation.getImageAnnotation(coords);
+      if (prop == null) {
+         prop = new DefaultPropertyMap.Builder().build();
       }
-      catch (IOException e) {
-         ReportingUtils.logError(e, "Error setting image comment");
-      }
+      prop = prop.copy().putString(COMMENTS_KEY, comment).build();
+      annotation.setImageAnnotation(coords, prop);
    }
 
    public static void saveComments(Datastore store) throws IOException {

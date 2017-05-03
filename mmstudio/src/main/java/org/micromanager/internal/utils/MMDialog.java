@@ -66,7 +66,7 @@ public class MMDialog extends JDialog {
     * @param y new WINDOW_Y position if current value isn't valid
     */
    private void ensureSafeWindowPosition(int x, int y) {
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       int prefX = profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, 0);
       int prefY = profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, 0);
       if (GUIUtils.getGraphicsConfigurationContaining(prefX, prefY) == null) {

@@ -184,7 +184,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (initialDisplaySettings == null) {
          initialDisplaySettings = RememberedChannelSettings.updateSettings(
                builder.dataProvider_.getSummaryMetadata(),
-               DefaultDisplaySettings.getStandardSettings(null), // TODO Standard settings should be handled elsewhere!
+               DefaultDisplaySettings.builder().build(),
                builder.dataProvider_.getAxisLength(Coords.CHANNEL));
       }
       if (initialDisplaySettings == null) {

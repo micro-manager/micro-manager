@@ -38,8 +38,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.data.Coords;
@@ -52,6 +53,7 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultDatastore;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
+import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
@@ -74,7 +76,8 @@ public final class StorageMultipageTiff implements Storage {
 
    private DefaultDatastore store_;
    private DefaultSummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
-   private String summaryMetadataString_ = summaryMetadata_.toJSON().toString();
+   private String summaryMetadataString_ = NonPropertyMapJSONFormats.
+         summaryMetadata().toJSON(summaryMetadata_.toPropertyMap());
    private boolean amInWriteMode_;
    private int lastFrameOpenedDataSet_ = -1;
    private String directory_;
@@ -91,7 +94,7 @@ public final class StorageMultipageTiff implements Storage {
    // writing completes, so that calls to getImage() mid-write can access
    // complete data rather than risking a call to
    // MultipageTiffReader.readImage().
-   private ConcurrentHashMap<Coords, Image> coordsToPendingImage_ =
+   private final ConcurrentHashMap<Coords, Image> coordsToPendingImage_ =
       new ConcurrentHashMap<Coords, Image>();
 
    //map of position indices to objects associated with each
@@ -259,7 +262,7 @@ public final class StorageMultipageTiff implements Storage {
             }
          }
       } catch (IOException ex) {
-         ReportingUtils.showError("Couldn't open file: " + f.toString());
+         ReportingUtils.showError(ex, "There was an error reading the file: " + f.toString());
       }
       return reader;
    }
@@ -350,7 +353,6 @@ public final class StorageMultipageTiff implements Storage {
             }
          }
       }
-      TaggedImage taggedImage = image.legacyToTaggedImage();
 
       // initialize writing executor
       if (writingExecutor_ == null) {
@@ -373,26 +375,20 @@ public final class StorageMultipageTiff implements Storage {
 
       if (!positionToFileSet_.containsKey(fileSetIndex)) {
          positionToFileSet_.put(fileSetIndex,
-               new FileSet(taggedImage.tags, this, omeMetadata_,
+               new FileSet(image, this, omeMetadata_,
                   splitByXYPosition_, separateMetadataFile_));
       }
       FileSet set = positionToFileSet_.get(fileSetIndex);
 
       try {
-         set.writeImage(taggedImage);
-         DefaultCoords coords = DefaultCoords.legacyFromJSON(taggedImage.tags);
+         set.writeImage(image);
+         Coords coords = image.getCoords();
          coordsToReader_.put(coords, set.getCurrentReader());
       } catch (IOException ex) {
         ReportingUtils.showError(ex, "Failed to write image to file.");
       }
 
-         
-      int frame;
-      try {
-         frame = MDUtils.getFrameIndex(taggedImage.tags);
-      } catch (JSONException ex) {
-         frame = 0;
-      }
+      int frame = image.getCoords().getTimePoint();
       lastFrameOpenedDataSet_ = Math.max(frame, lastFrameOpenedDataSet_);
    }
 
@@ -534,13 +530,8 @@ public final class StorageMultipageTiff implements Storage {
    private void setSummaryMetadata(DefaultSummaryMetadata summary,
          boolean showProgress) {
       summaryMetadata_ = summary;
-      // HACK: ensure the metadata version is valid.
-      if (summaryMetadata_.getMetadataVersion() == null) {
-         summaryMetadata_ = (DefaultSummaryMetadata) summaryMetadata_.copy()
-            .metadataVersion(DefaultSummaryMetadata.METADATA_VERSION).build();
-      }
-      JSONObject summaryJSON = summary.toJSON();
-      summaryMetadataString_ = summaryJSON.toString();
+      summaryMetadataString_ = NonPropertyMapJSONFormats.summaryMetadata().
+            toJSON(summary.toPropertyMap());
       TreeMap<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
       coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
       if (showProgress && !GraphicsEnvironment.isHeadless()) {
@@ -684,7 +675,12 @@ public final class StorageMultipageTiff implements Storage {
       }
       for (Coords imageCoords : coordsToReader_.keySet()) {
          if (imageCoords.matches(coords)) {
-            result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
+            try {
+               result.add(coordsToReader_.get(imageCoords).readImage(imageCoords));
+            }
+            catch (IOException ex) {
+               ReportingUtils.logError(ex, "Failed to read image at " + imageCoords);
+            }
          }
       }
       return new ArrayList<Image>(result);
@@ -701,7 +697,13 @@ public final class StorageMultipageTiff implements Storage {
          ReportingUtils.logError("Asked for image at " + coords + " that doesn't exist");
          return null;
       }
-      return coordsToReader_.get(coords).readImage(coords);
+      try {
+         return coordsToReader_.get(coords).readImage(coords);
+      }
+      catch (IOException ex) {
+         ReportingUtils.logError(ex, "Failed to read image at " + coords);
+         return null;
+      }
    }
 
    @Override

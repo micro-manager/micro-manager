@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Metadata;
+import static org.micromanager.data.internal.PropertyKey.*;
 
 /**
  * This class holds the metadata for ImagePlanes. It is intended to be 
@@ -33,224 +34,203 @@ import org.micromanager.data.Metadata;
  * not explicitly set will default to null.
  */
 public final class DefaultMetadata implements Metadata {
-   public static class Builder implements Metadata.MetadataBuilder {
-      private UUID uuid_;
-      private String camera_;
-      private Integer binning_;
-      private Rectangle ROI_;
-      private Integer bitDepth_;
-      private Double exposureMs_;
-      private Double elapsedTimeMs_;
-      private Long imageNumber_;
-      private String receivedTime_;
-      private Double pixelSizeUm_;
-      private Double pixelAspect_;
-      private String positionName_;
-      private Double xPositionUm_;
-      private Double yPositionUm_;
-      private Double zPositionUm_;
-      private PropertyMap scopeData_;
-      private PropertyMap userData_;
+   public static class Builder implements Metadata.Builder {
+      private final PropertyMap.Builder b_;
+
+      public Builder() {
+         b_ = PropertyMaps.builder();
+      }
+
+      private Builder(PropertyMap toCopy) {
+         b_ = toCopy.copyBuilder();
+      }
 
       @Override
       public DefaultMetadata build() {
-         return new DefaultMetadata(this);
+         return new DefaultMetadata(b_.build());
       }
 
       @Override
-      public MetadataBuilder uuid() {
-         uuid_ = UUID.randomUUID();
+      public Builder generateUUID() {
+         return uuid(java.util.UUID.randomUUID());
+      }
+
+      @Override
+      public Builder uuid() {
+         return generateUUID();
+      }
+
+      @Override
+      public Builder uuid(UUID uuid) {
+         b_.putUUID(PropertyKey.UUID.key(), uuid);
          return this;
       }
 
       @Override
-      public MetadataBuilder uuid(UUID uuid) {
-         uuid_ = uuid;
+      public Builder bitDepth(Integer bitDepth) {
+         b_.putInteger(BIT_DEPTH.key(), bitDepth);
          return this;
       }
 
       @Override
-      public MetadataBuilder bitDepth(Integer bitDepth) {
-         bitDepth_ = bitDepth;
+      public Builder exposureMs(Double exposureMs) {
+         b_.putDouble(EXPOSURE_MS.key(), exposureMs);
          return this;
       }
 
       @Override
-      public MetadataBuilder exposureMs(Double exposureMs) {
-         exposureMs_ = exposureMs;
+      public Builder elapsedTimeMs(Double elapsedTimeMs) {
+         b_.putDouble(ELAPSED_TIME_MS.key(), elapsedTimeMs);
          return this;
       }
 
       @Override
-      public MetadataBuilder elapsedTimeMs(Double elapsedTimeMs) {
-         elapsedTimeMs_ = elapsedTimeMs;
+      public Builder binning(Integer binning) {
+         b_.putInteger(BINNING.key(), binning);
          return this;
       }
 
       @Override
-      public MetadataBuilder binning(Integer binning) {
-         binning_ = binning;
+      public Builder imageNumber(Long imageNumber) {
+         b_.putLong(IMAGE_NUMBER.key(), imageNumber);
          return this;
       }
 
       @Override
-      public MetadataBuilder imageNumber(Long imageNumber) {
-         imageNumber_ = imageNumber;
+      public Builder positionName(String positionName) {
+         b_.putString(POSITION_NAME.key(), positionName);
          return this;
       }
 
       @Override
-      public MetadataBuilder positionName(String positionName) {
-         positionName_ = positionName;
+      public Builder xPositionUm(Double xPositionUm) {
+         b_.putDouble(X_POSITION_UM.key(), xPositionUm);
          return this;
       }
 
       @Override
-      public MetadataBuilder xPositionUm(Double xPositionUm) {
-         xPositionUm_ = xPositionUm;
+      public Builder yPositionUm(Double yPositionUm) {
+         b_.putDouble(Y_POSITION_UM.key(), yPositionUm);
          return this;
       }
 
       @Override
-      public MetadataBuilder yPositionUm(Double yPositionUm) {
-         yPositionUm_ = yPositionUm;
+      public Builder zPositionUm(Double zPositionUm) {
+         b_.putDouble(Z_POSITION_UM.key(), zPositionUm);
          return this;
       }
 
       @Override
-      public MetadataBuilder zPositionUm(Double zPositionUm) {
-         zPositionUm_ = zPositionUm;
+      public Builder pixelSizeUm(Double pixelSizeUm) {
+         b_.putDouble(PIXEL_SIZE_UM.key(), pixelSizeUm);
          return this;
       }
 
       @Override
-      public MetadataBuilder pixelSizeUm(Double pixelSizeUm) {
-         pixelSizeUm_ = pixelSizeUm;
+      public Builder camera(String camera) {
+         b_.putString(CAMERA.key(), camera);
          return this;
       }
 
       @Override
-      public MetadataBuilder camera(String camera) {
-         camera_ = camera;
+      public Builder receivedTime(String receivedTime) {
+         b_.putString(RECEIVED_TIME.key(), receivedTime);
          return this;
       }
 
       @Override
-      public MetadataBuilder receivedTime(String receivedTime) {
-         receivedTime_ = receivedTime;
+      public Builder roi(Rectangle roi) {
+         b_.putRectangle(ROI.key(), roi);
          return this;
       }
 
       @Override
-      public MetadataBuilder ROI(Rectangle ROI) {
-         ROI_ = ROI;
+      public Builder ROI(Rectangle roi) {
+         return roi(roi);
+      }
+
+      @Override
+      public Builder pixelAspect(Double pixelAspect) {
+         b_.putDouble(PIXEL_ASPECT.key(), pixelAspect);
          return this;
       }
 
       @Override
-      public MetadataBuilder pixelAspect(Double pixelAspect) {
-         pixelAspect_ = pixelAspect;
-         return this;
-      }
-
-      @Override
-      public MetadataBuilder scopeData(PropertyMap scopeData) {
+      public Builder scopeData(PropertyMap scopeData) {
          for (String key : scopeData.keySet()) {
             if (scopeData.getValueTypeForKey(key) != String.class) {
                throw new ClassCastException("ScopeData property map values must be Strings");
             }
          }
-         scopeData_ = scopeData;
+         b_.putPropertyMap(SCOPE_DATA.key(), scopeData);
          return this;
       }
 
       @Override
-      public MetadataBuilder userData(PropertyMap userData) {
+      public Builder userData(PropertyMap userData) {
          // This is not read by MM1 so an arbitrary property map is allowed.
-         userData_ = userData;
+         b_.putPropertyMap(USER_DATA.key(), userData);
+         return this;
+      }
+
+      @Override
+      public Builder fileName(String filename) {
+         b_.putString(FILE_NAME.key(), filename);
          return this;
       }
    }
 
-   private final UUID uuid_;
-   private final String camera_;
-   private final Integer binning_;
-   private final Rectangle ROI_;
-   private final Integer bitDepth_;
-   private final Double exposureMs_;
-   private final Double elapsedTimeMs_;
-   private final Long imageNumber_;
-   private final String receivedTime_;
-   private final Double pixelSizeUm_;
-   private final Double pixelAspect_;
-   private final String positionName_;
-   private final Double xPositionUm_;
-   private final Double yPositionUm_;
-   private final Double zPositionUm_;
-   private final PropertyMap scopeData_;
-   private final PropertyMap userData_;
 
-   public DefaultMetadata(Builder builder) {
-      uuid_ = builder.uuid_;
-      camera_ = builder.camera_;
-      binning_ = builder.binning_;
-      ROI_ = builder.ROI_;
-      bitDepth_ = builder.bitDepth_;
-      exposureMs_ = builder.exposureMs_;
-      elapsedTimeMs_ = builder.elapsedTimeMs_;
-      imageNumber_ = builder.imageNumber_;
-      receivedTime_ = builder.receivedTime_;
-      pixelSizeUm_ = builder.pixelSizeUm_;
-      pixelAspect_ = builder.pixelAspect_;
-      positionName_ = builder.positionName_;
-      xPositionUm_ = builder.xPositionUm_;
-      yPositionUm_ = builder.yPositionUm_;
-      zPositionUm_ = builder.zPositionUm_;
-      scopeData_ = builder.scopeData_;
-      userData_ = builder.userData_;
+   private final PropertyMap pmap_;
+
+   public DefaultMetadata(PropertyMap pmap) {
+      pmap_ = pmap;
+
+      // Check map format
+      getUUID();
+      getCamera();
+      getBinning();
+      getROI();
+      getBitDepth();
+      getExposureMs();
+      getElapsedTimeMs();
+      getImageNumber();
+      getReceivedTime();
+      getPixelSizeUm();
+      getPixelAspect();
+      getPositionName();
+      getXPositionUm();
+      getYPositionUm();
+      getZPositionUm();
+      PropertyMap scopeData = getScopeData();
+      for (String key : scopeData.keySet()) {
+         if (scopeData.getValueTypeForKey(key) != String.class) {
+            throw new ClassCastException("ScopeData property map values must be Strings");
+         }
+      }
+      getUserData();
+      getFileName();
    }
 
    @Override
-   public MetadataBuilder copy() {
-      return new Builder()
-            .uuid(uuid_)
-            .camera(camera_)
-            .binning(binning_)
-            .ROI(ROI_)
-            .bitDepth(bitDepth_)
-            .exposureMs(exposureMs_)
-            .elapsedTimeMs(elapsedTimeMs_)
-            .imageNumber(imageNumber_)
-            .receivedTime(receivedTime_)
-            .pixelSizeUm(pixelSizeUm_)
-            .pixelAspect(pixelAspect_)
-            .positionName(positionName_)
-            .xPositionUm(xPositionUm_)
-            .yPositionUm(yPositionUm_)
-            .zPositionUm(zPositionUm_)
-            .scopeData(scopeData_)
-            .userData(userData_);
+   public Builder copyBuilderPreservingUUID() {
+      return new Builder(pmap_);
    }
 
-   private DefaultMetadata(PropertyMap map) {
-      uuid_ = map.containsString(PropertyKey.UUID.key()) ?
-            UUID.fromString(map.getString(PropertyKey.UUID.key(), null)) : null;
-      camera_ = map.getString(PropertyKey.CAMERA.key(), null);
-      binning_ = (Integer) map.getAsNumber(PropertyKey.BINNING.key(), null);
-      ROI_ = map.getRectangle(PropertyKey.ROI.key(), null);
-      bitDepth_ = (Integer) map.getAsNumber(PropertyKey.BIT_DEPTH.key(), null);
-      exposureMs_ = (Double) map.getAsNumber(PropertyKey.EXPOSURE_MS.key(), null);
-      elapsedTimeMs_ = (Double) map.getAsNumber(PropertyKey.ELAPSED_TIME_MS.key(), null);
-      imageNumber_ = (Long) map.getAsNumber(PropertyKey.IMAGE_NUMBER.key(), null);
-      receivedTime_ = map.getString(PropertyKey.RECEIVED_TIME.key(), null);
-      pixelSizeUm_ = (Double) map.getAsNumber(PropertyKey.PIXEL_SIZE_UM.key(), null);
-      pixelAspect_ = (Double) map.getAsNumber(PropertyKey.PIXEL_ASPECT.key(), null);
-      positionName_ = map.getString(PropertyKey.POSITION_NAME.key(), null);
-      xPositionUm_ = (Double) map.getAsNumber(PropertyKey.X_POSITION_UM.key(), null);
-      yPositionUm_ = (Double) map.getAsNumber(PropertyKey.Y_POSITION_UM.key(), null);
-      zPositionUm_ = (Double) map.getAsNumber(PropertyKey.Z_POSITION_UM.key(), null);
-      scopeData_ = map.getPropertyMap(PropertyKey.SCOPE_DATA.key(), null);
-      userData_ = map.getPropertyMap(PropertyKey.USER_DATA.key(), null);
+   @Override
+   public Builder copyBuilderWithNewUUID() {
+      return new Builder(pmap_).generateUUID();
+   }
+
+   @Override
+   public Builder copyBuilderRemovingUUID() {
+      return new Builder(pmap_).uuid(null);
+   }
+
+   @Override
+   @Deprecated
+   public Builder copy() {
+      return copyBuilderPreservingUUID();
    }
 
    // Could throw if map has wrong value types
@@ -259,110 +239,107 @@ public final class DefaultMetadata implements Metadata {
    }
 
    public PropertyMap toPropertyMap() {
-      return PropertyMaps.builder().
-            putString(PropertyKey.UUID.key(), getUUID() == null ? null : getUUID().toString()).
-            putString(PropertyKey.CAMERA.key(), getCamera()).
-            putInteger(PropertyKey.BINNING.key(), getBinning()).
-            putRectangle(PropertyKey.ROI.key(), getROI()).
-            putInteger(PropertyKey.BIT_DEPTH.key(), getBitDepth()).
-            putDouble(PropertyKey.EXPOSURE_MS.key(), getExposureMs()).
-            putDouble(PropertyKey.ELAPSED_TIME_MS.key(), getElapsedTimeMs()).
-            putLong(PropertyKey.IMAGE_NUMBER.key(), getImageNumber()).
-            putString(PropertyKey.RECEIVED_TIME.key(), getReceivedTime()).
-            putDouble(PropertyKey.PIXEL_SIZE_UM.key(), getPixelSizeUm()).
-            putDouble(PropertyKey.PIXEL_ASPECT.key(), getPixelAspect()).
-            putString(PropertyKey.POSITION_NAME.key(), getPositionName()).
-            putDouble(PropertyKey.X_POSITION_UM.key(), getXPositionUm()).
-            putDouble(PropertyKey.Y_POSITION_UM.key(), getYPositionUm()).
-            putDouble(PropertyKey.Z_POSITION_UM.key(), getZPositionUm()).
-            putPropertyMap(PropertyKey.SCOPE_DATA.key(), scopeData_).
-            putPropertyMap(PropertyKey.USER_DATA.key(), userData_).
-            build();
+      return pmap_;
    }
 
    @Override
    public UUID getUUID() {
-      return uuid_;
+      return pmap_.getUUID(PropertyKey.UUID.key(), null);
    }
 
    @Override
    public Integer getBitDepth() {
-      return bitDepth_;
+      return pmap_.containsKey(BIT_DEPTH.key()) ?
+            pmap_.getInteger(BIT_DEPTH.key(), 0) : null;
    }
 
    @Override
    public Double getExposureMs() {
-      return exposureMs_;
+      return pmap_.containsKey(EXPOSURE_MS.key()) ?
+            pmap_.getDouble(EXPOSURE_MS.key(), Double.NaN) : null;
    }
 
    @Override
    public Double getElapsedTimeMs() {
-      return elapsedTimeMs_;
+      return pmap_.containsKey(ELAPSED_TIME_MS.key()) ?
+            pmap_.getDouble(ELAPSED_TIME_MS.key(), Double.NaN) : null;
    }
 
    @Override
    public Integer getBinning() {
-      return binning_;
+      return pmap_.containsKey(BINNING.key()) ?
+            pmap_.getInteger(BINNING.key(), 0) : null;
    }
 
    @Override
    public Long getImageNumber() {
-      return imageNumber_;
+      return pmap_.containsKey(IMAGE_NUMBER.key()) ?
+            pmap_.getLong(IMAGE_NUMBER.key(), 0L) : null;
    }
 
    @Override
    public String getPositionName() {
-      return positionName_;
+      return pmap_.getString(POSITION_NAME.key(), null);
    }
 
    @Override
    public Double getXPositionUm() {
-      return xPositionUm_;
+      return pmap_.containsKey(X_POSITION_UM.key()) ?
+            pmap_.getDouble(X_POSITION_UM.key(), Double.NaN) : null;
    }
 
    @Override
    public Double getYPositionUm() {
-      return yPositionUm_;
+      return pmap_.containsKey(Y_POSITION_UM.key()) ?
+            pmap_.getDouble(Y_POSITION_UM.key(), Double.NaN) : null;
    }
 
    @Override
    public Double getZPositionUm() {
-      return zPositionUm_;
+      return pmap_.containsKey(Z_POSITION_UM.key()) ?
+            pmap_.getDouble(Z_POSITION_UM.key(), Double.NaN) : null;
    }
 
    @Override
    public Double getPixelSizeUm() {
-      return pixelSizeUm_;
+      return pmap_.containsKey(PIXEL_SIZE_UM.key()) ?
+            pmap_.getDouble(PIXEL_SIZE_UM.key(), Double.NaN) : null;
    }
 
    @Override
    public String getCamera() {
-      return camera_;
+      return pmap_.getString(CAMERA.key(), null);
    }
 
    @Override
    public String getReceivedTime() {
-      return receivedTime_;
+      return pmap_.getString(RECEIVED_TIME.key(), null);
    }
 
    @Override
    public Rectangle getROI() {
-      return ROI_ == null ? null : new Rectangle(ROI_);
+      return pmap_.getRectangle(ROI.key(), null);
    }
 
    @Override
    public Double getPixelAspect() {
-      return pixelAspect_;
+      return pmap_.containsKey(PIXEL_ASPECT.key()) ?
+            pmap_.getDouble(PIXEL_ASPECT.key(), Double.NaN) : null;
    }
 
    @Override
    public PropertyMap getScopeData() {
-      return scopeData_ == null ? PropertyMaps.emptyPropertyMap() : scopeData_;
+      return pmap_.getPropertyMap(SCOPE_DATA.key(), PropertyMaps.emptyPropertyMap());
    }
 
    @Override
    public PropertyMap getUserData() {
-      return userData_ == null ? PropertyMaps.emptyPropertyMap() : userData_;
+      return pmap_.getPropertyMap(USER_DATA.key(), PropertyMaps.emptyPropertyMap());
+   }
+
+   @Override
+   public String getFileName() {
+      return pmap_.getString(FILE_NAME.key(), null);
    }
 
    @Override

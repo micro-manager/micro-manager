@@ -229,7 +229,9 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    private final PropertyMap pmap_;
 
-   private DefaultSummaryMetadata(PropertyMap map) {
+   private DefaultSummaryMetadata(PropertyMap pmap) {
+      pmap_ = pmap;
+
       // Check map format
       getPrefix();
       getUserName();
@@ -250,8 +252,6 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       getKeepShutterOpenSlices();
       getKeepShutterOpenChannels();
       getUserData();
-
-      pmap_ = map;
    }
 
    @Override
@@ -302,7 +302,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    @Deprecated
    public String[] getChannelNames() {
-      return pmap_.containsStringList(CHANNEL_NAMES.key()) ?
+      return pmap_.containsKey(CHANNEL_NAMES.key()) ?
             getChannelNameList().toArray(new String[0]) : null;
    }
 
@@ -317,13 +317,13 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public Double getZStepUm() {
-      return pmap_.containsDouble(Z_STEP_UM.key()) ?
+      return pmap_.containsKey(Z_STEP_UM.key()) ?
             pmap_.getDouble(Z_STEP_UM.key(), Double.NaN) : null;
    }
 
    @Override
    public Double getWaitInterval() {
-      return pmap_.containsDouble(INTERVAL_MS.key()) ?
+      return pmap_.containsKey(INTERVAL_MS.key()) ?
             pmap_.getDouble(INTERVAL_MS.key(), Double.NaN) : null;
    }
 
@@ -383,13 +383,13 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
 
    @Override
    public Boolean getKeepShutterOpenSlices() {
-      return pmap_.containsBoolean(KEEP_SHUTTER_OPEN_SLICES.key()) ?
+      return pmap_.containsKey(KEEP_SHUTTER_OPEN_SLICES.key()) ?
             pmap_.getBoolean(KEEP_SHUTTER_OPEN_SLICES.key(), false) : null;
    }
 
    @Override
    public Boolean getKeepShutterOpenChannels() {
-      return pmap_.containsBoolean(KEEP_SHUTTER_OPEN_CHANNELS.key()) ?
+      return pmap_.containsKey(KEEP_SHUTTER_OPEN_CHANNELS.key()) ?
             pmap_.getBoolean(KEEP_SHUTTER_OPEN_CHANNELS.key(), false) : null;
    }
 

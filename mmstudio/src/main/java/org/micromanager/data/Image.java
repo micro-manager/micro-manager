@@ -127,7 +127,9 @@ public interface Image {
     * @return ImageJ pixel type.
     * @throws UnsupportedOperationException if the image format is not
     * supported by ImageJ1
+    * @deprecated
     */
+   @Deprecated
    int getImageJPixelType();
 
    /**
