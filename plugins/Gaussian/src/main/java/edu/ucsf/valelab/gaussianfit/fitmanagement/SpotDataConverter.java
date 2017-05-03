@@ -125,7 +125,7 @@ public class SpotDataConverter {
       return spotData;
    }
    
-    private static Double calcIntegral(double N, double a, double sasqr, double bgr) {
+    public static Double calcIntegral(double N, double a, double sasqr, double bgr) {
       final int count = 1000;
       final double halfstep = 0.5d / (double) count; 
       final double step = 1.0d / (double) count;
