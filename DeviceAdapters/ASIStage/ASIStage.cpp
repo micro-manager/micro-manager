@@ -1456,7 +1456,9 @@ int XYStage::GetMaxSpeed(char * maxSpeedStr)
    maxSpeed_ = 10001;
    SetProperty("Speed-S", "10000");
    ret = GetProperty("Speed-S", maxSpeedStr);
-   maxSpeed_ = origMaxSpeed;  // restore in case we return early
+   maxSpeed_ = atof(maxSpeedStr);
+   if (maxSpeed_ <= 0.1)
+      maxSpeed_ = origMaxSpeed;  // restore default if something went wrong in which case atof returns 0.0
    if (ret != DEVICE_OK)
       return ret;
    ret = SetProperty("Speed-S", orig_speed);
@@ -3314,7 +3316,7 @@ int CRIF::SetFocusState(std::string focusState)
       {
          const char* command = "LK Z";
          // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
+         ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -3326,7 +3328,7 @@ int CRIF::SetFocusState(std::string focusState)
       if (currentState == g_CRIF_B || currentState == g_CRIF_O)
       {
          // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
+         ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
          ret = GetFocusState(currentState);
@@ -3336,7 +3338,7 @@ int CRIF::SetFocusState(std::string focusState)
       if (currentState == g_CRIF_I) // Idle, first switch on laser
       {
          // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
+         ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
          ret = GetFocusState(currentState);
@@ -3346,7 +3348,7 @@ int CRIF::SetFocusState(std::string focusState)
       if (currentState == g_CRIF_L)
       {
          // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
+         ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -3370,7 +3372,7 @@ int CRIF::SetFocusState(std::string focusState)
       // only try a lock when we are good
       if ( (currentState == g_CRIF_G) || (currentState == g_CRIF_O) ) 
       {
-         int ret = SetContinuousFocusing(true);
+         ret = SetContinuousFocusing(true);
          if (ret != DEVICE_OK)
             return ret;
       }
