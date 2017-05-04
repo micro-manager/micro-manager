@@ -95,15 +95,15 @@ public class ZProjectorPluginExecutor {
                DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
                copyDisplay.setCustomTitle(newName);
                studio_.displays().manage(newStore);
-               for (int p = 0; p < oldStore.getAxisLength(Coords.STAGE_POSITION); p++) {
-                  for (int t = 0; t < oldStore.getAxisLength(Coords.TIME); t++) {
-                     for (int c = 0; t < oldStore.getAxisLength(Coords.CHANNEL); c++) {
+               for (int p = 0; p <= oldSizeCoord.getStagePosition(); p++) {
+                  for (int t = 0; t <= oldSizeCoord.getTime(); t++) {
+                     for (int c = 0; c <= oldSizeCoord.getChannel(); c++) {
                         Coords.CoordsBuilder cbz = cb.stagePosition(p).time(t).channel(c);
                         Image tmpImg = oldStore.getImage(cbz.z(0).build());
                         ImageStack stack = new ImageStack(
                                 tmpImg.getWidth(), tmpImg.getHeight());
                         Metadata imgMetadata = tmpImg.getMetadata();
-                        for (int z = 0; z < oldStore.getAxisLength(Coords.Z); z++) {
+                        for (int z = 0; z <= oldSizeCoord.getZ(); z++) {
                            Image img = oldStore.getImage(cbz.z(z).build());
                            ImageProcessor ip
                                    = studio_.data().getImageJConverter().createProcessor(img);
