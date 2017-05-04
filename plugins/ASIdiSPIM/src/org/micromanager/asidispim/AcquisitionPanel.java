@@ -1312,6 +1312,32 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     sliceTiming_.sliceDuration) +
             " ms");
    }
+   
+   /**
+    * calculate the total ramp time for stage scan in units of milliseconds (includes both acceleration and settling time
+    *   given by "delay before side" setting)
+    * @param acqSettings
+    * @return
+    */
+   private double getStageRampDuration(AcquisitionSettings acqSettings) {
+      final double accelerationX = controller_.computeScanAcceleration(
+            controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller
+      ReportingUtils.logDebugMessage("stage ramp duration is " + (acqSettings.delayBeforeSide + accelerationX) + " milliseconds");
+      return acqSettings.delayBeforeSide + accelerationX;
+   }
+   
+   /**
+    * calculate the retrace time in stage scan raster mode in units of milliseconds
+    * @param acqSettings
+    * @return
+    */
+   private double getStageRetraceDuration(AcquisitionSettings acqSettings) {
+      final double retraceSpeed = 0.67f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);  // retrace speed set to 67% of max speed in firmware
+      final double speedFactor = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
+      final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
+      ReportingUtils.logDebugMessage("stage retrace duration is " + scanDistance/retraceSpeed + " milliseconds");
+      return scanDistance/retraceSpeed;
+   }
 
    /**
     * Compute the volume duration in ms based on controller's timing settings.
@@ -1328,15 +1354,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         numCameraTriggers += 1;
       }
       // stackDuration is per-side, per-channel, per-position
+      
       final double stackDuration = numCameraTriggers * acqSettings.sliceTiming.sliceDuration;
       if (acqSettings.isStageScanning) {
-         final double accelerationX = controller_.computeScanAcceleration(
-               controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller
-         final double rampDuration = delayBeforeSide + accelerationX;
-         final double retraceSpeed = 0.67f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);  // retrace speed set to 67% of max speed in firmware
-         final double speedFactor = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
-         final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
-         final double retraceTime = scanDistance/retraceSpeed/1000;
+         final double rampDuration = getStageRampDuration(acqSettings);
+         final double retraceTime = getStageRetraceDuration(acqSettings);
          // TODO double-check these calculations below, at least they are better than before ;-)
          if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN) {
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
@@ -1625,6 +1647,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     *   Devices.Side.A or B to run only that side
     */
    public void runTestAcquisition(Devices.Sides side) {
+      ReportingUtils.logDebugMessage("User requested start of test diSPIM acquisition with side " + side.toString() + " selected.");
       cancelAcquisition_.set(false);
       acquisitionRequested_.set(true);
       updateStartButton();
@@ -2604,7 +2627,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         int imagesToSkip = 0;  // hardware timepoints have to drop spurious images with overlap mode
                         final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
                         boolean done = false;
-                        final long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
+                        long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
+                        if (acqSettings.isStageScanning) {  // for stage scanning have to allow extra time for turn-around
+                           timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
+                           timeout2 += 1500;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
+                           if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
+                              timeout2 += (long)Math.ceil(getStageRetraceDuration(acqSettings));  // in unidirectional case also need to rewind
+                           }
+                        }
                         start = System.currentTimeMillis();
                         long last = start;
                         try {
