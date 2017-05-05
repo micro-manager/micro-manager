@@ -71,7 +71,7 @@ public class CoordinateMapper {
    
    private int method_ = LWM;
    private int pieceWiseAffineMaxControlPoints_ = 100;
-   private double pieceWiseAffineMaxDistance_ = 500.0;
+   private double pieceWiseAffineMaxDistance_ = 5000.0;
 
    /**
     * Shorthand name
