@@ -1,0 +1,61 @@
+language: java
+dist: trusty
+
+global:
+  - CASHER_TIME_OUT=500
+
+jdk:
+  - oraclejdk8
+
+addons:
+  apt:
+    packages:
+    - subversion
+    - build-essential
+    - autoconf
+    - automake
+    - libtool
+    - pkg-config
+    - libboost-all-dev
+    - zlib1g-dev
+      swig
+    - ant
+    - python-dev
+    - python-numpy-dev
+    - git-svn
+
+cache:
+  directories:
+  - /$TRAVIS_BUILD_DIR/3rdpartypublic
+
+script:
+  - cd $TRAVIS_BUILD_DIR
+
+  # Get 3rdpartypublic
+  - git svn clone --quiet -r HEAD https://valelab4.ucsf.edu/svn/3rdpartypublic
+  - cd /$TRAVIS_BUILD_DIR/3rdpartypublic
+  - git svn --quiet -r HEAD fetch
+  - git svn --quiet rebase
+  - cd ../
+
+  # Get IJ
+  - wget http://rsb.info.nih.gov/ij/download/zips/ij149.zip
+  - unzip ij149.zip
+
+  # Build MM
+  - cd $TRAVIS_BUILD_DIR/micro-manager/
+  - ./autogen.sh
+  - JAVA_HOME=$JAVA_HOME CC=gcc CXX=g++ ./configure --enable-imagej-plugin=/$TRAVIS_BUILD_DIR/ImageJ
+  - make fetchdeps
+  - make
+  - make install
+
+  # Build MM bundle
+  - cd /$TRAVIS_BUILD_DIR
+  - mkdir -p bundles/
+  - BUNDLE_NAME="$(date +"%Y.%m.%d.%H.%M").MicroManager-$GIT_HASH.zip"
+  - zip -r bundles/$BUNDLE_NAME ImageJ/
+
+deploy:
+  # Deploy the builded Linux MicroManager bundle wherever you want here
+  skip_cleanup: true
