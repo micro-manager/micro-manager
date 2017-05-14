@@ -81,20 +81,17 @@ public class RegionManager {
    public void deleteAll() {
       regions_.clear();
       for (SurfaceRegionComboBoxModel combo : comboBoxModels_) {
-         combo.setSelectedIndex(-1);
+         combo.setSelectedItem(null);
       }
       updateRegionTableAndCombos();
    }
 
    public void delete(int index) {
-      regions_.remove(index);
+      MultiPosRegion r = regions_.remove(index);
       for (SurfaceRegionComboBoxModel combo : comboBoxModels_) {
-         if (index == 0 && regions_.isEmpty()) {
-            combo.setSelectedIndex(-1); //set selectionto null cause no surfaces left
-         } else if (combo.getSelectedIndex() == 0) {
-            //do noting, so selection stays at top of list
-         } else if (index <= combo.getSelectedIndex()) {
-            combo.setSelectedIndex(combo.getSelectedIndex() - 1); //decrment selection so combo stays on same object
+         if(combo.getSelectedItem() == r) {
+            combo.setSelectedItem(null);
+            combo.update();
          }
       }
       updateRegionTableAndCombos();
