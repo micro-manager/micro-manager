@@ -32,7 +32,7 @@ public class LaserPredNet {
    private static final int N_THETA_ANGLES = 12;
    private static final int N_HIST_BINS = 12;
    private static final double PHI = 0.3491;
-   private static final int FOV_LASER_MODULATION_RESOLUTION = 16;
+   private static final int FOV_LASER_MODULATION_RESOLUTION = 8;
    
    private static final int N_HIDDENS = 200;
    private static final int N_INPUTS = 15;
@@ -58,15 +58,10 @@ public class LaserPredNet {
       brightness_ = brightness;
    }
 
-    public byte[] getExcitations(AcquisitionEvent e, SurfaceInterpolator surf) throws InterruptedException {
-      XYStagePosition xyPos = e.xyPosition_;
-      double zPos = e.zPosition_;
+    public byte[] getExcitations(XYStagePosition xyPos, double zPos, SurfaceInterpolator surf) throws InterruptedException {
       Point2D.Double[] corners = xyPos.getFullTileCorners();
-      double tileSize = Math.abs(corners[2].x - corners[0].x);      
-      int pixelDim = JavaLayerImageConstructor.getInstance().getImageHeight();
-      
+      int pixelDim = JavaLayerImageConstructor.getInstance().getImageHeight();      
       AffineTransform posTransform = AffineUtils.getAffineTransform(getCurrentPixelSizeConfig(), xyPos.getCenter().x, xyPos.getCenter().y);
-
       
       double[][] designMat = new double[FOV_LASER_MODULATION_RESOLUTION*FOV_LASER_MODULATION_RESOLUTION][N_HIST_BINS+3];
 //      designMatrix = [designMatrix tilePosition brightness];
@@ -117,7 +112,7 @@ public class LaserPredNet {
       return brightness_;
    }
    
- public byte[] forwardPass(double[][] x) {
+ private byte[] forwardPass(double[][] x) {
      double[] ones = new double[x.length];
      Arrays.fill(ones, 1.0);
      Array2DRowRealMatrix onesMat = new Array2DRowRealMatrix(ones);
@@ -222,9 +217,6 @@ public class LaserPredNet {
        }  
       
    }
-   
-      
-   
    
    
    /**

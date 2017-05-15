@@ -80,16 +80,12 @@ public class CovariantPairing {
    public void updateHardwareBasedOnPairing(AcquisitionEvent event) throws Exception {
       //special behavior for curved surface calcualtions or neural net
       if (independent_ instanceof SurfaceData && ((SurfaceData) independent_).isNeuralNetControl()) {
-          //TODO: move this to a different thread for imporved performance
-          //First EOM           
-          byte[] eomSettings = ((SurfaceData) independent_).getNN(0).getExcitations(event, ((SurfaceData) independent_).getSurface());
           String name = "TeensySLM1";
-          Magellan.getCore().setSLMImage(name, eomSettings);
+          Magellan.getCore().setSLMImage(name, event.nnEOM1Settings_);
           Magellan.getCore().displaySLMImage(name);
           //Second EOM
-          byte[] eomSettings2 = ((SurfaceData) independent_).getNN(1).getExcitations(event, ((SurfaceData) independent_).getSurface());
           String name2 = "TeensySLM2";
-          Magellan.getCore().setSLMImage(name2, eomSettings2);
+          Magellan.getCore().setSLMImage(name2, event.nnEOM2Settings_);
           Magellan.getCore().displaySLMImage(name2);
           return;
       } else if (independent_ instanceof SurfaceData && ((SurfaceData) independent_).isCurvedSurfaceCalculation()) {

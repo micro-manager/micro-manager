@@ -77,7 +77,7 @@
     <Component class="javax.swing.JSpinner" name="maitaiBrightness_">
       <Properties>
         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-          <SpinnerModel initial="0.0" maximum="3.0" minimum="-3.0" numberType="java.lang.Double" stepSize="0.1" type="number"/>
+          <SpinnerModel initial="-0.5" maximum="3.0" minimum="-3.0" numberType="java.lang.Double" stepSize="0.1" type="number"/>
         </Property>
       </Properties>
     </Component>
@@ -92,7 +92,7 @@
     <Component class="javax.swing.JSpinner" name="chameleonBrightness_">
       <Properties>
         <Property name="model" type="javax.swing.SpinnerModel" editor="org.netbeans.modules.form.editors2.SpinnerModelEditor">
-          <SpinnerModel initial="0.0" maximum="3.0" minimum="-3.0" numberType="java.lang.Double" stepSize="0.1" type="number"/>
+          <SpinnerModel initial="-0.5" maximum="3.0" minimum="-3.0" numberType="java.lang.Double" stepSize="0.1" type="number"/>
         </Property>
       </Properties>
     </Component>
