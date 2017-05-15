@@ -78,7 +78,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // CTeensySLM implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-CTeensySLM::CTeensySLM() : initialized_(false), name_(g_DeviceNameTeensySLM), pixels_(0), width_(16), height_(16),
+CTeensySLM::CTeensySLM() : initialized_(false), name_(g_DeviceNameTeensySLM), pixels_(0), width_(8), height_(8),
 	shutterOpen_(false), manualVoltage_(0), rotation_(0), tilt_(0)
 {
    portAvailable_ = false;
