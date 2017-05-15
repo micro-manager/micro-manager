@@ -19,6 +19,8 @@ package org.micromanager.plugins.magellan.acq;
 
 import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.plugins.magellan.propsandcovariants.CovariantPairing;
 import org.micromanager.plugins.magellan.propsandcovariants.SurfaceData;
 
@@ -63,52 +65,77 @@ public class AcquisitionEvent  {
       }
    }
    
-   public static AcquisitionEvent createAutofocusEvent(String zName, double pos ) throws InterruptedException {   
-      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, null, null);
-      evt.autofocusZName_ = zName;
-      evt.autofocusPosition_ = pos;
-      evt.specialFlag_ = SpecialFlag.AutofocusAdjustment;
-      return evt;
+   public static AcquisitionEvent createAutofocusEvent(String zName, double pos )  {   
+       try {
+           AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, null, null);
+           evt.autofocusZName_ = zName;
+           evt.autofocusPosition_ = pos;
+           evt.specialFlag_ = SpecialFlag.AutofocusAdjustment;
+           return evt;
+       } catch (InterruptedException ex) {
+          //Shouldn't ever happen
+           return null;
+       }
    }
    
     public boolean isAutofocusAdjustmentEvent() {
       return specialFlag_ == SpecialFlag.AutofocusAdjustment;
    }
    
-   public static AcquisitionEvent createEngineTaskFinishedEvent() throws InterruptedException {
-      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0,  0, 0, 0, null, null);
-      evt.specialFlag_ = SpecialFlag.EngineTaskFinished;
-      return evt;
+   public static AcquisitionEvent createEngineTaskFinishedEvent()  {
+       try {
+           AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0,  0, 0, 0, null, null);
+           evt.specialFlag_ = SpecialFlag.EngineTaskFinished;
+           return evt;
+       } catch (InterruptedException ex) {
+           //Shouldn't ever happen
+           return null;
+       }
    }
    
    public boolean isEngineTaskFinishedEvent() {
       return specialFlag_ == SpecialFlag.EngineTaskFinished;
    }
    
-   public static AcquisitionEvent createTimepointFinishedEvent(Acquisition acq) throws InterruptedException {
-      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0,  0, 0, 0, null, null);
-      evt.specialFlag_ = SpecialFlag.TimepointFinished;
-      return evt;
+   public static AcquisitionEvent createTimepointFinishedEvent(Acquisition acq)   {
+       try {
+           AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0,  0, 0, 0, null, null);
+           evt.specialFlag_ = SpecialFlag.TimepointFinished;
+           return evt;
+       } catch (InterruptedException ex) {
+            //Shouldn't ever happen
+           return null;
+       }
    }
    
    public boolean isTimepointFinishedEvent() {
       return specialFlag_ == SpecialFlag.TimepointFinished;
    }
    
-   public static AcquisitionEvent createReQuerieEventQueueEvent() throws InterruptedException {
-      AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, null, null);
-      evt.specialFlag_ = SpecialFlag.SwappingQueues;
-      return evt;
+   public static AcquisitionEvent createReQuerieEventQueueEvent() {
+       try {
+           AcquisitionEvent evt = new AcquisitionEvent(null, 0, 0, 0, 0, 0, null, null);
+           evt.specialFlag_ = SpecialFlag.SwappingQueues;
+           return evt;
+       } catch (InterruptedException ex) {
+           //Shouldn't ever happen
+           return null;
+       }
    }
    
    public boolean isReQueryEvent() {
       return specialFlag_ == SpecialFlag.SwappingQueues;
    }
    
-   public static AcquisitionEvent createAcquisitionFinishedEvent(Acquisition acq) throws InterruptedException {
-      AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0, 0, 0, 0, null, null);
-      evt.specialFlag_ = SpecialFlag.AcqusitionFinished;
-      return evt;
+   public static AcquisitionEvent createAcquisitionFinishedEvent(Acquisition acq)  {
+       try {
+           AcquisitionEvent evt = new AcquisitionEvent(acq, 0, 0, 0, 0, 0, null, null);
+           evt.specialFlag_ = SpecialFlag.AcqusitionFinished;
+           return evt;
+       } catch (InterruptedException ex) {
+           //Shouldn't ever happen
+           return null;
+       }
    }
    
    public boolean isAcquisitionFinishedEvent() {
