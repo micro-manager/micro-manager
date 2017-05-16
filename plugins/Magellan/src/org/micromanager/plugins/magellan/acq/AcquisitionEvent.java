@@ -52,18 +52,20 @@ public class AcquisitionEvent  {
       acquisition_ = acq;
       xyPosition_ = xyPos;
       covariants_ = covariants;
-      //check if Neural net is one of the covariants and if so precompite value
-      for (CovariantPairing p : covariants_) {
-         if (p.getIndependentCovariant() instanceof SurfaceData
-                 && ((SurfaceData) p.getIndependentCovariant()).isNeuralNetControl()) {
-            //precompute neural net values
-             nnEOM1Settings_ = ((SurfaceData) p.getIndependentCovariant()).getNN(0).getExcitations(xyPosition_,zPosition_, 
-                  ((SurfaceData) p.getIndependentCovariant()).getSurface());
-             nnEOM2Settings_ = ((SurfaceData) p.getIndependentCovariant()).getNN(1).getExcitations(xyPosition_,zPosition_, 
-                  ((SurfaceData) p.getIndependentCovariant()).getSurface());
-         }
-      }
-   }
+        //check if Neural net is one of the covariants and if so precompite value
+        if (covariants_ != null) {
+            for (CovariantPairing p : covariants_) {
+                if (p.getIndependentCovariant() instanceof SurfaceData
+                        && ((SurfaceData) p.getIndependentCovariant()).isNeuralNetControl()) {
+                    //precompute neural net values
+                    nnEOM1Settings_ = ((SurfaceData) p.getIndependentCovariant()).getNN(0).getExcitations(xyPosition_, zPosition_,
+                            ((SurfaceData) p.getIndependentCovariant()).getSurface());
+                    nnEOM2Settings_ = ((SurfaceData) p.getIndependentCovariant()).getNN(1).getExcitations(xyPosition_, zPosition_,
+                            ((SurfaceData) p.getIndependentCovariant()).getSurface());
+                }
+            }
+        }
+    }
    
    public static AcquisitionEvent createAutofocusEvent(String zName, double pos )  {   
        try {
