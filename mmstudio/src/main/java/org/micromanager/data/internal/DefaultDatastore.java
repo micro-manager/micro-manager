@@ -268,7 +268,7 @@ public class DefaultDatastore implements Datastore {
       }
       return result;
    }
-   
+
    @Override
    public synchronized void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException, DatastoreRewriteException {
       if (isFrozen_) {

@@ -27,6 +27,8 @@ import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
+import org.micromanager.UserProfile;
+import org.micromanager.profile.internal.DefaultUserProfile;
 
 /**
  * Base class for the Micro-Manager dialogs.
@@ -126,7 +128,7 @@ public class MMDialog extends JDialog {
     */
    protected void loadPosition(int x, int y, int width, int height) {
       ensureSafeWindowPosition(x, y);
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       setBounds(profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, x),
                 profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y),
                 profile.getInt(this.getClass(), prefPrefix_ + WINDOW_WIDTH, width),
@@ -141,7 +143,7 @@ public class MMDialog extends JDialog {
    
    protected void loadPosition(int x, int y) {
       ensureSafeWindowPosition(x, y);
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       setLocation(profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, x),
                 profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y));
    }
@@ -151,7 +153,7 @@ public class MMDialog extends JDialog {
     */
    protected void savePosition() {
       Rectangle r = getBounds();
-      DefaultUserProfile profile = DefaultUserProfile.getInstance();
+      UserProfile profile = UserProfileStaticInterface.getInstance();
       if (r != null) {
          profile.setInt(this.getClass(), prefPrefix_ + WINDOW_X, r.x);
          profile.setInt(this.getClass(), prefPrefix_ + WINDOW_Y, r.y);

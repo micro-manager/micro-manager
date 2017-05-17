@@ -245,18 +245,18 @@ public final class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Metadata.MetadataBuilder getMetadataBuilder() {
+   public Metadata.Builder getMetadataBuilder() {
       return new DefaultMetadata.Builder();
    }
 
    @Override
-   public SummaryMetadata.SummaryMetadataBuilder getSummaryMetadataBuilder() {
+   public SummaryMetadata.Builder getSummaryMetadataBuilder() {
       return new DefaultSummaryMetadata.Builder();
    }
 
    @Override
-   public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
-      return new DefaultPropertyMap.Builder();
+   public PropertyMap.Builder getPropertyMapBuilder() {
+      return PropertyMaps.builder();
    }
 
    @Override

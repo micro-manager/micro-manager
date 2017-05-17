@@ -21,7 +21,7 @@
 package org.micromanager.data;
 
 /**
- * This exception is raised when an attempt is made to modify a Datastore after
- * its freeze() method has been called.
+ * An unchecked exception thrown when an attempt is made to modify a Datastore
+ * that has been frozen.
  */
-public class DatastoreFrozenException extends Exception {}
+public class DatastoreFrozenException extends UnsupportedOperationException {}

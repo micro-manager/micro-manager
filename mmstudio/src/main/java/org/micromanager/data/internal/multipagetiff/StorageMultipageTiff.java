@@ -517,21 +517,17 @@ public final class StorageMultipageTiff implements Storage {
       return !amInWriteMode_;
    }
 
-   /**
-    * TODO: disallowing non-DefaultSummaryMetadata instances here because
-    * we rely on DefaultSummaryMetadata's JSON conversion functions.
-    * TODO: subscribe to the Datastore to get notified of newly-created
-    * images.
-    */
    public void setSummaryMetadata(SummaryMetadata summary) {
       setSummaryMetadata((DefaultSummaryMetadata) summary, false);
    }
-   
+
    private void setSummaryMetadata(DefaultSummaryMetadata summary,
          boolean showProgress) {
       summaryMetadata_ = summary;
       summaryMetadataString_ = NonPropertyMapJSONFormats.summaryMetadata().
             toJSON(summary.toPropertyMap());
+
+      // TODO What does the following have to do with summary metadata?
       TreeMap<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
       coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
       if (showProgress && !GraphicsEnvironment.isHeadless()) {

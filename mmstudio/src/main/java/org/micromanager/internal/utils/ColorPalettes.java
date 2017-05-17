@@ -174,11 +174,12 @@ public final class ColorPalettes {
          }
       }
       // if there is a 3-digit number in name, take it as excitation/absorption
-      // wavelength and give it a 30 nm Stokes shift.
+      // wavelength and give it a Stokes shift.
+      final int STOKES_SHIFT = 40;
       Matcher matcher = NM_PATTERN.matcher(name);
       if (matcher.find()) {
          try {
-            int nanometers = Integer.valueOf(matcher.group(NM_GROUP_INDEX));
+            int nanometers = Integer.valueOf(matcher.group(NM_GROUP_INDEX)) + STOKES_SHIFT;
             if (380 <= nanometers && nanometers <= 800) {
                return colorForMonochromaticWavelenth(nanometers);
             }

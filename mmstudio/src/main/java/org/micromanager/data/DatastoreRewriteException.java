@@ -21,9 +21,7 @@
 package org.micromanager.data;
 
 /**
- * This exception is thrown when an attempt is made to insert an image into
- * a Datastore when that Datastore already contains an image at the specified
- * coordinates, or an attempt is made to modify the Datastore's SummaryMetadata
- * when it already has SummaryMetadata.
+ * An unchecked exception thrown when an attempt is made to overwrite data in
+ * a non-rewritable datastore.
  */
-public class DatastoreRewriteException extends Exception {}
+public class DatastoreRewriteException extends UnsupportedOperationException {}

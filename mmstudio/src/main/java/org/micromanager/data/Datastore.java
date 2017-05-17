@@ -25,56 +25,18 @@ import java.beans.ExceptionListener;
 import java.io.IOException;
 
 /**
- * Datastores provide read/write access to images and metadata.
+ * Read/write access to multi-dimensional image data.
  *
  * <strong>Important</strong>: Custom Datastore implementations are not
- * supported.
+ * supported (consider creating a custom storage instead).
  */
 public interface Datastore extends DataProvider {
    /**
-    * Registers an object that will be notified if there is an error during
-    * file input and output.
-    * <p>
-    * The listener is notified of IOException and other errors encountered
-    * while loading and saving images. It is not called for parameter errors,
-    * which are reported as unchecked exceptions to the method caller.
-    * <p>
-    * When an error occurs while storing an image (usually a file system error,
-    * such as insufficient disk space), the storage may be in an inconsistent
-    * state. Therefore it is advisable for image saving code to register an
-    * exception listener to handle the error and stop storing.
-    * <p>
-    * When an error occurs while retrieving an image (usually either a file
-    * system error, or a file in an unrecognized format), the Datastore will
-    * behave as if the requested data doesn't exist (e.g. by returning null).
-    * But it is advisable for image reading code to register an exception to
-    * notify the user.
-    * <p>
-    * If the exception listener throws an (unchecked) exception, it will be
-    * propagated back to the caller. This can be used to handle input/output
-    * errors in a traditional way by catching exceptions at the call site.
-    * However, this method should be avoided when the Datastore is shared with
-    * other objects.
-    *
-    * @param listener an exception listener
-    * @see #removeExceptionListener
-    */
-   void addExceptionListener(ExceptionListener listener);
-
-   /**
-    * Unregister an exception listener.
-    * @param listener an exception listener
-    * @see #addExceptionListener
-    */
-   void removeExceptionListener(ExceptionListener listener);
-
-   /**
     * Sets the data storage implementation for this Datastore.
     * 
-    * @param storage source of data to be used henceforth
+    * @param storage data storage to be used henceforth
     */
    void setStorage(Storage storage);
-
 
    /**
     * Insert an image into the Datastore. Posts a NewImageEvent to the event
@@ -89,9 +51,7 @@ public interface Datastore extends DataProvider {
     *         in a Datastore are required to have the same set of axes in
     *         their Coords objects.
     */
-   void putImage(Image image)
-         throws DatastoreFrozenException, DatastoreRewriteException;
-
+   void putImage(Image image) throws IOException;
 
    /**
     * Set the SummaryMetadata. Posts a NewSummaryMetadataEvent to the event
@@ -102,8 +62,7 @@ public interface Datastore extends DataProvider {
     * @throws DatastoreRewriteException if the Datastore already has
     *         SummaryMetadata.
     */
-   void setSummaryMetadata(SummaryMetadata metadata)
-           throws DatastoreFrozenException, DatastoreRewriteException;
+   void setSummaryMetadata(SummaryMetadata metadata) throws IOException;
 
    /**
     * Return whether an annotation with the given tag exists.
@@ -111,103 +70,59 @@ public interface Datastore extends DataProvider {
     * @param tag the tag for the annotation
     * @return true if the annotation exists; false otherwise
     */
-   boolean hasAnnotation(String tag);
+   boolean hasAnnotation(String tag) throws IOException;
 
    /**
     * Get an annotation, creating it if it doesn't exist
     * @param tag
     * @return
     */
-   Annotation getAnnotation(String tag);
+   Annotation getAnnotation(String tag) throws IOException;
 
    /**
-    * Get an annotation, creating it if it doesn't exist.
-    *
-    * @param tag the tag for the annotation
-    * @return the annotation
-    * @deprecated use {@link #createAnnotation} instead
+    * Freeze this Datastore so it cannot be further modified.
     */
-   @Deprecated
-   Annotation loadAnnotation(String tag);
+   void freeze() throws IOException;
 
    /**
-    * Create a new annotation.
-    *
-    * @param tag the tag for the annotation
-    * @return the created annotation
-    * @throws IllegalArgumentException if an annotation with {@code tag}
-    * already exists
-    * @deprecated use {@link #hasAnnotation} and {@link #getAnnotation}
-    */
-   @Deprecated
-   Annotation createNewAnnotation(String tag);
-
-   /**
-    * Freeze the Datastore. Methods that modify its contents will throw
-    * DatastoreFrozenExceptions, and a DatastoreFrozenEvent() will be posted to
-    * any subscribers.
-    */
-   void freeze();
-
-
-   /**
-    * Tell the Datastore where on disk it is being saved to.
+    * Set the intended path where the data will be stored.
+    * <p>
+    * In the current Micro-Manager file format, this path is used as the
+    * enclosing directory.
     * 
-    * @param path The location on disk at which the data has been stored.
+    * @param path the file path (without extension)
+    * @throws UnsupportedOperationException if this is an on-disk datastore
     */
    void setSavePath(String path);
 
    /**
-    * Return the path for where the data has been saved to disk. Will be null
-    * if the data has not been saved yet.
+    * Get the intended or actual path where the data will be stored.
+    * <p>
+    * If this is an in-memory datastore, returns whatever was set by {@link
+    * #setSavePath}. If this is an on-disk datastore, returns the actual path.
     * 
-    * @return The directory path to the saved data.
+    * @return the file path where the data is (to be) saved
     */
    String getSavePath();
 
    /**
-    * These are the valid inputs to the save() methods. 
-    * SINGLEPLANE_TIFF_SERIES saves each individual 2D image plane as a 
-    * separate file; 
-    * MULTIPAGE_TIFF saves all images together in a single file (up to a 
-    * limit of 4GB/file, after which point the images will be split into 
-    * a second file).
-    * 
-    * @deprecated because it doesn't make sense to define this for general
-    * Datastores
+    * The file format to save to.
     */
-   @Deprecated
    enum SaveMode {
       SINGLEPLANE_TIFF_SERIES,
       MULTIPAGE_TIFF,
    }
 
    /**
-    * Prompts the user for a location to save data to, then saves data there
-    * according to the mode parameter. After this method, getSavePath() will
-    * return the selected save path, unless the user cancels when prompted for
-    * directory/filename or there is an error while saving. Includes a file
-    * format selector in the save dialog, which defaults to the last format
-    * the user used.
-    *
     * @param parent Window  on top of which to display the dialog prompt;
     *        may be null.
-    * @return TODO WHAT DOES THE RETURN BOOLEAN MEAN?
+    * @return true if data was saved; false if user canceled
     */
-   boolean save(Component parent);
+   boolean save(Component parent) throws IOException;
 
    /**
-    * As above, except uses the provided path (the last element of which is
-    * assumed to be a filename), instead of prompting the user. After this
-    * method, getSavePath() will return the input save path, unless there is an
-    * error while saving.
-    *
     * @param mode
     * @param path
-    * @return true if saving succeeded, false otherwise.
-    * @deprecated because it doesn't make sense to define this for general
-    * Datastores
     */
-   @Deprecated
-   boolean save(SaveMode mode, String path);
+   void save(SaveMode mode, String path) throws IOException;
 }

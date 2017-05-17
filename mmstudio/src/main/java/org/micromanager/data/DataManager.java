@@ -39,7 +39,8 @@ public interface DataManager {
     * instances.
     * @return a CoordsBuilder used to construct new Coords instances.
     */
-   public Coords.CoordsBuilder getCoordsBuilder();
+   @Deprecated
+   Coords.Builder getCoordsBuilder();
 
    /**
     * Generate a Coords object from the provided normalized coordinate string.
@@ -60,7 +61,8 @@ public interface DataManager {
     * @throws IllegalArgumentException if the definition string is
     *         malformatted.
     */
-   public Coords createCoords(String def) throws IllegalArgumentException;
+   @Deprecated
+   Coords createCoords(String def) throws IllegalArgumentException;
 
    /**
     * Generate a new, "blank" Datastore with RAM-based Storage and return it.
@@ -69,7 +71,9 @@ public interface DataManager {
     * information).
     * @return an empty RAM-based Datastore.
     */
-   public Datastore createRAMDatastore();
+   Datastore createRAMDatastore();
+
+   Datastore createRAMDatastore(Datastore storeToCopy);
 
    /**
     * Generate a new, "blank" RewritableDatastore with RAM-based Storage and
@@ -78,7 +82,9 @@ public interface DataManager {
     * method for more information).
     * @return an empty RAM-based RewritableDatastore.
     */
-   public RewritableDatastore createRewritableRAMDatastore();
+   RewritableDatastore createRewritableRAMDatastore();
+
+   RewritableDatastore createRewritableRAMDatastore(Datastore storeToCopy);
 
    /**
     * Generate a new, "blank" Datastore with multipage TIFF-based Storage and
@@ -103,9 +109,13 @@ public interface DataManager {
     *         TIFF files each containing multiple image planes.
     * @throws IOException if any errors occur while opening files for writing.
     */
-   public Datastore createMultipageTIFFDatastore(String directory,
+   Datastore createMultipageTIFFDatastore(String directory,
          boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions)
          throws IOException;
+
+   Datastore createMultipageTIFFDatastore(Datastore storeToCopy,
+         String directory, boolean shouldGenerateSeparateMetadata,
+         boolean shouldSplitPositions) throws IOException;
 
    /**
     * Generate a new, "blank" Datastore whose Storage is a series of
@@ -126,7 +136,11 @@ public interface DataManager {
     *         single-plane TIFF files.
     * @throws IOException If the directory already exists.
     */
-   public Datastore createSinglePlaneTIFFSeriesDatastore(String directory) throws IOException;
+   Datastore createSinglePlaneTIFFSeriesDatastore(String directory)
+         throws IOException;
+
+   Datastore createSinglePlaneTIFFSeriesDatastore(Datastore storeToCopy,
+         String directory) throws IOException;
 
    /**
     * Given a path string, create a unique string with that name.  In short,
@@ -147,7 +161,7 @@ public interface DataManager {
     * @param path String used to create a unique name
     * @return String to a unique directory to be used to save data
     */
-   public String getUniqueSaveDirectory(String path);
+   String getUniqueSaveDirectory(String path);
 
 
    /**
@@ -165,7 +179,7 @@ public interface DataManager {
     *         data.
     * @throws IOException if loadData() encountered difficulties.
     */
-   public Datastore promptForDataToLoad(Window parent, boolean isVirtual) throws IOException;
+   Datastore promptForDataToLoad(Window parent, boolean isVirtual) throws IOException;
 
    /**
     * Load the image data at the specified location on disk, and return a
@@ -182,14 +196,14 @@ public interface DataManager {
     *        to the images.
     * @throws IOException if there was any error in reading the data.
     */
-   public Datastore loadData(String directory, boolean isVirtual) throws IOException;
+   Datastore loadData(String directory, boolean isVirtual) throws IOException;
 
    /**
     * Return the save mode that the user prefers to use. This is automatically
     * updated whenever the user saves a file.
     * @return save mode that the user prefers to use
     */
-   public Datastore.SaveMode getPreferredSaveMode();
+   Datastore.SaveMode getPreferredSaveMode();
 
    /**
     * Generate a new Image with the provided pixel data, rules for interpreting
@@ -209,7 +223,7 @@ public interface DataManager {
     *         width * height.
     * @return A new Image based on the input parameters.
     */
-   public Image createImage(Object pixels, int width, int height,
+   Image createImage(Object pixels, int width, int height,
          int bytesPerPixel, int numComponents, Coords coords,
          Metadata metadata);
 
@@ -227,7 +241,7 @@ public interface DataManager {
     * @throws IllegalArgumentException if portions of the TaggedImage's
     *         metadata are malformed.
     */
-   public Image convertTaggedImage(TaggedImage tagged) throws JSONException, IllegalArgumentException;
+   Image convertTaggedImage(TaggedImage tagged) throws JSONException, IllegalArgumentException;
 
    /**
     * Given a TaggedImage input, output an Image based on the TaggedImage,
@@ -242,7 +256,7 @@ public interface DataManager {
     * @throws IllegalArgumentException if portions of the TaggedImage's metadata are
     *         malformed.
     */
-   public Image convertTaggedImage(TaggedImage tagged, Coords coords,
+   Image convertTaggedImage(TaggedImage tagged, Coords coords,
          Metadata metadata) throws JSONException, IllegalArgumentException;
 
    /**
@@ -250,7 +264,7 @@ public interface DataManager {
     * Metadata instances.
     * @return a MetadataBuilder for creating new Metadata instances.
     */
-   public Metadata.MetadataBuilder getMetadataBuilder();
+   Metadata.Builder getMetadataBuilder();
 
    /**
     * Generate a "blank" SummaryMetadataBuilder for use in constructing new
@@ -258,13 +272,14 @@ public interface DataManager {
     * @return a SummaryMetadataBuilder for creating new SummaryMetadata
     *         instances.
     */
-   public SummaryMetadata.SummaryMetadataBuilder getSummaryMetadataBuilder();
+   SummaryMetadata.Builder getSummaryMetadataBuilder();
 
    /**
     * Generate a "blank" PropertyMap.Builder with all null values.
     * @return a PropertyMapBuilder for creating new PropertyMap instances.
     */
-   public PropertyMap.PropertyMapBuilder getPropertyMapBuilder();
+   @Deprecated
+   PropertyMap.Builder getPropertyMapBuilder();
 
    /**
     * Attempt to load a file that contains PropertyMap data.
@@ -273,7 +288,8 @@ public interface DataManager {
     * @throws FileNotFoundException if the path does not point to a file.
     * @throws IOException if there was an error reading the file.
     */
-   public PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException;
+   @Deprecated
+   PropertyMap loadPropertyMap(String path) throws FileNotFoundException, IOException;
 
    /**
     * Create a new Pipeline using the provided list of ProcessorFactories.
@@ -293,7 +309,7 @@ public interface DataManager {
     * @return a Pipeline containing Processors as specified by the input
     *         factories.
     */
-   public Pipeline createPipeline(List<ProcessorFactory> factories,
+   Pipeline createPipeline(List<ProcessorFactory> factories,
          Datastore store, boolean isSynchronous);
 
    /**
@@ -310,7 +326,7 @@ public interface DataManager {
     *        arrive in the Datastore at some indeterminate later time.
     * @return a Pipeline based on the current GUI pipeline.
     */
-   public Pipeline copyApplicationPipeline(Datastore store,
+   Pipeline copyApplicationPipeline(Datastore store,
          boolean isSynchronous);
 
    /**
@@ -327,7 +343,7 @@ public interface DataManager {
     *        arrive in the Datastore at some indeterminate later time.
     * @return a Pipeline based on the current GUI pipeline.
     */
-   public Pipeline copyLivePipeline(Datastore store,
+   Pipeline copyLivePipeline(Datastore store,
          boolean isSynchronous);
 
    /**
@@ -337,13 +353,13 @@ public interface DataManager {
     * then it will not be in this list.
     * @return An ordered list of ProcessorConfigurators.
     */
-   public List<ProcessorConfigurator> getApplicationPipelineConfigurators();
+   List<ProcessorConfigurator> getApplicationPipelineConfigurators();
 
    /**
     * Clear the current application pipeline, so that no on-the-fly image
     * processing is performed.
     */
-   public void clearPipeline();
+   void clearPipeline();
 
    /**
     * Add a new instance of the given ProcessorPlugin to the current
@@ -355,7 +371,7 @@ public interface DataManager {
     * @param plugin instance of a <code>ProcessorPlugin</code> that will be
     *        added to the current application image processing pipeline
     */
-   public void addAndConfigureProcessor(ProcessorPlugin plugin);
+   void addAndConfigureProcessor(ProcessorPlugin plugin);
 
    /**
     * Add the provide ProcessorConfigurator onto the end of the application
@@ -365,7 +381,7 @@ public interface DataManager {
     * @param plugin The ProcessorPlugin that the ProcessorConfigurator came
     *        from.
     */
-   public void addConfiguredProcessor(ProcessorConfigurator config,
+   void addConfiguredProcessor(ProcessorConfigurator config,
          ProcessorPlugin plugin);
 
    /**
@@ -377,7 +393,7 @@ public interface DataManager {
     * @param plugins List of ProcessorPlugins that will henceforth be used as
     *        the application's processor pipeline
     */
-   public void setApplicationPipeline(List<ProcessorPlugin> plugins);
+   void setApplicationPipeline(List<ProcessorPlugin> plugins);
 
    /**
     * Notify the application that the state of one of the processors in the
@@ -386,18 +402,18 @@ public interface DataManager {
     * NewPipelineEvent event to be posted to the application event bus (which
     * can be accessed via Studio.events()).
     */
-   public void notifyPipelineChanged();
+   void notifyPipelineChanged();
 
    /**
     * Provide access to the ImageJConverter() object.
     * @return An implementation of the ImageJConverter interface.
     */
-   public ImageJConverter ij();
+   ImageJConverter ij();
 
    /**
     * Provide access to the ImageJConverter() object. Identical to ij()
     * except in name.
     * @return An implementation of the ImageJConverter interface.
     */
-   public ImageJConverter getImageJConverter();
+   ImageJConverter getImageJConverter();
 }
