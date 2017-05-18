@@ -476,6 +476,8 @@ public class ControllerUtils {
                Properties.Keys.SPIM_STATE, Properties.Values.SPIM_ARMED);
       }
       
+      // TODO figure out what we should do with piezo illumination/center position during stage scan
+      
       // set up stage scan parameters if necessary
       if (settings.isStageScanning) {
          // TODO update UI to hide image center control for stage scanning
@@ -483,7 +485,9 @@ public class ControllerUtils {
          //   the first side piezo will never get moved into position either so do both manually (for
          //   simplicity ignore fact that one of two is unnecessary for two-sided normal stage scan acquisition)
          try {
-            core_.home(devices_.getMMDevice(piezoDevice));
+            if (devices_.isValidMMDevice(piezoDevice)) {
+               core_.home(devices_.getMMDevice(piezoDevice));
+            }
          } catch (Exception e) {
             ReportingUtils.showError(e, "Could not move piezo to home");
          }
