@@ -66,6 +66,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
    private final JCheckBox deskewInvert_;
    private final JCheckBox deskewInterpolate_;
    private final JCheckBox deskewAutoTest_;
+   private final JButton exportButton_;
    
    public static final String[] TRANSFORMOPTIONS = 
       {"None", "Rotate Right 90\u00B0", "Rotate Left 90\u00B0", "Rotate outward", "Rotate 180\u00B0"};
@@ -185,8 +186,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
       progBar.setVisible(false);
       final JLabel infoLabel = new JLabel("");
      
-      JButton exportButton = new JButton("Export");
-      exportButton.addActionListener(new ActionListener() {
+      exportButton_ = new JButton("Export");
+      exportButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -216,7 +217,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             task.execute();
          }
       });
-      exportPanel_.add(exportButton, "span 3, center, wrap");
+      exportPanel_.add(exportButton_, "span 3, center, wrap");
       exportPanel_.add(infoLabel,"");
       exportPanel_.add(progBar, "span3, center, wrap");    
       
@@ -681,6 +682,21 @@ public void runDeskew(final ListeningJPanel caller) {
          }
       }
    }
+   
+   /**
+    * for API, perform export like clicking on the button
+    */
+   public void runExport() {
+      exportButton_.doClick();
+   }
+   
+   /**
+    * for API, set the base name field for export
+    */
+   public void setExportBaseName(String baseName) {
+      baseNameField_.setText(baseName);
+   }
+   
    
    /**
     * Since java 1.6 does not seem to have this functionality....

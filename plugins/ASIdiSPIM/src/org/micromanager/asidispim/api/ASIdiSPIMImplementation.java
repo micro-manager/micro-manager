@@ -32,6 +32,7 @@ import org.micromanager.asidispim.ASIdiSPIMFrame;
 import org.micromanager.asidispim.AcquisitionPanel;
 import org.micromanager.asidispim.AutofocusPanel;
 import org.micromanager.asidispim.AutofocusPanel.Modes;
+import org.micromanager.asidispim.DataAnalysisPanel;
 import org.micromanager.asidispim.NavigationPanel;
 import org.micromanager.asidispim.SetupPanel;
 import org.micromanager.asidispim.Data.AcquisitionModes.Keys;
@@ -749,6 +750,15 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       getAcquisitionPanel().updateDurationLabels();
    }
    
+   @Override
+   public void setExportBaseName(String baseName) throws ASIdiSPIMException, RemoteException {
+      getDataAnalysisPanel().setExportBaseName(baseName);
+   }
+
+   @Override
+   public void doExportData() throws ASIdiSPIMException, RemoteException {
+      getDataAnalysisPanel().runExport();
+   }
    
    
    //** Private methods.  Only for internal use **//
@@ -808,6 +818,14 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
          throw new ASIdiSPIMException ("AutofocusPanel is not open");
       }
       return autofocusPanel;
+   }
+   
+   private DataAnalysisPanel getDataAnalysisPanel() throws ASIdiSPIMException, RemoteException {
+      DataAnalysisPanel dataAnalysisPanel = getFrame().getDataAnalysisPanel();
+      if (dataAnalysisPanel == null) {
+         throw new ASIdiSPIMException ("DataAnalysisPanel is not open");
+      }
+      return dataAnalysisPanel;
    }
    
    private Devices getDevices() throws ASIdiSPIMException, RemoteException {

@@ -775,7 +775,17 @@ public interface ASIdiSPIMInterface extends Remote {
    public double getEstimatedAcquisitionDuration() throws ASIdiSPIMException, RemoteException;
    
    /**
-    * forces recalculation of estimated timings.
+    * forces recalculation of estimated timings
     */
    public void refreshEstimatedTiming() throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * set the base name for file export on data analysis tab
+    */
+   public void setExportBaseName(String baseName) throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * equivalent to clicking "Export" button on data analysis tab
+    */
+   public void doExportData() throws ASIdiSPIMException, RemoteException;
 }
