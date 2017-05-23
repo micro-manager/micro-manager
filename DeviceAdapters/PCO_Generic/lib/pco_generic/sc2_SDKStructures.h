@@ -312,7 +312,7 @@ typedef struct
   WORD        wPatternTypeDESC;        // Pattern type of color chip
                                        // 1: Bayer pattern RGB
   WORD        wDummy1;                 // former DSNU correction mode             // 240
-  WORD        wDummy2;                 //
+  WORD        wDummy2;                 // 
   WORD        wNumCoolingSetpoints;    //
   DWORD       dwGeneralCapsDESC1;      // General capabilities:
                                        // Bit 0: Noisefilter available
@@ -524,12 +524,20 @@ typedef struct
   WORD        wSize;                   // Sizeof this struct
   WORD        wTimeBaseDelay;          // Timebase delay 0:ns, 1:µs, 2:ms
   WORD        wTimeBaseExposure;       // Timebase expos 0:ns, 1:µs, 2:ms
-  WORD        ZZwAlignDummy1;                                             // 8
-  DWORD       ZZdwDummy0[2];           // removed single entry for dwDelay and dwExposure // 16
+  WORD        wCMOSParameter;          // Line Time mode: 0: off 1: on    // 8
+  DWORD       dwCMOSDelayLines;        // See next line
+  DWORD       dwCMOSExposureLines;     // Delay and Exposure lines for lightsheet // 16
   DWORD       dwDelayTable[PCO_MAXDELEXPTABLE];// Delay table             // 80
-  DWORD       ZZdwDummy1[114];                                            // 536
+  DWORD       ZZdwDummy1[110];                                            // 524
+  DWORD       dwCMOSLineTimeMin;       // Minimum line time in ns
+  DWORD       dwCMOSLineTimeMax;       // Maximum line time in ms         // 532
+  DWORD       dwCMOSLineTime;          // Current line time value         // 536
+  WORD        wCMOSTimeBase;           // Current time base for line time
+  WORD        wZZDummy4;
   DWORD       dwExposureTable[PCO_MAXDELEXPTABLE];// Exposure table       // 600
-  DWORD       ZZdwDummy2[112];                                            // 1048
+  DWORD       ZZdwDummy2[110];                                            // 1040
+  DWORD       dwCMOSFlags;             // Flags indicating the option, whether it is possible to LS-Mode with slow/fast scan
+  DWORD       dwCMOSParameter;
   WORD        wTriggerMode;            // Trigger mode                    // 1050
                                        // 0: auto, 1: software trg, 2:extern 3: extern exp. ctrl
   WORD        wForceTrigger;           // Force trigger (Auto reset flag!)
@@ -541,10 +549,10 @@ typedef struct
   DWORD       dwFPSExposureTime;       // Resulting exposure time in FPS mode // 1068
 
   WORD        wModulationMode;         // Mode for modulation (0 = modulation off, 1 = modulation on) // 1070
-  WORD        wCameraSynchMode;        // Camera synchronisation mode (0 = off, 1 = master, 2 = slave)
+  WORD        wCameraSynchMode;        // Camera synchronization mode (0 = off, 1 = master, 2 = slave)
   DWORD       dwPeriodicalTime;        // Periodical time (unit depending on timebase) for modulation // 1076
   WORD        wTimeBasePeriodical;     // timebase for periodical time for modulation  0 -> ns, 1 -> µs, 2 -> ms
-  WORD        ZZwAlignDummy3;
+  WORD        ZZwDummy3;
   DWORD       dwNumberOfExposures;     // Number of exposures during modulation // 1084
   LONG        lMonitorOffset;          // Monitor offset value in ns      // 1088
   PCO_Signal  strSignal[NUM_MAX_SIGNALS];// Signal settings               // 2288
@@ -703,10 +711,11 @@ typedef struct
 #define APIMANAGEMENTFLAG_SOFTROI_MASK  0xFEFE
 #define APIMANAGEMENTFLAG_SOFTROI       0x0001 // Soft ROI is active
 #define APIMANAGEMENTFLAG_SOFTROI_RESET 0x0100 // Reset Soft ROI to default camera ROI
+#define APIMANAGEMENTFLAG_LINE_TIMING   0x0002 // Line timing is available
 
 typedef struct
 {
-  WORD          wSize;                 // Sizeof this struct
+  WORD          wSize;                 // Size of this struct
   WORD          wCameraNum;            // Current number of camera
   HANDLE        hCamera;               // Handle of the device
   WORD          wTakenFlag;            // Flags to show whether the device is taken or not. // 10
