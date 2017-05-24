@@ -536,8 +536,8 @@ typedef struct
   WORD        wZZDummy4;
   DWORD       dwExposureTable[PCO_MAXDELEXPTABLE];// Exposure table       // 600
   DWORD       ZZdwDummy2[110];                                            // 1040
-  DWORD       dwCMOSFlags;             // Flags indicating the option, whether it is possible to LS-Mode with slow/fast scan
-  DWORD       dwCMOSParameter;
+  DWORD       dwCMOSFlags;             // Flags indicating the option, whether it is possible to LS-Mode with slow/fast scan, etc.
+  DWORD       ZZdwDummy3;
   WORD        wTriggerMode;            // Trigger mode                    // 1050
                                        // 0: auto, 1: software trg, 2:extern 3: extern exp. ctrl
   WORD        wForceTrigger;           // Force trigger (Auto reset flag!)
