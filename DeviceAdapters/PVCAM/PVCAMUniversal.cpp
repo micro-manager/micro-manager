@@ -552,6 +552,9 @@ int Universal::Initialize()
     AddAllowedValue(g_Keyword_RGB32, g_Keyword_OFF);
 
 #ifdef PVCAM_3_0_12_SUPPORTED
+    // Start with 80 chars for each of 512 centroids
+    metaAllRoisStr_.reserve(80 * 512);
+
     /// PARAM_FRAME_BUFFER_SIZE, no UI property but we use it later in the code
     prmFrameBufSize_ = new PvParam<ulong64>( "PARAM_FRAME_BUFFER_SIZE", PARAM_FRAME_BUFFER_SIZE, this, true );
 
@@ -873,6 +876,12 @@ int Universal::Initialize()
         nRet = CreateProperty(MM::g_Keyword_Gain, gainName.c_str(), MM::String, false, pAct);
         if (nRet != DEVICE_OK)
             return nRet;
+
+        // Fill in the GUI gain choices
+        vector<string> gainChoices;
+        for (int16 i = camCurrentSpeed_.gainMin; i <= camCurrentSpeed_.gainMax; i++)
+            gainChoices.push_back(camCurrentSpeed_.gainNameMapReverse.at(i));
+        SetAllowedValues(MM::g_Keyword_Gain, gainChoices);
     }
 
     /// EXPOSURE RESOLUTION
@@ -3259,7 +3268,7 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
 
     int ret = DEVICE_ERR;
 
-    const PvFrameInfo frameNfo = entry.FrameMetadata();
+    const PvFrameInfo& frameNfo = entry.FrameMetadata();
 
     // Build the metadata
     Metadata md;
@@ -3342,31 +3351,30 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
             (ulong64)fHdr->timestampEOF * fHdr->timestampResNs );
         // Implied ROI
         const rgn_type& iRoi = metaFrameStruct_->impliedRoi;
-        std::stringstream iRoiStr;
-        iRoiStr << "[" << iRoi.s1 << ", " << iRoi.s2 << ", " << iRoi.sbin << ", "
-            << iRoi.p1 << ", " << iRoi.p2 << ", " << iRoi.pbin << "]"; 
-        md.PutImageTag<std::string>("PVCAM-FMD-ImpliedRoi", iRoiStr.str()); 
+        snprintf(metaRoiStr_, sizeof(metaRoiStr_),
+                "[%u, %u, %u, %u, %u, %u]",
+                iRoi.s1, iRoi.s2, iRoi.sbin, iRoi.p1, iRoi.p2, iRoi.pbin);
+        md.PutImageTag<std::string>("PVCAM-FMD-ImpliedRoi", metaRoiStr_); 
         // Per-ROI metadata
-        std::stringstream roiMdStr;
-        roiMdStr << "[";
+        metaAllRoisStr_ = "[";
         for (int i = 0; i < metaFrameStruct_->roiCount; ++i)
         {
             const md_frame_roi_header* rHdr = metaFrameStruct_->roiArray[i].header;
             // Since we cannot add per-ROI metadata we will format the MD to a simple JSON array
             // and add it as a per-Frame metadata TAG. Example:
             // "[{"nr":1,"coords":[0,0,0,0,0,0],"borNs":123,"eorNs":456},{"nr":2,"coords":[0,0,0,0,0,0],"borNs":123,"eorNs":456}]"
-            roiMdStr << "{\"nr\":" << rHdr->roiNr
-                << ",\"coords\":["
-                << rHdr->roi.s1 << "," << rHdr->roi.s2 << "," << rHdr->roi.sbin << ","
-                << rHdr->roi.p1 << "," << rHdr->roi.p2 << "," << rHdr->roi.pbin << "],"
-                << "\"borNs\":" << (ulong64)rHdr->timestampBOR * fHdr->roiTimestampResNs << ","
-                << "\"eorNs\":" << (ulong64)rHdr->timestampEOR * fHdr->roiTimestampResNs << "}";
+            snprintf(metaRoiStr_, sizeof(metaRoiStr_),
+                    "{\"nr\":%u,\"coords\":[%u,%u,%u,%u,%u,%u],\"borNs\":%llu,\"eorNs\":%llu}",
+                    rHdr->roiNr,
+                    rHdr->roi.s1, rHdr->roi.s2, rHdr->roi.sbin, rHdr->roi.p1, rHdr->roi.p2, rHdr->roi.pbin,
+                    (ulong64)rHdr->timestampBOR * fHdr->roiTimestampResNs,
+                    (ulong64)rHdr->timestampEOR * fHdr->roiTimestampResNs);
+            metaAllRoisStr_.append(metaRoiStr_);
             if (i != metaFrameStruct_->roiCount - 1)
-                roiMdStr << ",";
-            else
-                roiMdStr << "]";
+                metaAllRoisStr_.append(",");
         }
-        md.PutImageTag<std::string>("PVCAM-FMD-RoiMD", roiMdStr.str());
+        metaAllRoisStr_.append("]");
+        md.PutImageTag<std::string>("PVCAM-FMD-RoiMD", metaAllRoisStr_);
     }
 #endif
 
@@ -4908,19 +4916,19 @@ int Universal::applyAcqConfig()
             "Universal::applyAcqConfig() ROI definition is invalid for current camera configuration" );
     }
 
-    // VALIDATE Centroids (PrimeEnhance), so far it works with 1x1 binning only
+    // VALIDATE Centroids (PrimeLocate), so far it works with 1x1 binning only
     if (acqCfgNew_.CentroidsEnabled && acqCfgNew_.Rois.BinX() > 1 && acqCfgNew_.Rois.BinY() > 1)
     {
         acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
         return LogAdapterError( ERR_BINNING_INVALID, __LINE__,
-            "Universal::applyAcqConfig() Centroids (PrimeEnhance) is not supported with binning." );
+            "Universal::applyAcqConfig() Centroids (PrimeLocate) is not supported with binning." );
     }
     // Centroids also do not work with user defined Multiple ROIs
     if (acqCfgNew_.CentroidsEnabled && acqCfgNew_.Rois.Count() > 1)
     {
         acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
         return LogAdapterError( ERR_ROI_DEFINITION_INVALID, __LINE__,
-            "Universal::applyAcqConfig() Centroids (PrimeEnhance) is not supported with multiple ROIs." );
+            "Universal::applyAcqConfig() Centroids (PrimeLocate) is not supported with multiple ROIs." );
     }
 
     // Change in ROI or binning requires buffer reallocation

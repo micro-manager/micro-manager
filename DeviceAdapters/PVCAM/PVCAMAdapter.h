@@ -748,6 +748,10 @@ private: // Static
     // PVCAM helper structure for decoding an embedded-metadata-enabled frame buffer
 #ifdef PVCAM_3_0_12_SUPPORTED
     md_frame*        metaFrameStruct_;
+
+    // For metadata serialization, optimization to not allocate the same for each frame
+    std::string      metaAllRoisStr_;
+    char             metaRoiStr_[1000];
 #endif
     // A buffer used for creating a black-filled frame when Centroids or Multi-ROI
     // acquisition is running. Used in both single snap and live mode if needed.
