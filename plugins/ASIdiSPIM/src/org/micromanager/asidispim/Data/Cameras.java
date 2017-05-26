@@ -328,6 +328,7 @@ public class Cameras {
       case PVCAM:
          switch (mode) {
          case EDGE:
+         case PSEUDO_OVERLAP:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
                   Properties.Values.EDGE_TRIGGER);
@@ -523,8 +524,7 @@ public class Cameras {
             }
          }
       case PVCAM:
-         // TODO get this correct; currently just draft for testing
-         return 20e-3;
+         return 20e-3;  // this isn't "real", have to query camera for chip readout time
       case DEMOCAM:
          return(10e-3);  // dummy 10us row time
       default:
@@ -575,9 +575,15 @@ public class Cameras {
             resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
             break;
          case PVCAM:
-            // TODO get this correct; currently just draft for testing
-            numRowsOverhead = 1;
-            resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+            int trigToGlobal = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_POST_TIME)
+               + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
+            String clearMode = props_.getPropValueString(camKey, Properties.Keys.PVCAM_CLEARING_MODE);
+            if (clearMode.equals(Properties.Values.PRE_EXPOSURE.toString())) {
+               trigToGlobal += props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_CLEARING_TIME);
+            }
+            // TODO figure out if we need to do anything special with Pre-Sequence clearing mode of if this happens
+            //    automatically in the device adapter
+            resetTimeMs = (float) trigToGlobal / 1e6f;
             break;
          case DEMOCAM:
             resetTimeMs = camReadoutTime;
@@ -593,7 +599,8 @@ public class Cameras {
    
    /**
     * Gets an estimate of a specific camera's readout time based on ROI and 
-    * other settings.  Returns 0 for overlap mode and 0.25ms pseudo-overlap mode.
+    * other settings.  Returns 0 for overlap mode and 0.25ms pseudo-overlap mode
+    * (or camera-specific time for Photometrics)
     * @param camKey device key for camera in question
     * @param camMode camera mode
     * @return readout time in ms
@@ -608,7 +615,21 @@ public class Cameras {
       if (camMode == CameraModes.Keys.OVERLAP) {
          readoutTimeMs = 0.0f;
       } else if (camMode == CameraModes.Keys.PSEUDO_OVERLAP) {
-         readoutTimeMs = 0.25f;
+         switch (devices_.getMMDeviceLibrary(camKey)) {
+         case PCOCAM:
+            readoutTimeMs = 0.25f;
+            break;
+         case PVCAM:
+            int preTime = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME);
+            readoutTimeMs = (float) preTime / 1e6f;
+            // for safety we make sure to wait at least a quarter millisecond to trigger
+            //   (may have hidden assumptions in other code about at least one tic wait)
+            if (readoutTimeMs < 0.249f) {
+               readoutTimeMs = 0.25f;
+            }
+         default:
+            break;
+         }
       } else if (camMode == CameraModes.Keys.LIGHT_SHEET) {
          Rectangle roi = getCameraROI(camKey);
          final double rowReadoutTime = getRowReadoutTime(camKey);
@@ -651,9 +672,9 @@ public class Cameras {
             readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
             break;
          case PVCAM:
-            // TODO get this correct; currently just draft for testing
-            numReadoutRows = roi.height;
-            readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
+            int endGlobalToTrig = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME)
+               + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
+            readoutTimeMs = (float) endGlobalToTrig / 1e6f;
             break;
          case DEMOCAM:
             numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);

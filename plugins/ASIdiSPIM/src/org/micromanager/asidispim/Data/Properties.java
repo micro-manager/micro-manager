@@ -164,6 +164,12 @@ public class Properties {
       CAMERA_SIZE_Y("OnCameraCCDYSize"),  // for DemoCam
       CAMERA_X_DIMENSION("X-dimension"),  // for PVCAM
       CAMERA_Y_DIMENSION("Y-dimension"),  // for PVCAM
+      PVCAM_CLEARING_MODE("ClearMode"),       // for PVCAM
+      PVCAM_CLEARING_TIME("Timing-ClearingTimeNs"),  // for PVCAM
+      PVCAM_EXPOSURE_TIME("Timing-ExposureTimeNs"),  // for PVCAM
+      PVCAM_READOUT_TIME("Timing-ReadoutTimeNs"),    // for PVCAM
+      PVCAM_POST_TIME("Timing-PostTriggerDelayNs"),  // for PVCAM
+      PVCAM_PRE_TIME("Timing-PreTriggerDelayNs"),    // for PVCAM
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
@@ -324,6 +330,9 @@ public class Properties {
       BOTTOM_UP_SIM_ANDOR("Bottom Up Simultaneous"),
       INTERNAL_TRIGGER("Internal Trigger"),  // for PVCam
       EDGE_TRIGGER("Edge Trigger"),          // for PVCam
+      NEVER("Never"),                        // for PVCam
+      PRE_EXPOSURE("Pre-Exposure"),          // for PVCam
+      PRE_SEQUENCE("Pre-Sequence"),          // for PVCam
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
       SIXTEENBIT("16bit"),

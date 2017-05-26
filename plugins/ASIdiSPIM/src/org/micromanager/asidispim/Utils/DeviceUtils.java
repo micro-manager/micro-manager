@@ -182,6 +182,9 @@ public class DeviceUtils {
             checkPropertyExists(key, Properties.Keys.TRIGGER_MODE);
             checkPropertyExists(key, Properties.Keys.CAMERA_X_DIMENSION);
             checkPropertyExists(key, Properties.Keys.CAMERA_Y_DIMENSION);
+            checkPropertyExists(key, Properties.Keys.PVCAM_CLEARING_MODE);
+            checkPropertyExists(key, Properties.Keys.PVCAM_EXPOSURE_TIME);
+            checkPropertyExists(key, Properties.Keys.PVCAM_PRE_TIME);
             break;
          default:
             MyDialogUtils.showError("Plugin doesn't support your camera for SPIM yet;"

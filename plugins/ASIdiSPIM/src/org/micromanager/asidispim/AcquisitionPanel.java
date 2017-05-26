@@ -1181,11 +1181,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
          s.cameraExposure = 1;  // doesn't really matter, controlled by interval between triggers
          break;
-      case PSEUDO_OVERLAP:  // only PCO, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
+      case PSEUDO_OVERLAP:  // PCO or Photometrics, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
          s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms
-         if (!MyNumberUtils.floatsEqual(s.cameraDelay, 0.25f)) {
-            MyDialogUtils.showError("Camera delay should be 0.25ms for pseudo-overlap mode.");
+         if (s.cameraDelay < 0.24f) {
+            MyDialogUtils.showError("Camera delay should be at least 0.25ms for pseudo-overlap mode.");
          }
          break;
       case LIGHT_SHEET:
