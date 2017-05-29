@@ -1096,7 +1096,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    private SliceTiming getTimingFromPeriodAndLightExposure(boolean showWarnings) {
       // uses algorithm Jon worked out in Octave code; each slice period goes like this:
-      // 1. camera readout time (none if in overlap mode, 0.25ms in PCO pseudo-overlap)
+      // 1. camera readout time (none if in overlap mode, 0.25ms in pseudo-overlap)
       // 2. any extra delay time
       // 3. camera reset time
       // 4. start scan 0.25ms before camera global exposure and shifted up in time to account for delay introduced by Bessel filter

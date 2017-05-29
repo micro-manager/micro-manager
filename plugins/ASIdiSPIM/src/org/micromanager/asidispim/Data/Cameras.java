@@ -329,6 +329,7 @@ public class Cameras {
          switch (mode) {
          case EDGE:
          case PSEUDO_OVERLAP:
+         case LIGHT_SHEET:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
                   Properties.Values.EDGE_TRIGGER);
@@ -481,11 +482,8 @@ public class Cameras {
    }
    
    /**
-    * Gets the per-row readout time of the camera in ms.
-    * Assumes fast readout mode (should include slow readout too).
-    * 
     * @param camKey
-    * @return
+    * @return the per-row readout time of the camera in ms
     */
    public double getRowReadoutTime(Devices.Keys camKey) {
       switch(devices_.getMMDeviceLibrary(camKey)) {
@@ -524,7 +522,9 @@ public class Cameras {
             }
          }
       case PVCAM:
-         return 20e-3;  // this isn't "real", have to query camera for chip readout time
+         Rectangle roi = getCameraROI(camKey);
+         float readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
+         return (readoutTimeMs / roi.height);
       case DEMOCAM:
          return(10e-3);  // dummy 10us row time
       default:
@@ -611,11 +611,12 @@ public class Cameras {
       //      (e.g. could cache some values or something)
       
       float readoutTimeMs = 10f;
+      Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
       
       if (camMode == CameraModes.Keys.OVERLAP) {
          readoutTimeMs = 0.0f;
       } else if (camMode == CameraModes.Keys.PSEUDO_OVERLAP) {
-         switch (devices_.getMMDeviceLibrary(camKey)) {
+         switch (camLibrary) {
          case PCOCAM:
             readoutTimeMs = 0.25f;
             break;
@@ -631,13 +632,17 @@ public class Cameras {
             break;
          }
       } else if (camMode == CameraModes.Keys.LIGHT_SHEET) {
-         Rectangle roi = getCameraROI(camKey);
-         final double rowReadoutTime = getRowReadoutTime(camKey);
-         int speedFactor = 1; // props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
-         if (speedFactor < 1) {
-            speedFactor = 1;
+         if (camLibrary == Devices.Libraries.PVCAM) {
+            readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
+         } else {
+            Rectangle roi = getCameraROI(camKey);
+            final double rowReadoutTime = getRowReadoutTime(camKey);
+            int speedFactor = 1; // props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+            if (speedFactor < 1) {
+               speedFactor = 1;
+            }
+            readoutTimeMs = (float) rowReadoutTime * roi.height * speedFactor;
          }
-         readoutTimeMs = (float) rowReadoutTime * roi.height * speedFactor;
       } else {
          
          // below code only applies to non-overlap, non-light sheet
@@ -647,7 +652,7 @@ public class Cameras {
          Rectangle roi = getCameraROI(camKey);
          Rectangle sensorSize = getSensorSize(camKey);
 
-         switch (devices_.getMMDeviceLibrary(camKey)) {
+         switch (camLibrary) {
          case HAMCAM:
             // device adapter provides readout time rounded to nearest 0.1ms; we
             // calculate it ourselves instead
