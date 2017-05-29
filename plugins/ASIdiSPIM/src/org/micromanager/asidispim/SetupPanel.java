@@ -155,7 +155,6 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       controller_ = controller;
       gui_ = gui;
       PanelUtils pu = new PanelUtils(prefs_, props_, devices);
-      final SetupPanel setupPanel = this;
 
       updateKeyAssignments();
 
