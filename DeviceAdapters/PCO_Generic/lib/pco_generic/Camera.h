@@ -40,8 +40,7 @@
 
 #define KAMLIBVERSION           250
 #pragma once
-#include "c:\PCO_Include\SrcWin\Sdk\Sc2\extern\sc2_SDKStructures.h"
-//#include "CameraRegistry.h"
+
 #define WM_CHANGE_CAMERAVALUES WM_APP + 200
 
 #define SET_RESULT_MUST_REINIT          1
