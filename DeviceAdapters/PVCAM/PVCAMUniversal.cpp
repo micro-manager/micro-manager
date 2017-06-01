@@ -3266,6 +3266,10 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
     if ( imagesInserted_ >= imagesToAcquire_ )
         return DEVICE_OK;
 
+    // Ignore any callbacks that might be arriving after stopping the acquisition
+    if (!isAcquiring_) // Cannot guard it with acqLock_
+        return DEVICE_OK;
+
     int ret = DEVICE_ERR;
 
     const PvFrameInfo& frameNfo = entry.FrameMetadata();
