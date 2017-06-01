@@ -371,6 +371,7 @@ public void runDeskew(final ListeningJPanel caller) {
             final ImagePlus ip = IJ.getImage();
             final MMWindow mmW = new MMWindow(ip);
             final boolean firstSideIsA;
+            final boolean twoSided;
             final String windowTitle;
             final AcquisitionModes.Keys acqMode;
             double zStepPx = 0;
@@ -383,6 +384,7 @@ public void runDeskew(final ListeningJPanel caller) {
                   throw new Exception("Can only deskew stage scanning data");
                }
                firstSideIsA = !metadata.getString("FirstSide").equals("B");
+               twoSided = metadata.getString("NumberOfSides").equals("2");
                if (metadata.has("AcquisitionName")) {
                   windowTitle = metadata.getString("AcquisitionName");
                } else {
@@ -395,7 +397,9 @@ public void runDeskew(final ListeningJPanel caller) {
                }
             } else {
                // guess at settings since we can't access MM metadata
+               // TODO considering way of user setting these if they know them since can't easily add metadata
                firstSideIsA = true;
+               twoSided = true;
                acqMode = AcquisitionModes.Keys.STAGE_SCAN;
                windowTitle = ip.getTitle();
                ReportingUtils.logDebugMessage("Deskew may be incorrect because don't have Micro-Manager dataset with metadata");
@@ -416,7 +420,8 @@ public void runDeskew(final ListeningJPanel caller) {
             final int width = ip.getWidth();
             final int height = ip.getHeight();
             final int nrSlices = ip.getNSlices();
-            final int nrImages = nrChannels * nrSlices;
+            final int nrFrames = ip.getNFrames();
+            final int nrImages = nrChannels * nrSlices * nrFrames;
             final String title = windowTitle + "-deskewed";
             final int width_expansion = (int) Math.abs(Math.ceil(dx*(nrSlices-1)));
             
@@ -437,7 +442,13 @@ public void runDeskew(final ListeningJPanel caller) {
             for (int c=0; c<nrChannels; c++) {  // loop over channels
                switch (acqMode) {
                case STAGE_SCAN:
-                  dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B
+                  if (twoSided) {
+                     dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B
+                  } else {
+                     // single-sided is path A for all channels
+                     dir = -1;
+                  }
+                  // invert direction if we started with path B, regardless of single- or double-sided
                   if (!firstSideIsA) {
                      dir *= -1;
                   }
@@ -456,13 +467,15 @@ public void runDeskew(final ListeningJPanel caller) {
                }
                ImagePlus i = channels[c];
                i.setStack(resize.expandStack(i.getImageStack(), width + width_expansion, height, (dir < 0 ? width_expansion : 0), 0));
-               for (int s=0; s<nrSlices; s++) {  // loop over slices in stack and shift each by an appropriate amount
-                  i.setSlice(s+1);
-                  ImageProcessor proc = i.getProcessor();
-                  proc.setInterpolate(false);
-                  proc.translate(dx*s*dir, 0);
-                  nrImagesProcessed++;
-                  IJ.showProgress(nrImagesProcessed, nrImages);
+               for (int t=0; t<nrFrames; t++) {
+                  for (int s=0; s<nrSlices; s++) {  // loop over slices in stack and shift each by an appropriate amount
+                     i.setPositionWithoutUpdate(c+1, s+1, t+1);  // all 1-indexed
+                     ImageProcessor proc = i.getProcessor();
+                     proc.setInterpolate(false);
+                     proc.translate(dx*s*dir, 0);
+                     nrImagesProcessed++;
+                     IJ.showProgress(nrImagesProcessed, nrImages);
+                  }
                }
             }
             
