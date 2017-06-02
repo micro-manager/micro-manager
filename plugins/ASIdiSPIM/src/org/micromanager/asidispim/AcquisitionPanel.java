@@ -1154,10 +1154,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       s.laserDuration = laserDuration;
       s.cameraDelay = cameraReadout_max;       // camera must readout last frame before triggering again
       
+      final Devices.Keys camKey = isFirstSideA() ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
+      final Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
+      
       // figure out desired time for camera to be exposing (including reset time)
       // because both camera trigger and laser on occur on 0.25ms intervals (i.e. we may not
       //    trigger the laser until 0.24ms after global exposure) use cameraReset_max
-      final float cameraExposure = cameraReset_max + laserDuration;
+      // special adjustment for Photometrics cameras that possibly has extra clear time which is counted in reset time
+      //    but not in the camera exposure time
+      final float actualCameraResetTime = (camLibrary == Devices.Libraries.PVCAM)
+            ? (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f
+            : cameraResetTime; // everything but Photometrics
+      final float cameraExposure = MyNumberUtils.ceilToQuarterMs(actualCameraResetTime) + laserDuration;
       
       switch (acqSettings.cameraMode) {
       case EDGE:
@@ -1183,7 +1191,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          break;
       case PSEUDO_OVERLAP:  // PCO or Photometrics, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
-         s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms
+         if (camLibrary == Devices.Libraries.PCOCAM) {
+            s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms for PCO
+         } else if (camLibrary == Devices.Libraries.PVCAM) {
+            s.cameraExposure = cameraExposure;
+         } else {
+            MyDialogUtils.showError("Unknown camera library for pseudo-overlap calculations");
+         }
          if (s.cameraDelay < 0.24f) {
             MyDialogUtils.showError("Camera delay should be at least 0.25ms for pseudo-overlap mode.");
          }
@@ -1886,7 +1900,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
-      
+
       boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && sideActiveA)
             || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && sideActiveB);
       
