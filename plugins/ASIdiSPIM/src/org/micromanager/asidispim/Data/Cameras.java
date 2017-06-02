@@ -546,51 +546,57 @@ public class Cameras {
     * @param camMode camera mode
     * @return reset time in ms
     */
-   public float computeCameraResetTime(Devices.Keys camKey,  CameraModes.Keys camMode) {
+   public float computeCameraResetTime(Devices.Keys camKey, CameraModes.Keys camMode) {
+      float resetTimeMs = 10f;
       if (camMode == CameraModes.Keys.LIGHT_SHEET) {
-         return 0f;
+         return resetTimeMs = 0f;
       } else {
-         float resetTimeMs = 10;
-         double rowReadoutTime = getRowReadoutTime(camKey);
-         float camReadoutTime = computeCameraReadoutTime(camKey, CameraModes.Keys.EDGE);
-         int numRowsOverhead;
-         switch (devices_.getMMDeviceLibrary(camKey)) {
-         case HAMCAM:
-            // global reset mode not yet exposed in Micro-manager
-            // it will be 17+1 rows of overhead but nothing else
-            if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE)
-                  .equals(Properties.Values.SYNCREADOUT.toString())) {
-               numRowsOverhead = 18; // overhead of 17 rows plus jitter of 1 row
-            } else { // for EDGE and LEVEL trigger modes
-               numRowsOverhead = 10; // overhead of 9 rows plus jitter of 1 row
-            }
-            resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-            break;
-         case PCOCAM:
-            numRowsOverhead = 1;
-            resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-            break;
-         case ANDORCAM:
-            numRowsOverhead = 1;
-            resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-            break;
-         case PVCAM:
+         Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
+         
+         // Photometrics is very different from other cameras so handle it as special case
+         if (camLibrary == Devices.Libraries.PVCAM) {
             int trigToGlobal = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_POST_TIME)
-               + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
-            String clearMode = props_.getPropValueString(camKey, Properties.Keys.PVCAM_CLEARING_MODE);
-            if (clearMode.equals(Properties.Values.PRE_EXPOSURE.toString())) {
-               trigToGlobal += props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_CLEARING_TIME);
-            }
-            // TODO figure out if we need to do anything special with Pre-Sequence clearing mode of if this happens
-            //    automatically in the device adapter
+                  + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
+            // it appears as of end-May 2017 that the clearing time is actually rolled into the post-trigger
+            //    time despite Photometrics documentation to the contrary
+            //String clearMode = props_.getPropValueString(camKey, Properties.Keys.PVCAM_CLEARING_MODE);
+            //if (clearMode.equals(Properties.Values.PRE_EXPOSURE.toString())) {
+            //   trigToGlobal += props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_CLEARING_TIME);
+            //}
             resetTimeMs = (float) trigToGlobal / 1e6f;
-            break;
-         case DEMOCAM:
-            resetTimeMs = camReadoutTime;
-            break;
-         default:
-            break;
-         }
+         } else {
+            // all other cameras
+            double rowReadoutTime = getRowReadoutTime(camKey);
+            float camReadoutTime = computeCameraReadoutTime(camKey, CameraModes.Keys.EDGE);
+            int numRowsOverhead;
+            switch (camLibrary) {
+            case HAMCAM:
+               // global reset mode not yet exposed in Micro-manager
+               // it will be 17+1 rows of overhead but nothing else
+               if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE)
+                     .equals(Properties.Values.SYNCREADOUT.toString())) {
+                  numRowsOverhead = 18; // overhead of 17 rows plus jitter of 1 row
+               } else { // for EDGE and LEVEL trigger modes
+                  numRowsOverhead = 10; // overhead of 9 rows plus jitter of 1 row
+               }
+               resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+               break;
+            case PCOCAM:
+               numRowsOverhead = 1;
+               resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+               break;
+            case ANDORCAM:
+               numRowsOverhead = 1;
+               resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+               break;
+            case DEMOCAM:
+               resetTimeMs = camReadoutTime;
+               break;
+            default:
+               break;
+            }
+         }//else
+         
          ReportingUtils.logDebugMessage("camera reset time computed as " + resetTimeMs + 
                " for camera " + devices_.getMMDevice(camKey));
          return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
@@ -613,9 +619,11 @@ public class Cameras {
       float readoutTimeMs = 10f;
       Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
       
-      if (camMode == CameraModes.Keys.OVERLAP) {
+      switch (camMode) {
+      case OVERLAP:
          readoutTimeMs = 0.0f;
-      } else if (camMode == CameraModes.Keys.PSEUDO_OVERLAP) {
+         break;
+      case PSEUDO_OVERLAP:
          switch (camLibrary) {
          case PCOCAM:
             readoutTimeMs = 0.25f;
@@ -631,7 +639,8 @@ public class Cameras {
          default:
             break;
          }
-      } else if (camMode == CameraModes.Keys.LIGHT_SHEET) {
+         break;
+      case LIGHT_SHEET:
          if (camLibrary == Devices.Libraries.PVCAM) {
             readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
          } else {
@@ -643,9 +652,9 @@ public class Cameras {
             }
             readoutTimeMs = (float) rowReadoutTime * roi.height * speedFactor;
          }
-      } else {
-         
-         // below code only applies to non-overlap, non-light sheet
+         break;
+      case EDGE:
+      case LEVEL:
          double rowReadoutTime = getRowReadoutTime(camKey);
          int numReadoutRows;
 
@@ -688,11 +697,14 @@ public class Cameras {
          default:
             break;
          }//end switch
-      }//end else
+         break;
+      default:
+         break;  // assume 10ms readout if not otherwise possible to calculate
+      }
       
       ReportingUtils.logDebugMessage("camera readout time computed as " + readoutTimeMs + 
             " for camera " + devices_.getMMDevice(camKey));
-      return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
+      return readoutTimeMs;
    }
    
    /**
