@@ -79,7 +79,7 @@ public class SpotData {
    private final int frame_;        // frame number in the original stack - 1-based
    private final int channel_;      // channel number in the original stack
    private final int slice_;        // slice number in the original stack - 1-based
-   private final int position_;     // position number in the original stack
+   private int position_;     // position number in the original stack
    private final int nr_;           // spot index in given image
    private final int x_;            // x as found by spotfinder
    private final int y_;            // y as found by spotfinder
@@ -99,7 +99,7 @@ public class SpotData {
 
    public int nrLinks_;       // number of frames/slices in which this spot was found
    public int originalFrame_; // original first frame/slice in which this spot was found
-   private final Map<String, Double> keyValue_; // Map of keys/values taht can be used to extend what we store in the SpotData
+   private final Map<String, Double> keyValue_; // Map of keys/values that can be used to extend what we store in the SpotData
 
    public SpotData(ImageProcessor ip, int channel, int slice, int frame, 
            int position, int nr, int x, int y) {
@@ -202,6 +202,9 @@ public class SpotData {
    }
    public int getPosition() {
       return position_;
+   }
+   public void setPosition(int position) {
+      position_ = position;
    }
    public int getNr() {
       return nr_;
