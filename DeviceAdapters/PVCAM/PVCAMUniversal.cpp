@@ -5425,7 +5425,6 @@ int Universal::applyAcqConfig(bool forceSetup)
         }
 
         GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-        GetCoreCallback()->PrepareForAcq(this);
     }
 
     // Update the Device/Property browser UI
