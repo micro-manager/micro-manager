@@ -1944,11 +1944,15 @@ public class DataCollectionForm extends JFrame {
 
                List<SpotData> newData =
                        Collections.synchronizedList(new ArrayList<SpotData>());
+               int positionOffset = 0;
                for (int i = 0; i < rows.length; i++) {
                   RowData rowData = mainTableModel_.getRow(rows[i]);
                   for (SpotData gs : rowData.spotList_) {
+                     SpotData newGs = new SpotData(gs);
+                     newGs.setPosition(gs.getPosition() + positionOffset);
                      newData.add(gs);
                   }
+                  positionOffset += rowData.nrPositions_;
                }
 
                // Add transformed data to data overview window
@@ -1958,7 +1962,8 @@ public class DataCollectionForm extends JFrame {
                builder.setName(rowData.getName() + "-Combined").
                        setColColorRef(reference2CName_.getText()).
                        setSpotList(newData).setIsTrack(false).
-                       setHasZ(false).setMinZ(0.0).setMaxZ(0.0);
+                       setHasZ(false).setMinZ(0.0).setMaxZ(0.0).
+                       setNrPositions(positionOffset);
                addSpotData(builder);
 
                semaphore_.release();
