@@ -1193,6 +1193,11 @@ int Universal::Initialize()
     // Make sure our configs are synchronized
     acqCfgCur_ = acqCfgNew_;
 
+    // Force sending initial setup to camera to have up to date "post-setup" parameters
+    nRet = applyAcqConfig(true);
+    if (nRet != DEVICE_OK)
+        return LogAdapterError(nRet, __LINE__, "Failed to apply initial settings to camera");
+
     initialized_ = true;
     START_METHOD("<<< Universal::Initialize");
     return DEVICE_OK;
@@ -4897,7 +4902,7 @@ int Universal::selectDebayerAlgMask(int xRoiPos, int yRoiPos, int32 pvcamColorMo
         }
 }
 
-int Universal::applyAcqConfig()
+int Universal::applyAcqConfig(bool forceSetup)
 {
     int nRet = DEVICE_OK;
 
@@ -5391,7 +5396,7 @@ int Universal::applyAcqConfig()
     // immediately the acqCfgCur_ must already contain correct configuration.
     acqCfgCur_ = acqCfgNew_;
 
-    if (bufferResizeRequired)
+    if (bufferResizeRequired || forceSetup)
     {
         // Automatically prepare the acquisition. This helps with following problem:
         // Some parameters (PARAM_TEMP_SETPOINT, PARAM_READOUT_TIME) update their values only
@@ -5427,7 +5432,7 @@ int Universal::applyAcqConfig()
     // LW: 2016-06-20 We may need to comment this out as well because the call to
     // OnPropertiesChanged often causes an immediate call to StartSequenceAcquisition()
     // which in turn results in hang of Live mode. (happens in uM 2.0, not 1.4)
-    if (configChanged)
+    if (configChanged || forceSetup)
         nRet = this->GetCoreCallback()->OnPropertiesChanged(this);
 
     return nRet;

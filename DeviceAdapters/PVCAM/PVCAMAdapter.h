@@ -666,8 +666,9 @@ private:
     * Device/Property Browser or any other event.
     * This function should validate and apply the new acquisition configuration
     * to the camera, if not accepted the setting should be reverted and error returned.
+    * @param forceSetup If true the settings will be sent to camera even without any change.
     */
-    int applyAcqConfig();
+    int applyAcqConfig(bool forceSetup = false);
 
 private: // Static
 
