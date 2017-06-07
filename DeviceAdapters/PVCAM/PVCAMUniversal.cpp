@@ -114,6 +114,7 @@ const char* g_Keyword_FWellCapacity   = "FullWellCapacity";
 const char* g_Keyword_TriggerMode     = "TriggerMode";
 const char* g_Keyword_ExposeOutMode   = "ExposeOutMode";
 const char* g_Keyword_ClearCycles     = "ClearCycles";
+const char* g_Keyword_ClearMode       = "ClearMode";
 const char* g_Keyword_ColorMode       = "ColorMode";
 const char* g_Keyword_TriggerTimeout  = "Trigger Timeout (secs)";
 const char* g_Keyword_ActualGain      = "Actual Gain e/ADU";
@@ -184,7 +185,6 @@ const char* g_Keyword_TimingPreTriggerDelayNs  = "Timing-PreTriggerDelayNs";
 // Do not use these for static camera properties that never changes. It's more efficient to create
 // a simple readonly MM property without a handler (see examples in Initialize())
 ParamNameIdPair g_UniversalParams[] = {
-    {"ClearMode",          "PARAM_CLEAR_MODE",         PARAM_CLEAR_MODE},         // ENUM
     {"PreampDelay",        "PARAM_PREAMP_DELAY",       PARAM_PREAMP_DELAY},       // UNS16
     {"PreampOffLimit",     "PARAM_PREAMP_OFF_CONTROL", PARAM_PREAMP_OFF_CONTROL}, // UNS32 // preamp is off during exposure if exposure time is less than this
     {"MaskLines",          "PARAM_PREMASK",            PARAM_PREMASK},            // UNS16
@@ -262,6 +262,7 @@ Universal::Universal(short cameraId) :
     prmExposureTime_(0),
     prmExposeOutMode_(0),
     prmClearCycles_(0),
+    prmClearMode_(0),
     prmReadoutPort_(0),
     prmSpdTabIndex_(0),
     prmColorMode_(0),
@@ -348,6 +349,7 @@ Universal::~Universal()
     delete prmTriggerMode_;
     delete prmExposeOutMode_;
     delete prmClearCycles_;
+    delete prmClearMode_;
     delete prmSpdTabIndex_;
     delete prmReadoutPort_;
     delete prmColorMode_;
@@ -673,12 +675,32 @@ int Universal::Initialize()
     prmClearCycles_ = new PvParam<uns16>("PARAM_CLEAR_CYCLES", PARAM_CLEAR_CYCLES, this, true);
     if (prmClearCycles_->IsAvailable())
     {
-        pAct = new CPropertyAction (this, &Universal::OnClearCycles);
-        nRet = CreateProperty(g_Keyword_ClearCycles, "1", MM::Integer, false, pAct);
+        pAct = new CPropertyAction(this, &Universal::OnClearCycles);
+        const uns16 cur = prmClearCycles_->Current();
+        const char* curStr = CDeviceUtils::ConvertToString(cur);
+
+        nRet = CreateProperty(g_Keyword_ClearCycles, curStr, MM::Integer, prmClearCycles_->IsReadOnly(), pAct);
         assert(nRet == DEVICE_OK);
         nRet = SetPropertyLimits(g_Keyword_ClearCycles, 0, 16);
-        if (nRet != DEVICE_OK)
-            return nRet;
+        assert(nRet == DEVICE_OK);
+
+        acqCfgNew_.ClearCycles = cur;
+    }
+
+    /// CLEAR MODE
+    prmClearMode_ = new PvEnumParam("PARAM_CLEAR_MODE", PARAM_CLEAR_MODE, this, true);
+    if (prmClearMode_->IsAvailable())
+    {
+        pAct = new CPropertyAction(this, &Universal::OnClearMode);
+        const int32 cur = prmClearMode_->Current();
+        const char* curStr = prmClearMode_->GetEnumString(cur).c_str();
+
+        nRet = CreateProperty(g_Keyword_ClearMode, curStr, MM::String, prmClearMode_->IsReadOnly(), pAct);
+        assert(nRet == DEVICE_OK);
+        nRet = SetAllowedValues(g_Keyword_ClearMode, prmClearMode_->GetEnumStrings());
+        assert(nRet == DEVICE_OK);
+
+        acqCfgNew_.ClearMode = cur;
     }
 
     /// CAMERA TEMPERATURE
@@ -2159,24 +2181,33 @@ int Universal::OnClearCycles(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     if (eAct == MM::AfterSet)
     {
-        // The acquisition must be stopped, and will be automatically started again by MMCore
-        if (IsCapturing())
-            StopSequenceAcquisition();
-
-        // this param requires reconfiguration of the acquisition
-        singleFrameModeReady_ = false;
-        sequenceModeReady_ = false;
-
         long val;
         pProp->Get( val );
-        uns16 pvVal = (uns16)val;
-
-        prmClearCycles_->Set( pvVal );
-        prmClearCycles_->Apply();
+        acqCfgNew_.ClearCycles = val;
+        return applyAcqConfig();
     }
     else if (eAct == MM::BeforeGet)
     {
-        pProp->Set( prmClearCycles_->ToString().c_str() );
+        pProp->Set( (long)acqCfgCur_.ClearCycles );
+    }
+
+    return DEVICE_OK;
+}
+
+int Universal::OnClearMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnClearMode", eAct);
+
+    if (eAct == MM::AfterSet)
+    {
+        string valStr;
+        pProp->Get( valStr );
+        acqCfgNew_.ClearMode = prmClearMode_->GetEnumValue(valStr);
+        return applyAcqConfig();
+    }
+    else if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(prmClearMode_->GetEnumString(acqCfgCur_.ClearMode).c_str());
     }
 
     return DEVICE_OK;
@@ -5018,6 +5049,40 @@ int Universal::applyAcqConfig()
             acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
             return nRet; // Error logged in SetAndApply()
         }
+    }
+
+    // Clear cycles
+    if (acqCfgNew_.ClearCycles != acqCfgCur_.ClearCycles)
+    {
+        configChanged = true;
+        nRet = prmClearCycles_->SetAndApply(static_cast<uns16>(acqCfgNew_.ClearCycles));
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        // Workaround: When it changes we force buffer reinitialization (which results
+        // in pl_exp_setup_seq/cont getting called, which applies script, which then
+        // forces the camera to update the "post-setup parameters" and this
+        // results in GUI getting immediately updated with correct values for timing params.
+        bufferResizeRequired = true;
+    }
+
+    // Clear mode
+    if (acqCfgNew_.ClearMode != acqCfgCur_.ClearMode)
+    {
+        configChanged = true;
+        nRet = prmClearMode_->SetAndApply(acqCfgNew_.ClearMode);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        // Workaround: When it changes we force buffer reinitialization (which results
+        // in pl_exp_setup_seq/cont getting called, which applies script, which then
+        // forces the camera to update the "post-setup parameters" and this
+        // results in GUI getting immediately updated with correct values for timing params.
+        bufferResizeRequired = true;
     }
 
     // Debayering algorithm selection

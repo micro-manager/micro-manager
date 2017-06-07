@@ -303,6 +303,10 @@ public: // Action handlers
     */
     int OnClearCycles(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
+    * Gets or sets the current sensor clear mode.
+    */
+    int OnClearMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
     * Enables or disables the use of circular buffer. When disabled the live acquisition
     * runs as a repeated sequence (something like fast time-lapse). The PVCAM continous
     * mode is not used.
@@ -788,6 +792,7 @@ private: // Static
     PvParam<ulong64>* prmExposureTime_;    // (PARAM_EXPOSURE_TIME)
     PvEnumParam*      prmExposeOutMode_;
     PvParam<uns16>*   prmClearCycles_;
+    PvEnumParam*      prmClearMode_;
     PvEnumParam*      prmReadoutPort_;
     PvParam<int16>*   prmSpdTabIndex_;
     PvEnumParam*      prmColorMode_;
