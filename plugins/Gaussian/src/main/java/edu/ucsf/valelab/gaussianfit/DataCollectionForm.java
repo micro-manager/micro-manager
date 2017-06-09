@@ -1950,7 +1950,7 @@ public class DataCollectionForm extends JFrame {
                   for (SpotData gs : rowData.spotList_) {
                      SpotData newGs = new SpotData(gs);
                      newGs.setPosition(gs.getPosition() + positionOffset);
-                     newData.add(gs);
+                     newData.add(newGs);
                   }
                   positionOffset += rowData.nrPositions_;
                }
