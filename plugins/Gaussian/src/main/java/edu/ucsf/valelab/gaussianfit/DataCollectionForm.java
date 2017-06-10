@@ -550,11 +550,22 @@ public class DataCollectionForm extends JFrame {
       combineButton.addActionListener(new java.awt.event.ActionListener() {
          @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            combineButton_ActionPerformed(evt);
+            combine(true);
          }
       });
       combineButton.setMaximumSize(buttonSize);
       generalPanel.add(combineButton, "wrap");
+      
+      JButton combineTracksButton = new JButton("Combine Tracks");
+      combineTracksButton.setFont(gFont); 
+      combineTracksButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            combine(false);
+         }
+      });
+      combineTracksButton.setMaximumSize(buttonSize);
+      generalPanel.add(combineTracksButton);
 
       
 /**********************  2-Color tab    ***************************************/
@@ -1927,7 +1938,7 @@ public class DataCollectionForm extends JFrame {
 
    }
 
-   private void combineButton_ActionPerformed(java.awt.event.ActionEvent evt) {
+   private void combine(final boolean modifyPositions) {
       try {
          final int[] rows = mainTable_.getSelectedRowsSorted();
          
@@ -1948,9 +1959,14 @@ public class DataCollectionForm extends JFrame {
                for (int i = 0; i < rows.length; i++) {
                   RowData rowData = mainTableModel_.getRow(rows[i]);
                   for (SpotData gs : rowData.spotList_) {
-                     SpotData newGs = new SpotData(gs);
-                     newGs.setPosition(gs.getPosition() + positionOffset);
-                     newData.add(newGs);
+                     if (modifyPositions) {
+                        SpotData newGs = new SpotData(gs);
+                        newGs.setPosition(gs.getPosition() + positionOffset);
+                        newData.add(newGs);
+                     } else {
+                        newData.add(gs);
+                     }
+                     
                   }
                   positionOffset += rowData.nrPositions_;
                }
