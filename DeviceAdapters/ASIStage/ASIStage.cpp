@@ -1759,7 +1759,7 @@ int XYStage::OnSerialCommandOnlySendChanged(MM::PropertyBase* pProp, MM::ActionT
 
 int XYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 // special property, when set to "yes" it creates a set of little-used properties that can be manipulated thereafter
-// these parameters exposed with some hurdle to user: KP, KI, KD, KA, AA
+// these parameters exposed with some hurdle to user: KP, KI, KD, AA
 {
    if (eAct == MM::BeforeGet)
    {
@@ -1791,12 +1791,6 @@ int XYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (hasCommand("KD X?")) {
             pAct = new CPropertyAction (this, &XYStage::OnKDerivative);
             CreateProperty("ServoIntegral-KD", "0", MM::Integer, false, pAct);
-         }
-
-         // acceleration feed-forward term (KA)
-         if (hasCommand("KA X?")) {
-            pAct = new CPropertyAction (this, &XYStage::OnKFeedforward);
-            CreateProperty("ServoFeedforward-KA", "0", MM::Integer, false, pAct);
          }
 
          // Align calibration/setting for pot in drive electronics (AA)
@@ -1938,53 +1932,6 @@ int XYStage::OnKDerivative(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "KD X =" << tmp << " Y=" << tmp;
-      string answer;
-      int ret = QueryCommand(command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      if (answer.substr(0,2).compare(":A") == 0)
-         return DEVICE_OK;
-      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
-      {
-         int errNo = atoi(answer.substr(3).c_str());
-         return ERR_OFFSET + errNo;
-      }
-      return ERR_UNRECOGNIZED_ANSWER;
-   }
-   return DEVICE_OK;
-}
-
-int XYStage::OnKFeedforward(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   ostringstream command; command.str("");
-   ostringstream response; response.str("");
-   long tmp = 0;
-   if (eAct == MM::BeforeGet)
-   {
-      command << "KA X?";
-      string answer;
-      int ret = QueryCommand(command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      if (answer.substr(0,2).compare(":A") == 0)
-      {
-         tmp = atol(answer.substr(5).c_str());
-         if (!pProp->Set(tmp))
-            return DEVICE_INVALID_PROPERTY_VALUE;
-         else
-            return DEVICE_OK;
-      }
-      // deal with error later
-      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
-      {
-         int errNo = atoi(answer.substr(3).c_str());
-         return ERR_OFFSET + errNo;
-      }
-      return ERR_UNRECOGNIZED_ANSWER;
-   }
-   else if (eAct == MM::AfterSet) {
-      pProp->Get(tmp);
-      command << "KA X =" << tmp << " Y=" << tmp;
       string answer;
       int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)

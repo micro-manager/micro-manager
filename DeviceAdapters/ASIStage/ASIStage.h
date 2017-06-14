@@ -148,7 +148,6 @@ private:
    int OnKIntegral            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnKProportional        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnKDerivative          (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnKFeedforward         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAAlign               (MM::PropertyBase* pProp, MM::ActionType eAct);
    int GetPositionStepsSingle(char axis, long& steps);
    int SetAxisDirection();
