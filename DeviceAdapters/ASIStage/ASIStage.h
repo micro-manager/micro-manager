@@ -143,6 +143,13 @@ private:
    int OnSerialCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialResponse(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialCommandOnlySendChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAdvancedProperties   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOvershoot            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnKIntegral            (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnKProportional        (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnKDerivative          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnKFeedforward         (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAAlign               (MM::PropertyBase* pProp, MM::ActionType eAct);
    int GetPositionStepsSingle(char axis, long& steps);
    int SetAxisDirection();
    bool hasCommand(std::string commnand);
@@ -165,6 +172,7 @@ private:
    bool serialOnlySendChanged_;        // if true the serial command is only sent when it has changed
    std::string manualSerialAnswer_; // last answer received when the SerialCommand property was used
    unsigned int compileDay_;  // "days" since Jan 1 2000 since the firmware was compiled according to (compile day + 31*(compile month-1) + 12*31*(compile year-2000))
+   bool advancedPropsEnabled_;
 };
 
 class ZStage : public CStageBase<ZStage>, public ASIBase
