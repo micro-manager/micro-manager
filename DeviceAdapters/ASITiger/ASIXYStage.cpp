@@ -635,7 +635,7 @@ int CXYStage::OnRefreshProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
 // special property, when set to "yes" it creates a set of little-used properties that can be manipulated thereafter
-// these parameters exposed with some hurdle to user: B, OS, AA, AZ, KP, KI, KD, KA, AZ
+// these parameters exposed with some hurdle to user: B, OS, AA, AZ, KP, KI, KD, AZ
 {
    if (eAct == MM::BeforeGet)
    {
@@ -668,11 +668,6 @@ int CXYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          pAct = new CPropertyAction (this, &CXYStage::OnKDerivative);
          CreateProperty(g_KDerivativePropertyName, "0", MM::Integer, false, pAct);
          UpdateProperty(g_KDerivativePropertyName);
-
-         // servo feedforward term (KA)
-         pAct = new CPropertyAction (this, &CXYStage::OnKFeedforward);
-         CreateProperty(g_KFeedforwardPropertyName, "0", MM::Integer, false, pAct);
-         UpdateProperty(g_KFeedforwardPropertyName);
 
          // Align calibration/setting for pot in drive electronics (AA)
          pAct = new CPropertyAction (this, &CXYStage::OnAAlign);
@@ -1032,30 +1027,6 @@ int CXYStage::OnKDerivative(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
       command << "KD " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-   }
-   return DEVICE_OK;
-}
-
-int CXYStage::OnKFeedforward(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   ostringstream command; command.str("");
-   ostringstream response; response.str("");
-   long tmp = 0;
-   if (eAct == MM::BeforeGet)
-   {
-      if (!refreshProps_ && initialized_)
-         return DEVICE_OK;
-      command << "KA " << axisLetterX_ << "?";
-      response << ":A " << axisLetterX_ << "=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
-      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
-      if (!pProp->Set(tmp))
-         return DEVICE_INVALID_PROPERTY_VALUE;
-   }
-   else if (eAct == MM::AfterSet) {
-      pProp->Get(tmp);
-      command << "KA " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;

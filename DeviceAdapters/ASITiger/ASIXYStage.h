@@ -107,7 +107,6 @@ public:
    int OnKIntegral            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnKProportional        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnKDerivative          (MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnKFeedforward         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAAlign               (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAZeroX               (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAZeroY               (MM::PropertyBase* pProp, MM::ActionType eAct);
