@@ -308,7 +308,10 @@ int CTigerCommHub::DetectInstalledDevices()
 			 {
 			 ParseAnswerAfterUnderscore(channels);
 			 }
-            break; 
+            break;
+		   case 'b':  // Tunable Lens
+            name = g_LensDeviceName;
+            break;
 		 default:
             command.str("");
             command << "Device type " <<  build.vAxesType[i] << " not supported by Tiger device adapter, skipping it";

@@ -143,6 +143,11 @@ public:
    // phototargeting properties
    int OnTargetExposureTime   (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTargetSettlingTime   (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVectorGeneric		  (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnVectorX			  (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterX_); }
+   int OnVectorY              (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterY_); }
+
+
 
 private:
    string axisLetterX_;

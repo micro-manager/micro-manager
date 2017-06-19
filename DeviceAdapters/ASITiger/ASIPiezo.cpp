@@ -312,6 +312,10 @@ int CPiezo::Initialize()
       AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_0);
       AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_1);
       AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_2);
+	  if (FirmwareVersionAtLeast(3.14))
+	   {	//sin pattern was implemeted much later atleast firmware 3/14 needed
+		   AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_3);
+	   }
       UpdateProperty(g_SAPatternPropertyName);
       // generates a set of additional advanced properties that are rarely used
       pAct = new CPropertyAction (this, &CPiezo::OnSAAdvanced);
@@ -402,6 +406,12 @@ int CPiezo::Initialize()
       CreateProperty(g_AutoSleepDelayPropertyName, "5", MM::Integer, false, pAct);
       UpdateProperty(g_AutoSleepDelayPropertyName);
    }
+
+      //VectorMove
+   pAct = new CPropertyAction (this, &CPiezo::OnVector);
+   CreateProperty(g_VectorPropertyName, "0", MM::Float, false, pAct);
+   SetPropertyLimits(g_VectorPropertyName, -10,10); //hardcoded as -+10mm/sec , piezo r fast
+   UpdateProperty(g_VectorPropertyName);
 
    initialized_ = true;
    return DEVICE_OK;
@@ -1346,6 +1356,7 @@ int CPiezo::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
          case 0: success = pProp->Set(g_SAPattern_0); break;
          case 1: success = pProp->Set(g_SAPattern_1); break;
          case 2: success = pProp->Set(g_SAPattern_2); break;
+		 case 3: success = pProp->Set(g_SAPattern_3); break;
          default:success = 0;                      break;
       }
       if (!success)
@@ -1360,7 +1371,9 @@ int CPiezo::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 1;
       else if (tmpstr.compare(g_SAPattern_2) == 0)
          tmp = 2;
-      else
+      else if (tmpstr.compare(g_SAPattern_3) == 0)
+         tmp = 3;
+	  else
          return DEVICE_INVALID_PROPERTY_VALUE;
       // have to get current settings and then modify bits 0-2 from there
       command << "SAP " << axisLetter_ << "?";
@@ -1885,6 +1898,30 @@ int CPiezo::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       ttl_trigger_enabled_ = (ttl_trigger_supported_ && (tmpstr.compare(g_YesState) == 0));
       return OnUseSequence(pProp, MM::BeforeGet);  // refresh value
+   }
+   return DEVICE_OK;
+}
+
+   int CPiezo::OnVector(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "VE " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "VE " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }

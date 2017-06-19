@@ -307,6 +307,10 @@ int CScanner::Initialize()
    AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_0, 0);
    AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_1, 1);
    AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_2, 2);
+   if (FirmwareVersionAtLeast(3.14))
+	   {	//sin pattern was implemeted much later atleast firmware 3/14 needed
+		   AddAllowedValue(g_SAPatternXPropertyName, g_SAPattern_3, 3);
+	   }
    UpdateProperty(g_SAPatternXPropertyName);
    pAct = new CPropertyAction (this, &CScanner::OnSAAmplitudeY);
    CreateProperty(g_ScannerSAAmplitudeYPropertyName, "0", MM::Float, false, pAct);
@@ -329,6 +333,10 @@ int CScanner::Initialize()
    AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_0, 0);
    AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_1, 1);
    AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_2, 2);
+   if (FirmwareVersionAtLeast(3.14))
+	   {	//sin pattern was implemeted much later atleast firmware 3/14 needed
+		   AddAllowedValue(g_SAPatternYPropertyName, g_SAPattern_3, 3);
+	   }
    UpdateProperty(g_SAPatternYPropertyName);
 
    // generates a set of additional advanced properties that are rarely used
@@ -582,6 +590,16 @@ int CScanner::Initialize()
          SetIlluminationStateHelper(illuminationState_);
       }
    }
+
+      //Vector Move VE X=### Y=###
+   pAct = new CPropertyAction (this, &CScanner::OnVectorX);
+   CreateProperty(g_VectorXPropertyName, "0", MM::Float, false, pAct);
+   SetPropertyLimits(g_VectorXPropertyName, -10, 10);//hardcoded as -+10mm/sec , can he higher 
+   UpdateProperty(g_VectorXPropertyName);
+   pAct = new CPropertyAction (this, &CScanner::OnVectorY);
+   CreateProperty(g_VectorYPropertyName, "0", MM::Float, false, pAct);
+   SetPropertyLimits(g_VectorYPropertyName, -10 , 10);//hardcoded as -+10mm/sec , can he higher 
+   UpdateProperty(g_VectorYPropertyName);
 
    initialized_ = true;
    return DEVICE_OK;
@@ -1669,6 +1687,7 @@ int CScanner::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
          case 0: success = pProp->Set(g_SAPattern_0); break;
          case 1: success = pProp->Set(g_SAPattern_1); break;
          case 2: success = pProp->Set(g_SAPattern_2); break;
+		 case 3: success = pProp->Set(g_SAPattern_3); break;
          default:success = 0;                      break;
       }
       if (!success)
@@ -1841,7 +1860,8 @@ int CScanner::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
          case 0: success = pProp->Set(g_SAPattern_0); break;
          case 1: success = pProp->Set(g_SAPattern_1); break;
          case 2: success = pProp->Set(g_SAPattern_2); break;
-         default:success = 0;                      break;
+         case 3: success = pProp->Set(g_SAPattern_3); break;
+		 default:success = 0;                      break;
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -3597,6 +3617,32 @@ int CScanner::OnTargetSettlingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << "WT " << axisLetterX_ << "=" << tmp << " " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       targetSettling_ = tmp;
+   }
+   return DEVICE_OK;
+}
+
+   int CScanner::OnVectorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_ && !refreshOverride_)
+         return DEVICE_OK;
+      refreshOverride_ = false;
+      command << "VE " << axisLetter << "?";
+      response << ":A " << axisLetter << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "VE " << axisLetter << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+
    }
    return DEVICE_OK;
 }
