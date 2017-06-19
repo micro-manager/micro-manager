@@ -196,6 +196,7 @@ const char* const g_OvershootPropertyName = "Overshoot-O(um)";
 const char* const g_KIntegralPropertyName = "ServoIntegral-KI";
 const char* const g_KProportionalPropertyName = "ServoProportional-KP";
 const char* const g_KDerivativePropertyName = "ServoIntegral-KD";
+const char* const g_KFeedforwardPropertyName = "ServoFeedforward-KA";
 const char* const g_AAlignPropertyName = "MotorAlign-AA";
 const char* const g_AZeroXPropertyName = "AutoZeroXResult-AZ";
 const char* const g_AZeroYPropertyName = "AutoZeroYResult-AZ";

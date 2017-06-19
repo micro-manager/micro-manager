@@ -35,6 +35,9 @@
 //
 #define ERR_NOT_CONNECTED           10002
 #define ERR_COMMAND_CANNOT_EXECUTE  10003
+#define ERR_COMMUNICATION           11000
+#define ERR_COMMUNICATION_TIMEOUT   11001
+#define ERR_COMMAND_EXECUTION_ERROR 11003
 
 enum CommandMode {
     Sync = 0,
@@ -72,12 +75,23 @@ public:
     int LockoutTouchscreen(MM::Device& device, MM::Core& core);
     int ActivateTouchscreen(MM::Device& device, MM::Core& core);
 
+	int ExecuteCommandEx(MM::Device& device, MM::Core& core, const char* command);
+
+	void SetDeviceWait(int delay) { deviceWaitMs_ = delay; }
+	int GetDeviceWait(void) { return deviceWaitMs_; }
+
+	void SetCommandTimeout(int to) { commandExecutionTimeoutMs_ = to; }
+	int GetCommandTimeout(void) { return commandExecutionTimeoutMs_; }
+	void RestoreCommandTimeout(void) { commandExecutionTimeoutMs_ = defaultCmdExecutionTimeout; }
+	int GetDevicePosition(void);
+
 private:
     int ExecuteCommand(MM::Device& device, MM::Core& core, const char* command);
     //int GetAcknowledgment(MM::Device& device, MM::Core& core);
     int ParseResponse(const char* cmdId, std::string& value);
     void FetchSerialData(MM::Device& device, MM::Core& core);
 
+	bool enableDeviceWaitByDelay_;
     static const int RCV_BUF_LENGTH = 1024;
     char rcvBuf_[RCV_BUF_LENGTH];
     char asynchRcvBuf_[RCV_BUF_LENGTH];
@@ -89,6 +103,8 @@ private:
     std::multimap<std::string, long> waitingCommands_;
     std::string commandMode_;
     int deviceWaitMs_;
+	static const int defaultCmdExecutionTimeout = 15000; // 15s -- maximum spinning tray path
+	int commandExecutionTimeoutMs_;
 };
 
 #endif // _XLIGHTHUB_H_

@@ -39,7 +39,7 @@
 #error Missing current pco library (in camera.h). Please copy pco lib into correct library/include folder.
 #endif
 
-#define KAMLIBVERSION_MM 241  // Will be incremented by pco when a new Kamlib is present (do not change)
+#define KAMLIBVERSION_MM 250  // Will be incremented by pco when a new Kamlib is present (do not change)
 #if KAMLIBVERSION != KAMLIBVERSION_MM
 #define STRING2(x) #x
 #define STRING(x) STRING2(x)
@@ -101,6 +101,7 @@ public:
   bool IsCapturing();
   void SetSizes(int iw, int ih, int ib);
   int InitHWIO();
+  int InitLineTiming();
 
   // action interface
   //int OnBoard(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -129,6 +130,12 @@ public:
   int OnSelectSignalType(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSelectSignalFilter(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSelectSignalPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+  int OnCmosParameter(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnCmosTimeBase(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnCmosLineTime(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnCmosExposureLines(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnCmosDelayLines(MM::PropertyBase* pProp, MM::ActionType eAct);
   /*
   int OnMode(CPropertyBase* pProp, ActionType eAct);
   int OnSubMode(CPropertyBase* pProp, ActionType eAct);
@@ -142,10 +149,11 @@ public:
 
 private:
   int ResizeImageBuffer();
-  int SetupCamera(bool bStopRecording);
+  int SetupCamera(bool bStopRecording, bool bSizeChanged);
   int CleanupSequenceAcquisition();
   int SetNCheckROI(int *Roix0, int *Roix1, int *Roiy0, int *Roiy1);
   int GetSignalNum(std::string szSigName);
+  int CheckLineTime(DWORD *ptime);
 
 
   class SequenceThread : public MMDeviceThreadBase
@@ -186,14 +194,27 @@ private:
   float pictime_;
   bool m_bSequenceRunning;
 
-  CCamera *m_pCamera;
+  CCameraWrapper *m_pCamera;
   int m_bufnr;
   WORD *m_pic;
   bool m_bDemoMode;
   bool m_bStartStopMode;
+  bool m_bSoftwareTriggered;
+  bool m_bRecording;
+  bool m_bCMOSLineTiming;
 
   double m_dExposure; 
   double m_dFps; 
+
+  WORD m_wCMOSParameter;
+  WORD m_wCMOSTimeBase;
+  DWORD m_dwCMOSLineTime;
+  DWORD m_dwCMOSExposureLines;
+  DWORD m_dwCMOSDelayLines;
+  DWORD m_dwCMOSLineTimeMin;
+  DWORD m_dwCMOSLineTimeMax;
+  DWORD m_dwCMOSFlags;
+
   int    m_iFpsMode;
   int    m_iNoiseFilterMode;
   int    m_iPixelRate;
@@ -234,7 +255,7 @@ private:
   int m_iNextBufferToUse[4];
   int m_iLastBufferUsed[4];
   int m_iNextBuffer;
-  CRITICAL_SECTION m_cCrisec;
+  HANDLE mxMutex;
   int m_iNumImages;
   int m_iNumImagesInserted;
   double dIntervall;

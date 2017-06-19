@@ -114,6 +114,7 @@ const char* g_Keyword_FWellCapacity   = "FullWellCapacity";
 const char* g_Keyword_TriggerMode     = "TriggerMode";
 const char* g_Keyword_ExposeOutMode   = "ExposeOutMode";
 const char* g_Keyword_ClearCycles     = "ClearCycles";
+const char* g_Keyword_ClearMode       = "ClearMode";
 const char* g_Keyword_ColorMode       = "ColorMode";
 const char* g_Keyword_TriggerTimeout  = "Trigger Timeout (secs)";
 const char* g_Keyword_ActualGain      = "Actual Gain e/ADU";
@@ -184,7 +185,6 @@ const char* g_Keyword_TimingPreTriggerDelayNs  = "Timing-PreTriggerDelayNs";
 // Do not use these for static camera properties that never changes. It's more efficient to create
 // a simple readonly MM property without a handler (see examples in Initialize())
 ParamNameIdPair g_UniversalParams[] = {
-    {"ClearMode",          "PARAM_CLEAR_MODE",         PARAM_CLEAR_MODE},         // ENUM
     {"PreampDelay",        "PARAM_PREAMP_DELAY",       PARAM_PREAMP_DELAY},       // UNS16
     {"PreampOffLimit",     "PARAM_PREAMP_OFF_CONTROL", PARAM_PREAMP_OFF_CONTROL}, // UNS32 // preamp is off during exposure if exposure time is less than this
     {"MaskLines",          "PARAM_PREMASK",            PARAM_PREMASK},            // UNS16
@@ -262,6 +262,7 @@ Universal::Universal(short cameraId) :
     prmExposureTime_(0),
     prmExposeOutMode_(0),
     prmClearCycles_(0),
+    prmClearMode_(0),
     prmReadoutPort_(0),
     prmSpdTabIndex_(0),
     prmColorMode_(0),
@@ -348,6 +349,7 @@ Universal::~Universal()
     delete prmTriggerMode_;
     delete prmExposeOutMode_;
     delete prmClearCycles_;
+    delete prmClearMode_;
     delete prmSpdTabIndex_;
     delete prmReadoutPort_;
     delete prmColorMode_;
@@ -552,6 +554,9 @@ int Universal::Initialize()
     AddAllowedValue(g_Keyword_RGB32, g_Keyword_OFF);
 
 #ifdef PVCAM_3_0_12_SUPPORTED
+    // Start with 80 chars for each of 512 centroids
+    metaAllRoisStr_.reserve(80 * 512);
+
     /// PARAM_FRAME_BUFFER_SIZE, no UI property but we use it later in the code
     prmFrameBufSize_ = new PvParam<ulong64>( "PARAM_FRAME_BUFFER_SIZE", PARAM_FRAME_BUFFER_SIZE, this, true );
 
@@ -670,12 +675,32 @@ int Universal::Initialize()
     prmClearCycles_ = new PvParam<uns16>("PARAM_CLEAR_CYCLES", PARAM_CLEAR_CYCLES, this, true);
     if (prmClearCycles_->IsAvailable())
     {
-        pAct = new CPropertyAction (this, &Universal::OnClearCycles);
-        nRet = CreateProperty(g_Keyword_ClearCycles, "1", MM::Integer, false, pAct);
+        pAct = new CPropertyAction(this, &Universal::OnClearCycles);
+        const uns16 cur = prmClearCycles_->Current();
+        const char* curStr = CDeviceUtils::ConvertToString(cur);
+
+        nRet = CreateProperty(g_Keyword_ClearCycles, curStr, MM::Integer, prmClearCycles_->IsReadOnly(), pAct);
         assert(nRet == DEVICE_OK);
         nRet = SetPropertyLimits(g_Keyword_ClearCycles, 0, 16);
-        if (nRet != DEVICE_OK)
-            return nRet;
+        assert(nRet == DEVICE_OK);
+
+        acqCfgNew_.ClearCycles = cur;
+    }
+
+    /// CLEAR MODE
+    prmClearMode_ = new PvEnumParam("PARAM_CLEAR_MODE", PARAM_CLEAR_MODE, this, true);
+    if (prmClearMode_->IsAvailable())
+    {
+        pAct = new CPropertyAction(this, &Universal::OnClearMode);
+        const int32 cur = prmClearMode_->Current();
+        const char* curStr = prmClearMode_->GetEnumString(cur).c_str();
+
+        nRet = CreateProperty(g_Keyword_ClearMode, curStr, MM::String, prmClearMode_->IsReadOnly(), pAct);
+        assert(nRet == DEVICE_OK);
+        nRet = SetAllowedValues(g_Keyword_ClearMode, prmClearMode_->GetEnumStrings());
+        assert(nRet == DEVICE_OK);
+
+        acqCfgNew_.ClearMode = cur;
     }
 
     /// CAMERA TEMPERATURE
@@ -873,6 +898,12 @@ int Universal::Initialize()
         nRet = CreateProperty(MM::g_Keyword_Gain, gainName.c_str(), MM::String, false, pAct);
         if (nRet != DEVICE_OK)
             return nRet;
+
+        // Fill in the GUI gain choices
+        vector<string> gainChoices;
+        for (int16 i = camCurrentSpeed_.gainMin; i <= camCurrentSpeed_.gainMax; i++)
+            gainChoices.push_back(camCurrentSpeed_.gainNameMapReverse.at(i));
+        SetAllowedValues(MM::g_Keyword_Gain, gainChoices);
     }
 
     /// EXPOSURE RESOLUTION
@@ -1161,6 +1192,11 @@ int Universal::Initialize()
 
     // Make sure our configs are synchronized
     acqCfgCur_ = acqCfgNew_;
+
+    // Force sending initial setup to camera to have up to date "post-setup" parameters
+    nRet = applyAcqConfig(true);
+    if (nRet != DEVICE_OK)
+        return LogAdapterError(nRet, __LINE__, "Failed to apply initial settings to camera");
 
     initialized_ = true;
     START_METHOD("<<< Universal::Initialize");
@@ -2150,24 +2186,33 @@ int Universal::OnClearCycles(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     if (eAct == MM::AfterSet)
     {
-        // The acquisition must be stopped, and will be automatically started again by MMCore
-        if (IsCapturing())
-            StopSequenceAcquisition();
-
-        // this param requires reconfiguration of the acquisition
-        singleFrameModeReady_ = false;
-        sequenceModeReady_ = false;
-
         long val;
         pProp->Get( val );
-        uns16 pvVal = (uns16)val;
-
-        prmClearCycles_->Set( pvVal );
-        prmClearCycles_->Apply();
+        acqCfgNew_.ClearCycles = val;
+        return applyAcqConfig();
     }
     else if (eAct == MM::BeforeGet)
     {
-        pProp->Set( prmClearCycles_->ToString().c_str() );
+        pProp->Set( (long)acqCfgCur_.ClearCycles );
+    }
+
+    return DEVICE_OK;
+}
+
+int Universal::OnClearMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    START_ONPROPERTY("Universal::OnClearMode", eAct);
+
+    if (eAct == MM::AfterSet)
+    {
+        string valStr;
+        pProp->Get( valStr );
+        acqCfgNew_.ClearMode = prmClearMode_->GetEnumValue(valStr);
+        return applyAcqConfig();
+    }
+    else if (eAct == MM::BeforeGet)
+    {
+        pProp->Set(prmClearMode_->GetEnumString(acqCfgCur_.ClearMode).c_str());
     }
 
     return DEVICE_OK;
@@ -3257,9 +3302,13 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
     if ( imagesInserted_ >= imagesToAcquire_ )
         return DEVICE_OK;
 
+    // Ignore any callbacks that might be arriving after stopping the acquisition
+    if (!isAcquiring_) // Cannot guard it with acqLock_
+        return DEVICE_OK;
+
     int ret = DEVICE_ERR;
 
-    const PvFrameInfo frameNfo = entry.FrameMetadata();
+    const PvFrameInfo& frameNfo = entry.FrameMetadata();
 
     // Build the metadata
     Metadata md;
@@ -3342,31 +3391,30 @@ int Universal::ProcessNotification( const NotificationEntry& entry )
             (ulong64)fHdr->timestampEOF * fHdr->timestampResNs );
         // Implied ROI
         const rgn_type& iRoi = metaFrameStruct_->impliedRoi;
-        std::stringstream iRoiStr;
-        iRoiStr << "[" << iRoi.s1 << ", " << iRoi.s2 << ", " << iRoi.sbin << ", "
-            << iRoi.p1 << ", " << iRoi.p2 << ", " << iRoi.pbin << "]"; 
-        md.PutImageTag<std::string>("PVCAM-FMD-ImpliedRoi", iRoiStr.str()); 
+        snprintf(metaRoiStr_, sizeof(metaRoiStr_),
+                "[%u, %u, %u, %u, %u, %u]",
+                iRoi.s1, iRoi.s2, iRoi.sbin, iRoi.p1, iRoi.p2, iRoi.pbin);
+        md.PutImageTag<std::string>("PVCAM-FMD-ImpliedRoi", metaRoiStr_); 
         // Per-ROI metadata
-        std::stringstream roiMdStr;
-        roiMdStr << "[";
+        metaAllRoisStr_ = "[";
         for (int i = 0; i < metaFrameStruct_->roiCount; ++i)
         {
             const md_frame_roi_header* rHdr = metaFrameStruct_->roiArray[i].header;
             // Since we cannot add per-ROI metadata we will format the MD to a simple JSON array
             // and add it as a per-Frame metadata TAG. Example:
             // "[{"nr":1,"coords":[0,0,0,0,0,0],"borNs":123,"eorNs":456},{"nr":2,"coords":[0,0,0,0,0,0],"borNs":123,"eorNs":456}]"
-            roiMdStr << "{\"nr\":" << rHdr->roiNr
-                << ",\"coords\":["
-                << rHdr->roi.s1 << "," << rHdr->roi.s2 << "," << rHdr->roi.sbin << ","
-                << rHdr->roi.p1 << "," << rHdr->roi.p2 << "," << rHdr->roi.pbin << "],"
-                << "\"borNs\":" << (ulong64)rHdr->timestampBOR * fHdr->roiTimestampResNs << ","
-                << "\"eorNs\":" << (ulong64)rHdr->timestampEOR * fHdr->roiTimestampResNs << "}";
+            snprintf(metaRoiStr_, sizeof(metaRoiStr_),
+                    "{\"nr\":%u,\"coords\":[%u,%u,%u,%u,%u,%u],\"borNs\":%llu,\"eorNs\":%llu}",
+                    rHdr->roiNr,
+                    rHdr->roi.s1, rHdr->roi.s2, rHdr->roi.sbin, rHdr->roi.p1, rHdr->roi.p2, rHdr->roi.pbin,
+                    (ulong64)rHdr->timestampBOR * fHdr->roiTimestampResNs,
+                    (ulong64)rHdr->timestampEOR * fHdr->roiTimestampResNs);
+            metaAllRoisStr_.append(metaRoiStr_);
             if (i != metaFrameStruct_->roiCount - 1)
-                roiMdStr << ",";
-            else
-                roiMdStr << "]";
+                metaAllRoisStr_.append(",");
         }
-        md.PutImageTag<std::string>("PVCAM-FMD-RoiMD", roiMdStr.str());
+        metaAllRoisStr_.append("]");
+        md.PutImageTag<std::string>("PVCAM-FMD-RoiMD", metaAllRoisStr_);
     }
 #endif
 
@@ -4854,7 +4902,7 @@ int Universal::selectDebayerAlgMask(int xRoiPos, int yRoiPos, int32 pvcamColorMo
         }
 }
 
-int Universal::applyAcqConfig()
+int Universal::applyAcqConfig(bool forceSetup)
 {
     int nRet = DEVICE_OK;
 
@@ -4908,19 +4956,19 @@ int Universal::applyAcqConfig()
             "Universal::applyAcqConfig() ROI definition is invalid for current camera configuration" );
     }
 
-    // VALIDATE Centroids (PrimeEnhance), so far it works with 1x1 binning only
+    // VALIDATE Centroids (PrimeLocate), so far it works with 1x1 binning only
     if (acqCfgNew_.CentroidsEnabled && acqCfgNew_.Rois.BinX() > 1 && acqCfgNew_.Rois.BinY() > 1)
     {
         acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
         return LogAdapterError( ERR_BINNING_INVALID, __LINE__,
-            "Universal::applyAcqConfig() Centroids (PrimeEnhance) is not supported with binning." );
+            "Universal::applyAcqConfig() Centroids (PrimeLocate) is not supported with binning." );
     }
     // Centroids also do not work with user defined Multiple ROIs
     if (acqCfgNew_.CentroidsEnabled && acqCfgNew_.Rois.Count() > 1)
     {
         acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
         return LogAdapterError( ERR_ROI_DEFINITION_INVALID, __LINE__,
-            "Universal::applyAcqConfig() Centroids (PrimeEnhance) is not supported with multiple ROIs." );
+            "Universal::applyAcqConfig() Centroids (PrimeLocate) is not supported with multiple ROIs." );
     }
 
     // Change in ROI or binning requires buffer reallocation
@@ -5006,6 +5054,40 @@ int Universal::applyAcqConfig()
             acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
             return nRet; // Error logged in SetAndApply()
         }
+    }
+
+    // Clear cycles
+    if (acqCfgNew_.ClearCycles != acqCfgCur_.ClearCycles)
+    {
+        configChanged = true;
+        nRet = prmClearCycles_->SetAndApply(static_cast<uns16>(acqCfgNew_.ClearCycles));
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        // Workaround: When it changes we force buffer reinitialization (which results
+        // in pl_exp_setup_seq/cont getting called, which applies script, which then
+        // forces the camera to update the "post-setup parameters" and this
+        // results in GUI getting immediately updated with correct values for timing params.
+        bufferResizeRequired = true;
+    }
+
+    // Clear mode
+    if (acqCfgNew_.ClearMode != acqCfgCur_.ClearMode)
+    {
+        configChanged = true;
+        nRet = prmClearMode_->SetAndApply(acqCfgNew_.ClearMode);
+        if (nRet != DEVICE_OK)
+        {
+            acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
+            return nRet; // Error logged in SetAndApply()
+        }
+        // Workaround: When it changes we force buffer reinitialization (which results
+        // in pl_exp_setup_seq/cont getting called, which applies script, which then
+        // forces the camera to update the "post-setup parameters" and this
+        // results in GUI getting immediately updated with correct values for timing params.
+        bufferResizeRequired = true;
     }
 
     // Debayering algorithm selection
@@ -5314,7 +5396,7 @@ int Universal::applyAcqConfig()
     // immediately the acqCfgCur_ must already contain correct configuration.
     acqCfgCur_ = acqCfgNew_;
 
-    if (bufferResizeRequired)
+    if (bufferResizeRequired || forceSetup)
     {
         // Automatically prepare the acquisition. This helps with following problem:
         // Some parameters (PARAM_TEMP_SETPOINT, PARAM_READOUT_TIME) update their values only
@@ -5343,14 +5425,13 @@ int Universal::applyAcqConfig()
         }
 
         GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-        GetCoreCallback()->PrepareForAcq(this);
     }
 
     // Update the Device/Property browser UI
     // LW: 2016-06-20 We may need to comment this out as well because the call to
     // OnPropertiesChanged often causes an immediate call to StartSequenceAcquisition()
     // which in turn results in hang of Live mode. (happens in uM 2.0, not 1.4)
-    if (configChanged)
+    if (configChanged || forceSetup)
         nRet = this->GetCoreCallback()->OnPropertiesChanged(this);
 
     return nRet;

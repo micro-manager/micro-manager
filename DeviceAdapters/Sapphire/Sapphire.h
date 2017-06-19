@@ -57,20 +57,38 @@ public:
 
 		Purge();
 		Send(msg.str());
-		ReceiveOneLine();
+		int ret = ReceiveOneLine();
 		string buf_string = currentIOBuffer();
+
+      if (ret == DEVICE_OK && buf_string.empty())
+      {
+         // Sometimes it appears that an empty line is inserted.
+         // Query responses should not be empty, so try the next line.
+         ret = ReceiveOneLine();
+         buf_string = currentIOBuffer();
+      }
 
 		if (! buf_string.empty())
 		{
-			std::vector<std::string> tokens;
-			Tokenize(buf_string, tokens, "=");
-			if ( 2 == tokens.size())
-			{
-				if ( thisToken == tokens.at(0))
-				{
-					result = tokens.at(1).c_str();
-				}
-			}
+         // At least some models respond with just the value,
+         // no equals sign.
+         if (buf_string.find('=') == std::string::npos)
+         {
+            result = buf_string;
+         }
+         else
+         {
+            // Not sure if other models use this format, but keeping code.
+            std::vector<std::string> tokens;
+            Tokenize(buf_string, tokens, "=");
+            if ( 2 == tokens.size())
+            {
+               if ( thisToken == tokens.at(0))
+               {
+                  result = tokens.at(1).c_str();
+               }
+            }
+         }
 		}
 		return result;
 	}
