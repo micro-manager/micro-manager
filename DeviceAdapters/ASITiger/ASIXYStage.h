@@ -58,7 +58,7 @@ public:
    int SetYOrigin();
    int Home();
    int SetHome();
-
+   int Move (double vx, double vy);
    int IsXYStageSequenceable(bool& isSequenceable) const { isSequenceable = false; return DEVICE_OK; }
    int GetXYStageSequenceMaxLength(long& nrEvents) const { nrEvents = 0; return DEVICE_OK; }
 
@@ -134,6 +134,10 @@ public:
    int OnScanNumLines         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanSettlingTime     (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanOvershootDistance (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVectorGeneric		  (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnVectorX			  (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterX_); }
+   int OnVectorY              (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisLetterY_); }
+
 
 private:
    double unitMultX_;

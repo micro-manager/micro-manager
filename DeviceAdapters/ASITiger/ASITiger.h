@@ -110,6 +110,7 @@ const char* const g_CRISPDeviceName = "CRISPAFocus";
 const char* const g_LEDDeviceName = "LED";
 const char* const g_PLogicDeviceName = "PLogic";
 const char* const g_PMTDeviceName = "PMT";
+const char* const g_LensDeviceName = "TunableLens";
 
 // corresponding device descriptions
 const char* const g_TigerCommHubDescription = "ASI TigerComm Hub (TG-1000)";
@@ -124,7 +125,8 @@ const char* const g_PiezoDeviceDescription = "ASI Piezo Stage";
 const char* const g_CRISPDeviceDescription = "ASI CRISP AutoFocus";
 const char* const g_LEDDeviceDescription = "ASI LED Illuminator";
 const char* const g_PLogicDeviceDescription = "ASI Programmable Logic";
-const char* const g_PMTDeviceDescription = "ASI Photo Multiplier Tube ";  
+const char* const g_PMTDeviceDescription = "ASI Photo Multiplier Tube";  
+const char* const g_LensDeviceDescription = "ASI Tunable Lens";  
 
 // constant values
 const double g_StageMinStepSize = 0.001;   // in units of um
@@ -211,7 +213,11 @@ const char* const g_JoystickEnabledPropertyName = "JoystickEnabled";
 const char* const g_WheelSlowSpeedPropertyName = "WheelSlowSpeed";
 const char* const g_WheelFastSpeedPropertyName = "WheelFastSpeed";
 const char* const g_WheelMirrorPropertyName = "WheelReverse";
-
+const char* const g_VectorPropertyName = "VectorMove-VE(mm/s)";
+const char* const g_VectorXPropertyName = "VectorMoveX-VE(mm/s)";
+const char* const g_VectorYPropertyName = "VectorMoveY-VE(mm/s)";
+const char* const g_TTLinName = "TTLinMode";
+const char* const g_TTLoutName = "TTLoutMode";
 // Z stage property names
 const char* const g_StepSizePropertyName = "StepSize(um)";
 const char* const g_LowerLimPropertyName =  "LowerLim(mm)";
@@ -255,11 +261,18 @@ const char* const g_PiezoMaintainOneOvershootPropertyName = "PiezoMaintainOneOve
 const char* const g_PiezoMaintainOneMaxTimePropertyName = "PiezoMaintainOneMaxTime(ms)";
 const char* const g_AutoSleepDelayPropertyName = "AutoSleepDelay(min)";
 const char* const g_RunPiezoCalibrationPropertyName = "RunPiezoCalibration";
+// TLC property names 
+const char* const g_LensModePropertyName = "LensMode";
+const char* const g_LensTravelRangePropertyName = "LensTravelRange(units)";
+const char* const g_TLCMode_0 = "0 - internal input";
+const char* const g_TLCMode_1 = "1 - external input";
 
 // single axis property names
 const char* const g_AdvancedSAPropertiesPropertyName = "SingleAxisAdvancedPropertiesEnable";
 const char* const g_SAAmplitudePropertyName = "SingleAxisAmplitude(um)";
+const char* const g_SAAnonUnitPropertyName = "SingleAxisAmplitude";
 const char* const g_SAOffsetPropertyName = "SingleAxisOffset(um)";
+const char* const g_SAOnonUnitPropertyName = "SingleAxisOffset";
 const char* const g_SAPeriodPropertyName = "SingleAxisPeriod(ms)";
 const char* const g_SAModePropertyName = "SingleAxisMode";
 const char* const g_SAPatternPropertyName = "SingleAxisPattern";
@@ -545,6 +558,7 @@ const char* const g_SAMode_3 = "3 - Enabled with axes synced";
 const char* const g_SAPattern_0 = "0 - Ramp";
 const char* const g_SAPattern_1 = "1 - Triangle";
 const char* const g_SAPattern_2 = "2 - Square";
+const char* const g_SAPattern_3 = "3 - Sine";
 // single-axis clock source
 const char* const g_SAClkSrc_0 = "internal 4kHz clock";
 const char* const g_SAClkSrc_1 = "external clock";

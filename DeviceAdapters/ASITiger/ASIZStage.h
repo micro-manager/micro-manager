@@ -55,6 +55,7 @@ public:
    int SetRelativePositionUm(double d);
    int GetLimits(double& min, double& max);
    int SetOrigin();
+   int 	Move (double velocity);
 
    bool IsContinuousFocusDrive() const {return false;}  // todo figure out what this means and if it's accurate
 
@@ -115,6 +116,8 @@ public:
    int OnRBTrigger            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRBRunning            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUseSequence          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   //Others
+   int OnVector				  (MM::PropertyBase* pProp, MM::ActionType eAct);	
 
 private:
    double unitMult_;
