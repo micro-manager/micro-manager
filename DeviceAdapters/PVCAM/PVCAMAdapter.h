@@ -303,6 +303,10 @@ public: // Action handlers
     */
     int OnClearCycles(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
+    * Gets or sets the current sensor clear mode.
+    */
+    int OnClearMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
     * Enables or disables the use of circular buffer. When disabled the live acquisition
     * runs as a repeated sequence (something like fast time-lapse). The PVCAM continous
     * mode is not used.
@@ -662,8 +666,9 @@ private:
     * Device/Property Browser or any other event.
     * This function should validate and apply the new acquisition configuration
     * to the camera, if not accepted the setting should be reverted and error returned.
+    * @param forceSetup If true the settings will be sent to camera even without any change.
     */
-    int applyAcqConfig();
+    int applyAcqConfig(bool forceSetup = false);
 
 private: // Static
 
@@ -748,6 +753,10 @@ private: // Static
     // PVCAM helper structure for decoding an embedded-metadata-enabled frame buffer
 #ifdef PVCAM_3_0_12_SUPPORTED
     md_frame*        metaFrameStruct_;
+
+    // For metadata serialization, optimization to not allocate the same for each frame
+    std::string      metaAllRoisStr_;
+    char             metaRoiStr_[1000];
 #endif
     // A buffer used for creating a black-filled frame when Centroids or Multi-ROI
     // acquisition is running. Used in both single snap and live mode if needed.
@@ -784,6 +793,7 @@ private: // Static
     PvParam<ulong64>* prmExposureTime_;    // (PARAM_EXPOSURE_TIME)
     PvEnumParam*      prmExposeOutMode_;
     PvParam<uns16>*   prmClearCycles_;
+    PvEnumParam*      prmClearMode_;
     PvEnumParam*      prmReadoutPort_;
     PvParam<int16>*   prmSpdTabIndex_;
     PvEnumParam*      prmColorMode_;

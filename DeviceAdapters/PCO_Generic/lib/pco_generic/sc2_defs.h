@@ -235,7 +235,7 @@
 #define USB_PID_CAM_FLOW_20       0x0007      // AVR32
 #define USB_PID_CAM_EDGEHS_20     0x0008      // AVR32
 #define USB_PID_P5CTR             0x0009      // FTDI FT2232H (for updating P5CTR framegrabber)
-#define USB_PID_P5CTR_PROD        0x000A      // FTDI FT2232H (usb bridge for controlling the production tool for the P5CTR framegrabber)
+#define USB_PID_P5CTR_PROD        0x000A      // FTDI FT4232H (usb bridge for controlling the production tool for the P5CTR framegrabber)
 #define USB_PID_CAM_PANDA_20      0x000B      // Panda AVR32 USB2.0 Interface
 #define USB_PID_CAM_PANDA_30      0x000C      // Panda FX3 USB3.0 Interface
 #define USB_PID_DMCT_DEBUG        0x0080      // Microchip PIC32MZ / DMCT debug port
@@ -360,8 +360,6 @@
 #define SENSOR_ICX414AK           0x0051      // Sony
 #define SENSOR_ICX407BLA          0x0060      // Sony UV type
 
-
-
 #define SENSOR_KAI2000M           0x0110      // Kodak
 #define SENSOR_KAI2000CM          0x0111      // Kodak
 #define SENSOR_KAI2001M           0x0120      // Kodak
@@ -409,11 +407,9 @@
 
 #define SENSOR_QMFLIM_V2B_BW      0x4000      // CSEM QMFLIM V2B B/W
 
-#define SENSOR_GPIXEL_2020_ASM          0x5000  // GPixel 2020 revision A
-#define SENSOR_GPIXEL_2020_ESM_REV_A    0x5002  // GPixel 2020 eSM prototype, revision a+ , enhanced QE, no binning
-#define SENSOR_GPIXEL_2020_BSM          0x5004  // GPixel 2020 revision B; charge binning
-#define SENSOR_GPIXEL_2020_BSC          0x5005  // GPixel 2020 rev. B, color version
-#define SENSOR_GPIXEL_2020_ESM_REV_B    0x5006  // GPixel 2020 rev. B, enhanced QE version
+#define SENSOR_GPIXEL_X2_BW       0x5000  // GPixel 2k
+#define SENSOR_GPIXEL_X2_COL      0x5001  // GPixel 2k
+
 
 // ------------------------------------------------------------------------ //
 // -- Defines for Get Info String Command: -------------------------------- //
@@ -438,7 +434,7 @@ const PCO_SENSOR_TYPE_DEF far pco_sensor[] =
                SENSOR_ICX407AK, "Sony ICX407AK",
                SENSOR_ICX414AL, "Sony ICX414AL",
                SENSOR_ICX414AK, "Sony ICX414AK",
-            SENSOR_ICX407BLA, "Sony ICX407BLA",
+               SENSOR_ICX407BLA, "Sony ICX407BLA",
 
                // Kodak sensor types
                SENSOR_KAI2000M,   "Kodak KAI2000M",
@@ -469,23 +465,21 @@ const PCO_SENSOR_TYPE_DEF far pco_sensor[] =
                // Other sensor types
                SENSOR_TC285SPD, "TI TC285SPD",
                
-            SENSOR_CYPRESS_RR_V1_BW,  "Cypress Roadrunner V1 BW",
-            SENSOR_CYPRESS_RR_V1_COL, "Cypress Roadrunner V1 Color",
+               SENSOR_CYPRESS_RR_V1_BW,  "Cypress Roadrunner V1 BW",
+               SENSOR_CYPRESS_RR_V1_COL, "Cypress Roadrunner V1 Color",
                
-               SENSOR_CIS2051_V1_FI_BW, "Fairchild CIS2051 V1 I-Front BW",
-               SENSOR_CIS2051_V1_BI_BW, "Fairchild CIS2051 V1 I-Back BW",
+               SENSOR_CIS2051_V1_FI_BW,  "Fairchild CIS2521 V1 I-Front BW",
+               SENSOR_CIS2051_V1_FI_COL, "Fairchild CIS2521 V1 I-Front Color",
+               SENSOR_CIS1042_V1_FI_BW,  "Fairchild CIS2020 V1 I-Front BW",
+               SENSOR_CIS2051_V1_BI_BW,  "Fairchild CIS2521 V1 I-Back BW",
                
                SENSOR_CMOSIS_CMV12000_BW,  "CMOSIS CMV12000 BW",
                SENSOR_CMOSIS_CMV12000_COL, "CMOSIS CMV12000 Color",
                
                SENSOR_QMFLIM_V2B_BW, "QMFLIM V2B BW",
-							 
-							 SENSOR_GPIXEL_2020_ASM,       "GPixel 2020 rev A",
-							 SENSOR_GPIXEL_2020_ESM_REV_A, "GPixel 2020 rev A+ (eSM prototype)",
-							 SENSOR_GPIXEL_2020_BSM,       "GPixel 2020 rev B",
-							 SENSOR_GPIXEL_2020_BSC,       "GPixel 2020 rev B, color",
-							 SENSOR_GPIXEL_2020_ESM_REV_B, "GPixel 2020 rev B, enhanced QE"
-							 
+
+               SENSOR_GPIXEL_X2_BW,  "GPixel 2k BW",
+               SENSOR_GPIXEL_X2_COL, "GPixel 2k Color",
 };
 
 const int far PCO_SENSOR_TYPE_DEF_NUM = sizeof(pco_sensor) / sizeof(pco_sensor[0]);
@@ -641,6 +635,18 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define MAILBOX_STATUS_NO_VALID_MESSAGE                     0x0000
 #define MAILBOX_STATUS_MESSAGE_VALID                        0x0001
 #define MAILBOX_STATUS_MESSAGE_HAS_BEEN_READ                0x0003
+
+
+
+// ------------------------------------------------------------------------ //
+// -- Defines for Get/Set Battery Status: --------------------------------- //
+// ------------------------------------------------------------------------ //
+
+  // the following are bit flags which can be combined:
+
+#define BATTERY_STATUS_MAINS_AVAILABLE                      0x0001
+#define BATTERY_STATUS_CONNECTED                            0x0002
+#define BATTERY_STATUS_CHARGING                             0x0004
 
 
 
