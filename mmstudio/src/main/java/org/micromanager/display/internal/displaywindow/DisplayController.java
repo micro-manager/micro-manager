@@ -22,6 +22,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import java.awt.Window;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 import javax.swing.SwingUtilities;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
@@ -213,7 +215,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       if (instance.dataProvider_.getNumImages() > 0) {
          // TODO Get _first_ image, not just any
-         instance.setDisplayPosition(instance.dataProvider_.getAnyImage().getCoords());
+         Coords.Builder b = Coordinates.builder();
+         for (String axis : instance.dataProvider_.getAxes()) {
+            b.index(axis, 0);
+         }
+         instance.setDisplayPosition(b.build());
+
          // TODO Cleaner
          instance.animationAcknowledgeDataPosition(instance.getDataProvider().getMaxIndices());
       }
@@ -265,6 +272,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @MustCallOnEDT
    public DisplayUIController getUIController() {
       return uiController_;
+   }
+
+   LinkManager getLinkManager() {
+      return linkManager_;
    }
 
    @MustCallOnEDT
@@ -497,7 +508,14 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       Coords channellessPos = position.hasAxis(Coords.CHANNEL) ?
             position.copy().removeAxis(Coords.CHANNEL).build() :
             position;
-      List<Image> images = dataProvider_.getImagesMatching(channellessPos);
+      List<Image> images;
+      try {
+         images = dataProvider_.getImagesMatching(channellessPos);
+      }
+      catch (IOException e) {
+         // TODO Should display error
+         images = Collections.emptyList();
+      }
 
       // Images are sorted by channel here, since we don't (yet) have any other
       // way to correctly recombine stats with newer images (when update rate
@@ -844,7 +862,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
 
    @Override
-   public List<Image> getDisplayedImages() {
+   public List<Image> getDisplayedImages() throws IOException {
       // TODO Make sure this is accurate for composite and single-channel
       return dataProvider_.getImagesMatching(getDisplayPosition());
    }

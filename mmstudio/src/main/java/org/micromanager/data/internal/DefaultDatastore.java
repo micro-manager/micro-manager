@@ -81,21 +81,8 @@ public class DefaultDatastore implements Datastore {
    private String savePath_ = null;
    private boolean haveSetSummary_ = false;
 
-   protected final EventListenerSupport<ExceptionListener> exceptionListeners_ =
-         EventListenerSupport.create(ExceptionListener.class);
-
    public DefaultDatastore() {
       bus_ = new PrioritizedEventBus();
-   }
-
-   @Override
-   public void addExceptionListener(ExceptionListener listener) {
-      exceptionListeners_.addListener(listener, true);
-   }
-
-   @Override
-   public void removeExceptionListener(ExceptionListener listener) {
-      exceptionListeners_.removeListener(listener);
    }
 
    /**
@@ -103,7 +90,8 @@ public class DefaultDatastore implements Datastore {
     * optional ProgressMonitor can be used to keep callers appraised of our
     * progress.
     */
-   public void copyFrom(Datastore alt, ProgressMonitor monitor) {
+   public void copyFrom(Datastore alt, ProgressMonitor monitor)
+         throws IOException {
       int imageCount = 0;
       try {
          setSummaryMetadata(alt.getSummaryMetadata());
@@ -149,14 +137,9 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public Image getImage(Coords coords) {
+   public Image getImage(Coords coords) throws IOException {
       if (storage_ != null) {
-         try {
-            return storage_.getImage(coords);
-         }
-         catch (IOException ex) {
-            exceptionListeners_.fire().exceptionThrown(ex);
-         }
+         return storage_.getImage(coords);
       }
       return null;
    }
@@ -170,14 +153,9 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public List<Image> getImagesMatching(Coords coords) {
+   public List<Image> getImagesMatching(Coords coords) throws IOException {
       if (storage_ != null) {
-         try {
-            return storage_.getImagesMatching(coords);
-         }
-         catch (IOException ex) {
-            exceptionListeners_.fire().exceptionThrown(ex);
-         }
+         return storage_.getImagesMatching(coords);
       }
       return null;
    }
@@ -196,7 +174,7 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public void putImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, IllegalArgumentException {
+   public void putImage(Image image) throws IOException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
@@ -217,12 +195,7 @@ public class DefaultDatastore implements Datastore {
       }
 
       if (storage_ != null) {
-         try {
-            storage_.putImage(image);
-         }
-         catch (IOException ex) {
-            exceptionListeners_.fire().exceptionThrown(ex);
-         }
+         storage_.putImage(image);
       }
       bus_.post(new NewImageEvent(image, this));
    }
@@ -236,7 +209,7 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public Integer getAxisLength(String axis) {
+   public int getAxisLength(String axis) {
       return getMaxIndex(axis) + 1;
    }
 
@@ -282,39 +255,26 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public Annotation getAnnotation(String tag) {
+   public Annotation getAnnotation(String tag) throws IOException {
       if (annotations_.containsKey(tag)) {
          // We already have an Annotation for this store/filename combo.
          return annotations_.get(tag);
       }
       DefaultAnnotation result;
-      try {
-         result = new DefaultAnnotation(this, tag);
-         annotations_.put(tag, result);
-         return result;
-      }
-      catch (IOException ex) {
-         exceptionListeners_.fire().exceptionThrown(ex);
-      }
-      return null;
+      result = new DefaultAnnotation(this, tag);
+      annotations_.put(tag, result);
+      return result;
    }
 
-   @Override
-   public Annotation loadAnnotation(String tag) {
+   public Annotation loadAnnotation(String tag) throws IOException {
       if (annotations_.containsKey(tag)) {
          // We already have an Annotation for this store/filename combo.
          return annotations_.get(tag);
       }
       DefaultAnnotation result;
-      try {
-         result = new DefaultAnnotation(this, tag);
-         annotations_.put(tag, result);
-         return result;
-      }
-      catch (IOException ex) {
-         exceptionListeners_.fire().exceptionThrown(ex);
-      }
-      return null;
+      result = new DefaultAnnotation(this, tag);
+      annotations_.put(tag, result);
+      return result;
    }
 
    @Override
@@ -323,7 +283,6 @@ public class DefaultDatastore implements Datastore {
             DefaultAnnotation.isAnnotationOnDisk(this, tag));
    }
 
-   @Override
    public Annotation createNewAnnotation(String filename) {
       if (hasAnnotation(filename)) {
          throw new IllegalArgumentException("Annotation \"" + filename +
@@ -343,37 +302,33 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public synchronized void freeze() {
+   public synchronized void freeze() throws IOException {
       if (!isFrozen_) {
          isFrozen_ = true;
          if (storage_ != null) {
-            try {
-               storage_.freeze();
-            }
-            catch (IOException ex) {
-               exceptionListeners_.fire().exceptionThrown(ex);
-            }
+            storage_.freeze();
          }
          bus_.post(new DefaultDatastoreFrozenEvent());
       }
    }
 
    @Override
-   public boolean getIsFrozen() {
+   public boolean isFrozen() {
       return isFrozen_;
    }
 
    @Override
-   public void close() {
+   @Deprecated
+   public boolean getIsFrozen() {
+      return isFrozen();
+   }
+
+   @Override
+   public void close() throws IOException {
       DefaultEventManager.getInstance().post(
             new DefaultDatastoreClosingEvent(this));
       if (storage_ != null) {
-         try {
-            storage_.close();
-         }
-         catch (IOException ex) {
-            exceptionListeners_.fire().exceptionThrown(ex);
-         }
+         storage_.close();
       }
    }
 
@@ -388,7 +343,7 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public boolean save(Component parent) {
+   public boolean save(Component parent) throws IOException {
       // This replicates some logic from the FileDialogs class, but we want to
       // use non-file-extension-based "filters" to let the user select the
       // savefile format to use, and FileDialogs doesn't play nicely with that.
@@ -426,13 +381,14 @@ public class DefaultDatastore implements Datastore {
                filter.getDescription());
       }
       setPreferredSaveMode(mode);
-      return save(mode, file.getAbsolutePath());
+      save(mode, file.getAbsolutePath());
+      return true;
    }
 
    // TODO: re-use existing file-based storage if possible/relevant (i.e.
    // if our current Storage is a file-based Storage).
    @Override
-   public boolean save(Datastore.SaveMode mode, String path) {
+   public void save(Datastore.SaveMode mode, String path) throws IOException {
       SummaryMetadata summary = getSummaryMetadata();
       if (summary == null) {
          // Create dummy summary metadata just for saving.
@@ -446,90 +402,79 @@ public class DefaultDatastore implements Datastore {
          }
          summary = summary.copy().intendedDimensions(builder.build()).build();
       }
-      try {
-         DefaultDatastore duplicate = new DefaultDatastore();
 
-         Storage saver;
-         if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-            saver = new StorageMultipageTiff(duplicate,
+      DefaultDatastore duplicate = new DefaultDatastore();
+
+      Storage saver;
+      if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
+         saver = new StorageMultipageTiff(duplicate,
                path, true, true,
                StorageMultipageTiff.getShouldSplitPositions());
-         }
-         else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
-            saver = new StorageSinglePlaneTiffSeries(duplicate, path, true);
-         }
-         else {
-            throw new IllegalArgumentException("Unrecognized mode parameter " + mode);
-         }
-         duplicate.setStorage(saver);
-         duplicate.setSummaryMetadata(summary);
-         // HACK HACK HACK HACK HACK
-         // Copy images into the duplicate ordered by stage position index.
-         // Doing otherwise causes errors when trying to write the OMEMetadata
-         // (we get an ArrayIndexOutOfBoundsException when calling
-         // MetadataTools.populateMetadata() in
-         // org.micromanager.data.internal.multipagetiff.OMEMetadata).
-         // Ideally we'd fix the OME metadata writer to be able to handle
-         // images in arbitrary order, but that would require understanding
-         // that code...
-         // We also need to sort by frame (and while we're at it, sort by
-         // z and channel as well), since FileSet.writeImage() assumes that
-         // timepoints are written sequentially and can potentially cause
-         // invalid metadata if they are not.
-         ArrayList<Coords> tmp = new ArrayList<Coords>();
-         for (Coords coords : getUnorderedImageCoords()) {
-            tmp.add(coords);
-         }
-         java.util.Collections.sort(tmp, new java.util.Comparator<Coords>() {
-            @Override
-            public int compare(Coords a, Coords b) {
-               int p1 = a.getStagePosition();
-               int p2 = b.getStagePosition();
-               if (p1 != p2) {
-                  return p1 < p2 ? -1 : 1;
-               }
-               int t1 = a.getTime();
-               int t2 = b.getTime();
-               if (t1 != t2) {
-                  return t1 < t2 ? -1 : 1;
-               }
-               int z1 = a.getZ();
-               int z2 = b.getZ();
-               if (z1 != z2) {
-                  return z1 < z2 ? -1 : 1;
-               }
-               int c1 = a.getChannel();
-               int c2 = b.getChannel();
-               return c1 < c2 ? -1 : 1;
+      }
+      else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
+         saver = new StorageSinglePlaneTiffSeries(duplicate, path, true);
+      }
+      else {
+         throw new IllegalArgumentException("Unrecognized mode parameter " +
+               mode);
+      }
+      duplicate.setStorage(saver);
+      duplicate.setSummaryMetadata(summary);
+      // HACK HACK HACK HACK HACK
+      // Copy images into the duplicate ordered by stage position index.
+      // Doing otherwise causes errors when trying to write the OMEMetadata
+      // (we get an ArrayIndexOutOfBoundsException when calling
+      // MetadataTools.populateMetadata() in
+      // org.micromanager.data.internal.multipagetiff.OMEMetadata).
+      // Ideally we'd fix the OME metadata writer to be able to handle
+      // images in arbitrary order, but that would require understanding
+      // that code...
+      // We also need to sort by frame (and while we're at it, sort by
+      // z and channel as well), since FileSet.writeImage() assumes that
+      // timepoints are written sequentially and can potentially cause
+      // invalid metadata if they are not.
+      ArrayList<Coords> tmp = new ArrayList<Coords>();
+      for (Coords coords : getUnorderedImageCoords()) {
+         tmp.add(coords);
+      }
+      java.util.Collections.sort(tmp, new java.util.Comparator<Coords>() {
+         @Override
+         public int compare(Coords a, Coords b) {
+            int p1 = a.getStagePosition();
+            int p2 = b.getStagePosition();
+            if (p1 != p2) {
+               return p1 < p2 ? -1 : 1;
             }
-         });
-         for (Coords coords : tmp) {
-            duplicate.putImage(getImage(coords));
+            int t1 = a.getTime();
+            int t2 = b.getTime();
+            if (t1 != t2) {
+               return t1 < t2 ? -1 : 1;
+            }
+            int z1 = a.getZ();
+            int z2 = b.getZ();
+            if (z1 != z2) {
+               return z1 < z2 ? -1 : 1;
+            }
+            int c1 = a.getChannel();
+            int c2 = b.getChannel();
+            return c1 < c2 ? -1 : 1;
          }
-         // We set the save path and freeze *both* datastores; our own because
-         // we should not be modified post-saving, and the other because it
-         // may trigger side-effects that "finish" the process of saving.
-         setSavePath(path);
-         freeze();
-         duplicate.setSavePath(path);
-         duplicate.freeze();
-         duplicate.close();
-         // Save our annotations now.
-         for (DefaultAnnotation annotation : annotations_.values()) {
-            annotation.save();
-         }
-         return true;
+      });
+      for (Coords coords : tmp) {
+         duplicate.putImage(getImage(coords));
       }
-      catch (java.io.IOException e) {
-         ReportingUtils.showError(e, "Failed to save image data");
+      // We set the save path and freeze *both* datastores; our own because
+      // we should not be modified post-saving, and the other because it
+      // may trigger side-effects that "finish" the process of saving.
+      setSavePath(path);
+      freeze();
+      duplicate.setSavePath(path);
+      duplicate.freeze();
+      duplicate.close();
+      // Save our annotations now.
+      for (DefaultAnnotation annotation : annotations_.values()) {
+         annotation.save();
       }
-      catch (DatastoreFrozenException e) {
-         ReportingUtils.logError("Couldn't modify newly-created datastore; this should never happen!");
-      }
-      catch (DatastoreRewriteException e) {
-         ReportingUtils.logError("Couldn't insert an image into newly-created datastore; this should never happen!");
-      }
-      return false;
    }
 
    @Override

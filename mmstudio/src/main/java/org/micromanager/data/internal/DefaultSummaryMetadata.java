@@ -357,7 +357,7 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
    @Override
    public Coords getIntendedDimensions() {
       return DefaultCoords.fromPropertyMap(pmap_.getPropertyMap(
-            INTENDED_DIMENSIONS.key(), null));
+            INTENDED_DIMENSIONS.key(), PropertyMaps.emptyPropertyMap()));
    }
 
    @Override

@@ -14,6 +14,7 @@
 
 package org.micromanager.display;
 
+import java.io.IOException;
 import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.data.Coords;
@@ -242,7 +243,7 @@ public interface DataViewer extends EventPublisher {
     *
     * @return Every image at the currently-displayed image coordinates.
     */
-   List<Image> getDisplayedImages();
+   List<Image> getDisplayedImages() throws IOException;
 
    /**
     * Return true if this viewer is visible.

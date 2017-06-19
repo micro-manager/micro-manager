@@ -54,6 +54,7 @@ import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.internal.link.LinkManager;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 

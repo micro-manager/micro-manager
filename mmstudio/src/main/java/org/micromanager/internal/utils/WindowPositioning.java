@@ -14,6 +14,7 @@
 
 package org.micromanager.internal.utils;
 
+import com.google.common.base.Preconditions;
 import java.awt.Dimension;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
-import org.micromanager.UserProfile;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -326,12 +326,10 @@ public final class WindowPositioning {
 
       private GeometrySaver(Window window, Class<?> positioningClass,
             String positioningKey, Mode mode) {
-         if (window == null) {
-            throw new NullPointerException("Window must not be null");
-         }
+         Preconditions.checkNotNull(window);
          window_ = window;
          positioningClass_ = positioningClass;
-         positioningKey_ = positioningKey;
+         positioningKey_ = positioningKey == null ? "" : positioningKey;
          mode_ = mode;
       }
 

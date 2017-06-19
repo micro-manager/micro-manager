@@ -20,6 +20,8 @@
 
 package org.micromanager.data;
 
+import java.io.IOException;
+
 /**
  * RewritableDatastores are Datastores that allow images and SummaryMetadata
  * to be deleted or overwritten after they have been inserted. They also
@@ -46,7 +48,7 @@ public interface RewritableDatastore extends Datastore {
     *         their Coords objects.
     */
    @Override
-   public void putImage(Image image) throws DatastoreFrozenException, IllegalArgumentException;
+   public void putImage(Image image) throws IOException;
 
    /**
     * Set the SummaryMetadata. Posts a NewSummaryMetadataEvent to the event
@@ -56,8 +58,8 @@ public interface RewritableDatastore extends Datastore {
     * @param metadata Object representing the summary metadata
     * @throws DatastoreFrozenException if the freeze() method has been called.
     */
-   public void setSummaryMetadata(SummaryMetadata metadata)
-           throws DatastoreFrozenException;
+   public void setSummaryMetadata(SummaryMetadata metadata) 
+         throws IOException;
 
    /**
     * Delete an image from the Datastore. Posts an ImageDeletedEvent to the
@@ -66,7 +68,7 @@ public interface RewritableDatastore extends Datastore {
     * @param coords Coordinates of the image to remove.
     * @throws IllegalArgumentException if the coords do not match any image.
     */
-   public void deleteImage(Coords coords) throws IllegalArgumentException;
+   public void deleteImage(Coords coords) throws IOException;
 
    /**
     * Delete all images from the Datastore whose coordinates match the provided
@@ -81,12 +83,12 @@ public interface RewritableDatastore extends Datastore {
     * @param coords Potentially-underspecified coordinates of the image(s) to
     *        remove.
     */
-   public void deleteImagesMatching(Coords coords);
+   public void deleteImagesMatching(Coords coords) throws IOException;
 
    /**
     * Delete all images from the Datastore. An ImageDeletedEvent will be
     * published on the Datastore's event bus for each image, as will a
     * DatastoreClearedEvent.
     */
-   public void deleteAllImages();
+   public void deleteAllImages() throws IOException;
 }

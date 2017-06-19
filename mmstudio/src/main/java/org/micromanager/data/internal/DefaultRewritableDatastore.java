@@ -53,29 +53,19 @@ public final class DefaultRewritableDatastore extends DefaultDatastore implement
    }
 
    @Override
-   public void putImage(Image image) throws DatastoreFrozenException, IllegalArgumentException {
+   public void putImage(Image image) throws IOException {
       try {
          super.putImage(image);
       }
       catch (DatastoreRewriteException e) {
          Image oldImage;
-         try {
-            oldImage = storage_.getImage(image.getCoords());
-         }
-         catch (IOException e) {
-            exceptionListeners_.fire().exceptionThrown(e);
-         }
+         oldImage = storage_.getImage(image.getCoords());
          // We call the storage's method directly instead of using our
          // deleteImage() method, to avoid posting an ImageDeletedEvent.
          ((RewritableStorage) storage_).deleteImage(image.getCoords());
          try {
             super.putImage(image);
-            try {
-               bus_.post(new DefaultImageOverwrittenEvent(image, oldImage, this));
-            }
-            catch (IOException e) {
-               exceptionListeners_.fire().exceptionThrown(e);
-            }
+            bus_.post(new DefaultImageOverwrittenEvent(image, oldImage, this));
          }
          catch (DatastoreRewriteException e2) {
             // This should never happen.
@@ -114,21 +104,21 @@ public final class DefaultRewritableDatastore extends DefaultDatastore implement
    }
 
    @Override
-   public void deleteImage(Coords coords) {
+   public void deleteImage(Coords coords) throws IOException {
       Image image = getImage(coords);
       ((RewritableStorage) storage_).deleteImage(coords);
       bus_.post(new DefaultImageDeletedEvent(image, this));
    }
 
    @Override
-   public void deleteImagesMatching(Coords coords) {
+   public void deleteImagesMatching(Coords coords) throws IOException {
       for (Image image : getImagesMatching(coords)) {
          deleteImage(image.getCoords());
       }
    }
 
    @Override
-   public void deleteAllImages() {
+   public void deleteAllImages() throws IOException {
       Coords blank = new DefaultCoords.Builder().build();
       deleteImagesMatching(blank);
       bus_.post(new DefaultDatastoreClearedEvent(this));

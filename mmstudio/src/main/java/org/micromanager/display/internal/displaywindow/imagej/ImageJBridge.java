@@ -32,6 +32,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import net.imglib2.display.ColorTable8;
@@ -562,8 +563,14 @@ public final class ImageJBridge {
    private Image makeBlankImage(Coords coords) {
       // TODO Clearly this should be factored out as a general utility method
       // in org.micromanager.data.
-      Image template =
-            uiController_.getDisplayController().getDataProvider().getAnyImage();
+      Image template;
+      try {
+         template = uiController_.getDisplayController().getDataProvider().
+               getAnyImage();
+      }
+      catch (IOException e) {
+         throw new RuntimeException(e);
+      }
       if (template == null) {
          throw new IllegalStateException("Image requested from empty dataset");
       }

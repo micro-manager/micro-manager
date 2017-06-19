@@ -38,6 +38,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.geom.Rectangle2D;
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1273,11 +1274,21 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    public int getImageWidth() {
-      return displayController_.getDataProvider().getAnyImage().getWidth();
+      try {
+         return displayController_.getDataProvider().getAnyImage().getWidth();
+      }
+      catch (IOException e) {
+         return 0;
+      }
    }
 
    public int getImageHeight() {
-      return displayController_.getDataProvider().getAnyImage().getHeight();
+      try {
+         return displayController_.getDataProvider().getAnyImage().getHeight();
+      }
+      catch (IOException e) {
+         return 0;
+      }
    }
 
    public List<Image> getDisplayedImages() {

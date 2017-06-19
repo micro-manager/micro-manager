@@ -67,7 +67,7 @@ public final class DefaultDataManager implements DataManager {
    }
 
    @Override
-   public Coords.CoordsBuilder getCoordsBuilder() {
+   public Coords.Builder getCoordsBuilder() {
       return new DefaultCoords.Builder();
    }
 
@@ -84,10 +84,21 @@ public final class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public Datastore createRAMDatastore(Datastore storeToCopy) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public RewritableDatastore createRewritableRAMDatastore() {
       RewritableDatastore result = new DefaultRewritableDatastore();
       result.setStorage(new StorageRAM(result));
       return result;
+   }
+
+   @Override
+   public RewritableDatastore createRewritableRAMDatastore(
+         Datastore storeToCopy) {
+      throw new UnsupportedOperationException();
    }
 
    @Override
@@ -101,11 +112,24 @@ public final class DefaultDataManager implements DataManager {
    }
 
    @Override
+   public Datastore createMultipageTIFFDatastore(Datastore storeToCopy,
+         String directory, boolean shouldGenerateSeparateMetadata,
+         boolean shouldSplitPositions) throws IOException {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
    public Datastore createSinglePlaneTIFFSeriesDatastore(String directory) throws IOException {
       DefaultDatastore result = new DefaultDatastore();
       result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
             true));
       return result;
+   }
+
+   @Override
+   public Datastore createSinglePlaneTIFFSeriesDatastore(Datastore storeToCopy,
+         String directory) throws IOException {
+      throw new UnsupportedOperationException();
    }
 
    @Override

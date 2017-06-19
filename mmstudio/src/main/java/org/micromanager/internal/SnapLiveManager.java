@@ -68,6 +68,7 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.RequestToCloseEvent;
 
 /**
  * This class is responsible for all logic surrounding live mode and the
@@ -569,12 +570,13 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
             }
          }
       }
+
       try {
          DefaultImage newImage = new DefaultImage(image, image.getCoords(),
                studio_.acquisitions().generateMetadata(image, true));
 
          int newImageChannel = newImage.getCoords().getChannel();
-         DefaultImage lastImage = null;
+         DefaultImage lastImage;
          synchronized (this) {
             lastImage = lastImageForEachChannel_.size() > newImageChannel ?
                   lastImageForEachChannel_.get(newImageChannel) :

@@ -44,7 +44,7 @@ public final class DefaultAnnotation implements Annotation {
 
    private Datastore store_;
    private HashMap<Coords, PropertyMap> imageAnnotations_ = new HashMap<Coords, PropertyMap>();
-   private PropertyMap generalAnnotation_ = null;
+   private PropertyMap generalAnnotation_ = PropertyMaps.emptyPropertyMap();
 
    public DefaultAnnotation(Datastore store, String filename) throws IOException {
       store_ = store;

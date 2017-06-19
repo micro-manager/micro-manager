@@ -327,7 +327,7 @@ public final class DefaultPropertyMap implements PropertyMap {
    private static final Cloner<Rectangle> cloneRectangle = new Cloner<Rectangle>() {
       @Override
       public Rectangle clone(Rectangle value) {
-         return (Rectangle) value.clone();
+         return value == null ? null : (Rectangle) value.clone();
       }
    };
    @Override public boolean containsRectangle(String key) { return containsNonPrimitiveScalar(key, Rectangle.class); }
@@ -339,7 +339,7 @@ public final class DefaultPropertyMap implements PropertyMap {
    private static final Cloner<Dimension> cloneDimension = new Cloner<Dimension>() {
       @Override
       public Dimension clone(Dimension value) {
-         return (Dimension) value.clone();
+         return value == null ? null : (Dimension) value.clone();
       }
    };
    @Override public boolean containsDimension(String key) { return containsNonPrimitiveScalar(key, Dimension.class); }
@@ -351,7 +351,7 @@ public final class DefaultPropertyMap implements PropertyMap {
    private static final Cloner<Point> clonePoint = new Cloner<Point>() {
       @Override
       public Point clone(Point value) {
-         return (Point) value.clone();
+         return value == null ? null : (Point) value.clone();
       }
    };
    @Override public boolean containsPoint(String key) { return containsNonPrimitiveScalar(key, Point.class); }

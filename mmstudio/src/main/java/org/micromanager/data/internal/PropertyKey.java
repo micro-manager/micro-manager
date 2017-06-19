@@ -1340,16 +1340,15 @@ public enum PropertyKey {
    private final String[] historical_;
    private final Set<Class<?>> affiliations_;
 
-   private static final Map<String, PropertyKey> LOOKUP;
+   private static final Set<String> ALL_SPELLINGS;
    static {
-      ImmutableMap.Builder<String, PropertyKey> builder =
-            ImmutableMap.builder();
+      ImmutableSet.Builder<String> builder = ImmutableSet.builder();
       for (PropertyKey e : values()) {
          for (String k : e.getAllKeys()) {
-            builder.put(k, e);
+            builder.add(k);
          }
       }
-      LOOKUP = builder.build();
+      ALL_SPELLINGS = builder.build();
    }
 
    private static final Map<String, String> UNITS = ImmutableMap.of(
@@ -1499,6 +1498,6 @@ public enum PropertyKey {
    }
 
    public static boolean isKnownKey(String key) {
-      return LOOKUP.containsKey(key);
+      return ALL_SPELLINGS.contains(key);
    }
 }
