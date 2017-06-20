@@ -38,6 +38,12 @@ public class PropertyNameCellRenderer implements TableCellRenderer {
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int rowIndex, int column) {
+
+       // https://stackoverflow.com/a/3055930
+       if (value == null) {
+          return null;
+       }
+
        MMPropertyTableModel data = (MMPropertyTableModel) table.getModel();
        item_ = data.getPropertyItem(rowIndex);
        JLabel lab = new JLabel();

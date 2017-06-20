@@ -1962,6 +1962,11 @@ public class DataCollectionForm extends javax.swing.JFrame {
       public Component getTableCellRendererComponent(JTable table, Object value,
           boolean isSelected, boolean hasFocus, int row, int column) {
 
+         // https://stackoverflow.com/a/3055930
+         if (value == null) {
+            return null;
+         }
+
          setForeground(table.getForeground());
          setBackground(UIManager.getColor("Button.background"));
 

@@ -63,6 +63,11 @@ public class SliderCellEditor extends AbstractCellEditor implements TableCellEdi
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
 
+        // https://stackoverflow.com/a/3055930
+        if (value == null) {
+           return null;
+        }
+
         PMTDataModel data = (PMTDataModel) table.getModel();
         double setting = data.getPMTSetting(rowIndex);
 

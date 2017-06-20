@@ -62,6 +62,11 @@ public class StatePresetCellEditor extends AbstractCellEditor implements TableCe
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int vColIndex) {
 
+        // https://stackoverflow.com/a/3055930
+        if (value == null) {
+           return null;
+        }
+
         if (isSelected) {
             // cell (and perhaps other cells) are selected
         }

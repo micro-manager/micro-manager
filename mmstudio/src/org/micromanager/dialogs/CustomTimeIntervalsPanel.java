@@ -735,6 +735,12 @@ public class CustomTimeIntervalsPanel extends JPanel {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+
+           // https://stackoverflow.com/a/3055930
+           if (value == null) {
+              return null;
+           }
+
             Component cell = super.getTableCellRendererComponent(table, formatter.format((Number) value), isSelected, hasFocus, row, column);
             if (column == 0 || column == 2) {
                 if (isSelected) {

@@ -63,6 +63,12 @@ public class ShadingTable extends JTable {
       public Component getTableCellRendererComponent(JTable table,
             Object dataProcessor, boolean isSelected, boolean hasFocus,
             int row, int column) {
+
+         // https://stackoverflow.com/a/3055930
+         if (dataProcessor == null) {
+            return null;
+         }
+
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
          }
@@ -107,6 +113,12 @@ public class ShadingTable extends JTable {
       @Override
       public Component getTableCellEditorComponent(JTable table,
             Object someObject, boolean isSelected, int row, int column) {
+
+         // https://stackoverflow.com/a/3055930
+         if (someObject == null) {
+            return null;
+         }
+
          row_ = row;
          panel_.setBackground(table.getSelectionBackground());
          return panel_;
@@ -138,6 +150,12 @@ public class ShadingTable extends JTable {
       @Override
       public Component getTableCellEditorComponent(JTable table, Object value, 
               boolean isSelected, int row, int column) {
+
+         // https://stackoverflow.com/a/3055930
+         if (value == null) {
+            return null;
+         }
+
          row_ = row;
          String[] presets = gui_.getMMCore().getAvailableConfigs(
                  model_.getChannelGroup()).toArray();

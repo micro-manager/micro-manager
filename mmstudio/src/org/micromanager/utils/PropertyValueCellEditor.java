@@ -88,6 +88,11 @@ public class PropertyValueCellEditor extends AbstractCellEditor implements Table
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
 
+        // https://stackoverflow.com/a/3055930
+        if (value == null) {
+           return null;
+        }
+
         MMPropertyTableModel data = (MMPropertyTableModel) table.getModel();
         item_ = data.getPropertyItem(rowIndex);
 

@@ -97,6 +97,11 @@ public class CovariantValueCellEditor extends AbstractCellEditor implements Tabl
    public Component getTableCellEditorComponent(JTable table, Object value,
            boolean isSelected, int rowIndex, int colIndex) {
 
+      // https://stackoverflow.com/a/3055930
+      if (value == null) {
+         return null;
+      }
+
       CovariantPairValuesTableModel data = (CovariantPairValuesTableModel) table.getModel();
       item_ = colIndex == 0 ?  data.getPairing().getIndependentCovariant() : data.getPairing().getDependentCovariant();
 

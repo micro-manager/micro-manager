@@ -27,6 +27,11 @@ public class StateGroupCellRenderer extends PropertyValueCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
+        // https://stackoverflow.com/a/3055930
+        if (value == null) {
+           return null;
+        }
+
         ConfigGroupPad.StateTableData data = (ConfigGroupPad.StateTableData) table.getModel();
 
         stateItem_ = data.getPropertyItem(rowIndex);
