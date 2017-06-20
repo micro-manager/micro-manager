@@ -184,10 +184,17 @@ public class ConfigGroupPad extends JScrollPane{
       @Override
       public Object getValueAt(int row, int col) {
          StateItem item = groupList_.get(row);
-         if (col == 0)
+         if (col == 0) {
             return item.group;
-         else if (col == 1)
-            return item.config;
+         }
+         else if (col == 1) {
+            if (item.singleProp) {
+               return item.value;
+            }
+            else {
+               return item.config;
+            }
+         }
 
          return null;
       }
