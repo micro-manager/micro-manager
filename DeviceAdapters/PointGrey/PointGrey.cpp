@@ -1259,10 +1259,15 @@ int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
-   int ret = SetTriggerMode( TRIGGER_INTERNAL);
-   if (ret != DEVICE_OK)
+   int ret;
+   
+   if (snapTriggerMode_ == TRIGGER_SOFTWARE) 
    {
-      return ret;
+      ret = SetTriggerMode( TRIGGER_INTERNAL);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
    }
 
 	ret = GetCoreCallback()->PrepareForAcq(this);
