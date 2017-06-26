@@ -102,6 +102,8 @@ public:
   void SetSizes(int iw, int ih, int ib);
   int InitHWIO();
   int InitLineTiming();
+  int InitFlim();
+  int SetupFlim();
 
   // action interface
   //int OnBoard(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -136,6 +138,17 @@ public:
   int OnCmosLineTime(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnCmosExposureLines(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnCmosDelayLines(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+  int OnFlimModulationSource(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFlimMasterFrequencyMHz(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFlimFrequency(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFlimRelativePhase(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFlimOutputWaveForm(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFlimNumberOfPhaseSamples(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFlimPhaseSymmetry(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFlimPhaseOrder(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFlimTapSelection(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnFlimAsymCorrection(MM::PropertyBase* pProp, MM::ActionType eAct);
   /*
   int OnMode(CPropertyBase* pProp, ActionType eAct);
   int OnSubMode(CPropertyBase* pProp, ActionType eAct);
@@ -214,6 +227,12 @@ private:
   DWORD m_dwCMOSLineTimeMin;
   DWORD m_dwCMOSLineTimeMax;
   DWORD m_dwCMOSFlags;
+
+  WORD m_wFlimSourceSelect, m_wFlimOutputWaveform;
+  WORD m_wFlimPhaseNumber, m_wFlimPhaseSymmetry, m_wFlimPhaseOrder, m_wFlimTapSelect;
+  WORD m_wFlimAsymmetryCorrection, m_wFlimCalculationMode, m_wFlimReferencingMode, m_wFlimThresholdLow, m_wFlimThresholdHigh, m_wFlimOutputMode;
+  DWORD m_dwFlimFrequency, m_dwFlimPhaseMilliDeg;
+  BOOL m_bFlimMasterFrequencyMHz;
 
   int    m_iFpsMode;
   int    m_iNoiseFilterMode;
