@@ -434,7 +434,23 @@ public class LiveModeTimer {
                });
             } else {
                try {
-                  TaggedImage ti = core_.getLastTaggedImage();
+                  // Allow some time for circular buffer to have an image.
+                  TaggedImage ti = null;
+                  long start = System.currentTimeMillis();
+                  while (ti == null) {
+                     try {
+                        ti = core_.getLastTaggedImage();
+                     } catch (Exception e) {
+                        if (!e.getMessage().equals("Circular buffer is empty.")) {
+                           throw e;
+                        }
+                     }
+                     // if we time out, have the function throw the error so that we can exit
+                     if (System.currentTimeMillis() > 20 * fpsInterval_ + start) {
+                        ti = core_.getLastTaggedImage();
+                     }
+                  }
+
                   // if we have already shown this image, do not do it again.
                   long imageNumber = MDUtils.getSequenceNumber(ti.tags);
                   if (setImageNumber(imageNumber)) {
@@ -471,6 +487,7 @@ public class LiveModeTimer {
                   String camera = core_.getCameraDevice();
                   Set<String> cameraChannelsAcquired = new HashSet<String>();
                   for (int i = 0; i < 2 * multiChannelCameraNrCh_; ++i) {
+                     // Allow some time for circular buffer to have an image.
                      TaggedImage ti = null;
                      long start = System.currentTimeMillis();
                      while (ti == null) {
@@ -486,6 +503,7 @@ public class LiveModeTimer {
                            ti = core_.getNBeforeLastTaggedImage(i);
                         }
                      }
+
                      String channelName;
                      if (ti.tags.has(camera + "-CameraChannelName")) {
                         channelName = ti.tags.getString(camera + "-CameraChannelName");
