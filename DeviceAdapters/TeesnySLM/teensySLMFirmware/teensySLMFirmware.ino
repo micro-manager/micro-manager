@@ -7,7 +7,7 @@
 #include <elapsedMillis.h>
 
 #define FRAMESYNC_PIN 23
-#define LINESYNC_PIN 22
+#define LINESYNC_PIN 7
 #define BAUD 57600
 
 const byte GLOBAL_HEADER[] = {148,169};
@@ -19,8 +19,8 @@ const int MIN_ROW = 52;
 const int MAX_ROW = MIN_ROW + NUM_ACTIVE_LINES;
 const float TIME_PER_ROW_US = 126.206;
 const byte LUT_SIZE = 127;
-const byte PATTERN_ROWS = 8;
-const byte PATTERN_COLS = 8;
+const byte PATTERN_ROWS = 16;
+const byte PATTERN_COLS = 16;
 float PHASE_SHIFT_US = 2.4;
 byte lowerBoundIndex[LUT_SIZE];
 byte weights[LUT_SIZE][2];
