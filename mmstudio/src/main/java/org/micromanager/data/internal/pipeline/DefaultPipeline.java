@@ -20,6 +20,7 @@
 
 package org.micromanager.data.internal.pipeline;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -69,7 +70,7 @@ public final class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public void insertSummaryMetadata(SummaryMetadata summary) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException {
+   public void insertSummaryMetadata(SummaryMetadata summary) throws IOException, PipelineErrorException {
       if (amHalting_) {
          throw new PipelineErrorException("Attempted to pass summary metadata through pipeline after it has been halted.");
       }
@@ -86,7 +87,7 @@ public final class DefaultPipeline implements Pipeline {
    }
 
    @Override
-   public synchronized void insertImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException {
+   public synchronized void insertImage(Image image) throws IOException, PipelineErrorException {
       if (amHalting_) {
          // Ignore it.
          return;

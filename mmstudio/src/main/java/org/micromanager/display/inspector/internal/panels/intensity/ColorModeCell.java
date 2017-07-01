@@ -82,8 +82,11 @@ final class ColorModeCell extends DefaultListCellRenderer {
    @Override
    public Component getListCellRendererComponent(JList list, Object value,
          int index, boolean isSelected, boolean cellHasFocus) {
-      JLabel renderer = (JLabel) super.getListCellRendererComponent(list,
+      Component superComponent = super.getListCellRendererComponent(list,
             String.valueOf(value), index, isSelected, cellHasFocus);
+      if (value == null) {
+         return superComponent;
+      }
 
       Item item = (Item) value;
       switch (item) {

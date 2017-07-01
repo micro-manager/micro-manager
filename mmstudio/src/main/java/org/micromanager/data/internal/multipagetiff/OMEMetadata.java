@@ -23,6 +23,7 @@ package org.micromanager.data.internal.multipagetiff;
 
 // Note: java.awt.Color and ome.xml.model.primitives.Color used with
 // fully-qualified class names
+import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,18 +41,13 @@ import ome.xml.model.primitives.NonNegativeInteger;
 import ome.xml.model.primitives.PositiveInteger;
 import ome.xml.model.primitives.Timestamp;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.micromanager.PropertyMap;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.CommentsHelper;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.DefaultDisplaySettings;
-import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class OMEMetadata {
@@ -173,8 +169,14 @@ public final class OMEMetadata {
       // link Instrument and Image
       metadata_.setImageInstrumentRef(instrumentID, seriesIndex);
 
-      metadata_.setImageDescription(CommentsHelper.getSummaryComment(
-               mptStorage_.getDatastore()), seriesIndex);
+      try {
+         String summaryComment = CommentsHelper.getSummaryComment(
+               mptStorage_.getDatastore());
+         metadata_.setImageDescription(summaryComment, seriesIndex);
+      }
+      catch (IOException e) {
+         // TODO Report error (not severe)
+      }
 
       // TODO Also save channel colors (need display settings...)
       List<String> names = mptStorage_.getSummaryMetadata().getChannelNameList();

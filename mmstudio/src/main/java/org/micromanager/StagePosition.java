@@ -26,7 +26,6 @@
 //
 package org.micromanager;
 
-import java.io.IOException;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.utils.NumberUtils;
 

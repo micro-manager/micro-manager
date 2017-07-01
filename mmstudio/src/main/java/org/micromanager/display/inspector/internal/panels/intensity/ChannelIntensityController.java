@@ -15,6 +15,7 @@ import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
@@ -621,7 +622,14 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       channelColorSwatch_.setColor(channelSettings.getColor());
       // TODO Name: this from dataset (on attachment, then listen)
       // TODO Component selector: this from dataset (on attachment, or first image)
-      int numComponents = viewer_.getDataProvider().getAnyImage().getNumComponents();
+      // TODO Error-free way to get number of components?
+      int numComponents;
+      try {
+         numComponents = viewer_.getDataProvider().getAnyImage().getNumComponents();
+      }
+      catch (IOException e) {
+         numComponents = 1;
+      }
       if (numComponents == 1) {
          histogram_.setComponentColor(0, channelSettings.getColor(),
                channelSettings.getColor());

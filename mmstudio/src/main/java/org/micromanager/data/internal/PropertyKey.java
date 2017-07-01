@@ -224,6 +224,7 @@ public enum PropertyKey {
    },
 
    CHANNEL_COLOR("ChColor"),
+   CHANNEL_COLORS("ChColors"),
    CHANNEL_CONTRAST_MAX("ChContrastMax"),
    CHANNEL_CONTRAST_MIN("ChContrastMin"),
 
@@ -1205,7 +1206,8 @@ public enum PropertyKey {
          // (includes device properties if SCOPE_DATA_KEYS unavailable)
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (Map.Entry<String, JsonElement> e : jo.entrySet()) {
-            if (!isKnownKey(e.getKey()) && !scopeDataKeys.contains(e.getKey())) {
+            if (!isKnownKey(e.getKey()) && !e.getValue().isJsonNull() &&
+                  !scopeDataKeys.contains(e.getKey())) {
                builder.putString(e.getKey(), e.getValue().getAsString());
             }
          }
@@ -1240,7 +1242,7 @@ public enum PropertyKey {
 
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
-         dest.putString(key(), je.getAsString());
+         dest.putUUID(key(), java.util.UUID.fromString(je.getAsString()));
       }
 
       @Override
@@ -1467,7 +1469,7 @@ public enum PropertyKey {
    public boolean extractFromGsonObject(JsonObject source,
          PropertyMap.Builder destination) {
       for (String key : getAllKeys()) {
-         if (source.has(key)) {
+         if (source.has(key) && !source.get(key).isJsonNull()) {
             convertFromGson(source.get(key), destination);
             return true;
          }

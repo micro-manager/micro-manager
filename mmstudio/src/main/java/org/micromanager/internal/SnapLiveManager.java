@@ -22,6 +22,7 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
@@ -519,11 +521,27 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
          @Override
          public void actionPerformed(ActionEvent event) {
             // Send all images at current channel to the album.
-            Coords.CoordsBuilder builder = studio_.data().getCoordsBuilder();
+            Coords.CoordsBuilder builder = Coordinates.builder();
+            boolean hadChannels = false;
             for (int i = 0; i < store_.getAxisLength(Coords.CHANNEL); ++i) {
                builder.channel(i);
-               DefaultAlbum.getInstance().addImages(store_.getImagesMatching(
-                     builder.build()));
+               try {
+                  DefaultAlbum.getInstance().addImages(store_.getImagesMatching(
+                        builder.build()));
+                  hadChannels = true;
+               }
+               catch (IOException e) {
+                  ReportingUtils.showError(e, "There was an error grabbing the images");
+               }
+            }
+            try {
+               if (!hadChannels) {
+                  DefaultAlbum.getInstance().addImages(store_.getImagesMatching(
+                        Coordinates.builder().build()));
+               }
+            }
+            catch (IOException e) {
+               ReportingUtils.showError(e, "There was an error grabbing the image");
             }
          }
       });

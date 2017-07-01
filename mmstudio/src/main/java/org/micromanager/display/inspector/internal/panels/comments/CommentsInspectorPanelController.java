@@ -7,6 +7,7 @@ package org.micromanager.display.inspector.internal.panels.comments;
 
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
+import java.io.IOException;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -118,6 +119,9 @@ public final class CommentsInspectorPanelController
                CommentsHelper.getImageComment(store, editingCoords_));
          planeCommentEdited_ = false;
       }
+      catch (IOException e) {
+         // TODO Show error
+      }
       finally {
          programmaticallySettingText_ = false;
       }
@@ -158,8 +162,13 @@ public final class CommentsInspectorPanelController
       }
       String comment = summaryTextArea_.getText();
       Datastore store = (Datastore) viewer_.getDataProvider();
-      CommentsHelper.setSummaryComment(store, comment);
-      summaryCommentEdited_ = false;
+      try {
+         CommentsHelper.setSummaryComment(store, comment);
+         summaryCommentEdited_ = false;
+      }
+      catch (IOException e) {
+         // TODO XXX Show error
+      }
    }
 
    private void savePlaneComments() {
@@ -168,8 +177,13 @@ public final class CommentsInspectorPanelController
       }
       String comment = planeTextArea_.getText();
       Datastore store = (Datastore) viewer_.getDataProvider();
-      CommentsHelper.setImageComment(store, editingCoords_, comment);
-      planeCommentEdited_ = false;
+      try {
+         CommentsHelper.setImageComment(store, editingCoords_, comment);
+         planeCommentEdited_ = false;
+      }
+      catch (IOException e) {
+         // TODO XXX Show error
+      }
    }
 
    @Subscribe
@@ -181,6 +195,9 @@ public final class CommentsInspectorPanelController
       try {
          planeTextArea_.setText(
                CommentsHelper.getImageComment(store, editingCoords_));
+      }
+      catch (IOException ex) {
+         // TODO Show error
       }
       finally {
          programmaticallySettingText_ = false;

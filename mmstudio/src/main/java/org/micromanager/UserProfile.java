@@ -51,7 +51,7 @@ public interface UserProfile {
    /**
     * Get an interface to save and retrieve settings.
     * <p>
-    * This is the main interface to the user profile.
+    * This is the main interface for accessing values in the user profile.
     *
     * @param owner the class that "owns" the settings
     * @return an object allowing settings to be set and retrieved

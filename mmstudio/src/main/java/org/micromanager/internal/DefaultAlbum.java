@@ -21,6 +21,7 @@
 
 package org.micromanager.internal;
 
+import java.io.IOException;
 import java.util.Collection;
 import org.micromanager.Album;
 import org.micromanager.data.Coords;
@@ -47,7 +48,7 @@ public final class DefaultAlbum implements Album {
    }
 
    @Override
-   public boolean addImage(Image image) {
+   public boolean addImage(Image image) throws IOException {
       MMStudio studio = MMStudio.getInstance();
       boolean mustCreateNew = (store_ == null || store_.getIsFrozen());
       String curChannel = "";
@@ -120,7 +121,7 @@ public final class DefaultAlbum implements Album {
    }
 
    @Override
-   public boolean addImages(Collection<Image> images) {
+   public boolean addImages(Collection<Image> images) throws IOException {
       boolean result = false;
       for (Image image : images) {
          // Watch out for boolean logic short-circuiting here!

@@ -12,6 +12,7 @@ import java.awt.event.WindowEvent;
 import javax.swing.JFrame;
 import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher.ImageStatsChangedEvent;
 import org.micromanager.internal.graph.GraphData;
 import org.micromanager.internal.graph.GraphFrame;
 
@@ -25,7 +26,7 @@ public final class LineProfile {
    
    public LineProfile(DisplayWindow display) {
       display_ = display;
-      display_.registerForEvents(this);
+      display_.registerForEvents(this);;
       calculateLineProfileData(display_.getImagePlus());
 
       profileWin_ = new GraphFrame(new Runnable() {
@@ -84,7 +85,7 @@ public final class LineProfile {
    }
 
    @Subscribe
-   public void onPixelsSet(PixelsSetEvent event) {
+   public void onPixelsSet(ImageStatsChangedEvent event) {
       updateLineProfile();
    }
 

@@ -10,6 +10,7 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -164,7 +165,14 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
       detachDataViewer();
       viewer_ = viewer;
       viewer_.registerForEvents(this);
-      final List<Image> images = viewer_.getDisplayedImages();
+      final List<Image> images;
+      try {
+          images = viewer_.getDisplayedImages();
+      }
+      catch (IOException e) {
+         // TODO Show error
+         return;
+      }
 
       background_.submit(new Runnable() {
          @Override

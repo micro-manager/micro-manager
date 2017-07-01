@@ -70,8 +70,8 @@ import org.micromanager.alerts.internal.DefaultAlertManager;
 import org.micromanager.data.DataManager;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.DefaultDataManager;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayManager;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.events.AutofocusPluginShouldInitializeEvent;
 import org.micromanager.events.ChannelExposureEvent;
@@ -655,11 +655,16 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // necessary).
       Rectangle originalROI = null;
 
-      DisplayWindow curWindow = displays().getCurrentWindow();
-      if (curWindow != null) {
-         List<Image> images = curWindow.getDisplayedImages();
-         // Just take the first one.
-         originalROI = images.get(0).getMetadata().getROI();
+      DataViewer viewer = displays().getActiveDataViewer();
+      if (viewer != null) {
+         try {
+            List<Image> images = viewer.getDisplayedImages();
+            // Just take the first one.
+            originalROI = images.get(0).getMetadata().getROI();
+         }
+         catch (IOException e) {
+            ReportingUtils.showError(e, "There was an error determining the selected ROI");
+         }
       }
 
       if (originalROI == null) {

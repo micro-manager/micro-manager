@@ -144,6 +144,9 @@ public final class MMAcquisition {
          catch (JSONException e) {
             ReportingUtils.logError(e, "Unable to set summary comment");
          }
+         catch (IOException e) {
+            // TODO XXX Report
+         }
       }
 
       try {
@@ -329,7 +332,12 @@ public final class MMAcquisition {
             studio_.displays().promptToSave(store_, display_)) {
          // Datastore is saved, or user declined to save.
          display_.forceClosed();
-         store_.close();
+         try {
+            store_.close();
+         }
+         catch (IOException e) {
+            // TODO XXX Report
+         }
       }
    }
 
@@ -341,7 +349,12 @@ public final class MMAcquisition {
 
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
-      store_.freeze();
+      try {
+         store_.freeze();
+      }
+      catch (IOException e) {
+         // TODO XXX Report
+      }
       DefaultEventManager.getInstance().unregisterForEvents(this);
       new Thread(new Runnable() {
          @Override

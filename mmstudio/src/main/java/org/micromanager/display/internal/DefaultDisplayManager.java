@@ -27,19 +27,17 @@ import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.WeakHashMap;
 import javax.swing.JOptionPane;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
@@ -52,7 +50,6 @@ import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.internal.link.LinkManager;
@@ -70,8 +67,6 @@ public final class DefaultDisplayManager implements DisplayManager {
    // Map from "managed" datastores to attached displays. Synchronized by
    // monitor on 'this'.
    private final HashMap<Datastore, ArrayList<DisplayWindow>> storeToDisplays_;
-
-   private LinkedHashMap<String, Overlay> titleToOverlay_;
 
    private final DataViewerCollection viewers_ = DataViewerCollection.create();
 
@@ -99,13 +94,8 @@ public final class DefaultDisplayManager implements DisplayManager {
       try {
          result.putImage(image);
       }
-      catch (DatastoreFrozenException e) {
-         // This should never happen.
-         ReportingUtils.showError(e, "Somehow managed to create an immediately-frozen RAM datastore.");
-      }
-      catch (DatastoreRewriteException e) {
-         // This should also never happen.
-         ReportingUtils.showError(e, "Somehow managed to create a Datastore that already had an image in it.");
+      catch (IOException e) {
+         ReportingUtils.logError(e, "Failed to display image");
       }
       createDisplay(result);
       return result;
@@ -234,8 +224,8 @@ public final class DefaultDisplayManager implements DisplayManager {
    */
 
    @Override
-   public PropertyMap.PropertyMapBuilder getPropertyMapBuilder() {
-      return new DefaultPropertyMap.Builder();
+   public PropertyMap.Builder getPropertyMapBuilder() {
+      return PropertyMaps.builder();
    }
 
    @Override
@@ -309,11 +299,11 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public List<DisplayWindow> loadDisplays(Datastore store) {
+   public List<DisplayWindow> loadDisplays(Datastore store) throws IOException {
       String path = store.getSavePath();
       ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
       if (path != null) {
-         List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
+          List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
          for (DisplaySettings settings : allSettings) {
             DisplayWindow tmp = createDisplay(store);
             tmp.setDisplaySettings(settings);
@@ -434,7 +424,7 @@ public final class DefaultDisplayManager implements DisplayManager {
 
    // TODO Why do we need both store and display?
    @Override
-   public boolean promptToSave(Datastore store, DisplayWindow display) {
+   public boolean promptToSave(Datastore store, DisplayWindow display) throws IOException {
       String[] options = {"Save", "Discard", "Cancel"};
       int result = JOptionPane.showOptionDialog(display.getAsWindow(),
             "Do you want to save this data set before closing?",

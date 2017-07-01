@@ -22,6 +22,7 @@
 
 package org.micromanager;
 
+import java.io.IOException;
 import java.util.Collection;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -56,7 +57,7 @@ public interface Album {
     * @return True if a new Datastore and DisplayWindow were created as a
     *         side-effect of adding the image.
     */
-   public boolean addImage(Image image);
+   public boolean addImage(Image image) throws IOException;
 
    /**
     * Add the specified Images to the Album's datastore. Equivalent to
@@ -66,5 +67,5 @@ public interface Album {
     * @return True if a new Datastore and DisplayWindow were created as a
     *         side-effect of adding the images.
     */
-   public boolean addImages(Collection<Image> images);
+   public boolean addImages(Collection<Image> images) throws IOException;
 }

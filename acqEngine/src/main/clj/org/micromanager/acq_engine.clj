@@ -40,7 +40,6 @@
     [org.micromanager.acquisition.internal AcquisitionSleepEvent]
     [org.micromanager.acquisition.internal TaggedImageQueue]
     [org.micromanager.data Coords]
-    [org.micromanager.data.internal DefaultSummaryMetadata]
     [org.micromanager.display.internal RememberedChannelSettings]
     [org.micromanager PositionList]
     [org.micromanager.internal MMStudio]
@@ -949,7 +948,6 @@
       "KeepShutterOpenChannels" (:keep-shutter-open-channels settings)
       "KeepShutterOpenSlices" (:keep-shutter-open-slices settings)
       "MicroManagerVersion" (if gui (.getVersion gui) "N/A")
-      "MetadataVersion" (DefaultSummaryMetadata/METADATA_VERSION)
       "PixelSize_um" (core getPixelSizeUm)
       "PixelType" (get-pixel-type)
       "Positions" (max 1 (count (:positions settings)))

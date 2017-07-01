@@ -20,6 +20,7 @@
 
 package org.micromanager.display;
 
+import java.io.IOException;
 import java.util.List;
 import org.micromanager.EventPublisher;
 import org.micromanager.PropertyMap;
@@ -54,7 +55,7 @@ public interface DisplayManager extends EventPublisher {
     * Generate a "blank" DisplaySettings.Builder with all null values.
     * @return A DisplaySettingsBuilder with no pre-set values.
     */
-   DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder();
+   DisplaySettings.Builder getDisplaySettingsBuilder();
 
    /**
     * Generate a ContrastSettings object with the provided values. This version
@@ -151,7 +152,7 @@ public interface DisplayManager extends EventPublisher {
     * @return A PropertyMapBuilder with no pre-set values.
     */
    // TODO Why on earth is this in DisplayManager?
-   PropertyMap.PropertyMapBuilder getPropertyMapBuilder();
+   PropertyMap.Builder getPropertyMapBuilder();
 
    /**
     * Create a new DisplayWindow for the specified Datastore and return it.
@@ -217,7 +218,7 @@ public interface DisplayManager extends EventPublisher {
     * @param store The Datastore to load display settings for.
     * @return The list of DisplayWindows that were created by this method.
     */
-   List<DisplayWindow> loadDisplays(Datastore store);
+   List<DisplayWindow> loadDisplays(Datastore store) throws IOException;
 
    /**
     * Request that MicroManager manage the specified Datastore for you.
@@ -315,7 +316,7 @@ public interface DisplayManager extends EventPublisher {
     * @return true if saving was successful or the user explicitly declined
     *         to save; false if the user cancelled or if saving failed.
     */
-   boolean promptToSave(Datastore store, DisplayWindow display);
+   boolean promptToSave(Datastore store, DisplayWindow display) throws IOException;
 
    /**
     * Provide an ImagceExporter for generating image sequences.

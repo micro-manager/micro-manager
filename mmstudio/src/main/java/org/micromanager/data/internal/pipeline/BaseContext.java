@@ -20,6 +20,7 @@
 
 package org.micromanager.data.internal.pipeline;
 
+import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
@@ -55,11 +56,9 @@ public abstract class BaseContext implements ProcessorContext {
          try {
             store_.putImage(image);
          }
-         catch (DatastoreFrozenException e) {
-            ReportingUtils.logError(e, "Unable to store processed image: datastore is frozen.");
-         }
-         catch (DatastoreRewriteException e) {
-            ReportingUtils.logError(e, "Unable to store processed image: image already exists at " + image.getCoords());
+         catch (IOException e) {
+            // TODO Report to user!
+            ReportingUtils.logError(e, "Unable to store processed image");
          }
       }
       else {
@@ -86,10 +85,15 @@ public abstract class BaseContext implements ProcessorContext {
    /**
     * Feed SummaryMetadata through the pipeline. This is always synchronous.
     */
-   public void insertSummaryMetadata(SummaryMetadata summary) throws DatastoreFrozenException, DatastoreRewriteException {
+   public void insertSummaryMetadata(SummaryMetadata summary) {
       summary = processor_.processSummaryMetadata(summary);
       if (sink_ == null) {
-         store_.setSummaryMetadata(summary);
+         try {
+            store_.setSummaryMetadata(summary);
+         }
+         catch (IOException e) {
+            throw new RuntimeException("Failed to set summary metadata", e);
+         }
       }
       else {
          sink_.insertSummaryMetadata(summary);

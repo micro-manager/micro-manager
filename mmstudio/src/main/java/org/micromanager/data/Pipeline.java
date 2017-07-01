@@ -20,6 +20,7 @@
 
 package org.micromanager.data;
 
+import java.io.IOException;
 import java.util.List;
 
 
@@ -45,7 +46,7 @@ public interface Pipeline {
     * @throws PipelineErrorException if processing of images has already
     *         started at the time this method is called.
     */
-   public void insertSummaryMetadata(SummaryMetadata source) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException;
+   public void insertSummaryMetadata(SummaryMetadata source) throws IOException, PipelineErrorException;
 
    /**
     * Insert an Image into the Pipeline. The Image will be processed by the
@@ -85,7 +86,7 @@ public interface Pipeline {
     *         in an error state; see the getExceptions() and clearExceptions()
     *         methods.
     */
-   public void insertImage(Image image) throws DatastoreFrozenException, DatastoreRewriteException, PipelineErrorException;
+   public void insertImage(Image image) throws IOException, PipelineErrorException;
 
    /**
     * Get the output Datastore for this Pipeline. This Datastore is the
