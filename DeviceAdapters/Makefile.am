@@ -142,6 +142,7 @@ SUBDIRS = \
 	Scientifica \
 	SerialManager \
 	SimpleAutofocus \
+	SmarActHCU-3D \
 	SpectralLMM5 \
 	SutterLambda \
 	SutterStage \
