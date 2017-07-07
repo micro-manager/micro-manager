@@ -2555,12 +2555,12 @@ double CDemoCamera::GaussDistributedValue(double mean, double std)
    double s = 2;
    double u;
    double v;
-   double halfRandMax = RAND_MAX / 2;
+   double halfRandMax = (double) RAND_MAX / 2.0;
    while (s >= 1 || s <= 0) 
    {
       // get random values between -1 and 1
-      u = rand() / halfRandMax - 1.0;
-      v = rand() / halfRandMax - 1.0;
+      u = (double) rand() / halfRandMax - 1.0;
+      v = (double) rand() / halfRandMax - 1.0;
       s = u * u + v * v;
    }
    double tmp = sqrt( -2 * log(s) / s);
@@ -4136,7 +4136,7 @@ int DemoGalvo::PointAndFire(double x, double y, double pulseTime_us)
    return DEVICE_OK;
 }
 
-int DemoGalvo::SetSpotInterval(double pulseInterval_us) 
+int DemoGalvo::SetSpotInterval(double /* pulseInterval_us */) 
 {
    return DEVICE_OK;
 }
@@ -4188,7 +4188,7 @@ int DemoGalvo::LoadPolygons()
    return DEVICE_OK;
 }
 
-int DemoGalvo::SetPolygonRepetitions(int repetitions) 
+int DemoGalvo::SetPolygonRepetitions(int /* repetitions */) 
 {
    return DEVICE_OK;
 }
@@ -4222,7 +4222,7 @@ int DemoGalvo::StopSequence()
 // What can this function be doing?
 // A channel is never set, so how come we can return one????
 // Documentation of the Galvo interface is severely lacking!!!!
-int DemoGalvo::GetChannel (char* channelName) 
+int DemoGalvo::GetChannel (char* /* channelName */) 
 {
    return DEVICE_OK;
 }
@@ -4261,7 +4261,7 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
       // establish the bounding boxes around the ROIs in image coordinates
       std::vector<std::vector<Point> > bBoxes = std::vector<std::vector<
          Point> >();
-      for (int i = 0; i < vertices_.size(); i++) {
+      for (unsigned int i = 0; i < vertices_.size(); i++) {
          std::vector<Point> vertex;
          for (std::vector<PointD>::iterator it = vertices_[i].begin();
                it != vertices_[i].end(); ++it)
@@ -4284,12 +4284,12 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
 
          // now iterate through the image pixels and set high 
          // if they are within a bounding box
-         for (int x = 0; x < img.Width(); x++)
+         for (unsigned int x = 0; x < img.Width(); x++)
          {
-            for (int y = 0; y < img.Height(); y++)
+            for (unsigned int y = 0; y < img.Height(); y++)
             {
                bool inROI = false;
-               for (int i = 0; i < bBoxes.size(); i++) 
+               for (unsigned int i = 0; i < bBoxes.size(); i++) 
                {
                   if (InBoundingBox(bBoxes[i], Point(x, y)))
                      inROI = true;
@@ -4310,12 +4310,12 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
 
          // now iterate through the image pixels and set high 
          // if they are within a bounding box
-         for (int x = 0; x < img.Width(); x++)
+         for (unsigned int x = 0; x < img.Width(); x++)
          {
-            for (int y = 0; y < img.Height(); y++)
+            for (unsigned int y = 0; y < img.Height(); y++)
             {
                bool inROI = false;
-               for (int i = 0; i < bBoxes.size(); i++) 
+               for (unsigned int i = 0; i < bBoxes.size(); i++) 
                {
                   if (InBoundingBox(bBoxes[i], Point(x, y)))
                      inROI = true;
@@ -4392,10 +4392,10 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
  */
 Point DemoGalvo::GalvoToCameraPoint(PointD galvoPoint, ImgBuffer& img)
 {
-   int xPos = (double) offsetX_ + (double) (galvoPoint.x / vMaxX_) * 
-                                 ((double) img.Width() - (double) offsetX_);
-   int yPos = (double) offsetY_ + (double) (galvoPoint.y / vMaxY_) * 
-                                 ((double) img.Height() - (double) offsetY_);
+   int xPos = (int) ((double) offsetX_ + (double) (galvoPoint.x / vMaxX_) * 
+                                 ((double) img.Width() - (double) offsetX_) );
+   int yPos = (int) ((double) offsetY_ + (double) (galvoPoint.y / vMaxY_) * 
+                                 ((double) img.Height() - (double) offsetY_));
    return Point(xPos, yPos);
 }
 
@@ -4429,7 +4429,7 @@ void DemoGalvo::GetBoundingBox(std::vector<Point>& vertex, std::vector<Point>& b
    int maxX = minX;
    int minY = vertex[0].y;
    int maxY = minY;
-   for (int i = 1; i < vertex.size(); i++)
+   for (unsigned int i = 1; i < vertex.size(); i++)
    {
       if (vertex[i].x < minX)
          minX = vertex[i].x;
