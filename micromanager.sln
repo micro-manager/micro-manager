@@ -373,6 +373,7 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VisiTech_iSIM", "DeviceAdapters\VisiTech_iSIM\VisiTech_iSIM.vcxproj", "{641D9549-0A15-4A98-9895-FDD19B380376}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MatrixVision", "DeviceAdapters\MatrixVision\MatrixVision.vcxproj", "{A982F985-EE25-434F-B9AF-E33C8A3AAC58}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SmarActHCU-3D", "DeviceAdapters\SmarActHCU-3D\SmarActHCU-3D.vcxproj", "{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -1843,6 +1844,14 @@ Global
 		{A982F985-EE25-434F-B9AF-E33C8A3AAC58}.Release|Win32.Build.0 = Release|Win32
 		{A982F985-EE25-434F-B9AF-E33C8A3AAC58}.Release|x64.ActiveCfg = Release|x64
 		{A982F985-EE25-434F-B9AF-E33C8A3AAC58}.Release|x64.Build.0 = Release|x64
+		{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}.Debug|Win32.Build.0 = Debug|Win32
+		{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}.Debug|x64.ActiveCfg = Debug|x64
+		{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}.Debug|x64.Build.0 = Debug|x64
+		{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}.Release|Win32.ActiveCfg = Release|Win32
+		{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}.Release|Win32.Build.0 = Release|Win32
+		{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}.Release|x64.ActiveCfg = Release|x64
+		{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
