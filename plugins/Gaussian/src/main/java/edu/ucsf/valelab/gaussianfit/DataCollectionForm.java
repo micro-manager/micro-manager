@@ -893,12 +893,23 @@ public class DataCollectionForm extends JFrame {
    }
    
    /**
-    * Class to create a popupmenu for shortcuts to estoric functions
+    * Class to create a popupmenu for shortcuts to esoteric functions
     */
    
    private class PopupMenu extends JPopupMenu {
 
       public PopupMenu() {
+         JMenuItem copyTracksItem = new JMenuItem(new AbstractAction("Copy Tracks") {
+            @Override
+            public void actionPerformed(ActionEvent ae) {
+               String txt1 = getSelectedTracks(true);
+               String txt2 = getSelectedTracks(false);
+               Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+               clpbrd.setContents(new StringSelection(txt1 + txt2), null);
+            }
+         });
+         super.add(copyTracksItem);
+         
          JMenuItem copySummaryItem = new JMenuItem(new AbstractAction("Copy Summary") {
             @Override
             public void actionPerformed(ActionEvent ae) {
@@ -1603,6 +1614,35 @@ public class DataCollectionForm extends JFrame {
       String output = mainTableModel_.getRow(rows[0]).getName() + "\t" +
               result.n + "\t" + result.numberOfSpots + "\t" + result.channelNr +
               "\t" + result.std + "\t" +  result.nrPhotons;
+      
+      return output;
+
+   }
+   
+   public String getSelectedTracks(boolean header) {
+      if (header) {
+         return "name\tNr of Spots\tCh.\tstd\tNr of Photons\tAvg nr Photons\tStdDev Nr Photons\n";
+      }
+      
+      String output = "";
+      final int rows[] = mainTable_.getSelectedRowsSorted();
+      for (int row : rows) {
+         final RowData rowData = mainTableModel_.getRow(row);
+         if (rowData.isTrack_) {
+            List<Double> photonNrs = new ArrayList<Double>();
+            for (SpotData spot : rowData.spotList_) {
+               photonNrs.add(spot.getIntensity());
+            }
+            double avgNrPhotons = ListUtils.listAvg(photonNrs);
+            output += rowData.getName() + "\t" + 
+                    rowData.maxNrSpots_ + "\t" +
+                    rowData.spotList_.get(0).getChannel() + "\t" +
+                    rowData.std_ + "\t" + 
+                    rowData.totalNrPhotons_ + "\t" + 
+                    avgNrPhotons + "\t" +
+                    ListUtils.listStdDev(photonNrs, avgNrPhotons) + "\n";
+         } 
+      }
       
       return output;
 
