@@ -115,6 +115,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private JLabel saveTypeLabel_;
    private JRadioButton singleButton_;
    private JRadioButton multiButton_;
+   private JRadioButton xySplitMultiButton_;
    private JLabel rootLabel_;
    private JButton browseRootButton_;
    private JCheckBox stackKeepShutterOpenCheckBox_;
@@ -832,11 +833,23 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
                Datastore.SaveMode.MULTIPAGE_TIFF);
          }
       });
-      savePanel_.add(multiButton_, "gapafter push");
+      savePanel_.add(multiButton_, "spanx, split");
+      
+      xySplitMultiButton_ = new JRadioButton("Image Stack File per XY Positions");
+      xySplitMultiButton_.setFont(DEFAULT_FONT);
+      xySplitMultiButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            DefaultDatastore.setPreferredSaveMode(
+               Datastore.SaveMode.XY_SPLIT_MULTIPAGE_TIFF);
+         }
+      });
+      savePanel_.add(xySplitMultiButton_, "gapafter push");
 
       ButtonGroup buttonGroup = new ButtonGroup();
       buttonGroup.add(singleButton_);
       buttonGroup.add(multiButton_);
+      buttonGroup.add(xySplitMultiButton_);
       updateSavingTypeButtons();
 
       savePanel_.addActionListener(new ActionListener() {
@@ -1122,6 +1135,9 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       else if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
          multiButton_.setSelected(true);
       }
+      else if (mode == Datastore.SaveMode.XY_SPLIT_MULTIPAGE_TIFF) {
+         xySplitMultiButton_.setSelected(true);
+      }
       else {
          ReportingUtils.logError("Unrecognized save mode " + mode);
       }
@@ -1334,6 +1350,10 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       else if (multiButton_.isSelected()) {
          DefaultDatastore.setPreferredSaveMode(
             Datastore.SaveMode.MULTIPAGE_TIFF);
+      }
+      else if (xySplitMultiButton_.isSelected()) {
+         DefaultDatastore.setPreferredSaveMode(
+            Datastore.SaveMode.XY_SPLIT_MULTIPAGE_TIFF);
       }
       else {
          ReportingUtils.logError("Unknown save mode button is selected, or no buttons are selected");

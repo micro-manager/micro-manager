@@ -275,7 +275,8 @@ public interface Datastore extends Closeable {
     */
    public enum SaveMode {
       SINGLEPLANE_TIFF_SERIES,
-      MULTIPAGE_TIFF
+      MULTIPAGE_TIFF,
+      XY_SPLIT_MULTIPAGE_TIFF
    }
 
    /**

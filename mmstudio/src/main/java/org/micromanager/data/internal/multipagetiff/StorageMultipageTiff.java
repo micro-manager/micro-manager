@@ -115,6 +115,7 @@ public final class StorageMultipageTiff implements Storage {
    public StorageMultipageTiff(Datastore store, String dir,
          boolean amInWriteMode, boolean separateMDFile,
          boolean separateFilesForPositions) throws IOException {
+
       store_ = (DefaultDatastore) store;
       // We must be notified of changes in the Datastore before everyone else,
       // so that others can read those changes out of the Datastore later.

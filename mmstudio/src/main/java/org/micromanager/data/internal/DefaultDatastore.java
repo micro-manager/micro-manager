@@ -38,6 +38,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.data.internal.multipagetiff.XYSplitStorageMultipageTiff;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
@@ -65,11 +66,14 @@ public class DefaultDatastore implements Datastore {
 
    private static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
    private static final String MULTIPAGE_TIFF = "Image Stack File";
+   private static final String XY_SPLIT_MULTIPAGE_TIFF = "Image Stack File per XY Positions";
    // FileFilters for saving.
    private static final FileFilter singleplaneFilter_ = new SaveFileFilter(
          SINGLEPLANE_TIFF_SERIES);
    private static final FileFilter multipageFilter_ = new SaveFileFilter(
          MULTIPAGE_TIFF);
+   private static final FileFilter xySplitMultipageFilter_ = new SaveFileFilter(
+         XY_SPLIT_MULTIPAGE_TIFF);
 
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
    protected Storage storage_ = null;
@@ -340,6 +344,9 @@ public class DefaultDatastore implements Datastore {
       if (getPreferredSaveMode().equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
          chooser.setFileFilter(multipageFilter_);
       }
+      else if (getPreferredSaveMode().equals(Datastore.SaveMode.XY_SPLIT_MULTIPAGE_TIFF)) {
+         chooser.setFileFilter(xySplitMultipageFilter_);
+      }
       else {
          chooser.setFileFilter(singleplaneFilter_);
       }
@@ -361,6 +368,9 @@ public class DefaultDatastore implements Datastore {
       }
       else if (filter == multipageFilter_) {
          mode = Datastore.SaveMode.MULTIPAGE_TIFF;
+      }
+      else if (filter == xySplitMultipageFilter_) {
+         mode = Datastore.SaveMode.XY_SPLIT_MULTIPAGE_TIFF;
       }
       else {
          ReportingUtils.logError("Unrecognized file format filter " +
@@ -398,6 +408,9 @@ public class DefaultDatastore implements Datastore {
          }
          else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
             saver = new StorageSinglePlaneTiffSeries(duplicate, path, true);
+         }
+         else if (mode == Datastore.SaveMode.XY_SPLIT_MULTIPAGE_TIFF) {
+            saver = new XYSplitStorageMultipageTiff(duplicate, path, true);
          }
          else {
             throw new IllegalArgumentException("Unrecognized mode parameter " + mode);
@@ -491,6 +504,9 @@ public class DefaultDatastore implements Datastore {
       else if (modeStr.equals(SINGLEPLANE_TIFF_SERIES)) {
          return Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
       }
+      else if (modeStr.equals(XY_SPLIT_MULTIPAGE_TIFF)) {
+         return Datastore.SaveMode.XY_SPLIT_MULTIPAGE_TIFF;
+      }
       else {
          ReportingUtils.logError("Unrecognized save mode " + modeStr);
          return null;
@@ -504,6 +520,9 @@ public class DefaultDatastore implements Datastore {
       }
       else if (mode == Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES) {
          modeStr = SINGLEPLANE_TIFF_SERIES;
+      }
+      else if (mode == Datastore.SaveMode.XY_SPLIT_MULTIPAGE_TIFF) {
+         modeStr = XY_SPLIT_MULTIPAGE_TIFF;
       }
       else {
          ReportingUtils.logError("Unrecognized save mode " + mode);
