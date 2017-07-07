@@ -55,16 +55,6 @@ import_array();
 #include "string.h"
 %}
 
-
-// output arguments
-%apply double &OUTPUT { double &x };
-%apply double &OUTPUT { double &y };
-%apply int &OUTPUT { int &x };
-%apply int &OUTPUT { int &y };
-%apply int &OUTPUT { int &xSize };
-%apply int &OUTPUT { int &ySize };
-
-
 %typemap(out) void*
 {
    npy_intp dims[2];
@@ -204,10 +194,21 @@ import_array();
 namespace std {
     %template(CharVector)   vector<char>;
     %template(LongVector)   vector<long>;
+    %template(DoubleVector) vector<double>;
     %template(StrVector)    vector<string>;
     %template(pair_ss)      pair<string, string>;
     %template(StrMap)       map<string, string>;
 }
+
+
+// output arguments
+%apply double &OUTPUT { double &x };
+%apply double &OUTPUT { double &y };
+%apply int &OUTPUT { int &x };
+%apply int &OUTPUT { int &y };
+%apply int &OUTPUT { int &xSize };
+%apply int &OUTPUT { int &ySize };
+
 
 
 %include "../MMDevice/MMDeviceConstants.h"
