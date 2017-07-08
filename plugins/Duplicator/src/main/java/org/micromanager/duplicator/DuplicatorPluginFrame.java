@@ -21,19 +21,25 @@
 
 package org.micromanager.duplicator;
 
+import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.awt.FileDialog;
+import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
@@ -44,6 +50,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.ApplicationSkin;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
@@ -53,7 +60,11 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -72,19 +83,18 @@ public class DuplicatorPluginFrame extends MMDialog {
       
       ourWindow_ = window;
       ourStore_ = ourWindow_.getDatastore();
-      
-      // Not sure if this is needed, be safe for now
+ 
+
+      // Not sure if ngoing acquisitions can be duplicated....
       if (!ourStore_.getIsFrozen()) {
-         studio_.logs().showMessage("Can not duplicate ongoing acquisitions", 
+         studio_.logs().logError("Can not duplicate ongoing acquisition: " + 
                  window.getAsWindow());
-         super.dispose();
-         return;
       }
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       File file = new File(window.getName());
       String shortName = file.getName();
-      super.setTitle(DuplicatorPlugin.MENUNAME + shortName);
+      super.setTitle(DuplicatorPlugin.MENUNAME + "   " + shortName);
 
       super.loadAndRestorePosition(100, 100, 375, 275);
       
@@ -158,12 +168,101 @@ public class DuplicatorPluginFrame extends MMDialog {
       final JTextField nameField = new JTextField(shortName);
       super.add(nameField, "span2, grow, wrap");
       
+      boolean save = false;
+      if (ourStore_.getSavePath() != null) {
+         save = !ourStore_.getSavePath().equals("") && 
+                      studio_.profile().getBoolean(DuplicatorPluginFrame.class, "Save", false);
+      }
+      final JCheckBox saveCheckBox = new JCheckBox("save", save);
+      saveCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            studio_.profile().setBoolean(
+                    DuplicatorPluginFrame.class, "Save", saveCheckBox.isSelected());
+         }
+      });
+      super.add(saveCheckBox);
+      
+      final JTextField dirField = new JTextField(ourStore_.getSavePath());
+      super.add (dirField, "span 2, split 2, wmax 250");
+      JButton dirButton = new JButton("...");
+      dirButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            if (JavaUtils.isMac()) {
+               // For Mac we only select directories, unfortunately!
+               System.setProperty("apple.awt.fileDialogForDirectories", "true");
+         
+               FileDialog fd = new FileDialog(cpFrame, "Select Directory", FileDialog.SAVE);
+               fd.setDirectory(dirField.getText());
+               fd.setFile("");
+
+               fd.setVisible(true);
+               System.setProperty("apple.awt.fileDialogForDirectories", "false");
+         
+               if (fd.getFile() != null) {
+                  File f = new File(fd.getDirectory());
+                  dirField.setText(f.getPath());
+               }
+               fd.dispose();
+            } else {
+               DaytimeNighttime.getInstance().suspendToMode(ApplicationSkin.SkinMode.DAY);
+               JFileChooser fc = new JFileChooser();
+               fc.setSelectedFile(new File(dirField.getText()));
+               DaytimeNighttime.getInstance().resume();
+               fc.setDialogTitle("Select Directory");
+               fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+
+               int returnVal = fc.showSaveDialog(cpFrame);
+               if (returnVal == JFileChooser.APPROVE_OPTION) {
+                  dirField.setText(fc.getSelectedFile().getAbsolutePath());
+               }
+            }
+         }
+      });
+      super.add(dirButton, "wmax 25, wrap");
+      
+      final JCheckBox showWhileCopying = new JCheckBox("Show while copying", 
+                      studio_.profile().getBoolean(DuplicatorPluginFrame.class, "Show", false));
+      showWhileCopying.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            studio_.profile().setBoolean(
+                    DuplicatorPluginFrame.class, "Show", showWhileCopying.isSelected());
+         }
+      });
+      super.add(showWhileCopying, "span 3, wrap");
+      
+      
       JButton OKButton = new JButton("OK");
       OKButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            duplicate(ourWindow_, nameField.getText(), mins, maxes);
+
             cpFrame.dispose();
+
+            class DuplicatorThread extends Thread {
+
+               DuplicatorThread(String threadName) {
+                  super(threadName);
+               }
+
+               @Override
+               public void run() {
+                  try {
+                     duplicate(ourWindow_,
+                             nameField.getText(),
+                             saveCheckBox.isSelected() ? dirField.getText() : null,
+                             mins,
+                             maxes,
+                             showWhileCopying.isSelected());
+                  } catch (IOException ex) {
+                     ReportingUtils.showError(ex, "Failed to save data");
+                  }
+               }
+            }
+            
+            (new DuplicatorThread("Duplicator")).start();
          }
       });
       super.add(OKButton, "span 3, split 2, tag ok, wmin button");
@@ -188,17 +287,32 @@ public class DuplicatorPluginFrame extends MMDialog {
     * 
     * @param theWindow - original window to be copied
     * @param newName - name for the copy
+    * @param savePath - directory to save new data to, or null fir RAMM storage
     * @param mins - Map with new (or unchanged) minima for the given axis
     * @param maxes - Map with new (or unchanged) maxima for the given axis
+    * @param show - whether or not to show the display during copying
+    * @throws java.io.IOException - can only be thrown when storing to disk
     */
    public void duplicate(final DisplayWindow theWindow, 
-           final String newName, 
+           String newName, 
+           final String savePath,
            final Map<String, Integer> mins,
-           final Map<String, Integer> maxes) {
+           final Map<String, Integer> maxes,
+           final boolean show) throws IOException {
       
       // TODO: provide options for disk-backed datastores
-      Datastore newStore = studio_.data().createRAMDatastore();
-      
+      Datastore newStore;
+      if (savePath == null) {
+         newStore = studio_.data().createRAMDatastore();
+      } else {
+         String newPath = studio_.data().getUniqueSaveDirectory(
+                 savePath + File.separator + newName);
+         newName = new File(newPath).getName();
+         newStore = studio_.data().createMultipageTIFFDatastore(
+                 newPath, 
+                 true, 
+                 false);
+      }
       Roi roi = theWindow.getImagePlus().getRoi();
       
       Datastore oldStore = theWindow.getDatastore();
@@ -233,11 +347,39 @@ public class DuplicatorPluginFrame extends MMDialog {
               .channelNames(channelNames)
               .intendedDimensions(newSizeCoordsBuilder.build())
               .build();
+               
+      ProgressBar progressBar = null;
       try {
          newStore.setSummaryMetadata(metadata);
+            
+         if (show) {
+            DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+            copyDisplay.setCustomTitle(newName);
+         }
 
          Iterable<Coords> unorderedImageCoords = oldStore.getUnorderedImageCoords();
+
+         int total = 0;
+         for (String key : mins.keySet()) {
+            int n = maxes.get(key) - mins.get(key) + 1;
+            if (total == 0) {
+               total = n;
+            } else {
+               total *= n;
+            }   
+         }
+         
+         int numProcessed = 0;
+         if (!GraphicsEnvironment.isHeadless()) {
+            progressBar = new ProgressBar("Duplicating to " + newName, 0, total);
+            progressBar.setProgress(numProcessed);
+            progressBar.setVisible(true);
+         }
+         
          for (Coords oldCoord : unorderedImageCoords) {
+            if (progressBar != null && progressBar.isCancelled()) {
+               throw new Cancelled();
+            }
             boolean copy = true;
             for (String axis : oldCoord.getAxes()) {
                if (mins.containsKey(axis) && maxes.containsKey(axis)) {
@@ -282,6 +424,10 @@ public class DuplicatorPluginFrame extends MMDialog {
                   }
                }
                newStore.putImage(newImgShallow);
+               if (progressBar != null) {
+                  progressBar.setProgress(++numProcessed);
+                  progressBar.toFront();
+               }
             }
          }
 
@@ -291,12 +437,25 @@ public class DuplicatorPluginFrame extends MMDialog {
          studio_.logs().showError("Can not overwrite data");
       } catch (DuplicatorException ex) {
          studio_.logs().showError(ex.getMessage());
+      } catch (Cancelled c) {
+      } finally {
+         if (progressBar != null) {
+            progressBar.setVisible(false);
+         }
       }
       
       newStore.freeze();
-      DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-      copyDisplay.setCustomTitle(newName);
+      if (!show) {
+         DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+         copyDisplay.setCustomTitle(newName);
+      }
       studio_.displays().manage(newStore);
+   }
+   
+   
+   @Subscribe
+   public void closeRequested( ShutdownCommencingEvent sce){
+      this.dispose();
    }
    
 }
