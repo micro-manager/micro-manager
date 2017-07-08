@@ -25,21 +25,40 @@
 #include "DeviceThreads.h"
 #include "ImgBuffer.h"
 #include "MMDeviceConstants.h"
+#include <bitset>
 
 #include "FlyCapture2.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_IN_READ_REGISTER                    12300
-#define ERR_NOT_READY_FOR_SOFTWARE_TRIGGER      12301
-#define ERR_UNAVAILABLE_TRIGGER_MODE_REQUESTED  12302
-#define ERR_UNKNOWN_TRIGGER_MODE_STRING         12303
+#define ERR_IN_READ_REGISTER                       12300
+#define ERR_NOT_READY_FOR_SOFTWARE_TRIGGER         12301
 
-// Trigger modes
-#define TRIGGER_INTERNAL   0
-#define TRIGGER_EXTERNAL   1
-#define TRIGGER_SOFTWARE   2
+// Trigger sources
+#define TRIGGER_GPIO_0                          0
+#define TRIGGER_GPIO_1                          1
+#define TRIGGER_GPIO_2                          2
+#define TRIGGER_GPIO_3                          3
+#define TRIGGER_SOFTWARE                        7
+
+// Trigger mode defs from FC2 register reference
+#define TMODE_STD                               0
+#define TMODE_EXPOSURE                          1
+#define TMODE_SKIP_N_FRAMES                     3
+#define TMODE_MULTIPLE_EXPOSURE                 4
+#define TMODE_MULTIPLE_EXPOSURE_PULSE_WIDTH     5
+#define TMODE_LOW_SMEAR                         13
+#define TMODE_OVERLAPPED_READOUT                14
+#define TMODE_MULTI_SHOT                        15
+
+// Trigger polarity codes
+#define TPOL_LOW                                0
+#define TPOL_HIGH                               1
+
+// Trigger On/Off codes
+#define TRIGGER_OFF                             0
+#define TRIGGER_ON                              1
 
 using namespace FlyCapture2;
 
@@ -112,20 +131,40 @@ public:
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerParameter(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerOnOff(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    void updatePixelFormats(unsigned int pixelFormatBitField);
    int SetEndianess(bool little);
    const char* GetBusSpeedAsString(BusSpeed speed);
-   int CheckSoftwareTriggerPresence(bool& result);
-   int PollForTriggerReady(const unsigned long timeoutMs);
-   bool FireSoftwareTrigger();
-   int SetTriggerMode(const unsigned short newMode);
    int SetGrabTimeout(const unsigned long timeoutMs);
    int PowerCameraOn(const unsigned int timeoutMs);
+   const unsigned char* RGBToRGBA(const unsigned char* img) const;
+
+   //Trigger functions
+   //int CheckSoftwareTriggerPresence(bool& result);
+   int PollForTriggerReady(const unsigned long timeoutMs);
+   bool FireSoftwareTrigger();
+   int SetTriggerSource(const unsigned short newSource);
+   int SetTriggerMode(const unsigned short newMode);
+   int TriggerSourceFromString(std::string source, unsigned short& tSource);
+   std::string TriggerSourceAsString(const unsigned short source) const;
    int TriggerModeFromString(std::string mode, unsigned short& tMode);
    std::string TriggerModeAsString(const unsigned short mode) const;
-   const unsigned char* RGBToRGBA(const unsigned char* img) const;
+   int TriggerPolarityFromString(std::string polarity, unsigned short& tPol);
+   std::string TriggerPolarityAsString(const unsigned short polarity) const;
+   int TriggerOnOffFromString(std::string onOff, unsigned short& tOnOff);
+   std::string TriggerOnOffAsString(const unsigned short onOff) const;
+   int GetTriggerMode();
+   int GetTriggerInfo();
+   int FindSupportedTriggerModes();
+   int FindSupportedTriggerSources();
+   int SetTriggerPolarity(unsigned short polarity);
+   int SetTriggerOnOff(unsigned short onOff);
 
 
    FlyCapture2::PGRGuid guid_;
@@ -140,21 +179,24 @@ private:
    bool stopOnOverflow_;
    long desiredNumImages_;
    bool isCapturing_;
+   bool snapSoftwareTrigger_;
    FlyCapture2::Format7Info format7Info_;
    std::map<VideoMode, std::vector<FrameRate>> videoModeFrameRateMap_;
    std::map<long, std::string> bin2Mode_;
    std::map<const std::string, long> mode2Bin_;
    std::vector<FlyCapture2::Mode> availableFormat7Modes_;
-   std::vector<unsigned short> availableTriggerModes_;
    bool f7InUse_;
    double exposureTimeMs_;
-   unsigned short triggerMode_;
-   unsigned short snapTriggerMode_;
-   unsigned long externalTriggerGrabTimeout_;
+   long externalTriggerGrabTimeout_;
    unsigned short bytesPerPixel_;
    MMThreadLock imgBuffLock_;
    const unsigned char* imgBuf_;
    const unsigned long bufSize_;
    FlyCapture2::PixelFormat pixelFormat8Bit_;
    FlyCapture2::PixelFormat pixelFormat16Bit_;
+   FlyCapture2::TriggerModeInfo triggerModeInfo_;
+   FlyCapture2::TriggerMode triggerMode_;
+   std::map<const int, std::string> triggerModesSupported_;
+   std::map<const int, std::string> triggerSourcesSupported_;
+
 };

@@ -55,9 +55,23 @@ const char* g_AdvancedMode             = "Use Advanced Mode?";
 const char* g_VideoModeAndFrameRate    = "Video Mode and Frame Rate";
 const char* g_NotSet                   = "Not set";
 const char* g_Format7Mode              = "Format-7 Mode";
-const char* g_InternalTrigger          = "Internal";
-const char* g_ExternalTrigger          = "External";
-const char* g_SoftwareTrigger          = "Software";
+const char* g_TriggerGPIO0             = "GPIO 0";
+const char* g_TriggerGPIO1             = "GPIO 1";
+const char* g_TriggerGPIO2             = "GPIO 2";
+const char* g_TriggerGPIO3             = "GPIO 3";
+const char* g_TriggerSoftware          = "Software";
+const char* g_TModeStandard            = "Standard";
+const char* g_TModeExposure            = "Exposure";
+const char* g_TModeSkipN               = "Skip N Frames";
+const char* g_TModeMultipleExposure    = "Multiple Exposure";
+const char* g_TModeMultiplePulseWidth  = "Multiple Exposure Pulse Width";
+const char* g_TModeLowSmear            = "Low Smear";
+const char* g_TModeOverlappedReadout   = "Overlapped Readout";
+const char* g_TModeMultipleShot        = "Multiple Shot";
+const char* g_TPolarityHigh            = "High";
+const char* g_TPolarityLow             = "Low";
+const char* g_TriggerOn                = "On";
+const char* g_TriggerOff               = "Off";
 
 /////////////////////////////////////////////////////
 
@@ -164,7 +178,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
-	delete pDevice;
+    delete pDevice;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -188,15 +202,14 @@ PointGrey::PointGrey(const char* deviceName) :
    stopOnOverflow_(false),
    isCapturing_(false),
    f7InUse_(false),
-   triggerMode_(TRIGGER_INTERNAL),
    externalTriggerGrabTimeout_(60000),
    bytesPerPixel_(1),
    imgBuf_(0),
    bufSize_(0)
-	
+    
 {
-	// call the base class method to set-up default error codes/messages
-	InitializeDefaultErrorMessages();
+    // call the base class method to set-up default error codes/messages
+    InitializeDefaultErrorMessages();
 
    // Create pre-init property with advanced mode
    // Selecting Yes here results in and attempto use Format 7 mode
@@ -218,8 +231,8 @@ PointGrey::PointGrey(const char* deviceName) :
 */
 PointGrey::~PointGrey()
 {
-	if (initialized_)
-		Shutdown();
+    if (initialized_)
+        Shutdown();
 }
 
 /***********************************************************************
@@ -228,7 +241,7 @@ PointGrey::~PointGrey()
 */
 void PointGrey::GetName(char* name) const
 {
-	CDeviceUtils::CopyLimitedString(name, deviceName_.c_str());
+    CDeviceUtils::CopyLimitedString(name, deviceName_.c_str());
 }
 
 /***********************************************************************
@@ -240,8 +253,8 @@ void PointGrey::GetName(char* name) const
 */
 int PointGrey::Initialize()
 {
-	if (initialized_)
-		return DEVICE_OK;
+    if (initialized_)
+        return DEVICE_OK;
 
    // check dll version and make sure it is compatible (the same as used 
    // to build the code)
@@ -273,8 +286,8 @@ int PointGrey::Initialize()
       return ret;
    }
 
-	// -------------------------------------------------------------------------
-	// Open camera device
+    // -------------------------------------------------------------------------
+    // Open camera device
    error = cam_.Connect(&guid_);
    if (error != PGRERROR_OK)
    {
@@ -297,44 +310,44 @@ int PointGrey::Initialize()
       return ALLERRORS;
    }
 
-	// -------------------------------------------------------------------------
-	// Set property list
-	// -------------------------------------------------------------------------
-	
+    // -------------------------------------------------------------------------
+    // Set property list
+    // -------------------------------------------------------------------------
+    
    // camera identification and other read-only information
-	char buf[FlyCapture2::sk_maxStringLength]="";
-	
+    char buf[FlyCapture2::sk_maxStringLength]="";
+    
    sprintf(buf, "%d", camInfo.serialNumber);
-	ret = CreateProperty(MM::g_Keyword_CameraID, buf, MM::String, true);
-	assert(ret == DEVICE_OK);
+    ret = CreateProperty(MM::g_Keyword_CameraID, buf, MM::String, true);
+    assert(ret == DEVICE_OK);
 
-	sprintf(buf, "%s", camInfo.modelName);
-	ret = CreateProperty(MM::g_Keyword_CameraName, buf, MM::String, true);
-	assert(ret == DEVICE_OK);
+    sprintf(buf, "%s", camInfo.modelName);
+    ret = CreateProperty(MM::g_Keyword_CameraName, buf, MM::String, true);
+    assert(ret == DEVICE_OK);
 
    sprintf(buf, "%s", camInfo.userDefinedName);
-	ret = CreateProperty(MM::g_Keyword_Description, buf, MM::String, true);
-	assert(ret == DEVICE_OK);
+    ret = CreateProperty(MM::g_Keyword_Description, buf, MM::String, true);
+    assert(ret == DEVICE_OK);
 
    sprintf(buf, "%s", camInfo.vendorName);
    ret = CreateProperty(g_VendorName, buf, MM::String, true);
-	assert(ret == DEVICE_OK);
+    assert(ret == DEVICE_OK);
 
    sprintf(buf, "%s", camInfo.sensorInfo);
    ret = CreateProperty(g_SensorInfo, buf, MM::String, true);
-	assert(ret == DEVICE_OK);
+    assert(ret == DEVICE_OK);
 
    sprintf(buf, "%s", camInfo.sensorResolution);
    ret = CreateProperty(g_SensorResolution, buf, MM::String, true);
-	assert(ret == DEVICE_OK);  
+    assert(ret == DEVICE_OK);  
 
    sprintf(buf, "%s", camInfo.driverName);
    ret = CreateProperty(g_DriverName, buf, MM::String, true);
-	assert(ret == DEVICE_OK); 
+    assert(ret == DEVICE_OK); 
 
    sprintf(buf, "%s", camInfo.firmwareVersion);
    ret = CreateProperty(g_FirmwareVersion, buf, MM::String, true);
-	assert(ret == DEVICE_OK); 
+    assert(ret == DEVICE_OK); 
 
    sprintf(buf, "%s", camInfo.firmwareBuildTime);
    ret = CreateProperty(g_FirmwareBuildTime, buf, MM::String, true);
@@ -643,47 +656,116 @@ int PointGrey::Initialize()
    AddAllowedValue(MM::g_Keyword_Binning, "1");
  
 
-   // Determined which trigger modes are available
-   availableTriggerModes_.push_back(TRIGGER_INTERNAL);  // seems to be always present
-   // Check for external trigger support
-	TriggerModeInfo triggerModeInfo;
-	error = cam_.GetTriggerModeInfo( &triggerModeInfo );
-	if (error != PGRERROR_OK)
-	{
-      SetErrorText(ALLERRORS, error.GetDescription());
-      return ALLERRORS;
-   }
-	if ( triggerModeInfo.present == true )
-	{
-		// this seems to guarantee that external trigger is present
+   // Determined which trigger sources and modes are available
+   ret = GetTriggerInfo();
+   assert(ret == DEVICE_OK);
+
+   // Check for non-internal trigger support
+    if ( triggerModeInfo_.present == true )
+    {
+      // this seems to guarantee that external trigger is present
       // the code example is a bit ambiguous about what that means
-      availableTriggerModes_.push_back(TRIGGER_EXTERNAL);
-      bool softwareTriggerPresent = false;
-      int result =  CheckSoftwareTriggerPresence(softwareTriggerPresent);
-      if (result != DEVICE_OK) 
-      {
-         return result;
-      }
-      if (softwareTriggerPresent) 
-      {
-         availableTriggerModes_.push_back(TRIGGER_SOFTWARE);
-         result = SetTriggerMode(TRIGGER_SOFTWARE);
-         if (result != DEVICE_OK)
-         {
-            return result;
-         }
-      }
-	}
-   if (availableTriggerModes_.size() > 1)
-   {
-      CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnTriggerMode);
-      CreateProperty("TriggerMode", g_InternalTrigger, MM::String, false, pAct, false);
-      for (std::vector<unsigned short>::const_iterator i = availableTriggerModes_.begin();
-         i != availableTriggerModes_.end(); i++)
-      {
-         AddAllowedValue("TriggerMode", TriggerModeAsString(*i).c_str());
-      }
-   }
+
+       //Get the current trigger config from the camera
+       ret = GetTriggerMode();
+       assert(ret == DEVICE_OK);
+
+       // Find out what trigger sources are available
+       ret = FindSupportedTriggerSources();
+       if (ret != DEVICE_OK)
+       {
+          return ret;
+       }
+
+       // Now find what modes are available
+       // these apply to all trigger types except internal
+       ret = FindSupportedTriggerModes();
+       if (ret != DEVICE_OK)
+       {
+          return ret;
+       }
+
+       // If software trigger is present turn it on
+       if (triggerModeInfo_.softwareTriggerSupported)
+       {
+          ret = SetTriggerSource(TRIGGER_SOFTWARE);
+          if (ret != DEVICE_OK)
+          {
+             return ret;
+          }
+
+          // Put the camera into standard triggering
+          // this seems to always be an option
+          ret = SetTriggerMode(TMODE_STD);
+          if (ret != DEVICE_OK)
+          {
+             return ret;
+          }
+
+          triggerMode_.parameter = 0;
+
+          // Turn on, this will update source, mode and parameter
+          ret = SetTriggerOnOff(TRIGGER_ON);
+          if (ret != DEVICE_OK)
+          {
+             return ret;
+          }
+       }
+
+       // If there is no software trigger available turn the trigger off
+       // to activate internal trigger
+       // This should avoid the timeout crash when loading the device
+       else
+       {
+          ret = SetTriggerOnOff(TRIGGER_OFF);
+          if (ret != DEVICE_OK)
+          {
+             return ret;
+          }
+       }
+
+       //Now we add the mode, source, on/off, polarity and parameter properties
+       CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnTriggerMode);
+       std::string currentValue = TriggerModeAsString((unsigned short)triggerMode_.mode);
+       CreateProperty("Trigger_Mode", currentValue.c_str(), MM::String, false, pAct, false);
+       std::map<const int, std::string>::iterator itr;
+       for(itr = triggerModesSupported_.begin(); itr!=triggerModesSupported_.end(); itr++)
+       {
+          AddAllowedValue("Trigger_Mode", itr->second.c_str());
+       }
+
+       pAct = new CPropertyAction(this, &PointGrey::OnTriggerSource);
+       currentValue = TriggerSourceAsString((unsigned short)triggerMode_.source);
+       CreateProperty("Trigger_Source", currentValue.c_str(), MM::String, false, pAct, false);
+       for(itr = triggerSourcesSupported_.begin(); itr!=triggerSourcesSupported_.end(); itr++)
+       {
+          AddAllowedValue("Trigger_Source", itr->second.c_str());
+          LogMessage(itr->second.c_str());
+       }
+
+       pAct = new CPropertyAction(this, &PointGrey::OnTriggerOnOff);
+       currentValue = TriggerOnOffAsString(triggerMode_.onOff);
+       CreateProperty("Trigger_OnOff", currentValue.c_str(), MM::String, false, pAct, false);
+       AddAllowedValue("Trigger_OnOff", g_TriggerOff);
+       AddAllowedValue("Trigger_OnOff", g_TriggerOn);
+
+       pAct = new CPropertyAction(this, &PointGrey::OnTriggerPolarity);
+       currentValue = TriggerPolarityAsString((unsigned short)triggerMode_.polarity);
+       CreateProperty("Trigger_Polarity", currentValue.c_str(), MM::String, false, pAct, false);
+       AddAllowedValue("Trigger_Polarity", g_TPolarityHigh);
+       AddAllowedValue("Trigger_Polarity", g_TPolarityLow);
+
+       pAct = new CPropertyAction(this, &PointGrey::OnTriggerParameter);
+       CreateProperty("Trigger_Parameter", "0", MM::Integer, false, pAct, false);
+
+       // Create a user-defined trigger timeout propert
+       pAct = new CPropertyAction(this, &PointGrey::OnTriggerTimeout);
+       std::ostringstream currentTimeout;
+       currentTimeout << externalTriggerGrabTimeout_;
+       CreateProperty("Trigger_Timeout", currentTimeout.str().c_str(), MM::Integer, false, pAct, false);
+       SetPropertyLimits("Trigger_Timeout", 0, 300000);
+
+    }
 
    // We most likely want little endian bit order
    ret = SetEndianess(true);
@@ -722,12 +804,11 @@ int PointGrey::Initialize()
       return ret;
    }
 
-
-	//-------------------------------------------------------------------------
-	// synchronize all properties
-	ret = UpdateStatus();
-	
-	return ret;
+    //-------------------------------------------------------------------------
+    // synchronize all properties
+    ret = UpdateStatus();
+    
+    return ret;
 }
 
 /***********************************************************************
@@ -740,11 +821,11 @@ int PointGrey::Initialize()
 int PointGrey::Shutdown()
 {
    cam_.StopCapture();
-	if(initialized_) {
+    if(initialized_) {
       cam_.Disconnect();
-	}
-	initialized_ = false;
-	return DEVICE_OK;
+    }
+    initialized_ = false;
+    return DEVICE_OK;
 }
 
 /***********************************************************************
@@ -766,15 +847,20 @@ int PointGrey::Shutdown()
 */
 int PointGrey::SnapImage()
 {
-   if (triggerMode_ == TRIGGER_SOFTWARE)
+    //Software trigger is set and internal triggering is not selected
+   if (triggerMode_.source == TRIGGER_SOFTWARE && triggerMode_.onOff == TRIGGER_ON)
    {
+      LogMessage("Snapping SW trigger", true);
       int ret = PollForTriggerReady( (unsigned long) exposureTimeMs_ + 50);
+      LogMessage("SW trigger ready", true);
       if (ret != DEVICE_OK) 
       {
          return ret;
       }
+      LogMessage("Firing SW trigger", true);
       FireSoftwareTrigger();
       Error error = cam_.RetrieveBuffer(&image_);
+      LogMessage("Attempted to retrieve camera buffer", true);
       if (error != PGRERROR_OK)
       {
          SetErrorText(ALLERRORS, error.GetDescription());
@@ -791,7 +877,7 @@ int PointGrey::SnapImage()
          SetErrorText(ALLERRORS, error.GetDescription());
          return ALLERRORS;
       }
-      if (triggerMode_ == TRIGGER_INTERNAL) 
+      if (triggerMode_.onOff == TRIGGER_OFF) 
          // since the first image may have been started before the shutter 
          // opened, grab a second one
       {
@@ -845,7 +931,7 @@ unsigned int PointGrey::GetImageWidth() const
 */
 unsigned int PointGrey::GetImageHeight() const
 {
-	return image_.GetRows();
+    return image_.GetRows();
 }
 
 /***********************************************************************
@@ -904,7 +990,7 @@ int PointGrey::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
    if (!f7InUse_) 
       return DEVICE_OK;
-   	  
+      
    Format7ImageSettings format7ImageSettings;
    unsigned int packetSize;
    float percentage;
@@ -952,7 +1038,7 @@ int PointGrey::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
       return ret;
    }
 
-	return DEVICE_OK;;
+    return DEVICE_OK;;
 }
 
 /***********************************************************************
@@ -970,7 +1056,7 @@ int PointGrey::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize
 
       return DEVICE_OK;
    }
-   	  
+      
    Format7ImageSettings format7ImageSettings;
    unsigned int packetSize;
    float percentage;
@@ -994,7 +1080,7 @@ int PointGrey::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize
    xSize = format7ImageSettings.width;
    ySize = format7ImageSettings.height;
 
-	return DEVICE_OK;
+    return DEVICE_OK;
 }
 
 /***********************************************************************
@@ -1005,7 +1091,7 @@ int PointGrey::ClearROI()
 {
   if (!f7InUse_) 
      return DEVICE_OK;
-   	  
+      
    Format7ImageSettings format7ImageSettings;
    unsigned int packetSize;
    float percentage;
@@ -1048,7 +1134,7 @@ int PointGrey::ClearROI()
       return ret;
    }
 
-	return DEVICE_OK;
+    return DEVICE_OK;
 }
 
 /***********************************************************************
@@ -1061,7 +1147,7 @@ double PointGrey::GetExposure() const
    // Hence, the only way to report exposure time is to cache it when we 
    // we set it
    
-	return exposureTimeMs_;
+    return exposureTimeMs_;
 }
 
 /***********************************************************************
@@ -1143,7 +1229,10 @@ void PointGrey::SetExposure(double exp)
 
    }
    unsigned long timeout = (unsigned long) (3.0 * exp) + 50;
-   if (triggerMode_ == TRIGGER_EXTERNAL)
+   if (triggerMode_.source == TRIGGER_GPIO_0 ||
+      triggerMode_.source == TRIGGER_GPIO_1 ||
+      triggerMode_.source == TRIGGER_GPIO_2 ||
+      triggerMode_.source == TRIGGER_GPIO_3)
    {
       timeout = externalTriggerGrabTimeout_;
    }
@@ -1176,7 +1265,7 @@ int PointGrey::GetBinning() const
 
    }
 
-	return 1;
+    return 1;
 }
 
 /***********************************************************************
@@ -1208,7 +1297,7 @@ int PointGrey::SetBinning(int binF)
  */
 int PointGrey::StartSequenceAcquisition(double interval)
 {
-	return StartSequenceAcquisition(LONG_MAX, interval, false);            
+    return StartSequenceAcquisition(LONG_MAX, interval, false);            
 }
 
 /***********************************************************************                                                                       
@@ -1224,11 +1313,18 @@ int PointGrey::StopSequenceAcquisition()
       SetErrorText(ALLERRORS, error.GetDescription());
       ret = ALLERRORS;
    }
-   ret = SetTriggerMode( snapTriggerMode_);
-   if (ret != DEVICE_OK)
+
+   //If snap was using software triggering, restart it
+   if (snapSoftwareTrigger_)
    {
-      return ret;
+      ret = SetTriggerOnOff(TRIGGER_ON);
+      snapSoftwareTrigger_ = false;
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
    }
+
    error = cam_.StartCapture(); // so that SnapImage will work
    return GetCoreCallback()->AcqFinished(this, ret);                                                      
 } 
@@ -1242,37 +1338,41 @@ int PointGrey::StopSequenceAcquisition()
 * problems maintaining state.
 */
 int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */, 
-		bool stopOnOverflow)
+        bool stopOnOverflow)
 {
    stopOnOverflow_ = stopOnOverflow;
    imageCounter_ = 0;
    desiredNumImages_ = numImages;
    sequenceStartTime_ = MM::MMTime(0);
 
-	if (IsCapturing())
-		return DEVICE_CAMERA_BUSY_ACQUIRING;
+    if (IsCapturing())
+        return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-   snapTriggerMode_ = triggerMode_;
    Error error = cam_.StopCapture();
    if (error != PGRERROR_OK)
    {
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
-   int ret;
-   
-   if (snapTriggerMode_ == TRIGGER_SOFTWARE) 
+
+   //Software trigger isn't sequenceable currently
+   //Other triggers are, so if SW trigger is active turn off the trigger for the sequence
+   if (triggerMode_.source == TRIGGER_SOFTWARE && triggerMode_.onOff == TRIGGER_ON)
    {
-      ret = SetTriggerMode( TRIGGER_INTERNAL);
+      LogMessage("Turning off SW trigger for sequence acquisition", true);
+      snapSoftwareTrigger_ = true;
+      int ret = SetTriggerOnOff(TRIGGER_OFF);
       if (ret != DEVICE_OK)
       {
          return ret;
       }
    }
 
-	ret = GetCoreCallback()->PrepareForAcq(this);
-	if (ret != DEVICE_OK)
-		return ret;
+    int ret = GetCoreCallback()->PrepareForAcq(this);
+    if (ret != DEVICE_OK)
+    {
+       return ret;
+    }
 
    error = cam_.StartCapture( PGCallback, this);
    if (error != PGRERROR_OK)
@@ -1283,7 +1383,7 @@ int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */
    }
    isCapturing_ = true;
 
-	return DEVICE_OK;
+    return DEVICE_OK;
 }
 
 /***********************************************************************
@@ -1291,7 +1391,7 @@ int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */
  */
 int PointGrey::InsertImage(Image* pImg) const
 {
-	int ret = DEVICE_OK;
+    int ret = DEVICE_OK;
 
    int frameCounter = pImg->GetMetadata().embeddedFrameCounter;
    // frameCounter seems to be always 0???
@@ -1304,30 +1404,30 @@ int PointGrey::InsertImage(Image* pImg) const
    }
 
    TimeStamp ts = pImg->GetTimeStamp();
-	MM::MMTime timeStamp = MM::MMTime( (long) ts.seconds, (long) ts.microSeconds);
+    MM::MMTime timeStamp = MM::MMTime( (long) ts.seconds, (long) ts.microSeconds);
    char label[MM::MaxStrLength];
-	this->GetLabel(label);
+    this->GetLabel(label);
    // TODO: we want to set the sequenceStartTimeStamp_ here but can not do so 
    // since we are const
    // if (imageCounter_ == 0) {
    //    sequenceStartTimeStamp_ = timeStamp;
    // }
 
-	// Important:  metadata about the image are generated here:
-	Metadata md;
-	md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
-	md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp).getMsec()));
-	md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
+    // Important:  metadata about the image are generated here:
+    Metadata md;
+    md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
+    md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp).getMsec()));
+    md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
    md.put("FrameCounter", frameCounter); // framecounter is always 0 for me
-	//md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
-	//md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
-	
+    //md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
+    //md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
+    
    // TODO: we want to increment the image counter but can not do so since we are const
-	// imageCounter_++;
+    // imageCounter_++;
 
-	char buf[MM::MaxStrLength];
-	GetProperty(MM::g_Keyword_Binning, buf);
-	md.put(MM::g_Keyword_Binning, buf);
+    char buf[MM::MaxStrLength];
+    GetProperty(MM::g_Keyword_Binning, buf);
+    md.put(MM::g_Keyword_Binning, buf);
 
    unsigned int w = pImg->GetCols();
    unsigned int h = pImg->GetRows();
@@ -1339,13 +1439,13 @@ int PointGrey::InsertImage(Image* pImg) const
       pData = RGBToRGBA(pImg->GetData());
    }
    ret = GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
-	if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
-	{
-		// do not stop on overflow - just reset the buffer
-		GetCoreCallback()->ClearImageBuffer(this);
-		GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
+    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+    {
+        // do not stop on overflow - just reset the buffer
+        GetCoreCallback()->ClearImageBuffer(this);
+        GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
       return DEVICE_OK;
-	} 
+    } 
 
    return ret;
 }
@@ -1371,8 +1471,8 @@ bool PointGrey::IsCapturing()
 int PointGrey::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
-	{
-		pProp->Set( (long) GetBinning());
+    {
+        pProp->Set( (long) GetBinning());
    } else if (eAct == MM::AfterSet) 
    {
       long binning;
@@ -1380,7 +1480,7 @@ int PointGrey::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
       return SetBinning((int) binning);
    }
 
-	return DEVICE_OK;
+    return DEVICE_OK;
 }
 
 
@@ -1707,8 +1807,8 @@ int PointGrey::OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct)
       return ALLERRORS;
    }
 
-	if (eAct == MM::AfterSet)
-	{
+    if (eAct == MM::AfterSet)
+    {
       std::string mode;
       pProp->Get(mode);
       Mode f7Mode;
@@ -1768,14 +1868,14 @@ int PointGrey::OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       updatePixelFormats(format7Info.pixelFormatBitField);
 
-	}
-	else if (eAct == MM::BeforeGet)
-	{
+    }
+    else if (eAct == MM::BeforeGet)
+    {
       std::string mode = Format7ModeAsString(fmt7ImageSettings.mode);
       pProp->Set(mode.c_str());
-	}
+    }
 
-	return DEVICE_OK;
+    return DEVICE_OK;
 }
 
 /***************************************************************
@@ -1784,41 +1884,238 @@ int PointGrey::OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int PointGrey::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+
    if (eAct == MM::AfterSet)
-	{
+    {
       std::string mode;
       pProp->Get(mode);
       unsigned short tMode;
+
       int ret = TriggerModeFromString(mode, tMode);
       if (ret != DEVICE_OK)
       {
          return ret;
       }
-      Error error = cam_.StopCapture();
-      // if camera is not capturing, StopCapture will return an error.
-      // probably safe to ignore, it is bad to return
-      if (error != PGRERROR_OK && error != PGRERROR_ISOCH_NOT_STARTED)
-      {
-         SetErrorText(ALLERRORS, error.GetDescription());
-         return ALLERRORS;
-      }
-      ret = SetTriggerMode(tMode);
-      if (ret != DEVICE_OK)
+      if (tMode == triggerMode_.mode)
       {
          return DEVICE_OK;
       }
-      error = cam_.StartCapture();
-      if (error != PGRERROR_OK)
+
+      /* Don't need to stop capture to update mode */
+      //Error error = cam_.StopCapture();
+      /*if camera is not capturing, StopCapture will return an error.
+         probably safe to ignore, it is bad to return*/
+      //if (error != PGRERROR_OK && error != PGRERROR_ISOCH_NOT_STARTED)
+      //{
+      //   SetErrorText(ALLERRORS, error.GetDescription());
+      //   return ALLERRORS;
+      //}
+
+      ret = SetTriggerMode(tMode);
+      if (ret != DEVICE_OK)
       {
-         SetErrorText(ALLERRORS, error.GetDescription());
-         return ALLERRORS;
+         return ret;
       }
 
-      triggerMode_ = tMode;
+      /* Don't need to start capture if we didn't stop it */
+      //error = cam_.StartCapture();
+      //if (error != PGRERROR_OK)
+      //{
+      //   SetErrorText(ALLERRORS, error.GetDescription());
+      //   return ALLERRORS;
+      //}
+
+      //If a trigger is running, update trigger mode
+      if (triggerMode_.onOff == TRIGGER_ON)
+      {
+         Error error = cam_.SetTriggerMode(&triggerMode_);
+         if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+      }
+   }
+
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(TriggerModeAsString((unsigned short)triggerMode_.mode).c_str());
+   }
+
+   return DEVICE_OK;
+}
+
+/* Handles Trigger Sources */
+int PointGrey::OnTriggerSource(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      std::string source;
+      pProp->Get(source);
+      unsigned short tSource;
+
+      int ret = TriggerSourceFromString(source, tSource);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+      if (tSource == triggerMode_.source)
+      {
+         return DEVICE_OK;
+      }
+
+      ret = SetTriggerSource(tSource);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+
+      if (triggerMode_.onOff == TRIGGER_ON)
+      {
+         Error error = cam_.SetTriggerMode(&triggerMode_);
+         if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+      }
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set(TriggerModeAsString(triggerMode_).c_str());
+      pProp->Set(TriggerSourceAsString((unsigned short)triggerMode_.source).c_str());
+   }
+   return DEVICE_OK;
+}
+
+/* Handles trigger polarity */
+int PointGrey::OnTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      std::string polarity;
+      pProp->Get(polarity);
+      unsigned short tPol;
+
+      int ret = TriggerPolarityFromString(polarity, tPol);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+      if (tPol == triggerMode_.polarity)
+      {
+         return DEVICE_OK;
+      }
+
+      ret = SetTriggerPolarity(tPol);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+
+      if (triggerMode_.onOff == TRIGGER_ON)
+      {
+         Error error = cam_.SetTriggerMode(&triggerMode_);
+         if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+      }
+   }
+
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(TriggerPolarityAsString((unsigned short)triggerMode_.polarity).c_str());
+   }
+
+   return DEVICE_OK;
+}
+
+/* Handles changing the trigger parameter value
+// This property only applies in a few trigger modes including 
+// skip-n, multiple exposure and multi-shot */
+int PointGrey::OnTriggerParameter(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      long parameter;
+      pProp->Get(parameter);
+
+      if ((long)triggerMode_.parameter == parameter)
+      {
+         return DEVICE_OK;
+      }
+      
+      triggerMode_.parameter = parameter;
+
+      if (triggerMode_.onOff == TRIGGER_ON)
+      {
+         Error error = cam_.SetTriggerMode(&triggerMode_);
+         if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+      }
+   }
+   
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long)triggerMode_.parameter);
+   }
+
+   return DEVICE_OK;
+}
+
+
+/* Handles turning the trigger on or off */
+int PointGrey::OnTriggerOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      std::string onOff;
+      pProp->Get(onOff);
+      unsigned short tOnOff;
+
+      int ret = TriggerOnOffFromString(onOff, tOnOff);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+      if (tOnOff == (unsigned short)triggerMode_.onOff)
+      {
+         return DEVICE_OK;
+      }
+
+      ret = SetTriggerOnOff(tOnOff);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+   }
+
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(TriggerOnOffAsString(triggerMode_.onOff).c_str());
+   }
+
+   return DEVICE_OK;
+}
+
+/* Handles user-defined trigger timeout values */
+int PointGrey::OnTriggerTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      long timeout;
+      pProp->Get(timeout);
+
+      externalTriggerGrabTimeout_ = timeout;
+   }
+
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(externalTriggerGrabTimeout_);
    }
 
    return DEVICE_OK;
@@ -1896,8 +2193,8 @@ int PointGrey::CameraID(PGRGuid id, std::string* camIdString)
 {
    FlyCapture2::Camera cam;
 
-	// -------------------------------------------------------------------------
-	// Open camera device
+    // -------------------------------------------------------------------------
+    // Open camera device
    Error error = cam.Connect(&id);
    if (error != PGRERROR_OK)
    {
@@ -2055,18 +2352,72 @@ std::string PointGrey::Format7ModeAsString(Mode mode) const
    return os.str();
 }
 
+std::string PointGrey::TriggerSourceAsString(const unsigned short source) const
+{
+   switch (source) 
+   {
+   case TRIGGER_SOFTWARE:
+      return g_TriggerSoftware;
+   case TRIGGER_GPIO_0:
+      return g_TriggerGPIO0;
+   case TRIGGER_GPIO_1:
+       return g_TriggerGPIO1;
+   case TRIGGER_GPIO_2:
+       return g_TriggerGPIO2;
+   case TRIGGER_GPIO_3:
+       return g_TriggerGPIO3;
+   default:
+       return "Invalid trigger source";
+   }
+}
+
 std::string PointGrey::TriggerModeAsString(const unsigned short mode) const
 {
-   switch (mode) 
+    switch (mode)
+    {
+    case TMODE_STD:
+        return g_TModeStandard;
+    case TMODE_EXPOSURE:
+        return g_TModeExposure;
+    case TMODE_SKIP_N_FRAMES:
+        return g_TModeSkipN;
+    case TMODE_MULTIPLE_EXPOSURE:
+        return g_TModeMultipleExposure;
+    case TMODE_MULTIPLE_EXPOSURE_PULSE_WIDTH:
+        return g_TModeMultiplePulseWidth;
+    case TMODE_LOW_SMEAR:
+        return g_TModeLowSmear;
+    case TMODE_OVERLAPPED_READOUT:
+        return g_TModeOverlappedReadout;
+    case TMODE_MULTI_SHOT:
+        return g_TModeMultipleShot;
+    default:
+        return "Invalid Trigger Mode";
+    }
+}
+
+std::string PointGrey::TriggerPolarityAsString(const unsigned short polarity) const
+{
+   if (polarity)
    {
-   case TRIGGER_INTERNAL:
-      return g_InternalTrigger;
-   case TRIGGER_EXTERNAL:
-      return g_ExternalTrigger;
-   case TRIGGER_SOFTWARE:
-      return g_SoftwareTrigger;
+      return g_TPolarityHigh;
    }
-   return "Unknown Trigger Mode";
+   else
+   {
+      return g_TPolarityLow;
+   }
+}
+
+std::string PointGrey::TriggerOnOffAsString(const unsigned short onOff) const
+{
+   if (onOff)
+   {
+      return g_TriggerOn;
+   }
+   else
+   {
+      return g_TriggerOff;
+   }
 }
 
 int PointGrey::Format7ModeFromString(std::string modeString, Mode* mode) const
@@ -2088,22 +2439,117 @@ int PointGrey::Format7ModeFromString(std::string modeString, Mode* mode) const
    return DEVICE_OK;
 }
 
+int PointGrey::TriggerSourceFromString(std::string source, unsigned short& tSource)
+{
+    if (source == g_TriggerSoftware)
+    {
+        tSource = TRIGGER_SOFTWARE;
+    }
+    else if (source == g_TriggerGPIO0)
+    {
+        tSource = TRIGGER_GPIO_0;
+    }
+    else if (source == g_TriggerGPIO1)
+    {
+        tSource = TRIGGER_GPIO_1;
+    }
+    else if (source == g_TriggerGPIO2)
+    {
+        tSource = TRIGGER_GPIO_2;
+    }
+    else if (source == g_TriggerGPIO3)
+    {
+        tSource = TRIGGER_GPIO_3;
+    }
+    else
+    {
+        std::string msg =  "Unknown trigger source: " + source;
+        SetErrorText(ALLERRORS, msg.c_str());
+        return ALLERRORS;
+    }
+
+   return DEVICE_OK;
+}
+
 int PointGrey::TriggerModeFromString(std::string mode, unsigned short& tMode)
 {
-   if (mode == g_InternalTrigger)
+    if (mode == g_TModeStandard)
+    {
+        tMode = TMODE_STD;
+    }
+    else if (mode == g_TModeExposure)
+    {
+        tMode = TMODE_EXPOSURE;
+    }
+    else if (mode == g_TModeSkipN)
+    {
+        tMode = TMODE_SKIP_N_FRAMES;
+    }
+    else if (mode == g_TModeMultipleExposure)
+    {
+        tMode = TMODE_MULTIPLE_EXPOSURE;
+    }
+    else if (mode == g_TModeMultiplePulseWidth)
+    {
+        tMode = TMODE_MULTIPLE_EXPOSURE_PULSE_WIDTH;
+    }
+    else if (mode == g_TModeLowSmear)
+    {
+        tMode = TMODE_LOW_SMEAR;
+    }
+    else if (mode == g_TModeOverlappedReadout)
+    {
+        tMode = TMODE_OVERLAPPED_READOUT;
+    }
+    else if (mode == g_TModeMultipleShot)
+    {
+        tMode = TMODE_MULTI_SHOT;
+    }
+    else
+    {
+        std::string msg = "Unknown trigger mode: " + mode;
+        SetErrorText(ALLERRORS, msg.c_str());
+        return ALLERRORS;
+    }
+
+    return DEVICE_OK;
+}
+
+int PointGrey::TriggerPolarityFromString(std::string polarity, unsigned short& tPol)
+{
+   if (polarity == g_TPolarityHigh)
    {
-      tMode = TRIGGER_INTERNAL;
-   } else 
-   if (mode == g_ExternalTrigger)
+      tPol = TPOL_HIGH;
+   }
+   else if (polarity == g_TPolarityLow)
    {
-      tMode = TRIGGER_EXTERNAL;
-   } else 
-   if (mode == g_SoftwareTrigger)
+      tPol = TPOL_LOW;
+   }
+   else
    {
-      tMode = TRIGGER_SOFTWARE;
-   } else 
+      std::string msg = "Invalid trigger polarity: " + polarity;
+      SetErrorText(ALLERRORS, msg.c_str());
+      return ALLERRORS;
+   }
+
+   return DEVICE_OK;
+}
+
+int PointGrey::TriggerOnOffFromString(std::string onOff, unsigned short& tOnOff)
+{
+   if (onOff == g_TriggerOn)
    {
-      return ERR_UNKNOWN_TRIGGER_MODE_STRING;
+      tOnOff = TRIGGER_ON;
+   }
+   else if (onOff == g_TriggerOff)
+   {
+      tOnOff = TRIGGER_OFF;
+   }
+   else
+   {
+      std::string msg = "Invalid trigger On/Off value: " + onOff;
+      SetErrorText(ALLERRORS, msg.c_str());
+      return ALLERRORS;
    }
 
    return DEVICE_OK;
@@ -2135,26 +2581,190 @@ const char* PointGrey::GetBusSpeedAsString(BusSpeed speed)
    }
 }
 
-int PointGrey::CheckSoftwareTriggerPresence(bool& result)
+int PointGrey::GetTriggerInfo()
 {
-	const unsigned int k_triggerInq = 0x530;
-	Error error;
-	unsigned int regVal = 0;
+    FlyCapture2::Error error = cam_.GetTriggerModeInfo(&triggerModeInfo_);
+    if (cam_.GetTriggerModeInfo(&triggerModeInfo_) != PGRERROR_OK)
+    {
+        SetErrorText(ALLERRORS, error.GetDescription());
+        return ALLERRORS;
+    }
+    return DEVICE_OK;
+}
 
-	error = cam_.ReadRegister( k_triggerInq, &regVal );
+int PointGrey::GetTriggerMode()
+{
+    FlyCapture2::Error error = cam_.GetTriggerMode(&triggerMode_);
+    if (error != PGRERROR_OK)
+    {
+        SetErrorText(ALLERRORS, error.GetDescription());
+        return ALLERRORS;
+    }
+    return DEVICE_OK;
+}
 
-	if (error != PGRERROR_OK)
-	{
-		return ERR_IN_READ_REGISTER;
-	}
+int PointGrey::SetTriggerOnOff(unsigned short onOff)
+{
+   if (onOff == TRIGGER_ON)
+   {
+      triggerMode_.onOff = TRIGGER_ON;
+   }
+   else
+   {
+      triggerMode_.onOff = TRIGGER_OFF;
+   }
 
-   result = true;
-	if( ( regVal & 0x10000 ) != 0x10000 )
-	{
-		result = false;
-	} 
+    // We update the camera's trigger registers on every call with a new value
+    Error error = cam_.SetTriggerMode(&triggerMode_);
+    if (error != PGRERROR_OK)
+    {
+       SetErrorText(ALLERRORS, error.GetDescription());
+       return ALLERRORS;
+    }
 
-   return DEVICE_OK;
+    // Update the grab timeout appropriately
+    int ret = DEVICE_OK;
+    // If switching back to internal trigger use the exposure time
+    if (!onOff)
+    {
+       unsigned long timeout = (unsigned long)(3.0 * exposureTimeMs_) + 50;
+       ret = SetGrabTimeout(timeout);
+    }
+    // Otherwise use the user-define timeout value
+    else
+    {
+       ret = SetGrabTimeout(externalTriggerGrabTimeout_);
+    }
+    if (ret != DEVICE_OK)
+    {
+       return ret;
+    }
+
+    if (triggerMode_.source == TRIGGER_SOFTWARE && onOff)
+    {
+       ret = PollForTriggerReady(2000);
+    }
+    if (ret != DEVICE_OK)
+    {
+       return ret;
+    }
+
+    return DEVICE_OK;
+}
+
+int PointGrey::SetTriggerPolarity(unsigned short polarity)
+{
+    //Check that the polarity can be switched
+    if (!triggerModeInfo_.polaritySupported)
+    {
+        std::string msg = "Trigger polarity not supported";
+        SetErrorText(ALLERRORS, msg.c_str());
+        return ALLERRORS;
+    }
+
+    triggerMode_.polarity = polarity;
+
+    //Load the new trigger type
+    if (triggerMode_.onOff)
+    {
+       FlyCapture2::Error error = cam_.SetTriggerMode(&triggerMode_);
+       if (error != PGRERROR_OK)
+       {
+          SetErrorText(ALLERRORS, error.GetDescription());
+          return ALLERRORS;
+       }
+    }
+
+    return DEVICE_OK;
+}
+
+int PointGrey::FindSupportedTriggerModes()
+{
+    //List all the possible modes
+    triggerModesSupported_[TMODE_STD] = g_TModeStandard;
+    triggerModesSupported_[TMODE_EXPOSURE] = g_TModeExposure;
+    triggerModesSupported_[TMODE_SKIP_N_FRAMES] = g_TModeSkipN;
+    triggerModesSupported_[TMODE_MULTIPLE_EXPOSURE] = g_TModeMultipleExposure;
+    triggerModesSupported_[TMODE_MULTIPLE_EXPOSURE_PULSE_WIDTH] = g_TModeMultiplePulseWidth;
+    triggerModesSupported_[TMODE_LOW_SMEAR] = g_TModeLowSmear;
+    triggerModesSupported_[TMODE_OVERLAPPED_READOUT] = g_TModeOverlappedReadout;
+    triggerModesSupported_[TMODE_MULTI_SHOT] = g_TModeMultipleShot;
+
+    //Test the modeMask element at each position and remove unavailable modes
+    std::bitset<16> b_modeMask((long)triggerModeInfo_.modeMask);
+    std::ostringstream msg;
+    msg << "trigger modeMask from camera: " << b_modeMask;
+    LogMessage(msg.str().c_str());
+    for (int i = 0; i < 16; i++)
+    {
+        if (triggerModesSupported_.find(i) != triggerModesSupported_.end())
+        {
+            std::ostringstream msg1;
+            msg1 << triggerModesSupported_[i] << ": ";
+            if (!b_modeMask.test(15 - i))
+            {
+                triggerModesSupported_.erase(i);
+                msg1 << "not supported";
+            }
+            else
+            {
+               msg1 << "available";
+            }
+            LogMessage(msg1.str().c_str());
+        }
+    }
+    //Not sure if there needs to be a return code here
+    return DEVICE_OK;
+}
+
+int PointGrey::FindSupportedTriggerSources()
+{
+    //List all the possible sources
+    triggerSourcesSupported_[TRIGGER_GPIO_0] = g_TriggerGPIO0;
+    triggerSourcesSupported_[TRIGGER_GPIO_1] = g_TriggerGPIO1;
+    triggerSourcesSupported_[TRIGGER_GPIO_2] = g_TriggerGPIO2;
+    triggerSourcesSupported_[TRIGGER_GPIO_3] = g_TriggerGPIO3;
+    triggerSourcesSupported_[TRIGGER_SOFTWARE] = g_TriggerSoftware;
+
+    //Test the sourceMask element at each position and remove unavailable
+    std::bitset<16> b_sourceMask((long)triggerModeInfo_.sourceMask);
+    std::stringstream msg;
+    msg << "trigger sourceMask from camera: " << b_sourceMask;
+    LogMessage(msg.str().c_str());
+    for (int i = 0; i < 4; i++)
+    {
+        if (triggerSourcesSupported_.find(i) != triggerSourcesSupported_.end())
+        {
+           std::ostringstream msg1;
+            msg1 << triggerSourcesSupported_[i] << ": ";
+            if (!b_sourceMask.test(3 - i))
+            {
+                triggerSourcesSupported_.erase(i);
+                msg1 << "not supported";
+            }
+            else
+            {
+                msg1 << "available";
+            }
+            LogMessage(msg1.str().c_str());
+        }
+    }
+    //Now test if software trigger is present
+    std::ostringstream msg2;
+    msg2 << triggerSourcesSupported_[7] << ": ";
+    if (triggerModeInfo_.softwareTriggerSupported == 0)
+    {
+       triggerSourcesSupported_.erase(7);
+       msg2 << "not supported";
+    }
+    else
+    {
+       msg2 << "available";
+    }
+    LogMessage(msg2.str().c_str());
+
+    //Again not sure if a return code is needed
+    return DEVICE_OK;
 }
 
 /**
@@ -2165,18 +2775,18 @@ int PointGrey::PollForTriggerReady(const unsigned long timeoutMs)
 {
    MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
 
-	const unsigned int k_softwareTrigger = 0x62C;
-	Error error;
-	unsigned int regVal = 0;
+    const unsigned int k_softwareTrigger = 0x62C;
+    Error error;
+    unsigned int regVal = 0;
 
-	do
-	{
-		error = cam_.ReadRegister( k_softwareTrigger, &regVal );
-		if (error != PGRERROR_OK)
-		{
-			return ERR_IN_READ_REGISTER;
-		}
-	} while ( (regVal >> 31) != 0  && !timerOut.expired(GetCurrentMMTime() ) );
+    do
+    {
+        error = cam_.ReadRegister( k_softwareTrigger, &regVal );
+        if (error != PGRERROR_OK)
+        {
+            return ERR_IN_READ_REGISTER;
+        }
+    } while ( (regVal >> 31) != 0  && !timerOut.expired(GetCurrentMMTime() ) );
 
    if ( (regVal >> 31) != 0) 
    {
@@ -2184,85 +2794,113 @@ int PointGrey::PollForTriggerReady(const unsigned long timeoutMs)
    }
 
 
-	return DEVICE_OK;
+    return DEVICE_OK;
 }
 
 bool PointGrey::FireSoftwareTrigger()
 {
-	const unsigned int k_softwareTrigger = 0x62C;
-	const unsigned int k_fireVal = 0x80000000;
-	Error error;
+    const unsigned int k_softwareTrigger = 0x62C;
+    const unsigned int k_fireVal = 0x80000000;
+    Error error;
 
-	error = cam_.WriteRegister( k_softwareTrigger, k_fireVal );
-	if (error != PGRERROR_OK)
-	{
-		return false;
-	}
+    error = cam_.WriteRegister( k_softwareTrigger, k_fireVal );
+    if (error != PGRERROR_OK)
+    {
+        return false;
+    }
+    LogMessage("SW trigger fired", true);
 
-	return true;
+    return true;
 }
 
-int PointGrey::SetTriggerMode(const unsigned short newMode) 
+int PointGrey::SetTriggerSource(const unsigned short newSource) 
 {
-   if ( std::find(availableTriggerModes_.begin(), availableTriggerModes_.end(), newMode) == 
-            availableTriggerModes_.end() )
+    //Return immediately if not switching trigger type
+    if (triggerMode_.source == newSource)
+    {
+        return DEVICE_OK;
+    }
+
+   if ( triggerSourcesSupported_.find(newSource) == 
+            triggerSourcesSupported_.end() )
    {
-      return ERR_UNAVAILABLE_TRIGGER_MODE_REQUESTED;
+       std::string msg = "Unsupported trigger source requested: " 
+           + TriggerSourceAsString(newSource);
+       SetErrorText(ALLERRORS, msg.c_str());
+      return ALLERRORS;
    }
+   
+   //Update the source member
+   triggerMode_.source = newSource;
 
-   if (triggerMode_ != newMode) // no need to do anything
+   //Load the new trigger type
+   if (triggerMode_.onOff)
    {
-      // Get current trigger settings
-      TriggerMode triggerMode;
-      Error error = cam_.GetTriggerMode( &triggerMode );
-      if (error != PGRERROR_OK) {
-         // software trigger mode not supported
-      } else {
-         // assume that triggerMode off is internal trigger
-         if (newMode == TRIGGER_INTERNAL)
-         {
-            triggerMode.onOff = false;
-         } else
-         {
-            triggerMode.onOff = true;
-         }
-         triggerMode.mode = 0;
-         triggerMode.parameter = 0;
-         triggerMode.source = 0;   // 7 for Software trigger, 0 for external
-         if (newMode == TRIGGER_SOFTWARE) 
-         {
-            triggerMode.source = 7;
-         }
-         error = cam_.SetTriggerMode( &triggerMode );
-         if (error != PGRERROR_OK)
-         {
-            SetErrorText(ALLERRORS, error.GetDescription());
-            return ALLERRORS;
-         }
+      FlyCapture2::Error error = cam_.SetTriggerMode(&triggerMode_);
+      if (error != PGRERROR_OK)
+      {
+         SetErrorText(ALLERRORS, error.GetDescription());
+         return ALLERRORS;
+      }
 
-         if (newMode == TRIGGER_SOFTWARE)
+      //Wait for the camera to be ready if switching to software trigger
+      if (newSource == TRIGGER_SOFTWARE)
+      {
+         LogMessage("SW trigger turned on, polling ready", true);
+         // Poll to ensure camera is ready
+         int ret = PollForTriggerReady(2000);
+         if (ret != DEVICE_OK)
          {
-            // Poll to ensure camera is ready
-            int ret = PollForTriggerReady(2000);
-            if (ret != DEVICE_OK) 
-            {
-               return ret;
-            }
+            return ret;
          }
-         triggerMode_ = newMode;
       }
    }
 
-   // we only need to change the grabtimeout when switching between external trigger
-   // and other modes.  Assume that this operation is not too costly.
-   unsigned long timeout = (unsigned long) (3.0 * exposureTimeMs_) + 50;
-   if (triggerMode_ == TRIGGER_EXTERNAL)
-   {
-      timeout = externalTriggerGrabTimeout_;
-   }
-   SetGrabTimeout(timeout );
-
    return DEVICE_OK;
+}
+
+int PointGrey::SetTriggerMode(const unsigned short newMode)
+{
+    //Return immediately if not changing
+    if (triggerMode_.mode == newMode)
+    {
+        return DEVICE_OK;
+    }
+
+    if (triggerModesSupported_.find(newMode) ==
+        triggerModesSupported_.end())
+    {
+        std::string msg = "Unsupported trigger mode requested: "
+            + TriggerModeAsString(newMode);
+        SetErrorText(ALLERRORS, msg.c_str());
+        return ALLERRORS;
+    }
+
+    triggerMode_.mode = newMode;
+    
+    //Load the new trigger type
+    if (triggerMode_.onOff)
+    {
+       FlyCapture2::Error error = cam_.SetTriggerMode(&triggerMode_);
+       if (error != PGRERROR_OK)
+       {
+          SetErrorText(ALLERRORS, error.GetDescription());
+          return ALLERRORS;
+       }
+
+       //Wait for the camera to be ready if switching to software trigger
+       if (triggerMode_.source == TRIGGER_SOFTWARE)
+       {
+          // Poll to ensure camera is ready
+          int ret = PollForTriggerReady(2000);
+          if (ret != DEVICE_OK)
+          {
+             return ret;
+          }
+       }
+    }
+
+    return DEVICE_OK;
 }
 
 int PointGrey::SetGrabTimeout(const unsigned long timeoutMs)
@@ -2274,13 +2912,13 @@ int PointGrey::SetGrabTimeout(const unsigned long timeoutMs)
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
-	
-	config.grabTimeout = timeoutMs;
+    
+    config.grabTimeout = timeoutMs;
 
-	error = cam_.SetConfiguration( &config );
-	if (error != PGRERROR_OK)
-	{
-		SetErrorText(ALLERRORS, error.GetDescription());
+    error = cam_.SetConfiguration( &config );
+    if (error != PGRERROR_OK)
+    {
+        SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
     
@@ -2290,44 +2928,44 @@ int PointGrey::SetGrabTimeout(const unsigned long timeoutMs)
 int PointGrey::PowerCameraOn(const unsigned int timeoutMs) 
 {
    // Power on the camera
-	const unsigned int k_cameraPower = 0x610;
-	const unsigned int k_powerVal = 0x80000000;
-	Error error  = cam_.WriteRegister( k_cameraPower, k_powerVal );
-	if (error != PGRERROR_OK)
-	{
-      SetErrorText(ALLERRORS, error.GetDescription());
-		return ALLERRORS;
-	}
+    const unsigned int k_cameraPower = 0x610;
+    const unsigned int k_powerVal = 0x80000000;
+    Error error  = cam_.WriteRegister( k_cameraPower, k_powerVal );
+    if (error != PGRERROR_OK)
+    {
+        SetErrorText(ALLERRORS, error.GetDescription());
+        return ALLERRORS;
+    }
 
-	unsigned int regVal = 0;
-	unsigned int retries = 10;
+    unsigned int regVal = 0;
+    unsigned int retries = 10;
 
-	// Wait for camera to complete power-up
-	do
-	{
+    // Wait for camera to complete power-up
+    do
+    {
       CDeviceUtils::SleepMs(timeoutMs);
 
-		error = cam_.ReadRegister(k_cameraPower, &regVal);
-		if (error == PGRERROR_TIMEOUT)
-		{
-			// ignore timeout errors, camera may not be responding to
-			// register reads during power-up
-		}
+        error = cam_.ReadRegister(k_cameraPower, &regVal);
+        if (error == PGRERROR_TIMEOUT)
+        {
+            // ignore timeout errors, camera may not be responding to
+            // register reads during power-up
+        }
       if (error != PGRERROR_OK)
-	   {
+       {
          SetErrorText(ALLERRORS, error.GetDescription());
-		   return ALLERRORS;
-	   }
+           return ALLERRORS;
+       }
 
-		retries--;
-	} while ((regVal & k_powerVal) == 0 && retries > 0);
+        retries--;
+    } while ((regVal & k_powerVal) == 0 && retries > 0);
 
-	// Check for timeout errors after retrying
-	if (error != PGRERROR_OK)
-	{
+    // Check for timeout errors after retrying
+    if (error != PGRERROR_OK)
+    {
       SetErrorText(ALLERRORS, error.GetDescription());
-		return ALLERRORS;
-	}
+        return ALLERRORS;
+    }
 
    return DEVICE_OK;
 }
