@@ -26,6 +26,9 @@ endif
 if BUILD_ITC
    ITC = ITC18
 endif
+if BUILD_MODBUS
+   MODBUS = Modbus
+endif
 if BUILD_OPENCV
    OPENCVGRABBER = OpenCVgrabber
 endif
@@ -69,6 +72,7 @@ SUBDIRS = \
 	$(ITC) \
 	$(NIDAQ) \
 	$(OPENCVGRABBER) \
+	$(MODBUS) \
 	$(PVCAM) \
 	$(QCAM) \
 	$(SCION) \
