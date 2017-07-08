@@ -93,6 +93,7 @@ SUBDIRS = \
 	Cobolt \
 	CoherentCube \
 	CoherentOBIS \
+   CoherentScientificRemote \
 	Conix \
 	Corvus \
 	DemoCamera \
