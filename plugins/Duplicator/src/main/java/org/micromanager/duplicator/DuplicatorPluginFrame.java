@@ -85,19 +85,16 @@ public class DuplicatorPluginFrame extends MMDialog {
       ourStore_ = ourWindow_.getDatastore();
  
 
-      // Not sure if this is needed, be safe for now
+      // Not sure if ngoing acquisitions can be duplicated....
       if (!ourStore_.getIsFrozen()) {
-         studio_.logs().showMessage("Can not duplicate ongoing acquisitions", 
+         studio_.logs().logError("Can not duplicate ongoing acquisition: " + 
                  window.getAsWindow());
-         super.dispose();
-         return;
       }
-
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       File file = new File(window.getName());
       String shortName = file.getName();
-      super.setTitle(DuplicatorPlugin.MENUNAME + shortName);
+      super.setTitle(DuplicatorPlugin.MENUNAME + "   " + shortName);
 
       super.loadAndRestorePosition(100, 100, 375, 275);
       
@@ -297,7 +294,7 @@ public class DuplicatorPluginFrame extends MMDialog {
     * @throws java.io.IOException - can only be thrown when storing to disk
     */
    public void duplicate(final DisplayWindow theWindow, 
-           final String newName, 
+           String newName, 
            final String savePath,
            final Map<String, Integer> mins,
            final Map<String, Integer> maxes,
@@ -308,8 +305,11 @@ public class DuplicatorPluginFrame extends MMDialog {
       if (savePath == null) {
          newStore = studio_.data().createRAMDatastore();
       } else {
+         String newPath = studio_.data().getUniqueSaveDirectory(
+                 savePath + File.separator + newName);
+         newName = new File(newPath).getName();
          newStore = studio_.data().createMultipageTIFFDatastore(
-                 studio_.data().getUniqueSaveDirectory(savePath + File.separator + newName), 
+                 newPath, 
                  true, 
                  false);
       }
