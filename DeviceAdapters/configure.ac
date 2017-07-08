@@ -414,6 +414,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Cobolt
    CoherentCube
    CoherentOBIS
+   CoherentScientificRemote
    Conix
    Corvus
    DTOpenLayer
