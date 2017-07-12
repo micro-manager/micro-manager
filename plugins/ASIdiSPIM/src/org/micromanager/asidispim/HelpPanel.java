@@ -59,22 +59,20 @@ public class HelpPanel extends ListeningJPanel {
       textPane.setContentType("text/html");
       textPane.setText(
             "This plugin is a work in progress; please contact the authors "
-            + "with bug reports or feature requests "
-            + "(<a href='mailto:jon@asiimaging.com'>jon@asiimaging.com</a>, "
-            + "<a href='mailto:info@micro-manager.org'>info@micro-manager.org</a>)."
+            + "Jon and Nico with bug reports or feature requests "
+            + "(<a href='mailto:jon@asiimaging.com'>jon@asiimaging.com</a>)."
             + "<p>If you encounter bugs, the first step is to check and see if your "
             + "problem has already been fixed by using a recent nightly build of Micro-Manager. "
             + "If not, it is helpful to generate a problem report using \"Help\""
             + "-> \"Report Problem...\" in the main Micro-Manager window.  After clicking "
-            + "\"Done\" you can submit it the usual way and it eventually will get to the "
-            + "plugin developers or you can click \"View Report\", save the text as a file, "
-            + "and then email that file directly to the plugin developers (Jon and Nico)."
+            + "\"Done\", click \"View Report\", save the text as a file, "
+            + "and then email that file directly to Jon."
             + "<p>Further information and instructions are on the Micro-Manager wiki "
             + "(<a href='http://micro-manager.org/wiki/ASIdiSPIM_Plugin'>"
             + "http://micro-manager.org/wiki/ASIdiSPIM_Plugin</a>)"
             + " as well as in the diSPIM User Manual ("
-            + "<a href='http://www.asiimaging.com/downloads/manuals/diSPIM_Manual.pdf'>"
-            + "http://www.asiimaging.com/downloads/manuals/diSPIM_Manual.pdf</a>)."
+            + "<a href='http://dispim.org/docs/manual'>"
+            + "http://dispim.org/docs/manual</a>)."
             );
       textPane.addHyperlinkListener(new HyperlinkListener() {
          @Override
