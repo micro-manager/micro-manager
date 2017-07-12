@@ -638,7 +638,7 @@ public void runDeskew(final ListeningJPanel caller) {
                      ImageStack stack = new ImageStack(iProc.getWidth(), iProc.getHeight());
                      for (int i = 0; i < mmW.getNumberOfSlices(); i++) {
                         ImageProcessor iProc2;
-                        iProc2 = mmW.getImageProcessor(c, i, t, 1);
+                        iProc2 = mmW.getImageProcessor(c, i, t, position + 1);  // positions are 1-indexed
 
                         // optional transformation
                         switch (transformIndex_) {
