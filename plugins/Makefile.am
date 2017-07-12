@@ -33,6 +33,7 @@ nobase_mmplugin_DATA = \
 	SnapOnMove.jar \
 	SplitView.jar \
 	WhiteBalance.jar \
+	ZProjector.jar \
 	pgFocus.jar
 
 .PHONY: plugins.stamp
