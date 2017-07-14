@@ -83,3 +83,6 @@ test-reports/
 /MMCorePy_wrap/MMCorePy_wrap.h
 /DeviceAdapters/DirectElectron/src/DEMessaging/DEServer.pb.cc
 /DeviceAdapters/DirectElectron/src/DEMessaging/DEServer.pb.h
+/DeviceAdapters/ThorlabsAPTStage/APTAPI.h
+/DeviceAdapters/ThorlabsAPTStage/APT.lib
+/DeviceAdapters/ThorlabsAPTStage/APT.dll

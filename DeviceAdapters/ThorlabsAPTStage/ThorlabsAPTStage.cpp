@@ -21,6 +21,7 @@
 // AUTHOR:        Emilio J. Gualda, IGC, 2012
 //                Egor Zindy (egor.zindy@manchester.ac.uk)
 //                Contributions and testing (TDC001): Alfie O'Neill / Christopher Blount
+//				  MM2.0 debugging Seamus Holden seamus.holden@ncl.ac.uk
 //
 // NOTES:         Needs / Tested with APT.dll v 1.0.0.3
 //                The following APT controllers have been tested:
@@ -34,7 +35,7 @@
 //                [ ] ODC001 - 1 Ch DC servo driver cube
 //                [ ] OST001 - 1 Ch stepper driver cube
 //                [ ] MST601 - 2 Ch modular stepper driver module
-//                [ ] TST001 - 1 Ch Stepper driver T-Cube
+//                [X] TST001 - 1 Ch Stepper driver T-Cube
 //                [X] TDC001 - 1 Ch DC servo driver T-Cube
 //
 
@@ -167,6 +168,9 @@ MODULE_API void InitializeModuleData()
     //if (plNumUnits >= 1) AddAvailableDeviceName(g_ThorlabsDeviceNameTDC001, g_ThorlabsDeviceDescTDC001);
     if (plNumUnits >= 1) RegisterDevice(g_ThorlabsDeviceNameTDC001, MM::StageDevice, g_ThorlabsDeviceDescTDC001);
 
+	// Have to set aptInitialized back to false to force reinitialization in Initialize()
+	// method or MM2.0 will seg fault as soon as we try to access the device. Why??
+	aptInitialized = false;
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -297,7 +301,8 @@ int ThorlabsAPTStage::Initialize()
     //needed to get the hardware info
     char szModel[256], szSWVer[256], szHWNotes[256];
 
-    //change the global flag
+	
+	//change the global flag
     if (aptInitialized == false)
     {
         //Initialize various data structures, initialise USB bus and other start functions
@@ -317,7 +322,7 @@ int ThorlabsAPTStage::Initialize()
     LogIt();
 
     EnableEventDlg(TRUE);
-    InitHWDevice((long)serialNumber_);
+	InitHWDevice((long)serialNumber_);
     MOT_SetChannel(serialNumber_, chNumber_-1);
 
     MOT_GetVelParamLimits(serialNumber_, &pfMaxAccn, &pfMaxVel);
