@@ -2290,10 +2290,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          
          long extraStageScanTimeout = 0;
          if (acqSettings.isStageScanning) {
-            // approximately compute the extra time to wait for stack to begin by getting the per-channel volume duration
-            //   and subtracting the acquisition duration and then dividing by two
-            extraStageScanTimeout = (long) Math.ceil(computeActualVolumeDuration(acqSettings)/acqSettings.numChannels
-                  - (acqSettings.numSlices * acqSettings.sliceTiming.sliceDuration)) / 2;
+            // approximately compute the extra time to wait for stack to begin (ramp up time)
+            //   by getting the volume duration and subtracting the acquisition duration and then dividing by two
+            extraStageScanTimeout = (long) Math.ceil(computeActualVolumeDuration(acqSettings)
+                  - (acqSettings.numSlices * acqSettings.numChannels * acqSettings.sliceTiming.sliceDuration)) / 2;
          }
          
          long extraMultiXYTimeout = 0;
@@ -2773,6 +2773,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            if (usingDemoCam) {
                               Thread.sleep(200);  // for serial communication overhead
                               Thread.sleep((long)volumeDuration/nrChannelsSoftware);  // estimate the time per channel, not ideal in case of software channel switching
+                              if (acqSettings.isStageScanning) {
+                                 Thread.sleep(1000 + extraStageScanTimeout);  // extra 1 second plus ramp time for stage scanning 
+                              }
                            }
                            
 
