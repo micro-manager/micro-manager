@@ -690,7 +690,7 @@ public class ControllerUtils {
       
       // speed things up by turning off updates, will restore value later
       String editCellUpdates = props_.getPropValueString(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES);
-      if (!editCellUpdates.equals(Properties.Values.NO)) {
+      if (!editCellUpdates.equals(Properties.Values.NO.toString())) {
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, Properties.Values.NO);
       }
       
@@ -743,7 +743,7 @@ public class ControllerUtils {
             Properties.Values.PLOGIC_PRESET_BNC5_8_ON_13_16);
       
       // restore update setting
-      if (!editCellUpdates.equals(Properties.Values.NO)) {
+      if (!editCellUpdates.equals(Properties.Values.NO.toString())) {
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
       }
       
