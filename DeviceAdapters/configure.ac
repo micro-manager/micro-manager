@@ -460,7 +460,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Marzhauser-LStep
    MarzhauserLStepOld
    MicroPoint
-   MODBUS
+   Modbus
    Motic_mac
    Neos
    NewportCONEX
