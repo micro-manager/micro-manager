@@ -373,8 +373,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VisiTech_iSIM", "DeviceAdapters\VisiTech_iSIM\VisiTech_iSIM.vcxproj", "{641D9549-0A15-4A98-9895-FDD19B380376}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MatrixVision", "DeviceAdapters\MatrixVision\MatrixVision.vcxproj", "{A982F985-EE25-434F-B9AF-E33C8A3AAC58}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SmarActHCU-3D", "DeviceAdapters\SmarActHCU-3D\SmarActHCU-3D.vcxproj", "{47C2BC19-A92B-4B1A-A0ED-E01D5DF50BDF}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoherentScientificRemote", "DeviceAdapters\CoherentScientificRemote\CoherentScientificRemote.vcxproj", "{481DAEEF-42DF-00A9-BE94-DAC7D6CC7F8C}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Modbus", "DeviceAdapters\Modbus\Modbus.vcxproj", "{93B23968-DB73-4209-9D19-613A00BFE6B0}"
 EndProject
 Global
