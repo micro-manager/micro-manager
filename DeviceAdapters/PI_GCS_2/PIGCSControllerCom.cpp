@@ -415,24 +415,6 @@ int PIGCSControllerCom::GetError()
 	return error;
 }
 
-bool PIGCSControllerCom::CheckError(bool &hasCmdFlag)
-{
-	int err = GetError();
-	if (err == PI_CNTR_UNKNOWN_COMMAND)
-	{
-		hasCmdFlag = false;
-		return true;
-	}
-	m_ControllerError = err;
-	return ( err == PI_CNTR_NO_ERROR );
-}
-
-bool PIGCSControllerCom::CheckError(void)
-{
-	m_ControllerError = GetError();
-	return ( m_ControllerError == PI_CNTR_NO_ERROR );
-}
-
 bool PIGCSControllerCom::IsControllerReady( BOOL* ready)
 {
 	std::vector<std::string> answer;

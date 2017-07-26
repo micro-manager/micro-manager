@@ -382,6 +382,11 @@ int PIGCSControllerDLL::LoadDLL(const std::string& dllName)
         dllPrefix_ = "C866_";
         gcs2_ = false;
     }
+    else if (ci_find(dllName, "PI_GCS2_DLL") != std::string::npos)
+    {
+        dllPrefix_ = "PI_";
+        gcs2_ = true;
+    }
 
 #ifdef WIN32
     module_ = LoadLibrary(dllName.c_str());
@@ -571,7 +576,7 @@ int PIGCSControllerDLL::ConnectRS232(const std::string &interfaceParameter)
 
 int PIGCSControllerDLL::ConnectUSB(const std::string&  interfaceParameter)
 {
-	if (ConnectUSB_ == NULL || EnumerateUSB_)
+	if (ConnectUSB_ == NULL || EnumerateUSB_ == NULL)
 		return DEVICE_NOT_SUPPORTED;
 
 	char szDevices[128*80+1];
@@ -582,7 +587,7 @@ int PIGCSControllerDLL::ConnectUSB(const std::string&  interfaceParameter)
 		return DEVICE_NOT_CONNECTED;
 
 	std::string deviceName;
-	if (interfaceParameter_.empty())
+	if (interfaceParameter.empty())
 	{
 		if (nrDevices != 1)
 			return ERR_DLL_PI_INVALID_INTERFACE_PARAMETER;
@@ -607,13 +612,15 @@ std::string PIGCSControllerDLL::FindDeviceNameInUSBList(const char* szDevices, s
 	std::string sDevices(szDevices);
 	static ToUpper up(std::locale::classic());
 	std::transform(interfaceParameter.begin(), interfaceParameter.end(), interfaceParameter.begin(), up);
-	std::transform(sDevices.begin(), sDevices.end(), sDevices.begin(), up);
 
 	std::vector<std::string> lines = tokenize(sDevices);
 	std::vector<std::string>::iterator line;
 	for(line = lines.begin(); line != lines.end(); ++line)
 	{
-		if ( (*line).find(interfaceParameter) != std::string::npos )
+		std::string LINE (*line);
+		std::transform(LINE.begin(), LINE.end(), LINE.begin(), up);
+
+		if ( LINE.find(interfaceParameter) != std::string::npos )
 			return (*line);
 	}
 	return "";
@@ -635,7 +642,21 @@ bool PIGCSControllerDLL::INI(const std::string& axis)
 {
 	if (INI_ == NULL)
 		return false;
-	return (INI_(ID_, axis.c_str()) == TRUE);
+	if (INI_(ID_, axis.c_str()) == TRUE)
+	{
+		return true;
+	}
+	bool hasINI = false;
+	if (CheckError(hasINI))
+	{
+		if (!hasINI)
+		{
+			INI_ = NULL;
+		}
+		return true;
+	}
+	return false;
+
 }
 
 bool PIGCSControllerDLL::CST(const std::string& axis, const std::string& stagetype)

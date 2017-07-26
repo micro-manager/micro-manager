@@ -207,9 +207,6 @@ private:
    std::string dllPrefix_;
    int ID_;
    bool needResetStages_;
-   std::string dllName_;
-   std::string interfaceType_;
-   std::string interfaceParameter_;
 
 #ifdef WIN32
 	HMODULE module_;
