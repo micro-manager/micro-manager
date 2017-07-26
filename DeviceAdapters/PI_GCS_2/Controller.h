@@ -157,6 +157,8 @@ protected:
    bool onlyIDSTAGEvalid_;
    static std::map<std::string, PIController*> allControllersByLabel_;
    bool referenceMoveActive_;
+   bool CheckError(bool& hasCmdFlag);
+   bool CheckError(void);
    int m_ControllerError;
    //lint -e{1401} // dummy ctor without any initialization
    PIController () {}
