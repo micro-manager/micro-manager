@@ -72,10 +72,11 @@ public class SettingsPanel extends ListeningJPanel {
    
    /**
     * 
+    * @param gui Micro-Manager api
     * @param devices the (single) instance of the Devices class
-    * @param props 
-    * @param prefs
-    * @param stagePosUpdater
+    * @param props Plugin-wide properties
+    * @param prefs Plugin-wide preferences
+    * @param stagePosUpdater Can query the controller for stage positionns
     */
    public SettingsPanel(final ScriptInterface gui, Devices devices, Properties props, 
          Prefs prefs, StagePositionUpdater stagePosUpdater) {    
@@ -281,11 +282,11 @@ public class SettingsPanel extends ListeningJPanel {
       
       
       // construct main panel
-      add(guiPanel);
-      add(scannerPanel, "wrap");
-      add(testAcqPanel);
-      add(stageScanPanel, "growx");
-      add(imageJPanel, "growx");
+      super.add(guiPanel);
+      super.add(scannerPanel, "wrap");
+      super.add(testAcqPanel);
+      super.add(stageScanPanel, "growx");
+      super.add(imageJPanel, "growx");
       
 
       

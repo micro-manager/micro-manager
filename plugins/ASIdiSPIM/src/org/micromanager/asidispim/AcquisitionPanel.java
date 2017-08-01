@@ -152,7 +152,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner delayCamera_;
    private final JSpinner durationCamera_;  // NB: not the same as camera exposure
    private final JSpinner exposureCamera_;  // NB: only used in advanced timing mode
-   private JCheckBox alternateBeamScanCB_;
+   private final JCheckBox alternateBeamScanCB_;
    private final JSpinner durationLaser_;
    private final JSpinner delaySide_;
    private final JLabel actualSlicePeriodLabel_;
@@ -189,6 +189,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner positionDelay_;
    private final JCheckBox useTimepointsCB_;
    private final JCheckBox useAutofocusCB_;
+   private final JCheckBox useMovementCorrectionCB_;
    private final JPanel leftColumnPanel_;
    private final JPanel centerColumnPanel_;
    private final JPanel rightColumnPanel_;
@@ -858,6 +859,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            }
       });
       
+      // checkbox to signal that movement should be corrected during acquisition
+      // Yet another orphan UI element
+      useMovementCorrectionCB_ = new JCheckBox("Correct Movement during acquisition");
+      useMovementCorrectionCB_.setSelected(prefs_.getBoolean(panelName_, 
+              Properties.Keys.PLUGIN_ACQUSITION_USE_MOVEMENT_CORRECTION, false));
+      useMovementCorrectionCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            prefs_.putBoolean(panelName_, 
+                    Properties.Keys.PLUGIN_ACQUSITION_USE_MOVEMENT_CORRECTION, 
+                    useMovementCorrectionCB_.isSelected());
+           }
+      });
+      
       
       // set up tabbed panels for GUI
       // make 3 columns as own JPanels to get vertical space right
@@ -887,7 +902,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       centerColumnPanel_.add(positionPanel, "growx, wrap");
       centerColumnPanel_.add(multiChannelPanel_, "wrap");
       centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
-      centerColumnPanel_.add(useAutofocusCB_);
+      centerColumnPanel_.add(useAutofocusCB_, "wrap");
+      centerColumnPanel_.add(useMovementCorrectionCB_);
       
       rightColumnPanel_ = new JPanel(new MigLayout("", "[center]0", "[]0[]"));
       
@@ -968,7 +984,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * (internal, edge, overlap, pseudo-overlap, light sheet) 
     */
    private CameraModes.Keys getSPIMCameraMode() {
-      CameraModes.Keys val = null;
+      CameraModes.Keys val;
       try {
          val = ASIdiSPIM.getFrame().getSPIMCameraMode();
       } catch (Exception ex) {
@@ -992,6 +1008,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings
     * public for API use
+    * @return Number of Sides
     */
    public int getNumSides() {
       if (numSides_.getSelectedIndex() == 1) {
@@ -1004,6 +1021,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings
     * public for API use
+    * @return true if the first side is side A
     */
    public boolean isFirstSideA() {
       return ((String) firstSide_.getSelectedItem()).equals("A");
@@ -1012,6 +1030,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings.
     * public for API use
+    * @return Time between starts of acquisition when doing a time-lapse acquisition 
     */
    public double getTimepointInterval() {
       return PanelUtils.getSpinnerFloatValue(acquisitionInterval_);
@@ -1037,6 +1056,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.channels = multiChannelPanel_.getUsedChannels();
       acqSettings.channelGroup = multiChannelPanel_.getChannelGroup();
       acqSettings.useAutofocus = useAutofocusCB_.isSelected();
+      acqSettings.useMovementCorrection = useMovementCorrectionCB_.isSelected();
       acqSettings.numSides = getNumSides();
       acqSettings.firstSideIsA = isFirstSideA();
       acqSettings.delayBeforeSide = PanelUtils.getSpinnerFloatValue(delaySide_);
@@ -1191,13 +1211,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          break;
       case PSEUDO_OVERLAP:  // PCO or Photometrics, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
-         if (camLibrary == Devices.Libraries.PCOCAM) {
+         if (null != camLibrary) switch (camLibrary) {
+         case PCOCAM:
             s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms for PCO
-         } else if (camLibrary == Devices.Libraries.PVCAM) {
+            break;
+         case PVCAM:
             s.cameraExposure = cameraExposure;
-         } else {
+            break;
+         default:
             MyDialogUtils.showError("Unknown camera library for pseudo-overlap calculations");
-         }
+            break;
+      }
          if (s.cameraDelay < 0.24f) {
             MyDialogUtils.showError("Camera delay should be at least 0.25ms for pseudo-overlap mode.");
          }
@@ -1356,6 +1380,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * Compute the volume duration in ms based on controller's timing settings.
     * Includes time for multiple channels.  However, does not include for multiple positions.
+    * @param acqSettings Settings for the acquisition
     * @return duration in ms
     */
    public double computeActualVolumeDuration(AcquisitionSettings acqSettings) {
@@ -2804,6 +2829,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
                         if (twoSided && core_.isSequenceRunning(secondCamera)) {
                            core_.stopSequenceAcquisition(secondCamera);
+                        }
+                        if (acqSettings.useMovementCorrection) {
+                           System.out.println("TODO: Movement Correction");
                         }
                      }
                   }

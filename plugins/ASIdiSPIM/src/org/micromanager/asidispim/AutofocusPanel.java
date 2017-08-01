@@ -61,6 +61,7 @@ public class AutofocusPanel extends ListeningJPanel{
    private final JSpinner maxOffsetChangeSetupSpinner_;
    private final JLabel maxOffsetChangeSetupLabel2_;
    private final JSpinner eachNTimePointsSpinner_;
+   private final JCheckBox correctMovement_;
    
    public AutofocusPanel(final ScriptInterface gui, final Devices devices, 
            final Properties props, final Prefs prefs, 
@@ -68,9 +69,9 @@ public class AutofocusPanel extends ListeningJPanel{
       
       super(MyStrings.PanelNames.AUTOFOCUS.toString(),
               new MigLayout(
-              "",
-              "[center]8[center]",
-              "[]16[]16[]"));
+              "flowy",
+              "[center]16[center]",
+              "[top]8[top]8[top]" ) );
       prefs_ = prefs;
       props_ = props;
       devices_ = devices;
@@ -231,12 +232,24 @@ public class AutofocusPanel extends ListeningJPanel{
          }
       });
       
+      final JPanel movementCorrectionsPanel = new JPanel(new MigLayout(
+            "",
+            "[right]8[center]8[left]",
+            "[]8[]"));
+      movementCorrectionsPanel.setBorder(PanelUtils.makeTitledBorder(
+              "Movement correction options"));
+      
+      correctMovement_ =  pu.makeCheckBox("Options will be coming",
+            Properties.Keys.PLUGIN_AUTOFOCUS_CORRECT_MOVEMENT, panelName_, false);
+      movementCorrectionsPanel.add(correctMovement_, "center, span 3, wrap");
+      
       
       // construct the main panel
-      add(optionsPanel);
-      add(acqOptionsPanel);
-      add(setupOptionsPanel);
-   }//constructor
+      super.add(optionsPanel, "wrap");
+      super.add(acqOptionsPanel);
+      super.add(setupOptionsPanel, "wrap");
+      super.add(movementCorrectionsPanel);
+   }  //constructor
    
    
    // not using the pref code for now, but now at least we have a way to refer

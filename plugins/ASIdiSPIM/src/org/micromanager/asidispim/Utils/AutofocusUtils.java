@@ -487,6 +487,7 @@ public class AutofocusUtils {
                   gui_.getMMCore().setCameraDevice(originalCamera);
                   if (showImages) {
                      gui_.promptToSaveAcquisition(acqName, false);
+                     gui_.closeAcquisition(acqName);
                   }
 
                   controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);

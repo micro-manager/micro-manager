@@ -68,6 +68,9 @@ public class AcquisitionSettings {
    // whether or not to use autofocus during acquisition
    public boolean useAutofocus;
    
+   // whether or not to correct movement during acquisition
+   public boolean useMovementCorrection;
+   
    // number of Sides from which we take data (diSPIM: 1 or 2)
    public int numSides;
    

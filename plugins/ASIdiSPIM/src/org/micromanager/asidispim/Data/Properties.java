@@ -210,6 +210,7 @@ public class Properties {
       AUTOFOCUS_ACQUSITION_MODE("AutofocusAcquisitionMode"),
       AUTOFOCUS_SCORING_ALGORITHM("AutofocusScoringAlgorithm"),
       PLUGIN_ACQUSITION_USE_AUTOFOCUS("UseAutofocusInAcquisition"),
+      PLUGIN_ACQUSITION_USE_MOVEMENT_CORRECTION("UseMovementCorrectionInAcquisition"),
       PLUGIN_CAMERA_MODE("CameraMode"),
       PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST("CameraLiveExposureMs_First"),  // used internally to save/restore live exposure time
       PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND("CameraLiveExposureMs_Second"),  // used internally to save/restore live exposure time
@@ -243,6 +244,7 @@ public class Properties {
       PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET("AutofocusAutoUpdateOffset"),
       PLUGIN_AUTOFOCUS_CHANNEL("AutofocusChannel"),
       PLUGIN_AUTOFOCUS_MINIMUMR2("AutofocusMinimumR2"),
+      PLUGIN_AUTOFOCUS_CORRECT_MOVEMENT("AUtofocusCorrectMovement"),
       PLUGIN_ADVANCED_CAMERA_EXPOSURE("AdvancedCameraExposure"),
       PLUGIN_DESKEW_FACTOR("DeskewFactor"),
       PLUGIN_DESKEW_INVERT("DeskewInvert"),
