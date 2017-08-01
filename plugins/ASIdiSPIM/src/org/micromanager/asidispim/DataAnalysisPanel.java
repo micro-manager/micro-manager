@@ -80,8 +80,9 @@ public class DataAnalysisPanel extends ListeningJPanel {
    
    /**
     * 
-    * @param gui
     * @param prefs - Plugin-wide preferences
+    * @param props - Plugin-wide properties
+    * @param devices - Plugin-wide devices
     */
    public DataAnalysisPanel(Prefs prefs, Properties props, Devices devices) {    
       super(MyStrings.PanelNames.DATAANALYSIS.toString(),
@@ -712,6 +713,8 @@ public void runDeskew(final ListeningJPanel caller) {
    
    /**
     * for API, set the base name field for export
+    * TODO
+    * @param baseName - Base name (explain!) for export (of what?)
     */
    public void setExportBaseName(String baseName) {
       baseNameField_.setText(baseName);
