@@ -475,6 +475,11 @@ public class AutofocusUtils {
             } finally {
                
                ASIdiSPIM.getFrame().setHardwareInUse(false);
+               if (showImages) {
+                  if (gui_.acquisitionExists(acqName)) {
+                     gui_.closeAcquisition(acqName);
+                  }
+               }
 
                // set result to be a dummy value for now; we will overwrite it later
                //  unless we encounter an exception in the meantime

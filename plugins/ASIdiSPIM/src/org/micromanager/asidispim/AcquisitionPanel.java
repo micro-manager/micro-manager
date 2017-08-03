@@ -113,8 +113,10 @@ import java.awt.event.WindowListener;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.media.j3d.Transform3D;
 
 import javax.swing.BorderFactory;
+import javax.vecmath.Point3d;
 
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.ChannelSpec;
@@ -122,6 +124,7 @@ import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.ControllerUtils;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.Utils.MovementDetector;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 /**
@@ -2108,6 +2111,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   + " with autofocus during acquisition.");
             return false;
          }
+         if (acqSettings.useMovementCorrection) {
+             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
+                  + " with movement correction during acquisition.");
+            return false;
+         }
          if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.VOLUME) {
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with software channels (need to use PLogic channel switching).");
@@ -2397,7 +2405,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     (int) core_.getImageBitDepth());
             gui_.promptToSaveAcquisition(acqName, !testAcq);
             
-            // These metadata have to added after initialization, otherwise they will not be shown?!
+            // These metadata have to be added after initialization, 
+            // otherwise they will not be shown?!
             gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
                     NumberUtils.doubleToDisplayString(acqSettings.numSides));
             gui_.setAcquisitionProperty(acqName, "FirstSide", acqSettings.firstSideIsA ? "A" : "B");
@@ -2412,6 +2421,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
             gui_.setAcquisitionProperty(acqName, "UseAutofocus", 
                   acqSettings.useAutofocus ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+            gui_.setAcquisitionProperty(acqName, "UseMotionCorrection", 
+                    acqSettings.useMovementCorrection ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName, "HardwareTimepoints", 
                   acqSettings.hardwareTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName, "SeparateTimepoints", 
@@ -2484,6 +2495,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // will be null if not saving to disk
             lastAcquisitionPath_ = acq_.getImageCache().getDiskLocation();
             lastAcquisitionName_ = acqName;
+            
+                           
+            // only used when motion correction was requested
+            MovementDetector[] movementDetectors = new MovementDetector[nrPositions];
+               
+            // Transformation matrices to convert between camera and stage coordinates
+            Transform3D camAMatrix = new Transform3D(); // initializes to the identity matrix
+            Transform3D camBMatrix = new Transform3D();
+            camAMatrix.rotY(-0.785398);   // rotate -45 degrees around y axis
+            camBMatrix.rotY(0.785398);    // rotate +45 degrees around y axis
+
+            final Point3d zeroPoint = new Point3d();  // cache a zero point for efficiency
             
             // make sure all devices have arrived, e.g. a stage isn't still moving
             try {
@@ -2830,9 +2853,46 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         if (twoSided && core_.isSequenceRunning(secondCamera)) {
                            core_.stopSequenceAcquisition(secondCamera);
                         }
-                        if (acqSettings.useMovementCorrection) {
-                           System.out.println("TODO: Movement Correction");
+                     }
+                  }
+                  
+                  if (acqSettings.useMovementCorrection) {
+                     if (movementDetectors[positionNum] == null) {
+                        // TODO: let user select which channel(s) to use
+                        movementDetectors[positionNum] = new MovementDetector(acq_, 0, positionNum);
+                     }
+                     Point3d movement = movementDetectors[positionNum].detectMovement();
+                     // TODO: we need to have a cut off to avoid accidents....
+                     if (movement.distance(zeroPoint) > 25.0) {
+                        System.out.println("Movement detected was greater than 25 micron.  Baling out");
+
+                     } else {
+                        // Transform from camera space to stage space:
+                        Transform3D rotMatrix = camBMatrix;
+                        if (firstSideA) {
+                           rotMatrix = camAMatrix;
                         }
+                        rotMatrix.transform(movement);
+
+                        // if we are using the position list, update the position in the list
+                        if (acqSettings.useMultiPositions) {
+                           MultiStagePosition position = positionList.getPosition(positionNum);
+                           StagePosition pos = position.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                           pos.x += movement.x;
+                           pos.y += movement.y;
+                           StagePosition zPos = position.get(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
+                           if (zPos != null) {
+                              zPos.x += movement.z;
+                           }
+                        } else {
+                           // only a single position, move the stage now
+                           core_.setRelativeXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE),
+                                   movement.x, movement.y);
+                           core_.setRelativePosition(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE),
+                                   movement.z);
+                        }
+
+                        System.out.println("Corrected Movement");
                      }
                   }
                }
