@@ -51,7 +51,7 @@ import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.EventBusExceptionLogger;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.RequestToCloseEvent;
+//import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.display.internal.link.LinkManager;
 import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 
@@ -303,12 +303,14 @@ public final class DefaultDisplayManager implements DisplayManager {
       String path = store.getSavePath();
       ArrayList<DisplayWindow> result = new ArrayList<DisplayWindow>();
       if (path != null) {
+         /*
           List<DisplaySettings> allSettings = DefaultDisplaySettings.load(path);
          for (DisplaySettings settings : allSettings) {
             DisplayWindow tmp = createDisplay(store);
             tmp.setDisplaySettings(settings);
             result.add(tmp);
          }
+         */
       }
       if (result.isEmpty()) {
          // No path, or no display settings at the path.  Just create a blank
@@ -383,7 +385,7 @@ public final class DefaultDisplayManager implements DisplayManager {
    /**
     * Check if this is the last display for a Datastore that we are managing,
     * and verify closing without saving (if appropriate).
-    */
+    *
    @Subscribe
    public void onRequestToClose(RequestToCloseEvent event) {
       DisplayWindow display = event.getDisplay();
@@ -421,6 +423,7 @@ public final class DefaultDisplayManager implements DisplayManager {
          store.close();
       }
    }
+   */
 
    // TODO Why do we need both store and display?
    @Override

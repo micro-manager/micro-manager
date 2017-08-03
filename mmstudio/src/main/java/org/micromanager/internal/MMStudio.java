@@ -365,10 +365,10 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // We wait until after showing the main window to enable hot keys
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
       hotKeys_.loadSettings();
-      zWheelListener_ = new ZWheelListener(core_, studio_);
+      // zWheelListener_ = new ZWheelListener(core_, studio_);
       getEventManager().registerForEvents(zWheelListener_);
       // TODO snapLiveManager_.addLiveModeListener(zWheelListener_);
-      xyzKeyListener_ = new XYZKeyListener(core_, studio_);
+      // xyzKeyListener_ = new XYZKeyListener(core_, studio_);
       // TODO snapLiveManager_.addLiveModeListener(xyzKeyListener_);
 
       // Switch error reporting back on TODO See above where it's turned off
@@ -422,7 +422,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private void initializeVariousManagers() {
       // The ClickToMoveManager manages itself; don't need to retain a
       // reference to it.
-      new ClickToMoveManager(this, core_);
+      // new ClickToMoveManager(this, core_);
 
       snapLiveManager_ = new SnapLiveManager(this, core_);
 

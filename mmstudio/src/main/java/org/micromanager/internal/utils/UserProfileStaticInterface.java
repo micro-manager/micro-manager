@@ -68,6 +68,7 @@ public final class UserProfileStaticInterface {
                      });
             }
             catch (IOException ex) {
+               ex.printStackTrace();
                // TODO Notify user of error
                // TODO Virtual profile?
             }

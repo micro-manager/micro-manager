@@ -487,11 +487,10 @@ public final class UserProfileAdmin {
    /**
     * Creates modern index and profiles from legacy index and profiles.
     *
-    * @return true if migration occurred; false if legacy profiles were not
-    * found or could not be read.
-    * @throws IOException if the legacy index could be read but the individual
-    * profiles could not be read, or if there was an error creating the modern
-    * index and profiles
+    * @return true if migration occurred; false if the profile index files
+    * was not found or could not be read.
+    * 
+    * @throws IOException when new profiles could not be written.
     */
    private boolean migrateProfiles() throws IOException {
       /*
@@ -502,7 +501,7 @@ public final class UserProfileAdmin {
          legacyIndex = MM1JSONSerializer.fromJSON(
                Files.toString(getLegacyIndexFile(), Charsets.UTF_8));
       }
-      catch (FileNotFoundException e) {
+      catch (IOException e) {
          return false;
       }
 
@@ -521,9 +520,13 @@ public final class UserProfileAdmin {
          entries.add(new IndexEntry(uuid, newName, filename));
 
          File legacyFile = getLegacyFile(legacyIndex.getString(legacyName, null));
-         PropertyMap legacyProfile = PropertyMaps.loadJSON(legacyFile);
-         Profile modernProfile = Profile.fromSettings(migrateProfile(legacyProfile));
-         writeFile(filename, modernProfile);
+         try {
+            PropertyMap legacyProfile = PropertyMaps.loadJSON(legacyFile);
+            Profile modernProfile = Profile.fromSettings(migrateProfile(legacyProfile));
+            writeFile(filename, modernProfile);
+         } catch (IOException ignored) {
+            // altough listed, this file does not exist.  Simply continue
+         }
       }
       writeIndex(new Index(entries));
       didMigrateLegacy_ = true;
