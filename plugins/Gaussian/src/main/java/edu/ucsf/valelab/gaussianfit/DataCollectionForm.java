@@ -1718,7 +1718,7 @@ public class DataCollectionForm extends JFrame {
    public String getInterTrackDistances(boolean header) {
       
       if (header) {
-         return "ID\tn1\tn2\tstdDev\tCalc.Sigma";
+         return "ID\tn1\tn2\tstdDev\tCalc.Sigma\tCalc. Sigma (Aperture)";
       }
          
       final int rows[] = mainTable_.getSelectedRowsSorted();
@@ -1808,6 +1808,7 @@ public class DataCollectionForm extends JFrame {
          }
 
          List<Double> intSigmas = new ArrayList<Double>();
+         List<Double> intAptSigmas = new ArrayList<Double>();
          for (SpotData spotData : rowData.spotList_) {
             // calculate sigma using Mortenson integral method
             double s = spotData.getWidth() / 2;
@@ -1816,18 +1817,30 @@ public class DataCollectionForm extends JFrame {
             double integral = SpotDataConverter.calcIntegral(
                     spotData.getIntensity(), pixelSize, sasqr, spotData.getBackground());
             double altVarX = sasqr / spotData.getIntensity() * (1 / (1 + integral));
+            double aptIntegral = SpotDataConverter.calcIntegral(
+                    spotData.getValue(SpotData.Keys.APERTUREINTENSITY), 
+                    pixelSize,
+                    sasqr,
+                    spotData.getValue(SpotData.Keys.APERTUREBACKGROUND));
+            double aptAltVarx = sasqr / spotData.getValue(SpotData.Keys.APERTUREINTENSITY) *
+                    (1 / (1 + aptIntegral) );
+                    
             // If EM gain was used, add uncertainty due to Poisson distributed noise
             //if (rowData. > 2.0) {
             //   altVarX = 2 * altVarX;
            // }
-            intSigmas.add(Math.sqrt(altVarX));
+            intSigmas.add( Math.sqrt(altVarX) );
+            intAptSigmas.add( Math.sqrt(aptAltVarx) );
          }
-         double xStdDev = ListUtils.listAvg(xStdDevs);
-         double yStdDev = ListUtils.listAvg(yStdDevs);
          double stdDev = ListUtils.listAvg(stdDevs) / sqrt2;
          double intSigma = ListUtils.listAvg(intSigmas);
-         output += rowData.ID_ + "\t" + rowData.spotList_.size() + "\t" + xStdDevs.size() + "\t"
-                 + stdDev + "\t" + intSigma + "\n";
+         double intAptSigma = ListUtils.listAvg(intAptSigmas);
+         output += rowData.ID_ + "\t" + 
+                 rowData.spotList_.size() + "\t" + 
+                 xStdDevs.size() + "\t" + 
+                 stdDev + "\t" + 
+                 intSigma + "\t" + 
+                 intAptSigma + "\n";
       }
 
       return output;
