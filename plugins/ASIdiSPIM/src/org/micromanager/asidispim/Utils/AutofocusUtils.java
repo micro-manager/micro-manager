@@ -475,11 +475,6 @@ public class AutofocusUtils {
             } finally {
                
                ASIdiSPIM.getFrame().setHardwareInUse(false);
-               if (showImages) {
-                  if (gui_.acquisitionExists(acqName)) {
-                     gui_.closeAcquisition(acqName);
-                  }
-               }
 
                // set result to be a dummy value for now; we will overwrite it later
                //  unless we encounter an exception in the meantime
@@ -570,6 +565,18 @@ public class AutofocusUtils {
                }
                finally {
                   posUpdater_.pauseUpdates(false);
+               }
+               
+               if (showImages) {
+                  if (gui_.acquisitionExists(acqName)) {
+                     try {
+                        gui_.closeAcquisition(acqName);
+                     } catch (Exception ex) {
+                        // NS: I don't yet know why, but this call can throw an exception
+                        // It is pivotal to catch it, or we will not stop the hardware
+                        gui_.logError(ex, "While closing acquisition in diSPIM-AutofocusUtils");
+                     }
+                  }
                }
             }
             ReportingUtils.logMessage("finished autofocus: " + (lastFocusResult_.getFocusSuccess() ? "successful" : "not successful")
