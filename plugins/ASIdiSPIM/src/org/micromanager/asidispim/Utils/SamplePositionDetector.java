@@ -24,27 +24,42 @@ public class SamplePositionDetector {
    private enum Axis {X, Y, Z}
    
 
-   
+   /**
+    * Calculates the sample of mass (using pixel coordinates) of the 3D volume of
+    * the given channel and position in this acquisition.
+    * Returns the center of mass in pixel coordinates
+    * @param acq  - Micro-Manager acquisition for which we want to know the center
+    *                of mass
+    * @param ch   - Channel to be used
+    * @param pos  - position to be used
+    * @return     - Center of mass in pixel coordinates
+    */
    public static Point3d getCenter(final MMAcquisition acq, final int ch, final int pos) {
-      final ImagePlus zProjection = project (acq, ch, pos, Axis.Z);
-      Point2d centerXY = centralXYPos(zProjection);
-      
-      final ImagePlus xProjection = project (acq, ch, pos, Axis.X);
-      Point2d centerYZ = centralXYPos(xProjection);
-      
-      Point3d center = new Point3d(centerXY.x, centerXY.y, centerYZ.x);
-      
-      return center;
+      return centerOfMass(getStack(acq, ch, pos));
    }
    
-   private static ImagePlus project (final MMAcquisition acq, final int ch, final int pos, final Axis axis) {
-      ImageStack stack = new ImageStack (acq.getWidth(), acq.getHeight());
-      int lastFrame = acq.getLastAcquiredFrame();
+   
+   /**
+    * Returns an ImageJ stack for the given channel and position in this
+    * Micro-manager acquisition
+    * @param acq   - Micro-Manager dataset
+    * @param ch    - Channel for which we want the stack
+    * @param pos   - Position for which we want the stack
+    * @return      - ImageJ stack containing a volume in one channel at one position
+    */
+   private static ImageStack getStack (final MMAcquisition acq, final int ch, final int pos) {
+      final ImageStack stack = new ImageStack (acq.getWidth(), acq.getHeight());
+      final int lastFrame = acq.getLastAcquiredFrame();
       for (int z=0; z < acq.getSlices(); z++) {
          TaggedImage tImg = acq.getImageCache().getImage(ch, z, lastFrame, pos);
          ImageProcessor processor = ImageUtils.makeProcessor(tImg);
          stack.addSlice(processor);
       }
+      return stack;
+   }
+   
+   private static ImagePlus project (final MMAcquisition acq, final int ch, final int pos, final Axis axis) {
+      ImageStack stack = getStack(acq, ch, pos);
 
       if (axis == Axis.Z) {
          ZProjector zp = new ZProjector(new ImagePlus("tmp", stack));
@@ -55,10 +70,10 @@ public class SamplePositionDetector {
       } else if (axis == Axis.X) {
          // do a sideways sum
          ImageProcessor projProc = new FloatProcessor(stack.getSize(), stack.getHeight());
-         for (int slice = 0; slice < stack.getSize(); slice++) {
+         for (int slice = 1; slice <= stack.getSize(); slice++) {
             for (int y = 0; y < stack.getHeight(); y++) {
                for (int x = 0; x < stack.getWidth(); x++) {
-                  projProc.setf(slice, y, projProc.getf(slice, y) + stack.getProcessor(slice).get(x, y)); 
+                  projProc.setf(slice-1, y, projProc.getf(slice-1, y) + stack.getProcessor(slice).get(x, y)); 
                }
             }
          }
@@ -78,11 +93,19 @@ public class SamplePositionDetector {
     */
    private static Point2d centralXYPos (ImagePlus projection) {
       IJ.setAutoThreshold(projection, "Li dark");
-      IJ.run(projection, "Convert to Mask", "");
+      IJ.run(projection, "Convert to Mask", "method=Li background=Dark black");
       IJ.run(projection, "Options...", "iterations=2 count=3 black pad edm=Overwrite do=Close");
 
-      IJ.run("Set Measurements...", "area centroid redirect=None decimal=2");
-      IJ.run("Analyze Particles...", "size=50-Infinity display exclude clear add");
+      IJ.run("Set Measurements...", "center redirect=None decimal=2");
+      // NS: I don't know why, but it seems that ImageJ uses pixel units rather than 
+      // micron^2, as it is supposed to.  Take no chances, and force it to use
+      // pixels^2 and convert ourselves.
+      double minSize = 50.0;
+      minSize /= 0.165;  // TODO: get pixel Width correctly
+      minSize /= 0.165;  
+      IJ.run(projection, "Measure", "");
+      
+      projection.show();
       
       ResultsTable rt = Analyzer.getResultsTable();
       
@@ -96,6 +119,35 @@ public class SamplePositionDetector {
       xyCenter.y /= numRows;
    
       return xyCenter;
+   }
+   
+   private static Point3d centerOfMass(ImageStack stack) {
+      int depth = stack.getSize();
+      ImageProcessor[] imgProcs = new ImageProcessor[stack.getSize()];
+      for (int i = 0; i < stack.getSize(); i++) {
+         imgProcs[i] = stack.getProcessor(i+1);
+      }
+      
+      double totalMass = 0.0;
+      double totalX = 0.0;
+      double totalY = 0.0;
+      double totalZ = 0.0;
+      for (int z = 0; z < depth; z++) {
+         for (int y = 0; y < stack.getHeight(); y++) {
+            for (int x = 0; x < stack.getWidth(); x++) {
+               totalMass += imgProcs[z].get(x, y);
+               totalX += x *  imgProcs[z].get(x, y);
+               totalY += y * imgProcs[z].get(x, y);
+               totalZ += z * imgProcs[z].get(x, y);
+            }
+         }
+      }
+      Point3d centerOfMass = new Point3d(
+            totalX / totalMass,
+            totalY / totalMass,
+            totalZ / totalMass);
+      
+      return centerOfMass;
    }
 
    

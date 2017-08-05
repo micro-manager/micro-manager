@@ -34,21 +34,21 @@ public class MovementDetector {
    }
    
    /**
-    * Determines position of the biggest object(s) in the sample
-    * and returns the difference with the previously measure position 
+    * Determines sample position (currently using Center of Mass) 
+    * and returns the difference with the previously measured position 
     * (or the 0,0,0 vector for the first time point).
     * Remembers the position of the object so that it can be used next.
     * It is therefore important to call this function consecutively for
     * each time point.
-    * @return 
+    * @return Movement since the last time point in pixel coordinates
     */
-   public  Point3d detectMovement() {
+   public Point3d detectMovement() {
       Point3d movement = new Point3d();
       
       int lastFrame = acq_.getLastAcquiredFrame();
       Point3d position = SamplePositionDetector.getCenter(acq_, ch_, pos_);
             
-      if (lastFrame > 1) {
+      if (lastFrame > 0) {
          movement = new Point3d(position);
          movement.sub(lastPosition_);
       }

@@ -1829,6 +1829,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       double timepointDuration = computeTimepointDuration();
       long timepointIntervalMs = Math.round(acqSettingsOrig.timepointInterval*1000);
       
+      // Needed for movement correction
+      float pixelSize = (float) core_.getPixelSizeUm();
+      if (pixelSize < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 if zero or negative
+         pixelSize = 0.1625f;  // default to pixel size of 40x with sCMOS = 6.5um/40
+      }
+      
       // use hardware timing if < 1 second between timepoints
       // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
       // cannot do this in getCurrentAcquisitionSettings because of mutually recursive
@@ -2862,6 +2868,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         movementDetectors[positionNum] = new MovementDetector(acq_, 0, positionNum);
                      }
                      Point3d movement = movementDetectors[positionNum].detectMovement();
+                     // movement is in pixel coordinates, translate here to microns
+                     movement.x *= pixelSize;
+                     movement.y *= pixelSize;
+                     movement.z *= acqSettings.stepSizeUm;
                      // TODO: we need to have a cut off to avoid accidents....
                      if (movement.distance(zeroPoint) > 25.0) {
                         System.out.println("Movement detected was greater than 25 micron.  Baling out");
