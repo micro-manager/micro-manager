@@ -70,6 +70,8 @@ public class SpotDataConverter {
          double NAperture = cPCF * fitResult.getApertureIntensity();
          double bgrAperture = Math.sqrt( cPCF * 
                  (fitResult.getApertureBackground() - info.getBaseLevel() ) );
+         // Add the read-noise of the camera (expressed in electrons)
+         bgrAperture = Math.sqrt( bgrAperture + (info.getReadNoise() * info.getReadNoise()));
 
          // Calculate error using the method by Mortenson et al.
          // http://dx.doi.org/10.1038/nmeth.1447
