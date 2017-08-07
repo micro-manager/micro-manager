@@ -1735,6 +1735,8 @@ public class DataCollectionForm extends JFrame {
          List<Double> stdDevs = new ArrayList<Double>();
          for (int sRow : rows) {
             if (row != sRow) {
+               // calculate the distance averaged over all frames 
+               // between between our track and this particalar one
                List<Double> dists = new ArrayList<Double>();
                final RowData sRowData = mainTableModel_.getRow(sRow);
                for (SpotData spotData : rowData.spotList_) {
@@ -1756,7 +1758,11 @@ public class DataCollectionForm extends JFrame {
                stdDevs.add(ListUtils.listStdDev(dists));
             }
          }
-         stdDevMap.put(row, ListUtils.listAvg(stdDevs));
+         // Now calculate the std. Dev. of all measured distances.
+         // Since we want to know the std. dev. in the position of our spot
+         // and the std. dev. of the distance consists of the std. dev. of both
+         // spots, we need to divide the std. dev. of the distance by Sqrt(2).
+         stdDevMap.put(row, ListUtils.listAvg(stdDevs) /sqrt2 );
       }
       Map<Integer, Double> sortedStdDevMap = MapUtils.sortByValue(stdDevMap);
       List<Integer> cleanedRows = new ArrayList<Integer>();
@@ -1832,6 +1838,10 @@ public class DataCollectionForm extends JFrame {
             intSigmas.add( Math.sqrt(altVarX) );
             intAptSigmas.add( Math.sqrt(aptAltVarx) );
          }
+         
+         // Since we want to know the std. dev. in the position of our spot
+         // and the std. dev. of the distance consists of the std. dev. of both
+         // spots, we need to divide the std. dev. of the distance by Sqrt(2).
          double stdDev = ListUtils.listAvg(stdDevs) / sqrt2;
          double intSigma = ListUtils.listAvg(intSigmas);
          double intAptSigma = ListUtils.listAvg(intAptSigmas);
