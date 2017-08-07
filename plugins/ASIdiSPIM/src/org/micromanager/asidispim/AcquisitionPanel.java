@@ -113,10 +113,10 @@ import java.awt.event.WindowListener;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import javax.media.j3d.Transform3D;
 
 import javax.swing.BorderFactory;
-import javax.vecmath.Point3d;
+import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.ChannelSpec;
@@ -2507,12 +2507,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MovementDetector[] movementDetectors = new MovementDetector[nrPositions];
                
             // Transformation matrices to convert between camera and stage coordinates
-            Transform3D camAMatrix = new Transform3D(); // initializes to the identity matrix
-            Transform3D camBMatrix = new Transform3D();
-            camAMatrix.rotY(-0.785398);   // rotate -45 degrees around y axis
-            camBMatrix.rotY(0.785398);    // rotate +45 degrees around y axis
+            final Vector3D yAxis = new Vector3D(0.0, 1.0, 0.0);
+            final Rotation camARotation = new Rotation( yAxis, Math.toRadians(45) );
+            final Rotation camBRotation = new Rotation ( yAxis, Math.toRadians(-45) );
 
-            final Point3d zeroPoint = new Point3d();  // cache a zero point for efficiency
+            final Vector3D zeroPoint = new Vector3D(0.0, 0.0, 0.0);  // cache a zero point for efficiency
             
             // make sure all devices have arrived, e.g. a stage isn't still moving
             try {
@@ -2867,39 +2866,40 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         // TODO: let user select which channel(s) to use
                         movementDetectors[positionNum] = new MovementDetector(acq_, 0, positionNum);
                      }
-                     Point3d movement = movementDetectors[positionNum].detectMovement();
+                     Vector3D tmpMovement = movementDetectors[positionNum].detectMovement();
                      // movement is in pixel coordinates, translate here to microns
-                     movement.x *= pixelSize;
-                     movement.y *= pixelSize;
-                     movement.z *= acqSettings.stepSizeUm;
+                     Vector3D movement = new Vector3D(pixelSize * tmpMovement.getX(),
+                             pixelSize * tmpMovement.getY(),
+                             acqSettings.stepSizeUm * tmpMovement.getZ() );
+
                      // TODO: we need to have a cut off to avoid accidents....
                      if (movement.distance(zeroPoint) > 25.0) {
                         System.out.println("Movement detected was greater than 25 micron.  Baling out");
 
                      } else {
                         // Transform from camera space to stage space:
-                        Transform3D rotMatrix = camBMatrix;
+                        Rotation rotation  = camBRotation;
                         if (firstSideA) {
-                           rotMatrix = camAMatrix;
+                           rotation = camARotation;
                         }
-                        rotMatrix.transform(movement);
+                        movement = rotation.applyTo(movement);
 
                         // if we are using the position list, update the position in the list
                         if (acqSettings.useMultiPositions) {
                            MultiStagePosition position = positionList.getPosition(positionNum);
                            StagePosition pos = position.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
-                           pos.x += movement.x;
-                           pos.y += movement.y;
+                           pos.x += movement.getX();
+                           pos.y += movement.getY();
                            StagePosition zPos = position.get(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
                            if (zPos != null) {
-                              zPos.x += movement.z;
+                              zPos.x += movement.getZ();
                            }
                         } else {
                            // only a single position, move the stage now
                            core_.setRelativeXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE),
-                                   movement.x, movement.y);
+                                   movement.getX(), movement.getY());
                            core_.setRelativePosition(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE),
-                                   movement.z);
+                                   movement.getZ());
                         }
 
                         System.out.println("Corrected Movement");

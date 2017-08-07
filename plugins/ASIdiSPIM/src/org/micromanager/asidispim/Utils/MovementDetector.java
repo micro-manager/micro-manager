@@ -1,7 +1,7 @@
 
 package org.micromanager.asidispim.Utils;
 
-import javax.vecmath.Point3d;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.micromanager.acquisition.MMAcquisition;
 
 /**
@@ -10,7 +10,7 @@ import org.micromanager.acquisition.MMAcquisition;
  */
 public class MovementDetector {
       
-   private  Point3d lastPosition_;
+   private  Vector3D lastPosition_;
    private final MMAcquisition acq_;
    private final int ch_;
    private final int pos_;
@@ -27,7 +27,6 @@ public class MovementDetector {
            final MMAcquisition acq, 
            final int ch, 
            final int pos) {
-      lastPosition_ = new Point3d();
       acq_ = acq;
       ch_ = ch;
       pos_ = pos;
@@ -42,15 +41,15 @@ public class MovementDetector {
     * each time point.
     * @return Movement since the last time point in pixel coordinates
     */
-   public Point3d detectMovement() {
-      Point3d movement = new Point3d();
+   public Vector3D detectMovement() {
+      Vector3D movement = new Vector3D(0.0, 0.0, 0.0);
       
       int lastFrame = acq_.getLastAcquiredFrame();
-      Point3d position = SamplePositionDetector.getCenter(acq_, ch_, pos_);
+      Vector3D position = SamplePositionDetector.getCenter(acq_, ch_, pos_);
             
-      if (lastFrame > 0) {
-         movement = new Point3d(position);
-         movement.sub(lastPosition_);
+      if (lastFrame > 0 && lastPosition_ != null) {
+         movement = new Vector3D(1.0, position);
+         movement.subtract(lastPosition_);
       }
       
       lastPosition_ = position;

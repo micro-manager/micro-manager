@@ -9,11 +9,14 @@ import ij.plugin.ZProjector;
 import ij.plugin.filter.Analyzer;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import javax.vecmath.Point2d;
-import javax.vecmath.Point3d;
+import java.awt.geom.Point2D;
+
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.utils.ImageUtils;
+
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
+
 
 /**
  *
@@ -34,7 +37,7 @@ public class SamplePositionDetector {
     * @param pos  - position to be used
     * @return     - Center of mass in pixel coordinates
     */
-   public static Point3d getCenter(final MMAcquisition acq, final int ch, final int pos) {
+   public static Vector3D getCenter(final MMAcquisition acq, final int ch, final int pos) {
       return centerOfMass(getStack(acq, ch, pos));
    }
    
@@ -91,7 +94,7 @@ public class SamplePositionDetector {
     * @param projection
     * @return 
     */
-   private static Point2d centralXYPos (ImagePlus projection) {
+   private static Point2D centralXYPos (ImagePlus projection) {
       IJ.setAutoThreshold(projection, "Li dark");
       IJ.run(projection, "Convert to Mask", "method=Li background=Dark black");
       IJ.run(projection, "Options...", "iterations=2 count=3 black pad edm=Overwrite do=Close");
@@ -109,19 +112,20 @@ public class SamplePositionDetector {
       
       ResultsTable rt = Analyzer.getResultsTable();
       
-      Point2d xyCenter = new Point2d();
+      double x = 0.0;
+      double y = 0.0;
       int numRows = rt.getCounter();
       for (int i = 0; i < numRows; i++) {
-         xyCenter.x += rt.getValue("X", i);
-         xyCenter.y += rt.getValue("Y", i);
+         x += rt.getValue("X", i);
+         y += rt.getValue("Y", i);
       }
-      xyCenter.x /= numRows;
-      xyCenter.y /= numRows;
+      x /= numRows;
+      y /= numRows;
    
-      return xyCenter;
+      return new Point2D.Double(x, y);
    }
    
-   private static Point3d centerOfMass(ImageStack stack) {
+   private static Vector3D centerOfMass(ImageStack stack) {
       int depth = stack.getSize();
       ImageProcessor[] imgProcs = new ImageProcessor[stack.getSize()];
       for (int i = 0; i < stack.getSize(); i++) {
@@ -142,7 +146,7 @@ public class SamplePositionDetector {
             }
          }
       }
-      Point3d centerOfMass = new Point3d(
+      Vector3D centerOfMass = new Vector3D(
             totalX / totalMass,
             totalY / totalMass,
             totalZ / totalMass);
