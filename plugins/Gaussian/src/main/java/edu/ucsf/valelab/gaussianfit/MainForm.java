@@ -207,6 +207,7 @@ public class MainForm extends JFrame {
        emGainTextField_.setText(Double.toString(up.getDouble(oc, GAIN, 50.0)));
        pixelSizeTextField_.setText(Double.toString(up.getDouble(oc, PIXELSIZE, 107.0)));
        baseLevelTextField_.setText(Double.toString(up.getDouble(oc, BACKGROUNDLEVEL, 100.0)));
+       readNoiseTextField_.setText(Double.toString(up.getDouble(oc, READNOISE, 0.0)));
        timeIntervalTextField_.setText(Double.toString(up.getDouble(oc, TIMEINTERVALMS, 1.0)));
        zStepTextField_.setText(Double.toString(up.getDouble(oc, ZSTEPSIZE, 50.0))); 
        
