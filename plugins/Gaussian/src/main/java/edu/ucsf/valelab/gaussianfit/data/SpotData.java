@@ -62,6 +62,8 @@ public class SpotData {
       public static final String MSIGMA = "Sigma-alt.";
       // integral method sigma estimate from Mortenson et al. paper
       public static final String INTEGRALSIGMA = "Sigma-integral";
+      // integral method sigma calculated using aperture intensity and background
+      public static final String INTEGRALAPERTURESIGMA = "Sigma-integral-aperture";
       // Number of spots in track or group
       public static final String N = "n";
       // Std. Deviation of positions in track or group
