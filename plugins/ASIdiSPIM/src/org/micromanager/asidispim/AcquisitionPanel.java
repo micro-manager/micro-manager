@@ -2508,8 +2508,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
             // Transformation matrices to convert between camera and stage coordinates
             final Vector3D yAxis = new Vector3D(0.0, 1.0, 0.0);
-            final Rotation camARotation = new Rotation( yAxis, Math.toRadians(45) );
-            final Rotation camBRotation = new Rotation ( yAxis, Math.toRadians(-45) );
+            final Rotation camARotation = new Rotation( yAxis, Math.toRadians(-45) );
+            final Rotation camBRotation = new Rotation ( yAxis, Math.toRadians(45) );
 
             final Vector3D zeroPoint = new Vector3D(0.0, 0.0, 0.0);  // cache a zero point for efficiency
             
@@ -2866,23 +2866,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         // TODO: let user select which channel(s) to use
                         movementDetectors[positionNum] = new MovementDetector(acq_, 0, positionNum);
                      }
-                     Vector3D tmpMovement = movementDetectors[positionNum].detectMovement();
+                     // We need to have a cut off to avoid accidents....
+                     double maxMovement = 25.0; // max movement in microns
+                     Vector3D tmpMovement = movementDetectors[positionNum].detectMovement(maxMovement / pixelSize);
                      // movement is in pixel coordinates, translate here to microns
                      Vector3D movement = new Vector3D(pixelSize * tmpMovement.getX(),
                              pixelSize * tmpMovement.getY(),
                              acqSettings.stepSizeUm * tmpMovement.getZ() );
 
-                     // TODO: we need to have a cut off to avoid accidents....
-                     if (movement.distance(zeroPoint) > 25.0) {
-                        System.out.println("Movement detected was greater than 25 micron.  Baling out");
-
-                     } else {
+                     
+                     if (!movement.equals(zeroPoint)) {
                         // Transform from camera space to stage space:
                         Rotation rotation  = camBRotation;
                         if (firstSideA) {
                            rotation = camARotation;
                         }
                         movement = rotation.applyTo(movement);
+                        
+                        gui_.logMessage(("ASIdiSPIM motion corrector moving stages: X: " + movement.getAlpha() +
+                                ", Y: " + movement.getY() + ", Z: " + movement.getZ()));
 
                         // if we are using the position list, update the position in the list
                         if (acqSettings.useMultiPositions) {

@@ -38,7 +38,7 @@ public class SamplePositionDetector {
     * @return     - Center of mass in pixel coordinates
     */
    public static Vector3D getCenter(final MMAcquisition acq, final int ch, final int pos) {
-      return centerOfMass(getStack(acq, ch, pos));
+      return centerOfMass(getStack(acq, ch, pos), 100);
    }
    
    
@@ -125,7 +125,7 @@ public class SamplePositionDetector {
       return new Point2D.Double(x, y);
    }
    
-   private static Vector3D centerOfMass(ImageStack stack) {
+   private static Vector3D centerOfMass(ImageStack stack, int offset) {
       int depth = stack.getSize();
       ImageProcessor[] imgProcs = new ImageProcessor[stack.getSize()];
       for (int i = 0; i < stack.getSize(); i++) {
@@ -139,10 +139,14 @@ public class SamplePositionDetector {
       for (int z = 0; z < depth; z++) {
          for (int y = 0; y < stack.getHeight(); y++) {
             for (int x = 0; x < stack.getWidth(); x++) {
-               totalMass += imgProcs[z].get(x, y);
-               totalX += x *  imgProcs[z].get(x, y);
-               totalY += y * imgProcs[z].get(x, y);
-               totalZ += z * imgProcs[z].get(x, y);
+               int mass = imgProcs[z].get(x, y) - offset;
+               if (mass < 0) {
+                  mass = 0;
+               }
+               totalMass += mass;
+               totalX += x * mass;
+               totalY += y * mass;
+               totalZ += z * mass;
             }
          }
       }
