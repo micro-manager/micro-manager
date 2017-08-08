@@ -97,6 +97,16 @@ public class SpotDataConverter {
             altVarX = 2 * altVarX;
          }
          double altSigma = Math.sqrt(altVarX);
+         
+          // variance using the integral function (5) from Mortenson et al.
+          // using aprteure intensity and background
+         double integralApt = calcIntegral(NAperture, info.getPixelSize(), sasqr, bgrAperture);
+         double altVarXApt = sasqr / N * (1 / (1 + integralApt));
+         // If EM gain was used, add uncertainty due to Poisson distributed noise
+         if (info.getGain() > 2.0) {
+            altVarXApt = 2 * altVarXApt;
+         }
+         double altSigmaApt = Math.sqrt(altVarXApt);
 
          if (fitResult.getParms().length >= 6) {
             sx = fitResult.getParms()[GaussianFit.S1] * info.getPixelSize();
@@ -125,6 +135,7 @@ public class SpotDataConverter {
          spotData.addKeyValue(SpotData.Keys.APERTUREBACKGROUND, bgrAperture);
          spotData.addKeyValue(SpotData.Keys.MSIGMA, mSigma);
          spotData.addKeyValue(SpotData.Keys.INTEGRALSIGMA, altSigma);
+         spotData.addKeyValue(SpotData.Keys.INTEGRALAPERTURESIGMA, altSigmaApt);
 
       }
       return spotData;
