@@ -342,6 +342,7 @@ public class Cameras {
          default:
             break;
          }
+         break;
       case DEMOCAM:
          // do nothing
          break;
@@ -636,6 +637,7 @@ public class Cameras {
             if (readoutTimeMs < 0.249f) {
                readoutTimeMs = 0.25f;
             }
+            break;
          default:
             break;
          }

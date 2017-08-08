@@ -695,7 +695,7 @@ public class PanelUtils {
        }
        
        JFormattedTextField tf = new JFormattedTextField();
-       tf.setValue((int) prefs_.getInt(prefNode, prefKey, defaultValue));
+       tf.setValue( prefs_.getInt(prefNode, prefKey, defaultValue) );
        tf.setColumns(numColumns);
        PropertyChangeListener listener = new FieldListener(tf, prefNode, prefKey);
        tf.addPropertyChangeListener("value", listener);

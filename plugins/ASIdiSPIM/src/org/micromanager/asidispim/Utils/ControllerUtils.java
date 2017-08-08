@@ -838,7 +838,7 @@ public class ControllerUtils {
             ReportingUtils.logDebugMessage("Could not get camera ROI for light sheet mode");
             return 0f;
          }
-         sheetWidth = (float) (roi.height * sheetSlope / 1e6f);  // in microdegrees per pixel, convert to degrees
+         sheetWidth = roi.height * sheetSlope / 1e6f;  // in microdegrees per pixel, convert to degrees
       } else {
          final boolean autoSheet = prefs_.getBoolean(
                MyStrings.PanelNames.SETUP.toString() + side.toString(), 
@@ -853,7 +853,7 @@ public class ControllerUtils {
             }
             final float sheetSlope = prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(), 
             Properties.Keys.PLUGIN_SLOPE_SHEET_WIDTH.toString(), 2);
-            sheetWidth = roi.height * (float) sheetSlope / 1000f;  // in millidegrees per pixel, convert to degrees
+            sheetWidth = roi.height *  sheetSlope / 1000f;  // in millidegrees per pixel, convert to degrees
             // TODO add extra width to compensate for filter depending on sweep rate and filter freq
             // TODO calculation should account for sample exposure to make sure 0.25ms edges get appropriately compensated for
             sheetWidth *= 1.1f;  // 10% extra width just to be sure
