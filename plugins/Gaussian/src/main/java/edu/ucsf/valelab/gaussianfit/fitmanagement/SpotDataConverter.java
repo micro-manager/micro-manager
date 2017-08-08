@@ -51,6 +51,16 @@ public class SpotDataConverter {
          }
          double N = cPCF * fitResult.getParms()[GaussianFit.INT]
                        * (2 * Math.PI * gs * gs);
+         
+         // # of photons and background as calculated using the method by
+         // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
+         double NAperture = cPCF * fitResult.getApertureIntensity();
+         // first calculate aperture background-noise squared 
+         // (i.e. background expressed in photons)
+         double bgrAperture =  cPCF * 
+                 (fitResult.getApertureBackground() - info.getBaseLevel() ) ;
+         // Add the read-noise of the camera (expressed in electrons)
+         bgrAperture = Math.sqrt( bgrAperture + (info.getReadNoise() * info.getReadNoise()));
          // double N = info.getPhotonConversionFactor() * fitResult.getParms()[GaussianFit.INT];
 
          // calculate error using formula from Thompson et al (2002)
@@ -65,15 +75,6 @@ public class SpotDataConverter {
          }
          double sigma = Math.sqrt(varX);
 
-         // # of photons and background as calculated using the method by
-         // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
-         double NAperture = cPCF * fitResult.getApertureIntensity();
-         // first calculate aperture background-noise squared 
-         // (i.e. background expressed in photons)
-         double bgrAperture =  cPCF * 
-                 (fitResult.getApertureBackground() - info.getBaseLevel() ) ;
-         // Add the read-noise of the camera (expressed in electrons)
-         bgrAperture = Math.sqrt( bgrAperture + (info.getReadNoise() * info.getReadNoise()));
 
          // Calculate error using the method by Mortenson et al.
          // http://dx.doi.org/10.1038/nmeth.1447
