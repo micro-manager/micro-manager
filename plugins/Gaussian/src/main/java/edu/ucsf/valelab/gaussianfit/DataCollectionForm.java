@@ -61,7 +61,6 @@ import edu.ucsf.valelab.gaussianfit.datasetdisplay.TrackPlotter;
 import edu.ucsf.valelab.gaussianfit.datasettransformations.DriftCorrector;
 import edu.ucsf.valelab.gaussianfit.datasettransformations.PairFilter;
 import edu.ucsf.valelab.gaussianfit.datasettransformations.TrackOperator;
-import edu.ucsf.valelab.gaussianfit.fitmanagement.SpotDataConverter;
 import edu.ucsf.valelab.gaussianfit.internal.tabledisplay.DataTable;
 import edu.ucsf.valelab.gaussianfit.internal.tabledisplay.DataTableModel;
 import edu.ucsf.valelab.gaussianfit.internal.tabledisplay.DataTableRowSorter;
@@ -100,6 +99,7 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -935,10 +935,21 @@ public class DataCollectionForm extends JFrame {
          JMenuItem getInterTrackDistancesItem = new JMenuItem(new AbstractAction("Inter Track Distances") {
             @Override
             public void actionPerformed(ActionEvent ae) {
-               String header = getInterTrackDistances(true);
-               String interTrackDistances = getInterTrackDistances(false);
-               Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
-               clpbrd.setContents(new StringSelection(header + "\n" + interTrackDistances), null);
+               IJ.showStatus("Calculating Inter Track distances...");
+               
+               // Distance calculations take a long time so need their own thread
+               Runnable calculateDistances = new Runnable() {
+                  @Override
+                  public void run() {
+                     String header = getInterTrackDistances(true);
+                     String interTrackDistances = getInterTrackDistances(false);
+                     Clipboard clpbrd = Toolkit.getDefaultToolkit().getSystemClipboard();
+                     clpbrd.setContents(new StringSelection(header + "\n" + interTrackDistances), null);
+                  }
+               };
+
+               (new Thread(calculateDistances, "Calculate distances")).start();
+               
             }
          });
          super.add(getInterTrackDistancesItem);
@@ -1718,142 +1729,148 @@ public class DataCollectionForm extends JFrame {
    public String getInterTrackDistances(boolean header) {
       
       if (header) {
-         return "ID\tn1\tn2\tstdDev\tCalc.Sigma\tCalc. Sigma (Aperture)";
+         return "Spot ID 1\tSpot ID 2\tMeasured Dist. Std. Dev\t" +
+                 "Predicted Dist. Std Dev. (Integral Aperture)\t" +
+                 "Measured Dist. Std. Dev. (direct)";
       }
+      
+      final double cutoffPercentage = 0.75;
+      
+      final double firstHalfWaitInProgressBar = 0.5;
          
       final int rows[] = mainTable_.getSelectedRowsSorted();
-      final double sqrt2 = Math.sqrt(2);
       
-      // First go through all tracks and calculate the stdDev in the distance
-      // to all other spots.  Then throw out the top x (25) %, since we have
+      // First go through all tracks and calculate the variance in the distances
+      // to all other spots.  Then throw out the top cutoffPercentage, since we have
       // noticed that there are usually badly behaving spots.
-      // Go through the cleaned up list and report the avg. sigmas
+      // Go through the cleaned up list and report the average measured 
+      // and predicted sigmas
       
-      Map<Integer, Double> stdDevMap = new HashMap<Integer, Double>();
+      Map<Integer, Double> variancesMap = new HashMap<Integer, Double>();
+      final AtomicInteger progressCounter = new AtomicInteger(1);
       for (int row : rows) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               IJ.showProgress((double) progressCounter.getAndIncrement() / 
+                       (double) rows.length * firstHalfWaitInProgressBar);
+         }
+         });
          final RowData rowData = mainTableModel_.getRow(row);
-         List<Double> stdDevs = new ArrayList<Double>();
+         List<Double> variances = new ArrayList<Double>();
          for (int sRow : rows) {
             if (row != sRow) {
                // calculate the distance averaged over all frames 
-               // between between our track and this particalar one
-               List<Double> dists = new ArrayList<Double>();
+               // between between our track and this particular one
+               final List<Double> distsSqr = new ArrayList<Double>();
                final RowData sRowData = mainTableModel_.getRow(sRow);
+               Map<Integer, List<SpotData>> sSpotListByFrame = sRowData.getSpotListIndexedByFrame();
                for (SpotData spotData : rowData.spotList_) {
-                  Iterator<SpotData> iterator = sRowData.spotList_.iterator();
                   SpotData sSpotData = null;
-                  boolean found = false;
-                  while (iterator.hasNext() && !found) {
-                     sSpotData = iterator.next();
-                     if (spotData.getFrame() == sSpotData.getFrame()) {
-                        found = true;
-                     }
+                  if (sSpotListByFrame.get(spotData.getFrame()) != null) {
+                     sSpotData = (SpotData) sSpotListByFrame.get(spotData.getFrame()).get(0);
                   }
-                  if (found && sSpotData != null) {
-                     double xDiff = spotData.getXCenter() - sSpotData.getXCenter();
-                     double yDiff = spotData.getYCenter() - sSpotData.getYCenter();
-                     dists.add(Math.sqrt(xDiff * xDiff + yDiff * yDiff));
+                  if (sSpotData != null) {
+                     double xDistance = spotData.getXCenter() - sSpotData.getXCenter();
+                     double yDistance = spotData.getYCenter() - sSpotData.getYCenter();
+                     distsSqr.add(xDistance * xDistance + yDistance * yDistance);
                   }
                }
-               stdDevs.add(ListUtils.listStdDev(dists));
+               variances.add(ListUtils.listStdDev(distsSqr));
             }
          }
-         // Now calculate the std. Dev. of all measured distances.
-         // Since we want to know the std. dev. in the position of our spot
-         // and the std. dev. of the distance consists of the std. dev. of both
-         // spots, we need to divide the std. dev. of the distance by Sqrt(2).
-         stdDevMap.put(row, ListUtils.listAvg(stdDevs) /sqrt2 );
+         // Calculate the std. Dev. of all measured distances.
+         variancesMap.put(row, ListUtils.listAvg(variances) );
       }
-      Map<Integer, Double> sortedStdDevMap = MapUtils.sortByValue(stdDevMap);
-      List<Integer> cleanedRows = new ArrayList<Integer>();
+      Map<Integer, Double> sortedStdDevMap = MapUtils.sortByValue(variancesMap);
+      final List<Integer> cleanedRows = new ArrayList<Integer>();
       Set<Map.Entry<Integer, Double>> entrySet = sortedStdDevMap.entrySet();
       Iterator<Map.Entry<Integer, Double>> eIterator = entrySet.iterator();
-      int cutOff = (int) (0.75 * (double) sortedStdDevMap.size());
+      int cutOff = (int) (cutoffPercentage * (double) sortedStdDevMap.size());
       while (eIterator.hasNext() && cleanedRows.size() < cutOff) {
          Map.Entry<Integer, Double> next = eIterator.next();
          cleanedRows.add(next.getKey());
       }
       
       
-      String output = "";
+      StringBuilder  output = new StringBuilder(10000);
+      List<Double> measuredSigmas = new ArrayList<Double>();
+      List<Double> predictedSigmas = new ArrayList<Double>();
       
+      progressCounter.set(1);
       for (int row : cleanedRows) {
+         SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+               IJ.showProgress(firstHalfWaitInProgressBar + 
+                       (double) progressCounter.getAndIncrement() / 
+                               (double)cleanedRows.size() * ( 1 - firstHalfWaitInProgressBar) );
+         }
+         });
          final RowData rowData = mainTableModel_.getRow(row);
-         List<Double> xStdDevs = new ArrayList<Double>();
-         List<Double> yStdDevs = new ArrayList<Double>();
-         List<Double> stdDevs = new ArrayList<Double>();
          for (int sRow : cleanedRows) {
             if (row != sRow) {
-               List<Double> xDist = new ArrayList<Double>();
-               List<Double> yDist = new ArrayList<Double>();
-               List<Double> dists = new ArrayList<Double>();
+               List<Double> xDists = new ArrayList<Double>();
+               List<Double> yDists = new ArrayList<Double>();
+               List<Double> predictedDistStdDevs = new ArrayList<Double>();
                final RowData sRowData = mainTableModel_.getRow(sRow);
+               Map<Integer, List<SpotData>> sSpotListByFrame = sRowData.getSpotListIndexedByFrame();
                for (SpotData spotData : rowData.spotList_) {
-                  Iterator<SpotData> iterator = sRowData.spotList_.iterator();
                   SpotData sSpotData = null;
-                  boolean found = false;
-                  while (iterator.hasNext() && !found) {
-                     sSpotData = iterator.next();
-                     if (spotData.getFrame() == sSpotData.getFrame()) {
-                        found = true;
-                     }
+                  if (sSpotListByFrame.get(spotData.getFrame()) != null) {
+                     sSpotData = (SpotData) sSpotListByFrame.get(spotData.getFrame()).get(0);
                   }
-                  if (found && sSpotData != null) {
-                     double xDiff = spotData.getXCenter() - sSpotData.getXCenter();
-                     xDist.add(xDiff);
-                     double yDiff = spotData.getYCenter() - sSpotData.getYCenter();
-                     yDist.add(yDiff);
-                     dists.add(Math.sqrt(xDiff * xDiff + yDiff * yDiff));
+                  if (sSpotData != null) {
+                     double xDist = spotData.getXCenter() - sSpotData.getXCenter();
+                     xDists.add(xDist);
+                     double yDist = spotData.getYCenter() - sSpotData.getYCenter();
+                     yDists.add(yDist);
+                     double pStdDevA = spotData.getValue(SpotData.Keys.INTEGRALAPERTURESIGMA);
+                     double pStdDevB = sSpotData.getValue(SpotData.Keys.INTEGRALAPERTURESIGMA);
+                     predictedDistStdDevs.add(Math.sqrt(pStdDevA * pStdDevA + pStdDevB * pStdDevB));
                   }
-                  
                }
-               xStdDevs.add(ListUtils.listStdDev(xDist));
-               yStdDevs.add(ListUtils.listStdDev(yDist));
-               stdDevs.add(ListUtils.listStdDev(dists));
+               // Propagate errors in x and y
+               double xAvg = ListUtils.listAvg(xDists);
+               double yAvg = ListUtils.listAvg(yDists);
+               double xStdDev = ListUtils.listStdDev(xDists, xAvg);
+               double yStdDev = ListUtils.listStdDev(yDists, yAvg);
+               double measuredSigma = 1 / Math.sqrt(xAvg * xAvg + yAvg * yAvg) *
+                       Math.sqrt(xStdDev * xStdDev * xAvg * xAvg + 
+                               yStdDev * yStdDev * yAvg * yAvg);
+               measuredSigmas.add(measuredSigma);
+               double predictedDistStdDev = ListUtils.listAvg(predictedDistStdDevs);
+               predictedSigmas.add(predictedDistStdDev);
+            
+               output.append(rowData.ID_).append("\t").append(sRowData.ID_).
+                       append("\t").append( measuredSigma ). 
+                       append("\t").append(predictedDistStdDev).
+                       append("\n");
             }
          }
 
-         List<Double> intSigmas = new ArrayList<Double>();
-         List<Double> intAptSigmas = new ArrayList<Double>();
-         for (SpotData spotData : rowData.spotList_) {
-            // calculate sigma using Mortenson integral method
-            double s = spotData.getWidth() / 2;
-            double pixelSize = rowData.pixelSizeNm_;
-            double sasqr = s * s + (pixelSize * pixelSize) / 12;
-            double integral = SpotDataConverter.calcIntegral(
-                    spotData.getIntensity(), pixelSize, sasqr, spotData.getBackground());
-            double altVarX = sasqr / spotData.getIntensity() * (1 / (1 + integral));
-            double aptIntegral = SpotDataConverter.calcIntegral(
-                    spotData.getValue(SpotData.Keys.APERTUREINTENSITY), 
-                    pixelSize,
-                    sasqr,
-                    spotData.getValue(SpotData.Keys.APERTUREBACKGROUND));
-            double aptAltVarx = sasqr / spotData.getValue(SpotData.Keys.APERTUREINTENSITY) *
-                    (1 / (1 + aptIntegral) );
-                    
-            // If EM gain was used, add uncertainty due to Poisson distributed noise
-            //if (rowData. > 2.0) {
-            //   altVarX = 2 * altVarX;
-           // }
-            intSigmas.add( Math.sqrt(altVarX) );
-            intAptSigmas.add( Math.sqrt(aptAltVarx) );
-         }
-         
-         // Since we want to know the std. dev. in the position of our spot
-         // and the std. dev. of the distance consists of the std. dev. of both
-         // spots, we need to divide the std. dev. of the distance by Sqrt(2).
-         double stdDev = ListUtils.listAvg(stdDevs) / sqrt2;
-         double intSigma = ListUtils.listAvg(intSigmas);
-         double intAptSigma = ListUtils.listAvg(intAptSigmas);
-         output += rowData.ID_ + "\t" + 
-                 rowData.spotList_.size() + "\t" + 
-                 xStdDevs.size() + "\t" + 
-                 stdDev + "\t" + 
-                 intSigma + "\t" + 
-                 intAptSigma + "\n";
       }
+      
+      StringBuilder finalOutput = new StringBuilder(output.length() + 1000);
+      double measuredSigmaAverage = ListUtils.listAvg(measuredSigmas);
+      double predictedSigmaAverage = ListUtils.listAvg(predictedSigmas);
+      finalOutput.append("\tAverage:\t").append(measuredSigmaAverage).
+              append("\t").append(predictedSigmaAverage).append("\n");
+      finalOutput.append("\tStd. Dev.:\t").
+              append(ListUtils.listStdDev(measuredSigmas, measuredSigmaAverage)).
+              append("\t").
+              append(ListUtils.listStdDev(predictedSigmas, predictedSigmaAverage)).
+              append("\n");
+      finalOutput.append(output);
+      
+      SwingUtilities.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            IJ.showStatus("Copied Inter Track distance data");
+         }
+      });
 
-      return output;
+      return finalOutput.toString();
    }
 
    /**
