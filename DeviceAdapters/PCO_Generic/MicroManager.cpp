@@ -3187,7 +3187,7 @@ const unsigned int* CPCOCam::GetImageBufferAsRGB32()
 
 const unsigned char* CPCOCam::GetImageBuffer()
 {
-  return (unsigned char*) GetBuffer(0);
+  return (unsigned char*) GetBuffer(m_iLastBufferUsed[0]);
 }
 
 
@@ -3800,6 +3800,9 @@ int CPCOCam::SnapImage()
     m_iNextBuffer = 0;
 
     unsigned int uiMode = 0x10000 + 0x0040 + 0x0010;//Avoid adding buffers, Preview, Single
+    if(m_bSoftwareTriggered)
+      uiMode = 0x10000 + 0x0010;
+      
     nErr = m_pCamera->PreStartCam(uiMode, 0, 0, 0);            // schaltet automatisch auf internen Trigger
 
     nErr = m_pCamera->StartCam();

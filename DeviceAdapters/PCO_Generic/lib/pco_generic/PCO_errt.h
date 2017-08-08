@@ -212,6 +212,12 @@ static char* PCO_ERROR_SDKDLL_TXT[] =
   "A DLL could not be found, due to div by zero.", // 0x80003011  PCO_ERROR_SDKDLL_DLLNOTFOUND_DIVZERO
   "Buffer is already queued.",                     // 0x80003012  PCO_ERROR_SDKDLL_BUFFERALREADYQUEUED
   "Buffer is not queued.",                         // 0x80003013  PCO_ERROR_SDKDLL_BUFFERNOTQUEUED
+  "","","","","","","","","","","","",             // 0x80003014 - 0x8000301F
+  "",                                              // 0x80003020
+  "Recording of camera must be off for recorder",  // 0x80003021  PCO_ERROR_SDKDLL_RECORDER_RECORD_MUST_BE_OFF     
+  "Acquisition in Recorder must be off",           // 0x80003022  PCO_ERROR_SDKDLL_RECORDER_ACQUISITION_MUST_BE_OFF
+  "Camera settings changed outside of recorder",   // 0x80003023  PCO_ERROR_SDKDLL_RECORDER_SETTINGS_CHANGED       
+  "No acquired images available in recorder",      // 0x80003024  PCO_ERROR_SDKDLL_RECORDER_NO_IMAGES_AVAILABLE    
 };
 
 const int SDKDLL_MSGNUM = sizeof(PCO_ERROR_SDKDLL_TXT) / sizeof(PCO_ERROR_SDKDLL_TXT[0]);
