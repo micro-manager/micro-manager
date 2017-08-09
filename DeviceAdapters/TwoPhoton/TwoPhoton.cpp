@@ -342,10 +342,10 @@ int BitFlowCamera::SnapImage()
 	bfDev_.StartSequence(); // start streaming mode
 	for (int k=0; k < numFrames; k++) {
 
-		char message[100];
-		strcpy(message,"Frame number ");
-		strcat(message,CDeviceUtils::ConvertToString(k));
-		GetCoreCallback()->LogMessage(this, message,true);
+		//char message[100];
+		//strcpy(message,"Frame number ");
+		//strcat(message,CDeviceUtils::ConvertToString(k));
+		//GetCoreCallback()->LogMessage(this, message,true);
 
 		unsigned char* buf = const_cast<unsigned char*>(bfDev_.GetImageCont());      
 		if (buf == 0) {
@@ -1269,7 +1269,7 @@ void BitFlowCamera::ConstructImage(unsigned char* buf, int bufLen, unsigned rawW
 {
    assert(rawWidth/2 > img_[0].Width());
    int fullWidth = rawWidth/2;
-   const int warpOffsetBase = -119; // this warp offset produces full frame at 480 pixels per line
+   const int warpOffsetBase = -112; // this warp offset produces full frame at 480 pixels per line
 
    for (unsigned i=0; i<img_.size(); i++)
    {
