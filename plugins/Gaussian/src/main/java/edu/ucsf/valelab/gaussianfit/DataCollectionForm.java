@@ -1739,6 +1739,10 @@ public class DataCollectionForm extends JFrame {
       final double firstHalfWaitInProgressBar = 0.5;
          
       final int rows[] = mainTable_.getSelectedRowsSorted();
+      if (rows.length < 2) {
+         ReportingUtils.showError("Need at least 2 tracks to calculate inter track distance statistics");
+         return "";
+      }
       
       // First go through all tracks and calculate the variance in the distances
       // to all other spots.  Then throw out the top cutoffPercentage, since we have
