@@ -378,7 +378,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                               siPlus.setRoi(roi, false);
                               siProc = siPlus.getProcessor();
                               Polygon q = FindLocalMaxima.FindMax(siPlus, 
-                                      super.getHalfBoxSize(), noiseTolerance_,
+                                      2 * super.getHalfBoxSize(), noiseTolerance_,
                                       preFilterType_);
                               for (int i = 0; i < q.npoints; i++) {
                                  p.addPoint(q.xpoints[i], q.ypoints[i]);
@@ -387,7 +387,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                         } else {  // no Rois in RoiManager
                            siPlus.setRoi(originalRoi, false);
                            siProc = siPlus.getProcessor();
-                           p = FindLocalMaxima.FindMax(siPlus, super.getHalfBoxSize(), noiseTolerance_,
+                           p = FindLocalMaxima.FindMax(siPlus, 2 * super.getHalfBoxSize(), noiseTolerance_,
                                    preFilterType_);
                         }
                      }

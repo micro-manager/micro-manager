@@ -1057,7 +1057,7 @@ public class MainForm extends JFrame {
             if (rois != null && rois.length > 0) {
                for (Roi roi : rois) {
                   siPlus.setRoi(roi, false);
-                  Polygon pol = FindLocalMaxima.FindMax(siPlus,2 *  halfSize, val, preFilterType_);
+                  Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 *  halfSize, val, preFilterType_);
                   for (int i = 0; i < pol.npoints && !aStop_.get(); i++) {
                      int x = pol.xpoints[i];
                      int y = pol.ypoints[i];

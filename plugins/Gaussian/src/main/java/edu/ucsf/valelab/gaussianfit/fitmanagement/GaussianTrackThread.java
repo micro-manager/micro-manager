@@ -142,7 +142,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          return false;
       }
       
-      Polygon pol = FindLocalMaxima.FindMax(siPlus, super.getHalfBoxSize(), 
+      Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 * super.getHalfBoxSize(), 
               super.getNoiseTolerance(), preFilterType_);
       if (pol.npoints == 0) {
          if (!silent_)
