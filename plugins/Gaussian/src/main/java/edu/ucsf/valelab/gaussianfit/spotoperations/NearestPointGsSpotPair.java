@@ -34,6 +34,7 @@ either expressed or implied, of the FreeBSD Project.
  */
 
 package edu.ucsf.valelab.gaussianfit.spotoperations;
+
 import edu.ucsf.valelab.gaussianfit.data.GsSpotPair;
 import ags.utils.KdTree;
 import ags.utils.KdTree.Entry;

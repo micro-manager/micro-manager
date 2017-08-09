@@ -94,7 +94,39 @@ public class FindLocalMaxima {
             break;
       }
 
-
+     
+      for (int x = roi.x + n; x < roi.width + roi.x - n - 1; x++) {
+         for (int y = roi.y + n; y < roi.height + roi.y - n - 1; y++) {
+            // Is this a local maximum?
+            boolean failed = false;
+            for (int mx = x - n; mx < x+ n && !failed; mx++) {
+               for (int my = y - n; my < y + n && !failed; my++) {
+                  if (iProc.get(mx, my) > iProc.get(x, y)) {
+                        failed = true;
+                  } else if (iProc.get(mx, my) == iProc.get(x, y)) {
+                     // special handling of pixels of equal intensity
+                     if (mx > x || my > y) {
+                        // avoid excluding x,y itself, when there are multiple 
+                        // pixel of same intensity in the box, take the first one
+                        failed = true;
+                     }
+                  }
+               }
+            }
+            if (!failed) {
+               int cornerAverage = (iProc.get(x - n, y -n) + iProc.get(x - n, y + n) + 
+                       iProc.get(x + n, y -n) + iProc.get(x + n, y + n) ) / 4;
+               if (iProc.get(x, y) - threshold > cornerAverage) {
+                  maxima.addPoint(x, y);
+               }
+            }
+         }
+      }
+      
+      
+            
+ /*      
+     
       // divide the image up in blocks of size n and find local maxima
       int n2 = 2*n + 1;
       // calculate borders once
@@ -164,7 +196,7 @@ public class FindLocalMaxima {
                maxima.addPoint(mi, mj);
          }
       }
-
+*/
 
       return maxima;
    }
