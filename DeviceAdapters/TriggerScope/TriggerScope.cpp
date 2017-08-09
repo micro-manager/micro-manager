@@ -2167,7 +2167,7 @@ int CTriggerScopeHub::LoadProgFile()
 	char strLine[1024], strOut[1024], *str, *str1, *str2;
 	int nNum=0, nTable[16];
 
-	if(fid>0)
+	if(fid > (void*) 0)
 	{
 		Send("CLEARTABLE");
 		ReceiveOneLine();
