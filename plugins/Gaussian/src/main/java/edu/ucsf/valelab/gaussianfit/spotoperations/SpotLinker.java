@@ -279,6 +279,9 @@ public class SpotLinker {
                         List<SpotData> markedSpots = new ArrayList<SpotData>();
                         // go through all tracks to see if they can be extended
                         if (tracks.size() > 0) {
+                           // Ideally we would have code to find the closes by Gaussian Spot
+                           // but we only have code for Gaussian Spot pairs.  Simply ignore
+                           // the second Gaussian Spot.
                            ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
                            for (SpotData spot : spots) {
                               gsSpots.add(new GsSpotPair(spot, null,
