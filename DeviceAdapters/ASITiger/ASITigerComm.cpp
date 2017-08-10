@@ -60,7 +60,7 @@ int CTigerCommHub::Initialize()
 
    // get version information from the controller, this is just for TigerComm (hub/serial card)
    int ret = QueryCommandVerify("0 V", ":A v");  // N.B. this is different for non-Tiger controllers like MS/WK-2000
-   if(ret == ERR_UNRECOGNIZED_ANSWER)
+   if (ret == ERR_UNRECOGNIZED_ANSWER)
       ret = DEVICE_NOT_SUPPORTED;
    RETURN_ON_MM_ERROR (ret);
    RETURN_ON_MM_ERROR ( ParseAnswerAfterPosition(4, firmwareVersion_) );
@@ -70,7 +70,7 @@ int CTigerCommHub::Initialize()
 
    // get compile date information from the controller, this is just for TigerComm (hub/serial card)
    ret = QueryCommand("0 CD");  // N.B. this is different for non-Tiger controllers like MS/WK-2000
-   if(ret == ERR_UNRECOGNIZED_ANSWER)
+   if (ret == ERR_UNRECOGNIZED_ANSWER)
       ret = DEVICE_NOT_SUPPORTED;
    RETURN_ON_MM_ERROR (ret);
    firmwareDate_ = LastSerialAnswer();
@@ -78,7 +78,7 @@ int CTigerCommHub::Initialize()
 
    // get build name information from the controller, this is just for TigerComm (hub/serial card)
    ret = QueryCommand("0 BU");  // N.B. this is different for non-Tiger controllers like MS/WK-2000
-   if(ret == ERR_UNRECOGNIZED_ANSWER)
+   if (ret == ERR_UNRECOGNIZED_ANSWER)
       ret = DEVICE_NOT_SUPPORTED;
    RETURN_ON_MM_ERROR (ret);
    firmwareBuild_ = LastSerialAnswer();
@@ -89,6 +89,16 @@ int CTigerCommHub::Initialize()
 
    // say which com port we are on
    RETURN_ON_MM_ERROR ( CreateProperty(g_SerialComPortPropertyName, port_.c_str(), MM::String, true) );
+
+   // get build info for axis letters
+   build_info_type build;
+   RETURN_ON_MM_ERROR ( GetBuildInfo("", build) );
+   command.str("");
+   for (unsigned int i=0; i<build.numAxes; ++i)
+   {
+      command << build.vAxesLetter[i];
+   }
+   RETURN_ON_MM_ERROR ( CreateProperty(g_AxisLetterPropertyName, command.str().c_str(), MM::String, true) );
 
    // if we made it this far everything looks good
    initialized_ = true;
@@ -112,11 +122,11 @@ MM::DeviceDetectionStatus CTigerCommHub::DetectDevice()   // looks for hub, not 
    try
    {
       std::string portLowerCase = port_;
-      for( std::string::iterator its = portLowerCase.begin(); its != portLowerCase.end(); ++its)
+      for ( std::string::iterator its = portLowerCase.begin(); its != portLowerCase.end(); ++its)
       {
          *its = (char)tolower(*its);
       }
-      if( 0< portLowerCase.length() &&  0 != portLowerCase.compare("undefined")  && 0 != portLowerCase.compare("unknown") )
+      if ( 0< portLowerCase.length() &&  0 != portLowerCase.compare("undefined")  && 0 != portLowerCase.compare("unknown") )
       {
          result = MM::CanNotCommunicate;
 
@@ -133,7 +143,7 @@ MM::DeviceDetectionStatus CTigerCommHub::DetectDevice()   // looks for hub, not 
          pS->Initialize();
          PurgeComPort(port_.c_str());
          int ret = TalkToTiger();  // this line unique to this hub, most of rest is copied from existing code
-         if( DEVICE_OK != ret )
+         if ( DEVICE_OK != ret )
          {
             LogMessageCode(ret,true);
          }
@@ -184,15 +194,13 @@ int CTigerCommHub::DetectInstalledDevices()
    //   appear to populate the Peripheral device list of the hub but the InitializeModuleData don't
    MM::Device* pDev;
    string name;
-   bool twoaxis = 0;
-   unsigned int channels=1;
    char splitAxisLetter = ' '; // used only if XY stage split across two cards
    string splitAddrHex = "";  // used only if XY stage split across two cards
    int ret=0;
-   for (unsigned int i=0; i<build.numAxes; i++)
+   for (unsigned int i=0; i<build.numAxes; ++i)
    {
-      twoaxis = 0;
-	  channels=1; // One Channel per Axis is default
+      bool twoaxis = false;
+      unsigned int channels = 1; // used for TGLED, TGPMT, etc. that may have more than one MM device per axis letter
       name = "";
       ostringstream command;
       command << "Adding axis " << build.vAxesLetter[i] << " with type " << build.vAxesType[i] << " at address " << build.vAxesAddrHex[i];
@@ -204,13 +212,13 @@ int CTigerCommHub::DetectInstalledDevices()
             {
                // we have an XY pair
                name = g_XYStageDeviceName;
-               twoaxis = 1;
+               twoaxis = true;
                i++; // skip one code because we added two axes in one step
             }
             else if (build.vAxesType[i+1] == 'z')
             {
                // we have one XY axis on this card (and presumably corresponding axis on other card)
-               if(splitAxisLetter != ' ')
+               if (splitAxisLetter != ' ')
                {
                   // we already saw another unpaired axis, pair it with this one
                   name = g_XYStageDeviceName;
@@ -246,7 +254,7 @@ int CTigerCommHub::DetectInstalledDevices()
             if (build.vAxesType[i+1] == 'u')  // skip one code because we added two axes in one step
             {
                name = g_ScannerDeviceName;
-               twoaxis = 1;
+               twoaxis = true;
                i++; // skip one code because we added two axes in one step
             }
             else
@@ -279,40 +287,40 @@ int CTigerCommHub::DetectInstalledDevices()
             break;
          case 'i': // TGLED
             name = g_LEDDeviceName;
-			// on TGLED card multiple channels fall under 1 axis
-			//Now lets figure out how many channels there are onboard
-			 command.str("");
-			 command << build.vAxesAddr[i] << "BU";
-			 ret=QueryCommandVerify(command.str(), "TGLED");
-		     if(ret == ERR_UNRECOGNIZED_ANSWER)
-			 { //error , lets go with a guess which is 4
-			 channels=4;
-			 }
-			 else
-			 {
-			 ParseAnswerAfterUnderscore(channels);
-			 }
+            // on TGLED card multiple channels fall under 1 axis
+            //Now lets figure out how many channels there are onboard
+            command.str("");
+            command << build.vAxesAddr[i] << "BU";
+            ret = QueryCommandVerify(command.str(), "TGLED");
+            if (ret == ERR_UNRECOGNIZED_ANSWER)
+            { //error , lets go with a guess which is 4
+               channels = 4;
+            }
+            else
+            {
+               RETURN_ON_MM_ERROR ( ParseAnswerAfterUnderscore(channels) );
+            }
             break; 
-          case 'c': // TGPMT
+         case 'c': // TGPMT
             name = g_PMTDeviceName;
-			// on TGPMT card multiple channels fall under 1 axis
-			//Now lets figure out how many channels there are onboard
-			 command.str("");
-			 command << build.vAxesAddr[i] << "BU";
-			 ret=QueryCommandVerify(command.str(), "TGPMT");
-		     if(ret == ERR_UNRECOGNIZED_ANSWER)
-			 { //error , lets go with a guess which is 2
-			 channels=2;
-			 }
-			 else
-			 {
-			 ParseAnswerAfterUnderscore(channels);
-			 }
+            // on TGPMT card multiple channels fall under 1 axis
+            //Now lets figure out how many channels there are onboard
+            command.str("");
+            command << build.vAxesAddr[i] << "BU";
+            ret = QueryCommandVerify(command.str(), "TGPMT");
+            if (ret == ERR_UNRECOGNIZED_ANSWER)
+            { //error , lets go with a guess which is 2
+               channels=2;
+            }
+            else
+            {
+               RETURN_ON_MM_ERROR ( ParseAnswerAfterUnderscore(channels) );
+            }
             break;
-		   case 'b':  // Tunable Lens
+         case 'b':  // Tunable Lens
             name = g_LensDeviceName;
             break;
-		 default:
+         default:
             command.str("");
             command << "Device type " <<  build.vAxesType[i] << " not supported by Tiger device adapter, skipping it";
             LogMessage(command.str());
@@ -326,26 +334,28 @@ int CTigerCommHub::DetectInstalledDevices()
       name.push_back(build.vAxesLetter[i]);
       name.push_back(g_NameInfoDelimiter);
       name.append(build.vAxesAddrHex[i]);
-     if(channels>1)
-	 {
-		  for(unsigned int j=1;j<=channels;j++)  //create devices based on number of channels
-		  {
-			command.str("");
-			command<<name<<g_NameInfoDelimiter<<j;
-			pDev = CreateDevice(command.str().c_str());
-			AddInstalledDevice(pDev);
-		  }
-	 }
-	 else
-	 {
-	       pDev = CreateDevice(name.c_str());
-           AddInstalledDevice(pDev);
-	 }
 
-}
+      // for TGLED, TGPMT, and similar we add a device for each channel on the card
+      if (channels>1)
+      {
+         for (unsigned int j=1; j<=channels; ++j)  //create devices based on number of channels
+         {
+            command.str("");
+            command << name << g_NameInfoDelimiter << j;
+            pDev = CreateDevice(command.str().c_str());
+            AddInstalledDevice(pDev);
+         }
+      }
+      else
+      {
+         pDev = CreateDevice(name.c_str());
+         AddInstalledDevice(pDev);
+      }
+
+   }
 
    // now look for CRISP
-   for (unsigned int i=0; i<build.numAxes; i++)
+   for (unsigned int i=0; i<build.numAxes; ++i)
    {
       if (build.vAxesProps[i] & BIT0)  // BIT0 indicates CRISP
       {
@@ -359,8 +369,8 @@ int CTigerCommHub::DetectInstalledDevices()
       }
    }
 
-   // look for LED
-   for (unsigned int i=0; i<build.numAxes; i++)
+   // look for LED (original type e.g. on 2-axis card, not TGLED)
+   for (unsigned int i=0; i<build.numAxes; ++i)
    {
       if (build.vAxesProps[i] & BIT6)  // BIT6 indicates LED, will only appear once per card address (enforced by firmware)
       {
@@ -382,7 +392,7 @@ int CTigerCommHub::TalkToTiger()
    RETURN_ON_MM_ERROR( ClearComPort() );
    // make sure we are on Tiger
    int ret = QueryCommandVerify("BU", "TIGER_COMM");
-   if(ret == ERR_UNRECOGNIZED_ANSWER)
+   if (ret == ERR_UNRECOGNIZED_ANSWER)
       ret = DEVICE_NOT_SUPPORTED;
    return ret;
 }
