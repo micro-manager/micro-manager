@@ -47,7 +47,7 @@ public class MovementDetector {
     * @param maxDistance maximum distance (in pixel coordinates) that the image
     *                      is allowed to move.  If it moves more than this, 
     *                      the zero vector will be returned.
-    * @return Movement since the last time point in pixel coordinates (or a zeroed
+    * @return Movement since the last time-point in pixel coordinates (or a zeroed
     *          vector if the movement is more than maxDistance).
     */
    public Vector3D detectMovement(double maxDistance) {

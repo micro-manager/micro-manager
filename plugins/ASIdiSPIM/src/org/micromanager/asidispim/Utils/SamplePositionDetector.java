@@ -38,7 +38,19 @@ public class SamplePositionDetector {
     * @return     - Center of mass in pixel coordinates
     */
    public static Vector3D getCenter(final MMAcquisition acq, final int ch, final int pos) {
-      return centerOfMass(getStack(acq, ch, pos), 100);
+      /*
+      ImagePlus xyProjection = project(acq, ch, pos, Axis.Z);
+      xyProjection.setTitle("XYProjection");
+      xyProjection.show();
+      ImagePlus xzProjection = project(acq, ch, pos, Axis.Y);
+      xzProjection.setTitle("XZProjection");
+      xzProjection.show();
+      ImagePlus yzProjection = project(acq, ch, pos, Axis.X);
+      yzProjection.setTitle("YZProjection");
+      yzProjection.show();
+      */
+      ImageStack tmpStack = getStack(acq, ch, pos);
+      return centerOfMass(tmpStack, 450);
    }
    
    
@@ -72,15 +84,26 @@ public class SamplePositionDetector {
          return zp.getProjection();
       } else if (axis == Axis.X) {
          // do a sideways sum
-         ImageProcessor projProc = new FloatProcessor(stack.getSize(), stack.getHeight());
+         ImageProcessor projProc = new FloatProcessor( stack.getSize(), stack.getHeight()  );
          for (int slice = 1; slice <= stack.getSize(); slice++) {
             for (int y = 0; y < stack.getHeight(); y++) {
                for (int x = 0; x < stack.getWidth(); x++) {
-                  projProc.setf(slice-1, y, projProc.getf(slice-1, y) + stack.getProcessor(slice).get(x, y)); 
+                  projProc.setf(slice-1, y, projProc.getf(slice - 1, y) + stack.getProcessor(slice).get(x, y)); 
                }
             }
          }
-         return new ImagePlus("projX", projProc);
+         return new ImagePlus("YZProjection", projProc);
+      } else if (axis == Axis.Y) {
+         // do a sideways sum
+         ImageProcessor projProc = new FloatProcessor( stack.getWidth(), stack.getSize() );
+         for (int slice = 1; slice <= stack.getSize(); slice++) {
+            for (int x = 0; x < stack.getWidth(); x++) {
+               for (int y = 0; y < stack.getHeight(); y++) {
+                  projProc.setf(x, slice-1, projProc.getf(x, slice-1) + stack.getProcessor(slice).get(x, y)); 
+               }
+            }
+         }
+         return new ImagePlus("XZProjection", projProc);
       }
       // else (todo?)
       return null;              
