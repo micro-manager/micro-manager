@@ -1688,27 +1688,35 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param side Devices.Sides.NONE to run as specified in acquisition tab,
     *   Devices.Side.A or B to run only that side
     */
-   public void runTestAcquisition(Devices.Sides side) {
-      ReportingUtils.logDebugMessage("User requested start of test diSPIM acquisition with side " + side.toString() + " selected.");
-      cancelAcquisition_.set(false);
-      acquisitionRequested_.set(true);
-      updateStartButton();
-      boolean success = runAcquisitionPrivate(true, side);
-      if (!success) {
-         ReportingUtils.logError("Fatal error running test diSPIM acquisition.");
-      }
-      acquisitionRequested_.set(false);
-      acquisitionRunning_.set(false);
-      updateStartButton();
-      // deskew automatically if we were supposed to
-      AcquisitionModes.Keys spimMode = getAcquisitionMode();
-      if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
-            || spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
-         if (prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(), 
-               Properties.Keys.PLUGIN_DESKEW_AUTO_TEST, false)) {
-            ASIdiSPIM.getFrame().getDataAnalysisPanel().runDeskew(acquisitionPanel_);
+   public void runTestAcquisition(final Devices.Sides side) {
+      Runnable runTestThread = new Runnable() {
+         @Override
+         public void run() {
+            ReportingUtils.logDebugMessage("User requested start of test diSPIM acquisition with side " + side.toString() + " selected.");
+            cancelAcquisition_.set(false);
+            acquisitionRequested_.set(true);
+            updateStartButton();
+            boolean success = runAcquisitionPrivate(true, side);
+            if (!success) {
+               ReportingUtils.logError("Fatal error running test diSPIM acquisition.");
+            }
+            acquisitionRequested_.set(false);
+            acquisitionRunning_.set(false);
+            updateStartButton();
+            // deskew automatically if we were supposed to
+            AcquisitionModes.Keys spimMode = getAcquisitionMode();
+            if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+                    || spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
+               if (prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(),
+                       Properties.Keys.PLUGIN_DESKEW_AUTO_TEST, false)) {
+                  ASIdiSPIM.getFrame().getDataAnalysisPanel().runDeskew(acquisitionPanel_);
+               }
+            }
          }
-      }
+      };
+      
+      (new Thread(runTestThread, "Run Test")).start();
+
    }
 
    /**
@@ -2873,7 +2881,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      Vector3D movement = new Vector3D(pixelSize * tmpMovement.getX(),
                              pixelSize * tmpMovement.getY(),
                              acqSettings.stepSizeUm * tmpMovement.getZ() );
-
+                     
+                     String msg1 = "TimePoint: " + timePoint + ", Detected movement.  X: " + movement.getX() +
+                                ", Y: " + movement.getY() + ", Z: " + movement.getZ();
+                     System.out.println(msg1);
                      
                      if (!movement.equals(zeroPoint)) {
                         // Transform from camera space to stage space:
@@ -2883,8 +2894,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
                         movement = rotation.applyTo(movement);
                         
-                        gui_.logMessage(("ASIdiSPIM motion corrector moving stages: X: " + movement.getAlpha() +
-                                ", Y: " + movement.getY() + ", Z: " + movement.getZ()));
+                        String msg = "ASIdiSPIM motion corrector moving stages: X: " + movement.getX() +
+                                ", Y: " + movement.getY() + ", Z: " + movement.getZ();
+                        gui_.logMessage(msg);
+                        System.out.println(msg);
 
                         // if we are using the position list, update the position in the list
                         if (acqSettings.useMultiPositions) {
