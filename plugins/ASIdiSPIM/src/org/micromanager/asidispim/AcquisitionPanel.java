@@ -31,6 +31,10 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Data.AcquisitionSettings;
+import org.micromanager.asidispim.Data.ChannelSpec;
+import org.micromanager.asidispim.Data.Devices.Sides;
+import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
@@ -38,6 +42,11 @@ import org.micromanager.asidispim.Utils.MyNumberUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.SliceTiming;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.asidispim.Utils.ControllerUtils;
+import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.Utils.MovementDetector;
+import org.micromanager.asidispim.Utils.MovementDetector.Method;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -46,6 +55,14 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.geom.Point2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.text.ParseException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -66,6 +83,7 @@ import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
+import javax.swing.BorderFactory;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -74,6 +92,8 @@ import org.json.JSONObject;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import com.swtdesigner.SwingResourceManager;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -101,32 +121,11 @@ import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
-import com.swtdesigner.SwingResourceManager;
-
 import ij.IJ;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.awt.geom.Point2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.BorderFactory;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
-import org.micromanager.asidispim.Data.AcquisitionSettings;
-import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.Devices.Sides;
-import org.micromanager.asidispim.Data.Joystick.Directions;
-import org.micromanager.asidispim.Utils.ControllerUtils;
-import org.micromanager.asidispim.Utils.AutofocusUtils;
-import org.micromanager.asidispim.Utils.MovementDetector;
-import org.micromanager.asidispim.Utils.MovementDetector.Method;
-import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 /**
  *
