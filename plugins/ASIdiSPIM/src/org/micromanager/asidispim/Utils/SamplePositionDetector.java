@@ -5,6 +5,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.ResultsTable;
+import ij.plugin.FFTMath;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.Analyzer;
 import ij.process.FloatProcessor;
@@ -23,6 +24,7 @@ import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
  * @author Nico
  */
 public class SamplePositionDetector {
+   
    
    private enum Axis {X, Y, Z}
    
@@ -49,61 +51,131 @@ public class SamplePositionDetector {
       yzProjection.setTitle("YZProjection");
       yzProjection.show();
       */
-      ImageStack tmpStack = getStack(acq, ch, pos);
+      ImageStack tmpStack = getStack(acq, acq.getLastAcquiredFrame(), ch, pos);
       return centerOfMass(tmpStack, 450);
+   }
+   
+   /**
+    * Calculates the displacement (in microns) between object in frame and
+    * frame -1 by projecting the stacks on the X, Y, and Z axis, Phase
+    * Correlation of these 3 sets of 2D images (see 
+    * https://en.wikipedia.org/wiki/Phase_correlation), using the ImageJ 
+    * FD Math method, calculating the position of the maxima, and averaging
+    * the two measurements.  
+    * Projections are sized to be a square of a power of 2 (i.e. 256x256, 1024, 1024).
+    * For best and fastest results, all sizes in the stack should be a power of 2.
+    * Returns a vector indicating the displacement (in microns) between the two frames.
+    * @param acq - Micro-Manager acquisition to be analyzed
+    * @param frame - Frame number to be analyzed.  If <= 1, the zero vector will be returned
+    * @param ch - Channel in the acquisition to be used
+    * @param pos - Position in the acquistion to be used
+    * @param pixelSize - PixelSize in the XY plane
+    * @param zStep - Stepsize between Z planes
+    * @return - Vector showing the object displacement in microns
+    */
+   public static Vector3D getDisplacementUsingIJPhaseCorrelation(
+           MMAcquisition acq, final int frame, final int ch, final int pos, 
+           final double pixelSize, final double zStep) {
+      
+      Vector3D zeroVector = new Vector3D (0.0, 0.0, 0.0);
+      
+      if (frame < 1) {
+         return zeroVector;
+      }
+      if (acq.getFrames() < frame) {
+         return zeroVector; // TODO: throw an exception instead?
+      }
+      ImageStack stackCurrent = getStack(acq, frame, ch, pos);
+      ImageStack stackPrevious = getStack(acq, frame, ch, pos);
+      
+      ImagePlus XYProjectCurrent = project(stackCurrent, Axis.Z);
+      ImagePlus XYProjectionPrevious = project(stackPrevious, Axis.Z);
+      ImagePlus XZProjectionCurrent = project(stackCurrent, Axis.Y);
+      ImagePlus XZProjectionPrevious = project(stackPrevious, Axis.Y);
+      ImagePlus YZProjectionCurrent = project(stackCurrent, Axis.X);
+      ImagePlus YZProjectionPrevious = project(stackPrevious, Axis.X);
+      
+      ImagePlus[] ips = {XYProjectCurrent, XYProjectionPrevious, 
+                        XZProjectionCurrent, XZProjectionPrevious,
+                        YZProjectionCurrent, YZProjectionPrevious};
+      for (ImagePlus ip : ips) {
+         IJ.setAutoThreshold(ip, "Default dark");
+         IJ.run(ip, "Convert to Mask", "");
+      }
+      //IJ.run
+              
+      FFTMath fftm = new FFTMath();
+      // run a correlation, do inverse
+      fftm.run("operation=Correlate, result=tmp do");
+      fftm.doMath(XYProjectCurrent, XYProjectionPrevious);
+      
+      
+      return zeroVector;
+      
    }
    
    
    /**
-    * Returns an ImageJ stack for the given channel and position in this
+    * Returns an ImageJ stack for the given frame, channel and position in this
     * Micro-manager acquisition
     * @param acq   - Micro-Manager dataset
     * @param ch    - Channel for which we want the stack
     * @param pos   - Position for which we want the stack
     * @return      - ImageJ stack containing a volume in one channel at one position
     */
-   private static ImageStack getStack (final MMAcquisition acq, final int ch, final int pos) {
+   private static ImageStack getStack (final MMAcquisition acq, final int frame, 
+           final int ch, final int pos) {
       final ImageStack stack = new ImageStack (acq.getWidth(), acq.getHeight());
-      final int lastFrame = acq.getLastAcquiredFrame();
       for (int z=0; z < acq.getSlices(); z++) {
-         TaggedImage tImg = acq.getImageCache().getImage(ch, z, lastFrame, pos);
+         TaggedImage tImg = acq.getImageCache().getImage(ch, z, frame, pos);
          ImageProcessor processor = ImageUtils.makeProcessor(tImg);
          stack.addSlice(processor);
       }
       return stack;
    }
    
-   private static ImagePlus project (final MMAcquisition acq, final int ch, final int pos, final Axis axis) {
-      ImageStack stack = getStack(acq, ch, pos);
-
-      if (axis == Axis.Z) {
-         ZProjector zp = new ZProjector(new ImagePlus("tmp", stack));
-         zp.doHyperStackProjection(false);
-         zp.setMethod(ZProjector.MAX_METHOD);
-         zp.doProjection();
-         return zp.getProjection();
-      } else if (axis == Axis.X) {
-         // do a sideways sum
-         ImageProcessor projProc = new FloatProcessor( stack.getSize(), stack.getHeight()  );
-         for (int slice = 1; slice <= stack.getSize(); slice++) {
-            for (int y = 0; y < stack.getHeight(); y++) {
+   private static ImagePlus project (ImageStack stack, final Axis axis) {
+      
+      if (null != axis) 
+         switch (axis) {
+         case Z:
+            ZProjector zp = new ZProjector(new ImagePlus("tmp", stack));
+            zp.doHyperStackProjection(false);
+            zp.setMethod(ZProjector.MAX_METHOD);
+            zp.doProjection();
+            return zp.getProjection();
+         case X:
+         {
+            // do a sideways sum
+            ImageProcessor projProc = new FloatProcessor( stack.getSize(), stack.getHeight()  );
+            for (int slice = 1; slice <= stack.getSize(); slice++) {
+               for (int y = 0; y < stack.getHeight(); y++) { 
+                  float sum = 0.0f;
+                  for (int x = 0; x < stack.getWidth(); x++) {
+                     sum += stack.getProcessor(slice).get(x, y);
+                  }
+                  projProc.setf(slice-1, y, sum);
+               }
+            }
+            return new ImagePlus("YZProjection", projProc);
+         }
+         case Y:
+         {
+            // do a sideways sum
+            ImageProcessor projProc = new FloatProcessor( stack.getWidth(), stack.getSize() );
+            for (int slice = 1; slice <= stack.getSize(); slice++) {
                for (int x = 0; x < stack.getWidth(); x++) {
-                  projProc.setf(slice-1, y, projProc.getf(slice - 1, y) + stack.getProcessor(slice).get(x, y)); 
+                  float sum = 0.0f;
+                  for (int y = 0; y < stack.getHeight(); y++) {
+                      sum += stack.getProcessor(slice).get(x, y); 
+                  }
+                  projProc.setf(x, slice-1, sum);
                }
             }
+            return new ImagePlus("XZProjection", projProc);
          }
-         return new ImagePlus("YZProjection", projProc);
-      } else if (axis == Axis.Y) {
-         // do a sideways sum
-         ImageProcessor projProc = new FloatProcessor( stack.getWidth(), stack.getSize() );
-         for (int slice = 1; slice <= stack.getSize(); slice++) {
-            for (int x = 0; x < stack.getWidth(); x++) {
-               for (int y = 0; y < stack.getHeight(); y++) {
-                  projProc.setf(x, slice-1, projProc.getf(x, slice-1) + stack.getProcessor(slice).get(x, y)); 
-               }
-            }
-         }
-         return new ImagePlus("XZProjection", projProc);
+         default:
+            break;
       }
       // else (todo?)
       return null;              

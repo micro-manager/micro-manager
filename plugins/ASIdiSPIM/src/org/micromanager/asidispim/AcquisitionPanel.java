@@ -125,6 +125,7 @@ import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.ControllerUtils;
 import org.micromanager.asidispim.Utils.AutofocusUtils;
 import org.micromanager.asidispim.Utils.MovementDetector;
+import org.micromanager.asidispim.Utils.MovementDetector.Method;
 import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 /**
@@ -2876,11 +2877,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
                      // We need to have a cut off to avoid accidents....
                      double maxMovement = 25.0; // max movement in microns
-                     Vector3D tmpMovement = movementDetectors[positionNum].detectMovement(maxMovement / pixelSize);
+                     Vector3D movement = movementDetectors[positionNum].detectMovement(
+                             Method.PhaseCorrelation, maxMovement / pixelSize);
                      // movement is in pixel coordinates, translate here to microns
-                     Vector3D movement = new Vector3D(pixelSize * tmpMovement.getX(),
-                             pixelSize * tmpMovement.getY(),
-                             acqSettings.stepSizeUm * tmpMovement.getZ() );
+                     //Vector3D movement = new Vector3D(pixelSize * tmpMovement.getX(),
+                     //        pixelSize * tmpMovement.getY(),
+                     //        acqSettings.stepSizeUm * tmpMovement.getZ() );
                      
                      String msg1 = "TimePoint: " + timePoint + ", Detected movement.  X: " + movement.getX() +
                                 ", Y: " + movement.getY() + ", Z: " + movement.getZ();
