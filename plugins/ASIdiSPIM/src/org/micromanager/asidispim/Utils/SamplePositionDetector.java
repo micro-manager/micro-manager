@@ -4,12 +4,14 @@ package org.micromanager.asidispim.Utils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.measure.Calibration;
 import ij.measure.ResultsTable;
-import ij.plugin.FFTMath;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.Analyzer;
+import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import java.awt.Point;
 import java.awt.geom.Point2D;
 
 import mmcorej.TaggedImage;
@@ -40,17 +42,6 @@ public class SamplePositionDetector {
     * @return     - Center of mass in pixel coordinates
     */
    public static Vector3D getCenter(final MMAcquisition acq, final int ch, final int pos) {
-      /*
-      ImagePlus xyProjection = project(acq, ch, pos, Axis.Z);
-      xyProjection.setTitle("XYProjection");
-      xyProjection.show();
-      ImagePlus xzProjection = project(acq, ch, pos, Axis.Y);
-      xzProjection.setTitle("XZProjection");
-      xzProjection.show();
-      ImagePlus yzProjection = project(acq, ch, pos, Axis.X);
-      yzProjection.setTitle("YZProjection");
-      yzProjection.show();
-      */
       ImageStack tmpStack = getStack(acq, acq.getLastAcquiredFrame(), ch, pos);
       return centerOfMass(tmpStack, 450);
    }
@@ -86,31 +77,81 @@ public class SamplePositionDetector {
          return zeroVector; // TODO: throw an exception instead?
       }
       ImageStack stackCurrent = getStack(acq, frame, ch, pos);
-      ImageStack stackPrevious = getStack(acq, frame, ch, pos);
+      ImageStack stackPrevious = getStack(acq, frame - 1, ch, pos);
       
-      ImagePlus XYProjectCurrent = project(stackCurrent, Axis.Z);
+      Calibration xyCal = new Calibration();
+      xyCal.pixelWidth = pixelSize;
+      xyCal.pixelHeight = pixelSize;
+      xyCal.setUnit("micron");
+      ImagePlus XYProjectionCurrent = project(stackCurrent, Axis.Z);
+      XYProjectionCurrent.setCalibration(xyCal);
       ImagePlus XYProjectionPrevious = project(stackPrevious, Axis.Z);
-      ImagePlus XZProjectionCurrent = project(stackCurrent, Axis.Y);
-      ImagePlus XZProjectionPrevious = project(stackPrevious, Axis.Y);
-      ImagePlus YZProjectionCurrent = project(stackCurrent, Axis.X);
-      ImagePlus YZProjectionPrevious = project(stackPrevious, Axis.X);
+      XYProjectionPrevious.setCalibration(xyCal);
       
-      ImagePlus[] ips = {XYProjectCurrent, XYProjectionPrevious, 
+      Calibration xzCal = new Calibration();
+      xzCal.pixelWidth = pixelSize;
+      xzCal.pixelHeight = zStep;
+      xzCal.setUnit("micron");
+      ImagePlus XZProjectionCurrent = project(stackCurrent, Axis.Y);
+      XZProjectionCurrent.setCalibration(xzCal);
+      ImagePlus XZProjectionPrevious = project(stackPrevious, Axis.Y);
+      XZProjectionPrevious.setCalibration(xzCal);
+      
+      Calibration yzCal = new Calibration();
+      yzCal.pixelWidth = zStep;
+      yzCal.pixelHeight = pixelSize;
+      yzCal.setUnit("micron");
+      ImagePlus YZProjectionCurrent = project(stackCurrent, Axis.X);
+      YZProjectionCurrent.setCalibration(yzCal);
+      ImagePlus YZProjectionPrevious = project(stackPrevious, Axis.X);
+      YZProjectionPrevious.setCalibration(yzCal);
+
+      ImagePlus[] ips = {XYProjectionCurrent, XYProjectionPrevious, 
                         XZProjectionCurrent, XZProjectionPrevious,
                         YZProjectionCurrent, YZProjectionPrevious};
       for (ImagePlus ip : ips) {
          IJ.setAutoThreshold(ip, "Default dark");
          IJ.run(ip, "Convert to Mask", "");
+         if (!isPowerOf2Size(ip)) {
+            int newSize = nextPowerOf2Size(ip);
+            IJ.run(ip, "Size...", "width=" + newSize + " height=" + newSize + 
+                    " average interpolation=Bilinear");
+         }
       }
-      //IJ.run
-              
-      FFTMath fftm = new FFTMath();
-      // run a correlation, do inverse
-      fftm.run("operation=Correlate, result=tmp do");
-      fftm.doMath(XYProjectCurrent, XYProjectionPrevious);
+           
       
+      ImagePlus XYCorr = doCorrelation(XYProjectionCurrent, XYProjectionPrevious);
+      //XYCorr.show();
+      ImagePlus XZCorr = doCorrelation(XZProjectionCurrent, XZProjectionPrevious);
+      //XZCorr.show();
+      ImagePlus YZCorr = doCorrelation(YZProjectionCurrent, YZProjectionPrevious);
+      //YZCorr.show();
+     
+      Point xyMov = coordinateOfMax(XYCorr);
+      Point2D xyMovM = new Point2D.Double( 
+              (xyMov.x - XYCorr.getWidth() / 2) * XYCorr.getCalibration().pixelWidth,
+              (xyMov.y - XYCorr.getHeight() / 2) * XYCorr.getCalibration().pixelHeight );
+      Point xzMov = coordinateOfMax(XZCorr);
+      Point2D xzMovM = new Point2D.Double (
+              (xzMov.x - XZCorr.getWidth() / 2) * XZCorr.getCalibration().pixelWidth,
+              (xzMov.y - XZCorr.getHeight() / 2) * XZCorr.getCalibration().pixelHeight);
+      Point yzMov = coordinateOfMax(YZCorr);
+      Point2D yzMovM = new Point2D.Double (
+              (yzMov.x - YZCorr.getWidth() / 2) * YZCorr.getCalibration().pixelWidth,
+              (yzMov.y - YZCorr.getHeight() / 2) * YZCorr.getCalibration().pixelHeight);
       
-      return zeroVector;
+      System.out.println("X: " + xyMovM.getX() + ", Y: " + xyMovM.getY());
+      System.out.println("X: " + xzMovM.getX() + ", Z: " + xzMovM.getY());
+      System.out.println("Z: " + yzMovM.getX() + ", Y: " + yzMovM.getY());
+      
+      // Average the information from the different planes
+      // TODO: evaluate weighing XY plane more than Z projections
+      Vector3D movement = new Vector3D( 
+              (xyMovM.getX() + xzMovM.getX()) / 2.0,
+              (xyMovM.getY() + yzMovM.getY()) / 2.0,
+              (xzMovM.getY() + yzMovM.getX()) / 2.0);
+      
+      return movement;
       
    }
    
@@ -134,6 +175,17 @@ public class SamplePositionDetector {
       return stack;
    }
    
+   /**
+    * Does a sum of slices projection in the requested orientation
+    * Returns an Imageplus with a FloatProcessor
+    * Only works reliably with 16-bit (short) input images.
+    * @param stack - Input stack to be projected
+    * @param axis - Axis along which the desired projection should executed,
+    *       Z -returns an XY projection,
+    *       X - return a YZ projection
+    *       Y - returns a XZ projection
+    * @return 
+    */
    private static ImagePlus project (ImageStack stack, final Axis axis) {
       
       if (null != axis) 
@@ -146,30 +198,42 @@ public class SamplePositionDetector {
             return zp.getProjection();
          case X:
          {
+            // TODO: this only work for 16-bit (short) input images
+		
             // do a sideways sum
+            IJ.showStatus("XProjection");
             ImageProcessor projProc = new FloatProcessor( stack.getSize(), stack.getHeight()  );
+            float[] fpixels = (float[]) projProc.getPixels();
             for (int slice = 1; slice <= stack.getSize(); slice++) {
+               IJ.showProgress(slice, stack.getSize());
+               IJ.showStatus("XProjection " + slice + "/" + stack.getSize());
+               short[] pixels = (short[]) stack.getProcessor(slice).getPixels();
                for (int y = 0; y < stack.getHeight(); y++) { 
-                  float sum = 0.0f;
+                  int index =  y * stack.getHeight();
+                  int fIndex = y * stack.getSize() + (slice - 1);
                   for (int x = 0; x < stack.getWidth(); x++) {
-                     sum += stack.getProcessor(slice).get(x, y);
+                     fpixels[fIndex] += pixels[index + x] & 0xffff;
                   }
-                  projProc.setf(slice-1, y, sum);
                }
             }
             return new ImagePlus("YZProjection", projProc);
          }
          case Y:
          {
+            // TODO: this only work for 16-bit (short) input images
             // do a sideways sum
+            IJ.showStatus("YProjection");
             ImageProcessor projProc = new FloatProcessor( stack.getWidth(), stack.getSize() );
+            float[] fpixels = (float[]) projProc.getPixels();
             for (int slice = 1; slice <= stack.getSize(); slice++) {
+               IJ.showProgress(slice, stack.getSize());
+               IJ.showStatus("YProjection " + slice + "/" + stack.getSize());
+               short[] pixels = (short[]) stack.getProcessor(slice).getPixels();
                for (int x = 0; x < stack.getWidth(); x++) {
-                  float sum = 0.0f;
+                  int fIndex = (slice -1) * stack.getWidth() + x;
                   for (int y = 0; y < stack.getHeight(); y++) {
-                      sum += stack.getProcessor(slice).get(x, y); 
+                      fpixels[fIndex] += pixels[x + y * stack.getWidth()] & 0xffff;
                   }
-                  projProc.setf(x, slice-1, sum);
                }
             }
             return new ImagePlus("XZProjection", projProc);
@@ -180,6 +244,36 @@ public class SamplePositionDetector {
       // else (todo?)
       return null;              
       
+   }
+   
+   
+   /**
+    * Find the pixel coordinates of the pixel with the highest intensity in this image
+    * Only works with images of type Float
+    * @param img - input image (better has a FLoatprocessor
+    * @return - x, y coordinates (in pixels) of pixel with highest intensity.
+    *          If input image did not have floatprocessor, the zero coordinates 
+    *          will be returned.
+    */
+   private static Point coordinateOfMax(ImagePlus img) {
+      Point result = new Point(0, 0);
+      
+      ImageProcessor iProc = img.getProcessor();
+      if (iProc instanceof FloatProcessor) {
+         float[] pixels = (float[]) iProc.getPixels();
+         float max = pixels[0];
+         int maxIndex = 0;
+         for (int i = 1; i < pixels.length; i++) {
+            if (pixels[i] > max) {
+               max = pixels[i];
+               maxIndex = i;
+            }
+         }
+         result.x = maxIndex % img.getWidth();
+         result.y = maxIndex / img.getWidth();
+      }
+      
+      return result;
    }
    
    /**
@@ -251,6 +345,125 @@ public class SamplePositionDetector {
             totalZ / totalMass);
       
       return centerOfMass;
+   }
+   
+   /**
+    * Copied from ImageJ1 source code (FFMath) so that we can return an ImagePlus
+    * and not show it.
+    * Now hard coded to do a conjugate multiplication and inverse
+    * Note that both input images should have identical height and width 
+    * that both should be a power of 2.
+    * @param imp1 - First ImagePlus
+    * @param imp2 - Second input ImagePlus
+    * @return - Inverse FFT of conjugate multiplication
+    */
+   private static ImagePlus doCorrelation(ImagePlus imp1, ImagePlus imp2) {
+      final int CONJUGATE_MULTIPLY = 0, MULTIPLY = 1, DIVIDE = 2;
+      final int operation = 0;
+      final boolean doInverse = true;
+
+      FHT h1, h2 = null;
+      ImageProcessor fht1, fht2;
+      fht1 = (ImageProcessor) imp1.getProperty("FHT");
+      if (fht1 != null) {
+         h1 = new FHT(fht1);
+      } else {
+         IJ.showStatus("Converting to float");
+         ImageProcessor ip1 = imp1.getProcessor();
+         h1 = new FHT(ip1);
+      }
+      fht2 = (ImageProcessor) imp2.getProperty("FHT");
+      if (fht2 != null) {
+         h2 = new FHT(fht2);
+      } else {
+         ImageProcessor ip2 = imp2.getProcessor();
+         if (imp2 != imp1) {
+            h2 = new FHT(ip2);
+         }
+      }
+      if (!h1.powerOf2Size()) {
+         IJ.error("FFT Math", "Images must be a power of 2 size (256x256, 512x512, etc.)");
+         return null;
+      }
+      if (imp1.getWidth() != imp2.getWidth()) {
+         IJ.error("FFT Math", "Images must be the same size");
+         return null;
+      }
+      if (fht1 == null) {
+         IJ.showStatus("Transform image1");
+         h1.transform();
+      }
+      if (fht2 == null) {
+         if (h2 == null) {
+            h2 = new FHT(h1.duplicate());
+         } else {
+            IJ.showStatus("Transform image2");
+            h2.transform();
+         }
+      }
+      FHT result = null;
+      switch (operation) {
+         case CONJUGATE_MULTIPLY:
+            IJ.showStatus("Complex conjugate multiply");
+            result = h1.conjugateMultiply(h2);
+            break;
+         case MULTIPLY:
+            IJ.showStatus("Fourier domain multiply");
+            result = h1.multiply(h2);
+            break;
+         case DIVIDE:
+            IJ.showStatus("Fourier domain divide");
+            result = h1.divide(h2);
+            break;
+      }
+      ImagePlus imp3 = null;
+      if (doInverse && result != null) {
+         IJ.showStatus("Inverse transform");
+         result.inverseTransform();
+         IJ.showStatus("Swap quadrants");
+         result.swapQuadrants();
+         IJ.showStatus("Display image");
+         result.resetMinAndMax();
+         imp3 = new ImagePlus("Corr", result);
+      } else if (result != null) {
+         IJ.showStatus("Power spectrum");
+         ImageProcessor ps = result.getPowerSpectrum();
+         imp3 = new ImagePlus("Power Spectrum", ps.convertToFloat());
+         result.quadrantSwapNeeded = true;
+         imp3.setProperty("FHT", result);
+      }
+      if (imp3 != null) {
+         Calibration cal1 = imp1.getCalibration();
+         Calibration cal2 = imp2.getCalibration();
+         Calibration cal3 = cal1.scaled() ? cal1 : cal2;
+         if (cal1.scaled() && cal2.scaled() && !cal1.equals(cal2)) {
+            cal3 = null;                //can't decide between different calibrations
+         }
+         imp3.setCalibration(cal3);
+         cal3 = imp3.getCalibration();   //imp3 has a copy, which we may modify
+         cal3.disableDensityCalibration();
+      }
+      IJ.showProgress(1.0);
+
+      return imp3;
+   }
+
+   private static boolean isPowerOf2Size(ImagePlus img) {
+		int i=2;
+		while(i<img.getWidth()) 
+         i *= 2;
+      return i==img.getWidth() && img.getWidth()==img.getHeight();
+	}
+   
+   private static int nextPowerOf2Size(ImagePlus img) {
+      int w = 2;
+      while (w < img.getWidth()) {
+         w *= 2;
+      }
+      while (w < img.getHeight()) {
+         w *=2;
+      }
+      return w;
    }
 
    
