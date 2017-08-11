@@ -62,10 +62,10 @@ public class MovementDetector {
     * 2 positions.  To avoid this, the last stage position is corrected by 
     * the movement (that was presumably executed by the stages
     * @param method
-    * @param maxDistance maximum distance (in pixel coordinates) that the image
+    * @param maxDistance maximum distance (in microns) that the image
     *                      is allowed to move.  If it moves more than this, 
     *                      the zero vector will be returned.
-    * @return Movement since the last time-point in microns (or a zeroed
+    * @return Movement (in microns) since the last time-point (or a zeroed
     *          vector if the movement is more than maxDistance).
     */
    public Vector3D detectMovement(Method method, double maxDistance) {
@@ -85,7 +85,10 @@ public class MovementDetector {
 
          lastPosition_ = position.add(movement);
       } else if (method == Method.PhaseCorrelation) {
-         
+         int lastFrame = acq_.getLastAcquiredFrame();
+         movement = SamplePositionDetector.
+                 getDisplacementUsingIJPhaseCorrelation(
+                         acq_, lastFrame, ch_, pos_, pixelSize_, stepSize_);
       }
       return movement;
    }
