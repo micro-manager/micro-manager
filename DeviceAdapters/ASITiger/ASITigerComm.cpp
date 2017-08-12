@@ -194,8 +194,6 @@ int CTigerCommHub::DetectInstalledDevices()
    //   appear to populate the Peripheral device list of the hub but the InitializeModuleData don't
    MM::Device* pDev;
    string name;
-   char splitAxisLetter = ' '; // used only if XY stage split across two cards
-   string splitAddrHex = "";  // used only if XY stage split across two cards
    int ret=0;
    for (unsigned int i=0; i<build.numAxes; ++i)
    {
@@ -208,50 +206,18 @@ int CTigerCommHub::DetectInstalledDevices()
       switch (build.vAxesType[i])
       {
          case 'x': // XYMotor type
-            if (build.vAxesType[i+1] == 'x')
+            if (build.vAxesType[i+1] == 'x')  // make sure we have a pair of axes
             {
                // we have an XY pair
                name = g_XYStageDeviceName;
                twoaxis = true;
                i++; // skip one code because we added two axes in one step
             }
-            else if (build.vAxesType[i+1] == 'z')
-            {
-               // we have one XY axis on this card (and presumably corresponding axis on other card)
-               if (splitAxisLetter != ' ')
-               {
-                  // we already saw another unpaired axis, pair it with this one
-                  name = g_XYStageDeviceName;
-                  name.push_back(g_NameInfoDelimiter);
-                  name.push_back(splitAxisLetter);  // prior unpaired axis
-                  name.push_back(build.vAxesLetter[i]);
-                  name.push_back(g_NameInfoDelimiter);
-                  name.append(splitAddrHex); // prior unpaired address
-                  name.append(build.vAxesAddrHex[i]);
-                  pDev = CreateDevice(name.c_str());
-                  AddInstalledDevice(pDev);
-
-                  // we found our awaited match, get ready to look for any other split XY pairs
-                  splitAxisLetter = ' ';
-                  splitAddrHex = "";
-
-                  continue;  // skip ahead to next axis; already created device
-               }
-               else
-               {
-                  // we haven't seen the corresponding axis yet
-                  // start looking for next unpaired one
-                  splitAxisLetter = build.vAxesLetter[i];
-                  splitAddrHex = build.vAxesAddrHex[i];
-
-                  continue;  // skip ahead to next axis without creating device
-               }
-            }
             else
                return ERR_TIGER_PAIR_NOT_PRESENT;
             break;
          case 'u': // scanner type (used to be MMirror type)
-            if (build.vAxesType[i+1] == 'u')  // skip one code because we added two axes in one step
+            if (build.vAxesType[i+1] == 'u')  // make sure we have a pair of axes
             {
                name = g_ScannerDeviceName;
                twoaxis = true;
