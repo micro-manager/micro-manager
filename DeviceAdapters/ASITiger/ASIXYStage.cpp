@@ -86,12 +86,9 @@ int CXYStage::Initialize()
    unitMultY_ = tmp/1000;
 
    // set controller card to return positions with 1 decimal places (3 is max allowed currently, 1 gives 10nm resolution)
-   for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-   {  // handle case where logical device is split across cards
-      command.str("");
-      command << addressChar_[iii] << "VB Z=1";
-      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );
-   }
+   command.str("");
+   command << addressChar_ << "VB Z=1";
+   RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );
 
    // expose the step size to user as read-only property (no need for action handler)
    command.str("");
@@ -498,12 +495,9 @@ int CXYStage::Stop()
 {
    // note this stops the card which usually is synonymous with the stage, \ stops all stages
    ostringstream command; command.str("");
-   for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-   {  // handle case where logical device is split across cards
-      command.str("");
-      command << addressChar_[iii] << "HALT";
-      RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );
-   }
+   command.str("");
+   command << addressChar_ << "HALT";
+   RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );
    return DEVICE_OK;
 }
 
@@ -633,29 +627,26 @@ int CXYStage::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
    string tmpstr;
    ostringstream command; command.str("");
    if (eAct == MM::AfterSet) {
-      for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-      { // handle case where logical device is split across cards
-         command.str("");
-         command << addressChar_[iii] << "SS ";
-         pProp->Get(tmpstr);
-         if (tmpstr.compare(g_SaveSettingsOrig) == 0)
-            return DEVICE_OK;
-         if (tmpstr.compare(g_SaveSettingsDone) == 0)
-            return DEVICE_OK;
-         if (tmpstr.compare(g_SaveSettingsX) == 0)
-            command << 'X';
-         else if (tmpstr.compare(g_SaveSettingsY) == 0)
-            command << 'X';
-         else if (tmpstr.compare(g_SaveSettingsZ) == 0)
-            command << 'Z';
-         else if (tmpstr.compare(g_SaveSettingsZJoystick) == 0)
-         {
-            command << 'Z';
-            // do save joystick settings first
-            RETURN_ON_MM_ERROR (OnSaveJoystickSettings());
-         }
-         RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note added 200ms delay
+      command.str("");
+      command << addressChar_ << "SS ";
+      pProp->Get(tmpstr);
+      if (tmpstr.compare(g_SaveSettingsOrig) == 0)
+         return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsDone) == 0)
+         return DEVICE_OK;
+      if (tmpstr.compare(g_SaveSettingsX) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsY) == 0)
+         command << 'X';
+      else if (tmpstr.compare(g_SaveSettingsZ) == 0)
+         command << 'Z';
+      else if (tmpstr.compare(g_SaveSettingsZJoystick) == 0)
+      {
+         command << 'Z';
+         // do save joystick settings first
+         RETURN_ON_MM_ERROR (OnSaveJoystickSettings());
       }
+      RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note added 200ms delay
       pProp->Set(g_SaveSettingsDone);
    }
    return DEVICE_OK;
@@ -1181,7 +1172,7 @@ int CXYStage::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_[0] << "JS X?";  // if device is split across cards, assume speed is same
+      command << addressChar_ << "JS X?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = abs(tmp);
@@ -1192,15 +1183,12 @@ int CXYStage::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
-      for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-      {  // handle case where logical device is split across cards
-         command.str("");
-         if (strcmp(joystickMirror, g_YesState) == 0)
-            command << addressChar_[iii] << "JS X=-" << tmp;
-         else
-            command << addressChar_[iii] << "JS X=" << tmp;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      }
+      command.str("");
+      if (strcmp(joystickMirror, g_YesState) == 0)
+         command << addressChar_ << "JS X=-" << tmp;
+      else
+         command << addressChar_ << "JS X=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
@@ -1215,7 +1203,7 @@ int CXYStage::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_[0] << "JS Y?";  // if device is split across cards, assume speed is same
+      command << addressChar_ << "JS Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A Y="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
@@ -1225,15 +1213,12 @@ int CXYStage::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
-      for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-      {  // handle case where logical device is split across cards
-         command.str("");
-         if (strcmp(joystickMirror, g_YesState) == 0)
-            command << addressChar_[iii] << "JS Y=-" << tmp;
-         else
-            command << addressChar_[iii] << "JS Y=" << tmp;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      }
+      command.str("");
+      if (strcmp(joystickMirror, g_YesState) == 0)
+         command << addressChar_ << "JS Y=-" << tmp;
+      else
+         command << addressChar_ << "JS Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
@@ -1248,7 +1233,7 @@ int CXYStage::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_[0] << "JS X?";  // query only the fast setting to see if already mirrored; if device is split across cards, assume speed is same
+      command << addressChar_ << "JS X?";  // query only the fast setting to see if already mirrored
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A X="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
@@ -1266,15 +1251,12 @@ int CXYStage::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickFastSpeedPropertyName, joystickFast) );
       double joystickSlow = 0.0;
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickSlowSpeedPropertyName, joystickSlow) );
-      for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-      {  // handle case where logical device is split across cards
-         command.str("");
-         if (tmpstr.compare(g_YesState) == 0)
-            command << addressChar_[iii] << "JS X=-" << joystickFast << " Y=-" << joystickSlow;
-         else
-            command << addressChar_[iii] << "JS X=" << joystickFast << " Y=" << joystickSlow;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      }
+      command.str("");
+      if (tmpstr.compare(g_YesState) == 0)
+         command << addressChar_ << "JS X=-" << joystickFast << " Y=-" << joystickSlow;
+      else
+         command << addressChar_ << "JS X=" << joystickFast << " Y=" << joystickSlow;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
@@ -1372,7 +1354,7 @@ int CXYStage::OnWheelFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_[0] << "JS F?";  // if device is split across cards, assume speed is same
+      command << addressChar_ << "JS F?";  // query only the fast setting to see if already mirrored
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = abs(tmp);
@@ -1383,15 +1365,12 @@ int CXYStage::OnWheelFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       char wheelMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_WheelMirrorPropertyName, wheelMirror) );
-      for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-      {  // handle case where logical device is split across cards
-         command.str("");
-         if (strcmp(wheelMirror, g_YesState) == 0)
-            command << addressChar_[iii] << "JS F=-" << tmp;
-         else
-            command << addressChar_[iii] << "JS F=" << tmp;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      }
+      command.str("");
+      if (strcmp(wheelMirror, g_YesState) == 0)
+         command << addressChar_ << "JS F=-" << tmp;
+      else
+         command << addressChar_ << "JS F=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
@@ -1407,7 +1386,7 @@ int CXYStage::OnWheelSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_[0] << "JS T?";  // if device is split across cards, assume speed is same
+      command << addressChar_ << "JS T?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A T="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       tmp = abs(tmp);
@@ -1418,15 +1397,12 @@ int CXYStage::OnWheelSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmp);
       char wheelMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, wheelMirror) );
-      for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-      {  // handle case where logical device is split across cards
-         command.str("");
-         if (strcmp(wheelMirror, g_YesState) == 0)
-            command << addressChar_[iii] << "JS T=-" << tmp;
-         else
-            command << addressChar_[iii] << "JS T=" << tmp;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      }
+      command.str("");
+      if (strcmp(wheelMirror, g_YesState) == 0)
+         command << addressChar_ << "JS T=-" << tmp;
+      else
+         command << addressChar_ << "JS T=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
@@ -1442,7 +1418,7 @@ int CXYStage::OnWheelMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_[0] << "JS F?";  // query only the fast setting to see if already mirrored; if device is split across cards, assume speed is same
+      command << addressChar_ << "JS F?";  // query only the fast setting to see if already mirrored
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A F="));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       bool success = 0;
@@ -1460,15 +1436,12 @@ int CXYStage::OnWheelMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( GetProperty(g_WheelFastSpeedPropertyName, wheelFast) );
       double wheelSlow = 0.0;
       RETURN_ON_MM_ERROR ( GetProperty(g_WheelSlowSpeedPropertyName, wheelSlow) );
-      for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-      {  // handle case where logical device is split across cards
-         command.str("");
-         if (tmpstr.compare(g_YesState) == 0)
-            command << addressChar_[iii] << "JS F=-" << wheelFast << " T=-" << wheelSlow;
-         else
-            command << addressChar_[iii] << "JS F=" << wheelFast << " T=" << wheelSlow;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      }
+      command.str("");
+      if (tmpstr.compare(g_YesState) == 0)
+         command << addressChar_ << "JS F=-" << wheelFast << " T=-" << wheelSlow;
+      else
+         command << addressChar_ << "JS F=" << wheelFast << " T=" << wheelSlow;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
@@ -1481,7 +1454,7 @@ int CXYStage::OnNrExtraMoveReps(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command << addressChar_[0] << "CCA Y?";  // if device is split across cards, assume setting is same
+      command << addressChar_ << "CCA Y?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp) );
       // don't complain if value is larger than MM's "artificial" limits, it just won't be set
@@ -1489,12 +1462,9 @@ int CXYStage::OnNrExtraMoveReps(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      for(std::string::size_type iii = 0; iii < addressChar_.size(); ++iii)
-      {  // handle case where logical device is split across cards
-         command.str("");
-         command << addressChar_[iii] << "CCA Y=" << tmp;
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      }
+      command.str("");
+      command << addressChar_ << "CCA Y=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
