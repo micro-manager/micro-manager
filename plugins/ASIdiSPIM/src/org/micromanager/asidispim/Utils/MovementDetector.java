@@ -5,6 +5,9 @@ import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.json.JSONException;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.MMTags;
+import org.micromanager.asidispim.Data.MyStrings;
+import org.micromanager.asidispim.Data.Prefs;
+import org.micromanager.asidispim.Data.Properties;
 
 /**
  *
@@ -16,11 +19,14 @@ public class MovementDetector {
    
    private Vector3D lastPosition_;
    private final Vector3D zeroPoint_;
+   private Vector3D lastMovement_;
+   private final Prefs prefs_;
    private final MMAcquisition acq_;
    private final int ch_;
    private final int pos_;
    private final double pixelSize_;
    private final double stepSize_;
+   private final int runEachNTimePoints_;
    
    /**
     * This class determines the position of the object in a stack and
@@ -31,13 +37,16 @@ public class MovementDetector {
     * @param pos Position in this acquisition that we track
     */
    public MovementDetector (
+           final Prefs prefs,
            final MMAcquisition acq, 
            final int ch, 
            final int pos) {
+      prefs_ = prefs;
       acq_ = acq;
       ch_ = ch;
       pos_ = pos;
       zeroPoint_ = new Vector3D(0.0, 0.0, 0.0);
+      lastMovement_ = new Vector3D(0.0, 0.0, 0.0);
       double pixelSize = 0.165;
       double stepSize = 1.5;
       try {
@@ -49,6 +58,8 @@ public class MovementDetector {
          pixelSize_ = pixelSize;
          stepSize_ = stepSize;
       }
+      runEachNTimePoints_ = prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(), 
+              Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_EACHNIMAGES, 1);
    }
    
    /**
@@ -85,10 +96,15 @@ public class MovementDetector {
 
          lastPosition_ = position.add(movement);
       } else if (method == Method.PhaseCorrelation) {
-         int lastFrame = acq_.getLastAcquiredFrame();
+         int currentFrame = acq_.getLastAcquiredFrame();
          movement = SamplePositionDetector.
                  getDisplacementUsingIJPhaseCorrelation(
-                         acq_, lastFrame, ch_, pos_, pixelSize_, stepSize_);
+                         acq_, currentFrame, ch_, pos_, pixelSize_, stepSize_);
+         // correct for the amount we moved last time to avoid oscillations
+         // I did not think through why we need an add, but it works.
+         movement = movement.add(lastMovement_);
+         // remember what we asked the stages to move for next time
+         lastMovement_ = movement;
       }
       return movement;
    }

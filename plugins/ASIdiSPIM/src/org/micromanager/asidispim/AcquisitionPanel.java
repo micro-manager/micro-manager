@@ -2188,6 +2188,44 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
+      // Movement Correction settings; only used if acqSettings.useMovementCorrection is true
+      int correctMovementEachNFrames = 10;
+      String correctMovementChannel = "";
+      int cmChannelNumber = -1;
+      if (acqSettings.useMovementCorrection) {
+         correctMovementEachNFrames = props_.getPropValueInteger(Devices.Keys.PLUGIN, 
+               Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_EACHNIMAGES);
+         autofocusChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
+               Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_CHANNEL);
+         // double-check that selected channel is valid if we are doing multi-channel
+         if (acqSettings.useChannels) {
+            String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
+                  Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
+            StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
+            boolean found = false;
+            for (String channel : channels) {
+               if (channel.equals(autofocusChannel)) {
+                  found = true;
+                  break;
+               }
+            }
+            if (!found) {
+               MyDialogUtils.showError("Invalid movement correction channel selected on autofocus tab.");
+               return false;
+            }
+         }
+
+         for (int i = 0; i < acqSettings.numChannels; i++) {
+            if (channelNames_[i].equals(correctMovementChannel)) {
+               cmChannelNumber = i;
+            }
+         }
+         if (cmChannelNumber == -1) {
+            MyDialogUtils.showError("The channel selected for movement correction on the auitofocus tab was not found in this acquisition");
+            return false;
+         }
+      }
+      
       // it appears the circular buffer, which is used by both cameras, can only have one 
       // image size setting => we require same image height and width for second camera if two-sided
       if (twoSided) {
@@ -2869,15 +2907,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
                   }
                   
-                  if (acqSettings.useMovementCorrection) {
+                  if (acqSettings.useMovementCorrection && 
+                          (timePoint % correctMovementEachNFrames) == 0) {
                      if (movementDetectors[positionNum] == null) {
-                        // TODO: let user select which channel(s) to use
-                        movementDetectors[positionNum] = new MovementDetector(acq_, 0, positionNum);
+                        movementDetectors[positionNum] = new MovementDetector(
+                                prefs_, acq_, cmChannelNumber, positionNum);
                      }
                      // We need to have a cut off to avoid accidents....
                      double maxMovement = 25.0; // max movement in microns
                      Vector3D movement = movementDetectors[positionNum].detectMovement(
-                             Method.PhaseCorrelation, maxMovement / pixelSize);
+                             Method.PhaseCorrelation, maxMovement);
                      // movement is in pixel coordinates, translate here to microns
                      //Vector3D movement = new Vector3D(pixelSize * tmpMovement.getX(),
                      //        pixelSize * tmpMovement.getY(),
