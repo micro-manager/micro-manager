@@ -57,7 +57,8 @@ public class SamplePositionDetector {
     * For best and fastest results, all sizes in the stack should be a power of 2.
     * Returns a vector indicating the displacement (in microns) between the two frames.
     * @param acq - Micro-Manager acquisition to be analyzed
-    * @param frame - Frame number to be analyzed.  If <= 1, the zero vector will be returned
+    * @param currentFrame - Frame number to be analyzed.  
+    * @param previousFrame - Frame to compare to
     * @param ch - Channel in the acquisition to be used
     * @param pos - Position in the acquistion to be used
     * @param pixelSize - PixelSize in the XY plane
@@ -65,19 +66,19 @@ public class SamplePositionDetector {
     * @return - Vector showing the object displacement in microns
     */
    public static Vector3D getDisplacementUsingIJPhaseCorrelation(
-           MMAcquisition acq, final int frame, final int ch, final int pos, 
-           final double pixelSize, final double zStep) {
+           MMAcquisition acq, final int currentFrame, final int previousFrame, 
+           final int ch, final int pos, final double pixelSize, 
+           final double zStep) {
       
       Vector3D zeroVector = new Vector3D (0.0, 0.0, 0.0);
       
-      if (frame < 1) {
-         return zeroVector;
-      }
-      if (acq.getFrames() < frame) {
+      // input sanitation
+      if (currentFrame <= previousFrame || previousFrame < 0 || 
+              currentFrame > acq.getFrames()) {
          return zeroVector; // TODO: throw an exception instead?
       }
-      ImageStack stackCurrent = getStack(acq, frame, ch, pos);
-      ImageStack stackPrevious = getStack(acq, frame - 1, ch, pos);
+      ImageStack stackCurrent = getStack(acq, currentFrame, ch, pos);
+      ImageStack stackPrevious = getStack(acq, currentFrame - 1, ch, pos);
       
       Calibration xyCal = new Calibration();
       xyCal.pixelWidth = pixelSize;
@@ -117,8 +118,7 @@ public class SamplePositionDetector {
             IJ.run(ip, "Size...", "width=" + newSize + " height=" + newSize + 
                     " average interpolation=Bilinear");
          }
-      }
-           
+      }          
       
       ImagePlus XYCorr = doCorrelation(XYProjectionCurrent, XYProjectionPrevious);
       //XYCorr.show();
@@ -186,64 +186,67 @@ public class SamplePositionDetector {
     *       Y - returns a XZ projection
     * @return 
     */
-   private static ImagePlus project (ImageStack stack, final Axis axis) {
-      
-      if (null != axis) 
+   private static ImagePlus project(ImageStack stack, final Axis axis) {
+
+      if (null != axis) {
          switch (axis) {
-         case Z:
-            ZProjector zp = new ZProjector(new ImagePlus("tmp", stack));
-            zp.doHyperStackProjection(false);
-            zp.setMethod(ZProjector.MAX_METHOD);
-            zp.doProjection();
-            return zp.getProjection();
-         case X:
-         {
-            // TODO: this only work for 16-bit (short) input images
-		
-            // do a sideways sum
-            IJ.showStatus("XProjection");
-            ImageProcessor projProc = new FloatProcessor( stack.getSize(), stack.getHeight()  );
-            float[] fpixels = (float[]) projProc.getPixels();
-            for (int slice = 1; slice <= stack.getSize(); slice++) {
-               IJ.showProgress(slice, stack.getSize());
-               IJ.showStatus("XProjection " + slice + "/" + stack.getSize());
-               short[] pixels = (short[]) stack.getProcessor(slice).getPixels();
-               for (int y = 0; y < stack.getHeight(); y++) { 
-                  int index =  y * stack.getHeight();
-                  int fIndex = y * stack.getSize() + (slice - 1);
-                  for (int x = 0; x < stack.getWidth(); x++) {
-                     fpixels[fIndex] += pixels[index + x] & 0xffff;
-                  }
-               }
-            }
-            return new ImagePlus("YZProjection", projProc);
-         }
-         case Y:
-         {
-            // TODO: this only work for 16-bit (short) input images
-            // do a sideways sum
-            IJ.showStatus("YProjection");
-            ImageProcessor projProc = new FloatProcessor( stack.getWidth(), stack.getSize() );
-            float[] fpixels = (float[]) projProc.getPixels();
-            for (int slice = 1; slice <= stack.getSize(); slice++) {
-               IJ.showProgress(slice, stack.getSize());
-               IJ.showStatus("YProjection " + slice + "/" + stack.getSize());
-               short[] pixels = (short[]) stack.getProcessor(slice).getPixels();
-               for (int x = 0; x < stack.getWidth(); x++) {
-                  int fIndex = (slice -1) * stack.getWidth() + x;
+            case Z:
+               ZProjector zp = new ZProjector(new ImagePlus("tmp", stack));
+               zp.doHyperStackProjection(false);
+               zp.setMethod(ZProjector.MAX_METHOD);
+               zp.doProjection();
+               return zp.getProjection();
+            case X: {
+               // TODO: this only work for 16-bit (short) input images
+
+               // do a sideways sum
+               IJ.showStatus("XProjection");
+               ImageProcessor projProc = new FloatProcessor(stack.getSize(), stack.getHeight());
+               float[] fpixels = (float[]) projProc.getPixels();
+               for (int slice = 1; slice <= stack.getSize(); slice++) {
+                  IJ.showProgress(slice, stack.getSize());
+                  IJ.showStatus("XProjection " + slice + "/" + stack.getSize());
+                  short[] pixels = (short[]) stack.getProcessor(slice).getPixels();
                   for (int y = 0; y < stack.getHeight(); y++) {
-                      fpixels[fIndex] += pixels[x + y * stack.getWidth()] & 0xffff;
+                     int index = y * stack.getHeight();
+                     int fIndex = y * stack.getSize() + (slice - 1);
+                     for (int x = 0; x < stack.getWidth(); x++) {
+                        fpixels[fIndex] += pixels[index + x] & 0xffff;
+                     }
                   }
                }
+               // not needed, but avoids Java warnings about fpixels being unused
+               projProc.setPixels(fpixels);
+               return new ImagePlus("YZProjection", projProc);
             }
-            return new ImagePlus("XZProjection", projProc);
+            case Y: {
+               // TODO: this only work for 16-bit (short) input images
+               // do a sideways sum
+               IJ.showStatus("YProjection");
+               ImageProcessor projProc = new FloatProcessor(stack.getWidth(), stack.getSize());
+               float[] fpixels = (float[]) projProc.getPixels();
+               for (int slice = 1; slice <= stack.getSize(); slice++) {
+                  IJ.showProgress(slice, stack.getSize());
+                  IJ.showStatus("YProjection " + slice + "/" + stack.getSize());
+                  short[] pixels = (short[]) stack.getProcessor(slice).getPixels();
+                  for (int x = 0; x < stack.getWidth(); x++) {
+                     int fIndex = (slice - 1) * stack.getWidth() + x;
+                     for (int y = 0; y < stack.getHeight(); y++) {
+                        fpixels[fIndex] += pixels[x + y * stack.getWidth()] & 0xffff;
+                     }
+                  }
+               }
+               // not needed, but avoids Java warnings about fpixels being unused
+               projProc.setPixels(fpixels);
+               return new ImagePlus("XZProjection", projProc);
+            }
+            default:
+               break;
          }
-         default:
-            break;
       }
-      // else (todo?)
-      return null;              
-      
+      // else null axis (todo?)
+      return null;
+
    }
    
    
@@ -450,8 +453,9 @@ public class SamplePositionDetector {
 
    private static boolean isPowerOf2Size(ImagePlus img) {
 		int i=2;
-		while(i<img.getWidth()) 
+		while(i<img.getWidth()) {
          i *= 2;
+      }
       return i==img.getWidth() && img.getWidth()==img.getHeight();
 	}
    

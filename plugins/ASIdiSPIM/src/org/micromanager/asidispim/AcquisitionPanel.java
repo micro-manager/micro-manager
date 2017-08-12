@@ -914,9 +914,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       rightColumnPanel_.add(slicePanel_, "growx");
       
       // add the column panels to the main panel
-      this.add(leftColumnPanel_);
-      this.add(centerColumnPanel_);
-      this.add(rightColumnPanel_);
+      super.add(leftColumnPanel_);
+      super.add(centerColumnPanel_);
+      super.add(rightColumnPanel_);
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addItemListener(sliceTimingDisableGUIInputs);
@@ -1212,26 +1212,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
          s.cameraExposure = 1;  // doesn't really matter, controlled by interval between triggers
          break;
-      case PSEUDO_OVERLAP:  // PCO or Photometrics, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
-         s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
-         if (null != camLibrary) switch (camLibrary) {
-         case PCOCAM:
-            s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms for PCO
+         case PSEUDO_OVERLAP:  // PCO or Photometrics, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
+            s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
+            if (null != camLibrary) {
+               switch (camLibrary) {
+                  case PCOCAM:
+                     s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms for PCO
+                     break;
+                  case PVCAM:
+                     s.cameraExposure = cameraExposure;
+                     break;
+                  default:
+                     MyDialogUtils.showError("Unknown camera library for pseudo-overlap calculations");
+                     break;
+               }
+            }
+            if (s.cameraDelay < 0.24f) {
+               MyDialogUtils.showError("Camera delay should be at least 0.25ms for pseudo-overlap mode.");
+            }
             break;
-         case PVCAM:
-            s.cameraExposure = cameraExposure;
-            break;
-         default:
-            MyDialogUtils.showError("Unknown camera library for pseudo-overlap calculations");
-            break;
-      }
-         if (s.cameraDelay < 0.24f) {
-            MyDialogUtils.showError("Camera delay should be at least 0.25ms for pseudo-overlap mode.");
-         }
-         break;
-      case LIGHT_SHEET:
-         // each slice period goes like this:
-         // 1. scan reset time (use to add any extra settling time to the start of each slice)
+         case LIGHT_SHEET:
+            // each slice period goes like this:
+            // 1. scan reset time (use to add any extra settling time to the start of each slice)
          // 2. start scan, wait scan settle time
          // 3. trigger camera/laser when scan settle time elapses
          // 4. scan for total of exposure time plus readout time (total time some row is exposing) plus settle time plus extra 0.25ms to prevent artifacts
@@ -1836,13 +1838,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       double volumeDuration = computeActualVolumeDuration(acqSettingsOrig);
       double timepointDuration = computeTimepointDuration();
       long timepointIntervalMs = Math.round(acqSettingsOrig.timepointInterval*1000);
-      
-      // Needed for movement correction
-      float pixelSize = (float) core_.getPixelSizeUm();
-      if (pixelSize < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 if zero or negative
-         pixelSize = 0.1625f;  // default to pixel size of 40x with sCMOS = 6.5um/40
-      }
-      
+     
       // use hardware timing if < 1 second between timepoints
       // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
       // cannot do this in getCurrentAcquisitionSettings because of mutually recursive
@@ -2049,7 +2045,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          // for separate timepoints, make sure the directory is empty to make sure naming pattern is "clean"
          // this is an arbitrary choice to avoid confusion later on when looking at file names
-         if (dir != null && (dir.list().length > 0)) {
+         if (dir.list().length > 0) {
             MyDialogUtils.showError("For separate timepoints the saving directory must be empty.");
             return false;
          }
@@ -2910,30 +2906,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   if (acqSettings.useMovementCorrection && 
                           (timePoint % correctMovementEachNFrames) == 0) {
                      if (movementDetectors[positionNum] == null) {
+                         // Transform from camera space to stage space:
+                        Rotation rotation  = camBRotation;
+                        if (firstSideA) {
+                           rotation = camARotation;
+                        }
                         movementDetectors[positionNum] = new MovementDetector(
-                                prefs_, acq_, cmChannelNumber, positionNum);
+                                prefs_, acq_, cmChannelNumber, positionNum, rotation);
                      }
-                     // We need to have a cut off to avoid accidents....
-                     double maxMovement = 25.0; // max movement in microns
+                     
                      Vector3D movement = movementDetectors[positionNum].detectMovement(
-                             Method.PhaseCorrelation, maxMovement);
-                     // movement is in pixel coordinates, translate here to microns
-                     //Vector3D movement = new Vector3D(pixelSize * tmpMovement.getX(),
-                     //        pixelSize * tmpMovement.getY(),
-                     //        acqSettings.stepSizeUm * tmpMovement.getZ() );
+                             Method.PhaseCorrelation);
                      
                      String msg1 = "TimePoint: " + timePoint + ", Detected movement.  X: " + movement.getX() +
                                 ", Y: " + movement.getY() + ", Z: " + movement.getZ();
                      System.out.println(msg1);
                      
                      if (!movement.equals(zeroPoint)) {
-                        // Transform from camera space to stage space:
-                        Rotation rotation  = camBRotation;
-                        if (firstSideA) {
-                           rotation = camARotation;
-                        }
-                        movement = rotation.applyTo(movement);
-                        
                         String msg = "ASIdiSPIM motion corrector moving stages: X: " + movement.getX() +
                                 ", Y: " + movement.getY() + ", Z: " + movement.getZ();
                         gui_.logMessage(msg);
@@ -2957,7 +2946,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                    movement.getZ());
                         }
 
-                        System.out.println("Corrected Movement");
                      }
                   }
                }

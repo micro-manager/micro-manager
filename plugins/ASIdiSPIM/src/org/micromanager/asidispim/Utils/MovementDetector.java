@@ -1,6 +1,7 @@
 
 package org.micromanager.asidispim.Utils;
 
+import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.json.JSONException;
 import org.micromanager.acquisition.MMAcquisition;
@@ -24,27 +25,34 @@ public class MovementDetector {
    private final MMAcquisition acq_;
    private final int ch_;
    private final int pos_;
+   private final Rotation rotation_;
    private final double pixelSize_;
    private final double stepSize_;
    private final int runEachNTimePoints_;
+   private final float maxDistance_;
+   private final float minDistance_;
    
    /**
     * This class determines the position of the object in a stack and
     * returns the difference in XYZ position of that object with the 
     * previous time point (or a zeroed 3D point if this is the first timepoint).
+    * @param prefs diSPIM preferences used to transmit user settings
     * @param acq MMAcquisition for which we track movement
     * @param ch  Channel to be used to determine position of the object
     * @param pos Position in this acquisition that we track
+    * @param rotation Rotation between this channel and the stages of the diSPIM
     */
    public MovementDetector (
            final Prefs prefs,
            final MMAcquisition acq, 
            final int ch, 
-           final int pos) {
+           final int pos,
+           final Rotation rotation) {
       prefs_ = prefs;
       acq_ = acq;
       ch_ = ch;
       pos_ = pos;
+      rotation_ = rotation;
       zeroPoint_ = new Vector3D(0.0, 0.0, 0.0);
       lastMovement_ = new Vector3D(0.0, 0.0, 0.0);
       double pixelSize = 0.165;
@@ -60,6 +68,10 @@ public class MovementDetector {
       }
       runEachNTimePoints_ = prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(), 
               Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_EACHNIMAGES, 1);
+      maxDistance_ = prefs_.getFloat(MyStrings.PanelNames.AUTOFOCUS.toString(),
+              Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_MAXCHANGE, 25.0f);
+       minDistance_ = prefs_.getFloat(MyStrings.PanelNames.AUTOFOCUS.toString(),
+              Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_MINCHANGE, 0.0f);
    }
    
    /**
@@ -73,13 +85,10 @@ public class MovementDetector {
     * 2 positions.  To avoid this, the last stage position is corrected by 
     * the movement (that was presumably executed by the stages
     * @param method
-    * @param maxDistance maximum distance (in microns) that the image
-    *                      is allowed to move.  If it moves more than this, 
-    *                      the zero vector will be returned.
     * @return Movement (in microns) since the last time-point (or a zeroed
     *          vector if the movement is more than maxDistance).
     */
-   public Vector3D detectMovement(Method method, double maxDistance) {
+   public Vector3D detectMovement(Method method) {
       Vector3D movement = new Vector3D(0.0, 0.0, 0.0);
   
       if (method == Method.CenterOfMass) {
@@ -89,7 +98,7 @@ public class MovementDetector {
 
          if (lastFrame > 0 && lastPosition_ != null) {
             movement = position.subtract(lastPosition_);
-            if (movement.distance(zeroPoint_) > maxDistance) {
+            if (movement.distance(zeroPoint_) > maxDistance_) {
                movement = new Vector3D(0.0, 0.0, 0.0);
             }
          }
@@ -99,10 +108,30 @@ public class MovementDetector {
          int currentFrame = acq_.getLastAcquiredFrame();
          movement = SamplePositionDetector.
                  getDisplacementUsingIJPhaseCorrelation(
-                         acq_, currentFrame, ch_, pos_, pixelSize_, stepSize_);
+                         acq_, currentFrame, currentFrame - runEachNTimePoints_, 
+                         ch_, pos_, pixelSize_, stepSize_);
+         
+         // convert from camera space to stage space:
+         movement = rotation_.applyTo(movement);
+         
+         // check for min and max distance traveled
+         if (movement.distance(movement) > maxDistance_) {
+            movement = zeroPoint_;
+         }
+         if (movement.getX() < minDistance_) {
+            movement = new Vector3D(0.0, movement.getY(), movement.getZ());
+         }
+         if (movement.getY() < minDistance_) {
+            movement = new Vector3D(movement.getX(), 0.0, movement.getZ());
+         }         
+         if (movement.getZ() < minDistance_) {
+            movement = new Vector3D(movement.getX(), movement.getY(), 0.0);
+         }
+        
          // correct for the amount we moved last time to avoid oscillations
          // I did not think through why we need an add, but it works.
          movement = movement.add(lastMovement_);
+         
          // remember what we asked the stages to move for next time
          lastMovement_ = movement;
       }
