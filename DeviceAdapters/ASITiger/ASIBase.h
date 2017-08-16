@@ -64,13 +64,15 @@ public:
       this->InitializeDefaultErrorMessages();
       InitializeASIErrorMessages();
 
+      // note that this name is different from the label that MM uses in e.g. SetProperty()
+
       // name property will be used to re-create the object by calling CreateDevice again with this parameter
       // if name isn't specified then skip this step (=> method for parent objects to delay setting name until child created)
       if (strcmp(name, "") != 0)
          this->CreateProperty(MM::g_Keyword_Name, name, MM::String, true);
    }
 
-   virtual ~ASIBase() { Shutdown(); }
+   virtual ~ASIBase() { }
 
    int Shutdown()
    {

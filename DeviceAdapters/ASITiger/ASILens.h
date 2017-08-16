@@ -35,7 +35,7 @@ class CLens : public ASIPeripheralBase<CStageBase, CLens>
 {
 public:
    CLens(const char* name);
-   ~CLens() { Shutdown(); }
+   ~CLens() { }
   
    // Device API
    // ----------

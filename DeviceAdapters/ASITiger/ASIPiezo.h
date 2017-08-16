@@ -33,7 +33,7 @@ class CPiezo : public ASIPeripheralBase<CStageBase, CPiezo>
 {
 public:
    CPiezo(const char* name);
-   ~CPiezo() { Shutdown(); }
+   ~CPiezo() { }
   
    // Device API
    // ----------

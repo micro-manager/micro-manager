@@ -33,7 +33,7 @@ class CXYStage : public ASIPeripheralBase<CXYStageBase, CXYStage>
 {
 public:
    CXYStage(const char* name);
-   ~CXYStage() { Shutdown(); }
+   ~CXYStage() { }
   
    // Device API
    // ----------
