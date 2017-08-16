@@ -33,8 +33,8 @@ class CScanner : public ASIPeripheralBase<CGalvoBase, CScanner>
 {
 public:
    CScanner(const char* name);
-   ~CScanner() { Shutdown(); }
-  
+   ~CScanner() { }
+
    // Device API
    // ----------
    int Initialize();

@@ -1011,16 +1011,12 @@ int CScanner::SetSpotInterval(double pulseInterval_us)
    // plus the time required to move to a new position (wait time plus a bit of overhead)
    long targetExposure = long (pulseInterval_us/1000 + 0.5);  // our instance variable gets updated in the property handler
    ostringstream command; command.str("");
-   char propValue1[MM::MaxStrLength];
    command << targetExposure;
-   CDeviceUtils::CopyLimitedString(propValue1, command.str().c_str());
-   RETURN_ON_MM_ERROR ( SetProperty(g_TargetExposureTimePropertyName, propValue1) );
+   RETURN_ON_MM_ERROR ( SetProperty(g_TargetExposureTimePropertyName, command.str().c_str()) );
    long intervalMs = targetExposure_ + targetSettling_ + 3;  // 3 ms extra cushion, need 1-2 ms for busy signal to go low beyond wait time
    command.str("");
-   char propValue2[MM::MaxStrLength];
    command << intervalMs;
-   CDeviceUtils::CopyLimitedString(propValue2, command.str().c_str());
-   RETURN_ON_MM_ERROR ( SetProperty(g_RB_DelayPropertyName, propValue2) );
+   RETURN_ON_MM_ERROR ( SetProperty(g_RB_DelayPropertyName, command.str().c_str()) );
    return DEVICE_OK;
 }
 
@@ -2705,9 +2701,13 @@ int CScanner::OnSPIMNumSlices(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmp);
       command << addressChar_ << "NR Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }

@@ -35,8 +35,8 @@ class CClocked : public ASIPeripheralBase<CStateDeviceBase, CClocked>
 {
 public:
    CClocked(const char* name);
-   ~CClocked() { Shutdown(); }
-  
+   ~CClocked() { }
+
    // Generic device API
    // ----------
    int Initialize();

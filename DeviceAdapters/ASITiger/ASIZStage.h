@@ -33,7 +33,7 @@ class CZStage : public ASIPeripheralBase<CStageBase, CZStage>
 {
 public:
    CZStage(const char* name);
-   ~CZStage() { Shutdown(); }
+   ~CZStage() { }
   
    // Device API
    // ----------

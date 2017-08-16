@@ -118,6 +118,18 @@ public:
    // get define string from substring (e.g. the RING BUFFER define has the # of positions)
    string GetDefineString(const build_info_type build, const string substringToLookFor);
 
+   void RegisterPeripheral(const string deviceLabel, const string addressChar) {
+      deviceMap_[deviceLabel] = addressChar;  // add device to lookup table
+   }
+
+   void UnRegisterPeripheral(const string deviceLabel) {
+      deviceMap_.erase(deviceLabel);  // remove device from lookup table
+   }
+
+   bool UpdatingSharedProperties() { return updatingSharedProperties_; }
+
+   int UpdateSharedProperties(string addressChar, string propName, string value);
+
    // action/property handlers
    int OnPort                       (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSerialTerminator           (MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -145,6 +157,10 @@ private:
    long serialRepeatPeriod_;  // how often in ms the command is sent
    bool serialOnlySendChanged_;        // if true the serial command is only sent when it has changed
    MMThreadLock threadLock_;  // used to lock thread during serial transaction
+   bool updatingSharedProperties_;
+   map<string, string> deviceMap_;  // to implement properties shared between devices
+        // key is the device name, value is the Tiger address (normally a single character, see note about addressChar_ in ASIPeripheralBase)
+
 };
 
 

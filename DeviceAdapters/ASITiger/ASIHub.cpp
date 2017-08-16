@@ -50,7 +50,8 @@ ASIHub::ASIHub() :
       serialTerminator_(g_SerialTerminatorDefault),
       serialRepeatDuration_(0),
       serialRepeatPeriod_(500),
-      serialOnlySendChanged_(true)
+      serialOnlySendChanged_(true),
+      updatingSharedProperties_(false)
 {
    CPropertyAction* pAct = new CPropertyAction(this, &ASIHub::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
@@ -472,6 +473,21 @@ string ASIHub::GetDefineString(const build_info_type build, const string substri
       }
    }
    return "";
+}
+
+int ASIHub::UpdateSharedProperties(string addressChar, string propName, string value) {
+   int ret = DEVICE_OK;
+   updatingSharedProperties_ = true;
+   for (map<string,string>::iterator it=deviceMap_.begin(); it!=deviceMap_.end(); ++it) {
+      if (addressChar == it->second) {
+         int ret_last = GetCoreCallback()->SetDeviceProperty(it->first.c_str(), propName.c_str(), value.c_str()) != DEVICE_OK;
+         if (ret_last!=DEVICE_OK) {
+            ret = ret_last;
+         }
+      }
+   }
+   updatingSharedProperties_ = false;
+   return ret;
 }
 
 int ASIHub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
