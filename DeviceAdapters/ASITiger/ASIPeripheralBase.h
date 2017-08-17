@@ -58,12 +58,13 @@ public:
       }
    }
 
-   int Shutdown() {
+   int Shutdown()
+   {
       char deviceLabel[MM::MaxStrLength];
       this->GetLabel(deviceLabel);
       string str(deviceLabel);
       hub_->UnRegisterPeripheral(str);
-      return ASIBase::Shutdown();
+      return (ASIBase::Shutdown());
    }
 
    // The Initialize() of child (concrete peripheral) classes must call this.
