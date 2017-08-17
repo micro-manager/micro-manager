@@ -64,7 +64,7 @@ public:
       this->GetLabel(deviceLabel);
       string str(deviceLabel);
       hub_->UnRegisterPeripheral(str);
-      return (ASIBase::Shutdown());
+      return (ASIBase<TDeviceBase, UConcreteDevice>::Shutdown());
    }
 
    // The Initialize() of child (concrete peripheral) classes must call this.
