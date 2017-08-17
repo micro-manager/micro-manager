@@ -1555,7 +1555,7 @@ int CXYStage::OnScanState(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << addressChar_ << "SN X?";
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
          RETURN_ON_MM_ERROR( hub_->GetAnswerCharAtPosition3(c) );
-         if ((c==g_SPIMStateCode_Idle))
+         if (c==g_SPIMStateCode_Idle)
          {
             // if we are idle or armed then start it
             // assume that nothing else could have started it since our query moments ago
