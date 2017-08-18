@@ -68,10 +68,11 @@ public class NearestPointGsSpotPair {
    /**
     * method to find the nearest point in the collection of Points
     * Uses Squared Euclidian distance method from Rednaxela
+    * TODO: evaluate if the copy of the spot is actually needed.
     * 
     * @param input - point for which we want to find the nearest neighbor
-    * @return point found or null when it was farther away than the cutoff set 
-    * in the constructor
+    * @return copy of the point found or null when it was farther away than 
+    * the cutoff set in the constructor
     */
    public GsSpotPair findKDWSE(Point2D.Double input) {
       // construct a new KD tree if needed
@@ -91,6 +92,42 @@ public class NearestPointGsSpotPair {
          double distance = result.get(0).distance;
 
          GsSpotPair ret = theList_.get(index).copy();
+
+         if (distance < maxDistanceSquared_) {
+            return ret;
+         }
+      }
+      
+      return null;
+   }
+   
+   
+   /**
+    * method to find the nearest point in the collection of Points
+    * Uses Squared Euclidian distance method from Rednaxela
+    * 
+    * @param input - point for which we want to find the nearest neighbor
+    * @return point found or null when it was farther away than the cutoff set 
+    * in the constructor
+    */
+   public GsSpotPair findKDWSENoCopy(Point2D.Double input) {
+      // construct a new KD tree if needed
+      if (we_ == null) {
+         we_ = new SqrEuclid<Integer>(2, 50 * theList_.size());
+         for (int i = 0; i < theList_.size(); i++) {
+            Point2D.Double p = theList_.get(i).getFirstPoint();
+            double[] point = {p.x, p.y};
+            we_.addPoint(point, i);
+         }
+      }
+      double[] testPoint = {input.x, input.y};
+      List<Entry<Integer>> result = we_.nearestNeighbor(testPoint, 1, false);
+      
+      if (result != null && !result.isEmpty()) {
+         Integer index = result.get(0).value;
+         double distance = result.get(0).distance;
+
+         GsSpotPair ret = theList_.get(index);
 
          if (distance < maxDistanceSquared_) {
             return ret;
