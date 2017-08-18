@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -216,8 +217,11 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
 
    private JButton createButton(String text, String iconPath,
          String help, final Runnable action) {
-      JButton button = new JButton(text,
-            IconLoader.getIcon("/org/micromanager/icons/" + iconPath));
+      Icon icon = null;
+      if (iconPath != null) {
+         icon = IconLoader.getIcon("/org/micromanager/icons/" + iconPath);
+      }
+      JButton button = new JButton(text, icon);
       button.setMargin(new Insets(0, 0, 0, 0));
       button.setToolTipText(help);
       button.setFont(defaultFont_);
