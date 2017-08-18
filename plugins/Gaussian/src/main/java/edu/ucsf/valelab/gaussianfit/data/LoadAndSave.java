@@ -204,11 +204,29 @@ public class LoadAndSave {
     * @param caller - JFrame calling code, used to set Waitcursor
     */
    public static void loadText(File selectedFile, JFrame caller) {
-      try {
-         ij.IJ.showStatus("Loading data..");
 
-         caller.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+      ij.IJ.showStatus("Loading data..");
+
+      caller.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+      try {
          BufferedReader fr = new BufferedReader(new FileReader(selectedFile));
+         loadTextFromBufferedReader(fr);
+      } catch (FileNotFoundException ex) {
+         JOptionPane.showMessageDialog(getInstance(), "File not found");
+      } finally {
+         caller.setCursor(Cursor.getDefaultCursor());
+         ij.IJ.showStatus("");
+         ij.IJ.showProgress(1.0);
+      }
+   }
+   
+   /**
+    * 
+    * @param fr - input data as a stream
+    */
+   public static void loadTextFromBufferedReader(BufferedReader fr) {
+      
+      try {
 
          String info = fr.readLine();
          String[] infos = info.split("\t");
@@ -314,15 +332,10 @@ public class LoadAndSave {
 
       } catch (NumberFormatException ex) {
          JOptionPane.showMessageDialog(getInstance(), "File format did not meet expectations");
-      } catch (FileNotFoundException ex) {
-         JOptionPane.showMessageDialog(getInstance(), "File not found");
+      
       } catch (IOException ex) {
          JOptionPane.showMessageDialog(getInstance(), "Error while reading file");
-      } finally {
-         caller.setCursor(Cursor.getDefaultCursor());
-         ij.IJ.showStatus("");
-         ij.IJ.showProgress(1.0);
-      }
+      } 
 
    }
 
