@@ -44,7 +44,6 @@ import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Arrow;
-import ij.gui.MessageDialog;
 import ij.measure.ResultsTable;
 import ij.text.TextPanel;
 import ij.text.TextWindow;
@@ -266,8 +265,6 @@ public class ParticlePairLister {
     * In addition, it will list the average distance, and average distance in x
     * and y for each frame.
     *
-    * Currently, the code only lists "tracks" starting at frame 1.
-    *
     * Needed input variables are set through a builder.
     *
     */
@@ -344,13 +341,6 @@ public class ParticlePairLister {
                               xyPointsCh2.add(point);
                            }
                         }
-                     }
-
-                     if (xyPointsCh2.isEmpty()) {
-                        ReportingUtils.logError(
-                                "Pairs function in Localization plugin: no points found in second channel in frame "
-                                + frame);
-                        continue;
                      }
 
                      // Find matching points in the two ArrayLists
@@ -451,7 +441,8 @@ public class ParticlePairLister {
                      }
                   }
                }
-
+               
+/*
                if (showSummary_) {
                   ResultsTable summaryTable = new ResultsTable();
                   summaryTable.setPrecision(2);
@@ -482,6 +473,7 @@ public class ParticlePairLister {
                   summaryTable.addValue("StdDevY", stdDevY);
                }
                
+               */
                if (showImage_) {
                   /*
                                              distances.add(d);
@@ -507,39 +499,45 @@ public class ParticlePairLister {
                for (int pos : positions) {
                   // prepare NearestPoint objects to speed up finding closest pair 
                   ArrayList<NearestPointGsSpotPair> npsp = new ArrayList<NearestPointGsSpotPair>();
-                  Iterator<GsSpotPair> iSpotPairs = spotPairsByFrame.get(pos).get(0).iterator();
                   for (int frame = 1; frame <= dc.getSpotData(row).nrFrames_; frame++) {
                      npsp.add(new NearestPointGsSpotPair(
                              spotPairsByFrame.get(pos).get(frame - 1), maxDistanceNm_));
                   }
-                  int i = 0;
-                  while (iSpotPairs.hasNext()) {
-                     ij.IJ.showProgress(i++, nrSpotPairsInFrame1);
-                     GsSpotPair spotPair = iSpotPairs.next();
-                     // for now, we only start tracks at frame number 1
-                     if (spotPair.getFirstSpot().getFrame() == 1) {
-                        ArrayList<GsSpotPair> track = new ArrayList<GsSpotPair>();
-                        track.add(spotPair);
-                        int frame = 2;
-                        while (frame <= dc.getSpotData(row).nrFrames_) {
-                           GsSpotPair newSpotPair = npsp.get(frame - 1).findKDWSE(
-                                   new Point2D.Double(spotPair.getFirstPoint().getX(),
-                                           spotPair.getFirstPoint().getY()));
-                           if (newSpotPair != null) {
-                              spotPair = newSpotPair;
-                              track.add(spotPair);
+                  //int i = 0;
+                  for (int firstFrame = 1; firstFrame <= dc.getSpotData(row).nrFrames_; firstFrame++) {
+                     Iterator<GsSpotPair> iSpotPairs = spotPairsByFrame.get(pos).get(firstFrame - 1).iterator();
+                     while (iSpotPairs.hasNext()) {
+                        //ij.IJ.showProgress(i++, nrSpotPairsInFrame1);
+                        GsSpotPair spotPair = iSpotPairs.next();
+                        // for now, we only start tracks at frame number 1
+                        if (!spotPair.partOfTrack()) {
+                           for (int frame = firstFrame; frame < dc.getSpotData(row).nrFrames_; frame++) {
+                              if (!spotPair.partOfTrack() && spotPair.getFirstSpot().getFrame() == frame) {
+                                 ArrayList<GsSpotPair> track = new ArrayList<GsSpotPair>();
+                                 track.add(spotPair);
+                                 int searchInFrame = frame + 1;
+                                 while (searchInFrame <= dc.getSpotData(row).nrFrames_) {
+                                    GsSpotPair newSpotPair = npsp.get(searchInFrame - 1).findKDWSENoCopy(
+                                            new Point2D.Double(spotPair.getFirstPoint().getX(),
+                                                    spotPair.getFirstPoint().getY()));
+                                    if (newSpotPair != null && !newSpotPair.partOfTrack()) {
+                                       newSpotPair.useInTrack(true);
+                                       spotPair = newSpotPair;
+                                       track.add(spotPair);
+                                    }
+                                    searchInFrame++;
+                                 }
+                                 tracks.add(track);
+                              }
                            }
-                           frame++;
                         }
-                        tracks.add(track);
                      }
                   }
-               }
 
-               if (tracks.isEmpty()) {
-                  MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(),
-                          "No Pairs found", "No Pairs found");
-                  continue;
+                  if (tracks.isEmpty()) {
+                     MMStudio.getInstance().alerts().postAlert("P2D fit error", null, "ID: " + dc.getSpotData(row).ID_ + 
+                             ", No Pairs found");
+                  }
                }
 
                Iterator<ArrayList<GsSpotPair>> itTracks = tracks.iterator();
@@ -784,11 +782,12 @@ public class ParticlePairLister {
 
                }
 
-               if (p2d_) {
-                  List<Double> distancesToUse = allDistances; 
-                  if (useVectorDistances_) {
-                     distancesToUse = avgVectDistances;
-                  }
+               List<Double> distancesToUse = allDistances;
+               if (useVectorDistances_) {
+                  distancesToUse = avgVectDistances;
+               }
+
+               if (p2d_ && distancesToUse.size() > 0) {
                   double[] d = new double[distancesToUse.size()];
                   for (int j = 0; j < distancesToUse.size(); j++) {
                      d[j] = distancesToUse.get(j);
@@ -971,9 +970,13 @@ public class ParticlePairLister {
                      rt3.show("P2D Summary");
 
                   } catch (FittingException fe) {
-                     // ReportingUtils.showError(fe.getMessage());
-                  } catch (TooManyEvaluationsException tmee) {
-                     // ReportingUtils.showError(tmee.getMessage());
+                     MMStudio.getInstance().alerts().postAlert("P2D fit error", 
+                             null, "ID: " + dc.getSpotData(row).ID_ + 
+                             ", Failed to fit p2d function");
+                  } catch (TooManyEvaluationsException tmee) {    
+                     MMStudio.getInstance().alerts().postAlert("P2D fit error", 
+                             null, "ID: " + dc.getSpotData(row).ID_ + 
+                             ", Too many evaluations while fitting");
                   }
                }
                ij.IJ.showProgress(100.0);
@@ -987,235 +990,6 @@ public class ParticlePairLister {
       (new Thread(doWorkRunnable)).start();
       
    }
-
-   /**
-    * Cycles through the spots of the selected data set and finds the most
-    * nearby spot in channel 2. It will list this as a pair if the two spots are
-    * within MAXMATCHDISTANCE nm of each other. In addition, it will list the
-    * average distance, and average distance in x and y for each frame.
-    *
-    * spots in channel 2 that are within MAXMATCHDISTANCE of
-    *
-    * @param row
-    * @param maxDistance
-    * @param showPairs
-    * @param showImage
-    * @param savePairs
-    * @param filePath
-    * @param showSummary
-    * @param showGraph
-    *
-   public static void ListParticlePairs(final int row, final double maxDistance,
-           final boolean showPairs, final boolean showImage,
-           final boolean savePairs, final String filePath,
-           final boolean showSummary, final boolean showGraph) {
-
-      Runnable doWorkRunnable = new Runnable() {
-
-         @Override
-         public void run() {
-
-            RowData spotData = DataCollectionForm.getInstance().getSpotData(row);
-
-            ResultsTable rt = new ResultsTable();
-            rt.reset();
-            rt.setPrecision(2);
-
-            ResultsTable rt2 = new ResultsTable();
-            rt2.reset();
-            rt2.setPrecision(2);
-
-            int width = spotData.width_;
-            int height = spotData.height_;
-            double factor = spotData.pixelSizeNm_;
-            boolean useS = spotData.useSeconds();
-            ij.ImageStack stack = new ij.ImageStack(width, height);
-
-            XYSeries xData = new XYSeries("XError");
-            XYSeries yData = new XYSeries("YError");
-
-            ij.IJ.showStatus("Creating Pairs...");
-
-            for (int frame = 1; frame <= spotData.nrFrames_; frame++) {
-               ij.IJ.showProgress(frame, spotData.nrFrames_);
-               ImageProcessor ip = new ShortProcessor(width, height);
-               short pixels[] = new short[width * height];
-               ip.setPixels(pixels);
-               stack.addSlice("frame: " + frame, ip);
-
-               // Get points from both channels in each frame as ArrayLists        
-               ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
-               ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-               for (SpotData gs : spotData.spotList_) {
-                  if (gs.getFrame() == frame) {
-                     if (gs.getChannel() == 1) {
-                        gsCh1.add(gs);
-                     } else if (gs.getChannel() == 2) {
-                        Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                        xyPointsCh2.add(point);
-                     }
-                  }
-               }
-
-               if (xyPointsCh2.isEmpty()) {
-                  ReportingUtils.logError("Pairs function in Localization plugin: no points found in second channel in frame " + frame);
-                  continue;
-               }
-
-               // Find matching points in the two ArrayLists
-               Iterator it2 = gsCh1.iterator();
-               NearestPoint2D np = new NearestPoint2D(xyPointsCh2,
-                       maxDistance);
-               ArrayList<Double> distances = new ArrayList<Double>();
-               ArrayList<Double> errorX = new ArrayList<Double>();
-               ArrayList<Double> errorY = new ArrayList<Double>();
-               while (it2.hasNext()) {
-                  SpotData gs = (SpotData) it2.next();
-                  Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                  Point2D.Double pCh2 = np.findKDWSE(pCh1);
-                  if (pCh2 != null) {
-                     rt.incrementCounter();
-                     rt.addValue(Terms.FRAME, gs.getFrame());
-                     rt.addValue(Terms.SLICE, gs.getSlice());
-                     rt.addValue(Terms.CHANNEL, gs.getSlice());
-                     rt.addValue(Terms.POSITION, gs.getPosition());
-                     rt.addValue(Terms.XPIX, gs.getX());
-                     rt.addValue(Terms.YPIX, gs.getY());
-                     rt.addValue("X1", pCh1.getX());
-                     rt.addValue("Y1", pCh1.getY());
-                     rt.addValue("X2", pCh2.getX());
-                     rt.addValue("Y2", pCh2.getY());
-                     double d2 = NearestPoint2D.distance2(pCh1, pCh2);
-                     double d = Math.sqrt(d2);
-                     rt.addValue("Distance", d);
-                     rt.addValue("Orientation (sine)",
-                             NearestPoint2D.orientation(pCh1, pCh2));
-                     distances.add(d);
-
-                     ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
-
-                     double ex = pCh2.getX() - pCh1.getX();
-                     //double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
-                     //ex = Math.sqrt(ex);
-                     errorX.add(ex);
-                     //double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
-                     //ey = Math.sqrt(ey);
-                     double ey = pCh2.getY() - pCh1.getY();
-                     errorY.add(ey);
-                  }
-               }
-               Double avg = ListUtils.listAvg(distances);
-               Double stdDev = ListUtils.listStdDev(distances, avg);
-               Double avgX = ListUtils.listAvg(errorX);
-               Double stdDevX = ListUtils.listStdDev(errorX, avgX);
-               Double avgY = ListUtils.listAvg(errorY);
-               Double stdDevY = ListUtils.listStdDev(errorY, avgY);
-               rt2.incrementCounter();
-               rt2.addValue("Frame Nr.", frame);
-               rt2.addValue("Avg. distance", avg);
-               rt2.addValue("StdDev distance", stdDev);
-               rt2.addValue("X", avgX);
-               rt2.addValue("StdDev X", stdDevX);
-               rt2.addValue("Y", avgY);
-               rt2.addValue("StdDevY", stdDevY);
-               double timePoint = frame;
-               if (spotData.timePoints_ != null) {
-                  timePoint = spotData.timePoints_.get(frame);
-                  if (useS) {
-                     timePoint /= 1000;
-                  }
-               }
-               xData.add(timePoint, avgX);
-               yData.add(timePoint, avgY);
-            }
-
-            if (rt.getCounter() == 0) {
-               MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(),
-                       "No Pairs found", "No Pairs found");
-               return;
-            }
-
-            if (showSummary) {
-               // show summary in resultstable
-               rt2.show("Summary of Pairs found in " + spotData.getName());
-            }
-
-            if (showGraph) {
-               String xAxis = "Time (frameNr)";
-               if (spotData.timePoints_ != null) {
-                  xAxis = "Time (ms)";
-                  if (useS) {
-                     xAxis = "Time (s)";
-                  }
-               }
-               GaussianUtils.plotData2("Error in " + spotData.getName(),
-                       xData, yData, xAxis, "Error(nm)", 0, 400);
-
-               ij.IJ.showStatus("");
-            }
-
-            if (showPairs) {
-               //  show Pairs panel and attach listener
-               TextPanel tp;
-               TextWindow win;
-
-               String rtName = "Pairs found in " + spotData.getName();
-               rt.show(rtName);
-               ImagePlus siPlus = ij.WindowManager.getImage(spotData.title_);
-               Frame frame = WindowManager.getFrame(rtName);
-               if (frame != null && frame instanceof TextWindow && siPlus != null) {
-                  win = (TextWindow) frame;
-                  tp = win.getTextPanel();
-
-                  // TODO: the following does not work, there is some voodoo going on here
-                  for (MouseListener ms : tp.getMouseListeners()) {
-                     tp.removeMouseListener(ms);
-                  }
-                  for (KeyListener ks : tp.getKeyListeners()) {
-                     tp.removeKeyListener(ks);
-                  }
-
-                  ResultsTableListener myk = new ResultsTableListener(
-                          MMStudio.getInstance(), spotData.dw_, siPlus,
-                          rt, win, spotData.halfSize_);
-                  tp.addKeyListener(myk);
-                  tp.addMouseListener(myk);
-                  frame.toFront();
-               }
-            }
-
-            if (showImage) {
-               ImagePlus sp = new ImagePlus("Errors in pairs");
-               sp.setOpenAsHyperStack(true);
-               sp.setStack(stack, 1, 1, stack.getSize());
-               sp.setDisplayRange(0, 20);
-               sp.setTitle(spotData.title_);
-
-               ImageWindow w = new StackWindow(sp);
-               w.setTitle("Error in " + spotData.getName());
-
-               w.setImage(sp);
-               w.setVisible(true);
-            }
-
-            if (savePairs) {
-               try {
-                  String fileName = filePath + File.separator
-                          + spotData.getName() + "_Pairs.cvs";
-                  rt.saveAs(fileName);
-                  ij.IJ.log("Saved file: " + fileName);
-               } catch (IOException ex) {
-                  ReportingUtils.showError(ex, "Failed to save file");
-               }
-            }
-
-         }
-      };
-
-      (new Thread(doWorkRunnable)).start();
-
-   }
-   */
 
    /**
     * Fits a list of numbers to a Gaussian function using Maximum Likelihood
