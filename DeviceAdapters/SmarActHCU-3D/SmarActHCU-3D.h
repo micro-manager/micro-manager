@@ -10,7 +10,7 @@
 //
 // LICENSE:       LGPL
 //
-
+///////////////////////////////////////////
 
 #ifndef _SMARACT_H_
 #define _SMARACT_H_
@@ -66,7 +66,7 @@ public:
 
     // action interface
    // ----------------
-   int OnLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrequency(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -119,7 +119,7 @@ public:
    // action interface
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFrequency(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ExecuteCommand(const std::string& cmd, std::string& response);

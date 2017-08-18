@@ -10,6 +10,7 @@
 //
 // LICENSE:       LGPL
 //
+///////////////////////////////////////////
 
 #ifdef WIN32
    #include <windows.h>
@@ -485,12 +486,12 @@ int ZStage::Initialize()
    if (ret != DEVICE_OK){
       return ret;
    }
-   channelZ_ = atoi(charbuff); 
+   channelZ_ = atoi(charbuff);  
 
    // Frequency
-   CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnSpeed);
-   CreateProperty("Speed", "5000", MM::Integer, false, pAct);
-   SetPropertyLimits("Speed", 1, 18500);
+   CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnFrequency);
+   CreateProperty("Frequency", "5000", MM::Integer, false, pAct);
+   SetPropertyLimits("Frequency", 1, 18500);
    initialized_ = true;
      
    return DEVICE_OK;
@@ -582,7 +583,6 @@ int ZStage::SetFrequency(int freq)
    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
    if (ret != DEVICE_OK)
      return ret;
-
    return DEVICE_OK;
 }
 
@@ -609,7 +609,7 @@ int ZStage::GetLimits(double& /*min*/, double& /*max*/)
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
-int ZStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ZStage::OnFrequency(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {  
