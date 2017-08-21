@@ -94,6 +94,11 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       public Component getTableCellRendererComponent(JTable table, Object value,
             boolean selected, boolean focused, int rowIndex, int columnIndex)
       {
+         // https://stackoverflow.com/a/3055930
+         if (value == null) {
+            return null;
+         }
+
          setEnabled(table.isEnabled());
          return super.getTableCellRendererComponent(table, value, selected, 
                  focused, rowIndex, columnIndex);
@@ -104,6 +109,11 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int columnIndex) {
+         // https://stackoverflow.com/a/3055930
+         if (value == null) {
+            return null;
+         }
+
          if (!(value instanceof Boolean)) {
             return null;
          }

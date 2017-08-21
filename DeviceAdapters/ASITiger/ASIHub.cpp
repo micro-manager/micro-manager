@@ -29,9 +29,10 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceUtils.h"
+#include "../../MMDevice/DeviceThreads.h"
+#include <algorithm>
 #include <string>
 #include <vector>
-#include <algorithm>
 
 
 using namespace std;
@@ -49,7 +50,8 @@ ASIHub::ASIHub() :
       serialTerminator_(g_SerialTerminatorDefault),
       serialRepeatDuration_(0),
       serialRepeatPeriod_(500),
-      serialOnlySendChanged_(true)
+      serialOnlySendChanged_(true),
+      updatingSharedProperties_(false)
 {
    CPropertyAction* pAct = new CPropertyAction(this, &ASIHub::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
@@ -143,6 +145,7 @@ int ASIHub::QueryCommandUnterminatedResponse(const char *command, const long tim
 
 int ASIHub::QueryCommand(const char *command, const char *replyTerminator, const long delayMs)
 {
+   MMThreadGuard g(threadLock_);
    RETURN_ON_MM_ERROR ( ClearComPort() );
    RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
    serialCommand_ = command;
@@ -470,6 +473,21 @@ string ASIHub::GetDefineString(const build_info_type build, const string substri
       }
    }
    return "";
+}
+
+int ASIHub::UpdateSharedProperties(string addressChar, string propName, string value) {
+   int ret = DEVICE_OK;
+   updatingSharedProperties_ = true;
+   for (map<string,string>::iterator it=deviceMap_.begin(); it!=deviceMap_.end(); ++it) {
+      if (addressChar == it->second) {
+         int ret_last = GetCoreCallback()->SetDeviceProperty(it->first.c_str(), propName.c_str(), value.c_str()) != DEVICE_OK;
+         if (ret_last!=DEVICE_OK) {
+            ret = ret_last;
+         }
+      }
+   }
+   updatingSharedProperties_ = false;
+   return ret;
 }
 
 int ASIHub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)

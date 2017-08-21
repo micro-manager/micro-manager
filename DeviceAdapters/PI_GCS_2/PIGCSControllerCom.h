@@ -130,8 +130,6 @@ public:
 
 private:
 	std::string ConvertToAxesStringWithSpaces(const std::string& axes) const;
-	bool CheckError(bool& hasCmdFlag);
-	bool CheckError(void);
    PIGCSControllerComDevice* deviceProxy_;
 	bool hasCST_;
 	bool hasSVO_;

@@ -900,6 +900,12 @@ public class CalibrationEditor extends MMDialog {
       @Override
       public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
+
+         // https://stackoverflow.com/a/3055930
+         if (value == null) {
+            return null;
+         }
+
                  
          if (isSelected) {
             // cell (and perhaps other cells) are selected
@@ -982,6 +988,11 @@ public class CalibrationEditor extends MMDialog {
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
+
+         // https://stackoverflow.com/a/3055930
+         if (value == null) {
+            return null;
+         }
          
          PropertyTableData data = (PropertyTableData)table.getModel();
          item_ = data.getPropertyItem(rowIndex);

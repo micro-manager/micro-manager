@@ -64,11 +64,14 @@ public class MD {
    private static final String GRID_ROW = "GridRowIndex";
    private static final String AFFINE_TRANSFORM = "AffineTransform";
    private static final String EXPLORE_ACQ = "MagellanExploreAcquisition";
+   private static final String IMAGE_CONSTRUCTION_FILTER = "ImageConstruction";
+   private static final String RANK_FILTER_RANK = "RankFilterRank";
    private static final String PIX_TYPE_GRAY8 = "GRAY8";
    private static final String PIX_TYPE_GRAY16 = "GRAY16";
    private static final String IJ_TYPE = "IJType";
    private static final String CORE_XYSTAGE = "Core-XYStage";
    private static final String CORE_FOCUS = "Core-Focus";
+   private static final String FIXED_SURFACE_POINTS = "DistanceFromFixedSurfacePoints";
    
    
    
@@ -325,8 +328,8 @@ public class MD {
                return ImagePlus.GRAY16;
 //            } else if (pixelType.contentEquals("GRAY32")) {
 //               return ImagePlus.GRAY32;
-//            } else if (pixelType.contentEquals("RGB32")) {
-//               return ImagePlus.COLOR_RGB;
+            } else if (pixelType.contentEquals("RGB32")) {
+               return ImagePlus.GRAY8;
             } else {
                throw new RuntimeException();
             }
@@ -385,9 +388,9 @@ public class MD {
          case 2:
             map.put(PIX_TYPE, PIX_TYPE_GRAY16);
          break;
-//         case 4:
-//            map.put(PIX_TYPE, "RGB32");
-//         break;
+         case 4:
+            map.put(PIX_TYPE, "RGB32");
+         break;
 //         case 8:
 //            map.put(PIX_TYPE, "RGB64");
 //         break;
@@ -402,7 +405,7 @@ public class MD {
        if (isGRAY8(map)) return 1;
        if (isGRAY16(map)) return 2;
 //       if (isGRAY32(map)) return 4;
-//       if (isRGB32(map)) return 4;
+       if (isRGB32(map)) return 4;
 //       if (isRGB64(map)) return 8;
        return 0;
    }
@@ -415,8 +418,8 @@ public class MD {
            return 1;
 //      else if (pixelType.contentEquals("GRAY32"))
 //         return 1;
-//      else if (pixelType.contentEquals("RGB32"))
-//           return 3;
+      else if (pixelType.contentEquals("RGB32"))
+           return 3;
 //      else if (pixelType.contentEquals("RGB64"))
 //           return 3;
       else {
@@ -431,16 +434,16 @@ public class MD {
    public static boolean isGRAY16(JSONObject map) {
          return getPixelType(map).contentEquals(PIX_TYPE_GRAY16);
    }
-   
-//   public static boolean isGRAY32(JSONObject map) throws JSONException {
+    
+//   public static boolean isGRAY32(JSONObject map)  {
 //      return getPixelType(map).contentEquals("GRAY32");
 //   }
 //
-//   public static boolean isRGB32(JSONObject map) throws JSONException {
-//      return getPixelType(map).contentEquals("RGB32");
-//   }
+   public static boolean isRGB32(JSONObject map) {
+      return getPixelType(map).contentEquals("RGB32");
+   }
 
-//   public static boolean isRGB64(JSONObject map) throws JSONException {
+//   public static boolean isRGB64(JSONObject map)  {
 //      return getPixelType(map).contentEquals("RGB64");
 //   }
 
@@ -449,8 +452,8 @@ public class MD {
    }
 
    public static boolean isRGB(JSONObject map)   {
-//      return (isRGB32(map) || isRGB64(map));
-      return false;
+      return (isRGB32(map));
+//              || isRGB64(map));
    }
 
    public static String getLabel(JSONObject md) {
@@ -569,6 +572,15 @@ public class MD {
       }
    }
 
+     public static void setSurfacePoints(JSONObject tags, JSONArray arr) {
+      try {
+         tags.put(FIXED_SURFACE_POINTS, arr);
+      } catch (JSONException ex) {
+         Log.log("Couldnt add fixed surface interpolation points");
+         throw new RuntimeException();
+      }
+   }
+   
    public static double getPixelSizeUm(JSONObject map)  {
       try {
          return map.getDouble(PIX_SIZE);
@@ -703,6 +715,24 @@ public class MD {
    public static void setExploreAcq(JSONObject smd, boolean explore) {
       try {
          smd.put(EXPLORE_ACQ, explore);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set pixel overlap tag");
+         throw new RuntimeException();
+      }
+   }
+   
+   public static void setImageConstructionFilter(JSONObject smd, String type) {
+      try {
+         smd.put(IMAGE_CONSTRUCTION_FILTER, type);
+      } catch (JSONException ex) {
+         Log.log("Couldnt set pixel overlap tag");
+         throw new RuntimeException();
+      }
+   }
+   
+    public static void setRankFilterRank(JSONObject smd, double rank) {
+      try {
+         smd.put(RANK_FILTER_RANK, rank);
       } catch (JSONException ex) {
          Log.log("Couldnt set pixel overlap tag");
          throw new RuntimeException();

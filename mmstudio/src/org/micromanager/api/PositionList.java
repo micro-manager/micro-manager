@@ -28,6 +28,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,7 +46,7 @@ import org.micromanager.utils.MMSerializationException;
  * Navigation list of positions for the XYStage.
  * Used for multi site acquisition support.
  */
-public class PositionList {
+public class PositionList implements Serializable {
    private ArrayList<MultiStagePosition> positions_;
    private final static String ID = "Micro-Manager XY-position list";
    private final static String ID_KEY = "ID";

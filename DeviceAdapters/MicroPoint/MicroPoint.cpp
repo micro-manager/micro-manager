@@ -224,7 +224,7 @@ long MicroPoint::FindAttenuatorPosition()
       StepAttenuatorPosition(false);
       ++startingIndex;
    }
-   if (!IsAttenuatorHome())
+   if (!IsAttenuatorHome()) // Motor broken?
    {
       return -1;
    }
@@ -233,9 +233,13 @@ long MicroPoint::FindAttenuatorPosition()
    if (startingIndex == 0)
    {
       // Take one step out of home.
-      while(IsAttenuatorHome())
+      for (int i = 0; i < 100 && IsAttenuatorHome(); ++i)
       {
          StepAttenuatorPosition(true);
+      }
+      if (IsAttenuatorHome()) // Motor broken?
+      {
+         return -1;
       }
       // Step back home.
       StepAttenuatorPosition(false);

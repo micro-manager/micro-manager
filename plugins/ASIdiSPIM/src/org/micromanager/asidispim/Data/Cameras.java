@@ -29,6 +29,8 @@ import java.util.List;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.asidispim.ASIdiSPIM;
+import org.micromanager.asidispim.CameraPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -133,6 +135,25 @@ public class Cameras {
       return noduplicates.toArray(new CameraData[0]);
    }
 
+   private void setShutterForCamera(Devices.Keys camera) {
+      Devices.Keys shutter = null;
+      if (camera == Devices.Keys.CAMERAA
+            || camera == Devices.Keys.CAMERAB
+            || camera == Devices.Keys.MULTICAMERA) {
+         shutter = Devices.Keys.PLOGIC;
+      }
+      if (camera == Devices.Keys.CAMERALOWER) {
+         shutter = Devices.Keys.SHUTTERLOWER;
+      }
+      if (shutter != null) {
+         try {
+            gui_.getMMCore().setShutterDevice(devices_.getMMDevice(shutter));
+         } catch (Exception ex) {
+            // do nothing
+         }
+      }  
+   }
+   
    /**
     * Switches the active camera to the desired one. Takes care of possible side
     * effects.
@@ -146,15 +167,16 @@ public class Cameras {
       String mmDevice = devices_.getMMDevice(key);
       if (mmDevice != null) {
          try {
-            boolean liveEnabled = gui_.isLiveModeOn();
+            final boolean liveEnabled = gui_.isLiveModeOn();
             if (liveEnabled) {
-               enableLiveMode(false);
+               gui_.enableLiveMode(false);
             }
             currentCameraKey_ = key;
             core_.setCameraDevice(mmDevice);
+            setShutterForCamera(key);
             gui_.refreshGUIFromCache();
             if (liveEnabled) {
-               enableLiveMode(true);
+               gui_.enableLiveMode(true);
             }
          } catch (Exception ex) {
             MyDialogUtils.showError("Failed to set Core Camera property");
@@ -195,21 +217,9 @@ public class Cameras {
    }
 
    /**
-    * Turns live mode on or off via core call
-    * @param enable true: switch on live mode, false: switch it off
-    */
-   public void enableLiveMode(boolean enable) {
-      if (enable) {
-         setSPIMCamerasForAcquisition(false);
-      }
-      gui_.enableLiveMode(enable);
-   }
-
-   /**
-    * Internal use only, take care of low-level property setting to make
-    * internal or external depending on camera type (via the DeviceLibrary)
+    * Take care of low-level property setting to make internal trigger
+    * or appropriate external mode depending on camera type (via the DeviceLibrary)
     * currently HamamatsuHam, PCO_Camera, and Andor sCMOS are supported
-    * 
     * @param devKey
     * @param mode enum from this class
     */
@@ -221,18 +231,26 @@ public class Cameras {
                Properties.Keys.TRIGGER_SOURCE,
                ((mode == CameraModes.Keys.INTERNAL) 
                      ? Properties.Values.INTERNAL
-                     : Properties.Values.EXTERNAL), true);
+                     : Properties.Values.EXTERNAL));
+         props_.setPropValue(devKey, Properties.Keys.SENSOR_MODE,
+               ((mode == CameraModes.Keys.LIGHT_SHEET)
+                     ? Properties.Values.PROGRESSIVE
+                     : Properties.Values.AREA));
          switch (mode) {
          case EDGE:
-            props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
+         case LIGHT_SHEET:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_ACTIVE,
                   Properties.Values.EDGE);
             break;
          case LEVEL:
-            props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_ACTIVE,
                   Properties.Values.LEVEL);
             break;
          case OVERLAP:
-            props_.setPropValue(devKey, Properties.Keys.TRIGGER_ACTIVE,
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_ACTIVE,
                   Properties.Values.SYNCREADOUT);
             break;
          default:
@@ -245,52 +263,81 @@ public class Cameras {
          case PSEUDO_OVERLAP:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE_PCO,
-                  Properties.Values.EXTERNAL_LC, true);
+                  Properties.Values.EXTERNAL_LC);
             break;
          case LEVEL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE_PCO,
-                  Properties.Values.LEVEL_PCO, true);
+                  Properties.Values.LEVEL_PCO);
             break;
          case INTERNAL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE_PCO,
-                  Properties.Values.INTERNAL_LC, true);
+                  Properties.Values.INTERNAL_LC);
             break;
          default:
                break;
          }
          break;
       case ANDORCAM:
+         // work-around to bug in SDK3 device adapter, can't switch from light sheet mode
+         //  to "normal" center out simultaneous but works if we always go through the in-between mode
+         props_.setPropValue(devKey,
+               Properties.Keys.SENSOR_READOUT_MODE,
+               Properties.Values.BOTTOM_UP_SIM_ANDOR);
+         props_.setPropValue(devKey,
+               Properties.Keys.SENSOR_READOUT_MODE,
+               (mode == CameraModes.Keys.LIGHT_SHEET
+               ? Properties.Values.BOTTOM_UP_ANDOR
+                     : Properties.Values.CENTER_OUT_ANDOR));
          switch (mode) {
          case EDGE:
+         case LIGHT_SHEET:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.EXTERNAL_LC, true);
+                  Properties.Values.EXTERNAL_LC);
             props_.setPropValue(devKey,
                   Properties.Keys.ANDOR_OVERLAP,
-                  Properties.Values.OFF, true);
+                  Properties.Values.OFF);
             break;
          case INTERNAL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.INTERNAL_ANDOR, true);
+                  Properties.Values.INTERNAL_ANDOR);
             break;
          case LEVEL:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.LEVEL_ANDOR, true);
+                  Properties.Values.LEVEL_ANDOR);
             props_.setPropValue(devKey,
                   Properties.Keys.ANDOR_OVERLAP,
-                  Properties.Values.OFF, true);
+                  Properties.Values.OFF);
             break;
          case OVERLAP:
             props_.setPropValue(devKey,
                   Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.LEVEL_ANDOR, true);
+                  Properties.Values.LEVEL_ANDOR);
             props_.setPropValue(devKey,
                   Properties.Keys.ANDOR_OVERLAP,
-                  Properties.Values.ON, true);
+                  Properties.Values.ON);
+            break;
+         default:
+            break;
+         }
+         break;
+      case PVCAM:
+         switch (mode) {
+         case EDGE:
+         case PSEUDO_OVERLAP:
+         case LIGHT_SHEET:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE,
+                  Properties.Values.EDGE_TRIGGER);
+            break;
+         case INTERNAL:
+            props_.setPropValue(devKey,
+                  Properties.Keys.TRIGGER_MODE,
+                  Properties.Values.INTERNAL_TRIGGER);
             break;
          default:
             break;
@@ -416,6 +463,10 @@ public class Cameras {
             y = 2048;
          }
          break;
+      case PVCAM:
+         x = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_X_DIMENSION);
+         y = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_Y_DIMENSION);
+         break;
       case DEMOCAM:
          x = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_SIZE_X);
          y = props_.getPropValueInteger(camKey, Properties.Keys.CAMERA_SIZE_Y);
@@ -432,13 +483,10 @@ public class Cameras {
    }
    
    /**
-    * Gets the per-row readout time of the camera in ms.
-    * Assumes fast readout mode (should include slow readout too).
-    * 
     * @param camKey
-    * @return
+    * @return the per-row readout time of the camera in ms
     */
-   private double getRowReadoutTime(Devices.Keys camKey) {
+   public double getRowReadoutTime(Devices.Keys camKey) {
       switch(devices_.getMMDeviceLibrary(camKey)) {
       case HAMCAM:
          if (isSlowReadout(camKey)) {
@@ -474,6 +522,10 @@ public class Cameras {
                return (2592 * 2 / 540e3);
             }
          }
+      case PVCAM:
+         Rectangle roi = getCameraROI(camKey);
+         float readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
+         return (readoutTimeMs / roi.height);
       case DEMOCAM:
          return(10e-3);  // dummy 10us row time
       default:
@@ -489,51 +541,73 @@ public class Cameras {
     * Gets an estimate of a specific camera's time between trigger and global
     * exposure, i.e. how long it takes for reset. Will depend on whether we
     * have/use global reset, the ROI size, etc.  To first order this is the same
-    * as the camera readout time in edge-trigger mode so we utilize that.
-    * 
-    * @param camKey
-    * @return
+    * as the camera readout time in edge-trigger mode so we utilize that (exception
+    * is for light sheet mode, when reset time is 0).
+    * @param camKey device key for camera in question
+    * @param camMode camera mode
+    * @return reset time in ms
     */
-   public float computeCameraResetTime(Devices.Keys camKey) {
-      float resetTimeMs = 10;
-      double rowReadoutTime = getRowReadoutTime(camKey);
-      float camReadoutTime = computeCameraReadoutTime(camKey, CameraModes.Keys.EDGE);
-      int numRowsOverhead;
-      switch (devices_.getMMDeviceLibrary(camKey)) {
-      case HAMCAM:
-         // global reset mode not yet exposed in Micro-manager
-         // it will be 17+1 rows of overhead but nothing else
-         if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE)
-               .equals(Properties.Values.SYNCREADOUT.toString())) {
-            numRowsOverhead = 18; // overhead of 17 rows plus jitter of 1 row
-         } else { // for EDGE and LEVEL trigger modes
-            numRowsOverhead = 10; // overhead of 9 rows plus jitter of 1 row
-         }
-         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-         break;
-      case PCOCAM:
-         numRowsOverhead = 1;
-         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-         break;
-      case ANDORCAM:
-         numRowsOverhead = 1;
-         resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
-         break;
-      case DEMOCAM:
-         resetTimeMs = camReadoutTime;
-         break;
-      default:
-         break;
+   public float computeCameraResetTime(Devices.Keys camKey, CameraModes.Keys camMode) {
+      float resetTimeMs = 10f;
+      if (camMode == CameraModes.Keys.LIGHT_SHEET) {
+         return resetTimeMs = 0f;
+      } else {
+         Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
+         
+         // Photometrics is very different from other cameras so handle it as special case
+         if (camLibrary == Devices.Libraries.PVCAM) {
+            int trigToGlobal = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_POST_TIME)
+                  + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
+            // it appears as of end-May 2017 that the clearing time is actually rolled into the post-trigger
+            //    time despite Photometrics documentation to the contrary
+            //String clearMode = props_.getPropValueString(camKey, Properties.Keys.PVCAM_CLEARING_MODE);
+            //if (clearMode.equals(Properties.Values.PRE_EXPOSURE.toString())) {
+            //   trigToGlobal += props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_CLEARING_TIME);
+            //}
+            resetTimeMs = (float) trigToGlobal / 1e6f;
+         } else {
+            // all other cameras
+            double rowReadoutTime = getRowReadoutTime(camKey);
+            float camReadoutTime = computeCameraReadoutTime(camKey, CameraModes.Keys.EDGE);
+            int numRowsOverhead;
+            switch (camLibrary) {
+            case HAMCAM:
+               // global reset mode not yet exposed in Micro-manager
+               // it will be 17+1 rows of overhead but nothing else
+               if (props_.getPropValueString(camKey, Properties.Keys.TRIGGER_ACTIVE)
+                     .equals(Properties.Values.SYNCREADOUT.toString())) {
+                  numRowsOverhead = 18; // overhead of 17 rows plus jitter of 1 row
+               } else { // for EDGE and LEVEL trigger modes
+                  numRowsOverhead = 10; // overhead of 9 rows plus jitter of 1 row
+               }
+               resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+               break;
+            case PCOCAM:
+               numRowsOverhead = 1;
+               resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+               break;
+            case ANDORCAM:
+               numRowsOverhead = 1;
+               resetTimeMs = camReadoutTime + (float) (numRowsOverhead * rowReadoutTime);
+               break;
+            case DEMOCAM:
+               resetTimeMs = camReadoutTime;
+               break;
+            default:
+               break;
+            }
+         }//else
+         
+         ReportingUtils.logDebugMessage("camera reset time computed as " + resetTimeMs + 
+               " for camera " + devices_.getMMDevice(camKey));
+         return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
       }
-      ReportingUtils.logDebugMessage("camera reset time computed as " + resetTimeMs + 
-            " for camera " + devices_.getMMDevice(camKey));
-      return resetTimeMs;  // assume 10ms readout if not otherwise possible to calculate
    }
    
    /**
     * Gets an estimate of a specific camera's readout time based on ROI and 
-    * other settings.  Returns 0 for overlap mode and 0.25ms pseudo-overlap mode.
-    * 
+    * other settings.  Returns 0 for overlap mode and 0.25ms pseudo-overlap mode
+    * (or camera-specific time for Photometrics)
     * @param camKey device key for camera in question
     * @param camMode camera mode
     * @return readout time in ms
@@ -544,21 +618,52 @@ public class Cameras {
       //      (e.g. could cache some values or something)
       
       float readoutTimeMs = 10f;
+      Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
       
-      if (camMode == CameraModes.Keys.OVERLAP) {
+      switch (camMode) {
+      case OVERLAP:
          readoutTimeMs = 0.0f;
-      } else if (camMode == CameraModes.Keys.PSEUDO_OVERLAP) {
-         readoutTimeMs = 0.25f;
-      } else {
-         
-         // below code only applies to non-overlap
+         break;
+      case PSEUDO_OVERLAP:
+         switch (camLibrary) {
+         case PCOCAM:
+            readoutTimeMs = 0.25f;
+            break;
+         case PVCAM:
+            int preTime = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME);
+            readoutTimeMs = (float) preTime / 1e6f;
+            // for safety we make sure to wait at least a quarter millisecond to trigger
+            //   (may have hidden assumptions in other code about at least one tic wait)
+            if (readoutTimeMs < 0.249f) {
+               readoutTimeMs = 0.25f;
+            }
+            break;
+         default:
+            break;
+         }
+         break;
+      case LIGHT_SHEET:
+         if (camLibrary == Devices.Libraries.PVCAM) {
+            readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
+         } else {
+            Rectangle roi = getCameraROI(camKey);
+            final double rowReadoutTime = getRowReadoutTime(camKey);
+            int speedFactor = 1; // props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+            if (speedFactor < 1) {
+               speedFactor = 1;
+            }
+            readoutTimeMs = (float) rowReadoutTime * roi.height * speedFactor;
+         }
+         break;
+      case EDGE:
+      case LEVEL:
          double rowReadoutTime = getRowReadoutTime(camKey);
          int numReadoutRows;
 
          Rectangle roi = getCameraROI(camKey);
          Rectangle sensorSize = getSensorSize(camKey);
 
-         switch (devices_.getMMDeviceLibrary(camKey)) {
+         switch (camLibrary) {
          case HAMCAM:
             // device adapter provides readout time rounded to nearest 0.1ms; we
             // calculate it ourselves instead
@@ -582,56 +687,47 @@ public class Cameras {
             numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
             readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
             break;
+         case PVCAM:
+            int endGlobalToTrig = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME)
+               + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
+            readoutTimeMs = (float) endGlobalToTrig / 1e6f;
+            break;
          case DEMOCAM:
             numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
             readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
             break;
          default:
             break;
-         }//switch
-      }//else
+         }//end switch
+         break;
+      default:
+         break;  // assume 10ms readout if not otherwise possible to calculate
+      }
       
       ReportingUtils.logDebugMessage("camera readout time computed as " + readoutTimeMs + 
             " for camera " + devices_.getMMDevice(camKey));
-      return readoutTimeMs;  // assume 10ms readout if not otherwise possible to calculate
+      return readoutTimeMs;
    }
    
    /**
-    * private utility/shortcut function to set both SPIM cameras
-    * @param trigMode
+    * Sets the specified camera for acquisition if acq is true or for live mode if acq is false
+    * @param camKey
+    * @param acq
     */
-   private void setSPIMTriggerMode(CameraModes.Keys trigMode) {
-      // TODO look at whether both sides are active before setting cameras up
-      setCameraTriggerMode(Devices.Keys.CAMERAA, trigMode);
-      setCameraTriggerMode(Devices.Keys.CAMERAB, trigMode);
-   }
-
-   /**
-    * Sets up SPIM cameras in correct mode for acquisition when called with true.
-    * Uses the camera mode setting to see which external trigger mode.
-    * @param acq true if setting for acquisition, false if setting for live
-    */
-   public void setSPIMCamerasForAcquisition(boolean acq) {
+   public void setCameraForAcquisition(Devices.Keys camKey, boolean acq) {
       if (acq) {
-         CameraModes.Keys cameraMode = CameraModes.getKeyFromPrefCode(
-               // could also get from props_ with PLUGIN device
-               prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-                     Properties.Keys.PLUGIN_CAMERA_MODE, 0));
-         setSPIMTriggerMode(cameraMode);
+         CameraModes.Keys cameraMode = ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode();
+         setCameraTriggerMode(camKey, cameraMode);
+//         if (cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+//            int shutterSpeed = props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+//            
+//         }
          // exposure time set by acquisition setup code
       } else { // for Live mode
-         setSPIMTriggerMode(CameraModes.Keys.INTERNAL);
-         // also set exposure time to the live mode value
-         float exposure = prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
-               Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(), 100f);
-         try {
-            core_.setExposure(exposure);
-         } catch (Exception e) {
-            MyDialogUtils.showError("Could not change exposure setting for live mode");
-         }
+         setCameraTriggerMode(camKey, CameraModes.Keys.INTERNAL);
       }
    }
-   
+
    /**
     * Gets the camera ROI in actual pixels used (i.e. if binning is 4x with 2k sensor return 2k instead of 512).
     * This is because reset and readout times depend on actual pixels and only data transfer time (usually less
@@ -659,5 +755,85 @@ public class Cameras {
       return roi;  // only should reach here if there was exception
    }
    
+   /**
+    * Sets the ROI of the specified camera to the provided rectangle
+    * @param camKey
+    * @param roi
+    */
+   public void setCameraROI(Devices.Keys camKey, Rectangle roi) {
+      try {
+         final boolean liveEnabled = gui_.isLiveModeOn();
+         if (liveEnabled) {
+            gui_.enableLiveMode(false);
+         }
+         core_.setROI(devices_.getMMDevice(camKey), roi.x, roi.y, roi.width, roi.height);
+         if (liveEnabled) {
+            gui_.enableLiveMode(true);
+         }
+      }
+      catch (Exception ex) {
+         MyDialogUtils.showError(ex, "Could not set camera ROI to " + roi.toString());
+      }
+   }
+   
+   /**
+    * calculate a new rectangle smaller by the factor scale and centered in the old one 
+    * @param r
+    * @param scale
+    * @return
+    */
+   private Rectangle calculateCenterRectangle(Rectangle r, int scale) {
+      // two sanity checks, maybe not strictly necessary but assumed in calculations below
+      if (scale < 1) {
+         return r;
+      }
+      if (r.x != 0 || r.y != 0) {
+         return r;
+      }
+      final int width = r.width / scale;
+      final int height = r.height / scale;
+      final int x = (r.width - width) / 2;
+      final int y = (r.height - height) / 2;
+      return new Rectangle(x, y, width, height);
+   }
+   
+   /**
+    * Sets the ROI
+    * @param camKey
+    * @param roi
+    */
+   public void setCameraROI(Devices.Keys camKey, CameraPanel.RoiPresets roi) {
+      try {
+         if (devices_.isValidMMDevice(camKey)) {
+            Rectangle size = getSensorSize(camKey);
+            switch (roi) {
+            case FULL:
+               setCameraROI(camKey, size);
+               break;
+            case HALF:
+               setCameraROI(camKey, calculateCenterRectangle(size, 2));
+               break;
+            case QUARTER:
+               setCameraROI(camKey, calculateCenterRectangle(size, 4));
+               break;
+            case EIGHTH:
+               setCameraROI(camKey, calculateCenterRectangle(size, 8));
+               break;
+            case CUSTOM:
+               final int x = prefs_.getInt(MyStrings.PanelNames.CAMERAS.toString(), "OffsetX", 0);
+               final int y = prefs_.getInt(MyStrings.PanelNames.CAMERAS.toString(), "OffsetY", 0);
+               final int height = prefs_.getInt(MyStrings.PanelNames.CAMERAS.toString(), "Height", 0);
+               final int width = prefs_.getInt(MyStrings.PanelNames.CAMERAS.toString(), "Width", 0);
+               setCameraROI(camKey, new Rectangle(x, y, width, height));
+               break;
+            case UNCHANGED:
+               break;
+            }
+         }
+      }
+      catch (Exception ex) {
+         MyDialogUtils.showError(ex, "Could not set camera ROI to value " + roi.toString());
+      }
+   }
 
 }

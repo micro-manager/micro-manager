@@ -28,7 +28,7 @@ namespace MM {
 // declaration. Because of that nonstandard behavior, VC++ issues a warning
 // (LNK4006) if the initializer is supplied with the declaration _and_ a
 // definition is (correctly) provided. So, to compile correctly with a
-// standards-confomant compiler _and_ avoid warnings from VC++, we need to
+// standards-conformant compiler _and_ avoid warnings from VC++, we need to
 // leave the initializers out of the declarations, and supply them here with
 // the definitions. See:
 // http://connect.microsoft.com/VisualStudio/feedback/details/802091/lnk4006-reported-for-static-const-members-that-is-initialized-in-the-class-definition

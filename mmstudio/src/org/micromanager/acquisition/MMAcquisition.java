@@ -35,6 +35,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.Iterator;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,6 +49,7 @@ import org.json.JSONObject;
 import org.json.JSONException;
 import org.micromanager.MMStudio;
 import org.micromanager.api.ImageCache;
+import org.micromanager.api.MMTags;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.dialogs.AcqControlDlg;
 import org.micromanager.imagedisplay.VirtualAcquisitionDisplay;
@@ -379,6 +382,41 @@ public class MMAcquisition {
             virtAcq_ = new VirtualAcquisitionDisplay(imageCache_, null, name, true);
             imageCache_.addImageCacheListener(virtAcq_);
             virtAcq_.show();
+         }
+         
+         // need to update the MMAcquisition members from SummaryMetadata
+         // or the script interface will not work
+         if (existing_) {
+            JSONObject summaryMetadata = imageCache_.getSummaryMetadata();
+            try {
+               if (summaryMetadata.has(MMTags.Summary.FRAMES)) {
+                  numFrames_ = summaryMetadata.getInt(MMTags.Summary.FRAMES);
+               }
+               if (summaryMetadata.has(MMTags.Summary.CHANNELS)) {
+                  numChannels_ = summaryMetadata.getInt(MMTags.Summary.CHANNELS);
+               }
+               if (summaryMetadata.has(MMTags.Summary.SLICES)) {
+                  numSlices_ = summaryMetadata.getInt(MMTags.Summary.SLICES);
+               }
+               if (summaryMetadata.has(MMTags.Summary.POSITIONS)) {
+                  numPositions_ = summaryMetadata.getInt(MMTags.Summary.POSITIONS);
+               }
+               if (summaryMetadata.has(MMTags.Summary.WIDTH)) {
+                  width_ = summaryMetadata.getInt(MMTags.Summary.WIDTH);
+               }
+               if (summaryMetadata.has(MMTags.Summary.HEIGHT)) {
+                  height_ = summaryMetadata.getInt(MMTags.Summary.HEIGHT);
+               }
+               if (summaryMetadata.has("Depth")) {
+                  byteDepth_ = summaryMetadata.getInt("Depth");
+               }
+               if (summaryMetadata.has(MMTags.Summary.BIT_DEPTH)) {
+                  bitDepth_ = summaryMetadata.getInt(MMTags.Summary.BIT_DEPTH);
+               }
+
+            } catch (JSONException ex) {
+               Logger.getLogger(MMAcquisition.class.getName()).log(Level.SEVERE, null, ex);
+            }
          }
 
          initialized_ = true;

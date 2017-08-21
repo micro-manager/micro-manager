@@ -24,8 +24,22 @@
 #include "ImgBuffer.h"
 #include "DeviceThreads.h"
 #include "ImgBuffer.h"
+#include "MMDeviceConstants.h"
 
 #include "FlyCapture2.h"
+
+//////////////////////////////////////////////////////////////////////////////
+// Error codes
+//
+#define ERR_IN_READ_REGISTER                    12300
+#define ERR_NOT_READY_FOR_SOFTWARE_TRIGGER      12301
+#define ERR_UNAVAILABLE_TRIGGER_MODE_REQUESTED  12302
+#define ERR_UNKNOWN_TRIGGER_MODE_STRING         12303
+
+// Trigger modes
+#define TRIGGER_INTERNAL   0
+#define TRIGGER_EXTERNAL   1
+#define TRIGGER_SOFTWARE   2
 
 using namespace FlyCapture2;
 
@@ -36,7 +50,7 @@ class SequenceThread;
 class PointGrey : public CCameraBase<PointGrey>  
 {
 public:
-   PointGrey();
+   PointGrey(const char* deviceName);
    ~PointGrey();
   
    //////////////////////////////////////////////////////////////
@@ -77,7 +91,7 @@ public:
    /////////////////////////////////////////////////////////////
    // Functions to convert between PGR and MM
    int CameraPGRGuid(FlyCapture2::BusManager* busMgr, FlyCapture2::PGRGuid* guid, int nr);
-   int CameraID(FlyCapture2::PGRGuid id, std::string* camIDString);
+   int static CameraID(FlyCapture2::PGRGuid id, std::string* camIDString);
    int CameraGUIDfromOurID(FlyCapture2::BusManager* busMgr, FlyCapture2::PGRGuid* guid, std::string ourID);
    void VideoModeAndFrameRateStringFromEnums(std::string &readableString, FlyCapture2::VideoMode vm, FlyCapture2::FrameRate fr) const;
    int VideoModeAndFrameRateEnumsFromString(std::string readableString, FlyCapture2::VideoMode &vm, FlyCapture2::FrameRate &fr) const;
@@ -88,8 +102,8 @@ public:
 
    //////////////////////////////////////////////////////////////
    // action interface
-   int OnCameraId(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBinningFromFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnAbsValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnValue(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
    int OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct, long value);
@@ -97,18 +111,29 @@ public:
    int OnVideoModeAndFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    void updatePixelFormats(unsigned int pixelFormatBitField);
    int SetEndianess(bool little);
+   const char* GetBusSpeedAsString(BusSpeed speed);
+   int CheckSoftwareTriggerPresence(bool& result);
+   int PollForTriggerReady(const unsigned long timeoutMs);
+   bool FireSoftwareTrigger();
+   int SetTriggerMode(const unsigned short newMode);
+   int SetGrabTimeout(const unsigned long timeoutMs);
+   int PowerCameraOn(const unsigned int timeoutMs);
+   int TriggerModeFromString(std::string mode, unsigned short& tMode);
+   std::string TriggerModeAsString(const unsigned short mode) const;
+   const unsigned char* RGBToRGBA(const unsigned char* img) const;
+
 
    FlyCapture2::PGRGuid guid_;
    FlyCapture2::Camera cam_;
    FlyCapture2::Image image_;
    unsigned int nComponents_;
    bool initialized_;
-   std::string name_;
-   std::string cameraId_;
+   std::string deviceName_;
    MM::MMTime sequenceStartTime_;
    MM::MMTime sequenceStartTimeStamp_;
    long imageCounter_;
@@ -117,9 +142,19 @@ private:
    bool isCapturing_;
    FlyCapture2::Format7Info format7Info_;
    std::map<VideoMode, std::vector<FrameRate>> videoModeFrameRateMap_;
+   std::map<long, std::string> bin2Mode_;
+   std::map<const std::string, long> mode2Bin_;
    std::vector<FlyCapture2::Mode> availableFormat7Modes_;
+   std::vector<unsigned short> availableTriggerModes_;
    bool f7InUse_;
    double exposureTimeMs_;
+   unsigned short triggerMode_;
+   unsigned short snapTriggerMode_;
+   unsigned long externalTriggerGrabTimeout_;
+   unsigned short bytesPerPixel_;
+   MMThreadLock imgBuffLock_;
+   const unsigned char* imgBuf_;
+   const unsigned long bufSize_;
    FlyCapture2::PixelFormat pixelFormat8Bit_;
    FlyCapture2::PixelFormat pixelFormat16Bit_;
 };

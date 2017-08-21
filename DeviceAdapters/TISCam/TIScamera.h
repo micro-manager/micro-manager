@@ -140,7 +140,7 @@ unsigned GetBitDepth() const;
 	int OnDeNoise           (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	int OnCamera			(MM::PropertyBase* pProp, MM::ActionType eAct);
-
+	int OnTriggerMode		(MM::PropertyBase* pProp, MM::ActionType eAct);
 		/*
 		int OnContrast    (MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -154,6 +154,7 @@ unsigned GetBitDepth() const;
 
 	// custom interface for the burst thread
 	int PushImage();
+	int DisableTrigger();
 
 private:
 

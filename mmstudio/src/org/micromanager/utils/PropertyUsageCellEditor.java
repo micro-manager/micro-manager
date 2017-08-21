@@ -34,6 +34,11 @@ public class PropertyUsageCellEditor extends AbstractCellEditor implements Table
     public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
 
+        // https://stackoverflow.com/a/3055930
+        if (value == null) {
+           return null;
+        }
+
         PropertyTableData data = (PropertyTableData) table.getModel();
         item_ = data.getPropertyItem(rowIndex);
         check_.setSelected(item_.confInclude);

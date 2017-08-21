@@ -33,7 +33,7 @@ class CPiezo : public ASIPeripheralBase<CStageBase, CPiezo>
 {
 public:
    CPiezo(const char* name);
-   ~CPiezo() { Shutdown(); }
+   ~CPiezo() { }
   
    // Device API
    // ----------
@@ -103,6 +103,7 @@ public:
    int OnSAPatternByte        (MM::PropertyBase* pProp, MM::ActionType eAct);
    // SPIM properties
    int OnSetHomeHere          (MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnHomePosition         (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMNumSlices        (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSPIMState            (MM::PropertyBase* pProp, MM::ActionType eAct);
    // ring buffer properties
@@ -111,7 +112,8 @@ public:
    int OnRBTrigger            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRBRunning            (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUseSequence          (MM::PropertyBase* pProp, MM::ActionType eAct);
-
+   //Others
+   int OnVector				  (MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double unitMult_;

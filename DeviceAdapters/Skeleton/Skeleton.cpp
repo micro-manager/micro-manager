@@ -27,7 +27,7 @@
 // The device name needs to be a class name in this file
 
 // Skeleton device
-const char* g_SkeletonDevicename = "SkeletonDevice";
+const char* g_SkeletonDeviceName = "SkeletonDevice";
 ///////////////////////////////////////////////////////////////////////////////
 
 using namespace std;
@@ -46,7 +46,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (deviceName == 0)                                                      
        return 0;
 
-   if (strcmp(deviceName, g_SkeletonDevicename) == 0)
+   if (strcmp(deviceName, g_SkeletonDeviceName) == 0)
    {
         SkeletonDevice* pSkeletonDevice = new SkeletonDevice();
         return pSkeletonDevice;
@@ -75,7 +75,7 @@ SkeletonDevice::SkeletonDevice() :
    // ------------------------------------
 
    // Name
-   CreateProperty(MM::g_Keyword_Name, g_SkeletonDevicename, MM::String, true);
+   CreateProperty(MM::g_Keyword_Name, g_SkeletonDeviceName, MM::String, true);
    
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "Tell what your device is", MM::String, true);
@@ -123,7 +123,7 @@ int SkeletonDevice::Shutdown()
 
 void SkeletonDevice::GetName (char* Name) const
 {
-   CDeviceUtils::CopyLimitedString(Name, g_SkeletonDevicename);
+   CDeviceUtils::CopyLimitedString(Name, g_SkeletonDeviceName);
 }
 
 bool SkeletonDevice::Busy() 

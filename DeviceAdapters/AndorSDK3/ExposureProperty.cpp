@@ -140,7 +140,7 @@ int TExposureProperty::OnFloat(MM::PropertyBase * pProp, MM::ActionType eAct)
       }
       if (!almostEqual(new_value, current_value, DEC_PLACES_ERROR))
       {
-         if(valueIsWithinLimits(new_value))
+         if(valueIsWithinLimits(new_value) && float_feature_->IsWritable())
          {
            setFeatureWithinLimits(new_value);
          }

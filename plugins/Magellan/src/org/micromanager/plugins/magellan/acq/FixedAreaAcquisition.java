@@ -66,7 +66,6 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
    final private CrossCorrelationAutofocus autofocus_;
    private int maxSliceIndex_ = 0, minSliceIndex_ = 0;
    private double zOrigin_;
-   private final boolean burstMode_;
    private final boolean towardsSampleIsPositive_;
    private volatile boolean acqSettingsUpdated_ = false;
    private volatile boolean tpImagesFinishedWriting_ = false;
@@ -120,11 +119,6 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       } else {
          autofocus_ = null;
       }
-      //if a 2D, single xy position, no covariants, no autofocus: activate burst mode
-      burstMode_ = getFilterType() == FrameIntegrationMethod.BURST_MODE;
-      if (burstMode_) {
-         Log.log("Burst mode activated");
-      }
    }
 
    @Override
@@ -154,9 +148,6 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       tpImagesFinishedWritingLatch_.countDown();
    }
 
-   public boolean burstModeActive() {
-      return burstMode_;
-   }
 
    private void setupXYPositions() {
       try {
@@ -452,8 +443,9 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       while (positionIndex < positions_.size()) {
          //add events for all slices/channels at this position
          XYStagePosition position = positions_.get(positionIndex);
-
-         if (settings_.channelsAtEverySlice_) {
+         boolean tiltedPlane2D = settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D && settings_.collectionPlane_ != null;
+         
+         if (settings_.channelsAtEverySlice_ && !tiltedPlane2D) {
 
             int sliceIndex = (int) Math.round((getZTopCoordinate() - zOrigin_) / zStep_);
             while (true) {
@@ -484,6 +476,7 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
                   if (!settings_.channels_.get(channelIndex).uniqueEvent_ || !settings_.channels_.get(channelIndex).use_) {
                      continue;
                   }
+                  
                   AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
                           positionIndex, zPos, position, settings_.covariantPairings_);
                   if (eventGenerator_.isShutdown()) {
@@ -512,12 +505,24 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
                if (!settings_.channels_.get(channelIndex).uniqueEvent_ || !settings_.channels_.get(channelIndex).use_) {
                   continue;
                }
+               //Special case: 2D tilted plane
+               if (tiltedPlane2D) {
+                  //index all slcies as 0, even though they may nto be in the same plane
+                  int sliceIndex = 0;
+                  double zPos = settings_.collectionPlane_.getExtrapolatedValue(position.getCenter().x, position.getCenter().y);
+                  AcquisitionEvent event = new AcquisitionEvent(FixedAreaAcquisition.this, timeIndex, channelIndex, sliceIndex,
+                          positionIndex, zPos, position, settings_.covariantPairings_);
+                  events_.put(event);
+                  continue;
+               }
+               
+               
                int sliceIndex = (int) Math.round((getZTopCoordinate() - zOrigin_) / zStep_);
                while (true) {
                   if (eventGenerator_.isShutdown()) { // check for aborts
                      throw new InterruptedException();
                   }
-                  double zPos = zOrigin_ + sliceIndex * zStep_;
+                  double zPos = zOrigin_ + sliceIndex * zStep_;        
                   if ((settings_.spaceMode_ == FixedAreaAcquisitionSettings.REGION_2D || settings_.spaceMode_ == FixedAreaAcquisitionSettings.NO_SPACE)
                           && sliceIndex > 0) {
                      break; //2D regions only have 1 slice
@@ -669,6 +674,19 @@ public class FixedAreaAcquisition extends Acquisition implements SurfaceChangedL
       }
    }
 
+   public JSONArray getSurfacePoints() {
+       Point3d[] points = settings_.fixedSurface_.getPoints();
+       JSONArray pointArray = new JSONArray();
+       for (Point3d p : points) {
+           pointArray.put(p.x+ "_" + p.y + "_" + p.z);
+       }
+       return pointArray;
+   }
+   
+   public int getSpaceMode() {
+       return settings_.spaceMode_;
+   }
+   
    @Override
    public double getZCoordinateOfDisplaySlice(int displaySliceIndex) {
       displaySliceIndex += minSliceIndex_;

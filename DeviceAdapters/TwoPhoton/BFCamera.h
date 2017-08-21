@@ -39,6 +39,8 @@
 #define BF_INCOMPATIBLE_CAMERAS 1010
 #define BF_NOT_INITIALIZED 1011
 #define BF_BUSY_ACQUIRING 1012
+#define BF_NO_CHANNELS_DETECTED 1013
+
 class BitFlowCamera;
 
 class BFCamera

@@ -28,6 +28,8 @@ public class CovariantValue  implements Comparable<CovariantValue>{
    private double doubleValue_;
    private int intValue_;
    private String stringValue_;
+   private Object objectValue_;
+   
    private CovariantType type_;
    
    CovariantValue(double d) {
@@ -43,6 +45,10 @@ public class CovariantValue  implements Comparable<CovariantValue>{
    CovariantValue(String s) {
       stringValue_ = s;
       type_ = CovariantType.STRING;
+   }
+   
+   CovariantValue(Object o) {
+      objectValue_ = o;
    }
    
    public CovariantType getType() {

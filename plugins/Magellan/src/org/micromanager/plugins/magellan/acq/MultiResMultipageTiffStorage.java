@@ -17,9 +17,6 @@
 
 package org.micromanager.plugins.magellan.acq;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.process.ByteProcessor;
 import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import org.micromanager.plugins.magellan.coordinates.PositionManager;
 import org.micromanager.plugins.magellan.coordinates.XYStagePosition;
@@ -28,14 +25,15 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.micromanager.plugins.magellan.json.JSONArray;
@@ -76,6 +74,7 @@ public class MultiResMultipageTiffStorage {
    private AffineTransform affine_;
    private BDVXMLWriter bdvXML_;
    private int currentTP_ = -1;
+   private boolean rgb_;
    
    /**
     * Constructor to load existing storage from disk
@@ -185,7 +184,12 @@ public class MultiResMultipageTiffStorage {
       return TaggedImageStorageMultipageTiff.readSummaryMD(fullResDir);
    }
 
+   public boolean isRGB() {
+       return rgb_;
+   }
+   
    private void processSummaryMetadata() {
+      rgb_ = MD.isRGB(summaryMD_);
       xOverlap_ = MD.getPixelOverlapX(summaryMD_);
       yOverlap_ = MD.getPixelOverlapY(summaryMD_);
       byteDepth_ = MD.getBytesPerPixel(summaryMD_);
@@ -281,6 +285,39 @@ public class MultiResMultipageTiffStorage {
       }
    }
    
+   public int[] readBackgroundPixelValues() {
+      //grab 5 random images from each channel to estiamte background
+      Set<String> keys  = imageKeys();
+      int numChannels = fullResStorage_.getNumChannels();
+      int[] backgroundVals = new int[numChannels];
+      int pixPerImage = tileWidth_*tileHeight_;
+      ArrayList<String> keyList = new ArrayList<String>(keys);
+      Collections.shuffle(keyList);
+      for (int c = 0; c < numChannels; c++) {
+         int count = 0;
+         ArrayList<Integer> pixels = new ArrayList<Integer>();
+         for (String key : keyList) {
+            //channel slice frame position
+            int[] indices = MD.getIndices(key);
+            if (indices[0] != c) {
+               continue;
+            } 
+            //correct channel
+            byte[] pix = (byte[]) fullResStorage_.getImage(indices[0], indices[1], indices[2], indices[3]).pix;
+            for (byte b : pix) {
+               pixels.add( b & 0xff);
+            }
+            count++;
+            if (count == 5) {
+               break;
+            }
+         }
+         Collections.sort(pixels);
+         backgroundVals[c] = pixels.get((int)(pixels.size() * 0.15));
+      }
+      return backgroundVals;
+   }
+   
    public int getBackgroundPixelValue(int channelIndex) {
       return backgroundPix_.containsKey(channelIndex) ? backgroundPix_.get(channelIndex) : 0;
    }
@@ -290,7 +327,7 @@ public class MultiResMultipageTiffStorage {
            return;
        }
       int[] pixVals = new int[fullResTileHeightIncludingOverlap_ * fullResTileWidthIncludingOverlap_];
-      if (byteDepth_ == 1) {
+      if (byteDepth_ == 1 || byteDepth_ == 4) {
          for (int j = 0; j < pixVals.length; j++) {
             pixVals[j] = ((byte[])img.pix)[j] & 0xff;
          }
@@ -348,17 +385,21 @@ public class MultiResMultipageTiffStorage {
    public MagellanTaggedImage getImageForDisplay(int channel, int slice, int frame, int dsIndex, long x, long y, 
            int width, int height) {
       Object pixels;
-      if (byteDepth_ == 1) {
-         pixels = new byte[width * height]; 
-         if (backgroundPix_.containsKey(channel)) {
-            Arrays.fill((byte[]) pixels, (byte)getBackgroundPixelValue(channel));
-         }
-      } else {            
-         pixels = new short[width * height];      
-         if (backgroundPix_.containsKey(channel)) {
-            Arrays.fill((short[]) pixels, (short)getBackgroundPixelValue(channel));
-         }
-      }
+       if (rgb_) {
+          pixels = new byte[width * height * 4];
+       } else {
+           if (byteDepth_ == 1) {
+               pixels = new byte[width * height];
+               if (backgroundPix_.containsKey(channel)) {
+                   Arrays.fill((byte[]) pixels, (byte) getBackgroundPixelValue(channel));
+               }
+           } else {
+               pixels = new short[width * height];
+               if (backgroundPix_.containsKey(channel)) {
+                   Arrays.fill((short[]) pixels, (short) getBackgroundPixelValue(channel));
+               }
+           }
+       }
       //go line by line through one column of tiles at a time, then move to next column
       JSONObject topLeftMD = null;
       //first calculate how many columns and rows of tiles are relevant and the number of pixels
@@ -430,13 +471,14 @@ public class MultiResMultipageTiffStorage {
                   tileYPix += tileHeight_;
                }
                try {
+                  int multiplier = rgb_ ? 4 : 1; 
                   if (dsIndex == 0) {
                      //account for overlaps when viewing full resolution tiles
                      tileYPix += yOverlap_ / 2;
                      tileXPix += xOverlap_ / 2;
-                     System.arraycopy(tile.pix, tileYPix * fullResTileWidthIncludingOverlap_ + tileXPix, pixels, xOffset + width * line, lineWidths.get((int) (col - colStart)));                 
+                     System.arraycopy(tile.pix, multiplier*(tileYPix * fullResTileWidthIncludingOverlap_ + tileXPix), pixels, (xOffset + width * line)*multiplier, multiplier*lineWidths.get((int) (col - colStart)));                 
                   } else {
-                     System.arraycopy(tile.pix, tileYPix * tileWidth_ + tileXPix, pixels, xOffset + width * line, lineWidths.get((int)(col - colStart)));
+                     System.arraycopy(tile.pix, multiplier*(tileYPix * tileWidth_ + tileXPix), pixels, multiplier*(xOffset + width * line), multiplier*lineWidths.get((int)(col - colStart)));
                   }
                } catch (Exception e) {
                   e.printStackTrace();
@@ -529,9 +571,17 @@ public class MultiResMultipageTiffStorage {
                  posManager_.getLowResPositionIndex(fullResPositionIndex, resolutionIndex));
          Object currentLevelPix;
          if (existingImage == null) {
-            currentLevelPix = byteDepth_ == 1 ? new byte[tileWidth_ * tileHeight_] : new short[tileWidth_ * tileHeight_];
+             if (rgb_) {
+                 currentLevelPix = new byte[tileWidth_ * tileHeight_ * 4];
+             } else if (byteDepth_ == 1) {
+                 currentLevelPix = new byte[tileWidth_ * tileHeight_];
+             } else {
+                 currentLevelPix = new short[tileWidth_ * tileHeight_];
+             }         
             //fill in with background pixel value
-            if (byteDepth_ == 1) {
+            if (rgb_) {
+                //whatever
+            }else if (byteDepth_ == 1) {
                Arrays.fill((byte[]) currentLevelPix, (byte) getBackgroundPixelValue(channel));
             } else {
                Arrays.fill((short[]) currentLevelPix, (short) getBackgroundPixelValue(channel));
@@ -550,7 +600,7 @@ public class MultiResMultipageTiffStorage {
                //average a square of 4 pixels from previous level
                //edges: if odd number of pixels in tile, round to determine which
                //tiles pixels make it to next res level
-               int count = 1; //count is number of pixels (out of 4) used to create a pixel at this level
+               
                //these are the indices of pixels at the previous res level, which are offset
                //when moving from res level 0 to one as we throw away the overlapped image edges
                int pixelX, pixelY, previousLevelWidth, previousLevelHeight; 
@@ -567,58 +617,63 @@ public class MultiResMultipageTiffStorage {
                   previousLevelHeight = tileHeight_;
 
                }
-               
-               //always take top left pixel, maybe take others depending on whether at image edge
-               int sum = 0;
-               if (byteDepth_ == 1) {
-                  sum += ((byte[])previousLevelPix)[pixelY * previousLevelWidth + pixelX] & 0xff;                  
-               } else {
-                  sum += ((short[])previousLevelPix)[pixelY * previousLevelWidth + pixelX] & 0xffff;
-               }
-               //pixel index can be different from index in tile at resolution level 0 if there is nonzero overlap
-               if (x < previousLevelWidth - 1 && y < previousLevelHeight - 1) { //if not bottom right corner, add three more pix
-                  count += 3;
-                  if (byteDepth_ == 1) {
-                     sum += (((byte[]) previousLevelPix)[(pixelY + 1) * previousLevelWidth + pixelX + 1] & 0xff)
-                             + (((byte[]) previousLevelPix)[pixelY * previousLevelWidth + pixelX + 1] & 0xff)
-                             + (((byte[]) previousLevelPix)[(pixelY + 1) * previousLevelWidth + pixelX] & 0xff);
-                  } else {
-                     sum += (((short[]) previousLevelPix)[(pixelY + 1) * previousLevelWidth + pixelX + 1] & 0xffff)
-                             + (((short[]) previousLevelPix)[pixelY * previousLevelWidth + pixelX + 1] & 0xffff)
-                             + (((short[]) previousLevelPix)[(pixelY + 1) * previousLevelWidth + pixelX] & 0xffff);
-                  }
-               } else if (x < previousLevelWidth - 1) { //if not right edge, add two more pix
-                  count++;
-                  if (byteDepth_ == 1) {
-                     sum += ((byte[]) previousLevelPix)[pixelY * previousLevelWidth + pixelX + 1] & 0xff;
-                  } else {
-                     sum += ((short[]) previousLevelPix)[pixelY * previousLevelWidth + pixelX + 1] & 0xffff;
-                  }
-               } else if (y < previousLevelHeight - 1) { // if not bottom edge, add two more pix
-                  count++;
-                  if (byteDepth_ == 1) {
-                     sum += ((byte[]) previousLevelPix)[(pixelY + 1) * previousLevelWidth + pixelX] & 0xff;
-                  } else {
-                     sum += ((short[]) previousLevelPix)[(pixelY + 1) * previousLevelWidth + pixelX] & 0xffff;
-                  }
-               } else {
-                  //it is the bottom right corner, no more pix to add
-               }
-               //add averaged pixel into appropriate quadrant of current res level
-               //if full res tile has an odd number of pix, the last one gets chopped off
-               //to make it fit into tile containers
-               try {
-                  int index = ((y + yPos * tileHeight_)/2) * tileWidth_ + (x + xPos * tileWidth_)/2;
-                  if (byteDepth_ == 1) {
-                     ((byte[])currentLevelPix)[index] = (byte) (sum / count);
-                  } else {
-                     ((short[])currentLevelPix)[index] = (short) (sum / count);
-                  }
-               } catch (Exception e) {
-                  Log.log("Couldn't copy pixels to lower resolution");
-                  e.printStackTrace();
-                  return;
-               }
+                int rgbMultiplier_ = rgb_ ? 4 : 1;
+                for (int compIndex = 0; compIndex < (rgb_ ? 3 : 1); compIndex++) {
+                    int count = 1; //count is number of pixels (out of 4) used to create a pixel at this level
+                    //always take top left pixel, maybe take others depending on whether at image edge
+                    int sum = 0;
+                    if (byteDepth_ == 1 || rgb_) {
+                        sum += ((byte[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX)*rgbMultiplier_ + compIndex] & 0xff;
+                    } else {
+                        sum += ((short[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX)*rgbMultiplier_ + compIndex] & 0xffff;
+                    }
+
+                    //pixel index can be different from index in tile at resolution level 0 if there is nonzero overlap
+                    if (x < previousLevelWidth - 1 && y < previousLevelHeight - 1) { //if not bottom right corner, add three more pix
+                        count += 3;
+                        if (byteDepth_ == 1 || rgb_) {
+                            sum += (((byte[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xff)
+                                    + (((byte[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xff)
+                                    + (((byte[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX)*rgbMultiplier_+compIndex] & 0xff);
+                        } else {
+                            sum += (((short[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xffff)
+                                    + (((short[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xffff)
+                                    + (((short[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX)*rgbMultiplier_+compIndex] & 0xffff);
+                        }
+                    } else if (x < previousLevelWidth - 1) { //if not right edge, add one more pix
+                        count++;
+                        if (byteDepth_ == 1 || rgb_) {
+                            sum += ((byte[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xff;
+                        } else {
+                            sum += ((short[]) previousLevelPix)[(pixelY * previousLevelWidth + pixelX + 1)*rgbMultiplier_+compIndex] & 0xffff;
+                        }
+                    } else if (y < previousLevelHeight - 1) { // if not bottom edge, add one more pix
+                        count++;
+                        if (byteDepth_ == 1 || rgb_) {
+                            sum += ((byte[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX)*rgbMultiplier_+compIndex] & 0xff;
+                        } else {
+                            sum += ((short[]) previousLevelPix)[((pixelY + 1) * previousLevelWidth + pixelX)*rgbMultiplier_+compIndex] & 0xffff;
+                        }
+                    } else {
+                        //it is the bottom right corner, no more pix to add
+                    }
+                    //add averaged pixel into appropriate quadrant of current res level
+                    //if full res tile has an odd number of pix, the last one gets chopped off
+                    //to make it fit into tile containers
+                    try {
+                        int index = (((y + yPos * tileHeight_) / 2) * tileWidth_ + (x + xPos * tileWidth_) / 2)*rgbMultiplier_+compIndex;
+                        if (byteDepth_ == 1 || rgb_) {
+                            ((byte[]) currentLevelPix)[index] = (byte) Math.round(sum / count);
+                        } else {
+                            ((short[]) currentLevelPix)[index] = (short) Math.round(sum / count);
+                        }
+                    } catch (Exception e) {
+                        Log.log("Couldn't copy pixels to lower resolution");
+                        e.printStackTrace();
+                        return;
+                    }
+
+                }
             }
          }
          

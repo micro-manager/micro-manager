@@ -661,6 +661,49 @@ public class PanelUtils {
    
    
    /**
+    * Creates formatted text field for user to enter integer values.
+    * @param prefNode - String identifying preference node where this variable 
+    *                    be store such that its value can be retrieved on restart
+    * @param prefKey - String used to identify this preference
+    * @param defaultValue - initial (default) value.  Will be overwritten by
+    *                       value in Preferences
+    * @param numColumns - width of the GUI element
+    * @return - JFormattedTextField element
+    */
+    public JFormattedTextField makeIntEntryField(String prefNode, String prefKey, 
+            int defaultValue, int numColumns) {
+       
+       class FieldListener implements PropertyChangeListener {
+          private final JFormattedTextField tf_;
+          private final String prefNode_;
+          private final String prefKey_;
+
+          @Override
+          public void propertyChange(PropertyChangeEvent evt) {
+             try {
+                prefs_.putInt(prefNode_, prefKey_, ((Integer)tf_.getValue()).intValue());
+             } catch (Exception e) {
+                MyDialogUtils.showError(e);
+             }
+          }
+          
+          public FieldListener(JFormattedTextField tf, String prefNode, String prefKey) {
+             prefNode_ = prefNode;
+             prefKey_ = prefKey;
+             tf_ = tf;
+          }
+       }
+       
+       JFormattedTextField tf = new JFormattedTextField();
+       tf.setValue( prefs_.getInt(prefNode, prefKey, defaultValue) );
+       tf.setColumns(numColumns);
+       PropertyChangeListener listener = new FieldListener(tf, prefNode, prefKey);
+       tf.addPropertyChangeListener("value", listener);
+       return tf;
+    }
+   
+   
+   /**
     * Creates field for user to type in new position for an axis, with default value of 0.
     * @param key
     * @param dir
@@ -777,6 +820,31 @@ public class PanelUtils {
          }
       };
       jcb.addActionListener(newListener);
+   }
+   
+   /**
+    * takes a JSlider and adds a listener that is guaranteed to be called 
+    * after the other listeners.
+    * Modifies the JSlider!!
+    * @param jcb - combo box to which listener will be added
+    * @param lastListener - listener that will be added at the end
+    */
+   public void addListenerLast(JSlider jsl, final ChangeListener lastListener) {
+      final ChangeListener [] origListeners = jsl.getChangeListeners();
+      for (ChangeListener list : origListeners) {
+         jsl.removeChangeListener(list);
+      }
+
+      ChangeListener newListener = new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            for (ChangeListener list : origListeners) {
+               list.stateChanged(e);
+            }
+            lastListener.stateChanged(e);
+         }
+      };
+      jsl.addChangeListener(newListener);
    }
    
    /**

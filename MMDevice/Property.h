@@ -101,7 +101,7 @@ public:
 
 /** 
  * Extended device action implementation.
- * It takes one additional long parameter whic can be used as
+ * It takes one additional long parameter which can be used as
  * a command identifier inside the command handler
  */
 template <class T>

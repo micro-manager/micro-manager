@@ -25,13 +25,13 @@ import java.util.ArrayList;
  */
 public abstract class FrameIntegrationMethod {
 
-   public static final int FRAME_AVERAGE = 0, RANK_FILTER = 1, FRAME_SUMMATION = 2, BURST_MODE = 3;;
+   public static final int FRAME_AVERAGE = 0, RANK_FILTER = 1, FRAME_SUMMATION = 2;
    protected int width_, height_;
    protected ArrayList<RawBufferWrapper> rawBuffers_;
    protected int doubleWidth_, numFrames_;
    private int offset_;
 
-
+   
    public FrameIntegrationMethod(int doubleWidth, int offset, int numFrames) {
       offset_ = offset;
       numFrames_ = numFrames;

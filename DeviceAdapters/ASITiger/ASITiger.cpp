@@ -37,6 +37,7 @@
 #include "ASILED.h"
 #include "ASIPLogic.h"
 #include "ASIPmt.h"
+#include "ASILens.h"
 #include <cstdio>
 #include <string>
 #include "../../MMDevice/MMDevice.h"
@@ -78,6 +79,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new CFSlider(deviceName);
    else if (deviceStr.compare(0, strlen(g_TurretDeviceName), (string)g_TurretDeviceName) == 0)
       return new CTurret(deviceName);
+   else if (deviceStr.compare(0, strlen(g_PortSwitchDeviceName), (string)g_PortSwitchDeviceName) == 0)
+      return new CPortSwitch(deviceName);
    else if (deviceStr.compare(0, strlen(g_FWheelDeviceName), (string)g_FWheelDeviceName) == 0)
       return new CFWheel(deviceName);
    else if (deviceStr.compare(0, strlen(g_ScannerDeviceName), (string)g_ScannerDeviceName) == 0)
@@ -94,6 +97,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new CPLogic(deviceName);
    else if (deviceStr.compare(0, strlen(g_PMTDeviceName), (string)g_PMTDeviceName) == 0)
       return new CPMT(deviceName);
+   else if (deviceStr.compare(0, strlen(g_LensDeviceName), (string)g_LensDeviceName) == 0)
+      return new CLens(deviceName);
    else
       return 0;
 }

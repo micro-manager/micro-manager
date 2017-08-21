@@ -111,6 +111,12 @@ ActionListener {
          boolean isSelected,
          int row,
          int column) {
+
+      // https://stackoverflow.com/a/3055930
+      if (value == null) {
+         return null;
+      }
+
       currentColor = (Color)value;
       return button;
    }

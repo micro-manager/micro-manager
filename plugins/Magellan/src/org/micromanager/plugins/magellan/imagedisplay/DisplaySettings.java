@@ -67,8 +67,7 @@ public class DisplaySettings {
          if (summaryMetadata.has("BitDepth")) {
             bitDepth = MD.getBitDepth(summaryMetadata);
          } else if (summaryMetadata.has("PixelType")) {
-            if (MD.isGRAY8(summaryMetadata) ) { 
-//                    || MD.isRGB32(summaryMetadata)) {
+            if (MD.isGRAY8(summaryMetadata) || MD.isRGB32(summaryMetadata)) {
                bitDepth = 8;
             }
          }

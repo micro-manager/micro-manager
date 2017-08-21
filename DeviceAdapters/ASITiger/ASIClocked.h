@@ -35,8 +35,8 @@ class CClocked : public ASIPeripheralBase<CStateDeviceBase, CClocked>
 {
 public:
    CClocked(const char* name);
-   ~CClocked() { Shutdown(); }
-  
+   ~CClocked() { }
+
    // Generic device API
    // ----------
    int Initialize();
@@ -81,6 +81,14 @@ class CTurret : public CClocked
 {
 public:
    CTurret(const char* name);
+
+   int Initialize();
+};
+
+class CPortSwitch : public CClocked
+{
+public:
+   CPortSwitch(const char* name);
 
    int Initialize();
 };

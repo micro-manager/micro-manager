@@ -43,6 +43,11 @@ public class CellEditor extends AbstractCellEditor implements TableCellEditor,
    public Component getTableCellEditorComponent(JTable table, Object value,
          boolean isSelected, int rowIndex, int colIndex) {
 
+      // https://stackoverflow.com/a/3055930
+      if (value == null) {
+         return null;
+      }
+
      editingCol_ = colIndex;
 
       // Configure the component with the specified value

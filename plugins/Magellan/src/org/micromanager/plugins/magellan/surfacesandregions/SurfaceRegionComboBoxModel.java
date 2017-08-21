@@ -27,47 +27,22 @@ public class SurfaceRegionComboBoxModel extends DefaultComboBoxModel {
    
    private RegionManager rManager_;
    private SurfaceManager sManager_;
-   private int selectedIndex_ = -1;
+   private Object selectedItem_ = null;
 
    public SurfaceRegionComboBoxModel(SurfaceManager sManager, RegionManager rManager)  {
       sManager_ = sManager;
       rManager_ = rManager;
    }
 
-   public int getSelectedIndex() {
-      return selectedIndex_;
-   }
-
-   public void setSelectedIndex(int selectedIndex) {
-      selectedIndex_ = selectedIndex;
-   }
-   
-   @Override
-   public void setSelectedItem(Object anItem) {
-     selectedIndex_ = -1;
-     int offset = 0;
-      if (rManager_ != null) {
-         offset = rManager_.getNumberOfRegions();
-         for (int i = 0; i < rManager_.getNumberOfRegions(); i++) {
-            if (rManager_.getRegion(i).equals(anItem)) {
-               selectedIndex_ = i;
-               return;
-            }
-         }
-      }
-      if (sManager_ != null) {
-         for (int i = 0; i < sManager_.getNumberOfSurfaces(); i++) {
-            if (sManager_.getSurface(i).equals(anItem)) {
-               selectedIndex_ = i + offset;
-               return;
-            }
-         }
-      }
-   }
-
    @Override
    public Object getSelectedItem() {
-      return getElementAt(selectedIndex_);
+      return selectedItem_;
+   }
+
+
+   @Override
+   public void setSelectedItem(Object anItem) {
+     selectedItem_ = anItem;
    }
 
    @Override
@@ -79,19 +54,13 @@ public class SurfaceRegionComboBoxModel extends DefaultComboBoxModel {
    public Object getElementAt(int index) {
       if (index == -1) {
          return null;
-      }
-      if (rManager_ == null) {
-         //surfaces only
+      }     
+      if (rManager_ != null && index < rManager_.getNumberOfRegions()) {
+         return rManager_.getRegion(index);         
+      } else if (rManager_ == null) {
          return sManager_.getSurface(index);
-      } else if (sManager_ == null) {
-         return rManager_.getRegion(index);
       } else {
-         //regions first, then surfaces
-         if (index >= rManager_.getNumberOfRegions()) {
-            return sManager_.getSurface(index - rManager_.getNumberOfRegions());
-         } else {
-            return rManager_.getRegion(index);
-         }
+         return sManager_.getSurface(index - rManager_.getNumberOfRegions());
       }
    }
 

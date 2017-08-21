@@ -23,6 +23,11 @@ class FirstRowRenderer extends JLabel implements TableCellRenderer {
          Object text, boolean isSelected, boolean hasFocus, 
          int row, int column) {
 
+      // https://stackoverflow.com/a/3055930
+      if (text == null) {
+         return null;
+      }
+
       setText((String) text);
       setBackground(Color.lightGray);
       return this;

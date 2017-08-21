@@ -31,6 +31,10 @@ import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.asidispim.Data.AcquisitionSettings;
+import org.micromanager.asidispim.Data.ChannelSpec;
+import org.micromanager.asidispim.Data.Devices.Sides;
+import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
 import org.micromanager.asidispim.Utils.MyDialogUtils;
@@ -38,6 +42,11 @@ import org.micromanager.asidispim.Utils.MyNumberUtils;
 import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.SliceTiming;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
+import org.micromanager.asidispim.Utils.ControllerUtils;
+import org.micromanager.asidispim.Utils.AutofocusUtils;
+import org.micromanager.asidispim.Utils.MovementDetector;
+import org.micromanager.asidispim.Utils.MovementDetector.Method;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -46,6 +55,14 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.geom.Point2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.text.ParseException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -66,6 +83,7 @@ import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
+import javax.swing.BorderFactory;
 
 import net.miginfocom.swing.MigLayout;
 
@@ -74,6 +92,8 @@ import org.json.JSONObject;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+import com.swtdesigner.SwingResourceManager;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -101,28 +121,11 @@ import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
-import com.swtdesigner.SwingResourceManager;
-
 import ij.IJ;
 
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import java.awt.geom.Point2D;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
-import javax.swing.BorderFactory;
-
-import org.micromanager.asidispim.Data.AcquisitionSettings;
-import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.Devices.Sides;
-import org.micromanager.asidispim.Data.Joystick.Directions;
-import org.micromanager.asidispim.Utils.ControllerUtils;
-import org.micromanager.asidispim.Utils.AutofocusUtils;
-import org.micromanager.asidispim.api.ASIdiSPIMException;
 
 /**
  *
@@ -152,7 +155,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner delayCamera_;
    private final JSpinner durationCamera_;  // NB: not the same as camera exposure
    private final JSpinner exposureCamera_;  // NB: only used in advanced timing mode
-   private JCheckBox alternateBeamScanCB_;
+   private final JCheckBox alternateBeamScanCB_;
    private final JSpinner durationLaser_;
    private final JSpinner delaySide_;
    private final JLabel actualSlicePeriodLabel_;
@@ -163,7 +166,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JToggleButton buttonStart_;
    private final JButton buttonTestAcq_;
    private final JPanel volPanel_;
-   private final JPanel slicePanel_;
+   private final JPanel sliceAdvancedPanel_;
    private final JPanel timepointPanel_;
    private final JPanel savePanel_;
    private final JPanel durationPanel_;
@@ -189,6 +192,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner positionDelay_;
    private final JCheckBox useTimepointsCB_;
    private final JCheckBox useAutofocusCB_;
+   private final JCheckBox useMovementCorrectionCB_;
    private final JPanel leftColumnPanel_;
    private final JPanel centerColumnPanel_;
    private final JPanel rightColumnPanel_;
@@ -199,8 +203,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    private String lastAcquisitionPath_;
    private String lastAcquisitionName_;
+   private MMAcquisition acq_;
    private String[] channelNames_;
    private int nrRepeats_;  // how many separate acquisitions to perform
+   private final AcquisitionPanel acquisitionPanel_;
+   private final JComponent[] simpleTimingComponents_;
+   private final JPanel slicePanel_;
+   private final JPanel slicePanelContainer_;
+   private final JPanel lightSheetPanel_;
+   private final JPanel normalPanel_;
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -230,7 +241,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceTiming_ = new SliceTiming();
       lastAcquisitionPath_ = "";
       lastAcquisitionName_ = "";
+      acq_ = null;
       channelNames_ = null;
+      acquisitionPanel_ = this;
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
       
@@ -256,12 +269,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       };
       
-      // start volume (main) sub-panel
+      // start volume sub-panel
 
       volPanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
-              "[]8[]"));
+              "4[]8[]"));
 
       volPanel_.setBorder(PanelUtils.makeTitledBorder("Volume Settings"));
 
@@ -290,6 +303,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       firstSide_ = pu.makeDropDownBox(ab, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_FIRST_SIDE, Devices.Sides.A.toString());
+      firstSide_.addActionListener(recalculateTimingDisplayAL);
       if (!ASIdiSPIM.oSPIM) {
       } else {
          firstSide_.setEnabled(false);
@@ -297,24 +311,77 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       volPanel_.add(firstSide_, "wrap");
       
       volPanel_.add(new JLabel("Delay before side [ms]:"));
+      // used to read/write directly to galvo/micro-mirror firmware, but want different stage scan behavior
       delaySide_ = pu.makeSpinnerFloat(0, 10000, 0.25,
-              new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
-              Properties.Keys.SPIM_DELAY_SIDE, 0);
-      delaySide_.addChangeListener(recalculateTimingDisplayCL);
+              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DELAY_BEFORE_SIDE, 50);
+      pu.addListenerLast(delaySide_, recalculateTimingDisplayCL);
       volPanel_.add(delaySide_, "wrap");
 
       volPanel_.add(new JLabel("Slices per side:"));
       numSlices_ = pu.makeSpinnerInteger(1, 65000,
               Devices.Keys.PLUGIN,
               Properties.Keys.PLUGIN_NUM_SLICES, 20);
-      numSlices_.addChangeListener(recalculateTimingDisplayCL);
+      pu.addListenerLast(numSlices_, recalculateTimingDisplayCL);
       volPanel_.add(numSlices_, "wrap");
       
       volPanel_.add(new JLabel("Slice step size [\u00B5m]:"));
       stepSize_ = pu.makeSpinnerFloat(0, 100, 0.1,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_SLICE_STEP_SIZE,
             1.0);
+      pu.addListenerLast(stepSize_, recalculateTimingDisplayCL);  // needed only for stage scanning b/c acceleration time related to speed
       volPanel_.add(stepSize_, "wrap");
+      
+      // end volume sub-panel
+      
+      
+      // start slice timing controls, have 2 options with advanced timing checkbox shared
+      slicePanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]10[center]",
+            "0[]0[]"));
+      
+      slicePanel_.setBorder(PanelUtils.makeTitledBorder("Slice Settings"));
+      
+      
+      // start light sheet controls
+      lightSheetPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]10[center]",
+            "4[]8"));
+      
+      lightSheetPanel_.add(new JLabel("Scan reset time [ms]:"));
+      JSpinner lsScanReset = pu.makeSpinnerFloat(1, 100, 0.25,  // practical lower limit of 1ms
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_RESET, 3);
+      lsScanReset.addChangeListener(PanelUtils.coerceToQuarterIntegers(lsScanReset));
+      pu.addListenerLast(lsScanReset, recalculateTimingDisplayCL);
+      lightSheetPanel_.add(lsScanReset, "wrap");
+      
+      lightSheetPanel_.add(new JLabel("Scan settle time [ms]:"));
+      JSpinner lsScanSettle = pu.makeSpinnerFloat(0.25, 100, 0.25,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE, 1);
+      lsScanSettle.addChangeListener(PanelUtils.coerceToQuarterIntegers(lsScanSettle));
+      pu.addListenerLast(lsScanSettle, recalculateTimingDisplayCL);
+      lightSheetPanel_.add(lsScanSettle, "wrap");
+      
+      lightSheetPanel_.add(new JLabel("Shutter width [\u00B5m]:"));
+      JSpinner lsShutterWidth = pu.makeSpinnerFloat(0.1, 100, 1,
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH, 5);
+      pu.addListenerLast(lsShutterWidth, recalculateTimingDisplayCL);
+      lightSheetPanel_.add(lsShutterWidth);
+      
+//      lightSheetPanel_.add(new JLabel("1 / (shutter speed):"));
+//      JSpinner lsShutterSpeed = pu.makeSpinnerInteger(1, 10,
+//            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED, 1);
+//      lightSheetPanel_.add(lsShutterSpeed, "wrap");
+      
+      // end light sheet controls
+      
+      // start "normal" (not light sheet) controls
+      
+      normalPanel_ = new JPanel(new MigLayout(
+            "",
+            "[right]10[center]",
+            "4[]8"));
       
       // out of order so we can reference it
       desiredSlicePeriod_ = pu.makeSpinnerFloat(1, 1000, 0.25,
@@ -331,31 +398,38 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             recalculateSliceTiming(false);
          }
       });
-      volPanel_.add(minSlicePeriodCB_, "span 2, wrap");
+      normalPanel_.add(minSlicePeriodCB_, "span 2, wrap");
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
       desiredSlicePeriodLabel_ = new JLabel("Slice period [ms]:"); 
-      volPanel_.add(desiredSlicePeriodLabel_);
-      volPanel_.add(desiredSlicePeriod_, "wrap");
+      normalPanel_.add(desiredSlicePeriodLabel_);
+      normalPanel_.add(desiredSlicePeriod_, "wrap");
       desiredSlicePeriod_.addChangeListener(PanelUtils.coerceToQuarterIntegers(desiredSlicePeriod_));
       desiredSlicePeriod_.addChangeListener(recalculateTimingDisplayCL);
       
       // special field that is enabled/disabled depending on whether advanced timing is enabled
       desiredLightExposureLabel_ = new JLabel("Sample exposure [ms]:"); 
-      volPanel_.add(desiredLightExposureLabel_);
+      normalPanel_.add(desiredLightExposureLabel_);
       desiredLightExposure_ = pu.makeSpinnerFloat(1.0, 1000, 0.25,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DESIRED_EXPOSURE, 8.5);
       desiredLightExposure_.addChangeListener(PanelUtils.coerceToQuarterIntegers(desiredLightExposure_));
       desiredLightExposure_.addChangeListener(recalculateTimingDisplayCL);
-      volPanel_.add(desiredLightExposure_, "wrap");
+      normalPanel_.add(desiredLightExposure_);
+      
+      // end normal simple slice timing controls
+      
+      slicePanelContainer_ = new JPanel(new MigLayout("", "0[center]0", "0[]0"));
+      slicePanelContainer_.add(getSPIMCameraMode() == CameraModes.Keys.LIGHT_SHEET ?
+            lightSheetPanel_ : normalPanel_, "growx");
+      slicePanel_.add(slicePanelContainer_, "span 2, center, wrap");
       
       // special checkbox to use the advanced timing settings
       // action handler added below after defining components it enables/disables
       advancedSliceTimingCB_ = pu.makeCheckBox("Use advanced timing settings",
             Properties.Keys.PREFS_ADVANCED_SLICE_TIMING, panelName_, false);
-      volPanel_.add(advancedSliceTimingCB_, "left, span 2, wrap");
+      slicePanel_.add(advancedSliceTimingCB_, "span 2, left");
       
-      // end volume sub-panel
+      // end slice sub-panel
       
       
       // start advanced slice timing frame
@@ -366,11 +440,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceFrameAdvanced_.setTitle("Advanced timing");
       sliceFrameAdvanced_.loadPosition(100, 100);
 
-      slicePanel_ = new JPanel(new MigLayout(
+      sliceAdvancedPanel_ = new JPanel(new MigLayout(
               "",
               "[right]10[center]",
               "[]8[]"));
-      sliceFrameAdvanced_.add(slicePanel_);
+      sliceFrameAdvanced_.add(sliceAdvancedPanel_);
       
       class SliceFrameAdapter extends WindowAdapter {
          @Override
@@ -383,80 +457,80 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       sliceFrameAdvanced_.addWindowListener(new SliceFrameAdapter());
       
       JLabel scanDelayLabel =  new JLabel("Delay before scan [ms]:");
-      slicePanel_.add(scanDelayLabel);
+      sliceAdvancedPanel_.add(scanDelayLabel);
       delayScan_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_SCAN, 0);
       delayScan_.addChangeListener(PanelUtils.coerceToQuarterIntegers(delayScan_));
       delayScan_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(delayScan_, "wrap");
+      sliceAdvancedPanel_.add(delayScan_, "wrap");
 
       JLabel lineScanLabel = new JLabel("Lines scans per slice:");
-      slicePanel_.add(lineScanLabel);
+      sliceAdvancedPanel_.add(lineScanLabel);
       numScansPerSlice_ = pu.makeSpinnerInteger(1, 1000,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_NUM_SCANSPERSLICE, 1);
       numScansPerSlice_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(numScansPerSlice_, "wrap");
+      sliceAdvancedPanel_.add(numScansPerSlice_, "wrap");
 
       JLabel lineScanPeriodLabel = new JLabel("Line scan duration [ms]:");
-      slicePanel_.add(lineScanPeriodLabel);
+      sliceAdvancedPanel_.add(lineScanPeriodLabel);
       lineScanDuration_ = pu.makeSpinnerFloat(1, 10000, 0.25,
               new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
               Properties.Keys.SPIM_DURATION_SCAN, 10);
       lineScanDuration_.addChangeListener(PanelUtils.coerceToQuarterIntegers(lineScanDuration_));
       lineScanDuration_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(lineScanDuration_, "wrap");
+      sliceAdvancedPanel_.add(lineScanDuration_, "wrap");
       
       JLabel delayLaserLabel = new JLabel("Delay before laser [ms]:");
-      slicePanel_.add(delayLaserLabel);
+      sliceAdvancedPanel_.add(delayLaserLabel);
       delayLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_LASER, 0);
       delayLaser_.addChangeListener(PanelUtils.coerceToQuarterIntegers(delayLaser_));
       delayLaser_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(delayLaser_, "wrap");
+      sliceAdvancedPanel_.add(delayLaser_, "wrap");
       
       JLabel durationLabel = new JLabel("Laser trig duration [ms]:");
-      slicePanel_.add(durationLabel);
+      sliceAdvancedPanel_.add(durationLabel);
       durationLaser_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_LASER, 1);
       durationLaser_.addChangeListener(PanelUtils.coerceToQuarterIntegers(durationLaser_));
       durationLaser_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(durationLaser_, "span 2, wrap");
+      sliceAdvancedPanel_.add(durationLaser_, "span 2, wrap");
       
       JLabel delayLabel = new JLabel("Delay before camera [ms]:");
-      slicePanel_.add(delayLabel);
+      sliceAdvancedPanel_.add(delayLabel);
       delayCamera_ = pu.makeSpinnerFloat(0, 10000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DELAY_CAMERA, 0);
       delayCamera_.addChangeListener(PanelUtils.coerceToQuarterIntegers(delayCamera_));
       delayCamera_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(delayCamera_, "wrap");
+      sliceAdvancedPanel_.add(delayCamera_, "wrap");
       
       JLabel cameraLabel = new JLabel("Camera trig duration [ms]:");
-      slicePanel_.add(cameraLabel);
+      sliceAdvancedPanel_.add(cameraLabel);
       durationCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SPIM_DURATION_CAMERA, 0);
       durationCamera_.addChangeListener(PanelUtils.coerceToQuarterIntegers(durationCamera_));
       durationCamera_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(durationCamera_, "wrap");
+      sliceAdvancedPanel_.add(durationCamera_, "wrap");
       
       JLabel exposureLabel = new JLabel("Camera exposure [ms]:");
-      slicePanel_.add(exposureLabel);
+      sliceAdvancedPanel_.add(exposureLabel);
       exposureCamera_ = pu.makeSpinnerFloat(0, 1000, 0.25,
             Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_ADVANCED_CAMERA_EXPOSURE, 10f);
       exposureCamera_.addChangeListener(recalculateTimingDisplayCL);
-      slicePanel_.add(exposureCamera_, "wrap");
+      sliceAdvancedPanel_.add(exposureCamera_, "wrap");
       
       alternateBeamScanCB_ = pu.makeCheckBox("Alternate scan direction",
             Properties.Keys.PREFS_SCAN_OPPOSITE_DIRECTIONS, panelName_, false);
-      slicePanel_.add(alternateBeamScanCB_, "center, span 2, wrap");
+      sliceAdvancedPanel_.add(alternateBeamScanCB_, "center, span 2, wrap");
       
-      final JComponent[] simpleTimingComponents = { desiredLightExposure_,
+      simpleTimingComponents_ = new JComponent[]{ desiredLightExposure_,
             minSlicePeriodCB_, desiredSlicePeriodLabel_,
             desiredLightExposureLabel_};
       final JComponent[] advancedTimingComponents = {
@@ -464,7 +538,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             delayLaser_, durationLaser_, delayCamera_,
             durationCamera_, exposureCamera_, alternateBeamScanCB_};
       PanelUtils.componentsSetEnabled(advancedTimingComponents, advancedSliceTimingCB_.isSelected());
-      PanelUtils.componentsSetEnabled(simpleTimingComponents, !advancedSliceTimingCB_.isSelected());
+      PanelUtils.componentsSetEnabled(simpleTimingComponents_, !advancedSliceTimingCB_.isSelected());
       
       // this action listener takes care of enabling/disabling inputs
       // of the advanced slice timing window
@@ -476,7 +550,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // set other components in this advanced timing frame
             PanelUtils.componentsSetEnabled(advancedTimingComponents, enabled);
             // also control some components in main volume settings sub-panel
-            PanelUtils.componentsSetEnabled(simpleTimingComponents, !enabled);
+            PanelUtils.componentsSetEnabled(simpleTimingComponents_, !enabled);
             desiredSlicePeriod_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
             desiredSlicePeriodLabel_.setEnabled(!enabled && !minSlicePeriodCB_.isSelected());
             updateDurationLabels();
@@ -576,13 +650,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_.setBorder(PanelUtils.makeTitledBorder("Data Saving Settings"));
       
       separateTimePointsCB_ = pu.makeCheckBox("Separate viewer / file for each time point",
-            Properties.Keys.PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false); 
-      savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
+            Properties.Keys.PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS, panelName_, false);
       
       saveCB_ = pu.makeCheckBox("Save while acquiring",
             Properties.Keys.PREFS_SAVE_WHILE_ACQUIRING, panelName_, false);
-      // init the save while acquiring CB; could also do two doClick() calls
-      // TODO check that it's initialized now
+
+      // make sure that when separate viewer is enabled then saving gets enabled too
+      separateTimePointsCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (separateTimePointsCB_.isSelected() && !saveCB_.isSelected()) {
+               saveCB_.doClick();  // setSelected() won't work because need to call its listener
+            }
+         }
+      });
+      savePanel_.add(separateTimePointsCB_, "span 3, left, wrap");
       savePanel_.add(saveCB_, "skip 1, span 2, center, wrap");
 
       JLabel dirRootLabel = new JLabel ("Directory root:");
@@ -780,6 +862,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            }
       });
       
+      // checkbox to signal that movement should be corrected during acquisition
+      // Yet another orphan UI element
+      useMovementCorrectionCB_ = new JCheckBox("Correct Movement during acquisition");
+      useMovementCorrectionCB_.setSelected(prefs_.getBoolean(panelName_, 
+              Properties.Keys.PLUGIN_ACQUSITION_USE_MOVEMENT_CORRECTION, false));
+      useMovementCorrectionCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            prefs_.putBoolean(panelName_, 
+                    Properties.Keys.PLUGIN_ACQUSITION_USE_MOVEMENT_CORRECTION, 
+                    useMovementCorrectionCB_.isSelected());
+           }
+      });
+      
       
       // set up tabbed panels for GUI
       // make 3 columns as own JPanels to get vertical space right
@@ -804,27 +900,23 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       leftColumnPanel_.add(new JLabel("Status:"), "split 2, left");
       leftColumnPanel_.add(acquisitionStatusLabel_);
       
-      centerColumnPanel_ = new JPanel(new MigLayout(
-            "",
-            "[]",
-            "[]"));
+      centerColumnPanel_ = new JPanel(new MigLayout("", "[]", "[]"));
       
       centerColumnPanel_.add(positionPanel, "growx, wrap");
       centerColumnPanel_.add(multiChannelPanel_, "wrap");
       centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
-      centerColumnPanel_.add(useAutofocusCB_);
+      centerColumnPanel_.add(useAutofocusCB_, "wrap");
+      centerColumnPanel_.add(useMovementCorrectionCB_);
       
-      rightColumnPanel_ = new JPanel(new MigLayout(
-            "",
-            "[]",
-            "[]"));
+      rightColumnPanel_ = new JPanel(new MigLayout("", "[center]0", "[]0[]"));
       
-      rightColumnPanel_.add(volPanel_);
+      rightColumnPanel_.add(volPanel_, "growx, wrap");
+      rightColumnPanel_.add(slicePanel_, "growx");
       
       // add the column panels to the main panel
-      this.add(leftColumnPanel_);
-      this.add(centerColumnPanel_);
-      this.add(rightColumnPanel_);
+      super.add(leftColumnPanel_);
+      super.add(centerColumnPanel_);
+      super.add(rightColumnPanel_);
       
       // properly initialize the advanced slice timing
       advancedSliceTimingCB_.addItemListener(sliceTimingDisableGUIInputs);
@@ -891,13 +983,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * @return CameraModes.Keys value from Settings panel
-    * (internal, edge, overlap, pseudo-overlap) 
+    * @return CameraModes.Keys value from Camera panel
+    * (internal, edge, overlap, pseudo-overlap, light sheet) 
     */
    private CameraModes.Keys getSPIMCameraMode() {
-      return CameraModes.getKeyFromPrefCode(
-            prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-                  Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      CameraModes.Keys val;
+      try {
+         val = ASIdiSPIM.getFrame().getSPIMCameraMode();
+      } catch (Exception ex) {
+         val = CameraModes.getKeyFromPrefCode(prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+            Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      }
+      return val;
    }
    
    /**
@@ -914,6 +1011,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings
     * public for API use
+    * @return Number of Sides
     */
    public int getNumSides() {
       if (numSides_.getSelectedIndex() == 1) {
@@ -926,6 +1024,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings
     * public for API use
+    * @return true if the first side is side A
     */
    public boolean isFirstSideA() {
       return ((String) firstSide_.getSelectedItem()).equals("A");
@@ -934,6 +1033,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings.
     * public for API use
+    * @return Time between starts of acquisition when doing a time-lapse acquisition 
     */
    public double getTimepointInterval() {
       return PanelUtils.getSpinnerFloatValue(acquisitionInterval_);
@@ -945,9 +1045,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     */
    public AcquisitionSettings getCurrentAcquisitionSettings() {
       AcquisitionSettings acqSettings = new AcquisitionSettings();
-      acqSettings.spimMode = (AcquisitionModes.Keys) spimMode_.getSelectedItem();
+      acqSettings.spimMode = getAcquisitionMode();
       acqSettings.isStageScanning = (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN
-            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED);
+            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+            || acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL);
       acqSettings.useTimepoints = useTimepointsCB_.isSelected();
       acqSettings.numTimepoints = getNumTimepoints();
       acqSettings.timepointInterval = getTimepointInterval();
@@ -958,6 +1059,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.channels = multiChannelPanel_.getUsedChannels();
       acqSettings.channelGroup = multiChannelPanel_.getChannelGroup();
       acqSettings.useAutofocus = useAutofocusCB_.isSelected();
+      acqSettings.useMovementCorrection = useMovementCorrectionCB_.isSelected();
       acqSettings.numSides = getNumSides();
       acqSettings.firstSideIsA = isFirstSideA();
       acqSettings.delayBeforeSide = PanelUtils.getSpinnerFloatValue(delaySide_);
@@ -969,8 +1071,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.centerAtCurrentZ = false;
       acqSettings.sliceTiming = sliceTiming_;
       acqSettings.cameraMode = getSPIMCameraMode();
-      acqSettings.accelerationX = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
-            Properties.Keys.STAGESCAN_MOTOR_ACCEL);
       acqSettings.hardwareTimepoints = false; //  when running acquisition we check this and set to true if needed
       acqSettings.separateTimepoints = getSavingSeparateFile();
       return acqSettings;
@@ -1014,27 +1114,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
-    * 
     * @param showWarnings true to warn user about needing to change slice period
     * @return
     */
    private SliceTiming getTimingFromPeriodAndLightExposure(boolean showWarnings) {
       // uses algorithm Jon worked out in Octave code; each slice period goes like this:
-      // 1. camera readout time (none if in overlap mode, 0.25ms in PCO pseudo-overlap)
+      // 1. camera readout time (none if in overlap mode, 0.25ms in pseudo-overlap)
       // 2. any extra delay time
       // 3. camera reset time
       // 4. start scan 0.25ms before camera global exposure and shifted up in time to account for delay introduced by Bessel filter
       // 5. turn on laser as soon as camera global exposure, leave laser on for desired light exposure time
       // 7. end camera exposure in final 0.25ms, post-filter scan waveform also ends now
-      
       final float scanLaserBufferTime = MyNumberUtils.roundToQuarterMs(0.25f);  // below assumed to be multiple of 0.25ms
       final Color foregroundColorOK = Color.BLACK;
       final Color foregroundColorError = Color.RED;
       final Component elementToColor  = desiredSlicePeriod_.getEditor().getComponent(0);
       
       SliceTiming s = new SliceTiming();
-      final float cameraResetTime = computeCameraResetTime();      // recalculate for safety
-      final float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety
+      final float cameraResetTime = computeCameraResetTime();      // recalculate for safety, 0 for light sheet
+      final float cameraReadoutTime = computeCameraReadoutTime();  // recalculate for safety, 0 for overlap
       
       // can we use acquisition settings directly? because they may be in flux
       final AcquisitionSettings acqSettings = getCurrentAcquisitionSettings();
@@ -1079,10 +1177,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       s.laserDuration = laserDuration;
       s.cameraDelay = cameraReadout_max;       // camera must readout last frame before triggering again
       
+      final Devices.Keys camKey = isFirstSideA() ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
+      final Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
+      
       // figure out desired time for camera to be exposing (including reset time)
       // because both camera trigger and laser on occur on 0.25ms intervals (i.e. we may not
       //    trigger the laser until 0.24ms after global exposure) use cameraReset_max
-      final float cameraExposure = cameraReset_max + laserDuration;
+      // special adjustment for Photometrics cameras that possibly has extra clear time which is counted in reset time
+      //    but not in the camera exposure time
+      final float actualCameraResetTime = (camLibrary == Devices.Libraries.PVCAM)
+            ? (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f
+            : cameraResetTime; // everything but Photometrics
+      final float cameraExposure = MyNumberUtils.ceilToQuarterMs(actualCameraResetTime) + laserDuration;
       
       switch (acqSettings.cameraMode) {
       case EDGE:
@@ -1106,16 +1212,57 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
          s.cameraExposure = 1;  // doesn't really matter, controlled by interval between triggers
          break;
-      case PSEUDO_OVERLAP:  // only PCO, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
-         s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
-         s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms
-         if (!MyNumberUtils.floatsEqual(s.cameraDelay, 0.25f)) {
-            MyDialogUtils.showError("Camera delay should be 0.25ms for pseudo-overlap mode.");
+         case PSEUDO_OVERLAP:  // PCO or Photometrics, enforce 0.25ms between end exposure and start of next exposure by triggering camera 0.25ms into the slice
+            s.cameraDuration = 1;  // doesn't really matter, 1ms should be plenty fast yet easy to see for debugging
+            if (null != camLibrary) {
+               switch (camLibrary) {
+                  case PCOCAM:
+                     s.cameraExposure = getSliceDuration(s) - s.cameraDelay;  // s.cameraDelay should be 0.25ms for PCO
+                     break;
+                  case PVCAM:
+                     s.cameraExposure = cameraExposure;
+                     break;
+                  default:
+                     MyDialogUtils.showError("Unknown camera library for pseudo-overlap calculations");
+                     break;
+               }
+            }
+            if (s.cameraDelay < 0.24f) {
+               MyDialogUtils.showError("Camera delay should be at least 0.25ms for pseudo-overlap mode.");
+            }
+            break;
+         case LIGHT_SHEET:
+            // each slice period goes like this:
+            // 1. scan reset time (use to add any extra settling time to the start of each slice)
+         // 2. start scan, wait scan settle time
+         // 3. trigger camera/laser when scan settle time elapses
+         // 4. scan for total of exposure time plus readout time (total time some row is exposing) plus settle time plus extra 0.25ms to prevent artifacts
+         // 5. laser turns on 0.25ms before camera trigger and stays on until exposure is ending
+         // TODO revisit this after further experimentation
+         s.cameraDuration = 1;  // only need to trigger camera
+         final float shutterWidth = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_WIDTH);
+         final int shutterSpeed = 1;  // props_.getPropValueInteger(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SHUTTER_SPEED);
+         float pixelSize = (float) core_.getPixelSizeUm();
+         if (pixelSize < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
+            pixelSize = 0.1625f;  // default to pixel size of 40x with sCMOS = 6.5um/40
          }
+         final double rowReadoutTime = getRowReadoutTime();
+         s.cameraExposure = (float) (rowReadoutTime * shutterWidth / pixelSize * shutterSpeed);
+         final float totalExposure_max = MyNumberUtils.ceilToQuarterMs(cameraReadoutTime + s.cameraExposure + 0.05f);  // 50-300us extra cushion time
+         final float scanSettle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_SETTLE);
+         final float scanReset = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_LS_SCAN_RESET);
+         s.scanDelay = scanReset - scanDelayFilter;
+         s.scanPeriod = scanSettle + totalExposure_max + scanLaserBufferTime;
+         s.cameraDelay = scanReset + scanSettle;
+         s.laserDelay = s.cameraDelay - scanLaserBufferTime;  // trigger laser just before camera to make sure it's on already
+         s.laserDuration = totalExposure_max + scanLaserBufferTime;  // laser will turn off as exposure is ending
          break;
       case INTERNAL:
       default:
-         MyDialogUtils.showError("Invalid camera mode");
+         if (showWarnings) {
+            MyDialogUtils.showError("Invalid camera mode");
+         }
+         s.valid = false;
          break;
       }
       
@@ -1129,14 +1276,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // if a specific slice period was requested, add corresponding delay to scan/laser/camera
       elementToColor.setForeground(foregroundColorOK);
       if (!acqSettings.minimizeSlicePeriod) {
-         float globalDelay = acqSettings.desiredSlicePeriod - getSliceDuration(s);  // both should be in 0.25ms increments // TODO fix
+         float globalDelay = acqSettings.desiredSlicePeriod - getSliceDuration(s);  // both should be in 0.25ms increments // TODO fix;
+         if (acqSettings.cameraMode == CameraModes.Keys.LIGHT_SHEET) {
+            globalDelay = 0;
+         }
          if (globalDelay < 0) {
             globalDelay = 0;
             if (showWarnings) {  // only true when user has specified period that is unattainable
-               MyDialogUtils.showError(
-                     "Increasing slice period to meet laser exposure constraint\n"
-                           + "(time required for camera readout; readout time depends on ROI).");
-               elementToColor.setForeground(foregroundColorError);
+                  MyDialogUtils.showError(
+                        "Increasing slice period to meet laser exposure constraint\n"
+                              + "(time required for camera readout; readout time depends on ROI).");
+                  elementToColor.setForeground(foregroundColorError);
             }
          }
          s.scanDelay += globalDelay;
@@ -1205,10 +1355,37 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     sliceTiming_.sliceDuration) +
             " ms");
    }
+   
+   /**
+    * calculate the total ramp time for stage scan in units of milliseconds (includes both acceleration and settling time
+    *   given by "delay before side" setting)
+    * @param acqSettings
+    * @return
+    */
+   private double getStageRampDuration(AcquisitionSettings acqSettings) {
+      final double accelerationX = controller_.computeScanAcceleration(
+            controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller
+      ReportingUtils.logDebugMessage("stage ramp duration is " + (acqSettings.delayBeforeSide + accelerationX) + " milliseconds");
+      return acqSettings.delayBeforeSide + accelerationX;
+   }
+   
+   /**
+    * calculate the retrace time in stage scan raster mode in units of milliseconds
+    * @param acqSettings
+    * @return
+    */
+   private double getStageRetraceDuration(AcquisitionSettings acqSettings) {
+      final double retraceSpeed = 0.67f*props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);  // retrace speed set to 67% of max speed in firmware
+      final double speedFactor = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
+      final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
+      ReportingUtils.logDebugMessage("stage retrace duration is " + scanDistance/retraceSpeed + " milliseconds");
+      return scanDistance/retraceSpeed;
+   }
 
    /**
     * Compute the volume duration in ms based on controller's timing settings.
     * Includes time for multiple channels.  However, does not include for multiple positions.
+    * @param acqSettings Settings for the acquisition
     * @return duration in ms
     */
    public double computeActualVolumeDuration(AcquisitionSettings acqSettings) {
@@ -1221,21 +1398,36 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
         numCameraTriggers += 1;
       }
       // stackDuration is per-side, per-channel, per-position
+      
       final double stackDuration = numCameraTriggers * acqSettings.sliceTiming.sliceDuration;
       if (acqSettings.isStageScanning) {
-         final double rampDuration = delayBeforeSide + acqSettings.accelerationX;
+         final double rampDuration = getStageRampDuration(acqSettings);
+         final double retraceTime = getStageRetraceDuration(acqSettings);
          // TODO double-check these calculations below, at least they are better than before ;-)
          if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN) {
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-               return (numSides * ((rampDuration * 2) + (stackDuration * numChannels)));
-            } else {
-               return (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
+               return retraceTime + (numSides * ((rampDuration * 2) + (stackDuration * numChannels)));
+            } else {  // "normal" stage scan with volume channel switching
+               if (numSides == 1) {
+                  // single-view so will retrace at beginning of each channel
+                  return ((rampDuration * 2) + stackDuration + retraceTime) * numChannels;
+               } else {
+                  // will only retrace at very start/end
+                  return retraceTime + (numSides * ((rampDuration * 2) + stackDuration) * numChannels);
+               }
             }
-         } else {  // interleaved mode
+         } else if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
             if (channelMode == MultichannelModes.Keys.SLICE_HW) {
-               return (rampDuration * 2 + stackDuration * numSides * numChannels);
-            } else {
-               return ((rampDuration * 2 + stackDuration * numSides) * numChannels);
+               return ((rampDuration * 2) + (stackDuration * numChannels) + retraceTime) * numSides;
+            } else {  // "normal" stage scan with volume channel switching
+               return ((rampDuration * 2) + stackDuration + retraceTime) * numChannels * numSides;
+            }
+         } else {  // interleaved mode => one-way pass collecting both sides
+            if (channelMode == MultichannelModes.Keys.SLICE_HW) {
+               // single pass with all sides and channels
+               return retraceTime + (rampDuration * 2 + stackDuration * numSides * numChannels);
+            } else {  // one-way pass collecting both sides, then rewind for next channel
+               return ((rampDuration * 2) + (stackDuration * numSides) + retraceTime) * numChannels;
             }
          }
       } else { // piezo scan
@@ -1268,6 +1460,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // (could be wildly off but was estimated using actual system
             // and then slightly padded to be conservative to avoid errors
             // where positions aren't completed in time for next position)
+            // could estimate the actual time by analyzing the position's relative locations
+            //   and using the motor speed and acceleration time
             return gui_.getPositionList().getNumberOfPositions() *
                   (volumeDuration + 1500 + PanelUtils.getSpinnerFloatValue(positionDelay_));
          } catch (MMScriptException ex) {
@@ -1290,12 +1484,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * Update the displayed volume duration.
     */
    private void updateActualVolumeDurationLabel() {
-      actualVolumeDurationLabel_.setText(
-            NumberUtils.doubleToDisplayString(computeActualVolumeDuration()) +
-            " ms");
+      double duration = computeActualVolumeDuration();
+      if (duration > 1000) {
+         actualVolumeDurationLabel_.setText(
+               NumberUtils.doubleToDisplayString(duration/1000d) +
+               " s"); // round to ms
+      } else {
+         actualVolumeDurationLabel_.setText(
+               NumberUtils.doubleToDisplayString(Math.round(10*duration)/10d) +
+               " ms");  // round to tenth of ms
+      }
    }
-   
-   
    
    /**
     * Compute the time lapse duration
@@ -1326,24 +1525,42 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    }
    
    /**
+    * Computes the per-row readout time of the SPIM cameras set on Devices panel.
+    * Handles single-side operation.
+    * Needed for computing camera exposure in light sheet mode
+    * @return
+    */
+   private double getRowReadoutTime() {
+      if (getNumSides() > 1) {
+         return Math.max(cameras_.getRowReadoutTime(Devices.Keys.CAMERAA),
+               cameras_.getRowReadoutTime(Devices.Keys.CAMERAB));
+      } else {
+         if (isFirstSideA()) {
+            return cameras_.getRowReadoutTime(Devices.Keys.CAMERAA);
+         } else {
+            return cameras_.getRowReadoutTime(Devices.Keys.CAMERAB);
+         }
+      }
+   }
+   
+   /**
     * Computes the reset time of the SPIM cameras set on Devices panel.
     * Handles single-side operation.
     * Needed for computing (semi-)optimized slice timing in "easy timing" mode.
     * @return
     */
    private float computeCameraResetTime() {
-      float resetTime;
+      CameraModes.Keys camMode = getSPIMCameraMode();
       if (getNumSides() > 1) {
-         resetTime = Math.max(cameras_.computeCameraResetTime(Devices.Keys.CAMERAA),
-               cameras_.computeCameraResetTime(Devices.Keys.CAMERAB));
+         return Math.max(cameras_.computeCameraResetTime(Devices.Keys.CAMERAA, camMode),
+               cameras_.computeCameraResetTime(Devices.Keys.CAMERAB, camMode));
       } else {
          if (isFirstSideA()) {
-            resetTime = cameras_.computeCameraResetTime(Devices.Keys.CAMERAA);
+            return cameras_.computeCameraResetTime(Devices.Keys.CAMERAA, camMode);
          } else {
-            resetTime = cameras_.computeCameraResetTime(Devices.Keys.CAMERAB);
+            return cameras_.computeCameraResetTime(Devices.Keys.CAMERAB, camMode);
          }
       }
-      return resetTime;
    }
    
    /**
@@ -1446,6 +1663,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acquisitionStatusLabel_.setText(text);
    }
    
+   private boolean requiresPiezos(AcquisitionModes.Keys mode) {
+      switch (mode) {
+      case STAGE_SCAN:
+      case NONE:
+      case SLICE_SCAN_ONLY:
+      case STAGE_SCAN_INTERLEAVED:
+      case STAGE_SCAN_UNIDIRECTIONAL:
+      case NO_SCAN:
+         return false;
+      case PIEZO_SCAN_ONLY:
+      case PIEZO_SLICE_SCAN:
+         return true;
+      default:
+         MyDialogUtils.showError("Unspecified acquisition mode " + mode.toString());
+         return true;
+      }
+   }
+   
    /**
     * runs a test acquisition with the following features:
     *   - not saved to disk
@@ -1455,17 +1690,35 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @param side Devices.Sides.NONE to run as specified in acquisition tab,
     *   Devices.Side.A or B to run only that side
     */
-   public void runTestAcquisition(Devices.Sides side) {
-      cancelAcquisition_.set(false);
-      acquisitionRequested_.set(true);
-      updateStartButton();
-      boolean success = runAcquisitionPrivate(true, side);
-      if (!success) {
-         ReportingUtils.logError("Fatal error running test diSPIM acquisition.");
-      }
-      acquisitionRequested_.set(false);
-      acquisitionRunning_.set(false);
-      updateStartButton();
+   public void runTestAcquisition(final Devices.Sides side) {
+      Runnable runTestThread = new Runnable() {
+         @Override
+         public void run() {
+            ReportingUtils.logDebugMessage("User requested start of test diSPIM acquisition with side " + side.toString() + " selected.");
+            cancelAcquisition_.set(false);
+            acquisitionRequested_.set(true);
+            updateStartButton();
+            boolean success = runAcquisitionPrivate(true, side);
+            if (!success) {
+               ReportingUtils.logError("Fatal error running test diSPIM acquisition.");
+            }
+            acquisitionRequested_.set(false);
+            acquisitionRunning_.set(false);
+            updateStartButton();
+            // deskew automatically if we were supposed to
+            AcquisitionModes.Keys spimMode = getAcquisitionMode();
+            if (spimMode == AcquisitionModes.Keys.STAGE_SCAN || spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+                    || spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
+               if (prefs_.getBoolean(MyStrings.PanelNames.DATAANALYSIS.toString(),
+                       Properties.Keys.PLUGIN_DESKEW_AUTO_TEST, false)) {
+                  ASIdiSPIM.getFrame().getDataAnalysisPanel().runDeskew(acquisitionPanel_);
+               }
+            }
+         }
+      };
+      
+      (new Thread(runTestThread, "Run Test")).start();
+
    }
 
    /**
@@ -1538,21 +1791,32 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          gui_.enableLiveMode(false);
       }
       
-      // stop the serial traffic for position updates during acquisition
-      posUpdater_.pauseUpdates(true);
-      
       // make sure slice timings are up to date
       // do this automatically; we used to prompt user if they were out of date
       // do this before getting snapshot of sliceTiming_ in acqSettings
       recalculateSliceTiming(!minSlicePeriodCB_.isSelected());
       
+      if (!sliceTiming_.valid) {
+         MyDialogUtils.showError("Error in calculating the slice timing; is the camera mode set correctly?");
+         return false;
+      }
+      
       AcquisitionSettings acqSettingsOrig = getCurrentAcquisitionSettings();
       
+      if (acqSettingsOrig.cameraMode == CameraModes.Keys.LIGHT_SHEET
+            && core_.getPixelSizeUm() < 1e-6) {  // can't compare equality directly with floating point values so call < 1e-9 is zero or negative
+         ReportingUtils.showError("Need to configure pixel size in Micro-Manager to use light sheet mode.");
+         return false;
+      }
+      
       // if a test acquisition then only run single timpoint, no autofocus
+      // allow multi-positions for test acquisition for now, though perhaps this is not desirable
       if (testAcq) {
          acqSettingsOrig.useTimepoints = false;
          acqSettingsOrig.numTimepoints = 1;
          acqSettingsOrig.useAutofocus = false;
+         acqSettingsOrig.separateTimepoints = false;
+         
          // if called from the setup panels then the side will be specified
          //   so we can do an appropriate single-sided acquisition
          // if called from the acquisition panel then NONE will be specified
@@ -1574,7 +1838,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       double volumeDuration = computeActualVolumeDuration(acqSettingsOrig);
       double timepointDuration = computeTimepointDuration();
       long timepointIntervalMs = Math.round(acqSettingsOrig.timepointInterval*1000);
-      
+     
       // use hardware timing if < 1 second between timepoints
       // experimentally need ~0.5 sec to set up acquisition, this gives a bit of cushion
       // cannot do this in getCurrentAcquisitionSettings because of mutually recursive
@@ -1607,17 +1871,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // get MM device names for first/second cameras to acquire
       String firstCamera, secondCamera;
+      Devices.Keys firstCameraKey, secondCameraKey;
       boolean firstSideA = acqSettings.firstSideIsA; 
       if (firstSideA) {
          firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+         firstCameraKey = Devices.Keys.CAMERAA;
          secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+         secondCameraKey = Devices.Keys.CAMERAB;
       } else {
          firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+         firstCameraKey = Devices.Keys.CAMERAB;
          secondCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+         secondCameraKey = Devices.Keys.CAMERAA;
       }
       
       boolean sideActiveA, sideActiveB;
-      boolean twoSided = acqSettings.numSides > 1;
+      final boolean twoSided = acqSettings.numSides > 1;
       if (twoSided) {
          sideActiveA = true;
          sideActiveB = true;
@@ -1632,6 +1901,44 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
+      if (sideActiveA) {
+         if (!devices_.isValidMMDevice(Devices.Keys.CAMERAA)) {
+            MyDialogUtils.showError("Using side A but no camera specified for that side.");
+            return false;
+         }
+         if (!CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA)).contains(getSPIMCameraMode())) {
+            MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera A doesn't support it.");
+            return false;
+         }
+         if (!devices_.isValidMMDevice(Devices.Keys.GALVOA)) {
+            MyDialogUtils.showError("Using side A but no scanner specified for that side.");
+            return false;
+         }
+         if (requiresPiezos(acqSettings.spimMode) && !devices_.isValidMMDevice(Devices.Keys.PIEZOA)) {
+            MyDialogUtils.showError("Using side A and acquisition mode requires piezos but no piezo specified for that side.");
+            return false;
+         }
+      }
+      
+      if (sideActiveB) {
+         if (!devices_.isValidMMDevice(Devices.Keys.CAMERAB)) {
+            MyDialogUtils.showError("Using side B but no camera specified for that side.");
+            return false;
+         }
+         if (!CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB)).contains(getSPIMCameraMode())) {
+            MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera B doesn't support it.");
+            return false;
+         }
+         if (!devices_.isValidMMDevice(Devices.Keys.GALVOB)) {
+            MyDialogUtils.showError("Using side B but no scanner specified for that side.");
+            return false;
+         }
+         if (requiresPiezos(acqSettings.spimMode) && !devices_.isValidMMDevice(Devices.Keys.PIEZOB)) {
+            MyDialogUtils.showError("Using side B and acquisition mode requires piezos but no piezo specified for that side.");
+            return false;
+         }
+      }
+
       boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && sideActiveA)
             || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && sideActiveB);
       
@@ -1677,14 +1984,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // in hardwareTimepoints case we trigger controller once for all timepoints => need to
          //   adjust number of frames we expect back from the camera during MM's SequenceAcquisition
          if (acqSettings.cameraMode == CameraModes.Keys.OVERLAP) {
-            // For overlap mode we are send one extra trigger per side for PLogic slice-switching
-            //   and one extra trigger be channel per side for volume-switching (both PLogic and not).
+            // For overlap mode we are send one extra trigger per channel per side for volume-switching (both PLogic and not)
+            // This holds for all multi-channel modes, just the order in which the extra trigger comes varies
             // Very last trigger won't ever return a frame so subtract 1.
-            if (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-               nrSlicesSoftware = (((acqSettings.numSlices * acqSettings.numChannels) + 1) * acqSettings.numTimepoints) - 1;
-            } else {
-               nrSlicesSoftware = ((acqSettings.numSlices + 1) * acqSettings.numChannels * acqSettings.numTimepoints) - 1;
-            }
+            nrSlicesSoftware = ((acqSettings.numSlices + 1) * acqSettings.numChannels * acqSettings.numTimepoints) - 1;
          } else {
             // we get back one image per trigger for all trigger modes other than OVERLAP
             //   and we have already computed how many images that is (nrSlicesSoftware)
@@ -1713,12 +2016,41 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
-      float cameraReadoutTime = computeCameraReadoutTime();
-      double exposureTime = acqSettings.sliceTiming.cameraExposure;
+      final float cameraReadoutTime = computeCameraReadoutTime();
+      final double exposureTime = acqSettings.sliceTiming.cameraExposure;
       
-      boolean save = saveCB_.isSelected() && !testAcq;
-      String rootDir = rootField_.getText();
-
+      final boolean save = saveCB_.isSelected() && !testAcq;
+      final String rootDir = rootField_.getText();
+      
+      // make sure we have a valid directory to save in
+      final File dir = new File(rootDir);
+      if (save) {
+         try {
+            if (!dir.exists()) {
+               if (!dir.mkdir()) {
+                  throw new Exception();
+               }
+            }
+         } catch (Exception ex) {
+            MyDialogUtils.showError("Could not create directory for saving acquisition data.");
+            return false;
+         }
+      }
+      
+      if (acqSettings.separateTimepoints) {
+         // because separate timepoints closes windows when done, force the user to save data to disk to avoid confusion
+         if (!save) {
+            MyDialogUtils.showError("For separate timepoints, \"Save while acquiring\" must be enabled.");
+            return false;
+         }
+         // for separate timepoints, make sure the directory is empty to make sure naming pattern is "clean"
+         // this is an arbitrary choice to avoid confusion later on when looking at file names
+         if (dir.list().length > 0) {
+            MyDialogUtils.showError("For separate timepoints the saving directory must be empty.");
+            return false;
+         }
+      }
+      
       int nrFrames;   // how many Micro-manager "frames" = time points to take
       if (acqSettings.separateTimepoints) {
          nrFrames = 1;
@@ -1742,6 +2074,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (!devices_.isTigerDevice(Devices.Keys.XYSTAGE)
               || !props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
             MyDialogUtils.showError("Must have stage with scan-enabled firmware for stage scanning.");
+            return false;
+         }
+         if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
+               && acqSettings.numSides < 2) {
+            MyDialogUtils.showError("Interleaved mode requires two sides.");
             return false;
          }
       }
@@ -1782,6 +2119,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          if (acqSettings.useAutofocus) {
             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
                   + " with autofocus during acquisition.");
+            return false;
+         }
+         if (acqSettings.useMovementCorrection) {
+             MyDialogUtils.showError("Cannot use hardware time points (small time point interval)"
+                  + " with movement correction during acquisition.");
             return false;
          }
          if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.VOLUME) {
@@ -1842,6 +2184,44 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
+      // Movement Correction settings; only used if acqSettings.useMovementCorrection is true
+      int correctMovementEachNFrames = 10;
+      String correctMovementChannel = "";
+      int cmChannelNumber = -1;
+      if (acqSettings.useMovementCorrection) {
+         correctMovementEachNFrames = props_.getPropValueInteger(Devices.Keys.PLUGIN, 
+               Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_EACHNIMAGES);
+         autofocusChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
+               Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_CHANNEL);
+         // double-check that selected channel is valid if we are doing multi-channel
+         if (acqSettings.useChannels) {
+            String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
+                  Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
+            StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
+            boolean found = false;
+            for (String channel : channels) {
+               if (channel.equals(autofocusChannel)) {
+                  found = true;
+                  break;
+               }
+            }
+            if (!found) {
+               MyDialogUtils.showError("Invalid movement correction channel selected on autofocus tab.");
+               return false;
+            }
+         }
+
+         for (int i = 0; i < acqSettings.numChannels; i++) {
+            if (channelNames_[i].equals(correctMovementChannel)) {
+               cmChannelNumber = i;
+            }
+         }
+         if (cmChannelNumber == -1) {
+            MyDialogUtils.showError("The channel selected for movement correction on the auitofocus tab was not found in this acquisition");
+            return false;
+         }
+      }
+      
       // it appears the circular buffer, which is used by both cameras, can only have one 
       // image size setting => we require same image height and width for second camera if two-sided
       if (twoSided) {
@@ -1855,6 +2235,35 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          } catch (Exception ex) {
             MyDialogUtils.showError(ex, "Problem getting camera ROIs");
          }
+      }
+      
+      cameras_.setCameraForAcquisition(firstCameraKey, true);
+      if (twoSided) {
+         cameras_.setCameraForAcquisition(secondCameraKey, true);
+      }
+
+      // save exposure time, will restore at end of acquisition
+      try {
+         prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(),
+               (float)core_.getExposure(devices_.getMMDevice(firstCameraKey)));
+         if (twoSided) {
+            prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND.toString(),
+                  (float)core_.getExposure(devices_.getMMDevice(secondCameraKey)));
+         }
+      } catch (Exception ex) {
+         MyDialogUtils.showError(ex, "could not cache exposure");
+      }
+      
+      try {
+         core_.setExposure(firstCamera, exposureTime);
+         if (twoSided) {
+            core_.setExposure(secondCamera, exposureTime);
+         }
+         gui_.refreshGUIFromCache();
+      } catch (Exception ex) {
+         MyDialogUtils.showError(ex, "could not set exposure");
       }
       
       // seems to have a problem if the core's camera has been set to some other
@@ -1873,22 +2282,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          return false;
       }
       
+      // stop the serial traffic for position updates during acquisition
+      // if we return from this function (including aborting) we need to unpause
+      posUpdater_.pauseUpdates(true);
+      
       // initialize stage scanning so we can restore state
       Point2D.Double xyPosUm = new Point2D.Double();
       float origXSpeed = 1f;  // don't want 0 in case something goes wrong
+      float origXAccel = 1f;  // don't want 0 in case something goes wrong
       if (acqSettings.isStageScanning) {
          try {
             xyPosUm = core_.getXYStagePosition(devices_.getMMDevice(Devices.Keys.XYSTAGE));
             origXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_SPEED);
+            origXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                  Properties.Keys.STAGESCAN_MOTOR_ACCEL);
          } catch (Exception ex) {
-            MyDialogUtils.showError("Could not get XY stage position for stage scan initialization");
+            MyDialogUtils.showError("Could not get XY stage position, speed, or acceleration for stage scan initialization");
+            posUpdater_.pauseUpdates(false);
             return false;
          }
       }
       
-      cameras_.setSPIMCamerasForAcquisition(true);
-
       numTimePointsDone_ = 0;
       
       // force saving as image stacks, not individual files
@@ -1901,12 +2316,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
       if (!controller_.prepareControllerForAquisition(acqSettings)) {
+         posUpdater_.pauseUpdates(false);
          return false;
       }
       
       boolean nonfatalError = false;
       long acqButtonStart = System.currentTimeMillis();
       String acqName = "";
+      acq_ = null;
 
       // do not want to return from within this loop => throw exception instead
       // loop is executed once per acquisition (i.e. once if separate viewers isn't selected
@@ -1933,12 +2350,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          BlockingQueue<TaggedImage> bq = new LinkedBlockingQueue<TaggedImage>(10);
          
          // try to close last acquisition viewer if there could be one open (only in single acquisition per timepoint mode)
-         if (acqSettings.separateTimepoints && gui_.acquisitionExists(acqName) && !cancelAcquisition_.get()) {
+         if (acqSettings.separateTimepoints && (acq_!=null) && !cancelAcquisition_.get()) {
             try {
                // following line needed due to some arcane internal reason, otherwise
                //   call to closeAcquisitionWindow() fails silently. 
                //   See http://sourceforge.net/p/micro-manager/mailman/message/32999320/
-               gui_.getAcquisition(acqName).promptToSave(false);
+               acq_.promptToSave(false);
                gui_.closeAcquisitionWindow(acqName);
             } catch (Exception ex) {
                // do nothing if unsuccessful
@@ -1946,9 +2363,24 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          
          if (acqSettings.separateTimepoints) {
+            // call to getUniqueAcquisitionName is extra safety net, we have checked that directory is empty before starting
             acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + acqNum);
          } else {
             acqName = gui_.getUniqueAcquisitionName(prefixField_.getText());
+         }
+         
+         long extraStageScanTimeout = 0;
+         if (acqSettings.isStageScanning) {
+            // approximately compute the extra time to wait for stack to begin (ramp up time)
+            //   by getting the volume duration and subtracting the acquisition duration and then dividing by two
+            extraStageScanTimeout = (long) Math.ceil(computeActualVolumeDuration(acqSettings)
+                  - (acqSettings.numSlices * acqSettings.numChannels * acqSettings.sliceTiming.sliceDuration)) / 2;
+         }
+         
+         long extraMultiXYTimeout = 0;
+         if (acqSettings.useMultiPositions) {
+            // give 10 extra seconds to arrive at intended XY position instead of trying to get fancy about computing actual move time
+            extraMultiXYTimeout = 10000;
          }
          
          VirtualAcquisitionDisplay vad = null;
@@ -1972,16 +2404,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             } else {
                gui_.openAcquisition(acqName, rootDir, nrFrames, acqSettings.numSides * acqSettings.numChannels,
                   acqSettings.numSlices, nrPositions, true, save);
-            }
-            
-            // save exposure time, will restore at end of acquisition
-            prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
-                    Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE.toString(),
-                    (float)core_.getExposure());
-            
-            core_.setExposure(firstCamera, exposureTime);
-            if (twoSided) {
-               core_.setExposure(secondCamera, exposureTime);
             }
             
             channelNames_ = new String[acqSettings.numSides * acqSettings.numChannels];
@@ -2031,7 +2453,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                     (int) core_.getImageBitDepth());
             gui_.promptToSaveAcquisition(acqName, !testAcq);
             
-            // These metadata have to added after initialization, otherwise they will not be shown?!
+            // These metadata have to be added after initialization, 
+            // otherwise they will not be shown?!
             gui_.setAcquisitionProperty(acqName, "NumberOfSides", 
                     NumberUtils.doubleToDisplayString(acqSettings.numSides));
             gui_.setAcquisitionProperty(acqName, "FirstSide", acqSettings.firstSideIsA ? "A" : "B");
@@ -2046,6 +2469,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
             gui_.setAcquisitionProperty(acqName, "UseAutofocus", 
                   acqSettings.useAutofocus ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+            gui_.setAcquisitionProperty(acqName, "UseMotionCorrection", 
+                    acqSettings.useMovementCorrection ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName, "HardwareTimepoints", 
                   acqSettings.hardwareTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName, "SeparateTimepoints", 
@@ -2067,7 +2492,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
             gui_.setAcquisitionProperty(acqName, "Position_SPIM_Head",
                   positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
-            gui_.setAcquisitionProperty(acqName, "SPIMAcqSettings", acqSettingsJSON);            
+            gui_.setAcquisitionProperty(acqName, "SPIMAcqSettings", acqSettingsJSON);
+            gui_.setAcquisitionProperty(acqName, "SPIMtype", ASIdiSPIM.oSPIM ? "oSPIM" : "diSPIM");
+            gui_.setAcquisitionProperty(acqName, "AcquisitionName", acqName);
                       
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
@@ -2075,11 +2502,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
-            MMAcquisition acq = gui_.getAcquisition(acqName);
+            acq_ = gui_.getAcquisition(acqName);
             
             // Dive into MM internals since script interface does not support pipelines
-            ImageCache imageCache = acq.getImageCache();
-            vad = acq.getAcquisitionWindow();
+            ImageCache imageCache = acq_.getImageCache();
+            vad = acq_.getAcquisitionWindow();
             imageCache.addImageCacheListener(vad);
             
             // Start pumping images into the ImageCache
@@ -2114,8 +2541,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             // patterned after implementation in MMStudio.java
             // will be null if not saving to disk
-            lastAcquisitionPath_ = acq.getImageCache().getDiskLocation();
+            lastAcquisitionPath_ = acq_.getImageCache().getDiskLocation();
             lastAcquisitionName_ = acqName;
+            
+                           
+            // only used when motion correction was requested
+            MovementDetector[] movementDetectors = new MovementDetector[nrPositions];
+               
+            // Transformation matrices to convert between camera and stage coordinates
+            final Vector3D yAxis = new Vector3D(0.0, 1.0, 0.0);
+            final Rotation camARotation = new Rotation( yAxis, Math.toRadians(-45) );
+            final Rotation camBRotation = new Rotation ( yAxis, Math.toRadians(45) );
+
+            final Vector3D zeroPoint = new Vector3D(0.0, 0.0, 0.0);  // cache a zero point for efficiency
             
             // make sure all devices have arrived, e.g. a stage isn't still moving
             try {
@@ -2198,11 +2636,16 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      // want to move between positions move stage fast, so we 
                      //   will clobber stage scanning setting so need to restore it
                      float scanXSpeed = 1f;
+                     float scanXAccel = 1f;
                      if (acqSettings.isStageScanning) {
                         scanXSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_SPEED);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_SPEED, origXSpeed);
+                        scanXAccel = props_.getPropValueFloat(Devices.Keys.XYSTAGE,
+                              Properties.Keys.STAGESCAN_MOTOR_ACCEL);
+                        props_.setPropValue(Devices.Keys.XYSTAGE,
+                              Properties.Keys.STAGESCAN_MOTOR_ACCEL, origXAccel);
                      }
                      
                      // blocking call; will wait for stages to move
@@ -2212,10 +2655,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      if (acqSettings.isStageScanning) {
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_SPEED, scanXSpeed);
+                        props_.setPropValue(Devices.Keys.XYSTAGE,
+                              Properties.Keys.STAGESCAN_MOTOR_ACCEL, scanXAccel);
                      }
                      
                      // setup stage scan at this position
-                     if (acqSettings.isStageScanning) {
+                     // non-multi-position situation is handled in prepareControllerForAquisition instead
+                     if (acqSettings.useMultiPositions) {
                         StagePosition pos = positionList.getPosition(positionNum).get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
                         controller_.prepareStageScanForAcquisition(pos.x, pos.y);
                      }
@@ -2266,7 +2712,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         // Do not actually grab first image here, just make sure it is there
                         long start = System.currentTimeMillis();
                         long now = start;
-                        final long timeout = Math.max(3000, Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide));
+                        final long timeout = Math.max(3000, Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide))
+                              + extraStageScanTimeout + extraMultiXYTimeout;
                         while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
                               && !cancelAcquisition_.get()) {
                            now = System.currentTimeMillis();
@@ -2286,12 +2733,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         int[] frNumber = new int[2*acqSettings.numChannels];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
                         int[] cameraFrNumber = new int[2];       // keep track of how many frames we have received from the camera
                         int[] tpNumber = new int[2*acqSettings.numChannels];  // keep track of which timepoint we are on for hardware timepoints
-                        boolean skipNextImage = false;  // hardware timepoints have to drop spurious images with overlap mode
+                        int imagesToSkip = 0;  // hardware timepoints have to drop spurious images with overlap mode
                         final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
-                        final boolean skipPerSide = acqSettings.useChannels && (acqSettings.numChannels > 1)
-                              && (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW); 
                         boolean done = false;
-                        final long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
+                        long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
+                        if (acqSettings.isStageScanning) {  // for stage scanning have to allow extra time for turn-around
+                           timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
+                           timeout2 += 1500;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
+                           if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
+                              timeout2 += (long)Math.ceil(getStageRetraceDuration(acqSettings));  // in unidirectional case also need to rewind
+                           }
+                        }
                         start = System.currentTimeMillis();
                         long last = start;
                         try {
@@ -2303,8 +2755,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
                                  TaggedImage timg = core_.popNextTaggedImage();
                                  
-                                 if (skipNextImage) {
-                                    skipNextImage = false;
+                                 if (checkForSkips && imagesToSkip != 0) {
+                                    imagesToSkip--;
                                     continue;  // goes to next iteration of this loop without doing anything else
                                  }
 
@@ -2340,15 +2792,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  if (acqSettings.hardwareTimepoints) {
                                     actualTimePoint = tpNumber[channelIndex];
                                  }
+                                 if (acqSettings.separateTimepoints) {
+                                    // if we are doing separate timepoints then frame is always 0
+                                    actualTimePoint = 0;
+                                 }
+                                 // note that hardwareTimepoints and separateTimepoints can never both be true
                                  
                                  // add image to acquisition
                                  if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                                     // create time series for no scan
-                                    addImageToAcquisition(acqName,
+                                    addImageToAcquisition(acq_,
                                           frNumber[channelIndex], channelIndex, actualTimePoint, 
                                           positionNum, now - acqStart, timg, bq);
                                  } else { // standard, create Z-stacks
-                                    addImageToAcquisition(acqName, actualTimePoint, channelIndex,
+                                    addImageToAcquisition(acq_, actualTimePoint, channelIndex,
                                           frNumber[channelIndex], positionNum,
                                           now - acqStart, timg, bq);
                                  }
@@ -2368,13 +2825,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                                     // see if we are supposed to skip next image
                                     if (checkForSkips) {
-                                       if (skipPerSide) {  // one extra image per side, only happens with per-slice HW switching
-                                          if ((channelIndex == (acqSettings.numChannels - 1))  // final channel index is last one of side
-                                                || (twoSided && (channelIndex == (acqSettings.numChannels - 2)))) {  // 2nd-to-last channel index for two-sided is also last one of side 
-                                             skipNextImage = true;
-                                          }
-                                       } else {  // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected)
-                                          skipNextImage = true;
+                                       // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected)
+                                       // if we are interleaving by slice then next nrChannel images will be from extra slice position
+                                       // any other configuration we will just drop the next image
+                                       if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
+                                          imagesToSkip = acqSettings.numChannels;
+                                       } else {
+                                          imagesToSkip = 1;
                                        }
                                     }
                                     
@@ -2386,6 +2843,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                        updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
                                     }
                                  }
+                                 
                                  last = now;  // keep track of last image timestamp
 
                               } else {  // no image ready yet
@@ -2393,7 +2851,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  Thread.sleep(1);
                                  if (now - last >= timeout2) {
                                     ReportingUtils.logError("Camera did not send all expected images within" +
-                                          " a reasonable period for timepoint " + (timePoint+1) + ".  Continuing anyway.");
+                                          " a reasonable period for timepoint " + numTimePointsDone_ + ".  Continuing anyway.");
                                     nonfatalError = true;
                                     done = true;
                                  }
@@ -2410,7 +2868,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            if (usingDemoCam) {
                               Thread.sleep(200);  // for serial communication overhead
                               Thread.sleep((long)volumeDuration/nrChannelsSoftware);  // estimate the time per channel, not ideal in case of software channel switching
+                              if (acqSettings.isStageScanning) {
+                                 Thread.sleep(1000 + extraStageScanTimeout);  // extra 1 second plus ramp time for stage scanning 
+                              }
                            }
+                           
 
                         } catch (InterruptedException iex) {
                            MyDialogUtils.showError(iex);
@@ -2438,6 +2900,52 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         if (twoSided && core_.isSequenceRunning(secondCamera)) {
                            core_.stopSequenceAcquisition(secondCamera);
                         }
+                     }
+                  }
+                  
+                  if (acqSettings.useMovementCorrection && 
+                          (timePoint % correctMovementEachNFrames) == 0) {
+                     if (movementDetectors[positionNum] == null) {
+                         // Transform from camera space to stage space:
+                        Rotation rotation  = camBRotation;
+                        if (firstSideA) {
+                           rotation = camARotation;
+                        }
+                        movementDetectors[positionNum] = new MovementDetector(
+                                prefs_, acq_, cmChannelNumber, positionNum, rotation);
+                     }
+                     
+                     Vector3D movement = movementDetectors[positionNum].detectMovement(
+                             Method.PhaseCorrelation);
+                     
+                     String msg1 = "TimePoint: " + timePoint + ", Detected movement.  X: " + movement.getX() +
+                                ", Y: " + movement.getY() + ", Z: " + movement.getZ();
+                     System.out.println(msg1);
+                     
+                     if (!movement.equals(zeroPoint)) {
+                        String msg = "ASIdiSPIM motion corrector moving stages: X: " + movement.getX() +
+                                ", Y: " + movement.getY() + ", Z: " + movement.getZ();
+                        gui_.logMessage(msg);
+                        System.out.println(msg);
+
+                        // if we are using the position list, update the position in the list
+                        if (acqSettings.useMultiPositions) {
+                           MultiStagePosition position = positionList.getPosition(positionNum);
+                           StagePosition pos = position.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                           pos.x += movement.getX();
+                           pos.y += movement.getY();
+                           StagePosition zPos = position.get(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
+                           if (zPos != null) {
+                              zPos.x += movement.getZ();
+                           }
+                        } else {
+                           // only a single position, move the stage now
+                           core_.setRelativeXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE),
+                                   movement.getX(), movement.getY());
+                           core_.setRelativePosition(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE),
+                                   movement.getZ());
+                        }
+
                      }
                   }
                }
@@ -2494,11 +3002,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // TODO be more careful and always do these if we actually started acquisition, 
       // even if exception happened
       
-      // restore camera
+      cameras_.setCameraForAcquisition(firstCameraKey, false);
+      if (twoSided) {
+         cameras_.setCameraForAcquisition(secondCameraKey, false);
+      }
+      
+      // restore exposure times of SPIM cameras
       try {
-         core_.setCameraDevice(originalCamera);
+         core_.setExposure(firstCamera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 10f));
+         if (twoSided) {
+            core_.setExposure(secondCamera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                  Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND.toString(), 10f));
+         }
+         gui_.refreshGUIFromCache();
       } catch (Exception ex) {
-         MyDialogUtils.showError("Could not restore camera after acquisition");
+         MyDialogUtils.showError("Could not restore exposure after acquisition");
       }
       
       // reset channel to original if we clobbered it
@@ -2518,10 +3037,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // make sure stage scanning state machine is stopped, otherwise setting speed/position won't take
             props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
                   Properties.Values.SPIM_IDLE);
-            core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
-                    xyPosUm.x, xyPosUm.y);
             props_.setPropValue(Devices.Keys.XYSTAGE,
                   Properties.Keys.STAGESCAN_MOTOR_SPEED, origXSpeed);
+            props_.setPropValue(Devices.Keys.XYSTAGE,
+                  Properties.Keys.STAGESCAN_MOTOR_ACCEL, origXAccel);
+            core_.setXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE), 
+                  xyPosUm.x, xyPosUm.y);
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not restore XY stage position after acquisition");
          }
@@ -2535,7 +3056,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          try {
             path = prefs_.getString(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_TESTACQ_PATH, "");
-            IJ.saveAs(gui_.getAcquisition(acqName).getAcquisitionWindow().getImagePlus(), "raw", path);
+            IJ.saveAs(acq_.getAcquisitionWindow().getImagePlus(), "raw", path);
             // TODO consider generating a short metadata file to assist in interpretation
          } catch (Exception ex) {
             MyDialogUtils.showError("Could not save raw data from test acquisition to path " + path);
@@ -2545,7 +3066,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (separateImageFilesOriginally) {
          ImageUtils.setImageStorageClass(TaggedImageStorageDiskDefault.class);
       }
-      cameras_.setSPIMCamerasForAcquisition(false);
+      
+      // restore camera
+      try {
+         core_.setCameraDevice(originalCamera);
+      } catch (Exception ex) {
+         MyDialogUtils.showError("Could not restore camera after acquisition");
+      }
+      
       if (liveModeOriginally) {
          gui_.enableLiveMode(true);
       }
@@ -2627,6 +3155,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    public void refreshDisplay() {
       updateDurationLabels();
    }
+   
+   @Override
+   // Used to re-layout portion of window depending when camera mode changes, in
+   //   particular light sheet mode needs different set of controls.
+   public void cameraModeChange() {
+      CameraModes.Keys key = getSPIMCameraMode();
+      slicePanelContainer_.removeAll();
+      slicePanelContainer_.add((key == CameraModes.Keys.LIGHT_SHEET) ?
+         lightSheetPanel_ : normalPanel_, "growx");
+      slicePanelContainer_.revalidate();
+      slicePanelContainer_.repaint();
+   }
 
    private void setRootDirectory(JTextField rootField) {
       File result = FileDialogs.openDir(null,
@@ -2644,7 +3184,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * much faster than the one currently implemented in the ScriptInterface
     * Eventually, this function should be replaced by the ScriptInterface version
     * of the same.
-    * @param name - named acquisition to add image to
+    * @param acq - MMAcquisition object to use (old way used acquisition name and then
+    *  had to call deprecated function on every call, now just pass acquisition object
     * @param frame - frame nr at which to insert the image
     * @param channel - channel at which to insert image
     * @param slice - (z) slice at which to insert image
@@ -2656,7 +3197,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * @throws java.lang.InterruptedException
     * @throws org.micromanager.utils.MMScriptException
     */
-   public void addImageToAcquisition(String name,
+   private void addImageToAcquisition(MMAcquisition acq,
            int frame,
            int channel,
            int slice,
@@ -2664,8 +3205,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            long ms,
            TaggedImage taggedImg,
            BlockingQueue<TaggedImage> bq) throws MMScriptException, InterruptedException {
-
-      MMAcquisition acq = gui_.getAcquisition(name);
 
       // verify position number is allowed 
       if (acq.getPositions() <= position) {

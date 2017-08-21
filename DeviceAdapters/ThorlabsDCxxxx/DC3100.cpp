@@ -1,7 +1,5 @@
 #include "DC3100.h"
 
-const char* g_DeviceDC3100Name = "Thorlabs DC3100";
-
 /****************************************************************************
 
  class: 			DC3100
@@ -12,7 +10,8 @@ const char* g_DeviceDC3100Name = "Thorlabs DC3100";
 /*---------------------------------------------------------------------------
  Default constructor.
 ---------------------------------------------------------------------------*/
-DC3100::DC3100() :
+DC3100::DC3100(const char* deviceName) :
+m_devName(deviceName),
 	m_name("Undefined"),
    m_port("Undefined"),
    m_LEDOn("On"),
@@ -35,7 +34,7 @@ DC3100::DC3100() :
 	SetErrorText(ERR_INVALID_DEVICE, "The selected plugin does not fit for the device.");
 
 	// Name
-	CreateProperty(MM::g_Keyword_Name, g_DeviceDC3100Name, MM::String, true);
+	CreateProperty(MM::g_Keyword_Name, deviceName, MM::String, true);
 
 	// Description
 	CreateProperty(MM::g_Keyword_Description, "Thorlabs DC3100", MM::String, true);
@@ -60,12 +59,7 @@ DC3100::~DC3100()
 ---------------------------------------------------------------------------*/
 void DC3100::GetName(char* Name) const
 {
-	CDeviceUtils::CopyLimitedString(Name, g_DeviceDC3100Name);
-}
-
-const char* DC3100::DeviceName()
-{
-	return g_DeviceDC3100Name;
+	CDeviceUtils::CopyLimitedString(Name, m_devName);
 }
 
 
@@ -830,5 +824,3 @@ int DC3100::ValidateDevice(void)
 
 	return nRet;
 }
-
-

@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Properties;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -146,10 +147,11 @@ public class StagePositionUpdater {
     * Call this with true to temporarily turn off updates.
     * Be sure to call it again with false. Keeps an internal counter
     * so that the calling code does not need to know whether other code
-    * also called the pauseUpdate function.
+    * also called the pauseUpdate function. If an update cycle is underway
+    * when called with true the update cycle will finish.
     * @param pause true disables updates temporarily, and increases the pause 
-    * counter.  false decreases the pause counter.  When the counter returns to 
-    * 0, unpauses the updater
+    * counter.  false decreases the pause counter.  When the counter returns 
+    * to 0, unpauses the updater
     */
    public void pauseUpdates(boolean pause) {
       if (pause) {
@@ -161,8 +163,12 @@ public class StagePositionUpdater {
             pauseCounter_ = 0;
          }
       }
-      if (pauseCounter_ < 2) {
-         pauseUpdates_.set(pause);
+      if (pauseCounter_ == 0) {
+         pauseUpdates_.set(false);
+         ReportingUtils.logDebugMessage("Unpaused position updates");
+      } else {
+         pauseUpdates_.set(true);
+         ReportingUtils.logDebugMessage("Paused position updates");
          for (ListeningJPanel panel : panels_) {
             panel.stoppedStagePositions();
          }

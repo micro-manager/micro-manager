@@ -31,6 +31,11 @@ public class ChannelCellRenderer extends JLabel implements TableCellRenderer {
    public Component getTableCellRendererComponent(JTable table, Object value,
            boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
+      // https://stackoverflow.com/a/3055930
+      if (value == null) {
+         return null;
+      }
+
       ChannelTableModel model = (ChannelTableModel) table.getModel();
       ArrayList<ChannelSpec> channels = model.getChannels();
       ChannelSpec channel = channels.get(rowIndex);

@@ -352,8 +352,6 @@ public class Positions {
       }
    }
 
-   
-   
    /**
     * updates the cached stage positions via calls to MMCore
     */
@@ -419,5 +417,4 @@ public class Positions {
       return "";
    }
 
-   
 }

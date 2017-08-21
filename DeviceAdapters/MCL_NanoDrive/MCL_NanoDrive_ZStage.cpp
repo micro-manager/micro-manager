@@ -13,7 +13,12 @@ MCL_NanoDrive_ZStage::MCL_NanoDrive_ZStage() :
    initialized_(false),
    settlingTimeZ_ms_(100),
    curZpos_(0),
+   commandedZ_(0),
    firstWrite_(true),
+   canSupportSeq_(false),
+   supportsSeq_(false),
+   seqMaxSize_(0),
+   shiftSequence_(false),
    MCLhandle_(0)
 {
 	// Basically only construct error messages in the constructor
@@ -47,8 +52,8 @@ bool MCL_NanoDrive_ZStage::Busy()
 
 int MCL_NanoDrive_ZStage::Initialize()
 {
-// BEGIN LOCKING -> make sure to unlock before any return call
-HandleListLock(); 
+	// BEGIN LOCKING -> make sure to unlock before any return call
+	HandleListLock(); 
 
 	int err = DEVICE_OK;
 	int possHandle = 0;
@@ -177,6 +182,15 @@ HandleListLock();
    {
 	   err = (int) serialNumber_;
 	   goto ZSTAGE_INIT_EXIT;
+   }
+
+   if((pi.FirmwareProfile & 0x0100) != 0)
+   {
+	   canSupportSeq_ = true;
+	   supportsSeq_ = true;
+	   err = MCL_SequenceGetMax(&seqMaxSize_, MCLhandle_);
+	   if(err != MCL_SUCCESS)
+		   	goto ZSTAGE_INIT_EXIT;
    }
 
    err = CreateZStageProperties();
@@ -329,6 +343,29 @@ int MCL_NanoDrive_ZStage::CreateZStageProperties()
 	yesNoList.push_back("Yes");
 	SetAllowedValues(g_Keyword_SetOrigin, yesNoList);
 
+	if(canSupportSeq_)
+    {
+		// Set the origin at the current position
+		pAct = new CPropertyAction(this, &MCL_NanoDrive_ZStage::OnSetSequence);
+		err = CreateProperty(g_Keyword_SetSequence, "No", MM::String, false, pAct);
+		if (err != DEVICE_OK)
+			return err;
+		SetAllowedValues(g_Keyword_SetSequence, yesNoList);
+
+
+		pAct = new CPropertyAction(this, &MCL_NanoDrive_ZStage::OnSetShiftSequence);
+		err = CreateProperty(g_Keyword_ShiftSequence, "No", MM::String, false, pAct);
+		if(err != DEVICE_OK)
+			return err;
+		SetAllowedValues(g_Keyword_ShiftSequence, yesNoList);
+    }
+
+
+	//Current Commanded Position
+	sprintf(iToChar, "%f", commandedZ_);
+	pAct = new CPropertyAction(this, &MCL_NanoDrive_ZStage::OnCommandChanged);
+	err = CreateProperty("CommandedZ",iToChar, MM::Float, true, pAct);
+
 	return DEVICE_OK;
 }
 
@@ -437,39 +474,95 @@ int MCL_NanoDrive_ZStage::GetLimits(double& lower, double& upper)
 
 int MCL_NanoDrive_ZStage::IsStageSequenceable(bool& isSequenceable) const
 {
-	isSequenceable = false;
+	isSequenceable = supportsSeq_;
 	return DEVICE_OK;
 }
-int MCL_NanoDrive_ZStage::GetStageSequenceMaxLength(long& /*nrEvents*/)const 
+
+int MCL_NanoDrive_ZStage::GetStageSequenceMaxLength(long& nrEvents)const 
 {
-	return DEVICE_UNSUPPORTED_COMMAND;
+	if(!supportsSeq_)
+		return DEVICE_UNSUPPORTED_COMMAND;
+
+	nrEvents = seqMaxSize_;
+
+	return DEVICE_OK;
 }
+
 int MCL_NanoDrive_ZStage::StartStageSequence()
 {
-	return DEVICE_UNSUPPORTED_COMMAND;
+	if(!supportsSeq_)
+		return DEVICE_UNSUPPORTED_COMMAND;
+
+	int err = MCL_SequenceStart(MCLhandle_);
+	if(err != MCL_SUCCESS)
+		return err;
+
+	return DEVICE_OK;
 }
+
 int MCL_NanoDrive_ZStage::StopStageSequence() 
 {
-	return DEVICE_UNSUPPORTED_COMMAND;
-}
-int MCL_NanoDrive_ZStage::LoadStageSequence(std::vector<double> /*positions*/) const
-{
-	return DEVICE_UNSUPPORTED_COMMAND;
+	if(!supportsSeq_)
+		return DEVICE_UNSUPPORTED_COMMAND;
+
+	int err = MCL_SequenceStop(MCLhandle_);
+	if(err != MCL_SUCCESS)
+		return err;
+
+	return DEVICE_OK;
 }
 
 int MCL_NanoDrive_ZStage::ClearStageSequence()
 {
-	return DEVICE_UNSUPPORTED_COMMAND;
+	if(!supportsSeq_)
+		return DEVICE_UNSUPPORTED_COMMAND;
+
+	sequence_.clear();
+	int err = MCL_SequenceClear(MCLhandle_);
+	if(err != MCL_SUCCESS)
+		return err;
+
+	return DEVICE_OK;
 }
 
-int MCL_NanoDrive_ZStage::AddToStageSequence(double /*position*/)
+int MCL_NanoDrive_ZStage::AddToStageSequence(double position)
 {
-	return DEVICE_UNSUPPORTED_COMMAND;
+	if(!supportsSeq_)
+		return DEVICE_UNSUPPORTED_COMMAND;
+
+	sequence_.push_back(position);
+
+	return DEVICE_OK;
 }
 
-int MCL_NanoDrive_ZStage::SendStageSequence() 
+int MCL_NanoDrive_ZStage::SendStageSequence()
 {
-	return DEVICE_UNSUPPORTED_COMMAND;
+	if(!supportsSeq_)
+		return DEVICE_UNSUPPORTED_COMMAND;
+
+	if(sequence_.size() < 0)
+		return MCL_SEQ_NOT_VALID;
+
+	double *seqCopy = new double[sequence_.size()];
+	if(shiftSequence_)
+	{
+		if(sequence_.size() == 1)
+			seqCopy[0] = sequence_[0];
+		else
+		{
+			memcpy(seqCopy, &sequence_[1], (sequence_.size() - 1) * sizeof(double));
+			seqCopy[sequence_.size() - 1] = sequence_[0];
+		}
+	}
+	else
+	{
+		memcpy(seqCopy, &sequence_[0], sequence_.size() * sizeof(double));
+	}
+
+	int err = MCL_SequenceLoad(axis_, seqCopy, sequence_.size(), MCLhandle_);
+	delete [] seqCopy;
+
+	return err;
 }
 
 bool MCL_NanoDrive_ZStage::IsContinuousFocusDrive() const
@@ -547,4 +640,64 @@ int MCL_NanoDrive_ZStage::OnSetOrigin(MM::PropertyBase* pProp, MM::ActionType eA
 	}
 
 	return err;
+}
+
+int MCL_NanoDrive_ZStage::OnCommandChanged(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int err = DEVICE_OK;
+
+   if (eAct == MM::BeforeGet)
+   {
+	   double ignoreX, ignoreY;
+	   MCL_GetCommandedPosition(&ignoreX, &ignoreY, &commandedZ_, MCLhandle_);
+	   pProp->Set(commandedZ_);
+   }
+
+   return err;
+}
+
+int MCL_NanoDrive_ZStage::OnSetSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		if(supportsSeq_)
+			pProp->Set("Yes");
+		else
+			pProp->Set("No");
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		std::string message;
+		pProp->Get(message);
+
+		if (message.compare("Yes") == 0)
+			supportsSeq_ = true;
+		else
+			supportsSeq_ = false;
+	}
+
+	return DEVICE_OK;
+}
+
+int MCL_NanoDrive_ZStage::OnSetShiftSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		if(shiftSequence_)
+			pProp->Set("Yes");
+		else
+			pProp->Set("No");
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		std::string message;
+		pProp->Get(message);
+
+		if (message.compare("Yes") == 0)
+			shiftSequence_ = true;
+		else
+			shiftSequence_ = false;
+	}
+
+	return DEVICE_OK;
 }

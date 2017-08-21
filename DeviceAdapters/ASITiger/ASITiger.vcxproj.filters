@@ -54,6 +54,9 @@
     <ClCompile Include="ASIPmt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ASILens.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ASIBase.h">
@@ -99,6 +102,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ASIPmt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ASILens.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

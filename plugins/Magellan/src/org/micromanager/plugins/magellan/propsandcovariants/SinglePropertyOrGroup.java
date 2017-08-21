@@ -295,12 +295,20 @@ public class SinglePropertyOrGroup implements Covariant{
 
    @Override
    public CovariantValue getLowerLimit() {
-      return new CovariantValue(isInteger() ? (int) lowerLimit  : lowerLimit);
-   }
+        if (isInteger()) {
+            return new CovariantValue((int) lowerLimit);
+        } else {
+            return new CovariantValue(lowerLimit);
+        }
+    }
 
    @Override
    public CovariantValue getUpperLimit() {
-      return new CovariantValue(isInteger() ? (int) upperLimit : upperLimit);
+       if (isInteger()) {
+           return new CovariantValue((int) upperLimit);
+       } else {
+           return new CovariantValue( upperLimit);
+       }
    }
 
    @Override

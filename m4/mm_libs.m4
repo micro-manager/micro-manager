@@ -39,6 +39,18 @@ AC_DEFUN([MM_LIB_GPHOTO2], [
       [$2], [$3])
 ])
 
+# Check for Modbus library
+#
+# MM_LIB_MODBUS([MODBUS prefix], [action-if-found], [action-if-not-found])
+#
+# Defines precious variables MODBUS_CPPFLAGS, MODBUS_CFLAGS, MODBUS_LDFLAGS,
+# MODBUS_LIS.
+AC_DEFUN([MM_LIB_MODBUS], [
+   MM_LIB_WITH_PKG_CONFIG([MODBUS], [libmodbus], [libmodbus >= 3.1.4], [],
+      [$1], [-lmodbus], [modbus/modbus.h], [modbus_connect],
+      [$2], [$3])
+])
+
 
 # Check for HIDAPI library
 #

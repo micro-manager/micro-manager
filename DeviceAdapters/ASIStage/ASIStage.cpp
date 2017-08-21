@@ -389,7 +389,8 @@ XYStage::XYStage() :
    answerTimeoutMs_(1000),
    serialOnlySendChanged_(true),
    manualSerialAnswer_(""),
-   compileDay_(0)
+   compileDay_(0),
+   advancedPropsEnabled_(false)
 {
    InitializeDefaultErrorMessages();
 
@@ -566,6 +567,12 @@ int XYStage::Initialize()
    CreateProperty("OnlySendSerialCommandOnChange", "Yes", MM::String, false, pAct);
    AddAllowedValue("OnlySendSerialCommandOnChange", "Yes");
    AddAllowedValue("OnlySendSerialCommandOnChange", "No");
+
+   // generates a set of additional advanced properties that are rarely used
+   pAct = new CPropertyAction (this, &XYStage::OnAdvancedProperties);
+   CreateProperty("EnableAdvancedProperties", "No", MM::String, false, pAct);
+   AddAllowedValue("EnableAdvancedProperties", "No");
+   AddAllowedValue("EnableAdvancedProperties", "Yes");
 
    /* Disabled.  Use the MA command instead
    // Number of times stage approaches a new position (+1)
@@ -1456,7 +1463,9 @@ int XYStage::GetMaxSpeed(char * maxSpeedStr)
    maxSpeed_ = 10001;
    SetProperty("Speed-S", "10000");
    ret = GetProperty("Speed-S", maxSpeedStr);
-   maxSpeed_ = origMaxSpeed;  // restore in case we return early
+   maxSpeed_ = atof(maxSpeedStr);
+   if (maxSpeed_ <= 0.1)
+      maxSpeed_ = origMaxSpeed;  // restore default if something went wrong in which case atof returns 0.0
    if (ret != DEVICE_OK)
       return ret;
    ret = SetProperty("Speed-S", orig_speed);
@@ -1744,6 +1753,244 @@ int XYStage::OnSerialCommandOnlySendChanged(MM::PropertyBase* pProp, MM::ActionT
          serialOnlySendChanged_ = true;
       else
          serialOnlySendChanged_ = false;
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
+// special property, when set to "yes" it creates a set of little-used properties that can be manipulated thereafter
+// these parameters exposed with some hurdle to user: KP, KI, KD, AA
+{
+   if (eAct == MM::BeforeGet)
+   {
+      return DEVICE_OK; // do nothing
+   }
+   else if (eAct == MM::AfterSet) {
+      string tmpstr;
+      pProp->Get(tmpstr);
+      if ((tmpstr.compare("Yes") == 0) && !advancedPropsEnabled_) // after creating advanced properties once no need to repeat
+      {
+         CPropertyAction* pAct;
+         advancedPropsEnabled_ = true;
+
+         // overshoot (OS)  // in Nico's original
+
+         // servo integral term (KI)
+         if (hasCommand("KI X?")) {
+            pAct = new CPropertyAction (this, &XYStage::OnKIntegral);
+            CreateProperty("ServoIntegral-KI", "0", MM::Integer, false, pAct);
+         }
+
+         // servo proportional term (KP)
+         if (hasCommand("KP X?")) {
+            pAct = new CPropertyAction (this, &XYStage::OnKProportional);
+            CreateProperty("ServoProportional-KP", "0", MM::Integer, false, pAct);
+         }
+
+         // servo derivative term (KD)
+         if (hasCommand("KD X?")) {
+            pAct = new CPropertyAction (this, &XYStage::OnKDerivative);
+            CreateProperty("ServoIntegral-KD", "0", MM::Integer, false, pAct);
+         }
+
+         // Align calibration/setting for pot in drive electronics (AA)
+         if (hasCommand("AA X?")) {
+            pAct = new CPropertyAction (this, &XYStage::OnAAlign);
+            CreateProperty("MotorAlign-AA", "0", MM::Integer, false, pAct);
+         }
+
+         // Autozero drive electronics (AZ)  // omitting for now, need to do for each axis (see Tiger)
+
+         // number of extra move repetitions  // in Nico's original
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnKIntegral(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      command << "KI X?";
+      string answer;
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0,2).compare(":A") == 0)
+      {
+         tmp = atol(answer.substr(5).c_str());
+         if (!pProp->Set(tmp))
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         else
+            return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "KI X =" << tmp << " Y=" << tmp;
+      string answer;
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnKProportional(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      command << "KP X?";
+      string answer;
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0,2).compare(":A") == 0)
+      {
+         tmp = atol(answer.substr(5).c_str());
+         if (!pProp->Set(tmp))
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         else
+            return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "KP X =" << tmp << " Y=" << tmp;
+      string answer;
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnKDerivative(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      command << "KD X?";
+      string answer;
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0,2).compare(":A") == 0)
+      {
+         tmp = atol(answer.substr(5).c_str());
+         if (!pProp->Set(tmp))
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         else
+            return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "KD X =" << tmp << " Y=" << tmp;
+      string answer;
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
+int XYStage::OnAAlign(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   long tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      command << "AA X?";
+      string answer;
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0,2).compare(":A") == 0)
+      {
+         tmp = atol(answer.substr(5).c_str());
+         if (!pProp->Set(tmp))
+            return DEVICE_INVALID_PROPERTY_VALUE;
+         else
+            return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "AA X =" << tmp << " Y=" << tmp;
+      string answer;
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
    }
    return DEVICE_OK;
 }
@@ -3314,7 +3561,7 @@ int CRIF::SetFocusState(std::string focusState)
       {
          const char* command = "LK Z";
          // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
+         ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -3326,7 +3573,7 @@ int CRIF::SetFocusState(std::string focusState)
       if (currentState == g_CRIF_B || currentState == g_CRIF_O)
       {
          // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
+         ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
          ret = GetFocusState(currentState);
@@ -3336,7 +3583,7 @@ int CRIF::SetFocusState(std::string focusState)
       if (currentState == g_CRIF_I) // Idle, first switch on laser
       {
          // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
+         ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
          ret = GetFocusState(currentState);
@@ -3346,7 +3593,7 @@ int CRIF::SetFocusState(std::string focusState)
       if (currentState == g_CRIF_L)
       {
          // query command and wait for acknowledgement
-         int ret = QueryCommandACK(command);
+         ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -3370,7 +3617,7 @@ int CRIF::SetFocusState(std::string focusState)
       // only try a lock when we are good
       if ( (currentState == g_CRIF_G) || (currentState == g_CRIF_O) ) 
       {
-         int ret = SetContinuousFocusing(true);
+         ret = SetContinuousFocusing(true);
          if (ret != DEVICE_OK)
             return ret;
       }

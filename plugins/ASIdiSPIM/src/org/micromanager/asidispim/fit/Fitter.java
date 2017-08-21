@@ -55,6 +55,7 @@ public class Fitter {
       VOLATH5("Volath5", 8),
       MEDIAN_EDGES("MedianEdges", 9),
       FFT_BANDPASS("FFTBandpass", 10),
+      TENENGRAD("Tenengrad", 11),
       ;
       private final String text;
       private final int prefCode;
@@ -121,6 +122,7 @@ public class Fitter {
                gf.withStartPoint(guess);
             }
             result = gf.fit(obs.toList());
+            break;
          default:
             break;
       }

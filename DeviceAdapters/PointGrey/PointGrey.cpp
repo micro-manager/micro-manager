@@ -6,7 +6,7 @@
 // DESCRIPTION:   PointGrey camera module.
 //                
 // AUTHOR:        Nico Stuurman
-// COPYRIGHT:     University of California, 2016
+// COPYRIGHT:     University of California, 2016, 2017
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -21,6 +21,10 @@
 //
 
 #include <list>
+#include <string>
+#include <map>
+#include <iterator>
+#include <algorithm>
 
 #include "PointGrey.h"
 #include "../../MMDevice/ModuleInterface.h"
@@ -42,12 +46,18 @@ const char* g_SensorInfo               = "Sensor Info";
 const char* g_DriverName               = "Driver Name";
 const char* g_FirmwareVersion          = "Firmware Version";
 const char* g_FirmwareBuildTime        = "Firmware Build Time";
+const char* g_MaxBusSpeed              = "Maximum Bus Speed";
 const char* g_InterfaceType            = "Interface Type";
 const char* g_ColorMonoChrome          = "Color or Monochrome";
 const char* g_IIDCVersion              = "IIDC version";
 const char* g_CameraId                 = "CameraID";
 const char* g_AdvancedMode             = "Use Advanced Mode?";
 const char* g_VideoModeAndFrameRate    = "Video Mode and Frame Rate";
+const char* g_NotSet                   = "Not set";
+const char* g_Format7Mode              = "Format-7 Mode";
+const char* g_InternalTrigger          = "Internal";
+const char* g_ExternalTrigger          = "External";
+const char* g_SoftwareTrigger          = "Software";
 
 /////////////////////////////////////////////////////
 
@@ -64,16 +74,15 @@ const char* g_PixelType_RGB32  = "RGB 32";
 
 /////////////////////////////////////////////////////
 
-const int g_NumProps = 12;
+const int g_NumProps = 11;
 const PropertyType g_PropertyTypes [g_NumProps] = { SHARPNESS, HUE, SATURATION, IRIS, 
-   FOCUS, ZOOM, PAN, TILT, GAIN,TRIGGER_MODE, TRIGGER_DELAY, TEMPERATURE };
+   FOCUS, ZOOM, PAN, TILT, GAIN, TRIGGER_DELAY, TEMPERATURE };
 const std::string g_PropertyNames [g_NumProps] = { "Sharpness", "Hue", "Saturation", 
-   "Iris", "Focus", "Zoom", "Pan", "Tilt", "Gain", "Trigger Mode", "Trigger Delay", 
+   "Iris", "Focus", "Zoom", "Pan", "Tilt", "Gain", "Trigger Delay", 
    "Temperature"};
 
 const int g_NumOffProps = 4;
 const PropertyType g_OffPropertyTypes [g_NumOffProps] = {FRAME_RATE, BRIGHTNESS, AUTO_EXPOSURE, GAMMA};
-//const std::string g_OffPropertyNames [g_NumOffProps] = {"Frame Rate", "Brightness", "Auto Exposure", "Gamma"};
 
 const int g_NumFrameRates = 9;
 const std::string g_FrameRates [g_NumFrameRates] = { "1.875 fps", "3.75 fps", 
@@ -105,10 +114,11 @@ void PGCallback(Image* pImage,  const void* pCallbackData)
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
 
+
 /***********************************************************************
-* Update available devices list
-*/
-void UpdateDevList()
+ * List all supported hardware devices here
+ */
+MODULE_API void InitializeModuleData()
 {
    BusManager busMgr;
    Error error;
@@ -130,25 +140,24 @@ void UpdateDevList()
          // TODO work out how to return/report errors, 
          return;
       }
-      std::string name = "Camera-" + std::to_string((_ULonglong) (i + 1) );
+
+      std::string name;
+      int ret = PointGrey::CameraID(guid, &name);
+      if (ret != DEVICE_OK) 
+      {
+         return;
+      }
+
       RegisterDevice(name.c_str(), MM::CameraDevice, "Point Grey Camera");
    }
 }
 
 
-/***********************************************************************
- * List all supported hardware devices here
- */
-MODULE_API void InitializeModuleData()
-{
-	UpdateDevList();
-}
-
 //***********************************************************************
 
-MODULE_API MM::Device* CreateDevice(const char* /* deviceName */)
+MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-    return new PointGrey();
+    return new PointGrey(deviceName);
 }
 
 //***********************************************************************
@@ -162,67 +171,41 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // PointGrey implementation
 /***********************************************************************
 * PointGrey constructor.
-* Setup default all variables and create device properties required to exist
-* before intialization. In this case, no such properties were required. All
-* properties will be created in the Initialize() method.
+* Setup default variables and create device properties required to exist
+* before intialization. Most properties will be created in the 
+* Initialize() method.
 *
 * As a general guideline Micro-Manager devices do not access hardware in the
 * the constructor. We should do as little as possible in the constructor and
 * perform most of the initialization in the Initialize() method.
 */
-PointGrey::PointGrey() :
+PointGrey::PointGrey(const char* deviceName) :
    nComponents_(1),
    initialized_(false),
+   deviceName_(deviceName),
    sequenceStartTime_(0),
    imageCounter_(0),
    stopOnOverflow_(false),
    isCapturing_(false),
-   f7InUse_(false)
-
+   f7InUse_(false),
+   triggerMode_(TRIGGER_INTERNAL),
+   externalTriggerGrabTimeout_(60000),
+   bytesPerPixel_(1),
+   imgBuf_(0),
+   bufSize_(0)
 	
 {
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
 
-   // Create pre-init property with name and SN
-   BusManager busMgr;
-   Error error;
-
-   unsigned int numCameras = 0;
-   error = busMgr.GetNumOfCameras(&numCameras);
-   if (error != PGRERROR_OK)
-   {
-      LogMessage("Failed to determine number of cameras", false);
-      return;
-   }
-
-	if(numCameras == 0)	
-   {
-      LogMessage("No Point Grey cameras detected", false);
-		return; 
-   }
-
-   std::vector<std::string> cameras(numCameras);
-   for (unsigned int i = 0; i < numCameras; i++) {
-      PGRGuid guid;
-      int ret =  CameraPGRGuid(&busMgr, &guid, i);
-      if (ret == DEVICE_OK) {
-         std::string name;;
-         ret = CameraID(guid, &name);
-         if (ret == DEVICE_OK) {
-            cameras.push_back(name);
-         }
-      }
-   }
-   CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnCameraId);
-   CreateProperty(g_CameraId, cameras.front().c_str(), MM::String, false, pAct, true);
-   for (unsigned int i = 0; i < cameras.size(); i++) {
-      AddAllowedValue(g_CameraId, cameras[i].c_str());
-   }
-
+   // Create pre-init property with advanced mode
+   // Selecting Yes here results in and attempto use Format 7 mode
    CreateProperty(g_AdvancedMode, "Yes", MM::String, false, 0, true);
    AddAllowedValue(g_AdvancedMode, "No");
    AddAllowedValue(g_AdvancedMode, "Yes");
+
+   SetErrorText(ERR_NOT_READY_FOR_SOFTWARE_TRIGGER, 
+         "Camera not ready for software trigger");
 
 }
 
@@ -245,12 +228,12 @@ PointGrey::~PointGrey()
 */
 void PointGrey::GetName(char* name) const
 {
-	CDeviceUtils::CopyLimitedString(name, name_.c_str());
+	CDeviceUtils::CopyLimitedString(name, deviceName_.c_str());
 }
 
 /***********************************************************************
 * Intializes the hardware.
-* Gets the PGRGuid based on the CameraId set in the pre-init property
+* Gets the PGRGuid based on the CameraId set in the Module initializer.
 * Uses this to retrieve information about the camera and expose all
 * possible properties.
 * Required by the MM::Device API.
@@ -260,19 +243,49 @@ int PointGrey::Initialize()
 	if (initialized_)
 		return DEVICE_OK;
 
-   BusManager busMgr;
-   int ret = CameraGUIDfromOurID(&busMgr, &guid_, cameraId_.c_str()); 
-   if (ret != DEVICE_OK) {
-      return ret;
-   }
-
-	// -------------------------------------------------------------------------------------
-	// Open camera device
-   Error error = cam_.Connect(&guid_);
+   // check dll version and make sure it is compatible (the same as used 
+   // to build the code)
+   // Todo: find an automated way to synchronize version numbers
+   FC2Version pVersion;
+   Error error = Utilities::GetLibraryVersion(&pVersion);
    if (error != PGRERROR_OK)
    {
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
+   }
+   
+   std::ostringstream os;
+   os << "FlyCapture2_v100.dll version number is " << pVersion.major 
+      << "." << pVersion.minor << "." << pVersion.type << "." << pVersion.build;
+   LogMessage(os.str().c_str(), false);
+
+   // BE AWARE: This version number needs to be updated if/when MM is 
+   // linked against another PGR version
+   if (pVersion.major != 2 || pVersion.minor != 10 || pVersion.type != 3 || pVersion.build != 266) {
+      SetErrorText(ALLERRORS, "Flycapture2_v100.dll is not version 2.10.3.266.  Micro-Manager works correctly only with that version");
+      return ALLERRORS;
+   }
+
+   BusManager busMgr;
+   
+   int ret = CameraGUIDfromOurID(&busMgr, &guid_, deviceName_.c_str()); 
+   if (ret != DEVICE_OK) {
+      return ret;
+   }
+
+	// -------------------------------------------------------------------------
+	// Open camera device
+   error = cam_.Connect(&guid_);
+   if (error != PGRERROR_OK)
+   {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+
+   ret = PowerCameraOn(100);
+   if (ret != DEVICE_OK)
+   {
+      return ret;
    }
 
    // Get the camera information
@@ -284,9 +297,9 @@ int PointGrey::Initialize()
       return ALLERRORS;
    }
 
-	// -------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 	// Set property list
-	// -------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 	
    // camera identification and other read-only information
 	char buf[FlyCapture2::sk_maxStringLength]="";
@@ -325,7 +338,11 @@ int PointGrey::Initialize()
 
    sprintf(buf, "%s", camInfo.firmwareBuildTime);
    ret = CreateProperty(g_FirmwareBuildTime, buf, MM::String, true);
-	assert(ret == DEVICE_OK); 
+   assert(ret == DEVICE_OK); 
+
+   sprintf(buf, "%s", GetBusSpeedAsString(camInfo.maximumBusSpeed));
+   ret = CreateProperty(g_MaxBusSpeed, buf, MM::String, true);
+   assert (ret == DEVICE_OK);
 
    std::string colorType = "MonoChrome";
    if (camInfo.isColorCamera) {
@@ -347,9 +364,9 @@ int PointGrey::Initialize()
    assert(ret == DEVICE_OK); 
 
    // IIDC version
-   std::ostringstream os;
-   os << std::fixed << std::setprecision(2) << ( ((float) camInfo.iidcVer) / 100.0f);
-   ret = CreateProperty(g_IIDCVersion, os.str().c_str(), MM::String, true);
+   std::ostringstream os2;
+   os2 << std::fixed << std::setprecision(2) << ( ((float) camInfo.iidcVer) / 100.0f);
+   ret = CreateProperty(g_IIDCVersion, os2.str().c_str(), MM::String, true);
    
    if (it == INTERFACE_GIGE) {
       
@@ -374,6 +391,13 @@ int PointGrey::Initialize()
             os << "Format 7 mode " << mode << " is available";
             LogMessage (os.str().c_str(), false);
          }
+        
+         else if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+       
       }
       
       if (f7Requested && f7Available) {
@@ -391,8 +415,10 @@ int PointGrey::Initialize()
          updatePixelFormats(format7Info.pixelFormatBitField);
          if (format7Info.pixelFormatBitField & pixelFormat16Bit_) {
             fmt7ImageSettings.pixelFormat = pixelFormat16Bit_;
+            bytesPerPixel_ = 2;
          } else if (format7Info.pixelFormatBitField & pixelFormat8Bit_) {
             fmt7ImageSettings.pixelFormat = pixelFormat8Bit_;
+            bytesPerPixel_ = 1;
          }
          // TODO: preference order for pixelFormat: RGB > 16bit > 8bit
          bool valid;
@@ -424,10 +450,25 @@ int PointGrey::Initialize()
             // Format 7 mode selection
             std::string f7Mode = Format7ModeAsString(fmt7ImageSettings.mode);
             pAct = new CPropertyAction(this, &PointGrey::OnFormat7Mode);
-            CreateProperty("Format-7 Mode", f7Mode.c_str(), MM::String, false, pAct, false);
+            CreateProperty(g_Format7Mode, f7Mode.c_str(), MM::String, false, pAct, false);
             for (unsigned int i = 0; i < availableFormat7Modes_.size(); i++) {
                f7Mode = Format7ModeAsString(availableFormat7Modes_[i]);
-               AddAllowedValue("Format-7 Mode", f7Mode.c_str());
+               AddAllowedValue(g_Format7Mode, f7Mode.c_str());
+            }
+
+            // Associate binning with Format-7 modes:
+            long binnings[] = { 1, 2, 4};
+            for (unsigned int i = 0; i < sizeof(binnings)/sizeof(int); i++) 
+            {
+               CPropertyActionEx* pActEx = new CPropertyActionEx(this, &PointGrey::OnBinningFromFormat7Mode, binnings[i]);
+               std::ostringstream propName;
+               propName << "Format 7 Mode for binning " << binnings[i];
+               CreateProperty(propName.str().c_str(), g_NotSet, MM::String, false, pActEx, false);
+               AddAllowedValue(propName.str().c_str(), g_NotSet);
+               for (unsigned int j = 0; j < availableFormat7Modes_.size(); j++) {
+                  f7Mode = Format7ModeAsString(availableFormat7Modes_[j]);
+                  AddAllowedValue(propName.str().c_str(), f7Mode.c_str());
+               }
             }
          }
       }
@@ -514,7 +555,14 @@ int PointGrey::Initialize()
             std::string propName = g_PropertyNames[i] + "-AutoOrManual";
             std::string val = "Manual";
             if (pProp->autoManualMode) {
-               val = "Auto";
+               // set all auto/manual properties to manual, since things like
+               // automatic gain control are not good for quantitative measurements
+               pProp->autoManualMode = false;
+               error = cam_.SetProperty(pProp);
+               if (error != PGRERROR_OK) {
+                  SetErrorText(ALLERRORS, error.GetDescription());
+                  return ALLERRORS;  
+               }
             }
             CreateProperty(propName.c_str(), val.c_str(), MM::String, false, pActEx, false);
             AddAllowedValue(propName.c_str(), "Auto");
@@ -587,21 +635,54 @@ int PointGrey::Initialize()
 
    // TODO: check for the AutoExpose property and switch it off
 
+   // The Micro-Manager GUI does not function without the Binning property.
+   // User can associate Format7 modes with binning using the 
+   // "Format 7 Mode for binning" property
+   CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnBinning);
+   CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct, false);
+   AddAllowedValue(MM::g_Keyword_Binning, "1");
+ 
 
-	// -------------------------------------------------------------------------------------
-	// binning
-	CPropertyAction* pAct = new CPropertyAction (this, &PointGrey::OnBinning);
-	ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
-	assert(ret == DEVICE_OK);
-
-   // TODO: figure out possibility of hardware binning with Point Grey cameras
-
-   FC2Config config;
-   error = cam_.GetConfiguration( &config );
-   if (error != PGRERROR_OK)
-   {
+   // Determined which trigger modes are available
+   availableTriggerModes_.push_back(TRIGGER_INTERNAL);  // seems to be always present
+   // Check for external trigger support
+	TriggerModeInfo triggerModeInfo;
+	error = cam_.GetTriggerModeInfo( &triggerModeInfo );
+	if (error != PGRERROR_OK)
+	{
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
+   }
+	if ( triggerModeInfo.present == true )
+	{
+		// this seems to guarantee that external trigger is present
+      // the code example is a bit ambiguous about what that means
+      availableTriggerModes_.push_back(TRIGGER_EXTERNAL);
+      bool softwareTriggerPresent = false;
+      int result =  CheckSoftwareTriggerPresence(softwareTriggerPresent);
+      if (result != DEVICE_OK) 
+      {
+         return result;
+      }
+      if (softwareTriggerPresent) 
+      {
+         availableTriggerModes_.push_back(TRIGGER_SOFTWARE);
+         result = SetTriggerMode(TRIGGER_SOFTWARE);
+         if (result != DEVICE_OK)
+         {
+            return result;
+         }
+      }
+	}
+   if (availableTriggerModes_.size() > 1)
+   {
+      CPropertyAction* pAct = new CPropertyAction(this, &PointGrey::OnTriggerMode);
+      CreateProperty("TriggerMode", g_InternalTrigger, MM::String, false, pAct, false);
+      for (std::vector<unsigned short>::const_iterator i = availableTriggerModes_.begin();
+         i != availableTriggerModes_.end(); i++)
+      {
+         AddAllowedValue("TriggerMode", TriggerModeAsString(*i).c_str());
+      }
    }
 
    // We most likely want little endian bit order
@@ -609,14 +690,40 @@ int PointGrey::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // Start Camera Capture so that Snaps can succeed
+   error = cam_.StartCapture();
+   if (error != PGRERROR_OK)
+   {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
 
    // Make sure that we have an image so that 
    // things like bitdepth are set correctly
-   SnapImage();
+   SetExposure(50.0);
+   unsigned short nrTries = 0;
+   do {
+      ret = SnapImage(); // first snap often times out, ignore error
+      nrTries++;
+   } while (ret != DEVICE_OK && nrTries < 10); 
+   if (ret != DEVICE_OK) {
+      return ret;
+   }
 
-	// -------------------------------------------------------------------------------------
+   unsigned int size = image_.GetDataSize();
+   unsigned int width = image_.GetCols();
+   unsigned int height = image_.GetRows();
+   unsigned int pixels = width * height;
+   bytesPerPixel_ = unsigned short (size / pixels); 
 
-	//-------------------------------------------------------------------------------------
+   ret = SetGrabTimeout( (unsigned long) (3 * exposureTimeMs_) + 50);
+   if (ret != DEVICE_OK) 
+   {
+      return ret;
+   }
+
+
+	//-------------------------------------------------------------------------
 	// synchronize all properties
 	ret = UpdateStatus();
 	
@@ -625,13 +732,15 @@ int PointGrey::Initialize()
 
 /***********************************************************************
 * Shuts down (unloads) the device.
-* Ideally this method will completely unload the device and release all resources.
+* Ideally this method will completely unload the device and release 
+* all resources.
 * Shutdown() may be called multiple times in a row.
 * Required by the MM::Device API.
 */
 int PointGrey::Shutdown()
 {
-	if(initialized_){
+   cam_.StopCapture();
+	if(initialized_) {
       cam_.Disconnect();
 	}
 	initialized_ = false;
@@ -643,27 +752,58 @@ int PointGrey::Shutdown()
 * This function should block during the actual exposure and return immediately afterwards 
 * (i.e., before readout).  This behavior is needed for proper synchronization with the shutter.
 * Required by the MM::Camera API.
+*
+* Camera is continuously capturing.  In software trigger mode, we wait for the camera to be
+* ready for a trigger, then send the software trigger, then wait to retrieve the image.
+* it is potentially possible to skip the wait for the image itself, but some heuristics would
+* be needed (at least, I could not find anything in the API about this).  
+* Readout times have gotten pretty short, so this issues is only important for very short
+* exposure times.
+* In external trigger mode, the code simply waits for the image.  The grabtimeout that was previously
+* set determines whether or not the camera gives up.  
+* In internal trigger mode, the first received image is discarded and we wait for a second one.
+* Exposure of the first one most likely was started before the shutter opened.
 */
 int PointGrey::SnapImage()
 {
-   Error error = cam_.StartCapture();
-   if (error != PGRERROR_OK)
+   if (triggerMode_ == TRIGGER_SOFTWARE)
    {
-      SetErrorText(ALLERRORS, error.GetDescription());
-      return ALLERRORS;
-   }   if (error != PGRERROR_OK)
-   {
-      SetErrorText(ALLERRORS, error.GetDescription());
-      return ALLERRORS;
+      int ret = PollForTriggerReady( (unsigned long) exposureTimeMs_ + 50);
+      if (ret != DEVICE_OK) 
+      {
+         return ret;
+      }
+      FireSoftwareTrigger();
+      Error error = cam_.RetrieveBuffer(&image_);
+      if (error != PGRERROR_OK)
+      {
+         SetErrorText(ALLERRORS, error.GetDescription());
+         return ALLERRORS;
+      }
    }
-   error = cam_.RetrieveBuffer(&image_);
-   if (error != PGRERROR_OK)
+   else 
    {
-      SetErrorText(ALLERRORS, error.GetDescription());
-      return ALLERRORS;
+      // for external trigger, we may need to wait longer than the timeout 
+      // set so far
+      Error error = cam_.RetrieveBuffer(&image_);
+      if (error != PGRERROR_OK)
+      {
+         SetErrorText(ALLERRORS, error.GetDescription());
+         return ALLERRORS;
+      }
+      if (triggerMode_ == TRIGGER_INTERNAL) 
+         // since the first image may have been started before the shutter 
+         // opened, grab a second one
+      {
+         error = cam_.RetrieveBuffer(&image_);
+         if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+      }
    }
-   error = cam_.StopCapture();
-
+  
    return DEVICE_OK;
 }
 
@@ -679,8 +819,15 @@ int PointGrey::SnapImage()
 */
 const unsigned char* PointGrey::GetImageBuffer()
 {
-   // Note: may need to do a DeepCopy first
-   return image_.GetData();
+   if (nComponents_ == 1) {
+      // This seems to work without a DeepCopy first
+      return image_.GetData();
+   } 
+   else if (nComponents_ == 4) {
+      return RGBToRGBA( image_.GetData());
+   }
+   return 0;
+
 }
 
 /***********************************************************************
@@ -708,12 +855,15 @@ unsigned int PointGrey::GetImageHeight() const
 unsigned int PointGrey::GetImageBytesPerPixel() const
 {
    //PixelFormat pf =  image_.GetPixelFormat();
+   /*
    int bpp = image_.GetBitsPerPixel();
    unsigned int bytespp = (bpp/8);
    if ( (bpp % 8) > 0) {
       bytespp += 1;
    }
-   return bytespp;
+   return bytespp * nComponents_;
+   */
+   return bytesPerPixel_;
 } 
 
 /***********************************************************************
@@ -724,10 +874,11 @@ unsigned int PointGrey::GetImageBytesPerPixel() const
 */
 unsigned int PointGrey::GetBitDepth() const
 {
+   if (image_.GetPixelFormat() == FlyCapture2::PIXEL_FORMAT_RGB) 
+   {
+      return 8;
+   }
    unsigned int bpp = image_.GetBitsPerPixel();
-   std::ostringstream os;
-   os << "BitDepth: " << bpp;
-   LogMessage(os.str().c_str());
    return bpp;
 }
 
@@ -737,7 +888,6 @@ unsigned int PointGrey::GetBitDepth() const
 */
 long PointGrey::GetImageBufferSize() const
 {
-	// GetImageWidth() * GetImageHeight() * GetImageBytesPerPixel();
    return image_.GetDataSize();
 }
 
@@ -745,11 +895,6 @@ long PointGrey::GetImageBufferSize() const
 * Sets the camera Region Of Interest.
 * Required by the MM::Camera API.
 * This command will change the dimensions of the image.
-* Depending on the hardware capabilities the camera may not be able to configure the
-* exact dimensions requested - but should try do as close as possible.
-* If the hardware does not have this capability the software should simulate the ROI by
-* appropriately cropping each frame.
-* This demo implementation ignores the position coordinates and just crops the buffer.
 * @param x - top-left corner coordinate
 * @param y - top-left corner coordinate
 * @param xSize - width
@@ -788,10 +933,23 @@ int PointGrey::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
       SetErrorText(ALLERRORS, "Error setting ROI");
       return ALLERRORS;
    }
+   cam_.StopCapture();
    error = cam_.SetFormat7Configuration(&format7ImageSettings, f7pInfo.recommendedBytesPerPacket);
    if (error != PGRERROR_OK) {
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
+   }
+   cam_.StartCapture();
+   if (error != PGRERROR_OK) {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+
+   // Make sure that we have an image so that 
+   // things like bitdepth are set correctly
+   int ret = SnapImage();
+   if (ret != DEVICE_OK) {
+      return ret;
    }
 
 	return DEVICE_OK;;
@@ -803,10 +961,38 @@ int PointGrey::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 */
 int PointGrey::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-   x = 0;
-   y = 0;
-   xSize = image_.GetCols();
-   ySize = image_.GetRows();
+   if (!f7InUse_) 
+   {
+      x = 0;
+      y = 0;
+      xSize = image_.GetCols();
+      ySize = image_.GetRows();
+
+      return DEVICE_OK;
+   }
+   	  
+   Format7ImageSettings format7ImageSettings;
+   unsigned int packetSize;
+   float percentage;
+   Error error = cam_.GetFormat7Configuration(&format7ImageSettings, &packetSize, &percentage);
+   if (error != PGRERROR_OK) {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+
+   Format7Info format7Info;
+   format7Info.mode = format7ImageSettings.mode;
+   bool supported;
+   error = cam_.GetFormat7Info(&format7Info, &supported);
+
+   if (error != PGRERROR_OK) {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+   x = format7ImageSettings.offsetX;
+   y = format7ImageSettings.offsetY;
+   xSize = format7ImageSettings.width;
+   ySize = format7ImageSettings.height;
 
 	return DEVICE_OK;
 }
@@ -844,10 +1030,22 @@ int PointGrey::ClearROI()
       SetErrorText(ALLERRORS, "Error clearing ROI");
       return ALLERRORS;
    }
+   cam_.StopCapture();
    error = cam_.SetFormat7Configuration(&format7ImageSettings, f7pInfo.recommendedBytesPerPacket);
    if (error != PGRERROR_OK) {
       SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
+   }
+   error = cam_.StartCapture();
+   if (error != PGRERROR_OK) {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+   // Make sure that we have an image so that 
+   // things like bitdepth are set correctly
+   int ret = SnapImage();
+   if (ret != DEVICE_OK) {
+      return ret;
    }
 
 	return DEVICE_OK;
@@ -944,6 +1142,12 @@ void PointGrey::SetExposure(double exp)
       }
 
    }
+   unsigned long timeout = (unsigned long) (3.0 * exp) + 50;
+   if (triggerMode_ == TRIGGER_EXTERNAL)
+   {
+      timeout = externalTriggerGrabTimeout_;
+   }
+   SetGrabTimeout( timeout );
 
 }
 
@@ -953,6 +1157,25 @@ void PointGrey::SetExposure(double exp)
 */
 int PointGrey::GetBinning() const
 {
+   if (HasProperty(g_Format7Mode) )
+   {
+      char mode[MM::MaxStrLength];
+      int ret = GetProperty(g_Format7Mode, mode);
+      if (ret != DEVICE_OK) 
+      {
+         return ret;
+      }
+
+      try
+      {
+         return mode2Bin_.at(mode);
+      } catch (const std::out_of_range& /*oor*/) {
+         // very ugly to use try/catch here, but I somehow can not 
+         // get an iterator to compile
+      }
+
+   }
+
 	return 1;
 }
 
@@ -962,14 +1185,26 @@ int PointGrey::GetBinning() const
 */
 int PointGrey::SetBinning(int binF)
 {
+   if (!f7InUse_) 
+   {
+      binF = 1;
+      return DEVICE_OK;
+   }
+   if (HasProperty(g_Format7Mode) )
+   {
+      std::map<long, std::string>::iterator it = bin2Mode_.find(binF);
+      if (it != bin2Mode_.end())
+      {
+         return SetProperty(g_Format7Mode, it->second.c_str());
+      }
+   }
 
-	return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
+   // not sure if we should return an error code here
+   return DEVICE_OK;
 }
 
 /***********************************************************************
  * Required by the MM::Camera API
- * Please implement this yourself and do not rely on the base class implementation
- * The Base class implementation is deprecated and will be removed shortly
  */
 int PointGrey::StartSequenceAcquisition(double interval)
 {
@@ -977,11 +1212,11 @@ int PointGrey::StartSequenceAcquisition(double interval)
 }
 
 /***********************************************************************                                                                       
-* Stop and wait for the Sequence thread finished                                   
+* Stop and wait for the Sequence thread to finish                                  
 */                                                                        
 int PointGrey::StopSequenceAcquisition()                                     
 {
-	isCapturing_ = false;
+   isCapturing_ = false;
    Error error = cam_.StopCapture();
    int ret = DEVICE_OK;
    if (error != PGRERROR_OK)
@@ -989,18 +1224,25 @@ int PointGrey::StopSequenceAcquisition()
       SetErrorText(ALLERRORS, error.GetDescription());
       ret = ALLERRORS;
    }
+   ret = SetTriggerMode( snapTriggerMode_);
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+   error = cam_.StartCapture(); // so that SnapImage will work
    return GetCoreCallback()->AcqFinished(this, ret);                                                      
 } 
 
 /***********************************************************************
 * This implementation of Sequence Acquisition uses callbacks from the PointGrey
 * API.  The global function PGCallback matches the ImageEvent typedef.
-* All it does (in a complicated way) is to call out InsertImage function
+* All it does (in a complicated way) is to call our InsertImage function
 * that inserts the newly acquired image into the circular buffer.
 * Because of the syntax, InsertImage needs to be const, which poses a few
 * problems maintaining state.
 */
-int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */, bool stopOnOverflow)
+int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */, 
+		bool stopOnOverflow)
 {
    stopOnOverflow_ = stopOnOverflow;
    imageCounter_ = 0;
@@ -1010,11 +1252,35 @@ int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */
 	if (IsCapturing())
 		return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-	int ret = GetCoreCallback()->PrepareForAcq(this);
+   snapTriggerMode_ = triggerMode_;
+   Error error = cam_.StopCapture();
+   if (error != PGRERROR_OK)
+   {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+   int ret;
+   
+   if (snapTriggerMode_ == TRIGGER_SOFTWARE) 
+   {
+      ret = SetTriggerMode( TRIGGER_INTERNAL);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+   }
+
+	ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK)
 		return ret;
 
-   Error error = cam_.StartCapture( PGCallback, this);
+   error = cam_.StartCapture( PGCallback, this);
+   if (error != PGRERROR_OK)
+   {
+      cam_.StopCapture();
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
    isCapturing_ = true;
 
 	return DEVICE_OK;
@@ -1038,10 +1304,11 @@ int PointGrey::InsertImage(Image* pImg) const
    }
 
    TimeStamp ts = pImg->GetTimeStamp();
-   MM::MMTime timeStamp = MM::MMTime((long) ts.seconds, (long) ts.microSeconds);
+	MM::MMTime timeStamp = MM::MMTime( (long) ts.seconds, (long) ts.microSeconds);
    char label[MM::MaxStrLength];
-   this->GetLabel(label);
-   // TODO: we want to set the sequenceStartTimeStamp_ here but can not do so since we are const
+	this->GetLabel(label);
+   // TODO: we want to set the sequenceStartTimeStamp_ here but can not do so 
+   // since we are const
    // if (imageCounter_ == 0) {
    //    sequenceStartTimeStamp_ = timeStamp;
    // }
@@ -1064,14 +1331,20 @@ int PointGrey::InsertImage(Image* pImg) const
 
    unsigned int w = pImg->GetCols();
    unsigned int h = pImg->GetRows();
-   unsigned int b = pImg->GetDataSize() / (w * h);
+   unsigned int b = GetImageBytesPerPixel();
 
-   ret = GetCoreCallback()->InsertImage(this, pImg->GetData(), w, h, b, md.Serialize().c_str(), false);
+   const unsigned char* pData = pImg->GetData();
+   if (b == 4) // RGB Image
+   {
+      pData = RGBToRGBA(pImg->GetData());
+   }
+   ret = GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
 	if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
 	{
 		// do not stop on overflow - just reset the buffer
 		GetCoreCallback()->ClearImageBuffer(this);
-		return GetCoreCallback()->InsertImage(this, pImg->GetData(), w, h, b, md.Serialize().c_str(), false);
+		GetCoreCallback()->InsertImage(this, pData, w, h, b, md.Serialize().c_str(), false);
+      return DEVICE_OK;
 	} 
 
    return ret;
@@ -1086,53 +1359,62 @@ bool PointGrey::IsCapturing()
    return isCapturing_;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// PointGrey Action handlers
-/***********************************************************************
-* Handles "Binning" property.
-*/
-int PointGrey::OnBinning(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */)
-{
-	int ret = DEVICE_OK;
-   /*
-	if (eAct == MM::AfterSet)
-	{
-		long binSize;
-		pProp->Get(binSize);
-		binning_ = (int)binSize;
-		ret = xiSetParamInt( handle, XI_PRM_DOWNSAMPLING, binning_);
-
-		int width = 0;
-		xiGetParamInt( handle, XI_PRM_WIDTH XI_PRM_INFO_MAX, &width);
-		xiSetParamInt( handle, XI_PRM_WIDTH, width - (width%4));
-		return ResizeImageBuffer();
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		pProp->Set((long)binning_);
-	}
-   */
-	return ret;
-}
-
-
 
 /***********************************************************************
-* Handles "CameraId" property.
+* Handles Binning property.
+* Although some PGR cameras support binning by switching modes, there is no
+* binning "function" in the SDK.  To full support binning would need a 
+* lot of knowledge of specific cameras in this device adapter,  which is
+* something we want to avoid.  Instruct the user to read the camera's data
+* sheet instead.
 */
-int PointGrey::OnCameraId(MM::PropertyBase* pProp, MM::ActionType eAct)
+int PointGrey::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::AfterSet)
+   if (eAct == MM::BeforeGet)
 	{
-		pProp->Get(cameraId_);
-	}
-	else if (eAct == MM::BeforeGet)
-	{
-		pProp->Set(cameraId_.c_str());
-	}
+		pProp->Set( (long) GetBinning());
+   } else if (eAct == MM::AfterSet) 
+   {
+      long binning;
+      pProp->Get(binning);
+      return SetBinning((int) binning);
+   }
 
 	return DEVICE_OK;
 }
+
+
+/**********************************************************************
+ * Let's the user specify a Format-7 mode for various binning settings
+ */
+
+int PointGrey::OnBinningFromFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct, long value)
+{
+   if (eAct == MM::AfterSet)
+   {
+      std::string format;
+      pProp->Get(format);
+      bin2Mode_[value] = format;
+      mode2Bin_[format] = value;
+      std::ostringstream os;
+      os << value;
+      AddAllowedValue(MM::g_Keyword_Binning, os.str().c_str());
+   } else if (eAct == MM::BeforeGet)
+   {
+      if (bin2Mode_.find(value) != bin2Mode_.end())
+      {
+         pProp->Set(bin2Mode_[value].c_str());
+      } else 
+      {
+        bin2Mode_[value] = g_NotSet;
+        pProp->Set(g_NotSet);
+      }
+
+   }
+
+   return DEVICE_OK;
+}
+
 
 /***********************************************************************
  * Handles Absolute value aspect of properties
@@ -1302,6 +1584,7 @@ int PointGrey::OnVideoModeAndFrameRate(MM::PropertyBase* pProp, MM::ActionType e
          return ALLERRORS;
       }
       // Note: Format 7 can not be set using this function!
+      cam_.StopCapture();
       Error error = cam_.SetVideoModeAndFrameRate(vm, fr);
       if (error != PGRERROR_OK) {
          SetErrorText(ALLERRORS, error.GetDescription());
@@ -1309,7 +1592,13 @@ int PointGrey::OnVideoModeAndFrameRate(MM::PropertyBase* pProp, MM::ActionType e
       }
       // Work around an issue in the Micro-Manager GUI: If we do not snap an image
       // here, the bitdepth information can easily go stale
+      cam_.StartCapture();
       SnapImage();
+      unsigned int size = image_.GetDataSize();
+      unsigned int width = image_.GetCols();
+      unsigned int height = image_.GetRows();
+      unsigned int pixels = width * height;
+      bytesPerPixel_ = unsigned short (size / pixels);    
    } 
    else if (eAct == MM::BeforeGet) {
       // Find current video mode and frame rate
@@ -1363,8 +1652,14 @@ int PointGrey::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
       Format7PacketInfo format7PacketInfo;
       error = cam_.ValidateFormat7Settings(&format7ImageSettings, &valid, &format7PacketInfo);
       if (valid) {
+         cam_.StopCapture();
          error = cam_.SetFormat7Configuration(&format7ImageSettings,
                         format7PacketInfo.recommendedBytesPerPacket);
+         if (error != PGRERROR_OK) {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+         error = cam_.StartCapture();
          if (error != PGRERROR_OK) {
             SetErrorText(ALLERRORS, error.GetDescription());
             return ALLERRORS;
@@ -1373,7 +1668,20 @@ int PointGrey::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
          SetErrorText(ALLERRORS, "Failed to generate valid Format 7 settings");
          return ALLERRORS;
       }
-      // if we do not snap an image, MM 2.0 gets the bitdepths wrong. Delete once fixed upstream
+      if (format7ImageSettings.pixelFormat == PIXEL_FORMAT_RGB8) {
+         nComponents_ = 4;
+         bytesPerPixel_ = 4;
+      } else {
+         nComponents_ = 1;
+         bytesPerPixel_ = 1;
+         if (format7ImageSettings.pixelFormat == pixelFormat16Bit_)
+         {
+            bytesPerPixel_ = 2;
+         }
+      }
+            
+      // if we do not snap an image, MM 2.0 gets the bitdepths wrong. 
+      // Delete once fixed upstream
       SnapImage();
    }
 
@@ -1436,9 +1744,19 @@ int PointGrey::OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct)
       error = cam_.ValidateFormat7Settings(&newF7Settings, &valid, &format7PacketInfo);
       if (valid) {
          // Set the settings to the camera
+         error = cam_.StopCapture();  
+         // do not check for error, since the camera 
+         // may not be capturing because of previous errors
          error = cam_.SetFormat7Configuration(&newF7Settings,
                      format7PacketInfo.recommendedBytesPerPacket);
-         if (error != PGRERROR_OK) {
+         if (error != PGRERROR_OK) 
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+         error = cam_.StartCapture();
+         if (error != PGRERROR_OK) 
+         {
             SetErrorText(ALLERRORS, error.GetDescription());
             return ALLERRORS;
          }
@@ -1458,6 +1776,52 @@ int PointGrey::OnFormat7Mode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 
 	return DEVICE_OK;
+}
+
+/***************************************************************
+* Handles Trigger Modes
+*
+*/
+int PointGrey::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+	{
+      std::string mode;
+      pProp->Get(mode);
+      unsigned short tMode;
+      int ret = TriggerModeFromString(mode, tMode);
+      if (ret != DEVICE_OK)
+      {
+         return ret;
+      }
+      Error error = cam_.StopCapture();
+      // if camera is not capturing, StopCapture will return an error.
+      // probably safe to ignore, it is bad to return
+      if (error != PGRERROR_OK && error != PGRERROR_ISOCH_NOT_STARTED)
+      {
+         SetErrorText(ALLERRORS, error.GetDescription());
+         return ALLERRORS;
+      }
+      ret = SetTriggerMode(tMode);
+      if (ret != DEVICE_OK)
+      {
+         return DEVICE_OK;
+      }
+      error = cam_.StartCapture();
+      if (error != PGRERROR_OK)
+      {
+         SetErrorText(ALLERRORS, error.GetDescription());
+         return ALLERRORS;
+      }
+
+      triggerMode_ = tMode;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(TriggerModeAsString(triggerMode_).c_str());
+   }
+
+   return DEVICE_OK;
 }
 
 /***********************************************************************
@@ -1532,12 +1896,12 @@ int PointGrey::CameraID(PGRGuid id, std::string* camIdString)
 {
    FlyCapture2::Camera cam;
 
-	// -------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 	// Open camera device
    Error error = cam.Connect(&id);
    if (error != PGRERROR_OK)
    {
-      SetErrorText(ALLERRORS, error.GetDescription());
+      //SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
 
@@ -1547,7 +1911,7 @@ int PointGrey::CameraID(PGRGuid id, std::string* camIdString)
    if (error != PGRERROR_OK)
    {
       cam.Disconnect();
-      SetErrorText(ALLERRORS, error.GetDescription());
+      //SetErrorText(ALLERRORS, error.GetDescription());
       return ALLERRORS;
    }
 
@@ -1597,9 +1961,9 @@ int PointGrey::CameraGUIDfromOurID(BusManager* busMgr, PGRGuid* guid, std::strin
    return 3000; 
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // Functions to translate human readable versions to PGR enums and back
-//////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 void PointGrey::VideoModeAndFrameRateStringFromEnums(std::string &readableString, 
    FlyCapture2::VideoMode vm, FlyCapture2::FrameRate fr) const
@@ -1691,6 +2055,20 @@ std::string PointGrey::Format7ModeAsString(Mode mode) const
    return os.str();
 }
 
+std::string PointGrey::TriggerModeAsString(const unsigned short mode) const
+{
+   switch (mode) 
+   {
+   case TRIGGER_INTERNAL:
+      return g_InternalTrigger;
+   case TRIGGER_EXTERNAL:
+      return g_ExternalTrigger;
+   case TRIGGER_SOFTWARE:
+      return g_SoftwareTrigger;
+   }
+   return "Unknown Trigger Mode";
+}
+
 int PointGrey::Format7ModeFromString(std::string modeString, Mode* mode) const
 {
    // Split the mode string by "-"
@@ -1708,4 +2086,277 @@ int PointGrey::Format7ModeFromString(std::string modeString, Mode* mode) const
    *mode = (Mode) iMode;
 
    return DEVICE_OK;
+}
+
+int PointGrey::TriggerModeFromString(std::string mode, unsigned short& tMode)
+{
+   if (mode == g_InternalTrigger)
+   {
+      tMode = TRIGGER_INTERNAL;
+   } else 
+   if (mode == g_ExternalTrigger)
+   {
+      tMode = TRIGGER_EXTERNAL;
+   } else 
+   if (mode == g_SoftwareTrigger)
+   {
+      tMode = TRIGGER_SOFTWARE;
+   } else 
+   {
+      return ERR_UNKNOWN_TRIGGER_MODE_STRING;
+   }
+
+   return DEVICE_OK;
+}
+
+const char* PointGrey::GetBusSpeedAsString(BusSpeed speed)
+{  
+   switch (speed) 
+   {
+   case BUSSPEED_S100:
+      return "s100";
+   case BUSSPEED_S200:
+         return "s200";
+   case BUSSPEED_S400:
+      return "s400";
+   case BUSSPEED_S480:
+      return "s480";
+   case BUSSPEED_S800:
+      return "s800";
+   case BUSSPEED_S1600:
+      return "s1600";
+   case BUSSPEED_S3200:
+      return "s3200";
+   case BUSSPEED_S5000:
+      return "s5000";
+
+   default:
+      return "Unknown bus speed";
+   }
+}
+
+int PointGrey::CheckSoftwareTriggerPresence(bool& result)
+{
+	const unsigned int k_triggerInq = 0x530;
+	Error error;
+	unsigned int regVal = 0;
+
+	error = cam_.ReadRegister( k_triggerInq, &regVal );
+
+	if (error != PGRERROR_OK)
+	{
+		return ERR_IN_READ_REGISTER;
+	}
+
+   result = true;
+	if( ( regVal & 0x10000 ) != 0x10000 )
+	{
+		result = false;
+	} 
+
+   return DEVICE_OK;
+}
+
+/**
+ * Blocks until the camera is ready for a software trigger
+ * or given timeout expired
+ */
+int PointGrey::PollForTriggerReady(const unsigned long timeoutMs)
+{
+   MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
+
+	const unsigned int k_softwareTrigger = 0x62C;
+	Error error;
+	unsigned int regVal = 0;
+
+	do
+	{
+		error = cam_.ReadRegister( k_softwareTrigger, &regVal );
+		if (error != PGRERROR_OK)
+		{
+			return ERR_IN_READ_REGISTER;
+		}
+	} while ( (regVal >> 31) != 0  && !timerOut.expired(GetCurrentMMTime() ) );
+
+   if ( (regVal >> 31) != 0) 
+   {
+      return ERR_NOT_READY_FOR_SOFTWARE_TRIGGER;
+   }
+
+
+	return DEVICE_OK;
+}
+
+bool PointGrey::FireSoftwareTrigger()
+{
+	const unsigned int k_softwareTrigger = 0x62C;
+	const unsigned int k_fireVal = 0x80000000;
+	Error error;
+
+	error = cam_.WriteRegister( k_softwareTrigger, k_fireVal );
+	if (error != PGRERROR_OK)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+int PointGrey::SetTriggerMode(const unsigned short newMode) 
+{
+   if ( std::find(availableTriggerModes_.begin(), availableTriggerModes_.end(), newMode) == 
+            availableTriggerModes_.end() )
+   {
+      return ERR_UNAVAILABLE_TRIGGER_MODE_REQUESTED;
+   }
+
+   if (triggerMode_ != newMode) // no need to do anything
+   {
+      // Get current trigger settings
+      TriggerMode triggerMode;
+      Error error = cam_.GetTriggerMode( &triggerMode );
+      if (error != PGRERROR_OK) {
+         // software trigger mode not supported
+      } else {
+         // assume that triggerMode off is internal trigger
+         if (newMode == TRIGGER_INTERNAL)
+         {
+            triggerMode.onOff = false;
+         } else
+         {
+            triggerMode.onOff = true;
+         }
+         triggerMode.mode = 0;
+         triggerMode.parameter = 0;
+         triggerMode.source = 0;   // 7 for Software trigger, 0 for external
+         if (newMode == TRIGGER_SOFTWARE) 
+         {
+            triggerMode.source = 7;
+         }
+         error = cam_.SetTriggerMode( &triggerMode );
+         if (error != PGRERROR_OK)
+         {
+            SetErrorText(ALLERRORS, error.GetDescription());
+            return ALLERRORS;
+         }
+
+         if (newMode == TRIGGER_SOFTWARE)
+         {
+            // Poll to ensure camera is ready
+            int ret = PollForTriggerReady(2000);
+            if (ret != DEVICE_OK) 
+            {
+               return ret;
+            }
+         }
+         triggerMode_ = newMode;
+      }
+   }
+
+   // we only need to change the grabtimeout when switching between external trigger
+   // and other modes.  Assume that this operation is not too costly.
+   unsigned long timeout = (unsigned long) (3.0 * exposureTimeMs_) + 50;
+   if (triggerMode_ == TRIGGER_EXTERNAL)
+   {
+      timeout = externalTriggerGrabTimeout_;
+   }
+   SetGrabTimeout(timeout );
+
+   return DEVICE_OK;
+}
+
+int PointGrey::SetGrabTimeout(const unsigned long timeoutMs)
+{
+   FC2Config config;
+   Error error = cam_.GetConfiguration( &config );
+   if (error != PGRERROR_OK)
+   {
+      SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+	
+	config.grabTimeout = timeoutMs;
+
+	error = cam_.SetConfiguration( &config );
+	if (error != PGRERROR_OK)
+	{
+		SetErrorText(ALLERRORS, error.GetDescription());
+      return ALLERRORS;
+   }
+    
+   return DEVICE_OK;
+}
+
+int PointGrey::PowerCameraOn(const unsigned int timeoutMs) 
+{
+   // Power on the camera
+	const unsigned int k_cameraPower = 0x610;
+	const unsigned int k_powerVal = 0x80000000;
+	Error error  = cam_.WriteRegister( k_cameraPower, k_powerVal );
+	if (error != PGRERROR_OK)
+	{
+      SetErrorText(ALLERRORS, error.GetDescription());
+		return ALLERRORS;
+	}
+
+	unsigned int regVal = 0;
+	unsigned int retries = 10;
+
+	// Wait for camera to complete power-up
+	do
+	{
+      CDeviceUtils::SleepMs(timeoutMs);
+
+		error = cam_.ReadRegister(k_cameraPower, &regVal);
+		if (error == PGRERROR_TIMEOUT)
+		{
+			// ignore timeout errors, camera may not be responding to
+			// register reads during power-up
+		}
+      if (error != PGRERROR_OK)
+	   {
+         SetErrorText(ALLERRORS, error.GetDescription());
+		   return ALLERRORS;
+	   }
+
+		retries--;
+	} while ((regVal & k_powerVal) == 0 && retries > 0);
+
+	// Check for timeout errors after retrying
+	if (error != PGRERROR_OK)
+	{
+      SetErrorText(ALLERRORS, error.GetDescription());
+		return ALLERRORS;
+	}
+
+   return DEVICE_OK;
+}
+
+const unsigned char* PointGrey::RGBToRGBA(const unsigned char* img) const
+{
+  
+   const unsigned long newImageSize = GetImageWidth() * 
+                                      GetImageHeight() * 
+                                      GetImageBytesPerPixel();
+   if (newImageSize > bufSize_)
+   {
+      if (imgBuf_ != 0) 
+      {
+         delete[](imgBuf_);
+      }
+      unsigned long* b;
+      b = (unsigned long*) &bufSize_;
+      *b = GetImageWidth() * GetImageHeight() * GetImageBytesPerPixel();
+      unsigned char** c;
+      c = (unsigned char**) &imgBuf_;
+      *c = new unsigned char[bufSize_];
+   }
+   // go from RGB to ABGR, there may be a more efficient way
+   for (unsigned long i = 0; i < GetImageWidth() * GetImageHeight(); i++) 
+   {
+      memcpy ( (void*) (imgBuf_ +  (4 * i) ), img + (i * 3) + 2, 1) ;
+      memcpy ( (void*) (imgBuf_ +  (4 * i) + 1), img + (i * 3) + 1, 1) ;
+      memcpy ( (void*) (imgBuf_ +  (4 * i) + 2), img + (i * 3), 1) ;
+   }
+   return imgBuf_;
 }

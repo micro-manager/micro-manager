@@ -7,7 +7,7 @@
 //                (bottom) internal API for calls going from devices to the 
 //                core.
 //
-//                This class is essentialy an extension of the CMMCore class
+//                This class is essentially an extension of the CMMCore class
 //                and has full access to CMMCore private members.
 //              
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 01/05/2007
@@ -27,6 +27,7 @@
 
 #include "../MMDevice/DeviceThreads.h"
 #include "../MMDevice/DeviceUtils.h"
+#include "../MMDevice/ImgBuffer.h"
 #include "CircularBuffer.h"
 #include "CoreCallback.h"
 #include "DeviceManager.h"
@@ -290,9 +291,14 @@ void CoreCallback::ClearImageBuffer(const MM::Device* /*caller*/)
    core_->cbuf_->Clear();
 }
 
-bool CoreCallback::InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth)
+bool CoreCallback::InitializeImageBuffer(unsigned channels, unsigned slices,
+      unsigned int w, unsigned int h, unsigned int pixDepth)
 {
-   return core_->cbuf_->Initialize(channels, slices, w, h, pixDepth);
+   // Support for multi-slice images has not been implemented
+   if (slices != 1)
+      return false;
+
+   return core_->cbuf_->Initialize(channels, w, h, pixDepth);
 }
 
 int CoreCallback::InsertMultiChannel(const MM::Device* caller,
@@ -440,7 +446,7 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
 
       // Find all configs that contain this property and callback to indicate 
       // that the config group changed
-      // TODO: Assess whether performace is better by maintaining a map tying 
+      // TODO: Assess whether performance is better by maintaining a map tying
       // property to configurations
       std::vector<std::string> configGroups = 
          core_->getAvailableConfigGroups ();

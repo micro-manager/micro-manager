@@ -156,7 +156,7 @@ public:
     * Add and/or remove multiple sinks, atomically.
     *
     * This function should be used for example to switch files when performing
-    * log rotation, because it ensures that no entries are lossed during the
+    * log rotation, because it ensures that no entries are lost during the
     * switch.
     *
     * SinkModePairIterator should be an iterator type over

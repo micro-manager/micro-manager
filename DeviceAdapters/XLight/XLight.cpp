@@ -41,6 +41,7 @@ const char* g_XLIGHTDichroicFilter = "XLIGHT Dichroic";
 const char* g_XLIGHTDiskSlider = "XLIGHT Disk slider";
 const char* g_XLIGHTSpinMotor = "XLIGHT Spin motor";
 const char* g_XLIGHTEmissionWheel = "XLIGHT Emission Wheel";
+const char* g_XLIGHTExcitationWheel = "XLIGHT Excitation Wheel";
 const char* g_XLIGHTTouchScreen = "XLIGHT Touchscreen";
 
 using namespace std;
@@ -59,6 +60,7 @@ MODULE_API void InitializeModuleData() {
     RegisterDevice(g_XLIGHTDiskSlider, MM::StateDevice, "Spinning disk slider");
     RegisterDevice(g_XLIGHTSpinMotor, MM::StateDevice, "Spinning disk motor");
 	RegisterDevice(g_XLIGHTEmissionWheel, MM::StateDevice, "Confocal Emission wheel");
+	RegisterDevice(g_XLIGHTExcitationWheel, MM::StateDevice, "Confocal Excitation wheel");
     RegisterDevice(g_XLIGHTTouchScreen, MM::StateDevice, "Touchscreen lockout control");
 }
 
@@ -78,6 +80,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName) {
         return new SpinMotor();
 	} else if (strcmp(deviceName, g_XLIGHTEmissionWheel) == 0) {
         return new Emission();
+	} else if (strcmp(deviceName, g_XLIGHTExcitationWheel) == 0) {
+        return new Excitation();
     } else if (strcmp(deviceName, g_XLIGHTTouchScreen) == 0) {
         return new TouchScreen();
     }
@@ -164,7 +168,6 @@ int Hub::Shutdown() {
     if (initialized_) {
         int ret = g_hub.ActivateTouchscreen(*this, *GetCoreCallback());
         if (ret != DEVICE_OK)
-
             return ret;
 
         initialized_ = false;
@@ -261,6 +264,15 @@ int Dichroic::Initialize() {
     SetPositionLabel(3, "Dichroic-3");
     SetPositionLabel(4, "Dichroic-4");
 
+
+	// read-back position
+	ostringstream os;
+	os << "rC";
+	ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
+	int pos = g_hub.GetDevicePosition() - 1;
+	SetPosition(pos);
+	// pAct->Set(pos);
+
     ret = UpdateStatus();
     if (ret != DEVICE_OK)
         return ret;
@@ -302,7 +314,12 @@ int Dichroic::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
             pos = 0;
         else if (pos > 4)
             pos = 4;
-        int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos, delay);
+        // int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos, delay);
+		int posCommand = pos + 1; //MM positions start at 0, CARVII pos start at 1
+		ostringstream os;
+		os << "C" << posCommand;
+		g_hub.SetDeviceWait(delay);
+		int ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
         if (ret == DEVICE_OK) {
             pos_ = pos;
             pProp->Set(pos_);
@@ -381,7 +398,14 @@ int Emission::Initialize() {
 	SetPositionLabel(6, "Emission-6");
 	SetPositionLabel(7, "Emission-7");
 
-    ret = UpdateStatus();
+	// read-back position
+	ostringstream os;
+	os << "rB";
+	ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
+	int pos = g_hub.GetDevicePosition() - 1;
+	SetPosition(pos);
+
+	ret = UpdateStatus();
     if (ret != DEVICE_OK)
         return ret;
 
@@ -409,6 +433,7 @@ int Emission::Shutdown() {
 ///////////////////////////////////////////////////////////////////////////////
 
 int Emission::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
+    int delay = 75;
     if (eAct == MM::BeforeGet) {
         // return pos as we know it
         pProp->Set(pos_);
@@ -421,7 +446,166 @@ int Emission::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
             pos = 0;
         else if (pos > 7)
             pos = 7;
-        int ret = g_hub.SetEmissionWheelPosition(*this, *GetCoreCallback(), pos);
+        //int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos, delay);
+		//int ret = g_hub.SetEmissionWheelPosition(*this, *GetCoreCallback(), pos/*, delay*/); // GPU first fix
+		int posCommand = pos + 1; //MM positions start at 0, CARVII pos start at 1
+		ostringstream os;
+		os << "B" << posCommand;
+		g_hub.SetDeviceWait(delay);
+		int ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
+        if (ret == DEVICE_OK) {
+            pos_ = pos;
+            pProp->Set(pos_);
+            return DEVICE_OK;
+        } else
+            return ret;
+    }
+    return DEVICE_OK;
+}
+
+
+//-------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////
+// XLIGHT Excitation Wheel
+///////////////////////////////////////////////////////////////////////////////
+
+Excitation::Excitation() :
+initialized_(false),
+numPos_(8),
+pos_(0),
+use_new_command_(false),
+name_(g_XLIGHTExcitationWheel) {
+
+    InitializeDefaultErrorMessages();
+
+    // Todo: Add custom messages
+}
+
+Excitation::~Excitation() {
+
+    Shutdown();
+}
+
+void Excitation::GetName(char* name) const {
+
+    assert(name_.length() < CDeviceUtils::GetMaxStringLength());
+    CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+int Excitation::Initialize() {
+    // Name
+    int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+    if (DEVICE_OK != ret)
+        return ret;
+
+    // Description
+    ret = CreateProperty(MM::g_Keyword_Description, "XLIGHT Excitation Wheel Position", MM::String, true);
+    if (DEVICE_OK != ret)
+        return ret;
+
+    // State
+    CPropertyAction * pAct = new CPropertyAction(this, &Excitation::OnState);
+    ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+    if (ret != DEVICE_OK)
+        return ret;
+    AddAllowedValue(MM::g_Keyword_State, "0");
+    AddAllowedValue(MM::g_Keyword_State, "1");
+    AddAllowedValue(MM::g_Keyword_State, "2");
+    AddAllowedValue(MM::g_Keyword_State, "3");
+    AddAllowedValue(MM::g_Keyword_State, "4");
+	AddAllowedValue(MM::g_Keyword_State, "5");
+	AddAllowedValue(MM::g_Keyword_State, "6");
+	AddAllowedValue(MM::g_Keyword_State, "7");
+
+    // Label                                                                  
+    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
+    ret = CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, false, pAct);
+    if (ret != DEVICE_OK)
+        return ret;
+
+    // create default positions and labels
+    SetPositionLabel(0, "Excitation-0");
+    SetPositionLabel(1, "Excitation-1");
+    SetPositionLabel(2, "Excitation-2");
+    SetPositionLabel(3, "Excitation-3");
+    SetPositionLabel(4, "Excitation-4");
+	SetPositionLabel(5, "Excitation-5");
+	SetPositionLabel(6, "Excitation-6");
+	SetPositionLabel(7, "Excitation-7");
+
+	// read-back position
+	ostringstream os;
+	//os << "rE";
+	os << "r" << cmd_letter; 
+	ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
+	if (DEVICE_OK == ret)
+	{
+		int pos = g_hub.GetDevicePosition() - 1;
+		SetPosition(pos);
+	}
+	else 
+	{
+		os.str(""); // this actually clears the oss, the line below clears erros and flags instead
+		os.clear();
+		os << "rA";
+		ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
+		if (DEVICE_OK == ret)
+		{
+			int pos = g_hub.GetDevicePosition() - 1;
+			SetPosition(pos);
+			use_new_command_ = true;
+		}
+	}
+
+	ret = UpdateStatus();
+    if (ret != DEVICE_OK)
+        return ret;
+
+    initialized_ = true;
+
+    return DEVICE_OK;
+}
+
+bool Excitation::Busy() {
+    // Who knows?
+
+    return false;
+}
+
+int Excitation::Shutdown() {
+    if (initialized_) {
+
+        initialized_ = false;
+    }
+    return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers                                                           
+///////////////////////////////////////////////////////////////////////////////
+
+int Excitation::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
+    int delay = 75;
+    if (eAct == MM::BeforeGet) {
+        // return pos as we know it
+        pProp->Set(pos_);
+    } else if (eAct == MM::AfterSet) {
+        long pos;
+        pProp->Get(pos);
+        if (pos == pos_)
+            return DEVICE_OK;
+        if (pos < 0)
+            pos = 0;
+        else if (pos > 7)
+            pos = 7;
+		int posCommand = pos + 1; //MM positions start at 0, CARVII pos start at 1
+		ostringstream os;
+		if (use_new_command_)
+			os << "A" << posCommand;
+		else
+			os << cmd_letter << posCommand;
+		g_hub.SetDeviceWait(delay);
+		int ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
         if (ret == DEVICE_OK) {
             pos_ = pos;
             pProp->Set(pos_);
@@ -499,6 +683,13 @@ int DiskSlider::Initialize() {
     SetPositionLabel(1, "Disk Pos 70um");
 	SetPositionLabel(2, "Disk Pos 40um");
  
+	// read-back position
+	ostringstream os;
+	os << "rD";
+	ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
+	int pos = g_hub.GetDevicePosition();
+	SetPosition(pos);
+
     ret = UpdateStatus();
     if (ret != DEVICE_OK)
         return ret;
@@ -546,7 +737,13 @@ int DiskSlider::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
 			delay = 300;
 		 if ( (pos_ == 1 && pos == 2) || (pos_ == 2 && pos == 1))
 			delay = 700;
-        int ret = g_hub.SetDiskSliderPosition(*this, *GetCoreCallback(), pos, delay);
+        // int ret = g_hub.SetDiskSliderPosition(*this, *GetCoreCallback(), pos, delay);
+		ostringstream os;
+		os << "D" << pos;
+		g_hub.SetCommandTimeout(20000);
+		g_hub.SetDeviceWait(delay);
+ 		int ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
+		g_hub.RestoreCommandTimeout();
         if (ret == DEVICE_OK) {
             pos_ = pos;
             pProp->Set(pos_);
@@ -611,6 +808,13 @@ int SpinMotor::Initialize() {
     SetPositionLabel(0, "Off (no spin)");
     SetPositionLabel(1, "On (spinning)");
 
+	// read-back position
+	ostringstream os;
+	os << "rN";
+	ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
+	int pos = g_hub.GetDevicePosition();
+	SetPosition(pos);
+
     ret = UpdateStatus();
     if (ret != DEVICE_OK)
         return ret;
@@ -651,7 +855,9 @@ int SpinMotor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct) {
             pos = 0;
         else if (pos > 1)
             pos = 1;
+		g_hub.SetCommandTimeout(20000);
         int ret = g_hub.SetSpinMotorState(*this, *GetCoreCallback(), pos);
+		g_hub.RestoreCommandTimeout();
         if (ret == DEVICE_OK) {
             pos_ = pos;
             pProp->Set(pos_);
@@ -716,7 +922,14 @@ int TouchScreen::Initialize() {
     SetPositionLabel(0, "Screen active");
     SetPositionLabel(1, "Screen locked");
 
-    ret = UpdateStatus();
+	// read-back position
+	ostringstream os;
+	os << "rM";
+	ret = g_hub.ExecuteCommandEx(*this, *GetCoreCallback(), os.str().c_str());
+	int pos = g_hub.GetDevicePosition();
+	SetPosition(pos);
+
+	ret = UpdateStatus();
     if (ret != DEVICE_OK)
         return ret;
 

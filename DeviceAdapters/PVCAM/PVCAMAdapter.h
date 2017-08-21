@@ -88,6 +88,7 @@
 #define ERR_BINNING_INVALID             10011 // Binning value is not valid for current configuration
 #define ERR_OPERATION_TIMED_OUT         10012 // Generic timeout error
 #define ERR_FRAME_READOUT_FAILED        10013 // Polling: status = READOUT_FAILED
+#define ERR_TOO_MANY_ROIS               10014 // Device does not support that many ROIs (uM 2.0)
 
 // PVCAM-specific error codes base. When a PVCAM error occurs we use the PVCAM
 // ID and PVCAM message to create a new uM error code, we call the the SetErrorCode()
@@ -280,6 +281,10 @@ public: // Action handlers
     */
     int OnPMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
+    * Gets or sets the current ADC offset
+    */
+    int OnAdcOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
     * Gets or sets the current Trigger Mode - i.e. Internal, Bulb, Edge, etc.
     */
     int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -297,6 +302,10 @@ public: // Action handlers
     * Gets or sets the current number of sensor clear cycles.
     */
     int OnClearCycles(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Gets or sets the current sensor clear mode.
+    */
+    int OnClearMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     /**
     * Enables or disables the use of circular buffer. When disabled the live acquisition
     * runs as a repeated sequence (something like fast time-lapse). The PVCAM continous
@@ -427,6 +436,26 @@ public: // Action handlers
     */
     int OnSmartStreamingValues(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
+    /**
+    * Read-only: Shows the camera actual exposure time value in ns.
+    */
+    int OnTimingExposureTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual readout time value in ns.
+    */
+    int OnTimingReadoutTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual clearing time value in ns.
+    */
+    int OnTimingClearingTimeNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual pre-trigger delay value in ns.
+    */
+    int OnTimingPreTriggerDelayNs(MM::PropertyBase* pProp, MM::ActionType eAct);
+    /**
+    * Read-only: Shows the camera actual post-trigger delay value in ns.
+    */
+    int OnTimingPostTriggerDelayNs(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 public: // Other published methods
     /**
@@ -528,7 +557,10 @@ private:
     * bit depth, readout speed and gain range based on speed index.
     */
     int initializeSpeedTable();
-
+    /**
+    * Initialize all parameters that may change their value after acquisition setup
+    */
+    int initializePostSetupParams();
     /**
     * Resizes the buffer used for continous live acquisition
     */
@@ -603,14 +635,6 @@ private:
     */
     int revertPostProcValue( long absoluteParamIdx, MM::PropertyBase* pProp);
     /**
-    * Called when Readout Port changes. Handles updating of all depending properties.
-    */
-    int portChanged();
-    /**
-    * Called when Readout Speed changes. Handles updating of all depending properties.
-    */
-    int speedChanged();
-    /**
     * This function is called right after pl_exp_setup_seq() and pl_exp_setup_cont()
     * After setup is called following parameters become available or may change their values:
     *  PARAM_READOUT_TIME - camera calculated readout time.
@@ -642,8 +666,9 @@ private:
     * Device/Property Browser or any other event.
     * This function should validate and apply the new acquisition configuration
     * to the camera, if not accepted the setting should be reverted and error returned.
+    * @param forceSetup If true the settings will be sent to camera even without any change.
     */
-    int applyAcqConfig();
+    int applyAcqConfig(bool forceSetup = false);
 
 private: // Static
 
@@ -728,6 +753,10 @@ private: // Static
     // PVCAM helper structure for decoding an embedded-metadata-enabled frame buffer
 #ifdef PVCAM_3_0_12_SUPPORTED
     md_frame*        metaFrameStruct_;
+
+    // For metadata serialization, optimization to not allocate the same for each frame
+    std::string      metaAllRoisStr_;
+    char             metaRoiStr_[1000];
 #endif
     // A buffer used for creating a black-filled frame when Centroids or Multi-ROI
     // acquisition is running. Used in both single snap and live mode if needed.
@@ -764,7 +793,9 @@ private: // Static
     PvParam<ulong64>* prmExposureTime_;    // (PARAM_EXPOSURE_TIME)
     PvEnumParam*      prmExposeOutMode_;
     PvParam<uns16>*   prmClearCycles_;
+    PvEnumParam*      prmClearMode_;
     PvEnumParam*      prmReadoutPort_;
+    PvParam<int16>*   prmSpdTabIndex_;
     PvEnumParam*      prmColorMode_;
     PvParam<ulong64>* prmFrameBufSize_;
 
@@ -777,6 +808,13 @@ private: // Static
     PvEnumParam*      prmTrigTabSignal_;
     PvParam<uns8>*    prmLastMuxedSignal_;
     PvEnumParam*      prmPMode_;
+    PvParam<int16>*   prmAdcOffset_;
+
+    // These parameters become valid after calling pl_exp_setup_seq()/pl_exp_setup_cont()
+    PvParam<uns32>*   prmReadoutTime_;      // (PARAM_READOUT_TIME)
+    PvParam<long64>*  prmClearingTime_;     // (PARAM_CLEARING_TIME)
+    PvParam<long64>*  prmPostTriggerDelay_; // (PARAM_POST_TRIGGER_DELAY)
+    PvParam<long64>*  prmPreTriggerDelay_;  // (PARAM_PRE_TRIGGER_DELAY)
 
     // List of post processing features
     std::vector<PpParam> PostProc_;

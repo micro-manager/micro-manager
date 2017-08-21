@@ -234,6 +234,12 @@ public final class HotKeysDialog extends MMDialog {
     public class ActionCollRenderer extends DefaultTableCellRenderer {
        @Override
        public Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+
+          // https://stackoverflow.com/a/3055930
+          if (value == null) {
+             return null;
+          }
+
           Component res = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           res.setBackground(Color.white);
           res.setForeground(Color.black);
@@ -247,6 +253,12 @@ public final class HotKeysDialog extends MMDialog {
        }
        @Override
        public Component getTableCellRendererComponent(javax.swing.JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+
+          // https://stackoverflow.com/a/3055930
+          if (value == null) {
+             return null;
+          }
+
           Component res = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
           res.setBackground(Color.white);
           res.setForeground(Color.black);
@@ -290,6 +302,12 @@ public final class HotKeysDialog extends MMDialog {
        @Override
        public Component getTableCellEditorComponent(javax.swing.JTable table, Object value,
                boolean isSelected, int rowIndex, int colIndex) {
+
+           // https://stackoverflow.com/a/3055930
+           if (value == null) {
+              return null;
+           }
+
            // 'value' is value contained in the cell located at (rowIndex, colIndex)
 
            if (value != null)

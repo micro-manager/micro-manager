@@ -49,6 +49,7 @@
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
 #define ERR_UNKNOWN_DA_DEVICE 415
 #define ERR_NUM_CHANNELS 416
+#define ERR_NO_CHANNELS_DETECTED 417 
 
 //////////////////////////////////////////////////////////////////////////////
 // BitFlowCamera class
@@ -125,7 +126,7 @@ public:
    void ShowError(const char* errTxt) {LogMessage(errTxt);}
 
 private:
-   static const int imageWidth_ = 410;
+   static const int imageWidth_ = 406;
    static const int maxFrames_ = 200;
 
    std::vector<ImgAccumulator> img_;

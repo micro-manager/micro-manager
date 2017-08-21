@@ -14,7 +14,7 @@ public:
 
 	// constructor and destructor
 	// ------------
-	DC4100();									// constructs a DC4100 device
+	DC4100(const char* deviceName);									// constructs a DC4100 device
 	~DC4100();									// destroys a DC4100 device
 
 	// MMDevice API
@@ -26,7 +26,6 @@ public:
 	// ------------
 	void GetName(char* pszName) const;	// returns the device name -> DC4100
 	bool Busy();								// returns true in case device is busy
-	static const char* DeviceName();
 
 	// Shutter API
 	// ------------
@@ -61,6 +60,7 @@ private:
 
 private:
 	static int const NUM_LEDS = 4;
+	const char* m_devName;
 	std::string 	m_name;
 	std::string 	m_port;
 	std::string 	m_LEDOn;

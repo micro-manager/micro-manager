@@ -67,6 +67,12 @@ public class ChannelConfigEditor extends AbstractCellEditor implements TableCell
    @Override
    public Component getTableCellEditorComponent(JTable table, Object value,
            boolean isSelected, int rowIndex, int colIndex) {
+
+      // https://stackoverflow.com/a/3055930
+      if (value == null) {
+         return null;
+      }
+
       channelPreset_.removeAllItems();
       StrVector configs = core_.getAvailableConfigs(channelGroup_.getSelectedItem().toString());
       for (String config : configs) {

@@ -349,7 +349,8 @@ public:
 
    /** \name Image acquisition. */
    ///@{
-   void setROI(int x, int y, int xSize, int ySize) throw (CMMError); 
+   void setROI(int x, int y, int xSize, int ySize) throw (CMMError);
+   void setROI(const char* label, int x, int y, int xSize, int ySize) throw (CMMError);
    void getROI(int& x, int& y, int& xSize, int& ySize) throw (CMMError);
    void getROI(const char* label, int& x, int& y, int& xSize, int& ySize) throw (CMMError);
    void clearROI() throw (CMMError);
@@ -366,6 +367,7 @@ public:
    void setExposure(double exp) throw (CMMError);
    void setExposure(const char* cameraLabel, double dExp) throw (CMMError);
    double getExposure() throw (CMMError);
+   double getExposure(const char* label) throw (CMMError);
 
    void snapImage() throw (CMMError);
    void* getImage() throw (CMMError);

@@ -26,6 +26,9 @@ endif
 if BUILD_ITC
    ITC = ITC18
 endif
+if BUILD_MODBUS
+   MODBUS = Modbus
+endif
 if BUILD_OPENCV
    OPENCVGRABBER = OpenCVgrabber
 endif
@@ -69,6 +72,7 @@ SUBDIRS = \
 	$(ITC) \
 	$(NIDAQ) \
 	$(OPENCVGRABBER) \
+	$(MODBUS) \
 	$(PVCAM) \
 	$(QCAM) \
 	$(SCION) \
@@ -93,6 +97,7 @@ SUBDIRS = \
 	Cobolt \
 	CoherentCube \
 	CoherentOBIS \
+   CoherentScientificRemote \
 	Conix \
 	Corvus \
 	DemoCamera \
@@ -142,6 +147,7 @@ SUBDIRS = \
 	Scientifica \
 	SerialManager \
 	SimpleAutofocus \
+	SmarActHCU-3D \
 	SpectralLMM5 \
 	SutterLambda \
 	SutterStage \

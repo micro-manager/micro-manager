@@ -250,7 +250,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                for (int j = 0; j < properties.size(); j++) {
                   PropertyItem item = new PropertyItem();
                   if (!groupOnly_ || cfg.isPropertyIncluded(devices.get(i), properties.get(j))) {
-                     item.readFromCore(core_, devices.get(i), properties.get(j), false);
+                     item.readFromCore(core_, devices.get(i), properties.get(j), fromCache);
                      if ((!item.readOnly || showReadOnly_) && !item.preInit) {
                         if (cfg.isPropertyIncluded(item.device, item.name)) {
                            item.confInclude = true;

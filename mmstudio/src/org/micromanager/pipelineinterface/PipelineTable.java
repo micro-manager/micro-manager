@@ -37,6 +37,12 @@ public class PipelineTable extends JTable {
       public Component getTableCellRendererComponent(JTable table,
             Object dataProcessor, boolean isSelected, boolean hasFocus,
             int row, int column) {
+
+         // https://stackoverflow.com/a/3055930
+         if (dataProcessor == null) {
+            return null;
+         }
+
          if (isSelected) {
             panel_.setBackground(table.getSelectionBackground());
          }
@@ -75,6 +81,11 @@ public class PipelineTable extends JTable {
       @Override
       public Component getTableCellEditorComponent(JTable table,
             Object cellValue, boolean isSelected, int row, int column) {
+
+         // https://stackoverflow.com/a/3055930
+         if (cellValue == null) {
+            return null;
+         }
 
          @SuppressWarnings("unchecked")
          DataProcessor<TaggedImage> dataProcessor = (DataProcessor) cellValue;

@@ -244,6 +244,10 @@ int CPiezo::Initialize()
    AddAllowedValue(g_SetHomeHerePropertyName, g_DoneState, 2);
    UpdateProperty(g_SetHomeHerePropertyName);
 
+   pAct = new CPropertyAction (this, &CPiezo::OnHomePosition);
+   CreateProperty(g_HomePositionPropertyName, "0", MM::Float, false, pAct);
+   UpdateProperty(g_HomePositionPropertyName);
+
    // "do it" property to go home removed with addition of Home() API call
    // will use API call in diSPIM plugin; anybody else using it contact author
    // if you really need the property to continue to exist
@@ -308,6 +312,10 @@ int CPiezo::Initialize()
       AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_0);
       AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_1);
       AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_2);
+	  if (FirmwareVersionAtLeast(3.14))
+	   {	//sin pattern was implemeted much later atleast firmware 3/14 needed
+		   AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_3);
+	   }
       UpdateProperty(g_SAPatternPropertyName);
       // generates a set of additional advanced properties that are rarely used
       pAct = new CPropertyAction (this, &CPiezo::OnSAAdvanced);
@@ -398,6 +406,12 @@ int CPiezo::Initialize()
       CreateProperty(g_AutoSleepDelayPropertyName, "5", MM::Integer, false, pAct);
       UpdateProperty(g_AutoSleepDelayPropertyName);
    }
+
+      //VectorMove
+   pAct = new CPropertyAction (this, &CPiezo::OnVector);
+   CreateProperty(g_VectorPropertyName, "0", MM::Float, false, pAct);
+   SetPropertyLimits(g_VectorPropertyName, -10,10); //hardcoded as -+10mm/sec , piezo r fast
+   UpdateProperty(g_VectorPropertyName);
 
    initialized_ = true;
    return DEVICE_OK;
@@ -1342,6 +1356,7 @@ int CPiezo::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
          case 0: success = pProp->Set(g_SAPattern_0); break;
          case 1: success = pProp->Set(g_SAPattern_1); break;
          case 2: success = pProp->Set(g_SAPattern_2); break;
+		 case 3: success = pProp->Set(g_SAPattern_3); break;
          default:success = 0;                      break;
       }
       if (!success)
@@ -1356,7 +1371,9 @@ int CPiezo::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 1;
       else if (tmpstr.compare(g_SAPattern_2) == 0)
          tmp = 2;
-      else
+      else if (tmpstr.compare(g_SAPattern_3) == 0)
+         tmp = 3;
+	  else
          return DEVICE_INVALID_PROPERTY_VALUE;
       // have to get current settings and then modify bits 0-2 from there
       command << "SAP " << axisLetter_ << "?";
@@ -1599,10 +1616,41 @@ int CPiezo::OnSetHomeHere(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_DoItState) == 0)
       {
-         command << "HM " << axisLetter_ << "+";
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+         // old code used the controller's "+" ability but adapter needs to know the home position
+         // so now implement in less efficient way that keeps OnHomePosition value up to date
+         // one unfortunate side effect of this approach is that due to precision considerations
+         //    the home position is limited to increments of 0.1um (probably sufficient)
+         double homePos;
+         ostringstream tmp; tmp.str("");
+         RETURN_ON_MM_ERROR ( GetPositionUm(homePos) );
+         tmp << homePos/1000;  // divide by 1000 b/c home position read out in mm
+         RETURN_ON_MM_ERROR ( SetProperty(g_HomePositionPropertyName, tmp.str().c_str()) );
          pProp->Set(g_DoneState);
       }
+   }
+   return DEVICE_OK;
+}
+
+int CPiezo::OnHomePosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "HM " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "HM " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }
@@ -1850,6 +1898,30 @@ int CPiezo::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(tmpstr);
       ttl_trigger_enabled_ = (ttl_trigger_supported_ && (tmpstr.compare(g_YesState) == 0));
       return OnUseSequence(pProp, MM::BeforeGet);  // refresh value
+   }
+   return DEVICE_OK;
+}
+
+   int CPiezo::OnVector(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "VE " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "VE " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
 }

@@ -143,7 +143,7 @@ public:
 
    /// Access the underlying error.
    /**
-    * This is intended for code that wants to perform custum formatting or
+    * This is intended for code that wants to perform custom formatting or
     * analysis of the chained errors.
     *
     * The returned pointer is valid until the instance on which this method was

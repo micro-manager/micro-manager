@@ -90,4 +90,10 @@ public class ListeningJPanel extends JPanel {
     */
    public void refreshSelected() {};
    
+   /**
+    * Called when acquisition camera trigger mode changes (not between live and acquisition,
+    *   but e.g. between edge and overlap)
+    */
+   public void cameraModeChange() {};
+   
 }

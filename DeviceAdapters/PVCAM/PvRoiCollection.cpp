@@ -57,6 +57,11 @@ void PvRoiCollection::SetCapacity(unsigned int capacity)
     Clear();
 }
 
+unsigned int PvRoiCollection::Capacity() const
+{
+    return m_capacity;
+}
+
 void PvRoiCollection::Add(const PvRoi& newRoi)
 {
     const unsigned int oldCount = Count();

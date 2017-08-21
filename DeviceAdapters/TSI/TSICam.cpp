@@ -128,7 +128,9 @@ TsiCam::TsiCam() :
    bitDepth(14),
    wb(false),
    whiteBalanceSelected(0),
-   color(true)
+   color(true),
+   triggerPolarity(Positive),
+   trigger(Software)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -312,7 +314,7 @@ int TsiCam::Initialize()
 	   vector<string> tapValues;
 	   uint32_t tapIdxOrg(0);
 
-	   bool bRet;
+	   bRet;
 
 	   uint32_t tapsIdxMin(0);
 	   uint32_t tapsIdxMax(0);
@@ -424,6 +426,21 @@ int TsiCam::Initialize()
    ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
    assert(ret == DEVICE_OK);
 
+   // create Trigger mode property
+   pAct = new CPropertyAction(this, &TsiCam::OnTriggerMode);
+   trigger = Software;
+   ret = CreateProperty(g_TriggerMode, g_Software, MM::String, false, pAct);
+   AddAllowedValue(g_TriggerMode, g_Software, (long)Software);
+   AddAllowedValue(g_TriggerMode, g_HardwareEdge, (long)HardwareEdge);
+   AddAllowedValue(g_TriggerMode, g_HardwareDuration, (long)HardwareDuration);
+
+   // create Trigger polarity
+   pAct = new CPropertyAction(this, &TsiCam::OnTriggerPolarity);
+   triggerPolarity = Positive;
+   ret = CreateProperty(g_TriggerPolarity, g_Positive, MM::String, false, pAct);
+   AddAllowedValue(g_TriggerPolarity, g_Positive, (long) Positive);
+   AddAllowedValue(g_TriggerPolarity, g_Negative, (long) Negative);
+
    ret = ResizeImageBuffer();
    if (ret != DEVICE_OK)
       return ret;
@@ -440,7 +457,7 @@ int TsiCam::Shutdown()
    if (IsCapturing())
       StopSequenceAcquisition();
 
-   camHandle_->Stop();
+   StopCamera();
 
    bool bret = camHandle_->Close();
    if (!bret)
@@ -541,7 +558,7 @@ int TsiCam::GetChannelName(unsigned channel, char* name)
 int TsiCam::SnapImage()
 {
    camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, 0);
-   camHandle_->Start();
+   StartCamera();
 
    if (color)
    {
@@ -575,8 +592,7 @@ int TsiCam::SnapImage()
          BuildWhiteBalancedPipeline(*tsiColorImg, getColorCamera());
          getColorCamera()->FreeColorImage(tsiColorImg);
          tsiColorImg = 0;
-         MM::MMTime start = GetCurrentMMTime();
-         MM::MMTime timeout(4000000); // 4 sec timeout
+         start = GetCurrentMMTime();
          do
          {
             tsiColorImg = getColorCamera()->GetPendingColorImage(TSI_COLOR_POST_PROCESS);
@@ -614,7 +630,7 @@ int TsiCam::SnapImage()
       camHandle_->FreeImage(tsiImg);
     }
 
-    camHandle_->Stop();
+   StopCamera();
 
    return DEVICE_OK;
 }
@@ -658,7 +674,7 @@ double TsiCam::GetExposure() const
 
 void TsiCam::SetExposure(double dExpMs)
 {
-   uint32_t exp      = (uint32_t)(dExpMs + 0.5);
+   uint32_t exp = (uint32_t)(dExpMs + 0.5);
    (void)camHandle_->SetParameter(TSI_PARAM_EXPOSURE_TIME, (void*)&exp);
 }
 
@@ -697,7 +713,6 @@ int TsiCam::PrepareSequenceAcqusition()
 {
    if (IsCapturing())
    {
-
       return DEVICE_CAMERA_BUSY_ACQUIRING;
    }
 
@@ -980,11 +995,27 @@ bool TsiCam::ParamSupported (TSI_PARAM_ID ParamID)
 
 }
 
+bool TsiCam::StopCamera()
+{
+   if (trigger == Software)
+      return camHandle_->Stop();
+   else
+      return camHandle_->StopTriggerAcquisition(false);
+}
+
+bool TsiCam::StartCamera()
+{
+   if (trigger == Software)
+      return camHandle_->Start();
+   else
+      return camHandle_->StartTriggerAcquisition();
+}
+
 int AcqSequenceThread::svc (void)
 {
    bool rb = camInstance->camHandle_->SetParameter(TSI_PARAM_FRAME_COUNT, numFrames <= 0 ? 0 : numFrames);
    InterlockedExchange(&camInstance->acquiring, 1);
-   rb = camInstance->camHandle_->Start();
+   rb = camInstance->StartCamera();
    assert(rb);
 
    unsigned count = 0;
@@ -1024,7 +1055,7 @@ int AcqSequenceThread::svc (void)
                camInstance->ConfigureDefaultColorPipeline();
             }
 
-            camInstance->camHandle_->Stop();
+            camInstance->StopCamera();
             InterlockedExchange(&camInstance->acquiring, 0);
             return 1;
          }
@@ -1061,7 +1092,7 @@ int AcqSequenceThread::svc (void)
             printf("[MicroManager] - Expected image size w:%5d h:%5d bytes_per_pixel:%5d\n", camInstance->img.Width(), camInstance->img.Height(), camInstance->img.Depth());
             printf("[MicroManager] - Actual   image size w:%5d h:%5d bytes_per_pixel:%5d\n", tsiCImg->m_Width, tsiCImg->m_Height, tsiCImg->m_BytesPerPixel);
    
-            camInstance->getColorCamera()->Stop();
+            camInstance->StopCamera();
             InterlockedExchange(&camInstance->acquiring, 0);
             return 1;
          }
@@ -1079,7 +1110,7 @@ int AcqSequenceThread::svc (void)
          if (!tsiImg)
          {
             camInstance->LogMessage("Camera timed out on GetPendingImage().");
-            camInstance->camHandle_->Stop();
+            camInstance->StopCamera();
             InterlockedExchange(&camInstance->acquiring, 0);
             return 1;
          }
@@ -1094,7 +1125,7 @@ int AcqSequenceThread::svc (void)
             {
                printf("[MicroManager] - AcqSequenceThread::svc() - numFrames:%d count:%d - calling Stop()\n", numFrames, count);
                camInstance->LogMessage("Number of frames reached: exiting.");
-               camInstance->camHandle_->Stop();
+               camInstance->StopCamera();
                InterlockedExchange(&camInstance->acquiring, 0);
                return 0;
             }
@@ -1107,7 +1138,7 @@ int AcqSequenceThread::svc (void)
             printf("[MicroManager] - Expected image size w:%5d h:%5d bytes_per_pixel:%5d\n", camInstance->img.Width(), camInstance->img.Height(), camInstance->img.Depth());
             printf("[MicroManager] - Actual   image size w:%5d h:%5d bytes_per_pixel:%5d\n", tsiImg->m_Width, tsiImg->m_Height, tsiImg->m_BytesPerPixel);
   
-            camInstance->camHandle_->Stop();
+            camInstance->StopCamera();
             InterlockedExchange(&camInstance->acquiring, 0);
             return 1;
          }
@@ -1116,13 +1147,13 @@ int AcqSequenceThread::svc (void)
       if (numFrames > 0 && count >= numFrames)
       {
          camInstance->LogMessage("Number of frames reached.");
-         camInstance->camHandle_->Stop();
+         camInstance->StopCamera();
          InterlockedExchange(&camInstance->acquiring, 0);
       }
    }
 
    camInstance->LogMessage("User pressed stop.");
-   camInstance->camHandle_->Stop();
+   camInstance->StopCamera();
    InterlockedExchange(&camInstance->acquiring, 0);
    return 0;
 }

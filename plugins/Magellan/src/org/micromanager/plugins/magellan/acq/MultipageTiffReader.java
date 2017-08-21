@@ -58,7 +58,7 @@ public class MultipageTiffReader {
       
    private JSONObject displayAndComments_;
    private JSONObject summaryMetadata_;
-   private int byteDepth_ = 0;;
+   private int byteDepth_ = 0;
    private boolean rgb_;
    
    private HashMap<String,Long> indexMap_;
@@ -353,7 +353,7 @@ public class MultipageTiffReader {
          md = new JSONObject(getString(mdBuffer));
       } catch (JSONException ex) {
          Log.log("Error reading image metadata from file", false);
-         System.out.println(getString(mdBuffer));
+         ex.printStackTrace();
       }
       
       if ( byteDepth_ == 0) {

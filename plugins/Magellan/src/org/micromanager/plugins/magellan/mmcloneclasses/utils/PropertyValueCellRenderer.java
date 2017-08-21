@@ -31,6 +31,11 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
    public Component getTableCellRendererComponent(JTable table, Object value,
            boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
+      // https://stackoverflow.com/a/3055930
+      if (value == null) {
+         return null;
+      }
+
       DeviceControlTableModel data = (DeviceControlTableModel) table.getModel();
       item_ = data.getPropertyItem(rowIndex);
 

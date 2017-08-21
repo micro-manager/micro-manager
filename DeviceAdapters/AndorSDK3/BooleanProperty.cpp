@@ -1,38 +1,44 @@
 #include "BooleanProperty.h"
 #include "CallBackManager.h"
 
-
 using namespace andor;
 using namespace std;
 
-static const char * const g_StatusON = "On";
-static const char * const g_StatusOFF = "Off";
-
-
 TBooleanProperty::TBooleanProperty(const string & MM_name, IBool * boolean_feature,
                                        ICallBackManager * callback, bool readOnly)
-: boolean_feature_(boolean_feature),
+: MM_name_(MM_name),
+  boolean_feature_(boolean_feature),
   callback_(callback)
 {
-   if (boolean_feature->IsImplemented())
+  initialise(readOnly);
+}
+
+void TBooleanProperty::initialise(bool readOnly)
+{
+   if (boolean_feature_->IsImplemented())
    {
-      CPropertyAction * pAct = new CPropertyAction (this, &TBooleanProperty::OnBoolean);
-      callback->CPCCreateProperty(MM_name.c_str(), g_StatusON, MM::String, readOnly, pAct);
+      MM::ActionFunctor * pAct = CreatePropertyAction();
+      callback_->CPCCreateProperty(MM_name_.c_str(), g_StatusON, MM::String, readOnly, pAct);
 
       vector<string> values;
       values.push_back(g_StatusOFF);
       values.push_back(g_StatusON);
-      callback->CPCSetAllowedValues(MM_name.c_str(), values);
+      callback_->CPCSetAllowedValues(MM_name_.c_str(), values);
       try 
       {
-         boolean_feature->Attach(this);
+         boolean_feature_->Attach(this);
       }
       catch (exception & e)
       {
          // SDK3 Callback not implemented for this feature
-         callback->CPCLog(e.what());
+         callback_->CPCLog(e.what());
       }
    }
+}
+
+MM::ActionFunctor* TBooleanProperty::CreatePropertyAction()
+{
+  return new CPropertyAction(this, &TBooleanProperty::OnBoolean);
 }
 
 TBooleanProperty::~TBooleanProperty()
@@ -82,6 +88,7 @@ void TBooleanProperty::setFeature(const string & value)
 // Action handler for OnBoolean
 int TBooleanProperty::OnBoolean(MM::PropertyBase * pProp, MM::ActionType eAct)
 {
+
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(boolean_feature_->Get() ? g_StatusON : g_StatusOFF);
@@ -110,6 +117,7 @@ int TBooleanProperty::OnBoolean(MM::PropertyBase * pProp, MM::ActionType eAct)
          {
             callback_->CPCLog("Error - cannot set boolean feature during MDA");
          }
+
       }
    }
 

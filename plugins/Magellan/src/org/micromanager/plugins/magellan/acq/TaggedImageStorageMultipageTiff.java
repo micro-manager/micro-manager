@@ -57,6 +57,7 @@ public final class TaggedImageStorageMultipageTiff   {
    private int numChannels_;
    private boolean fastStorageMode_;
    private int lastAcquiredPosition_ = 0;
+    private String summaryMetadataString_ = null; 
    private ThreadPoolExecutor writingExecutor_;
    private int maxSliceIndex_ = 0, maxFrameIndex_ = 0, maxChannelIndex_ = 0, minSliceIndex_ = 0;
 
@@ -363,34 +364,39 @@ public final class TaggedImageStorageMultipageTiff   {
    
    private void setSummaryMetadata(JSONObject md, boolean showProgress) {
       summaryMetadata_ = md;
+       summaryMetadataString_ = null; 
       if (summaryMetadata_ != null) {
-         // try {
-            boolean slicesFirst = summaryMetadata_.optBoolean("SlicesFirst", true);
-            boolean timeFirst = false;
-            HashMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
-            tiffReadersByLabel_ = new HashMap<String, MultipageTiffReader>();
-            if (showProgress) {
-               ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
-               progressBar.setProgress(0);
-               progressBar.setVisible(true);
-               int i = 1;
-               for (String label : oldImageMap.keySet()) {
+          summaryMetadataString_ = md.toString();
+          boolean slicesFirst = summaryMetadata_.optBoolean("SlicesFirst", true);
+          boolean timeFirst = summaryMetadata_.optBoolean("TimeFirst", false);
+          HashMap<String, MultipageTiffReader> oldImageMap = tiffReadersByLabel_;
+          tiffReadersByLabel_ = new HashMap<String, MultipageTiffReader>();
+          if (showProgress) {
+              ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
+              progressBar.setProgress(0);
+              progressBar.setVisible(true);
+              int i = 1;
+              for (String label : oldImageMap.keySet()) {
                   tiffReadersByLabel_.put(label, oldImageMap.get(label));
                   progressBar.setProgress(i);
                   i++;
-               }
-               progressBar.setVisible(false);
-            } else {
-               tiffReadersByLabel_.putAll(oldImageMap);
-            }
+              }
+              progressBar.setVisible(false);
+          } else {
+              tiffReadersByLabel_.putAll(oldImageMap);
+          }
 
-         if (summaryMetadata_ != null && summaryMetadata_.length() > 0) {
-            processSummaryMD();
+          if (summaryMetadata_ != null && summaryMetadata_.length() > 0) {
+              processSummaryMD();
          }
       }
    }
 
-   public JSONObject getSummaryMetadata() {
+    public String getSummaryMetadataString() {
+        return summaryMetadataString_;
+    }
+
+    public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
    

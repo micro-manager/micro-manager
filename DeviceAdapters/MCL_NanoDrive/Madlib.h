@@ -16,6 +16,7 @@ License:	Distributed under the BSD license.
 #define		MCL_INVALID_AXIS		-7
 #define		MCL_INVALID_HANDLE		-8
 #define		MCL_INVALID_DRIVER      -9
+#define		MCL_SEQ_NOT_VALID		-10
 
 #pragma pack(push, 1)
 struct ProductInformation {
@@ -48,6 +49,13 @@ MADLIB_API	double	MCL_GetCalibration(unsigned int axis, int handle);
 MADLIB_API	int		MCL_GetSerialNumber(int handle);
 MADLIB_API	int		MCL_GetProductInfo(struct ProductInformation *pi, int handle);
 MADLIB_API	bool	MCL_DeviceAttached(int milliseconds, int handle);
+MADLIB_API  int     MCL_GetCommandedPosition(double *xCom, double *yCom, double *zCom, int handle);
+
+MADLIB_API	int		MCL_SequenceLoad(int axis, double* sequence, int seqSize, int handle);
+MADLIB_API	int		MCL_SequenceClear(int handle);
+MADLIB_API	int		MCL_SequenceStart(int handle);
+MADLIB_API	int		MCL_SequenceStop(int handle);
+MADLIB_API	int		MCL_SequenceGetMax(int* max, int handle);
 
 MADLIB_API  bool    MCL_CorrectDriverVersion();
 

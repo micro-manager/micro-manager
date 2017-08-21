@@ -274,6 +274,13 @@ int BitFlowCamera::Initialize()
 		   return ret;
 	   }
 
+	   char message[200];
+		strcpy(message,"number of buffers, number of channels ");
+		strcat(message,  CDeviceUtils::ConvertToString((int) bfDev_.GetNumberOfBuffers()) );
+		strcat(message,  CDeviceUtils::ConvertToString((int) numChannels_) );
+		GetCoreCallback()->LogMessage(this,message, true );
+
+
 	   // at this point frame grabber is successfully initialized so
 	   // we can re-assign image buffers
 	   if (bfDev_.GetNumberOfBuffers() != numChannels_)
@@ -335,10 +342,10 @@ int BitFlowCamera::SnapImage()
 	bfDev_.StartSequence(); // start streaming mode
 	for (int k=0; k < numFrames; k++) {
 
-		char message[100];
-		strcpy(message,"Frame number ");
-		strcat(message,CDeviceUtils::ConvertToString(k));
-		GetCoreCallback()->LogMessage(this, message,true);
+		//char message[100];
+		//strcpy(message,"Frame number ");
+		//strcat(message,CDeviceUtils::ConvertToString(k));
+		//GetCoreCallback()->LogMessage(this, message,true);
 
 		unsigned char* buf = const_cast<unsigned char*>(bfDev_.GetImageCont());      
 		if (buf == 0) {
@@ -885,7 +892,7 @@ int BitFlowCamera::OnEnableBitflowChannels(MM::PropertyBase* pProp, MM::ActionTy
 	  bfDev_.UseVFGs(chanlist);
    }  else if (eAct == MM::BeforeGet) {
        string chanlist;
-	   for (unsigned i=0; i < 8; i++)
+	   for (unsigned i=0; i < numChannels_; i++)
 		   if (bfDev_.VFGActive(i))
 			  chanlist += "1";
 		   else
@@ -1262,7 +1269,7 @@ void BitFlowCamera::ConstructImage(unsigned char* buf, int bufLen, unsigned rawW
 {
    assert(rawWidth/2 > img_[0].Width());
    int fullWidth = rawWidth/2;
-   const int warpOffsetBase = -119; // this warp offset produces full frame at 480 pixels per line
+   const int warpOffsetBase = -112; // this warp offset produces full frame at 480 pixels per line
 
    for (unsigned i=0; i<img_.size(); i++)
    {

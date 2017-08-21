@@ -136,7 +136,7 @@ public class AutofocusUtils {
     * @param sliceTiming - Data structure with current device timing setting
     * @param runAsynchronously - whether or not to run the function asynchronously (in own thread)
     *          (true when run from Setup panel and false when run during acquisition)
-    * @return FocusResult object.  Will be bogus  if runAsynchronously is true, but in that case the
+    * @return FocusResult object.  Will be bogus if runAsynchronously is true, but in that case the
     *          actual result can be accessed via getLastFocusResult() in the caller's refreshSelected() method
     *
     */
@@ -201,9 +201,11 @@ public class AutofocusUtils {
             );
 
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
+            Devices.Keys cameraDevice = Devices.Keys.CAMERAA;
             boolean usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM);
             if (side.equals(Devices.Sides.B)) {
                camera = devices_.getMMDevice(Devices.Keys.CAMERAB);
+               cameraDevice = Devices.Keys.CAMERAB;
                usingDemoCam = devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM);
             }
             Devices.Keys galvoDevice = Devices.getSideSpecificKey(Devices.Keys.GALVOA, side);
@@ -212,9 +214,9 @@ public class AutofocusUtils {
             final int nrImages = props_.getPropValueInteger(
                     Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_NRIMAGES);
             final boolean showImages = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
-                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, false);
+                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, true);
             final boolean showPlot = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
-                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, false);
+                    Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, true);
             float piezoStepSize = props_.getPropValueFloat(Devices.Keys.PLUGIN,
                     Properties.Keys.PLUGIN_AUTOFOCUS_STEPSIZE);  // user specifies step size in um, we translate to galvo and move only galvo
             final float imagingCenter = prefs_.getFloat(
@@ -222,6 +224,13 @@ public class AutofocusUtils {
                     Properties.Keys.PLUGIN_PIEZO_CENTER_POS, 0);
             final float minimumRSquare =  props_.getPropValueFloat(Devices.Keys.PLUGIN,
                      Properties.Keys.PLUGIN_AUTOFOCUS_MINIMUMR2);
+            
+            // make sure we start with the beam on, but we will restore its state later
+            // if the beam is off then we will get an erroneous value for the slice position
+            final boolean beamOff = props_.getPropValueString(galvoDevice, Properties.Keys.BEAM_ENABLED)
+                  .equals(Properties.Values.NO.toString());
+            props_.setPropValue(galvoDevice, Properties.Keys.BEAM_ENABLED, Properties.Values.YES);
+            
             final double originalPiezoPosition = positions_.getUpdatedPosition(piezoDevice);
             final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice, Directions.Y);
             final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
@@ -233,6 +242,7 @@ public class AutofocusUtils {
             
             // start with current acquisition settings, then modify a few of them for the focus acquisition
             AcquisitionSettings acqSettings = ASIdiSPIM.getFrame().getAcquisitionPanel().getCurrentAcquisitionSettings();
+            acqSettings.isStageScanning = false;
             acqSettings.hardwareTimepoints = false;
             acqSettings.channelMode = MultichannelModes.Keys.NONE;
             acqSettings.useChannels = false;
@@ -325,8 +335,12 @@ public class AutofocusUtils {
                }
                gui_.getMMCore().clearCircularBuffer();
                gui_.getMMCore().initializeCircularBuffer();
-               cameras_.setSPIMCamerasForAcquisition(true);
+               cameras_.setCameraForAcquisition(cameraDevice, true);
+               prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                     Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(),
+                     (float)gui_.getMMCore().getExposure());
                gui_.getMMCore().setExposure((double) sliceTiming.cameraExposure);
+               gui_.refreshGUIFromCache();
                gui_.getMMCore().startSequenceAcquisition(camera, nrImages, 0, true);
 
                boolean success = controller_.triggerControllerStartAcquisition(
@@ -346,8 +360,7 @@ public class AutofocusUtils {
                   Thread.sleep(5);
                }
                if (now - startTime >= timeout) {
-                  throw new ASIdiSPIMException(
-                          "Camera did not send first image within a reasonable time");
+                  throw new ASIdiSPIMException("Camera did not send first image within a reasonable time");
                }
 
                // calculate focus scores of the acquired images, using the scoring
@@ -462,7 +475,7 @@ public class AutofocusUtils {
             } finally {
                
                ASIdiSPIM.getFrame().setHardwareInUse(false);
-               
+
                // set result to be a dummy value for now; we will overwrite it later
                //  unless we encounter an exception in the meantime
                lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0);
@@ -474,12 +487,23 @@ public class AutofocusUtils {
                   gui_.getMMCore().setCameraDevice(originalCamera);
                   if (showImages) {
                      gui_.promptToSaveAcquisition(acqName, false);
+                     gui_.closeAcquisition(acqName);
                   }
 
                   controller_.cleanUpControllerAfterAcquisition(1, acqSettings.firstSideIsA, false);
                   
-                  if (runAsynchronously)
-                     cameras_.setSPIMCamerasForAcquisition(false);
+                  if (runAsynchronously) {
+                     // when run from Setup panels then put things back to live mode settings, but not if run during acquisition
+                     cameras_.setCameraForAcquisition(cameraDevice, false);
+                     gui_.getMMCore().setExposure(camera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
+                           Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 10f));
+                     gui_.refreshGUIFromCache();
+                  }
+                  
+                  // turn the beam off it started out that way
+                  if (beamOff) {
+                     props_.setPropValue(galvoDevice, Properties.Keys.BEAM_ENABLED, Properties.Values.NO);
+                  }
 
                   // move back to original position if needed
                   if (!centerAtCurrentZ) {
@@ -530,8 +554,6 @@ public class AutofocusUtils {
                   // currently only used by setup panels
                   caller.refreshSelected();
                      
-                  posUpdater_.pauseUpdates(false);
-
                   if (liveModeOriginally) {
                      gui_.getMMCore().waitForDevice(camera);
                      gui_.getMMCore().waitForDevice(originalCamera);
@@ -540,6 +562,21 @@ public class AutofocusUtils {
 
                } catch (Exception ex) {
                   throw new ASIdiSPIMException(ex, "Error while restoring hardware state after autofocus.");
+               }
+               finally {
+                  posUpdater_.pauseUpdates(false);
+               }
+               
+               if (showImages) {
+                  if (gui_.acquisitionExists(acqName)) {
+                     try {
+                        gui_.closeAcquisition(acqName);
+                     } catch (Exception ex) {
+                        // NS: I don't yet know why, but this call can throw an exception
+                        // It is pivotal to catch it, or we will not stop the hardware
+                        gui_.logError(ex, "While closing acquisition in diSPIM-AutofocusUtils");
+                     }
+                  }
                }
             }
             ReportingUtils.logMessage("finished autofocus: " + (lastFocusResult_.getFocusSuccess() ? "successful" : "not successful")

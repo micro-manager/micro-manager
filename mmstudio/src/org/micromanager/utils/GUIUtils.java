@@ -248,30 +248,29 @@ public class GUIUtils {
       }
    }
 
-   public static void registerImageFocusListener(final ImageFocusListener listener) {
-      AWTEventListener awtEventListener = new AWTEventListener() {
-         private ImageWindow currentImageWindow_ = null;
-         @Override
-         public void eventDispatched(AWTEvent event) {
-            if (event instanceof WindowEvent) {
-               if (0 != (event.getID() & WindowEvent.WINDOW_GAINED_FOCUS)) {
-                  if (event.getSource() instanceof ImageWindow) {
-                     ImageWindow focusedWindow = WindowManager.getCurrentWindow();
-                     if (currentImageWindow_ != focusedWindow) {
-                        //if (focusedWindow.isVisible() && focusedWindow instanceof ImageWindow) {
-                           listener.focusReceived(focusedWindow);
-                           currentImageWindow_ = focusedWindow;
-                        //}
-                     }
-                  }
-               }
-            }
-         }
-      };
+    public static void registerImageFocusListener(final ImageFocusListener listener) {
+        AWTEventListener awtEventListener = new AWTEventListener() {
+            private ImageWindow currentImageWindow_ = null;
 
-      Toolkit.getDefaultToolkit().addAWTEventListener(awtEventListener,
-              AWTEvent.WINDOW_FOCUS_EVENT_MASK);
-   }
+            @Override
+            public void eventDispatched(AWTEvent event) {
+                if (event instanceof WindowEvent) {
+                    if (0 != (event.getID() & WindowEvent.WINDOW_GAINED_FOCUS)) {
+                        if (event.getSource() instanceof ImageWindow) {
+                            ImageWindow focusedWindow = (ImageWindow) event.getSource();
+                            if (currentImageWindow_ != focusedWindow) {
+                                listener.focusReceived(focusedWindow);
+                                currentImageWindow_ = focusedWindow;
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        Toolkit.getDefaultToolkit().addAWTEventListener(awtEventListener,
+                AWTEvent.WINDOW_FOCUS_EVENT_MASK);
+    }
 
    /*
     * Wraps SwingUtilities.invokeAndWait so that if it is being called

@@ -22,6 +22,10 @@
 #define NOMINMAX
 #endif
 
+#ifndef __has_builtin         // fix older g++ versions
+  #define __has_builtin(x) 0  // compatibility with non-clang compilers.
+#endif
+
 #include "MMIIDCCamera.h"
 
 #include "IIDCConvert.h"

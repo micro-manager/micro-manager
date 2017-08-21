@@ -21,9 +21,12 @@ License:	Distributed under the BSD license.
 #include "HandleListType.h"
 #include "heap.h"
 
+#include <vector>
+
 class MCL_NanoDrive_ZStage : public CStageBase<MCL_NanoDrive_ZStage>
 {
 public:
+
   MCL_NanoDrive_ZStage();
   ~MCL_NanoDrive_ZStage();
 
@@ -36,7 +39,7 @@ public:
   // Stage API
   virtual int SetPositionUm(double pos);
   virtual int GetPositionUm(double& pos);
-  virtual int SetRelativePositionUm(double d);
+  virtual int SetRelativePositionUm(double d); 
   virtual double GetStepSize();
   virtual int SetPositionSteps(long steps);
   virtual int GetPositionSteps(long& steps);
@@ -46,11 +49,10 @@ public:
   virtual int GetStageSequenceMaxLength(long& nrEvents) const;
   virtual int StartStageSequence();
   virtual int StopStageSequence();
-  virtual int LoadStageSequence(std::vector<double> positions) const;
-  virtual bool IsContinuousFocusDrive() const;
   virtual int ClearStageSequence();
   virtual int AddToStageSequence(double position);
-  virtual int SendStageSequence(); 
+  virtual int SendStageSequence();
+  virtual bool IsContinuousFocusDrive() const;
 
   int getHandle(){ return MCLhandle_;}
 
@@ -58,6 +60,9 @@ public:
   int OnPositionUm(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSettlingTimeZMs(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSetOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnCommandChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnSetSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnSetShiftSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int CreateZStageProperties();
@@ -71,10 +76,16 @@ private:
    double calibration_;
    int serialNumber_;
    int settlingTimeZ_ms_;
+   double commandedZ_;
 
    double curZpos_;
-
    bool firstWrite_;
+   
+   bool canSupportSeq_;
+   bool supportsSeq_;
+   int seqMaxSize_;
+   bool shiftSequence_;
+   std::vector<double> sequence_;
 
    int axis_;
 };

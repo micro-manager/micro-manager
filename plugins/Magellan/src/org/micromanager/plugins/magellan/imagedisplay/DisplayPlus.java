@@ -108,7 +108,7 @@ public class DisplayPlus extends VirtualAcquisitionDisplay implements ListDataLi
       //add in customized zoomable acquisition virtual stack
       try {
          //looks like nSlicess only really matters during display startup
-         int nSlices = MD.getNumChannels(summaryMD);
+         int nSlices = MD.getNumChannels(summaryMD) * (MD.isRGB32(summaryMD) ? 3 : 1) ;
 
 
          if (exploreAcq_) {

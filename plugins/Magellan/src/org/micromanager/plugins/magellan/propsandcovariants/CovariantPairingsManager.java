@@ -191,7 +191,9 @@ public class CovariantPairingsManager {
                     }
                     try {
                         SurfaceData ind = new SurfaceData(surface, type);
-                        ind.initializeCurvedSurfaceData();
+                        if (ind.isCurvedSurfaceCalculation()) {
+                           ind.initializeCurvedSurfaceData();
+                        } 
                         //Get reverse pairing (EOM voltage -> Relative power) to convert entered base EOM to bae power
                         CovariantPairing reversePairing = createCovariantAndAddValues(ind, dependentName, lines);
                         ind.setBasePowerFromBaseVoltage(reversePairing);
@@ -214,7 +216,7 @@ public class CovariantPairingsManager {
     private CovariantPairing createCovariantAndAddValues(Covariant independent, String dependentName, String[] lines) throws Exception {
         Covariant dependent = initCovariantFromString(dependentName);
         CovariantPairing pairing = new CovariantPairing(independent, dependent);
-        CovariantPairing reversePairing = new CovariantPairing(independent, dependent);
+        CovariantPairing reversePairing = new CovariantPairing(dependent,independent);
         for (int i = 1; i < lines.length; i++) {
             String[] vals = lines[i].split(",");
             CovariantValue iVal = independent.getType() == CovariantType.STRING ? new CovariantValue(vals[0])
@@ -225,7 +227,7 @@ public class CovariantPairingsManager {
                     : new CovariantValue(Integer.parseInt(vals[1]));
             pairing.addValuePair(iVal, dVal);
             reversePairing.addValuePair(dVal, iVal);
-        }
+        }  
         this.addPair(pairing);
         return reversePairing;
     }

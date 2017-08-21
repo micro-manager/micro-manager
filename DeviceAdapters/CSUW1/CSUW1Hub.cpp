@@ -196,14 +196,10 @@ int CSUW1Hub::GetDichroicPosition(MM::Device& device, MM::Core& core, long &dich
 /*
  * 
  */
-int CSUW1Hub::SetShutterPosition(MM::Device& device, MM::Core& core, int pos)
+int CSUW1Hub::SetShutterPosition(MM::Device& device, MM::Core& core, bool open)
 {
    ostringstream os;
-   os << "SH";
-   if (pos == 0)
-      os << "O";
-   else 
-      os << "C";
+   os << "SH" << (open ? "O" : "C");
    int ret =  ExecuteCommand(device, core, os.str().c_str());
    if (ret != DEVICE_OK)
       return ret;
@@ -211,10 +207,9 @@ int CSUW1Hub::SetShutterPosition(MM::Device& device, MM::Core& core, int pos)
 }
 
 /*
- * 1 = closed
- * 0 = open
+ * 
  */
-int CSUW1Hub::GetShutterPosition(MM::Device& device, MM::Core& core, int& pos)
+int CSUW1Hub::GetShutterPosition(MM::Device& device, MM::Core& core, bool& open)
 {
    ClearAllRcvBuf(device, core);
    int ret = ExecuteCommand(device, core, "SH, ?");
@@ -222,10 +217,7 @@ int CSUW1Hub::GetShutterPosition(MM::Device& device, MM::Core& core, int& pos)
    ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
    if (ret != DEVICE_OK)
       return ret;
-   if (strstr(rcvBuf_, "CLOSE") != 0)
-      pos = 1;
-   pos = 0;
-
+   open = (strstr(rcvBuf_, "OPEN") != 0);
    return DEVICE_OK;
 }
 
@@ -707,14 +699,10 @@ core.LogMessage(&device, os2.str().c_str(), false);
 /*
  * Set NIR Shutter
  */
-int CSUW1Hub::SetNIRShutterPosition(MM::Device& device, MM::Core& core, int pos)
+int CSUW1Hub::SetNIRShutterPosition(MM::Device& device, MM::Core& core, bool open)
 {
    ostringstream os;
-   os << "SH2";
-   if (pos == 0)
-      os << "O";
-   else 
-      os << "C";
+   os << "SH2" << (open ? "O" : "C");
    int ret =  ExecuteCommand(device, core, os.str().c_str());
    if (ret != DEVICE_OK)
       return ret;
@@ -723,10 +711,8 @@ int CSUW1Hub::SetNIRShutterPosition(MM::Device& device, MM::Core& core, int pos)
 
 /* 
  * Queries CSU for current NIR Shutter
- * 1 = closed
- * 0 = open
  */
-int CSUW1Hub::GetNIRShutterPosition(MM::Device& device, MM::Core& core, int& pos)
+int CSUW1Hub::GetNIRShutterPosition(MM::Device& device, MM::Core& core, bool& open)
 {
    ClearAllRcvBuf(device, core);
    int ret = ExecuteCommand(device, core, "SH2, ?");
@@ -734,10 +720,7 @@ int CSUW1Hub::GetNIRShutterPosition(MM::Device& device, MM::Core& core, int& pos
    ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
    if (ret != DEVICE_OK)
       return ret;
-   if (strstr(rcvBuf_, "CLOSE") != 0)
-      pos = 1;
-   pos = 0;
-
+   open = (strstr(rcvBuf_, "OPEN") != 0);
    return DEVICE_OK;
 }
 

@@ -27,11 +27,11 @@
 #define ERR_LOW_LEVEL_MODE_FAILED    10007                                   
 #define ERR_INVALID_MODE             10008 
 
-class Skeleton : public CGenericBase<Skeleton>
+class SkeletonDevice : public CGenericBase<SkeletonDevice>
 {
    public:
-      Skeleton();
-      ~Skeleton();
+      SkeletonDevice();
+      ~SkeletonDevice();
 
       // Device API
       // ---------

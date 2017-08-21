@@ -23,9 +23,11 @@ package org.micromanager.asidispim;
 
 import net.miginfocom.swing.MigLayout;
 
+import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
+import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Positions;
 import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
@@ -75,17 +77,24 @@ import org.micromanager.utils.MMFrame;
 //TODO factor out common code for JComboBoxes like MulticolorModes, CameraModes, AcquisitionModes, etc.
 //TODO cleanup prefs vs. props... maybe add boolean support for plugin device use only?
 //TODO finish eliminating Prefs.Keys in favor of Properties.Keys with plugin values
-//TODO save/load plugin settings from file instead of from registry (nice to also include controller settings)
+//TODO separate properties into true hardware-related properties and plugin settings (maybe store plugin settings directly in prefs?)
+//TODO have per-tab way of creating and accessing plugin settings in prefs
+//TODO with prefs, make sure there is good way of specifying default value
+//TODO save/load plugin settings from file (or image metadata) instead of from registry (nice to also include controller settings)
 //TODO improve efficiency of camera code by pre-calculating key factors and updating when needed instead of calculating every time
 //TODO add check for correct Hamamatsu model
+//TODO fix slightly incorrect Hamamatsu timing calculation (apparent at small ROI)
 //TODO execute autofocus during acquisition before the desired time point is reached instead of waiting until a timepoint should be collected
 //       or else do autofocus after acquisition instead of before
+//TODO merge all acquisition code instead of autofocus having its own version
+//TODO better separate GUI from function!!, e.g. similar to MM's core/gui separation (~MVC framework)
 //TODO smart default joystick settings (e.g. different defaults different panels/wheels)
 //TODO calculate and show estimated disk space as part of "durations"
 //TODO Make it easier to adjust stack center (or start and end) including autodetect start/end based on content
 //TODO allow different stack center, number of slices, offset, or other settings for each XY position
 //TODO iconify tab labels and/or other parts of plugin
-//TODO use new J *=0 to more efficiently clear joystick settings (require comm card version 3.1)
+//TODO use new J *=0 to more efficiently clear joystick settings (require comm card version 3.1)\
+//TODO be more efficient in serial commands, including not resending same commands (largely obviated once shared properties on same card are implemented)
 
 /**
  *
@@ -114,11 +123,13 @@ public class ASIdiSPIMFrame extends MMFrame
    private final SettingsPanel settingsPanel_;
    private final DataAnalysisPanel dataAnalysisPanel_;
    private final AutofocusPanel autofocusPanel_;
+   private final CameraPanel cameraPanel_;
    private final HelpPanel helpPanel_;
    private final StatusSubPanel statusSubPanel_;
    private final StagePositionUpdater stagePosUpdater_;
    private final ListeningJTabbedPane tabbedPane_;
    private PiezoSleepPreventer piezoSleepPreventer_;
+   private final LiveModeListener piezoSleepListener_;
    
    private final AtomicBoolean hardwareInUse_ = new AtomicBoolean(false);   // true if acquisition or autofocus running
    
@@ -142,13 +153,8 @@ public class ASIdiSPIMFrame extends MMFrame
       cameras_ = new Cameras(gui_, devices_, props_, prefs_);
       controller_ = new ControllerUtils(gui_, props_, prefs_, devices_, positions_);
       
-      // make sure Live mode is turned off (panels assume it can manipulate
-      //   cameras which requires live mode to be turned off)
-      boolean liveModeOriginally = gui_.isLiveModeOn();
-      String cameraOriginal = gui_.getMMCore().getCameraDevice();
-      if (liveModeOriginally) {
-         gui_.enableLiveMode(false);
-      }
+      // make sure Live mode is turned off
+      gui_.enableLiveMode(false);
       
       // create the panels themselves
       // in some cases dependencies create required ordering
@@ -162,19 +168,20 @@ public class ASIdiSPIMFrame extends MMFrame
             prefs_, stagePosUpdater_, positions_, controller_, autofocus_);
       setupPanelA_ = new SetupPanel(gui_, devices_, props_, joystick_,
             Devices.Sides.A, positions_, cameras_, prefs_, stagePosUpdater_,
-            autofocus_);
+            autofocus_, controller_);
       if (!ASIdiSPIM.oSPIM) {
          setupPanelB_ = new SetupPanel(gui_, devices_, props_, joystick_,
                Devices.Sides.B, positions_, cameras_, prefs_, stagePosUpdater_,
-               autofocus_);
+               autofocus_, controller_);
       } else {
          setupPanelB_ = null;
       }
       navigationPanel_ = new NavigationPanel(gui_, devices_, props_, joystick_,
             positions_, prefs_, cameras_, stagePosUpdater_);
 
-      dataAnalysisPanel_ = new DataAnalysisPanel(gui_, prefs_);
+      dataAnalysisPanel_ = new DataAnalysisPanel(prefs_, props_, devices_);
       autofocusPanel_ = new AutofocusPanel(gui_, devices_, props_, prefs_, autofocus_);
+      cameraPanel_ = new CameraPanel(gui_, devices_, props_, prefs_, cameras_);
       settingsPanel_ = new SettingsPanel(gui_, devices_, props_, prefs_, stagePosUpdater_);
       stagePosUpdater_.oneTimeUpdate();  // needed for NavigationPanel
       helpPanel_ = new HelpPanel();
@@ -199,8 +206,9 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.addLTab(devicesPanel_);     // tabIndex = 5
       final int deviceTabIndex = tabbedPane_.getTabCount() - 1;
       tabbedPane_.addLTab(autofocusPanel_);   // tabIndex = 6
-      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 7
-      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 8
+      tabbedPane_.addLTab(cameraPanel_);      // tabIndex = 7
+      tabbedPane_.addLTab(settingsPanel_);    // tabIndex = 8
+      tabbedPane_.addLTab(helpPanel_);        // tabIndex = 9
       final int helpTabIndex = tabbedPane_.getTabCount() - 1;
       
       // make taller tabs for easier navigation between them
@@ -228,12 +236,7 @@ public class ASIdiSPIMFrame extends MMFrame
       piezoSleepPreventer_ = new PiezoSleepPreventer(gui_, devices_, props_);
 
       // attach live mode listeners
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
-      if (!ASIdiSPIM.oSPIM) {
-         MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
-      }
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
-      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(new LiveModeListener() {
+      piezoSleepListener_ = new LiveModeListener() {
          // make sure to "wake up" any piezos with autosleep enabled before we start imaging 
          @Override
          public void liveModeEnabled(boolean enabled) {
@@ -243,7 +246,13 @@ public class ASIdiSPIMFrame extends MMFrame
                piezoSleepPreventer_.stop();
             }
          }
-      });
+      };
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener(piezoSleepListener_);
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelA_);
+      if (!ASIdiSPIM.oSPIM) {
+         MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) setupPanelB_);
+      }
+      MMStudio.getInstance().getSnapLiveManager().addLiveModeListener((LiveModeListener) navigationPanel_);
       
       // set scan for live mode to be triangle (now live mode setting not affected by SPIM setting)
       props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
@@ -288,15 +297,6 @@ public class ASIdiSPIMFrame extends MMFrame
             "[" + this.getHeight() + "]"));
       glassPane.add(statusSubPanel_, "dock south");
       
-      // restore live mode and camera
-      if (liveModeOriginally) {
-         gui_.enableLiveMode(true);
-      }
-      try {
-         gui_.getMMCore().setCameraDevice(cameraOriginal);
-      } catch (Exception ex) {
-         // do nothing
-      }
    }
    
    public void setHardwareInUse(boolean inuse) {
@@ -309,6 +309,23 @@ public class ASIdiSPIMFrame extends MMFrame
    
    public void tabsSetEnabled(boolean enabled) {
       tabbedPane_.setEnabled(enabled);
+   }
+   
+   /**
+    * @return CameraModes.Keys value from Camera panel
+    * (internal, edge, overlap, pseudo-overlap, light sheet) 
+    */
+   public CameraModes.Keys getSPIMCameraMode() {
+      CameraModes.Keys val = null;
+      try {
+         val = ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode();
+      } catch (Exception ex) {
+         // this case in for when tab is first created and CameraPanel doesn't yet exist
+         // arguably it's better to use the Java object when possible instead of always going to prefs
+         val = CameraModes.getKeyFromPrefCode(prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+      }
+      return val;
    }
    
    /**
@@ -329,6 +346,26 @@ public class ASIdiSPIMFrame extends MMFrame
    public NavigationPanel getNavigationPanel() {
       return navigationPanel_;
    }
+   
+   /**
+    * For use of data analysis panel code (running deskew)
+    * Do not get into the internals of this plugin without relying on
+    * ASIdiSPIM.api
+    * @return the currently used instance of the DataAnalysisPanel;
+    */
+   public DataAnalysisPanel getDataAnalysisPanel() {
+      return dataAnalysisPanel_;
+   }
+   
+   /**
+    * For use of acquisition panel code (getting camera settings)
+    * Do not get into the internals of this plugin without relying on
+    * ASIdiSPIM.api
+    * @return the currently used instance of the CameraPanel;
+    */
+   public CameraPanel getCameraPanel() {
+      return cameraPanel_;
+   }   
    
    /**
     * For use by the acquisition panel code (to update offset setting)
@@ -355,7 +392,7 @@ public class ASIdiSPIMFrame extends MMFrame
    public AutofocusPanel getAutofocusPanel() {
       return autofocusPanel_;
    }
-
+   
    /**
     * Do not get into the internals of this plugin without relying on
     * ASIdiSPIM.api
@@ -375,6 +412,9 @@ public class ASIdiSPIMFrame extends MMFrame
    @Override
    public void propertyChangedAlert(String device, String property, String value) {
      // props_.callListeners();
+     // if (device.equals("Core") && property.equals("Camera")) {
+     //    could call cameras_.setCamera() here
+     //}
    }
 
    @Override
@@ -434,8 +474,13 @@ public class ASIdiSPIMFrame extends MMFrame
    @Override
    public void dispose() {
       stagePosUpdater_.stop();
+      piezoSleepPreventer_.stop();
       saveSettings();
       windowClosing();
+      MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener(piezoSleepListener_);
+      MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener((LiveModeListener) setupPanelA_);
+      MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener((LiveModeListener) setupPanelB_);
+      MMStudio.getInstance().getSnapLiveManager().removeLiveModeListener((LiveModeListener) navigationPanel_);
       super.dispose();
    }
 }

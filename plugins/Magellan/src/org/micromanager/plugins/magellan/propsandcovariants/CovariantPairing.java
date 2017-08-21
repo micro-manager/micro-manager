@@ -20,6 +20,7 @@ package org.micromanager.plugins.magellan.propsandcovariants;
 import org.micromanager.plugins.magellan.acq.Acquisition;
 import org.micromanager.plugins.magellan.acq.AcquisitionEvent;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
@@ -28,6 +29,7 @@ import org.micromanager.plugins.magellan.misc.Log;
 import org.micromanager.plugins.magellan.misc.NumberUtils;
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
+import org.micromanager.plugins.magellan.main.Magellan;
 
 /**
  * Class that encapsulates and independent and a dependent covariant, and a set of covaried values between the two
@@ -43,11 +45,21 @@ public class CovariantPairing {
    private IdentityHashMap<Acquisition, Object> excludedAcqs_; //not actually a map, but theres no IdentityHashSet
    private PolynomialSplineFunction interpolant_;
    private LinearInterpolator interpolator_;
-   
+   //for randomizing excitaitions
+   public static String lastPositionName_ = "None";
+    public static double powerMultipler_ = 1.0;
+     
    public CovariantPairing(Covariant independent, Covariant dependent) {
       independent_ = independent;
       dependent_ = dependent;
       excludedAcqs_ = new IdentityHashMap<Acquisition, Object>();
+      if (independent instanceof SurfaceData && ((SurfaceData)independent).isNeuralNetControl()) {
+         new Thread(new Runnable() {
+             @Override
+             public void run() {
+                ((SurfaceData)independent_).initializeNeuralNetControl();             }
+         }).start();   
+      }
    }
    
     public double getInterpolatedNumericalValue(CovariantValue independentValue) {
@@ -64,8 +76,57 @@ public class CovariantPairing {
             return interpolant_.value(indVal);
         }
     }
-
+   
    public void updateHardwareBasedOnPairing(AcquisitionEvent event) throws Exception {
+      //special behavior for curved surface calcualtions or neural net
+      if (independent_ instanceof SurfaceData && ((SurfaceData) independent_).isNeuralNetControl()) {
+          String name = "TeensySLM1";
+          Magellan.getCore().setSLMImage(name, event.nnEOM1Settings_);
+          Magellan.getCore().displaySLMImage(name);
+          //Second EOM
+          String name2 = "TeensySLM2";
+          Magellan.getCore().setSLMImage(name2, event.nnEOM2Settings_);
+          Magellan.getCore().displaySLMImage(name2);
+          return;
+      } else if (independent_ instanceof SurfaceData && ((SurfaceData) independent_).isCurvedSurfaceCalculation()) {
+         //randomize excitaitons
+//         String posName = event.xyPosition_.getName();
+//         if (!posName.equals(lastPositionName_)) {
+//            double minMult = 0.5;
+//            double maxMult = 2.0;
+//            lastPositionName_ = event.xyPosition_.getName();
+//            powerMultipler_ = Math.random() * (maxMult - minMult) + minMult;
+//         }
+//         
+         if (dependent_.getName().startsWith("TeensySLM1")) {
+            double[] powers = ((SurfaceData) independent_).curvedSurfacePower(event, powerMultipler_);
+            byte[] eomSettings = new byte[powers.length];
+            for (int i = 0; i < powers.length; i++) {
+               eomSettings[i] = (byte) (0xff & ((int) getInterpolatedNumericalValue(new CovariantValue(powers[i]))));
+            }
+
+            String name = "TeensySLM1";
+            Magellan.getCore().setSLMImage(name, eomSettings);
+            Magellan.getCore().displaySLMImage(name);
+         } else if (dependent_.getName().startsWith("TeensySLM2")) {
+            //current value is a string, even though stored values 
+            double[] powers = ((SurfaceData) independent_).curvedSurfacePower(event, powerMultipler_);
+            byte[] eomSettings = new byte[powers.length];
+            for (int i = 0; i < powers.length; i++) {
+               eomSettings[i] = (byte) (0xff & ((int) getInterpolatedNumericalValue(new CovariantValue(powers[i]))));
+            }
+
+            String name = "TeensySLM2";
+            Magellan.getCore().setSLMImage(name, eomSettings);
+            Magellan.getCore().displaySLMImage(name);
+         } else {
+            Log.log("Unrecognized SLM name");
+             throw new Exception();
+         }
+        
+         return;
+      }
+      
       CovariantValue dVal = getDependentValue(event);
       dependent_.updateHardwareToValue(dVal);
    }
@@ -78,7 +139,7 @@ public class CovariantPairing {
    private CovariantValue getDependentValue(AcquisitionEvent evt) throws Exception {
       //get the value of the independent based on state of hardware
       CovariantValue iVal = independent_.getCurrentValue(evt);
-      
+                  
       if (independent_.isDiscrete() || independent_.getType() == CovariantType.STRING) {
          //if independent is discrete, dependent value is whatever is defined
          //for the current value of independent, or null if no mapping is defined

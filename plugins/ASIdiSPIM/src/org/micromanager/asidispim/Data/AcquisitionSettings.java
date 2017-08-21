@@ -68,6 +68,9 @@ public class AcquisitionSettings {
    // whether or not to use autofocus during acquisition
    public boolean useAutofocus;
    
+   // whether or not to correct movement during acquisition
+   public boolean useMovementCorrection;
+   
    // number of Sides from which we take data (diSPIM: 1 or 2)
    public int numSides;
    
@@ -102,9 +105,6 @@ public class AcquisitionSettings {
    // camera in overlap, edge, etc. mode
    public CameraModes.Keys cameraMode;
    
-   // acceleration time of X axis (only applies to stage scanning)
-   public float accelerationX;
-
    // if true, the tiger controller will coordinate multiple timepoints
    // instead of having plugin trigger each one
    // true/false determined by the interval between timpoints vs. overhead

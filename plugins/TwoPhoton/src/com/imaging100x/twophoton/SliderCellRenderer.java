@@ -41,6 +41,11 @@ public class SliderCellRenderer implements TableCellRenderer {
 	public Component getTableCellRendererComponent(JTable table, Object value,
 			boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
+		// https://stackoverflow.com/a/3055930
+		if (value == null) {
+			return null;
+		}
+
 		PMTDataModel data = (PMTDataModel)table.getModel();
 		
 		Component comp;

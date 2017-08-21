@@ -29,7 +29,6 @@ import java.text.ParseException;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -43,7 +42,6 @@ import java.beans.PropertyChangeListener;
 
 import org.micromanager.MMStudio;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.asidispim.Data.CameraModes;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.MyStrings;
 import org.micromanager.asidispim.Data.Prefs;
@@ -71,14 +69,14 @@ public class SettingsPanel extends ListeningJPanel {
    
    private final JFormattedTextField rawPath_;
    private final JSpinner liveScanMs_;
-
    
    /**
     * 
+    * @param gui Micro-Manager api
     * @param devices the (single) instance of the Devices class
-    * @param props 
-    * @param prefs
-    * @param stagePosUpdater
+    * @param props Plugin-wide properties
+    * @param prefs Plugin-wide preferences
+    * @param stagePosUpdater Can query the controller for stage positionns
     */
    public SettingsPanel(final ScriptInterface gui, Devices devices, Properties props, 
          Prefs prefs, StagePositionUpdater stagePosUpdater) {    
@@ -164,22 +162,7 @@ public class SettingsPanel extends ListeningJPanel {
             Properties.Keys.SCANNER_FILTER_Y, 0.4);
       scannerPanel.add(scannerFilterY, "wrap");
       
-      // end scanner panel
-      
-      
-      // start camera panel
-      
-      final JPanel cameraPanel = new JPanel(new MigLayout(
-            "",
-            "[right]16[left]",
-            "[]8[]"));
-      cameraPanel.setBorder(PanelUtils.makeTitledBorder("Camera"));
-      cameraPanel.add(new JLabel("Acq. Trigger Mode:"));
-      CameraModes camModeObject = new CameraModes(devices_, props_, prefs_);
-      JComboBox camModeCB = camModeObject.getComboBox();
-      cameraPanel.add(camModeCB, "wrap");
-      
-      cameraPanel.add(new JLabel("Live scan time [ms]:"));
+      scannerPanel.add(new JLabel("Live scan period [ms]:"));
       liveScanMs_ = pu.makeSpinnerInteger(1, 10000,
             Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_CAMERA_LIVE_SCAN, 10);
       liveScanMs_.addChangeListener(new ChangeListener() {
@@ -193,9 +176,9 @@ public class SettingsPanel extends ListeningJPanel {
       // set it the first time
       props_.setPropValue(new Devices.Keys[]{Devices.Keys.GALVOA, Devices.Keys.GALVOB},
             Properties.Keys.SA_PERIOD_X, (Integer) liveScanMs_.getValue(), true);
-      cameraPanel.add(liveScanMs_, "wrap");
+      scannerPanel.add(liveScanMs_, "wrap");
       
-      // end camera panel
+      // end scanner panel
       
       
       // start test acquisition panel
@@ -260,11 +243,16 @@ public class SettingsPanel extends ListeningJPanel {
       // TODO create method to determine this instead of separate code here and in AcquisitionPanel
       if (devices_.isTigerDevice(Devices.Keys.XYSTAGE)
             && props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_NUMLINES)) {
-         stageScanPanel.add(new JLabel("Motor acceleration time [ms]:"));
-         final JSpinner stageAccelTime = pu.makeSpinnerFloat(10, 1000, 10,
-               Devices.Keys.XYSTAGE,
-               Properties.Keys.STAGESCAN_MOTOR_ACCEL, 50);
-         stageScanPanel.add(stageAccelTime, "wrap");
+         stageScanPanel.add(new JLabel("Relative acceleration time:"));
+         final JSpinner stageAccelFactor = pu.makeSpinnerFloat(0.1, 10, 1,
+               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ACCEL_FACTOR, 1);
+         stageScanPanel.add(stageAccelFactor, "wrap");
+         if (props_.hasProperty(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST)) {  // present in 3.17 and above
+            stageScanPanel.add(new JLabel("Scan overshoot distance [" + "\u00B5"+ "m]:"));
+            final JSpinner scanOvershootDistance = pu.makeSpinnerInteger(0, 1000,
+                  Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST, 0);
+            stageScanPanel.add(scanOvershootDistance, "wrap");
+         }
       } else {
          stageScanPanel.add(new JLabel("Stage scanning not supported by your firmware."), "left, wrap");
          stageScanPanel.add(new JLabel("See http://dispim.org for further information."), "left, wrap");
@@ -294,12 +282,11 @@ public class SettingsPanel extends ListeningJPanel {
       
       
       // construct main panel
-      add(guiPanel);
-      add(scannerPanel);
-      add(cameraPanel, "wrap");
-      add(testAcqPanel);
-      add(stageScanPanel, "growx");
-      add(imageJPanel, "growx");
+      super.add(guiPanel);
+      super.add(scannerPanel, "wrap");
+      super.add(testAcqPanel);
+      super.add(stageScanPanel, "growx");
+      super.add(imageJPanel, "growx");
       
 
       

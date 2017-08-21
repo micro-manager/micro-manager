@@ -148,23 +148,10 @@
 #define CAMERASUBTYPE_PCO_DIMAX_HS2        0x217F   
 #define CAMERASUBTYPE_PCO_DIMAX_HS4        0x237F   
 
-#define CAMERASUBTYPE_PCO_DIMAX_CS_AM      0x407F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_1   0x417F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_2   0x427F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_3   0x437F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_4   0x447F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_5   0x457F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_6   0x467F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_7   0x477F   
-        
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_IX  0x507F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_1   0x517F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_2   0x527F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_3   0x537F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_4   0x547F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_5   0x557F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_6   0x567F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_7   0x577F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_AM_DEPRECATED      0x407F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_1       0x417F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_2       0x427F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_4       0x447F   
 
 
 // pco.sensicam types                   // tbd., all names are internal ids
@@ -235,8 +222,10 @@
 #define USB_PID_CAM_FLOW_20       0x0007      // AVR32
 #define USB_PID_CAM_EDGEHS_20     0x0008      // AVR32
 #define USB_PID_P5CTR             0x0009      // FTDI FT2232H (for updating P5CTR framegrabber)
-#define USB_PID_P5CTR_PROD        0x000A      // FTDI FT2232H (usb bridge for controlling the production tool for the P5CTR framegrabber)
-#define USB_PID_DMCT_DEBUG        0x0080      // Microchip PIC32MZ / DMCT debug port
+#define USB_PID_P5CTR_PROD        0x000A      // FTDI FT4232H (usb bridge for controlling the production tool for the P5CTR framegrabber)
+#define USB_PID_CAM_PANDA_20      0x000B      // Panda AVR32 USB2.0 Interface
+#define USB_PID_CAM_PANDA_30      0x000C      // Panda FX3 USB3.0 Interface
+#define USB_PID_DIMAX_CS          0x0001      // Microchip PIC32MZ / DMCT debug port
 
 
 //USB Device Endpoint addresses
@@ -250,6 +239,10 @@
 #define USB_EP_FX3_IMG_IN         0x82
 #define USB_EP_AVR32_CTRL_IN      0x81
 #define USB_EP_AVR32_CTRL_OUT     0x02
+#define USB_EP_DIMAX_CS_CTRL_IN   0x81     // debug interface, works with pco USB driver
+#define USB_EP_DIMAX_CS_CTRL_OUT  0x01     // debug interface, works with pco USB driver
+
+
 
 // ------------------------------------------------------------------------ //
 // -- Defines for CameraLink DataFormat  ---------------------------------- //
@@ -307,12 +300,15 @@
 #define ERROR_POWERSUPPLYTEMPERATURE    0x00000002
 #define ERROR_CAMERATEMPERATURE         0x00000004
 #define ERROR_SENSORTEMPERATURE         0x00000008
+
 #define ERROR_EXTERNAL_BATTERY_LOW      0x00000010
+#define ERROR_FIRMWARE_CORRUPTED        0x00000020
 
 #define ERROR_CAMERAINTERFACE           0x00010000
 #define ERROR_CAMERARAM                 0x00020000
 #define ERROR_CAMERAMAINBOARD           0x00040000
 #define ERROR_CAMERAHEADBOARD           0x00080000
+
 
 #define STATUS_DEFAULT_STATE            0x00000001
 #define STATUS_SETTINGS_VALID           0x00000002
@@ -354,8 +350,6 @@
 #define SENSOR_ICX414AL           0x0050      // Sony
 #define SENSOR_ICX414AK           0x0051      // Sony
 #define SENSOR_ICX407BLA          0x0060      // Sony UV type
-
-
 
 #define SENSOR_KAI2000M           0x0110      // Kodak
 #define SENSOR_KAI2000CM          0x0111      // Kodak
@@ -404,6 +398,9 @@
 
 #define SENSOR_QMFLIM_V2B_BW      0x4000      // CSEM QMFLIM V2B B/W
 
+#define SENSOR_GPIXEL_X2_BW       0x5000  // GPixel 2k
+#define SENSOR_GPIXEL_X2_COL      0x5001  // GPixel 2k
+
 
 // ------------------------------------------------------------------------ //
 // -- Defines for Get Info String Command: -------------------------------- //
@@ -428,7 +425,7 @@ const PCO_SENSOR_TYPE_DEF far pco_sensor[] =
                SENSOR_ICX407AK, "Sony ICX407AK",
                SENSOR_ICX414AL, "Sony ICX414AL",
                SENSOR_ICX414AK, "Sony ICX414AK",
-            SENSOR_ICX407BLA, "Sony ICX407BLA",
+               SENSOR_ICX407BLA, "Sony ICX407BLA",
 
                // Kodak sensor types
                SENSOR_KAI2000M,   "Kodak KAI2000M",
@@ -459,16 +456,21 @@ const PCO_SENSOR_TYPE_DEF far pco_sensor[] =
                // Other sensor types
                SENSOR_TC285SPD, "TI TC285SPD",
                
-            SENSOR_CYPRESS_RR_V1_BW,  "Cypress Roadrunner V1 BW",
-            SENSOR_CYPRESS_RR_V1_COL, "Cypress Roadrunner V1 Color",
+               SENSOR_CYPRESS_RR_V1_BW,  "Cypress Roadrunner V1 BW",
+               SENSOR_CYPRESS_RR_V1_COL, "Cypress Roadrunner V1 Color",
                
-               SENSOR_CIS2051_V1_FI_BW, "Fairchild CIS2051 V1 I-Front BW",
-               SENSOR_CIS2051_V1_BI_BW, "Fairchild CIS2051 V1 I-Back BW",
+               SENSOR_CIS2051_V1_FI_BW,  "Fairchild CIS2521 V1 I-Front BW",
+               SENSOR_CIS2051_V1_FI_COL, "Fairchild CIS2521 V1 I-Front Color",
+               SENSOR_CIS1042_V1_FI_BW,  "Fairchild CIS2020 V1 I-Front BW",
+               SENSOR_CIS2051_V1_BI_BW,  "Fairchild CIS2521 V1 I-Back BW",
                
                SENSOR_CMOSIS_CMV12000_BW,  "CMOSIS CMV12000 BW",
                SENSOR_CMOSIS_CMV12000_COL, "CMOSIS CMV12000 Color",
                
-               SENSOR_QMFLIM_V2B_BW, "QMFLIM V2B BW"
+               SENSOR_QMFLIM_V2B_BW, "QMFLIM V2B BW",
+
+               SENSOR_GPIXEL_X2_BW,  "GPixel 2k BW",
+               SENSOR_GPIXEL_X2_COL, "GPixel 2k Color",
 };
 
 const int far PCO_SENSOR_TYPE_DEF_NUM = sizeof(pco_sensor) / sizeof(pco_sensor[0]);
@@ -529,6 +531,7 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define GENERALCAPS1_ROI_HORZ_SYMM_TO_VERT_AXIS        0x01000000 // Camera horz.ROI must be symmetrical to vertical axis
 
 #define GENERALCAPS1_COOLING_SETPOINTS                 0x02000000 // Camera has cooling setpoints instead of cooling range
+#define GENERALCAPS1_USER_INTERFACE                    0x04000000 // Camera has user interface commands
 
 //#define GENERALCAPS_ENHANCE_DESCRIPTOR_x             0x10000000 // reserved for future desc.
 //#define GENERALCAPS_ENHANCE_DESCRIPTOR_x             0x20000000 // reserved for future desc.
@@ -583,6 +586,36 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 
 
 // ------------------------------------------------------------------------ //
+// -- Defines for User Interface Commands: -------------------------------- //
+// ------------------------------------------------------------------------ //
+
+#define USER_INTERFACE_TYPE_UART                       0x0001
+#define USER_INTERFACE_TYPE_UART_UNIDIRECTIONAL        0x0002
+#define USER_INTERFACE_TYPE_USART                      0x0003
+#define USER_INTERFACE_TYPE_SPI                        0x0004
+#define USER_INTERFACE_TYPE_I2C                        0x0005
+                                                       
+#define USER_INTERFACE_OPTIONS_UART_PARITY_NONE        0x00000001
+#define USER_INTERFACE_OPTIONS_UART_PARITY_EVEN        0x00000002
+#define USER_INTERFACE_OPTIONS_UART_PARITY_ODD         0x00000004
+                                                       
+#define USER_INTERFACE_EQUIPMENT_LENS_CONTROL_BIRGER   0x00000001
+                                                       
+#define USER_INTERFACE_HANDSHAKE_TYPE_NONE             0x0001
+#define USER_INTERFACE_HANDSHAKE_TYPE_RTS_CTS          0x0002
+#define USER_INTERFACE_HANDSHAKE_TYPE_XON_XOFF         0x0004
+
+
+#define USER_INTERFACE_DO_NOT_CLEAR_BUFFERS            0x00
+#define USER_INTERFACE_CLEAR_RX_BUFFER                 0x01
+#define USER_INTERFACE_CLEAR_TX_BUFFER                 0x02
+#define USER_INTERFACE_CLEAR_RX_AND_TX_BUFFER          0x03
+
+
+
+
+
+// ------------------------------------------------------------------------ //
 // -- Defines for Read/Write Mailbox & Get Mailbox Status Commands: ------- //
 // ------------------------------------------------------------------------ //
 
@@ -593,6 +626,18 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define MAILBOX_STATUS_NO_VALID_MESSAGE                     0x0000
 #define MAILBOX_STATUS_MESSAGE_VALID                        0x0001
 #define MAILBOX_STATUS_MESSAGE_HAS_BEEN_READ                0x0003
+
+
+
+// ------------------------------------------------------------------------ //
+// -- Defines for Get/Set Battery Status: --------------------------------- //
+// ------------------------------------------------------------------------ //
+
+  // the following are bit flags which can be combined:
+
+#define BATTERY_STATUS_MAINS_AVAILABLE                      0x0001
+#define BATTERY_STATUS_CONNECTED                            0x0002
+#define BATTERY_STATUS_CHARGING                             0x0004
 
 
 
@@ -1000,6 +1045,7 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define HDSDI_FORMAT_720P2997_SINGLE_LINK_RAW10BIT_2_IMAGES       0x0026
 #define HDSDI_FORMAT_720P5994_SINGLE_LINK_RAW10BIT_1_IMAGE        0x0027
 #define HDSDI_FORMAT_720P5994_SINGLE_LINK_RAW10BIT_2_IMAGES       0x0028
+#define HDSDI_FORMAT_1080P2498_SINGLE_LINK_RGB                    0x0029
 
 #define HDSDI_FORMAT_OPTIONS_TIMECODE_OUT                         0x0001
 #define HDSDI_FORMAT_OPTIONS_RECORD_ENABLE_FLAG                   0x0002
@@ -1113,13 +1159,14 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define SIGNAL_DEF_MASK     0x000000FF // Signal options mask
 
 // SIGNAL Type definitions (up to 16 different types)
-#define SIGNAL_TYPE_TTL     0x00000001 // Signal can be switched to TTL level
+#define SIGNAL_TYPE_TTL           0x00000001 // Signal can be switched to TTL level
 // (0V to 0.8V, 2V to VCC, VCC is 4.75V to 5.25V)
-#define SIGNAL_TYPE_HL_SIG  0x00000002 // Signal can be switched to high level signal
+#define SIGNAL_TYPE_HL_SIG        0x00000002 // Signal can be switched to high level signal
 // (0V to 5V, 10V to VCC, VCC is 56V)
-#define SIGNAL_TYPE_CONTACT 0x00000004 // Signal can be switched to contact level
-#define SIGNAL_TYPE_RS485   0x00000008 // Signal can be switched to RS485 level
-#define SIGNAL_TYPE_MASK    0x0000FFFF // Signal type mask
+#define SIGNAL_TYPE_CONTACT       0x00000004 // Signal can be switched to contact level
+#define SIGNAL_TYPE_RS485         0x00000008 // Signal can be switched to RS485 level
+#define SIGNAL_TYPE_TTL_A_GND_B   0x00000080 // Two pin diff. output, A = TTL, B = GND
+#define SIGNAL_TYPE_MASK          0x0000FFFF // Signal type mask
 
 // SIGNAL Polarity definitions (up to 16 different types)
 #define SIGNAL_POL_HIGH     0x00000001 // Signal can be switched to sense low level
