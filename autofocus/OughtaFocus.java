@@ -464,13 +464,14 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       int[] ken1 = {2, 1, 0, 1, 0, -1, 0, -1, -2};
       int[] ken2 = {0, 1, 2, -1, 0, 1, -2, -1, 0};
 
-      proc.medianFilter();    // 3x3 median filter
-      ImageProcessor proc2 = proc.duplicate();
-      proc.convolve3x3(ken1);
+      ImageProcessor proc1 = proc.duplicate();
+      proc1.medianFilter();    // 3x3 median filter
+      ImageProcessor proc2 = proc1.duplicate();
+      proc1.convolve3x3(ken1);
       proc2.convolve3x3(ken2);
       for (int i=0; i<w; i++){
          for (int j=0; j<h; j++){
-            sum += Math.sqrt(Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2));
+            sum += Math.sqrt(Math.pow(proc1.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2));
          }
       }
       return sum;
@@ -491,11 +492,12 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       int[] ken2 = {1, 2, 1, 0, 0, 0, -1, -2, -1};
 
       ImageProcessor proc2 = proc.duplicate();
-      proc.convolve3x3(ken1);
+      ImageProcessor proc2 = proc.duplicate();
+      proc1.convolve3x3(ken1);
       proc2.convolve3x3(ken2);
       for (int i=0; i<w; i++){
          for (int j=0; j<h; j++){
-            sum += Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2);
+            sum += Math.pow(proc1.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2);
          }
       }
       return sum;
