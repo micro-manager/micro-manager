@@ -909,7 +909,6 @@ int SerialPort::OnParity(MM::PropertyBase* pProp, MM::ActionType eAct)
             return ret;
          pPort_->ChangeParity(boost::asio::serial_port_base::parity::type(parity));
       }
-      pProp->Get(parity_);
    }
 
    return DEVICE_OK;
