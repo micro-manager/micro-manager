@@ -1290,6 +1290,7 @@ namespace MM {
       virtual int AcqFinished(const Device* caller, int statusCode) = 0;
       virtual int PrepareForAcq(const Device* caller) = 0;
       virtual int InsertImage(const Device* caller, const ImgBuffer& buf) = 0;
+      virtual int InsertImage(const Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, unsigned nComponents, const char* serializedMetadata, const bool doProcess = true) = 0;
       virtual int InsertImage(const Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* md = 0, const bool doProcess = true) = 0;
       /// \deprecated Use the other forms instead.
       virtual int InsertImage(const Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const char* serializedMetadata, const bool doProcess = true) = 0;

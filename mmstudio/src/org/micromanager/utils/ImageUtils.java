@@ -46,6 +46,10 @@ public class ImageUtils {
          return ImagePlus.GRAY16;
       }
 
+      if (proc instanceof FloatProcessor) {
+         return ImagePlus.GRAY32;
+      }
+
       if (proc instanceof ColorProcessor) {
          return ImagePlus.COLOR_RGB;
       }
@@ -62,6 +66,7 @@ public class ImageUtils {
       int w = (int) core.getImageWidth();
       int h = (int) core.getImageHeight();
       int Bpp = (int) core.getBytesPerPixel();
+      int nComponents = (int) core.getNumberOfComponents();
       int type;
       switch (Bpp) {
          case 1:
@@ -71,7 +76,12 @@ public class ImageUtils {
             type = ImagePlus.GRAY16;
             break;
          case 4:
-            type = ImagePlus.COLOR_RGB;
+            if (nComponents == 1) {
+               type = ImagePlus.GRAY32;
+            }
+            else {
+               type = ImagePlus.COLOR_RGB;
+            }
             break;
          default:
             type = 0;

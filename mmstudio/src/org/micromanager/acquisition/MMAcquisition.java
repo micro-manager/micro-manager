@@ -1038,6 +1038,9 @@ public class MMAcquisition {
          case 2:
             return "GRAY16";
          case 4:
+            if (MMStudio.getInstance().getCore().getNumberOfComponents() == 1) {
+               return "GRAY32";
+            }
             return "RGB32";
          case 8:
             return "RGB64";

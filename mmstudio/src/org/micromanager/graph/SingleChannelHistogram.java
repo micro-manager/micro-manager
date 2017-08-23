@@ -686,10 +686,19 @@ public class SingleChannelHistogram extends JPanel implements Histograms, Cursor
 
    @Override
    public void calcAndDisplayHistAndStats(boolean drawHist) {
-       if (img_ == null || img_.getProcessor() == null) {
+      if (img_ == null || img_.getProcessor() == null) {
          return;
       }
       int[] rawHistogram = img_.getProcessor().getHistogram();
+      if (rawHistogram == null) { // Histogram is not implemented in ImageJ for FloatProcessor (GRAY32)
+          ImageStatistics stats = img_.getStatistics(ImageStatistics.MIN_MAX);
+          pixelMax_ = (int) stats.max;
+          pixelMin_ = (int) stats.min;
+          if (contrastMax_ > 255) {
+             contrastMax_ = 255;
+          }
+          return;
+      }
      
       int imgWidth = img_.getWidth();
       int imgHeight = img_.getHeight();
