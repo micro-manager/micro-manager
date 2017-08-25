@@ -10,6 +10,7 @@ import ij.io.Opener;
 import ij.io.TiffDecoder;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.io.BufferedWriter;
@@ -281,6 +282,10 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          } else if (pixelType.equals("GRAY16")) {
             ip = new ShortProcessor(width, height);
             ip.setPixels((short[]) img);           
+            saveImageProcessor(ip, md, path, tiffFileName);
+         } else if (pixelType.equals("GRAY32")) {
+            ip = new FloatProcessor(width, height);
+            ip.setPixels((float[]) img);
             saveImageProcessor(ip, md, path, tiffFileName);
          } else if (pixelType.equals("RGB32")) {
             byte[][] planes = ImageUtils.getColorPlanesFromRGB32((byte []) img);
