@@ -2191,8 +2191,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       if (acqSettings.useMovementCorrection) {
          correctMovementEachNFrames = props_.getPropValueInteger(Devices.Keys.PLUGIN, 
                Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_EACHNIMAGES);
-         autofocusChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
-               Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_CHANNEL);
+         correctMovementChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
+                 Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_CHANNEL);
          // double-check that selected channel is valid if we are doing multi-channel
          if (acqSettings.useChannels) {
             String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
@@ -2200,7 +2200,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             StrVector channels = gui_.getMMCore().getAvailableConfigs(channelGroup);
             boolean found = false;
             for (String channel : channels) {
-               if (channel.equals(autofocusChannel)) {
+               if (channel.equals(correctMovementChannel)) {
                   found = true;
                   break;
                }
@@ -2211,15 +2211,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
          }
 
-         for (int i = 0; i < acqSettings.numChannels; i++) {
-            if (channelNames_[i].equals(correctMovementChannel)) {
-               cmChannelNumber = i;
-            }
-         }
-         if (cmChannelNumber == -1) {
-            MyDialogUtils.showError("The channel selected for movement correction on the auitofocus tab was not found in this acquisition");
-            return false;
-         }
       }
       
       // it appears the circular buffer, which is used by both cameras, can only have one 
@@ -2446,6 +2437,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                gui_.setChannelColor(acqName, i, getChannelColor(i));
             }
             
+            if (acqSettings.useMovementCorrection) {
+               for (int i = 0; i < acqSettings.numChannels; i++) {
+                  if (channelNames_[i].equals(firstCamera + "-" + correctMovementChannel)) {
+                     cmChannelNumber = i;
+                  }
+               }
+               if (cmChannelNumber == -1) {
+                  MyDialogUtils.showError("The channel selected for movement correction on the auitofocus tab was not found in this acquisition");
+                  return false;
+               }
+            }
+
             
             // initialize acquisition
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
