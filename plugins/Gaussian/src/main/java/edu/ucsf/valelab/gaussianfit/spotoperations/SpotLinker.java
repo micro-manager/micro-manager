@@ -36,7 +36,6 @@ import edu.ucsf.valelab.gaussianfit.DataCollectionForm;
 import static edu.ucsf.valelab.gaussianfit.DataCollectionForm.getInstance;
 import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import edu.ucsf.valelab.gaussianfit.data.GsSpotPair;
-import edu.ucsf.valelab.gaussianfit.data.PointData;
 import edu.ucsf.valelab.gaussianfit.data.RowData;
 import edu.ucsf.valelab.gaussianfit.data.TrackData;
 import java.awt.geom.Point2D;
@@ -101,13 +100,14 @@ public class SpotLinker {
                                       new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
                                       new Point2D.Double(0.0, 0.0)));
                            }
-                           NearestPointGsSpotPair nsp = new NearestPointGsSpotPair(gsSpots, maxDistance);
+                           NearestPointByData nsp = new NearestPointByData(gsSpots, maxDistance);
                            List<List<SpotData>> removedTracks = 
                                    new ArrayList<List<SpotData>>();
                            for (List<SpotData> track : tracks) {
                               SpotData tSpot = track.get(track.size() - 1);
-                              GsSpotPair newSpot = nsp.findKDWSE(new Point2D.Double(
-                                      tSpot.getXCenter(), tSpot.getYCenter()));
+                              // TODO: do we really need a copy here?
+                              GsSpotPair newSpot = ((GsSpotPair) nsp.findKDWSE(new Point2D.Double(
+                                      tSpot.getXCenter(), tSpot.getYCenter()))).copy();
                               if (newSpot == null) {
                                  // track could not be extended, finalize it
                                  linkSpots(track, destList, useFrames);
@@ -287,22 +287,14 @@ public class SpotLinker {
                         List<SpotData> markedSpots = new ArrayList<SpotData>();
                         // go through all tracks to see if they can be extended
                         if (tracks.size() > 0) {
-                           // Ideally we would have code to find the nearest Gaussian Spot
-                           // but we only have code for Gaussian Spot pairs.  Simply ignore
-                           // the second Gaussian Spot.
-                           ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
-                           for (SpotData spot : spots) {
-                              gsSpots.add(new GsSpotPair(spot, null,
-                                      new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
-                                      new Point2D.Double(0.0, 0.0)));
-                           }
-                           NearestPointGsSpotPair nsp = new NearestPointGsSpotPair(gsSpots, maxDistance);
+                           NearestPointByData nsp = new NearestPointByData(spots, maxDistance);
                            List<TrackData> removedTracks = 
                                    new ArrayList<TrackData>();
                            for (TrackData track : tracks) {
                               SpotData tSpot = track.get(track.size() - 1);
-                              GsSpotPair newSpot = nsp.findKDWSE(new Point2D.Double(
-                                      tSpot.getXCenter(), tSpot.getYCenter()));
+                              // TODO: do we really need a copy here?
+                              GsSpotPair newSpot = ((GsSpotPair) nsp.findKDWSE(new Point2D.Double(
+                                      tSpot.getXCenter(), tSpot.getYCenter()))).copy();
                               if (newSpot == null) {
                                  track.addMissing();
                                  if (track.missingMoreThan(nrMissing)) {
@@ -361,25 +353,24 @@ public class SpotLinker {
                   for (int ch = 1; ch <= rowData.nrChannels_; ch++) {
                      trackIndex = Collections.unmodifiableList(Arrays.asList(pos, ch, s));
                      tracksByChannel.put(ch, trackMap.get(trackIndex));
-                     List<PointData> lps = new ArrayList<PointData>();
-                     // strange, compiler does not like List<TrackData>
-                     for (TrackData track : trackMap.get(trackIndex)) {
-                        lps.add(track);
-                     }
-                     npsByChannel.put(ch, new NearestPointByData(lps, maxPairDistance));
+                     npsByChannel.put(ch, new NearestPointByData(
+                             trackMap.get(trackIndex), maxPairDistance));
                   }
                   for (TrackData track : tracksByChannel.get(1)) {
                      if (track.size() > minNr
                              && track.get(0).distance(track.get(track.size() - 1))
                              > minTotalDistance) {
                         for (int ch = 2; ch <= rowData.nrChannels_; ch++) {
-                           TrackData closestTrack = (TrackData) npsByChannel.get(ch).findKDWSE(track.getPoint());
+                           TrackData closestTrack = 
+                                   (TrackData) npsByChannel.get(ch).findKDWSE(track.getPoint());
                            if (closestTrack != null) {
                               if (closestTrack.size() > minNr
-                                      && closestTrack.get(0).distance(closestTrack.get(closestTrack.size() - 1))
+                                      && closestTrack.get(0).distance(
+                                              closestTrack.get(closestTrack.size() - 1))
                                       > minTotalDistance) {
                                  track.add(closestTrack);
-                                 trackMap.remove(Collections.unmodifiableList(Arrays.asList(pos, ch, s)));
+                                 trackMap.remove(Collections.unmodifiableList(
+                                         Arrays.asList(pos, ch, s)));
                               }
                            }
                         }

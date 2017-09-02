@@ -279,8 +279,9 @@ public class SpotData implements PointData {
 
    // For performance reasons, it is much better to use the cached version of the processor
    public ImageProcessor getSpotProcessor(ImagePlus siPlus, int halfSize) {
-      if (ip_ != null)
+      if (ip_ != null) {
          return ip_;
+      }
       synchronized(LOCK_IP) {
          Roi spotRoi = new Roi(x_ - halfSize, y_ - halfSize, 2 * halfSize, 2 * halfSize);
          siPlus.setPositionWithoutUpdate(channel_, slice_, frame_);
@@ -290,8 +291,9 @@ public class SpotData implements PointData {
    }
 
    public ImageProcessor getSpotProcessor(ImageProcessor siProc, int halfSize) {
-      if (ip_ != null)
+      if (ip_ != null) {
          return ip_;
+      }
       synchronized(LOCK_IP) {
          Roi spotRoi = new Roi(x_ - halfSize, y_ - halfSize, 2 * halfSize, 2 * halfSize);
          //siProc.setSliceWithoutUpdate(frame_);
