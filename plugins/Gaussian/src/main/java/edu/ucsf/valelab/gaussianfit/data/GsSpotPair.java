@@ -35,7 +35,7 @@ import java.awt.geom.Point2D;
  *
  * @author nico
  */
-public class GsSpotPair {
+public class GsSpotPair implements PointData {
    private final SpotData firstSpot_;
    private final SpotData secondSpot_;
    private final Point2D.Double firstPoint_; 
@@ -76,6 +76,11 @@ public class GsSpotPair {
    
    public GsSpotPair copy() {
       return new GsSpotPair(firstSpot_, secondSpot_, firstPoint_, secondPoint_);
+   }
+   
+   @Override
+   public Point2D.Double getPoint() {
+      return firstSpot_.getPoint();
    }
    
 }

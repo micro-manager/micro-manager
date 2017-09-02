@@ -33,6 +33,7 @@ package edu.ucsf.valelab.gaussianfit.data;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +48,7 @@ import java.util.Set;
  */
 
 
-public class SpotData {
+public class SpotData implements PointData {
    
    public class Keys {
       // total intensity as calculated by the sum of pixel intensities minus background
@@ -310,4 +311,10 @@ public class SpotData {
          }
       }
    }
+   
+   @Override
+   public Point2D.Double getPoint() {
+      return new Point2D.Double(xCenter_, yCenter_);
+   }
+   
 }
