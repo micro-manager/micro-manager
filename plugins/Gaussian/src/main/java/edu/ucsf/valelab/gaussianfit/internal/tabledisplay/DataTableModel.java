@@ -123,7 +123,7 @@ public class DataTableModel extends AbstractTableModel {
          return rowData_.get(row).colCorrRef_;
       } else if (col == 4) {
          if (rowData_.get(row).isTrack_) {
-            return rowData_.get(row).spotList_.get(0).getChannel();
+            return rowData_.get(row).channels_;
          } else {
             return NULLINSTANCE;
          }
