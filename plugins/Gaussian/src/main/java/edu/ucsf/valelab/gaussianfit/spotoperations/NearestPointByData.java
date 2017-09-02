@@ -40,17 +40,21 @@ import java.awt.geom.Point2D;
 import java.util.List;
 
 /**
- *
+ * Class that finds the closest by point in a point collection given a single point
+ * 
+ * The method findKDWSE uses a kd tree approach based written by Rednaxela
+ * 
+ * 
  * @author nico
  */
 public class NearestPointByData {
 
-   private final List<PointData> theList_;
+   private final List<? extends PointData> theList_;
    private final double maxDistance_;
    private final double maxDistanceSquared_;
    private KdTree<Integer> we_;
    
-   public NearestPointByData(List<PointData> unsorted, double maxDistance) {
+   public NearestPointByData(List<? extends PointData> unsorted, double maxDistance) {
       theList_ = unsorted;
       maxDistance_ = maxDistance;
       maxDistanceSquared_ = maxDistance * maxDistance;
@@ -114,8 +118,9 @@ public class NearestPointByData {
       
       double dist = Math.sqrt(NearestPoint2D.distance2(input, 
               closestPoint.getPoint()));
-      if (dist < maxDistance_)
+      if (dist < maxDistance_){
          return closestPoint;
+      }
       return null;
    }
 

@@ -35,7 +35,7 @@ import edu.ucsf.valelab.gaussianfit.fitting.FittingException;
 import edu.ucsf.valelab.gaussianfit.fitting.Gaussian1DFitter;
 import edu.ucsf.valelab.gaussianfit.fitting.P2DFitter;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPoint2D;
-import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPointGsSpotPair;
+import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPointByData;
 import edu.ucsf.valelab.gaussianfit.utils.CalcUtils;
 import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 import edu.ucsf.valelab.gaussianfit.utils.ListUtils;
@@ -419,9 +419,9 @@ public class ParticlePairLister {
 
                for (int pos : positions) {
                   // prepare NearestPoint objects to speed up finding closest pair 
-                  ArrayList<NearestPointGsSpotPair> npsp = new ArrayList<NearestPointGsSpotPair>();
+                  ArrayList<NearestPointByData> npsp = new ArrayList<NearestPointByData>();
                   for (int frame = 1; frame <= dc.getSpotData(row).nrFrames_; frame++) {
-                     npsp.add(new NearestPointGsSpotPair(
+                     npsp.add(new NearestPointByData(
                              spotPairsByFrame.get(pos).get(frame - 1), maxDistanceNm_));
                   }
 
@@ -438,7 +438,7 @@ public class ParticlePairLister {
                                  track.add(spotPair);
                                  int searchInFrame = frame + 1;
                                  while (searchInFrame <= dc.getSpotData(row).nrFrames_) {
-                                    GsSpotPair newSpotPair = npsp.get(searchInFrame - 1).findKDWSENoCopy(
+                                    GsSpotPair newSpotPair = (GsSpotPair) npsp.get(searchInFrame - 1).findKDWSE(
                                             new Point2D.Double(spotPair.getFirstPoint().getX(),
                                                     spotPair.getFirstPoint().getY()));
                                     if (newSpotPair != null && !newSpotPair.partOfTrack()) {
