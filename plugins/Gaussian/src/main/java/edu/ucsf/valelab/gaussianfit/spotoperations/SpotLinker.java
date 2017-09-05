@@ -293,8 +293,8 @@ public class SpotLinker {
                            for (TrackData track : tracks) {
                               SpotData tSpot = track.get(track.size() - 1);
                               // TODO: do we really need a copy here?
-                              GsSpotPair newSpot = ((GsSpotPair) nsp.findKDWSE(new Point2D.Double(
-                                      tSpot.getXCenter(), tSpot.getYCenter()))).copy();
+                              SpotData newSpot = (SpotData) nsp.findKDWSE(new Point2D.Double(
+                                      tSpot.getXCenter(), tSpot.getYCenter()));
                               if (newSpot == null) {
                                  track.addMissing();
                                  if (track.missingMoreThan(nrMissing)) {
@@ -312,8 +312,8 @@ public class SpotLinker {
                                  }
                               } else {
                                  track.resetMissing();
-                                 track.add(newSpot.getFirstSpot());
-                                 markedSpots.add(newSpot.getFirstSpot());
+                                 track.add(newSpot);
+                                 markedSpots.add(newSpot);
                               }
                            }
                            // second part of removing tracks
