@@ -425,6 +425,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    AndorSDK3
    Aquinas
    Arduino
+   BlueboxOptics_niji
    CARVII
    CNCMicroscope
    CNCMicroscope/ArduinoNeoPixelShutter
