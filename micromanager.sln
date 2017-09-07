@@ -64,6 +64,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Utilities", "DeviceAdapters
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Arduino", "DeviceAdapters\Arduino\Arduino.vcxproj", "{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlueboxOptics_niji", "DeviceAdapters\BlueboxOptics_niji\BlueboxOptics_niji.vcxproj", "{52D8BB90-2859-4086-A310-C72721BEF446}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Olympus", "SecretDeviceAdapters\Olympus\Olympus.vcxproj", "{3BFC5BBD-6C7D-44A7-8361-F9D6E03C98AB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMI", "DeviceAdapters\LeicaDMI\LeicaDMI.vcxproj", "{31FE7D1C-8B0F-4E6C-9A50-F63596606764}"
@@ -642,6 +644,14 @@ Global
 		{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}.Release|Win32.Build.0 = Release|Win32
 		{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}.Release|x64.ActiveCfg = Release|x64
 		{2067D4A8-8C32-40D3-BA9F-6B388ECCD714}.Release|x64.Build.0 = Release|x64
+		{52D8BB90-2859-4086-A310-C72721BEF446}.Debug|Win32.ActiveCfg = Debug|Win32
+		{52D8BB90-2859-4086-A310-C72721BEF446}.Debug|Win32.Build.0 = Debug|Win32
+		{52D8BB90-2859-4086-A310-C72721BEF446}.Debug|x64.ActiveCfg = Debug|x64
+		{52D8BB90-2859-4086-A310-C72721BEF446}.Debug|x64.Build.0 = Debug|x64
+		{52D8BB90-2859-4086-A310-C72721BEF446}.Release|Win32.ActiveCfg = Release|Win32
+		{52D8BB90-2859-4086-A310-C72721BEF446}.Release|Win32.Build.0 = Release|Win32
+		{52D8BB90-2859-4086-A310-C72721BEF446}.Release|x64.ActiveCfg = Release|x64
+		{52D8BB90-2859-4086-A310-C72721BEF446}.Release|x64.Build.0 = Release|x64
 		{3BFC5BBD-6C7D-44A7-8361-F9D6E03C98AB}.Debug|Win32.ActiveCfg = Debug|Win32
 		{3BFC5BBD-6C7D-44A7-8361-F9D6E03C98AB}.Debug|Win32.Build.0 = Debug|Win32
 		{3BFC5BBD-6C7D-44A7-8361-F9D6E03C98AB}.Debug|x64.ActiveCfg = Debug|x64
