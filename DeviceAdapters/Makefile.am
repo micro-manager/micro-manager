@@ -91,6 +91,7 @@ SUBDIRS = \
 	Aladdin \
 	Aquinas \
 	Arduino \
+	BlueboxOptics_niji \
 	CARVII \
 	CNCMicroscope \
 	CSUW1 \
