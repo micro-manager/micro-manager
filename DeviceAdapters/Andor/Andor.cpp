@@ -118,6 +118,7 @@ const char* g_OutputAmplifier_EM = "Standard EMCCD gain register";
 const char* g_OutputAmplifier_Conventional = "Conventional CCD register";
 
 const char* g_ADChannel = "AD_Converter";
+const char* g_VerticalSpeedProperty = "VerticalSpeed (microseconds)";
 
 const char* g_EMGain = "EMSwitch";
 const char* g_EMGainValue = "Gain";
@@ -873,19 +874,18 @@ int AndorCamera::GetListOfAvailableCameras()
       if (VSpeeds_.empty())
          return ERR_INVALID_VSPEED;
 
-      if(!HasProperty("VerticalSpeed"))
+      if(!HasProperty(g_VerticalSpeedProperty))
       {
          pAct = new CPropertyAction (this, &AndorCamera::OnVSpeed);
          if(numVSpeed>1)
-            nRet = CreateProperty("VerticalSpeed", VSpeeds_[numVSpeed-1].c_str(), MM::String, false, pAct);
+            nRet = CreateProperty(g_VerticalSpeedProperty, VSpeeds_[numVSpeed-1].c_str(), MM::String, false, pAct);
          else
-            nRet = CreateProperty("VerticalSpeed", VSpeeds_[numVSpeed-1].c_str(), MM::String, true, pAct);
+            nRet = CreateProperty(g_VerticalSpeedProperty, VSpeeds_[numVSpeed-1].c_str(), MM::String, true, pAct);
          assert(nRet == DEVICE_OK);
       }
-      nRet = SetAllowedValues("VerticalSpeed", VSpeeds_);
+      nRet = SetAllowedValues(g_VerticalSpeedProperty, VSpeeds_);
       assert(nRet == DEVICE_OK);
-      nRet = SetProperty("VerticalSpeed", VSpeeds_[VSpeeds_.size()-1].c_str());
-      VSpeed_ = VSpeeds_[numVSpeed-1];
+      nRet = SetProperty(g_VerticalSpeedProperty, VSpeeds_[VSpeeds_.size()-1].c_str());
       assert(nRet == DEVICE_OK);
 
 
@@ -1367,7 +1367,8 @@ int AndorCamera::GetListOfAvailableCameras()
          }
       }
 
-       
+      SetDefaultVSSForUltra888WithValidSRRF();
+
 
       nRet = UpdateTimings();
       if (nRet != DRV_SUCCESS)
@@ -3189,7 +3190,7 @@ int AndorCamera::GetListOfAvailableCameras()
       SetProperty("Pre-Amp-Gain", c_temp);  
       ui_retVal = ::OA_GetFloat(OAModeName, "shift_speed", &f_temp);
       sprintf(c_temp, "%.2f", f_temp);
-      SetProperty("VerticalSpeed", c_temp);        
+      SetProperty(g_VerticalSpeedProperty, c_temp);
    }
 
 
@@ -4979,6 +4980,19 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
       return false;
    }
 
+   void AndorCamera::SetDefaultVSSForUltra888WithValidSRRF()
+   {
+      if (IsIxonUltra888())
+      {
+         if (SRRFControl_->GetLibraryStatus() == SRRFControl::READY) {
+            ptrdiff_t pos = find(VSpeeds_.begin(), VSpeeds_.end(), "1.13") - VSpeeds_.begin();
+            if (pos < (long long)VSpeeds_.size())
+            {
+               SetProperty(g_VerticalSpeedProperty, VSpeeds_[pos].c_str());
+            }
+         }
+      }
+   }
 
    unsigned int AndorCamera::createShutterProperty(AndorCapabilities * caps)
    {

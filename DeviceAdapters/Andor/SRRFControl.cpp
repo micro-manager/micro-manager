@@ -348,19 +348,19 @@ bool SRRFControl::LoadFunctions()
 
 bool SRRFControl::CanSRRFBeActivated()
 {
-  // Check support of CUDA
-  if (AT_SRRF_CheckCudaCompatibility_() != AT_SRRF_SUCCESS) {
-    libraryStatus_ = NOT_CUDA_COMPATIBLE;
-    return false;
-  }
-  
-  // Check license for SRRF Library
+   // Check license for SRRF Library
    int licenceValidRetCode = AT_SRRF_ValidateLicense_(camera_->GetMyCameraID());
    if (licenceValidRetCode != AT_SRRF_SUCCESS) {
       libraryStatus_ = LICENSE_INVALID;
       camera_->Log(AT_SRRF_GetLastErrorString_());
       return false;
    }
+
+   // Check support of CUDA
+  if (AT_SRRF_CheckCudaCompatibility_() != AT_SRRF_SUCCESS) {
+    libraryStatus_ = NOT_CUDA_COMPATIBLE;
+    return false;
+  }
   
    return true;
 }
