@@ -401,6 +401,7 @@ private:
    unsigned int createSnapTriggerMode();
    unsigned int createShutterProperty(AndorCapabilities * caps);
    unsigned int AddTriggerProperty(int mode);
+   void SetDefaultVSSForUltra888WithValidSRRF();
    void AddMetadataInfo(Metadata & md);
    void AddSRRFMetadataInfo(Metadata & md);
    int SnapImageNormal();
