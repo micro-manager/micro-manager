@@ -36,6 +36,7 @@ const char* g_DeviceNameLEDArray = "LED-Array";
 	const char * g_Keyword_SingleLED = "Single LED"; // Lighting single LED
 	const char * g_Keyword_MultipleLEDs = "Multiple LEDs"; // Lighting multiple LEDs
 	const char * g_Keyword_NumericalAp = "Numerical Aperture"; // Setting the numerical aperture
+	const char * g_Keyword_ArrayDistMM = "Distance from aray to objective (mm)"; 
 	const char * g_Keyword_Pattern = "Illumination pattern";
 	const char * g_Keyword_type = "Pattern type"; //Pattern type: top, bottom, left, right
 	const char * g_Keyword_minna = "Minimum NA"; 
@@ -73,7 +74,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CLEDArray::CLEDArray() : initialized_(false), name_(g_DeviceNameLEDArray), pixels_(0), width_(1), height_(581),
-	shutterOpen_(false), red_(600), green_(400), blue_(200), numa_(0.7), minna_(0.2), maxna_(0.6), type_("Top")
+	shutterOpen_(false), red_(600), green_(400), blue_(200), numa_(0.7), minna_(0.2), maxna_(0.6), type_("Top"), distMM_(50)
 {
    portAvailable_ = false;
 
@@ -137,9 +138,13 @@ int CLEDArray::Initialize()
    SetPropertyLimits(g_Keyword_Blue, 0.0, 65535);
 
    //Set Numerical Aperture:
-   CPropertyAction* pActap = new CPropertyAction(this, &CLEDArray::Aperture);
+   CPropertyAction* pActap = new CPropertyAction(this, &CLEDArray::OnAperture);
    CreateProperty(g_Keyword_NumericalAp, "0.7", MM::Float, false, pActap);
-   
+
+   //Set Array Dist:
+   CPropertyAction* pActap2 = new CPropertyAction(this, &CLEDArray::OnDistance);
+   CreateProperty(g_Keyword_ArrayDistMM, "50", MM::Float, false, pActap2);
+
    //Illumination Pattern:
    CPropertyAction* pActpat = new CPropertyAction(this, &CLEDArray::OnPattern);
    CreateProperty(g_Keyword_Pattern, "", MM::String, false, pActpat);
@@ -259,13 +264,13 @@ int CLEDArray::Shutdown()
 			allData[3 + i] = Red[i];
 		}
 
-		allData[3+i] = ',';
+		allData[3+i] = '.';
 
 		for(j = 0; j < green.size();j++){
 			allData[4 + i + j] = Green[j];
 		}
 
-		allData[4+i+j] = ',';
+		allData[4+i+j] = '.';
 
 		for(u = 0; u < blue.size();u++){
 			allData[5 + i + j + u] = Blue[u];
@@ -280,37 +285,6 @@ int CLEDArray::Shutdown()
 			return DEVICE_ERR;
 		}
    }
-   int CLEDArray::WriteImage(bool applyImmediately) {
-	   //copy pattern to metadata
-	 //  std::stringstream ss;
-	 //  for (int i = 0; i < width_*height_; i++) {
-		//   ss << std::to_string((unsigned long long)(pixels_[i])) << "-";
-		//   if (i == width_ * height_ - 1) {
-		//	  break; //don't include trailing dash
-		//   }
-	 //  }
-	 //  patternString_ = ss.str();
-	 //  GetCoreCallback()->OnPropertyChanged(this,g_Keyword_Pattern,patternString_.c_str());  
-		//  //send pattern to Teensy
-		//  PurgeComPort(port_.c_str());
-		//  //write header that teensy firmware expects
-  //      unsigned char* allData = new unsigned char[5 + width_*height_];
-		//allData[0] = GLOBAL_HEADER[0];
-		//allData[1] = GLOBAL_HEADER[1];
-		//allData[2] = PATTERN_HEADER[0];
-		//allData[3] = PATTERN_HEADER[1];
-		//allData[4] = applyImmediately ? 1 : 0;
-		////copy in pattern
-		//memcpy(allData+5,pixels_,width_*height_);
-
-		//int ret =  WriteToComPort(port_.c_str(), allData, 5 +width_*height_);
-		//delete[] allData;
-		//if (ret != DEVICE_OK){
-		//	return DEVICE_ERR;
-		//}
-		//return readCommandSuccess();
-	   return DEVICE_OK;
-}
 
       /**
        * Command the SLM to display one 8-bit intensity.
@@ -370,7 +344,7 @@ int CLEDArray::MLED(std::string indices){
 
 		for(i = 0; i < indices.size();i++){
 			if(Indices[i] == ' '){
-				allData[3 + i] = ',';
+				allData[3 + i] = '.';
 			}
 			else{
 				allData[3 + i] = Indices[i];
@@ -380,6 +354,35 @@ int CLEDArray::MLED(std::string indices){
 		allData[size] = 10;
 		size++;
 	}
+	int ret =  WriteToComPort(port_.c_str(), allData, size); //Writing to port
+	if (ret != DEVICE_OK){
+		PurgeComPort(port_.c_str());
+		return DEVICE_ERR;
+	}
+	return DEVICE_OK;
+}
+
+
+int CLEDArray::ArrayDist(double distMM){
+	PurgeComPort(port_.c_str());
+	int i, size, DIST[8];
+	int distMM100 = 100*distMM; 
+	unsigned char allData[100];
+	    
+	std::string distString = std::to_string(static_cast <long long> (distMM100));
+	std::copy(distString.begin(),distString.end(),DIST);
+	allData[0] = 's';
+	allData[1] = 'a';
+	allData[2] = 'd';
+	allData[3] = ',';
+
+	for(i = 0; i < distString.size();i++){
+		allData[4 + i] = DIST[i];
+	}
+	size = 4 + i;
+	allData[size] = 10;
+	size++;
+
 	int ret =  WriteToComPort(port_.c_str(), allData, size); //Writing to port
 	if (ret != DEVICE_OK){
 		PurgeComPort(port_.c_str());
@@ -494,13 +497,13 @@ int CLEDArray::CDPC(long redint, long greenint, long blueint){
 		allData[5 + i] = Red[i];
 	}
 
-	allData[5+i] = ',';
+	allData[5+i] = '.';
 
 	for(j = 0; j < green.size();j++){
 		allData[6 + i + j] = Green[j];
 	}
 
-	allData[6+i+j] = ',';
+	allData[6+i+j] = '.';
 
 	for(u = 0; u < blue.size();u++){
 		allData[7 + i + j + u] = Blue[u];
@@ -535,7 +538,7 @@ int CLEDArray::Annul(double minna, double maxna){
 		allData[3 + i] = Minna[i];
 	}
 
-	allData[3+i] = ',';
+	allData[3+i] = '.';
 
 	for(j = 0; j < max.size();j++){
 		allData[4 + i + j] = Maxna[j];
@@ -585,7 +588,7 @@ int CLEDArray::hAnnul(std::string type, double minna, double maxna){
 		allData[5 + i] = Minna[i];
 	}
 
-	allData[5+i] = ',';
+	allData[5+i] = '.';
 
 	for(j = 0; j < max.size();j++){
 		allData[6 + i + j] = Maxna[j];
@@ -906,7 +909,37 @@ int CLEDArray::OnGreen(MM::PropertyBase* pProp, MM::ActionType pAct)
    return DEVICE_OK;
 }
 
-int CLEDArray::Aperture(MM::PropertyBase* pProp, MM::ActionType pAct)
+int CLEDArray::OnDistance(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+	if(pAct == MM::BeforeGet)
+	{
+		pProp->Set(distMM_);
+	}
+	else if(pAct == MM::AfterSet)
+	{
+		pProp->Get(distMM_);
+		ArrayDist(distMM_);
+		if (pattern_ == "Bright Field"){
+		  BF();
+	  }
+	  else if(pattern_ == "Dark Field"){
+		  DF();
+	  }
+	  else if(pattern_ == "DPC"){
+		  DPC(type_);
+	  }
+	  else if(pattern_ == "Colored DPC"){
+		  CDPC(red_,green_,blue_);
+	  }
+	  else if (pattern_ == "Off"){
+		  Off();
+	  }
+		return DEVICE_OK;
+	}
+    return DEVICE_OK;
+}
+
+int CLEDArray::OnAperture(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
 	if(pAct == MM::BeforeGet)
 	{
