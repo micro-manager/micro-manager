@@ -227,7 +227,8 @@ public:
 	  int OnGreen(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnBlue(MM::PropertyBase* pPropt, MM::ActionType eAct);
       int OnShutterOpen(MM::PropertyBase* pPropt, MM::ActionType eAct);
-	  int Aperture(MM::PropertyBase* pPropt, MM::ActionType eAct);
+	  int OnAperture(MM::PropertyBase* pPropt, MM::ActionType eAct);	 
+	  int OnDistance(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnType(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnMinNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnMaxNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
@@ -247,7 +248,7 @@ private:
 	bool IsPortAvailable() {return portAvailable_;}
 
 	long shutterOpen_, bf_, df_;
-	double numa_,minna_, maxna_;
+	double numa_,minna_, maxna_, distMM_;
 	long red_, green_, blue_;
 	long lsingle_; // LED index
 	std::string lmult_;
@@ -266,13 +267,13 @@ private:
 	int Annul(double minna, double maxna);
 	int hAnnul(std::string type, double minna, double maxna);
 	int NumA(double numa);
+	int ArrayDist(double dist);
 	int Off();
 
 	unsigned char lastModVal_;
 	
    	 MMThreadLock& GetLock() {return lock_;}
 	 int readCommandSuccess();
-	 int WriteImage(bool applyImmediately);
 
 
 
