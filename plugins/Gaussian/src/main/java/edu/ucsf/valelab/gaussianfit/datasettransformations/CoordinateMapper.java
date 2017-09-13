@@ -71,7 +71,7 @@ public class CoordinateMapper {
    
    private int method_ = LWM;
    private int pieceWiseAffineMaxControlPoints_ = 100;
-   private double pieceWiseAffineMaxDistance_ = 500.0;
+   private double pieceWiseAffineMaxDistance_ = 5000.0;
 
    /**
     * Shorthand name
@@ -163,8 +163,8 @@ public class CoordinateMapper {
          @SuppressWarnings("unchecked")
          List<Entry<Integer>> neighbors = super.nearestNeighbor(
                  new double[] {testPoint.x, testPoint.y}, size, ordered);
-         List<Point2D.Double> neighborList = new ArrayList<Point2D.Double>();
-         for (int i=0; i<neighbors.size(); ++i) {
+         List<Point2D.Double> neighborList = new ArrayList<Point2D.Double>(neighbors.size());
+         for (int i=neighbors.size() - 1; i>=0; i--) {
             neighborList.add(points_[neighbors.get(i).value]);
          }
          return neighborList;
@@ -181,7 +181,7 @@ public class CoordinateMapper {
       public List<Point2D.Double> nearestNeighbor(Point2D.Double testPoint,
               int size, double maxDistance) {
          List<Point2D.Double> nearestNeighbors = nearestNeighbor(testPoint, size, true);
-         // reverse thought the list and remove items until distance is smaller than 
+         // reverse through the list and remove items until distance is smaller than 
          // maxDistance
          final double maxDistanceSquare = maxDistance * maxDistance;
          ListIterator li = nearestNeighbors.listIterator(nearestNeighbors.size());

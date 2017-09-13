@@ -40,7 +40,11 @@ import edu.ucsf.valelab.gaussianfit.data.RowData;
 import edu.ucsf.valelab.gaussianfit.data.TrackData;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.swing.JOptionPane;
 
 /**
@@ -96,13 +100,14 @@ public class SpotLinker {
                                       new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
                                       new Point2D.Double(0.0, 0.0)));
                            }
-                           NearestPointGsSpotPair nsp = new NearestPointGsSpotPair(gsSpots, maxDistance);
+                           NearestPointByData nsp = new NearestPointByData(gsSpots, maxDistance);
                            List<List<SpotData>> removedTracks = 
                                    new ArrayList<List<SpotData>>();
                            for (List<SpotData> track : tracks) {
                               SpotData tSpot = track.get(track.size() - 1);
-                              GsSpotPair newSpot = nsp.findKDWSE(new Point2D.Double(
-                                      tSpot.getXCenter(), tSpot.getYCenter()));
+                              // TODO: do we really need a copy here?
+                              GsSpotPair newSpot = ((GsSpotPair) nsp.findKDWSE(new Point2D.Double(
+                                      tSpot.getXCenter(), tSpot.getYCenter()))).copy();
                               if (newSpot == null) {
                                  // track could not be extended, finalize it
                                  linkSpots(track, destList, useFrames);
@@ -252,26 +257,29 @@ public class SpotLinker {
     * @param minTotalDistance - Minimum distance between first and last point 
     *                in the track.  Track will only be reported if distance is 
     *                greater than this number.
+    * @param combineChannels - when true, combine track from multiple channels
+    *                   whose average position is within maxPairDistance
+    * @param maxPairDistance - parameter only used when combineChannels is true
     * @return Number of tracks that were extracted.
     */
    public static int extractTracks(final RowData rowData, final int minNr, 
-           final int nrMissing, final double maxDistance, final double minTotalDistance) {
+           final int nrMissing, final double maxDistance, final double minTotalDistance,
+           final boolean combineChannels, final double maxPairDistance) {
       
+
       int trackNr = 0;
       try {
          ij.IJ.showStatus("Extracting tracks...");
-         boolean useFrames = rowData.nrFrames_ > rowData.nrSlices_;
-         int nr = rowData.nrSlices_;
-         if (useFrames) {
-            nr = rowData.nrFrames_;
-         }
 
          // maintain active tracks here
-         List<TrackData> tracks = 
-                 new ArrayList<TrackData>();
+         List<Integer> trackIndex;
+         Map<List<Integer>, List<TrackData>> trackMap = new HashMap<List<Integer>, List<TrackData>>();
          for (int pos = 1; pos <= rowData.nrPositions_; pos++) {
             for (int ch = 1; ch <= rowData.nrChannels_; ch++) {
                for (int s = 1; s <= rowData.nrSlices_; s++) {
+                  trackIndex = Collections.unmodifiableList(Arrays.asList(pos, ch, s));
+                  List<TrackData> tracks = 
+                        new ArrayList<TrackData>();
                   for (int f = 1; f <= rowData.nrFrames_; f++) {
                      List<SpotData> spots = rowData.get(f, s, ch, pos);
                      if (spots != null) {
@@ -279,18 +287,13 @@ public class SpotLinker {
                         List<SpotData> markedSpots = new ArrayList<SpotData>();
                         // go through all tracks to see if they can be extended
                         if (tracks.size() > 0) {
-                           ArrayList<GsSpotPair> gsSpots = new ArrayList<GsSpotPair>();
-                           for (SpotData spot : spots) {
-                              gsSpots.add(new GsSpotPair(spot, null,
-                                      new Point2D.Double(spot.getXCenter(), spot.getYCenter()),
-                                      new Point2D.Double(0.0, 0.0)));
-                           }
-                           NearestPointGsSpotPair nsp = new NearestPointGsSpotPair(gsSpots, maxDistance);
+                           NearestPointByData nsp = new NearestPointByData(spots, maxDistance);
                            List<TrackData> removedTracks = 
                                    new ArrayList<TrackData>();
                            for (TrackData track : tracks) {
                               SpotData tSpot = track.get(track.size() - 1);
-                              GsSpotPair newSpot = nsp.findKDWSE(new Point2D.Double(
+                              // TODO: do we really need a copy here?
+                              SpotData newSpot = (SpotData) nsp.findKDWSE(new Point2D.Double(
                                       tSpot.getXCenter(), tSpot.getYCenter()));
                               if (newSpot == null) {
                                  track.addMissing();
@@ -309,8 +312,8 @@ public class SpotLinker {
                                  }
                               } else {
                                  track.resetMissing();
-                                 track.add(newSpot.getFirstSpot());
-                                 markedSpots.add(newSpot.getFirstSpot());
+                                 track.add(newSpot);
+                                 markedSpots.add(newSpot);
                               }
                            }
                            // second part of removing tracks
@@ -329,19 +332,74 @@ public class SpotLinker {
                         }
                      }
                   }
-                  // add tracks that made it to the end to destination list
-                  for (TrackData track : tracks) {
-                     if (track.size() > minNr && 
-                             track.get(0).distance(track.get(track.size() - 1) ) 
-                             > minTotalDistance) {
-                        writeTrack(rowData, track.getList(), trackNr);
-                        trackNr++;
-                     }
-                  }
-                  tracks.clear();
+                  
+                  // add tracks that made it to the end to destination list 
+                  trackMap.put(trackIndex, tracks);
+                  
                }
             }
          }
+
+         // take average position of track in first channel
+         // if average position of closest track in another channel is within
+         // maxPairDistance, combine the tracks 
+        if (combineChannels) {
+            for (int pos = 1; pos <= rowData.nrPositions_; pos++) {
+               for (int s = 1; s <= rowData.nrSlices_; s++) {
+                  Map <Integer, List<TrackData>> tracksByChannel = 
+                          new HashMap<Integer, List<TrackData>>();
+                  Map <Integer, NearestPointByData> npsByChannel =
+                          new HashMap<Integer, NearestPointByData>();
+                  for (int ch = 1; ch <= rowData.nrChannels_; ch++) {
+                     trackIndex = Collections.unmodifiableList(Arrays.asList(pos, ch, s));
+                     tracksByChannel.put(ch, trackMap.get(trackIndex));
+                     npsByChannel.put(ch, new NearestPointByData(
+                             trackMap.get(trackIndex), maxPairDistance));
+                  }
+                  for (TrackData track : tracksByChannel.get(1)) {
+                     if (track.size() > minNr
+                             && track.get(0).distance(track.get(track.size() - 1))
+                             > minTotalDistance) {
+                        for (int ch = 2; ch <= rowData.nrChannels_; ch++) {
+                           TrackData closestTrack = 
+                                   (TrackData) npsByChannel.get(ch).findKDWSE(track.getPoint());
+                           if (closestTrack != null) {
+                              if (closestTrack.size() > minNr
+                                      && closestTrack.get(0).distance(
+                                              closestTrack.get(closestTrack.size() - 1))
+                                      > minTotalDistance) {
+                                 track.add(closestTrack);
+                                 trackMap.remove(Collections.unmodifiableList(
+                                         Arrays.asList(pos, ch, s)));
+                              }
+                           }
+                        }
+                     }
+                  }
+               }
+            }
+         }
+         
+         
+         for (int pos = 1; pos <= rowData.nrPositions_; pos++) {
+            for (int ch = 1; ch <= rowData.nrChannels_; ch++) {
+               for (int s = 1; s <= rowData.nrSlices_; s++) {
+                  trackIndex = Collections.unmodifiableList(Arrays.asList(pos, ch, s));
+                  List<TrackData> tracks = trackMap.get(trackIndex);
+                  if (tracks != null) {
+                     for (TrackData track : tracks) {
+                        if (track.size() > minNr
+                                && track.get(0).distance(track.get(track.size() - 1))
+                                > minTotalDistance) {
+                           writeTrack(rowData, track.getList(), trackNr);
+                           trackNr++;
+                        }
+                     }
+                  }
+               }
+            }
+         }         
+         
          ij.IJ.showStatus("Extracted " + trackNr + " tracks");
       } catch (OutOfMemoryError oome) {
          JOptionPane.showMessageDialog(getInstance(), "Out of memory");

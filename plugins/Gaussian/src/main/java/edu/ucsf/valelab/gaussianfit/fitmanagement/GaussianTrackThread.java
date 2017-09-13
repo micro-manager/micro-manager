@@ -50,8 +50,6 @@ import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
-
 
 import ij.gui.*;
 import ij.ImagePlus;
@@ -74,7 +72,6 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
    double[] params0_ = {16000.0, 5.0, 5.0, 1.0, 850.0};
    double[] steps_ = new double[5];
    String [] paramNames_ = {"A", "x_c", "y_c", "sigma", "b"};
-   private Preferences mainPrefs_;
 
    private int firstX_ = 0;
    private int firstY_ = 0;
@@ -145,7 +142,7 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
          return false;
       }
       
-      Polygon pol = FindLocalMaxima.FindMax(siPlus, super.getHalfBoxSize(), 
+      Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 * super.getHalfBoxSize(), 
               super.getNoiseTolerance(), preFilterType_);
       if (pol.npoints == 0) {
          if (!silent_)
@@ -245,74 +242,19 @@ public class GaussianTrackThread extends GaussianInfo implements Runnable  {
             
          spot = new SpotData(ip, ch, 1, i, 1, i, xc,yc);
          GaussianFit.Data fitResult = gs.dogaussianfit(ip, maxIterations_);
-         double sx;
-         double sy;
-         double a = 1.0;
-         double theta = 0.0;
+         spot = SpotDataConverter.convert(spot, fitResult, this, null);
+
          if (fitResult.getParms().length >= 4) {
-            //anormalize the intensity from the Gaussian fit
-            double N = cPCF * fitResult.getParms()[GaussianFit.INT] * 
-                    (2 * Math.PI * fitResult.getParms()[GaussianFit.S] * fitResult.getParms()[GaussianFit.S]);           
-            double xpc = fitResult.getParms()[GaussianFit.XC];
-            double ypc = fitResult.getParms()[GaussianFit.YC];
-            double x = (xpc - super.getHalfBoxSize() + xc) * pixelSize_;
-            double y = (ypc - super.getHalfBoxSize() + yc) * pixelSize_;
-
-               
-            double s = fitResult.getParms()[GaussianFit.S] * pixelSize_;
-            double sasqr = s * s + (pixelSize_ * pixelSize_) / 12;
-            // express background in photons after base level correction
-            double bgr = cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_);
-            // calculate error using formular from Thompson et al (2002)
-            // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
-            double sigma = (s * s + (pixelSize_ * pixelSize_) / 12) / 
-                    N + (8 * Math.PI * s * s * s * s * bgr * bgr) / (pixelSize_ * pixelSize_ * N * N);
-            sigma = Math.sqrt(sigma);
-            
-            // # of photons and background as calculated using the method by
-            // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
-            double NAperture = cPCF * fitResult.getApertureIntensity();
-            double bgrAperture = cPCF * (fitResult.getApertureBackground() - baseLevel_);
-            // Calculate error using the method by Mortenson et al.
-            // http://dx.doi.org/10.1038/nmeth.1447
-            // sasqr = s * s + (a * a)/12
-            // d(x)2 = (sasqr /N) (16/9 + 8 * pi * sasqr * b * b / N * a * a)
-            double mVarX = sasqr / N
-                    * (16/9 + ( (8 * Math.PI * sasqr *  bgr * bgr) / 
-                    (N * pixelSize_ * pixelSize_) ) );
-            // If EM gain was used, add uncertainty due to Poisson distributed noise
-            if (this.gain_ > 2.0) {
-               mVarX = 2 * mVarX;
-            }
-            // Assume that the variance in X and Y are uncorrelated
-            // shortcut: Do not calculate variane in Y, but use the variance in X twice
-            double mSigma = Math.sqrt(mVarX + mVarX);
-            
-            double width = 2 * s;
-            if (fitResult.getParms().length >= 6) {
-                sx = fitResult.getParms()[GaussianFit.S1] * pixelSize_;
-                sy = fitResult.getParms()[GaussianFit.S2] * pixelSize_;
-                a = sx/sy;
-            }
-
-            if (fitResult.getParms().length >= 7) {
-                theta = fitResult.getParms()[GaussianFit.S3];
-            }
-            
-            if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))
-                    && (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_))) {
+            if ((!useWidthFilter_ || (spot.getWidth() > widthMin_ && spot.getWidth() < widthMax_))
+                    && (!useNrPhotonsFilter_ || (spot.getIntensity() > nrPhotonsMin_ && spot.getIntensity() < nrPhotonsMax_))) {
                // If we have a good fit, update position of the box
+               double xpc = fitResult.getParms()[GaussianFit.XC];
+               double ypc = fitResult.getParms()[GaussianFit.YC];
                if (xpc > 0 && xpc < (size) && ypc > 0 && ypc < (size)) {
                   xc += (int) xpc - getHalfBoxSize();
                   yc += (int) ypc - getHalfBoxSize();
                }
-               spot.setData(N, bgr, x, y, 0.0, 2 * s, a, theta, sigma);
-               spot.addKeyValue(SpotData.Keys.APERTUREINTENSITY, NAperture);
-               // Ratio of # of photons measured by Gaussian fit and Aperture method
-               spot.addKeyValue(SpotData.Keys.INTENSITYRATIO, N / NAperture);
-               spot.addKeyValue(SpotData.Keys.APERTUREBACKGROUND, bgrAperture);
-               spot.addKeyValue(SpotData.Keys.MSIGMA, mSigma);
-               xyPoints.add(new Point2D.Double(x, y));
+               xyPoints.add(new Point2D.Double(spot.getXCenter(), spot.getYCenter()));
                timePoints.add(i * timeIntervalMs_);
                resultList_.add(spot);
                missedFrames = 0;

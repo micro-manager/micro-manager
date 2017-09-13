@@ -217,6 +217,7 @@ public class RowData {
    public final double minZ_;
    public final double maxZ_;
    public final double totalNrPhotons_;
+   public final String channels_;
 
    private static int rowDataID_ = 1;
 
@@ -252,6 +253,7 @@ public class RowData {
       double stdY = 0.0;
       double std = 0.0;
       double nrPhotons = 0.0;
+      String tmpChannelStr = "";
       if (isTrack_) {
          ArrayList<Point2D.Double> xyList = ListUtils.spotListToPointList(spotList_);
          Point2D.Double avgPoint = ListUtils.avgXYList(xyList);
@@ -262,7 +264,19 @@ public class RowData {
          for (SpotData spot : spotList_) {
             nrPhotons += spot.getIntensity();
          }
+         List<Integer> channelList = new ArrayList<Integer>();
+         for (SpotData spot : spotList_) {
+            if (!channelList.contains(spot.getChannel()) ) {
+               channelList.add(spot.getChannel());
+            }
+         }
+         for (Integer i : channelList) {
+            tmpChannelStr += i + ", ";
+         }
+         tmpChannelStr = tmpChannelStr.substring(0, tmpChannelStr.length() - 2);
+         
       }
+      channels_ = tmpChannelStr;   
       stdX_ = stdX;
       stdY_ = stdY;
       std_ = std;

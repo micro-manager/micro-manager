@@ -33,6 +33,8 @@ either expressed or implied, of the FreeBSD Project.
  */
 package edu.ucsf.valelab.gaussianfit.data;
 
+import edu.ucsf.valelab.gaussianfit.utils.ListUtils;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,9 +42,10 @@ import java.util.List;
  *
  * @author nico
  */
-public class TrackData {
+public class TrackData implements PointData {
     private final List<SpotData> spotList_;
     private int missingAtEnd_;
+    private Point2D.Double center_;
     
     public TrackData() {
        spotList_ = new ArrayList<SpotData>();
@@ -73,7 +76,26 @@ public class TrackData {
        spotList_.add(item);
     }
     
+    public void add(TrackData otherTrack) {
+       for (SpotData item : otherTrack.getList()) {
+          spotList_.add(item);
+       }
+    }
+    
     public List<SpotData> getList() {
        return spotList_;
     }
+    
+    public Point2D.Double getCenter() {
+       if (center_ == null) {
+          center_ = ListUtils.avgXYList(ListUtils.spotListToPointList(spotList_));
+       }
+       return center_;
+    }
+    
+    @Override
+    public Point2D.Double getPoint() {
+       return getCenter();
+    }
+    
 }

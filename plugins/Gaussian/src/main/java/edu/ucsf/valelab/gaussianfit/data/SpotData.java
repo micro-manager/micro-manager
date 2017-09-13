@@ -33,6 +33,7 @@ package edu.ucsf.valelab.gaussianfit.data;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
+import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -47,7 +48,7 @@ import java.util.Set;
  */
 
 
-public class SpotData {
+public class SpotData implements PointData {
    
    public class Keys {
       // total intensity as calculated by the sum of pixel intensities minus background
@@ -59,8 +60,11 @@ public class SpotData {
       // (average of outer rows and columns of the box around the spot)
       public static final String APERTUREBACKGROUND = "Bkr (Apert.)";
       // Error estimate according to Mortensen et al. 2010 (http://dx.doi.org/10.1038/nmeth.1447
-      // uses aperture method intensity
       public static final String MSIGMA = "Sigma-alt.";
+      // integral method sigma estimate from Mortenson et al. paper
+      public static final String INTEGRALSIGMA = "Sigma-integral";
+      // integral method sigma calculated using aperture intensity and background
+      public static final String INTEGRALAPERTURESIGMA = "Sigma-integral-aperture";
       // Number of spots in track or group
       public static final String N = "n";
       // Std. Deviation of positions in track or group
@@ -78,7 +82,7 @@ public class SpotData {
    private final int frame_;        // frame number in the original stack - 1-based
    private final int channel_;      // channel number in the original stack
    private final int slice_;        // slice number in the original stack - 1-based
-   private final int position_;     // position number in the original stack
+   private int position_;     // position number in the original stack
    private final int nr_;           // spot index in given image
    private final int x_;            // x as found by spotfinder
    private final int y_;            // y as found by spotfinder
@@ -98,7 +102,7 @@ public class SpotData {
 
    public int nrLinks_;       // number of frames/slices in which this spot was found
    public int originalFrame_; // original first frame/slice in which this spot was found
-   private final Map<String, Double> keyValue_; // Map of keys/values taht can be used to extend what we store in the SpotData
+   private final Map<String, Double> keyValue_; // Map of keys/values that can be used to extend what we store in the SpotData
 
    public SpotData(ImageProcessor ip, int channel, int slice, int frame, 
            int position, int nr, int x, int y) {
@@ -202,6 +206,9 @@ public class SpotData {
    public int getPosition() {
       return position_;
    }
+   public void setPosition(int position) {
+      position_ = position;
+   }
    public int getNr() {
       return nr_;
    }
@@ -272,8 +279,9 @@ public class SpotData {
 
    // For performance reasons, it is much better to use the cached version of the processor
    public ImageProcessor getSpotProcessor(ImagePlus siPlus, int halfSize) {
-      if (ip_ != null)
+      if (ip_ != null) {
          return ip_;
+      }
       synchronized(LOCK_IP) {
          Roi spotRoi = new Roi(x_ - halfSize, y_ - halfSize, 2 * halfSize, 2 * halfSize);
          siPlus.setPositionWithoutUpdate(channel_, slice_, frame_);
@@ -283,8 +291,9 @@ public class SpotData {
    }
 
    public ImageProcessor getSpotProcessor(ImageProcessor siProc, int halfSize) {
-      if (ip_ != null)
+      if (ip_ != null) {
          return ip_;
+      }
       synchronized(LOCK_IP) {
          Roi spotRoi = new Roi(x_ - halfSize, y_ - halfSize, 2 * halfSize, 2 * halfSize);
          //siProc.setSliceWithoutUpdate(frame_);
@@ -304,4 +313,10 @@ public class SpotData {
          }
       }
    }
+   
+   @Override
+   public Point2D.Double getPoint() {
+      return new Point2D.Double(xCenter_, yCenter_);
+   }
+   
 }

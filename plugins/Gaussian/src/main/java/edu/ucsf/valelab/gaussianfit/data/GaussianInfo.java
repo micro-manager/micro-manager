@@ -51,6 +51,8 @@ public class GaussianInfo {
    // half the size (in pixels) of the square used for Gaussian fitting
    private int halfSize_ = 8;
    protected double baseLevel_ = 100; // base level (bias) of the camera in counts
+   protected double readNoise_ = 0.0; // Effective Read Noise of the camera in electrons
+                                      // Will not be corrected for EM gain
    
    // settings for maximum finder
    protected int noiseTolerance_ = 100;
@@ -181,6 +183,9 @@ public class GaussianInfo {
    public void setMaxIterations(int maxIter) {
       maxIterations_ = maxIter;
    }
+   public int getMaxIterations() {
+      return maxIterations_;
+   }
    public void setShape(int shape) {
       shape_ = shape;
    }
@@ -198,6 +203,12 @@ public class GaussianInfo {
    }
    public double getBaseLevel() {
       return baseLevel_;
+   }
+   public void setReadNoise(double readNoise) {
+      readNoise_ = readNoise;
+   }
+   public double getReadNoise() {
+      return readNoise_;
    }
    public void setEndTrackBool(boolean endTrack) {
       endTrackAfterBadFrames_ = endTrack;
@@ -250,6 +261,7 @@ public class GaussianInfo {
       setNrPhotonsMin(source.getNrPhotonsMin());
       setPhotonConversionFactor(source.getPhotonConversionFactor());
       setPixelSize(source.getPixelSize());
+      setReadNoise(source.getReadNoise());
       setShape(source.getShape());
       setSigmaMax(source.getSigmaMax());
       setSigmaMin(source.getSigmaMin());
@@ -259,6 +271,7 @@ public class GaussianInfo {
       setUseNrPhotonsFilter(source.getUseNrPhotonsFilter());
       setUseWidthFilter(source.getUseWidthFilter());
       setZStackStepSize(source.getZStackStepSize());
+      setMaxIterations(source.getMaxIterations());
    }
    
 }

@@ -84,14 +84,17 @@ public class NearestPoint2D {
       }
       double[] testPoint = {input.x, input.y};
       List<Entry<Integer>> result = we_.nearestNeighbor(testPoint, 1, false);
-      
-      Integer index = result.get(0).value;
-      double distance = result.get(0).distance;
-      
-      Point2D.Double ret = (Point2D.Double) theList_.get(index).clone();
-      
-      if (distance < maxDistanceSquared_)
-         return ret;
+
+      if (result.size() > 0) {
+         Integer index = result.get(0).value;
+         double distance = result.get(0).distance;
+
+         Point2D.Double ret = (Point2D.Double) theList_.get(index).clone();
+
+         if (distance < maxDistanceSquared_) {
+            return ret;
+         }
+      }
       
       return null;
    }

@@ -83,7 +83,6 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
    public void run() {
       GaussianFit gs_ = new GaussianFit(super.getShape(), super.getFitMode(),
             super.getUseFixedWidth(), super.getFixedWidthNm() / super.getPixelSize() / 2);
-      double cPCF = photonConversionFactor_ / gain_;
       ZCalibrator zc = DataCollectionForm.zc_;
 
       while (!stopNow_) {
@@ -108,87 +107,17 @@ public class GaussianFitStackThread extends GaussianInfo implements Runnable {
             GaussianFit.Data fitResult = gs_.dogaussianfit(ip, maxIterations_);
             // Note that the copy constructor will not copy pixel data, so we loose 
             // those when spot goes out of scope
-            SpotData spotData = new SpotData(spot);
-            double sx;
-            double sy;
-            double a = 1;
-            double theta = 0;
-            double gs = super.getFixedWidthNm() / pixelSize_ / 2;
-            if (fitResult.getParms().length >= 4) {
-
-               double xMax = (fitResult.getParms()[GaussianFit.XC] - 
-                       super.getHalfBoxSize() + spot.getX()) * pixelSize_;
-               double yMax = (fitResult.getParms()[GaussianFit.YC] - 
-                       super.getHalfBoxSize() + spot.getY()) * pixelSize_; 
-               // express background in photons after base level correction
-               double bgr = cPCF * (fitResult.getParms()[GaussianFit.BGR] - baseLevel_);
-               
-               if (fitResult.getParms().length >= 5) {
-                  gs = fitResult.getParms()[GaussianFit.S];
-               }
-               double N = cPCF * fitResult.getParms()[GaussianFit.INT]
-                       * (2 * Math.PI * gs * gs);
-               // calculate error using formular from Thompson et al (2002)
-               // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
-               double s = gs * pixelSize_;
-               double sasqr = s * s + (pixelSize_ * pixelSize_) / 12;
-               double varX = sasqr / N
-                       + (8 * Math.PI * s * s * s * s * bgr * bgr) / (pixelSize_ * pixelSize_ * N * N);
-               // Assume that the variance in X and Y are uncorrelated
-               // shortcut: Do not calculate variane in Y, but use the variance in X twice
-               double sigma = Math.sqrt(varX + varX);
-               // # of photons and background as calculated using the method by
-               // Franke et al. : http://dx.doi/org/10.1038/nmeth.4073
-               double NAperture = cPCF * fitResult.getApertureIntensity();
-               double bgrAperture = cPCF * (fitResult.getApertureBackground() - baseLevel_);
-               // Calculate error using the method by Mortenson et al.
-               // http://dx.doi.org/10.1038/nmeth.1447
-               // sasqr = s * s + (a * a)/12
-               // d(x)2 = (sasqr /N) (16/9 + 8 * pi * sasqr * b * b / N * a * a)
-               double mVarX = sasqr / N
-                       * (16/9 + ( (8 * Math.PI * sasqr *  bgr * bgr) / 
-                       (N * pixelSize_ * pixelSize_) ) );
-               // If EM gain was used, add uncertainty due to Poisson distributed noise
-               if (this.gain_ > 2.0) {
-                  mVarX = 2 * mVarX;
-               }
-               // Assume that the variance in X and Y are uncorrelated
-               // shortcut: Do not calculate variane in Y, but use the variance in X twice
-               double mSigma = Math.sqrt(mVarX + mVarX);
-
-               if (fitResult.getParms().length >= 6) {
-                  sx = fitResult.getParms()[GaussianFit.S1] * pixelSize_;
-                  sy = fitResult.getParms()[GaussianFit.S2] * pixelSize_;
-                  a = sx / sy;
-                  
-                  double z;              
-               
-                  if (zc.hasFitFunctions()) {
-                     z = zc.getZ(2 * sx, 2 * sy);
-                     spotData.setZCenter(z);
-                  }
-                  
-               }
-
-               if (fitResult.getParms().length >= 7) {
-                  theta = fitResult.getParms()[GaussianFit.S3];
-               }
-
-               double width = 2 * s;
-
-               spotData.setData(N, bgr, xMax, yMax, 0.0, width, a, theta, sigma);
-               spotData.addKeyValue(SpotData.Keys.APERTUREINTENSITY, NAperture);
-               // Ratio of # of photons measured by Gaussian fit and Aperture method
-               spotData.addKeyValue(SpotData.Keys.INTENSITYRATIO, N / NAperture);
-               spotData.addKeyValue(SpotData.Keys.APERTUREBACKGROUND, bgrAperture);
-               spotData.addKeyValue(SpotData.Keys.MSIGMA, mSigma);
-
-               if ((!useWidthFilter_ || (width > widthMin_ && width < widthMax_))
-                       && (!useNrPhotonsFilter_ || (N > nrPhotonsMin_ && N < nrPhotonsMax_))) {
-                  resultList_.add(spotData);
-               }
-
+            SpotData spotData = SpotDataConverter.convert(spot, fitResult, this, zc);
+            
+            if ( fitResult.getParms().length > 1 &&
+                    (!useWidthFilter_ || 
+                    (spotData.getWidth() > widthMin_ && spotData.getWidth() < widthMax_))
+                    && (!useNrPhotonsFilter_ || 
+                    (spotData.getIntensity() > nrPhotonsMin_ && spotData.getIntensity() < nrPhotonsMax_))) {
+               resultList_.add(spotData);
             }
+
+
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
             ReportingUtils.logError("Thread run out of memory  " + 

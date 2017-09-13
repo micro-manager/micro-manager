@@ -41,16 +41,29 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
  * @author nico
  */
 public class PairFilter {
+   
+   public static AtomicBoolean isRunning_ = new AtomicBoolean(false);
+   
+   public static void resetLock() {
+      isRunning_.set(false);
+   }
 
    /**
     * Creates a new data set that only contains spot pairs that match our
     * criteria.
+    * The filter finds pairs of a spot in channel 1 and 2 (in the same frame and
+    * position) within a distance maxdistance.  It then divides the image in
+    * n quadrants (where n is a square of an integer), and calculates the 
+    * average distance between the spots within this quadrant. Pairs with 
+    * a distance that is greater than deviationMax * the standard deviation 
+    * away from the mean, are rejected, all others make it into the output.
     *
     *
     * @param rowData - input source of data
@@ -58,7 +71,7 @@ public class PairFilter {
     * channels for them to be considered a pair
     * @param deviationMax - maximum deviation from the mean (expressed in
     * standard deviations) above which a pair is rejected
-    * @param nrQuadrants - NUmber of quadrants in which the image should be
+    * @param nrQuadrants - Number of quadrants in which the image should be
     * divided (i.e., each quadrant will be filtered by itself) Valid numbers are
     * 1, and squares of integers (i.e. 4, 9, 16).
     *
@@ -96,8 +109,15 @@ public class PairFilter {
                   for (int q = 0; q < nrQuadrants; q++) {
                      gsCh1.put(q, new ArrayList<SpotData>());
                   }
-                  // leave channel 2 intact (i.e. do not split in quadrants)
-                  List<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
+                  // index channel 2 by position
+                  ArrayList<List<Point2D.Double>> xyPointsCh2 = 
+                          new ArrayList<List<Point2D.Double>>(rowData.nrPositions_);
+                  ArrayList<List<SpotData>> xySpotsCh2 = 
+                          new ArrayList<List<SpotData>>(rowData.nrPositions_);
+                  for (int position = 1; position <= rowData.nrPositions_; position++) {
+                     xyPointsCh2.add(position - 1, new ArrayList<Point2D.Double>());
+                     xySpotsCh2.add(position - 1, new ArrayList<SpotData>());
+                  }
 
                   for (SpotData gs : rowData.spotList_) {
                      if (gs.getFrame() == frame) {
@@ -109,8 +129,9 @@ public class PairFilter {
                               gsCh1.get(q).add(gs);
                            }
                         } else if (gs.getChannel() == 2) {
+                           xySpotsCh2.get(gs.getPosition() - 1).add(gs);
                            Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                           xyPointsCh2.add(point);
+                           xyPointsCh2.get(gs.getPosition() - 1).add(point);
                         }
                      }
                   }
@@ -123,18 +144,23 @@ public class PairFilter {
                   // we have the points of channel 1 in each quadrant
                   // find each matching partner, and do statistics on each quadrant
                   // only keep pairs that match what was requested
+                  
+                  // First set up the nearestPoint maps for all positions
+                  List<NearestPoint2D> npsByPosition = new ArrayList<NearestPoint2D>(rowData.nrPositions_);
+                  for (int position = 1; position <= rowData.nrPositions_; position++) {
+                     npsByPosition.add(position - 1, new NearestPoint2D(xyPointsCh2.get(position - 1), maxDistance));
+                  }
                   for (int q = 0; q < nrQuadrants; q++) {
+                     ij.IJ.showProgress( (q+1) * frame, (nrQuadrants + 1) * rowData.nrFrames_);
                      // Find matching points in the two ArrayLists
                      Iterator it2 = gsCh1.get(q).iterator();
-                     NearestPoint2D np = new NearestPoint2D(xyPointsCh2,
-                             maxDistance);
                      ArrayList<Double> distances = new ArrayList<Double>();
                      ArrayList<Double> orientations = new ArrayList<Double>();
 
                      while (it2.hasNext()) {
                         SpotData gs = (SpotData) it2.next();
                         Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                        Point2D.Double pCh2 = np.findKDWSE(pCh1);
+                        Point2D.Double pCh2 = npsByPosition.get(gs.getPosition() - 1).findKDWSE(pCh1);
                         if (pCh2 != null) {
                            double d2 = NearestPoint2D.distance2(pCh1, pCh2);
                            double d = Math.sqrt(d2);
@@ -153,7 +179,7 @@ public class PairFilter {
                      while (it2.hasNext()) {
                         SpotData gs = (SpotData) it2.next();
                         Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                        Point2D.Double pCh2 = np.findKDWSE(pCh1);
+                        Point2D.Double pCh2 = npsByPosition.get(gs.getPosition() - 1).findKDWSE(pCh1);
                         if (pCh2 != null) {
                            double d2 = NearestPoint2D.distance2(pCh1, pCh2);
                            double d = Math.sqrt(d2);
@@ -162,7 +188,7 @@ public class PairFilter {
                                    && d < distAvg + deviationMax * distStd) {
                               correctedData.add(gs);
                               // we have to find the matching spot in channel 2!
-                              for (SpotData gsCh2 : rowData.spotList_) {
+                              for (SpotData gsCh2 : xySpotsCh2.get(gs.getPosition() - 1)) {
                                  if (gsCh2.getFrame() == frame) {
                                     if (gsCh2.getChannel() == 2) {
                                        if (gsCh2.getXCenter() == pCh2.x && gsCh2.getYCenter() == pCh2.y) {
@@ -188,11 +214,16 @@ public class PairFilter {
                System.gc();
                ij.IJ.error("Out of Memory");
             }
+            isRunning_.set(false);
          }
       };
 
-       
-      (new Thread(doWorkRunnable)).start();
+      if (!isRunning_.get()) {
+         isRunning_.set(true);
+         (new Thread(doWorkRunnable)).start();
+      } else {
+         // TODO: let the user know
+      }
    }
 
 }

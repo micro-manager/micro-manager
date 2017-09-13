@@ -42,6 +42,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.ParseException;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JSpinner;
@@ -61,6 +62,8 @@ public class ExtractTracksDialog  {
    private static final String MAXIMUM_NUMBER_OF_MISSING_FRAMES = "maxmissing";
    private static final String MAXIMUM_DISTANCE_BETWEEN_FRAMES = "maxdistance";
    private static final String MINIMUM_TOTAL_DISTANCE = "minimum_total_distance";
+   private static final String COMBINE_CHANNELS = "combine_channels";
+   private static final String MAX_CHANNEL_DISTANCE = "max_channel_distance";
    
    ExtractTracksDialog(final Studio studio, final RowData rowData, final Point p) {
       final JFrame jf = new JFrame();
@@ -109,11 +112,35 @@ public class ExtractTracksDialog  {
       minTotalDistanceTF.setFont(gFont);
       jf.getContentPane().add(minTotalDistanceTF, w + ", wrap");
       
+      final JLabel maxPairLabel = new JLabel("Max. pair distance (nm)");
+      final JTextField maxPairDistance = new JTextField(
+              NumberUtils.doubleToDisplayString(up.getDouble(us,
+                      MAX_CHANNEL_DISTANCE, 100.0)));
+      
+      final JCheckBox combineChannels = new JCheckBox("Combine tracks from all channels");
+      combineChannels.setFont(gFont);
+      combineChannels.setSelected(up.getBoolean(us, COMBINE_CHANNELS, false));
+      maxPairLabel.setEnabled(combineChannels.isSelected());
+      maxPairDistance.setEnabled(combineChannels.isSelected());
+      combineChannels.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent ae) {
+            maxPairLabel.setEnabled(combineChannels.isSelected());
+            maxPairDistance.setEnabled(combineChannels.isSelected());
+         }
+      });
+      jf.getContentPane().add(combineChannels, "span 2, wrap");
+      
+       jf.getContentPane().add(maxPairLabel);
+       jf.getContentPane().add(maxPairDistance, "wrap");
+      
+      
       JButton okButton = new JButton("OK");
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             try {
+               int start = DataCollectionForm.getInstance().getNumberOfSpotData();
                int minFrames = (Integer) minFramesSp.getValue();
                up.setInt(us, MINIMUM_NUMBER_OF_FRAMES, minFrames);
                int maxMissing = (Integer) maxMissingSp.getValue();
@@ -124,10 +151,19 @@ public class ExtractTracksDialog  {
                double minTotalDistance = NumberUtils.displayStringToDouble(
                        minTotalDistanceTF.getText());
                up.setDouble(us, MINIMUM_TOTAL_DISTANCE, minTotalDistance);
-               int nrExtractedTracks = SpotLinker.extractTracks(rowData, minFrames, maxMissing, distance,
-                       minTotalDistance);
+               boolean multiChannel = combineChannels.isSelected();
+               up.setBoolean(us, COMBINE_CHANNELS, multiChannel);
+               double maxPairDistanceD = NumberUtils.displayStringToDouble(
+                       maxPairDistance.getText());
+               up.setDouble(us, MAX_CHANNEL_DISTANCE, maxPairDistanceD);
+               int nrExtractedTracks = SpotLinker.extractTracks(rowData, 
+                       minFrames, maxMissing, distance, minTotalDistance,
+                       multiChannel, maxPairDistanceD);
                if (nrExtractedTracks == 0) {
                   studio.logs().showMessage("No tracks found with current settings");
+               } else {
+                  int end = DataCollectionForm.getInstance().getNumberOfSpotData();
+                  DataCollectionForm.getInstance().setSelectedRows(start, end - 1);
                }
                jf.dispose();
             } catch (ParseException pe) {

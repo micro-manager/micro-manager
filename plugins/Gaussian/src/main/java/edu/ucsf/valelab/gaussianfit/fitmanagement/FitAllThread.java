@@ -64,10 +64,7 @@ import ij.process.ShortProcessor;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
@@ -376,7 +373,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                               siPlus.setRoi(roi, false);
                               siProc = siPlus.getProcessor();
                               Polygon q = FindLocalMaxima.FindMax(siPlus, 
-                                      super.getHalfBoxSize(), noiseTolerance_,
+                                      2 * super.getHalfBoxSize(), noiseTolerance_,
                                       preFilterType_);
                               for (int i = 0; i < q.npoints; i++) {
                                  p.addPoint(q.xpoints[i], q.ypoints[i]);
@@ -385,7 +382,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
                         } else {  // no Rois in RoiManager
                            siPlus.setRoi(originalRoi, false);
                            siProc = siPlus.getProcessor();
-                           p = FindLocalMaxima.FindMax(siPlus, super.getHalfBoxSize(), noiseTolerance_,
+                           p = FindLocalMaxima.FindMax(siPlus, 2 * super.getHalfBoxSize(), noiseTolerance_,
                                    preFilterType_);
                         }
                      }

@@ -136,11 +136,6 @@ public class PairDisplayForm extends GUFrame{
       savePairTextFile.addActionListener(fileSavingActionListener);
       panel.add(savePairTextFile, "wrap");
       
-      // summary per frame
-      final JCheckBox showSummary = 
-              makeCheckBox("Show per Frame summary", SHOWSUMMARYPREF);
-      panel.add(showSummary, "wrap");
-      
       // graph of average distance in each frame
       final JCheckBox showGraph = 
               makeCheckBox("Show Graph with per Frame errors", SHOWGRAPHPREF);
@@ -154,9 +149,9 @@ public class PairDisplayForm extends GUFrame{
       panel.add(saveTrackSummaryFile, "wrap");
       saveTrackSummaryFile.addActionListener(fileSavingActionListener);
      
-      final JCheckBox showTrackSummary =
+      final JCheckBox showPairTrackSummary =
               makeCheckBox("Show Pair Track Summary", SHOWTRACKSUMMARYPREF);
-      panel.add(showTrackSummary, "wrap");
+      panel.add(showPairTrackSummary, "wrap");
            
       // arrow overlay
       final JCheckBox showOverlay = 
@@ -328,7 +323,7 @@ public class PairDisplayForm extends GUFrame{
                     savePairs(savePairTextFile.isSelected()).
                     showGraph(showGraph.isSelected()).
                     showTrack(showTracks.isSelected()).
-                    showSummary(showTrackSummary.isSelected()).
+                    showSummary(showPairTrackSummary.isSelected()).
                     showOverlay(showOverlay.isSelected()).
                     saveFile(saveTrackSummaryFile.isSelected()).
                     filePath(filePath.getText()).
