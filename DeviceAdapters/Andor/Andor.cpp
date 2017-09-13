@@ -66,8 +66,7 @@
 #include <math.h>
 
 #include <iostream>
-using namespace std;
-
+#include <algorithm>
 
 
 #pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
@@ -4985,7 +4984,8 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
       if (IsIxonUltra888())
       {
          if (SRRFControl_->GetLibraryStatus() == SRRFControl::READY) {
-            ptrdiff_t pos = find(VSpeeds_.begin(), VSpeeds_.end(), "1.13") - VSpeeds_.begin();
+            string requestedSpeed = "1.13";
+            ptrdiff_t pos = find(VSpeeds_.begin(), VSpeeds_.end(), requestedSpeed) - VSpeeds_.begin();
             if (pos < (long long)VSpeeds_.size())
             {
                SetProperty(g_VerticalSpeedProperty, VSpeeds_[pos].c_str());
