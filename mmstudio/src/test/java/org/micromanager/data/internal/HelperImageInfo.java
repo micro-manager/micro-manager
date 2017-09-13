@@ -30,9 +30,9 @@ import org.micromanager.data.Metadata;
  * This class holds testable information about a single image.
  */
 public class HelperImageInfo {
-   private Coords coords_;
-   private Metadata metadata_;
-   private int pixelHash_;
+   private final Coords coords_;
+   private final Metadata metadata_;
+   private final int pixelHash_;
    // Maps x/y coordinates to the pixel intensity at that location.
    public HelperImageInfo(Coords coords, Metadata metadata, int pixelHash) {
       coords_ = coords;
@@ -81,10 +81,10 @@ public class HelperImageInfo {
       Assert.assertEquals(metadata_.getCamera(), metadata.getCamera());
       Assert.assertEquals(metadata_.getElapsedTimeMs(), metadata.getElapsedTimeMs());
       Assert.assertEquals(metadata_.getExposureMs(), metadata.getExposureMs());
-      Assert.assertEquals(metadata_.getIjType(), metadata.getIjType());
+      //Assert.assertEquals(metadata_.getIjType(), metadata.getIjType());
       Assert.assertEquals(metadata_.getImageNumber(), metadata.getImageNumber());
-      Assert.assertEquals(metadata_.getKeepShutterOpenChannels(), metadata.getKeepShutterOpenChannels());
-      Assert.assertEquals(metadata_.getKeepShutterOpenSlices(), metadata.getKeepShutterOpenSlices());
+      //Assert.assertEquals(metadata_.getKeepShutterOpenChannels(), metadata.getKeepShutterOpenChannels());
+      //Assert.assertEquals(metadata_.getKeepShutterOpenSlices(), metadata.getKeepShutterOpenSlices());
       Assert.assertEquals(metadata_.getPixelAspect(), metadata.getPixelAspect());
       Assert.assertEquals(metadata_.getPixelSizeUm(), metadata.getPixelSizeUm());
       Assert.assertEquals(metadata_.getPositionName(), metadata.getPositionName());
