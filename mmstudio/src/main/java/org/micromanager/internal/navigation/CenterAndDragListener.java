@@ -26,8 +26,8 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class CenterAndDragListener implements MouseListener,
         MouseMotionListener, WindowListener {
 
-   private CMMCore core_;
-   private MMStudio studio_;
+   private final CMMCore core_;
+   private final MMStudio studio_;
    private ImageCanvas canvas_;
    private boolean mirrorX_;
    private boolean mirrorY_;
@@ -39,6 +39,8 @@ public final class CenterAndDragListener implements MouseListener,
          DisplayController display) {
       studio_ = studio;
       core_ = core;
+      // TODO
+      /*
       canvas_ = display.getCanvas();
       if (!Arrays.asList(canvas_.getMouseListeners()).contains(this)) {
          canvas_.addMouseListener(this);
@@ -51,6 +53,7 @@ public final class CenterAndDragListener implements MouseListener,
       }
 
       getOrientation();
+      */
    }
 
    public void stop() {

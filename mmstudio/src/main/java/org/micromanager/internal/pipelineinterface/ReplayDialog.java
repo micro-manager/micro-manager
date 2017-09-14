@@ -39,7 +39,7 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.events.DisplayAboutToShowEvent;
+// import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMDialog;
@@ -175,6 +175,8 @@ public final class ReplayDialog extends MMDialog {
       super.dispose();
    }
 
+   // TODO
+   /*
    @Subscribe
    public void onDisplayAboutToShow(DisplayAboutToShowEvent event) {
       // HACK: wait until DisplayManager knows about the display. Otherwise
@@ -186,7 +188,10 @@ public final class ReplayDialog extends MMDialog {
          }
       });
    }
+   */
 
+   // TODO
+   /*
    @Subscribe
    public void onDisplayDestroyed(GlobalDisplayDestroyedEvent event) {
       // HACK: wait until DisplayManager knows about the display. Otherwise
@@ -198,6 +203,7 @@ public final class ReplayDialog extends MMDialog {
          }
       });
    }
+   */
 
    /**
     * Rebuild the options in the input_ dropdown menu.
@@ -315,8 +321,16 @@ public final class ReplayDialog extends MMDialog {
       catch (PipelineErrorException e) {
          studio_.logs().showError("Error processing data:" + pipeline.getExceptions());
       }
+      catch (IOException e) {
+         studio_.logs().showError(e, "Error saving data");
+      }
       monitor.close();
       pipeline.halt();
-      destination.freeze();
+      try {
+         destination.freeze();
+      } 
+      catch (IOException e) {
+         studio_.logs().showError(e, "Error saving data");
+      }
    }
 }

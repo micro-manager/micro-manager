@@ -36,6 +36,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -400,7 +401,11 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
          new Runnable() {
             @Override
             public void run() {
-               studio_.album().addImages(studio_.live().snap(false));
+               try {
+                  studio_.album().addImages(studio_.live().snap(false));
+               } catch (IOException ioEx) {
+                  studio_.logs().showError(ioEx);
+               }
             }
          });
       subPanel.add(albumButton, BIGBUTTON_SIZE);

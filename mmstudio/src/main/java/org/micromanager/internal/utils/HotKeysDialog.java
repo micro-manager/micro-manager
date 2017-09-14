@@ -95,7 +95,7 @@ public final class HotKeysDialog extends MMDialog {
             HotKeyAction action = actions_.get(row);
             if (action != null) {
                if (action.type_ == HotKeyAction.GUICOMMAND) {
-                  return HotKeyAction.guiItems_[action.guiCommand_];
+                  return HotKeyAction.GUIITEMS[action.guiCommand_];
                } else
                   return action.beanShellScript_.getName();
             }
@@ -210,7 +210,7 @@ public final class HotKeysDialog extends MMDialog {
        }
 
        possibleActionsAsString_ = new String[HotKeyAction.NRGUICOMMANDS + nrScripts];
-       System.arraycopy(HotKeyAction.guiItems_, 0, possibleActionsAsString_, 0, HotKeyAction.guiItems_.length);
+       System.arraycopy(HotKeyAction.GUIITEMS, 0, possibleActionsAsString_, 0, HotKeyAction.GUIITEMS.length);
        for (int i=0; i < HotKeyAction.NRGUICOMMANDS; i++) {
          possibleActions_.add(i, new HotKeyAction(i));
        }

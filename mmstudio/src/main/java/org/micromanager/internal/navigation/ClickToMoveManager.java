@@ -26,7 +26,7 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-import org.micromanager.display.DisplayDestroyedEvent;
+//import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.MMStudio;
@@ -63,8 +63,9 @@ public final class ClickToMoveManager {
          dragListener = new CenterAndDragListener(core_, studio_, display);
          keyListener = new StageShortcutListener();
       }
-      display.getCanvas().removeKeyListener(IJ.getInstance());
-      display.getCanvas().addKeyListener(keyListener);
+      // TODO
+      // display.getCanvas().removeKeyListener(IJ.getInstance());
+      // display.getCanvas().addKeyListener(keyListener);
       displayToDragListener_.put(display, dragListener);
       displayToKeyListener_.put(display, keyListener);
    }
@@ -85,8 +86,9 @@ public final class ClickToMoveManager {
                }
                KeyAdapter keyListener = displayToKeyListener_.get(display);
                if (keyListener != null) {
-                  display.getCanvas().removeKeyListener(keyListener);
-                  display.getCanvas().addKeyListener(IJ.getInstance());
+                  // TODO
+                  // display.getCanvas().removeKeyListener(keyListener);
+                  // display.getCanvas().addKeyListener(IJ.getInstance());
                }
                // Still need to keep track of the display so we can reactivate
                // it later if necessary.
@@ -100,6 +102,8 @@ public final class ClickToMoveManager {
       }
    }
 
+   // TOD
+   /*
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
       DisplayController display = (DisplayController) event.getDisplay();
@@ -107,6 +111,7 @@ public final class ClickToMoveManager {
       displayToDragListener_.remove(display);
       displayToKeyListener_.remove(display);
    }
+   */
 
    public static ClickToMoveManager getInstance() {
       return staticInstance_;

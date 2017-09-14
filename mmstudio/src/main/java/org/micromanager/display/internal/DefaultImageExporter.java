@@ -42,7 +42,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.display.ImageExporter.OutputFormat;
-import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
+//import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -197,6 +197,7 @@ public final class DefaultImageExporter implements ImageExporter {
     * then once for the display painting to our provided Graphics object.
     * @param event
     */
+   /*
    @Subscribe
    public void onDrawComplete(CanvasDrawCompleteEvent event) {
       try {
@@ -241,6 +242,7 @@ public final class DefaultImageExporter implements ImageExporter {
          ReportingUtils.logError(e, "Error handling draw complete");
       }
    }
+   */
 
    /**
     * Save a single image to disk.
@@ -391,7 +393,8 @@ public final class DefaultImageExporter implements ImageExporter {
          loopThread = new Thread(new Runnable() {
             @Override
             public void run() {
-               display_.requestRedraw();
+               // TODO
+               //display_.requestRedraw();
             }
          }, "Image export thread");
       }

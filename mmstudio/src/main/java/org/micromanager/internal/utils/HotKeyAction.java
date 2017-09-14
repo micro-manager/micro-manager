@@ -1,5 +1,6 @@
 package org.micromanager.internal.utils;
 
+import java.io.IOException;
 import org.micromanager.SnapLiveManager;
 import org.micromanager.internal.MMStudio;
 
@@ -17,8 +18,8 @@ public final class HotKeyAction {
       public static final int ADD_TO_ALBUM = 3;
       public static final int MARK = 4;
       public static final int AUTOSTRETCH = 5;
-      public static final String[] guiItems_ = {"Snap", "Toggle Live", "Toggle Shutter", "->Album", "Mark Position", "Autostretch histograms"};
-      public static final int NRGUICOMMANDS = guiItems_.length;
+      public static final String[] GUIITEMS = {"Snap", "Toggle Live", "Toggle Shutter", "->Album", "Mark Position", "Autostretch histograms"};
+      public static final int NRGUICOMMANDS = GUIITEMS.length;
 
       public int type_;  // either GUICOMMAND or BEANSHELLSCRIPT
       public int guiCommand_;
@@ -55,7 +56,11 @@ public final class HotKeyAction {
                   }
                   return true;
                case ADD_TO_ALBUM:
-                  studio_.album().addImages(studio_.live().snap(false));
+                  try {
+                     studio_.album().addImages(studio_.live().snap(false));
+                  } catch (IOException ioEx) {
+                     studio_.logs().showError(ioEx);
+                  }
                   return true;
                case MARK:
                   studio_.markCurrentPosition();

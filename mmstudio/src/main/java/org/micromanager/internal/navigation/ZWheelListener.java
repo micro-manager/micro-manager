@@ -27,7 +27,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import mmcorej.CMMCore;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.events.DisplayAboutToShowEvent;
+//import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -53,6 +53,8 @@ public final class ZWheelListener implements MouseWheelListener, LiveModeListene
     * 
     * @param datse Handle to the new display
     */
+   // TODO
+   /*
    @Subscribe
    public synchronized void onNewDisplay(DisplayAboutToShowEvent datse) {
       try {
@@ -64,6 +66,7 @@ public final class ZWheelListener implements MouseWheelListener, LiveModeListene
          studio_.logs().logError(npe, "New display has no ImageJ Window in ZWheelListener");
       }
    }
+   */
 
    /**
     * We can only start if there is a live window
