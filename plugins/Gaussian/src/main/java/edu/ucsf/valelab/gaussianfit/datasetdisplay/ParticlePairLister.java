@@ -631,6 +631,10 @@ public class ParticlePairLister {
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> allSigmas = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
+               List<Double> sigmasFirstSpot  = new ArrayList<Double>(
+                       tracks.size() * dc.getSpotData(row).nrFrames_);
+               List<Double> sigmasSecondSpot = new ArrayList<Double>(
+                       tracks.size() * dc.getSpotData(row).nrFrames_);
                while (itTracks.hasNext()) {
                   ArrayList<GsSpotPair> track = itTracks.next();
                   ArrayList<Double> distances = new ArrayList<Double>();
@@ -656,6 +660,8 @@ public class ParticlePairLister {
                              * pair.getSecondSpot().getSigma());
                      sigmas.add(sigma);
                      allSigmas.add(sigma);
+                     sigmasFirstSpot.add(pair.getFirstSpot().getSigma());
+                     sigmasSecondSpot.add(pair.getSecondSpot().getSigma());
                      firstPoints.add(pair.getFirstPoint());
                      secondPoints.add(pair.getSecondPoint());
                   }
@@ -797,19 +803,16 @@ public class ParticlePairLister {
                   double distMean = ListUtils.listAvg(distancesToUse);
                   double distStd = sigmaUserGuess_;
                   if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
-                     // how do we best estimate sigma? If we have multiple
-                     // measurements per particle, it seems best to calculate it 
-                     // directly from the spread in those measurements
-                     // if we have only one particle per track, we need to
-                     // calculate it from the sigmas of the two spots in the particle
-                     // But where is the cutoff between these two methods?
-                     // From sigmas of two spots:
-                     // distStd = ListUtils.listAvg(avgSigmas);
-                     //if (ListUtils.listAvg(trackLengths) > 3.0) {
-                     //   distStd = ListUtils.listStdDev(avgToUse, distMean);
-                     //} else {
-                     distStd = ListUtils.listAvg(allSigmas);
-                     //}
+                     // how do we best estimate sigma? Stefan thinks that the 
+                     // localization errors themselves have an uncertainty that 
+                     // we should account for. See the upcoming manuscript:
+ 
+                     double sfsAvg = ListUtils.listAvg(sigmasFirstSpot);
+                     double sSsAvg = ListUtils.listAvg(sigmasSecondSpot);
+                     double sfsStdDev = ListUtils.listStdDev(sigmasFirstSpot, sfsAvg);
+                     double sSsStdDev = ListUtils.listStdDev(sigmasSecondSpot, sSsAvg);
+                     distStd = Math.sqrt(sfsAvg * sfsAvg  +  sSsAvg * sSsAvg  + 
+                             sfsStdDev * sfsStdDev  +  sSsStdDev * sSsStdDev);
                   }
                   if (gResult != null && gResult.length == 2 && useVectorDistances_){
                      p2df.setStartParams(gResult[0], gResult[1]);
