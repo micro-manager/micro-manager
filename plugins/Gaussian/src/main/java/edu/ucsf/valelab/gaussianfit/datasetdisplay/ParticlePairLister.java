@@ -774,7 +774,10 @@ public class ParticlePairLister {
                   if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
                      // how do we best estimate sigma? Stefan thinks that the 
                      // localization errors themselves have an uncertainty that 
-                     // we should account for. See the upcoming manuscript:
+                     // we should account for. Simulations show this is slightly 
+                     // better than just using the average of the quadratic 
+                     // addition of sigmas of individual spot pairs. 
+                     // See the upcoming manuscript:
                      double sfsAvg = ListUtils.listAvg(sigmasFirstSpot);
                      double sSsAvg = ListUtils.listAvg(sigmasSecondSpot);
                      double sfsStdDev = ListUtils.listStdDev(sigmasFirstSpot, sfsAvg);
