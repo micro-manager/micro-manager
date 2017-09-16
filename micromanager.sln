@@ -382,6 +382,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoherentScientificRemote", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Modbus", "DeviceAdapters\Modbus\Modbus.vcxproj", "{93B23968-DB73-4209-9D19-613A00BFE6B0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoolLEDpE4000", "DeviceAdapters\CoolLEDpE4000\pE4000.vcxproj", "{3745AD5B-44B8-4121-81FE-808067EFEA2A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoolLEDpE300", "DeviceAdapters\CoolLEDpE300\pE300.vcxproj", "{3845AD5B-44B8-4121-81FE-808067EFEA2A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1883,6 +1887,22 @@ Global
 		{93B23968-DB73-4209-9D19-613A00BFE6B0}.Release|Win32.Build.0 = Release|Win32
 		{93B23968-DB73-4209-9D19-613A00BFE6B0}.Release|x64.ActiveCfg = Release|x64
 		{93B23968-DB73-4209-9D19-613A00BFE6B0}.Release|x64.Build.0 = Release|x64
+		{3745AD5B-44B8-4121-81FE-808067EFEA2A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3745AD5B-44B8-4121-81FE-808067EFEA2A}.Debug|Win32.Build.0 = Debug|Win32
+		{3745AD5B-44B8-4121-81FE-808067EFEA2A}.Debug|x64.ActiveCfg = Debug|x64
+		{3745AD5B-44B8-4121-81FE-808067EFEA2A}.Debug|x64.Build.0 = Debug|x64
+		{3745AD5B-44B8-4121-81FE-808067EFEA2A}.Release|Win32.ActiveCfg = Release|Win32
+		{3745AD5B-44B8-4121-81FE-808067EFEA2A}.Release|Win32.Build.0 = Release|Win32
+		{3745AD5B-44B8-4121-81FE-808067EFEA2A}.Release|x64.ActiveCfg = Release|x64
+		{3745AD5B-44B8-4121-81FE-808067EFEA2A}.Release|x64.Build.0 = Release|x64
+		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Debug|Win32.Build.0 = Debug|Win32
+		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Debug|x64.ActiveCfg = Debug|x64
+		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Debug|x64.Build.0 = Debug|x64
+		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Release|Win32.ActiveCfg = Release|Win32
+		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Release|Win32.Build.0 = Release|Win32
+		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Release|x64.ActiveCfg = Release|x64
+		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
