@@ -318,25 +318,6 @@ public class MagellanEngine {
         }, "Setting autofocus position");
     }
 
-    //from MM website, a potential way to speed up acq:
-    //To further streamline synchronization tasks you can define all devices which must be non-busy before the image is acquired.
-// The following devices must stop moving before the image is acquired
-//core.assignImageSynchro("X");
-//core.assignImageSynchro("Y");
-//core.assignImageSynchro("Z");
-//core.assignImageSynchro("Emission");
-//
-//// Set all the positions. For some of the devices it will take a while
-//// to stop moving
-//core.SetPosition("X", 1230);
-//core.setPosition("Y", 330);
-//core.SetPosition("Z", 8000);
-//core.setState("Emission", 3);
-//
-//// Just go ahead and snap an image. The system will automatically wait
-//// for all of the above devices to stop moving before the
-//// image is acquired
-//core.snapImage();
     private void updateHardware(final AcquisitionEvent event) throws InterruptedException {
         //compare to last event to see what needs to change
         if (lastEvent_ != null && lastEvent_.acquisition_ != event.acquisition_) {
@@ -436,6 +417,9 @@ public class MagellanEngine {
                     loopHardwareCommandRetries(new HardwareCommand() {
                         @Override
                         public void run() throws Exception {
+                            //set exposure
+                            core_.setExposure(setting.exposure_);
+                            //set other channel props
                             core_.setConfig(setting.group_, setting.config_);
                         }
                     }, "Set channel group");
