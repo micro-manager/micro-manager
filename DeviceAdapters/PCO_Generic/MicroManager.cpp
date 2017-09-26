@@ -239,18 +239,88 @@ int CPCOCam::OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   if(eAct == MM::BeforeGet)
   {
+    char szinterfaces[20][40] = {
+        "Not specified",
+        "FireWire",          // 1            // Firewire interface
+        "CL Matrox",         // 2            // Cameralink Matrox Solios / Helios
+        "CL Silicon Soft ME3",// 3           // Cameralink Silicon Software Me3
+        "CL National Instr.",// 4            // Cameralink National Instruments
+        "GigE",              // 5            // Gigabit Ethernet
+        "USB",               // 6            // USB 2.0
+        "CL Silicon Soft.Me4", // 7          // Cameralink Silicon Software Me4
+        "USB3",              // 8            // USB 3.0
+        "WLAN",              // 9            // WLan
+        "CL Serial Int."    ,// 10           // Cameralink serial
+        "CLHS",             // 11           // Cameralink HS Silicon Software Me5
+        "Not specified 12",
+        "Not specified 13",
+        "Not specified 14",
+        "Not specified 15",
+        "Not specified 16",
+        "Not specified 17",
+        "Not specified 18",
+        "Not specified 19"
+    };
     char sztype[500];
     char szname[100];
     int ilen = 100, icamtype = 0, iccdtype = 0, icamid = 0;
+    int iinterface = m_pCamera->m_strCamera.strAPIManager.wInterface;
+    if (iinterface > 20)
+      iinterface = 0;
+
     m_pCamera->GetCameraNameNType(szname, ilen, &icamtype, &iccdtype, &icamid);
     if(m_pCamera->m_iCamClass == 3)
-      sprintf_s(sztype, 500, "%s - SN:%0X", szname, icamid);
+      sprintf_s(sztype, 500, "%s - SN:%0X / Interface: %s", szname, icamid, szinterfaces[iinterface]);
     else
       sprintf_s(sztype, 500, "%s", szname);
     pProp->Set(sztype);
   }
   return DEVICE_OK;
 }
+
+int CPCOCam::OnLineTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if(eAct == MM::BeforeGet)
+  {
+    char szLineTime[50] = {"undefined"};
+    double dlinetime;
+    double dclock;
+    WORD wsubtype = m_pCamera->m_strCamera.strGeneral.strCamType.wCamSubType;
+    //int ipixelclockselect = m_pCamera->m_strCamera.strSensor.dwPixelRate;
+    dclock = m_pCamera->m_strCamera.strSensor.dwPixelRate;//m_pCamera->m_strCamera.strSensor.strDescription.dwPixelRateDESC[ipixelclockselect];
+    if(dclock > 0)
+    {
+      if((m_nCameraType == CAMERATYPE_PCO_EDGE) ||
+        (m_nCameraType == CAMERATYPE_PCO_EDGE_GL) ||
+        (wsubtype == CAMERASUBTYPE_PCO_EDGE_55) || 
+        (wsubtype == CAMERASUBTYPE_PCO_EDGE_31))
+      {
+        dlinetime = 2624 / dclock;
+      }
+      else
+      {
+        if(m_nCameraType == CAMERATYPE_PCO_EDGE_HS)
+        {
+          if(dclock < 150000000)
+            dlinetime = 2658 / dclock;
+          else
+            dlinetime = 2653 / dclock;
+        }
+        else
+        {
+          if(dclock < 150000000)
+            dlinetime = 2647 / dclock;
+          else
+            dlinetime = 2658 / dclock;
+        }
+      }
+      sprintf_s(szLineTime, "%4.2f", dlinetime * 1000000);
+    }
+    pProp->Set(szLineTime);
+  }
+  return DEVICE_OK;
+}
+
 
 // CCD type
 int CPCOCam::OnCCDType(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2176,6 +2246,20 @@ int CPCOCam::Initialize()
         return nRet;
 
     }
+
+    if((m_nCameraType == CAMERATYPE_PCO_EDGE) ||// fps setting for pco.edge
+      (m_nCameraType == CAMERATYPE_PCO_EDGE_42) ||
+      (m_nCameraType == CAMERATYPE_PCO_EDGE_GL) ||
+      (m_nCameraType == CAMERATYPE_PCO_EDGE_USB3) ||
+      (m_nCameraType == CAMERATYPE_PCO_EDGE_HS))
+    {
+      pAct = new CPropertyAction(this, &CPCOCam::OnLineTime);
+      nRet = CreateProperty("Line Time [us]", "", MM::String, true, pAct);
+      if(nRet != DEVICE_OK)
+        return nRet;
+      UpdateProperty("Line Time (us)");
+    }
+
 
     if((m_pCamera->m_strCamera.strSensor.strDescription.dwGeneralCapsDESC1 & GENERALCAPS1_NOISE_FILTER) == GENERALCAPS1_NOISE_FILTER)
     {
