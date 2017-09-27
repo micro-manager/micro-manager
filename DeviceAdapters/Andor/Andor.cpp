@@ -856,36 +856,37 @@ int AndorCamera::GetListOfAvailableCameras()
       // Vertical Shift Speed
       int numVSpeed;
       ret = GetNumberVSSpeeds(&numVSpeed);
-      if (ret != DRV_SUCCESS)
-         return ret;
-
-      char VSpeedBuf[10];
-      VSpeeds_.clear();
-      for (int i=0; i<numVSpeed; i++)
+      if (ret == DRV_SUCCESS)
       {
-         float vsp;
-         ret = GetVSSpeed(i, &vsp); 
-         if (ret != DRV_SUCCESS)
-            return ret;
-         sprintf(VSpeedBuf, "%.2f", vsp);
-         VSpeeds_.push_back(VSpeedBuf);
-      }
-      if (VSpeeds_.empty())
-         return ERR_INVALID_VSPEED;
 
-      if(!HasProperty(g_VerticalSpeedProperty))
-      {
-         pAct = new CPropertyAction (this, &AndorCamera::OnVSpeed);
-         if(numVSpeed>1)
-            nRet = CreateProperty(g_VerticalSpeedProperty, VSpeeds_[numVSpeed-1].c_str(), MM::String, false, pAct);
-         else
-            nRet = CreateProperty(g_VerticalSpeedProperty, VSpeeds_[numVSpeed-1].c_str(), MM::String, true, pAct);
+         char VSpeedBuf[10];
+         VSpeeds_.clear();
+         for (int i = 0; i < numVSpeed; i++)
+         {
+            float vsp;
+            ret = GetVSSpeed(i, &vsp);
+            if (ret != DRV_SUCCESS)
+               return ret;
+            sprintf(VSpeedBuf, "%.2f", vsp);
+            VSpeeds_.push_back(VSpeedBuf);
+         }
+         if (VSpeeds_.empty())
+            return ERR_INVALID_VSPEED;
+
+         if (!HasProperty(g_VerticalSpeedProperty))
+         {
+            pAct = new CPropertyAction(this, &AndorCamera::OnVSpeed);
+            if (numVSpeed > 1)
+               nRet = CreateProperty(g_VerticalSpeedProperty, VSpeeds_[numVSpeed - 1].c_str(), MM::String, false, pAct);
+            else
+               nRet = CreateProperty(g_VerticalSpeedProperty, VSpeeds_[numVSpeed - 1].c_str(), MM::String, true, pAct);
+            assert(nRet == DEVICE_OK);
+         }
+         nRet = SetAllowedValues(g_VerticalSpeedProperty, VSpeeds_);
+         assert(nRet == DEVICE_OK);
+         nRet = SetProperty(g_VerticalSpeedProperty, VSpeeds_[VSpeeds_.size() - 1].c_str());
          assert(nRet == DEVICE_OK);
       }
-      nRet = SetAllowedValues(g_VerticalSpeedProperty, VSpeeds_);
-      assert(nRet == DEVICE_OK);
-      nRet = SetProperty(g_VerticalSpeedProperty, VSpeeds_[VSpeeds_.size()-1].c_str());
-      assert(nRet == DEVICE_OK);
 
 
       // Vertical Clock Voltage 
