@@ -595,7 +595,7 @@ public class ControllerUtils {
       Properties.Keys offsetProp = (side == Devices.Sides.A) ?
             Properties.Keys.PLUGIN_SHEET_OFFSET_A : Properties.Keys.PLUGIN_SHEET_OFFSET_B;
       
-      // restore sheet width and offset in case they got clobbered
+      // restore sheet width and offset in case they got clobbered by the code implementing light sheet mode
       props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG,
             props_.getPropValueFloat(Devices.Keys.PLUGIN, widthProp), skipScannerWarnings);
       props_.setPropValue(Devices.Keys.PLUGIN, offsetProp, 
