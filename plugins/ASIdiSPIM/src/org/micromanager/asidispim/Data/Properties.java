@@ -154,6 +154,7 @@ public class Properties {
       TRIGGER_MODE_PCO("Triggermode"),         // for PCO
       PIXEL_RATE("PixelRate"),                 // for PCO
       CAMERA_TYPE("CameraType"),               // for PCO
+      LINE_TIME("Line Time [us]"),             // for PCO
       TRIGGER_MODE("TriggerMode"),             // for Andor Zyla, PVCAM
       CAMERA_NAME("CameraName"),               // for Andor Zyla
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla

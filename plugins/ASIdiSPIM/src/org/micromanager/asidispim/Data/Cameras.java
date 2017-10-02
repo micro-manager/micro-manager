@@ -495,18 +495,22 @@ public class Cameras {
             return (2592 / 266e3);
          }
       case PCOCAM:
-         if (isEdge55(camKey)) {
-            if (isSlowReadout(camKey)) {
-               return 0.02752;
-            } else {
-               return 0.00917;
-            }       
-         } else {  // 4.2
-            if (isSlowReadout(camKey)) {
-               return 0.0276;
-            } else {
-               return 0.00965;
-            }            
+         if (props_.hasProperty(camKey, Properties.Keys.LINE_TIME)) {  // should be present as of 20170926 nightly build
+            return ((double) props_.getPropValueFloat(camKey, Properties.Keys.LINE_TIME))/1000d;
+         } else {  // assumes CameraLink interface
+            if (isEdge55(camKey)) {
+               if (isSlowReadout(camKey)) {
+                  return 0.02752;
+               } else {
+                  return 0.00917;
+               }       
+            } else {  // 4.2
+               if (isSlowReadout(camKey)) {
+                  return 0.0276;
+               } else {
+                  return 0.00965;
+               }            
+            }
          }
       case ANDORCAM:
          if (isZyla55(camKey)) {
