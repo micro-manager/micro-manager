@@ -524,8 +524,12 @@ public class Cameras {
          }
       case PVCAM:
          Rectangle roi = getCameraROI(camKey);
-         float readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
-         return (readoutTimeMs / roi.height);
+         if (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
+            float readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
+            return (readoutTimeMs / roi.height);
+         } else {
+            return 0.01;  // TODO get more accurate value
+         }
       case DEMOCAM:
          return(10e-3);  // dummy 10us row time
       default:
@@ -554,8 +558,9 @@ public class Cameras {
       } else {
          Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
          
-         // Photometrics is very different from other cameras so handle it as special case
-         if (camLibrary == Devices.Libraries.PVCAM) {
+         // Photometrics Prime 95B is very different from other cameras so handle it as special case
+         if (camLibrary == Devices.Libraries.PVCAM 
+               && props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
             int trigToGlobal = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_POST_TIME)
                   + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
             // it appears as of end-May 2017 that the clearing time is actually rolled into the post-trigger
@@ -630,11 +635,15 @@ public class Cameras {
             readoutTimeMs = 0.25f;
             break;
          case PVCAM:
-            int preTime = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME);
-            readoutTimeMs = (float) preTime / 1e6f;
-            // for safety we make sure to wait at least a quarter millisecond to trigger
-            //   (may have hidden assumptions in other code about at least one tic wait)
-            if (readoutTimeMs < 0.249f) {
+            if (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
+               int preTime = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME);
+               readoutTimeMs = (float) preTime / 1e6f;
+               // for safety we make sure to wait at least a quarter millisecond to trigger
+               //   (may have hidden assumptions in other code about at least one tic wait)
+               if (readoutTimeMs < 0.249f) {
+                  readoutTimeMs = 0.25f;
+               }
+            } else {  // original Prime
                readoutTimeMs = 0.25f;
             }
             break;
