@@ -172,11 +172,11 @@ public class AutofocusUtils {
             }
             
             // select the appropriate algorithm
-            afDevice.setPropertyValue("Maximize",
-                  Fitter.getAlgorithmFromPrefCode(
-                        prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(),
-                        Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
-                        Fitter.Algorithm.VOLATH.getPrefCode())).toString());
+            final String algorithmName = Fitter.getAlgorithmFromPrefCode(
+                  prefs_.getInt(MyStrings.PanelNames.AUTOFOCUS.toString(),
+                  Properties.Keys.AUTOFOCUS_SCORING_ALGORITHM,
+                  Fitter.Algorithm.VOLATH.getPrefCode())).toString();
+            afDevice.setPropertyValue("Maximize", algorithmName);
             
             // make sure that the currently selected MM autofocus device uses the 
             // settings in its dialog
@@ -199,6 +199,11 @@ public class AutofocusUtils {
                         Fitter.FunctionType.Gaussian) 
                     ) 
             );
+            
+            final String acqModeString = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE);
+            final boolean isPiezoScan = acqModeString.equals("Fix slice, sweep piezo");
+            
+            ReportingUtils.logDebugMessage("Autofocus getting ready using " + algorithmName + " algorithm, mode \"" + acqModeString + "\"");
 
             String camera = devices_.getMMDevice(Devices.Keys.CAMERAA);
             Devices.Keys cameraDevice = Devices.Keys.CAMERAA;
@@ -235,9 +240,6 @@ public class AutofocusUtils {
             final double originalGalvoPosition = positions_.getUpdatedPosition(galvoDevice, Directions.Y);
             final double piezoCenter = centerAtCurrentZ ? originalPiezoPosition : imagingCenter;
             
-            String acqModeString = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.AUTOFOCUS_ACQUSITION_MODE);
-            final boolean isPiezoScan = acqModeString.equals("Fix slice, sweep piezo");
-            
             posUpdater_.pauseUpdates(true);
             
             // start with current acquisition settings, then modify a few of them for the focus acquisition
@@ -254,7 +256,7 @@ public class AutofocusUtils {
             acqSettings.firstSideIsA = side.equals(Sides.A);
             acqSettings.useTimepoints = false;
             acqSettings.useMultiPositions = false;
-            acqSettings.spimMode = isPiezoScan? AcquisitionModes.Keys.PIEZO_SCAN_ONLY : AcquisitionModes.Keys.SLICE_SCAN_ONLY;
+            acqSettings.spimMode = isPiezoScan ? AcquisitionModes.Keys.PIEZO_SCAN_ONLY : AcquisitionModes.Keys.SLICE_SCAN_ONLY;
             acqSettings.centerAtCurrentZ = centerAtCurrentZ;
             acqSettings.stepSizeUm = piezoStepSize;
 
