@@ -329,7 +329,7 @@ public class MagellanEngine {
 
         //move Z before XY 
         /////////////////////////////Z stage/////////////////////////////
-        if (lastEvent_ == null || event.sliceIndex_ != lastEvent_.sliceIndex_) {
+        if (lastEvent_ == null || event.sliceIndex_ != lastEvent_.sliceIndex_ || event.positionIndex_ != lastEvent_.positionIndex_ ) {
             double startTime = System.currentTimeMillis();
             //wait for it to not be busy (is this even needed?)
             loopHardwareCommandRetries(new HardwareCommand() {
