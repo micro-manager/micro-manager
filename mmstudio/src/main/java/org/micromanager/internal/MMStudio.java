@@ -366,7 +366,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       hotKeys_ = new org.micromanager.internal.utils.HotKeys();
       hotKeys_.loadSettings();
       // zWheelListener_ = new ZWheelListener(core_, studio_);
-      getEventManager().registerForEvents(zWheelListener_);
+      // getEventManager().registerForEvents(zWheelListener_);
       // TODO snapLiveManager_.addLiveModeListener(zWheelListener_);
       // xyzKeyListener_ = new XYZKeyListener(core_, studio_);
       // TODO snapLiveManager_.addLiveModeListener(xyzKeyListener_);
