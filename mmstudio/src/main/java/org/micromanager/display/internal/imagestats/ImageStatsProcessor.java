@@ -187,7 +187,7 @@ final class ImageStatsProcessor {
          result = compute(
                clipToRect(img, nComponents, statsBounds),
                mask,
-               nComponents, 8 * bytesPerSample, binCountPowerOf2,
+               nComponents, bitDepth, binCountPowerOf2,
                useROI, index);
       }
       else if (bytesPerSample == 2) {
@@ -197,7 +197,7 @@ final class ImageStatsProcessor {
          result = compute(
                clipToRect(img, nComponents, statsBounds),
                mask,
-               nComponents, 8 * bytesPerSample, binCountPowerOf2,
+               nComponents, bitDepth, binCountPowerOf2,
                useROI, index);
       }
 
