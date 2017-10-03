@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.display.inspector.internal.panels.intensity;
 
 import com.bulenkov.iconloader.IconLoader;
@@ -71,19 +66,19 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private static final class HistoRangeComboBoxModel extends DefaultComboBoxModel {
       public HistoRangeComboBoxModel() {
          super(new String[] {
-            "Camera Depth", "4-bit (0-15)", "5-bit (0-31)", "6-bit (0-63)",
+            "4-bit (0-15)", "5-bit (0-31)", "6-bit (0-63)",
             "7-bit (0-127)", "8-bit (0-255)", "9-bit (0-511)", "10-bit (0-1023)",
             "11-bit (0-2047)", "12-bit (0-4095)", "13-bit (0-8191)",
-            "14-bit (0-16383)", "15-bit (0-32767)", "16-bit (0-65535)"
+            "14-bit (0-16383)", "15-bit (0-32767)", "16-bit (0-65535)", "Camera Depth"
          });
       }
 
       public int getBits(int cameraBits) {
          int index = getIndexOf(getSelectedItem());
-         if (index == 0) {
+         if (index == 13) {
             return cameraBits;
          }
-         return index + 3;
+         return index + 4;
       }
    }
 
@@ -362,6 +357,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             updateHistoRangeButtonStates();
          }
       });
+      histoRangeComboBox_.setSelectedItem("Camera Depth");
 
       // TODO This will actually be a popup button!
       intensityLinkButton_.setMaximumSize(new Dimension(30, 20));
@@ -410,15 +406,19 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       intensityStatsPanel_.setStdev(Double.isNaN(stdev) ? null :
             String.format("%1.2e", stdev));
 
-      int cameraBits = 16; // TODO
-      int rangeBits = histoRangeComboBoxModel_.getBits(cameraBits);
-      long[] data = componentStats.getInRangeHistogram();
-      int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
-      histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
-      histogram_.setROIIndicator(componentStats.isROIStats());
-
-      DisplaySettings settings = viewer_.getDisplaySettings();
-      updateScalingIndicators(settings, componentStats, component);
+      try {
+         int cameraBits = viewer_.getDataProvider().getAnyImage().getMetadata().getBitDepth(); // can throw IOException
+         int rangeBits = histoRangeComboBoxModel_.getBits(cameraBits);
+         long[] data = componentStats.getInRangeHistogram();
+         int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
+         histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
+         histogram_.setROIIndicator(componentStats.isROIStats());
+      
+         DisplaySettings settings = viewer_.getDisplaySettings();
+         updateScalingIndicators(settings, componentStats, component);
+      } catch (IOException ioEx) {
+         // TODO: log this exception
+      }
    }
 
    @MustCallOnEDT
