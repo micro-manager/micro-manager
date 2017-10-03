@@ -57,6 +57,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 import org.scijava.plugin.Plugin;
 import org.micromanager.display.inspector.InspectorPanelController;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
+import org.micromanager.events.ShutdownCommencingEvent;
 
 
 /**
@@ -110,6 +111,7 @@ public final class InspectorController
       instance.makeUI();
       viewers.registerForEvents(instance);
       instance.updateDataViewerChooser();
+      MMStudio.getInstance().events().registerForEvents(instance);
       return instance;
    }
 
@@ -184,6 +186,11 @@ public final class InspectorController
       frame_ = null;
       viewerCollection_.unregisterForEvents(this);
       eventBus_.post(InspectorDidCloseEvent.create(this));
+   }
+   
+   @Subscribe
+   public void closeRequested( ShutdownCommencingEvent sce) {
+      close();
    }
 
    public void setVisible(boolean visible) {
