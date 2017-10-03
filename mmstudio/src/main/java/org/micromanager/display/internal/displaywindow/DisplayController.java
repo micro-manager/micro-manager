@@ -997,7 +997,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void close() {
       postEvent(DataViewerWillCloseEvent.create(this));
-
+      try {
+         computeQueue_.shutdown();
+      } catch (InterruptedException ie) {
+         // TODO: report exception
+      }
+         
       uiController_.close();
       uiController_ = null;
       closeCompleted_ = true;
