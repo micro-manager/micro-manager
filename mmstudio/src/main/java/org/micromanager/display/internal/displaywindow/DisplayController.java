@@ -900,9 +900,15 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public String getName() {
+      if (customTitle_ != null) {
+         return customTitle_;
+      }
       // TODO
+      // return dataProvider_.getSummaryMetadata()."NAME-TODO-" + hashCode();
       return "NAME-TODO-" + hashCode();
    }
+   
+
 
    @Override
    public void displayStatusString(String status) {

@@ -279,7 +279,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
                GUIUtils.getFullScreenBounds(frame.getGraphicsConfiguration()));
          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
       }
-      frame.setTitle("TODO TITLE"); // TODO Listen for changes to name, zoom, and disk/memory/save state
+      String title = displayController_.getName();
+      frame.setTitle(title); // TODO Listen for changes to name, zoom, and disk/memory/save state
       return frame;
    }
 
