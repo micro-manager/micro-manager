@@ -81,7 +81,7 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
    }
 
    private VerticalMultiSplitPane(int numChildren, boolean continuousLayout) {
-      setLayout(new MigLayout(new LC().fill().insets("0")));
+      super.setLayout(new MigLayout(new LC().fill().insets("0")));
 
       extraSpace_.setMinimumSize(new Dimension(0, 0));
       extraSpace_.setPreferredSize(new Dimension(0, 0));
@@ -92,7 +92,7 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
          splitPane.setBorder(BorderFactory.createEmptyBorder());
          splitPane.setResizeWeight(0.0);
          if (i == 0) {
-            add(splitPane, new CC().grow().push());
+            super.add(splitPane, new CC().grow().push());
          }
          else {
             splitPanes_.get(i - 1).setBottomComponent(splitPane);
@@ -166,7 +166,7 @@ public class VerticalMultiSplitPane extends JPanel implements Scrollable {
       }
 
       if (splitPanes_.isEmpty()) {
-         return new Dimension(prefSize.width, 0);
+         return new Dimension(prefSize.width, 200);
       }
 
       int prefHeight = 0;
