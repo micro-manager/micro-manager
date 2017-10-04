@@ -96,6 +96,7 @@ import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.NumberUtils;
 
 /**
  * Manages the JFrame(s) for image displays.
@@ -138,6 +139,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private JLabel pixelInfoLabel_;
    private JLabel newImageIndicator_;
    private JLabel fpsLabel_;
+   private JLabel infoLabel_;
    private PopupButton playbackFpsButton_;
    private JSpinner playbackFpsSpinner_;
    private MDScrollBarPanel scrollBarPanel_;
@@ -429,8 +431,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       panel.add(buttonPanel, "split 3");
       panel.add(new JPanel(), "growx");
-      panel.add(new JLabel("INFO HERE"), "wrap");
 
+      infoLabel_ = new JLabel("No Image yet");
+      panel.add(infoLabel_, "wrap");
+      
       return panel;
    }
 
@@ -703,6 +707,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (mouseLocationOnImage_ != null) {
          updatePixelInformation(); // TODO Can skip if identical images
       }
+      
+      infoLabel_.setText(this.getInfoString()); // TODO, this should be invariant, so only need to do this for first image
 
       repaintScheduledForNewImages_.set(true);
    }
@@ -1290,6 +1296,64 @@ public final class DisplayUIController implements Closeable, WindowListener,
       catch (IOException e) {
          return 0;
       }
+   }
+   
+   public String getPixelType() {
+      try {
+         int bytesPerPixel = displayController_.getDataProvider().getAnyImage().getBytesPerPixel();
+         int numComponents = displayController_.getDataProvider().getAnyImage().getNumComponents();
+         if (numComponents == 1) {
+            switch (bytesPerPixel) {
+               case 1:
+                  return "8-bit";
+               case 2:
+                  return "16-bit";
+               case 4:
+                  return "32-bit";
+               default:
+                  break;
+            }
+         } 
+         // TODO: RGB 
+      }
+      catch (IOException e) {
+      }
+      return "Unknown pixelType";
+   }
+  
+   public String getInfoString() {
+      StringBuilder infoStringB = new StringBuilder();
+      Double pixelSize;
+      long nrBytes;
+      try {
+         if (displayController_.getDataProvider().getAnyImage() == null) {
+            return "No image yet";
+         }
+         pixelSize = displayController_.getDataProvider().getAnyImage().getMetadata().getPixelSizeUm();
+         nrBytes = getImageWidth() * getImageHeight()
+                 * displayController_.getDataProvider().getAnyImage().getBytesPerPixel()
+                 * displayController_.getDataProvider().getAnyImage().getNumComponents();
+
+      } catch (IOException io) {
+         return "Failed to find image";
+      }
+
+      double widthUm = getImageWidth() * pixelSize;
+      double heightUm = getImageHeight() * pixelSize;
+      infoStringB.append(NumberUtils.doubleToDisplayString(widthUm)).append("x").
+              append(NumberUtils.doubleToDisplayString(heightUm)).
+              append("\u00B5").append("m  ");
+
+      infoStringB.append(getImageWidth()).append("x").append(getImageHeight());
+      infoStringB.append("px  ").append(this.getPixelType()).append(" ");
+
+      if (nrBytes / 1000 < 1000) {
+         infoStringB.append((int) nrBytes / 1024).append("KB");
+      } else {
+         infoStringB.append((int) nrBytes / 1048576).append("MB");
+      }
+      
+      return infoStringB.toString();
    }
 
    public List<Image> getDisplayedImages() {
