@@ -143,8 +143,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
          summaryMetadata_ = getAcquisitionEngine2010().getSummaryMetadata();
 
          boolean shouldShow = acquisitionSettings.shouldDisplayImages;
-         MMAcquisition acq = new MMAcquisition(studio_, "Acq",
-                 summaryMetadata_, acquisitionSettings.save, this,
+         MMAcquisition acq = new MMAcquisition(studio_, summaryMetadata_, this,
                  shouldShow);
          curStore_ = acq.getDatastore();
          curPipeline_ = acq.getPipeline();

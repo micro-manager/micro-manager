@@ -30,13 +30,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.Studio;
@@ -56,7 +54,6 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
-//import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
@@ -64,7 +61,6 @@ import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.DisplayWindowControlsFactory;
-//import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 
 /**
@@ -77,40 +73,26 @@ public final class MMAcquisition {
     * Final queue of images immediately prior to insertion into the ImageCache.
     * Only used when running in asynchronous mode.
     */
-   private BlockingQueue<TaggedImage> outputQueue_ = null;
-   private boolean isAsynchronous_ = false;
-   private int numFrames_ = 0;
-   private int numChannels_ = 0;
-   private int numSlices_ = 0;
-   private int numPositions_ = 0;
-   protected String name_;
+
    protected int width_ = 0;
    protected int height_ = 0;
    protected int byteDepth_ = 1;
    protected int bitDepth_ = 8;    
    protected int multiCamNumCh_ = 1;
-   private boolean initialized_ = false;
-   private final String comment_ = "";
-   private String rootDirectory_;
    private Studio studio_;
    private DefaultDatastore store_;
    private Pipeline pipeline_;
    private DisplayWindow display_;
-   private final boolean virtual_;
    private AcquisitionEngine eng_;
    private final boolean show_;
-   private JSONObject summary_ = new JSONObject();
-   private final String NOTINITIALIZED = "Acquisition was not initialized";
 
    private int imagesReceived_ = 0;
    private int imagesExpected_ = 0;
    private UpdatableAlert alert_;
 
-   public MMAcquisition(Studio studio, String name, JSONObject summaryMetadata,
-         boolean diskCached, AcquisitionEngine eng, boolean show) {
+   public MMAcquisition(Studio studio, JSONObject summaryMetadata,
+         AcquisitionEngine eng, boolean show) {
       studio_ = studio;
-      name_ = name;
-      virtual_ = diskCached;
       eng_ = eng;
       show_ = show;
       store_ = new DefaultDatastore();
