@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.micromanager.internal.propertymap;
 
 import com.google.common.base.Charsets;
@@ -189,7 +184,7 @@ public final class DefaultPropertyMap implements PropertyMap {
 
    @Override
    public String getValueAsString(String key, String aDefault) {
-      return map_.containsKey(key) ? aDefault : map_.get(key).toString();
+      return map_.containsKey(key) ? map_.get(key).toString() : aDefault;
    }
 
 
