@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.Studio;
@@ -54,6 +55,8 @@ import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.data.internal.StorageSinglePlaneTiffSeries;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
@@ -133,7 +136,8 @@ public final class MMAcquisition {
 
       try {
          // Compatibility hack: serialize to JSON, then parse as summary metadata JSON format
-         SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(NonPropertyMapJSONFormats.summaryMetadata().fromJSON(summaryMetadata.toString()));
+         SummaryMetadata summary = DefaultSummaryMetadata.fromPropertyMap(
+                 NonPropertyMapJSONFormats.summaryMetadata().fromJSON(summaryMetadata.toString()));
          pipeline_.insertSummaryMetadata(summary);
       }
       catch (DatastoreFrozenException e) {
@@ -161,6 +165,35 @@ public final class MMAcquisition {
          display_ = studio_.displays().createDisplay(
                store_, makeControlsFactory());
          display_.registerForEvents(this);
+         
+         // Color handling is a problem. It seems that Mark does not like them to 
+         // be part of the summary metadat.  However, they clearly need to be stored 
+         // with the dataset itself.  I guess that it makes sense to store them in 
+         // the display setting.  However, it then becomes essential that 
+         // display settings are stored with the (meta-)data.  
+         // Handling the conversion from colors in the summary metadat to display
+         // settings here seems clumsy, but I am not sure where else this belongs
+         
+         try {
+            if (summaryMetadata != null && summaryMetadata.has("ChColors")) {
+               JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
+               DisplaySettings displaySettings = display_.getDisplaySettings();
+               for (int channelIndex = 0; channelIndex < MDUtils.getNumChannels(summaryMetadata);
+                       channelIndex++) {
+                  ChannelDisplaySettings channelSettings
+                          = displaySettings.getChannelSettings(channelIndex);
+                  Color chColor = new Color(chColors.getInt(channelIndex));
+                  displaySettings = displaySettings.
+                          copyBuilderWithChannelSettings(channelIndex,
+                                  channelSettings.copyBuilder().color(chColor).build()).
+                          build();
+               }
+               display_.setDisplaySettings(displaySettings);
+            }
+         } catch (JSONException je) {
+            // relatively harmless, but look here when acquisition colors do not show up
+         }
+         
          alert_ = studio_.alerts().postUpdatableAlert("Acquisition Progress", "");
          setProgressText();
       }
