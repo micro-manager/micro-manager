@@ -26,13 +26,6 @@
  */
 package org.micromanager.splitview;
 
-import com.bulenkov.iconloader.IconLoader;
-
-import com.google.common.eventbus.Subscribe;
-
-import ij.process.ByteProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -48,27 +41,13 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
 import mmcorej.CMMCore;
-import mmcorej.TaggedImage;
 
 import net.miginfocom.swing.MigLayout;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.micromanager.data.Coords;
-import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.Image;
 import org.micromanager.data.ProcessorConfigurator;
-import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.DisplayWindow;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.display.RequestToCloseEvent;
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.MMScriptException;
-import org.micromanager.internal.utils.MMTags;
 
 /**
  * Micro-Manager plugin that can split the acquired image top-down or left-right
