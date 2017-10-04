@@ -103,7 +103,6 @@ private: // Private data
    double distance_, numa_, radius_, maxrad_, minrad_, minna_, maxna_, DispWidth_, DispHeight_, intensity_;
    long double pixelsizeh_, pixelsizew_;
    long centerx_, centery_;
-   bool congruence_; //This bool determines whether the pixel width and height are equal! (if true, means a square pixel)
    unsigned char *indices_; //a dynamic two dimensional array pointer to the LED indices 
    double Rad(double Dist, double na);
    double minRad(double Dist, double minna);

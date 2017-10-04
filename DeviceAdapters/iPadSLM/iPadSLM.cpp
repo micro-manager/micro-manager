@@ -53,7 +53,7 @@ const char* g_Propname_Intensity = "Intensity";
 const char* g_Propname_Resolution_H= "Resolution_Height";
 const char* g_Propname_Resolution_W= "Resolution_Width";
 const char* g_Propname_Type = "DPC_type";
-const char* g_Propname_Distance = "Distance (in mm)";
+const char* g_Propname_Distance = "Distance_mm";
 
 enum {
    ERR_INVALID_TESTMODE_SIZE = 20000,
@@ -102,8 +102,10 @@ iPadSLM::iPadSLM(const char* name) :
    inversionStr_("Off"),
    monoColor_(SLM_COLOR_WHITE),
    monoColorStr_("White"),
-   congruence_(false),
-   distance_(50), pixelsizeh_(0), pixelsizew_(0), centerx_(0), centery_(0), DispWidth_(0), DispHeight_(0), minna_(0.25), maxna_(0.45), numa_(0.5), intensity_(200) //distances are in mm
+   pattern_("Off"),
+   distance_(50), 
+   pixelsizeh_(0.155), pixelsizew_(0.155), centerx_(0), centery_(0), 
+   DispWidth_(0), DispHeight_(0), minna_(0.25), maxna_(0.45), numa_(0.5), intensity_(255) //distances are in mm
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_INVALID_TESTMODE_SIZE,
@@ -647,14 +649,12 @@ int iPadSLM::OnHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(DispHeight_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      pProp->Get(DispHeight_);
-	 //conversion from inches to mm
-	  double H = height_;
-	  pixelsizeh_ = DispHeight_*25.4/H;
+	  double heightMM = height_*pixelsizeh_;
+      pProp->Set(heightMM);
+   } else if (eAct == MM::AfterSet) {
+	  double heightMM;
+      pProp->Get(heightMM);
+	  pixelsizeh_ = heightMM/height_;
       return DEVICE_OK;
    }
    return DEVICE_OK;
@@ -664,18 +664,12 @@ int iPadSLM::OnWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(DispWidth_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      pProp->Get(DispWidth_);
-	//conversion from inches to mm
-	  double W = width_;
-	  pixelsizew_ = DispWidth_*25.4/W;
-	  if(abs(pixelsizew_ - pixelsizeh_) < 0.01){
-		  pixelsizew_ = pixelsizeh_;
-		  congruence_ = true;
-	  }
+	  double widthMM = width_*pixelsizew_;
+      pProp->Set(widthMM);
+   } else if (eAct == MM::AfterSet) {
+	  double widthMM;
+      pProp->Get(widthMM);
+	  pixelsizew_ = widthMM/width_;
       return DEVICE_OK;
    }
    return DEVICE_OK;
