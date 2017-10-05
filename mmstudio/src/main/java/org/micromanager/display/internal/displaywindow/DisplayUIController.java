@@ -371,6 +371,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       updateZoomUIState();
       canvasDidChangeSize();
+      
+      // Need to set DisplaySettings now after the ijBridge has been created
+      applyDisplaySettings(displayController_.getDisplaySettings());
    }
 
    @MustCallOnEDT
