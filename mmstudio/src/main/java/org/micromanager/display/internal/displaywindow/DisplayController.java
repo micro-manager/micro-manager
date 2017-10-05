@@ -1036,7 +1036,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public DisplayWindow duplicate() {
-      return DefaultDisplayManager.getInstance().createDisplay(dataProvider_);
+      DisplayWindow dup = DefaultDisplayManager.getInstance().createDisplay(dataProvider_);
+      dup.setDisplaySettings(this.getDisplaySettings());
+      return dup;
    }
 
    @Override
