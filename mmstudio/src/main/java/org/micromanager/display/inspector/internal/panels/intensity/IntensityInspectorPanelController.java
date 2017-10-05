@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.display.inspector.internal.panels.intensity;
 
 import com.google.common.base.Preconditions;
@@ -17,6 +13,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
@@ -31,6 +28,7 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
 import org.micromanager.data.NewImageEvent;
+import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplaySettingsChangedEvent;
@@ -56,26 +54,26 @@ public class IntensityInspectorPanelController
    private final JPopupMenu gearMenu_ = new JPopupMenu();
    private final JMenu gearMenuPaletteSubMenu_ =
          new JMenu("Channel Color Palette");
-   private final JCheckBoxMenuItem gearMenuColorblindFriendlyItem_ =
-         new JCheckBoxMenuItem("Colorblind-friendly");
-   private final JCheckBoxMenuItem gearMenuRGBCMYWItem_ =
-         new JCheckBoxMenuItem("RGBCMYW");
-   private final JCheckBoxMenuItem gearMenuCustomColorItem_ =
-         new JCheckBoxMenuItem("Custom");
+   private final JMenuItem gearMenuColorblindFriendlyItem_ =
+         new JMenuItem("Colorblind-friendly");
+   private final JMenuItem gearMenuRGBCMYWItem_ =
+         new JMenuItem("RGBCMYW");
+   private final JMenuItem gearMenuCustomColorItem_ =
+         new JMenuItem("Custom");
    private final JMenu gearMenuUpdateRateSubMenu_ =
          new JMenu("Histogram Update Rate");
-   private final JCheckBoxMenuItem gearMenuHistogramEveryImageItem_ =
-         new JCheckBoxMenuItem("Every Displayed Image");
-   private final JCheckBoxMenuItem gearMenuHistogram5HzItem_ =
-         new JCheckBoxMenuItem("5 Hz");
-   private final JCheckBoxMenuItem gearMenuHistogram2HzItem_ =
-         new JCheckBoxMenuItem("2 Hz");
-   private final JCheckBoxMenuItem gearMenuHistogram1HzItem_ =
-         new JCheckBoxMenuItem("1 Hz");
-   private final JCheckBoxMenuItem gearMenuHistogramHalfHzItem_ =
-         new JCheckBoxMenuItem("0.5 Hz");
-   private final JCheckBoxMenuItem gearMenuHistogramNeverItem_ =
-         new JCheckBoxMenuItem("Never");
+   private final JMenuItem gearMenuHistogramEveryImageItem_ =
+         new JMenuItem("Every Displayed Image");
+   private final JMenuItem gearMenuHistogram5HzItem_ =
+         new JMenuItem("5 Hz");
+   private final JMenuItem gearMenuHistogram2HzItem_ =
+         new JMenuItem("2 Hz");
+   private final JMenuItem gearMenuHistogram1HzItem_ =
+         new JMenuItem("1 Hz");
+   private final JMenuItem gearMenuHistogramHalfHzItem_ =
+         new JMenuItem("0.5 Hz");
+   private final JMenuItem gearMenuHistogramNeverItem_ =
+         new JMenuItem("Never");
    private final JCheckBoxMenuItem gearMenuLogYAxisItem_ =
          new JCheckBoxMenuItem("Logarithmic Y Axis");
    private final JCheckBoxMenuItem gearMenuUseROIItem_ =
@@ -92,6 +90,8 @@ public class IntensityInspectorPanelController
          new ArrayList<ChannelIntensityController>();
 
    private DataViewer viewer_;
+   
+   private List<Color> customPalette_;
 
    private final CoalescentEDTRunnablePool runnablePool_ =
          CoalescentEDTRunnablePool.create();
@@ -139,6 +139,14 @@ public class IntensityInspectorPanelController
          }
       });
       gearMenuCustomColorItem_.setEnabled(false);
+      gearMenuCustomColorItem_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (customPalette_ != null) {
+               handleColorPalette(customPalette_);
+            }
+         }      
+      });
       gearMenuHistogramEveryImageItem_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -284,7 +292,21 @@ public class IntensityInspectorPanelController
    }
 
    private void handleColorPalette(List<Color> colors) {
-      // TODO
+      DisplaySettings displaySettings = viewer_.getDisplaySettings();
+      List<Color> allChannelColors = displaySettings.getAllChannelColors();
+      if (! (ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors) || 
+              ColorPalettes.getPrimaryColorPalette().containsAll(allChannelColors)) ) {
+         customPalette_ = allChannelColors;
+         gearMenuCustomColorItem_.setEnabled(true);
+      }
+      List<ChannelDisplaySettings> allChannelSettings = displaySettings.getAllChannelSettings();
+      for (int i = 0; i < allChannelSettings.size(); i++) {
+         displaySettings = displaySettings.
+                 copyBuilderWithChannelSettings(i,
+                         allChannelSettings.get(i).copyBuilder().color(colors.get(i)).build()).
+                 build();
+      }
+      viewer_.setDisplaySettings(displaySettings);
    }
 
    private void handleHistogramUpdateRate(double hz) {

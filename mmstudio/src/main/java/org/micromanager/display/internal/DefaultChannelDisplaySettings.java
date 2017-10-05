@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.display.internal;
 
 import com.google.common.base.Preconditions;
@@ -13,6 +9,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
+import org.micromanager.internal.utils.ColorPalettes;
 
 /**
  *
@@ -53,9 +50,9 @@ public final class DefaultChannelDisplaySettings
 
       @Override
       public Builder colorColorBlindFriendly(int number) {
-         throw new UnsupportedOperationException("TODO");
+         return color(ColorPalettes.getFromColorblindFriendlyPalette(number));
       }
-
+    
       @Override
       public Builder colorRed() {
          return color(Color.RED);
