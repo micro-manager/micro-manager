@@ -368,6 +368,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             "/org/micromanager/icons/linkflat_active.png"));
 
       updateHistoRangeButtonStates();
+      // Needed to pick up the current DisplaySettings, 
+      newDisplaySettings(viewer.getDisplaySettings());
    }
 
    void detach() {
