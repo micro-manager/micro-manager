@@ -29,6 +29,11 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  *
  * Manages all data viewers in the application, and keeps track of the
  * currently active viewer. Also publishes all viewer events.
+ * 
+ * NS: The definition of "active" is ambiguous.  Does this mean the
+ * front-most visible viewer?  Or all viewers that are on the screen?  This 
+ * ambiguity creates problems downstream. 
+ * 
  * <p>
  * This class handles generic {@code DataViewer}s and does not perform tasks
  * that are specific to {@code DisplayWindow}s.
@@ -84,6 +89,14 @@ public class DataViewerCollection implements EventPublisher {
          eventBus_.post(DataViewerDidBecomeInactiveEvent.create(viewer));
       }
       activeViewerStack_.remove(viewer);
+      // An event needs to be generated for the newly front-most Dataviewer
+      // even though it may already have been "active", it is not in front
+      // and event consumers (like the Inspector) will need to know about this.
+      DataViewer activeViewer = getActiveDataViewer();
+      if (activeViewer != null) {
+         eventBus_.post(DataViewerDidBecomeActiveEvent.create(activeViewer));
+      }
+      
    }
 
    @MustCallOnEDT
