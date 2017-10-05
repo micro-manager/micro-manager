@@ -176,27 +176,33 @@ public final class MMAcquisition {
          
          try {
             if (summaryMetadata != null && summaryMetadata.has("ChColors")) {
+
                JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
-               DisplaySettings.Builder displaySettingsBuilder = 
-                       display_.getDisplaySettings().copyBuilder();
+               DisplaySettings.Builder displaySettingsBuilder
+                       = display_.getDisplaySettings().copyBuilder();
                final int nrChannels = MDUtils.getNumChannels(summaryMetadata);
-               if (nrChannels == 1) {
-                  displaySettingsBuilder.colorModeGrayscale();
-               } else {
-                  displaySettingsBuilder.colorModeComposite();
-               }
-               for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
-                  ChannelDisplaySettings channelSettings
-                          = displaySettingsBuilder.getChannelSettings(channelIndex);
-                  Color chColor = new Color(chColors.getInt(channelIndex));
-                  displaySettingsBuilder.channel(channelIndex, 
-                          channelSettings.copyBuilder().color(chColor).build() );
-               }
-               display_.setDisplaySettings(displaySettingsBuilder.build());
+               // the do-while loop is a way to set display settings in a thread
+               // safe way.  See docs to compareAndSetDisplaySettings.
+               do {
+                  if (nrChannels == 1) {
+                     displaySettingsBuilder.colorModeGrayscale();
+                  } else {
+                     displaySettingsBuilder.colorModeComposite();
+                  }
+                  for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
+                     ChannelDisplaySettings channelSettings
+                             = displaySettingsBuilder.getChannelSettings(channelIndex);
+                     Color chColor = new Color(chColors.getInt(channelIndex));
+                     displaySettingsBuilder.channel(channelIndex,
+                             channelSettings.copyBuilder().color(chColor).build());
+                  }
+               } while (!display_.compareAndSetDisplaySettings(
+                       display_.getDisplaySettings(), displaySettingsBuilder.build()));
             }
          } catch (JSONException je) {
             // relatively harmless, but look here when display settings are unexpected
          }
+
          
          alert_ = studio_.alerts().postUpdatableAlert("Acquisition Progress", "");
          setProgressText();
