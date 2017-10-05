@@ -32,7 +32,6 @@ import javax.swing.event.MouseInputAdapter;
 import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.inspector.internal.InspectorController;
 import org.micromanager.internal.utils.SortedMenu;
 import org.micromanager.internal.utils.SortedPopupMenu;
 

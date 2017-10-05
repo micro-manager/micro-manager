@@ -21,7 +21,7 @@
 //
 // CVS:          $Id$
 
-package org.micromanager.display.internal;
+package org.micromanager.display.internal.gearmenu;
 
 import com.bulenkov.iconloader.IconLoader;
 import ij.CompositeImage;
