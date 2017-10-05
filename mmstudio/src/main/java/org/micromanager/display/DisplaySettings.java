@@ -43,16 +43,25 @@ public interface DisplaySettings {
       Builder zoomRatio(double ratio);
       Builder playbackFPS(double fps);
 
-      /** Color mode or lookup table for displaying the image. */
+      /** Color mode or lookup table for displaying the image.
+        * @param mode ColorMode to appply
+        * @return Builder 
+        */
       Builder colorMode(ColorMode mode);
       Builder colorModeComposite();
       Builder colorModeGrayscale();
       Builder colorModeSingleColor();
       Builder colorModeHighlightSaturated();
 
-      /** Whether to use the same intensity scaling for every channel. */
+      /** Whether to use the same intensity scaling for every channel.
+        * @param enable flag
+        * @return  Builder
+        */
       Builder uniformChannelScaling(boolean enable);
-      /** Whether to continuously apply autoscale. */
+      /** Whether to continuously apply autoscale.
+        * @param enable flag
+        * @return Builder 
+        */
       Builder autostretch(boolean enable);
       Builder roiAutoscale(boolean enable);
       Builder autoscaleIgnoredQuantile(double quantile);
@@ -68,11 +77,17 @@ public interface DisplaySettings {
 
    double getZoomRatio();
    double getPlaybackFPS();
-   /** Color mode or lookup table for displaying the image. */
+   /** Color mode or lookup table for displaying the image.
+     * @return  ColorMode used by these DisplaySettings
+     */
    ColorMode getColorMode();
-   /** Whether to use the same intensity scaling for every channel. */
+   /** Whether to use the same intensity scaling for every channel.
+     * @return true if all channels use the same intensity scaling
+    */
    boolean isUniformChannelScalingEnabled();
-   /** Whether to continuously apply autoscale. */
+   /** Whether to continuously apply autoscale.
+     * @return  true is AutoStretch is enabled
+     */
    boolean isAutostretchEnabled();
    boolean isROIAutoscaleEnabled();
    double getAutoscaleIgnoredQuantile();
@@ -113,6 +128,7 @@ public interface DisplaySettings {
        * in the image that results in black display) for all components. May
        * be null.
        */
+      @Deprecated
       public Integer[] getContrastMins();
 
       /**
@@ -127,6 +143,7 @@ public interface DisplaySettings {
        *        the specified component number.
        * @return The minimum contrast setting for the component
        */
+      @Deprecated
       public Integer getSafeContrastMin(int component, Integer defaultVal);
 
       /**
@@ -135,6 +152,7 @@ public interface DisplaySettings {
        * in the image that results in the brightest display value) for all
        * components. May be null.
        */
+      @Deprecated
       public Integer[] getContrastMaxes();
 
       /**
@@ -149,6 +167,7 @@ public interface DisplaySettings {
        *        the specified component number.
        * @return The maximum contrast setting for the component
        */
+      @Deprecated
       public Integer getSafeContrastMax(int component, Integer defaultVal);
 
       /**
@@ -156,6 +175,7 @@ public interface DisplaySettings {
        * multi-component images do not currently make use of the gamma setting.
        * @return Array of gamma settings for all components. May be null.
        */
+      @Deprecated
       public Double[] getContrastGammas();
 
       /**
@@ -171,6 +191,7 @@ public interface DisplaySettings {
        * @return The gamma setting controlling how linear the contrast mapping
        *        is.
        */
+      @Deprecated
       public Double getSafeContrastGamma(int component, Double defaultVal);
 
       /**
@@ -190,6 +211,7 @@ public interface DisplaySettings {
        * @return Flag indicating whether the channel is currently displayed
        * @deprecated Use isVisible
        */
+      @Deprecated
       Boolean isVisible();
 
       /**
@@ -200,6 +222,7 @@ public interface DisplaySettings {
        * arrays.
        * @return The number of components this object has information for.
        */
+      @Deprecated
       public int getNumComponents();
    }
 
@@ -211,11 +234,13 @@ public interface DisplaySettings {
        * @return Build object
        */
       @Override
+      @Deprecated
       DisplaySettings build();
 
       // The following functions each set the relevant value for the
       // DisplaySettings. See the getters of the DisplaySettings, below,
       // for information on the meaning of these fields.
+      @Deprecated
       DisplaySettingsBuilder channelColors(Color[] channelColors);
       /**
        * "Safely" update the channelColors property to include the new
@@ -227,8 +252,10 @@ public interface DisplaySettings {
        * @param channelIndex Index into the channelColors array.
        * @return builder to be used to build the new DisplaySettings
        */
+      @Deprecated
       DisplaySettingsBuilder safeUpdateChannelColor(Color newColor,
             int channelIndex);
+      @Deprecated
       DisplaySettingsBuilder channelContrastSettings(ContrastSettings[] contrastSettings);
       /**
        * "Safely" update the contrastSettings property to have the provided
@@ -241,17 +268,25 @@ public interface DisplaySettings {
        * @param channelIndex Index into the contrastSettings array.
        * @return builder to be used to build the new DisplaySettings
        */
+      @Deprecated
       DisplaySettingsBuilder safeUpdateContrastSettings(
             ContrastSettings newSettings, int channelIndex);
 
       @Deprecated
       DisplaySettingsBuilder magnification(Double magnification);
+      @Deprecated
       DisplaySettingsBuilder zoom(Double ratio);
+      @Deprecated
       DisplaySettingsBuilder animationFPS(Double animationFPS);
+      @Deprecated
       DisplaySettingsBuilder channelColorMode(ColorMode channelColorMode);
+      @Deprecated
       DisplaySettingsBuilder shouldSyncChannels(Boolean shouldSyncChannels);
+      @Deprecated
       DisplaySettingsBuilder shouldAutostretch(Boolean shouldAutostretch);
+      @Deprecated
       DisplaySettingsBuilder shouldScaleWithROI(Boolean shouldScaleWithROI);
+      @Deprecated
       DisplaySettingsBuilder extremaPercentage(Double extremaPercentage);
    }
 
@@ -260,6 +295,7 @@ public interface DisplaySettings {
     * the values of this DisplaySettings.
     * @return Copy of the DisplaySettingsBuilder
     */
+   @Deprecated
    DisplaySettingsBuilder copy();
 
    /**

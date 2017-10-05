@@ -177,21 +177,25 @@ public final class MMAcquisition {
          try {
             if (summaryMetadata != null && summaryMetadata.has("ChColors")) {
                JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
-               DisplaySettings displaySettings = display_.getDisplaySettings();
-               for (int channelIndex = 0; channelIndex < MDUtils.getNumChannels(summaryMetadata);
-                       channelIndex++) {
-                  ChannelDisplaySettings channelSettings
-                          = displaySettings.getChannelSettings(channelIndex);
-                  Color chColor = new Color(chColors.getInt(channelIndex));
-                  displaySettings = displaySettings.
-                          copyBuilderWithChannelSettings(channelIndex,
-                                  channelSettings.copyBuilder().color(chColor).build()).
-                          build();
+               DisplaySettings.Builder displaySettingsBuilder = 
+                       display_.getDisplaySettings().copyBuilder();
+               final int nrChannels = MDUtils.getNumChannels(summaryMetadata);
+               if (nrChannels == 1) {
+                  displaySettingsBuilder.colorModeGrayscale();
+               } else {
+                  displaySettingsBuilder.colorModeComposite();
                }
-               display_.setDisplaySettings(displaySettings);
+               for (int channelIndex = 0; channelIndex < nrChannels; channelIndex++) {
+                  ChannelDisplaySettings channelSettings
+                          = displaySettingsBuilder.getChannelSettings(channelIndex);
+                  Color chColor = new Color(chColors.getInt(channelIndex));
+                  displaySettingsBuilder.channel(channelIndex, 
+                          channelSettings.copyBuilder().color(chColor).build() );
+               }
+               display_.setDisplaySettings(displaySettingsBuilder.build());
             }
          } catch (JSONException je) {
-            // relatively harmless, but look here when acquisition colors do not show up
+            // relatively harmless, but look here when display settings are unexpected
          }
          
          alert_ = studio_.alerts().postUpdatableAlert("Acquisition Progress", "");
