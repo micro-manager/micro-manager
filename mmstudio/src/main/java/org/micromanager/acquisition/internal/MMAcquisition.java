@@ -166,8 +166,8 @@ public final class MMAcquisition {
                store_, makeControlsFactory());
          display_.registerForEvents(this);
          
-         // Color handling is a problem. It seems that Mark does not like them to 
-         // be part of the summary metadat.  However, they clearly need to be stored 
+         // Color handling is a problem. They are no longer part of the summary 
+         // metadata.  However, they clearly need to be stored 
          // with the dataset itself.  I guess that it makes sense to store them in 
          // the display setting.  However, it then becomes essential that 
          // display settings are stored with the (meta-)data.  
