@@ -20,6 +20,7 @@
 
 package org.micromanager.display.internal;
 
+import org.micromanager.display.internal.gearmenu.DefaultImageExporter;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
