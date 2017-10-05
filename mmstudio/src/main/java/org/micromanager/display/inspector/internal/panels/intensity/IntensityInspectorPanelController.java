@@ -293,12 +293,6 @@ public class IntensityInspectorPanelController
 
    private void handleColorPalette(List<Color> colors) {
       DisplaySettings displaySettings = viewer_.getDisplaySettings();
-      List<Color> allChannelColors = displaySettings.getAllChannelColors();
-      if (! (ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors) || 
-              ColorPalettes.getPrimaryColorPalette().containsAll(allChannelColors)) ) {
-         customPalette_ = allChannelColors;
-         gearMenuCustomColorItem_.setEnabled(true);
-      }
       List<ChannelDisplaySettings> allChannelSettings = displaySettings.getAllChannelSettings();
       for (int i = 0; i < allChannelSettings.size(); i++) {
          displaySettings = displaySettings.
@@ -534,6 +528,13 @@ public class IntensityInspectorPanelController
       percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
       for (ChangeListener listener : saveListeners) {
          percentileSpinner_.addChangeListener(listener);
+      }
+      
+      List<Color> allChannelColors = settings.getAllChannelColors();
+      if (! (ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors) || 
+              ColorPalettes.getPrimaryColorPalette().containsAll(allChannelColors)) ) {
+         customPalette_ = allChannelColors;
+         gearMenuCustomColorItem_.setEnabled(true);
       }
 
       for (int ch = 0; ch < channelControllers_.size(); ++ch) {
