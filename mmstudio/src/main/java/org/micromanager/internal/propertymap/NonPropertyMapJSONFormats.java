@@ -217,7 +217,13 @@ public abstract class NonPropertyMapJSONFormats {
                USER_DATA,
                DISPLAY_SETTINGS))
          {
-            key.storeInGsonObject(pmap, jo);
+            try {
+               key.storeInGsonObject(pmap, jo);
+            } catch (NullPointerException npe) {
+            } catch (UnsupportedOperationException uoe) {
+               // TODO: log exception
+            }
+         
          }
       }
    }

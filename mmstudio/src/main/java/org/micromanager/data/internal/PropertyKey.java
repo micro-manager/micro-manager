@@ -848,7 +848,11 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+         String string = pmap.getString(key(), null);
+         if (string != null) {
+            return new JsonPrimitive(string);
+         }
+         return null;
       }
    },
 
@@ -1229,7 +1233,11 @@ public enum PropertyKey {
 
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
-         return new JsonPrimitive(pmap.getString(key(), null));
+         String string = pmap.getString(key(), null);
+         if (string != null) {
+            return new JsonPrimitive(string);
+         }
+         return null;
       }
    },
 
@@ -1502,4 +1510,5 @@ public enum PropertyKey {
    public static boolean isKnownKey(String key) {
       return ALL_SPELLINGS.contains(key);
    }
+
 }

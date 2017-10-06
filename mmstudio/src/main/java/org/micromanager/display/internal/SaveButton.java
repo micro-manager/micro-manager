@@ -33,16 +33,16 @@ import org.micromanager.display.DisplayWindow;
  * This class provides a button for saving the current datastore to TIFF.
  */
 public final class SaveButton extends JButton {
-   public SaveButton(final Studio studio, final Datastore store, final DisplayWindow display) {
+   public SaveButton(final Studio studio, final DisplayWindow display) {
       setToolTipText("Save data as a Micro-Manager dataset.");
 
       addMouseListener(new MouseInputAdapter() {
          @Override
          public void mousePressed(MouseEvent e) {
             try {
-               store.save(display.getWindow());
+               display.getDatastore().save(display.getWindow());
             } catch (IOException ex) {
-               studio.logs().showError(ex, "Failed to save data to " + store.getSavePath() );
+               studio.logs().showError(ex, "Failed to save data to " + display.getDatastore().getSavePath() );
             }
          }
       });

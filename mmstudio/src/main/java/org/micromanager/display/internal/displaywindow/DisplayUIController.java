@@ -93,6 +93,7 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.SaveButton;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.MMStudio;
@@ -205,8 +206,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    private static final int MIN_CANVAS_HEIGHT = 100;
    private static final int BORDER_THICKNESS = 2;
-
-   private static final class UpdatePixelInfoTag {}
 
 
    @MustCallOnEDT
@@ -529,8 +528,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       panel.add(customControlsPanel, new CC().split());
       panel.add(new JPanel(), new CC().growX());
-      panel.add(new JLabel("[Save As...]"));
       // TODO Avoid static studio
+      panel.add(new SaveButton(MMStudio.getInstance(), displayController_));
       panel.add(new GearButton(displayController_, MMStudio.getInstance()));
 
       return panel;

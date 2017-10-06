@@ -21,7 +21,6 @@
 package org.micromanager.data.internal;
 
 import java.awt.Component;
-import java.beans.ExceptionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,7 +29,6 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.ProgressMonitor;
 import javax.swing.filechooser.FileFilter;
-import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.data.Annotation;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -51,15 +49,17 @@ public class DefaultDatastore implements Datastore {
    // Simple customization of the FileFilter class for choosing the save
    // file format.
    private static class SaveFileFilter extends FileFilter {
-      private String desc_;
+      private final String desc_;
       public SaveFileFilter(String desc) {
          desc_ = desc;
       }
 
+      @Override
       public boolean accept(File f) {
          return true;
       }
 
+      @Override
       public String getDescription() {
          return desc_;
       }
@@ -68,9 +68,9 @@ public class DefaultDatastore implements Datastore {
    private static final String SINGLEPLANE_TIFF_SERIES = "Separate Image Files";
    private static final String MULTIPAGE_TIFF = "Image Stack File";
    // FileFilters for saving.
-   private static final FileFilter singleplaneFilter_ = new SaveFileFilter(
+   private static final FileFilter SINGLEPLANEFILTER = new SaveFileFilter(
          SINGLEPLANE_TIFF_SERIES);
-   private static final FileFilter multipageFilter_ = new SaveFileFilter(
+   private static final FileFilter MULTIPAGEFILTER = new SaveFileFilter(
          MULTIPAGE_TIFF);
 
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
@@ -89,6 +89,9 @@ public class DefaultDatastore implements Datastore {
     * Copy all data from the provided other Datastore into ourselves. The
     * optional ProgressMonitor can be used to keep callers appraised of our
     * progress.
+    * @param alt Source Datastore
+    * @param monitor can be used to keep callers appraised of our progress.
+    * @throws java.io.IOException
     */
    public void copyFrom(Datastore alt, ProgressMonitor monitor)
          throws IOException {
@@ -121,6 +124,7 @@ public class DefaultDatastore implements Datastore {
 
    /**
     * Registers objects at default priority levels.
+    * @param obj object to be registered
     */
    @Override
    public void registerForEvents(Object obj) {
@@ -349,13 +353,13 @@ public class DefaultDatastore implements Datastore {
       // savefile format to use, and FileDialogs doesn't play nicely with that.
       JFileChooser chooser = new JFileChooser();
       chooser.setAcceptAllFileFilterUsed(false);
-      chooser.addChoosableFileFilter(singleplaneFilter_);
-      chooser.addChoosableFileFilter(multipageFilter_);
+      chooser.addChoosableFileFilter(SINGLEPLANEFILTER);
+      chooser.addChoosableFileFilter(MULTIPAGEFILTER);
       if (getPreferredSaveMode().equals(Datastore.SaveMode.MULTIPAGE_TIFF)) {
-         chooser.setFileFilter(multipageFilter_);
+         chooser.setFileFilter(MULTIPAGEFILTER);
       }
       else {
-         chooser.setFileFilter(singleplaneFilter_);
+         chooser.setFileFilter(SINGLEPLANEFILTER);
       }
       chooser.setSelectedFile(
             new File(FileDialogs.getSuggestedFile(FileDialogs.MM_DATA_SET)));
@@ -370,10 +374,10 @@ public class DefaultDatastore implements Datastore {
       // Determine the mode the user selected.
       FileFilter filter = chooser.getFileFilter();
       Datastore.SaveMode mode = null;
-      if (filter == singleplaneFilter_) {
+      if (filter == SINGLEPLANEFILTER) {
          mode = Datastore.SaveMode.SINGLEPLANE_TIFF_SERIES;
       }
-      else if (filter == multipageFilter_) {
+      else if (filter == MULTIPAGEFILTER) {
          mode = Datastore.SaveMode.MULTIPAGE_TIFF;
       }
       else {

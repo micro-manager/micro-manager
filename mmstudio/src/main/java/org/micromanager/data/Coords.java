@@ -40,7 +40,7 @@ import java.util.List;
  *
  * @Author Chris Weisiger, Mark A. Tsuchida
  */
-public interface Coords {
+public interface Coords extends Comparable {
    /** Axis label for the time point (frame) axis. */
    public static final String TIME_POINT = "time";
 
