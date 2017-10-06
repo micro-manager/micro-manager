@@ -37,6 +37,7 @@ import static org.micromanager.data.Coords.Z_SLICE;
 
 
 public final class DefaultCoords implements Coords {
+
    public static class Builder implements Coords.Builder {
       // Since we only hold several axes, array lists are likely more efficient
       // than a LinkedHashMap
@@ -236,6 +237,19 @@ public final class DefaultCoords implements Coords {
       }
       return true;
    }
+   
+   
+   @Override
+   public int compareTo(Object other) {
+      if (!(other instanceof Coords)) {
+         return 1;
+      }
+      if (equals(other)) {
+         return 0;
+      }
+      // TODO
+      return 1;
+    }
 
    @Override
    public int hashCode() {
