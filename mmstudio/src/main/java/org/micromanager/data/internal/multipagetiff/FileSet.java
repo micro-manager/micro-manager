@@ -137,6 +137,10 @@ class FileSet {
    }
 
    public void writeImage(Image img) throws IOException {
+      //Add filename to image tags - needed by hasSpaceToWrite function
+      img = img.copyWithMetadata(img.getMetadata().
+            copyBuilderPreservingUUID().fileName(currentTiffFilename_).
+            build());
       //check if current writer is out of space, if so, make a new one
       if (!tiffWriters_.getLast().hasSpaceToWrite(img, SPACE_FOR_PARTIAL_OME_MD)) {
          //write index map here but still need to call close() at end of acq
@@ -147,12 +151,12 @@ class FileSet {
          ifdCount_ = 0;
          tiffWriters_.add(new MultipageTiffWriter(masterStorage_,
                img, currentTiffFilename_));
+         
+         //Add new filename to image tags
+         img = img.copyWithMetadata(img.getMetadata().
+               copyBuilderPreservingUUID().fileName(currentTiffFilename_).
+               build());
       }      
-
-      //Add filename to image tags
-      img = img.copyWithMetadata(img.getMetadata().
-            copyBuilderPreservingUUID().fileName(currentTiffFilename_).
-            build());
 
       //write image
       tiffWriters_.getLast().writeImage(img);

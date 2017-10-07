@@ -201,6 +201,15 @@ public enum PropertyKey {
             return true;
          }
          return false;
+      }      
+      
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         String string = pmap.getString(key(), null);
+         if (string != null) {
+            return new JsonPrimitive(string);
+         }
+         return null;
       }
    },
 
@@ -460,6 +469,12 @@ public enum PropertyKey {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
+      }
+      
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         // Save zero even if missing
+         return new JsonPrimitive(pmap.getInteger(key(), 0));
       }
    },
 
@@ -1266,6 +1281,12 @@ public enum PropertyKey {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
          dest.putInteger(key(), je.getAsInt());
+      }
+      
+      @Override
+      protected JsonElement convertToGson(PropertyMap pmap) {
+         // Save zero even if missing
+         return new JsonPrimitive(pmap.getInteger(key(), 0));
       }
    },
 

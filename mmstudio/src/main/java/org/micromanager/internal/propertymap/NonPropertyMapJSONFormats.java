@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.internal.propertymap;
 
 import com.google.common.collect.ImmutableList;
@@ -25,41 +21,41 @@ import static org.micromanager.data.internal.PropertyKey.*;
  * @author Mark A. Tsuchida
  */
 public abstract class NonPropertyMapJSONFormats {
-   private static final NonPropertyMapJSONFormats metadataInstance_ =
+   private static final NonPropertyMapJSONFormats METADATA_INSTANCE =
          new MetadataFormat();
-   private static final NonPropertyMapJSONFormats summaryInstance_ =
+   private static final NonPropertyMapJSONFormats SUMMARY_INSTANCE =
          new SummaryFormat();
-   private static final NonPropertyMapJSONFormats positionListInstance_ =
+   private static final NonPropertyMapJSONFormats POSITION_LIST_INSTANCE =
          new PositionListFormat();
-   private static final NonPropertyMapJSONFormats mspInstance_ =
+   private static final NonPropertyMapJSONFormats MSP_INSTANCE =
          new MultiStagePositionFormat();
-   private static final NonPropertyMapJSONFormats coordsInstance_ =
+   private static final NonPropertyMapJSONFormats COORDS_INSTANCE =
          new CoordsFormat();
-   private static final NonPropertyMapJSONFormats imageFormatInstance_ =
+   private static final NonPropertyMapJSONFormats IMAGE_FORMAT_INSTANCE =
          new ImageFormat();
 
    public static NonPropertyMapJSONFormats metadata() {
-      return metadataInstance_;
+      return METADATA_INSTANCE;
    }
 
    public static NonPropertyMapJSONFormats summaryMetadata() {
-      return summaryInstance_;
+      return SUMMARY_INSTANCE;
    }
 
    public static NonPropertyMapJSONFormats positionList() {
-      return positionListInstance_;
+      return POSITION_LIST_INSTANCE;
    }
 
    public static NonPropertyMapJSONFormats multiStagePosition() {
-      return mspInstance_;
+      return MSP_INSTANCE;
    }
 
    public static NonPropertyMapJSONFormats coords() {
-      return coordsInstance_;
+      return COORDS_INSTANCE;
    }
 
    public static NonPropertyMapJSONFormats imageFormat() {
-      return imageFormatInstance_; }
+      return IMAGE_FORMAT_INSTANCE; }
 
    @SuppressWarnings("UseSpecificCatch")
    public final PropertyMap fromJSON(String json) throws IOException {

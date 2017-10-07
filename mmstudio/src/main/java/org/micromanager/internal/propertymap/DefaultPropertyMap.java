@@ -620,7 +620,7 @@ public final class DefaultPropertyMap implements PropertyMap {
       if (!cls.isInstance(map_.get(key))) {
          // We throw ClassCastException (but a subclass thereof, for backward compat)
          throw new TypeMismatchException(String.format(
-               "Type mismatch on property map access (requested: %s; found: %s)",
+               "Type mismatch on property map access for key: " + key + " (requested: %s; found: %s)",
                cls.getName(), map_.get(key).getClass().getName()));
       }
       return false;
