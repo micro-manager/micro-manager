@@ -253,7 +253,6 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
 
       JScrollBar scrollBar = new JScrollBar(JScrollBar.HORIZONTAL,
             0, (length > 0 ? 1 : 0), 0, length);
-      scrollBar.setBorder(BorderFactory.createEmptyBorder());
       scrollBar.addAdjustmentListener(this);
       rowPanel.add(scrollBar, new CC().growX().pushX());
 
