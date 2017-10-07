@@ -162,11 +162,13 @@ public final class DisplayUIController implements Closeable, WindowListener,
          "/org/micromanager/icons/pause.png");
    private static final Icon UNLOCKED_ICON = IconLoader.getIcon(
          "/org/micromanager/icons/lock_open.png");
+   // TODO: Make Icons same size so that they are not moving around when changing
    private static final Icon BLACK_LOCKED_ICON = IconLoader.getIcon(
          "/org/micromanager/icons/lock_locked.png");
    private static final Icon RED_LOCKED_ICON = IconLoader.getIcon(
          "/org/micromanager/icons/lock_super.png");
-
+   
+   private final Insets buttonInsets_ = new Insets(0, 5, 0, 5);
 
    private ImageJBridge ijBridge_;
 
@@ -470,10 +472,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
       int width = 16 + playbackFpsButton_.getFontMetrics(
             playbackFpsButton_.getFont()).stringWidth("Playback: 9999.0 fps");
       Dimension fpsButtonSize = new Dimension(width,
-            fpsLabel_.getPreferredSize().height);
+            fpsLabel_.getPreferredSize().height + 4);
       playbackFpsButton_.setMinimumSize(fpsButtonSize);
       playbackFpsButton_.setMaximumSize(fpsButtonSize);
       playbackFpsButton_.setPreferredSize(fpsButtonSize);
+      playbackFpsButton_.setMargin(buttonInsets_);
       playbackFpsButton_.addPopupButtonListener(new PopupButton.Listener() {
          @Override
          public void popupButtonWillShowPopup(PopupButton button) {
@@ -503,7 +506,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       panel.add(scrollBarPanel_, new CC().growX().pushX().split(2));
 
       axisLockButton_ = new JButton();
-      Dimension size = new Dimension(MDScrollBarPanel.ROW_HEIGHT, MDScrollBarPanel.ROW_HEIGHT);
+      Dimension size = new Dimension(UNLOCKED_ICON.getIconWidth() + 6, MDScrollBarPanel.ROW_HEIGHT);
       axisLockButton_.setMinimumSize(size);
       axisLockButton_.setPreferredSize(size);
       axisLockButton_.setIcon(UNLOCKED_ICON);
@@ -550,7 +553,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (animateButton == null) {
          animateButton = new JToggleButton(axis.substring(0, 1));
          animateButton.setFont(animateButton.getFont().deriveFont(10.0f));
-         Dimension size = new Dimension(2 * height, height);
+         int width = 22 + PLAY_ICON.getIconWidth() + animateButton .getFontMetrics(animateButton .getFont()).
+               stringWidth("z");
+         Dimension size = new Dimension(width, height);
          animateButton.setMinimumSize(size);
          animateButton.setMaximumSize(size);
          animateButton.setPreferredSize(size);
@@ -558,6 +563,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.setHorizontalTextPosition(SwingConstants.RIGHT);
          animateButton.setIcon(PLAY_ICON);
          animateButton.setSelectedIcon(PAUSE_ICON);
+         animateButton.setBorderPainted(false);
+         animateButton.setMargin(buttonInsets_);
          animateButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -586,6 +593,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          positionButton.setMinimumSize(size);
          positionButton.setMaximumSize(size);
          positionButton.setPreferredSize(size);
+         positionButton.setBorderPainted(false);
+         positionButton.setMargin(buttonInsets_);
          axisPositionButtons_.add(new AbstractMap.SimpleEntry(
                axis, positionButton));
       }

@@ -21,11 +21,11 @@ import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
-import javax.swing.event.ChangeEvent;
 import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
@@ -253,6 +253,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
 
       JScrollBar scrollBar = new JScrollBar(JScrollBar.HORIZONTAL,
             0, (length > 0 ? 1 : 0), 0, length);
+      scrollBar.setBorder(BorderFactory.createEmptyBorder());
       scrollBar.addAdjustmentListener(this);
       rowPanel.add(scrollBar, new CC().growX().pushX());
 
