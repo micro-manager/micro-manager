@@ -62,7 +62,7 @@
 	<presetdef name="mm-ant-javac">
 		<javac debug="on" debuglevel="lines,vars,source"
 			optimize="on" deprecation="on"
-			source="1.6" target="1.6" includeAntRuntime="true">
+			source="1.6" target="1.8" includeAntRuntime="true">
 			<compilerarg value="-Xlint"/>
 			<compilerarg line="${mm.javacflags}"/>
 		</javac>
@@ -70,7 +70,7 @@
 	<presetdef name="mm-javac">
 		<javac debug="on" debuglevel="lines,vars,source"
 			optimize="on" deprecation="on"
-			source="1.6" target="1.6" includeAntRuntime="false">
+			source="1.6" target="1.8" includeAntRuntime="false">
 			<compilerarg value="-Xlint:all,-path,-serial"/>
 			<compilerarg line="${mm.javacflags}"/>
 		</javac>

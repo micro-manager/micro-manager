@@ -63,5 +63,6 @@
 
 		<!-- Run-time-only dependencies -->
 		<dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
+      <!-- <dependency conf="runtime" org="ome" name="loci_tools" rev="5.1.2"/> -->
 	</dependencies>
 </ivy-module>
