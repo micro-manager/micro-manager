@@ -38,11 +38,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -55,7 +51,6 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.MMException;
 import org.micromanager.internal.utils.ProgressBar;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -283,7 +278,13 @@ public final class StorageMultipageTiff implements Storage {
       try {
          writeImage(image, false);
       }
-      catch (Exception e) {
+      catch (MMException e) {
+         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
+      } catch (InterruptedException e) {
+         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
+      } catch (ExecutionException e) {
+         ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
+      } catch (IOException e) {
          ReportingUtils.showError(e, "Failed to write image at " + image.getCoords());
       }
    }
@@ -627,11 +628,11 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    /**
-    * TODO: in future there will probably be a cleaner way to implement this.
+    * TODO: Check that summaryMetadata is a reliable source for this information
     */
    @Override
    public List<String> getAxes() {
-      return getMaxIndices().getAxes();
+      return summaryMetadata_.getOrderedAxes();
    }
 
    @Override

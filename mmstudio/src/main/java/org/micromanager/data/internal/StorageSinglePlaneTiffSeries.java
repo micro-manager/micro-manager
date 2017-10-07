@@ -318,7 +318,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
 
    @Override
    public List<String> getAxes() {
-      return maxIndices_.getAxes();
+      return summaryMetadata_.getOrderedAxes();
    }
 
    @Override

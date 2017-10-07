@@ -116,9 +116,10 @@ public final class StorageRAM implements RewritableStorage {
       return maxIndex_.getIndex(axis);
    }
 
+   // TODO: check that metadata axis are a reliable source of information
    @Override
    public List<String> getAxes() {
-      return maxIndex_.getAxes();
+      return summaryMetadata_.getOrderedAxes();
    }
 
    @Override

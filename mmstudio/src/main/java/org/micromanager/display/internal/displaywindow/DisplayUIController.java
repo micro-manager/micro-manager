@@ -44,6 +44,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -667,8 +669,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
 
-      // TODO XXX Reorder scrollable axes to match axis order of data provider
-
       List<String> scrollableAxes = new ArrayList<String>();
       List<Integer> scrollableLengths = new ArrayList<Integer>();
       for (int i = 0; i < displayedAxes_.size(); ++i) {
@@ -677,6 +677,22 @@ public final class DisplayUIController implements Closeable, WindowListener,
             scrollableLengths.add(displayedAxisLengths_.get(i));
          }
       }
+      // Reorder scrollable axes to match axis order of data provider
+      Collections.sort(scrollableAxes, new Comparator<String>() {
+         @Override
+         // This could be comverted in a utility function
+         public int compare(String o1, String o2) {
+            if (o1.equals(o2)) { 
+               return 0;
+            } 
+            List<String> ordered = displayController_.getOrderedAxes();
+            Map<String, Integer> axisMap = new HashMap<String, Integer>(ordered.size());
+            for (int i = 0; i < ordered.size(); i++) {
+               axisMap.put(ordered.get(i), i);
+            }
+            return axisMap.get(o1) > axisMap.get(o2) ? 1 : -1;
+         }
+      });
       scrollBarPanel_.setAxes(scrollableAxes);
       for (int i = 0; i < scrollableAxes.size(); ++i) {
          scrollBarPanel_.setAxisLength(scrollableAxes.get(i),
@@ -857,24 +873,27 @@ public final class DisplayUIController implements Closeable, WindowListener,
       newImageIndicator_.setVisible(show);
    }
 
-   private void updateAxisPositionIndicator(String axis, int position, int length) {
-      if (length < 0) {
+   private void updateAxisPositionIndicator(final String axis, 
+           final int position, final int length) {
+      int checkedLength = length;
+      if (checkedLength < 0) {
          int axisIndex = displayedAxes_.indexOf(axis);
          if (axisIndex < 0) {
             return;
          }
-         length = displayedAxisLengths_.get(axisIndex);
+         checkedLength = displayedAxisLengths_.get(axisIndex);
       }
-      if (length <= 1) {
+      if (checkedLength <= 1) {
          return; // Not displayed
       }
-      if (position < 0) {
-         position = scrollBarPanel_.getAxisPosition(axis);
+      int checkedPosition = position;
+      if (checkedPosition < 0) {
+         checkedPosition = scrollBarPanel_.getAxisPosition(axis);
       }
       for (Map.Entry<String, PopupButton> e : axisPositionButtons_) {
          if (axis.equals(e.getKey())) {
             e.getValue().setText(String.format("% 5d/% 5d",
-                  position + 1, length));
+                  checkedPosition + 1, checkedLength));
             break;
          }
       }
