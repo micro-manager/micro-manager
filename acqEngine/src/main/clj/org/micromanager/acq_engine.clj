@@ -135,6 +135,7 @@
        "PositionName" (when-lets [pos (:position event)
                                   msp (get-msp (state :position-list) pos)]
                                  (.getLabel msp))
+       "ReceivedTime" (get-current-time-str)
        "Slice" (:slice-index event)
        "SliceIndex" (:slice-index event)
        "SlicePosition" (:slice event)
