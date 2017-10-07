@@ -238,19 +238,6 @@ public final class DefaultCoords implements Coords {
       return true;
    }
    
-   
-   @Override
-   public int compareTo(Object other) {
-      if (!(other instanceof Coords)) {
-         return 1;
-      }
-      if (equals(other)) {
-         return 0;
-      }
-      // TODO
-      return 1;
-    }
-
    @Override
    public int hashCode() {
       // Axis order is not considered for equality

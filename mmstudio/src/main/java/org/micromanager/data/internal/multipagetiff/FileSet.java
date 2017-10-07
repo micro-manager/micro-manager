@@ -22,7 +22,8 @@ package org.micromanager.data.internal.multipagetiff;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
@@ -35,8 +36,6 @@ import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
-import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMScriptException;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -47,10 +46,10 @@ import org.micromanager.internal.utils.ReportingUtils;
 class FileSet {
    private static final int SPACE_FOR_PARTIAL_OME_MD = 2000; //this should be more than enough
 
-   private LinkedList<MultipageTiffWriter> tiffWriters_;
+   private final LinkedList<MultipageTiffWriter> tiffWriters_;
    private FileWriter mdWriter_;
-   private OMEMetadata omeMetadata_;
-   private String baseFilename_;
+   private final OMEMetadata omeMetadata_;
+   private final String baseFilename_;
    private String currentTiffFilename_;
    private String currentTiffUUID_;;
    private String metadataFileFullPath_;
@@ -59,7 +58,7 @@ class FileSet {
    private boolean splitByXYPosition_ = false;
    private boolean expectedImageOrder_ = true;
    private int ifdCount_ = 0;
-   private StorageMultipageTiff masterStorage_;
+   private final StorageMultipageTiff masterStorage_;
    int nextExpectedChannel_ = 0, nextExpectedSlice_ = 0, nextExpectedFrame_ = 0;
    int currentFrame_ = 0;
 
@@ -136,9 +135,9 @@ class FileSet {
       return currentFrame_;
    }
 
-   public void writeImage(Image img) throws IOException {
+   public void writeImage(final Image imgIn) throws IOException {
       //Add filename to image tags - needed by hasSpaceToWrite function
-      img = img.copyWithMetadata(img.getMetadata().
+      Image img = imgIn.copyWithMetadata(imgIn.getMetadata().
             copyBuilderPreservingUUID().fileName(currentTiffFilename_).
             build());
       //check if current writer is out of space, if so, make a new one
@@ -288,12 +287,16 @@ class FileSet {
       int numSlices = masterStorage_.getIntendedSize(Coords.Z);
       int numChannels = masterStorage_.getIntendedSize(Coords.CHANNEL);
       if (numFrames > frame + 1 ) {
-         TreeSet<Coords> writtenImages = new TreeSet<Coords>();
+         HashSet<Coords> writtenImages = new HashSet<Coords>();
          for (MultipageTiffWriter w : tiffWriters_) {
             writtenImages.addAll(w.getIndexMap().keySet());
             w.setAbortedNumFrames(frame + 1);
          }
-         int positionIndex = writtenImages.first().getStagePosition();
+         Iterator<Coords> iterator = writtenImages.iterator();
+         int positionIndex = 0;
+         if (iterator.hasNext()) {
+            positionIndex = iterator.next().getStagePosition();
+         }
          omeMetadata_.setNumFrames(positionIndex, frame + 1);
          TreeSet<Coords> lastFrameCoords = new TreeSet<Coords>();
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
