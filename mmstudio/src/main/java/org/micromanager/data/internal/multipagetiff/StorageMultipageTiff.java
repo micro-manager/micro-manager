@@ -29,8 +29,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -96,7 +96,7 @@ public final class StorageMultipageTiff implements Storage {
    private HashMap<Integer, FileSet> positionToFileSet_;
    
    //Map of image labels to file 
-   private TreeMap<Coords, MultipageTiffReader> coordsToReader_;
+   private Map<Coords, MultipageTiffReader> coordsToReader_;
    // Keeps track of our maximum extent along each axis.
    private Coords maxIndices_;
   
@@ -123,7 +123,7 @@ public final class StorageMultipageTiff implements Storage {
       amInWriteMode_ = amInWriteMode;
       directory_ = dir;
       store_.setSavePath(directory_);
-      coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
+      coordsToReader_ = new HashMap<Coords, MultipageTiffReader>();
 
       if (amInWriteMode_) {
          positionToFileSet_ = new HashMap<Integer, FileSet>();
@@ -160,12 +160,11 @@ public final class StorageMultipageTiff implements Storage {
    }
 
    boolean slicesFirst() {
-      String[] order = summaryMetadata_.getAxisOrder();
-      if (order == null) {
+      List<String> orderList = summaryMetadata_.getOrderedAxes();
+      if (orderList == null) {
          // HACK: default to true.
          return true;
       }
-      List<String> orderList = Arrays.asList(order);
       int sliceIndex = orderList.indexOf(Coords.Z);
       int channelIndex = orderList.indexOf(Coords.CHANNEL);
       return (sliceIndex < channelIndex);
@@ -529,8 +528,8 @@ public final class StorageMultipageTiff implements Storage {
             toJSON(summary.toPropertyMap());
 
       // TODO What does the following have to do with summary metadata?
-      TreeMap<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
-      coordsToReader_ = new TreeMap<Coords, MultipageTiffReader>();
+      Map<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
+      coordsToReader_ = new HashMap<Coords, MultipageTiffReader>();
       if (showProgress && !GraphicsEnvironment.isHeadless()) {
          ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
          progressBar.setProgress(0);

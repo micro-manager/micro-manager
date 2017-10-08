@@ -14,6 +14,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.internal.PropertyKey;
 import static org.micromanager.data.internal.PropertyKey.*;
+import org.micromanager.internal.MMStudio;
 
 /**
  * High-level format conversion between MM1-style JSON and modern property maps.
@@ -144,7 +145,11 @@ public abstract class NonPropertyMapJSONFormats {
                USER_DATA,
                FILE_NAME))
          {
+            try {
             key.storeInGsonObject(pmap, jo);
+            } catch (NullPointerException npe) {
+               MMStudio.getInstance().logs().logError(npe, "Key: " + key);
+            }
          }
       }
    }
@@ -216,8 +221,9 @@ public abstract class NonPropertyMapJSONFormats {
             try {
                key.storeInGsonObject(pmap, jo);
             } catch (NullPointerException npe) {
+               //MMStudio.getInstance().logs().logError(npe, "Key: " + key);
             } catch (UnsupportedOperationException uoe) {
-               // TODO: log exception
+               //MMStudio.getInstance().logs().logError(uoe, "Key: " + key);
             }
          
          }
