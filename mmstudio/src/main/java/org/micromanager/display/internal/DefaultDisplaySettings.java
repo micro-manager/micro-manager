@@ -32,6 +32,7 @@ import org.json.JSONObject;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
@@ -984,16 +985,16 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       for (ChannelDisplaySettings cs : channelSettings_) {
          channelSettings.add(((DefaultChannelDisplaySettings) cs).toPropertyMap());
       }
-      // TODO Define keys
+      
       return PropertyMaps.builder().
-            putDouble("ZoomRatio", zoom_).
-            putDouble("PlaybackFPS", fps_).
-            putEnumAsString("ColorMode", mode_).
-            putBoolean("UniformChannelScaling", uniformChannelScaling_).
-            putBoolean("Autostretch", autostretch_).
-            putBoolean("ROIAutoscale", useROI_).
-            putDouble("AutoscaleIgnoredQuantile", extremaQuantile_).
-            putPropertyMapList("ChannelSettings", channelSettings).
+            putDouble(PropertyKey.ZOOM_RATIO.key(), zoom_).
+            putDouble(PropertyKey.PLAYBACK_FPS.key(), fps_).
+            putEnumAsString(PropertyKey.COLOR_MODE.key(), mode_).
+            putBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key(), uniformChannelScaling_).
+            putBoolean(PropertyKey.AUTOSTRETCH.key(), autostretch_).
+            putBoolean(PropertyKey.ROI_AUTOSCALE.key(), useROI_).
+            putDouble(PropertyKey.ACUTOSCALE_IGNORED_QUANTILE.key(), extremaQuantile_).
+            putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings).
             build();
    }
 }
