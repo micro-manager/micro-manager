@@ -155,17 +155,17 @@ public interface DisplayManager extends EventPublisher {
    PropertyMap.Builder getPropertyMapBuilder();
 
    /**
-    * Create a new DisplayWindow for the specified Datastore and return it.
-    * @param dataProvider The Datastore whose data should be displayed.
+    * Create a new DisplayWindow for the specified DataProvider and return it.
+    * @param dataProvider The DataProvider whose data should be displayed.
     * @return The created DisplayWindow.
     */
    DisplayWindow createDisplay(DataProvider dataProvider);
 
    /**
-    * Create a new DisplayWindow for the specified Datastore and return it.
+    * Create a new DisplayWindow for the specified DataProvider and return it.
     * This version allows you to add your own custom controls to the display
     * that will appear underneath the axis scrollbars.
-    * @param dataProvider The Datastore whose data should be displayed.
+    * @param dataProvider The DataProvider whose data should be displayed.
     * @param factory A ControlsFactory used to create custom controls for
     *        the DisplayWindow. May be null.
     * @return The created DisplayWindow.
@@ -217,46 +217,47 @@ public interface DisplayManager extends EventPublisher {
     * default DisplayWindow will be created, as per createDisplay() above.
     * @param store The Datastore to load display settings for.
     * @return The list of DisplayWindows that were created by this method.
+    * @throws java.io.IOException
     */
    List<DisplayWindow> loadDisplays(Datastore store) throws IOException;
 
    /**
-    * Request that MicroManager manage the specified Datastore for you.
+    * Request that MicroManager manage the specified DataProvider for you.
     * In brief: if you want users to receive a prompt to save their data when
-    * the last display for a Datastore you created is closed, then use this
+    * the last display for a DataProvider you created is closed, then use this
     * method.
     * Specifically, this method does the following things:
-    * - Add the Datastore to the list returned by getDatastores().
-    * - Find all currently-existing DisplayWindows for this Datastore and
-    *   associate them (thus, getDisplays() for this Datastore will return the
+    * - Add the DataProvider to the list returned by getDataProviders().
+    * - Find all currently-existing DisplayWindows for this DataProvider and
+    *   associate them (thus, getDisplays() for this DataProvider will return the
     *   displays)
-    * - When the last DisplayWindow for the Datastore is closed:
-    * -- If the Datastore has not been saved, prompt the user to save (and if
+    * - When the last DisplayWindow for the DataProvider is closed:
+    * -- If the DataProvider has not been saved, prompt the user to save (and if
     *    they cancel, closing the DisplayWindow is halted)
-    * -- The Datastore is frozen, which may have side-effects like finalizing
+    * -- The DataProvider is frozen, which may have side-effects like finalizing
     *    writing of image data to disk
-    * -- The Datastore is removed from the list returned by getDatastores().
-    * By default, new Datastores created by the createNewDatastore() method
+    * -- The DataProvider is removed from the list returned by getDatastores().
+    * By default, new DataProvider created by the createNewDatastore() method
     * are not managed, which means you are responsible for ensuring that they
-    * are properly closed and saved. Datastores created by MicroManager itself
+    * are properly closed and saved. DataProvider created by MicroManager itself
     * (e.g. by running an MDA) are automatically managed.
-    * @param store The Datastore to manage.
+    * @param store The DataProvider to manage.
     */
-   void manage(Datastore store);
+   void manage(DataProvider store);
 
    /**
-    * Return a list of all Datastores that MicroManager is managing (see the
+    * Return a list of all DataProviders that MicroManager is managing (see the
     * manage() method for more information).
-    * @return A list of all Datastores that Micro-Manager is managing.
+    * @return A list of all DataProviders that Micro-Manager is managing.
     */
-   List<Datastore> getManagedDatastores();
+   List<DataProvider> getManagedDataProviders();
 
    /**
-    * Returns true iff the Datastore is being managed by MicroManager.
-    * @param store The Datastore whose management status is under question.
-    * @return Whether or not Micro-Manager is managing the Datastore.
+    * Returns true if the DataProvider is being managed by MicroManager.
+    * @param store The DataProvider whose management status is under question.
+    * @return Whether or not Micro-Manager is managing the DataProvider.
     */
-   boolean getIsManaged(Datastore store);
+   boolean getIsManaged(DataProvider store);
 
    /**
     * Return all associated DisplayWindows for the Datastore. Returns null if
@@ -315,6 +316,7 @@ public interface DisplayManager extends EventPublisher {
     * @param display The DisplayWindow over which to show the prompt.
     * @return true if saving was successful or the user explicitly declined
     *         to save; false if the user cancelled or if saving failed.
+    * @throws java.io.IOException
     */
    boolean promptToSave(Datastore store, DisplayWindow display) throws IOException;
 

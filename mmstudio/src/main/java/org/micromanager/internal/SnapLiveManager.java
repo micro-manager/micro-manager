@@ -55,7 +55,6 @@ import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.internal.DefaultDisplayManager;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.internal.DefaultEventManager;
@@ -464,7 +463,7 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
       display_ = new DisplayController.Builder(store_).
             controlsFactory(controlsFactory).
             shouldShow(true).build();
-      DefaultDisplayManager.getInstance().addViewer(display_);
+      studio_.displays().addViewer(display_);
 
       // HACK: coerce single-camera setups to grayscale (instead of the
       // default of composite mode) if there is no existing profile settings
