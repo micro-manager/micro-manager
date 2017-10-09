@@ -171,7 +171,7 @@ public final class MMAcquisition {
          // with the dataset itself.  I guess that it makes sense to store them in 
          // the display setting.  However, it then becomes essential that 
          // display settings are stored with the (meta-)data.  
-         // Handling the conversion from colors in the summary metadat to display
+         // Handling the conversion from colors in the summary metadata to display
          // settings here seems clumsy, but I am not sure where else this belongs
          
          try {
