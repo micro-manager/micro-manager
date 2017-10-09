@@ -28,11 +28,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  * The collection of data viewers.
  *
  * Manages all data viewers in the application, and keeps track of the
- * currently active viewer. Also publishes all viewer events.
- * 
- * NS: The definition of "active" is ambiguous.  Does this mean the
- * front-most visible viewer?  Or all viewers that are on the screen?  This 
- * ambiguity creates problems downstream. 
+ * front-most viewer. Also publishes all viewer events.
  * 
  * <p>
  * This class handles generic {@code DataViewer}s and does not perform tasks
@@ -46,11 +42,11 @@ public class DataViewerCollection implements EventPublisher {
    private final Set<DataViewer> viewers_ = new HashSet<DataViewer>();
 
    // Viewers in most-recently-activated order. The first element is the
-   // currently active viewer.
+   // currently active (or at least, front-most) viewer.
    // Invariant: elements are unique
    // Invariant: elements are in viewers_
    // Access: only onEDT
-   private final Deque<DataViewer> activeViewerStack_ =
+   private final Deque<DataViewer> showingViewers_ =
          new ArrayDeque<DataViewer>();
 
    private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
@@ -88,7 +84,7 @@ public class DataViewerCollection implements EventPublisher {
       if (viewer == getActiveDataViewer()) {
          eventBus_.post(DataViewerDidBecomeInactiveEvent.create(viewer));
       }
-      activeViewerStack_.remove(viewer);
+      showingViewers_.remove(viewer);
       // An event needs to be generated for the newly front-most Dataviewer
       // even though it may already have been "active", it is not in front
       // and event consumers (like the Inspector) will need to know about this.
@@ -106,7 +102,7 @@ public class DataViewerCollection implements EventPublisher {
 
    @MustCallOnEDT
    public DataViewer getActiveDataViewer() {
-      for (DataViewer viewer : activeViewerStack_) {
+      for (DataViewer viewer : showingViewers_) {
          if (viewer.isVisible()) {
             return viewer;
          }
@@ -137,8 +133,8 @@ public class DataViewerCollection implements EventPublisher {
          eventBus_.post(DataViewerDidBecomeInactiveEvent.create(previous));
       }
 
-      activeViewerStack_.remove(e.getDataViewer());
-      activeViewerStack_.addFirst(e.getDataViewer());
+      showingViewers_.remove(e.getDataViewer());
+      showingViewers_.addFirst(e.getDataViewer());
 
       eventBus_.post(e);
    }
