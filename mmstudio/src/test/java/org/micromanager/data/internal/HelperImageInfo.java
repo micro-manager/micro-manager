@@ -20,6 +20,7 @@
 
 package org.micromanager.data.internal;
 
+import java.io.IOException;
 import org.junit.Assert;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
@@ -30,9 +31,10 @@ import org.micromanager.data.Metadata;
  * This class holds testable information about a single image.
  */
 public class HelperImageInfo {
-   private Coords coords_;
-   private Metadata metadata_;
-   private int pixelHash_;
+   private final Coords coords_;
+   private final Metadata metadata_;
+   private final int pixelHash_;
+   
    // Maps x/y coordinates to the pixel intensity at that location.
    public HelperImageInfo(Coords coords, Metadata metadata, int pixelHash) {
       coords_ = coords;
@@ -46,6 +48,8 @@ public class HelperImageInfo {
 
    /**
     * This method should match the imagePixelHash.bsh script.
+    * @param image for which to calculate the hash
+    * @return hash for given image
     */
    public static int hashPixels(Image image) {
       Object pixelsArr = image.getRawPixels();
@@ -72,29 +76,33 @@ public class HelperImageInfo {
    }
 
    public void test(Datastore store) {
-      Image image = store.getImage(coords_);
-      Assert.assertNotNull("Image at " + coords_ + " is null", image);
-      Assert.assertEquals(pixelHash_, hashPixels(image));
-      Metadata metadata = image.getMetadata();
-      Assert.assertEquals(metadata_.getBinning(), metadata.getBinning());
-      Assert.assertEquals(metadata_.getBitDepth(), metadata.getBitDepth());
-      Assert.assertEquals(metadata_.getCamera(), metadata.getCamera());
-      Assert.assertEquals(metadata_.getElapsedTimeMs(), metadata.getElapsedTimeMs());
-      Assert.assertEquals(metadata_.getExposureMs(), metadata.getExposureMs());
-      Assert.assertEquals(metadata_.getIjType(), metadata.getIjType());
-      Assert.assertEquals(metadata_.getImageNumber(), metadata.getImageNumber());
-      Assert.assertEquals(metadata_.getKeepShutterOpenChannels(), metadata.getKeepShutterOpenChannels());
-      Assert.assertEquals(metadata_.getKeepShutterOpenSlices(), metadata.getKeepShutterOpenSlices());
-      Assert.assertEquals(metadata_.getPixelAspect(), metadata.getPixelAspect());
-      Assert.assertEquals(metadata_.getPixelSizeUm(), metadata.getPixelSizeUm());
-      Assert.assertEquals(metadata_.getPositionName(), metadata.getPositionName());
-      Assert.assertEquals(metadata_.getReceivedTime(), metadata.getReceivedTime());
-      Assert.assertEquals(metadata_.getROI(), metadata.getROI());
-      Assert.assertEquals(metadata_.getScopeData(), metadata.getScopeData());
-      Assert.assertEquals(metadata_.getUserData(), metadata.getUserData());
-      Assert.assertEquals(metadata_.getUUID(), metadata.getUUID());
-      Assert.assertEquals(metadata_.getXPositionUm(), metadata.getXPositionUm());
-      Assert.assertEquals(metadata_.getYPositionUm(), metadata.getYPositionUm());
-      Assert.assertEquals(metadata_.getZPositionUm(), metadata.getZPositionUm());
+      try {
+         Image image = store.getImage(coords_);
+         Assert.assertNotNull("Image at " + coords_ + " is null", image);
+         Assert.assertEquals(pixelHash_, hashPixels(image));
+         Metadata metadata = image.getMetadata();
+         Assert.assertEquals(metadata_.getBinning(), metadata.getBinning());
+         Assert.assertEquals(metadata_.getBitDepth(), metadata.getBitDepth());
+         Assert.assertEquals(metadata_.getCamera(), metadata.getCamera());
+         Assert.assertEquals(metadata_.getElapsedTimeMs(), metadata.getElapsedTimeMs());
+         Assert.assertEquals(metadata_.getExposureMs(), metadata.getExposureMs());
+         // Assert.assertEquals(metadata_.getIjType(), metadata.getIjType());
+         Assert.assertEquals(metadata_.getImageNumber(), metadata.getImageNumber());
+         //  Assert.assertEquals(metadata_.getKeepShutterOpenChannels(), metadata.getKeepShutterOpenChannels());
+         // Assert.assertEquals(metadata_.getKeepShutterOpenSlices(), metadata.getKeepShutterOpenSlices());
+         Assert.assertEquals(metadata_.getPixelAspect(), metadata.getPixelAspect());
+         Assert.assertEquals(metadata_.getPixelSizeUm(), metadata.getPixelSizeUm());
+         Assert.assertEquals(metadata_.getPositionName(), metadata.getPositionName());
+         Assert.assertEquals(metadata_.getReceivedTime(), metadata.getReceivedTime());
+         Assert.assertEquals(metadata_.getROI(), metadata.getROI());
+         Assert.assertEquals(metadata_.getScopeData(), metadata.getScopeData());
+         Assert.assertEquals(metadata_.getUserData(), metadata.getUserData());
+         Assert.assertEquals(metadata_.getUUID(), metadata.getUUID());
+         Assert.assertEquals(metadata_.getXPositionUm(), metadata.getXPositionUm());
+         Assert.assertEquals(metadata_.getYPositionUm(), metadata.getYPositionUm());
+         Assert.assertEquals(metadata_.getZPositionUm(), metadata.getZPositionUm());
+      } catch (IOException io) {
+         Assert.fail("Failed to read image from Datastore");
+      }
    }
 }
