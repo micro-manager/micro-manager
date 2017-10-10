@@ -214,7 +214,7 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public int getAxisLength(String axis) {
-      return getMaxIndex(axis) + 1;
+      return getMaxIndices().getIndex(axis) + 1;
    }
 
    @Override
@@ -319,12 +319,6 @@ public class DefaultDatastore implements Datastore {
    @Override
    public boolean isFrozen() {
       return isFrozen_;
-   }
-
-   @Override
-   @Deprecated
-   public boolean getIsFrozen() {
-      return isFrozen();
    }
 
    @Override

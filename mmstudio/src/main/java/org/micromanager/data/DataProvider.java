@@ -37,13 +37,7 @@ public interface DataProvider extends Closeable {
 
    List<Image> getImagesMatching(Coords coords) throws IOException;
 
-   @Deprecated
-   boolean getIsFrozen();
-
    boolean isFrozen();
-
-   @Deprecated
-   Integer getMaxIndex(String axis);
 
    Coords getMaxIndices();
 

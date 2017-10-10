@@ -50,7 +50,7 @@ public final class DefaultAlbum implements Album {
    @Override
    public boolean addImage(Image image) throws IOException {
       MMStudio studio = MMStudio.getInstance();
-      boolean mustCreateNew = (store_ == null || store_.getIsFrozen());
+      boolean mustCreateNew = (store_ == null || store_.isFrozen());
       String curChannel = "";
       try {
          curChannel = studio.core().getCurrentConfig(
