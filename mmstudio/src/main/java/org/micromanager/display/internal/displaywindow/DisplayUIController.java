@@ -99,6 +99,7 @@ import org.micromanager.display.internal.SaveButton;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.NumberUtils;
 
 /**
@@ -110,6 +111,9 @@ import org.micromanager.internal.utils.NumberUtils;
  * This is the object that holds the state describing which images are
  * currently displayed (as opposed to {@code DisplayController}'s notion of
  * the current display position, which may update faster than the actual UI.
+ * 
+ * TODO: indication of the currently displayed time (in seconds), channel (name),
+ * and z (in microns)
  *
  * @author Mark A. Tsuchida
  */
@@ -474,7 +478,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       int width = 16 + playbackFpsButton_.getFontMetrics(
             playbackFpsButton_.getFont()).stringWidth("Playback: 9999.0 fps");
       Dimension fpsButtonSize = new Dimension(width,
-            fpsLabel_.getPreferredSize().height + 4);
+            fpsLabel_.getPreferredSize().height + 12);
       playbackFpsButton_.setMinimumSize(fpsButtonSize);
       playbackFpsButton_.setMaximumSize(fpsButtonSize);
       playbackFpsButton_.setPreferredSize(fpsButtonSize);
@@ -541,7 +545,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @MustCallOnEDT
-   private JComponent makeScrollBarLeftControls(String axis, int height) {
+   private JComponent makeScrollBarLeftControls(final String axis, final int height) {
       JPanel ret = new JPanel(new MigLayout(
             new LC().insets("0").gridGap("0", "0").fillX()));
 
@@ -555,8 +559,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (animateButton == null) {
          animateButton = new JToggleButton(axis.substring(0, 1));
          animateButton.setFont(animateButton.getFont().deriveFont(10.0f));
-         int width = 22 + PLAY_ICON.getIconWidth() + animateButton .getFontMetrics(animateButton .getFont()).
+         int fontWidth = animateButton .getFontMetrics(animateButton .getFont()).
                stringWidth("z");
+         int offset = 28;
+         if (JavaUtils.isWindows()) {
+            offset = 22;
+            animateButton.setBorderPainted(false);
+         }
+         int width = offset + PLAY_ICON.getIconWidth() + fontWidth;
          Dimension size = new Dimension(width, height);
          animateButton.setMinimumSize(size);
          animateButton.setMaximumSize(size);
@@ -565,7 +575,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
          animateButton.setHorizontalTextPosition(SwingConstants.RIGHT);
          animateButton.setIcon(PLAY_ICON);
          animateButton.setSelectedIcon(PAUSE_ICON);
-         animateButton.setBorderPainted(false);
          animateButton.setMargin(buttonInsets_);
          animateButton.addActionListener(new ActionListener() {
             @Override
@@ -586,16 +595,30 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
       if (positionButton == null) {
-         positionButton = PopupButton.create("", new JPanel());
+
+         SpinnerModel axisModel = new SpinnerNumberModel(1, 1, 1, 1);
+         final JSpinner axisSpinner = new JSpinner(axisModel);
+         axisSpinner.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+               handleAxisSpinner(axis, axisSpinner, e);
+            }
+         });
+         axisSpinner.setFont(axisSpinner.getFont().deriveFont(10.0f));
+         positionButton = PopupButton.create("", axisSpinner);
          positionButton.setFont(positionButton.getFont().deriveFont(10.0f));
-         int width = 8 + positionButton .getFontMetrics(positionButton .getFont()).
+         int offset = 0;
+         if (JavaUtils.isWindows()) {
+            offset = 8;
+            positionButton.setBorderPainted(false);
+         }
+         int width = offset + positionButton.getFontMetrics(positionButton .getFont()).
                stringWidth("99999/99999");
          positionButton.setHorizontalAlignment(SwingConstants.RIGHT);
          Dimension size = new Dimension(width, height);
          positionButton.setMinimumSize(size);
          positionButton.setMaximumSize(size);
          positionButton.setPreferredSize(size);
-         positionButton.setBorderPainted(false);
          positionButton.setMargin(buttonInsets_);
          axisPositionButtons_.add(new AbstractMap.SimpleEntry(
                axis, positionButton));
@@ -670,11 +693,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
 
       List<String> scrollableAxes = new ArrayList<String>();
-      List<Integer> scrollableLengths = new ArrayList<Integer>();
+      Map<String, Integer> scrollableLengths = new HashMap<String, Integer>();
       for (int i = 0; i < displayedAxes_.size(); ++i) {
          if (displayedAxisLengths_.get(i) > 1) {
             scrollableAxes.add(displayedAxes_.get(i));
-            scrollableLengths.add(displayedAxisLengths_.get(i));
+            scrollableLengths.put(displayedAxes_.get(i), displayedAxisLengths_.get(i));
          }
       }
       // Reorder scrollable axes to match axis order of data provider
@@ -695,10 +718,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
       });
       scrollBarPanel_.setAxes(scrollableAxes);
       for (int i = 0; i < scrollableAxes.size(); ++i) {
-         scrollBarPanel_.setAxisLength(scrollableAxes.get(i),
-               scrollableLengths.get(i));
-         updateAxisPositionIndicator(scrollableAxes.get(i),
-               -1, scrollableLengths.get(i));
+         final String currentAxis = scrollableAxes.get(i);
+         scrollBarPanel_.setAxisLength(currentAxis, 
+                 scrollableLengths.get(currentAxis));
+         updateAxisPositionIndicator(currentAxis, -1, 
+                 scrollableLengths.get(currentAxis));
       }
 
       playbackFpsButton_.setVisible(!scrollableAxes.isEmpty());
@@ -893,9 +917,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
       for (Map.Entry<String, PopupButton> e : axisPositionButtons_) {
          if (axis.equals(e.getKey())) {
             e.getValue().setText(String.format("% 5d/% 5d",
-                  checkedPosition + 1, checkedLength));
+                    checkedPosition + 1, checkedLength));
+            if (!animationController_.isAnimating()) {
+               JComponent popup = e.getValue().getPopupComponent();
+               if (popup instanceof JSpinner) {
+                  JSpinner js = (JSpinner) popup;
+                  js.setModel(new SpinnerNumberModel(checkedPosition + 1, 1, checkedLength, 1));
+               }
+            }
             break;
          }
+
       }
    }
 
@@ -1407,6 +1439,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       displayController_.setPlaybackAnimationAxes(
             animatedAxes.toArray(new String[] {}));
+   }
+   
+   private void handleAxisSpinner(String axis, JSpinner spinner, ChangeEvent event) {
+      int newPosition = (Integer) spinner.getValue() - 1;
+      displayController_.setDisplayPosition(
+              displayController_.getDisplayPosition().copyBuilder().
+                      index(axis, newPosition).build() 
+      );
    }
 
    private void handlePlaybackFpsSpinner(ChangeEvent event) {

@@ -166,6 +166,10 @@ public class PopupButton extends JToggleButton
          popup_.addPopupMenuListener(this);
       }
    }
+   
+   public JComponent getPopupComponent() {
+      return component_;
+   }
 
    private void showPopup() {
       // Give listeners a chance to populate or replace the popup
