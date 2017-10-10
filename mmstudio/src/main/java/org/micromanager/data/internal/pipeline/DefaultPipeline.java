@@ -101,7 +101,7 @@ public final class DefaultPipeline implements Pipeline {
       // Manually check for frozen; otherwise for asynchronous pipelines,
       // there's no way for the caller to be informed when we later try to
       // insert the image into the datastore.
-      if (store_.getIsFrozen()) {
+      if (store_.isFrozen()) {
          throw new DatastoreFrozenException();
       }
       if (contexts_.size() > 0) {

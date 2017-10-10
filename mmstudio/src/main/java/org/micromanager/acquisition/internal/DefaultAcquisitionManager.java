@@ -135,7 +135,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       if (mdaDialog_ != null) {
          Datastore store = mdaDialog_.runAcquisition(name, root);
          try {
-            while (!store.getIsFrozen()) {
+            while (!store.isFrozen()) {
                Thread.sleep(100);
             }
          } catch (InterruptedException e) {

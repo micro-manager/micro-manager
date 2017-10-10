@@ -48,7 +48,7 @@ public interface DataProvider extends Closeable {
    Iterable<Coords> getUnorderedImageCoords();
 
    boolean hasImage(Coords coords);
-
+   
    void registerForEvents(Object obj);
 
    void unregisterForEvents(Object obj);

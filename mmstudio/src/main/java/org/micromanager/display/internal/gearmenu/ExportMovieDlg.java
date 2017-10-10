@@ -495,7 +495,7 @@ public final class ExportMovieDlg extends MMDialog {
       ArrayList<String> result = new ArrayList<String>();
       for (String axis : store_.getAxes()) {
          // Channel axis is only available when in non-composite display modes.
-         if (store_.getMaxIndex(axis) > 0 &&
+         if (store_.getMaxIndices().getIndex(axis) > 0 &&
                (!axis.equals(Coords.CHANNEL) || !getIsComposite())) {
             result.add(axis);
          }

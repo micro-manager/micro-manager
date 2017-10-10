@@ -205,14 +205,6 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public Integer getMaxIndex(String axis) {
-      if (storage_ != null) {
-         return storage_.getMaxIndex(axis);
-      }
-      return -1;
-   }
-
-   @Override
    public int getAxisLength(String axis) {
       return getMaxIndices().getIndex(axis) + 1;
    }
