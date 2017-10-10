@@ -121,8 +121,8 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public synchronized boolean getIsManaged(DataProvider store) {
-      return providerToDisplays_.containsKey(store);
+   public synchronized boolean getIsManaged(DataProvider provider) {
+      return providerToDisplays_.containsKey(provider);
    }
 
    /**
@@ -143,7 +143,7 @@ public final class DefaultDisplayManager implements DisplayManager {
       }
       if (displays != null) {
          for (DisplayWindow display : displays) {
-            display.forceClosed();
+            //display.forceClosed();
          }
       }
    }
@@ -287,6 +287,7 @@ public final class DefaultDisplayManager implements DisplayManager {
          if (getIsManaged(store) && viewer instanceof DisplayWindow) {
             DisplayWindow display = (DisplayWindow) viewer;
             providerToDisplays_.get(store).add(display);
+            studio_.events().registerForEvents(viewer);
          }
       }
    }
@@ -371,9 +372,9 @@ public final class DefaultDisplayManager implements DisplayManager {
    }
 
    @Override
-   public boolean closeDisplaysFor(Datastore store) {
+   public boolean closeDisplaysFor(DataProvider provider) {
       for (DisplayWindow display : getAllImageWindows()) {
-         if (display.getDatastore() == store) {
+         if (display.getDataProvider() == provider) {
             if (!display.requestToClose()) {
                // Fail out immediately; don't try to close other displays.
                return false;

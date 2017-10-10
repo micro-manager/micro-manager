@@ -14,10 +14,7 @@
 
 package org.micromanager.display.internal.displaywindow;
 
-import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
-import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
-import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
@@ -43,6 +40,9 @@ import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.overlay.Overlay;
+import org.micromanager.display.overlay.OverlayListener;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.display.internal.RememberedChannelSettings;
@@ -53,19 +53,21 @@ import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.StatsComputeQueue;
+import org.micromanager.display.internal.DefaultDisplayManager;
+import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
+import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInvisibleEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
+import org.micromanager.display.internal.link.LinkManager;
+import org.micromanager.events.DatastoreClosingEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
-import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.internal.DefaultDisplayManager;
-import org.micromanager.display.internal.event.DisplayWindowDidAddOverlayEvent;
-import org.micromanager.display.internal.event.DisplayWindowDidRemoveOverlayEvent;
-import org.micromanager.display.internal.link.LinkManager;
-import org.micromanager.display.overlay.Overlay;
-import org.micromanager.display.overlay.OverlayListener;
 
 /**
  * Main controller for the standard image viewer.
@@ -1008,6 +1010,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       } catch (InterruptedException ie) {
          // TODO: report exception
       }
+      //if (dataProvider_.
       animationController_.shutdown();
       uiController_.close();
       uiController_ = null;
@@ -1017,6 +1020,13 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // TODO This event should probably be posted in response to window event
       // (which can be done with a ComponentListener for the JFrame)
       postEvent(DataViewerDidBecomeInvisibleEvent.create(this));
+   }
+   
+   @Subscribe
+   public void onDatastoreClosed(DatastoreClosingEvent event) {
+      if (event.getDatastore().equals(dataProvider_)) {
+         requestToClose();
+      }
    }
 
    @Override

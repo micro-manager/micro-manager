@@ -21,7 +21,6 @@
 package org.micromanager.data;
 
 import java.awt.Component;
-import java.beans.ExceptionListener;
 import java.io.IOException;
 
 /**
@@ -43,6 +42,7 @@ public interface Datastore extends DataProvider {
     * bus.
     *
     * @param image Micro-Manager Image object
+    * @throws java.io.IOException
     * @throws DatastoreFrozenException if the freeze() method has been called.
     * @throws DatastoreRewriteException if an Image with the same coordinates
     *         already exists in the Datastore.
