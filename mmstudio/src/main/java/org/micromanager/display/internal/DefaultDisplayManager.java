@@ -40,7 +40,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
-import org.micromanager.display.DataViewerDelegate;
+import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
@@ -58,7 +58,7 @@ import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 
 
 // TODO Methods must implement correct threading semantics!
-public final class DefaultDisplayManager extends DataViewerDelegate implements DisplayManager {
+public final class DefaultDisplayManager extends DataViewerListener implements DisplayManager {
    private static final String[] CLOSE_OPTIONS = new String[] {
          "Cancel", "Prompt for each", "Close without save prompt"};
    private static DefaultDisplayManager staticInstance_;
@@ -117,6 +117,7 @@ public final class DefaultDisplayManager extends DataViewerDelegate implements D
          if (display.getDataProvider() == store) {
             displays.add(display);
             display.registerForEvents(this);
+            display.addListener(this, 100);
          }
       }
    }
@@ -288,6 +289,7 @@ public final class DefaultDisplayManager extends DataViewerDelegate implements D
          if (getIsManaged(store) && viewer instanceof DisplayWindow) {
             DisplayWindow display = (DisplayWindow) viewer;
             providerToDisplays_.get(store).add(display);
+            display.addListener(this, 100);
             studio_.events().registerForEvents(viewer);
          }
       }
@@ -337,7 +339,7 @@ public final class DefaultDisplayManager extends DataViewerDelegate implements D
       return new ArrayList<DisplayWindow>(providerToDisplays_.get(store));
    }
    
-      public synchronized List<DisplayWindow> getDisplays(DataProvider provider) {
+   public synchronized List<DisplayWindow> getDisplays(DataProvider provider) {
       return new ArrayList<DisplayWindow>(providerToDisplays_.get(provider));
    }
    
@@ -500,6 +502,7 @@ public final class DefaultDisplayManager extends DataViewerDelegate implements D
    private void removeDisplay(DisplayWindow display) {
       Datastore store = display.getDatastore();
       synchronized (this) {
+         display.removeListener(this);
          providerToDisplays_.get(store).remove(display);
       }
       display.forceClosed();

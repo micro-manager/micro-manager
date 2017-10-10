@@ -27,7 +27,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
@@ -38,6 +40,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.data.NewImageEvent;
+import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.DisplayWindowControlsFactory;
@@ -115,6 +118,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    private BoundsRectAndMask selection_ = BoundsRectAndMask.unselected();
 
    private final List<Overlay> overlays_ = new ArrayList<Overlay>();
+   
+   private final TreeMap<Integer, DataViewerListener> listeners_ = 
+           new TreeMap<Integer, DataViewerListener>();
 
    // A way to know from a non-EDT thread that the display has definitely
    // closed (may not be true for a short period after closing)
@@ -133,6 +139,26 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          PerformanceMonitor.createWithTimeConstantMs(1000.0);
    private final PerformanceMonitorUI perfMonUI_ =
          PerformanceMonitorUI.create(perfMon_, "Display Performance");
+
+   @Override
+   public void addListener(DataViewerListener listener, int priority) {
+      int tmpPriority = priority;
+      while (listeners_.containsKey(tmpPriority)) {
+         tmpPriority += 1;
+      }
+      listeners_.put(tmpPriority, listener);
+   }
+
+   @Override
+   public void removeListener(DataViewerListener listener) {
+      for (Map.Entry<Integer, DataViewerListener> entry : listeners_.entrySet()) {
+         if (listener.equals(entry.getValue())) {
+            // if we remove the entry, we risk concurrent modification
+            // of the TreeMap.  Therefore, simply set the value to null
+            listeners_.put(entry.getKey(), null);
+         }
+      }
+   }
 
    public static class Builder {
       private DataProvider dataProvider_;
@@ -986,19 +1012,13 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          }
       }
 
-      /* TODO
-      DataViewerDelegate delegate = firstDelegate_;
-      do {
-         boolean okToClose = delegate.canCloseViewer(this);
-         if (!okToClose) {
+      for (DataViewerListener listener : listeners_.values()) {
+         if (listener != null && !listener.canCloseViewer(this)) {
             return false;
          }
-         delegate = delegate.getNextViewerDelegate(this);
-      } while (delegate != null);
-      forceClose();
-      return true;
-      */
-      close(); // Temporary
+      }
+      
+      close(); 
       return true;
    }
 
@@ -1010,7 +1030,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       } catch (InterruptedException ie) {
          // TODO: report exception
       }
-      //if (dataProvider_.
       animationController_.shutdown();
       uiController_.close();
       uiController_ = null;

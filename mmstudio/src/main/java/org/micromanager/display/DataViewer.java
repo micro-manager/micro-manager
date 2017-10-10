@@ -242,6 +242,7 @@ public interface DataViewer extends EventPublisher {
     * This method can be called from any thread.
     *
     * @return Every image at the currently-displayed image coordinates.
+    * @throws java.io.IOException
     */
    List<Image> getDisplayedImages() throws IOException;
 
@@ -283,4 +284,22 @@ public interface DataViewer extends EventPublisher {
     * @return a string labeling this display
     */
    String getName();
+   
+   /**
+    * Listeners will be notified of important events of the DataViewer
+    * 
+    * @param listener - that will be notified
+    * @param priority - determines the order in which listeners will be called.
+    * the lower the number, the earlier the listener will be called.  If the 
+    * priority matches a previously added listener, the previously added listener
+    * will be called first
+    */
+   public void addListener(DataViewerListener listener, int priority);
+   
+   /**
+    * No longer notify this listener
+    * @param listener - that will no longer be notified
+    */
+   public void removeListener(DataViewerListener listener);
+   
 }

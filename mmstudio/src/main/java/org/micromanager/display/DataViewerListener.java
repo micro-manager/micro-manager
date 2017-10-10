@@ -6,7 +6,7 @@ package org.micromanager.display;
  * 
  * @author nico
  */
-public abstract class DataViewerDelegate {
+public abstract class DataViewerListener {
    
    /**
     * 
