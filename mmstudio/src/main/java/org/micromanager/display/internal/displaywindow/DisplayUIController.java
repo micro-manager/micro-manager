@@ -475,7 +475,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       });
       playbackFpsButton_ = PopupButton.create("", playbackFpsSpinner_);
       playbackFpsButton_.setFont(playbackFpsButton_.getFont().deriveFont(10.0f));
-      int width = 16 + playbackFpsButton_.getFontMetrics(
+      int width = 24 + playbackFpsButton_.getFontMetrics(
             playbackFpsButton_.getFont()).stringWidth("Playback: 9999.0 fps");
       Dimension fpsButtonSize = new Dimension(width,
             fpsLabel_.getPreferredSize().height + 12);
@@ -605,6 +605,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
             }
          });
          axisSpinner.setFont(axisSpinner.getFont().deriveFont(10.0f));
+         // setting a minimum size on the spinner does not seem to have any effects
          positionButton = PopupButton.create("", axisSpinner);
          positionButton.setFont(positionButton.getFont().deriveFont(10.0f));
          int offset = 0;
