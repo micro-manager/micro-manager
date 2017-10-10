@@ -40,6 +40,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.DataViewerDelegate;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
@@ -57,7 +58,7 @@ import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 
 
 // TODO Methods must implement correct threading semantics!
-public final class DefaultDisplayManager implements DisplayManager {
+public final class DefaultDisplayManager extends DataViewerDelegate implements DisplayManager {
    private static final String[] CLOSE_OPTIONS = new String[] {
          "Cancel", "Prompt for each", "Close without save prompt"};
    private static DefaultDisplayManager staticInstance_;
@@ -330,10 +331,16 @@ public final class DefaultDisplayManager implements DisplayManager {
       return result;
    }
 
+   // TODO: deprecate, and/or remove?
    @Override
    public synchronized List<DisplayWindow> getDisplays(Datastore store) {
       return new ArrayList<DisplayWindow>(providerToDisplays_.get(store));
    }
+   
+      public synchronized List<DisplayWindow> getDisplays(DataProvider provider) {
+      return new ArrayList<DisplayWindow>(providerToDisplays_.get(provider));
+   }
+   
 
    @Override
    public DataViewer getActiveDataViewer() {
@@ -539,5 +546,63 @@ public final class DefaultDisplayManager implements DisplayManager {
    @Override
    public void unregisterForEvents(Object recipient) {
       eventBus_.unregister(recipient);
+   }
+
+   /**
+    * Check if this is the last display for a Datastore that we are managing,
+    * and verify closing without saving (if appropriate).
+    *
+    * @return
+    */
+   @Override
+   public boolean canCloseViewer(DataViewer viewer) {
+
+      DataProvider provider = viewer.getDataProvider();
+      List<DisplayWindow> displays;
+      synchronized (this) {
+         if (!providerToDisplays_.containsKey(provider)) {
+            // This should never happen.
+            ReportingUtils.logError("Received request to close a display that is not associated with a managed datastore.");
+            return true;
+         }
+         displays = getDisplays(provider);
+
+         if (viewer instanceof DisplayWindow) {
+            DisplayWindow window = (DisplayWindow) viewer;
+            if (!displays.contains(window)) {
+               // This should also never happen.
+               ReportingUtils.logError("Was notified of a request to close a display that we didn't know was associated with datastore " + provider);
+            }
+
+            if (displays.size() > 1) {
+               // Not last display, so OK to remove 
+               removeDisplay(window);
+               return true;
+            }
+            // Last display; check for saving now.
+            if (provider instanceof Datastore) {
+               Datastore store = (Datastore) provider;
+               if (store.getSavePath() != null) {
+                  // No problem with saving.
+                  removeDisplay(window);
+                  return true;
+               }
+               // Prompt the user to save their data.
+               try {
+                  if (promptToSave(store, window)) {
+                     removeDisplay(window);
+                     store.freeze();
+                     // This will invoke our onDatastoreClosed() method.
+                     store.close();
+                     return true;
+                  }
+               } catch (IOException ioe) {
+                  ReportingUtils.logError(ioe, "Failed to save:");
+               }
+            }
+            
+         }
+         return false;
+      }
    }
 }
