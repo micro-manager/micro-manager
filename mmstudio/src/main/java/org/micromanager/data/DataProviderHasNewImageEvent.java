@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
-//SUBSYSTEM:     Data API implementation
+//SUBSYSTEM:     Data API
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Chris Weisiger, 2015
@@ -18,23 +18,27 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.data.internal;
-
-import org.micromanager.data.SummaryMetadata;
+package org.micromanager.data;
 
 /**
- * This class signifies that new summary metadata has been set for a 
- * Datastore.
- * TODO: should be renamed to DefaultNewSummaryMetadataEvent.
+ * This class signifies that an image has been added to a DataProvider.
  */
-public final class NewSummaryMetadataEvent implements org.micromanager.data.NewSummaryMetadataEvent {
-   private SummaryMetadata metadata_;
-   public NewSummaryMetadataEvent(SummaryMetadata metadata) {
-      metadata_ = metadata;
-   }
+public interface DataProviderHasNewImageEvent {
+   /**
+    * Provides the newly-added image.
+    * @return the Image that was just added to the DataProvider.
+    */
+   public Image getImage();
 
-   @Override
-   public SummaryMetadata getSummaryMetadata() {
-      return metadata_;
-   }
+   /**
+    * @return the Coords for the Image; identical to getImage().getCoords().
+    */
+   public Coords getCoords();
+
+   /**
+    * Provides the Datastore this image was added to; potentially useful for
+    * code that listens to events from multiple Datastores.
+    * @return the Datastore this image was added to.
+    */
+   public Datastore getDatastore();
 }

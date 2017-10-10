@@ -21,24 +21,9 @@
 package org.micromanager.data;
 
 /**
- * This class signifies that an image has been added to a Datastore.
+ * This class signifies that new summary metadata has been set for a 
+ * DataProvider.
  */
-public interface NewImageEvent {
-   /**
-    * Provides the newly-added image.
-    * @return the Image that was just added to the Datastore.
-    */
-   public Image getImage();
-
-   /**
-    * @return the Coords for the Image; identical to getImage().getCoords().
-    */
-   public Coords getCoords();
-
-   /**
-    * Provides the Datastore this image was added to; potentially useful for
-    * code that listens to events from multiple Datastores.
-    * @return the Datastore this image was added to.
-    */
-   public Datastore getDatastore();
+public interface DataProviderHasNewSummaryMetadataEvent {
+   public SummaryMetadata getSummaryMetadata();
 }

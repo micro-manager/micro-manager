@@ -49,7 +49,7 @@ public final class DefaultRewritableDatastore extends DefaultDatastore implement
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
-      bus_.post(new NewSummaryMetadataEvent(metadata));
+      bus_.post(new DefaultNewSummaryMetadataEvent(metadata));
    }
 
    @Override

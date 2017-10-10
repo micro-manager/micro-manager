@@ -39,7 +39,6 @@ import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
-import org.micromanager.data.NewImageEvent;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplayWindow;
@@ -71,6 +70,8 @@ import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunna
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
+import org.micromanager.data.DataProviderHasNewImageEvent;
+import org.micromanager.data.DataProviderHasNewNameEvent;
 
 /**
  * Main controller for the standard image viewer.
@@ -126,9 +127,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    // closed (may not be true for a short period after closing)
    // Guarded by monitor on this
    private volatile boolean closeCompleted_;
-
-   // Guarded by monitor on this
-   private String customTitle_; // TODO Use
 
    private final DisplayWindowControlsFactory controlsFactory_;
 
@@ -824,7 +822,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    // From the datastore
    @Subscribe
-   public void onNewImage(final NewImageEvent event) {
+   public void onNewImage(final DataProviderHasNewImageEvent event) {
       perfMon_.sampleTimeInterval("NewImageEvent");
 
       synchronized (this) {
@@ -928,12 +926,10 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public String getName() {
-      if (customTitle_ != null) {
-         return customTitle_;
-      }
-      // TODO
-      // return dataProvider_.getSummaryMetadata()."NAME-TODO-" + hashCode();
-      return "NAME-TODO-" + hashCode();
+      // TODO: using the hashCode may be foolproof to provide a unique name, 
+      // but is not very useful to the end-user.
+      // Find a way to number viewers for one datastore sequentially instead
+      return dataProvider_.getName() + "-" + hashCode();
    }
    
 
@@ -1046,6 +1042,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (event.getDatastore().equals(dataProvider_)) {
          requestToClose();
       }
+   }
+   
+   @Subscribe 
+   public void onNewDataProviderName(DataProviderHasNewNameEvent dpnne) {
+      uiController_.updateTitle();
    }
 
    @Override

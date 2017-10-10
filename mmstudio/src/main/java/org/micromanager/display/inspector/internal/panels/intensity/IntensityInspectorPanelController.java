@@ -27,7 +27,6 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
-import org.micromanager.data.NewImageEvent;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
@@ -41,6 +40,7 @@ import org.micromanager.internal.utils.CoalescentEDTRunnablePool;
 import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunnable;
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.MustCallOnEDT;
+import org.micromanager.data.DataProviderHasNewImageEvent;
 
 /**
  *
@@ -554,7 +554,7 @@ public class IntensityInspectorPanelController
    }
 
    @Subscribe
-   public void onEvent(NewImageEvent event) {
+   public void onEvent(DataProviderHasNewImageEvent event) {
       final int channel = event.getImage().getCoords().getChannel();
       SwingUtilities.invokeLater(new Runnable() {
          @Override

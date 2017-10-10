@@ -46,6 +46,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 
 public class DefaultDatastore implements Datastore {
+
    // Simple customization of the FileFilter class for choosing the save
    // file format.
    private static class SaveFileFilter extends FileFilter {
@@ -75,6 +76,7 @@ public class DefaultDatastore implements Datastore {
 
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
    protected Storage storage_ = null;
+   protected String name_ = "UnNamed";
    protected HashMap<String, DefaultAnnotation> annotations_ = new HashMap<String, DefaultAnnotation>();
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
@@ -98,6 +100,7 @@ public class DefaultDatastore implements Datastore {
       int imageCount = 0;
       try {
          setSummaryMetadata(alt.getSummaryMetadata());
+         setName(alt.getName() + " - Copy");
          for (Coords coords : alt.getUnorderedImageCoords()) {
             putImage(alt.getImage(coords));
             imageCount++;
@@ -115,6 +118,18 @@ public class DefaultDatastore implements Datastore {
       catch (IllegalArgumentException e) {
          ReportingUtils.logError("Inconsistent image coordinates in datastore");
       }
+   }
+   
+   
+   @Override
+   public void setName(String name) {
+      name_ = name;
+      bus_.post(new DefaultHasNewNameEvent(name_));
+   }
+
+   @Override
+   public String getName() {
+      return name_;
    }
 
    @Override
@@ -201,7 +216,7 @@ public class DefaultDatastore implements Datastore {
       if (storage_ != null) {
          storage_.putImage(image);
       }
-      bus_.post(new NewImageEvent(image, this));
+      bus_.post(new DefaultNewImageEvent(image, this));
    }
 
    @Override
@@ -239,7 +254,8 @@ public class DefaultDatastore implements Datastore {
    }
 
    @Override
-   public synchronized void setSummaryMetadata(SummaryMetadata metadata) throws DatastoreFrozenException, DatastoreRewriteException {
+   public synchronized void setSummaryMetadata(SummaryMetadata metadata) 
+           throws DatastoreFrozenException, DatastoreRewriteException {
       if (isFrozen_) {
          throw new DatastoreFrozenException();
       }
@@ -247,7 +263,7 @@ public class DefaultDatastore implements Datastore {
          throw new DatastoreRewriteException();
       }
       haveSetSummary_ = true;
-      bus_.post(new NewSummaryMetadataEvent(metadata));
+      bus_.post(new DefaultNewSummaryMetadataEvent(metadata));
    }
 
    @Override

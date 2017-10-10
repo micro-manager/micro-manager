@@ -450,6 +450,7 @@ public final class SnapLiveManager extends DataViewerListener implements org.mic
          // DataManager to track this Datastore for us.
          store_ = new DefaultRewritableDatastore();
          store_.setStorage(new StorageRAM(store_));
+         store_.setName("Snap/Live");
          // Use a synchronous pipeline for live mode.
          pipeline_ = studio_.data().copyLivePipeline(store_, true);
       }

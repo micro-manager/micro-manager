@@ -27,9 +27,9 @@ import java.util.List;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
-import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.RewritableStorage;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 
 /**
  * Simple RAM-based storage for Datastores. Methods that interact with the
@@ -133,7 +133,7 @@ public final class StorageRAM implements RewritableStorage {
    }
 
    @Subscribe
-   public void onNewSummary(NewSummaryMetadataEvent event) {
+   public void onNewSummary(DataProviderHasNewSummaryMetadataEvent event) {
       summaryMetadata_ = event.getSummaryMetadata();
    }
 

@@ -58,6 +58,7 @@ public interface Datastore extends DataProvider {
     * bus. This method may only be called once for a given Datastore.
     *
     * @param metadata Object representing the summary metadata
+    * @throws java.io.IOException
     * @throws DatastoreFrozenException if the freeze() method has been called.
     * @throws DatastoreRewriteException if the Datastore already has
     *         SummaryMetadata.
@@ -69,6 +70,7 @@ public interface Datastore extends DataProvider {
     *
     * @param tag the tag for the annotation
     * @return true if the annotation exists; false otherwise
+    * @throws java.io.IOException
     */
    boolean hasAnnotation(String tag) throws IOException;
 
@@ -76,11 +78,14 @@ public interface Datastore extends DataProvider {
     * Get an annotation, creating it if it doesn't exist
     * @param tag
     * @return
+    * @throws java.io.IOException
     */
    Annotation getAnnotation(String tag) throws IOException;
 
    /**
     * Freeze this Datastore so it cannot be further modified.
+    * 
+    * @throws java.io.IOException
     */
    void freeze() throws IOException;
 
@@ -117,12 +122,20 @@ public interface Datastore extends DataProvider {
     * @param parent Window  on top of which to display the dialog prompt;
     *        may be null.
     * @return true if data was saved; false if user canceled
+    * @throws java.io.IOException
     */
    boolean save(Component parent) throws IOException;
 
    /**
     * @param mode
     * @param path
+    * @throws java.io.IOException
     */
    void save(SaveMode mode, String path) throws IOException;
+   
+   /**
+    * Sets the name of the Datastore.  Posts a DatastoreNewNameEvent
+    * @param name 
+    */
+   void setName(String name);
 }

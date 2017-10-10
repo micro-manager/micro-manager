@@ -3,9 +3,9 @@
 //SUBSYSTEM:     Data API implementation
 //-----------------------------------------------------------------------------
 //
-// AUTHOR:       Chris Weisiger, 2015
+// AUTHOR:       Nico Stuurman, 2017
 //
-// COPYRIGHT:    University of California, San Francisco, 2015
+// COPYRIGHT:    University of California, San Francisco, 2017
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -20,35 +20,23 @@
 
 package org.micromanager.data.internal;
 
-import org.micromanager.data.Coords;
-import org.micromanager.data.Datastore;
-import org.micromanager.data.Image;
+import org.micromanager.data.DataProviderHasNewNameEvent;
 
 /**
- * This class signifies that an image has been added to a Datastore.
- * TODO: should be renamed to DefaultNewImageEvent.
+ *
+ * @author nico
  */
-public final class NewImageEvent implements org.micromanager.data.NewImageEvent {
-   private Image image_;
-   private Datastore store_;
-
-   public NewImageEvent(Image image, Datastore store) {
-      image_ = image;
-      store_ = store;
+public class DefaultHasNewNameEvent implements DataProviderHasNewNameEvent {
+   private final String newName_;
+   
+   public DefaultHasNewNameEvent (String newName) {
+      newName_ = newName;
    }
-
+   
+   
    @Override
-   public Image getImage() {
-      return image_;
+   public String getNewName() {
+      return newName_;
    }
-
-   @Override
-   public Coords getCoords() {
-      return image_.getCoords();
-   }
-
-   @Override
-   public Datastore getDatastore() {
-      return store_;
-   }
+   
 }

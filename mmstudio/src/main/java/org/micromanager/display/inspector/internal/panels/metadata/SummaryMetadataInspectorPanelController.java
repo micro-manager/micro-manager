@@ -36,12 +36,12 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.DataProvider;
-import org.micromanager.data.NewSummaryMetadataEvent;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultSummaryMetadata;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.inspector.AbstractInspectorPanelController;
+import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 
 /**
  * @author Mark A. Tsuchida, in part based on original by Chris Weisiger
@@ -179,7 +179,7 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
    }
 
    @Subscribe
-   public void onEvent(NewSummaryMetadataEvent e) {
+   public void onEvent(DataProviderHasNewSummaryMetadataEvent e) {
       updateSummaryMetadata(e.getSummaryMetadata());
    }
 }
