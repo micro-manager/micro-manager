@@ -188,14 +188,11 @@ int CLEDArray::Initialize()
 	allData[4] = 't';
 	allData[5] = 10;
 
-	int ret =  WriteToComPort(port_.c_str(), allData, 6); //Writing to port
+	ret =  WriteToComPort(port_.c_str(), allData, 6); //Writing to port
 	if (ret != DEVICE_OK){
 		PurgeComPort(port_.c_str());
 		return DEVICE_ERR;
 	}
-	return DEVICE_OK;
-}
-
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
