@@ -547,7 +547,7 @@ int CLEDArray::Annul(double minna, double maxna){
 
 	allData[0] = 'a';
 	allData[1] = 'n';
-	allData[2] = '.';
+	allData[2] = ',';
 
 	for(i = 0; i < min.size();i++){
 		allData[3 + i] = Minna[i];
@@ -597,7 +597,7 @@ int CLEDArray::hAnnul(std::string type, double minna, double maxna){
 	else{
 		allData[3] = 'r';
 	}
-	allData[4] = ',';
+	allData[4] = '.';
 
 	for(i = 0; i < min.size();i++){
 		allData[5 + i] = Minna[i];
