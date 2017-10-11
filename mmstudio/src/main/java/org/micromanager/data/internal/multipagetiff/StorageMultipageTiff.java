@@ -123,6 +123,7 @@ public final class StorageMultipageTiff implements Storage {
       amInWriteMode_ = amInWriteMode;
       directory_ = dir;
       store_.setSavePath(directory_);
+      store_.setName(new File(directory_).getName());
       coordsToReader_ = new HashMap<Coords, MultipageTiffReader>();
 
       if (amInWriteMode_) {

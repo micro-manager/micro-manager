@@ -91,6 +91,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       store_ = store;
       dir_ = directory;
       store_.setSavePath(dir_);
+      store_.setName(new File(dir_).getName());
       isDatasetWritable_ = newDataSet;
       if (isDatasetWritable_ && new File(dir_).exists()) {
          throw new IOException("Directory at " + dir_ + " already exists");

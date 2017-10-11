@@ -76,7 +76,7 @@ public class DefaultDatastore implements Datastore {
 
    private static final String PREFERRED_SAVE_FORMAT = "default format for saving data";
    protected Storage storage_ = null;
-   protected String name_ = "UnNamed";
+   protected String name_ = "Untitled";
    protected HashMap<String, DefaultAnnotation> annotations_ = new HashMap<String, DefaultAnnotation>();
    protected PrioritizedEventBus bus_;
    protected boolean isFrozen_ = false;
