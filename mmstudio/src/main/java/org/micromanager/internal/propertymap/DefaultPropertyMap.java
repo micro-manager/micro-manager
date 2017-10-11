@@ -168,6 +168,7 @@ public final class DefaultPropertyMap implements PropertyMap {
          type_ = type;
          value_ = value;
       }
+      @Override
       public Class<?> getValueType() {
          return type_;
       }
@@ -184,7 +185,33 @@ public final class DefaultPropertyMap implements PropertyMap {
 
    @Override
    public String getValueAsString(String key, String aDefault) {
-      return map_.containsKey(key) ? map_.get(key).toString() : aDefault;
+      if (map_.containsKey(key)) {
+         
+         if (containsDoubleList(key) || containsStringList(key)) {
+            StringBuilder strb = new StringBuilder();
+            
+            if (containsDoubleList(key)) {
+               double[] doubles = getDoubleList(key);
+               for (double d : doubles) {
+                  strb.append(d).append(", ");
+               }
+            } else if (containsStringList(key)) {
+               List<String> strList = getStringList(key);
+               for (String str : strList) {
+                  strb.append(str).append(", ");
+               }
+            }
+            String result = strb.toString();
+            if (result.length() > 2) {
+               result = result.substring(0, result.length() - 2);
+            }
+            return result;
+         }
+         
+         // not a Double or String List
+         return map_.get(key).toString();
+      }
+      return aDefault;
    }
 
 
@@ -319,41 +346,41 @@ public final class DefaultPropertyMap implements PropertyMap {
    // Non-primitive contains/get: Mutable types (copy before returning!)
    //
 
-   private static final Cloner<Rectangle> cloneRectangle = new Cloner<Rectangle>() {
+   private static final Cloner<Rectangle> CLONE_RECTANGLE = new Cloner<Rectangle>() {
       @Override
       public Rectangle clone(Rectangle value) {
          return value == null ? null : (Rectangle) value.clone();
       }
    };
    @Override public boolean containsRectangle(String key) { return containsNonPrimitiveScalar(key, Rectangle.class); }
-   @Override public Rectangle getRectangle(String key, Rectangle aDefault) { return getClonedNonPrimitiveScalar(key, Rectangle.class, cloneRectangle, aDefault); }
+   @Override public Rectangle getRectangle(String key, Rectangle aDefault) { return getClonedNonPrimitiveScalar(key, Rectangle.class, CLONE_RECTANGLE, aDefault); }
    @Override public boolean containsRectangleList(String key) { return containsNonPrimitiveArray(key, Rectangle.class); }
-   @Override public List<Rectangle> getRectangleList(String key, Rectangle... defaults) { return getClonedNonPrimitiveArray(key, Rectangle.class, cloneRectangle, defaults); }
-   @Override public List<Rectangle> getRectangleList(String key, Iterable<Rectangle> defaults) { return getClonedNonPrimitiveArray(key, Rectangle.class, cloneRectangle, defaults); }
+   @Override public List<Rectangle> getRectangleList(String key, Rectangle... defaults) { return getClonedNonPrimitiveArray(key, Rectangle.class, CLONE_RECTANGLE, defaults); }
+   @Override public List<Rectangle> getRectangleList(String key, Iterable<Rectangle> defaults) { return getClonedNonPrimitiveArray(key, Rectangle.class, CLONE_RECTANGLE, defaults); }
 
-   private static final Cloner<Dimension> cloneDimension = new Cloner<Dimension>() {
+   private static final Cloner<Dimension> CLONE_DIMENSION = new Cloner<Dimension>() {
       @Override
       public Dimension clone(Dimension value) {
          return value == null ? null : (Dimension) value.clone();
       }
    };
    @Override public boolean containsDimension(String key) { return containsNonPrimitiveScalar(key, Dimension.class); }
-   @Override public Dimension getDimension(String key, Dimension aDefault) { return getClonedNonPrimitiveScalar(key, Dimension.class, cloneDimension, aDefault); }
+   @Override public Dimension getDimension(String key, Dimension aDefault) { return getClonedNonPrimitiveScalar(key, Dimension.class, CLONE_DIMENSION, aDefault); }
    @Override public boolean containsDimensionList(String key) { return containsNonPrimitiveArray(key, Dimension.class); }
-   @Override public List<Dimension> getDimensionList(String key, Dimension... defaults) { return getClonedNonPrimitiveArray(key, Dimension.class, cloneDimension, defaults); }
-   @Override public List<Dimension> getDimensionList(String key, Iterable<Dimension> defaults) { return getClonedNonPrimitiveArray(key, Dimension.class, cloneDimension, defaults); }
+   @Override public List<Dimension> getDimensionList(String key, Dimension... defaults) { return getClonedNonPrimitiveArray(key, Dimension.class, CLONE_DIMENSION, defaults); }
+   @Override public List<Dimension> getDimensionList(String key, Iterable<Dimension> defaults) { return getClonedNonPrimitiveArray(key, Dimension.class, CLONE_DIMENSION, defaults); }
 
-   private static final Cloner<Point> clonePoint = new Cloner<Point>() {
+   private static final Cloner<Point> CLONE_POINT = new Cloner<Point>() {
       @Override
       public Point clone(Point value) {
          return value == null ? null : (Point) value.clone();
       }
    };
    @Override public boolean containsPoint(String key) { return containsNonPrimitiveScalar(key, Point.class); }
-   @Override public Point getPoint(String key, Point aDefault) { return getClonedNonPrimitiveScalar(key, Point.class, clonePoint, aDefault); }
+   @Override public Point getPoint(String key, Point aDefault) { return getClonedNonPrimitiveScalar(key, Point.class, CLONE_POINT, aDefault); }
    @Override public boolean containsPointList(String key) { return containsNonPrimitiveArray(key, Point.class); }
-   @Override public List<Point> getPointList(String key, Point... defaults) { return getClonedNonPrimitiveArray(key, Point.class, clonePoint, defaults); }
-   @Override public List<Point> getPointList(String key, Iterable<Point> defaults) { return getClonedNonPrimitiveArray(key, Point.class, clonePoint, defaults); }
+   @Override public List<Point> getPointList(String key, Point... defaults) { return getClonedNonPrimitiveArray(key, Point.class, CLONE_POINT, defaults); }
+   @Override public List<Point> getPointList(String key, Iterable<Point> defaults) { return getClonedNonPrimitiveArray(key, Point.class, CLONE_POINT, defaults); }
 
    // To add more, copy the Rectnagle methods and replace 'Rectangle' with the
    // type name; then edit the clone method if the value type requires a
@@ -733,17 +760,17 @@ public final class DefaultPropertyMap implements PropertyMap {
       // Mutable non-primitives (clone before adding!)
       //
 
-      @Override public Builder putRectangle(String key, Rectangle value) { return putClonedScalar(key, cloneRectangle, value); }
-      @Override public Builder putRectangleList(String key, Rectangle... values) { return putClonedNonPrimitiveArray(key, Rectangle.class, cloneRectangle, values); }
-      @Override public Builder putRectangleList(String key, Iterable<Rectangle> values) { return putClonedNonPrimitiveArray(key, Rectangle.class, cloneRectangle, values); }
+      @Override public Builder putRectangle(String key, Rectangle value) { return putClonedScalar(key, CLONE_RECTANGLE, value); }
+      @Override public Builder putRectangleList(String key, Rectangle... values) { return putClonedNonPrimitiveArray(key, Rectangle.class, CLONE_RECTANGLE, values); }
+      @Override public Builder putRectangleList(String key, Iterable<Rectangle> values) { return putClonedNonPrimitiveArray(key, Rectangle.class, CLONE_RECTANGLE, values); }
 
-      @Override public Builder putDimension(String key, Dimension value) { return putClonedScalar(key, cloneDimension, value); }
-      @Override public Builder putDimensionList(String key, Dimension... values) { return putClonedNonPrimitiveArray(key, Dimension.class, cloneDimension, values); }
-      @Override public Builder putDimensionList(String key, Iterable<Dimension> values) { return putClonedNonPrimitiveArray(key, Dimension.class, cloneDimension, values); }
+      @Override public Builder putDimension(String key, Dimension value) { return putClonedScalar(key, CLONE_DIMENSION, value); }
+      @Override public Builder putDimensionList(String key, Dimension... values) { return putClonedNonPrimitiveArray(key, Dimension.class, CLONE_DIMENSION, values); }
+      @Override public Builder putDimensionList(String key, Iterable<Dimension> values) { return putClonedNonPrimitiveArray(key, Dimension.class, CLONE_DIMENSION, values); }
 
-      @Override public Builder putPoint(String key, Point value) { return putClonedScalar(key, clonePoint, value); }
-      @Override public Builder putPointList(String key, Point... values) { return putClonedNonPrimitiveArray(key, Point.class, clonePoint, values); }
-      @Override public Builder putPointList(String key, Iterable<Point> values) { return putClonedNonPrimitiveArray(key, Point.class, clonePoint, values); }
+      @Override public Builder putPoint(String key, Point value) { return putClonedScalar(key, CLONE_POINT, value); }
+      @Override public Builder putPointList(String key, Point... values) { return putClonedNonPrimitiveArray(key, Point.class, CLONE_POINT, values); }
+      @Override public Builder putPointList(String key, Iterable<Point> values) { return putClonedNonPrimitiveArray(key, Point.class, CLONE_POINT, values); }
 
 
       //
@@ -1202,7 +1229,7 @@ public final class DefaultPropertyMap implements PropertyMap {
          if (value == null) {
             return modern().remove(key);
          }
-         return modern().putInteger(key, value.intValue());
+         return modern().putInteger(key, value);
       }
 
       @Override
@@ -1220,7 +1247,7 @@ public final class DefaultPropertyMap implements PropertyMap {
          if (value == null) {
             return modern().remove(key);
          }
-         return modern().putLong(key, value.longValue());
+         return modern().putLong(key, value);
       }
 
       @Override
@@ -1238,7 +1265,7 @@ public final class DefaultPropertyMap implements PropertyMap {
          if (value == null) {
             return modern().remove(key);
          }
-         return modern().putDouble(key, value.doubleValue());
+         return modern().putDouble(key, value);
       }
 
       @Override
@@ -1256,7 +1283,7 @@ public final class DefaultPropertyMap implements PropertyMap {
          if (value == null) {
             return modern().remove(key);
          }
-         return modern().putBoolean(key, value.booleanValue());
+         return modern().putBoolean(key, value);
       }
 
       @Override
