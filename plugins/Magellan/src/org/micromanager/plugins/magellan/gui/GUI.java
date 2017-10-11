@@ -404,14 +404,6 @@ public class GUI extends javax.swing.JFrame {
         return null;
     }
     
-    private ArrayList<ChannelSetting> getCurrentChannelsCopy() {
-         ArrayList<ChannelSetting> list = new ArrayList<ChannelSetting>();
-        for (ChannelSetting c : ((SimpleChannelTableModel)channelsTable_.getModel()).getChannels() ) {
-            list.add(c.copy());
-        }
-        return list;
-    }
-
     public void selectNewCovariantPair() {
         //set bottom row selected because it was just added
         covariantPairingsTable_.setRowSelectionInterval(covariantPairingsTable_.getRowCount() - 1, covariantPairingsTable_.getRowCount() - 1);
@@ -568,8 +560,8 @@ public class GUI extends javax.swing.JFrame {
         }
         //channels
         settings.channelGroup_ = (String) ChannelGroupCombo_.getSelectedItem();
-        settings.channels_ = getCurrentChannelsCopy();
-        
+        settings.channels_ = ((SimpleChannelTableModel)channelsTable_.getModel()).getChannels();
+              
         //autofocus
         settings.autofocusEnabled_ = useAutofocusCheckBox_.isSelected();
         if (settings.autofocusEnabled_) {

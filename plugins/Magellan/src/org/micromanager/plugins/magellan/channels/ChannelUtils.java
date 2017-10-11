@@ -24,6 +24,8 @@ import org.micromanager.plugins.magellan.main.Magellan;
 import org.micromanager.plugins.magellan.misc.GlobalSettings;
 import org.micromanager.plugins.magellan.misc.Log;
 import mmcorej.StrVector;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisition;
+import org.micromanager.plugins.magellan.acq.FixedAreaAcquisitionSettings;
 import org.micromanager.plugins.magellan.demo.DemoModeImageData;
 
 /**
@@ -48,16 +50,17 @@ public class ChannelUtils {
       }
       return names;
    }
-   
-   public static void storeChannelInfo(ArrayList<ChannelSetting> channels) {
-      for (ChannelSetting c : channels) {
-         GlobalSettings.getInstance().storeDoubleInPrefs(PREF_EXPOSURE + c.name_, c.exposure_);
-         GlobalSettings.getInstance().storeIntInPrefs(PREF_COLOR + c.name_, c.color_.getRGB());
-         GlobalSettings.getInstance().storeBooleanInPrefs(PREF_USE + c.name_, c.use_);
-      }
-   }
 
-   public static ArrayList<ChannelSetting> getAvailableChannels(String channelGroup) {
+    public static void storeChannelInfo(ArrayList<ChannelSetting> channels) {
+        //store individual channel setttings
+        for (int i = 0; i < channels.size(); i++) {
+            Magellan.getPrefs().putBoolean(FixedAreaAcquisitionSettings.PREF_PREFIX + "CHANNELGROUP" + channels.get(0).group_ + "CHANNELNAME" + channels.get(i).name_ + "USE", channels.get(i).use_);
+            Magellan.getPrefs().putDouble(FixedAreaAcquisitionSettings.PREF_PREFIX + "CHANNELGROUP" + channels.get(0).group_ + "CHANNELNAME" + channels.get(i).name_ + "EXPOSURE", channels.get(i).exposure_);
+            Magellan.getPrefs().putInt(FixedAreaAcquisitionSettings.PREF_PREFIX + "CHANNELGROUP" + channels.get(0).group_ + "CHANNELNAME" + channels.get(i).name_ + "COLOR", channels.get(i).color_.getRGB());
+        }
+    }
+
+    public static ArrayList<ChannelSetting> getAvailableChannels(String channelGroup) {
       int numCamChannels = (int) (GlobalSettings.getInstance().getDemoMode() ? DemoModeImageData.getNumChannels() : Magellan.getCore().getNumberOfCameraChannels());
       ArrayList<ChannelSetting> channels = new ArrayList<ChannelSetting>();
       double exposure = 10;
