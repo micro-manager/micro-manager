@@ -206,7 +206,7 @@ public final class RememberedChannelSettings {
                   channel.getHistogramMaxes(), null, null);
       }
 
-      return settings.copy().channelColors(newColors)
+      return settings.copyBuilder().channelColors(newColors)
          .channelContrastSettings(newSettings).build();
    }
 

@@ -298,26 +298,6 @@ public interface DisplaySettings {
    @Deprecated
    DisplaySettingsBuilder copy();
 
-   /**
-    * The colors of each channel in the image display window. In the case of
-    * multi-component (e.g. RGB) images, this value is not used by Micro-
-    * Manager.
-    * @return Channel colors
-    */
-   @Deprecated
-   public Color[] getChannelColors();
-
-   /**
-    * Safely retrieve the color for the specified channel. If the
-    * channelColors property is null, is too small to have a value for the
-    * given index, or has a value of null for that index, then the provided
-    * default value will be returned instead.
-    * @param index Channel index to get the color for
-    * @param defaultVal Default value to return if no color is available.
-    * @return Channel color
-    */
-   @Deprecated
-   public Color getSafeChannelColor(int index, Color defaultVal);
 
    /**
     * The object containing contrast information for each channel.
@@ -400,22 +380,6 @@ public interface DisplaySettings {
     */
    @Deprecated
    public Boolean getSafeIsVisible(int index, Boolean defaultVal);
-
-   /**
-    * The magnification level of the canvas
-    * @return magnification level of the canvas
-    * @deprecated use {@code getZoom} instead
-    */
-   @Deprecated
-   public Double getMagnification();
-
-
-   /**
-    * Animation speed, when animation of the display is turned on
-    * @return Animation speed in frames per second
-    */
-   @Deprecated
-   public Double getAnimationFPS();
 
    public enum ColorMode {
       // TODO Integer indices should be implementation detail of file format

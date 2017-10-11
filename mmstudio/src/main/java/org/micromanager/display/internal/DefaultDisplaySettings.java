@@ -696,25 +696,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   @Deprecated
-   public Color[] getChannelColors() {
-      Color[] ret = new Color[getNumberOfChannels()];
-      for (int i = 0; i < ret.length; ++i) {
-         ret[i] = getChannelSettings(i).getColor();
-      }
-      return ret;
-   }
-
-   @Override
-   @Deprecated
-   public Color getSafeChannelColor(int index, Color defaultVal) {
-      if (index < 0 || index >= getNumberOfChannels()) {
-         return defaultVal;
-      }
-      return getChannelSettings(index).getColor();
-   }
-
-   @Override
    public ContrastSettings[] getChannelContrastSettings() {
       ContrastSettings[] ret = new ContrastSettings[getNumberOfChannels()];
       for (int i = 0; i < getNumberOfChannels(); ++i) {
@@ -794,17 +775,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          return defaultVal;
       }
       return getChannelSettings(index).isVisible();
-   }
-
-   @Override
-   @Deprecated
-   public Double getMagnification() {
-      return getZoomRatio();
-   }
-
-   @Override
-   public Double getAnimationFPS() {
-      return getPlaybackFPS();
    }
 
    @Override
