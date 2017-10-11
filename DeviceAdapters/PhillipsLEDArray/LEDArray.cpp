@@ -178,6 +178,24 @@ int CLEDArray::Initialize()
    // Check that we have a controller:
    PurgeComPort(port_.c_str());
 
+   //reset LED arraya
+	unsigned char allData[6];
+	    
+	allData[0] = 'r';
+	allData[1] = 'e';
+	allData[2] = 's';
+	allData[3] = 'e';
+	allData[4] = 't';
+	allData[5] = 10;
+
+	int ret =  WriteToComPort(port_.c_str(), allData, 6); //Writing to port
+	if (ret != DEVICE_OK){
+		PurgeComPort(port_.c_str());
+		return DEVICE_ERR;
+	}
+	return DEVICE_OK;
+}
+
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -619,22 +637,6 @@ int CLEDArray::Off(){
 	return DEVICE_OK;
 }
 
-int CLEDArray::readCommandSuccess() {
-		  //MM::MMTime startTime = GetCurrentMMTime();
-		  //unsigned long bytesRead = 0;
-		  //unsigned char answer[1];
-		  //int ret;
-		  //while ((bytesRead < 1) && ( (GetCurrentMMTime() - startTime).getMsec() < 1000)) {
-			 // ret = ReadFromComPort(port_.c_str(),answer,1,bytesRead);
-			 // if (ret != DEVICE_OK)
-				//  return ret;
-		  //}
-		  //if (answer[0] != COMMAND_SUCCESS[0]){
-			 // PurgeComPort(port_.c_str());
-			 // return ERR_COMMAND_SUCCESS_MISSING;
-		  //}
-		  return DEVICE_OK;
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////

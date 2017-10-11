@@ -152,7 +152,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
     </Link>
     <PostBuildEvent>
-      <Message>copy"D:\trunk\build\Debug\x64\mmgr_dal_PhillipsLEDArray.dll" "C:\Program Files\Micro-Manager-1.4"</Message>
+      <Message>
+      </Message>
+      <Command>copy "$(TargetPath)" "C:\Program Files\Micro-Manager-1.4"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
