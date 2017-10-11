@@ -273,7 +273,6 @@ private:
 	unsigned char lastModVal_;
 	
    	 MMThreadLock& GetLock() {return lock_;}
-	 int readCommandSuccess();
 
 
 
