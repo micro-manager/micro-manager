@@ -29,6 +29,8 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
@@ -296,6 +298,8 @@ public enum PropertyKey {
          return ja;
       }
    },
+   
+   COLOR("Color", ChannelDisplaySettings.class),
 
    COLOR_MODE("ColorMode", DisplaySettings.class),
    
@@ -337,6 +341,8 @@ public enum PropertyKey {
          return jo;
       }
    },
+   
+   COMPONENT_SETTINGS("ComponentSettings", ChannelDisplaySettings.class),
 
    COMPUTER_NAME("ComputerName", SummaryMetadata.class) {
       @Override
@@ -474,7 +480,10 @@ public enum PropertyKey {
       }
    },
 
+   GAMMA("Gamma", ComponentDisplaySettings.class),
+   
    GRID_COLUMN("GridColumn", "gridColumn"),
+   
    GRID_ROW("GridRow", "gridRow"),
 
    HEIGHT("Height") {
@@ -978,6 +987,10 @@ public enum PropertyKey {
 
    ROI_AUTOSCALE("ROIAutoscale", DisplaySettings.class),
    
+   SCALING_MIN("ScalingMin", ComponentDisplaySettings.class),
+   
+   SCALING_MAX("ScalingMax", ComponentDisplaySettings.class),
+   
    SCOPE_DATA("ScopeData", "scopeData", Metadata.class) {
       @Override
       public String getDescription() {
@@ -1221,6 +1234,8 @@ public enum PropertyKey {
          return new JsonPrimitive(pmap.getBoolean(key(), timeFirst));
       }
    },
+   
+   UNIFORM_COMPONENT_SCALING("UniformComponentScaling", ChannelDisplaySettings.class),
 
    UNIFORM_CHANNEL_SCALING("UniformChannelScaling", DisplaySettings.class),
    
@@ -1313,6 +1328,8 @@ public enum PropertyKey {
          return null;
       }
    },
+   
+   VISIBLE("Visible", ChannelDisplaySettings.class),
 
    WIDTH("Width", Image.class) {
       @Override

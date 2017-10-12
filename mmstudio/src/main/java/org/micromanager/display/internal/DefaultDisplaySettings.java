@@ -39,8 +39,10 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 public final class DefaultDisplaySettings implements DisplaySettings {
+   private final static String PROFILEKEY = "Default_Display_Settings";
    private final double zoom_;
    private final double fps_;
    private final ColorMode mode_;
@@ -339,15 +341,36 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       return builder.build();
    }
 
+  
+   /**
+    * Saves these DisplaySettings in the UserProfile. Implementers are free to 
+    * save copies of the settings themselves.  
+    * @param profile Profile to which these settings should be saved
+    * @param key Key under which the settings will be stored.
+    *             Will be pre-pended with PROFILEKEY
+    */
+   public void saveToProfile(UserProfile profile, String key) {
+      MutablePropertyMapView mpmv = profile.getSettings(DefaultDisplaySettings.class);
+      mpmv.putPropertyMap(PROFILEKEY + "-" + key, this.toPropertyMap());
+   }  
+   
+   public DisplaySettings restoreFromProfile(UserProfile profile, String key) {
+      MutablePropertyMapView mpmv = profile.getSettings(DefaultDisplaySettings.class);
+      final String finalKey = new StringBuilder(PROFILEKEY).append("-").append(key).toString();
+      if (mpmv.containsPropertyMap(finalKey)) {
+         PropertyMap propertyMap = mpmv.getPropertyMap(finalKey, null);
+         return fromPropertyMap(propertyMap);
+      }
+      return null;
+   }
+   
+   
    /**
     * Set new settings in the user's profile.
     * @param key As with getStandardSettings, a specific key to use for
     *        this type of display.
     */
-   public static void setStandardSettings(DisplaySettings settings,
-         String key) {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
-      key = key + "_";
+      /*
       profile.setDouble(DefaultDisplaySettings.class,
             key + ANIMATION_FPS_DOUBLE,
             settings.getPlaybackFPS());
@@ -366,7 +389,9 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             key + SHOULD_SCALE_WITH_ROI, settings.getShouldScaleWithROI());
       profile.setDouble(DefaultDisplaySettings.class,
             key + EXTREMA_PERCENTAGE, settings.getExtremaPercentage());
-   }
+      */
+
+   
 
    /**
     * Return the current color mode setting in the profile, or the provided
@@ -950,6 +975,11 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       return result;
    }
 
+   /**
+    * Store these displaySettings in a propertyMap
+    * NS: Should this be in the API?
+    * @return PropertyMap containing these DisplaySettings
+    */
    public PropertyMap toPropertyMap() {
       List<PropertyMap> channelSettings = new ArrayList<PropertyMap>();
       for (ChannelDisplaySettings cs : channelSettings_) {
@@ -966,5 +996,52 @@ public final class DefaultDisplaySettings implements DisplaySettings {
             putDouble(PropertyKey.ACUTOSCALE_IGNORED_QUANTILE.key(), extremaQuantile_).
             putPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key(), channelSettings).
             build();
+   }
+   
+   /**
+    * Restore DisplaySettings from a PropertyMap
+    * NS: Should this be in the api?
+    * @param pMap PropertyMap to be restored to DisplaySettings
+    * @return restored DisplaySettings.  Any missing component will be replaced 
+    * with the (Builder's) default 
+    */
+   public static DisplaySettings fromPropertyMap(PropertyMap pMap) {
+      DefaultDisplaySettings.Builder ddsb = new DefaultDisplaySettings.Builder();
+      
+      // TODO: (NS) not sure if it is really necessary to test each key 
+      if (pMap.containsDouble(PropertyKey.ZOOM_RATIO.key())) {
+         ddsb.zoomRatio(pMap.getDouble(PropertyKey.ZOOM_RATIO.key(), ddsb.zoom_));
+      }
+      if (pMap.containsDouble(PropertyKey.PLAYBACK_FPS.key())) {
+         ddsb.playbackFPS(pMap.getDouble(PropertyKey.PLAYBACK_FPS.key(), ddsb.fps_));
+      }
+      if (pMap.containsStringForEnum(PropertyKey.COLOR_MODE.key(), ColorMode.class)) {
+         ddsb.colorMode(pMap.getStringAsEnum(PropertyKey.COLOR_MODE.key(), 
+                 ColorMode.class, ddsb.mode_));
+      }
+      if (pMap.containsBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key())) {
+         ddsb.uniformChannelScaling(pMap.getBoolean(
+                 PropertyKey.UNIFORM_CHANNEL_SCALING.key(), ddsb.useUniformChannelScaling_));
+      }
+      if (pMap.containsBoolean(PropertyKey.AUTOSTRETCH.key())) {
+         ddsb.autostretch(pMap.getBoolean(PropertyKey.AUTOSTRETCH.key(), ddsb.autostretch_));
+      }
+      if (pMap.containsBoolean(PropertyKey.ROI_AUTOSCALE.key())) {
+         ddsb.roiAutoscale(pMap.getBoolean(PropertyKey.ROI_AUTOSCALE.key(), ddsb.useROI_));
+      }
+      if (pMap.containsDouble(PropertyKey.ACUTOSCALE_IGNORED_QUANTILE.key())) {
+         ddsb.autoscaleIgnoredQuantile(pMap.getDouble(PropertyKey.ACUTOSCALE_IGNORED_QUANTILE.key(), 
+                 ddsb.extremaQuantile_));
+      }
+      
+      if (pMap.containsPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key())) {
+         List<PropertyMap> propertyMapList = pMap.getPropertyMapList( 
+                 PropertyKey.CHANNEL_SETTINGS.key(), new ArrayList<PropertyMap>());
+         for (int i = 0; i < propertyMapList.size(); i++) {
+            ddsb.channel(i, DefaultChannelDisplaySettings.fromPropertyMap(propertyMapList.get(i)));
+         }
+      }      
+      
+      return ddsb.build();
    }
 }

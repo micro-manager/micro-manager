@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.internal.utils.ColorPalettes;
@@ -203,16 +204,53 @@ public final class DefaultChannelDisplaySettings
       return copyBuilder().component(component, settings);
    }
 
+   /**
+    * Encodes these ChannelDisplaySettings into a PropertyMap
+    * @return PropertyMap encoding the current ChannelDisplaySettings
+    */
    public PropertyMap toPropertyMap() {
       List<PropertyMap> componentSettings = new ArrayList<PropertyMap>();
       for (ComponentDisplaySettings cs : componentSettings_) {
          componentSettings.add(((DefaultComponentDisplaySettings) cs).toPropertyMap());
       }
+
       return PropertyMaps.builder().
-            putColor("Color", color_).
-            putBoolean("UniformComponentScaling", useUniformComponentScaling_).
-            putBoolean("Visible", visible_).
-            putPropertyMapList("ComponentSettings", componentSettings).
+            putColor(PropertyKey.COLOR.key(), color_).
+            putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_).
+            putBoolean(PropertyKey.VISIBLE.key(), visible_).
+            putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings).
             build();
+   }
+   
+   /**
+    * Restores ChannelDisplaySettings from a PropertyMap
+    * 
+    * @param pMap PropertyMap from which to restore the ChannelDIsplaySettings
+    * @return ChannelDisplaySettings.  Missing values are replaced by defaults.
+    */
+   public static ChannelDisplaySettings fromPropertyMap (PropertyMap pMap) {
+      Builder b = new Builder();
+
+      if (pMap.containsColor(PropertyKey.COLOR.key())) {
+         b.color(pMap.getColor(PropertyKey.COLOR.key(), b.color_));
+      }
+      if (pMap.containsBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key())) {
+         b.uniformComponentScaling(pMap.getBoolean(
+                 PropertyKey.UNIFORM_COMPONENT_SCALING.key(), b.useUniformComponentScaling_));
+      }
+      if (pMap.containsBoolean(PropertyKey.VISIBLE.key())) {
+         b.visible(pMap.getBoolean(PropertyKey.VISIBLE.key(), b.visible_));
+      }
+      if (pMap.containsPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key())) {
+         List<PropertyMap> componentMapList = pMap.getPropertyMapList(
+                 PropertyKey.COMPONENT_SETTINGS.key(), new ArrayList<PropertyMap>());
+         for (int i = 0; i < componentMapList.size(); i++) {
+            ComponentDisplaySettings cds = DefaultComponentDisplaySettings.fromPropertyMap(
+                    componentMapList.get(i));
+            b.component(i, cds);
+         }
+      }
+            
+      return b.build();
    }
 }

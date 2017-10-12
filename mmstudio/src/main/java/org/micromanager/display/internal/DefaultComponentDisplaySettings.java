@@ -1,13 +1,10 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.display.internal;
 
 import com.google.common.base.Preconditions;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ComponentDisplaySettings;
 
 /**
@@ -96,9 +93,26 @@ public final class DefaultComponentDisplaySettings
 
    public PropertyMap toPropertyMap() {
       return PropertyMaps.builder().
-            putLong("ScalingMin", scalingMin_).
-            putLong("ScalingMax", scalingMax_).
-            putDouble("Gamma", gamma_).
+            putLong(PropertyKey.SCALING_MIN.key(), scalingMin_).
+            putLong(PropertyKey.SCALING_MAX.key(), scalingMax_).
+            putDouble(PropertyKey.GAMMA.key(), gamma_).
             build();
    }
+   
+   public static ComponentDisplaySettings fromPropertyMap(PropertyMap pMap) {
+      Builder b = new Builder();
+      
+      if (pMap.containsLong(PropertyKey.SCALING_MIN.key())) {
+         b.scalingMinimum(pMap.getLong(PropertyKey.SCALING_MIN.key(), b.scalingMin_));
+      }
+      if (pMap.containsLong(PropertyKey.SCALING_MAX.key())) {
+         b.scalingMaximum(pMap.getLong(PropertyKey.SCALING_MAX.key(), b.scalingMax_));
+      }
+      if (pMap.containsDouble(PropertyKey.GAMMA.key())) {
+         b.scalingGamma(pMap.getDouble(PropertyKey.GAMMA.key(), b.gamma_));
+      }
+      
+      return b.build();
+   }
+   
 }

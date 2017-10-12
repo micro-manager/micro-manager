@@ -43,10 +43,11 @@ public final class RememberedChannelSettings {
    private static final String AUTOSCALE = "whether or not to use autoscaling for this channel"; 
 
    // Used to prevent simultaneous read/writes of the profile
-   private static final Object profileLock_ = new Object();
+   private static final Object PROFILELOCK = new Object();
+   
+   
    private final String channelName_;
    private final String channelGroup_;
-
    private final Color color_;
    private final Integer[] histogramMins_;
    private final Integer[] histogramMaxes_;
@@ -101,7 +102,7 @@ public final class RememberedChannelSettings {
     * name and group.
     */
    public void saveToProfile() {
-      synchronized(profileLock_) {
+      synchronized(PROFILELOCK) {
          UserProfile profile = UserProfileStaticInterface.getInstance();
          String ourKey = genKey(channelName_, channelGroup_);
          if (color_ != null) {
@@ -133,7 +134,7 @@ public final class RememberedChannelSettings {
          Integer[] histogramMaxes, Boolean shouldAutoscale) {
       // Don't try to do this when someone else is (potentially) modifying the
       // profile.
-      synchronized(profileLock_) {
+      synchronized(PROFILELOCK) {
          UserProfile profile = UserProfileStaticInterface.getInstance();
          String key = genKey(channelName, channelGroup);
          defaultColor = new Color(profile.getInt(
@@ -157,7 +158,7 @@ public final class RememberedChannelSettings {
     */
    public static Color getColorForChannel(String channelName,
          String channelGroup, Color defaultColor) {
-      synchronized(profileLock_) {
+      synchronized(PROFILELOCK) {
          UserProfile profile = UserProfileStaticInterface.getInstance();
          String key = genKey(channelName, channelGroup);
          Integer rgb = profile.getInt(
@@ -170,27 +171,13 @@ public final class RememberedChannelSettings {
    }
 
    /**
-    * As getColorForChannel, but we use the DisplaySettings as a fallback.
-    */
-   public static Color getColorWithSettings(String channelName,
-         String channelGroup, DisplaySettings settings, int channelIndex,
-         Color defaultColor) {
-      Color result = getColorForChannel(channelName, channelGroup, null);
-      if (result == null) {
-         result = settings.getSafeChannelColor(channelIndex, null);
-      }
-      if (result == null) {
-         result = defaultColor;
-      }
-      return result;
-   }
-
-   /**
     * Given a SummaryMetadata object and a DisplaySettings object, record the
     * appropriate color/min/max values into the DisplaySettings and return it.
     * Note that the SummaryMetadata's channel names are assumed to be in the
     * same order as the ContrastSettings array in the DisplaySettings.
     */
+   //TODO: figute out if this function is still needed and if so, 
+   // figure out its intent and how to make it work.
    public static DisplaySettings updateSettings(SummaryMetadata summary,
          DisplaySettings settings, int numChannels) {
       Color[] newColors = new Color[numChannels];
@@ -206,8 +193,9 @@ public final class RememberedChannelSettings {
                   channel.getHistogramMaxes(), null, null);
       }
 
-      return settings.copyBuilder().channelColors(newColors)
-         .channelContrastSettings(newSettings).build();
+      //return settings.copyBuilder().channelColors(newColors)
+      //   .channelContrastSettings(newSettings).build();
+      return settings;  //
    }
 
    /**
@@ -223,8 +211,7 @@ public final class RememberedChannelSettings {
          DisplaySettings.ContrastSettings contrast = settings.getSafeContrastSettings(i,
                new DefaultDisplaySettings.DefaultContrastSettings(0, 0, 1.0, true));
          Color defaultColor = ColorPalettes.getFromDefaultPalette(i);
-         Color color = settings.getSafeChannelColor(i,
-               getColorForChannel(channel, group, defaultColor));
+         Color color = settings.getChannelColor(i);
          new RememberedChannelSettings(channel, group, color,
                contrast.getContrastMins(), contrast.getContrastMaxes(),
                settings.getShouldAutostretch()).saveToProfile();
