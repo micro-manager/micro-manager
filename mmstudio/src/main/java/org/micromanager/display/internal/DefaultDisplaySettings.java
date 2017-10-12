@@ -813,21 +813,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
    @Override
-   public Boolean getShouldAutostretch() {
-      return isAutostretchEnabled();
-   }
-
-   @Override
-   public Boolean getShouldScaleWithROI() {
-      return isROIAutoscaleEnabled();
-   }
-
-   @Override
-   public Double getExtremaPercentage() {
-      return getAutoscaleIgnoredPercentile();
-   }
-
-   @Override
    public DisplaySettings.Builder copyBuilder() {
       DisplaySettings.Builder ret = builder().zoomRatio(zoom_).playbackFPS(fps_).colorMode(mode_).
             uniformChannelScaling(uniformChannelScaling_).

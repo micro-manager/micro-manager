@@ -48,6 +48,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
@@ -81,7 +82,7 @@ public final class ExportMovieDlg extends MMDialog {
     * panel, to represent the nested-loop nature of the export process.
     */
    public static class AxisPanel extends JPanel {
-      private final Datastore store_;
+      private final DataProvider store_;
       private JComboBox axisSelector_;
       private JSpinner minSpinner_;
       private SpinnerNumberModel minModel_ = null;
@@ -96,7 +97,7 @@ public final class ExportMovieDlg extends MMDialog {
       public AxisPanel(DisplayWindow display, final ExportMovieDlg parent) {
          super(new MigLayout("flowx"));
          setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-         store_ = display.getDatastore();
+         store_ = display.getDataProvider();
          ArrayList<String> axes = new ArrayList<String>(
                parent.getNonZeroAxes());
          Collections.sort(axes);
@@ -222,7 +223,7 @@ public final class ExportMovieDlg extends MMDialog {
    }
 
    private final DisplayWindow display_;
-   private final Datastore store_;
+   private final DataProvider provider_;
    private final ArrayList<AxisPanel> axisPanels_;
    private final JPanel contentsPanel_;
    private JComboBox outputFormatSelector_;
@@ -239,7 +240,7 @@ public final class ExportMovieDlg extends MMDialog {
       super();
       super.loadAndRestorePosition(100, 100);
       display_ = display;
-      store_ = display.getDatastore();
+      provider_ = display.getDataProvider();
       axisPanels_ = new ArrayList<AxisPanel>();
 
       File file = new File(display.getName());
@@ -354,17 +355,20 @@ public final class ExportMovieDlg extends MMDialog {
          chooser.setDialogTitle("Please choose a directory to export to.");
          chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
          chooser.setAcceptAllFileFilterUsed(false);
-         if (store_.getSavePath() != null) {
-            // Default them to where their data was originally saved.
-            File path = new File(store_.getSavePath());
-            chooser.setCurrentDirectory(path);
-            chooser.setSelectedFile(path);
-            // HACK: on OSX if we don't do this, the "Choose" button will be
-            // disabled until the user interacts with the dialog.
-            // This may be related to a bug in the OSX JRE; see
-            // http://stackoverflow.com/questions/31148021/jfilechooser-cant-set-default-selection/31148287
-            // and in particular Madhan's reply.
-            chooser.updateUI();
+         if (provider_ instanceof Datastore) {
+            Datastore store = (Datastore) provider_;
+            if (store.getSavePath() != null) {
+               // Default them to where their data was originally saved.
+               File path = new File(store.getSavePath());
+               chooser.setCurrentDirectory(path);
+               chooser.setSelectedFile(path);
+               // HACK: on OSX if we don't do this, the "Choose" button will be
+               // disabled until the user interacts with the dialog.
+               // This may be related to a bug in the OSX JRE; see
+               // http://stackoverflow.com/questions/31148021/jfilechooser-cant-set-default-selection/31148287
+               // and in particular Madhan's reply.
+               chooser.updateUI();
+            }
          }
          if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
             // User cancelled.
@@ -397,7 +401,7 @@ public final class ExportMovieDlg extends MMDialog {
       if (axisPanels_.size() > 0) {
          axisPanels_.get(0).configureExporter(exporter);
       } else {
-         exporter.loop(store_.getAxes().get(0), 0, 0);
+         exporter.loop(provider_.getAxes().get(0), 0, 0);
       }
       exporter.setDisplay(display_);
 
@@ -493,9 +497,9 @@ public final class ExportMovieDlg extends MMDialog {
     */
    public ArrayList<String> getNonZeroAxes() {
       ArrayList<String> result = new ArrayList<String>();
-      for (String axis : store_.getAxes()) {
+      for (String axis : provider_.getAxes()) {
          // Channel axis is only available when in non-composite display modes.
-         if (store_.getMaxIndices().getIndex(axis) > 0 &&
+         if (provider_.getMaxIndices().getIndex(axis) > 0 &&
                (!axis.equals(Coords.CHANNEL) || !getIsComposite())) {
             result.add(axis);
          }

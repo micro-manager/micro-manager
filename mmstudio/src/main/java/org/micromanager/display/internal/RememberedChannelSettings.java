@@ -203,6 +203,7 @@ public final class RememberedChannelSettings {
     * generate RememberedChannelSettings from its values and save them to the
     * profile.
     */
+   @Deprecated
    public static void saveSettingsToProfile(DisplaySettings settings,
          SummaryMetadata summary, int numChannels) {
       String group = summary.getChannelGroup();
@@ -214,7 +215,7 @@ public final class RememberedChannelSettings {
          Color color = settings.getChannelColor(i);
          new RememberedChannelSettings(channel, group, color,
                contrast.getContrastMins(), contrast.getContrastMaxes(),
-               settings.getShouldAutostretch()).saveToProfile();
+               settings.isAutostretchEnabled()).saveToProfile();
       }
    }
 

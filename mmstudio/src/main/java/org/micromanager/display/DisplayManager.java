@@ -69,6 +69,7 @@ public interface DisplayManager extends EventPublisher {
     * @return a DisplaySettings.ContrastSettings object, whose properties are
     *         all length-1 arrays with the provided values.
     */
+   @Deprecated
    DisplaySettings.ContrastSettings getContrastSettings(
          Integer contrastMin, Integer contrastMax, Double gamma,
          Boolean isVisible);
@@ -86,6 +87,7 @@ public interface DisplayManager extends EventPublisher {
     *        when the display is showing multiple channels simultaneously.
     * @return a DisplaySettings.ContrastSettings object.
     */
+   @Deprecated
    DisplaySettings.ContrastSettings getContrastSettings(
          Integer[] contrastMins, Integer[] contrastMaxes, Double[] gammas,
          Boolean isVisible);
@@ -152,6 +154,7 @@ public interface DisplayManager extends EventPublisher {
     * @return A PropertyMapBuilder with no pre-set values.
     */
    // TODO Why on earth is this in DisplayManager?
+   @Deprecated
    PropertyMap.Builder getPropertyMapBuilder();
 
    /**

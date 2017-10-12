@@ -500,12 +500,12 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    }
 
    private void removeDisplay(DisplayWindow display) {
-      Datastore store = display.getDatastore();
+      DataProvider provider = display.getDataProvider();
       synchronized (this) {
          display.removeListener(this);
-         providerToDisplays_.get(store).remove(display);
+         providerToDisplays_.get(provider).remove(display);
       }
-      display.forceClosed();
+      display.close();
    }
 
    @Subscribe

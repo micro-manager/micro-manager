@@ -75,24 +75,65 @@ public interface DisplaySettings {
       DisplaySettings build();
    }
 
+   /**
+    * Zoom level expressed as a ratio (i.e. 1.0 denotes that each pixel in the 
+    * image occupies 1 pixel on the screen, 0.5 indicates that 4 image pixels
+    * are combined in 1 screen pixel
+    * @return Zoom ratio
+    */
    double getZoomRatio();
+   
+   
    double getPlaybackFPS();
+   
    /** Color mode or lookup table for displaying the image.
      * @return  ColorMode used by these DisplaySettings
      */
    ColorMode getColorMode();
+   
    /** Whether to use the same intensity scaling for every channel.
      * @return true if all channels use the same intensity scaling
     */
    boolean isUniformChannelScalingEnabled();
+   
    /** Whether to continuously apply autoscale.
-     * @return  true is AutoStretch is enabled
+     * @return  true if AutoStretch is enabled
      */
    boolean isAutostretchEnabled();
+   
+   /**
+    * Whether to only look at the ROI when autoscaling
+    * @return true if only the ROI should be taken into account when autoscaling
+    */
    boolean isROIAutoscaleEnabled();
+   
+    /**
+    * When autoscaling, the minimum value will have this fraction of pixels
+    * with lower intensities, and the maximum value will have this fraction
+    * of pixels with higher intensities.
+    * @return Number used in Autostretch mode to determine where to set the
+    * white and black points.  Expressed as fraction.
+    */
    double getAutoscaleIgnoredQuantile();
+   
+   /**
+    * When autoscaling, the minimum value will have this fraction of pixels
+    * with lower intensities, and the maximum value will have this fraction
+    * of pixels with higher intensities.
+    * @return Number used in Autostretch mode to determine where to set the
+    * white and black points.  Expressed as percentage.
+    */
    double getAutoscaleIgnoredPercentile();
+   
+   /**
+    * Returns the number of channels in these DisplaySettings
+    * Note that this number may be different from the number of the channels 
+    * in the image being shown
+    * @return 
+    */
    int getNumberOfChannels();
+   
+   
    ChannelDisplaySettings getChannelSettings(int channel);
    List<ChannelDisplaySettings> getAllChannelSettings();
 
@@ -422,29 +463,7 @@ public interface DisplaySettings {
    @Deprecated
    public Boolean getShouldSyncChannels();
 
-   /**
-    * Whether each newly-displayed image should be autostretched
-    * @return True if new images should be auto-stretched
-    */
-   @Deprecated
-   public Boolean getShouldAutostretch();
-   
-   /**
-    * Whether histogram calculations should use only the pixels in the current ROI.
-    * @return True if ROI should be used
-    */
-   @Deprecated
-   public Boolean getShouldScaleWithROI();
-
-   /**
-    * The percentage of values off the top and bottom of the image's value
-    * range that get ignored when autostretching
-    * @return Number used in Autostretch mode to determine where to set the
-    * white and black points.  Expressed as percentage.
-    */
-   @Deprecated
-   public Double getExtremaPercentage();
-
+ 
    @Deprecated
    static final String FILENAME = "displaySettings.txt";
 }

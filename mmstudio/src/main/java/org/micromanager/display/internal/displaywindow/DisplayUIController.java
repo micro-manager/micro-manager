@@ -95,7 +95,6 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
 import org.micromanager.display.DisplayWindowControlsFactory;
-import org.micromanager.display.internal.SaveButton;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.MMStudio;

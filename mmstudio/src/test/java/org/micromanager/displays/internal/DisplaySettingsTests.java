@@ -23,8 +23,8 @@ public class DisplaySettingsTests {
       assertEquals(ds.getAutoscaleIgnoredQuantile(), fromMap.getAutoscaleIgnoredQuantile(), 0.00001);
       assertEquals(ds.getChannelColorMode(), fromMap.getChannelColorMode());
       assertEquals(ds.getPlaybackFPS(), fromMap.getPlaybackFPS(), 0.000001);
-      assertEquals(ds.getShouldAutostretch(), fromMap.getShouldAutostretch());
-      assertEquals(ds.getShouldScaleWithROI(), fromMap.getShouldScaleWithROI());
+      assertEquals(ds.isAutostretchEnabled(), fromMap.isAutostretchEnabled());
+      assertEquals(ds.isROIAutoscaleEnabled(), fromMap.isROIAutoscaleEnabled());
       
       // TODO: Change Channel and Component Display Settings
       

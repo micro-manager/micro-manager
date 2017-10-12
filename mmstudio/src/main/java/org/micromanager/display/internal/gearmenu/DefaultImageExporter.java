@@ -36,7 +36,7 @@ import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import org.micromanager.data.Coords;
-import org.micromanager.data.Datastore;
+import org.micromanager.data.DataProvider;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.display.ImageExporter.OutputFormat;
@@ -51,7 +51,7 @@ public final class DefaultImageExporter implements ImageExporter {
     * exporting.
     */
    public static class ExporterLoop {
-      private Datastore store_;
+      private DataProvider store_;
       private final String axis_;
       private final int startIndex_;
       private final int stopIndex_;
@@ -89,7 +89,7 @@ public final class DefaultImageExporter implements ImageExporter {
        */
       public void setDisplay(DisplayWindow display) {
          if (display != null) {
-            store_ = display.getDatastore();
+            store_ = display.getDataProvider();
          }
          if (child_ != null) {
             child_.setDisplay(display);
