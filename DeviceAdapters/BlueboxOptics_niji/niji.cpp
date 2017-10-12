@@ -265,8 +265,9 @@ void Controller::GenerateIntensityProperties()
       CreateProperty(propertyName.c_str(), "100", MM::Integer, false, pActEx);
       SetPropertyLimits(propertyName.c_str(), 0, 100);
 
-      //channel intensities are initialized to 0
+      // channel intensities are initialized to 100%
       channelIntensities_.push_back(100);
+      SetChannelIntensity(100, index);
    }
 }
 
