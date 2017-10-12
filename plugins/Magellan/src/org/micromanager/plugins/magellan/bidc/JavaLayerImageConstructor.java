@@ -106,7 +106,7 @@ public class JavaLayerImageConstructor {
     * to go way faster than images can be constructed
     *
     */
-   public void getMagellanTaggedImagesAndAddToAcq(AcquisitionEvent event, final long currentTime) throws Exception {
+   public void getMagellanTaggedImagesAndAddToAcq(AcquisitionEvent event, final long currentTime, double exposure) throws Exception {
       if (javaLayerConstruction_) {
          //Images go into circular buffer one channel at a time followed by succsessive frames
          //want to change the order to all frames of a channel at a time
@@ -179,8 +179,8 @@ public class JavaLayerImageConstructor {
          }
       } else {
          for (int c = 0; c < core_.getNumberOfCameraChannels(); c++) {
-            MagellanTaggedImage img = convertTaggedImage(core_.getTaggedImage(c));
-            MagellanEngine.addImageMetadata(img.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(), 1);
+            MagellanTaggedImage img = convertTaggedImage(core_.getTaggedImage(c));          
+            MagellanEngine.addImageMetadata(img.tags, event, event.timeIndex_, c, currentTime - event.acquisition_.getStartTime_ms(), exposure);
             event.acquisition_.addImage(img);
          }
       }

@@ -300,7 +300,7 @@ public class MagellanEngine {
         loopHardwareCommandRetries(new HardwareCommand() {
             @Override
             public void run() throws Exception {
-                JavaLayerImageConstructor.getInstance().getMagellanTaggedImagesAndAddToAcq(event, currentTime);
+                JavaLayerImageConstructor.getInstance().getMagellanTaggedImagesAndAddToAcq(event, currentTime, event.acquisition_.channels_.get(event.channelIndex_).exposure_);
             }
         }, "getting tagged image");
 
@@ -473,7 +473,7 @@ public class MagellanEngine {
     }
 
     public static void addImageMetadata(JSONObject tags, AcquisitionEvent event, int timeIndex,
-            int camChannelIndex, long elapsed_ms, int exposure) {
+            int camChannelIndex, long elapsed_ms, double exposure) {
         //add tags
         try {
             long gridRow = event.acquisition_.getStorage().getGridRow(event.positionIndex_, 0);
@@ -486,6 +486,7 @@ public class MagellanEngine {
             MD.setZPositionUm(tags, event.zPosition_);
             MD.setElapsedTimeMs(tags, elapsed_ms);
             MD.setImageTime(tags, (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss -")).format(Calendar.getInstance().getTime()));
+            MD.setExposure(tags, exposure);
             MD.setGridRow(tags, gridRow);
             MD.setGridCol(tags, gridCol);
             MD.setStageX(tags, event.xyPosition_.getCenter().x);
