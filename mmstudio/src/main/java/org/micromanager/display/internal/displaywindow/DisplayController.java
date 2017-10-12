@@ -518,8 +518,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                return;
             }
 
-            // TODO Apply settings other than image rendering, such as zoom
-
             uiController_.applyDisplaySettings(adjustedSettings);
          }
       });
