@@ -22,6 +22,8 @@ package org.micromanager.display.internal;
 
 import com.google.common.base.Preconditions;
 import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +34,7 @@ import org.json.JSONObject;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.UserProfile;
+import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
@@ -354,7 +357,15 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       mpmv.putPropertyMap(PROFILEKEY + "-" + key, this.toPropertyMap());
    }  
    
-   public DisplaySettings restoreFromProfile(UserProfile profile, String key) {
+   
+   /**
+    * Save these DisplaySettings to the User Profile.
+    * @param profile UserProfile to save these Display Settings to
+    * @param key Key use to retrieve the DisplaySettings
+    *             Will be pre-pended with PROFILEKEY
+    * @return Stored DisplaySettings or null if none found
+    */
+   public static DisplaySettings restoreFromProfile(UserProfile profile, String key) {
       MutablePropertyMapView mpmv = profile.getSettings(DefaultDisplaySettings.class);
       final String finalKey = new StringBuilder(PROFILEKEY).append("-").append(key).toString();
       if (mpmv.containsPropertyMap(finalKey)) {
@@ -363,34 +374,6 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       }
       return null;
    }
-   
-   
-   /**
-    * Set new settings in the user's profile.
-    * @param key As with getStandardSettings, a specific key to use for
-    *        this type of display.
-    */
-      /*
-      profile.setDouble(DefaultDisplaySettings.class,
-            key + ANIMATION_FPS_DOUBLE,
-            settings.getPlaybackFPS());
-      if (settings.getChannelColorMode() != null) {
-         profile.setInt(DefaultDisplaySettings.class,
-               key + CHANNEL_COLOR_MODE,
-               settings.getChannelColorMode().getIndex());
-      }
-      profile.setDouble(DefaultDisplaySettings.class,
-            key + ZOOM_RATIO, settings.getZoomRatio());
-      profile.setBoolean(DefaultDisplaySettings.class,
-            key + SHOULD_SYNC_CHANNELS, settings.getShouldSyncChannels());
-      profile.setBoolean(DefaultDisplaySettings.class,
-            key + SHOULD_AUTOSTRETCH, settings.getShouldAutostretch());
-      profile.setBoolean(DefaultDisplaySettings.class,
-            key + SHOULD_SCALE_WITH_ROI, settings.getShouldScaleWithROI());
-      profile.setDouble(DefaultDisplaySettings.class,
-            key + EXTREMA_PERCENTAGE, settings.getExtremaPercentage());
-      */
-
    
 
    /**
@@ -992,41 +975,74 @@ public final class DefaultDisplaySettings implements DisplaySettings {
     */
    public static DisplaySettings fromPropertyMap(PropertyMap pMap) {
       DefaultDisplaySettings.Builder ddsb = new DefaultDisplaySettings.Builder();
-      
-      // TODO: (NS) not sure if it is really necessary to test each key 
-      if (pMap.containsDouble(PropertyKey.ZOOM_RATIO.key())) {
-         ddsb.zoomRatio(pMap.getDouble(PropertyKey.ZOOM_RATIO.key(), ddsb.zoom_));
-      }
-      if (pMap.containsDouble(PropertyKey.PLAYBACK_FPS.key())) {
-         ddsb.playbackFPS(pMap.getDouble(PropertyKey.PLAYBACK_FPS.key(), ddsb.fps_));
-      }
-      if (pMap.containsStringForEnum(PropertyKey.COLOR_MODE.key(), ColorMode.class)) {
-         ddsb.colorMode(pMap.getStringAsEnum(PropertyKey.COLOR_MODE.key(), 
-                 ColorMode.class, ddsb.mode_));
-      }
-      if (pMap.containsBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key())) {
-         ddsb.uniformChannelScaling(pMap.getBoolean(
-                 PropertyKey.UNIFORM_CHANNEL_SCALING.key(), ddsb.useUniformChannelScaling_));
-      }
-      if (pMap.containsBoolean(PropertyKey.AUTOSTRETCH.key())) {
-         ddsb.autostretch(pMap.getBoolean(PropertyKey.AUTOSTRETCH.key(), ddsb.autostretch_));
-      }
-      if (pMap.containsBoolean(PropertyKey.ROI_AUTOSCALE.key())) {
-         ddsb.roiAutoscale(pMap.getBoolean(PropertyKey.ROI_AUTOSCALE.key(), ddsb.useROI_));
-      }
-      if (pMap.containsDouble(PropertyKey.ACUTOSCALE_IGNORED_QUANTILE.key())) {
-         ddsb.autoscaleIgnoredQuantile(pMap.getDouble(PropertyKey.ACUTOSCALE_IGNORED_QUANTILE.key(), 
-                 ddsb.extremaQuantile_));
-      }
-      
-      if (pMap.containsPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key())) {
-         List<PropertyMap> propertyMapList = pMap.getPropertyMapList( 
-                 PropertyKey.CHANNEL_SETTINGS.key(), new ArrayList<PropertyMap>());
-         for (int i = 0; i < propertyMapList.size(); i++) {
-            ddsb.channel(i, DefaultChannelDisplaySettings.fromPropertyMap(propertyMapList.get(i)));
+     
+      if (pMap != null) {
+         
+         if (pMap.containsDouble(PropertyKey.ZOOM_RATIO.key())) {
+            ddsb.zoomRatio(pMap.getDouble(PropertyKey.ZOOM_RATIO.key(), ddsb.zoom_));
          }
-      }      
-      
+         if (pMap.containsDouble(PropertyKey.PLAYBACK_FPS.key())) {
+            ddsb.playbackFPS(pMap.getDouble(PropertyKey.PLAYBACK_FPS.key(), ddsb.fps_));
+         }
+         if (pMap.containsStringForEnum(PropertyKey.COLOR_MODE.key(), ColorMode.class)) {
+            ddsb.colorMode(pMap.getStringAsEnum(PropertyKey.COLOR_MODE.key(),
+                    ColorMode.class, ddsb.mode_));
+         }
+         if (pMap.containsBoolean(PropertyKey.UNIFORM_CHANNEL_SCALING.key())) {
+            ddsb.uniformChannelScaling(pMap.getBoolean(
+                    PropertyKey.UNIFORM_CHANNEL_SCALING.key(), ddsb.useUniformChannelScaling_));
+         }
+         if (pMap.containsBoolean(PropertyKey.AUTOSTRETCH.key())) {
+            ddsb.autostretch(pMap.getBoolean(PropertyKey.AUTOSTRETCH.key(), ddsb.autostretch_));
+         }
+         if (pMap.containsBoolean(PropertyKey.ROI_AUTOSCALE.key())) {
+            ddsb.roiAutoscale(pMap.getBoolean(PropertyKey.ROI_AUTOSCALE.key(), ddsb.useROI_));
+         }
+         if (pMap.containsDouble(PropertyKey.ACUTOSCALE_IGNORED_QUANTILE.key())) {
+            ddsb.autoscaleIgnoredQuantile(pMap.getDouble(PropertyKey.ACUTOSCALE_IGNORED_QUANTILE.key(),
+                    ddsb.extremaQuantile_));
+         }
+         if (pMap.containsPropertyMapList(PropertyKey.CHANNEL_SETTINGS.key())) {
+            List<PropertyMap> propertyMapList = pMap.getPropertyMapList(
+                    PropertyKey.CHANNEL_SETTINGS.key(), new ArrayList<PropertyMap>());
+            for (int i = 0; i < propertyMapList.size(); i++) {
+               ddsb.channel(i, DefaultChannelDisplaySettings.fromPropertyMap(propertyMapList.get(i)));
+            }
+         }
+      } // note that if PropertyMap was null, the builder will return defaults
+
       return ddsb.build();
    }
+
+   /**
+    * Extracts DisplaySettings from given File
+    *
+    * @param sourceFile
+    * @return
+    */  
+   public static DisplaySettings getSavedDisplaySettings(final File sourceFile) {
+      if (sourceFile.canRead()) {
+         try {
+            return DefaultDisplaySettings.fromPropertyMap(PropertyMaps.loadJSON(sourceFile));
+         } catch (IOException ioe) {
+            ReportingUtils.logError(ioe, "Error reading: " + sourceFile.getPath());
+         }  
+      } else {
+         ReportingUtils.logError("No display settings file found at: " + sourceFile.getPath());
+      }
+      return null;
+   }
+   
+      
+   public void save(File destination) {
+      try {
+         if (!toPropertyMap().saveJSON(destination, true, false)) {
+            ReportingUtils.logError("Failed to save Display Settings to: " + destination.getPath());
+         }
+      } catch (IOException ioe) {
+         ReportingUtils.logError(ioe, "Failed to save Display Settings to: " + destination.getPath());
+      }
+   }
+
+   
 }

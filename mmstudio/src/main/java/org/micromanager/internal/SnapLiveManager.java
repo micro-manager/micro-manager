@@ -52,6 +52,7 @@ import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultRewritableDatastore;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.data.internal.StorageRAM;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DataViewerListener;
@@ -71,7 +72,6 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
-//import org.micromanager.display.RequestToCloseEvent;
 
 /**
  * This class is responsible for all logic surrounding live mode and the
@@ -466,19 +466,11 @@ public final class SnapLiveManager extends DataViewerListener implements org.mic
       display_ = new DisplayController.Builder(store_).
             controlsFactory(controlsFactory).
             shouldShow(true).build();
+      DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
+              studio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
+      display_.setDisplaySettings(ds);
       studio_.displays().addViewer(display_);
 
-      // HACK: coerce single-camera setups to grayscale (instead of the
-      // default of composite mode) if there is no existing profile settings
-      // for the user and we do not have a multicamera setup.
-      DisplaySettings.ColorMode mode = DefaultDisplaySettings.getStandardColorMode(TITLE, null);
-      if (mode == null && numCameraChannels_ == 1) {
-         DisplaySettings settings = display_.getDisplaySettings();
-         settings = settings.copyBuilder()
-            .colorMode(DisplaySettings.ColorMode.GRAYSCALE)
-            .build();
-         display_.setDisplaySettings(settings);
-      }
       display_.registerForEvents(this);
       display_.addListener(this, 1);
       display_.setCustomTitle(TITLE);
@@ -775,18 +767,6 @@ public final class SnapLiveManager extends DataViewerListener implements org.mic
       }
       return display_;
    }
-/*
-   @Subscribe
-   public void onRequestToClose(RequestToCloseEvent event) {
-      // Closing is fine by us, but we need to stop live mode first.
-      setLiveMode(false);
-      event.getDisplay().forceClosed();
-      // Force a reset for next time, in case of changes that we don't pick up
-      // on (e.g. a processor that failed to notify us of changes in image
-      // parameters.
-      shouldForceReset_ = true;
-   }
-*/
 
    @Subscribe
    public void onPipelineChanged(NewPipelineEvent event) {
@@ -805,6 +785,10 @@ public final class SnapLiveManager extends DataViewerListener implements org.mic
    @Override
    public boolean canCloseViewer(DataViewer viewer) {
       if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
+         if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
+            ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
+                    studio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+         }
          setLiveMode(false);
       }
       return true;

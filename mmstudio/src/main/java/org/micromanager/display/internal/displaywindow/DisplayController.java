@@ -19,6 +19,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.eventbus.Subscribe;
 import ij.ImagePlus;
 import java.awt.Window;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,6 +73,8 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
+import org.micromanager.data.Datastore;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Main controller for the standard image viewer.
@@ -710,14 +713,15 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void overlayConfigurationChanged(Overlay overlay) {
-      if (overlay.isVisible()) {
+      if (overlay.isVisible() && uiController_ != null) {
          uiController_.overlaysChanged();
       }
    }
 
+   // TODO: why this duplicate function?
    @Override
    public void overlayVisibleChanged(Overlay overlay) {
-      uiController_.overlaysChanged();
+      overlayConfigurationChanged(overlay);
    }
 
    //
@@ -869,10 +873,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
       @Override
       public void run() {
-         if (uiController_ == null) {
-            return;
+         if (uiController_ != null) {
+            uiController_.expandDisplayedRangeToInclude(coords_);
          }
-         uiController_.expandDisplayedRangeToInclude(coords_);
       }
    }
 
@@ -1021,14 +1024,27 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    @Override
    public void close() {
       postEvent(DataViewerWillCloseEvent.create(this));
+      // attempt to save Display Settings
+      // TODO: Are there problems with multiple viewers on one Datastore?
+      if (dataProvider_ instanceof Datastore) {
+         Datastore ds = (Datastore) dataProvider_;
+         if (ds.getSavePath() != null) {
+            File displaySettingsFile = new File(ds.getSavePath() + File.separator + "DisplaySettings.json");
+            ((DefaultDisplaySettings) getDisplaySettings()).save(displaySettingsFile);
+         }
+      }
       try {
          computeQueue_.shutdown();
       } catch (InterruptedException ie) {
          // TODO: report exception
       }
       animationController_.shutdown();
-      uiController_.close();
-      uiController_ = null;
+      if (uiController_ == null) {
+         ReportingUtils.logError("DisplayController's reference to UIController is null where it shouldn't be");
+      } else {
+         uiController_.close();
+         uiController_ = null;
+      }
       closeCompleted_ = true;
       dispose();
 
@@ -1038,7 +1054,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    }
    
    @Subscribe
-   public void onDatastoreClosed(DatastoreClosingEvent event) {
+   public void onDatastoreClosing(DatastoreClosingEvent event) {
       if (event.getDatastore().equals(dataProvider_)) {
          requestToClose();
       }
@@ -1125,4 +1141,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public void setCustomTitle(String title) {
       // TODO
    }
+   
+   
 }

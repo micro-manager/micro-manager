@@ -24,6 +24,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
+import org.micromanager.SnapLiveManager;
 import org.micromanager.StagePosition;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
@@ -392,6 +393,8 @@ public enum PropertyKey {
    },
 
    DISPLAY_SETTINGS("DisplaySettings", SummaryMetadata.class),
+   
+   DISPLAY_SETTINGS_FILE_NAME("DisplaySettings.json", DisplaySettings.class),
 
    ELAPSED_TIME_MS("ElapsedTime-ms", Metadata.class) {
       @Override
@@ -1074,6 +1077,8 @@ public enum PropertyKey {
          return ja;
       }
    },
+   
+   SNAP_LIVE_DISPLAY_SETTINGS("SnapLiveDisplaySettings", SnapLiveManager.class),
 
    SLICES("Slices", SummaryMetadata.class) { // See INTENDED_DIMENSIONS
       @Override

@@ -217,13 +217,6 @@ public interface DisplayWindow extends DataViewer, Closeable {
    public void close();
 
    /**
-    * Obsolete equivalent of {@link close}.
-    * @deprecated use {@link close} instead
-    */
-   @Deprecated
-   public void forceClosed();
-
-   /**
     * Enable or disable full screen mode.
     *
     * Calls are ignored if the display has closed.
