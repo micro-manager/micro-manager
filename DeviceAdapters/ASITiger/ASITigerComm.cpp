@@ -253,13 +253,12 @@ int CTigerCommHub::DetectInstalledDevices()
             break;
          case 'i': // TGLED
             name = g_LEDDeviceName;
-            // on TGLED card multiple channels fall under 1 axis
-            //Now lets figure out how many channels there are onboard
+            // on TGLED card multiple channels fall under 1 axis, need to figure out how many channels
             command.str("");
             command << build.vAxesAddr[i] << "BU";
             ret = QueryCommandVerify(command.str(), "TGLED");
             if (ret == ERR_UNRECOGNIZED_ANSWER)
-            { //error , lets go with a guess which is 4
+            { // error, guess 4 as reasonable default
                channels = 4;
             }
             else
@@ -269,14 +268,13 @@ int CTigerCommHub::DetectInstalledDevices()
             break; 
          case 'c': // TGPMT
             name = g_PMTDeviceName;
-            // on TGPMT card multiple channels fall under 1 axis
-            //Now lets figure out how many channels there are onboard
+            // on TGPMT card multiple channels fall under 1 axis, need to figure out how many channels
             command.str("");
             command << build.vAxesAddr[i] << "BU";
             ret = QueryCommandVerify(command.str(), "TGPMT");
             if (ret == ERR_UNRECOGNIZED_ANSWER)
-            { //error , lets go with a guess which is 2
-               channels=2;
+            { // error, guess 2 as reasonable default
+               channels = 2;
             }
             else
             {
@@ -287,8 +285,10 @@ int CTigerCommHub::DetectInstalledDevices()
             name = g_LensDeviceName;
             break;
          case 'v': // slave axis
-            // do nothing
-            break;
+            command.str("");
+            command << "Found slave axis letter " <<  build.vAxesLetter[i] << "; skipping it";
+            LogMessage(command.str());
+            continue; // go on to next axis (skips below code and goes to next for loop iteration)
          default:
             command.str("");
             command << "Device type " <<  build.vAxesType[i] << " not supported by Tiger device adapter, skipping it";
