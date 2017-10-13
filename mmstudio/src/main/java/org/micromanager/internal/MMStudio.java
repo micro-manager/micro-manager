@@ -425,6 +425,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // new ClickToMoveManager(this, core_);
 
       snapLiveManager_ = new SnapLiveManager(this, core_);
+      events().registerForEvents(snapLiveManager_);
 
       DefaultShutterManager.instantiate(studio_);
 

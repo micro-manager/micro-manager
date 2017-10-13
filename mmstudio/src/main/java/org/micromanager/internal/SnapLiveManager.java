@@ -132,7 +132,6 @@ public final class SnapLiveManager extends DataViewerListener implements org.mic
    public SnapLiveManager(Studio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
-      studio_.events().registerForEvents(this);
    }
 
    @Override

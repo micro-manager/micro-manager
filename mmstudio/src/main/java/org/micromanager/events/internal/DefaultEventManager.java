@@ -8,9 +8,9 @@ import org.micromanager.internal.utils.EventBusExceptionLogger;
 // a system-wide EventBus for certain general-purpose events.
 public final class DefaultEventManager implements EventManager {
    // Singleton.
-   private static final DefaultEventManager staticInstance_;
+   private static final DefaultEventManager STATIC_INSTANCE;
    static {
-      staticInstance_ = new DefaultEventManager();
+      STATIC_INSTANCE = new DefaultEventManager();
    }
 
    private final EventBus bus_;
@@ -34,6 +34,6 @@ public final class DefaultEventManager implements EventManager {
    }
 
    public static DefaultEventManager getInstance() {
-      return staticInstance_;
+      return STATIC_INSTANCE;
    }
 }
