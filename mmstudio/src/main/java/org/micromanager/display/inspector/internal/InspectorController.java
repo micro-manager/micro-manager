@@ -42,6 +42,7 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.EventPublisher;
 import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.DataViewerCollection;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
@@ -360,13 +361,22 @@ public final class InspectorController
    }
 
    private void viewerToFrontButtonActionPerformed(ActionEvent e) {
-      Object selectedItem = viewerComboBox_.getModel().getSelectedItem();
-      // TODO: in this case, the Selected item is of type String.  Need to look 
-      // into the viewerComboBox_ code more...
+      Object selectedItem = viewerComboBox_.getSelectedItem();
+      // TODO: in this case, the Selected item is of type String.  
+      // I don't understand why, but for now just deal with it
       if (selectedItem instanceof ViewerItem) {
          ViewerItem vi = (ViewerItem) selectedItem;
          if (vi.getDataViewer() instanceof DisplayController) {
             ((DisplayController) vi.getDataViewer()).getWindow().toFront();
+         }
+      } else if (selectedItem instanceof String) {
+         List<DataViewer> viewers = viewerCollection_.getAllDataViewers();
+         for (DataViewer viewer : viewers) {
+            if (viewer.getName().equals(selectedItem)) {
+               if (viewer instanceof DisplayWindow) {
+                  ((DisplayWindow) viewer).getWindow().toFront();
+               }
+            }
          }
       }
    }
