@@ -376,9 +376,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       updateZoomUIState();
       canvasDidChangeSize();
-      
-      // Need to set DisplaySettings now after the ijBridge has been created
-      applyDisplaySettings(displayController_.getDisplaySettings());
+
    }
 
    @MustCallOnEDT
@@ -734,7 +732,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    @MustCallOnEDT
    void displayImages(ImagesAndStats images) {
-      setupDisplayUI();
+      boolean firstTime = false;
+      if (ijBridge_ == null) {
+         firstTime = true;
+         setupDisplayUI();  // creates ijBridge amongst other things
+      }
 
       displayedImages_ = images;
       Coords nominalCoords = images.getRequest().getNominalCoords();
@@ -749,8 +751,20 @@ public final class DisplayUIController implements Closeable, WindowListener,
             scrollBarPanel_.setAxisPosition(axis, nominalCoords.getIndex(axis));
             updateAxisPositionIndicator(axis, nominalCoords.getIndex(axis), -1);
          }
+      } 
+      
+      if (firstTime) {
+         // We need to set the displaySettings after the ijBride was created
+         // (in the setupDisplayUI function), and after the display range
+         // has been expanded to include all Coords in the "images"
+         // If we do not do so, only one channel will be shown
+         // If we call applyDisplaySettings every time, the Display fps 
+         // will never be shown
+         applyDisplaySettings(displayController_.getDisplaySettings());
+         // This should be invariant, so only need to do this for first image
+         infoLabel_.setText(this.getInfoString()); 
       }
-
+      
       ijBridge_.mm2ijSetDisplayPosition(nominalCoords);
       applyAutostretch(images, displayController_.getDisplaySettings());
 
@@ -758,8 +772,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
          updatePixelInformation(); // TODO Can skip if identical images
       }
       
-      infoLabel_.setText(this.getInfoString()); // TODO, this should be invariant, so only need to do this for first image
-
       repaintScheduledForNewImages_.set(true);
    }
 

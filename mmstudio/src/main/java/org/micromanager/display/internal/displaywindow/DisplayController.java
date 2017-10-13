@@ -243,7 +243,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
 
       if (instance.dataProvider_.getNumImages() > 0) {
-         // TODO Get _first_ image, not just any
          Coords.Builder b = Coordinates.builder();
          for (String axis : instance.dataProvider_.getAxes()) {
             b.index(axis, 0);
@@ -278,9 +277,6 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       animationController_ = AnimationController.create(animationState_);
       animationController_.setPerformanceMonitor(perfMon_);
       animationController_.addListener(this);
-      // TODO Shut down animation controller
-
-      // TODO compute queue needs shut down
 
       uiController_ = DisplayUIController.create(this, controlsFactory_,
             animationController_);
