@@ -467,6 +467,10 @@ public final class SnapLiveManager extends DataViewerListener implements org.mic
             shouldShow(true).build();
       DisplaySettings ds = DefaultDisplaySettings.restoreFromProfile(
               studio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key() );
+      if (ds == null) {
+         ds = DefaultDisplaySettings.builder().colorMode(
+                 DisplaySettings.ColorMode.GRAYSCALE).build();
+      }
       display_.setDisplaySettings(ds);
       studio_.displays().addViewer(display_);
 
