@@ -57,6 +57,7 @@ import org.micromanager.internal.utils.WindowPositioning;
 import org.scijava.plugin.Plugin;
 import org.micromanager.display.inspector.InspectorPanelController;
 import org.micromanager.display.inspector.InspectorPanelPlugin;
+import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.ShutdownCommencingEvent;
 
 
@@ -349,15 +350,25 @@ public final class InspectorController
 
       if (selectedItem == FRONTMOST_VIEWER_ITEM) {
          attachToFrontmostDataViewer();
+         viewerToFrontButton_.setEnabled(false);
       }
       else if (selectedItem instanceof ViewerItem) {
          DataViewer viewer = ((ViewerItem) selectedItem).getDataViewer();
          attachToFixedDataViewer(viewer);
+         viewerToFrontButton_.setEnabled(true);
       }
    }
 
    private void viewerToFrontButtonActionPerformed(ActionEvent e) {
-      // TODO
+      Object selectedItem = viewerComboBox_.getModel().getSelectedItem();
+      // TODO: in this case, the Selected item is of type String.  Need to look 
+      // into the viewerComboBox_ code more...
+      if (selectedItem instanceof ViewerItem) {
+         ViewerItem vi = (ViewerItem) selectedItem;
+         if (vi.getDataViewer() instanceof DisplayController) {
+            ((DisplayController) vi.getDataViewer()).getWindow().toFront();
+         }
+      }
    }
 
    @Override
