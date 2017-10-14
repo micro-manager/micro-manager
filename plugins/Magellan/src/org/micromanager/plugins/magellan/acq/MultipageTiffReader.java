@@ -268,7 +268,7 @@ public class MultipageTiffReader {
           ByteBuffer buffer = readIntoBuffer(offset + 8, header.getInt(4));
          return new JSONArray(getString(buffer));
       } catch (Exception ex) {
-         Log.log("Can't find display settings in file: " + file_.getName(), true);
+         Log.log("Can't find display settings in file: " + file_.getName(), false);
          return null;
       }
    }

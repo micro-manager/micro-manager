@@ -25,6 +25,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,6 +35,8 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.micromanager.plugins.magellan.json.JSONArray;
@@ -43,6 +46,7 @@ import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
 import org.micromanager.plugins.magellan.misc.LongPoint;
 import org.micromanager.plugins.magellan.misc.MD;
+import py4j.GatewayServer;
 
 /**
  * This class manages multiple multipage Tiff datasets, averaging multiple 2x2
@@ -186,6 +190,14 @@ public class MultiResMultipageTiffStorage {
 
    public boolean isRGB() {
        return rgb_;
+   }
+   
+   public int getXOverlap() {
+      return xOverlap_;
+   }
+
+   public int getYOverlap() {
+      return yOverlap_;
    }
    
    private void processSummaryMetadata() {
@@ -827,6 +839,14 @@ public class MultiResMultipageTiffStorage {
    public String getDiskLocation() {
       //For display purposes
       return directory_;
+   }
+   
+   public String getChannelName(int index) {
+      try {
+         return summaryMD_.getJSONArray("ChNames").getString(index);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Channel names missing");
+      }
    }
    
    public int getNumChannels() {

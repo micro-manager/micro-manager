@@ -17,6 +17,8 @@
 
 package org.micromanager.plugins.magellan.acq;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import org.micromanager.plugins.magellan.json.JSONObject;
 
 /**
@@ -33,6 +35,16 @@ public class MagellanTaggedImage {
       this.tags = tags;
    }
    
+  public byte[] get16BitPixelsAsByteArray() {
+     short[] shortArray = (short[]) pix;
+      ByteBuffer byteBuf = ByteBuffer.allocate(2 * shortArray.length );
+      for (int i = 0; i < shortArray.length; i++) {
+         byteBuf.putShort(shortArray[i]);
+      }
+      byteBuf.order(ByteOrder.BIG_ENDIAN);
+      return byteBuf.array();
+   }
+
    public boolean is8Bit() {
       return this.pix instanceof byte[];
    }
