@@ -67,6 +67,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.data.DataProviderHasNewImageEvent;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 
 /**
  * This class is used to execute most of the acquisition and image display
@@ -360,38 +361,7 @@ public final class MMAcquisition extends DataViewerListener {
       };
    }
 
-   /*
-   @Subscribe
-   public void onRequestToClose(RequestToCloseEvent event) {
-      // Prompt to stop the acquisition if it's still running. Only if our
-      // display is the display for the current active acquisition.
-      if (eng_.getAcquisitionDatastore() == store_) {
-         if (!eng_.abortRequest()) {
-            // User cancelled abort.
-            return;
-         }
-      }
-      if (store_.getSavePath() != null ||
-            studio_.displays().promptToSave(store_, display_)) {
-         // Datastore is saved, or user declined to save.
-         display_.forceClosed();
-         try {
-            store_.close();
-         }
-         catch (IOException e) {
-            // TODO XXX Report
-         }
-      }
-   }
-*/
-/*
-   @Subscribe
-   public void onDisplayDestroyed(DisplayDestroyedEvent event) {
-      display_.unregisterForEvents(this);
-      display_ = null;
-   }
-*/
-
+  
    @Subscribe
    public void onAcquisitionEnded(AcquisitionEndedEvent event) {
       try {
@@ -399,6 +369,9 @@ public final class MMAcquisition extends DataViewerListener {
       }
       catch (IOException e) {
          ReportingUtils.logError(e);
+      }
+      if (display_ .getDisplaySettings() instanceof DefaultDisplaySettings) {
+         ( (DefaultDisplaySettings) display_.getDisplaySettings() ).save(store_.getSavePath());
       }
       display_.removeListener(this);
       DefaultEventManager.getInstance().unregisterForEvents(this);
