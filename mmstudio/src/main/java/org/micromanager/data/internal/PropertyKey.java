@@ -555,7 +555,7 @@ public enum PropertyKey {
                // NS: not sure how to handle this.  Can we be sure only to 
                // receive the correct keys?  I see no straight forward way 
                // to copy other properties
-               MMStudio.getInstance().logs().showError("Found weird key in Intended dimensiona: " + key);
+               MMStudio.getInstance().logs().showError("Found weird key in Intended dimensions: " + key);
             }
          }
          dest.putPropertyMap(key(), builder.build());

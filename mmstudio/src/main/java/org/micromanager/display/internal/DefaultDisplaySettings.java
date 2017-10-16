@@ -433,6 +433,10 @@ public final class DefaultDisplaySettings implements DisplaySettings {
 
       /**
        * Convenience method for single-component settings.
+       * @param contrastMin - new value for contrastMin
+       * @param contrastMax - new value for contrastMax
+       * @param gamma - new gamma value
+       * @param isVisible - new boolean to indicate visibility 
        */
       public DefaultContrastSettings(Integer contrastMin, Integer contrastMax,
             Double gamma, Boolean isVisible) {
@@ -1032,7 +1036,12 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       return null;
    }
    
-      
+   /**
+    * Saves the current displaySettings to the indicated File
+    * DisplaySettings are saves as a JSON encoded PropertyMap
+    * 
+    * @param destination File to which these DisplaySettings should be saved
+    */
    public void save(File destination) {
       try {
          if (!toPropertyMap().saveJSON(destination, true, false)) {
@@ -1041,6 +1050,20 @@ public final class DefaultDisplaySettings implements DisplaySettings {
       } catch (IOException ioe) {
          ReportingUtils.logError(ioe, "Failed to save Display Settings to: " + destination.getPath());
       }
+   }
+   
+   /**
+    * Saves the current displaySettings to a file in the provided path.
+    * This file will be named using a common convention (DisplaySettings.json, 
+    * defined in PropertyKey.DISPLAY_SETTINGS_FILE_NAME).  
+    * 
+    * @param path path under which to create the DisplaySettings file 
+    */
+   public void save(String path) {
+      // TODO: test for sanity of input path?      
+      File displaySettingsFile = new File(path + 
+               File.separator + PropertyKey.DISPLAY_SETTINGS_FILE_NAME.key() );
+      save(displaySettingsFile);
    }
 
    

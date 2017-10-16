@@ -74,6 +74,7 @@ import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -1023,8 +1024,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       if (dataProvider_ instanceof Datastore) {
          Datastore ds = (Datastore) dataProvider_;
          if (ds.getSavePath() != null) {
-            File displaySettingsFile = new File(ds.getSavePath() + File.separator + "DisplaySettings.json");
-            ((DefaultDisplaySettings) getDisplaySettings()).save(displaySettingsFile);
+            ((DefaultDisplaySettings) getDisplaySettings()).save(ds.getSavePath());
          }
       }
       try {

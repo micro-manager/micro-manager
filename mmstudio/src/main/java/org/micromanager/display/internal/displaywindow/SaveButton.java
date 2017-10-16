@@ -29,6 +29,7 @@ import org.micromanager.Studio;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.DefaultDisplaySettings;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -48,6 +49,10 @@ public final class SaveButton extends JButton {
                   Datastore ds = (Datastore) dp;
                   savePath = ds.getSavePath();
                   ds.save(display.getWindow());
+                  if (display.getDisplaySettings() instanceof DefaultDisplaySettings) {
+                     ( (DefaultDisplaySettings) display.getDisplaySettings()).
+                             save(ds.getSavePath());
+                  }
                } else {
                   // TODO: save button should never have been shown
                   // For now, just log
