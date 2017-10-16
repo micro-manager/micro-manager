@@ -180,8 +180,10 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                ((DefaultImage) image).formatToPropertyMap());
          NonPropertyMapJSONFormats.coords().addToGson(jo,
                ((DefaultCoords) image.getCoords()).toPropertyMap());
+         Metadata imgMetadata = image.getMetadata().copyBuilderPreservingUUID().
+                 fileName(fileName).build();
          NonPropertyMapJSONFormats.metadata().addToGson(jo,
-               ((DefaultMetadata) image.getMetadata()).toPropertyMap());
+               ((DefaultMetadata) imgMetadata).toPropertyMap());
 
          Gson gson = new GsonBuilder().disableHtmlEscaping().
                setPrettyPrinting().create();
