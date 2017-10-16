@@ -25,8 +25,10 @@ import com.google.common.eventbus.Subscribe;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 import ij.ImagePlus;
 import ij.io.FileSaver;
@@ -57,7 +59,6 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.Storage;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.internal.propertymap.MM1JSONSerializer;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -71,7 +72,7 @@ import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
  */
 public final class StorageSinglePlaneTiffSeries implements Storage {
    private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
-         Arrays.asList(Coords.CHANNEL, Coords.TIME, Coords.Z,
+         Arrays.asList(Coords.CHANNEL, Coords.T, Coords.Z,
             Coords.STAGE_POSITION));
    private final DefaultDatastore store_;
    private final String dir_;
@@ -190,7 +191,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          String metadataJSON = gson.toJson(jo);
 
          saveImageFile(image, dir_, fileName, metadataJSON);
-         writeFrameMetadata(image, metadataJSON);
+         writeFrameMetadata(image, metadataJSON, fileName);
       }
 
       Coords coords = image.getCoords();
@@ -271,7 +272,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          DefaultImage result = new DefaultImage(pixels, width, height,
                bytesPerPixel, numComponents, coords, metadata);
          return result;
-      } catch (Exception ex) {
+      } catch (IllegalArgumentException ex) {
          ReportingUtils.logError(ex);
          return null;
       }
@@ -398,17 +399,21 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       Collections.sort(orderedChannelNames_);
    }
 
-   private void writeFrameMetadata(Image image, String metadataJSON) {
+   private void writeFrameMetadata(final Image image, final String metadataJSON,
+           final String fileName) {
       try {
-         String filename = createFileName(image.getCoords());
-         String coordsKey = "Coords-" + filename;
+         String coordsKey = "Coords-" + fileName;
+         
          // Use 0 for situations where there's no index information.
          int pos = Math.max(0, image.getCoords().getStagePosition());
-         String coordsJSON = ((DefaultCoords) image.getCoords()).
-               toPropertyMap().toJSON();
-         writeJSONMetadata(pos, coordsJSON, coordsKey);
+         JsonObject jo = new JsonObject();         
+         NonPropertyMapJSONFormats.coords().addToGson(jo,
+               ((DefaultCoords) image.getCoords()).toPropertyMap());
+         Gson gson = new GsonBuilder().disableHtmlEscaping().
+               setPrettyPrinting().create();
+         writeJSONMetadata(pos, gson.toJson(jo), coordsKey);
 
-         String mdKey = "Metadata-" + filename;
+         String mdKey = "Metadata-" + fileName;
          writeJSONMetadata(pos, metadataJSON, mdKey);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -420,6 +425,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          Writer metadataStream = metadataStreams_.get(pos);
          if (metadataStream == null) {
             ReportingUtils.logError("Failed to make a stream for location " + pos);
+            return;
          }
          if (!firstElement_) {
             metadataStream.write(",\n");
@@ -428,7 +434,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          metadataStream.write(json);
          metadataStream.flush();
          firstElement_ = false;
-      } catch (Exception e) {
+      } catch (IOException e) {
          ReportingUtils.logError(e);
       }
    }
@@ -464,7 +470,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             throw new IllegalArgumentException(String.format("Unexpected image format with %d bytes per pixel and %d components", bytesPerPixel, numComponents));
          }
          saveImageProcessor(proc, image, path, tiffFileName, metadataJSON);
-      } catch (Exception ex) {
+      } catch (IllegalArgumentException ex) {
          ReportingUtils.logError(ex);
       }
    }
@@ -589,7 +595,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
          }
          isMultiPosition_ = true;
       }
-      if (positions.size() == 0) {
+      if (positions.isEmpty()) {
          // Couldn't find either a metadata.txt or any position directories in
          // our directory. We've been handed a bad directory.
          throw new IOException("Unable to find dataset at " + dir_);
@@ -625,13 +631,13 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             // instead use the metadata stored in the TIFF as ImagePlus Info.
             for (Map.Entry<String, JsonElement> entry : data.entrySet()) {
                String key = entry.getKey();
-               String fileName = null;
-               Coords coords = null;
+               String fileName;
+               Coords coords;
                if (key.startsWith("Coords-")) {
                   // 2.0 method. SummaryMetadata is already valid.
-                  PropertyMap coordsPmap =
-                        MM1JSONSerializer.fromGson(entry.getValue());
-                  coords = DefaultCoords.fromPropertyMap(coordsPmap);
+                  coords = DefaultCoords.fromPropertyMap(
+                     NonPropertyMapJSONFormats.coords().fromGson(entry.getValue()));
+                  
                   // TODO Filename should be read from JSON key instead of
                   // using fixed rule!
                   fileName = createFileName(coords);
@@ -685,7 +691,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                   ReportingUtils.showError(ex);
                }
             }
-         } catch (Exception ex) {
+         } catch (NumberFormatException ex) {
             ReportingUtils.showError(ex);
          }
       }
@@ -722,7 +728,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       try {
          return parser.parse(reader).getAsJsonObject();
       }
-      catch (Exception e) {
+      catch (JsonIOException e) {
          // Try again with an added curly brace because some old versions
          // failed to write the final '}' under some circumstances.
          try {
@@ -730,7 +736,25 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
             reader.setLenient(true);
             return parser.parse(reader).getAsJsonObject();
          }
-         catch (Exception e2) {
+         catch (JsonIOException e2) {
+            // Give up.
+            return null;
+         } catch (JsonSyntaxException e2) {
+            // Give up.
+            return null;
+         }
+      } catch (JsonSyntaxException e) {
+         // Try again with an added curly brace because some old versions
+         // failed to write the final '}' under some circumstances.
+         try {
+            reader = new JsonReader(new StringReader(fileStr + "}"));
+            reader.setLenient(true);
+            return parser.parse(reader).getAsJsonObject();
+         }
+         catch (JsonIOException e2) {
+            // Give up.
+            return null;
+         } catch (JsonSyntaxException e2) {
             // Give up.
             return null;
          }
