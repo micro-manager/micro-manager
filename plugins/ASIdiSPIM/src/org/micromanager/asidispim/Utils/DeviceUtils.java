@@ -166,7 +166,6 @@ public class DeviceUtils {
          case PCOCAM:
             // trigger polarity not accessible in Micro-Manager, so we have to trust it is correct
             checkPropertyExists(key, Properties.Keys.TRIGGER_MODE_PCO);
-            checkPropertyExists(key, Properties.Keys.PIXEL_RATE);
             break;
          case ANDORCAM:
             // TODO check trigger polarity
