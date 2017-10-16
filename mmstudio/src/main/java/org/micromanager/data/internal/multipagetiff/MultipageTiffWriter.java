@@ -335,6 +335,7 @@ public final class MultipageTiffWriter {
     * map entries for backwards reading capability A file that has been
     * finished should have everything it needs to be properly reopened in MM or
     * by a basic TIFF reader
+    * @throws java.io.IOException
     */
    public void finish() throws IOException {
       writeNullOffsetAfterLastImage();
@@ -354,6 +355,8 @@ public final class MultipageTiffWriter {
     * Called when entire set of files (i.e. acquisition) is finished. Adds in
     * all the extra (but nonessential) stuff--comments, display settings,
     * OME/IJ metadata, and truncates the file to a reasonable length
+    * @param omeXML
+    * @throws java.io.IOException
     */
    public void close(String omeXML) throws IOException {
       String summaryComment = CommentsHelper.getSummaryComment(
@@ -362,7 +365,7 @@ public final class MultipageTiffWriter {
 
       try {
          writeImageDescription(omeXML, omeDescriptionTagPosition_);
-      } catch (Exception ex) {
+      } catch (IOException ex) {
          ReportingUtils.showError("Error writing OME metadata");
       }
       writeImageDescription(getIJDescriptionString(),
@@ -391,11 +394,9 @@ public final class MultipageTiffWriter {
    public boolean hasSpaceForFullOMEMetadata(int length) {
       //5 MB extra padding..just to be safe
       int extraPadding = 5000000; 
-      long size = length + SPACE_FOR_COMMENTS + numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
-      if ( size >= MAX_FILE_SIZE) {
-         return false;
-      }
-      return true;
+      long size = length + SPACE_FOR_COMMENTS + numChannels_ * 
+              DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
+      return size < MAX_FILE_SIZE;
    }
    
    public boolean hasSpaceToWrite(Image img, int omeMDLength) {
@@ -408,10 +409,7 @@ public final class MultipageTiffWriter {
       numChannels_ * DISPLAY_SETTINGS_BYTES_PER_CHANNEL + extraPadding + filePosition_;
       size += omeMDLength;
       
-      if ( size >= MAX_FILE_SIZE) {
-         return false;
-      }
-      return true;
+      return size < MAX_FILE_SIZE;
    }
    
    public boolean isClosed() {
@@ -605,12 +603,16 @@ public final class MultipageTiffWriter {
                //skip alpha channel
                if ((i + 1) % 4 != 0) {
                   //swap R and B for correct format
-                  if ((i + 1) % 4 == 1 ) {
-                     rgbaPix[count] = originalPix[i + 2];
-                  } else if ((i + 1) % 4 == 3) {
-                     rgbaPix[count] = originalPix[i - 2];
-                  } else {                      
-                     rgbaPix[count] = originalPix[i];
+                  switch ((i + 1) % 4) {
+                     case 1:
+                        rgbaPix[count] = originalPix[i + 2];
+                        break;
+                     case 3:
+                        rgbaPix[count] = originalPix[i - 2];
+                        break;
+                     default:
+                        rgbaPix[count] = originalPix[i];
+                        break;
                   }
                   count++;
                }
@@ -623,12 +625,16 @@ public final class MultipageTiffWriter {
             for (int i = 0; i < originalPix.length; i++) {
                if ((i + 1) % 4 != 0) {
                   //swap R and B for correct format
-                  if ((i + 1) % 4 == 1 ) {
-                     rgbaPix[count] = originalPix[i + 2];
-                  } else if ((i + 1) % 4 == 3) {
-                     rgbaPix[count] = originalPix[i - 2];
-                  } else {                      
-                     rgbaPix[count] = originalPix[i];
+                  switch ((i + 1) % 4) {
+                     case 1:
+                        rgbaPix[count] = originalPix[i + 2];
+                        break;
+                     case 3:
+                        rgbaPix[count] = originalPix[i - 2];
+                        break;
+                     default:
+                        rgbaPix[count] = originalPix[i];
+                        break;
                   }
                   count++;
                }
@@ -792,9 +798,10 @@ public final class MultipageTiffWriter {
          String name = summary.getSafeChannelName(i);
          Color color = RememberedChannelSettings.getColorForChannel(
                name, channelGroup, Color.WHITE);
-         // HACK: defaulting to a gamma range of 1.0, as display settings
+         // Defaulting to a gamma range of 1.0, as display settings
          // aren't available here and that's the only place we can access that
-         // information.
+         // information. Also, non-linear LUTs do not make much sense in the 
+         // ImageJ context
          LUT lut = ImageUtils.makeLUT(color, 1.0);
          for (byte b : lut.getBytes()) {
             mdBuffer.put(bufferPosition, b);
@@ -835,19 +842,27 @@ public final class MultipageTiffWriter {
          sb.append("spacing=").append(zStepUm_).append("\n");
       }
       //write single channel contrast settings or display mode if multi channel
+      // it would be nice to have the display settings of the current viewer,
+      // but we don't, and do not want to couple Display Settings to Data storage,
+      // so come up with reasonable defaults
       DisplaySettings settings = DefaultDisplaySettings.builder().build();
       if (numChannels_ == 1) {
-         sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
-         sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
+         sb.append("mode=gray\n");
+         // sb.append("min=").append(settings.getSafeContrastMin(0, 0, 0)).append("\n");
+         //sb.append("max=").append(settings.getSafeContrastMax(0, 0, 0)).append("\n");
       } else {
+         // multiple channels?  go for composite display
+         sb.append("mode=composite\n");
+         /*
          DisplaySettings.ColorMode mode = settings.getChannelColorMode();
          if (mode == DisplaySettings.ColorMode.COMPOSITE) {
-            sb.append("mode=composite\n");
+            
          } else if (mode == DisplaySettings.ColorMode.COLOR) {
             sb.append("mode=color\n");
          } else if (mode == DisplaySettings.ColorMode.GRAYSCALE) {
             sb.append("mode=gray\n");
          }    
+         */
       }
 
 
