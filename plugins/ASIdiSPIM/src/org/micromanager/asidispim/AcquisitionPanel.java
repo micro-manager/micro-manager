@@ -2743,7 +2743,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
                         if (acqSettings.isStageScanning) {  // for stage scanning have to allow extra time for turn-around
                            timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
-                           timeout2 += 1500;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
+                           timeout2 += 5000;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
                            if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
                               timeout2 += (long)Math.ceil(getStageRetraceDuration(acqSettings));  // in unidirectional case also need to rewind
                            }
