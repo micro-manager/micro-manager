@@ -63,8 +63,10 @@ import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
  * TODO: extricate DisplaySettings from this code.
  */
 public final class StorageMultipageTiff implements Storage {
-   private static final String SHOULD_GENERATE_METADATA_FILE = "generate a metadata file when saving datasets as multipage TIFF files";
-   private static final String SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS = "generate a separate multipage TIFF file for each stage position";
+   private static final String SHOULD_GENERATE_METADATA_FILE = 
+           "generate a metadata file when saving datasets as multipage TIFF files";
+   private static final String SHOULD_USE_SEPARATE_FILES_FOR_POSITIONS = 
+           "generate a separate multipage TIFF file for each stage position";
    private static final HashSet<String> ALLOWED_AXES = new HashSet<String>(
          Arrays.asList(Coords.CHANNEL, Coords.TIME, Coords.Z,
             Coords.STAGE_POSITION));

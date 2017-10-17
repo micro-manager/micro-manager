@@ -125,8 +125,10 @@ public final class MultipageTiffWriter {
    private MultipageTiffReader reader_;
    private long blankPixelsOffset_ = -1;
    
-   public MultipageTiffWriter(StorageMultipageTiff masterStorage,
-         Image firstImage, String filename)
+   public MultipageTiffWriter(
+            final StorageMultipageTiff masterStorage,
+            final Image firstImage, 
+            final String filename)
          throws IOException {
       masterStorage_ = masterStorage;
       // TODO: casting to DefaultSummaryMetadata here.
@@ -332,7 +334,7 @@ public final class MultipageTiffWriter {
    /**
     * Called when there is no more data to be written. Write null offset after
     * last image in accordance with TIFF specification and set number of index
-    * map entries for backwards reading capability A file that has been
+    * map entries for backwards reading capability. A file that has been
     * finished should have everything it needs to be properly reopened in MM or
     * by a basic TIFF reader
     * @throws java.io.IOException
