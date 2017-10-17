@@ -11,12 +11,13 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.util.Arrays;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
+import org.micromanager.Studio;
 import org.micromanager.display.internal.displaywindow.DisplayController;
-import org.micromanager.internal.MMStudio;
+import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -27,7 +28,7 @@ public final class CenterAndDragListener implements MouseListener,
         MouseMotionListener, WindowListener {
 
    private final CMMCore core_;
-   private final MMStudio studio_;
+   private final Studio studio_;
    private ImageCanvas canvas_;
    private boolean mirrorX_;
    private boolean mirrorY_;
@@ -35,11 +36,12 @@ public final class CenterAndDragListener implements MouseListener,
    private boolean correction_;
    private int lastX_, lastY_;
 
-   public CenterAndDragListener(CMMCore core, MMStudio studio,
+   public CenterAndDragListener(CMMCore core, Studio studio,
          DisplayController display) {
       studio_ = studio;
       core_ = core;
       // TODO
+      
       /*
       canvas_ = display.getCanvas();
       if (!Arrays.asList(canvas_.getMouseListeners()).contains(this)) {
@@ -129,16 +131,8 @@ public final class CenterAndDragListener implements MouseListener,
                if (mirrorY_) {mYUm = -mYUm;}
             }
 
-            // Move the stage
-            try {
-               core_.setRelativeXYPosition(xyStage, mXUm, mYUm);
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
-               return;
-            }
-
-            // refresh GUI x,y
-            studio_.updateXYStagePosition();
+            moveStage (xyStage, mXUm, mYUm);
+            
          }
       }
    } 
@@ -169,7 +163,7 @@ public final class CenterAndDragListener implements MouseListener,
       // (is it really needed to run this every time?)
       getOrientation();
       String xyStage = core_.getXYStageDevice();
-      if (xyStage == null && !xyStage.equals(""))
+      if (xyStage == null || xyStage.equals(""))
          return;
       try {
          if (core_.deviceBusy(xyStage))
@@ -206,20 +200,33 @@ public final class CenterAndDragListener implements MouseListener,
          if (mirrorX_) {mXUm = -mXUm;}
          if (mirrorY_) {mYUm = -mYUm;}
       }
-
-      // Move the stage
-      try {
-         core_.setRelativeXYPosition(xyStage, mXUm, mYUm);
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-         return;
-      }
+      
       lastX_ = cX;
       lastY_ = cY;
 
-      studio_.updateXYPosRelative(mXUm, mYUm);
-
+      moveStage (xyStage, mXUm, mYUm);     
    } 
+   
+
+   private void moveStage(String xyStage, double xRel, double yRel) {
+      // Move the stage
+      try {
+         // TODO: make sure to not run on EDT?
+         core_.setRelativeXYPosition(xyStage, xRel, yRel);
+         double[] xs = new double[1];
+         double[] ys = new double[1];
+         core_.getXYPosition(xyStage, xs, ys);
+         // studio_.updateXYStagePosition();
+         DefaultEventManager.getInstance().post(
+                 new XYStagePositionChangedEvent(xyStage, xs[0], ys[0]));
+         // alternative, less correct but possibly faster:
+         //      if (studio_ instanceof MMStudio) {
+         //  ((MMStudio) studio_).updateXYPosRelative(mXUm, mYUm);
+         // }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
 
    @Override
    public void mouseReleased(MouseEvent e) {}

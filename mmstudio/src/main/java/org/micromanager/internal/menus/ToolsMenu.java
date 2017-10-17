@@ -18,7 +18,6 @@ import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.HotKeysDialog;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -251,13 +250,14 @@ public final class ToolsMenu {
       centerAndDragMenuItem_.setSelected(event.getIsEnabled());
    }
 
-   public static boolean getMouseMovesStage() {
-      return UserProfileStaticInterface.getInstance().getBoolean(
-            ToolsMenu.class, MOUSE_MOVES_STAGE, false);
+   public boolean getMouseMovesStage() {
+      return studio_.profile().getSettings(ToolsMenu.class).
+              getBoolean(MOUSE_MOVES_STAGE, false);
    }
 
-   public static void setMouseMovesStage(boolean doesMove) {
-      UserProfileStaticInterface.getInstance().setBoolean(
-            ToolsMenu.class, MOUSE_MOVES_STAGE, doesMove);
+   public void setMouseMovesStage(boolean doesMove) {
+      studio_.profile().getSettings(ToolsMenu.class).
+              putBoolean(MOUSE_MOVES_STAGE, doesMove);
    }
+   
 }

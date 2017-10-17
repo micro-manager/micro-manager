@@ -96,6 +96,7 @@ import org.micromanager.internal.dialogs.RegistrationDlg;
 import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.logging.LogFileManager;
+import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.menus.ToolsMenu;
 import org.micromanager.internal.navigation.ClickToMoveManager;
 import org.micromanager.internal.navigation.XYZKeyListener;
@@ -867,7 +868,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       isClickToMoveEnabled_ = isEnabled;
       if (isEnabled) {
          IJ.setTool(Toolbar.HAND);
-         ToolsMenu.setMouseMovesStage(isEnabled);
+         MMMenuBar.getToolsMenu().setMouseMovesStage(isEnabled);
       }
       events().post(new MouseMovesStageEvent(isEnabled));
    }

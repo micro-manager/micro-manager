@@ -26,10 +26,12 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
+import org.micromanager.Studio;
 //import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.menus.MMMenuBar;
 
 /**
  * This class handles setting up and disabling click-to-move and keyboard
@@ -39,27 +41,28 @@ public final class ClickToMoveManager {
    private final HashMap<DisplayController, CenterAndDragListener> displayToDragListener_;
    private final HashMap<DisplayController, KeyAdapter> displayToKeyListener_;
    private final CMMCore core_;
-   private final MMStudio studio_;
+   private final Studio studio_;
 
    private static ClickToMoveManager staticInstance_;
 
-   public ClickToMoveManager(MMStudio studio, CMMCore core) {
+   public ClickToMoveManager(Studio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
       displayToDragListener_ = new HashMap<DisplayController, CenterAndDragListener>();
       displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
       staticInstance_ = this;
-      studio_.events().registerForEvents(this);
+      // Calling code has to register us for studio_ events
    }
 
    /**
     * Keep track of enabling/disabling click-to-move for this display.
+    * @param display Display to which we will listen for mouse events
     */
    public void activate(DisplayController display) {
       CenterAndDragListener dragListener = null;
       KeyAdapter keyListener = null;
       display.registerForEvents(this);
-      if (studio_.getIsClickToMoveEnabled()) {
+      if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
          dragListener = new CenterAndDragListener(core_, studio_, display);
          keyListener = new StageShortcutListener();
       }
