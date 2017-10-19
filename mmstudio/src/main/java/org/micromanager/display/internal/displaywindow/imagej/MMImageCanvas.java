@@ -283,11 +283,13 @@ public final class MMImageCanvas extends ImageCanvas
 
    @Override
    public void mouseClicked(MouseEvent e) {
+      parent_.ij2mmMouseClicked(e);
       super.mouseClicked(e); // Super delegates to the current tool
    }
 
    @Override
    public void mousePressed(MouseEvent e) {
+      parent_.ij2mmMousePressed(e);
       super.mousePressed(e);
       // Super, roughly,
       // 1) Tries to stop playback animation if tool is not magnifier (but
@@ -301,6 +303,7 @@ public final class MMImageCanvas extends ImageCanvas
 
    @Override
    public void mouseReleased(MouseEvent e) {
+      parent_.ij2mmMouseReleased(e);
       super.mouseReleased(e);
       // Super, roughly,
       // 1) May take special actions for overlays

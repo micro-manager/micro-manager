@@ -34,6 +34,7 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.geom.Rectangle2D;
@@ -95,6 +96,7 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.MMStudio;
@@ -1165,31 +1167,38 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    /**
-    * Notify the UI controller that the mouse has moved on the image canvas.
+    * Notify the UI controller that a mouse event occurred on the image canvas.
     *
     * If {@code imageLocation} is null or empty, the indicator is hidden. The
     * {@code imageLocation} parameter can be a rectangle containing more than
     * one pixel, for example if the point comes from a zoomed-out canvas.
     *
+    * @param e MouseEvent that occurred on the Canvas. Use its getId() function
+    * to discover what kind of Mouse Event happened.
     * @param imageLocation the image coordinates of the pixel for which
     * information should be displayed (in image coordinates)
     */
-   public void mouseLocationOnImageChanged(Rectangle imageLocation) {
-      if (imageLocation == null ||
-            imageLocation.width == 0 || imageLocation.height == 0)
-      {
-         if (mouseLocationOnImage_ == null) {
-            return;
-         }
-         mouseLocationOnImage_ = null;
-         updatePixelInformation();
-      }
-      else {
-         if (imageLocation.equals(mouseLocationOnImage_)) {
-            return;
-         }
-         mouseLocationOnImage_ = new Rectangle(imageLocation);
-         updatePixelInformation();
+   public void mouseEventOnImage(MouseEvent e, Rectangle imageLocation) {
+      displayController_.postDisplayEvent(new DisplayMouseEvent(e, imageLocation));
+      switch (e.getID()) {
+         case MouseEvent.MOUSE_MOVED:
+         case MouseEvent.MOUSE_ENTERED:
+         case MouseEvent.MOUSE_EXITED:
+         case MouseEvent.MOUSE_DRAGGED:
+            if (imageLocation == null
+                    || imageLocation.width == 0 || imageLocation.height == 0) {
+               if (mouseLocationOnImage_ == null) {
+                  return;
+               }
+               mouseLocationOnImage_ = null;
+               updatePixelInformation();
+            } else {
+               if (imageLocation.equals(mouseLocationOnImage_)) {
+                  return;
+               }
+               mouseLocationOnImage_ = new Rectangle(imageLocation);
+               updatePixelInformation();
+            }
       }
    }
 

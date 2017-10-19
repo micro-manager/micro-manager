@@ -111,24 +111,24 @@ public final class ImageJBridge {
    private Rectangle lastSeenRoiRect_;
 
    // Get a copy of ImageCanvas's zoom levels
-   private static final List<Double> ijZoomLevels_ = new ArrayList<Double>();
+   private static final List<Double> IJ_ZOOM_LEVELS = new ArrayList<Double>();
    static {
       double factor = 1.0;
-      ijZoomLevels_.add(factor);
+      IJ_ZOOM_LEVELS.add(factor);
       for (;;) {
          factor = ImageCanvas.getLowerZoomLevel(factor);
-         if (factor == ijZoomLevels_.get(0)) {
+         if (factor == IJ_ZOOM_LEVELS.get(0)) {
             break;
          }
-         ijZoomLevels_.add(0, factor);
+         IJ_ZOOM_LEVELS.add(0, factor);
       }
-      factor = ijZoomLevels_.get(ijZoomLevels_.size() - 1);
+      factor = IJ_ZOOM_LEVELS.get(IJ_ZOOM_LEVELS.size() - 1);
       for (;;) {
          factor = ImageCanvas.getHigherZoomLevel(factor);
-         if (factor == ijZoomLevels_.get(ijZoomLevels_.size() - 1)) {
+         if (factor == IJ_ZOOM_LEVELS.get(IJ_ZOOM_LEVELS.size() - 1)) {
             break;
          }
-         ijZoomLevels_.add(factor);
+         IJ_ZOOM_LEVELS.add(factor);
       }
    }
 
@@ -518,7 +518,7 @@ public final class ImageJBridge {
    }
 
    int getMMNumberOfTimePoints() {
-      return Math.max(1, uiController_.getDisplayedAxisLength(Coords.TIME));
+      return Math.max(1, uiController_.getDisplayedAxisLength(Coords.T));
    }
 
    int getMMNumberOfZSlices() {
@@ -606,7 +606,8 @@ public final class ImageJBridge {
       Calibration cal = new Calibration(imagePlus_);
       if (pixelWidthUm * pixelHeightUm == 0.0) {
          cal.setUnit("px");
-         cal.pixelWidth = cal.pixelHeight = 1.0;
+         cal.pixelWidth = 1.0;
+         cal.pixelHeight = 1.0;
       }
       else {
          cal.setUnit("um");
@@ -625,13 +626,13 @@ public final class ImageJBridge {
 
    @MustCallOnEDT
    public boolean isIJZoomedAllTheWayOut() {
-      return canvas_.getMagnification() <= ijZoomLevels_.get(0) + 0.001;
+      return canvas_.getMagnification() <= IJ_ZOOM_LEVELS.get(0) + 0.001;
    }
 
    @MustCallOnEDT
    public boolean isIJZoomedAllTheWayIn() {
       return canvas_.getMagnification() >=
-            ijZoomLevels_.get(ijZoomLevels_.size() - 1) - 0.001;
+            IJ_ZOOM_LEVELS.get(IJ_ZOOM_LEVELS.size() - 1) - 0.001;
    }
 
    @MustCallOnEDT
@@ -785,23 +786,39 @@ public final class ImageJBridge {
 
       uiController_.selectionMayHaveChanged(makeBoundsAndMaskFromIJRoi(roi));
    }
+   
+   void ij2mmMouseClicked(MouseEvent e) {
+      uiController_.mouseEventOnImage(e, 
+            computeImageRectForCanvasPoint(e.getPoint()));
+   }
+   
+   void ij2mmMousePressed(MouseEvent e) {
+      uiController_.mouseEventOnImage(e, 
+            computeImageRectForCanvasPoint(e.getPoint()));
+      
+   }
+   
+   void ij2mmMouseReleased(MouseEvent e) {
+      uiController_.mouseEventOnImage(e, 
+            computeImageRectForCanvasPoint(e.getPoint()));
+   }
 
    void ij2mmMouseEnteredCanvas(MouseEvent e) {
-      uiController_.mouseLocationOnImageChanged(
+      uiController_.mouseEventOnImage(e,
             computeImageRectForCanvasPoint(e.getPoint()));
    }
 
    void ij2mmMouseExitedCanvas(MouseEvent e) {
-      uiController_.mouseLocationOnImageChanged(null);
+      uiController_.mouseEventOnImage(e,null);
    }
 
    void ij2mmMouseDraggedOnCanvas(MouseEvent e) {
-      uiController_.mouseLocationOnImageChanged(
+      uiController_.mouseEventOnImage(e,
             computeImageRectForCanvasPoint(e.getPoint()));
    }
 
    void ij2mmMouseMovedOnCanvas(MouseEvent e) {
-      uiController_.mouseLocationOnImageChanged(
+      uiController_.mouseEventOnImage(e, 
             computeImageRectForCanvasPoint(e.getPoint()));
    }
 
