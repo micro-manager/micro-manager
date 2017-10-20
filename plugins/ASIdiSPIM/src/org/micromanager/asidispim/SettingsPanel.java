@@ -180,6 +180,20 @@ public class SettingsPanel extends ListeningJPanel {
       
       // end scanner panel
       
+      // start acquisition panel
+      
+      final JPanel acqusitionPanel = new JPanel(new MigLayout(
+            "",
+            "[right]16[center]",
+            "[]8[]"));
+      acqusitionPanel.setBorder(PanelUtils.makeTitledBorder("Acquisition"));
+
+      final JCheckBox acqSettingsWrite = pu.makeCheckBox("Write file with acquisition settings",
+            Properties.Keys.PLUGIN_WRITE_ACQ_SETTINGS_FILE, panelName_, false);
+      acqusitionPanel.add(acqSettingsWrite, "span 2, wrap");
+      
+      // end acquisiton panel
+      
       
       // start test acquisition panel
       
@@ -283,7 +297,8 @@ public class SettingsPanel extends ListeningJPanel {
       
       // construct main panel
       super.add(guiPanel);
-      super.add(scannerPanel, "wrap");
+      super.add(scannerPanel);
+      super.add(acqusitionPanel, "wrap");
       super.add(testAcqPanel);
       super.add(stageScanPanel, "growx");
       super.add(imageJPanel, "growx");

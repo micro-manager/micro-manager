@@ -185,6 +185,7 @@ public class Properties {
       PLUGIN_NAME_PREFIX("NamePrefix"),
       PLUGIN_TESTACQ_PATH("TestAcquisitionPath"),
       PLUGIN_TESTACQ_SAVE("TestAcquisitionSave"),
+      PLUGIN_WRITE_ACQ_SETTINGS_FILE("WriteAcquisitionSettingsFile"),
       PLUGIN_USE_TOOLSET("UseImageJToolset"),
       PREFS_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
       PREFS_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),

@@ -64,6 +64,7 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -986,7 +987,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    
    /**
     * @return CameraModes.Keys value from Camera panel
-    * (internal, edge, overlap, pseudo-overlap, light sheet) 
+    * (edge, overlap, pseudo-overlap, light sheet) 
     */
    private CameraModes.Keys getSPIMCameraMode() {
       CameraModes.Keys val;
@@ -994,7 +995,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          val = ASIdiSPIM.getFrame().getSPIMCameraMode();
       } catch (Exception ex) {
          val = CameraModes.getKeyFromPrefCode(prefs_.getInt(MyStrings.PanelNames.SETTINGS.toString(),
-            Properties.Keys.PLUGIN_CAMERA_MODE, 0));
+            Properties.Keys.PLUGIN_CAMERA_MODE, 1));  // default is edge
       }
       return val;
    }
@@ -3010,6 +3011,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
                // flag that we are done with acquisition
                acquisitionRunning_.set(false);
+               
+               // write acquisition settings if requested
+               if (lastAcquisitionPath_!=null && prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+                     Properties.Keys.PLUGIN_WRITE_ACQ_SETTINGS_FILE, false)) {
+                  String path = "";
+                  try {
+                     path = lastAcquisitionPath_ + File.separator + "AcqSettings.txt";
+                     PrintWriter writer = new PrintWriter(path);
+                     writer.println(acqSettingsJSON);
+                     writer.flush();
+                     writer.close();
+                  } catch (Exception ex) {
+                     MyDialogUtils.showError(ex, "Could not save acquisition settings to file as requested to path " + path);
+                  }
+               }
                
             } catch (Exception ex) {
                // exception while stopping sequence acquisition, not sure what to do...
