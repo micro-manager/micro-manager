@@ -1184,7 +1184,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
          case MouseEvent.MOUSE_MOVED:
          case MouseEvent.MOUSE_ENTERED:
          case MouseEvent.MOUSE_EXITED:
-         case MouseEvent.MOUSE_DRAGGED:
             if (imageLocation == null
                     || imageLocation.width == 0 || imageLocation.height == 0) {
                if (mouseLocationOnImage_ == null) {

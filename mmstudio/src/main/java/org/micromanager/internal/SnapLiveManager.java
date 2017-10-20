@@ -483,16 +483,11 @@ public final class SnapLiveManager extends DataViewerListener
       display_.registerForEvents(this);
       display_.addListener(this, 1);
       display_.setCustomTitle(TITLE);
-      if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
-         attachCenterDragListener();
-      }
-   }
-   
-   private void attachCenterDragListener() {
-      if (display_ != null) {
+      if (MMMenuBar.getToolsMenu().getMouseMovesStage() && display_ != null) {
          clickToMoveManager_.activate(display_);
       }
    }
+
 
    /**
     * HACK: in addition to providing the snap/live/album buttons for the

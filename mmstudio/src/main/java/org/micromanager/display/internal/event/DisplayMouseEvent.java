@@ -18,7 +18,7 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 
 /**
- * Provides a MouseEvent and the location (in image coordinates) where
+ * Provides a MouseEvent and the location (in image pixel coordinates) where
  * the event happened
  * 
  * @author Nico
@@ -32,10 +32,21 @@ public class DisplayMouseEvent {
       location_ = imageLocation;
    }
    
+   /**
+    * The MouseEvent as received by the display.  Use the getID() function to 
+    * find out what this event signifies.
+    * @return MouseEvent received by the display
+    */
    public MouseEvent getEvent() {
       return event_;
    }
    
+   /**
+    * Provides location in image coordinates. 
+    * This parameter can be a rectangle containing more than
+    * one pixel, for example if the point comes from a zoomed-out canvas.
+    * @return Location in image coordinates
+    */
    public Rectangle getLocation() {
       return location_;
    }

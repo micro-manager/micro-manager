@@ -3,9 +3,12 @@
  */
 package org.micromanager.internal.navigation;
 
+import com.google.common.eventbus.Subscribe;
 import ij.gui.ImageCanvas;
 import ij.gui.Toolbar;
 import java.awt.Event;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -14,8 +17,7 @@ import java.awt.event.WindowListener;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
-import org.micromanager.Studio;
-import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -28,7 +30,6 @@ public final class CenterAndDragListener implements MouseListener,
         MouseMotionListener, WindowListener {
 
    private final CMMCore core_;
-   private final Studio studio_;
    private ImageCanvas canvas_;
    private boolean mirrorX_;
    private boolean mirrorY_;
@@ -36,9 +37,7 @@ public final class CenterAndDragListener implements MouseListener,
    private boolean correction_;
    private int lastX_, lastY_;
 
-   public CenterAndDragListener(CMMCore core, Studio studio,
-         DisplayController display) {
-      studio_ = studio;
+   public CenterAndDragListener(CMMCore core) {
       core_ = core;
       // TODO
       
@@ -54,8 +53,8 @@ public final class CenterAndDragListener implements MouseListener,
          display.getAsWindow().addWindowListener(this);
       }
 
-      getOrientation();
       */
+      getOrientation();
    }
 
    public void stop() {
@@ -74,6 +73,10 @@ public final class CenterAndDragListener implements MouseListener,
          JOptionPane.showMessageDialog(null, "This function does not work without a camera");
          return;
       }
+      // we could possibly cache the current camera and only execute the code
+      // below if the camera changed.  However, that will make it difficult 
+      // to experiment with these settings, and it probably is not very expensive
+      // to check every time
       try {
          String tmp = core_.getProperty(camera, "TransposeCorrection");
          correction_ = !(tmp.equals("0"));
@@ -83,8 +86,70 @@ public final class CenterAndDragListener implements MouseListener,
          mirrorY_ = !(tmp.equals("0"));
          tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
          transposeXY_ = !(tmp.equals("0"));
-      } catch(Exception exc) {
+      } catch (Exception exc) {
          ReportingUtils.showError(exc);
+      }
+   }
+
+   @Subscribe
+   public void onDisplayMouseEvent(DisplayMouseEvent dme) {
+      switch (dme.getEvent().getID()) {
+         case MouseEvent.MOUSE_CLICKED:
+            if (dme.getEvent().getClickCount() >= 2) {
+               // double clik, center the stage
+               Rectangle location = dme.getLocation();
+
+               // Get needed info from core
+               getOrientation();
+               String xyStage = core_.getXYStageDevice();
+               if (xyStage == null) {
+                  return;
+               }
+               double pixSizeUm = core_.getPixelSizeUm();
+               if (!(pixSizeUm > 0.0)) {
+                  JOptionPane.showMessageDialog(null, "Please provide pixel size calibration data before using this function");
+                  return;
+               }
+
+               int width = (int) core_.getImageWidth();
+               int height = (int) core_.getImageHeight();
+
+               // Calculate the center point of the event
+               final Point center = new Point(
+                       location.x + location.width / 2,
+                       location.y + location.height / 2);
+
+               // calculate needed relative movement
+               double tmpXUm = ((0.5 * width) - center.x) * pixSizeUm;
+               double tmpYUm = ((0.5 * height) - center.y) * pixSizeUm;
+
+               double mXUm = tmpXUm;
+               double mYUm = tmpYUm;
+               // if camera does not correct image orientation, we'll correct for it here:
+               if (!correction_) {
+                  // Order: swapxy, then mirror axis
+                  if (transposeXY_) {
+                     mXUm = tmpYUm;
+                     mYUm = tmpXUm;
+                  }
+                  if (mirrorX_) {
+                     mXUm = -mXUm;
+                  }
+                  if (mirrorY_) {
+                     mYUm = -mYUm;
+                  }
+               }
+
+               moveStage(xyStage, mXUm, mYUm);
+
+            }
+            break;
+         case MouseEvent.MOUSE_PRESSED:
+            // record start position for a drag
+            break;
+         case MouseEvent.MOUSE_DRAGGED:
+            // compare to start position and move stage
+            break;
       }
    }
 
@@ -136,6 +201,8 @@ public final class CenterAndDragListener implements MouseListener,
          }
       }
    } 
+   
+   
 
 
    // Mouse listener implementation

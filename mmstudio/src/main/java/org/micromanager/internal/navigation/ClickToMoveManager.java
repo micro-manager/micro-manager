@@ -20,7 +20,6 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
-import ij.IJ;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
@@ -29,8 +28,8 @@ import mmcorej.MMCoreJ;
 import org.micromanager.Studio;
 //import org.micromanager.display.DisplayDestroyedEvent;
 import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.events.internal.MouseMovesStageEvent;
-import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.menus.MMMenuBar;
 
 /**
@@ -43,14 +42,14 @@ public final class ClickToMoveManager {
    private final CMMCore core_;
    private final Studio studio_;
 
-   private static ClickToMoveManager staticInstance_;
+   //private static ClickToMoveManager staticInstance_;
 
    public ClickToMoveManager(Studio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
       displayToDragListener_ = new HashMap<DisplayController, CenterAndDragListener>();
       displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
-      staticInstance_ = this;
+      //staticInstance_ = this;
       // Calling code has to register us for studio_ events
    }
 
@@ -61,9 +60,10 @@ public final class ClickToMoveManager {
    public void activate(DisplayController display) {
       CenterAndDragListener dragListener = null;
       KeyAdapter keyListener = null;
-      display.registerForEvents(this);
+      //display.registerForEvents(this);
       if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
-         dragListener = new CenterAndDragListener(core_, studio_, display);
+         dragListener = new CenterAndDragListener(core_);
+         display.registerForEvents(dragListener);
          keyListener = new StageShortcutListener();
       }
       // TODO
@@ -105,7 +105,23 @@ public final class ClickToMoveManager {
       }
    }
 
-   // TOD
+   @Subscribe
+   public void onDataViewerWillCloseEvent(DataViewerWillCloseEvent e) {
+
+      for (DisplayController display : displayToDragListener_.keySet()) {
+         if (display.equals(e.getDataViewer())) {
+            // Deactivate listener for this display.
+            CenterAndDragListener listener = displayToDragListener_.get(display);
+            if (listener != null) {
+               listener.stop();
+               display.unregisterForEvents(listener);
+            }
+            displayToDragListener_.remove(display);
+         }
+      }
+   }
+
+   // TODO
    /*
    @Subscribe
    public void onDisplayDestroyed(DisplayDestroyedEvent event) {
@@ -114,11 +130,12 @@ public final class ClickToMoveManager {
       displayToDragListener_.remove(display);
       displayToKeyListener_.remove(display);
    }
-   */
+   
 
    public static ClickToMoveManager getInstance() {
       return staticInstance_;
    }
+   */
 
    /**
     * Listens for certain key presses and moves the stage.
