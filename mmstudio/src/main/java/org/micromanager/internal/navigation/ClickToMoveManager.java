@@ -42,25 +42,21 @@ public final class ClickToMoveManager {
    private final CMMCore core_;
    private final Studio studio_;
 
-   //private static ClickToMoveManager staticInstance_;
-
    public ClickToMoveManager(Studio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
       displayToDragListener_ = new HashMap<DisplayController, CenterAndDragListener>();
       displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
-      //staticInstance_ = this;
       // Calling code has to register us for studio_ events
    }
 
    /**
     * Keep track of enabling/disabling click-to-move for this display.
-    * @param display Display to which we will listen for mouse events
+    * @param display Display to which we will listen for events
     */
    public void activate(DisplayController display) {
       CenterAndDragListener dragListener = null;
       KeyAdapter keyListener = null;
-      //display.registerForEvents(this);
       if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
          dragListener = new CenterAndDragListener(core_);
          display.registerForEvents(dragListener);
@@ -73,6 +69,9 @@ public final class ClickToMoveManager {
       displayToKeyListener_.put(display, keyListener);
    }
 
+   // we need to be informed when a new display opens and 
+   // activate that display if we are "active"
+   
    @Subscribe
    public void onMouseMovesStage(MouseMovesStageEvent event) {
       try {
