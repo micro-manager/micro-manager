@@ -184,6 +184,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private final List<String> displayedAxes_ = new ArrayList<String>();
    private final List<Integer> displayedAxisLengths_ = new ArrayList<Integer>();
    private ImagesAndStats displayedImages_;
+   private Double cachedPixelSize_ = -1.0;
 
    private BoundsRectAndMask lastSeenSelection_;
 
@@ -252,7 +253,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       JFrame frame;
       if (!fullScreen) {
          // TODO LATER Eliminate MMFrame
-         frame = new MMFrame("iamge display window", false);
+         frame = new MMFrame("image display window", false);
          frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
          ((MMFrame) frame).loadPosition(320, 320, 480, 320);
 
@@ -359,8 +360,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
       if (ijBridge_ != null) {
          return;
       }
-
-      JFrame frame = fullScreenFrame_ == null ? frame_ : fullScreenFrame_;
 
       ijBridge_ = ImageJBridge.create(this);
 
@@ -644,7 +643,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
                displayController_.getLinkManager(),
                displayController_, axis);
          final JPopupMenu linkPopup = new JPopupMenu();
-         linkButton = PopupButton.create(IconLoader.getIcon("/org/micromanager/icons/linkflat.png"), linkPopup);
+         linkButton = PopupButton.create(IconLoader.getIcon(
+                 "/org/micromanager/icons/linkflat.png"), linkPopup);
          linkButton.addPopupButtonListener(new PopupButton.Listener() {
             @Override
             public void popupButtonWillShowPopup(PopupButton button) {
@@ -702,7 +702,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       // Reorder scrollable axes to match axis order of data provider
       Collections.sort(scrollableAxes, new Comparator<String>() {
          @Override
-         // This could be comverted in a utility function
+         // This could be converted in a utility function
          public int compare(String o1, String o2) {
             if (o1.equals(o2)) { 
                return 0;
@@ -763,9 +763,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
          // If we call applyDisplaySettings every time, the Display fps 
          // will never be shown
          applyDisplaySettings(displayController_.getDisplaySettings());
-         // This should be invariant, so only need to do this for first image
-         infoLabel_.setText(this.getInfoString()); 
       }
+      
+      // info label: The only aspect that can change is pixel size.  To avoid
+      // redrawing the info line (which may be expensive), check if pixelsize
+      // changed (which can happen for the snap/live window) and only redraw the 
+      // info label if it changed.
+      if (!cachedPixelSize_.equals(images.getRequest().getImage(0).getMetadata().getPixelSizeUm())) {
+         infoLabel_.setText(this.getInfoString(images));
+         cachedPixelSize_ = images.getRequest().getImage(0).getMetadata().getPixelSizeUm();
+      } 
       
       ijBridge_.mm2ijSetDisplayPosition(nominalCoords);
       applyAutostretch(images, displayController_.getDisplaySettings());
@@ -1459,7 +1466,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       return "Unknown pixelType";
    }
   
-   public String getInfoString() {
+   public String getInfoString(ImagesAndStats images) {
       StringBuilder infoStringB = new StringBuilder();
       Double pixelSize;
       long nrBytes;
@@ -1467,10 +1474,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
          if (displayController_.getDataProvider().getAnyImage() == null) {
             return "No image yet";
          }
-         pixelSize = displayController_.getDataProvider().getAnyImage().getMetadata().getPixelSizeUm();
+         // TODO: is 0 always the right choice?  
+         images.getRequest().getImage(0);
+         pixelSize = images.getRequest().getImage(0).getMetadata().getPixelSizeUm();
          nrBytes = getImageWidth() * getImageHeight()
-                 * displayController_.getDataProvider().getAnyImage().getBytesPerPixel()
-                 * displayController_.getDataProvider().getAnyImage().getNumComponents();
+                 * images.getRequest().getImage(0).getBytesPerPixel()
+                 * images.getRequest().getImage(0).getNumComponents();
 
       } catch (IOException io) {
          return "Failed to find image";
