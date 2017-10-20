@@ -37,7 +37,7 @@ import org.micromanager.internal.menus.MMMenuBar;
  */
 public final class ClickToMoveManager {
    private final HashMap<DisplayController, CenterAndDragListener> displayToDragListener_;
-   private final HashMap<DisplayController, KeyAdapter> displayToKeyListener_;
+   //private final HashMap<DisplayController, KeyAdapter> displayToKeyListener_;
    private final CMMCore core_;
    private final Studio studio_;
 
@@ -45,7 +45,7 @@ public final class ClickToMoveManager {
       studio_ = studio;
       core_ = core;
       displayToDragListener_ = new HashMap<DisplayController, CenterAndDragListener>();
-      displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
+      //displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
       // Calling code has to register us for studio_ events
    }
 
@@ -55,17 +55,14 @@ public final class ClickToMoveManager {
     */
    public void activate(DisplayController display) {
       CenterAndDragListener dragListener = null;
-      KeyAdapter keyListener = null;
+      //KeyAdapter keyListener = null;
       if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
          dragListener = new CenterAndDragListener(core_);
          display.registerForEvents(dragListener);
-         keyListener = new StageShortcutListener();
+         //keyListener = new StageShortcutListener();
       }
-      // TODO
-      // display.getCanvas().removeKeyListener(IJ.getInstance());
-      // display.getCanvas().addKeyListener(keyListener);
       displayToDragListener_.put(display, dragListener);
-      displayToKeyListener_.put(display, keyListener);
+      //displayToKeyListener_.put(display, keyListener);
    }
 
    public void deActivate(final DataViewer displayToDeActivate) {
@@ -74,7 +71,6 @@ public final class ClickToMoveManager {
             // Deactivate listener for this display.
             CenterAndDragListener listener = displayToDragListener_.get(display);
             if (listener != null) {
-               listener.stop();
                display.unregisterForEvents(listener);
             }
             displayToDragListener_.remove(display);
@@ -123,7 +119,6 @@ public final class ClickToMoveManager {
             // Deactivate listener for this display.
             CenterAndDragListener listener = displayToDragListener_.get(display);
             if (listener != null) {
-               listener.stop();
                display.unregisterForEvents(listener);
             }
             displayToDragListener_.remove(display);

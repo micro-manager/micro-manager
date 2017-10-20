@@ -4,7 +4,6 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
-import ij.gui.ImageCanvas;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -23,7 +22,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class CenterAndDragListener {
 
    private final CMMCore core_;
-   private ImageCanvas canvas_;
    private boolean mirrorX_;
    private boolean mirrorY_;
    private boolean transposeXY_;
@@ -32,29 +30,12 @@ public final class CenterAndDragListener {
 
    public CenterAndDragListener(CMMCore core) {
       core_ = core;
-      // TODO
-      
-      /*
-      canvas_ = display.getCanvas();
-      if (!Arrays.asList(canvas_.getMouseListeners()).contains(this)) {
-         canvas_.addMouseListener(this);
-      }
-      if (!Arrays.asList(canvas_.getMouseMotionListeners()).contains(this)) {
-         canvas_.addMouseMotionListener(this);
-      }
-      if (!Arrays.asList(display.getAsWindow().getWindowListeners()).contains(this)) {
-         display.getAsWindow().addWindowListener(this);
-      }
 
-      */
       getOrientation();
    }
 
+   @Deprecated
    public void stop() {
-      if (canvas_ != null) {
-         //canvas_.removeMouseListener(this);
-         //canvas_.removeMouseMotionListener(this);
-      }
    }
 
    /*
