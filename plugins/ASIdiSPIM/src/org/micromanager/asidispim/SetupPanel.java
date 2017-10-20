@@ -903,12 +903,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    
   /**
    * Centers the piezo and micro-mirror.  Doesn't do anything if the devices
-   * aren't assigned to prevent spurious exceptions.
+   * aren't assigned to prevent spurious exceptions, but will move micro-mirror
+   * if piezo isn't assigned.
    * @throws Exception 
    */
    private void centerPiezoAndGalvo() {
       boolean success = positions_.setPosition(piezoImagingDeviceKey_, imagingCenterPos_, true);
-      if (success) {
+      if (success || !devices_.isValidMMDevice(piezoImagingDeviceKey_)) {
          positions_.setPosition(micromirrorDeviceKey_, Directions.Y,
             computeGalvoFromPiezo(imagingCenterPos_));
       }
