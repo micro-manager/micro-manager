@@ -5,15 +5,9 @@ package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
 import ij.gui.ImageCanvas;
-import ij.gui.Toolbar;
-import java.awt.Event;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
@@ -26,8 +20,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * @author OD
  *
  */
-public final class CenterAndDragListener implements MouseListener,
-        MouseMotionListener, WindowListener {
+public final class CenterAndDragListener {
 
    private final CMMCore core_;
    private ImageCanvas canvas_;
@@ -59,8 +52,8 @@ public final class CenterAndDragListener implements MouseListener,
 
    public void stop() {
       if (canvas_ != null) {
-         canvas_.removeMouseListener(this);
-         canvas_.removeMouseMotionListener(this);
+         //canvas_.removeMouseListener(this);
+         //canvas_.removeMouseMotionListener(this);
       }
    }
 
@@ -91,8 +84,19 @@ public final class CenterAndDragListener implements MouseListener,
       }
    }
 
+   /**
+    * Handles mouse events and does the actual stage movement
+    * TODO: factor out duplicated code
+    * @param dme DisplauMouseEvent containing information about the mouse movement
+    * TODO: this does not take into account multiple cameras in different displays
+    * 
+    */
    @Subscribe
    public void onDisplayMouseEvent(DisplayMouseEvent dme) {
+      // only take action when the Hand tool is selected
+      if (dme.getToolId() != ij.gui.Toolbar.HAND) {
+         return;
+      }
       switch (dme.getEvent().getID()) {
          case MouseEvent.MOUSE_CLICKED:
             if (dme.getEvent().getClickCount() >= 2) {
@@ -107,7 +111,8 @@ public final class CenterAndDragListener implements MouseListener,
                }
                double pixSizeUm = core_.getPixelSizeUm();
                if (!(pixSizeUm > 0.0)) {
-                  JOptionPane.showMessageDialog(null, "Please provide pixel size calibration data before using this function");
+                  JOptionPane.showMessageDialog(null, 
+                          "Please provide pixel size calibration data before using this function");
                   return;
                }
 
@@ -146,134 +151,73 @@ public final class CenterAndDragListener implements MouseListener,
             break;
          case MouseEvent.MOUSE_PRESSED:
             // record start position for a drag
+            // Calculate the center point of the event
+            final Point center = new Point(
+                    dme.getLocation().x + dme.getLocation().width / 2,
+                    dme.getLocation().y + dme.getLocation().height / 2);
+            lastX_ = center.x;
+            lastY_ = center.y;
             break;
          case MouseEvent.MOUSE_DRAGGED:
             // compare to start position and move stage
-            break;
-      }
-   }
-
-   @Override
-   public void mouseClicked(MouseEvent e) {
-      if (Toolbar.getInstance() != null) {
-         if (Toolbar.getToolId() == Toolbar.HAND) {
-            // right click and single click: ignore
-            int nc=   e.getClickCount();
-            if ((e.getModifiers() & Event.META_MASK) != 0 || nc < 2) 
-                return;
-
             // Get needed info from core
+            // (is it really needed to run this every time?)
             getOrientation();
             String xyStage = core_.getXYStageDevice();
-            if (xyStage == null)
+            if (xyStage == null || xyStage.equals("")) {
                return;
+            }
+            try {
+               if (core_.deviceBusy(xyStage)) {
+                  return;
+               }
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
+               return;
+            }
+
             double pixSizeUm = core_.getPixelSizeUm();
-            if (! (pixSizeUm > 0.0)) {
+            if (!(pixSizeUm > 0.0)) {
                JOptionPane.showMessageDialog(null, "Please provide pixel size calibration data before using this function");
                return;
             }
 
-            int width = (int) core_.getImageWidth();
-            int height = (int) core_.getImageHeight();
-
             // Get coordinates of event
-            int x = e.getX();
-            int y = e.getY();
-            int cX = canvas_.offScreenX(x);
-            int cY = canvas_.offScreenY(y);
+            final Point center2 = new Point(
+                    dme.getLocation().x + dme.getLocation().width / 2,
+                    dme.getLocation().y + dme.getLocation().height / 2);
 
             // calculate needed relative movement
-            double tmpXUm = ((0.5 * width) - cX) * pixSizeUm;
-            double tmpYUm = ((0.5 * height) - cY) * pixSizeUm;
+            double tmpXUm = center2.x - lastX_;
+            double tmpYUm = center2.y - lastY_;
 
+            tmpXUm *= pixSizeUm;
+            tmpYUm *= pixSizeUm;
             double mXUm = tmpXUm;
             double mYUm = tmpYUm;
             // if camera does not correct image orientation, we'll correct for it here:
             if (!correction_) {
                // Order: swapxy, then mirror axis
-               if (transposeXY_) {mXUm = tmpYUm; mYUm = tmpXUm;}
-               if (mirrorX_) {mXUm = -mXUm;}
-               if (mirrorY_) {mYUm = -mYUm;}
+               if (transposeXY_) {
+                  mXUm = tmpYUm;
+                  mYUm = tmpXUm;
+               }
+               if (mirrorX_) {
+                  mXUm = -mXUm;
+               }
+               if (mirrorY_) {
+                  mYUm = -mYUm;
+               }
             }
 
-            moveStage (xyStage, mXUm, mYUm);
-            
-         }
+            lastX_ = center2.x;
+            lastY_ = center2.y;
+
+            moveStage(xyStage, mXUm, mYUm);
+            break;
       }
-   } 
-   
-   
-
-
-   // Mouse listener implementation
-   @Override
-   public void mousePressed(MouseEvent e) {
-      // Get the starting coordinate for the dragging
-      int x = e.getX();
-      int y = e.getY();
-      lastX_ = canvas_.offScreenX(x);
-      lastY_ = canvas_.offScreenY(y);
    }
-
-   @Override
-   public void mouseDragged(MouseEvent e) {
-      if ((e.getModifiers() & Event.META_MASK) != 0) // right click: ignore
-         return;
-
-      // only respond when the Hand tool is selected in the IJ Toolbat
-      if (Toolbar.getInstance() != null) {
-      if (Toolbar.getToolId() != Toolbar.HAND)
-            return;
-      }
-
-      // Get needed info from core
-      // (is it really needed to run this every time?)
-      getOrientation();
-      String xyStage = core_.getXYStageDevice();
-      if (xyStage == null || xyStage.equals(""))
-         return;
-      try {
-         if (core_.deviceBusy(xyStage))
-            return;
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-         return;
-      }
-
-      double pixSizeUm = core_.getPixelSizeUm();
-      if (! (pixSizeUm > 0.0)) {
-         JOptionPane.showMessageDialog(null, "Please provide pixel size calibration data before using this function");
-         return;
-      }
-
-      // Get coordinates of event
-      int x = e.getX();
-      int y = e.getY();
-      int cX = canvas_.offScreenX(x);
-      int cY = canvas_.offScreenY(y);
-
-      // calculate needed relative movement
-      double tmpXUm = cX - lastX_;
-      double tmpYUm = cY - lastY_;
-
-      tmpXUm *= pixSizeUm;
-      tmpYUm *= pixSizeUm;
-      double mXUm = tmpXUm;
-      double mYUm = tmpYUm;
-      // if camera does not correct image orientation, we'll correct for it here:
-      if (!correction_) {
-         // Order: swapxy, then mirror axis
-         if (transposeXY_) {mXUm = tmpYUm; mYUm = tmpXUm;}
-         if (mirrorX_) {mXUm = -mXUm;}
-         if (mirrorY_) {mYUm = -mYUm;}
-      }
-      
-      lastX_ = cX;
-      lastY_ = cY;
-
-      moveStage (xyStage, mXUm, mYUm);     
-   } 
-   
+    
 
    private void moveStage(String xyStage, double xRel, double yRel) {
       // Move the stage
@@ -295,41 +239,4 @@ public final class CenterAndDragListener implements MouseListener,
       }
    }
 
-   @Override
-   public void mouseReleased(MouseEvent e) {}
-   @Override
-   public void mouseExited(MouseEvent e) {}
-   @Override
-   public void mouseEntered(MouseEvent e) {}
-   @Override
-   public void mouseMoved(MouseEvent e) {}
-
-   @Override
-   public void windowOpened(WindowEvent we) {
-   }
-
-      @Override
-   public void windowClosing(WindowEvent we) {
-   }
-
-      @Override
-   public void windowClosed(WindowEvent we) {
-      stop();
-   }
-
-      @Override
-   public void windowIconified(WindowEvent we) {
-   }
-
-      @Override
-   public void windowDeiconified(WindowEvent we) {
-   }
-
-      @Override
-   public void windowActivated(WindowEvent we) {
-   }
-
-      @Override
-   public void windowDeactivated(WindowEvent we) {
-   }
 }

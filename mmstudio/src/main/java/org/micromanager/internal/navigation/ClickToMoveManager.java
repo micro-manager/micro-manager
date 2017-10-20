@@ -26,10 +26,9 @@ import java.util.HashMap;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import org.micromanager.Studio;
-//import org.micromanager.display.DisplayDestroyedEvent;
+import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
-import org.micromanager.events.internal.MouseMovesStageEvent;
 import org.micromanager.internal.menus.MMMenuBar;
 
 /**
@@ -69,11 +68,22 @@ public final class ClickToMoveManager {
       displayToKeyListener_.put(display, keyListener);
    }
 
-   // we need to be informed when a new display opens and 
-   // activate that display if we are "active"
-   
+   public void deActivate(final DataViewer displayToDeActivate) {
+      for (DisplayController display : displayToDragListener_.keySet()) {
+         if (display.equals(displayToDeActivate)) {
+            // Deactivate listener for this display.
+            CenterAndDragListener listener = displayToDragListener_.get(display);
+            if (listener != null) {
+               listener.stop();
+               display.unregisterForEvents(listener);
+            }
+            displayToDragListener_.remove(display);
+         }
+      }
+   }
+   /*
    @Subscribe
-   public void onMouseMovesStage(MouseMovesStageEvent event) {
+   public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
       try {
          for (DisplayController display : displayToDragListener_.keySet()) {
             if (event.getIsEnabled()) {
@@ -103,10 +113,11 @@ public final class ClickToMoveManager {
          studio_.logs().logError(e, "Error updating mouse-moves-stage info");
       }
    }
+   */
 
    @Subscribe
    public void onDataViewerWillCloseEvent(DataViewerWillCloseEvent e) {
-
+      deActivate(e.getDataViewer());
       for (DisplayController display : displayToDragListener_.keySet()) {
          if (display.equals(e.getDataViewer())) {
             // Deactivate listener for this display.

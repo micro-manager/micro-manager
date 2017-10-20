@@ -85,7 +85,7 @@ import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.internal.CoreEventCallback;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.events.internal.MouseMovesStageEvent;
+import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.diagnostics.EDTHangLogger;
 import org.micromanager.internal.dialogs.AcqControlDlg;
 import org.micromanager.internal.dialogs.CalibrationListDlg;
@@ -870,7 +870,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          IJ.setTool(Toolbar.HAND);
          MMMenuBar.getToolsMenu().setMouseMovesStage(isEnabled);
       }
-      events().post(new MouseMovesStageEvent(isEnabled));
+      events().post(new MouseMovesStageStateChangeEvent(isEnabled));
    }
 
    public boolean getIsClickToMoveEnabled() {

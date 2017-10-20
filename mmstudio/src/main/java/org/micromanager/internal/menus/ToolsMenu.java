@@ -14,7 +14,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import mmcorej.CMMCore;
 import org.micromanager.alerts.internal.AlertsWindow;
-import org.micromanager.events.internal.MouseMovesStageEvent;
+import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
@@ -246,7 +246,7 @@ public final class ToolsMenu {
    }
 
    @Subscribe
-   public void onMouseMovesStage(MouseMovesStageEvent event) {
+   public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
       centerAndDragMenuItem_.setSelected(event.getIsEnabled());
    }
 

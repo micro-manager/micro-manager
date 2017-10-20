@@ -26,10 +26,13 @@ import java.awt.event.MouseEvent;
 public class DisplayMouseEvent {
    private final MouseEvent event_;
    private final Rectangle location_;
+   private final int IJToolId_;
    
-   public DisplayMouseEvent(MouseEvent e, Rectangle imageLocation) {
+   public DisplayMouseEvent(final MouseEvent e, final Rectangle imageLocation,
+           final int IJToolId) {
       event_ = e;
       location_ = imageLocation;
+      IJToolId_ = IJToolId;
    }
    
    /**
@@ -49,6 +52,17 @@ public class DisplayMouseEvent {
     */
    public Rectangle getLocation() {
       return location_;
+   }
+   
+   /**
+    * The currently selected ImageJ Tool
+    * Regretfully, this creates some dependencies on ImageJ code, however
+    * only an integer is being propagated.  Possible values are defined in
+    * ij.gui.Toolbar
+    * @return ID of the tool selected in the ImageJ Tool-bar
+    */
+   public int getToolId() {
+      return IJToolId_;
    }
    
 }

@@ -1184,9 +1184,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
     * to discover what kind of Mouse Event happened.
     * @param imageLocation the image coordinates of the pixel for which
     * information should be displayed (in image coordinates)
+    * @param ijToolId ID of tool selected in ImageJ tool-bar
     */
-   public void mouseEventOnImage(MouseEvent e, Rectangle imageLocation) {
-      displayController_.postDisplayEvent(new DisplayMouseEvent(e, imageLocation));
+   public void mouseEventOnImage(final MouseEvent e, final Rectangle imageLocation, 
+           final int ijToolId) {
+      displayController_.postDisplayEvent( new DisplayMouseEvent(
+              e, imageLocation, ijToolId));
       switch (e.getID()) {
          case MouseEvent.MOUSE_MOVED:
          case MouseEvent.MOUSE_ENTERED:

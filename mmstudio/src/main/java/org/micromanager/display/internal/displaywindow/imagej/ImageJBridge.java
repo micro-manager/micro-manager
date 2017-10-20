@@ -16,6 +16,7 @@ package org.micromanager.display.internal.displaywindow.imagej;
 
 import com.google.common.base.Preconditions;
 import ij.CompositeImage;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.Menus;
 import ij.WindowManager;
@@ -789,37 +790,37 @@ public final class ImageJBridge {
    
    void ij2mmMouseClicked(MouseEvent e) {
       uiController_.mouseEventOnImage(e, 
-            computeImageRectForCanvasPoint(e.getPoint()));
+            computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
    }
    
    void ij2mmMousePressed(MouseEvent e) {
       uiController_.mouseEventOnImage(e, 
-            computeImageRectForCanvasPoint(e.getPoint()));
+            computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
       
    }
    
    void ij2mmMouseReleased(MouseEvent e) {
       uiController_.mouseEventOnImage(e, 
-            computeImageRectForCanvasPoint(e.getPoint()));
+            computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
    }
 
    void ij2mmMouseEnteredCanvas(MouseEvent e) {
       uiController_.mouseEventOnImage(e,
-            computeImageRectForCanvasPoint(e.getPoint()));
+            computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
    }
 
    void ij2mmMouseExitedCanvas(MouseEvent e) {
-      uiController_.mouseEventOnImage(e,null);
+      uiController_.mouseEventOnImage(e, null, ij.gui.Toolbar.getToolId());
    }
 
    void ij2mmMouseDraggedOnCanvas(MouseEvent e) {
       uiController_.mouseEventOnImage(e,
-            computeImageRectForCanvasPoint(e.getPoint()));
+            computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
    }
 
    void ij2mmMouseMovedOnCanvas(MouseEvent e) {
       uiController_.mouseEventOnImage(e, 
-            computeImageRectForCanvasPoint(e.getPoint()));
+            computeImageRectForCanvasPoint(e.getPoint()), ij.gui.Toolbar.getToolId());
    }
 
    private Rectangle computeImageRectForCanvasPoint(Point canvasPoint) {

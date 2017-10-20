@@ -70,7 +70,7 @@ import org.micromanager.events.GUIRefreshEvent;
 import org.micromanager.events.StartupCompleteEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.DefaultEventManager;
-import org.micromanager.events.internal.MouseMovesStageEvent;
+import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
@@ -758,7 +758,7 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
    }
 
    @Subscribe
-   public void onMouseMovesStage(MouseMovesStageEvent event) {
+   public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
       handMovesButton_.setSelected(event.getIsEnabled());
    }
 
