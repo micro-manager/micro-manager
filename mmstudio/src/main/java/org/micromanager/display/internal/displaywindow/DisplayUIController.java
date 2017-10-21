@@ -35,6 +35,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.geom.Rectangle2D;
@@ -1209,6 +1210,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
                updatePixelInformation();
             }
       }
+   }
+   
+   public void mouseWheelMoved(MouseWheelEvent e) {
+      // TODO: post event 
    }
 
    private void updatePixelInformation() {

@@ -28,6 +28,8 @@ import java.awt.event.HierarchyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import javax.swing.SwingUtilities;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
@@ -37,7 +39,7 @@ import org.micromanager.internal.utils.MustCallOnEDT;
  * @author Mark A. Tsuchida, parts based on older version by Chris Weisiger
  */
 public final class MMImageCanvas extends ImageCanvas
-      implements MouseListener, MouseMotionListener
+      implements MouseListener, MouseMotionListener, MouseWheelListener
 {
    private final ImageJBridge parent_;
 
@@ -345,6 +347,11 @@ public final class MMImageCanvas extends ImageCanvas
       // 3) Notifies ImageWindow, which notifies ImagePlus, which shows
       // ImageJ status line with location and pixel value
    }
+   
+      @Override
+   public void mouseWheelMoved(MouseWheelEvent e) {
+      parent_.ij2mmMouseWheelMoved(e);   
+   }
 
    @Override
    public void repaint() {
@@ -363,4 +370,6 @@ public final class MMImageCanvas extends ImageCanvas
       }
       super.repaint(x, y, w, h);
    }
+
+
 }
