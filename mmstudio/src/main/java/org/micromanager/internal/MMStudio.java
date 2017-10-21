@@ -181,7 +181,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    // Lock invoked while shutting down
    private final Object shutdownLock_ = new Object();
 
-   private JCheckBoxMenuItem centerAndDragMenuItem_;
    private Thread acquisitionEngine2010LoadingThread_ = null;
    private Class<?> acquisitionEngine2010Class_ = null;
    private IAcquisitionEngine2010 acquisitionEngine2010_ = null;

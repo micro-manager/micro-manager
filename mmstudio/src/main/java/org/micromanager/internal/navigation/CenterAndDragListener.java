@@ -34,10 +34,6 @@ public final class CenterAndDragListener {
       getOrientation();
    }
 
-   @Deprecated
-   public void stop() {
-   }
-
    /*
     * Ensures that the stage moves in the expected direction
     */
