@@ -64,7 +64,7 @@ public final class CenterAndDragListener {
    /**
     * Handles mouse events and does the actual stage movement
     * TODO: factor out duplicated code
-    * @param dme DisplauMouseEvent containing information about the mouse movement
+    * @param dme DisplayMouseEvent containing information about the mouse movement
     * TODO: this does not take into account multiple cameras in different displays
     * 
     */

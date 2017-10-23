@@ -74,7 +74,7 @@ import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.menus.MMMenuBar;
-import org.micromanager.internal.navigation.ClickToMoveManager;
+import org.micromanager.internal.navigation.UiMovesStageManager;
 
 /**
  * This class is responsible for all logic surrounding live mode and the
@@ -97,7 +97,7 @@ public final class SnapLiveManager extends DataViewerListener
 
    private final Studio studio_;
    private final CMMCore core_;
-   private final ClickToMoveManager clickToMoveManager_;
+   private final UiMovesStageManager clickToMoveManager_;
    private DisplayController display_;
    private DefaultRewritableDatastore store_;
    private Pipeline pipeline_;
@@ -137,7 +137,7 @@ public final class SnapLiveManager extends DataViewerListener
    public SnapLiveManager(Studio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
-      clickToMoveManager_ = new ClickToMoveManager(studio_, core_);
+      clickToMoveManager_ = new UiMovesStageManager(studio_, core_);
       studio_.events().registerForEvents(clickToMoveManager_);
    }
 
@@ -505,7 +505,7 @@ public final class SnapLiveManager extends DataViewerListener
     */
    private List<Component> createControls() {
       /* TODO
-      ClickToMoveManager.getInstance().activate((DisplayController) display);
+      UiMovesStageManager.getInstance().activate((DisplayController) display);
       */
       ArrayList<Component> controls = new ArrayList<Component>();
       Insets zeroInsets = new Insets(0, 0, 0, 0);

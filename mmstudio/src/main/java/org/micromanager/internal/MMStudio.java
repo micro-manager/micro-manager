@@ -98,7 +98,7 @@ import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.menus.ToolsMenu;
-import org.micromanager.internal.navigation.ClickToMoveManager;
+import org.micromanager.internal.navigation.UiMovesStageManager;
 import org.micromanager.internal.navigation.XYZKeyListener;
 import org.micromanager.internal.navigation.ZWheelListener;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
@@ -420,9 +420,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    private void initializeVariousManagers() {
-      // The ClickToMoveManager manages itself; don't need to retain a
+      // The UiMovesStageManager manages itself; don't need to retain a
       // reference to it.
-      // new ClickToMoveManager(this, core_);
+      // new UiMovesStageManager(this, core_);
 
       snapLiveManager_ = new SnapLiveManager(this, core_);
       events().registerForEvents(snapLiveManager_);

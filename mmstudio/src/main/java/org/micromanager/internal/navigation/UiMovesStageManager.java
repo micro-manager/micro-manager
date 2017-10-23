@@ -32,19 +32,21 @@ import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.internal.menus.MMMenuBar;
 
 /**
- * This class handles setting up and disabling click-to-move and keyboard
+ * This class handles setting up and disabling mouse and keyboard
  * shortcuts for stage motion.
  */
-public final class ClickToMoveManager {
+public final class UiMovesStageManager {
    private final HashMap<DisplayController, CenterAndDragListener> displayToDragListener_;
+   private final HashMap<DisplayController, ZWheelListener> displayToWheelListener_;
    //private final HashMap<DisplayController, KeyAdapter> displayToKeyListener_;
    private final CMMCore core_;
    private final Studio studio_;
 
-   public ClickToMoveManager(Studio studio, CMMCore core) {
+   public UiMovesStageManager(Studio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
       displayToDragListener_ = new HashMap<DisplayController, CenterAndDragListener>();
+      displayToWheelListener_ = new HashMap<DisplayController, ZWheelListener>();
       //displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
       // Calling code has to register us for studio_ events
    }
@@ -55,13 +57,17 @@ public final class ClickToMoveManager {
     */
    public void activate(DisplayController display) {
       CenterAndDragListener dragListener = null;
+      ZWheelListener wheelListener = null;
       //KeyAdapter keyListener = null;
       if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
          dragListener = new CenterAndDragListener(core_);
          display.registerForEvents(dragListener);
+         wheelListener = new ZWheelListener(core_);
+         display.registerForEvents(wheelListener);
          //keyListener = new StageShortcutListener();
       }
       displayToDragListener_.put(display, dragListener);
+      displayToWheelListener_.put(display, wheelListener);
       //displayToKeyListener_.put(display, keyListener);
    }
 
@@ -74,6 +80,16 @@ public final class ClickToMoveManager {
                display.unregisterForEvents(listener);
             }
             displayToDragListener_.remove(display);
+         }
+      }
+      
+      for (DisplayController display : displayToWheelListener_.keySet()) {
+         if (display.equals(displayToDeActivate)) {
+            ZWheelListener listener =  displayToWheelListener_.get(display);
+            if (listener != null) {
+               display.unregisterForEvents(listener);
+            }
+            displayToWheelListener_.remove(display);
          }
       }
    }
@@ -114,16 +130,6 @@ public final class ClickToMoveManager {
    @Subscribe
    public void onDataViewerWillCloseEvent(DataViewerWillCloseEvent e) {
       deActivate(e.getDataViewer());
-      for (DisplayController display : displayToDragListener_.keySet()) {
-         if (display.equals(e.getDataViewer())) {
-            // Deactivate listener for this display.
-            CenterAndDragListener listener = displayToDragListener_.get(display);
-            if (listener != null) {
-               display.unregisterForEvents(listener);
-            }
-            displayToDragListener_.remove(display);
-         }
-      }
    }
 
    // TODO
@@ -137,7 +143,7 @@ public final class ClickToMoveManager {
    }
    
 
-   public static ClickToMoveManager getInstance() {
+   public static UiMovesStageManager getInstance() {
       return staticInstance_;
    }
    */

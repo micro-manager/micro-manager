@@ -31,9 +31,17 @@ public class StagePositionChangedEvent {
       deviceName_ = deviceName;
       pos_ = pos;
    }
+   /**
+    * The new (current) position of the stage
+    * @return 
+    */
    public double getPos() {
       return pos_;
    }
+   /**
+    * Name of the stage that moved
+    * @return 
+    */
    public String getDeviceName() {
       return deviceName_;
    }

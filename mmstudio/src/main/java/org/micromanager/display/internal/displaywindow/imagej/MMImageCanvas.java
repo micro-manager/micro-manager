@@ -68,6 +68,8 @@ public final class MMImageCanvas extends ImageCanvas
             instance.handleHierarchyChanged(e);
          }
       });
+      
+      instance.addMouseWheelListener(instance);
 
       return instance;
    }
@@ -348,7 +350,7 @@ public final class MMImageCanvas extends ImageCanvas
       // ImageJ status line with location and pixel value
    }
    
-      @Override
+   @Override
    public void mouseWheelMoved(MouseWheelEvent e) {
       parent_.ij2mmMouseWheelMoved(e);   
    }
