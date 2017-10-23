@@ -207,7 +207,7 @@ public class DefaultDatastore implements Datastore {
       // gracefully.
       if (ourAxes != null && ourAxes.size() > 0) {
          for (String axis : coords.getAxes()) {
-            if (!ourAxes.contains(axis)) {
+            if (!ourAxes.contains(axis) && coords.getIndex(axis) > 0) {
                throw new IllegalArgumentException("Invalid image coordinate axis " + axis + "; allowed axes are " + ourAxes);
             }
          }

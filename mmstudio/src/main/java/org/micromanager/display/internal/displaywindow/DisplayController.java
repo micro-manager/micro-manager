@@ -73,6 +73,7 @@ import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.DataProviderHasNewNameEvent;
 import org.micromanager.data.Datastore;
+import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -163,7 +164,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public static class Builder {
       private DataProvider dataProvider_;
       private DisplaySettings displaySettings_;
-      private LinkManager linkManager_;
+      private LinkManager linkManager_ = DefaultLinkManager.create();;
       private boolean shouldShow_;
       private DisplayWindowControlsFactory controlsFactory_;
 
