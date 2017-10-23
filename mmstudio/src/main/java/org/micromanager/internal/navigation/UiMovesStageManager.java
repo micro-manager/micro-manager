@@ -20,11 +20,8 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import mmcorej.CMMCore;
-import mmcorej.MMCoreJ;
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.internal.displaywindow.DisplayController;
@@ -75,9 +72,8 @@ public final class UiMovesStageManager {
       for (DisplayController display : displayToDragListener_.keySet()) {
          if (display.equals(displayToDeActivate)) {
             // Deactivate listener for this display.
-            CenterAndDragListener listener = displayToDragListener_.get(display);
-            if (listener != null) {
-               display.unregisterForEvents(listener);
+            if (null != displayToDragListener_.get(display)) {
+               display.unregisterForEvents(displayToDragListener_.get(display));
             }
             displayToDragListener_.remove(display);
          }
@@ -85,47 +81,13 @@ public final class UiMovesStageManager {
       
       for (DisplayController display : displayToWheelListener_.keySet()) {
          if (display.equals(displayToDeActivate)) {
-            ZWheelListener listener =  displayToWheelListener_.get(display);
-            if (listener != null) {
-               display.unregisterForEvents(listener);
+            if (displayToWheelListener_.get(display) != null) {
+               display.unregisterForEvents(displayToWheelListener_.get(display));
             }
             displayToWheelListener_.remove(display);
          }
       }
    }
-   /*
-   @Subscribe
-   public void onMouseMovesStage(MouseMovesStageStateChangeEvent event) {
-      try {
-         for (DisplayController display : displayToDragListener_.keySet()) {
-            if (event.getIsEnabled()) {
-               // Create listeners for each display.
-               activate(display);
-            }
-            else {
-               // Deactivate listeners for each display.
-               CenterAndDragListener listener = displayToDragListener_.get(display);
-               if (listener != null) {
-                  listener.stop();
-               }
-               KeyAdapter keyListener = displayToKeyListener_.get(display);
-               if (keyListener != null) {
-                  // TODO
-                  // display.getCanvas().removeKeyListener(keyListener);
-                  // display.getCanvas().addKeyListener(IJ.getInstance());
-               }
-               // Still need to keep track of the display so we can reactivate
-               // it later if necessary.
-               displayToDragListener_.put(display, null);
-               displayToKeyListener_.put(display, null);
-            }
-         }
-      }
-      catch (Exception e) {
-         studio_.logs().logError(e, "Error updating mouse-moves-stage info");
-      }
-   }
-   */
 
    @Subscribe
    public void onDataViewerWillCloseEvent(DataViewerWillCloseEvent e) {
@@ -141,16 +103,15 @@ public final class UiMovesStageManager {
       displayToDragListener_.remove(display);
       displayToKeyListener_.remove(display);
    }
-   
 
-   public static UiMovesStageManager getInstance() {
-      return staticInstance_;
-   }
    */
 
+   
+   // TODO: Move shortcuts to Stage Control plugin, but have Canvas listen to 
+   // KeyPresses and propagate them (eventually to the Stage Control plugin)
    /**
     * Listens for certain key presses and moves the stage.
-    */
+    
    private class StageShortcutListener extends KeyAdapter {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -273,4 +234,5 @@ public final class UiMovesStageManager {
          }
       }
    }
+   * */
 }
