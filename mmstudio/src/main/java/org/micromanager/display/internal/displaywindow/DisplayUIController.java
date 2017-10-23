@@ -98,6 +98,7 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
+import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.display.internal.gearmenu.GearButton;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.MMStudio;
@@ -1213,7 +1214,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
    
    public void mouseWheelMoved(MouseWheelEvent e) {
-      // TODO: post event 
+      displayController_.postDisplayEvent( new DisplayMouseWheelEvent(e));
    }
 
    private void updatePixelInformation() {
