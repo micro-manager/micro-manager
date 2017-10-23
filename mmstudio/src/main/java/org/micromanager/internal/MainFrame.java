@@ -92,7 +92,6 @@ import org.micromanager.quickaccess.internal.controls.ShutterControl;
 public final class MainFrame extends MMFrame implements LiveModeListener {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
-   private static final String MAIN_FRAME_DIVIDER_POS = "divider_pos";
    private static final String MAIN_EXPOSURE = "exposure";
 
    // Size constraint for normal buttons.
@@ -147,17 +146,17 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
       snapLiveManager_ = manager;
       snapLiveManager_.addLiveModeListener(this);
 
-      setTitle(String.format("%s %s", MICRO_MANAGER_TITLE,
+      super.setTitle(String.format("%s %s", MICRO_MANAGER_TITLE,
                MMVersion.VERSION_STRING));
 
       JPanel contents = new JPanel();
       // Minimize insets.
       contents.setLayout(new MigLayout("insets 1, gap 0, fill"));
-      setContentPane(contents);
+      super.setContentPane(contents);
 
       contents.add(createComponents(), "grow");
 
-      setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+      super.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
       setupWindowHandlers();
 
       // Add our own keyboard manager that handles Micro-Manager shortcuts
@@ -166,17 +165,17 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
       DropTarget dropTarget = new DropTarget(this, new DragDropUtil(studio_));
 
       setExitStrategy(OptionsDlg.getShouldCloseOnExit());
-      setIconImage(Toolkit.getDefaultToolkit().getImage(
+      super.setIconImage(Toolkit.getDefaultToolkit().getImage(
                getClass().getResource("/org/micromanager/icons/microscope.gif")));
 
-      setJMenuBar(MMMenuBar.createMenuBar(studio_));
+      super.setJMenuBar(MMMenuBar.createMenuBar(studio_));
 
       setConfigText("");
       // Set minimum size so we can't resize smaller and hide some of our
       // contents. Our insets are only available after the first call to
       // pack().
-      pack();
-      setMinimumSize(getSize());
+      super.pack();
+      super.setMinimumSize(super.getSize());
       resetPosition();
       DefaultEventManager.getInstance().registerForEvents(this);
    }
