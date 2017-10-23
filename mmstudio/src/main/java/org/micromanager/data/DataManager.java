@@ -277,6 +277,7 @@ public interface DataManager {
    /**
     * Generate a "blank" PropertyMap.Builder with all null values.
     * @return a PropertyMapBuilder for creating new PropertyMap instances.
+    * @deprecated Use PropertyMaps.builder() instead
     */
    @Deprecated
    PropertyMap.Builder getPropertyMapBuilder();
