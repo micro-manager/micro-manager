@@ -27,9 +27,9 @@ import ij.process.ImageProcessor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.micromanager.data.Coords;
-import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
@@ -44,10 +44,10 @@ import org.micromanager.Studio;
  */
 public class SplitViewProcessor extends Processor {
 
-   private Studio studio_;
+   private final Studio studio_;
    private String orientation_ = SplitViewFrame.LR;
-   private int numSplits_;
-   private ArrayList<String> channelSuffixes_;
+   private final int numSplits_;
+   private final ArrayList<String> channelSuffixes_;
 
    public SplitViewProcessor(Studio studio, String orientation, int numSplits) {
       studio_ = studio;
@@ -78,19 +78,19 @@ public class SplitViewProcessor extends Processor {
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
       // Update channel names in summary metadata.
-      String[] names = summary.getChannelNames();
-      if (names == null) {
+      List<String> chNames = summary.getChannelNameList();
+      if (chNames == null || chNames.isEmpty()) {
          // Can't do anything as we don't know how many names there'll be.
          return summary;
       }
-      String[] newNames = new String[names.length * numSplits_];
-      for (int i = 0; i < names.length; ++i) {
+      String[] newNames = new String[chNames.size() * numSplits_];
+      for (int i = 0; i < chNames.size(); ++i) {
          String base = summary.getSafeChannelName(i);
          for (int j = 0; j < numSplits_; ++j) {
             newNames[i * numSplits_ + j] = base + channelSuffixes_.get(j);
          }
       }
-      return summary.copy().channelNames(newNames).build();
+      return summary.copyBuilder().channelNames(newNames).build();
    }
 
    @Override

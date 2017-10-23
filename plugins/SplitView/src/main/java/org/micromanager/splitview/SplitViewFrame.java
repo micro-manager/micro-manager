@@ -46,6 +46,7 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
 
@@ -77,13 +78,13 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
       core_ = studio_.getCMMCore();
 
       orientation_ = settings.getString("orientation",
-            studio_.profile().getString(getClass(), ORIENTATION, LR));
-      numSplits_ = settings.getInt("splits",
-            studio_.profile().getInt(getClass(), NUM_SPLITS, 2));
+            studio_.profile().getSettings(SplitViewFrame.class).getString(ORIENTATION, LR));
+      numSplits_ = settings.getInteger("splits",
+            studio_.profile().getSettings(SplitViewFrame.class).getInteger(NUM_SPLITS, 2));
 
       initComponents();
 
-      loadAndRestorePosition(DEFAULT_WIN_X, DEFAULT_WIN_Y);
+      super.loadAndRestorePosition(DEFAULT_WIN_X, DEFAULT_WIN_Y);
 
       lrRadio_.setSelected(orientation_.equals(LR));
       tbRadio_.setSelected(orientation_.equals(TB));
@@ -91,9 +92,9 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
 
    @Override
    public PropertyMap getSettings() {
-      PropertyMap.PropertyMapBuilder builder = studio_.data().getPropertyMapBuilder();
+      PropertyMap.Builder builder =  PropertyMaps.builder();
       builder.putString("orientation", orientation_);
-      builder.putInt("splits", numSplits_);
+      builder.putInteger("splits", numSplits_);
       return builder.build();
    }
 
@@ -122,6 +123,7 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
       group.add(tbRadio_);
 
       lrRadio_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent evt) {
             updateSettings(LR, numSplits_);
          }
@@ -129,6 +131,7 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
 
       tbRadio_.setText("Top-Bottom Split");
       tbRadio_.addActionListener(new ActionListener() {
+         @Override
          public void actionPerformed(ActionEvent evt) {
             updateSettings(TB, numSplits_);
          }
@@ -164,14 +167,16 @@ public class SplitViewFrame extends MMFrame implements ProcessorConfigurator {
    private void updateSettings(String orientation, int numSplits) {
       orientation_ = orientation;
       numSplits_ = numSplits;
-      studio_.profile().setString(getClass(), ORIENTATION, orientation);
-      studio_.profile().setInt(getClass(), NUM_SPLITS, numSplits_);
+      studio_.profile().getSettings(SplitViewFrame.class).putString(
+              ORIENTATION, orientation);
+      studio_.profile().getSettings(SplitViewFrame.class).putInteger(
+              NUM_SPLITS, numSplits_);
       studio_.data().notifyPipelineChanged();
       repaint();
    }
 
    private class Preview extends JPanel {
-      private boolean isLeftRight_;
+      private final boolean isLeftRight_;
       public Preview(boolean isLeftRight) {
          isLeftRight_ = isLeftRight;
       }

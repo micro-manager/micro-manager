@@ -39,8 +39,8 @@ import org.micromanager.Studio;
  */
 @Plugin(type = ProcessorPlugin.class)
 public class SplitView implements ProcessorPlugin, SciJavaPlugin {
-   public static final String menuName = "Split View";
-   public static final String tooltipDescription =
+   public static final String MENU_NAME = "Split View";
+   public static final String TOOL_TIP_DESCRIPTION =
       "Split images vertically or horizontally into two channels";
    private Studio studio_;
 
@@ -66,7 +66,7 @@ public class SplitView implements ProcessorPlugin, SciJavaPlugin {
 
    @Override
    public String getHelpText() {
-      return tooltipDescription;
+      return TOOL_TIP_DESCRIPTION;
    }
 
    @Override
@@ -76,6 +76,6 @@ public class SplitView implements ProcessorPlugin, SciJavaPlugin {
    
    @Override
    public String getCopyright() {
-      return "University of California, 2014";
+      return "University of California, 2011-2017";
    }
 }
