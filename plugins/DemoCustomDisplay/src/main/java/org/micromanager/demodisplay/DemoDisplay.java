@@ -28,6 +28,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,9 +47,13 @@ import org.micromanager.data.DatastoreRewriteException;
 
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.NewDisplaySettingsEvent;
 
 import org.micromanager.Studio;
+import org.micromanager.data.DataProvider;
+import org.micromanager.display.DataViewerListener;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -60,7 +65,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
    private Datastore store_;
    private DisplaySettings settings_;
    private Studio studio_;
-   private JPanel imageDisplay_;
+   private final JPanel imageDisplay_;
 
    private int imageCount_ = 0;
    private Image currentImage_ = null;
@@ -74,14 +79,14 @@ public class DemoDisplay extends JFrame implements DataViewer {
       store_ = studio_.data().createRAMDatastore();
 
       // Notify the DisplayManager when we receive focus.
-      addWindowListener(new WindowAdapter() {
+      super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowActivated(WindowEvent e) {
-            studio_.displays().raisedToTop(DemoDisplay.this);
+            postEvent(DataViewerDidBecomeActiveEvent.create(DemoDisplay.this));
          }
       });
 
-      setLayout(new MigLayout("flowy"));
+      super.setLayout(new MigLayout("flowy"));
 
       imageDisplay_ = new JPanel() {
          @Override
@@ -103,7 +108,7 @@ public class DemoDisplay extends JFrame implements DataViewer {
             return new Dimension(400, 400);
          }
       };
-      add(imageDisplay_);
+      super.add(imageDisplay_);
 
       JButton snap = new JButton("Snap new image");
       snap.addActionListener(new ActionListener() {
@@ -112,26 +117,26 @@ public class DemoDisplay extends JFrame implements DataViewer {
             addNewImage();
          }
       });
-      add(snap);
+      super.add(snap);
 
       // Start us off with several images already in our Datastore.
       for (int i = 0; i < 5; ++i) {
          addNewImage();
       }
 
-      pack();
-      setVisible(true);
+      super.pack();
+      super.setVisible(true);
 
       // Make Micro-Manager aware of our display.
       studio_.displays().addViewer(this);
       // Ensure there are histograms for our display.
-      updateHistograms();
+      //updateHistograms();
    }
 
    /**
     * Snap a new image and add it to our Datastore.
     */
-   private void addNewImage() {
+   private void addNewImage()  {
       Image newImage = studio_.live().snap(false).get(0);
       // Move its timepoint to the end of our little timeseries.
       newImage = newImage.copyAtCoords(newImage.getCoords()
@@ -146,19 +151,21 @@ public class DemoDisplay extends JFrame implements DataViewer {
       catch (DatastoreRewriteException e) {
          // This should also be impossible.
          studio_.logs().showError("Image already exists at " + newImage.getCoords());
+      } catch (IOException ex) {
+         studio_.logs().showError(ex, "IO exception in DemoDataViewer");
       }
       imageCount_ += 1;
       // Draw the new image, and ensure the inspector histograms are up to
       // date.
       currentImage_ = newImage;
-      updateHistograms();
+      //updateHistograms();
       repaint();
    }
 
    /**
     * This method ensures that the Inspector histograms have up-to-date data
     * to display.
-    */
+ 
    private void updateHistograms() {
       // We only ever have one image shown at a time, but if we had multiple
       // visible, then we would add them all to this list.
@@ -166,15 +173,16 @@ public class DemoDisplay extends JFrame implements DataViewer {
       imageList.add(currentImage_);
       studio_.displays().updateHistogramDisplays(imageList, this);
    }
+   *    */
 
    @Override
    public void setDisplaySettings(DisplaySettings settings) {
-      settings_ = settings;
       // We must inform our clients of the new display settings, according to
       // the documentation in DataViewer.
-      bus_.post(new NewDisplaySettingsEvent(settings_, this));
+      bus_.post(DefaultDisplaySettingsChangedEvent.create(this, settings_, settings)); 
       // Display settings may have changed how we should paint. Again, this is
       // per the documentation in DataViewer.
+      settings_ = settings;
       repaint();
    }
 
@@ -193,7 +201,6 @@ public class DemoDisplay extends JFrame implements DataViewer {
       bus_.unregister(obj);
    }
 
-   @Override
    public void postEvent(Object obj) {
       bus_.post(obj);
    }
@@ -205,7 +212,11 @@ public class DemoDisplay extends JFrame implements DataViewer {
 
    @Override
    public void setDisplayedImageTo(Coords coords) {
-      currentImage_ = store_.getImage(coords);
+      try {
+         currentImage_ = store_.getImage(coords);
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex, "IOException in DemoDataViewer");
+      }
       repaint();
    }
 
@@ -218,20 +229,57 @@ public class DemoDisplay extends JFrame implements DataViewer {
    }
 
    @Override
-   public void requestRedraw() {
-      repaint();
-   }
-
-   @Override
-   public boolean getIsClosed() {
-      // An alternative is to listen for the windowClosed callback in our
-      // WindowAdapter above, but this also works, and is valid as well for
-      // windows that only "pretend" to close, by hiding themselves.
-      return !isVisible();
-   }
-
-   @Override
    public String getName() {
       return "Demo Display";
+   }
+
+   @Override
+   public boolean compareAndSetDisplaySettings(DisplaySettings originalSettings, DisplaySettings newSettings) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public DataProvider getDataProvider() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public void setDisplayPosition(Coords position, boolean forceRedisplay) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public void setDisplayPosition(Coords position) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public Coords getDisplayPosition() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public boolean compareAndSetDisplayPosition(Coords originalPosition, Coords newPosition, boolean forceRedisplay) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public boolean compareAndSetDisplayPosition(Coords originalPosition, Coords newPosition) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public boolean isClosed() {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public void addListener(DataViewerListener listener, int priority) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public void removeListener(DataViewerListener listener) {
+      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 }
