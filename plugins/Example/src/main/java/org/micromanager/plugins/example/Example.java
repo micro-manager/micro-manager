@@ -30,7 +30,7 @@
  */
 
 
-package org.micromanager.example;
+package org.micromanager.plugins.example;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;

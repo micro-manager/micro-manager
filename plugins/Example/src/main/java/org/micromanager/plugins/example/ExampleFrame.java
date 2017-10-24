@@ -18,7 +18,7 @@
  * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
  * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
  */
-package org.micromanager.example;
+package org.micromanager.plugins.example;
 
 import com.google.common.eventbus.Subscribe;
 
@@ -28,17 +28,13 @@ import java.awt.Font;
 import java.util.List;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 
-import mmcorej.CMMCore;
 
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.Image;
-import org.micromanager.display.HistogramData;
 import org.micromanager.events.ExposureChangedEvent;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.MMFrame;
@@ -47,24 +43,24 @@ public class ExampleFrame extends MMFrame {
 
    private Studio studio_;
    private JTextField userText_;
-   private JLabel imageInfoLabel_;
-   private JLabel exposureTimeLabel_;
+   private final JLabel imageInfoLabel_;
+   private final JLabel exposureTimeLabel_;
 
    public ExampleFrame(Studio studio) {
       super("Example Plugin GUI");
       studio_ = studio;
 
-      setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
+      super.setLayout(new MigLayout("fill, insets 2, gap 2, flowx"));
 
       JLabel title = new JLabel("I'm an example plugin!");
       title.setFont(new Font("Arial", Font.BOLD, 14));
-      add(title, "span, alignx center, wrap");
+      super.add(title, "span, alignx center, wrap");
 
       // Create a text field for the user to customize their alerts.
-      add(new JLabel("Alert text: "));
+      super.add(new JLabel("Alert text: "));
       userText_ = new JTextField(30);
       userText_.setText("Something happened!");
-      add(userText_);
+      super.add(userText_);
 
       JButton alertButton = new JButton("Alert me!");
       // Clicking on this button will invoke the ActionListener, which in turn
@@ -77,12 +73,12 @@ public class ExampleFrame extends MMFrame {
                ExampleFrame.class, userText_.getText());
          }
       });
-      add(alertButton, "wrap");
+      super.add(alertButton, "wrap");
 
       // Snap an image, show the image in the Snap/Live view, and show some
       // stats on the image in our frame.
       imageInfoLabel_ = new JLabel();
-      add(imageInfoLabel_, "growx, split, span");
+      super.add(imageInfoLabel_, "growx, split, span");
       JButton snapButton = new JButton("Snap Image");
       snapButton.addActionListener(new ActionListener() {
          @Override
@@ -94,10 +90,10 @@ public class ExampleFrame extends MMFrame {
             showImageInfo(firstImage);
          }
       });
-      add(snapButton, "wrap");
+      super.add(snapButton, "wrap");
 
       exposureTimeLabel_ = new JLabel("");
-      add(exposureTimeLabel_, "split, span, growx");
+      super.add(exposureTimeLabel_, "split, span, growx");
 
       // Run an acquisition using the current MDA parameters.
       JButton acquireButton = new JButton("Run Acquisition");
@@ -116,9 +112,9 @@ public class ExampleFrame extends MMFrame {
             acqThread.start();
          }
       });
-      add(acquireButton, "wrap");
+      super.add(acquireButton, "wrap");
 
-      pack();
+      super.pack();
 
       // Registering this class for events means that its event handlers
       // (that is, methods with the @Subscribe annotation) will be invoked when
@@ -133,6 +129,7 @@ public class ExampleFrame extends MMFrame {
    /**
     * To be invoked, this method must be public and take a single parameter
     * which is the type of the event we care about.
+    * @param event
     */
    @Subscribe
    public void onExposureChanged(ExposureChangedEvent event) {
@@ -145,11 +142,11 @@ public class ExampleFrame extends MMFrame {
     */
    private void showImageInfo(Image image) {
       // See DisplayManager for information on these parameters.
-      HistogramData data = studio_.displays().calculateHistogram(
-         image, 0, 16, 16, 0, true);
+      //HistogramData data = studio_.displays().calculateHistogram(
+      //   image, 0, 16, 16, 0, true);
       imageInfoLabel_.setText(String.format(
-            "Image size: %dx%d; min: %d, max: %d, mean: %d, std: %.2f",
-            image.getWidth(), image.getHeight(), data.getMinVal(),
-            data.getMaxVal(), data.getMean(), data.getStdDev()));
+            "Image size: %dx%d", // min: %d, max: %d, mean: %d, std: %.2f",
+            image.getWidth(), image.getHeight() ) ); //, data.getMinVal(),
+            //data.getMaxVal(), data.getMean(), data.getStdDev()));
    }
 }
