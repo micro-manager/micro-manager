@@ -32,8 +32,10 @@
 
 package org.micromanager.recall;
 
-import java.util.concurrent.LinkedBlockingQueue;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
@@ -41,19 +43,20 @@ import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.acquisition.internal.TaggedImageQueue;
+import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.internal.utils.MMTags;
-import org.micromanager.internal.utils.MDUtils;
-import org.micromanager.internal.utils.MMScriptException;
+import org.micromanager.data.Image;
+import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.utils.ReportingUtils;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
 public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
-   public static final String menuName = "Live Replay";
-   public static final String tooltipDescription =
+   public static final String MENU_NAME = "Live Replay";
+   public static final String TOOL_TIP_DESCRIPTION =
       "Recalls (live) images left over in the internal sequence buffer";
    private CMMCore core_;
    private MMStudio studio_;
@@ -82,6 +85,20 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
       }
 
       store_ = studio_.data().createRAMDatastore();
+      // It is imperative to set the axis order, or animation will not work correctly
+      SummaryMetadata.Builder metadataBuilder = store_.getSummaryMetadata().copyBuilder();
+      List<String> orderedAxis = new ArrayList<String>();
+      orderedAxis.add(Coords.C); 
+      orderedAxis.add(Coords.T);
+      // TODO: even though we do not use Z and P, not including them causes the
+      // display animation to stop working....
+      orderedAxis.add(Coords.Z);
+      orderedAxis.add(Coords.P);
+      try {
+         store_.setSummaryMetadata(metadataBuilder.axisOrder(orderedAxis).build());
+      } catch (IOException ioe) {
+         ReportingUtils.logError(ioe, "SummaryMetadat Error in Recall plugin");
+      }
       studio_.getDisplayManager().createDisplay(store_);
       studio_.getDisplayManager().manage(store_);
 
@@ -92,9 +109,12 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
          for (int i = 0; i < remaining; i++) {
             try {
                TaggedImage tImg = core_.popNextTaggedImage();
-               normalizeTags(tImg, frameCounter);
+               
+               Image convertedTaggedImage = studio_.data().convertTaggedImage(tImg);
+               if (convertedTaggedImage != null) {
+                  store_.putImage(normalizeTags(convertedTaggedImage, tImg, frameCounter));
+               }
                frameCounter++;
-               store_.putImage(studio_.data().convertTaggedImage(tImg));
             }
             catch (DatastoreFrozenException e) { // Can't add to datastore.
                studio_.logs().logError(e);
@@ -119,9 +139,12 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
                tImg.tags.put("Channel", channelName);
                int channelIndex = tImg.tags.getInt(camera + "-CameraChannelIndex");
                tImg.tags.put("ChannelIndex", channelIndex);
-               normalizeTags(tImg, frameCounters[channelIndex]);
+               Image convertedTaggedImage = studio_.data().convertTaggedImage(tImg);
+               if (convertedTaggedImage != null) {
+                  store_.putImage( normalizeTags(
+                          convertedTaggedImage, tImg, frameCounters[channelIndex]));
+               }
                frameCounters[channelIndex]++;
-               store_.putImage(studio_.data().convertTaggedImage(tImg));
             }
             catch (DatastoreFrozenException e) { // Can't add to datastore.
                studio_.logs().logError(e);
@@ -136,26 +159,32 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
       }        
    }
 
-   private void normalizeTags(TaggedImage ti, int frameIndex) {
+   private Image normalizeTags(Image convertedTaggedImage, TaggedImage ti, int frameIndex) {
+      
+      Coords.Builder coordsBuilder = convertedTaggedImage.getCoords().copyBuilder();
       if (ti != TaggedImageQueue.POISON) {
          int channel = 0;
+         
          try {
             if (ti.tags.has("Multi Camera-CameraChannelIndex")) {
                channel = ti.tags.getInt("Multi Camera-CameraChannelIndex");
             } else if (ti.tags.has("CameraChannelIndex")) {
                channel = ti.tags.getInt("CameraChannelIndex");
             } else if (ti.tags.has("ChannelIndex")) {
-               channel = MDUtils.getChannelIndex(ti.tags);
+               channel = ti.tags.getInt("ChannelIndex");
             }
-            ti.tags.put(MMTags.Image.CHANNEL_INDEX, channel);
-            ti.tags.put(MMTags.Image.POS_INDEX, 0);
-            ti.tags.put(MMTags.Image.SLICE_INDEX, 0);          
-            ti.tags.put(MMTags.Image.FRAME, frameIndex);
+            
+            Coords coords = coordsBuilder.channel(channel).t(frameIndex).build();
+            
+            return convertedTaggedImage.copyAtCoords(coords);
 
          } catch (JSONException ex) {
             studio_.logs().logError(ex);
          }
       }
+                  
+      Coords coords = coordsBuilder.c(0).t(frameIndex).build();    
+      return convertedTaggedImage.copyAtCoords(coords);
    }
    
    public void configurationChanged() {
@@ -163,7 +192,7 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getName() {
-      return menuName;
+      return MENU_NAME;
    }
 
    @Override
@@ -183,6 +212,7 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
    
    @Override
    public String getCopyright() {
-      return "University of California, 2010-2015";
+      return "University of California, 2010-2017";
    }
+   
 }
