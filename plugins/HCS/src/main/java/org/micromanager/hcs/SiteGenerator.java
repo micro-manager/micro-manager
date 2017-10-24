@@ -530,8 +530,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             // set the proper XYstage name
             for (int k = 0; k < mpl.size(); k++) {
                StagePosition sp = mpl.get(k);
-               if (sp.numAxes == 2) {
-                  sp.stageName = mpl.getDefaultXYStage();
+               if (sp.is2DStagePosition()) {
+                  sp.set2DPosition(mpl.getDefaultXYStage(), sp.get2DPositionX(), 
+                          sp.get2DPositionY());
                }
             }
             // add Z position if 3-point focus is enabled
@@ -541,10 +542,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
                   return;
                }
                // add z position from the 3-point plane estimate
-               StagePosition sp = new StagePosition();
-               sp.numAxes = 1;
-               sp.x = focusPlane_.getZPos(mpl.getX(), mpl.getY());
-               sp.stageName = mpl.getDefaultZStage();
+               StagePosition sp = StagePosition.create1D(mpl.getDefaultZStage(), 
+                       focusPlane_.getZPos(mpl.getX(), mpl.getY()));
                mpl.add(sp);
             }
             platePl.addPosition(pl.getPosition(j));
@@ -625,10 +624,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             }
 
             MultiStagePosition mps = new MultiStagePosition();
-            StagePosition sp = new StagePosition();
-            sp.numAxes = 2;
-            sp.x = x;
-            sp.y = y;
+            StagePosition sp = StagePosition.create2D("", x, y);
 
             mps.add(sp);
             sites.addPosition(mps);

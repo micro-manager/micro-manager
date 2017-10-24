@@ -52,7 +52,7 @@ public class SBSPlate {
 
    private String id_;
    private String description_;
-   private HashMap<String, Well> wellMap_;
+   private final HashMap<String, Well> wellMap_;
 
    private static final String ROWS = "rows";
    private static final String COLS = "cols";
@@ -82,7 +82,7 @@ public class SBSPlate {
          "PLATE_FILE", "High-Content Screening plate definition files",
          System.getProperty("user.home") + "/MyPlate.txt", true, "txt");
 
-   private static final char rowAlphabet[] = { 'A','B','C','D','E',
+   private static final char[] ROW_ALPHABET = { 'A','B','C','D','E',
       'F','G','H','I','J',
       'K','L','M','N','O',
       'P','Q','R','S','T',
@@ -240,7 +240,7 @@ public class SBSPlate {
             try {
                load(file.getAbsolutePath());
             }
-            catch (Exception e) {
+            catch (HCSException e) {
                ReportingUtils.showError(e, "There was an error loading the file");
             }
          }
@@ -251,7 +251,7 @@ public class SBSPlate {
          try {
             load(id);
          }
-         catch (Exception e) {
+         catch (HCSException e) {
             ReportingUtils.showError(e, "There was an error loading the file");
          }
       }
@@ -348,9 +348,12 @@ public class SBSPlate {
     * Generate a list of well positions using 'snake' pattern.
     * Takes a list of sites and merges them into the well list.
     * Site XY coordinates are assumed to be relative to the well center.
+    * @param xyStageName
+    * @param sites
     * @return - an array of well positions
     */
-   public WellPositionList[] generatePositions(String xyStageName, PositionList sites) {
+   public WellPositionList[] generatePositions(final String xyStageName, 
+           final PositionList sites) {
       WellPositionList posListArray[] = new WellPositionList[numRows_ * numColumns_];
       boolean direction = true;
       int wellCount = 0;
@@ -378,11 +381,8 @@ public class SBSPlate {
                   absMps.setDefaultXYStage(xyStageName);
                   // TODO: make sure we get the right XY stage not just the first one
                   StagePosition sp = mps.get(0);
-                  StagePosition absSp = new StagePosition();
-                  absSp.x = wellX + sp.x;
-                  absSp.y = wellY + sp.y;
-                  absSp.stageName = xyStageName;
-                  absSp.numAxes = 2;
+                  StagePosition absSp = StagePosition.create2D(xyStageName, 
+                          wellX + sp.x, wellY + sp.y);
                   absMps.add(absSp);
                   absSites.addPosition(absMps);
                }
@@ -404,10 +404,7 @@ public class SBSPlate {
       // generate default site in the center of the well
       PositionList sites = new PositionList();
       MultiStagePosition mps = new MultiStagePosition();
-      StagePosition sp = new StagePosition();
-      sp.numAxes = 2;
-      sp.x = 0.0;
-      sp.y = 0.0;
+      StagePosition sp = StagePosition.create2D(xyStageName, 0.0, 0.0);
       mps.add(sp);
       sites.addPosition(mps);
       
@@ -456,9 +453,9 @@ public class SBSPlate {
       String label = new String();
       while( tempRow > 0 )
       {
-         int letterIndex = (tempRow - 1) % rowAlphabet.length;
-         label += rowAlphabet[letterIndex];
-         tempRow = ( tempRow - 1 ) / rowAlphabet.length;
+         int letterIndex = (tempRow - 1) % ROW_ALPHABET.length;
+         label += ROW_ALPHABET[letterIndex];
+         tempRow = ( tempRow - 1 ) / ROW_ALPHABET.length;
       }
       return label;
    }
@@ -612,10 +609,7 @@ public class SBSPlate {
    }
    
    boolean isPointWithin(double x, double y) {
-      if (x >= 0.0 && x < sizeXUm_ && y >= 0.0 && y < sizeYUm_)
-         return true;
-      else
-         return false;
+      return x >= 0.0 && x < sizeXUm_ && y >= 0.0 && y < sizeYUm_;
             
    }
 

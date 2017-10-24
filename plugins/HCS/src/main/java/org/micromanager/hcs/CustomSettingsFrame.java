@@ -28,8 +28,6 @@ public class CustomSettingsFrame extends JFrame {
    private final JTextField sizeYUm_;
    private final JTextField firstWellX_;
    private final JTextField firstWellY_;
-   private final JTextField wellSizeX_;
-   private final JTextField wellSizeY_;
    private final JCheckBox circular_;
 
    private final SiteGenerator parent_;
@@ -58,9 +56,6 @@ public class CustomSettingsFrame extends JFrame {
 
       firstWellX_ = createText("<html>First well X-offset (&#956;m): </html>", 10, false);
       firstWellY_ = createText("<html>First well Y-offset (&#956;m): </html>", 10, true);
-
-      wellSizeX_ = createText("<html>Well width (&#956;m): </html>", 10, false);
-      wellSizeY_ = createText("<html>Well height (&#956;m): </html>", 10, true);
 
       circular_ = new JCheckBox("<html>Circular: ");
       super.add(circular_, "wrap");

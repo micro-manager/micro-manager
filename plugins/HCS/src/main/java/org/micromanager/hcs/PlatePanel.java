@@ -173,7 +173,7 @@ public class PlatePanel extends JPanel {
          wells_ = plate_.generatePositions(gui_.getXYStageName(), pl);
       
 
-      addMouseListener(new MouseAdapter() {
+      super.addMouseListener(new MouseAdapter() {
          @Override
          public void mouseClicked(final MouseEvent e) {
             try {
@@ -203,7 +203,7 @@ public class PlatePanel extends JPanel {
          }
       });
       
-      addComponentListener(new ComponentAdapter() {
+      super.addComponentListener(new ComponentAdapter() {
          @Override
          public void componentResized(final ComponentEvent e) {
             rescale();
