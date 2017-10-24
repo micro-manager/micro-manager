@@ -29,6 +29,7 @@ import ij.process.ShortProcessor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +48,7 @@ import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
@@ -54,6 +56,7 @@ import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -74,9 +77,9 @@ public class DuplicatorPluginFrame extends MMDialog {
       ourStore_ = ourWindow_.getDatastore();
       
       // Not sure if this is needed, be safe for now
-      if (!ourStore_.getIsFrozen()) {
+      if (!ourStore_.isFrozen()) {
          studio_.logs().showMessage("Can not duplicate ongoing acquisitions", 
-                 window.getAsWindow());
+                 window.getWindow());
          super.dispose();
          return;
       }
@@ -122,9 +125,13 @@ public class DuplicatorPluginFrame extends MMDialog {
                      minSpinner.setValue(maxes.get(axis) + 1);
                   }
                   mins.put(axis, (Integer) minSpinner.getValue() - 1);
-                  Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                  coord = coord.copy().index(axis, mins.get(axis)).build();
-                  ourWindow_.setDisplayedImageTo(coord);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
+                  }
                }
             });
             super.add(minSpinner, "wmin 60");
@@ -145,9 +152,13 @@ public class DuplicatorPluginFrame extends MMDialog {
                      maxSpinner.setValue(mins.get(axis) + 1);
                   }
                   maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
-                  Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                  coord = coord.copy().index(axis, maxes.get(axis)).build();
-                  ourWindow_.setDisplayedImageTo(coord);
+                  try {
+                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                     coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
+                     ourWindow_.setDisplayPosition(coord);
+                  } catch (IOException ioe) {
+                     ReportingUtils.logError(ioe, "IOException in DuplcatorPlugin");
+                  }
                }
             });
             super.add(maxSpinner, "wmin 60, wrap");
@@ -199,28 +210,29 @@ public class DuplicatorPluginFrame extends MMDialog {
       // TODO: provide options for disk-backed datastores
       Datastore newStore = studio_.data().createRAMDatastore();
       
+      // TODO: use Overlays instead
       Roi roi = theWindow.getImagePlus().getRoi();
       
-      Datastore oldStore = theWindow.getDatastore();
+      DataProvider oldStore = theWindow.getDataProvider();
       Coords oldSizeCoord = oldStore.getMaxIndices();
-      CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copy();
+      CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
       SummaryMetadata metadata = oldStore.getSummaryMetadata();
-      String[] channelNames = metadata.getChannelNames();
+      List<String> channelNames = metadata.getChannelNameList();
       if (mins.containsKey(Coords.CHANNEL)) {
          int min = mins.get(Coords.CHANNEL);
          int max = maxes.get(Coords.CHANNEL);
          List<String> chNameList = new ArrayList<String>();
          for (int index = min; index <= max; index++) {
-            if (channelNames == null || index >= channelNames.length) {
+            if (channelNames == null || index >= channelNames.size()) {
                chNameList.add("channel " + index);
             } else {
-               chNameList.add(channelNames[index]);
+               chNameList.add(channelNames.get(index));
             }  
          }
-         channelNames = chNameList.toArray(new String[chNameList.size()]);
+         channelNames = chNameList;
       }
-      newSizeCoordsBuilder.channel(channelNames.length);
-      String[] axes = {Coords.STAGE_POSITION, Coords.TIME, Coords.Z};
+      newSizeCoordsBuilder.channel(channelNames.size());
+      String[] axes = {Coords.P, Coords.T, Coords.Z};
       for (String axis : axes) {
          if (mins.containsKey(axis)) {
             int min = mins.get(axis);
@@ -229,7 +241,7 @@ public class DuplicatorPluginFrame extends MMDialog {
          }
       }
 
-      metadata = metadata.copy()
+      metadata = metadata.copyBuilder()
               .channelNames(channelNames)
               .intendedDimensions(newSizeCoordsBuilder.build())
               .build();
@@ -250,7 +262,7 @@ public class DuplicatorPluginFrame extends MMDialog {
                }
             }
             if (copy) {
-               CoordsBuilder newCoordBuilder = oldCoord.copy();
+               CoordsBuilder newCoordBuilder = oldCoord.copyBuilder();
                for (String axis : oldCoord.getAxes()) {
                   if (mins.containsKey(axis)) {
                      newCoordBuilder.index(axis, oldCoord.getIndex(axis) - mins.get(axis) );
@@ -291,9 +303,15 @@ public class DuplicatorPluginFrame extends MMDialog {
          studio_.logs().showError("Can not overwrite data");
       } catch (DuplicatorException ex) {
          studio_.logs().showError(ex.getMessage());
+      } catch (IOException ioe) {
+         studio_.logs().showError(ioe, "IOException in Duplicator plugin");
       }
       
-      newStore.freeze();
+      try {
+         newStore.freeze();
+      } catch (IOException ioe) {
+         studio_.logs().showError(ioe, "IOException freezing store in Duplicator plugin");
+      }
       DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
       copyDisplay.setCustomTitle(newName);
       studio_.displays().manage(newStore);
