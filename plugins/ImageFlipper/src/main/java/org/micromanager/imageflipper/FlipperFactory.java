@@ -21,15 +21,14 @@
 package org.micromanager.imageflipper;
 
 import org.micromanager.data.Processor;
-import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.data.ProcessorFactory;
 
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
 public class FlipperFactory implements ProcessorFactory {
-   private PropertyMap settings_;
-   private Studio studio_;
+   private final PropertyMap settings_;
+   private final Studio studio_;
 
    public FlipperFactory(PropertyMap settings, Studio studio) {
       settings_ = settings;
@@ -39,7 +38,7 @@ public class FlipperFactory implements ProcessorFactory {
    @Override
    public Processor createProcessor() {
       return new FlipperProcessor(studio_, settings_.getString("camera", ""),
-            settings_.getInt("rotation", 0),
+            settings_.getInteger("rotation", 0),
             settings_.getBoolean("shouldMirror", false));
    }
 }

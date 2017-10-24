@@ -20,7 +20,6 @@
 
 package org.micromanager.imageflipper;
 
-import com.google.common.eventbus.Subscribe;
 
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.data.ProcessorPlugin;

@@ -34,10 +34,9 @@ import mmcorej.StrVector;
 
 import org.micromanager.data.Image;
 import org.micromanager.data.ProcessorConfigurator;
-import org.micromanager.data.ProcessorPlugin;
-import org.micromanager.data.ProcessorFactory;
 
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 
 import org.micromanager.internal.utils.MMFrame;
@@ -55,9 +54,6 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
    private static final List<Integer> R_INTS =
       Arrays.asList(new Integer[] {FlipperProcessor.R0,
          FlipperProcessor.R90, FlipperProcessor.R180, FlipperProcessor.R270});
-   private static final String ROTATE = "_Rotation";
-   private static final String MIRRORED = "_Mirror";
-   private static final String SELECTEDCAMERA = "SelectedCamera";
    private static final String EXAMPLE_ICON_PATH =
                         "/org/micromanager/icons/R.png";
    private static final Icon EXAMPLE_ICON = IconLoader.getIcon(EXAMPLE_ICON_PATH);
@@ -65,7 +61,7 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
    private final int frameXPos_ = 300;
    private final int frameYPos_ = 300;
 
-   private Studio studio_;
+   private final Studio studio_;
    private final String selectedCamera_;
 
    private javax.swing.JComboBox cameraComboBox_;
@@ -79,15 +75,14 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
       studio_ = studio;
       initComponents();
       selectedCamera_ = settings.getString("camera",
-            studio_.profile().getString(
-               FlipperConfigurator.class, DEFAULT_CAMERA,
-               studio_.core().getCameraDevice()));
+            studio_.profile().getSettings(FlipperConfigurator.class).getString(
+               DEFAULT_CAMERA, studio_.core().getCameraDevice()));
       Boolean shouldMirror = settings.getBoolean("shouldMirror",
-            studio_.profile().getBoolean(
-               FlipperConfigurator.class, DEFAULT_MIRRORED, false));
-      Integer rotation = settings.getInt("rotation",
-            studio_.profile().getInt(
-               FlipperConfigurator.class, DEFAULT_ROTATION, FlipperProcessor.R0));
+            studio_.profile().getSettings(FlipperConfigurator.class).getBoolean(
+               DEFAULT_MIRRORED, false));
+      Integer rotation = settings.getInteger("rotation",
+            studio_.profile().getSettings(FlipperConfigurator.class).getInteger(
+               DEFAULT_ROTATION, FlipperProcessor.R0));
 
       mirrorCheckBox_.setSelected(shouldMirror);
       rotateComboBox_.removeAllItems();
@@ -95,7 +90,7 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
          rotateComboBox_.addItem(item);
       }
       rotateComboBox_.setSelectedIndex(R_INTS.indexOf(rotation));
-      this.loadAndRestorePosition(frameXPos_, frameYPos_);
+      super.loadAndRestorePosition(frameXPos_, frameYPos_);
       updateCameras();
    }
 
@@ -300,13 +295,14 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
       exampleImageTarget_.setIcon(
             new ImageIcon(studio_.data().ij().createProcessor(testImage).createImage()));
    }
-
+   
+   
    // HACK: providing hardcoded values for now (GUI hasn't been reimplemented)
    @Override
    public PropertyMap getSettings() {
-      PropertyMap.PropertyMapBuilder builder = studio_.data().getPropertyMapBuilder();
+      PropertyMap.Builder builder = PropertyMaps.builder(); 
       builder.putString("camera", getCamera());
-      builder.putInt("rotation", getRotate());
+      builder.putInteger("rotation", getRotate());
       builder.putBoolean("shouldMirror", getMirror());
       return builder.build();
    }

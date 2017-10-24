@@ -20,13 +20,8 @@
 
 package org.micromanager.imageflipper;
 
-import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
-import mmcorej.TaggedImage;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -34,9 +29,9 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 
-import org.micromanager.internal.utils.ImageUtils;
 
 public class FlipperProcessor extends Processor {
 
@@ -46,7 +41,7 @@ public class FlipperProcessor extends Processor {
    public static final int R180 = 180;
    public static final int R270 = 270;
 
-   private Studio studio_;
+   private final Studio studio_;
    String camera_;
    boolean isMirrored_;
    int rotation_;
@@ -83,6 +78,7 @@ public class FlipperProcessor extends Processor {
     * Executes image transformation
     * First mirror the image if requested, than rotate as requested
     * 
+    * @param studio
     * @param image Image to be transformed.
     * @param isMirrored Whether or not to mirror the image.
     * @param rotation Degrees to rotate by (R0, R90, R180, R270)
@@ -90,8 +86,6 @@ public class FlipperProcessor extends Processor {
     */
    public static Image transformImage(Studio studio, Image image,
          boolean isMirrored, int rotation) {
-      int width = image.getWidth();
-      int height = image.getHeight();
       
       ImageProcessor proc = studio.data().ij().createProcessor(image);
 
@@ -109,17 +103,17 @@ public class FlipperProcessor extends Processor {
          proc = proc.rotateLeft();
       }
       // Insert some metadata to indicate what we did to the image.
-      PropertyMap.PropertyMapBuilder builder;
+      PropertyMap.Builder builder;
       PropertyMap userData = image.getMetadata().getUserData();
       if (userData != null) {
-         builder = userData.copy();
+         builder = userData.copyBuilder();
       }
       else {
-         builder = studio.data().getPropertyMapBuilder();
+         builder = PropertyMaps.builder();
       }
-      builder.putInt("ImageFlipper-Rotation", rotation);
+      builder.putInteger("ImageFlipper-Rotation", rotation);
       builder.putString("ImageFlipper-Mirror", isMirrored ? "On" : "Off");
-      Metadata newMetadata = image.getMetadata().copy().userData(builder.build()).build();
+      Metadata newMetadata = image.getMetadata().copyBuilderPreservingUUID().userData(builder.build()).build();
       Image result = studio.data().ij().createImage(proc, image.getCoords(),
             newMetadata);
       return result;
