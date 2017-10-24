@@ -37,6 +37,9 @@ public interface DataManager {
    /**
     * Generate a "blank" CoordsBuilder for use in constructing new Coords
     * instances.
+    * @deprecated - it is unclear what else to use.  I can not find any
+    * ways to create a CoordsBuilder using api-only functions...
+    * 
     * @return a CoordsBuilder used to construct new Coords instances.
     */
    @Deprecated
