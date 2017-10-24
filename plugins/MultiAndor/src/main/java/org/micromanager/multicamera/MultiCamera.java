@@ -9,18 +9,17 @@ import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
 public class MultiCamera implements MenuPlugin, SciJavaPlugin {
-   public static final String menuName = "Multi-Andor Control";
-   public static final String tooltipDescription =
+   public static final String MENU_NAME = "Multi-Andor Control";
+   public static final String TOOL_TIP_DESCRIPTION =
       "Control settings for one or more Andor EM-CCD cameras via the " +
       "Multi Camera device"; 
 
-   private CMMCore core_;
    private Studio gui_;
    private MultiCameraFrame myFrame_;
 
    @Override
    public String getName() {
-      return menuName;
+      return MENU_NAME;
    }
 
    @Override
@@ -30,8 +29,7 @@ public class MultiCamera implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public void setContext(Studio app) {
-      gui_ = app;                                        
-      core_ = app.getCMMCore();
+      gui_ = app; 
    }
 
    @Override
@@ -50,7 +48,7 @@ public class MultiCamera implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getHelpText() {
-      return tooltipDescription;
+      return TOOL_TIP_DESCRIPTION;
    }
    
     @Override

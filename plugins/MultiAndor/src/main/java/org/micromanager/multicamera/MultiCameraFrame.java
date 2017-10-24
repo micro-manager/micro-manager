@@ -105,7 +105,7 @@ public class MultiCameraFrame extends MMFrame {
 
       initComponents();
 
-      loadAndRestorePosition(100, 100);
+      super.loadAndRestorePosition(100, 100);
 
       cameraSelectComboBox.removeAllItems();
 
