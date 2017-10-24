@@ -46,6 +46,7 @@ import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
@@ -84,8 +85,8 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       studio_ = studio;
       imageCollection_ = new ImageCollection(studio_);
       mmc_ = studio_.getCMMCore();
-      this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-      this.addWindowListener(new WindowAdapter() {
+      super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+      super.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent arg0) {
             dispose();
@@ -99,14 +100,14 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       final JButton removeButton =  mcsButton(buttonSize_, arialSmallFont_);
       
       mcsPluginWindow = this;
-      this.setLayout(new MigLayout("flowx, fill, insets 8"));
-      this.setTitle(MultiChannelShading.MENUNAME);
+      super.setLayout(new MigLayout("flowx, fill, insets 8"));
+      super.setTitle(MultiChannelShading.MENUNAME);
 
       super.loadAndRestorePosition(100, 100, 375, 275);
       
       JLabel channelGroupLabel = new JLabel("Channel Group:");
       channelGroupLabel.setFont(arialSmallFont_);
-      add(channelGroupLabel);
+      super.add(channelGroupLabel);
       
       //populate group ComboBox
       final JComboBox groupComboBox = new JComboBox();
@@ -128,7 +129,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
             studio_.data().notifyPipelineChanged();
          }
       });
-      add(groupComboBox);
+      super.add(groupComboBox);
       
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(new ActionListener() {
@@ -139,11 +140,11 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
                     "https://micro-manager.org/wiki/Flat-Field_Correction")).start();
         }
       });
-      add (helpButton, "skip 3,  wrap");
+      super.add (helpButton, "skip 3,  wrap");
              
       JLabel darkImageLabel = new JLabel("Dark Image (common):");
       darkImageLabel.setFont(arialSmallFont_);
-      add (darkImageLabel);
+      super.add (darkImageLabel);
       
       final JTextField darkFieldTextField = new JTextField(50);
       darkFieldTextField.setFont(arialSmallFont_);
@@ -171,7 +172,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       });
       darkFieldTextField.setText(processBackgroundImage(
               darkFieldTextField.getText()));
-      add(darkFieldTextField, "span 2");
+      super.add(darkFieldTextField, "span 2");
 
 
       final JButton darkFieldButton =  mcsButton(buttonSize_, arialSmallFont_);
@@ -188,7 +189,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
             }
          }
       });
-      add(darkFieldButton, "wrap");
+      super.add(darkFieldButton, "wrap");
       
       // Table with channel presets and files
       final JScrollPane scrollPane = new JScrollPane() {
@@ -197,7 +198,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
             return new Dimension(550, 150);
          }
       };
-      add(scrollPane, "span 5 2, grow, push");
+      super.add(scrollPane, "span 5 2, grow, push");
       shadingTableModel_ = new ShadingTableModel(studio_, imageCollection_);
       shadingTableModel_.setChannelGroup(groupName_);
       final ShadingTable shadingTable = 
@@ -238,13 +239,13 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       });
       buttonPanel.add(removeButton);
       
-      add(buttonPanel, "gap 5px, aligny top, wrap");
-      add(new JLabel(""), "growy, pushy, wrap");
+      super.add(buttonPanel, "gap 5px, aligny top, wrap");
+      super.add(new JLabel(""), "growy, pushy, wrap");
       
       statusLabel_ = new JLabel(" ");
-      add(statusLabel_, "span 3, wrap");
+      super.add(statusLabel_, "span 3, wrap");
       updateAddAndRemoveButtons(addButton, removeButton);
-      pack();
+      super.pack();
       
       studio_.events().registerForEvents(this);
    }
@@ -262,15 +263,15 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
 
    @Override
    public PropertyMap getSettings() {
-      PropertyMap.PropertyMapBuilder builder = studio_.data().getPropertyMapBuilder();
+      PropertyMap.Builder builder = PropertyMaps.builder();
       builder.putString(CHANNELGROUP, shadingTableModel_.getChannelGroup());
-      builder.putStringArray("Presets", shadingTableModel_.getUsedPresets());
+      builder.putStringList("Presets", shadingTableModel_.getUsedPresets());
       builder.putString(DARKFIELDFILENAME, imageCollection_.getBackgroundFile());
       ArrayList<String> files = new ArrayList<String>();
       for (String preset : shadingTableModel_.getUsedPresets()) {
          files.add(imageCollection_.getFileForPreset(preset));
       }
-      builder.putStringArray("PresetFiles", files.toArray(new String[] {}));
+      builder.putStringList("PresetFiles", files.toArray(new String[] {}));
       return builder.build();
    }
 

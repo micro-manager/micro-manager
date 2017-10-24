@@ -24,6 +24,7 @@ package org.micromanager.multichannelshading;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
+import java.util.List;
 
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
@@ -44,11 +45,11 @@ public class ShadingProcessor extends Processor {
    private Studio studio_;
    private ImageCollection imageCollection_;
    private String channelGroup_;
-   private String[] presets_;
+   private List<String> presets_;
 
    public ShadingProcessor(Studio studio, String channelGroup,
-           String backgroundFile, String[] presets,
-           String[] files) {
+           String backgroundFile, List<String> presets,
+           List<String> files) {
       studio_ = studio;
       channelGroup_ = channelGroup;
       presets_ = presets;
@@ -61,10 +62,10 @@ public class ShadingProcessor extends Processor {
          }
       }
       try {
-         for (int i = 0; i < presets.length; ++i) {
-            imageCollection_.addFlatField(presets[i], files[i]);
+         for (int i = 0; i < presets.size(); ++i) {
+            imageCollection_.addFlatField(presets.get(i), files.get(i));
          }
-      } catch (Exception e) {
+      } catch (ShadingException e) {
          studio_.logs().logError(e, "Error recreating ImageCollection");
       }
    }

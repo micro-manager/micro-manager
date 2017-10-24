@@ -20,6 +20,7 @@
 
 package org.micromanager.multichannelshading;
 
+import java.util.List;
 import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorFactory;
 import org.micromanager.PropertyMap;
@@ -32,18 +33,18 @@ import org.micromanager.Studio;
 public class MultiChannelShadingFactory implements ProcessorFactory {
    private final Studio studio_;
    private final String channelGroup_;
-   private final String[] presets_;
+   private final List presets_;
    private final String backgroundFile_;
-   private final String[] files_;
+   private final List files_;
 
    public MultiChannelShadingFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;
       channelGroup_ = settings.getString(
-            MultiChannelShadingMigForm.CHANNELGROUP);
-      presets_ = settings.getStringArray("Presets");
+            MultiChannelShadingMigForm.CHANNELGROUP, "Channels");
+      presets_ = settings.getStringList("Presets", "");
       backgroundFile_ = settings.getString(
-            MultiChannelShadingMigForm.DARKFIELDFILENAME);
-      files_ = settings.getStringArray("PresetFiles");
+            MultiChannelShadingMigForm.DARKFIELDFILENAME, "");
+      files_ = settings.getStringList("PresetFiles", "");
    }
 
    @Override

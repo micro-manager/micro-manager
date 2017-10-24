@@ -183,22 +183,22 @@ public class ShadingTable extends JTable {
       super(model);
       gui_ = gui;
 
-      setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+      super.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
       //Editor for column 0 (preset combobox)
       presetCellEditor_ = new PresetCellEditor(gui, model);
-      getColumnModel().getColumn(0).setCellEditor(presetCellEditor_);
+      super.getColumnModel().getColumn(0).setCellEditor(presetCellEditor_);
                   
       // Renderer and Editor for column 2 (button)
       LoadFileButtonCellRenderer loadFileButtonRenderer = 
               new LoadFileButtonCellRenderer(form);
-      getColumnModel().getColumn(2).setCellRenderer(loadFileButtonRenderer);
+      super.getColumnModel().getColumn(2).setCellRenderer(loadFileButtonRenderer);
 
       loadFileButtonCellEditor_ = 
               new LoadFileButtonCellEditor(form);
-      getColumnModel().getColumn(2).setCellEditor(loadFileButtonCellEditor_);
+      super.getColumnModel().getColumn(2).setCellEditor(loadFileButtonCellEditor_);
       
-      this.setRowHeight((int) (this.getRowHeight() * 1.5));
+      super.setRowHeight((int) (super.getRowHeight() * 1.5));
 
    }
    
