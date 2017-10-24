@@ -16,7 +16,6 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
@@ -59,12 +58,14 @@ public class IntensityInspectorPanelController
    private final JPopupMenu gearMenu_ = new JPopupMenu();
    private final JMenu gearMenuPaletteSubMenu_ =
          new JMenu("Channel Color Palette");
-   private final JMenuItem gearMenuColorblindFriendlyItem_ =
-         new JMenuItem("Colorblind-friendly");
-   private final JMenuItem gearMenuRGBCMYWItem_ =
-         new JMenuItem("RGBCMYW");
-   private final JMenuItem gearMenuCustomColorItem_ =
-         new JMenuItem("Custom");
+   private final JCheckBoxMenuItem gearMenuColorblindFriendlyItem_ =
+         new JCheckBoxMenuItem("Colorblind-friendly");
+   private final JCheckBoxMenuItem gearMenuRGBCMYWItem_ =
+         new JCheckBoxMenuItem("RGBCMYW");
+   private final JCheckBoxMenuItem gearMenuCustomColorItem_ =
+         new JCheckBoxMenuItem("Custom");
+   private final Map<String, JCheckBoxMenuItem> colorMenuMap_ = 
+           new LinkedHashMap<String, JCheckBoxMenuItem>(3);
    private final JMenu gearMenuUpdateRateSubMenu_ =
          new JMenu("Histogram Update Rate");
    private final Map<String, Double> histogramMenuMap_ = 
@@ -109,6 +110,16 @@ public class IntensityInspectorPanelController
    private void setUpGearMenu() {
       gearMenu_.add(gearMenuLogYAxisItem_);
       gearMenu_.add(gearMenuPaletteSubMenu_);
+      colorMenuMap_.put(gearMenuColorblindFriendlyItem_.getText(), 
+              gearMenuColorblindFriendlyItem_);
+      colorMenuMap_.put(gearMenuRGBCMYWItem_.getText(), 
+              gearMenuRGBCMYWItem_);
+      colorMenuMap_.put(gearMenuCustomColorItem_.getText(), 
+              gearMenuCustomColorItem_);
+      for (String key : colorMenuMap_.keySet()) {
+         gearMenuPaletteSubMenu_.add(colorMenuMap_.get(key));
+      }
+      
       gearMenuPaletteSubMenu_.add(gearMenuColorblindFriendlyItem_);
       gearMenuPaletteSubMenu_.add(gearMenuRGBCMYWItem_);
       gearMenuPaletteSubMenu_.add(gearMenuCustomColorItem_);
@@ -295,7 +306,7 @@ public class IntensityInspectorPanelController
    }
 
    private void handleHistogramUpdateRate(double hz) {
-      // Also, need to either hide menu items for non-DisplayWindow, or else
+      // Need to either hide menu items for non-DisplayWindow, or else
       // add a standard interface
 
       if (viewer_ instanceof DisplayController) {
