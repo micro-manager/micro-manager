@@ -22,7 +22,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
-import java.util.TimerTask;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
@@ -34,7 +33,6 @@ import javax.swing.JSpinner;
 import javax.swing.JToggleButton;
 import javax.swing.SpinnerModel;
 import javax.swing.Timer;
-//import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -89,7 +87,6 @@ public class CRISPFrame extends MMFrame {
     private JLabel nrAvgLabel;
     private JLabel naLabel;
     private JLabel versionLabel;
-    private JSeparator jSeparator1;
     private JLabel statusLabel_;
     private JLabel AGCLabel_;
     private JCheckBox pollCheckBox_;
@@ -239,7 +236,6 @@ public class CRISPFrame extends MMFrame {
         lockButton_ = new javax.swing.JToggleButton();
         calibrateButton_ = new javax.swing.JButton();
         curveButton_ = new javax.swing.JButton();
-        jSeparator1 = new javax.swing.JSeparator();
         ledIntLabel = new javax.swing.JLabel();
         gainMultiplierLabel = new javax.swing.JLabel();
         nrAvgLabel = new javax.swing.JLabel();
