@@ -5,6 +5,7 @@ import javax.swing.text.NumberFormatter;
 
 
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.internal.utils.MMFrame;
@@ -145,52 +146,53 @@ public class FrameCombinerConfigurator extends MMFrame implements ProcessorConfi
       setNumerOfImagesToProcess(Integer.parseInt(numerOfImagesToProcessField_.getText()));
       setChannelsToAvoid(channelsToAvoidField_.getText());
 
-      PropertyMap.PropertyMapBuilder builder = studio_.data().getPropertyMapBuilder();
+      PropertyMap.Builder builder = PropertyMaps.builder();
       builder.putString("processorDimension", (String) processorDimensionBox_.getSelectedItem());
       builder.putString("processorAlgo", (String) processorAlgoBox_.getSelectedItem());
-      builder.putInt("numerOfImagesToProcess", Integer.parseInt(numerOfImagesToProcessField_.getText()));
+      builder.putInteger("numerOfImagesToProcess", Integer.parseInt(numerOfImagesToProcessField_.getText()));
       builder.putString("channelsToAvoid", channelsToAvoidField_.getText());
       return builder.build();
    }
 
     private String getProcessorDimension() {
-        return studio_.profile().getString(FrameCombinerConfigurator.class,
-                PROCESSOR_DIMENSION, FrameCombinerPlugin.PROCESSOR_DIMENSION_Z);
+        return studio_.profile().getSettings(FrameCombinerConfigurator.class).
+                getString(PROCESSOR_DIMENSION, 
+                        FrameCombinerPlugin.PROCESSOR_DIMENSION_Z);
     }
 
     private void setProcessorDimension(String processorDimension) {
-        studio_.profile().setString(FrameCombinerConfigurator.class,
-                PROCESSOR_DIMENSION, processorDimension);
+        studio_.profile().getSettings(FrameCombinerConfigurator.class).
+                putString(PROCESSOR_DIMENSION, processorDimension);
     }
 
    private String getProcessorAglo() {
-      return studio_.profile().getString(FrameCombinerConfigurator.class,
-              PROCESSOR_ALGO, FrameCombinerPlugin.PROCESSOR_ALGO_MEAN);
+      return studio_.profile().getSettings(FrameCombinerConfigurator.class).
+              getString(PROCESSOR_ALGO, FrameCombinerPlugin.PROCESSOR_ALGO_MEAN);
    }
 
    private void setProcessorAglo(String processorAlgo) {
-      studio_.profile().setString(FrameCombinerConfigurator.class,
-              PROCESSOR_ALGO, processorAlgo);
+      studio_.profile().getSettings(FrameCombinerConfigurator.class).
+              putString(PROCESSOR_ALGO, processorAlgo);
    }
 
    private int getNumerOfImagesToProcess() {
-      return studio_.profile().getInt(FrameCombinerConfigurator.class,
-              NUMBER_TO_PROCESS, 10);
+      return studio_.profile().getSettings(FrameCombinerConfigurator.class).
+              getInteger(NUMBER_TO_PROCESS, 10);
    }
 
    private void setNumerOfImagesToProcess(int numerOfImagesToProcess) {
-      studio_.profile().setInt(FrameCombinerConfigurator.class,
-              NUMBER_TO_PROCESS, numerOfImagesToProcess);
+      studio_.profile().getSettings(FrameCombinerConfigurator.class).
+              putInteger(NUMBER_TO_PROCESS, numerOfImagesToProcess);
    }
 
    private String getChannelsToAvoid() {
-      return studio_.profile().getString(FrameCombinerConfigurator.class,
-              CHANNEL_TO_AVOID, "");
+      return studio_.profile().getSettings(FrameCombinerConfigurator.class).
+              getString(CHANNEL_TO_AVOID, "");
    }
 
    private void setChannelsToAvoid(String channelsToAvoid) {
-      studio_.profile().setString(FrameCombinerConfigurator.class,
-              CHANNEL_TO_AVOID, channelsToAvoid);
+      studio_.profile().getSettings(FrameCombinerConfigurator.class).
+              putString(CHANNEL_TO_AVOID, channelsToAvoid);
    }
 
    // Variables declaration - do not modify//GEN-BEGIN:variables

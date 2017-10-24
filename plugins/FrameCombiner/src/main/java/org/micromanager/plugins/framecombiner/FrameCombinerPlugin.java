@@ -12,16 +12,15 @@ import org.scijava.plugin.Plugin;
 @Plugin(type = ProcessorPlugin.class)
 public class FrameCombinerPlugin implements ProcessorPlugin, SciJavaPlugin {
 
-   public static String menuName = "Frame Combiner";
-   public static String tooltipDescription = "Combine multiple images into a single output image (mean/sum/max/min)";
-   public static String versionNumber = "1.0";
-   public static String copyright = "Hadrien Mary";
+   public final static String MENU_NAME = "Frame Combiner";
+   public final static String TOOL_TIP_DESCRIPTION = "Combine multiple images into a single output image (mean/sum/max/min)";
+   public final static String VERSION_NUMBER = "1.0";
+   public final static String COPYRIGHT = "Hadrien Mary";
 
-   public static String PROCESSOR_ALGO_MEAN = "Mean";
-   //public static String PROCESSOR_ALGO_MEDIAN = "Median";
-   public static String PROCESSOR_ALGO_SUM = "Sum";
-   public static String PROCESSOR_ALGO_MAX = "Max";
-   public static String PROCESSOR_ALGO_MIN = "Min";
+   public final static String PROCESSOR_ALGO_MEAN = "Mean";
+   public final static String PROCESSOR_ALGO_SUM = "Sum";
+   public final static String PROCESSOR_ALGO_MAX = "Max";
+   public final static String PROCESSOR_ALGO_MIN = "Min";
    public final static String PROCESSOR_DIMENSION_TIME = "Time";
    public final static String PROCESSOR_DIMENSION_Z = "Z";
 
@@ -44,21 +43,21 @@ public class FrameCombinerPlugin implements ProcessorPlugin, SciJavaPlugin {
 
    @Override
    public String getName() {
-      return menuName;
+      return MENU_NAME;
    }
 
    @Override
    public String getHelpText() {
-      return tooltipDescription;
+      return TOOL_TIP_DESCRIPTION;
    }
 
    @Override
    public String getVersion() {
-      return versionNumber;
+      return VERSION_NUMBER;
    }
 
    @Override
    public String getCopyright() {
-      return copyright;
+      return COPYRIGHT;
    }
 }

@@ -79,16 +79,16 @@ public class FrameCombiner extends Processor {
          return;
       }
 
-      Coords coords = null;
-      Coords.CoordsBuilder builder = image.getCoords().copy();
+      Coords.CoordsBuilder builder = image.getCoords().copyBuilder();
 
       if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME) ) {
          // Get coords without time (set it to 0)
-         coords = builder.time(0).build();
+         builder.time(0);
       } else if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_Z) ) {
          // Get coords without z (set it to 0)
-         coords = builder.z(0).build();
+         builder.z(0);
       }
+      Coords coords = builder.build();
 
       // If this coordinates index does not exist in singleAquisitions hasmap, create it
       SingleCombinationProcessor singleAcquProc;
@@ -100,8 +100,9 @@ public class FrameCombiner extends Processor {
             processCombinations = false;
          }
 
-         singleAcquProc = new SingleCombinationProcessor(coords, studio_, processorAlgo_, processorDimension_,
-                 numerOfImagesToProcess_, processCombinations, !channelsToAvoid_.isEmpty());
+         singleAcquProc = new SingleCombinationProcessor(coords, studio_, 
+                 processorAlgo_, processorDimension_, numerOfImagesToProcess_, 
+                 processCombinations, !channelsToAvoid_.isEmpty());
          singleAquisitions_.put(coords, singleAcquProc);
       } else {
          singleAcquProc = singleAquisitions_.get(coords);
@@ -114,8 +115,8 @@ public class FrameCombiner extends Processor {
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
       if (summary.getIntendedDimensions() != null) {
-         Coords.CoordsBuilder coordsBuilder = summary.getIntendedDimensions().copy();
-         SummaryMetadata.SummaryMetadataBuilder builder = summary.copy();
+         Coords.CoordsBuilder coordsBuilder = summary.getIntendedDimensions().copyBuilder();
+         SummaryMetadata.Builder builder = summary.copyBuilder();
          // Calculate new number of corresponding dimension number
          int newIntendedDimNumber_;
          if (processorDimension_.equals(FrameCombinerPlugin.PROCESSOR_DIMENSION_TIME)) {
