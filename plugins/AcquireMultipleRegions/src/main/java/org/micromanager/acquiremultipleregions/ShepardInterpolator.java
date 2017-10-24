@@ -51,8 +51,8 @@ public class ShepardInterpolator {
     
 
     
-    private double distance(double X1, double X2, double Y1, double Y2) {
-        return Math.pow((Math.pow(X1 - X2, 2) + Math.pow(Y1 - Y2, 2)), 0.5);
+    private double distance(double x1, double x2, double y1, double y2) {
+        return Math.pow((Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2)), 0.5);
     }
     
 }

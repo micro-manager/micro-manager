@@ -18,30 +18,30 @@ class ZGeneratorAverage implements ZGenerator {
      /**
      * Constructor
      * 
-     * @param PL initial position list
+     * @param positionList initial position list
      * @param type 
      */  
-    public ZGeneratorAverage (PositionList PL, ZGeneratorType type) {
+    public ZGeneratorAverage (PositionList positionList, ZGeneratorType type) {
        type_ = type; //remember type of ZGenerator
 
-       MultiStagePosition MSP0;
-       StagePosition SP;
-       double C;
+       MultiStagePosition msp0;
+       StagePosition sp;
+       double c;
 
        averageZPositions_ = new HashMap<String, Double>(5);
        //Loop over single axis stages and calculate their mean value     
-       MSP0 =  PL.getPosition(0);        
-       for (int a=0; a<MSP0.size(); a++){
-           SP = MSP0.get(a);
-           if (SP.numAxes == 1){
-              C = SP.x;
+       msp0 =  positionList.getPosition(0);        
+       for (int a=0; a<msp0.size(); a++){
+           sp = msp0.get(a);
+           if (sp.is1DStagePosition()){
+              c = sp.x;
               //Calculate sum of positions for current axis
-              for (int p=1; p<PL.getNumberOfPositions(); p++){
-                  C = C + PL.getPosition(p).get(a).x;                
+              for (int p=1; p<positionList.getNumberOfPositions(); p++){
+                  c = c + positionList.getPosition(p).get(a).x;                
               }
 
-              Double Z = C / PL.getNumberOfPositions(); //average
-              averageZPositions_.put(SP.stageName, Z);
+              Double z = c / positionList.getNumberOfPositions(); //average
+              averageZPositions_.put(sp.getStageDeviceLabel(), z);
            }
        }        
     } 

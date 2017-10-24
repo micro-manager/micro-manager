@@ -13,19 +13,16 @@ import org.scijava.plugin.SciJavaPlugin;
  */
 @Plugin(type = MenuPlugin.class)
 public class AcquireMultipleRegions implements MenuPlugin, SciJavaPlugin {
-   public static final String menuName = "Acquire Multiple Regions";
-   public static final String tooltipDescription =
+   public static final String MENU_NAME = "Acquire Multiple Regions";
+   public static final String TOOL_TIP_DESCRIPTION =
       "Automatically acquire multiple regions of a sample";
    public static String versionNumber = "0.4";
    private Studio gui_;
    private AcquireMultipleRegionsForm myFrame_;
+   
    //Static variables so we can use script panel to tweak interpolation params
    //Exponent for Shepard interpolation
-   
-    /**
-     *
-     */
-       public static double shepardExponent = 2; 
+   public static double shepardExponent = 2; 
    
     @Override
     public void setContext(Studio si) {
@@ -41,7 +38,7 @@ public class AcquireMultipleRegions implements MenuPlugin, SciJavaPlugin {
 
     @Override
     public String getName() {
-        return menuName;
+        return MENU_NAME;
     }
 
     @Override
@@ -51,7 +48,7 @@ public class AcquireMultipleRegions implements MenuPlugin, SciJavaPlugin {
 
     @Override
     public String getHelpText() {
-        return tooltipDescription;
+        return TOOL_TIP_DESCRIPTION;
     }
 
     @Override
