@@ -53,19 +53,28 @@ public class IntensityInspectorPanelController
       extends AbstractInspectorPanelController
 {
    public static final String HISTOGRAM_UPDATE_FREQUENCY = "HistogramUpdateFrequency";
+   public static final String COLOR_PALETTE = "ColorPalette";
+   private static final String COLOR_BLIND_FRIENDLY = "Colorblind-friendly";
+   private static final String RGBCMYW = "RGBCMYW";
+   private static final String CUSTOM = "Custom";
+   
    private final JPanel panel_ = new JPanel();
 
    private final JPopupMenu gearMenu_ = new JPopupMenu();
    private final JMenu gearMenuPaletteSubMenu_ =
          new JMenu("Channel Color Palette");
-   private final JCheckBoxMenuItem gearMenuColorblindFriendlyItem_ =
-         new JCheckBoxMenuItem("Colorblind-friendly");
-   private final JCheckBoxMenuItem gearMenuRGBCMYWItem_ =
-         new JCheckBoxMenuItem("RGBCMYW");
-   private final JCheckBoxMenuItem gearMenuCustomColorItem_ =
-         new JCheckBoxMenuItem("Custom");
-   private final Map<String, JCheckBoxMenuItem> colorMenuMap_ = 
-           new LinkedHashMap<String, JCheckBoxMenuItem>(3);
+   private class colorMenuItem {
+      private final JCheckBoxMenuItem checkBox_;
+      private final List<Color> colorPalette_;
+      public colorMenuItem(JCheckBoxMenuItem checkBox, List<Color> colorPalette) {
+         checkBox_ = checkBox;
+         colorPalette_ = colorPalette;        
+      }
+      public JCheckBoxMenuItem getCheckBox() { return checkBox_;}
+      public List<Color> getColorPalette() { return colorPalette_;}
+   };
+   private final Map<String, colorMenuItem> colorMenuMap_ = 
+           new LinkedHashMap<String, colorMenuItem>(3);
    private final JMenu gearMenuUpdateRateSubMenu_ =
          new JMenu("Histogram Update Rate");
    private final Map<String, Double> histogramMenuMap_ = 
@@ -109,20 +118,40 @@ public class IntensityInspectorPanelController
 
    private void setUpGearMenu() {
       gearMenu_.add(gearMenuLogYAxisItem_);
-      gearMenu_.add(gearMenuPaletteSubMenu_);
-      colorMenuMap_.put(gearMenuColorblindFriendlyItem_.getText(), 
-              gearMenuColorblindFriendlyItem_);
-      colorMenuMap_.put(gearMenuRGBCMYWItem_.getText(), 
-              gearMenuRGBCMYWItem_);
-      colorMenuMap_.put(gearMenuCustomColorItem_.getText(), 
-              gearMenuCustomColorItem_);
-      for (String key : colorMenuMap_.keySet()) {
-         gearMenuPaletteSubMenu_.add(colorMenuMap_.get(key));
-      }
       
-      gearMenuPaletteSubMenu_.add(gearMenuColorblindFriendlyItem_);
-      gearMenuPaletteSubMenu_.add(gearMenuRGBCMYWItem_);
-      gearMenuPaletteSubMenu_.add(gearMenuCustomColorItem_);
+      gearMenu_.add(gearMenuPaletteSubMenu_);
+      colorMenuMap_.put(COLOR_BLIND_FRIENDLY, 
+              new colorMenuItem (new JCheckBoxMenuItem(COLOR_BLIND_FRIENDLY), 
+                  ColorPalettes.getColorblindFriendlyPalette() ) );
+      colorMenuMap_.put(RGBCMYW, 
+              new colorMenuItem (new JCheckBoxMenuItem(RGBCMYW),
+                  ColorPalettes.getPrimaryColorPalette()) );
+      colorMenuMap_.put(CUSTOM, new colorMenuItem( 
+              new JCheckBoxMenuItem(CUSTOM), customPalette_));
+      // we do not have a custom palette yet, so disable the menu entry
+      colorMenuMap_.get(CUSTOM).getCheckBox().setEnabled(false);
+      // TODO: the viewer defaults to the colorblind friendly palette
+      // get these settings from the viewer rather than default:
+      colorMenuMap_.get(COLOR_BLIND_FRIENDLY).getCheckBox().setSelected(true);
+      for (final String key : colorMenuMap_.keySet()) {
+         colorMenuMap_.get(key).getCheckBox().addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            for (String tmpKey : colorMenuMap_.keySet()) {
+               colorMenuMap_.get(tmpKey).getCheckBox().setSelected(false);
+            }
+            if (colorMenuMap_.get(key).getColorPalette() != null) {
+               handleColorPalette(colorMenuMap_.get(key).getColorPalette());
+               colorMenuMap_.get(key).getCheckBox().setSelected(true);
+               // record in profile - even though we do not (yet) use this value
+               UserProfileStaticInterface.getInstance().getSettings(
+                     IntensityInspectorPanelController.class).putString(
+                             COLOR_PALETTE, key);
+            }
+         } 
+         });
+         gearMenuPaletteSubMenu_.add(colorMenuMap_.get(key).getCheckBox());
+      }
       
       gearMenu_.add(gearMenuUpdateRateSubMenu_);
       // Add/remove items to the histogramSubMenu here
@@ -133,13 +162,13 @@ public class IntensityInspectorPanelController
       histogramMenuMap_.put("0.5 Hz", 0.5);
       histogramMenuMap_.put("Never", 0.0);
       final String defaultUpdateFrequency = UserProfileStaticInterface.getInstance().getSettings(
-              IntensityInspectorPanelController.class).getString(HISTOGRAM_UPDATE_FREQUENCY, "1 Hz");
+              IntensityInspectorPanelController.class).getString(HISTOGRAM_UPDATE_FREQUENCY, "5 Hz");
       final List<JCheckBoxMenuItem> histogramMenuItems = new LinkedList<JCheckBoxMenuItem>();
-      for (final String key : histogramMenuMap_.keySet()) {
-         final JCheckBoxMenuItem jcmi = new JCheckBoxMenuItem(key);
-         if (key.equals(defaultUpdateFrequency)) {
+      for (final String hKey : histogramMenuMap_.keySet()) {
+         final JCheckBoxMenuItem jcmi = new JCheckBoxMenuItem(hKey);
+         if (hKey.equals(defaultUpdateFrequency)) {
             jcmi.setSelected(true);
-            handleHistogramUpdateRate(histogramMenuMap_.get(key));
+            handleHistogramUpdateRate(histogramMenuMap_.get(hKey));
          }
          histogramMenuItems.add(jcmi);
       }
@@ -162,28 +191,6 @@ public class IntensityInspectorPanelController
       }
 
       gearMenu_.add(gearMenuUseROIItem_);
-
-      gearMenuRGBCMYWItem_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleColorPalette(ColorPalettes.getPrimaryColorPalette());
-         }
-      });
-      gearMenuColorblindFriendlyItem_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleColorPalette(ColorPalettes.getColorblindFriendlyPalette());
-         }
-      });
-      gearMenuCustomColorItem_.setEnabled(false);
-      gearMenuCustomColorItem_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (customPalette_ != null) {
-               handleColorPalette(customPalette_);
-            }
-         }      
-      });
 
       gearMenuLogYAxisItem_.addActionListener(new ActionListener() {
          @Override
@@ -541,7 +548,7 @@ public class IntensityInspectorPanelController
       if (! (ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors) || 
               ColorPalettes.getPrimaryColorPalette().containsAll(allChannelColors)) ) {
          customPalette_ = allChannelColors;
-         gearMenuCustomColorItem_.setEnabled(true);
+         colorMenuMap_.get(CUSTOM).getCheckBox().setEnabled(true);
       }
 
       for (int ch = 0; ch < channelControllers_.size(); ++ch) {
