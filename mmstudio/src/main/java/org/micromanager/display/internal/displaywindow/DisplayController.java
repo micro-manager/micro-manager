@@ -1132,7 +1132,14 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void setCustomTitle(String title) {
-      // TODO
+      // TODO: evaulate if this is as intended
+      if (dataProvider_ instanceof Datastore) {
+         if (dataProvider_ != null) {
+            ((Datastore) dataProvider_).setName(title);
+         } else {
+            // TODO: set default name, whatever that is and wherever that is decided
+         }
+      }
    }
    
    
