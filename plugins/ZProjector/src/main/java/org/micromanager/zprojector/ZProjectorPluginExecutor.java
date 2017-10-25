@@ -28,6 +28,7 @@ import javax.swing.SwingWorker;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
@@ -48,10 +49,13 @@ public class ZProjectorPluginExecutor {
       studio_ = studio;
 
       // Not sure if this is needed, be safe for now
-      if (!window.getDatastore().getIsFrozen()) {
-         studio_.logs().showMessage("Can not Z-Project ongoing acquisitions", 
-                 window.getAsWindow());
-         return;
+      DataProvider dp = window.getDataProvider();
+      if (dp instanceof Datastore) {
+         if (!((Datastore) dp).isFrozen()) {
+            studio_.logs().showMessage("Can not Z-Project ongoing acquisitions",
+                    window.getWindow());
+            return;
+         }
       }
       
       // TODO: provide UI to other projection methods and z-ranges
@@ -80,13 +84,13 @@ public class ZProjectorPluginExecutor {
             // TODO: provide options for disk-backed datastores
             Datastore newStore = studio_.data().createRAMDatastore();
 
-            Datastore oldStore = theWindow.getDatastore();
+            DataProvider oldStore = theWindow.getDataProvider();
             Coords oldSizeCoord = oldStore.getMaxIndices();
-            CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copy();
+            CoordsBuilder newSizeCoordsBuilder = oldSizeCoord.copyBuilder();
             newSizeCoordsBuilder.z(1);
             SummaryMetadata metadata = oldStore.getSummaryMetadata();
 
-            metadata = metadata.copy()
+            metadata = metadata.copyBuilder()
                     .intendedDimensions(newSizeCoordsBuilder.build())
                     .build();
             Coords.CoordsBuilder cb = studio_.data().getCoordsBuilder();
@@ -96,7 +100,7 @@ public class ZProjectorPluginExecutor {
                copyDisplay.setCustomTitle(newName);
                studio_.displays().manage(newStore);
                for (int p = 0; p < oldStore.getAxisLength(Coords.STAGE_POSITION); p++) {
-                  for (int t = 0; t < oldStore.getAxisLength(Coords.TIME); t++) {
+                  for (int t = 0; t < oldStore.getAxisLength(Coords.T); t++) {
                      for (int c = 0; t < oldStore.getAxisLength(Coords.CHANNEL); c++) {
                         Coords.CoordsBuilder cbz = cb.stagePosition(p).time(t).channel(c);
                         Image tmpImg = oldStore.getImage(cbz.z(0).build());
@@ -116,7 +120,7 @@ public class ZProjectorPluginExecutor {
                         ImagePlus projection = zp.getProjection();
                         Image outImg = studio_.data().getImageJConverter().createImage(
                                 projection.getProcessor(), cbz.z(0).build(),
-                                imgMetadata.copy().build());
+                                imgMetadata.copyBuilderWithNewUUID().build());
                         newStore.putImage(outImg);
                      }
                   }
