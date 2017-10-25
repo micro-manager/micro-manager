@@ -22,11 +22,9 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import java.io.File;
-import java.io.IOException;
 import java.text.ParseException;
 import mmcorej.CMMCore;
 
-import java.text.NumberFormat;
 
 
 import org.micromanager.Studio;
@@ -47,10 +45,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.data.Coords;
-import org.micromanager.display.DisplayWindow;
-import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.JavaUtils;
+import org.micromanager.display.DataViewer;
 
 /**
  *
@@ -59,9 +57,7 @@ import org.micromanager.internal.utils.JavaUtils;
 public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private final Studio gui_;
    private final CMMCore core_;
-   //private Preferences prefs_;
-   
-   private final NumberFormat nf_;
+
    private final Class cl_ = IntelligentAcquisitionFrame.class;
 
    private int frameXPos_ = 100;
@@ -104,24 +100,30 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
     public IntelligentAcquisitionFrame(Studio gui) {
        gui_ = gui;
        core_ = gui_.getCMMCore();
-       nf_ = NumberFormat.getInstance();
-       //prefs_ = Preferences.userNodeForPackage(this.getClass());
        
        // Read values from PREFS
-       frameXPos_ = gui_.profile().getInt(cl_,FRAMEXPOS, frameXPos_);
-       frameYPos_ = gui_.profile().getInt(cl_, FRAMEYPOS, frameYPos_);
-       acqFileNameA_ = gui_.profile().getString(cl_, ACQFILENAMEA, acqFileNameA_);
-       acqFileNameB_ = gui_.profile().getString(cl_, ACQFILENAMEB, acqFileNameB_);
-       scriptFileName_ = gui_.profile().getString(cl_, SCRIPTFILENAME, 
-               scriptFileName_); 
-       explorationX_ = gui_.profile().getInt(cl_, EXPFIELDSX, explorationX_);
-       explorationY_ = gui_.profile().getInt(cl_, EXPFIELDSY, explorationY_);
-       roiWidthX_ = gui_.profile().getLong(cl_, ROIWIDTHX, roiWidthX_);
-       roiWidthY_ = gui_.profile().getLong(cl_, ROIWIDTHY, roiWidthY_);
+       frameXPos_ = gui_.profile().getSettings(cl_).getInteger(
+               FRAMEXPOS, frameXPos_);
+       frameYPos_ = gui_.profile().getSettings(cl_).getInteger(
+               FRAMEYPOS, frameYPos_);
+       acqFileNameA_ = gui_.profile().getSettings(cl_).getString(
+               ACQFILENAMEA, acqFileNameA_);
+       acqFileNameB_ = gui_.profile().getSettings(cl_).getString(
+               ACQFILENAMEB, acqFileNameB_);
+       scriptFileName_ = gui_.profile().getSettings(cl_).getString(
+               SCRIPTFILENAME, scriptFileName_); 
+       explorationX_ = gui_.profile().getSettings(cl_).getInteger(
+               EXPFIELDSX, explorationX_);
+       explorationY_ = gui_.profile().getSettings(cl_).getInteger(
+               EXPFIELDSY, explorationY_);
+       roiWidthX_ = gui_.profile().getSettings(cl_).getLong( 
+               ROIWIDTHX, roiWidthX_);
+       roiWidthY_ = gui_.profile().getSettings(cl_).getLong( 
+               ROIWIDTHY, roiWidthY_);
        
        initComponents();
 
-       setLocation(frameXPos_, frameYPos_);
+       super.setLocation(frameXPos_, frameYPos_);
        acqTextField1_.setText(acqFileNameA_);
        acqTextField2_.setText(acqFileNameB_);
        scriptTextField_.setText(scriptFileName_);
@@ -440,19 +442,24 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
      * @param evt 
      */
     private void onWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_onWindowClosing
-       gui_.profile().setInt(cl_, FRAMEXPOS, (int) getLocation().getX());
-       gui_.profile().setInt(cl_, FRAMEYPOS, (int) getLocation().getY());
+       gui_.profile().getSettings(cl_).putInteger(
+               FRAMEXPOS, (int) getLocation().getX());
+       gui_.profile().getSettings(cl_).putInteger(
+               FRAMEYPOS, (int) getLocation().getY());
        try {
-         gui_.profile().setInt(cl_, EXPFIELDSX, 
+         gui_.profile().getSettings(cl_).putInteger(EXPFIELDSX, 
                NumberUtils.displayStringToInt(expAreaFieldX_.getText()));
        } catch (ParseException ex) {}
        try {
-         gui_.profile().setInt(cl_, EXPFIELDSY, 
+         gui_.profile().getSettings(cl_).putInteger(EXPFIELDSY, 
                  NumberUtils.displayStringToInt(expAreaFieldY_.getText()));
        } catch (ParseException ex) {}
-       gui_.profile().setString(cl_, SCRIPTFILENAME, scriptTextField_.getText());
-       gui_.profile().setString(cl_, ACQFILENAMEA, acqTextField1_.getText());
-       gui_.profile().setString(cl_, ACQFILENAMEB, acqTextField2_.getText());
+       gui_.profile().getSettings(cl_).putString(
+               SCRIPTFILENAME, scriptTextField_.getText());
+       gui_.profile().getSettings(cl_).putString(
+               ACQFILENAMEA, acqTextField1_.getText());
+       gui_.profile().getSettings(cl_).putString(
+               ACQFILENAMEB, acqTextField2_.getText());
     }//GEN-LAST:event_onWindowClosing
 
     public void closeWindow() {
@@ -468,7 +475,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          acqTextField1_.setText(acqFileNameA_);
       }   
       
-      gui_.profile().setString(cl_, ACQFILENAMEA, acqFileNameA_);
+      gui_.profile().getSettings(cl_).putString(ACQFILENAMEA, acqFileNameA_);
    }//GEN-LAST:event_acqSettingsButton1_ActionPerformed
 
    private void acqSettingsButton2_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_acqSettingsButton2_ActionPerformed
@@ -480,7 +487,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          acqTextField2_.setText(acqFileNameB_);
       }
       
-      gui_.profile().setString(cl_, ACQFILENAMEB, acqFileNameB_);     
+      gui_.profile().getSettings(cl_).putString(ACQFILENAMEB, acqFileNameB_);     
    }//GEN-LAST:event_acqSettingsButton2_ActionPerformed
 
    private void scriptButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_scriptButton_ActionPerformed
@@ -493,7 +500,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
          scriptTextField_.setText(scriptFileName_);
       }
       
-      gui_.profile().setString(cl_, SCRIPTFILENAME, scriptFileName_);
+      gui_.profile().getSettings(cl_).putString(SCRIPTFILENAME, scriptFileName_);
    }//GEN-LAST:event_scriptButton_ActionPerformed
 
    private void roiFieldX_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roiFieldX_ActionPerformed
@@ -502,7 +509,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
       }
-      gui_.profile().setLong(cl_, ROIWIDTHX, roiWidthX_);
+      gui_.profile().getSettings(cl_).putLong(ROIWIDTHX, roiWidthX_);
       
    }//GEN-LAST:event_roiFieldX_ActionPerformed
 
@@ -512,13 +519,13 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
       } 
-      gui_.profile().setLong(cl_, ROIWIDTHY, roiWidthY_);
+      gui_.profile().getSettings(cl_).putLong(ROIWIDTHY, roiWidthY_);
    }//GEN-LAST:event_roiFieldY_ActionPerformed
 
    private void expAreaFieldY_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_expAreaFieldY_ActionPerformed
       try {
          explorationY_ = NumberUtils.displayStringToInt(expAreaFieldY_.getText());
-         gui_.profile().setInt(cl_, EXPFIELDSY, explorationY_);
+         gui_.profile().getSettings(cl_).putInteger(EXPFIELDSY, explorationY_);
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
       }
@@ -527,7 +534,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private void expAreaFieldX_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_expAreaFieldX_ActionPerformed
       try {
          explorationX_ = NumberUtils.displayStringToInt(expAreaFieldX_.getText());
-         gui_.profile().setInt(cl_, EXPFIELDSX, explorationX_);
+         gui_.profile().getSettings(cl_).putInteger(EXPFIELDSX, explorationX_);
       } catch (ParseException ex) {
          gui_.logs().logError(ex);
       }
@@ -553,7 +560,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
       public void run() {
          try {
             gui_.acquisitions().runAcquisition();
-         } catch (Exception ex) {
+         } catch (IllegalThreadStateException ex) {
             gui_.logs().showError(ex, "Error during acquisition");
          }
       }
@@ -641,7 +648,7 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                Datastore store;
                try {
                   store = gui_.acquisitions().runAcquisition();
-               } catch (Exception e) {
+               } catch (IllegalThreadStateException e) {
                   gui_.logs().showError(e, "Exploration acquisition failed");
                   break;
                }
@@ -725,10 +732,10 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    }//GEN-LAST:event_stopButton_ActionPerformed
 
    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-       gui_.profile().setInt(cl_, FRAMEXPOS, (int) getLocation().getX());
-       gui_.profile().setInt(cl_, FRAMEYPOS, (int) getLocation().getY());
-       gui_.profile().setInt(cl_, EXPFIELDSX, explorationX_);
-       gui_.profile().setInt(cl_, EXPFIELDSY, explorationY_);
+       gui_.profile().getSettings(cl_).putInteger(FRAMEXPOS, (int) getLocation().getX());
+       gui_.profile().getSettings(cl_).putInteger(FRAMEYPOS, (int) getLocation().getY());
+       gui_.profile().getSettings(cl_).putInteger(EXPFIELDSX, explorationX_);
+       gui_.profile().getSettings(cl_).putInteger(EXPFIELDSY, explorationY_);
    }//GEN-LAST:event_formWindowClosed
 
    
@@ -748,37 +755,41 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
                return;
             }
             // TODO: the below code was broken by the MM2.0 refactor.
-            DisplayWindow dw = gui_.displays().getCurrentWindow();
+            DataViewer dw = gui_.displays().getActiveDataViewer();
            
             ResultsTable outTable = new ResultsTable();
             String outTableName = Terms.RESULTTABLENAME;
 
-            if (siPlus != dw.getImagePlus()) {
+            if (siPlus != null && dw == null) {
                // run the script on the current window
                ij.IJ.runMacroFile(scriptFileName_);
                // results should be in results window
             } else { 
-               int nrPositions = dw.getDatastore().
+               int nrPositions = dw.getDataProvider().
                        getAxisLength(Coords.STAGE_POSITION);
 
                for (int p = 1; p <= nrPositions && !stop_.get(); p++) {
-                  Coords c = dw.getDatastore().getAnyImage().getCoords();
-                  dw.setDisplayedImageTo(c.copy().stagePosition(p).build());
-
-                  ij.IJ.runMacroFile(scriptFileName_);
-                  ResultsTable res = ij.measure.ResultsTable.getResultsTable();
-                  // get results out, stick them in new window that has listeners coupling to image window 
-                  if (res.getCounter() > 0) {
-                     String[] headings = res.getHeadings();
-                     for (int i = 0; i < res.getCounter(); i++) {
-                        outTable.incrementCounter();
-                        outTable.addValue(Terms.POSITION, p);
-                        for (String header : headings) {
-                           outTable.addValue(header, res.getValue(header, i));
+                  try {
+                     Coords c = dw.getDataProvider().getAnyImage().getCoords();
+                     dw.setDisplayPosition(c.copyBuilder().stagePosition(p).build());
+                     
+                     ij.IJ.runMacroFile(scriptFileName_);
+                     ResultsTable res = ij.measure.ResultsTable.getResultsTable();
+                     // get results out, stick them in new window that has listeners coupling to image window
+                     if (res.getCounter() > 0) {
+                        String[] headings = res.getHeadings();
+                        for (int i = 0; i < res.getCounter(); i++) {
+                           outTable.incrementCounter();
+                           outTable.addValue(Terms.POSITION, p);
+                           for (String header : headings) {
+                              outTable.addValue(header, res.getValue(header, i));
+                           }
                         }
                      }
+                     outTable.show(outTableName);
+                  } catch (IOException ex) {
+                     Logger.getLogger(IntelligentAcquisitionFrame.class.getName()).log(Level.SEVERE, null, ex);
                   }
-                  outTable.show(outTableName);
                }
             }
             
@@ -836,8 +847,8 @@ public class IntelligentAcquisitionFrame extends javax.swing.JFrame {
    private void updateROI() {
       roiFieldX_.setText(NumberUtils.longToDisplayString(roiWidthX_));
       roiFieldY_.setText(NumberUtils.longToDisplayString(roiWidthY_));
-      gui_.profile().setLong(cl_, ROIWIDTHX, roiWidthX_);
-      gui_.profile().setLong(cl_, ROIWIDTHY, roiWidthY_);
+      gui_.profile().getSettings(cl_).putLong(ROIWIDTHX, roiWidthX_);
+      gui_.profile().getSettings(cl_).putLong(ROIWIDTHY, roiWidthY_);
    }
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton acqSettingsButton1_;

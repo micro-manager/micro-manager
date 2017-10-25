@@ -27,14 +27,15 @@ import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
 public class IntelligentAcquisition implements MenuPlugin, SciJavaPlugin {
-   public static final String menuName = "Intelligent Acquisition";
-   public static final String tooltipDescription =
+   public static final String MENU_NAME = "Intelligent Acquisition";
+   public static final String TOOL_TIP_DESCIRIPTION =
       "Use image analysis to drive image acquisition";
 
    private CMMCore core_;
    private Studio gui_;
    private IntelligentAcquisitionFrame myFrame_;
 
+   @Override
    public void setContext(Studio app) {
       gui_ = app;
       core_ = app.getCMMCore();
@@ -42,7 +43,7 @@ public class IntelligentAcquisition implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getName() {
-      return menuName;
+      return MENU_NAME;
    }
 
    @Override
@@ -63,13 +64,15 @@ public class IntelligentAcquisition implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getHelpText() {
-      return tooltipDescription;
+      return TOOL_TIP_DESCIRIPTION;
    }
 
+   @Override
    public String getVersion() {
       return "1.0";
    }
    
+   @Override
    public String getCopyright() {
       return "University of California, 2012";
    }
