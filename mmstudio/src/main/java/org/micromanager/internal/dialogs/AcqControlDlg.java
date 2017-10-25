@@ -64,6 +64,7 @@ import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TooltipTextMaker;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Time-lapse, channel and z-stack acquisition setup dialog.
@@ -77,10 +78,12 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 10);
    private static final String RELATIVE_Z = "Relative Z";
    private static final String ABSOLUTE_Z = "Absolute Z";
-   private static final String SHOULD_SYNC_EXPOSURE = "should sync exposure times between main window and Acquire dialog";
-   private static final String SHOULD_HIDE_DISPLAY = "should hide image display windows for multi-dimensional acquisitions";
-   private static final String SAVE_MODE = "default save mode";
-   private static final String SHOULD_CHECK_EXPOSURE_SANITY = "whether to prompt the user if their exposure times seem excessively long";
+   private static final String SHOULD_SYNC_EXPOSURE = 
+           "should sync exposure times between main window and Acquire dialog";
+   private static final String SHOULD_HIDE_DISPLAY = 
+           "should hide image display windows for multi-dimensional acquisitions";
+   private static final String SHOULD_CHECK_EXPOSURE_SANITY = 
+           "whether to prompt the user if their exposure times seem excessively long";
    private static final String BUTTON_SIZE = "width 80!, height 22!";
    private static final String PANEL_CONSTRAINT = "fillx, gap 2, insets 2";
 
@@ -99,7 +102,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private JFormattedTextField zStep_;
    private JFormattedTextField zTop_;
    private JFormattedTextField zBottom_;
-   private AcquisitionWrapperEngine acqEng_;
+   private final AcquisitionWrapperEngine acqEng_;
    private JScrollPane channelTablePane_;
    private JTable channelTable_;
    private JSpinner numFrames_;
@@ -110,8 +113,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private JButton acquireButton_;
    private JButton setBottomButton_;
    private JButton setTopButton_;
-   private MMStudio studio_;
-   private NumberFormat numberFormat_;
+   private final MMStudio studio_;
+   private final NumberFormat numberFormat_;
    private JLabel namePrefixLabel_;
    private JLabel saveTypeLabel_;
    private JRadioButton singleButton_;
@@ -122,6 +125,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private JCheckBox chanKeepShutterOpenCheckBox_;
    private AcqOrderMode[] acqOrderModes_;
    private CustomTimesDialog customTimesWindow;
+   private final UserProfile profile_;
    // persistent properties (app settings)
    private static final String ACQ_FILE_DIR = "dir";
    private static final String ACQ_INTERVAL = "acqInterval";
@@ -144,9 +148,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private static final String CHANNEL_EXPOSURE_PREFIX = "acqChannelExp";
    private static final String CHANNEL_ZOFFSET_PREFIX = "acqChannelZOffset";
    private static final String CHANNEL_DOZSTACK_PREFIX = "acqChannelDoZStack";
-   private static final String CHANNEL_CONTRAST_MIN_PREFIX = "acqChannelContrastMin";
-   private static final String CHANNEL_CONTRAST_MAX_PREFIX = "acqChannelContrastMax";
-   private static final String CHANNEL_CONTRAST_GAMMA_PREFIX = "acqChannelContrstGamma";
    private static final String CHANNEL_COLOR_R_PREFIX = "acqChannelColorR";
    private static final String CHANNEL_COLOR_G_PREFIX = "acqChannelColorG";
    private static final String CHANNEL_COLOR_B_PREFIX = "acqChannelColorB";
@@ -155,7 +156,6 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    private static final String ACQ_DIR_NAME = "acqDirName";
    private static final String ACQ_ROOT_NAME = "acqRootName";
    private static final String ACQ_SAVE_FILES = "acqSaveFiles";
-   private static final String ACQ_DISPLAY_MODE = "acqDisplayMode";
    private static final String ACQ_AF_ENABLE = "autofocus_enabled";
    private static final String ACQ_AF_SKIP_INTERVAL = "autofocusSkipInterval";
    private static final String ACQ_COLUMN_WIDTH = "column_width";
@@ -906,6 +906,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       super("acquisition configuration dialog");
 
       studio_ = gui;
+      profile_ = studio_.getUserProfile();
 
       setIconImage(Toolkit.getDefaultToolkit().getImage(
               MMStudio.class.getResource(
@@ -1175,13 +1176,13 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       // load acquisition engine preferences
       acqEng_.clear();
-      UserProfile profile = UserProfileStaticInterface.getInstance();
-      int numFrames = profile.getInt(this.getClass(), ACQ_NUMFRAMES, 1);
-      double interval = profile.getDouble(this.getClass(), ACQ_INTERVAL, 0.0);
+      MutablePropertyMapView settings = profile_.getSettings(this.getClass());
+      int numFrames = settings.getInteger(ACQ_NUMFRAMES, 1);
+      double interval = settings.getDouble(ACQ_INTERVAL, 0.0);
 
       acqEng_.setFrames(numFrames, interval);
-      acqEng_.enableFramesSetting(profile.getBoolean(
-               this.getClass(), ACQ_ENABLE_MULTI_FRAME, false));
+      acqEng_.enableFramesSetting(settings.getBoolean(
+               ACQ_ENABLE_MULTI_FRAME, false));
 
       boolean framesEnabled = acqEng_.isFramesSettingEnabled();
       framesPanel_.setSelected(framesEnabled);
@@ -1191,47 +1192,55 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       numFrames_.setValue(acqEng_.getNumFrames());
 
-      int unit = profile.getInt(this.getClass(), ACQ_TIME_UNIT, 0);
+      int unit = settings.getInteger(ACQ_TIME_UNIT, 0);
       timeUnitCombo_.setSelectedIndex(unit);
 
-      double bottom = profile.getDouble(this.getClass(), ACQ_ZBOTTOM, 0.0);
-      double top = profile.getDouble(this.getClass(), ACQ_ZTOP, 0.0);
+      double bottom = settings.getDouble(ACQ_ZBOTTOM, 0.0);
+      double top = settings.getDouble(ACQ_ZTOP, 0.0);
       // TODO: ideally we would be able to check this value against the
       // physical resolution of the Z positioner.
-      double step = profile.getDouble(this.getClass(), ACQ_ZSTEP, 1.0);
-      zVals_ = profile.getInt(this.getClass(), ACQ_Z_VALUES, 0);
+      double step = settings.getDouble(ACQ_ZSTEP, 1.0);
+      zVals_ = settings.getInteger(ACQ_Z_VALUES, 0);
       acqEng_.setSlices(bottom, top, step, (zVals_ != 0));
-      acqEng_.enableZSliceSetting(profile.getBoolean(this.getClass(), ACQ_ENABLE_SLICE_SETTINGS, acqEng_.isZSliceSettingEnabled()));
-      acqEng_.enableMultiPosition(profile.getBoolean(this.getClass(), ACQ_ENABLE_MULTI_POSITION, acqEng_.isMultiPositionEnabled()));
+      acqEng_.enableZSliceSetting(settings.getBoolean(ACQ_ENABLE_SLICE_SETTINGS, 
+              acqEng_.isZSliceSettingEnabled()));
+      acqEng_.enableMultiPosition(settings.getBoolean(ACQ_ENABLE_MULTI_POSITION, 
+              acqEng_.isMultiPositionEnabled()));
       positionsPanel_.setSelected(acqEng_.isMultiPositionEnabled());
       positionsPanel_.repaint();
 
       slicesPanel_.setSelected(acqEng_.isZSliceSettingEnabled());
       slicesPanel_.repaint();
 
-      acqEng_.enableChannelsSetting(profile.getBoolean(this.getClass(), ACQ_ENABLE_MULTI_CHANNEL, false));
+      acqEng_.enableChannelsSetting(settings.getBoolean(
+              ACQ_ENABLE_MULTI_CHANNEL, false));
       channelsPanel_.setSelected(acqEng_.isChannelsSettingEnabled());
       channelsPanel_.repaint();
 
-      savePanel_.setSelected(profile.getBoolean(this.getClass(), ACQ_SAVE_FILES, false));
+      savePanel_.setSelected(settings.getBoolean(ACQ_SAVE_FILES, false));
 
-      nameField_.setText(profile.getString(this.getClass(), ACQ_DIR_NAME, "Untitled"));
+      nameField_.setText(settings.getString(ACQ_DIR_NAME, "Untitled"));
       String os_name = System.getProperty("os.name", "");
-      rootField_.setText(profile.getString(this.getClass(), ACQ_ROOT_NAME, System.getProperty("user.home") + "/AcquisitionData"));
-
-      acqEng_.setAcqOrderMode(profile.getInt(this.getClass(), ACQ_ORDER_MODE, acqEng_.getAcqOrderMode()));
-
-      acqEng_.enableAutoFocus(profile.getBoolean(this.getClass(), ACQ_AF_ENABLE, acqEng_.isAutoFocusEnabled()));
-      acqEng_.setAfSkipInterval(profile.getInt(this.getClass(), ACQ_AF_SKIP_INTERVAL, acqEng_.getAfSkipInterval()));
-      acqEng_.setChannelGroup(profile.getString(this.getClass(), ACQ_CHANNEL_GROUP, acqEng_.getFirstConfigGroup()));
+      rootField_.setText(settings.getString(ACQ_ROOT_NAME, 
+              System.getProperty("user.home") + "/AcquisitionData"));
+      acqEng_.setAcqOrderMode(settings.getInteger(ACQ_ORDER_MODE, 
+              acqEng_.getAcqOrderMode()));
+      acqEng_.enableAutoFocus(settings.getBoolean(ACQ_AF_ENABLE, 
+              acqEng_.isAutoFocusEnabled()));
+      acqEng_.setAfSkipInterval(settings.getInteger(ACQ_AF_SKIP_INTERVAL, 
+              acqEng_.getAfSkipInterval()));
+      acqEng_.setChannelGroup(settings.getString(ACQ_CHANNEL_GROUP, 
+              acqEng_.getFirstConfigGroup()));
       afPanel_.setSelected(acqEng_.isAutoFocusEnabled());
-      acqEng_.keepShutterOpenForChannels(profile.getBoolean(this.getClass(), ACQ_CHANNELS_KEEP_SHUTTER_OPEN, false));
-      acqEng_.keepShutterOpenForStack(profile.getBoolean(this.getClass(), ACQ_STACK_KEEP_SHUTTER_OPEN, false));
+      acqEng_.keepShutterOpenForChannels(settings.getBoolean(
+              ACQ_CHANNELS_KEEP_SHUTTER_OPEN, false));
+      acqEng_.keepShutterOpenForStack(settings.getBoolean(
+              ACQ_STACK_KEEP_SHUTTER_OPEN, false));
 
       ArrayList<Double> customIntervals = new ArrayList<Double>();
       int h = 0;
-      while (profile.getDouble(this.getClass(), CUSTOM_INTERVAL_PREFIX + h, -1.0) >= 0.0) {
-         customIntervals.add(profile.getDouble(this.getClass(), CUSTOM_INTERVAL_PREFIX + h, -1.0));
+      while (settings.getDouble(CUSTOM_INTERVAL_PREFIX + h, -1.0) >= 0.0) {
+         customIntervals.add(settings.getDouble(CUSTOM_INTERVAL_PREFIX + h, -1.0));
          h++;
       }
       double[] intervals = new double[customIntervals.size()];
@@ -1239,24 +1248,29 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          intervals[j] = customIntervals.get(j);
       }
       acqEng_.setCustomTimeIntervals(intervals);
-      acqEng_.enableCustomTimeIntervals(profile.getBoolean(this.getClass(), ACQ_ENABLE_CUSTOM_INTERVALS, false));
+      acqEng_.enableCustomTimeIntervals(settings.getBoolean(
+              ACQ_ENABLE_CUSTOM_INTERVALS, false));
 
 
-      int numChannels = profile.getInt(this.getClass(), ACQ_NUM_CHANNELS, 0);
+      int numChannels = settings.getInteger(ACQ_NUM_CHANNELS, 0);
 
       ChannelSpec defaultChannel = new ChannelSpec();
 
       acqEng_.getChannels().clear();
       for (int i = 0; i < numChannels; i++) {
-         String name = profile.getString(this.getClass(), CHANNEL_NAME_PREFIX + i, "Undefined");
-         boolean use = profile.getBoolean(this.getClass(), CHANNEL_USE_PREFIX + i, true);
-         double exp = profile.getDouble(this.getClass(), CHANNEL_EXPOSURE_PREFIX + i, 0.0);
-         Boolean doZStack = profile.getBoolean(this.getClass(), CHANNEL_DOZSTACK_PREFIX + i, true);
-         double zOffset = profile.getDouble(this.getClass(), CHANNEL_ZOFFSET_PREFIX + i, 0.0);
-         int r = profile.getInt(this.getClass(), CHANNEL_COLOR_R_PREFIX + i, defaultChannel.color.getRed());
-         int g = profile.getInt(this.getClass(), CHANNEL_COLOR_G_PREFIX + i, defaultChannel.color.getGreen());
-         int b = profile.getInt(this.getClass(), CHANNEL_COLOR_B_PREFIX + i, defaultChannel.color.getBlue());
-         int skip = profile.getInt(this.getClass(), CHANNEL_SKIP_PREFIX + i, defaultChannel.skipFactorFrame);
+         String name = settings.getString(CHANNEL_NAME_PREFIX + i, "Undefined");
+         boolean use = settings.getBoolean(CHANNEL_USE_PREFIX + i, true);
+         double exp = settings.getDouble(CHANNEL_EXPOSURE_PREFIX + i, 0.0);
+         Boolean doZStack = settings.getBoolean(CHANNEL_DOZSTACK_PREFIX + i, true);
+         double zOffset = settings.getDouble(CHANNEL_ZOFFSET_PREFIX + i, 0.0);
+         int r = settings.getInteger(CHANNEL_COLOR_R_PREFIX + i, 
+                 defaultChannel.color.getRed());
+         int g = settings.getInteger(CHANNEL_COLOR_G_PREFIX + i, 
+                 defaultChannel.color.getGreen());
+         int b = settings.getInteger(CHANNEL_COLOR_B_PREFIX + i, 
+                 defaultChannel.color.getBlue());
+         int skip = settings.getInteger(CHANNEL_SKIP_PREFIX + i, 
+                 defaultChannel.skipFactorFrame);
          Color c = new Color(r, g, b);
          acqEng_.addChannel(name, exp, doZStack, zOffset, skip, c, use);
       }
@@ -1267,65 +1281,66 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       columnWidth_ = new int[columnCount];
       columnOrder_ = new int[columnCount];
       for (int k = 0; k < columnCount; k++) {
-         columnWidth_[k] = profile.getInt(this.getClass(), ACQ_COLUMN_WIDTH + k, ACQ_DEFAULT_COLUMN_WIDTH);
-         columnOrder_[k] = profile.getInt(this.getClass(), ACQ_COLUMN_ORDER + k, k);
+         columnWidth_[k] = settings.getInteger(ACQ_COLUMN_WIDTH + k, 
+                 ACQ_DEFAULT_COLUMN_WIDTH);
+         columnOrder_[k] = settings.getInteger(ACQ_COLUMN_ORDER + k, k);
       }
 
       disableGUItoSettings_ = false;
    }
 
    public synchronized void saveAcqSettings() {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
+      MutablePropertyMapView settings = profile_.getSettings(this.getClass());
 
       applySettings();
 
-      profile.setBoolean(this.getClass(), ACQ_ENABLE_MULTI_FRAME, acqEng_.isFramesSettingEnabled());
-      profile.setBoolean(this.getClass(), ACQ_ENABLE_MULTI_CHANNEL, acqEng_.isChannelsSettingEnabled());
-      profile.setInt(this.getClass(), ACQ_NUMFRAMES, acqEng_.getNumFrames());
-      profile.setDouble(this.getClass(), ACQ_INTERVAL, acqEng_.getFrameIntervalMs());
-      profile.setInt(this.getClass(), ACQ_TIME_UNIT, timeUnitCombo_.getSelectedIndex());
-      profile.setDouble(this.getClass(), ACQ_ZBOTTOM, acqEng_.getSliceZBottomUm());
-      profile.setDouble(this.getClass(), ACQ_ZTOP, acqEng_.getZTopUm());
-      profile.setDouble(this.getClass(), ACQ_ZSTEP, acqEng_.getSliceZStepUm());
-      profile.setBoolean(this.getClass(), ACQ_ENABLE_SLICE_SETTINGS, acqEng_.isZSliceSettingEnabled());
-      profile.setBoolean(this.getClass(), ACQ_ENABLE_MULTI_POSITION, acqEng_.isMultiPositionEnabled());
-      profile.setInt(this.getClass(), ACQ_Z_VALUES, zVals_);
-      profile.setBoolean(this.getClass(), ACQ_SAVE_FILES, savePanel_.isSelected());
-      profile.setString(this.getClass(), ACQ_DIR_NAME, nameField_.getText());
-      profile.setString(this.getClass(), ACQ_ROOT_NAME, rootField_.getText());
+      settings.putBoolean(ACQ_ENABLE_MULTI_FRAME, acqEng_.isFramesSettingEnabled());
+      settings.putBoolean(ACQ_ENABLE_MULTI_CHANNEL, acqEng_.isChannelsSettingEnabled());
+      settings.putInteger(ACQ_NUMFRAMES, acqEng_.getNumFrames());
+      settings.putDouble(ACQ_INTERVAL, acqEng_.getFrameIntervalMs());
+      settings.putInteger(ACQ_TIME_UNIT, timeUnitCombo_.getSelectedIndex());
+      settings.putDouble(ACQ_ZBOTTOM, acqEng_.getSliceZBottomUm());
+      settings.putDouble(ACQ_ZTOP, acqEng_.getZTopUm());
+      settings.putDouble(ACQ_ZSTEP, acqEng_.getSliceZStepUm());
+      settings.putBoolean(ACQ_ENABLE_SLICE_SETTINGS, acqEng_.isZSliceSettingEnabled());
+      settings.putBoolean(ACQ_ENABLE_MULTI_POSITION, acqEng_.isMultiPositionEnabled());
+      settings.putInteger(ACQ_Z_VALUES, zVals_);
+      settings.putBoolean(ACQ_SAVE_FILES, savePanel_.isSelected());
+      settings.putString(ACQ_DIR_NAME, nameField_.getText());
+      settings.putString(ACQ_ROOT_NAME, rootField_.getText());
 
-      profile.setInt(this.getClass(), ACQ_ORDER_MODE, acqEng_.getAcqOrderMode());
+      settings.putInteger(ACQ_ORDER_MODE, acqEng_.getAcqOrderMode());
 
-      profile.setBoolean(this.getClass(), ACQ_AF_ENABLE, acqEng_.isAutoFocusEnabled());
-      profile.setInt(this.getClass(), ACQ_AF_SKIP_INTERVAL, acqEng_.getAfSkipInterval());
-      profile.setBoolean(this.getClass(), ACQ_CHANNELS_KEEP_SHUTTER_OPEN, acqEng_.isShutterOpenForChannels());
-      profile.setBoolean(this.getClass(), ACQ_STACK_KEEP_SHUTTER_OPEN, acqEng_.isShutterOpenForStack());
+      settings.putBoolean(ACQ_AF_ENABLE, acqEng_.isAutoFocusEnabled());
+      settings.putInteger(ACQ_AF_SKIP_INTERVAL, acqEng_.getAfSkipInterval());
+      settings.putBoolean(ACQ_CHANNELS_KEEP_SHUTTER_OPEN, acqEng_.isShutterOpenForChannels());
+      settings.putBoolean(ACQ_STACK_KEEP_SHUTTER_OPEN, acqEng_.isShutterOpenForStack());
 
-      profile.setString(this.getClass(), ACQ_CHANNEL_GROUP, acqEng_.getChannelGroup());
+      settings.putString(ACQ_CHANNEL_GROUP, acqEng_.getChannelGroup());
       ArrayList<ChannelSpec> channels = acqEng_.getChannels();
-      profile.setInt(this.getClass(), ACQ_NUM_CHANNELS, channels.size());
+      settings.putInteger(ACQ_NUM_CHANNELS, channels.size());
       for (int i = 0; i < channels.size(); i++) {
          ChannelSpec channel = channels.get(i);
-         profile.setString(this.getClass(), CHANNEL_NAME_PREFIX + i, channel.config);
-         profile.setBoolean(this.getClass(), CHANNEL_USE_PREFIX + i, channel.useChannel);
-         profile.setDouble(this.getClass(), CHANNEL_EXPOSURE_PREFIX + i, channel.exposure);
-         profile.setBoolean(this.getClass(), CHANNEL_DOZSTACK_PREFIX + i, channel.doZStack);
-         profile.setDouble(this.getClass(), CHANNEL_ZOFFSET_PREFIX + i, channel.zOffset);
-         profile.setInt(this.getClass(), CHANNEL_COLOR_R_PREFIX + i, channel.color.getRed());
-         profile.setInt(this.getClass(), CHANNEL_COLOR_G_PREFIX + i, channel.color.getGreen());
-         profile.setInt(this.getClass(), CHANNEL_COLOR_B_PREFIX + i, channel.color.getBlue());
-         profile.setInt(this.getClass(), CHANNEL_SKIP_PREFIX + i, channel.skipFactorFrame);
+         settings.putString(CHANNEL_NAME_PREFIX + i, channel.config);
+         settings.putBoolean(CHANNEL_USE_PREFIX + i, channel.useChannel);
+         settings.putDouble(CHANNEL_EXPOSURE_PREFIX + i, channel.exposure);
+         settings.putBoolean(CHANNEL_DOZSTACK_PREFIX + i, channel.doZStack);
+         settings.putDouble(CHANNEL_ZOFFSET_PREFIX + i, channel.zOffset);
+         settings.putInteger(CHANNEL_COLOR_R_PREFIX + i, channel.color.getRed());
+         settings.putInteger(CHANNEL_COLOR_G_PREFIX + i, channel.color.getGreen());
+         settings.putInteger(CHANNEL_COLOR_B_PREFIX + i, channel.color.getBlue());
+         settings.putInteger(CHANNEL_SKIP_PREFIX + i, channel.skipFactorFrame);
       }
 
       //Save custom time intervals
       double[] customIntervals = acqEng_.getCustomTimeIntervals();
       if (customIntervals != null && customIntervals.length > 0) {
          for (int h = 0; h < customIntervals.length; h++) {
-            profile.setDouble(this.getClass(), CUSTOM_INTERVAL_PREFIX + h, customIntervals[h]);
+            settings.putDouble(CUSTOM_INTERVAL_PREFIX + h, customIntervals[h]);
          }
       }
 
-      profile.setBoolean(this.getClass(), ACQ_ENABLE_CUSTOM_INTERVALS, acqEng_.customTimeIntervalsEnabled());
+      settings.putBoolean(ACQ_ENABLE_CUSTOM_INTERVALS, acqEng_.customTimeIntervalsEnabled());
 
       // Save preferred save mode.
       if (singleButton_.isSelected()) {
@@ -1342,8 +1357,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
       // Save model column widths and order
       for (int k = 0; k < model_.getColumnCount(); k++) {
-         profile.setInt(this.getClass(), ACQ_COLUMN_WIDTH + k, findTableColumn(channelTable_, k).getWidth());
-         profile.setInt(this.getClass(), ACQ_COLUMN_ORDER + k, channelTable_.convertColumnIndexToView(k));
+         settings.putInteger(ACQ_COLUMN_WIDTH + k, findTableColumn(channelTable_, k).getWidth());
+         settings.putInteger(ACQ_COLUMN_ORDER + k, channelTable_.convertColumnIndexToView(k));
       }
    }
 
@@ -1416,8 +1431,8 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
                updateGUIContents();
                acqDir_ = acqFile_.getParent();
                if (acqDir_ != null) {
-                  studio_.profile().setString(
-                     this.getClass(), ACQ_FILE_DIR, acqDir_);
+                  studio_.profile().getSettings(this.getClass()).putString(
+                     ACQ_FILE_DIR, acqDir_);
                }
             }
          });
@@ -1458,7 +1473,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
       int numFrames = Math.max(1, (Integer) numFrames_.getValue());
       if (acqEng_.customTimeIntervalsEnabled()) {
          int h = 0;
-         while (UserProfileStaticInterface.getInstance().getDouble(this.getClass(),
+         while (profile_.getSettings(this.getClass()).getDouble(
                   CUSTOM_INTERVAL_PREFIX + h, -1.0) >= 0.0) {
             h++;
          }
@@ -1996,7 +2011,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
          compTitledBorder = new ComponentTitledBorder(label, this,
                BorderFactory.createEtchedBorder());
-         this.setBorder(compTitledBorder);
+         super.setBorder(compTitledBorder);
          borderSet_ = true;
       }
       
@@ -2016,7 +2031,7 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
          checkBox = (JCheckBox) titleComponent;
 
          compTitledBorder = new ComponentTitledBorder(checkBox, this, BorderFactory.createEtchedBorder());
-         this.setBorder(compTitledBorder);
+         super.setBorder(compTitledBorder);
          borderSet_ = true;
 
          final CheckBoxPanel thisPanel = this;
@@ -2070,14 +2085,15 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
 
    public static Double getChannelExposure(String channelGroup,
          String channel, double defaultVal) {
-      return UserProfileStaticInterface.getInstance().getDouble(
-            AcqControlDlg.class, "Exposure_" + channelGroup + "_" + channel,
-            defaultVal);
+      return UserProfileStaticInterface.getInstance().getSettings(
+            AcqControlDlg.class).getDouble(
+                    "Exposure_" + channelGroup + "_" + channel,defaultVal);
    }
 
    public static void storeChannelExposure(String channelGroup,
          String channel, double exposure) {
-      UserProfileStaticInterface.getInstance().setDouble(AcqControlDlg.class,
+      UserProfileStaticInterface.getInstance().getSettings( 
+              AcqControlDlg.class).putDouble(
             "Exposure_" + channelGroup + "_" + channel, exposure);
    }
 
@@ -2100,32 +2116,32 @@ public final class AcqControlDlg extends MMFrame implements PropertyChangeListen
    }
 
    public static boolean getShouldSyncExposure() {
-      return UserProfileStaticInterface.getInstance().getBoolean(AcqControlDlg.class,
-            SHOULD_SYNC_EXPOSURE, true);
+      return UserProfileStaticInterface.getInstance().getSettings(
+              AcqControlDlg.class).getBoolean(SHOULD_SYNC_EXPOSURE, true);
    }
 
    public static void setShouldSyncExposure(boolean shouldSync) {
-      UserProfileStaticInterface.getInstance().setBoolean(AcqControlDlg.class,
-            SHOULD_SYNC_EXPOSURE, shouldSync);
+      UserProfileStaticInterface.getInstance().getSettings(AcqControlDlg.class).
+            putBoolean(SHOULD_SYNC_EXPOSURE, shouldSync);
    }
 
    public static boolean getShouldHideMDADisplay() {
-      return UserProfileStaticInterface.getInstance().getBoolean(AcqControlDlg.class,
-            SHOULD_HIDE_DISPLAY, false);
+      return UserProfileStaticInterface.getInstance().getSettings(AcqControlDlg.class).
+            getBoolean(SHOULD_HIDE_DISPLAY, false);
    }
 
    public static void setShouldHideMDADisplay(boolean shouldHide) {
-      UserProfileStaticInterface.getInstance().setBoolean(AcqControlDlg.class,
-            SHOULD_HIDE_DISPLAY, shouldHide);
+      UserProfileStaticInterface.getInstance().getSettings(AcqControlDlg.class).
+              putBoolean(SHOULD_HIDE_DISPLAY, shouldHide);
    }
 
-   public static boolean getShouldCheckExposureSanity() {
-      return UserProfileStaticInterface.getInstance().getBoolean(AcqControlDlg.class,
-            SHOULD_CHECK_EXPOSURE_SANITY, true);
+   public boolean getShouldCheckExposureSanity() {
+      return profile_.getSettings(AcqControlDlg.class).
+              getBoolean(SHOULD_CHECK_EXPOSURE_SANITY, true);
    }
 
-   public static void setShouldCheckExposureSanity(boolean shouldCheck) {
-      UserProfileStaticInterface.getInstance().setBoolean(AcqControlDlg.class,
-            SHOULD_CHECK_EXPOSURE_SANITY, shouldCheck);
+   public void setShouldCheckExposureSanity(boolean shouldCheck) {
+      profile_.getSettings(AcqControlDlg.class).
+              putBoolean(SHOULD_CHECK_EXPOSURE_SANITY, shouldCheck);
    }
 }

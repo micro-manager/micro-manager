@@ -6,9 +6,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.UUID;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
@@ -16,9 +14,6 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.PropertyMap;
-import org.micromanager.data.internal.DefaultPropertyMap;
-import org.micromanager.internal.MMStudio;
 
 /**
  * This class is intended to standardize interactions with the tags in 

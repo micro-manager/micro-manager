@@ -25,7 +25,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JToggleButton;
-import org.micromanager.data.internal.DefaultPropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.quickaccess.QuickAccessPlugin;
 import org.micromanager.quickaccess.SimpleButtonPlugin;
@@ -88,7 +88,6 @@ public final class QuickAccessFactory {
     * config.
     */
    public static JComponent makeWidget(WidgetPlugin plugin) {
-      return plugin.createControl(
-            new DefaultPropertyMap.Builder().build());
+      return plugin.createControl(PropertyMaps.emptyPropertyMap());
    }
 }

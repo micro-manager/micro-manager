@@ -76,7 +76,7 @@ import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.menus.MMMenuBar;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
+//import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -852,7 +852,7 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
     */
    public void savePrefs() {
       this.savePosition();
-      UserProfileStaticInterface.getInstance().setString(MainFrame.class,
+      studio_.profile().getSettings(MainFrame.class).putString(
             MAIN_EXPOSURE, textFieldExp_.getText());
    }
 

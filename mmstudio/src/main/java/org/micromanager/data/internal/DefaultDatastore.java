@@ -406,7 +406,7 @@ public class DefaultDatastore implements Datastore {
          for (String axis : getAxes()) {
             builder.index(axis, getAxisLength(axis));
          }
-         summary = summary.copy().intendedDimensions(builder.build()).build();
+         summary = summary.copyBuilder().intendedDimensions(builder.build()).build();
       }
 
       DefaultDatastore duplicate = new DefaultDatastore();
@@ -492,9 +492,9 @@ public class DefaultDatastore implements Datastore {
    }
 
    public static Datastore.SaveMode getPreferredSaveMode() {
-      String modeStr = MMStudio.getInstance().profile().getString(
-            DefaultDatastore.class,
-            PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
+      String modeStr = MMStudio.getInstance().profile().getSettings(
+            DefaultDatastore.class).getString(
+                  PREFERRED_SAVE_FORMAT, MULTIPAGE_TIFF);
       if (modeStr.equals(MULTIPAGE_TIFF)) {
          return Datastore.SaveMode.MULTIPAGE_TIFF;
       }
@@ -518,7 +518,7 @@ public class DefaultDatastore implements Datastore {
       else {
          ReportingUtils.logError("Unrecognized save mode " + mode);
       }
-      MMStudio.getInstance().profile().setString(DefaultDatastore.class,
-            PREFERRED_SAVE_FORMAT, modeStr);
+      MMStudio.getInstance().profile().getSettings(DefaultDatastore.class).
+              putString(PREFERRED_SAVE_FORMAT, modeStr);
    }
 }

@@ -550,7 +550,7 @@ public enum PropertyKey {
          PropertyMap.Builder builder = PropertyMaps.builder();
          for (String key : fromGson.keySet()) {
             if (fromGson.containsLong(key)) {
-               builder.putInteger(key, fromGson.getLong(key).intValue());
+               builder.putInteger(key, (int) fromGson.getLong(key, 1));
             } else {
                // NS: not sure how to handle this.  Can we be sure only to 
                // receive the correct keys?  I see no straight forward way 

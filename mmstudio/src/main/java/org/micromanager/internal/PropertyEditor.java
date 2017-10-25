@@ -166,8 +166,8 @@ public final class PropertyEditor extends MMFrame {
           }
       });
       // restore values from the previous session
-      showReadonlyCheckBox_.setSelected(profile.getBoolean(
-               PropertyEditor.class, PREF_SHOW_READONLY, true));
+      showReadonlyCheckBox_.setSelected(profile.getSettings(PropertyEditor.class).
+              getBoolean(PREF_SHOW_READONLY, true));
       data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
       add(showReadonlyCheckBox_);
 

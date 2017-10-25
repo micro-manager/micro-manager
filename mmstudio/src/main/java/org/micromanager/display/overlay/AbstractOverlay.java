@@ -12,8 +12,8 @@ import java.util.List;
 import javax.swing.JComponent;
 import org.apache.commons.lang3.event.EventListenerSupport;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.data.Image;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.display.DisplaySettings;
 
 /**
@@ -62,7 +62,7 @@ public abstract class AbstractOverlay implements Overlay {
     */
    @Override
    public PropertyMap getConfiguration() {
-      return new DefaultPropertyMap.Builder().build();
+      return PropertyMaps.emptyPropertyMap();
    }
 
    /**

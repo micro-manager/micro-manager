@@ -276,23 +276,13 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    }
 
 
-   /**
-    * This string is deprecated; it was used in prior versions of MM2.0 before
-    * we converted the value from int to double.
-    */
-   private static final String ANIMATION_FPS_INT = "animationFPS";
    private static final String ANIMATION_FPS_DOUBLE = "animationFPS_Double";
    private static final String CHANNEL_COLOR_MODE = "channelColorMode";
-   private static final String HISTOGRAM_UPDATE_RATE = "histogramUpdateRate";
    private static final String ZOOM_RATIO = "magnification";
    private static final String SHOULD_SYNC_CHANNELS = "shouldSyncChannels";
    private static final String SHOULD_AUTOSTRETCH = "shouldAutostretch";
    private static final String SHOULD_SCALE_WITH_ROI = "shouldScaleWithROI";
    private static final String EXTREMA_PERCENTAGE = "extremaPercentage";
-   private static final String BIT_DEPTH_INDICES = "bitDepthIndices";
-   private static final String SHOULD_USE_LOG_SCALE = "shouldUseLogScale";
-   private static final String SHOULD_CALCULATE_STD_DEV = "shouldCalculateStdDev";
-   private static final String USER_DATA = "userData";
 
    /**
     * Retrieve the display settings that have been saved in the preferences.

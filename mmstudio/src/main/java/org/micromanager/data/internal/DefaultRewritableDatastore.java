@@ -21,8 +21,7 @@
 package org.micromanager.data.internal;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
@@ -79,14 +78,7 @@ public final class DefaultRewritableDatastore extends DefaultDatastore implement
       if (summary == null) {
          return;
       }
-      ArrayList<String> axisOrderList = null;
-      String[] axisOrder = summary.getAxisOrder();
-      if (axisOrder == null) {
-         axisOrderList = new ArrayList<String>();
-      }
-      else {
-         axisOrderList = new ArrayList<String>(Arrays.asList(axisOrder));
-      }
+      List<String> axisOrderList = summary.getOrderedAxes();
       boolean didAdd = false;
       for (String axis : coords.getAxes()) {
          if (!axisOrderList.contains(axis) && coords.getIndex(axis) > 0) {
@@ -97,7 +89,7 @@ public final class DefaultRewritableDatastore extends DefaultDatastore implement
       }
       if (didAdd) {
          // Update summary metadata with the new axis order.
-         summary = summary.copy().axisOrder(
+         summary = summary.copyBuilder().axisOrder(
                axisOrderList.toArray(new String[] {})).build();
          setSummaryMetadata(summary);
       }

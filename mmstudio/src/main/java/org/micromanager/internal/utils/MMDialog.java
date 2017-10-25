@@ -28,7 +28,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.JDialog;
 import org.micromanager.UserProfile;
-import org.micromanager.profile.internal.DefaultUserProfile;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * Base class for the Micro-Manager dialogs.
@@ -69,12 +69,16 @@ public class MMDialog extends JDialog {
     */
    private void ensureSafeWindowPosition(int x, int y) {
       UserProfile profile = UserProfileStaticInterface.getInstance();
-      int prefX = profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, 0);
-      int prefY = profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, 0);
+      int prefX = profile.getSettings(this.getClass()).getInteger(
+              prefPrefix_ + WINDOW_X, 0);
+      int prefY = profile.getSettings(this.getClass()).getInteger(
+              prefPrefix_ + WINDOW_Y, 0);
       if (GUIUtils.getGraphicsConfigurationContaining(prefX, prefY) == null) {
          // only reach this code if the pref coordinates are off screen
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_X, x);
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_Y, y);
+         profile.getSettings(this.getClass()).putInteger(
+                 prefPrefix_ + WINDOW_X, x);
+         profile.getSettings(this.getClass()).putInteger(
+                 prefPrefix_ + WINDOW_Y, y);
       }
    }
 
@@ -129,10 +133,11 @@ public class MMDialog extends JDialog {
    protected void loadPosition(int x, int y, int width, int height) {
       ensureSafeWindowPosition(x, y);
       UserProfile profile = UserProfileStaticInterface.getInstance();
-      setBounds(profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, x),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_WIDTH, width),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_HEIGHT, height));
+      MutablePropertyMapView settings = profile.getSettings(this.getClass());
+      setBounds(settings.getInteger(prefPrefix_ + WINDOW_X, x),
+                settings.getInteger(prefPrefix_ + WINDOW_Y, y),
+                settings.getInteger(prefPrefix_ + WINDOW_WIDTH, width),
+                settings.getInteger(prefPrefix_ + WINDOW_HEIGHT, height));
    }
    
    @Override
@@ -144,8 +149,9 @@ public class MMDialog extends JDialog {
    protected void loadPosition(int x, int y) {
       ensureSafeWindowPosition(x, y);
       UserProfile profile = UserProfileStaticInterface.getInstance();
-      setLocation(profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, x),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y));
+      MutablePropertyMapView settings = profile.getSettings(this.getClass());
+      setLocation(settings.getInteger(prefPrefix_ + WINDOW_X, x),
+                settings.getInteger(prefPrefix_ + WINDOW_Y, y));
    }
 
    /**
@@ -154,11 +160,12 @@ public class MMDialog extends JDialog {
    protected void savePosition() {
       Rectangle r = getBounds();
       UserProfile profile = UserProfileStaticInterface.getInstance();
+      MutablePropertyMapView settings = profile.getSettings(this.getClass());
       if (r != null) {
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_X, r.x);
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_Y, r.y);
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_WIDTH, r.width);
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_HEIGHT, r.height);
+         settings.putInteger(prefPrefix_ + WINDOW_X, r.x);
+         settings.putInteger(prefPrefix_ + WINDOW_Y, r.y);
+         settings.putInteger(prefPrefix_ + WINDOW_WIDTH, r.width);
+         settings.putInteger(prefPrefix_ + WINDOW_HEIGHT, r.height);
       }
    }
 }

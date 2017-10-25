@@ -203,7 +203,8 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       // Update our tracking of the max index along each axis.
       for (String axis : coords.getAxes()) {
          if (coords.getIndex(axis) > maxIndices_.getIndex(axis)) {
-            maxIndices_ = maxIndices_.copy().index(axis, coords.getIndex(axis)).build();
+            maxIndices_ = maxIndices_.copyBuilder().index(
+                    axis, coords.getIndex(axis)).build();
          }
       }
    }
@@ -239,7 +240,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
                      NonPropertyMapJSONFormats.metadata().
                            fromJSON(metadataJSON));
             }
-            catch (Exception e) {
+            catch (IOException e) {
                ReportingUtils.logError(e, "Unable to extract image dimensions from JSON metadata");
                return null;
             }
@@ -345,7 +346,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       for (String axis : axes) {
          // HACK: more precision for the time axis.
          String precision = "%03d";
-         if (axis.contentEquals(Coords.TIME)) {
+         if (axis.contentEquals(Coords.T)) {
             precision = "%09d";
          }
          filename += String.format("_%s" + precision, axis,
@@ -698,6 +699,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       amLoading_ = false;
    }
 
+   /*
    private int getChannelIndex(String channelName) {
       if (summaryMetadata_.getChannelNames() == null) {
          return 0;
@@ -709,6 +711,7 @@ public final class StorageSinglePlaneTiffSeries implements Storage {
       }
       return result;
    }
+*/
 
    private JsonObject readJSONMetadata(String pos) {
       String fileStr;

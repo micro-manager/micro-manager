@@ -29,13 +29,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.SequenceSettings;
@@ -55,11 +55,11 @@ import org.micromanager.internal.utils.MMException;
  */
 public final class DefaultAcquisitionManager implements AcquisitionManager {
    // NOTE: should match the format used by the acquisition engine.
-   private static final SimpleDateFormat formatter_ = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+   private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 
-   private Studio studio_;
-   private AcquisitionWrapperEngine engine_;
-   private AcqControlDlg mdaDialog_;
+   private final Studio studio_;
+   private final AcquisitionWrapperEngine engine_;
+   private final AcqControlDlg mdaDialog_;
 
    public DefaultAcquisitionManager(Studio studio,
          AcquisitionWrapperEngine engine, AcqControlDlg mdaDialog) {
@@ -151,6 +151,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
    /**
     * Loads acquisition settings from file
     * @param path file containing previously saved acquisition settings
+    * @throws java.io.IOException
     */
    @Override
    public void loadAcquisition(String path) throws IOException {
@@ -168,6 +169,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
             Files.toString(new File(path), Charsets.UTF_8));
    }
 
+   @Override
    public void saveSequenceSettings(SequenceSettings settings, String path) throws IOException {
       File file = new File(path);
       FileWriter writer = null;
@@ -241,9 +243,8 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       for (int c = 0; c < core.getNumberOfCameraChannels(); ++c) {
          TaggedImage tagged = core.getTaggedImage(c);
          Image temp = new DefaultImage(tagged);
-         Coords newCoords = temp.getCoords().copy().channel(c).build();
-         Metadata newMetadata = temp.getMetadata().copy()
-            .uuid(UUID.randomUUID()).build();
+         Coords newCoords = temp.getCoords().copyBuilder().channel(c).build();
+         Metadata newMetadata = temp.getMetadata().copyBuilderWithNewUUID().build();
          temp = temp.copyWith(newCoords, newMetadata);
          result.add(temp);
       }
@@ -272,11 +273,10 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
       }
 
       MMStudio mmstudio = (MMStudio) studio_;
-      Metadata.MetadataBuilder result = image.getMetadata().copy()
+      Metadata.Builder result = image.getMetadata().copyBuilderWithNewUUID()
          .camera(camera)
-         .receivedTime(formatter_.format(new Date()))
+         .receivedTime(DATE_FORMATTER.format(new Date()))
          .pixelSizeUm(mmstudio.getCachedPixelSizeUm())
-         .uuid(UUID.randomUUID())
          .xPositionUm(mmstudio.getCachedXPosition())
          .yPositionUm(mmstudio.getCachedYPosition())
          .zPositionUm(mmstudio.getCachedZPosition())
@@ -308,7 +308,7 @@ public final class DefaultAcquisitionManager implements AcquisitionManager {
          // Again, this can fail if there is no camera.
       }
       if (includeHardwareState) {
-         PropertyMap.PropertyMapBuilder scopeBuilder = studio_.data().getPropertyMapBuilder();
+         PropertyMap.Builder scopeBuilder = PropertyMaps.builder();
          Configuration config = studio_.core().getSystemStateCache();
          for (long i = 0; i < config.size(); ++i) {
             PropertySetting setting = config.getSetting(i);

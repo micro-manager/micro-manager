@@ -196,7 +196,7 @@ public final class FileDialogs {
 
    public static void storePath(FileType type, File path) {
       UserProfile profile = UserProfileStaticInterface.getInstance();
-      profile.setString(FileDialogs.class, type.name,
+      profile.getSettings(FileDialogs.class).putString(type.name,
             path.getAbsolutePath());
    }
 
@@ -213,7 +213,7 @@ public final class FileDialogs {
    }
 
    public static String getSuggestedFile(FileType type) {
-      return UserProfileStaticInterface.getInstance().getString(
-            FileDialogs.class, type.name, type.defaultFileName);
+      return UserProfileStaticInterface.getInstance().getSettings(
+            FileDialogs.class).getString(type.name, type.defaultFileName);
    }
 }

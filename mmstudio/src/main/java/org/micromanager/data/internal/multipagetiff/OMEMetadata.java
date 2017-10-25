@@ -26,10 +26,11 @@ package org.micromanager.data.internal.multipagetiff;
 import java.io.IOException;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.TreeMap;
 import loci.common.DateTools;
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
@@ -52,11 +53,11 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public final class OMEMetadata {
 
-   private IMetadata metadata_;
-   private StorageMultipageTiff mptStorage_;
-   private TreeMap<Integer, Indices> seriesIndices_ = new TreeMap<Integer, Indices>();
+   private final IMetadata metadata_;
+   private final StorageMultipageTiff mptStorage_;
+   private final TreeMap<Integer, Indices> seriesIndices_ = new TreeMap<Integer, Indices>();
+   private final TreeMap<String, Integer> tiffDataIndexMap_;
    private int numSlices_, numChannels_;
-   private TreeMap<String, Integer> tiffDataIndexMap_;
    
    private class Indices {
       //specific to each series independent of file
@@ -77,7 +78,10 @@ public final class OMEMetadata {
          md.setBinaryOnlyMetadataFile(filename);
          md.setBinaryOnlyUUID(uuid);
          return new ServiceFactory().getInstance(OMEXMLService.class).getOMEXML(md) + " ";
-      } catch (Exception ex) {
+      } catch (DependencyException ex) {
+         ReportingUtils.logError("Couldn't generate partial OME block");
+         return " ";
+      } catch (ServiceException ex) {
          ReportingUtils.logError("Couldn't generate partial OME block");
          return " ";
       }
@@ -88,7 +92,10 @@ public final class OMEMetadata {
       try {
          OMEXMLService service = new ServiceFactory().getInstance(OMEXMLService.class);
          return service.getOMEXML(metadata_) + " ";
-      } catch (Exception ex) {
+      } catch (DependencyException ex) {
+         ReportingUtils.logError(ex);
+         return "";
+      } catch (ServiceException ex) {
          ReportingUtils.logError(ex);
          return "";
       }
@@ -114,9 +121,10 @@ public final class OMEMetadata {
       // the letters XYZCT (and as far as I can tell it must contain each
       // letter once).
       String axisOrder = "XY";
-      if (mptStorage_.getSummaryMetadata().getAxisOrder() != null) {
-         List<String> order = Arrays.asList(mptStorage_.getSummaryMetadata().getAxisOrder());
-         axisOrder += (order.indexOf(Coords.Z) < order.indexOf(Coords.CHANNEL)) ? "ZCT" : "CZT";
+      if (mptStorage_.getSummaryMetadata().getOrderedAxes() != null) {
+         List<String> order = mptStorage_.getSummaryMetadata().getOrderedAxes();
+         axisOrder += (order.indexOf(Coords.Z) < order.indexOf(Coords.CHANNEL)) 
+                 ? "ZCT" : "CZT";
       }
       else {
          // Make something up to have a valid string.
@@ -129,7 +137,7 @@ public final class OMEMetadata {
             "uint" + repImage.getBytesPerPixel() * 8,
             repImage.getWidth(), repImage.getHeight(),
             numSlices_, numChannels_,
-            mptStorage_.getIntendedSize(Coords.TIME), 1);
+            mptStorage_.getIntendedSize(Coords.T), 1);
 
       Metadata repMetadata = repImage.getMetadata();
       if (repMetadata.getPixelSizeUm() != null) {
@@ -283,7 +291,11 @@ public final class OMEMetadata {
                           new Timestamp(reformattedDate), position);
                }
             }
-         } catch (Exception e) {
+         } catch (IllegalArgumentException e) {
+            ReportingUtils.logError(e, "Problem adding System state cache metadata to OME Metadata: " + e);
+         } catch (UnsupportedOperationException e) {
+            ReportingUtils.logError(e, "Problem adding System state cache metadata to OME Metadata: " + e);
+         } catch (JSONException e) {
             ReportingUtils.logError(e, "Problem adding System state cache metadata to OME Metadata: " + e);
          }
       }

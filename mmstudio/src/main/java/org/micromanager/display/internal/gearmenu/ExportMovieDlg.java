@@ -96,7 +96,7 @@ public final class ExportMovieDlg extends MMDialog {
 
       public AxisPanel(DisplayWindow display, final ExportMovieDlg parent) {
          super(new MigLayout("flowx"));
-         setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+         super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
          store_ = display.getDataProvider();
          ArrayList<String> axes = new ArrayList<String>(
                parent.getNonZeroAxes());
@@ -155,17 +155,17 @@ public final class ExportMovieDlg extends MMDialog {
             }
          });
 
-         add(new JLabel("Export along "));
-         add(axisSelector_);
-         add(new JLabel(" from "));
-         add(minSpinner_);
-         add(new JLabel(" to "));
-         add(maxSpinner_);
+         super.add(new JLabel("Export along "));
+         super.add(axisSelector_);
+         super.add(new JLabel(" from "));
+         super.add(minSpinner_);
+         super.add(new JLabel(" to "));
+         super.add(maxSpinner_);
          // Only show the add button if there's an unused axis we can add.
          // HACK: the 1 remaining is us, because we're still in our
          // constructor.
          if (parent.getNumSpareAxes() > 1) {
-            add(addButton_);
+            super.add(addButton_);
          }
       }
 

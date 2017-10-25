@@ -110,15 +110,15 @@ public final class RememberedChannelSettings {
                   ourKey + ":" + COLOR, color_.getRGB());
          }
          if (histogramMins_ != null) {
-            profile.setIntArray(RememberedChannelSettings.class,
-                  ourKey + ":" + MINS, histogramMins_);
+            profile.getSettings(RememberedChannelSettings.class).putIntegerList(
+                  ourKey + ":" + MINS, Arrays.asList(histogramMins_));
          }
          if (histogramMaxes_ != null) {
-            profile.setIntArray(RememberedChannelSettings.class,
-                  ourKey + ":" + MAXES, histogramMaxes_);
+            profile.getSettings(RememberedChannelSettings.class).putIntegerList(
+                  ourKey + ":" + MAXES, Arrays.asList(histogramMaxes_));
          }
          if (shouldAutoscale_ != null) {
-            profile.setBoolean(RememberedChannelSettings.class,
+            profile.getSettings(RememberedChannelSettings.class).putBoolean(
                   ourKey + ":" + AUTOSCALE, shouldAutoscale_);
          }
       }
@@ -161,9 +161,9 @@ public final class RememberedChannelSettings {
       synchronized(PROFILELOCK) {
          UserProfile profile = UserProfileStaticInterface.getInstance();
          String key = genKey(channelName, channelGroup);
-         Integer rgb = profile.getInt(
-               RememberedChannelSettings.class, key + ":" + COLOR, null);
-         if (rgb == null) {
+         Integer rgb = profile.getSettings(RememberedChannelSettings.class).
+                 getInteger(key + ":" + COLOR, -1);
+         if (rgb == -1) {
             return defaultColor;
          }
          return new Color(rgb);

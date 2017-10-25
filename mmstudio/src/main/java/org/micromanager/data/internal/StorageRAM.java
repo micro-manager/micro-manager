@@ -60,7 +60,7 @@ public final class StorageRAM implements RewritableStorage {
          if (maxIndex_.getIndex(axis) < coords.getIndex(axis)) {
             // Either this image is further along on this axis, or we have
             // no index for this axis yet.
-            maxIndex_ = maxIndex_.copy()
+            maxIndex_ = maxIndex_.copyBuilder()
                   .index(axis, coords.getIndex(axis))
                   .build();
          }
@@ -94,7 +94,7 @@ public final class StorageRAM implements RewritableStorage {
    public synchronized List<Image> getImagesMatching(Coords coords) {
       ArrayList<Image> results = new ArrayList<Image>();
       for (Image image : coordsToImage_.values()) {
-         if (image.getCoords().matches(coords)) {
+         if (image.getCoords().isSubspaceCoordsOf(coords)) {
             results.add(image);
          }
       }

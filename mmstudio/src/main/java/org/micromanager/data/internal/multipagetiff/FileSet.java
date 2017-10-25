@@ -283,7 +283,7 @@ class FileSet {
     * images, so that it can be opened correctly by ImageJ/BioForamts
     */
    private void completeFrameWithBlankImages(int frame) {
-      int numFrames = masterStorage_.getIntendedSize(Coords.TIME);
+      int numFrames = masterStorage_.getIntendedSize(Coords.T);
       int numSlices = masterStorage_.getIntendedSize(Coords.Z);
       int numChannels = masterStorage_.getIntendedSize(Coords.CHANNEL);
       if (numFrames > frame + 1 ) {
@@ -300,7 +300,7 @@ class FileSet {
          omeMetadata_.setNumFrames(positionIndex, frame + 1);
          TreeSet<Coords> lastFrameCoords = new TreeSet<Coords>();
          DefaultCoords.Builder builder = new DefaultCoords.Builder();
-         builder.time(frame);
+         builder.t(frame);
          builder.stagePosition(positionIndex);
          for (int c = 0; c < numChannels; c++) {
             builder.channel(c);
