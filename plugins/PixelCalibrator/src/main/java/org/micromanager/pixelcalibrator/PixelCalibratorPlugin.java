@@ -28,7 +28,6 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
    private MMStudio app_;
    private CalibrationThread calibrationThread_;
    private PixelCalibratorDialog dialog_;
-   private final Class cp_ = MMStudio.class;
 
    double safeTravelRadiusUm_ = 1000;
 
@@ -43,13 +42,11 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getCopyright() {
-      // TODO Auto-generated method stub
       return "University of California, San Francisco, 2009. Author: Arthur Edelstein";
    }
 
    @Override
    public String getHelpText() {
-      // TODO Auto-generated method stub
       return TOOL_TIP_DESCRIPTION;
    }
 
