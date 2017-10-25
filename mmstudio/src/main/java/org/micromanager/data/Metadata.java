@@ -115,11 +115,26 @@ public interface Metadata {
       MetadataBuilder zPositionUm(Double zPositionUm);
    }
 
-   /** Return a builder with the same content, preserving the image UUID. */
+   /** 
+    * Return a builder with the same content, preserving the image UUID. 
+    * The UUID is a unique identifier for the image. Micro-Manager uses this
+    * field to determine if two images are truly different, so if you copy this
+    * Metadata instance to apply to a new image, use another builder
+    * @return Builder, useful for command chaining
+    */
    Builder copyBuilderPreservingUUID();
-   /** Return a builder with the same content, assigning a new image UUID. */
+   /** Return a builder with the same content, assigning a new image UUID. 
+    * The UUID is a unique identifier for the image. Micro-Manager uses this
+    * field to determine if two images are truly different, so if you copy this
+    * Metadata instance to apply to a new image, use this builder
+    * @return Builder, useful for command chaining
+    */
    Builder copyBuilderWithNewUUID();
-   /** Return a builder with the same content but removing the image UUID. */
+   /** Return a builder with the same content but removing the image UUID. 
+    * The UUID is a unique identifier for the image. Micro-Manager uses this
+    * field to determine if two images are truly different.
+    * @return Builder, useful for command chaining
+    */
    Builder copyBuilderRemovingUUID();
 
    /**
