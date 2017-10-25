@@ -7,10 +7,8 @@
 
 package org.micromanager.pixelcalibrator;
 
-import java.lang.reflect.InvocationTargetException;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -24,7 +22,7 @@ public class PixelCalibratorDialog extends MMFrame {
    PixelCalibratorDialog(PixelCalibratorPlugin plugin) {
       plugin_ = plugin;
       initComponents();
-      loadPosition(200, 200);
+      super.loadPosition(200, 200);
    }
 
 
@@ -143,33 +141,29 @@ public class PixelCalibratorDialog extends MMFrame {
        plugin_.safeTravelRadiusUm_ = Double.parseDouble(safeTravelRadiusComboBox.getSelectedItem().toString());
     }//GEN-LAST:event_safeTravelRadiusComboBoxActionPerformed
 
-    public void updateStatus(final boolean running, final double progress) {
-      try {
-         GUIUtils.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-               if (!running) {
-                  startButton.setEnabled(true);
-                  stopButton.setEnabled(false);
-                  calibrationProgressBar.setEnabled(false);
-                  safeTravelRadiusComboBox.setEnabled(true);
-               } else {
-                  toFront();
-                  startButton.setEnabled(false);
-                  stopButton.setEnabled(true);
-                  calibrationProgressBar.setEnabled(true);
-                  safeTravelRadiusComboBox.setEnabled(false);
-               }
-               calibrationProgressBar.setValue((int) (progress*100));
+   public void updateStatus(final boolean running, final double progress) {
+
+      GUIUtils.invokeLater(new Runnable() {
+         @Override
+         public void run() {
+            if (!running) {
+               startButton.setEnabled(true);
+               stopButton.setEnabled(false);
+               calibrationProgressBar.setEnabled(false);
+               safeTravelRadiusComboBox.setEnabled(true);
+            } else {
+               toFront();
+               startButton.setEnabled(false);
+               stopButton.setEnabled(true);
+               calibrationProgressBar.setEnabled(true);
+               safeTravelRadiusComboBox.setEnabled(false);
             }
-         });
-      } catch (InterruptedException ex) {
-         ReportingUtils.logError(ex);
-      } catch (InvocationTargetException ex) {
-         ReportingUtils.logError(ex);
-      }
-       //this.repaint();
-    }
+            calibrationProgressBar.setValue((int) (progress * 100));
+         }
+      });
+
+      //this.repaint();
+   }
     
 
    // Variables declaration - do not modify//GEN-BEGIN:variables

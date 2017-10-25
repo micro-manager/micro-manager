@@ -11,7 +11,6 @@ import org.micromanager.internal.dialogs.CalibrationListDlg;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
-import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -20,8 +19,8 @@ import org.scijava.plugin.SciJavaPlugin;
 
 @Plugin(type = MenuPlugin.class)
 public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
-   public static final String menuName = "Pixel Calibrator";
-   public static final String tooltipDescription =
+   public static final String MENU_NAME = "Pixel Calibrator";
+   public static final String TOOL_TIP_DESCRIPTION =
       "Calibrate pixel size by moving XY stage and computing " +
       "image displacement";
 
@@ -51,7 +50,7 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
    @Override
    public String getHelpText() {
       // TODO Auto-generated method stub
-      return tooltipDescription;
+      return TOOL_TIP_DESCRIPTION;
    }
 
    @Override
@@ -67,7 +66,7 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
 
    @Override
    public String getName() {
-      return menuName;
+      return MENU_NAME;
    }
 
    @Override

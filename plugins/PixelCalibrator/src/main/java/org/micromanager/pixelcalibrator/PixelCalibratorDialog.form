@@ -132,7 +132,6 @@
           <StringArray count="2">
             <StringItem index="0" value="1000"/>
             <StringItem index="1" value="10000"/>
-            <StringItem index="2" value="100000"/>
           </StringArray>
         </Property>
       </Properties>

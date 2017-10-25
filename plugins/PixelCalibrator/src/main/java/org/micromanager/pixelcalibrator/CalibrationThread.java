@@ -3,7 +3,6 @@ package org.micromanager.pixelcalibrator;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.ImageWindow;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -30,7 +29,6 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class CalibrationThread extends Thread {
    private final MMStudio app_;
    private final CMMCore core_;
-   private final String xystage_;
    private Map<Point2D.Double, Point2D.Double> pointPairs_;
 
    private AffineTransform result_ = null;
@@ -56,7 +54,6 @@ public class CalibrationThread extends Thread {
       app_ = (MMStudio) app;
       plugin_ = plugin;
       core_ = app_.getCMMCore();
-      xystage_ = core_.getXYStageDevice();
    }
 
 
@@ -289,7 +286,6 @@ public class CalibrationThread extends Thread {
 
    private AffineTransform firstApprox;
    private AffineTransform secondApprox;
-   private double pixelSize;
 
    private AffineTransform runCalibration()
       throws InterruptedException, CalibrationFailedException
