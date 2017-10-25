@@ -61,13 +61,11 @@ import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.ImageStack;
 import ij.plugin.HyperStackConverter;
 import ij.process.ShortProcessor;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
@@ -174,10 +172,10 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       if (! (dw == null || siPlus != dw.getImagePlus()) ) {
 
          String[] parts = positionString_.split("-");
-         nrPositions = dw.getDatastore().getAxisLength(Coords.STAGE_POSITION);
-         nrChannels = dw.getDatastore().getAxisLength(Coords.CHANNEL);
-         nrFrames = dw.getDatastore().getAxisLength(Coords.TIME);
-         nrSlices = dw.getDatastore().getAxisLength(Coords.Z);
+         nrPositions = dw.getDataProvider().getAxisLength(Coords.STAGE_POSITION);
+         nrChannels = dw.getDataProvider().getAxisLength(Coords.CHANNEL);
+         nrFrames = dw.getDataProvider().getAxisLength(Coords.T);
+         nrSlices = dw.getDataProvider().getAxisLength(Coords.Z);
          int startPos = 1; int endPos = 1;
          if (parts.length > 0) {
             startPos = Integer.parseInt(parts[0]);
@@ -192,41 +190,45 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
             endPos = startPos;
          }
 
-         CoordsBuilder builder = dw.getDisplayedImages().get(0).getCoords().copy();
-         for (int p = startPos - 1; p <= endPos - 1; p++) {
-            
-            Image image = dw.getDatastore().getImage(builder.stagePosition(p).build());
-            int width = image.getWidth();
-            int height = image.getHeight();
-            ImageStack stack = new ImageStack(width, height);
-            for (int f = 0; f < nrFrames; f++) {
-               for (int z = 0; z < nrSlices; z++) {
-                  for (int c = 0; c < nrChannels; c++) {
-                     image = dw.getDatastore().getImage(builder.stagePosition(p).
-                             channel(c).time(f).z(z).build());
-                     ImageProcessor iProcessor;
-                     if (image != null) {
-                        iProcessor = studio_.data().ij().createProcessor(image);
-                     } else {
-                        iProcessor = new ShortProcessor(width, height);
+         try {
+            CoordsBuilder builder = dw.getDisplayedImages().get(0).getCoords().copy();
+            for (int p = startPos - 1; p <= endPos - 1; p++) {
+
+               Image image = dw.getDataProvider().getImage(builder.stagePosition(p).build());
+               int width = image.getWidth();
+               int height = image.getHeight();
+               ImageStack stack = new ImageStack(width, height);
+               for (int f = 0; f < nrFrames; f++) {
+                  for (int z = 0; z < nrSlices; z++) {
+                     for (int c = 0; c < nrChannels; c++) {
+                        image = dw.getDataProvider().getImage(builder.stagePosition(p).
+                                channel(c).time(f).z(z).build());
+                        ImageProcessor iProcessor;
+                        if (image != null) {
+                           iProcessor = studio_.data().ij().createProcessor(image);
+                        } else {
+                           iProcessor = new ShortProcessor(width, height);
+                        }
+                        stack.addSlice(iProcessor);
                      }
-                     stack.addSlice(iProcessor);
                   }
                }
+
+               ImagePlus tmpSP = (new ImagePlus("tmp", stack)).duplicate();
+               tmpSP = HyperStackConverter.toHyperStack(tmpSP, nrChannels,
+                       nrSlices, nrFrames);
+               //tmpSP.show();
+
+               siPlus.deleteRoi();
+
+               analyzeImagePlus(tmpSP, p + 1, originalRoi);
+
+               siPlus.setRoi(originalRoi);
             }
 
-            ImagePlus tmpSP = (new ImagePlus("tmp", stack)).duplicate();
-            tmpSP = HyperStackConverter.toHyperStack(tmpSP, nrChannels, 
-                    nrSlices, nrFrames);
-            //tmpSP.show();
-
-            siPlus.deleteRoi();
-
-            analyzeImagePlus(tmpSP, p + 1, originalRoi);
-
-            siPlus.setRoi(originalRoi);
+         } catch (IOException ioe) {
+            ReportingUtils.logError(ioe, "In Gaussian plugin");
          }
-         
       }
 
       if (dw == null || siPlus != dw.getImagePlus()) {

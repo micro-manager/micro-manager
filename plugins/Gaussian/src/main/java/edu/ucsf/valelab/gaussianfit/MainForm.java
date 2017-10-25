@@ -60,6 +60,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -83,8 +84,9 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.display.DataViewer;
+import org.micromanager.display.DisplayPositionChangedEvent;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.PixelsSetEvent;
 
 
 
@@ -946,55 +948,58 @@ public class MainForm extends JFrame {
          timeIntervalTextField_.setText(NumberUtils.doubleToDisplayString(
                  summaryMetadata.getWaitInterval()));
       }
+      try {
+         Image img = dataStore.getAnyImage();
+         Metadata imgMetadata = img.getMetadata();
+         double pixelSize = imgMetadata.getPixelSizeUm();
+         pixelSizeTextField_.setText(NumberUtils.doubleToDisplayString(pixelSize * 1000.0));
 
-      Image img = dataStore.getAnyImage();
-      Metadata imgMetadata = img.getMetadata();
-      double pixelSize = imgMetadata.getPixelSizeUm();
-      pixelSizeTextField_.setText(NumberUtils.doubleToDisplayString(pixelSize * 1000.0));
-
-      String camera = imgMetadata.getCamera();
-      String key = camera + "-Output_Amplifier";
-      double emGain = 1.0;
-      if (imgMetadata.getScopeData().containsKey(key)) {
-         if (!imgMetadata.getScopeData().getString(key).equals("Conventional")) {
-            key = camera + "-EMGain";
-            String gain = imgMetadata.getScopeData().getString(key);
-            try {
-               emGain = NumberUtils.displayStringToDouble(gain);
-            } catch (ParseException ex) {
-               studio_.logs().logError(ex, "Error parsing EM Gain");
+         String camera = imgMetadata.getCamera();
+         String key = camera + "-Output_Amplifier";
+         double emGain = 1.0;
+         if (imgMetadata.getScopeData().containsKey(key)) {
+            if (!imgMetadata.getScopeData().getString(key).equals("Conventional")) {
+               key = camera + "-EMGain";
+               String gain = imgMetadata.getScopeData().getString(key);
+               try {
+                  emGain = NumberUtils.displayStringToDouble(gain);
+               } catch (ParseException ex) {
+                  studio_.logs().logError(ex, "Error parsing EM Gain");
+               }
             }
          }
-      }
-      emGainTextField_.setText(NumberUtils.doubleToDisplayString(emGain));
+         emGainTextField_.setText(NumberUtils.doubleToDisplayString(emGain));
 
-      int nrFrames = dataStore.getAxisLength(Coords.TIME);
-      Image img0 = dataStore.getImage(img.getCoords().copy().channel(0).time(0).build());
-      Image imgLast = dataStore.getImage(img.getCoords().copy().channel(0).time(nrFrames - 1).build());
-      double startTimeMs = img0.getMetadata().getElapsedTimeMs();
-      double endTimeMs = imgLast.getMetadata().getElapsedTimeMs();
-      double msPerFrame = (endTimeMs - startTimeMs) / nrFrames;
-      timeIntervalTextField_.setText(NumberUtils.doubleToDisplayString(msPerFrame));
+         int nrFrames = dataStore.getAxisLength(Coords.T);
+         Image img0 = dataStore.getImage(img.getCoords().copyBuilder().channel(0).t(0).build());
+         Image imgLast = dataStore.getImage(img.getCoords().copyBuilder().channel(0).t(nrFrames - 1).build());
+         double startTimeMs = img0.getMetadata().getElapsedTimeMs();
+         double endTimeMs = imgLast.getMetadata().getElapsedTimeMs();
+         double msPerFrame = (endTimeMs - startTimeMs) / nrFrames;
+         timeIntervalTextField_.setText(NumberUtils.doubleToDisplayString(msPerFrame));
+      } catch (IOException ioe) {
+         ReportingUtils.logError(ioe, "In Gaussian plugin show noise tolerance");
+      }
 
    }
 
    @Subscribe
-   public void OnImageChanged(PixelsSetEvent pe) {
+   public void OnImageChanged(DisplayPositionChangedEvent pe) {
       showNoiseTolerance();
    }
 
    private void showOverlay_ActionPerformed(java.awt.event.ActionEvent evt) {
-      DisplayWindow currentWindow = studio_.displays().getCurrentWindow();
+      DataViewer viewer = studio_.displays().getActiveDataViewer();
       if (showOverlay_.isSelected()) {
          if (showNoiseTolerance()) {
             showOverlay_.setText("hide");
-            if (currentWindow != null) {
-               currentWindow.registerForEvents(this);
+            if (viewer != null) {
+               viewer.registerForEvents(this);
             }
          }
       } else {
-         if (currentWindow != null) {
-            currentWindow.unregisterForEvents(this);
+         if (viewer != null) {
+            viewer.unregisterForEvents(this);
          }
          ImagePlus siPlus;
          try {
@@ -1096,11 +1101,14 @@ public class MainForm extends JFrame {
       }
       DisplayWindow dw = studio_.displays().getCurrentWindow();
 
-      int pos = 1;
-      if (!(dw == null || ip != dw.getImagePlus())) {
-         pos = dw.getDisplayedImages().get(0).getCoords().getStagePosition() + 1;
+      try {
+         int pos = 1;
+         if (!(dw == null || ip != dw.getImagePlus())) {
+            pos = dw.getDisplayedImages().get(0).getCoords().getStagePosition() + 1;
+         }
+         posTextField_.setText("" + pos);
+      } catch (IOException ioe) {
       }
-      posTextField_.setText("" + pos);
    }
 
    public void updateValues(GaussianInfo tT) {
