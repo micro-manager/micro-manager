@@ -75,30 +75,40 @@ public class SPIMFrame extends JFrame {
     */
    private void ensureSafeWindowPosition(int x, int y) {
       UserProfile profile = gui_.profile();
-      int prefX = profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, 0);
-      int prefY = profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, 0);
+      int prefX = profile.getSettings(this.getClass()).getInteger(
+              prefPrefix_ + WINDOW_X, 0);
+      int prefY = profile.getSettings(this.getClass()).getInteger(
+              prefPrefix_ + WINDOW_Y, 0);
       if (getGraphicsConfigurationContaining(prefX, prefY) == null) {
          // only reach this code if the pref coordinates are off screen
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_X, x);
-         profile.setInt(this.getClass(), prefPrefix_ + WINDOW_Y, y);
+         profile.getSettings(this.getClass()).putInteger(
+                 prefPrefix_ + WINDOW_X, x);
+         profile.getSettings(this.getClass()).putInteger(
+                 prefPrefix_ + WINDOW_Y, y);
       }
    }
 
    public void loadPosition(int x, int y, int width, int height) {
       ensureSafeWindowPosition(x, y);
       UserProfile profile = gui_.profile();
-      setBounds(profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, x),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_WIDTH, width),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_HEIGHT, height));
+      setBounds(profile.getSettings(this.getClass()).getInteger(
+                        prefPrefix_ + WINDOW_X, x),
+                profile.getSettings(this.getClass()).getInteger(
+                        prefPrefix_ + WINDOW_Y, y),
+                profile.getSettings(this.getClass()).getInteger(
+                        prefPrefix_ + WINDOW_WIDTH, width),
+                profile.getSettings(this.getClass()).getInteger(
+                        prefPrefix_ + WINDOW_HEIGHT, height));
       offsetIfNecessary();
    }
 
    public void loadPosition(int x, int y) {
       ensureSafeWindowPosition(x, y);
       UserProfile profile = gui_.profile();
-      setBounds(profile.getInt(this.getClass(), prefPrefix_ + WINDOW_X, x),
-                profile.getInt(this.getClass(), prefPrefix_ + WINDOW_Y, y),
+      setBounds(profile.getSettings(this.getClass()).getInteger(
+                        prefPrefix_ + WINDOW_X, x),
+                profile.getSettings(this.getClass()).getInteger(
+                        prefPrefix_ + WINDOW_Y, y),
                 getWidth(),
                 getHeight());
       offsetIfNecessary();
@@ -173,10 +183,14 @@ public class SPIMFrame extends JFrame {
       
       // save window position
       UserProfile profile = gui_.profile();
-      profile.setInt(this.getClass(), prefPrefix_ + WINDOW_X, r.x);
-      profile.setInt(this.getClass(), prefPrefix_ + WINDOW_Y, r.y);
-      profile.setInt(this.getClass(), prefPrefix_ + WINDOW_WIDTH, r.width);
-      profile.setInt(this.getClass(), prefPrefix_ + WINDOW_HEIGHT, r.height);
+      profile.getSettings(this.getClass()).putInteger(
+              prefPrefix_ + WINDOW_X, r.x);
+      profile.getSettings(this.getClass()).putInteger(
+              prefPrefix_ + WINDOW_Y, r.y);
+      profile.getSettings(this.getClass()).putInteger(
+              prefPrefix_ + WINDOW_WIDTH, r.width);
+      profile.getSettings(this.getClass()).putInteger(
+              prefPrefix_ + WINDOW_HEIGHT, r.height);
    }
    
          

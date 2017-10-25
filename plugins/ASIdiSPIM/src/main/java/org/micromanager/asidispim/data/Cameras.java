@@ -342,6 +342,7 @@ public class Cameras {
                default:
                   break;
             }
+            break;
          case DEMOCAM:
          // do nothing
          break;

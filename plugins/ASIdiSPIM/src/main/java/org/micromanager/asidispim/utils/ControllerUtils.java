@@ -630,20 +630,20 @@ public class ControllerUtils {
  		         final float sheetSlope = prefs_.getFloat( 
  		               MyStrings.PanelNames.SETUP.toString() + side.toString(),  
  		               Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE, 2000); 
- 		         Rectangle roi = null; 
+ 		         Rectangle roi; 
  		         try { 
  		            roi = core_.getROI(devices_.getMMDevice(cameraDevice)); 
  		         } catch (Exception e) { 
  		            ReportingUtils.logDebugMessage("Could not get camera ROI for light sheet mode"); 
  		            return 0f; 
  		         } 
- 		         sheetWidth = (float) (roi.height * sheetSlope / 1e6f);  // in microdegrees per pixel, convert to degrees 
+ 		         sheetWidth = roi.height * sheetSlope / 1e6f;  // in microdegrees per pixel, convert to degrees 
  		      } else { 
  		         final boolean autoSheet = prefs_.getBoolean( 
  		               MyStrings.PanelNames.SETUP.toString() + side.toString(),  
  		               Properties.Keys.PREFS_AUTO_SHEET_WIDTH, false); 
  		         if (autoSheet) { 
- 		            Rectangle roi = null; 
+ 		            Rectangle roi; 
  		            try { 
  		               roi = core_.getROI(devices_.getMMDevice(cameraDevice)); 
  		            } catch (Exception e) { 
@@ -652,7 +652,7 @@ public class ControllerUtils {
  		            } 
  		            final float sheetSlope = prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(),  
  		            Properties.Keys.PLUGIN_SLOPE_SHEET_WIDTH.toString(), 2); 
- 		            sheetWidth = roi.height * (float) sheetSlope / 1000f;  // in millidegrees per pixel, convert to degrees 
+ 		            sheetWidth = roi.height * sheetSlope / 1000f;  // in millidegrees per pixel, convert to degrees 
  		            // TODO add extra width to compensate for filter depending on sweep rate and filter freq 
  		            // TODO calculation should account for sample exposure to make sure 0.25ms edges get appropriately compensated for 
  		            sheetWidth *= 1.1f;  // 10% extra width just to be sure 
@@ -751,7 +751,7 @@ public class ControllerUtils {
       
       // speed things up by turning off updates, will restore value later
       String editCellUpdates = props_.getPropValueString(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES);
-      if (!editCellUpdates.equals(Properties.Values.NO)) {
+      if (!editCellUpdates.equals(Properties.Values.NO.toString())) {
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, Properties.Values.NO);
       }
       
@@ -804,7 +804,7 @@ public class ControllerUtils {
             Properties.Values.PLOGIC_PRESET_BNC5_8_ON_13_16);
       
       // restore update setting
-      if (!editCellUpdates.equals(Properties.Values.NO)) {
+      if (!editCellUpdates.equals(Properties.Values.NO.toString())) {
          props_.setPropValue(Devices.Keys.PLOGIC, Properties.Keys.PLOGIC_EDIT_CELL_UPDATES, editCellUpdates);
       }
       

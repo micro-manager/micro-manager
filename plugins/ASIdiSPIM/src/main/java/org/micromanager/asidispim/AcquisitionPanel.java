@@ -82,6 +82,7 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
@@ -91,7 +92,7 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.StagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMap.PropertyMapBuilder;
+import org.micromanager.PropertyMaps;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
@@ -101,9 +102,7 @@ import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
-import org.micromanager.data.Metadata.MetadataBuilder;
 import org.micromanager.data.SummaryMetadata;
-import org.micromanager.display.DisplaySettings.DisplaySettingsBuilder;
 import org.micromanager.display.DisplayWindow;
 
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
@@ -120,6 +119,7 @@ import org.micromanager.asidispim.events.SPIMAcquisitionStartedEvent;
 import org.micromanager.asidispim.utils.ControllerUtils;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.SPIMFrame;
+import org.micromanager.display.DisplaySettings;
 
 
 /**
@@ -960,7 +960,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * pseudo-overlap, light sheet)
     */
    private CameraModes.Keys getSPIMCameraMode() {
-      CameraModes.Keys val = null;
+      CameraModes.Keys val;
       try {
          val = ASIdiSPIM.getFrame().getSPIMCameraMode();
       } catch (Exception ex) {
@@ -1991,7 +1991,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
          // for separate timepoints, make sure the directory is empty to make sure naming pattern is "clean" 
          // this is an arbitrary choice to avoid confusion later on when looking at file names 
-         if (dir != null && (dir.list().length > 0)) {
+         if (dir.list().length > 0) {
             MyDialogUtils.showError("For separate timepoints the saving directory must be empty.");
             return false;
          }
@@ -2285,7 +2285,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             final String SEPARATOR = "_";
 
             // set up channels (side A/B is treated as channel too)
-            DisplaySettingsBuilder dsb = display.getDisplaySettings().copy();
+            DisplaySettings.Builder dsb = display.getDisplaySettings().copyBuilder();
 
             int channelNr = 1;
             if (acqSettings.useChannels) {
@@ -2330,11 +2330,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (acqNum > 0) {
                name += "_" + acqNum;
             }
-            SummaryMetadata.SummaryMetadataBuilder smb = gui_.data().getSummaryMetadataBuilder();
+            SummaryMetadata.Builder smb = gui_.data().getSummaryMetadataBuilder();
             smb = smb.channelNames(channelNames_).
                     channelGroup(multiChannelPanel_.getChannelGroup()).
                     zStepUm( (double) acqSettings.stepSizeUm).
-                    microManagerVersion(gui_.compat().getVersion()).
                     prefix(name).
                     startDate((new Date()).toString());
             if (acqSettings.useMultiPositions) {
@@ -2343,7 +2342,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             smb = smb.intendedDimensions(gui_.data().getCoordsBuilder().
                     channel(channelNr).
                     z(acqSettings.numSlices).
-                    time(nrFrames).
+                    t(nrFrames).
                     stagePosition(nrPositions).                    
                     build());
 
@@ -2351,11 +2350,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             viewString = viewString.substring(0, viewString.length() - 1);
 
             PropertyMap pm = store.getSummaryMetadata().getUserData();
-            PropertyMapBuilder pmb = gui_.data().getPropertyMapBuilder();
+            PropertyMap.Builder pmb = PropertyMaps.builder();
             if (pm != null) {
-               pmb = pm.copy();
+               pmb = pm.copyBuilder();
             }
-            pmb.putInt("NumberOfSides", getNumSides());
+            pmb.putInteger("NumberOfSides", getNumSides());
 
             String firstSide = "B";
             if (firstSideA) {
@@ -2753,7 +2752,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                
                gui_.events().post(new SPIMAcquisitionEndedEvent(store, this));
 
-            } catch (Exception ex) {
+            } catch (IOException ex) {
                // exception while stopping sequence acquisition, not sure what to do...
                MyDialogUtils.showError(ex, "Problem while finishing acquisition");
             }
@@ -2822,7 +2821,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             throw new ASIdiSPIMException("Not sure what is going on here");
             //IJ.saveAs(gui_.getAcquisition(acqName).getAcquisitionWindow().getImagePlus(), "raw", path);
             // TODO consider generating a short metadata file to assist in interpretation
-         } catch (Exception ex) {
+         } catch (ASIdiSPIMException ex) {
             MyDialogUtils.showError("Could not save raw data from test acquisition to path " + path);
          }
       }
@@ -2964,9 +2963,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       Coords coord = cb.time(frame).channel(channel).z(slice).stagePosition(position).build();
       Image img = gui_.data().convertTaggedImage(taggedImg);
       Metadata md = img.getMetadata();
-      MetadataBuilder mdb = md.copy();
+      Metadata.Builder mdb = md.copyBuilderWithNewUUID();
       PropertyMap ud = md.getUserData();
-      ud = ud.copy().putDouble("Z-Step-um", 
+      ud = ud.copyBuilder().putDouble("Z-Step-um", 
               (double) PanelUtils.getSpinnerFloatValue(stepSize_)).build();
       String posName = "Pos-0";
       PositionList pl = gui_.positions().getPositionList();

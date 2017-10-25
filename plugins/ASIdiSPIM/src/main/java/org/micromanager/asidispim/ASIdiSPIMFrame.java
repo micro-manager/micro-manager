@@ -301,7 +301,7 @@ public class ASIdiSPIMFrame extends SPIMFrame  {
  	 * (internal, edge, overlap, pseudo-overlap, light sheet)  
  	*/ 
  	public CameraModes.Keys getSPIMCameraMode() { 
- 	   CameraModes.Keys val = null; 
+ 	   CameraModes.Keys val; 
  	   try { 
  	      val = ASIdiSPIM.getFrame().getCameraPanel().getSPIMCameraMode(); 
  	   } catch (Exception ex) { 

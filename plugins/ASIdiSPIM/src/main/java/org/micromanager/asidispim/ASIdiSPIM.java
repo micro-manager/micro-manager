@@ -30,6 +30,7 @@ import java.rmi.server.UnicastRemoteObject;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
+import org.micromanager.asidispim.api.ASIdiSPIMException;
 import org.micromanager.asidispim.api.ASIdiSPIMImplementation;
 import org.micromanager.asidispim.api.ASIdiSPIMInterface;
 import org.micromanager.events.ShutdownCommencingEvent;
@@ -83,7 +84,7 @@ public class ASIdiSPIM implements MenuPlugin, SciJavaPlugin {
       try {
          myFrame_ = new ASIdiSPIMFrame(gui_);
          gui_.events().registerForEvents(myFrame_);
-      } catch (Exception e) {
+      } catch (ASIdiSPIMException e) {
          gui_.logs().showError(e);
       }
       myFrame_.setVisible(true);
