@@ -71,6 +71,7 @@ public class SaverProcessor extends Processor {
       }
    }
 
+   @Override
    public void processImage(Image image, ProcessorContext context) {
       try {
          store_.putImage(image);
@@ -81,12 +82,19 @@ public class SaverProcessor extends Processor {
       catch (DatastoreRewriteException e) {
          studio_.logs().logError(e, "Unable to save data: image already exists at " + image.getCoords());
       }
+      catch (IOException e) {
+         studio_.logs().logError(e, "Unable to save data: IOException");
+      }
       context.outputImage(image);
    }
 
    @Override
    public void cleanup(ProcessorContext context) {
-      store_.freeze();
+      try {
+         store_.freeze();
+      } catch (IOException ioe) {
+         studio_.logs().logError(ioe, "SaverProcessor ran into trouble");
+      }
       if (!format_.equals(SaverPlugin.RAM)) {
          store_.setSavePath(savePath_);
       }
@@ -96,7 +104,7 @@ public class SaverProcessor extends Processor {
     * Given a path including a final directory name, ensure that the path is
     * unique, appending a numerical suffix if necessary.
     */
-   public String findUniqueSavePath(String savePath) {
+   private String findUniqueSavePath(String savePath) {
       File dir = new File(savePath);
       if (!(dir.exists())) {
          // Path is already unique

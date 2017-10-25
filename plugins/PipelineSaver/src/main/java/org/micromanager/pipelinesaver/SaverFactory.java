@@ -21,15 +21,14 @@
 package org.micromanager.pipelinesaver;
 
 import org.micromanager.data.Processor;
-import org.micromanager.data.ProcessorPlugin;
 import org.micromanager.data.ProcessorFactory;
 
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 
 public class SaverFactory implements ProcessorFactory {
-   private PropertyMap settings_;
-   private Studio studio_;
+   private final PropertyMap settings_;
+   private final Studio studio_;
 
    public SaverFactory(PropertyMap settings, Studio studio) {
       settings_ = settings;
