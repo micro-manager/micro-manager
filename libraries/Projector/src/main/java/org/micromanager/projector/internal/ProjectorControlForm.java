@@ -88,13 +88,12 @@ import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.TaggedImage;
 
-import org.micromanager.data.Datastore;
 import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.Studio;
 import org.micromanager.PropertyMap;
+import org.micromanager.PropertyMaps;
 
 // TODO should not depend on internal code.
-import org.micromanager.display.internal.MMVirtualStack;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MathFunctions;
@@ -122,6 +121,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private Boolean disposing_ = false;
    
    public final static String DELAY = "Delay";
+   
+   private final static String MAP_NR_ENTRIES = "NrEntries";
+   private final static String MAP_POLYGON_MAP = "polygonMap-";
+   private final static String MAP_AFFINE_TRANSFORM = "affineTransform-";
 
    /**
     * Simple utility methods for points
@@ -219,7 +222,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingChannel(String channelName) {
       targetingChannel_ = channelName;
        if (channelName != null) {
-          app_.profile().setString(this.getClass(),"channel", channelName);
+          app_.profile().getSettings(this.getClass()).putString(
+                  "channel", channelName);
        }
    }
    
@@ -230,7 +234,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingShutter(String shutterName) {
       targetingShutter_ = shutterName;
       if (shutterName != null) {
-         app_.profile().setString(this.getClass(), "shutter", shutterName);
+         app_.profile().getSettings(this.getClass()).putString(
+                 "shutter", shutterName);
       }
    }
    
@@ -384,26 +389,37 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * maps each polygon cell to an AffineTransform.
     */
    private Map<Polygon, AffineTransform> loadMapping() {
-      try {
-         mapping_ = app_.profile().getObject(this.getClass(),
-               getCalibrationKey(),
-               (HashMap<Polygon, AffineTransform>) null);
-         return mapping_;
+      PropertyMap pMap = app_.profile().getSettings(this.getClass()).
+              getPropertyMap(getCalibrationKey(), null);
+      if (pMap != null) {
+         return mapFromPropertyMap(pMap);
       }
-      catch (IOException e) {
-         app_.logs().logError(e, "Unable to load mapping");
-      }
-      catch (PropertyMap.TypeMismatchException e) {
-         // Old mapping that needs to be deleted.
-         try {
-            app_.profile().setObject(this.getClass(), getCalibrationKey(),
-                  null);
-         }
-         catch (IOException e2) {
-            app_.logs().logError(e2, "Unable to delete invalid mapping");
-         }
-      }
+      
       return null;
+   }
+   
+   /**
+    * Restores mapping from a PropertyMap created by the function mapToPropertyMap
+    * @param pMap
+    * @return 
+    */
+   private Map<Polygon, AffineTransform> mapFromPropertyMap (PropertyMap pMap) {
+      int nrEntries = pMap.getInteger(MAP_NR_ENTRIES, 0);
+      Map<Polygon, AffineTransform> mapping = new HashMap<Polygon, AffineTransform>(nrEntries);
+      for (int i = 0; i < nrEntries; i++) {
+         if (pMap.containsPropertyMap(MAP_POLYGON_MAP + i)) {
+            PropertyMap polygonMap = pMap.getPropertyMap(MAP_POLYGON_MAP + i, null);
+            Polygon p = new Polygon();
+            int nrPolygonCorners = polygonMap.getInteger(MAP_NR_ENTRIES, 0);
+            for (int j=0; j < nrPolygonCorners; j++) {
+               p.addPoint(polygonMap.getInteger("x-" + j, 0), 
+                       polygonMap.getInteger("y-" + j, 0));
+            }
+            mapping.put(p, pMap.getAffineTransform(MAP_AFFINE_TRANSFORM + i, null));
+         }
+      }
+         
+      return mapping;
    }
 
    /**
@@ -412,13 +428,42 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    // TODO: debug and test this code!
    private void saveMapping(HashMap<Polygon, AffineTransform> mapping) {
-      try {
-         app_.profile().setObject(this.getClass(), getCalibrationKey(),
-               mapping);
+      app_.profile().getSettings(this.getClass()).putPropertyMap(getCalibrationKey(),
+               mapToPropertyMap(mapping));
+   }
+   
+   /**
+    * Builds a Property Map representing the input 
+    * @param mapping Map<Polygon, AffineTransform>
+    * @return Propertymap, structured as:
+    *   - Integer - nrEntries
+    *   - entries with keys:
+    *       polygonMap-i  - Contains a PropertyMap encoding Polygon
+    *       affineTransform-i - Contained affineTransform belonging to this Polygon
+    * 
+    *    Polygon PropertyMaps are structured as:
+    *       - Integer - nrEntries
+    *       - x-i - x position of point #i
+    *       - y-i - y position of point #i
+    */
+   private PropertyMap mapToPropertyMap(Map<Polygon, AffineTransform> mapping) {
+      PropertyMap.Builder pMapBuilder = PropertyMaps.builder();
+      pMapBuilder.putInteger(MAP_NR_ENTRIES, mapping.size());
+      
+      int counter = 0;
+      for (Polygon key : mapping.keySet()) {
+         PropertyMap.Builder polygonMapBuilder = PropertyMaps.builder();
+         polygonMapBuilder.putInteger(MAP_NR_ENTRIES, key.npoints);
+         for (int i = 0; i < key.npoints; i++) {
+            polygonMapBuilder.putInteger("x-" + i, key.xpoints[i]);
+            polygonMapBuilder.putInteger("y-" + i, key.ypoints[i]);
+         }
+         pMapBuilder.putPropertyMap(MAP_POLYGON_MAP + counter, polygonMapBuilder.build());
+         pMapBuilder.putAffineTransform(MAP_AFFINE_TRANSFORM + counter, mapping.get(key));
+         counter++;
       }
-      catch (IOException e) {
-         app_.logs().logError(e, "Unable to save mapping");
-      }
+      
+      return pMapBuilder.build();
    }
    
    // ## Methods for generating a calibration mapping.
@@ -744,15 +789,21 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       
    // Returns true if a particular image is mirrored.
    private static boolean isImageMirrored(ImagePlus imgp) {
+      // TODO: it is - rightfully - no longer possible to traverse back
+      // from an ImagePlus to a MM datastructure.  Hence, this library will 
+      // need to be structure very differently.  Until then, ignore mirroring
+      /*
       if (!(imgp.getStack() instanceof MMVirtualStack)) {
          return false;
       }
-      Datastore store = ((MMVirtualStack) imgp.getStack()).getDatastore();
+      Datastore store = ((MMVirtualStack) imgp.getStack())..getDatastore();
       if (store.getSummaryMetadata().getUserData() == null) {
          return false;
       }
       String mirrorString = store.getSummaryMetadata().getUserData().getString("ImageFlipper-Mirror");
       return (mirrorString != null && mirrorString.contentEquals("On"));
+      */
+      return false;
    }
 
    // Flips a point if it has been mirrored.
