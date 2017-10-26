@@ -321,7 +321,7 @@ public class CVViewer implements DataViewer {
       cvFrame_.addWindowFocusListener(new WindowFocusListener() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
-            studio_.getDisplayManager().raisedToTop(ourViewer);
+            //studio_.getDisplayManager()..raisedToTop(ourViewer);
          }
 
          @Override
@@ -346,8 +346,8 @@ public class CVViewer implements DataViewer {
 
    private void cleanup() {
       UserProfile profile = studio_.profile();
-      profile.setInt(ourClass_, XLOC, cvFrame_.getX());
-      profile.setInt(ourClass_, YLOC, cvFrame_.getY());
+      profile.getSettings(ourClass_).putInteger(XLOC, cvFrame_.getX());
+      profile.getSettings(ourClass_).putInteger(YLOC, cvFrame_.getY());
       studio_.getDisplayManager().removeViewer(this);
       displayBus_.unregister(this);
       store_.unregisterForEvents(this);
@@ -393,11 +393,11 @@ public class CVViewer implements DataViewer {
                  ds.getSafeIsVisible(ch, true)) ) {
             clearVolumeRenderer_.setLayerVisible(ch, ds.getSafeIsVisible(ch, true) );
          }
-         Color nc = ds.getChannelColors()[ch];
+         Color nc = ds.getChannelColor(ch);
          if (ds.getChannelColorMode() == DisplaySettings.ColorMode.GRAYSCALE) {
             nc = Color.WHITE;
          }
-         if (displaySettings_.getChannelColors()[ch] != nc || 
+         if (displaySettings_.getChannelColor(ch) != nc || 
                  displaySettings_.getChannelColorMode() != ds.getChannelColorMode() ) {
             clearVolumeRenderer_.setTransferFunction(ch, getGradientForColor(nc));
          }
@@ -424,11 +424,11 @@ public class CVViewer implements DataViewer {
       }
       
       // Autostretch if set
-      if (! Objects.equals( ds.getShouldAutostretch(), 
-              displaySettings_.getShouldAutostretch()) || 
-          ! Objects.equals( ds.getExtremaPercentage(), 
-                  displaySettings_.getExtremaPercentage()) ) {
-         if (ds.getShouldAutostretch()) {
+      if (! Objects.equals( ds.isAutostretchEnabled(), 
+              displaySettings_.isAutostretchEnabled()) || 
+          ! Objects.equals( ds.getAutoscaleIgnoredPercentile(), 
+                  displaySettings_.getAutoscaleIgnoredPercentile()) ) {
+         if (ds.isAutostretchEnabled()) {
             autostretch();
             drawVolume(currentlyShownTimePoint_);
             displayBus_.post(new CanvasDrawCompleteEvent());
@@ -439,7 +439,8 @@ public class CVViewer implements DataViewer {
       displaySettings_ = ds;
       
       // Needed to update the Inspector window
-      displayBus_.post(new NewDisplaySettingsEvent(displaySettings_, this));
+      // TODO
+      //displayBus_.post(new NewDisplaySettingsEvent(displaySettings_, this));
    }
 
    @Override
@@ -459,7 +460,7 @@ public class CVViewer implements DataViewer {
       displayBus_.unregister(o);
    }
 
-   @Override
+   
    public void postEvent(Object o) {
       // System.out.println("Posting event on the EventBus");
       displayBus_.post(o);
@@ -489,7 +490,7 @@ public class CVViewer implements DataViewer {
     * Assemble all images that are showing in our volume. May need to be updated
     * for multiple time points in the future
     */
-   public List<Image> getDisplayedImages() {
+   public List<Image> getDisplayedImages() throws IOException {
       // System.out.println("getDisplayed Images called");
       List<Image> imageList = new ArrayList<>();
       final int nrZ = store_.getAxisLength(Coords.Z);
@@ -519,18 +520,8 @@ public class CVViewer implements DataViewer {
     */
    public void updateHistograms() {
       // Needed to initialize the histograms
-      studio_.displays().updateHistogramDisplays(getDisplayedImages(), this);
-   }
-
-   @Override
-   public void requestRedraw() {
-      System.out.println("Redraw request received");
-   }
-
-   @Override
-   public boolean getIsClosed() {
-      System.out.println("getIsClosed called, answered: " + !clearVolumeRenderer_.isShowing());
-      return !clearVolumeRenderer_.isShowing();
+      // TODO
+      // studio_.displays().updateHistogramDisplays(getDisplayedImages(), this);
    }
 
    @Override
@@ -559,7 +550,7 @@ public class CVViewer implements DataViewer {
       return lTransfertFunction;
    }
 
-   public final void drawVolume(final int timePoint) {
+   public final void drawVolume(final int timePoint) throws IOException {
       //if (timePoint == currentlyShownTimePoint_)
       //   return; // nothing to do, already showing requested timepoint
       // create fragmented memory for each stack that needs sending to CV:
@@ -571,7 +562,7 @@ public class CVViewer implements DataViewer {
 
       // long startTime = System.currentTimeMillis();
       clearVolumeRenderer_.setVolumeDataUpdateAllowed(false);
-      if (displaySettings_.getShouldAutostretch()) {
+      if (displaySettings_.isAutostretchEnabled()) {
          autostretch();
       }
       for (int ch = 0; ch < nrCh; ch++) {
@@ -620,12 +611,13 @@ public class CVViewer implements DataViewer {
 
          // Set various display options:
          // HACK: on occassion we get null colors, correct that problem here
-         Color chColor = displaySettings_.getChannelColors()[ch];
+         Color chColor = displaySettings_.getChannelColor(ch);
          if (chColor == null) {
             chColor = colors[ch];
-            Color[] chColors = displaySettings_.getChannelColors();
-            chColors[ch] = chColor;
-            displaySettings_ = displaySettings_.copy().channelColors(chColors).build();
+            List<Color> chColors = displaySettings_.getAllChannelColors();
+            chColors.add(nrCh, chColor);
+            // TODO
+            // displaySettings_ = displaySettings_.copyBuilder().channelColors(chColors).build();
          }
          if (displaySettings_.getChannelColorMode() == ColorMode.GRAYSCALE) {
             chColor = Color.WHITE;
@@ -808,9 +800,9 @@ public class CVViewer implements DataViewer {
       return null;
    }
    
-   private void autostretch() {
+   private void autostretch() throws IOException {
       Coords baseCoords = getDisplayedImages().get(0).getCoords();
-      Double extremaPercentage = displaySettings_.getExtremaPercentage();
+      Double extremaPercentage = displaySettings_.getAutoscaleIgnoredPercentile();
       if (extremaPercentage == null) {
          extremaPercentage = 0.0;
       }
@@ -826,21 +818,27 @@ public class CVViewer implements DataViewer {
             final ArrayList<HistogramData> datas = new ArrayList(image.getNumComponents());
             for (int j = 0; j < image.getNumComponents(); ++j) {
                gammas[j] = displaySettings_.getSafeContrastGamma(ch, j, 1.0);
+               // TODO:
+               /*
                HistogramData data = studio_.displays().calculateHistogram(
                      getDisplayedImages().get(ch),
                      j,
                      store_.getAnyImage().getMetadata().getBitDepth(),
                      store_.getAnyImage().getMetadata().getBitDepth(),
                      extremaPercentage,
-                     false  /* make sure that we do not use stdev */ );
+                     false  ); // make sure that we do not use stdev
                mins[j] = data.getMinIgnoringOutliers();
                maxes[j] = data.getMaxIgnoringOutliers();
                datas.add(j, data);
+               
+               */
             }
             displaySettings_ = builder.safeUpdateContrastSettings(
                     studio_.displays().getContrastSettings(
                             mins, maxes, gammas, true), ch).build();
             final int tmpCh = ch;
+            // TODO
+            /*
             if (SwingUtilities.isEventDispatchThread()) {
                postEvent(new NewHistogramsEvent(tmpCh, datas));
             } else {
@@ -848,11 +846,12 @@ public class CVViewer implements DataViewer {
                   postEvent(new NewHistogramsEvent(tmpCh, datas));
                });
             }
+            */
          }
       }
-       postEvent(new NewDisplaySettingsEvent(displaySettings_, this));
+       //postEvent(new NewDisplaySettingsEvent(displaySettings_, this));
    }
-   
+   /*
    @Subscribe
    public void onNewImage(NewImageEvent event) {
       Coords coords = event.getCoords();
@@ -879,6 +878,7 @@ public class CVViewer implements DataViewer {
          }
       }
    }
+*/
    
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent sce) {
