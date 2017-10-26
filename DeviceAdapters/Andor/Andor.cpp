@@ -297,6 +297,7 @@ SRRFControl_(nullptr)
    SetErrorText(ERR_INVALID_SHUTTER_MODE, g_ShutterModeInvalid);
    SetErrorText(DRV_ERROR_NOCAMERA, "DRV_ERROR_NOCAMERA: No Camera Detected");
    SetErrorText(DRV_NOT_AVAILABLE,"DRV_NOT_AVAILABLE: Feature not available");
+   SetErrorText(DRV_ERROR_PAGELOCK, "DRV_ERROR_PAGELOCK: Please ensure you have enough memory available to store the acquisition.");
 
    SetErrorText(ERR_INVALID_SNAPIMAGEDELAY, g_SnapImageDelayInvalid);
    SRRFImage_ = new ImgBuffer();
@@ -3952,8 +3953,18 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          {
             if (series > seriesPrev)
             {
+               long imageCountFirst, imageCountLast;
+               int returnc;
+               returnc = GetNumberNewImages(&imageCountFirst, &imageCountLast);
+               if (ret != DRV_SUCCESS)
+               {
+                  os.str("");
+                  os << "GetNumberNewImages PushImage error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
+                  camera_->Log(os.str().c_str());
+                  return (int)ret;
+               }
                // new frame arrived
-               int retCode = camera_->PushImage(width, height, bytesPerPixel);
+               int retCode = camera_->PushImage(width, height, bytesPerPixel, imageCountFirst, imageCountLast);
                if (retCode != DEVICE_OK)
                {
                   os << "PushImage failed with error code " << retCode;
@@ -4291,11 +4302,11 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
    * In case of error or if the sequence is finished StopSequenceAcquisition()
    * is called, which will raise the stop_ flag and cause the thread to exit.
    */
-   int AndorCamera::PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel)
+   int AndorCamera::PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32 imageCountFirst, at_32 imageCountLast)
    {
       if (SRRFControl_->GetSRRFEnabled())
       {
-         return PushImageWithSRRF();
+         return PushImageWithSRRF(imageCountFirst, imageCountLast);
       }
 
       at_u32 imagesPerDMA;
@@ -4305,11 +4316,6 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          DriverGuard dg(this);
          unsigned ret;
          ret = GetImagesPerDMA(&imagesPerDMA);
-         at_32 imageCountFirst, imageCountLast;
-         
-         ret = GetNumberNewImages(&imageCountFirst, &imageCountLast);
-         if (ret != DRV_SUCCESS)
-            return (int)ret;
 
          long imagesAvailable = imageCountLast - imageCountFirst;
 
@@ -4397,7 +4403,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
    }
 
 
-   int AndorCamera::PushImageWithSRRF()
+   int AndorCamera::PushImageWithSRRF(at_32 imageCountFirst, at_32 imageCountLast)
    {
 
       unsigned int width;
@@ -4406,7 +4412,6 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
       at_32 validFirst = 0, validLast = 0;
 
       unsigned ret;
-      at_32 imageCountFirst, imageCountLast;
 
       width = img_.Width();
       height = img_.Height();
@@ -4415,9 +4420,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
       {
          DriverGuard dg(this);
          //ostringstream oss;
-         ret = GetNumberNewImages(&imageCountFirst, &imageCountLast);
-         if (ret != DRV_SUCCESS)
-            return (int)ret;
+
          //oss << "[PushSRRFImage] called GetNumberNewImages | first:" << imageCountFirst << " last:" << imageCountLast << "  Returned:" << ret << endl;
          //Log(oss.str().c_str());
          //oss.str("");
