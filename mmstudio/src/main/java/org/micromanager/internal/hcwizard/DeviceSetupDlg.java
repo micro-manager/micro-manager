@@ -269,6 +269,7 @@ public final class DeviceSetupDlg extends MMDialog {
 
       // setup com ports
       ArrayList<Device> ports = new ArrayList<Device>();
+      model_.rescanSerialPorts(core_);
       Device avPorts[] = model_.getAvailableSerialPorts();
       for(int i=0; i<avPorts.length; i++) {
 //         if (!model_.isPortInUse(avPorts[i]))
@@ -361,8 +362,8 @@ public final class DeviceSetupDlg extends MMDialog {
       Iterator<String> lp = loadedPorts.iterator();
       boolean loaded = false;
       while (lp.hasNext()) {
-         lp.next().compareTo(portName);
-         loaded = true;
+         if (lp.next().compareTo(portName) == 0)
+            loaded = true;
       }
       if (!loaded) {
          try {
