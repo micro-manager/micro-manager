@@ -183,11 +183,11 @@ public:
 
    // custom interface for the thread
    void CalculateAndSetupCameraImageBuffer(at_u32 & width, at_u32 & height, at_u32 & bytesPerPixel);
-   int PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel);
+   int PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32 imageCountFirst, at_32 imageCountLast);
    unsigned char * GetCameraImageBuffer() const { return pImgBuffer_; }
    void SetCameraImageBuffer(unsigned char * pBuffer) { pImgBuffer_ = pBuffer; }
 
-   int PushImageWithSRRF();
+   int PushImageWithSRRF(at_32 imageCountFirst, at_32 imageCountLast);
    int GetCameraAcquisitionProgress(at_32 *);
    //static void ReleaseInstance(AndorCamera * AndorCamera);
 
