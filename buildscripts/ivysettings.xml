@@ -3,7 +3,10 @@
 
 	<resolvers>
 		<ibiblio name="central" m2compatible="true"/>
+      <ibiblio name="ClearVolume" m2compatible="true" root="http://dl.bintray.com/clearvolume/ClearVolume"/>
+      <ibiblio name="CoreMem" m2compatible="true" root="http://dl.bintray.com/clearcontrol/ClearControl"/>
 		<ibiblio name="imagej-net" m2compatible="true" root="http://maven.imagej.net/content/groups/public"/>
+      <ibiblio name ="nico" m2compatible="true" root="http://valelab4.ucsf.edu/~nstuurman/maven"/>
 
 		<filesystem name="thirdpartypublic">
 			<artifact pattern="${ivy.settings.dir}/../../3rdpartypublic/classext/[artifact].[ext]"/>
@@ -16,6 +19,7 @@
 		<chain name="resolver-chain">
 			<resolver ref="central"/>
 			<resolver ref="imagej-net"/>
+			<resolver ref="nico"/>
 			<resolver ref="thirdpartypublic"/>
 			<resolver ref="thirdpartynonfree"/>
 		</chain>

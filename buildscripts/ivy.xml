@@ -1,4 +1,4 @@
-<ivy-module version="2.0">
+<ivy-module version="2.0" xmlns:e="http://ant.apache.org/ivy/extra">
 	<!-- Dependencies for all of Micro-Manager (MMStudio and plugins) -->
 	<!-- TODO List dependencies for each project -->
 	<info organisation="org.micromanager" module="micromanager"/>
@@ -16,7 +16,7 @@
 	<dependencies defaultconf="compile">
         <dependency conf="build->master" org="ant-contrib" name="ant-contrib" rev="1.0b3"/>
 		<dependency conf="test" org="junit" name="junit" rev="4.11"/>
-        <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
+      <dependency conf="test" org="org.msgpack" name="msgpack" rev="0.6.12"/>
 
 		<dependency org="com.fifesoft" name="rsyntaxtextarea" rev="2.5.2"/>
 		<dependency org="com.google.code.gson" name="gson" rev="2.2.4"/>
@@ -38,12 +38,32 @@
 		<dependency org="org.jfree" name="jcommon" rev="1.0.23"/>
 		<dependency org="org.jfree" name="jfreechart" rev="1.0.19"/>
 		<dependency org="org.scijava" name="scijava-common" rev="2.46.0"/>
+      <dependency org="edu.ucsf.valelab.tsf" name="tsfproto" rev="1.0.0"/>
+
+      <dependency org="net.clearvolume" name="cleargl" rev="2.0.4"/>
+      <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/>
+      <dependency org="net.clearvolume" name="clearcl" rev="0.4.7"/>
+
+      <!--TODO: the jogl and gluegen runtimes are not fetched correctly-->
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-main" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all" rev="2.3.2">
+         <artifact name="jogl-all"/> 
+         <artifact name="jogl-all" e:classifier="natives-macosx-universal"/>
+         <!--
+         <artifact name="jogl-all" e:classifer="natives-windows-amd64"/>
+         -->
+      </dependency>
+
+      <!-- Patched version of clearvolume from Nico -->
+      <dependency org="net.clearvolume" name="ClearVolume" rev="1.0-MM-SNAPSHOT"/>
 
 		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.51g"/>
 
 		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
 		<dependency org="" name="iconloader" rev="GIT"/>
-		<dependency org="" name="TSFProto" rev="SVN"/><!-- dependency on protobuf-java will not be resolved -->
+      <!---		<dependency org="" name="TSFProto" rev="SVN"/>--><!-- dependency on protobuf-java will not be resolved -->
 
 		<!-- Magellan dependencies -->
         <!--
