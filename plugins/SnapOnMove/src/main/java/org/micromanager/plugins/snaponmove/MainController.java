@@ -33,6 +33,7 @@
 package org.micromanager.plugins.snaponmove;
 
 import com.google.common.eventbus.Subscribe;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -44,16 +45,15 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMap.PropertyMapBuilder;
+import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.alerts.UpdatableAlert;
-import org.micromanager.data.internal.DefaultPropertyMap;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
+import org.micromanager.internal.propertymap.DefaultPropertyMap;
+import org.micromanager.internal.propertymap.MM1JSONSerializer;
 
 /**
  * The main control code for Snap-on-Move.
@@ -110,23 +110,20 @@ class MainController {
    MainController(Studio studio) {
       studio_ = studio;
 
-      pollingIntervalMs_ = studio_.profile().getLong(this.getClass(),
-            PROFILE_KEY_POLLING_INTERVAL_MS, 100L);
+      pollingIntervalMs_ = studio_.profile().getSettings(this.getClass()).
+              getLong(PROFILE_KEY_POLLING_INTERVAL_MS, 100L);
 
-      String criteriaJSON = studio_.profile().getString(
-            this.getClass(), PROFILE_KEY_CHANGE_CRITERIA, null);
+      String criteriaJSON = studio_.profile().getSettings(this.getClass()).
+              getString(PROFILE_KEY_CHANGE_CRITERIA, null);
       if (criteriaJSON != null) {
-         JSONObject jsonObj = null;
          PropertyMap listPm = null;
          try {
-            jsonObj = new JSONObject(criteriaJSON);
-            listPm = DefaultPropertyMap.fromJSON(jsonObj);
-         }
-         catch (JSONException ignore) {
+            listPm = MM1JSONSerializer.fromJSON(criteriaJSON);
+         } catch (IOException ignore) {
          }
          if (listPm != null) {
             for (int i = 0; ; ++i) {
-               PropertyMap pm = listPm.getPropertyMap(Integer.toString(i));
+               PropertyMap pm = listPm.getPropertyMap(Integer.toString(i), null);
                if (pm == null) {
                   break;
                }
@@ -142,7 +139,7 @@ class MainController {
    synchronized void setPollingIntervalMs(long intervalMs) {
       pollingIntervalMs_ = intervalMs;
 
-      studio_.profile().setLong(this.getClass(),
+      studio_.profile().getSettings(this.getClass()).putLong(
             PROFILE_KEY_POLLING_INTERVAL_MS, intervalMs);
    }
 
@@ -159,16 +156,16 @@ class MainController {
 
       // Each criterion is serialized into a PropertyMap. To store the list
       // in the profile, put in an outer PropertyMap with keys "0", "1", ....
-      PropertyMapBuilder listPmb = studio_.data().getPropertyMapBuilder();
+      PropertyMap.Builder listPmb = PropertyMaps.builder();
       for (int i = 0; i < changeCriteria_.size(); ++i) {
          ChangeCriterion cc = changeCriteria_.get(i);
-         PropertyMapBuilder pmb = studio_.data().getPropertyMapBuilder();
+         PropertyMap.Builder pmb = PropertyMaps.builder();
          cc.serialize(pmb);
          listPmb.putPropertyMap(Integer.toString(i), pmb.build());
       }
       // TODO We shouldn't use internal class DefaultPropertyMap
-      String json = ((DefaultPropertyMap) listPmb.build()).toJSON().toString();
-      studio_.profile().setString(this.getClass(),
+      String json = ((DefaultPropertyMap) listPmb.build()).toJSON();
+      studio_.profile().getSettings(this.getClass()).putString(
             PROFILE_KEY_CHANGE_CRITERIA, json);
    }
 

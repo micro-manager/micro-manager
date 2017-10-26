@@ -60,7 +60,6 @@ final class ConfigFrame extends MMFrame {
    private static final String ENABLE_BUTTON = "Start";
    private static final String DISABLE_BUTTON = "Stop";
    
-   private final MainController controller_;
 
    private final JTable criteriaTable_;
    private final JButton addButton_;
@@ -68,7 +67,6 @@ final class ConfigFrame extends MMFrame {
    private final JButton editButton_;
 
    public ConfigFrame(final MainController controller) {
-      controller_ = controller;
 
       setTitle("Snap-on-Move Preview");
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

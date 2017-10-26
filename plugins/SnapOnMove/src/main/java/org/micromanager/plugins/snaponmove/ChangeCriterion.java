@@ -33,7 +33,6 @@
 package org.micromanager.plugins.snaponmove;
 
 import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMap.PropertyMapBuilder;
 import org.micromanager.plugins.snaponmove.MonitoredItem.XYMonitoredItem;
 import org.micromanager.plugins.snaponmove.MonitoredItem.ZMonitoredItem;
 import org.micromanager.plugins.snaponmove.MonitoredValue.MonitoredFloatValue;
@@ -72,7 +71,7 @@ abstract class ChangeCriterion {
    private static final String SER_MONITORED_ITEM = "Monitored item";
    private static final String SER_THRESHOLD = "Threshold";
 
-   void serialize(PropertyMapBuilder pmb) {
+   void serialize(PropertyMap.Builder pmb) {
       pmb.putString(SER_CLASS, this.getClass().getSimpleName());
       pmb.putBoolean(SER_REQUIRES_POLLING, requiresPolling_);
    }
@@ -154,7 +153,7 @@ abstract class ChangeCriterion {
       }
 
       @Override
-      void serialize(PropertyMapBuilder pmb) {
+      void serialize(PropertyMap.Builder pmb) {
          super.serialize(pmb);
          pmb.putString(SER_MONITORED_ITEM, item_.toString());
          pmb.putDouble(SER_THRESHOLD, threshold_);
@@ -208,7 +207,7 @@ abstract class ChangeCriterion {
       }
 
       @Override
-      void serialize(PropertyMapBuilder pmb) {
+      void serialize(PropertyMap.Builder pmb) {
          super.serialize(pmb);
          pmb.putString(SER_MONITORED_ITEM, item_.toString());
          pmb.putDouble(SER_THRESHOLD, threshold_);
