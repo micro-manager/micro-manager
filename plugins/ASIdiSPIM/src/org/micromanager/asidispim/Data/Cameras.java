@@ -282,14 +282,16 @@ public class Cameras {
       case ANDORCAM:
          // work-around to bug in SDK3 device adapter, can't switch from light sheet mode
          //  to "normal" center out simultaneous but works if we always go through the in-between mode
-         props_.setPropValue(devKey,
-               Properties.Keys.SENSOR_READOUT_MODE,
-               Properties.Values.BOTTOM_UP_SIM_ANDOR);
-         props_.setPropValue(devKey,
-               Properties.Keys.SENSOR_READOUT_MODE,
-               (mode == CameraModes.Keys.LIGHT_SHEET
-               ? Properties.Values.BOTTOM_UP_ANDOR
-                     : Properties.Values.CENTER_OUT_ANDOR));
+         if (props_.hasProperty(devKey, Properties.Keys.SENSOR_READOUT_MODE)) {  // skip step if property is missing
+            props_.setPropValue(devKey,
+                  Properties.Keys.SENSOR_READOUT_MODE,
+                  Properties.Values.BOTTOM_UP_SIM_ANDOR);
+            props_.setPropValue(devKey,
+                  Properties.Keys.SENSOR_READOUT_MODE,
+                  (mode == CameraModes.Keys.LIGHT_SHEET
+                  ? Properties.Values.BOTTOM_UP_ANDOR
+                        : Properties.Values.CENTER_OUT_ANDOR));
+         }
          switch (mode) {
          case EDGE:
          case LIGHT_SHEET:
