@@ -432,7 +432,7 @@ public class ParticlePairLister {
                         }
 
                         ResultsTableListener myk = new ResultsTableListener(
-                                MMStudio.getInstance(), dc.getSpotData(row).dw_, siPlus,
+                                dc.getSpotData(row).dw_, siPlus,
                                 pairTable, win, dc.getSpotData(row).halfSize_);
                         tp.addKeyListener(myk);
                         tp.addMouseListener(myk);
@@ -599,7 +599,7 @@ public class ParticlePairLister {
                      }
 
                      ResultsTableListener myk = new ResultsTableListener(
-                             MMStudio.getInstance(), dc.getSpotData(row).dw_, siPlus,
+                             dc.getSpotData(row).dw_, siPlus,
                              rt, win, dc.getSpotData(row).halfSize_);
                      tp.addKeyListener(myk);
                      tp.addMouseListener(myk);
@@ -758,7 +758,7 @@ public class ParticlePairLister {
                      }
 
                      ResultsTableListener myk = new ResultsTableListener(
-                             MMStudio.getInstance(), dc.getSpotData(row).dw_, siPlus,
+                             dc.getSpotData(row).dw_, siPlus,
                              rt2, win, dc.getSpotData(row).halfSize_);
                      tp.addKeyListener(myk);
                      tp.addMouseListener(myk);

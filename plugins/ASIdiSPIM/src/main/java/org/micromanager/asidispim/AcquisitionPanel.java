@@ -119,6 +119,7 @@ import org.micromanager.asidispim.events.SPIMAcquisitionStartedEvent;
 import org.micromanager.asidispim.utils.ControllerUtils;
 import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.SPIMFrame;
+import org.micromanager.data.Coordinates;
 import org.micromanager.display.DisplaySettings;
 
 
@@ -2339,7 +2340,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             if (acqSettings.useMultiPositions) {
                smb = smb.stagePositions(gui_.positions().getPositionList().getPositions());
             }
-            smb = smb.intendedDimensions(gui_.data().getCoordsBuilder().
+            smb = smb.intendedDimensions(Coordinates.builder().
                     channel(channelNr).
                     z(acqSettings.numSlices).
                     t(nrFrames).
@@ -2958,7 +2959,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            DatastoreRewriteException, Exception
             {
 
-      CoordsBuilder cb = gui_.data().getCoordsBuilder();
+      CoordsBuilder cb = Coordinates.builder();
 
       Coords coord = cb.time(frame).channel(channel).z(slice).stagePosition(position).build();
       Image img = gui_.data().convertTaggedImage(taggedImg);

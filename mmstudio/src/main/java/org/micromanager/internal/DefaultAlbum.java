@@ -24,6 +24,7 @@ package org.micromanager.internal;
 import java.io.IOException;
 import java.util.Collection;
 import org.micromanager.Album;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
@@ -34,9 +35,9 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public final class DefaultAlbum implements Album {
-   private static final DefaultAlbum staticInstance_;
+   private static final DefaultAlbum STATIC_INSTANCE;
    static {
-      staticInstance_ = new DefaultAlbum();
+      STATIC_INSTANCE = new DefaultAlbum();
    }
 
    private Datastore store_;
@@ -96,9 +97,9 @@ public final class DefaultAlbum implements Album {
       else {
          // Try to find images at this timepoint and channel, which would mean
          // we need to move to the next timepoint.
-         Coords matcher = studio.data().getCoordsBuilder()
+         Coords matcher = Coordinates.builder()
             .channel(image.getCoords().getChannel())
-            .time(curTime_)
+            .t(curTime_)
             .build();
          if (store_.getImagesMatching(matcher).size() > 0) {
             // Have an image at this time/channel pair already.
@@ -132,6 +133,6 @@ public final class DefaultAlbum implements Album {
    }
 
    public static DefaultAlbum getInstance() {
-      return staticInstance_;
+      return STATIC_INSTANCE;
    }
 }

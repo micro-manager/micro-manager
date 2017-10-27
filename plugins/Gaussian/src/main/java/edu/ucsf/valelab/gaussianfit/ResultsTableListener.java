@@ -39,7 +39,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayWindow;
 
@@ -61,15 +61,11 @@ public class ResultsTableListener implements KeyListener, MouseListener {
    private final TextWindow win_;
    private final TextPanel tp_;
    private final DisplayWindow dw_;
-   private final Studio studio_;
    private final int hBS_;
-   //private final Timer t_;
    private int key_;
    private int row_;
 
-   public ResultsTableListener(Studio studio, DisplayWindow dw, ImagePlus siPlus, 
-           ResultsTable res, TextWindow win, int halfBoxSize) {
-      studio_ = studio;
+   public ResultsTableListener(DisplayWindow dw, ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
       dw_ = dw;
       siPlus_ = siPlus;
       res_ = res;
@@ -177,10 +173,10 @@ public class ResultsTableListener implements KeyListener, MouseListener {
          int y = Integer.parseInt(res_.getStringValue(Terms.YPIX, row));
          
          if (dw_ != null) {
-            Coords.CoordsBuilder builder = studio_.data().getCoordsBuilder();
+            Coords.CoordsBuilder builder = Coordinates.builder();
             Coords coords = builder.channel(channel - 1).time(frame - 1).
                     z(slice - 1).stagePosition(pos - 1).build();
-            dw_.setDisplayedImageTo(coords);
+            dw_.setDisplayPosition(coords);
          } else if (siPlus_.isHyperStack()) {
             siPlus_.setPosition(channel, slice, frame);
          } else {

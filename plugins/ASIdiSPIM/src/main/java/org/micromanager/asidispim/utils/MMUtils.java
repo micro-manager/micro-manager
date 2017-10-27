@@ -2,6 +2,7 @@
 package org.micromanager.asidispim.utils;
 
 import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords.CoordsBuilder;
 
 /**
@@ -17,7 +18,7 @@ public class MMUtils {
     * @return Zeroed CoordsBuilder
     */
    public static CoordsBuilder zeroedCoordsBuilder (Studio gui) {
-      return gui.data().getCoordsBuilder().channel(0).stagePosition(0).time(0).z(0);
+      return Coordinates.builder().channel(0).stagePosition(0).t(0).z(0);
    }
    
 }
