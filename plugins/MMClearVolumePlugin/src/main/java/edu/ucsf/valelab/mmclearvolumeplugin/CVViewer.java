@@ -429,9 +429,13 @@ public class CVViewer implements DataViewer {
           ! Objects.equals( ds.getAutoscaleIgnoredPercentile(), 
                   displaySettings_.getAutoscaleIgnoredPercentile()) ) {
          if (ds.isAutostretchEnabled()) {
+            try {
             autostretch();
             drawVolume(currentlyShownTimePoint_);
             displayBus_.post(new CanvasDrawCompleteEvent());
+            } catch (IOException ioe) {
+               studio_.logs().logError(ioe);
+            }
          }
       }
       
@@ -481,7 +485,11 @@ public class CVViewer implements DataViewer {
          setOneChannelVisible(coords.getChannel());
       }
       clearVolumeRenderer_.setCurrentRenderLayer(coords.getChannel());
+      try {
       drawVolume(coords.getTime());
+      } catch (IOException ioe) {
+          studio_.logs().logError(ioe);
+      }
       displayBus_.post(new CanvasDrawCompleteEvent());
    }
 
@@ -803,7 +811,7 @@ public class CVViewer implements DataViewer {
    private void autostretch() throws IOException {
       Coords baseCoords = getDisplayedImages().get(0).getCoords();
       Double extremaPercentage = displaySettings_.getAutoscaleIgnoredPercentile();
-      if (extremaPercentage == null) {
+      if (extremaPercentage < 0.0) {
          extremaPercentage = 0.0;
       }
       DisplaySettings.DisplaySettingsBuilder builder = 
@@ -859,10 +867,10 @@ public class CVViewer implements DataViewer {
       if (t != currentlyShownTimePoint_) { 
          // we are not yet showing this time point
          // check if we have all z planes, if so draw the volume
-         /** The following code is exact, but very slow
-         Coords zStackCoords = studio_.data().getCoordsBuilder().time(t).build();
-         final int nrImages = store_.getImagesMatching(zStackCoords).size();
-         */
+         // The following code is exact, but very slow
+         //Coords zStackCoords = studio_.data().getCoordsBuilder().time(t).build();
+         //final int nrImages = store_.getImagesMatching(zStackCoords).size();
+         
          Coords intendedDimensions = store_.getSummaryMetadata().getIntendedDimensions();
          // instead, keep our own counter, this assumes that all time points arrive in order
          // TODO: work around this by keeping a list of counters
