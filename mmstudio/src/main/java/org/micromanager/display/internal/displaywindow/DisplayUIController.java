@@ -1237,6 +1237,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
       final Point center = new Point(
             mouseLocationOnImage_.x + mouseLocationOnImage_.width / 2,
             mouseLocationOnImage_.y + mouseLocationOnImage_.height / 2);
+      
+      // sanity checks
+      if ( center.x >= images.get(0).getWidth()) {
+         center.x = images.get(0).getWidth() - 1;
+      }
+      if (center.y >= images.get(0).getHeight()) {
+         center.y = images.get(0).getHeight() -1;
+      }
 
       if (images.get(0).getCoords().hasAxis(Coords.CHANNEL)) {
          displayController_.postDisplayEvent(
