@@ -1765,7 +1765,7 @@ public class DataCollectionForm extends JFrame {
             win.removeKeyListener(ks);
          }
          
-         ResultsTableListener myk = new ResultsTableListener(studio_, rowData.dw_, siPlus, 
+         ResultsTableListener myk = new ResultsTableListener(rowData.dw_, siPlus, 
                  rt, win, rowData.halfSize_);
          
          tp.removeKeyListener(IJ.getInstance());

@@ -26,6 +26,7 @@ import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import javax.swing.SwingWorker;
 import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
 import org.micromanager.data.DataProvider;
@@ -93,7 +94,7 @@ public class ZProjectorPluginExecutor {
             metadata = metadata.copyBuilder()
                     .intendedDimensions(newSizeCoordsBuilder.build())
                     .build();
-            Coords.CoordsBuilder cb = studio_.data().getCoordsBuilder();
+            Coords.CoordsBuilder cb = Coordinates.builder();
             try {
                newStore.setSummaryMetadata(metadata);
                DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);

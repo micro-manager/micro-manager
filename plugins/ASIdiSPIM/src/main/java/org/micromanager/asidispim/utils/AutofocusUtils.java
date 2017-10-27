@@ -58,6 +58,7 @@ import org.micromanager.Studio;
 import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.data.AcquisitionSettings;
 import org.micromanager.asidispim.data.Devices.Sides;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -341,7 +342,7 @@ public class AutofocusUtils {
                   ourWindow_.setDisplaySettings(dsb.colorModeGrayscale().
                           build());
                   SummaryMetadata.Builder smb = gui_.data().getSummaryMetadataBuilder();
-                  Coords dim = gui_.data().getCoordsBuilder().z(nrImages).
+                  Coords dim = Coordinates.builder().z(nrImages).
                           channel(1).stagePosition(1).t(1).build();
                   store.setSummaryMetadata(smb.intendedDimensions(dim).build());
                }
@@ -416,7 +417,7 @@ public class AutofocusUtils {
                         timg.tags.put("SlicePosition", galvoPos);
                         timg.tags.put("ZPositionUm", piezoCenter);
                         Image img = gui_.data().convertTaggedImage(timg);
-                        Coords coords = gui_.data().getCoordsBuilder().
+                        Coords coords = Coordinates.builder().
                                 z(counter).build();
                         img = img.copyAtCoords(coords);
                         if (store != null)
@@ -511,7 +512,7 @@ public class AutofocusUtils {
                      store.freeze();
                   }
                   if (focusSuccess) {
-                     Coords coords = gui_.data().getCoordsBuilder().z(highestIndex).build();
+                     Coords coords = Coordinates.builder().z(highestIndex).build();
                      gui_.logs().logMessage("Highest Index was: " + highestIndex);
                      ourWindow_.setDisplayPosition(coords);
                   } 

@@ -38,6 +38,7 @@ import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
 
 import org.micromanager.internal.utils.MMFrame;
 
@@ -288,7 +289,7 @@ public class FlipperConfigurator extends MMFrame implements ProcessorConfigurato
             IconLoader.loadFromResource(EXAMPLE_ICON_PATH));
 
       Image testImage = studio_.data().ij().createImage(proc,
-            studio_.data().getCoordsBuilder().build(),
+            Coordinates.builder().build(),
             studio_.data().getMetadataBuilder().build());
       testImage = FlipperProcessor.transformImage(studio_, testImage,
             getMirror(), getRotate());
