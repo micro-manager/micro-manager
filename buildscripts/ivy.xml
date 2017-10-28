@@ -48,6 +48,7 @@
       <dependency org="org.jogamp.gluegen" name="gluegen-rt-main" rev="2.3.2"/>
       <dependency org="org.jogamp.gluegen" name="gluegen-rt" rev="2.3.2"/>
       <dependency org="org.jogamp.gluegen" name="gluegen" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-main" rev="2.3.2"/>
       <dependency org="org.jogamp.jogl" name="jogl-all" rev="2.3.2">
          <artifact name="jogl-all"/> 
          <artifact name="jogl-all" e:classifier="natives-macosx-universal"/>
