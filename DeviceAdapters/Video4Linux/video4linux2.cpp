@@ -300,7 +300,7 @@ VideoInit(State*state)
     // Pixel type
     pAct = new CPropertyAction (this, &V4L2::OnPixelType);
     nRet = CreateProperty(MM::g_Keyword_PixelType,
-			  "8bit", MM::String,true, pAct);
+			  "YUYV", MM::String,true, pAct);
     if (nRet != DEVICE_OK)
       return nRet;
     // Gain
@@ -314,7 +314,7 @@ VideoInit(State*state)
 			  "0.0", MM::Float, false, pAct);
     assert(nRet == DEVICE_OK);
     
-    image = (unsigned char*) malloc(state->W*state->H);
+    image = (unsigned char*) malloc(state->W*state->H*4);
     if(VideoInit(state))
       {
       initialized_=true;
@@ -343,17 +343,46 @@ VideoInit(State*state)
     CDeviceUtils::CopyLimitedString(name,gName);
   }
 
+  inline unsigned char clip(int val) {
+    if (val <= 0)
+      return 0;
+    else if (val >= 255) {
+      return 255;
+    }
+    else
+      return val;
+  }
+
   // blocks until exposure is finished
   int SnapImage()
   {
-    unsigned char*data=VideoTakeBuffer(state);
-    int i,j;
-    for(j=0;j<state->H;j++){
-      int wj=state->W*j;
-      for(i=0;i<state->W;i++){
-	image[i+wj]=data[2*i+2*wj];
-      }
+    unsigned char* data = VideoTakeBuffer(state);
+  
+    /* Convert YUYV to RGBA32, apparently mm does only display colors
+     * in this format */
+    unsigned char* ptrIn = data;
+    unsigned char* ptrOut = image;
+    for (int i = 0;  i < state->W * state->H / 2; ++i) {
+      int y0 = ptrIn[0];
+      int u0 = ptrIn[1];
+      int y1 = ptrIn[2];
+      int v0 = ptrIn[3];
+      ptrIn += 4;
+      int c = y0 - 16;
+      int d = u0 - 128;
+      int e = v0 - 128;
+      ptrOut[0] = clip((298 * c + 516 * d + 128) >> 8); // blue
+      ptrOut[1] = clip((298 * c - 100 * d - 208 * e + 128) >> 8); // green
+      ptrOut[2] = clip((298 * c + 409 * e + 128) >> 8); // red
+      ptrOut[4] = 255; // alpha
+      c = y1 - 16;
+      ptrOut[4] = clip((298 * c + 516 * d + 128) >> 8); // blue
+      ptrOut[5] = clip((298 * c - 100 * d - 208 * e + 128) >> 8); // green
+      ptrOut[6] = clip((298 * c + 409 * e + 128) >> 8); // red
+      ptrOut[7] = 255; // alpha
+      ptrOut += 8;
     }
+  
     VideoReturnBuffer(state);
     return DEVICE_OK;
   }
@@ -367,7 +396,7 @@ VideoInit(State*state)
   // changes only if binning, pixel type, ... properties are set
   long GetImageBufferSize() const
   {
-    return state->W*state->H;
+    return state->W*state->H*GetImageBytesPerPixel();
   }
 
   unsigned GetImageWidth() const 
@@ -383,13 +412,13 @@ VideoInit(State*state)
   unsigned GetImageBytesPerPixel() const
   {
     // FIXME
-    return 1; //get_image_bytes_per_pixel();
+    return 4; //get_image_bytes_per_pixel();
   }
 
   unsigned GetBitDepth() const 
   {
     // FIXME
-    return 8;// get_bit_depth();
+  return 8;// get_bit_depth();
   }
 
   int SetROI(unsigned x,unsigned y,unsigned xSize,unsigned ySize)
