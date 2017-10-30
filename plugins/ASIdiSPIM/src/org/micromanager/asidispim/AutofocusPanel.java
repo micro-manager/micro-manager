@@ -273,7 +273,7 @@ public class AutofocusPanel extends ListeningJPanel{
       
       // construct the main panel
       super.add(optionsPanel, "wrap");
-      super.add(acqOptionsPanel);
+      super.add(acqOptionsPanel, "flowy, split 2");
       super.add(setupOptionsPanel, "wrap");
       super.add(movementCorrectionsPanel);
    }  //constructor
