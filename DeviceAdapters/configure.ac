@@ -440,6 +440,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    DTOpenLayer
    DemoCamera
    Diskovery
+   FakeCamera
    FocalPoint
    FreeSerialPort
    HIDManager
