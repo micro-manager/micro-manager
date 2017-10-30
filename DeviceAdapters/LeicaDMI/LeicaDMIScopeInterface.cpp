@@ -2081,11 +2081,22 @@ int LeicaScopeInterface::SetAFCMode(MM::Device &device, MM::Core &core, bool on)
 int LeicaScopeInterface::SetAFCOffset(MM::Device &device, MM::Core &core, double offset)
 {
    std::stringstream os;
+   if (offset==-1){
+	    scopeModel_->afc_.SetBusy(true);
+	    os << g_AFC << "022";
+	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+	if(ret != DEVICE_OK)
+		return ret;	
+	return DEVICE_OK;
+   }
+   else{
+
    os << g_AFC << "024" << " " << offset;
 	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 	if(ret != DEVICE_OK)
 		return ret;	
 	return DEVICE_OK;
+   }
 }
 
 /**
@@ -2786,6 +2797,9 @@ int LeicaMonitoringThread::svc()
                         scopeModel_->afc_.SetBusy(false);
                         break;
                      }
+					 case (22) :  //set AFC offset to here
+						scopeModel_->afc_.SetBusy(false);
+                        break;
                      case (23) : // Current edge position value
                      {
                         double edgeposition;
