@@ -3048,9 +3048,17 @@ int AFC::GetCurrentFocusScore(double& score){
    return ret;
 }
 bool AFC::IsContinuousFocusLocked() {
+   int topColor, bottomColor;
    int ret;
-
-   double score;
+   ret = g_ScopeModel.afc_.GetLEDColors(topColor, bottomColor);
+   if (ret != DEVICE_OK)
+      return false;
+   if (bottomColor == 2 /* green */) {
+       return true;
+    } else {
+       return false;
+   }
+  /* double score;
    ret = GetCurrentFocusScore(score);
    if (ret != DEVICE_OK)
       return false;
@@ -3061,7 +3069,7 @@ bool AFC::IsContinuousFocusLocked() {
    else{
 	   return false;
    }
-
+*/
 }
 
 int AFC::FullFocus() {
