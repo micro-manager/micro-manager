@@ -31,6 +31,7 @@ if BUILD_MODBUS
 endif
 if BUILD_OPENCV
    OPENCVGRABBER = OpenCVgrabber
+   FAKECAMERA = FakeCamera
 endif
 if BUILD_PVCAM
    PVCAM = PVCAM PrincetonInstruments
@@ -66,6 +67,7 @@ SUBDIRS = \
 	$(ANDORLASERCOMBINER) \
 	$(ANDORSDK3) \
 	$(DC1394) \
+	$(FAKECAMERA) \
 	$(HIDMANAGER) \
 	$(IDSUEYE) \
 	$(IIDC) \
