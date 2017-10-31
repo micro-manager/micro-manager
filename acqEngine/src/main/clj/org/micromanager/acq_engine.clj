@@ -240,7 +240,8 @@
   (when (and (@state :init-continuous-focus)
              (not (is-continuous-focus-drive stage))
              (core isContinuousFocusEnabled))
-    (enable-continuous-focus false))
+    (enable-continuous-focus false)
+    (wait-for-device (core getAutoFocusDevice)))
   (device-best-effort stage (core setPosition stage pos)))
 
 (defn set-stage-position
