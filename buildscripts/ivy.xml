@@ -52,6 +52,7 @@
 		<dependency org="org.jdom" name="jdom" rev="2.0.2"/>
 		<dependency org="sc.fiji" name="bigdataviewer-core" rev="2.1.0"/>
 		<dependency org="org.scijava" name="scijava-common" rev="2.46.0"/>
+		<dependency org="net.sf.py4j" name="py4j" rev="0.10.6"/>
 
 		<!-- Magellan dependencies; not open source; not in Maven -->
 		<dependency conf="optional" org="" name="ij3d-bin" rev=""/>
