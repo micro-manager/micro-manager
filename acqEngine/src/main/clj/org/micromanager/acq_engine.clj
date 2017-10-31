@@ -617,9 +617,8 @@
          z-ref))))
 
 (defn z-stage-needs-adjustment [stage-name]
-  (not (and (@state :init-continuous-focus)
-            (core isContinuousFocusEnabled)
-            (not (is-continuous-focus-drive stage-name)))))
+  (and (not (@state :init-continuous-focus))
+       (not (is-continuous-focus-drive stage-name))))
 
 (defn update-z-positions [msp-index]
   (when-let [msp (get-msp (@state :position-list) msp-index)]
