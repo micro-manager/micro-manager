@@ -1063,6 +1063,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.channelGroup = multiChannelPanel_.getChannelGroup();
       acqSettings.useAutofocus = useAutofocusCB_.isSelected();
       acqSettings.useMovementCorrection = useMovementCorrectionCB_.isSelected();
+      acqSettings.acquireBothCamerasSimultaneously = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+            Properties.Keys.PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT, false);
       acqSettings.numSides = getNumSides();
       acqSettings.firstSideIsA = isFirstSideA();
       acqSettings.delayBeforeSide = PanelUtils.getSpinnerFloatValue(delaySide_);
@@ -1908,7 +1910,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      if (sideActiveA) {
+      final boolean acqBothCameras = acqSettings.acquireBothCamerasSimultaneously;
+      boolean camActiveA = sideActiveA || acqBothCameras;
+      boolean camActiveB = sideActiveB || acqBothCameras;
+      
+      if (camActiveA) {
          if (!devices_.isValidMMDevice(Devices.Keys.CAMERAA)) {
             MyDialogUtils.showError("Using side A but no camera specified for that side.");
             return false;
@@ -1917,6 +1923,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera A doesn't support it.");
             return false;
          }
+      }
+      
+      if (sideActiveA) {
          if (!devices_.isValidMMDevice(Devices.Keys.GALVOA)) {
             MyDialogUtils.showError("Using side A but no scanner specified for that side.");
             return false;
@@ -1927,7 +1936,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      if (sideActiveB) {
+      if (camActiveB) {
          if (!devices_.isValidMMDevice(Devices.Keys.CAMERAB)) {
             MyDialogUtils.showError("Using side B but no camera specified for that side.");
             return false;
@@ -1936,6 +1945,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera B doesn't support it.");
             return false;
          }
+      }
+      
+      if (sideActiveB) {
          if (!devices_.isValidMMDevice(Devices.Keys.GALVOB)) {
             MyDialogUtils.showError("Using side B but no scanner specified for that side.");
             return false;
@@ -1946,8 +1958,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
 
-      boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && sideActiveA)
-            || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && sideActiveB);
+      boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && camActiveA)
+            || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && camActiveB);
       
       // set up channels
       int nrChannelsSoftware = acqSettings.numChannels;  // how many times we trigger the controller per stack
@@ -1986,6 +1998,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
+      if (twoSided && acqBothCameras) {
+         nrSlicesSoftware *= 2;
+      }
       
       if (acqSettings.hardwareTimepoints) {
          // in hardwareTimepoints case we trigger controller once for all timepoints => need to
@@ -1994,11 +2009,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // For overlap mode we are send one extra trigger per channel per side for volume-switching (both PLogic and not)
             // This holds for all multi-channel modes, just the order in which the extra trigger comes varies
             // Very last trigger won't ever return a frame so subtract 1.
-            nrSlicesSoftware = ((acqSettings.numSlices + 1) * acqSettings.numChannels * acqSettings.numTimepoints) - 1;
+            nrSlicesSoftware = ((acqSettings.numSlices + 1) * acqSettings.numChannels * acqSettings.numTimepoints);
+            if (twoSided && acqBothCameras) {
+               nrSlicesSoftware *= 2;
+            }
+            nrSlicesSoftware -= 1;
          } else {
             // we get back one image per trigger for all trigger modes other than OVERLAP
             //   and we have already computed how many images that is (nrSlicesSoftware)
             nrSlicesSoftware *= acqSettings.numTimepoints;
+            if (twoSided && acqBothCameras) {
+               nrSlicesSoftware *= 2;
+            }
          }
       }
       
@@ -2220,14 +2242,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
       }
       
-      // it appears the circular buffer, which is used by both cameras, can only have one 
-      // image size setting => we require same image height and width for second camera if two-sided
-      if (twoSided) {
+      // the circular buffer, which is used by both cameras, can only have one image size setting
+      //    => require same image height and width for both cameras if both are used 
+      if (twoSided || acqBothCameras) {
          try {
             Rectangle roi_1 = core_.getROI(firstCamera);
             Rectangle roi_2 = core_.getROI(secondCamera);
             if (roi_1.width != roi_2.width || roi_1.height != roi_2.height) {
-               MyDialogUtils.showError("Camera ROI height and width must be equal because of Micro-Manager's circular buffer");
+               MyDialogUtils.showError("Two cameras' ROI height and width must be equal because of Micro-Manager's circular buffer");
                return false;
             }
          } catch (Exception ex) {
@@ -2236,7 +2258,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       cameras_.setCameraForAcquisition(firstCameraKey, true);
-      if (twoSided) {
+      if (twoSided || acqBothCameras) {
          cameras_.setCameraForAcquisition(secondCameraKey, true);
       }
 
@@ -2245,7 +2267,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
                Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(),
                (float)core_.getExposure(devices_.getMMDevice(firstCameraKey)));
-         if (twoSided) {
+         if (twoSided || acqBothCameras) {
             prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND.toString(),
                   (float)core_.getExposure(devices_.getMMDevice(secondCameraKey)));
@@ -2256,7 +2278,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       try {
          core_.setExposure(firstCamera, exposureTime);
-         if (twoSided) {
+         if (twoSided || acqBothCameras) {
             core_.setExposure(secondCamera, exposureTime);
          }
          gui_.refreshGUIFromCache();
@@ -2408,51 +2430,63 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             
             ReportingUtils.logMessage("diSPIM plugin starting acquisition " + acqName + " with following settings: " + acqSettingsJSON);
             
+            final int numMMChannels = acqSettings.numSides * acqSettings.numChannels * (acqBothCameras ? 2 : 1);
+            
             if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                // swap nrFrames and numSlices
-               gui_.openAcquisition(acqName, rootDir, acqSettings.numSlices, acqSettings.numSides * acqSettings.numChannels,
+               gui_.openAcquisition(acqName, rootDir, acqSettings.numSlices, numMMChannels,
                   nrFrames, nrPositions, true, save);
             } else {
-               gui_.openAcquisition(acqName, rootDir, nrFrames, acqSettings.numSides * acqSettings.numChannels,
+               gui_.openAcquisition(acqName, rootDir, nrFrames, numMMChannels,
                   acqSettings.numSlices, nrPositions, true, save);
             }
             
-            channelNames_ = new String[acqSettings.numSides * acqSettings.numChannels];
+            channelNames_ = new String[numMMChannels];
             
             // generate channel names and colors
             // also builds viewString for MultiViewRegistration metadata
             String viewString = "";
             final String SEPARATOR = "_";
-            // set up channels (side A/B is treated as channel too)
-            if (acqSettings.useChannels) {
-               ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
-               for (int i = 0; i < channels.length; i++) {
-                  String chName = "-" + channels[i].config_;
-                  // same algorithm for channel index vs. specified channel and side as below
-                  int channelIndex = i;
-                  if (twoSided) {
-                     channelIndex *= 2;
+            for (int reflect=0; reflect<2; reflect++) {
+               // only run for loop once unless acqBothCameras is true
+               // if acqBothCameras is true then run second time to add "epi" channels
+               if (reflect > 0 && !acqBothCameras) {
+                  continue;
+               }
+               // set up channels (side A/B is treated as channel too)
+               if (acqSettings.useChannels) {
+                  ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
+                  for (int i = 0; i < channels.length; i++) {
+                     String chName = "-" + channels[i].config_ + (reflect>0 ? "-epi" : "");
+                     // same algorithm for channel index vs. specified channel and side as in comments of code below
+                     //   that figures out the channel where to file each incoming image
+                     int channelIndex = i;
+                     if (twoSided) {
+                        channelIndex *= 2;
+                     }
+                     channelIndex += reflect*numMMChannels/2;
+                     channelNames_[channelIndex] = firstCamera + chName;
+                     viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
+                     if (twoSided) {
+                        channelNames_[channelIndex+1] = secondCamera + chName;
+                        viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
+                     }
                   }
-                  channelNames_[channelIndex] = firstCamera + chName;
+               } else {  // single-channel
+                  int channelIndex = reflect*numMMChannels/2;
+                  channelNames_[channelIndex] = firstCamera + (reflect>0 ? "-epi" : "");
                   viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                   if (twoSided) {
-                     channelNames_[channelIndex+1] = secondCamera + chName;
+                     channelNames_[channelIndex+1] = secondCamera + (reflect>0 ? "-epi" : "");
                      viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                   }
-               }
-            } else {
-               channelNames_[0] = firstCamera;
-               viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
-               if (twoSided) {
-                  channelNames_[1] = secondCamera;
-                  viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                }
             }
             // strip last separator of viewString (for Multiview Reconstruction)
             viewString = viewString.substring(0, viewString.length() - 1);
             
             // assign channel names and colors
-            for (int i = 0; i < acqSettings.numSides * acqSettings.numChannels; i++) {
+            for (int i = 0; i < numMMChannels; i++) {
                gui_.setChannelName(acqName, i, channelNames_[i]);
                gui_.setChannelColor(acqName, i, getChannelColor(i));
             }
@@ -2712,7 +2746,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                         // start the cameras
                         core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, 0, true);
-                        if (twoSided) {
+                        if (twoSided || acqBothCameras) {
                            core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
                         }
 
@@ -2753,8 +2787,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
 
                         // grab all the images from the cameras, put them into the acquisition
-                        int[] frNumber = new int[2*acqSettings.numChannels];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
-                        int[] cameraFrNumber = new int[2];       // keep track of how many frames we have received from the camera
+                        int[] channelImageNr = new int[4*acqSettings.numChannels];  // keep track of how many frames we have received for each MM "channel"
+                        int[] cameraImageNr = new int[2];       // keep track of how many images we have received from the camera
                         int[] tpNumber = new int[2*acqSettings.numChannels];  // keep track of which timepoint we are on for hardware timepoints
                         int imagesToSkip = 0;  // hardware timepoints have to drop spurious images with overlap mode
                         final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
@@ -2772,7 +2806,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         try {
                            while ((core_.getRemainingImageCount() > 0
                                  || core_.isSequenceRunning(firstCamera)
-                                 || (twoSided && core_.isSequenceRunning(secondCamera)))
+                                 || ((twoSided || acqBothCameras) && core_.isSequenceRunning(secondCamera)))
                                  && !done) {
                               now = System.currentTimeMillis();
                               if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
@@ -2785,9 +2819,42 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
                                  // figure out which channel index this frame belongs to
                                  // "channel index" is channel of MM acquisition
-                                 // channel indexes will go from 0 to (numSides * numChannels - 1)
+                                 // channel indexes will go from 0 to (numSides * numChannels - 1) for standard (non-reflective) imaging
                                  // if double-sided then second camera gets odd channel indexes (1, 3, etc.)
                                  //    and adjacent pairs will be same color (e.g. 0 and 1 will be from first color, 2 and 3 from second, etc.)
+                                 // if acquisition from both cameras (reflective imaging) then
+                                 //    second half of channel indices are from opposite (epi) view
+                                 // e.g. for 3-color 1-sided (A first) standard (non-reflective) then
+                                 //    0 will be A-illum A-cam 1st color
+                                 //    2 will be A-illum A-cam 2nd color
+                                 //    4 will be A-illum A-cam 3rd color
+                                 // e.g. for 3-color 2-sided (A first) standard (non-reflective) then
+                                 //    0 will be A-illum A-cam 1st color
+                                 //    1 will be B-illum B-cam 1st color
+                                 //    2 will be A-illum A-cam 2nd color
+                                 //    3 will be B-illum B-cam 2nd color
+                                 //    4 will be A-illum A-cam 3rd color
+                                 //    5 will be B-illum B-cam 3rd color
+                                 // e.g. for 3-color 1-sided (A first) both camera (reflective) then
+                                 //    0 will be A-illum A-cam 1st color
+                                 //    1 will be A-illum A-cam 2nd color
+                                 //    2 will be A-illum A-cam 3rd color
+                                 //    3 will be A-illum B-cam 1st color
+                                 //    4 will be A-illum B-cam 2nd color
+                                 //    5 will be A-illum B-cam 3rd color
+                                 // e.g. for 3-color 2-sided (A first) both camera (reflective) then
+                                 //    0 will be A-illum A-cam 1st color
+                                 //    1 will be B-illum B-cam 1st color
+                                 //    2 will be A-illum A-cam 2nd color
+                                 //    3 will be B-illum B-cam 2nd color
+                                 //    4 will be A-illum A-cam 3rd color
+                                 //    5 will be B-illum B-cam 3rd color
+                                 //    6 will be A-illum B-cam 1st color
+                                 //    7 will be B-illum A-cam 1st color
+                                 //    8 will be A-illum B-cam 2nd color
+                                 //    9 will be B-illum A-cam 2nd color
+                                 //   10 will be A-illum B-cam 3rd color
+                                 //   11 will be B-illum A-cam 3rd color
                                  String camera = (String) timg.tags.get("Camera");
                                  int cameraIndex = camera.equals(firstCamera) ? 0: 1;
                                  int channelIndex_tmp;
@@ -2797,19 +2864,33 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     channelIndex_tmp = channelNum;
                                     break;
                                  case VOLUME_HW:
-                                    channelIndex_tmp = cameraFrNumber[cameraIndex] / acqSettings.numSlices;  // want quotient only
+                                    channelIndex_tmp = cameraImageNr[cameraIndex] / acqSettings.numSlices;  // want quotient only
                                     break;
                                  case SLICE_HW:
-                                    channelIndex_tmp = cameraFrNumber[cameraIndex] % acqSettings.numChannels;  // want modulo arithmetic
+                                    channelIndex_tmp = cameraImageNr[cameraIndex] % acqSettings.numChannels;  // want modulo arithmetic
                                     break;
                                  default:
                                     // should never get here
                                     throw new Exception("Undefined channel mode");
                                  }
-                                 if (twoSided) {
-                                    channelIndex_tmp *= 2;
+                                 if (acqBothCameras) {
+                                    if (twoSided) {  // 2-sided, both cameras
+                                       channelIndex_tmp = channelIndex_tmp * 2 + cameraIndex;
+                                       // determine whether first or second side by whether we've seen half the images yet
+                                       if (cameraImageNr[cameraIndex] > nrSlicesSoftware/2) {
+                                          // second illumination side => second half of channels
+                                          channelIndex_tmp += 2*acqSettings.numChannels;
+                                       }
+                                    } else {  // 1-sided, both cameras
+                                       channelIndex_tmp += cameraIndex*acqSettings.numChannels;
+                                    }
+                                 } else {  // normal situation, non-reflective imaging
+                                    if (twoSided) {
+                                       channelIndex_tmp *= 2;
+                                    }
+                                    channelIndex_tmp += cameraIndex;
                                  }
-                                 final int channelIndex = channelIndex_tmp + cameraIndex;
+                                 final int channelIndex = channelIndex_tmp;
                                  
                                  int actualTimePoint = timePoint;
                                  if (acqSettings.hardwareTimepoints) {
@@ -2825,25 +2906,25 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                                     // create time series for no scan
                                     addImageToAcquisition(acq_,
-                                          frNumber[channelIndex], channelIndex, actualTimePoint, 
+                                          channelImageNr[channelIndex], channelIndex, actualTimePoint, 
                                           positionNum, now - acqStart, timg, bq);
                                  } else { // standard, create Z-stacks
                                     addImageToAcquisition(acq_, actualTimePoint, channelIndex,
-                                          frNumber[channelIndex], positionNum,
+                                          channelImageNr[channelIndex], positionNum,
                                           now - acqStart, timg, bq);
                                  }
 
                                  // update our counters to be ready for next image
-                                 frNumber[channelIndex]++;
-                                 cameraFrNumber[cameraIndex]++;
+                                 channelImageNr[channelIndex]++;
+                                 cameraImageNr[cameraIndex]++;
 
                                  // if hardware timepoints then we only send one trigger and
                                  //   manually keep track of which channel/timepoint comes next
                                  if (acqSettings.hardwareTimepoints
-                                       && frNumber[channelIndex] >= acqSettings.numSlices) {  // only do this if we are done with the slices in this MM channel
+                                       && channelImageNr[channelIndex] >= acqSettings.numSlices) {  // only do this if we are done with the slices in this MM channel
 
                                     // we just finished filling one MM channel with all its slices so go to next timepoint for this channel
-                                    frNumber[channelIndex] = 0;
+                                    channelImageNr[channelIndex] = 0;
                                     tpNumber[channelIndex]++;
 
                                     // see if we are supposed to skip next image
@@ -2920,7 +3001,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         if (core_.isSequenceRunning(firstCamera)) {
                            core_.stopSequenceAcquisition(firstCamera);
                         }
-                        if (twoSided && core_.isSequenceRunning(secondCamera)) {
+                        if ((twoSided || acqBothCameras) && core_.isSequenceRunning(secondCamera)) {
                            core_.stopSequenceAcquisition(secondCamera);
                         }
                      }
@@ -3041,7 +3122,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       // even if exception happened
       
       cameras_.setCameraForAcquisition(firstCameraKey, false);
-      if (twoSided) {
+      if (twoSided || acqBothCameras) {
          cameras_.setCameraForAcquisition(secondCameraKey, false);
       }
       
@@ -3049,7 +3130,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       try {
          core_.setExposure(firstCamera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
                Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 10f));
-         if (twoSided) {
+         if (twoSided || acqBothCameras) {
             core_.setExposure(secondCamera, prefs_.getFloat(MyStrings.PanelNames.SETTINGS.toString(),
                   Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND.toString(), 10f));
          }

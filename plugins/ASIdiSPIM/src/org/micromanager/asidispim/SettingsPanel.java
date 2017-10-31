@@ -184,13 +184,17 @@ public class SettingsPanel extends ListeningJPanel {
       
       final JPanel acqusitionPanel = new JPanel(new MigLayout(
             "",
-            "[right]16[center]",
+            "[left]",
             "[]8[]"));
       acqusitionPanel.setBorder(PanelUtils.makeTitledBorder("Acquisition"));
 
       final JCheckBox acqSettingsWrite = pu.makeCheckBox("Write file with acquisition settings",
             Properties.Keys.PLUGIN_WRITE_ACQ_SETTINGS_FILE, panelName_, false);
-      acqusitionPanel.add(acqSettingsWrite, "span 2, wrap");
+      acqusitionPanel.add(acqSettingsWrite, "wrap");
+      
+      final JCheckBox acqBothCamerasSimult = pu.makeCheckBox("Acquire from both cameras simultaneously",
+            Properties.Keys.PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT, panelName_, false);
+      acqusitionPanel.add(acqBothCamerasSimult, "wrap");
       
       // end acquisiton panel
       
