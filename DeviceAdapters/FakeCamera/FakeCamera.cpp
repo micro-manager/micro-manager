@@ -557,7 +557,7 @@ void FakeCamera::resetCurImg()
 {
 	initSize_ = false;
 	curPath_ = "";
-	curImg_ = cv::Mat(0, 0, type_, NULL, 0);
-	roiWidth_ = width_ = 0;
-	roiHeight_ = height_ = 0;
+	curImg_ = emptyImg;
+	roiWidth_ = width_ = 1;
+	roiHeight_ = height_ = 1;
 }
