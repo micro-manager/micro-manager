@@ -386,6 +386,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoolLEDpE4000", "DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoolLEDpE300", "DeviceAdapters\CoolLEDpE300\pE300.vcxproj", "{3845AD5B-44B8-4121-81FE-808067EFEA2A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FakeCamera", "DeviceAdapters\FakeCamera\FakeCamera.vcxproj", "{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1903,6 +1905,14 @@ Global
 		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Release|Win32.Build.0 = Release|Win32
 		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Release|x64.ActiveCfg = Release|x64
 		{3845AD5B-44B8-4121-81FE-808067EFEA2A}.Release|x64.Build.0 = Release|x64
+		{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}.Debug|Win32.Build.0 = Debug|Win32
+		{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}.Debug|x64.ActiveCfg = Debug|x64
+		{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}.Debug|x64.Build.0 = Debug|x64
+		{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}.Release|Win32.ActiveCfg = Release|Win32
+		{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}.Release|Win32.Build.0 = Release|Win32
+		{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}.Release|x64.ActiveCfg = Release|x64
+		{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

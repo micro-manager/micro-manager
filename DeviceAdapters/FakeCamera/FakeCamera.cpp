@@ -237,8 +237,8 @@ ERRH_START
 
   double rem = exposure_ - (end - start).getMsec();
 
-  if (rem > 0)
-     CDeviceUtils::SleepMs(rem);
+  if (rem > 0) 
+     CDeviceUtils::SleepMs((long) rem);
 
 ERRH_END
 }
@@ -477,9 +477,9 @@ void FakeCamera::getImg() const throw (error_code)
      }
   }
 
-  img.convertTo(img, type_, scaleFac(img.elemSize() / img.channels(), byteCount_));
+  img.convertTo(img, type_, scaleFac((int) img.elemSize() / img.channels(), byteCount_));
 
-  bool dimChanged = img.cols != width_ || img.rows != height_;
+  bool dimChanged = (unsigned) img.cols != width_ || (unsigned) img.rows != height_;
 
   if (dimChanged)
   {
