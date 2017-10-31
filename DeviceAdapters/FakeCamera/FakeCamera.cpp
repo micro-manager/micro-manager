@@ -74,7 +74,7 @@ FakeCamera::FakeCamera() :
 	pixelTypeValues.push_back(label_CV_16UC4);
 
 	SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
-	
+
 	SetErrorText(ERR_INVALID_DEVICE_NAME, "Specified stage name is invalid");
 	SetErrorText(OUT_OF_RANGE, "Parameters out of range");
 
@@ -226,9 +226,9 @@ unsigned FakeCamera::GetImageBytesPerPixel() const
 
 int FakeCamera::SnapImage()
 {
-ERRH_START
+	ERRH_START
 
-	MM::MMTime start = GetCoreCallback()->GetCurrentMMTime();
+		MM::MMTime start = GetCoreCallback()->GetCurrentMMTime();
 	initSize();
 
 	getImg();
@@ -238,9 +238,9 @@ ERRH_START
 	double rem = exposure_ - (end - start).getMsec();
 
 	if (rem > 0)
-		CDeviceUtils::SleepMs(rem);
+		CDeviceUtils::SleepMs((long)rem);
 
-ERRH_END
+	ERRH_END
 }
 
 int FakeCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
@@ -277,15 +277,15 @@ int FakeCamera::OnPath(MM::PropertyBase * pProp, MM::ActionType eAct)
 		{
 			ERRH_START
 				try
-				{
-					getImg();
-				}
-				catch (error_code ex)
-				{
-					pProp->Set(oldPath.c_str());
-					path_ = oldPath;
-					throw ex;
-				}
+			{
+				getImg();
+			}
+			catch (error_code ex)
+			{
+				pProp->Set(oldPath.c_str());
+				path_ = oldPath;
+				throw ex;
+			}
 			ERRH_END
 		}
 	}
@@ -352,8 +352,8 @@ int FakeCamera::OnPixelType(MM::PropertyBase * pProp, MM::ActionType eAct)
 			type_ = CV_8UC1;
 		}
 
-		emptyImg = cv::Mat(1, 1, type_);
-		emptyImg = 0;
+		emptyImg = cv::Mat::zeros(1, 1, type_);
+		// emptyImg = 0;
 
 		resetCurImg();
 	}
@@ -361,7 +361,7 @@ int FakeCamera::OnPixelType(MM::PropertyBase * pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-std::string FakeCamera::buildPath() const throw (error_code)
+std::string FakeCamera::buildPath() const
 {
 	std::ostringstream path;
 
@@ -413,13 +413,15 @@ std::string FakeCamera::buildPath() const throw (error_code)
 			prec = strtoul(it, &end, 10);
 			it = end;
 
-			if (prec < 0)
-				prec = 0;
 
 			if (*it == '}')
+			{
 				mode = 3;
+			}
 			else
+			{
 				throw error_code(CONTROLLER_ERROR, "Invalid precision specification. (format: ?? for focus stage, ?[name] for any stage, and ?{prec}[name]/?{prec}? for precision other than 0)");
+			}
 			break;
 		case 4:
 			std::ostringstream name;
@@ -429,7 +431,7 @@ std::string FakeCamera::buildPath() const throw (error_code)
 			{
 				MM::Stage* stage = (MM::Stage*)GetCoreCallback()->GetDevice(this, name.str().c_str());
 				if (!stage)
-					throw error_code(CONTROLLER_ERROR, "Invalid stage name '"+ name.str() + "'. (format: ?? for focus stage, ?[name] for any stage, and ?{prec}[name]/?{prec}? for precision other than 0)");
+					throw error_code(CONTROLLER_ERROR, "Invalid stage name '" + name.str() + "'. (format: ?? for focus stage, ?[name] for any stage, and ?{prec}[name]/?{prec}? for precision other than 0)");
 
 				double pos;
 				int ret = stage->GetPositionUm(pos);
@@ -452,7 +454,7 @@ std::string FakeCamera::buildPath() const throw (error_code)
 	return path.str();
 }
 
-void FakeCamera::getImg() const throw (error_code)
+void FakeCamera::getImg() const
 {
 	std::string path = buildPath();
 
@@ -460,8 +462,9 @@ void FakeCamera::getImg() const throw (error_code)
 		return;
 
 	cv::Mat img = path == lastFailedPath_ ? lastFailedImg_ : cv::imread(path, cv::IMREAD_ANYDEPTH | (color_ ? cv::IMREAD_COLOR : cv::IMREAD_GRAYSCALE));
-		
+
 	if (img.data == NULL)
+	{
 		if (curImg_.data != NULL)
 		{
 			LogMessage("Could not find image '" + path + "', reusing last valid image");
@@ -469,19 +472,24 @@ void FakeCamera::getImg() const throw (error_code)
 			return;
 		}
 		else
+		{
 			throw error_code(CONTROLLER_ERROR, "Could not find image '" + path + "'. Please specify a valid path mask (format: ?? for focus stage, ?[name] for any stage, and ?{prec}[name]/?{prec}? for precision other than 0)");
+		}
+	}
 
-	img.convertTo(img, type_, scaleFac(img.elemSize() / img.channels(), byteCount_));
+	img.convertTo(img, type_, scaleFac((int)img.elemSize() / img.channels(), byteCount_));
 
-	bool dimChanged = img.cols != width_ || img.rows != height_;
+	bool dimChanged = (unsigned)img.cols != width_ || (unsigned)img.rows != height_;
 
 	if (dimChanged)
+	{
 		if (capturing_)
 		{
 			lastFailedPath_ = path;
 			lastFailedImg_ = img;
 			throw error_code(DEVICE_CAMERA_BUSY_ACQUIRING);
 		}
+	}
 
 	if (color_)
 	{
@@ -505,7 +513,7 @@ void FakeCamera::getImg() const throw (error_code)
 	curPath_ = path;
 
 	if (dimChanged)
-	{ 
+	{
 		initSize_ = false;
 		initSize(false);
 	}
@@ -551,5 +559,5 @@ void FakeCamera::resetCurImg()
 	curPath_ = "";
 	curImg_ = cv::Mat(0, 0, type_, NULL, 0);
 	roiWidth_ = width_ = 0;
-	roiHeight_ = height_ = 0;	
+	roiHeight_ = height_ = 0;
 }

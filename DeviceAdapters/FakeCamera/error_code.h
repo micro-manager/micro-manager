@@ -39,5 +39,5 @@ public:
 	int code;
 	std::string msg;
 
-	static void ThrowErr(int code) throw (error_code);
+	static void ThrowErr(int code);
 }; 

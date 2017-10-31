@@ -77,7 +77,7 @@ public:
 	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	std::string buildPath() const throw(error_code);
-	void getImg() const throw (error_code);
+	void getImg() const;
 	void updateROI() const;
 
 	void initSize(bool loadImg = true) const;
