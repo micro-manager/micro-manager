@@ -374,6 +374,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VisiTech_iSIM", "DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MatrixVision", "DeviceAdapters\MatrixVision\MatrixVision.vcxproj", "{A982F985-EE25-434F-B9AF-E33C8A3AAC58}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TCPIPPort", "DeviceAdapters\TCPIPPort\TCPIPPort.vcxproj", "{F4370C29-1428-41CC-A52D-EB1EE711DCBC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1843,6 +1845,14 @@ Global
 		{A982F985-EE25-434F-B9AF-E33C8A3AAC58}.Release|Win32.Build.0 = Release|Win32
 		{A982F985-EE25-434F-B9AF-E33C8A3AAC58}.Release|x64.ActiveCfg = Release|x64
 		{A982F985-EE25-434F-B9AF-E33C8A3AAC58}.Release|x64.Build.0 = Release|x64
+		{F4370C29-1428-41CC-A52D-EB1EE711DCBC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F4370C29-1428-41CC-A52D-EB1EE711DCBC}.Debug|Win32.Build.0 = Debug|Win32
+		{F4370C29-1428-41CC-A52D-EB1EE711DCBC}.Debug|x64.ActiveCfg = Debug|x64
+		{F4370C29-1428-41CC-A52D-EB1EE711DCBC}.Debug|x64.Build.0 = Debug|x64
+		{F4370C29-1428-41CC-A52D-EB1EE711DCBC}.Release|Win32.ActiveCfg = Release|Win32
+		{F4370C29-1428-41CC-A52D-EB1EE711DCBC}.Release|Win32.Build.0 = Release|Win32
+		{F4370C29-1428-41CC-A52D-EB1EE711DCBC}.Release|x64.ActiveCfg = Release|x64
+		{F4370C29-1428-41CC-A52D-EB1EE711DCBC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
