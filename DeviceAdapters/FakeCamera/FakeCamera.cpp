@@ -44,7 +44,8 @@ FakeCamera::FakeCamera() :
 {
 	resetCurImg();
 
-	CreateProperty("Path Mask", "", MM::String, false, new CPropertyAction(this, &FakeCamera::OnPath));
+	CreateProperty("Path mask", "", MM::String, false, new CPropertyAction(this, &FakeCamera::OnPath));
+	CreateProperty("Resolved path", "", MM::String, true, new CPropertyAction(this, &FakeCamera::ResolvePath));
 
 	CreateProperty(MM::g_Keyword_Name, cameraName, MM::String, true);
 
@@ -293,6 +294,23 @@ int FakeCamera::OnPath(MM::PropertyBase * pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
+int FakeCamera::ResolvePath(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		try
+		{
+			pProp->Set(buildPath().c_str());
+		}
+		catch (error_code)
+		{
+			pProp->Set("[Invalid path specification]");
+		}
+	}
+
+	return DEVICE_OK;
+}
+
 double scaleFac(int bef, int aft)
 {
 	return (double)(1 << (8 * aft)) / (1 << (8 * bef));
@@ -394,10 +412,7 @@ std::string FakeCamera::buildPath() const
 				if (ret != 0)
 					pos = 0;
 
-				if (prec == 0)
-					path << (int)pos;
-				else
-					path << std::setprecision(prec) << pos;
+				path << std::setprecision(prec) << pos;
 
 				prec = 0;
 				mode = 0;
@@ -438,10 +453,7 @@ std::string FakeCamera::buildPath() const
 				if (ret != 0)
 					pos = 0;
 
-				if (prec == 0)
-					path << (int)pos;
-				else
-					path << std::setprecision(prec) << pos;
+				path << std::setprecision(prec) << pos;
 
 				prec = 0;
 				mode = 0;
