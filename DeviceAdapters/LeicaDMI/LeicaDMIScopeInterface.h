@@ -56,7 +56,10 @@ class LeicaScopeInterface
       // Utility function
       int GetAnswer(MM::Device& device, MM::Core& core, const char* command, std::string& answer);
       int GetStandInfo(MM::Device& device, MM::Core& core);
-	   int GetDevicesPresent(MM::Device& device, MM::Core& core);
+	  int GetAFCFocusScore(MM::Device& device, MM::Core& core);
+	  int GetAFCMode(MM::Device& device, MM::Core& core);
+	  int GetAFCLEDIntensity(MM::Device& device, MM::Core& core);
+	  int GetDevicesPresent(MM::Device& device, MM::Core& core);
       int GetILTurretInfo(MM::Device& device, MM::Core& core);
       int GetCondensorInfo(MM::Device& device, MM::Core& core);
       int GetRevolverInfo(MM::Device& device, MM::Core& core);
@@ -68,9 +71,9 @@ class LeicaScopeInterface
       int GetFastFilterWheelInfo(MM::Device& device, MM::Core& core);
       int GetMagChangerInfo(MM::Device& device, MM::Core& core);
       int GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID);
-	   int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
+	  int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
       int GetTransmittedLightManual(MM::Device& device, MM::Core& core, int & position);
-	   int GetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int & position);
+	  int GetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int & position);
 
 		int GetSidePortInfo(MM::Device& device, MM::Core& core);
 
@@ -94,13 +97,14 @@ class LeicaScopeInterface
       int SetTLPolarizerPosition(MM::Device& device, MM::Core& core, int position);
       int SetDICPrismTurretPosition(MM::Device& device, MM::Core& core, int position);
       int SetDICPrismFinePosition(MM::Device& device, MM::Core& core, int position);
-	   int SetTransmittedLightState(MM::Device& device, MM::Core& core, int position);
+	  int SetTransmittedLightState(MM::Device& device, MM::Core& core, int position);
       int SetTransmittedLightManual(MM::Device& device, MM::Core& core, int position);
-	   int SetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int position);
+	  int SetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetAFCMode(MM::Device& device, MM::Core& core, bool on);
       int SetAFCOffset(MM::Device &device, MM::Core &core, double offset);
       int SetAFCDichroicMirrorPosition(MM::Device &device, MM::Core &core, int position);
-		int SetSidePortPosition(MM::Device& device, MM::Core& core, int position);
+	  int SetAFCLEDIntensity(MM::Device &device, MM::Core &core, int intensity);
+	  int SetSidePortPosition(MM::Device& device, MM::Core& core, int position);
 
       bool portInitialized_;
       LeicaMonitoringThread* monitoringThread_;
