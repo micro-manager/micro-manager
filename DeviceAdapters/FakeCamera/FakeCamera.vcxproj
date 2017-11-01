@@ -100,7 +100,7 @@
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\OpenCV2.4.8\build\x86\vc10\lib;$(MM_BOOST_LIBDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Program Files (x86)\Micro-Manager-2.0beta"</Command>
+      <Command>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Program Files (x86)\Micro-Manager-1.4"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -116,7 +116,7 @@
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\OpenCV2.4.8\build\x64\vc10\lib;$(MM_BOOST_LIBDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Program Files\Micro-Manager-2.0beta"</Command>
+      <Command>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Program Files\Micro-Manager-1.4"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -136,7 +136,7 @@
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\OpenCV2.4.8\build\x86\vc10\lib;$(MM_BOOST_LIBDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Program Files (x86)\Micro-Manager-2.0beta"</Command>
+      <Command>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Program Files (x86)\Micro-Manager-1.4"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -156,7 +156,7 @@
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\OpenCV2.4.8\build\x64\vc10\lib;$(MM_BOOST_LIBDIR);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Program Files\Micro-Manager-2.0beta"</Command>
+      <Command>copy /Y "$(TargetDir)$(TargetFileName)" "C:\Program Files\Micro-Manager-1.4"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
