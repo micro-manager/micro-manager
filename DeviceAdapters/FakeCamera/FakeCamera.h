@@ -74,6 +74,7 @@ public:
 	const unsigned int* GetImageBufferAsRGB32();
 
 	int OnPath(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int ResolvePath(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	std::string buildPath() const throw(error_code);
