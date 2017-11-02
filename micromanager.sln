@@ -388,6 +388,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CoolLEDpE300", "DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FakeCamera", "DeviceAdapters\FakeCamera\FakeCamera.vcxproj", "{736FBB21-A1CB-47AB-A511-8C4D4C6C4CCA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TCPIPPort", "DeviceAdapters\TCPIPPort\TCPIPPort.vcxproj", "{F4370C29-1428-41CC-A52D-EB1EE711DCBC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
