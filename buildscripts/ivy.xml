@@ -44,18 +44,18 @@
       <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/>
       <dependency org="net.clearvolume" name="clearcl" rev="0.4.7"/>
 
-      <!--TODO: the jogl and gluegen runtimes are not fetched correctly-->
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt-main" rev="2.3.2"/>
-      <dependency org="org.jogamp.gluegen" name="gluegen-rt" rev="2.3.2"/>
+      <!--jogl and gluegen are a pain! They are in central, but named in a way that is hard to re-concile with ivy.  Rename and use a copy from 3rdpartypublic -->
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-local" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-main-local" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-macosx-universal" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-amd64" rev="2.3.2"/>
+      <dependency org="org.jogamp.gluegen" name="gluegen-rt-natives-windows-i586" rev="2.3.2"/>
       <dependency org="org.jogamp.gluegen" name="gluegen" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all-main" rev="2.3.2"/>
-      <dependency org="org.jogamp.jogl" name="jogl-all" rev="2.3.2">
-         <artifact name="jogl-all"/> 
-         <artifact name="jogl-all" e:classifier="natives-macosx-universal"/>
-         <!--
-         <artifact name="jogl-all" e:classifer="natives-windows-amd64"/>
-         -->
-      </dependency>
+      <dependency org="org.jogamp.jogl" name="jogl-all-local" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-main-local" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-natives-macosx-universal" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-amd64" rev="2.3.2"/>
+      <dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-i586" rev="2.3.2"/>
 
       <!-- Patched version of clearvolume from Nico -->
       <dependency org="net.clearvolume" name="ClearVolume" rev="1.0-MM-SNAPSHOT"/>
