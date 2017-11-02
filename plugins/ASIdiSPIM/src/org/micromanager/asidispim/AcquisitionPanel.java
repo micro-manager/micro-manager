@@ -853,7 +853,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // checkbox to signal that autofocus should be used during acquisition
       // another orphan UI element
-      useAutofocusCB_ = new JCheckBox("Autofocus during acquisition");
+      useAutofocusCB_ = new JCheckBox("Autofocus periodically");
       useAutofocusCB_.setSelected(prefs_.getBoolean(panelName_, 
               Properties.Keys.PLUGIN_ACQUSITION_USE_AUTOFOCUS, false));
       useAutofocusCB_.addActionListener(new ActionListener() {
@@ -867,7 +867,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // checkbox to signal that movement should be corrected during acquisition
       // Yet another orphan UI element
-      useMovementCorrectionCB_ = new JCheckBox("Correct Movement during acquisition");
+      useMovementCorrectionCB_ = new JCheckBox("Motion correction");
       useMovementCorrectionCB_.setSelected(prefs_.getBoolean(panelName_, 
               Properties.Keys.PLUGIN_ACQUSITION_USE_MOVEMENT_CORRECTION, false));
       useMovementCorrectionCB_.addActionListener(new ActionListener() {
@@ -908,7 +908,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       centerColumnPanel_.add(positionPanel, "growx, wrap");
       centerColumnPanel_.add(multiChannelPanel_, "wrap");
       centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
-      centerColumnPanel_.add(useAutofocusCB_, "wrap");
+      centerColumnPanel_.add(useAutofocusCB_, "split 2");
       centerColumnPanel_.add(useMovementCorrectionCB_);
       
       rightColumnPanel_ = new JPanel(new MigLayout("", "[center]0", "[]0[]"));
