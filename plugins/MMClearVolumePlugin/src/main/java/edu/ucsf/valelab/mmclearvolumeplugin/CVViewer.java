@@ -2,7 +2,7 @@
  * Binding to ClearVolume 3D viewer View Micro-Manager datasets in 3D
  *
  * AUTHOR: Nico Stuurman COPYRIGHT: Regents of the University of California,
- * 2015 
+ * 2015 - 2017
  * LICENSE: This file is distributed under the BSD license. License text is
  * included with the source distribution.
  *
@@ -63,6 +63,10 @@ import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplaySettings.ColorMode;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.HistogramData;
+import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
+import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
+import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.events.ShutdownCommencingEvent;
 
 
@@ -72,12 +76,12 @@ import org.micromanager.events.ShutdownCommencingEvent;
  * 
  * @author nico
  */
-public class CVViewer implements DataViewer {
+public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    private DisplaySettings displaySettings_;
    private final Studio studio_;
-   private Datastore store_;
-   private DisplayWindow clonedDisplay_;
+   private DataProvider dataProvider_;
+   private DataViewer clonedDisplay_;
    private ClearVolumeRendererInterface clearVolumeRenderer_;
    private String name_;
    private final EventBus displayBus_;
@@ -89,8 +93,8 @@ public class CVViewer implements DataViewer {
    private final String XLOC = "XLocation";
    private final String YLOC = "YLocation";
    private final Class<?> ourClass_;
-   private int imgCounter_ = 0;
    private int activeChannel_ = 0;
+   private Coords lastDisplayedCoords_;
    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    
@@ -113,14 +117,14 @@ public class CVViewer implements DataViewer {
       studio_ = studio;
       UserProfile profile = studio_.getUserProfile();
       if (store == null) {
-         clonedDisplay_ = studio_.displays().getCurrentWindow();
+         clonedDisplay_ = studio_.displays().getActiveDataViewer();
          if (clonedDisplay_ != null) {
-            store_ = clonedDisplay_.getDatastore();
+            dataProvider_ = clonedDisplay_.getDataProvider();
             name_ = clonedDisplay_.getName() + "-ClearVolume";
          }
       } else {
-         store_ = store;
-         clonedDisplay_ = getDisplay(store_);
+         dataProvider_ = store;
+         clonedDisplay_ = getDisplay(dataProvider_);
          if (clonedDisplay_ != null) {
             name_ = clonedDisplay_.getName() + "-ClearVolume";
          }
@@ -132,23 +136,23 @@ public class CVViewer implements DataViewer {
       cvFrame_.setLocation(xLoc, yLoc);
       coordsBuilder_ = studio_.data().getCoordsBuilder();
       
-      if (store_ == null) {
+      if (dataProvider_ == null) {
          studio_.logs().showMessage("No data set open");
          return;
       }
       
       if (name_ == null) {
-         name_ = store_.getSummaryMetadata().getPrefix();
+         name_ = dataProvider_.getSummaryMetadata().getPrefix();
       }
 
       // check if we have all z slices in the first time point
       // if not, rely on the onNewImage function to initialize the renderer
       Coords zStackCoords = studio_.data().getCoordsBuilder().t(0).build();
       try {
-         final int nrImages = store_.getImagesMatching(zStackCoords).size();
+         final int nrImages = dataProvider_.getImagesMatching(zStackCoords).size();
          currentlyShownTimePoint_ = -1; // set to make sure the first volume will be drawn
-         Coords intendedDimensions = store_.getSummaryMetadata().getIntendedDimensions();
-         if (store_.isFrozen()) {
+         Coords intendedDimensions = dataProvider_.getSummaryMetadata().getIntendedDimensions();
+         if (dataProvider_.isFrozen()) {
             initializeRenderer(0);
          } else if (intendedDimensions != null
                  && nrImages >= intendedDimensions.getChannel() * intendedDimensions.getZ()) {
@@ -170,7 +174,7 @@ public class CVViewer implements DataViewer {
 
       if (clonedDisplay_ == null) {
          // There could be a display attached to the store now
-         clonedDisplay_ = getDisplay(store_);
+         clonedDisplay_ = getDisplay(dataProvider_);
       }
 
       if (clonedDisplay_ != null) {
@@ -181,16 +185,16 @@ public class CVViewer implements DataViewer {
       }
 
       try {
-         maxValue_ = 1 << store_.getAnyImage().getMetadata().getBitDepth();
+         maxValue_ = 1 << dataProvider_.getAnyImage().getMetadata().getBitDepth();
 
-         final int nrCh = store_.getAxisLength(Coords.CHANNEL);
+         final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
 
          // clean up ContrastSettings
          DisplaySettings.ContrastSettings[] contrastSettings
                  = displaySettings_.getChannelContrastSettings();
          if (contrastSettings == null || contrastSettings.length != nrCh) {
             contrastSettings = new DisplaySettings.ContrastSettings[nrCh];
-            for (int ch = 0; ch < store_.getAxisLength(Coords.CHANNEL); ch++) {
+            for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ch++) {
                contrastSettings[ch] = studio_.displays().
                        getContrastSettings(min, maxValue_, preferredGamma, true);
             }
@@ -241,7 +245,7 @@ public class CVViewer implements DataViewer {
                  channelContrastSettings(contrastSettings).
                  build();
 
-         Image randomImage = store_.getAnyImage();
+         Image randomImage = dataProvider_.getAnyImage();
          // creates renderer:
          NativeTypeEnum nte = NativeTypeEnum.UnsignedShort;
          if (randomImage.getBytesPerPixel() == 1) {
@@ -303,9 +307,9 @@ public class CVViewer implements DataViewer {
     */
    public void register() {
 
-      displayBus_.register(this);
-      store_.registerForEvents(this);
-      studio_.getDisplayManager().addViewer(this);
+      // displayBus_.register(this);
+      dataProvider_.registerForEvents(this);
+      studio_.displays().addViewer(this);
       studio_.events().registerForEvents(this);
                   
       // Ensure there are histograms for our display.
@@ -321,12 +325,13 @@ public class CVViewer implements DataViewer {
       cvFrame_.addWindowFocusListener(new WindowFocusListener() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
+            postEvent(DataViewerDidBecomeActiveEvent.create(ourViewer));
             //studio_.getDisplayManager()..raisedToTop(ourViewer);
          }
 
          @Override
          public void windowLostFocus(WindowEvent e) {
-            // nothing to do
+            postEvent(DataViewerDidBecomeInactiveEvent.create(ourViewer));
          }
       }
       );
@@ -349,8 +354,8 @@ public class CVViewer implements DataViewer {
       profile.getSettings(ourClass_).putInteger(XLOC, cvFrame_.getX());
       profile.getSettings(ourClass_).putInteger(YLOC, cvFrame_.getY());
       studio_.getDisplayManager().removeViewer(this);
-      displayBus_.unregister(this);
-      store_.unregisterForEvents(this);
+      // displayBus_.unregister(this);
+      dataProvider_.unregisterForEvents(this);
       studio_.events().unregisterForEvents(this);
       clearVolumeRenderer_.close();
       cvFrame_.dispose();
@@ -358,7 +363,7 @@ public class CVViewer implements DataViewer {
    }
 
    private void setOneChannelVisible(int chToBeVisible) {
-      for (int ch = 0; ch < store_.getAxisLength(Coords.CHANNEL); ch++) {
+      for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ch++) {
          boolean setVisible = false;
          if (ch == chToBeVisible) {
             setVisible = true;
@@ -368,7 +373,7 @@ public class CVViewer implements DataViewer {
    }
    
    private void setAllChannelsVisible() {
-      for (int ch = 0; ch < store_.getAxisLength(Coords.CHANNEL); ch++) {
+      for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ch++) {
          clearVolumeRenderer_.setLayerVisible(ch, true);
       }
    }
@@ -388,7 +393,7 @@ public class CVViewer implements DataViewer {
             setOneChannelVisible(activeChannel_); // todo: get the channel selected in the slider
          }
       }
-      for (int ch = 0; ch < store_.getAxisLength(Coords.CHANNEL); ch++ ) {
+      for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ch++ ) {
          if ( !Objects.equals(displaySettings_.getSafeIsVisible(ch, true), 
                  ds.getSafeIsVisible(ch, true)) ) {
             clearVolumeRenderer_.setLayerVisible(ch, ds.getSafeIsVisible(ch, true) );
@@ -463,7 +468,6 @@ public class CVViewer implements DataViewer {
       System.out.println("Unregistering for event: " + o.toString());
       displayBus_.unregister(o);
    }
-
    
    public void postEvent(Object o) {
       // System.out.println("Posting event on the EventBus");
@@ -472,7 +476,15 @@ public class CVViewer implements DataViewer {
 
    @Override
    public Datastore getDatastore() {
-      return store_;
+      if (dataProvider_ instanceof Datastore) {
+         return (Datastore) dataProvider_;
+      }
+      return null;
+   }
+   
+   @Override
+   public DataProvider getDataProvider() {
+      return dataProvider_;
    }
    
    @Override
@@ -490,6 +502,7 @@ public class CVViewer implements DataViewer {
       } catch (IOException ioe) {
           studio_.logs().logError(ioe);
       }
+      lastDisplayedCoords_ = coords;
       displayBus_.post(new CanvasDrawCompleteEvent());
    }
 
@@ -501,22 +514,22 @@ public class CVViewer implements DataViewer {
    public List<Image> getDisplayedImages() throws IOException {
       // System.out.println("getDisplayed Images called");
       List<Image> imageList = new ArrayList<>();
-      final int nrZ = store_.getAxisLength(Coords.Z);
-      final int nrCh = store_.getAxisLength(Coords.CHANNEL);
+      final int nrZ = dataProvider_.getAxisLength(Coords.Z);
+      final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
       for (int ch = 0; ch < nrCh; ch++) {
          /*
          // return the complete stack
          for (int i = 0; i < nrZ; i++) {
             coordsBuilder_ = coordsBuilder_.z(i).channel(ch).time(0).stagePosition(0);
             Coords coords = coordsBuilder_.build();
-            imageList.add(store_.getImage(coords));
+            imageList.add(dataProvider_.getImage(coords));
          }
          */
 
          // Only return the middle image
          coordsBuilder_ = coordsBuilder_.z(nrZ / 2).channel(ch).time(0).stagePosition(0);
          Coords coords = coordsBuilder_.build();
-         imageList.add(store_.getImage(coords));
+         imageList.add(dataProvider_.getImage(coords));
 
       }
       return imageList;
@@ -562,11 +575,11 @@ public class CVViewer implements DataViewer {
       //if (timePoint == currentlyShownTimePoint_)
       //   return; // nothing to do, already showing requested timepoint
       // create fragmented memory for each stack that needs sending to CV:
-      Image randomImage = store_.getAnyImage();
+      Image randomImage = dataProvider_.getAnyImage();
       final Metadata metadata = randomImage.getMetadata();
-      final SummaryMetadata summary = store_.getSummaryMetadata();
-      final int nrZ = store_.getAxisLength(Coords.Z);
-      final int nrCh = store_.getAxisLength(Coords.CHANNEL);
+      final SummaryMetadata summary = dataProvider_.getSummaryMetadata();
+      final int nrZ = dataProvider_.getAxisLength(Coords.Z);
+      final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
 
       // long startTime = System.currentTimeMillis();
       clearVolumeRenderer_.setVolumeDataUpdateAllowed(false);
@@ -580,7 +593,7 @@ public class CVViewer implements DataViewer {
             Coords coords = coordsBuilder_.build();
 
             // Bypass Micro-Manager api to get access to the ByteBuffers
-            DefaultImage image = (DefaultImage) store_.getImage(coords);
+            DefaultImage image = (DefaultImage) dataProvider_.getImage(coords);
 
             // add the contiguous memory as fragment:
             if (image != null) {
@@ -798,10 +811,10 @@ public class CVViewer implements DataViewer {
     *
     * @param store first DisplayWindow or null if not found
     */
-   private DisplayWindow getDisplay(Datastore store) {
+   private DisplayWindow getDisplay(DataProvider provider) {
       List<DisplayWindow> dataWindows = studio_.displays().getAllImageWindows();
       for (DisplayWindow dv : dataWindows) {
-         if (store == dv.getDatastore()) {
+         if (provider == dv.getDataProvider()) {
             return dv;
          }
       }
@@ -816,8 +829,8 @@ public class CVViewer implements DataViewer {
       }
       DisplaySettings.DisplaySettingsBuilder builder = 
               displaySettings_.copy();
-      for (int ch = 0; ch < store_.getAxisLength(Coords.CHANNEL); ++ch) {
-         Image image = store_.getImage(baseCoords.copy().channel(ch).build());
+      for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ++ch) {
+         Image image = dataProvider_.getImage(baseCoords.copy().channel(ch).build());
          if (image != null) {
             int numComponents = image.getNumComponents();
             Integer[] mins = new Integer[numComponents];
@@ -831,8 +844,8 @@ public class CVViewer implements DataViewer {
                HistogramData data = studio_.displays().calculateHistogram(
                      getDisplayedImages().get(ch),
                      j,
-                     store_.getAnyImage().getMetadata().getBitDepth(),
-                     store_.getAnyImage().getMetadata().getBitDepth(),
+                     dataProvider_.getAnyImage().getMetadata().getBitDepth(),
+                     dataProvider_.getAnyImage().getMetadata().getBitDepth(),
                      extremaPercentage,
                      false  ); // make sure that we do not use stdev
                mins[j] = data.getMinIgnoringOutliers();
@@ -869,9 +882,9 @@ public class CVViewer implements DataViewer {
          // check if we have all z planes, if so draw the volume
          // The following code is exact, but very slow
          //Coords zStackCoords = studio_.data().getCoordsBuilder().time(t).build();
-         //final int nrImages = store_.getImagesMatching(zStackCoords).size();
+         //final int nrImages = dataProvider_.getImagesMatching(zStackCoords).size();
          
-         Coords intendedDimensions = store_.getSummaryMetadata().getIntendedDimensions();
+         Coords intendedDimensions = dataProvider_.getSummaryMetadata().getIntendedDimensions();
          // instead, keep our own counter, this assumes that all time points arrive in order
          // TODO: work around this by keeping a list of counters
          imgCounter_++;
@@ -900,24 +913,22 @@ public class CVViewer implements DataViewer {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
    }
 
-   @Override
-   public DataProvider getDataProvider() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-   }
 
    @Override
    public void setDisplayPosition(Coords position, boolean forceRedisplay) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      if (forceRedisplay || !position.equals(lastDisplayedCoords_)) {
+         setDisplayedImageTo(position);
+      }
    }
 
    @Override
    public void setDisplayPosition(Coords position) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      setDisplayedImageTo(position);
    }
 
    @Override
    public Coords getDisplayPosition() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return lastDisplayedCoords_;
    }
 
    @Override
@@ -927,17 +938,21 @@ public class CVViewer implements DataViewer {
 
    @Override
    public boolean compareAndSetDisplayPosition(Coords originalPosition, Coords newPosition) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      boolean display = originalPosition != newPosition;
+      if (display) {
+         setDisplayedImageTo(newPosition);
+      }
+      return display;
    }
 
    @Override
    public boolean isVisible() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return clearVolumeRenderer_ != null && clearVolumeRenderer_.isShowing();
    }
 
    @Override
    public boolean isClosed() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      return clearVolumeRenderer_ == null;
    }
 
    @Override
@@ -948,5 +963,11 @@ public class CVViewer implements DataViewer {
    @Override
    public void removeListener(DataViewerListener listener) {
       throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+
+   @Override
+   public ImagesAndStats getCurrentImagesAndStats() {
+      // TODO
+      return null;
    }
 }

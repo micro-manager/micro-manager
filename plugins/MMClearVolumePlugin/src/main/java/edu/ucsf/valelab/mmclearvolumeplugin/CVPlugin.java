@@ -80,10 +80,4 @@ public class CVPlugin implements MenuPlugin, SciJavaPlugin {
       return VERSION_INFO;
    }
 
-   public void createPanel() {
-      CVInspectorPanelController cvPanel =  new CVInspectorPanelController();
-      studio_.events().registerForEvents(cvPanel);
-   }
-  
-
 }
