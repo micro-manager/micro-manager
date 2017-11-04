@@ -61,7 +61,7 @@ public class ParallelAcquisitionGroup implements AcquisitionEventSource {
             //start first
             acqs_.get(0).signalReadyForNextTP();
         } catch (Exception ex) {
-            Log.log("Couldn't start acq group");
+            Log.log(ex);
             throw new RuntimeException();
         }
         //now that first one is started, return so that multi acquisition manager has a reference to the group for aborting purposes

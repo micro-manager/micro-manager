@@ -46,7 +46,6 @@ import org.micromanager.plugins.magellan.misc.JavaUtils;
 import org.micromanager.plugins.magellan.misc.Log;
 import org.micromanager.plugins.magellan.misc.LongPoint;
 import org.micromanager.plugins.magellan.misc.MD;
-import py4j.GatewayServer;
 
 /**
  * This class manages multiple multipage Tiff datasets, averaging multiple 2x2
