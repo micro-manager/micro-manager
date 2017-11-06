@@ -106,7 +106,7 @@ public final class CommentsHelper {
     * Create a new comments annotation.
     */
    public static void createAnnotation(Datastore store) throws IOException {
-      //store.createNewAnnotation(COMMENTS_FILE);
-      throw new UnsupportedOperationException("TODO");
+      //store.createNewAnnotation(COMMENTS_FILE       // throw new UnsupportedOperationException("TODO");
+      ReportingUtils.logError("TODO: Implement org.micromanager.data.internal.CommentsHelper.createAnnotation");
    }
 }
