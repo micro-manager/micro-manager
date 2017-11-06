@@ -33,6 +33,7 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.ChannelSpec;
+import org.micromanager.asidispim.Data.Devices.Libraries;
 import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
@@ -1919,9 +1920,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Using side A but no camera specified for that side.");
             return false;
          }
-         if (!CameraModes.getValidModeKeys(devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA)).contains(getSPIMCameraMode())) {
+         Devices.Keys camKey = Devices.Keys.CAMERAA;
+         Devices.Libraries camLib = devices_.getMMDeviceLibrary(camKey);
+         if (!CameraModes.getValidModeKeys(camLib).contains(getSPIMCameraMode())) {
             MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera A doesn't support it.");
             return false;
+         }
+         // Hamamatsu only supports light sheet mode with USB cameras.  Tt seems due to static architecture of getValidModeKeys
+         //   there is no good way to tell earlier that light sheet mode isn't supported.  I don't like this but don't see another option.
+         if (camLib == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
+            if (getSPIMCameraMode() == CameraModes.Keys.LIGHT_SHEET) {
+               MyDialogUtils.showError("Hamamatsu only supports light sheet mode with CameraLink readout.");
+               return false;
+            }
          }
       }
       

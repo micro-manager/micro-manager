@@ -658,7 +658,9 @@ public class Cameras {
          }
          break;
       case LIGHT_SHEET:
-         if (camLibrary == Devices.Libraries.PVCAM) {
+         if (camLibrary == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
+            readoutTimeMs = 10000;  // absurdly large, light sheet mode over USB3 isn't supported by Flash4 but we are set up to decide available modes by device library and not a property
+         } else if (camLibrary == Devices.Libraries.PVCAM) {
             readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
          } else {
             Rectangle roi = getCameraROI(camKey);
@@ -680,16 +682,20 @@ public class Cameras {
 
          switch (camLibrary) {
          case HAMCAM:
-            // device adapter provides readout time rounded to nearest 0.1ms; we
-            // calculate it ourselves instead
-            // note that Flash4's ROI is always set in increments of 4 pixels
-            if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE)
-                  .equals(Properties.Values.PROGRESSIVE.toString())) {
-               numReadoutRows = roi.height;
-            } else {
-               numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+            if (camLibrary == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
+               // trust the device adapter's calculation for USB3
+               readoutTimeMs = props_.getPropValueFloat(camKey, Properties.Keys.READOUTTIME)*1000f;
+            } else {  // Camera Link interface, original implementation
+               // device adapter provides readout time rounded to nearest 0.1ms; we calculate it ourselves instead
+               // note that Flash4's ROI is always set in increments of 4 pixels
+               if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE)
+                     .equals(Properties.Values.PROGRESSIVE.toString())) {
+                  numReadoutRows = roi.height;
+               } else {
+                  numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+               }
+               readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
             }
-            readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
             break;
          case PCOCAM:
             numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);

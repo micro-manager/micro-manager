@@ -151,6 +151,7 @@ public class Properties {
       READOUTTIME("ReadoutTime"),         // for Hamamatsu
       SENSOR_MODE("SENSOR MODE"),         // for Hamamatsu
       SCAN_MODE("ScanMode"),              // for Hamamatsu, 1 = slow scan, 2 = fast scan
+      CAMERA_BUS("Camera Bus"),           // for Hamamatsu interface type, USB3 or ??
       TRIGGER_MODE_PCO("Triggermode"),         // for PCO
       PIXEL_RATE("PixelRate"),                 // for PCO
       CAMERA_TYPE("CameraType"),               // for PCO
@@ -348,6 +349,7 @@ public class Properties {
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
       SIXTEENBIT("16bit"),
+      USB3("USB3"),
       AREA("AREA"),                // for Hamamatsu's SENSOR MODE
       PROGRESSIVE("PROGRESSIVE"),  // for Hamamatsu's SENSOR MODE, the "lightsheet" mode
       SYNCREADOUT("SYNCREADOUT"),  // for Hamamatsu's TRIGGER ACTIVE
