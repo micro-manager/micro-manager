@@ -29,6 +29,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.Hashtable;
@@ -245,6 +246,57 @@ public final class MicroscopeModel {
          hubs.toArray(availableHubs_);
          availableComPorts_ = new Device[ports.size()];
          comPortInUse_ = new Hashtable<String, Device>();
+         for (int i = 0; i < ports.size(); i++) {
+            availableComPorts_[i] = ports.get(i);
+         }
+      } catch (Exception e3) {
+         ReportingUtils.showError(e3);
+      }
+
+   }
+
+   /**
+    * Inspects the Micro-manager software and reloads information about serial ports
+    */
+   public void rescanSerialPorts(CMMCore core) {
+      try {
+         ArrayList<Device> ports = new ArrayList<Device>(Arrays.asList(availableComPorts_));
+         ArrayList<String> portNames = new ArrayList<String>();
+
+         for (int i = 0; i < ports.size(); ++i) {
+            portNames.add(ports.get(i).getName());
+         }
+
+         StrVector libs = core.getDeviceAdapterNames();
+
+         for (int i = 0; i < libs.size(); i++) {
+            if (!isLibraryAvailable(libs.get(i))) {
+               boolean foundNew = false;
+
+               Device devs[];
+               try {
+                  devs = Device.getLibraryContents(libs.get(i), core);
+                  for (int j = 0; j < devs.length; j++) {
+                     if (devs[j].isSerialPort()) {
+                        // com port
+                        devs[j].setName(devs[j].getAdapterName());
+                        if (!portNames.contains(devs[j].getName())) {
+                           if (!foundNew){
+                              foundNew = true;
+                              ReportingUtils.logMessage(libs.get(i) + ": Found new serial ports:");
+                           }
+                           ReportingUtils.logMessage("   " + devs[j].getAdapterName() + ", " + devs[j].getDescription());
+                           ports.add(devs[j]);
+                           portNames.add(devs[j].getName());
+                        }
+                     }
+                  }
+               } catch (Exception e) {
+               }
+            }
+         }
+
+         availableComPorts_ = new Device[ports.size()];
          for (int i = 0; i < ports.size(); i++) {
             availableComPorts_[i] = ports.get(i);
          }
