@@ -1315,10 +1315,10 @@ public class GUI extends javax.swing.JFrame {
             .addGroup(savingTab_Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(savingTab_Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(savingNameLabel_)
                     .addGroup(savingTab_Layout.createSequentialGroup()
                         .addGap(6, 6, 6)
-                        .addComponent(savingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 686, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(savingNameLabel_))
+                        .addComponent(savingNameTextField_, javax.swing.GroupLayout.PREFERRED_SIZE, 686, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(260, Short.MAX_VALUE))
         );
         savingTab_Layout.setVerticalGroup(
@@ -3078,7 +3078,7 @@ public class GUI extends javax.swing.JFrame {
    }//GEN-LAST:event_acqOrderCombo_ActionPerformed
 
    private void collectionPlaneCombo_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_collectionPlaneCombo_ActionPerformed
-      // TODO add your handling code here:
+      acquisitionSettingsChanged();
    }//GEN-LAST:event_collectionPlaneCombo_ActionPerformed
 
    private void collectionPlaneCheckBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_collectionPlaneCheckBox_ActionPerformed

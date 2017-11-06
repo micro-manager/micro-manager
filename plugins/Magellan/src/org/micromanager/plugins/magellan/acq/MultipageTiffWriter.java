@@ -153,7 +153,12 @@ public class MultipageTiffWriter {
    }
    
    private ByteBuffer allocateByteBuffer(int capacity) {
-      return ByteBuffer.allocateDirect(capacity).order(BYTE_ORDER);
+      try {
+       ByteBuffer buffer =  ByteBuffer.allocateDirect(capacity).order(BYTE_ORDER);
+       return buffer;
+      } catch (Exception e) {
+          throw new RuntimeException();
+      }  
    }
    
    private BlockingQueue<ByteBuffer> currentImageByteBuffers_ = new LinkedBlockingQueue<ByteBuffer>(10);

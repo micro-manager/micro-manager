@@ -845,11 +845,11 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" attributes="0">
+                                  <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
                                       <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
                                       <Component id="savingNameTextField_" min="-2" pref="686" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace pref="260" max="32767" attributes="0"/>
                           </Group>
