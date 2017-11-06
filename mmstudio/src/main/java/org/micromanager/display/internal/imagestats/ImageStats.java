@@ -17,7 +17,7 @@ public class ImageStats {
    private final int index_;
    private final List<IntegerComponentStats> componentStats_;
 
-   static ImageStats create(int index, IntegerComponentStats... componentStats) {
+   public static ImageStats create(int index, IntegerComponentStats... componentStats) {
       return new ImageStats(index, componentStats);
    }
 

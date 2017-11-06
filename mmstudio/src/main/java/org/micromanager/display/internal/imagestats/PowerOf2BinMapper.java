@@ -24,7 +24,7 @@ import net.imglib2.type.numeric.IntegerType;
  * bins. For example, a 256-bin histogram can be created for a 16-bit image.
  * @author Mark A. Tsuchida
  */
-class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<T> {
+public class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<T> {
    private final int sampleShift_;
    private final long endOfRange_;
    private final long binWidth_;
@@ -40,7 +40,7 @@ class PowerOf2BinMapper<T extends IntegerType<T>> implements BinMapper1d<T> {
     * @param binCountPowerOf2
     * @return
     */
-   static <T extends IntegerType<T>> PowerOf2BinMapper<T>
+   public static <T extends IntegerType<T>> PowerOf2BinMapper<T>
        create(int sampleDepthPowerOf2, int binCountPowerOf2)
    {
       return new PowerOf2BinMapper<T>(sampleDepthPowerOf2, binCountPowerOf2);

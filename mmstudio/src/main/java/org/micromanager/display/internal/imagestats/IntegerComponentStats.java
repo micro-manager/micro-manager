@@ -31,7 +31,7 @@ public final class IntegerComponentStats {
    private final long sumOfSquares_;
    private transient final long[] cumulativeDistrib_;
 
-   static class Builder {
+   public static class Builder {
       private long[] histogram_;
       private int binWidthPowerOf2_;
       private long pixelCount_;
@@ -44,49 +44,49 @@ public final class IntegerComponentStats {
       private Builder() {
       }
 
-      Builder histogram(long[] binsIncludingOutOfRange, int binWidthPowerOf2) {
+      public Builder histogram(long[] binsIncludingOutOfRange, int binWidthPowerOf2) {
          Preconditions.checkArgument(binsIncludingOutOfRange.length >= 2);
          histogram_ = binsIncludingOutOfRange;
          binWidthPowerOf2_ = binWidthPowerOf2;
          return this;
       }
 
-      Builder pixelCount(long count) {
+      public Builder pixelCount(long count) {
          pixelCount_ = count;
          return this;
       }
 
-      Builder usedROI(boolean used) {
+      public Builder usedROI(boolean used) {
          usedROI_ = used;
          return this;
       }
 
-      Builder minimum(long min) {
+      public Builder minimum(long min) {
          minimum_ = min;
          return this;
       }
 
-      Builder maximum(long max) {
+      public Builder maximum(long max) {
          maximum_ = max;
          return this;
       }
 
-      Builder sum(long sum) {
+      public Builder sum(long sum) {
          sum_ = sum;
          return this;
       }
 
-      Builder sumOfSquares(long ssq) {
+      public Builder sumOfSquares(long ssq) {
          sumOfSquares_ = ssq;
          return this;
       }
 
-      IntegerComponentStats build() {
+      public IntegerComponentStats build() {
          return new IntegerComponentStats(this);
       }
    }
 
-   static Builder builder() {
+   public static Builder builder() {
       return new Builder();
    }
 
