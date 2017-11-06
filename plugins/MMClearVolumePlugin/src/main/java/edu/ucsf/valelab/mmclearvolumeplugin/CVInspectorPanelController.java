@@ -325,7 +325,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       } 
       panel_.revalidate();
       panel_.repaint();
-      viewer_.updateHistograms();
+      //viewer_.updateHistograms();
       viewer_.registerForEvents(this);
    }
 

@@ -20,6 +20,7 @@ import clearvolume.renderer.cleargl.recorder.VideoRecorderInterface;
 import clearvolume.renderer.factory.ClearVolumeRendererFactory;
 import clearvolume.transferf.TransferFunction1D;
 import clearvolume.transferf.TransferFunctions;
+import com.google.common.base.Preconditions;
 
 import com.jogamp.newt.awt.NewtCanvasAWT;
 
@@ -47,6 +48,12 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import net.imglib2.Cursor;
+import net.imglib2.IterableInterval;
+import net.imglib2.histogram.BinMapper1d;
+import net.imglib2.histogram.Histogram1d;
+import net.imglib2.type.numeric.IntegerType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
@@ -62,11 +69,13 @@ import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.DisplaySettings.ColorMode;
 import org.micromanager.display.DisplayWindow;
-import org.micromanager.display.HistogramData;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
+import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
+import org.micromanager.display.internal.imagestats.IntegerComponentStats;
+import org.micromanager.display.internal.imagestats.PowerOf2BinMapper;
 import org.micromanager.events.ShutdownCommencingEvent;
 
 
@@ -97,6 +106,9 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private Coords lastDisplayedCoords_;
    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
+   
+   
+   private static final int MASK_THRESH = 128;
    
    public CVViewer(Studio studio) {
       this(studio, null);
@@ -313,9 +325,9 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       studio_.events().registerForEvents(this);
                   
       // Ensure there are histograms for our display.
-      if (open_) {
-         updateHistograms();
-      }
+      //if (open_) {
+      //   updateHistograms();
+      //}
       
       // used to reference our instance within the listeners:
       final CVViewer ourViewer = this;
@@ -539,11 +551,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
     * This method ensures that the Inspector histograms have up-to-date data to
     * display.
     */
-   public void updateHistograms() {
+   //public void updateHistograms() {
       // Needed to initialize the histograms
       // TODO
       // studio_.displays().updateHistogramDisplays(getDisplayedImages(), this);
-   }
+   //}
 
    @Override
    public String getName() {
@@ -827,8 +839,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       if (extremaPercentage < 0.0) {
          extremaPercentage = 0.0;
       }
-      DisplaySettings.DisplaySettingsBuilder builder = 
-              displaySettings_.copy();
+      DisplaySettings.Builder builder = 
+              displaySettings_.copyBuilder();
       for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ++ch) {
          Image image = dataProvider_.getImage(baseCoords.copy().channel(ch).build());
          if (image != null) {
@@ -836,7 +848,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             Integer[] mins = new Integer[numComponents];
             Integer[] maxes = new Integer[numComponents];
             Double[] gammas = new Double[numComponents];
-            final ArrayList<HistogramData> datas = new ArrayList(image.getNumComponents());
+            //final ArrayList<HistogramData> datas = new ArrayList(image.getNumComponents());
             for (int j = 0; j < image.getNumComponents(); ++j) {
                gammas[j] = displaySettings_.getSafeContrastGamma(ch, j, 1.0);
                // TODO:
@@ -854,10 +866,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                
                */
             }
-            displaySettings_ = builder.safeUpdateContrastSettings(
-                    studio_.displays().getContrastSettings(
-                            mins, maxes, gammas, true), ch).build();
-            final int tmpCh = ch;
+           // displaySettings_ = builder.safeUpdateContrastSettings(
+           //         studio_.displays().getContrastSettings(
+           //                 mins, maxes, gammas, true), ch).build();
+           // final int tmpCh = ch;
             // TODO
             /*
             if (SwingUtilities.isEventDispatchThread()) {
@@ -900,6 +912,90 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }
 */
+   
+  private <T extends IntegerType<T>> ImageStats compute(
+         IterableInterval<T> img, IterableInterval<UnsignedByteType> mask,
+         int nComponents, int sampleBitDepth, int binCountPowerOf2,
+         boolean isROI, int index)
+   {
+      // It's easier to debug if we check first...
+      Preconditions.checkArgument(img.numDimensions() == 3);
+      Preconditions.checkArgument(img.dimension(0) == nComponents);
+      for (int d = 0; d < 3; ++d) {
+         Preconditions.checkArgument(img.dimension(d) == mask.dimension(d));
+      }
+
+      BinMapper1d<T> binMapper =
+            PowerOf2BinMapper.create(sampleBitDepth, binCountPowerOf2);
+
+      // Some ugliness to allow us to compute stats for multiple components in
+      // a single interation over the pixels.
+      List<Histogram1d<T>> histograms = new ArrayList<>();
+      long[] counts = new long[nComponents];
+      long[] minima = new long[nComponents];
+      long[] maxima = new long[nComponents];
+      long[] sums = new long[nComponents];
+      long[] sumsOfSquares = new long[nComponents];
+      for (int component = 0; component < nComponents; ++component) {
+         histograms.add(new Histogram1d<>(binMapper));
+         counts[component] = 0;
+         minima[component] = Long.MAX_VALUE;
+         maxima[component] = Long.MIN_VALUE;
+         sums[component] = 0;
+         sumsOfSquares[component] = 0;
+      }
+
+      // Note: sums of squares could overflow with a huge image (65k by 65k or
+      // greater). If we ever deal with such images, we should split the image
+      // before computing partial statistics.
+      // The reason for computing sums of squares, rather than a running stdev,
+      // is to make it easy to parallelize these computations within a single
+      // image.
+
+      // Perform the actual computations:
+      Cursor<T> dataCursor = img.localizingCursor();
+      Cursor<UnsignedByteType> maskCursor = mask.cursor();
+      for (int i = 0; dataCursor.hasNext(); ++i) {
+         int component = i % nComponents;
+         T dataSample = dataCursor.next();
+         UnsignedByteType maskSample = maskCursor.next();
+
+         if (maskSample.getInteger() < MASK_THRESH) {
+            continue;
+         }
+
+         long dataValue = dataSample.getIntegerLong();
+
+         histograms.get(component).increment(dataSample);
+         counts[component]++;
+         if (dataValue < minima[component]) {
+            minima[component] = dataValue;
+         }
+         if (dataValue > maxima[component]) {
+            maxima[component] = dataValue;
+         }
+         sums[component] += dataValue;
+         sumsOfSquares[component] += dataValue * dataValue;
+      }
+
+      IntegerComponentStats[] componentStats =
+            new IntegerComponentStats[nComponents];
+      for (int component = 0; component < nComponents; ++component) {
+         componentStats[component] = IntegerComponentStats.builder().
+               histogram(histograms.get(component).toLongArray(),
+                     Math.max(0, sampleBitDepth - binCountPowerOf2)).
+               pixelCount(counts[component]).
+               usedROI(isROI).
+               minimum(minima[component]).
+               maximum(maxima[component]).
+               sum(sums[component]).
+               sumOfSquares(sumsOfSquares[component]).
+               build();
+      }
+
+      return ImageStats.create(index, componentStats);
+   }
+
    
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent sce) {
@@ -967,7 +1063,17 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    @Override
    public ImagesAndStats getCurrentImagesAndStats() {
-      // TODO
+      // TODO: wade through the nightmare of the undocumented ImagesAndStats
+      // existing code is extremely dense, and complete overkill for what we
+      // need here.  Sad that we'll need to recreate this basic stuff....
+      
+      // ImagesAndStats.create(maxValue_, input, stats);
+      
+      if (lastDisplayedCoords_ == null) {
+         return null;
+      }
+      //ImagesAndStats is = compute()
+      
       return null;
    }
 }
