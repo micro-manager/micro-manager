@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 67
+#define DEVICE_INTERFACE_VERSION 68
 ///////////////////////////////////////////////////////////////////////////////
 
 
