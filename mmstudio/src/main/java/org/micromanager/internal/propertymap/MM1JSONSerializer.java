@@ -103,7 +103,8 @@ public final class MM1JSONSerializer {
             // Nested object may be either nested data structure (= property
             // list) or a PropType-PropVal pair
             JsonObject jo = value.getAsJsonObject();
-            if (jo.has("PropType") && jo.has("PropVal")) {
+            if (jo.has("PropType") && jo.has("PropVal") && 
+                    jo.get("PropVal").isJsonObject()) {
                LegacyPropertyMap1Deserializer.
                      constructPropertyMap1Property(builder, key,
                            jo.get("PropType").getAsString(),
