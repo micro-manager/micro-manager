@@ -20,7 +20,6 @@ import clearvolume.renderer.cleargl.recorder.VideoRecorderInterface;
 import clearvolume.renderer.factory.ClearVolumeRendererFactory;
 import clearvolume.transferf.TransferFunction1D;
 import clearvolume.transferf.TransferFunctions;
-import com.google.common.base.Preconditions;
 
 import com.jogamp.newt.awt.NewtCanvasAWT;
 
@@ -43,17 +42,12 @@ import java.awt.event.WindowFocusListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
-import net.imglib2.Cursor;
-import net.imglib2.IterableInterval;
-import net.imglib2.histogram.BinMapper1d;
-import net.imglib2.histogram.Histogram1d;
-import net.imglib2.type.numeric.IntegerType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
@@ -64,6 +58,8 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultImage;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
@@ -72,10 +68,12 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
-import org.micromanager.display.internal.imagestats.ImageStats;
+import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
+import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ImageStatsRequest;
 import org.micromanager.display.internal.imagestats.ImagesAndStats;
+import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
-import org.micromanager.display.internal.imagestats.PowerOf2BinMapper;
 import org.micromanager.events.ShutdownCommencingEvent;
 
 
@@ -96,7 +94,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private final EventBus displayBus_;
    private final JFrame cvFrame_;
    private Coords.CoordsBuilder coordsBuilder_;
-   private boolean open_ = false;
    private int maxValue_;
    private int currentlyShownTimePoint_;
    private final String XLOC = "XLocation";
@@ -104,11 +101,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private final Class<?> ourClass_;
    private int activeChannel_ = 0;
    private Coords lastDisplayedCoords_;
+   private ImagesAndStats lastCalculatedImagesAndStats_;
    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    
-   
-   private static final int MASK_THRESH = 128;
    
    public CVViewer(Studio studio) {
       this(studio, null);
@@ -305,7 +301,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          
          //studio_.getDisplayManager()..raisedToTop(this);
 
-         open_ = true;
       } catch (IOException ioe) {
          studio_.logs().logError(ioe);
       }
@@ -371,7 +366,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       studio_.events().unregisterForEvents(this);
       clearVolumeRenderer_.close();
       cvFrame_.dispose();
-      open_ = false;
    }
 
    private void setOneChannelVisible(int chToBeVisible) {
@@ -398,46 +392,46 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
     */
    @Override
    public void setDisplaySettings(DisplaySettings ds) {
-      if (displaySettings_.getChannelColorMode() != ds.getChannelColorMode()) {
-         if (ds.getChannelColorMode() == DisplaySettings.ColorMode.COMPOSITE) {
+      if (displaySettings_.getColorMode() != ds.getColorMode()) {
+         if (ds.getColorMode() == DisplaySettings.ColorMode.COMPOSITE) {
             setAllChannelsVisible();
          } else {
             setOneChannelVisible(activeChannel_); // todo: get the channel selected in the slider
          }
       }
       for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ch++ ) {
-         if ( !Objects.equals(displaySettings_.getSafeIsVisible(ch, true), 
-                 ds.getSafeIsVisible(ch, true)) ) {
-            clearVolumeRenderer_.setLayerVisible(ch, ds.getSafeIsVisible(ch, true) );
+         if ( displaySettings_.isChannelVisible(ch) != ds.isChannelVisible(ch)) {
+            clearVolumeRenderer_.setLayerVisible(ch, ds.isChannelVisible(ch) );
          }
          Color nc = ds.getChannelColor(ch);
-         if (ds.getChannelColorMode() == DisplaySettings.ColorMode.GRAYSCALE) {
+         if (ds.getColorMode() == DisplaySettings.ColorMode.GRAYSCALE) {
             nc = Color.WHITE;
          }
          if (displaySettings_.getChannelColor(ch) != nc || 
-                 displaySettings_.getChannelColorMode() != ds.getChannelColorMode() ) {
+                 displaySettings_.getColorMode() != ds.getColorMode() ) {
             clearVolumeRenderer_.setTransferFunction(ch, getGradientForColor(nc));
          }
-         if (!Objects.equals 
-               (displaySettings_.getChannelContrastSettings()[ch].getContrastMaxes()[0], 
-               ds.getChannelContrastSettings()[ch].getContrastMaxes()[0])  ||
-             !Objects.equals
-               (displaySettings_.getChannelContrastSettings()[ch].getContrastMins()[0], 
-               ds.getChannelContrastSettings()[ch].getContrastMins()[0]) )  {
-            float max = (float) ds.getChannelContrastSettings()[ch].getContrastMaxes()[0] / 
-                         (float) maxValue_; 
-            float min = (float) ds.getChannelContrastSettings()[ch].getContrastMins()[0] / 
-                         (float) maxValue_;
-            
-            // System.out.println("Max was: " + max);
+         
+         ChannelDisplaySettings displayChannelSettings = displaySettings_.getChannelSettings(ch);
+         ChannelDisplaySettings dsChannelSettings = ds.getChannelSettings(ch);
+         
+         if ( displayChannelSettings.getComponentSettings(0).getScalingMaximum() != 
+                 dsChannelSettings.getComponentSettings(0).getScalingMaximum()  ||
+              displayChannelSettings.getComponentSettings(0).getScalingMinimum() != 
+                 dsChannelSettings.getComponentSettings(0).getScalingMinimum()  ) {
+            float min = (float) dsChannelSettings.getComponentSettings(0).getScalingMinimum() /
+                    (float) maxValue_; 
+            float max = (float) dsChannelSettings.getComponentSettings(0).getScalingMaximum() /
+                    (float) maxValue_;
             clearVolumeRenderer_.setTransferFunctionRange(ch, min, max);
          }
-         if (!Objects.equals 
-               (displaySettings_.getChannelContrastSettings()[ch].getContrastGammas(), 
-                ds.getChannelContrastSettings()[ch].getContrastGammas()) )  {
-            clearVolumeRenderer_.setGamma(ch,
-                    ds.getChannelContrastSettings()[ch].getContrastGammas()[0]);
+         
+         if (displayChannelSettings.getComponentSettings(0).getScalingGamma() != 
+                 dsChannelSettings.getComponentSettings(0).getScalingGamma() ) {
+            clearVolumeRenderer_.setGamma(ch, 
+                    dsChannelSettings.getComponentSettings(0).getScalingGamma());
          }
+         
       }
       
       // Autostretch if set
@@ -456,12 +450,12 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          }
       }
       
+      // Update the Inspector window
+      this.postEvent(DefaultDisplaySettingsChangedEvent.create(
+              this, displaySettings_, ds));
+      
       // replace our reference to the display settings with the new one
       displaySettings_ = ds;
-      
-      // Needed to update the Inspector window
-      // TODO
-      //displayBus_.post(new NewDisplaySettingsEvent(displaySettings_, this));
    }
 
    @Override
@@ -595,14 +589,15 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
       // long startTime = System.currentTimeMillis();
       clearVolumeRenderer_.setVolumeDataUpdateAllowed(false);
-      if (displaySettings_.isAutostretchEnabled()) {
-         autostretch();
-      }
+     // if (displaySettings_.isAutostretchEnabled()) {
+     //    autostretch();
+      //}
       for (int ch = 0; ch < nrCh; ch++) {
          FragmentedMemory fragmentedMemory = new FragmentedMemory();
          for (int i = 0; i < nrZ; i++) {
             coordsBuilder_ = coordsBuilder_.z(i).channel(ch).time(timePoint).stagePosition(0);
             Coords coords = coordsBuilder_.build();
+            lastDisplayedCoords_ = coords;
 
             // Bypass Micro-Manager api to get access to the ByteBuffers
             DefaultImage image = (DefaultImage) dataProvider_.getImage(coords);
@@ -834,38 +829,41 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
    
    private void autostretch() throws IOException {
+      if (lastCalculatedImagesAndStats_ == null) {
+         return;
+      }
+          
+      DisplaySettings.Builder newSettingsBuilder = displaySettings_.copyBuilder();
       Coords baseCoords = getDisplayedImages().get(0).getCoords();
       Double extremaPercentage = displaySettings_.getAutoscaleIgnoredPercentile();
       if (extremaPercentage < 0.0) {
          extremaPercentage = 0.0;
       }
-      DisplaySettings.Builder builder = 
-              displaySettings_.copyBuilder();
       for (int ch = 0; ch < dataProvider_.getAxisLength(Coords.CHANNEL); ++ch) {
-         Image image = dataProvider_.getImage(baseCoords.copy().channel(ch).build());
+         Image image = dataProvider_.getImage(baseCoords.copyBuilder().channel(ch).build());
          if (image != null) {
-            int numComponents = image.getNumComponents();
-            Integer[] mins = new Integer[numComponents];
-            Integer[] maxes = new Integer[numComponents];
-            Double[] gammas = new Double[numComponents];
-            //final ArrayList<HistogramData> datas = new ArrayList(image.getNumComponents());
+            ChannelDisplaySettings.Builder csCopyBuilder = 
+                    displaySettings_.getChannelSettings(ch).copyBuilder();
             for (int j = 0; j < image.getNumComponents(); ++j) {
-               gammas[j] = displaySettings_.getSafeContrastGamma(ch, j, 1.0);
-               // TODO:
-               /*
-               HistogramData data = studio_.displays().calculateHistogram(
-                     getDisplayedImages().get(ch),
-                     j,
-                     dataProvider_.getAnyImage().getMetadata().getBitDepth(),
-                     dataProvider_.getAnyImage().getMetadata().getBitDepth(),
-                     extremaPercentage,
-                     false  ); // make sure that we do not use stdev
-               mins[j] = data.getMinIgnoringOutliers();
-               maxes[j] = data.getMaxIgnoringOutliers();
-               datas.add(j, data);
-               
-               */
+               IntegerComponentStats componentStats = 
+                       lastCalculatedImagesAndStats_.getResult().get(ch).getComponentStats(0);
+               ComponentDisplaySettings.Builder ccB = csCopyBuilder.getComponentSettings(j).copyBuilder();
+               ccB.scalingRange(componentStats.
+                       getAutoscaleMinForQuantile(extremaPercentage), 
+                       componentStats.
+                       getAutoscaleMaxForQuantile(extremaPercentage));
+               ccB.scalingGamma(displaySettings_.getChannelSettings(ch).
+                       getComponentSettings(j).getScalingGamma());
+               csCopyBuilder.component(j, ccB.build());
             }
+            newSettingsBuilder.channel(ch, csCopyBuilder.build());
+         }
+      }
+      DisplaySettings newSettings = newSettingsBuilder.build();
+      postEvent(DefaultDisplaySettingsChangedEvent.create(this, displaySettings_, 
+              newSettings));
+      displaySettings_ = newSettings;
+   }
            // displaySettings_ = builder.safeUpdateContrastSettings(
            //         studio_.displays().getContrastSettings(
            //                 mins, maxes, gammas, true), ch).build();
@@ -880,10 +878,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                });
             }
             */
-         }
-      }
+         
+      //}
        //postEvent(new NewDisplaySettingsEvent(displaySettings_, this));
-   }
+   //}
    /*
    @Subscribe
    public void onNewImage(NewImageEvent event) {
@@ -912,91 +910,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }
 */
-   
-  private <T extends IntegerType<T>> ImageStats compute(
-         IterableInterval<T> img, IterableInterval<UnsignedByteType> mask,
-         int nComponents, int sampleBitDepth, int binCountPowerOf2,
-         boolean isROI, int index)
-   {
-      // It's easier to debug if we check first...
-      Preconditions.checkArgument(img.numDimensions() == 3);
-      Preconditions.checkArgument(img.dimension(0) == nComponents);
-      for (int d = 0; d < 3; ++d) {
-         Preconditions.checkArgument(img.dimension(d) == mask.dimension(d));
-      }
-
-      BinMapper1d<T> binMapper =
-            PowerOf2BinMapper.create(sampleBitDepth, binCountPowerOf2);
-
-      // Some ugliness to allow us to compute stats for multiple components in
-      // a single interation over the pixels.
-      List<Histogram1d<T>> histograms = new ArrayList<>();
-      long[] counts = new long[nComponents];
-      long[] minima = new long[nComponents];
-      long[] maxima = new long[nComponents];
-      long[] sums = new long[nComponents];
-      long[] sumsOfSquares = new long[nComponents];
-      for (int component = 0; component < nComponents; ++component) {
-         histograms.add(new Histogram1d<>(binMapper));
-         counts[component] = 0;
-         minima[component] = Long.MAX_VALUE;
-         maxima[component] = Long.MIN_VALUE;
-         sums[component] = 0;
-         sumsOfSquares[component] = 0;
-      }
-
-      // Note: sums of squares could overflow with a huge image (65k by 65k or
-      // greater). If we ever deal with such images, we should split the image
-      // before computing partial statistics.
-      // The reason for computing sums of squares, rather than a running stdev,
-      // is to make it easy to parallelize these computations within a single
-      // image.
-
-      // Perform the actual computations:
-      Cursor<T> dataCursor = img.localizingCursor();
-      Cursor<UnsignedByteType> maskCursor = mask.cursor();
-      for (int i = 0; dataCursor.hasNext(); ++i) {
-         int component = i % nComponents;
-         T dataSample = dataCursor.next();
-         UnsignedByteType maskSample = maskCursor.next();
-
-         if (maskSample.getInteger() < MASK_THRESH) {
-            continue;
-         }
-
-         long dataValue = dataSample.getIntegerLong();
-
-         histograms.get(component).increment(dataSample);
-         counts[component]++;
-         if (dataValue < minima[component]) {
-            minima[component] = dataValue;
-         }
-         if (dataValue > maxima[component]) {
-            maxima[component] = dataValue;
-         }
-         sums[component] += dataValue;
-         sumsOfSquares[component] += dataValue * dataValue;
-      }
-
-      IntegerComponentStats[] componentStats =
-            new IntegerComponentStats[nComponents];
-      for (int component = 0; component < nComponents; ++component) {
-         componentStats[component] = IntegerComponentStats.builder().
-               histogram(histograms.get(component).toLongArray(),
-                     Math.max(0, sampleBitDepth - binCountPowerOf2)).
-               pixelCount(counts[component]).
-               usedROI(isROI).
-               minimum(minima[component]).
-               maximum(maxima[component]).
-               sum(sums[component]).
-               sumOfSquares(sumsOfSquares[component]).
-               build();
-      }
-
-      return ImageStats.create(index, componentStats);
-   }
-
-   
+     
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent sce) {
       if (cvFrame_ != null) {
@@ -1004,9 +918,24 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }
 
+
    @Override
    public boolean compareAndSetDisplaySettings(DisplaySettings originalSettings, DisplaySettings newSettings) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+       if (newSettings == null) {
+         throw new NullPointerException("Display settings must not be null");
+      }
+      synchronized (this) {
+         if (originalSettings != displaySettings_) {
+            // We could compare the contents, but it's probably not worth the
+            // effort; spurious failures should not affect proper usage
+            return false;
+         }
+         if (newSettings == displaySettings_) {
+            return true;
+         }
+         setDisplaySettings(newSettings);
+         return true;
+      }
    }
 
 
@@ -1063,17 +992,56 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    @Override
    public ImagesAndStats getCurrentImagesAndStats() {
-      // TODO: wade through the nightmare of the undocumented ImagesAndStats
-      // existing code is extremely dense, and complete overkill for what we
-      // need here.  Sad that we'll need to recreate this basic stuff....
-      
-      // ImagesAndStats.create(maxValue_, input, stats);
-      
+                  
       if (lastDisplayedCoords_ == null) {
          return null;
       }
-      //ImagesAndStats is = compute()
+      // Only compute the statistic for the middle coordinates, otherwise the 
+      // computation is too slow
+      // TODO: figure out how to compute the whole histogram in the background
+      int middleSlice = dataProvider_.getAxisLength(Coords.Z) / 2;
       
-      return null;
+      Coords position = lastDisplayedCoords_.copyBuilder().z(middleSlice).build();
+      
+       // Always compute stats for all channels
+      Coords channellessPos = position.hasAxis(Coords.CHANNEL) ?
+            position.copyBuilder().removeAxis(Coords.CHANNEL).build() :
+            position;
+      List<Image> images;
+      try {
+         images = dataProvider_.getImagesMatching(channellessPos);
+      }
+      catch (IOException e) {
+         // TODO Should display error
+         images = Collections.emptyList();
+      }
+
+      // Images are sorted by channel here, since we don't (yet) have any other
+      // way to correctly recombine stats with newer images (when update rate
+      // is finite).
+      if (images.size() > 1) {
+         Collections.sort(images, (Image o1, Image o2) -> new Integer(o1.getCoords().getChannel()).
+                 compareTo(o2.getCoords().getChannel()));
+      }
+      
+      BoundsRectAndMask selection = BoundsRectAndMask.unselected();
+
+      ImageStatsRequest request = ImageStatsRequest.create(position, images, selection);
+      
+      ImageStatsProcessor isp = ImageStatsProcessor.create();
+      
+      ImagesAndStats process = null;
+      
+      try {
+         process = isp.process(1, request, true);
+      } catch (InterruptedException ex) {
+         //Logger.getLogger(CVViewer.class.getName()).log(Level.SEVERE, null, ex);
+      }
+      
+      lastCalculatedImagesAndStats_ = process;
+      
+      return process;
    }
+         
+   
 }
