@@ -49,14 +49,14 @@ import org.micromanager.internal.utils.performance.WallTimer;
  *
  * @author Mark A. Tsuchida
  */
-final class ImageStatsProcessor {
+public final class ImageStatsProcessor {
    private static final int MASK_THRESH = 128;
 
    private final ExecutorService executor_;
 
    private PerformanceMonitor perfMon_;
 
-   static ImageStatsProcessor create() {
+   public static ImageStatsProcessor create() {
       return new ImageStatsProcessor();
    }
 
