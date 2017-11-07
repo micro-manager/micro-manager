@@ -452,6 +452,7 @@ public interface DisplaySettings {
    /**
     * The index into the "Display mode" control.
     * @return index into the "Display mode" control
+    * @deprecated - use getColorMode() instead
     */
    @Deprecated
    public ColorMode getChannelColorMode();
