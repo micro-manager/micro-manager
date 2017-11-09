@@ -687,7 +687,7 @@ int LeicaScopeInterface::GetAFCFocusScore(MM::Device& device, MM::Core& core)
 	std::ostringstream command;
 	std::string answer, token;
 	int maxTries = 10;
-	bool scoreFound= FALSE;
+	bool scoreFound= false;
 	int count=0;
 	command << g_AFC << "030";
    
