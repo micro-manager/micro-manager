@@ -596,6 +596,10 @@ int Shutter::Shutdown()
 
 int Shutter::SetOpen(bool open)
 {
+   
+   if (shutterType_ == "Normally Closed")
+      open = !open;
+
    changedTime_ = GetCurrentMMTime();
    if (open)
    {
