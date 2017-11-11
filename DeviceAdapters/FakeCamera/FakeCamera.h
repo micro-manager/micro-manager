@@ -41,6 +41,8 @@ extern const char* label_CV_16U;
 extern const char* label_CV_8UC4;
 extern const char* label_CV_16UC4;
 
+class parse_error : std::exception {};
+
 class FakeCamera : public CCameraBase<FakeCamera>
 {
 public:
@@ -76,8 +78,14 @@ public:
 	int OnPath(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int ResolvePath(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnFrameCount(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	std::string buildPath() const throw(error_code);
+	std::string parseUntil(const char*& it, const char delim) const throw (parse_error);
+	std::string parsePlaceholder(const char*& it) const;
+	std::pair<int, int> parsePrecision(const char*& it) const throw (parse_error);
+	static std::ostream& printNum(std::ostream& o, std::pair<int, int> precSpec, double num);
+	static std::string iif(bool test, std::string spec);
+	std::string parseMask(std::string mask) const throw(error_code);
 	void getImg() const;
 	void updateROI() const;
 
@@ -87,6 +95,7 @@ private:
 	bool initialized_;
 
 	std::string path_;
+	int frameCount_;
 
 	bool capturing_;
 	mutable bool initSize_;

@@ -47,6 +47,8 @@ FakeCamera::FakeCamera() :
 	CreateProperty("Path mask", "", MM::String, false, new CPropertyAction(this, &FakeCamera::OnPath));
 	CreateProperty("Resolved path", "", MM::String, true, new CPropertyAction(this, &FakeCamera::ResolvePath));
 
+	CreateProperty("FrameCount", "0", MM::Integer, false, new CPropertyAction(this, &FakeCamera::OnFrameCount));
+
 	CreateProperty(MM::g_Keyword_Name, cameraName, MM::String, true);
 
 	// Description
@@ -56,7 +58,7 @@ FakeCamera::FakeCamera() :
 	CreateProperty(MM::g_Keyword_CameraName, "Fake camera adapter", MM::String, true);
 
 	// CameraID
-	CreateProperty(MM::g_Keyword_CameraID, "V1.0", MM::String, true);
+	CreateProperty(MM::g_Keyword_CameraID, "V1.1", MM::String, true);
 
 	// binning
 	CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false);
@@ -227,9 +229,9 @@ unsigned FakeCamera::GetImageBytesPerPixel() const
 
 int FakeCamera::SnapImage()
 {
-	ERRH_START
-
-		MM::MMTime start = GetCoreCallback()->GetCurrentMMTime();
+ERRH_START
+	MM::MMTime start = GetCoreCallback()->GetCurrentMMTime();
+	++frameCount_;
 	initSize();
 
 	getImg();
@@ -240,8 +242,7 @@ int FakeCamera::SnapImage()
 
 	if (rem > 0)
 		CDeviceUtils::SleepMs((long)rem);
-
-	ERRH_END
+ERRH_END
 }
 
 int FakeCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
@@ -300,7 +301,7 @@ int FakeCamera::ResolvePath(MM::PropertyBase * pProp, MM::ActionType eAct)
 	{
 		try
 		{
-			pProp->Set(buildPath().c_str());
+			pProp->Set(parseMask(path_).c_str());
 		}
 		catch (error_code)
 		{
@@ -379,96 +380,277 @@ int FakeCamera::OnPixelType(MM::PropertyBase * pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
-std::string FakeCamera::buildPath() const
+int FakeCamera::OnFrameCount(MM::PropertyBase * pProp, MM::ActionType eAct)
 {
-	std::ostringstream path;
-
-	path << std::fixed;
-
-	int mode = 0;
-	unsigned long int prec = 0;
-
-	for (const char* it = path_.data(); it != path_.data() + path_.size(); ++it)
+	if (eAct == MM::BeforeGet)
 	{
-		switch (mode)
-		{
-		case 0:
-			if (*it == '?')
-				mode = 1;
-			else
-				path << *it;
-			break;
-		case 1:
-			if (*it == '{')
-			{
-				mode = 2;
-				break;
-			}
-		case 3:
-			if (*it == '?')
-			{
-				double pos;
-				int ret = GetCoreCallback()->GetFocusPosition(pos);
-				if (ret != 0)
-					pos = 0;
-
-				path << std::setprecision(prec) << pos;
-
-				prec = 0;
-				mode = 0;
-				break;
-			}
-			else if (*it == '[')
-				mode = 4;
-			else
-				throw error_code(CONTROLLER_ERROR, "Invalid path specification. No stage name specified. (format: ?? for focus stage, ?[name] for any stage, and ?{prec}[name]/?{prec}? for precision other than 0)");
-			break;
-		case 2:
-			char* end;
-			prec = strtoul(it, &end, 10);
-			it = end;
-
-
-			if (*it == '}')
-			{
-				mode = 3;
-			}
-			else
-			{
-				throw error_code(CONTROLLER_ERROR, "Invalid precision specification. (format: ?? for focus stage, ?[name] for any stage, and ?{prec}[name]/?{prec}? for precision other than 0)");
-			}
-			break;
-		case 4:
-			std::ostringstream name;
-			for (; *it != ']' && it != path_.data() + path_.size() - 1; name << *(it++));
-
-			if (*it == ']')
-			{
-				MM::Stage* stage = (MM::Stage*)GetCoreCallback()->GetDevice(this, name.str().c_str());
-				if (!stage)
-					throw error_code(CONTROLLER_ERROR, "Invalid stage name '" + name.str() + "'. (format: ?? for focus stage, ?[name] for any stage, and ?{prec}[name]/?{prec}? for precision other than 0)");
-
-				double pos;
-				int ret = stage->GetPositionUm(pos);
-				if (ret != 0)
-					pos = 0;
-
-				path << std::setprecision(prec) << pos;
-
-				prec = 0;
-				mode = 0;
-			}
-			else
-				throw error_code(CONTROLLER_ERROR, "Invalid name specification. (format: ?? for focus stage, ?[name] for any stage, and ?{prec}[name]/?{prec}? for precision other than 0)");
-		}
+		pProp->Set(CDeviceUtils::ConvertToString(frameCount_));
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		std::string val;
+		pProp->Get(val);
+		resetCurImg();
+		frameCount_ = atoi(val.c_str());
 	}
 
-	return path.str();
+	return DEVICE_OK;
+}
+
+std::string FakeCamera::parseUntil(const char*& it, const char delim) const throw (parse_error)
+{
+	std::ostringstream ret;
+
+	for (; *it != '\0' && *it != delim; ++it)
+	{
+		if (*it == '?')
+			ret << parsePlaceholder(it);
+		else
+			ret << *it;
+	}
+
+	if (*it != delim)
+		throw parse_error();
+
+	return ret.str();
+}
+
+std::string FakeCamera::parsePlaceholder(const char*& it) const
+{
+	const char* start = it;
+	++it;
+
+	try
+	{
+		std::pair<int, int> precSpec(0, 0);
+		std::string metadata("");
+		std::string name("");
+
+		for (; *it != 0; ++it)
+		{
+			switch (*it)
+			{
+			case '{':
+				precSpec = parsePrecision(++it);
+				break;
+			case '(':
+				metadata = parseUntil(++it, ')');
+				break;
+			case '[':
+				name = parseUntil(++it, ']');
+				break;
+			case '?':
+				name = "?";
+				break;
+			default:
+				throw parse_error();
+			}
+
+			if (name.size() > 0)
+				break;
+		}
+
+		if (name.size() == 0)
+			throw parse_error();
+
+		std::ostringstream res;
+
+		if (name == "?")
+		{
+			double val;
+			if (GetCoreCallback()->GetFocusPosition(val) != 0)
+				val = 0;
+
+			printNum(res, precSpec, val);
+			return res.str();
+		}
+		
+		if (name == "$frame")
+		{
+			int val = frameCount_;
+
+			if (metadata.size() > 0)
+			{
+				int max = atoi(metadata.c_str());
+				if (max == 0)
+					max = 1;
+
+				val %= max;
+			}
+
+			printNum(res, precSpec, val);
+			return res.str();
+		}
+
+		MM::Device* dev = GetCoreCallback()->GetDevice(this, name.c_str());
+
+		if (dev == nullptr)
+			throw parse_error();
+
+		switch (dev->GetType())
+		{
+		case MM::ShutterDevice:
+		{
+			bool open;
+			if (((MM::Shutter*)dev)->GetOpen(open) != 0)
+				open = false;
+
+			if (metadata.size() == 0)
+				printNum(res, precSpec, open ? 1 : 0);
+			else
+				res << iif(open, metadata);
+		}
+		break;
+		case MM::StateDevice:
+		{
+			MM::State* state = (MM::State*)dev;
+
+			if (metadata == "$name")
+			{
+				char label[MM::MaxStrLength];
+				if (state->GetPosition(label) != 0)
+					label[0] = '\0';
+				res << label;
+			}
+			else if (metadata.size() > 0)
+			{
+				bool open;
+				if (state->GetGateOpen(open) != 0)
+					open = false;
+
+				res << iif(open, metadata);
+			}
+			else
+			{
+				long pos;
+				if (state->GetPosition(pos))
+					pos = 0;
+
+				printNum(res, precSpec, pos);
+			}
+		}
+		break;
+		case MM::XYStageDevice:
+		case MM::GalvoDevice:
+		{
+			double x, y;
+
+			if (dev->GetType() == MM::XYStageDevice ? ((MM::XYStage*)dev)->GetPositionUm(x, y) : ((MM::Galvo*)dev)->GetPosition(x, y))
+				x = y = 0;
+
+			if (metadata == "$x")
+				printNum(res, precSpec, x);
+			else if (metadata == "$y")
+				printNum(res, precSpec, y);
+			else
+			{
+				std::string sep = metadata.size() > 0 ? metadata : "-";
+				printNum(printNum(res, precSpec, x) << sep, precSpec, y);
+			}
+		}
+		break;
+		case MM::StageDevice:
+		{
+			double pos;
+			if (((MM::Stage*)dev)->GetPositionUm(pos) != 0)
+				pos = 0;
+
+			printNum(res, precSpec, pos);
+		}
+		break;
+		case MM::SignalIODevice:
+		{
+			MM::SignalIO* signalIO = (MM::SignalIO*) dev;
+
+			if (metadata.size() > 0)
+			{
+				bool open;
+				if (signalIO->GetGateOpen(open) != 0)
+					open = false;
+
+				res << iif(open, metadata);
+			}
+			else
+			{
+				double vol;
+				if (signalIO->GetSignal(vol) != 0)
+					vol = 0;
+
+				printNum(res, precSpec, vol);
+			}
+		}
+		break;
+		case MM::MagnifierDevice:
+			printNum(res, precSpec, ((MM::Magnifier*)dev)->GetMagnification());
+			break;
+
+		default:
+			throw parse_error();
+		}
+
+		return res.str();
+	}
+	catch (parse_error)
+	{
+		it = start;
+		return std::string(start, 1);
+	}
+}
+
+std::pair<int, int> FakeCamera::parsePrecision(const char*& it) const throw (parse_error)
+{
+	std::string pSpec = parseUntil(it, '}');
+
+	int dotPos = pSpec.find_first_of('.');
+
+	if (dotPos > 0)
+		return std::pair<int, int>(atoi(pSpec.substr(0, dotPos).c_str()), atoi(pSpec.substr(dotPos + 1).c_str()));
+	
+	return std::pair<int, int>(0, atoi(pSpec.c_str()));
+}
+
+std::ostream & FakeCamera::printNum(std::ostream & o, std::pair<int, int> precSpec, double num)
+{
+	int intLen = precSpec.first;
+	int prec = precSpec.second;
+
+	//force -0.0 to be interpreted as 0.0
+	if (num == 0)
+		num = 0;
+
+	if (num < 0)
+	{
+		o << '-';
+		num = -num;
+	}
+
+	//set decimal places
+	o << std::fixed << std::setprecision(prec);
+
+	//set leading zeros by setting total length of number
+	o << std::setfill('0') << std::setw(intLen + (prec == 0 ? 0 : prec + 1));
+
+	o << num;
+	return o;
+}
+
+//if spec contains a ':', this returns the part before if test is false, and the part after otherwise
+//else, an empty string is returned if test is false, and spec otherwise
+std::string FakeCamera::iif(bool test, std::string spec)
+{
+	int sepPos = spec.find_first_of(':');
+	return test ? spec.substr(sepPos + 1) : spec.substr(0, sepPos + 1);
+}
+
+std::string FakeCamera::parseMask(std::string mask) const throw(error_code)
+{
+	const char* it = mask.data();
+	return parseUntil(it, '\0');
 }
 
 void FakeCamera::getImg() const
 {
-	std::string path = buildPath();
+	std::string path = parseMask(path_);
 
 	if (path == curPath_)
 		return;
@@ -572,6 +754,7 @@ void FakeCamera::resetCurImg()
 	curImg_ = emptyImg;
 	roiWidth_ = width_ = 1;
 	roiHeight_ = height_ = 1;
+	frameCount_ = 0;
 
 	ClearROI();
 	updateROI();
