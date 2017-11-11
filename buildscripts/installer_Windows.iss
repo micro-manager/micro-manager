@@ -22,23 +22,23 @@
 ;;
 
 [Setup]
-AppName=Micro-Manager-2.0beta
-AppVerName=Micro-Manager-2.0beta
+AppName=Micro-Manager-2.0gamma
+AppVerName=Micro-Manager-2.0gamma
 AppPublisher=UCSF
 AppPublisherURL=http://www.micro-manager.org
 AppSupportURL=http://www.micro-manager.org
 AppUpdatesURL=http://www.micro-manager.org
-DefaultDirName=C:/Program Files/Micro-Manager-2.0beta
-DefaultGroupName=Micro-Manager-2.0beta
+DefaultDirName=C:/Program Files/Micro-Manager-2.0gamma
+DefaultGroupName=Micro-Manager-2.0gamma
 OutputBaseFilename=MMSetup_{#MMArch_bits}bit
 Compression=lzma
 SolidCompression=true
 VersionInfoVersion=0.0.0.0
 VersionInfoCompany=(c)University of California San Francisco
-VersionInfoCopyright=(c)University of California San Francisco, (c)100XImaging Inc
-AppCopyright=University of California San Francisco, 100XImaging Inc
+VersionInfoCopyright=(c)University of California San Francisco, (c)100XImaging Inc, (c)Open Imaging
+AppCopyright=University of California San Francisco, 100XImaging Inc, Open Imaging
 ShowLanguageDialog=yes
-AppVersion=2.0beta
+AppVersion=2.0gamma
 AppID=fc0550d5-cb09-4d4f-ad9c-3538b1c12d29
 
 #if MMArch == "x64"
@@ -209,4 +209,7 @@ Name: {group}\{cm:UninstallProgram,Micro-Manager-2.0beta}; Filename: {uninstalle
 Name: {commondesktop}\Micro-Manager 2.0beta; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
-Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-2.0beta}; Flags: nowait postinstall skipifsilent
+Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-2.0gamma}; Flags: nowait postinstall skipifsilent
+
+[Registry]
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"; ValueType: string; ValueName: "{app}\ImageJ.exe"; ValueData: "~ DPIUNAWARE";
