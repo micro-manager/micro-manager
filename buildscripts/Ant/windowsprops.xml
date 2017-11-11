@@ -102,10 +102,10 @@
 	<property name="mm.scripts.installdir" location="${mm.installdir}/scripts"/>
 
 	<!-- Location of Java Runtime to package -->
-	<condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre6_32">
+	<condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre1.8.0_152_x86">
 		<equals arg1="${mm.architecture}" arg2="Win32"/>
 	</condition>
-	<condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre">
+	<condition property="mm.java.runtime" value="${mm.basedir}/../3rdparty/jre1.8.0_152_x64">
 		<equals arg1="${mm.architecture}" arg2="x64"/>
 	</condition>
 
