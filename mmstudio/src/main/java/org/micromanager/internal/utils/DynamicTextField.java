@@ -41,7 +41,7 @@ public class DynamicTextField extends JTextField {
    }
 
    private final EventListenerSupport<Listener> listeners_ =
-         EventListenerSupport.create(Listener.class);
+         new EventListenerSupport(Listener.class, Listener.class.getClassLoader());
    private DocumentListener documentListener_;
 
    public DynamicTextField() {

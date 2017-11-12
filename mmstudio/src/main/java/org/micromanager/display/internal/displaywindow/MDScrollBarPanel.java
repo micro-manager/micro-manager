@@ -21,7 +21,6 @@ import java.awt.event.AdjustmentListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -54,7 +53,7 @@ public class MDScrollBarPanel extends JPanel implements AdjustmentListener {
    }
 
    private final EventListenerSupport<Listener> listeners_ =
-         EventListenerSupport.create(Listener.class);
+         new EventListenerSupport<> (Listener.class, Listener.class.getClassLoader());
 
    private final ControlsFactory leftControlsFactory_;
    private final ControlsFactory rightControlsFactory_;

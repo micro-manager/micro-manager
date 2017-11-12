@@ -55,7 +55,7 @@ public final class HistogramView extends JPanel {
    }
 
    private final EventListenerSupport<Listener> listeners_ =
-         new EventListenerSupport<Listener>(Listener.class);
+         new EventListenerSupport<Listener>(Listener.class, Listener.class.getClassLoader());
 
    // Data state
    private static class ComponentState {
@@ -420,9 +420,9 @@ public final class HistogramView extends JPanel {
          Rectangle rect = getGraphRect();
          float loX = intensityFractionToGraphXPos((float) state.scalingMin_ / state.rangeMax_);
          float hiX = intensityFractionToGraphXPos((float) state.scalingMax_ / state.rangeMax_);
-         int x = (int) Math.round(0.5f * (loX + hiX));
+         int x = Math.round(0.5f * (loX + hiX));
          float yFrac = (float) Math.pow(0.5, gamma_);
-         int y = (int) Math.round(frequencyFractionToGraphYPos(yFrac));
+         int y = Math.round(frequencyFractionToGraphYPos(yFrac));
 
          int s = GAMMA_HANDLE_RADIUS;
          gammaHandleRect_ = new Rectangle(x - s, y - s, 2 * s, 2 * s);

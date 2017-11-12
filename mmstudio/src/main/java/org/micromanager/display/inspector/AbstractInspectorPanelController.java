@@ -30,7 +30,7 @@ public abstract class AbstractInspectorPanelController
 {
    private final EventListenerSupport<InspectorPanelListener> listeners_ =
          new EventListenerSupport<InspectorPanelListener>(
-               InspectorPanelListener.class);
+               InspectorPanelListener.class, InspectorPanelListener.class.getClassLoader());
 
    @Override
    public final void addInspectorPanelListener(
