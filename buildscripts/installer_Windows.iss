@@ -204,9 +204,9 @@ Name: "{app}\mmplugins"; Permissions: users-modify
 Name: "{app}\mmautofocus"; Permissions: users-modify
 
 [Icons]
-Name: {group}\Micro-Manager-2.0beta; Filename: {app}\ImageJ.exe; WorkingDir: {app}
-Name: {group}\{cm:UninstallProgram,Micro-Manager-2.0beta}; Filename: {uninstallexe}
-Name: {commondesktop}\Micro-Manager 2.0beta; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
+Name: {group}\Micro-Manager-2.0gamma; Filename: {app}\ImageJ.exe; WorkingDir: {app}
+Name: {group}\{cm:UninstallProgram,Micro-Manager-2.0gamm}; Filename: {uninstallexe}
+Name: {commondesktop}\Micro-Manager 2.0gamma; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
 Filename: "{app}\ImageJ.exe"; WorkingDir: "{app}"; Description: {cm:LaunchProgram,Micro-Manager-2.0gamma}; Flags: nowait postinstall skipifsilent
