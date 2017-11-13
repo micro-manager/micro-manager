@@ -33,13 +33,13 @@ const char* label_CV_16UC4 = "64bitRGB";
 FakeCamera::FakeCamera() :
 	initialized_(false),
 	path_(""),
+	capturing_(false),
+	color_(false),
 	roiX_(0),
 	roiY_(0),
-	capturing_(false),
 	byteCount_(1),
 	type_(CV_8UC1),
 	emptyImg(1, 1, type_),
-	color_(false),
 	exposure_(10)
 {
 	resetCurImg();
@@ -484,7 +484,7 @@ std::string FakeCamera::parsePlaceholder(const char*& it) const
 
 		MM::Device* dev = GetCoreCallback()->GetDevice(this, name.c_str());
 
-		if (dev == nullptr)
+		if (dev == 0)
 			throw parse_error();
 
 		switch (dev->GetType())
