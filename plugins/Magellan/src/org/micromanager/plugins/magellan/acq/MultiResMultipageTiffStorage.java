@@ -944,5 +944,9 @@ public class MultiResMultipageTiffStorage {
    public long getMinCol() {
       return posManager_.getMinCol();
    }
+
+    int getPositionIndexFromStageCoords(double xPos, double yPos) {
+        return posManager_.getFullResPositionIndexFromStageCoords(xPos, yPos);
+    }
    
 }

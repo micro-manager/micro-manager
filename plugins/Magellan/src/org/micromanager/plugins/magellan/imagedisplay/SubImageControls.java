@@ -134,6 +134,27 @@ public class SubImageControls extends Panel {
       //convert to 0 based index based on which slices have been explored
    }
 
+   public void setZLimitSliderValues(int sliceIndex) {
+       //first expand scrollbars as needed
+       if(zTopScrollbar_.getMaximum() < sliceIndex + 1) {
+           zTopScrollbar_.setMaximum(sliceIndex + 2);
+       }
+       if(zBottomScrollbar_.getMaximum() < sliceIndex + 1) {
+           zBottomScrollbar_.setMaximum(sliceIndex + 2);
+       }
+       if(zTopScrollbar_.getMinimum() > sliceIndex - 1) {
+           zTopScrollbar_.setMinimum(sliceIndex - 1);
+       }
+       if(zBottomScrollbar_.getMinimum() > sliceIndex - 1) {
+           zBottomScrollbar_.setMinimum(sliceIndex - 1);
+       } 
+//       now set sliders to current position 
+       zBottomScrollbar_.setValue(sliceIndex);
+       zTopScrollbar_.setValue(sliceIndex); 
+       this.repaint();
+
+   }
+   
    private void expandZLimitsIfNeeded(int topScrollbarIndex, int bottomScrollbarIndex) {
       //extent of 1 needs to be accounted for on top
       if (topScrollbarIndex >= zTopScrollbar_.getMaximum() - 1 || bottomScrollbarIndex >= zBottomScrollbar_.getMaximum() - 1) {
