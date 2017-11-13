@@ -1,7 +1,10 @@
 <project name="MMClearVolume" basedir="." default="jar">
 	<import file="../javapluginbuild.xml"/>
 
- <condition property="mm.architecture.is_Win32">
+   <!-- lots of hoopla to install the native jogamp/gluegen libraries
+         Please replace with something simplere and more elegant if 
+         you can think of it-->
+   <condition property="mm.architecture.is_Win32">
       <equals arg1="${mm.architecture}" arg2="Win32"/>
    </condition>
 
@@ -17,10 +20,15 @@
       <antcall target="install-x64"/>
    </target>
 
-   <target name="install-only" depends="install-if-Win32,install-if-x64"/>
+   <target name="install-only" depends="install-if-Win32,install-if-x64">
+      <!-- no idea why the top level install-only is no longer executed
+           copy the code here and pray-->
+      <fail unless="installdir"/>
+      <mkdir dir="${installdir}"/>
+      <copy todir="${installdir}" file="${jarfile}"/>
+   </target>
 
-
-   <target name="install-win32">
+   <target name="install-Win32">
       <copy tofile="${mm.dll.installdir}/gluegen-rt.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x86/gluegen-rt.dll"/>
       <copy tofile="${mm.dll.installdir}/jogl_desktop.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x86/jogl_desktop.dll"/>
       <copy tofile="${mm.dll.installdir}/jogl_mobile.dll" file="${mm.basedir}/../3rdpartypublic/javalib3d/lib/natives/x86/jogl_mobile.dll"/>
