@@ -17,7 +17,7 @@
       <antcall target="install-x64"/>
    </target>
 
-   <target name="install" depends="install-if-Win32,install-if-x64"/>
+   <target name="install-only" depends="install-if-Win32,install-if-x64"/>
 
 
    <target name="install-win32">
