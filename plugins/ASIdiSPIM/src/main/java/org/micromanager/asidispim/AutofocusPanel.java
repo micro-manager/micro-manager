@@ -221,7 +221,7 @@ public class AutofocusPanel extends ListeningJPanel{
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_CHANNEL, "");
       // make sure to explicitly set it to something so pref gets written
       channelSelect.setSelectedIndex(channelSelect.getSelectedIndex());
-      acqOptionsPanel.add(new JLabel("Autofocus Channel: "));
+      acqOptionsPanel.add(new JLabel("Autofocus channel: "));
       acqOptionsPanel.add(channelSelect, "left, span 2, wrap");
       
       acqOptionsPanel.add(new JLabel("Max offset change:"));
