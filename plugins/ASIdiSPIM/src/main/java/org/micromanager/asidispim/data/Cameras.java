@@ -195,12 +195,12 @@ public class Cameras {
       // if we haven't initialized it yet or there is a mismatch
       // then try to find the key (based on core's settings)
       // un-initialize if not found
-      if (currentCameraKey_ == null ||
-            !camera.equals(devices_.getMMDevice(currentCameraKey_))) {
+      if (currentCameraKey_ == null
+              || !camera.equals(devices_.getMMDevice(currentCameraKey_))) {
          currentCameraKey_ = null;
          for (Devices.Keys camKey : Devices.CAMERAS) {
-            if (devices_.isValidMMDevice(camKey) &&
-                  devices_.getMMDevice(camKey).equals(camera)) {
+            if (devices_.isValidMMDevice(camKey)
+                    && devices_.getMMDevice(camKey).equals(camera)) {
                setCamera(camKey);  // updates currentCameraKey_
                break;
             }
@@ -208,125 +208,127 @@ public class Cameras {
       }
       return currentCameraKey_;
    }
-   
+
    /**
     * @return false if and only if a camera is not set (checks this class, not
-    *         Core-Camera)
+    * Core-Camera)
     */
    public boolean isCurrentCameraValid() {
       return !((currentCameraKey_ == null) || (currentCameraKey_ == Devices.Keys.NONE));
    }
 
    /**
-    *  Take care of low-level property setting to make internal trigger 
- 	 * or appropriate external mode depending on camera type (via the DeviceLibrary) 
+    * Take care of low-level property setting to make internal trigger or
+    * appropriate external mode depending on camera type (via the DeviceLibrary)
     * currently HamamatsuHam, PCO_Camera, and Andor sCMOS are supported
-    * 
+    *
     * @param devKey
     * @param mode enum from this class
     */
    private void setCameraTriggerMode(Devices.Keys devKey, CameraModes.Keys mode) {
       Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(devKey);
       switch (camLibrary) {
-      case HAMCAM:
-         props_.setPropValue(devKey,
-               Properties.Keys.TRIGGER_SOURCE,
-               ((mode == CameraModes.Keys.INTERNAL) 
-                     ? Properties.Values.INTERNAL
-                     : Properties.Values.EXTERNAL));
-         props_.setPropValue(devKey, Properties.Keys.SENSOR_MODE, 
- 		               ((mode == CameraModes.Keys.LIGHT_SHEET) 
- 		                     ? Properties.Values.PROGRESSIVE 
- 		                     : Properties.Values.AREA)); 
-         switch (mode) {
-         case EDGE:
-         case LIGHT_SHEET: 
- 		         props_.setPropValue(devKey, 
- 		                  Properties.Keys.TRIGGER_ACTIVE, 
-		                  Properties.Values.EDGE); 
-            break;
-         case LEVEL:
-            props_.setPropValue(devKey, 
-                  Properties.Keys.TRIGGER_ACTIVE,
-                  Properties.Values.LEVEL);
-            break;
-         case OVERLAP:
-            props_.setPropValue(devKey, 
-                  Properties.Keys.TRIGGER_ACTIVE,
-                  Properties.Values.SYNCREADOUT);
-            break;
-         default:
-            break;
-         }
-         break;
-      case PCOCAM:
-         switch (mode) {
-         case EDGE:
-         case PSEUDO_OVERLAP:
+         case HAMCAM:
             props_.setPropValue(devKey,
-                  Properties.Keys.TRIGGER_MODE_PCO,
-                  Properties.Values.EXTERNAL_LC);
+                    Properties.Keys.TRIGGER_SOURCE,
+                    ((mode == CameraModes.Keys.INTERNAL)
+                            ? Properties.Values.INTERNAL
+                            : Properties.Values.EXTERNAL));
+            props_.setPropValue(devKey, Properties.Keys.SENSOR_MODE,
+                    ((mode == CameraModes.Keys.LIGHT_SHEET)
+                            ? Properties.Values.PROGRESSIVE
+                            : Properties.Values.AREA));
+            switch (mode) {
+               case EDGE:
+               case LIGHT_SHEET:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_ACTIVE,
+                          Properties.Values.EDGE);
+                  break;
+               case LEVEL:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_ACTIVE,
+                          Properties.Values.LEVEL);
+                  break;
+               case OVERLAP:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_ACTIVE,
+                          Properties.Values.SYNCREADOUT);
+                  break;
+               default:
+                  break;
+            }
             break;
-         case LEVEL:
-            props_.setPropValue(devKey,
-                  Properties.Keys.TRIGGER_MODE_PCO,
-                  Properties.Values.LEVEL_PCO);
+         case PCOCAM:
+            switch (mode) {
+               case EDGE:
+               case PSEUDO_OVERLAP:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_MODE_PCO,
+                          Properties.Values.EXTERNAL_LC);
+                  break;
+               case LEVEL:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_MODE_PCO,
+                          Properties.Values.LEVEL_PCO);
+                  break;
+               case INTERNAL:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_MODE_PCO,
+                          Properties.Values.INTERNAL_LC);
+                  break;
+               default:
+                  break;
+            }
             break;
-         case INTERNAL:
-            props_.setPropValue(devKey,
-                  Properties.Keys.TRIGGER_MODE_PCO,
-                  Properties.Values.INTERNAL_LC);
-            break;
-         default:
-               break;
-         }
-         break;
          case ANDORCAM:
             // work-around to bug in SDK3 device adapter, can't switch from light sheet mode 
             //  to "normal" center out simultaneous but works if we always go through the in-between mode 
-            props_.setPropValue(devKey,
-                    Properties.Keys.SENSOR_READOUT_MODE,
-                    Properties.Values.BOTTOM_UP_SIM_ANDOR);
-            props_.setPropValue(devKey,
-                    Properties.Keys.SENSOR_READOUT_MODE,
-                    (mode == CameraModes.Keys.LIGHT_SHEET 
- 	              ? Properties.Values.BOTTOM_UP_ANDOR 
- 	              : Properties.Values.CENTER_OUT_ANDOR));
-         switch (mode) {
-         case EDGE:
-         case LIGHT_SHEET: 
-            props_.setPropValue(devKey,
-                  Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.EXTERNAL_LC);
-            props_.setPropValue(devKey,
-                  Properties.Keys.ANDOR_OVERLAP,
-                  Properties.Values.OFF);
+            if (props_.hasProperty(devKey, Properties.Keys.SENSOR_READOUT_MODE)) {  // skip step if property is missing 
+               props_.setPropValue(devKey,
+                       Properties.Keys.SENSOR_READOUT_MODE,
+                       Properties.Values.BOTTOM_UP_SIM_ANDOR);
+               props_.setPropValue(devKey,
+                       Properties.Keys.SENSOR_READOUT_MODE,
+                       (mode == CameraModes.Keys.LIGHT_SHEET
+                               ? Properties.Values.BOTTOM_UP_ANDOR
+                               : Properties.Values.CENTER_OUT_ANDOR));
+            }
+            switch (mode) {
+               case EDGE:
+               case LIGHT_SHEET:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_MODE,
+                          Properties.Values.EXTERNAL_LC);
+                  props_.setPropValue(devKey,
+                          Properties.Keys.ANDOR_OVERLAP,
+                          Properties.Values.OFF);
+                  break;
+               case INTERNAL:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_MODE,
+                          Properties.Values.INTERNAL_ANDOR);
+                  break;
+               case LEVEL:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_MODE,
+                          Properties.Values.LEVEL_ANDOR);
+                  props_.setPropValue(devKey,
+                          Properties.Keys.ANDOR_OVERLAP,
+                          Properties.Values.OFF);
+                  break;
+               case OVERLAP:
+                  props_.setPropValue(devKey,
+                          Properties.Keys.TRIGGER_MODE,
+                          Properties.Values.LEVEL_ANDOR);
+                  props_.setPropValue(devKey,
+                          Properties.Keys.ANDOR_OVERLAP,
+                          Properties.Values.ON);
+                  break;
+               default:
+                  break;
+            }
             break;
-         case INTERNAL:
-            props_.setPropValue(devKey,
-                  Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.INTERNAL_ANDOR);
-            break;
-         case LEVEL:
-            props_.setPropValue(devKey,
-                  Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.LEVEL_ANDOR);
-            props_.setPropValue(devKey,
-                  Properties.Keys.ANDOR_OVERLAP,
-                  Properties.Values.OFF);
-            break;
-         case OVERLAP:
-            props_.setPropValue(devKey,
-                  Properties.Keys.TRIGGER_MODE,
-                  Properties.Values.LEVEL_ANDOR);
-            props_.setPropValue(devKey,
-                  Properties.Keys.ANDOR_OVERLAP,
-                  Properties.Values.ON);
-            break;
-         default:
-            break;
-         }
-         break;
          case PVCAM:
             switch (mode) {
                case EDGE:
@@ -346,15 +348,16 @@ public class Cameras {
             }
             break;
          case DEMOCAM:
-         // do nothing
-         break;
-      default:
-         break;
+            // do nothing
+            break;
+         default:
+            break;
       }
    }
-   
+
    /**
     * Utility: calculates the ROI offset from centered on the vertical axis.
+    *
     * @param roi
     * @param sensor
     * @return
@@ -362,67 +365,71 @@ public class Cameras {
    private int roiVerticalOffset(Rectangle roi, Rectangle sensor) {
       return (roi.y + roi.height / 2) - (sensor.height / 2);
    }
-   
+
    /**
-    * Utility: calculates the number of rows that need to be read out
-    * for camera sensor split horizontally across the middle
+    * Utility: calculates the number of rows that need to be read out for camera
+    * sensor split horizontally across the middle
+    *
     * @param roi
     * @param sensor
     * @return
     */
    private int roiReadoutRowsSplitReadout(Rectangle roi, Rectangle sensor) {
       return Math.min(
-            Math.abs(roiVerticalOffset(roi, sensor)) + roi.height / 2,  // if ROI overlaps sensor mid-line
-            roi.height);                                                // if ROI does not overlap mid-line
+              Math.abs(roiVerticalOffset(roi, sensor)) + roi.height / 2, // if ROI overlaps sensor mid-line
+              roi.height);                                                // if ROI does not overlap mid-line
    }
-   
+
    /**
     * Returns true if the camera is a Zyla 5.5
     */
    private boolean isZyla55(Devices.Keys camKey) {
       return props_.getPropValueString(camKey, Properties.Keys.CAMERA_NAME)
-            .substring(0, 8).equals("Zyla 5.5");
+              .substring(0, 8).equals("Zyla 5.5");
    }
-   
+
    /**
     * Returns true if the camera is a Edge 5.5
     */
    private boolean isEdge55(Devices.Keys camKey) {
       return props_.getPropValueString(camKey, Properties.Keys.CAMERA_TYPE)
-            .contains(" 5.5");
+              .contains(" 5.5");
    }
-   
+
    /**
-    * Goes to properties and sees if this camera has slow readout enabled
-    * (which affects row transfer speed and thus reset/readout time).
+    * Goes to properties and sees if this camera has slow readout enabled (which
+    * affects row transfer speed and thus reset/readout time).
+    *
     * @param camKey
     * @return
     */
    private boolean isSlowReadout(Devices.Keys camKey) {
-      switch(devices_.getMMDeviceLibrary(camKey)) {
-      case HAMCAM:
-         return props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("1");
-      case PCOCAM:
-         return props_.getPropValueString(camKey, Properties.Keys.PIXEL_RATE).equals("slow scan");
-      case ANDORCAM:
-         if (isZyla55(camKey)) {
-            return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
-                  .substring(0, 3).equals("200");
-         } else {
-            return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
-                  .substring(0, 3).equals("216");
-         }
-      case DEMOCAM:
-         break;
-      default:
-         break;
+      switch (devices_.getMMDeviceLibrary(camKey)) {
+         case HAMCAM:
+            return props_.getPropValueString(camKey, Properties.Keys.SCAN_MODE).equals("1");
+         case PCOCAM:
+            return props_.getPropValueString(camKey, Properties.Keys.PIXEL_RATE).equals("slow scan");
+         case ANDORCAM:
+            if (isZyla55(camKey)) {
+               return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
+                       .substring(0, 3).equals("200");
+            } else {
+               return props_.getPropValueString(camKey, Properties.Keys.PIXEL_READOUT_RATE)
+                       .substring(0, 3).equals("216");
+            }
+         case DEMOCAM:
+            break;
+         default:
+            break;
       }
       return false;
    }
-   
+
    /**
-    * Tries to figure out binning by looking at first character of the camera's binning property
-    * of the camera.  There is not a uniform binning representation but hopefully this works.
+    * Tries to figure out binning by looking at first character of the camera's
+    * binning property of the camera. There is not a uniform binning
+    * representation but hopefully this works.
+    *
     * @return binning of the selected camera (usually 1, 2, or 4)
     */
    private int getBinningFactor(Devices.Keys camKey) {
