@@ -70,6 +70,12 @@ public class AcquisitionSettings {
    // whether or not to use autofocus during acquisition
    public boolean useAutofocus;
    
+   // whether or not to correct movement during acquisition
+   public boolean useMovementCorrection;
+   
+   // whether or not to acquire from both cameras simultaneously (reflective imaging) 
+ 	public boolean acquireBothCamerasSimultaneously; 
+   
    // number of Sides from which we take data (diSPIM: 1 or 2)
    public int numSides;
    

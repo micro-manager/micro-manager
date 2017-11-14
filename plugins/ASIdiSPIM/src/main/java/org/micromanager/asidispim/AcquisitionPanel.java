@@ -89,6 +89,8 @@ import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import org.micromanager.MultiStagePosition;
 import org.micromanager.StagePosition;
@@ -120,6 +122,8 @@ import org.micromanager.asidispim.events.SPIMAcquisitionEndedEvent;
 import org.micromanager.asidispim.events.SPIMAcquisitionStartedEvent;
 import org.micromanager.asidispim.utils.ControllerUtils;
 import org.micromanager.asidispim.utils.AutofocusUtils;
+import org.micromanager.asidispim.utils.MovementDetector;
+import org.micromanager.asidispim.utils.MovementDetector.Method;
 import org.micromanager.asidispim.utils.SPIMFrame;
 import org.micromanager.data.Coordinates;
 import org.micromanager.display.DisplaySettings;
@@ -190,6 +194,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JSpinner positionDelay_;
    private final JCheckBox useTimepointsCB_;
    private final JCheckBox useAutofocusCB_;
+   private final JCheckBox useMovementCorrectionCB_;
    private final JPanel leftColumnPanel_;
    private final JPanel centerColumnPanel_;
    private final JPanel rightColumnPanel_;
@@ -850,6 +855,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
            }
       });
       
+       // checkbox to signal that movement should be corrected during acquisition
+      // Yet another orphan UI element
+      useMovementCorrectionCB_ = new JCheckBox("Motion correction");
+      useMovementCorrectionCB_.setSelected(prefs_.getBoolean(panelName_,
+              Properties.Keys.PLUGIN_ACQUSITION_USE_MOVEMENT_CORRECTION, false));
+      useMovementCorrectionCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            prefs_.putBoolean(panelName_,
+                    Properties.Keys.PLUGIN_ACQUSITION_USE_MOVEMENT_CORRECTION,
+                    useMovementCorrectionCB_.isSelected());
+           }
+      });
       
       // set up tabbed panels for GUI
       // make 3 columns as own JPanels to get vertical space right
@@ -882,7 +900,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       centerColumnPanel_.add(positionPanel, "growx, wrap");
       centerColumnPanel_.add(multiChannelPanel_, "wrap");
       centerColumnPanel_.add(navigationJoysticksCB_, "wrap");
-      centerColumnPanel_.add(useAutofocusCB_);
+      centerColumnPanel_.add(useAutofocusCB_, "split 2");
+      centerColumnPanel_.add(useMovementCorrectionCB_);
       
       rightColumnPanel_ = new JPanel(new MigLayout(
             "",
@@ -1037,6 +1056,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.channels = multiChannelPanel_.getUsedChannels();
       acqSettings.channelGroup = multiChannelPanel_.getChannelGroup();
       acqSettings.useAutofocus = useAutofocusCB_.isSelected();
+      acqSettings.useMovementCorrection = useMovementCorrectionCB_.isSelected();
+      acqSettings.acquireBothCamerasSimultaneously = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(), 
+ 	            Properties.Keys.PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT, false); 
       acqSettings.numSides = getNumSides();
       acqSettings.firstSideIsA = isFirstSideA();
       acqSettings.delayBeforeSide = PanelUtils.getSpinnerFloatValue(delaySide_);
@@ -1887,7 +1909,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
 
-      if (sideActiveA) {
+      final boolean acqBothCameras = acqSettings.acquireBothCamerasSimultaneously;
+      boolean camActiveA = sideActiveA || acqBothCameras;
+      boolean camActiveB = sideActiveB || acqBothCameras;
+
+      if (camActiveA) {
          if (!devices_.isValidMMDevice(Devices.Keys.CAMERAA)) {
             MyDialogUtils.showError("Using side A but no camera specified for that side.");
             return false;
@@ -1896,6 +1922,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera A doesn't support it.");
             return false;
          }
+      }
+      if (sideActiveA) {
          if (!devices_.isValidMMDevice(Devices.Keys.GALVOA)) {
             MyDialogUtils.showError("Using side A but no scanner specified for that side.");
             return false;
@@ -1906,7 +1934,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
 
-      if (sideActiveB) {
+      if (camActiveB) {
          if (!devices_.isValidMMDevice(Devices.Keys.CAMERAB)) {
             MyDialogUtils.showError("Using side B but no camera specified for that side.");
             return false;
@@ -1915,6 +1943,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Camera trigger mode set to " + getSPIMCameraMode().toString() + " but camera B doesn't support it.");
             return false;
          }
+      }
+      if (sideActiveB) {
          if (!devices_.isValidMMDevice(Devices.Keys.GALVOB)) {
             MyDialogUtils.showError("Using side B but no scanner specified for that side.");
             return false;
@@ -1925,8 +1955,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
 
-      boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && sideActiveA)
-              || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && sideActiveB);
+      boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && camActiveA)
+              || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && camActiveB);
 
 
       // set up channels
@@ -1966,7 +1996,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                        acqSettings.channelMode.toString() + "\"");
                return false;
          }
-      }
+      } 
+      if (twoSided && acqBothCameras) { 
+ 	      nrSlicesSoftware *= 2; 
+ 	   } 
       
       if (acqSettings.hardwareTimepoints) {
          // in hardwareTimepoints case we trigger controller once for all timepoints => need to 
@@ -1976,12 +2009,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // for volume-switching (both PLogic and not) 
             // This holds for all multi-channel modes, just the order in which the extra trigger comes varies 
             // Very last trigger won't ever return a frame so subtract 1. 
-            nrSlicesSoftware = ((acqSettings.numSlices + 1) * 
-                    acqSettings.numChannels * acqSettings.numTimepoints) - 1; 
+            nrSlicesSoftware = ((acqSettings.numSlices + 1) * acqSettings.numChannels * acqSettings.numTimepoints);
+            if (twoSided && acqBothCameras) {
+               nrSlicesSoftware *= 2;
+            }
+            nrSlicesSoftware -= 1;
          } else {
             // we get back one image per trigger for all trigger modes other than OVERLAP 
             //   and we have already computed how many images that is (nrSlicesSoftware) 
             nrSlicesSoftware *= acqSettings.numTimepoints;
+            if (twoSided && acqBothCameras) {
+               nrSlicesSoftware *= 2;
+            }
          }
       }
 
@@ -2166,15 +2205,44 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             }
          }
       }
+      
+      // Movement Correction settings; only used if acqSettings.useMovementCorrection is true
+      int correctMovementEachNFrames = 10;
+      String correctMovementChannel;
+      int cmChannelNumber = -1;
+      if (acqSettings.useMovementCorrection) {
+         correctMovementEachNFrames = props_.getPropValueInteger(Devices.Keys.PLUGIN,
+               Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_EACHNIMAGES);
+         correctMovementChannel = props_.getPropValueString(Devices.Keys.PLUGIN,
+                 Properties.Keys.PLUGIN_AUTOFOCUS_CORRECTMOVEMENT_CHANNEL);
+         // double-check that selected channel is valid if we are doing multi-channel
+         if (acqSettings.useChannels) {
+            String channelGroup  = props_.getPropValueString(Devices.Keys.PLUGIN,
+                  Properties.Keys.PLUGIN_MULTICHANNEL_GROUP);
+            StrVector channels = gui_.core().getAvailableConfigs(channelGroup);
+            boolean found = false;
+            for (String channel : channels) {
+               if (channel.equals(correctMovementChannel)) {
+                  found = true;
+                  break;
+               }
+            }
+            if (!found) {
+               MyDialogUtils.showError("Invalid movement correction channel selected on autofocus tab.");
+               return false;
+            }
+         }
+      }
 
-      // it appears the circular buffer, which is used by both cameras, can only have one 
+
+      // the circular buffer, which is used by both cameras, can only have one 
       // image size setting => we require same image height and width for second camera if two-sided
-      if (twoSided) {
+      if (twoSided || acqBothCameras) {
          try {
             Rectangle roi_1 = core_.getROI(firstCamera);
             Rectangle roi_2 = core_.getROI(secondCamera);
             if (roi_1.width != roi_2.width || roi_1.height != roi_2.height) {
-               MyDialogUtils.showError("Camera ROI height and width must be equal because of Micro-Manager's circular buffer");
+               MyDialogUtils.showError("Two cameras' ROI height and width must be equal because of Micro-Manager's circular buffer");
                return false;
             }
          } catch (Exception ex) {
@@ -2183,7 +2251,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
        cameras_.setCameraForAcquisition(firstCameraKey, true); 
- 		      if (twoSided) { 
+ 		      if (twoSided || acqBothCameras) { 
  		         cameras_.setCameraForAcquisition(secondCameraKey, true); 
  		      } 
  		 
@@ -2192,7 +2260,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
  		         prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(), 
  		               Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(), 
  		               (float)core_.getExposure(devices_.getMMDevice(firstCameraKey))); 
- 		         if (twoSided) { 
+ 		         if (twoSided || acqBothCameras) { 
  		            prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(), 
  		                  Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_SECOND.toString(), 
  		                  (float)core_.getExposure(devices_.getMMDevice(secondCameraKey))); 
@@ -2203,7 +2271,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
  		 
  		      try { 
  		         core_.setExposure(firstCamera, exposureTime); 
- 		         if (twoSided) { 
+ 		         if (twoSided || acqBothCameras) { 
  		            core_.setExposure(secondCamera, exposureTime); 
  		         } 
  		         gui_.app().refreshGUIFromCache(); 
@@ -2336,12 +2404,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
             ReportingUtils.logMessage("diSPIM plugin starting acquisition " + 
                     acqName  + " with following settings: " + acqSettingsJSON);
+            
+            final int numMMChannels = acqSettings.numSides * acqSettings.numChannels * (acqBothCameras ? 2 : 1);             
 
             if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
                ReportingUtils.logMessage("Need to implements this mode");
             }
 
-            channelNames_ = new String[acqSettings.numSides * acqSettings.numChannels];
+            channelNames_ = new String[numMMChannels];
 
             // generate channel names and colors
             // also builds viewString for MultiViewRegistration metadata
@@ -2404,7 +2474,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                smb = smb.stagePositions(gui_.positions().getPositionList().getPositions());
             }
             smb = smb.intendedDimensions(Coordinates.builder().
-                    channel(channelNr).
+                    channel(numMMChannels).
                     z(acqSettings.numSlices).
                     t(nrFrames).
                     stagePosition(nrPositions).                    
@@ -2452,6 +2522,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             // do once here but not per-trigger; need to ensure ROI changes registered
             core_.initializeCircularBuffer();
 
+            // only used when motion correction was requested
+            MovementDetector[] movementDetectors = new MovementDetector[nrPositions];
+
+            // Transformation matrices to convert between camera and stage coordinates
+            final Vector3D yAxis = new Vector3D(0.0, 1.0, 0.0);
+            final Rotation camARotation = new Rotation( yAxis, Math.toRadians(-45) );
+            final Rotation camBRotation = new Rotation ( yAxis, Math.toRadians(45) );                                                         
+                                                              
+            final Vector3D zeroPoint = new Vector3D(0.0, 0.0, 0.0);  // cache a zero point for efficiency
+            
+            
             // make sure all devices have arrived, e.g. a stage isn't still moving
             try {
                core_.waitForSystem();
@@ -2803,7 +2884,58 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
                      }
                   }
+                  
+                  if (acqSettings.useMovementCorrection &&
+                          (timePoint % correctMovementEachNFrames) == 0) {
+                     if (movementDetectors[positionNum] == null) {
+                         // Transform from camera space to stage space:
+                        Rotation rotation  = camBRotation;
+                        if (firstSideA) {
+                           rotation = camARotation;
+                        }
+                        movementDetectors[positionNum] = new MovementDetector(
+                                prefs_,  cmChannelNumber, positionNum, rotation);
+                     }
+
+                     Vector3D movement = movementDetectors[positionNum].detectMovement(
+                             Method.PhaseCorrelation);
+
+                     String msg1 = "TimePoint: " + timePoint + ", Detected movement.  X: " + movement.getX() +
+                                ", Y: " + movement.getY() + ", Z: " + movement.getZ();
+                     System.out.println(msg1);
+
+                     if (!movement.equals(zeroPoint)) {
+                        String msg = "ASIdiSPIM motion corrector moving stages: X: " + movement.getX() +
+                                ", Y: " + movement.getY() + ", Z: " + movement.getZ();
+                        gui_.logs().logMessage(msg);
+                        System.out.println(msg);
+
+                        // if we are using the position list, update the position in the list
+                        if (acqSettings.useMultiPositions) {
+                           MultiStagePosition position = positionList.getPosition(positionNum);
+                           StagePosition pos = position.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                           pos.x += movement.getX();
+                           pos.y += movement.getY();
+                           StagePosition zPos = position.get(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE));
+                           if (zPos != null) {
+                              zPos.x += movement.getZ();
+                           }
+                        } else {
+                           // only a single position, move the stage now
+                           core_.setRelativeXYPosition(devices_.getMMDevice(Devices.Keys.XYSTAGE),
+                                   movement.getX(), movement.getY());
+                           core_.setRelativePosition(devices_.getMMDevice(Devices.Keys.UPPERZDRIVE),
+                                   movement.getZ());
+                        }
+
+                     }
+                  }
+
+                  
                }
+               
+               
+               
                if (acqSettings.hardwareTimepoints) {
                   break;
                }
