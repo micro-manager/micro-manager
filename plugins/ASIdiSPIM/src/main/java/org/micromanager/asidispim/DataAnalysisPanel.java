@@ -47,6 +47,7 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -345,6 +346,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
             boolean firstSideIsA;
             String windowTitle;
             final AcquisitionModes.Keys acqMode;
+            double zStepPx = 0.0;
             if (currentWindow != null) {
                ip = currentWindow.getImagePlus();
 
@@ -365,6 +367,11 @@ public class DataAnalysisPanel extends ListeningJPanel {
                } else {
                   windowTitle = ip.getTitle();
                }
+               if (metadata.containsString("PixelSize_um") && metadata.containsString("z-step_um")) { 
+ 		            // with test acquisitions ip.getCalibration() isn't correct for some reason so prefer metadata 
+ 		            zStepPx = NumberUtils.coreStringToDouble(metadata.getString("PixelSize_um")) /  
+ 		            NumberUtils.coreStringToDouble(metadata.getString("z-step_um")); 
+               }
             } else {
                ip = IJ.getImage();
                if (ip == null) {
@@ -376,12 +383,16 @@ public class DataAnalysisPanel extends ListeningJPanel {
                windowTitle = ip.getTitle(); 
  	            ReportingUtils.logDebugMessage("Deskew may be incorrect because don't have Micro-Manager dataset with metadata");
             }
+            
+            // if zStepPx wasn't set from MM metadata then get value from ImagePlus object  
+ 	         if (zStepPx < 1e-6) { 
+ 	            zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth; 
+ 	         }
 
             // for 45 degrees we shift the same amount as the interplane spacing, so factor of 1.0 
             // assume diSPIM unless marked specifically otherwise 
             // I don't understand why mathematically but it seems that for oSPIM the factor is 1.0 
             //   too instead of being tan(60 degrees) due to the rotation 
-            final double zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth;
             final double dx = zStepPx * (Double) deskewFactor_.getValue();
 
             final int sc = ip.getNChannels();
