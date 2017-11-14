@@ -370,10 +370,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
                } else {
                   windowTitle = ip.getTitle();
                }
-               if (metadata.containsString("PixelSize_um") && metadata.containsString("z-step_um")) { 
- 		            // with test acquisitions ip.getCalibration() isn't correct for some reason so prefer metadata 
- 		            zStepPx = NumberUtils.coreStringToDouble(metadata.getString("z-step_um")) /  
- 		            NumberUtils.coreStringToDouble(metadata.getString("PixelSize_um")); 
+               if (metadata.containsString("PixelSize_um") && metadata.containsString("z-step_um")) {
+                  // with test acquisitions ip.getCalibration() isn't correct for some reason so prefer metadata 
+                  double pixelSize = NumberUtils.coreStringToDouble(metadata.getString("PixelSize_um"));
+                  if (pixelSize < 1e-6) {
+                     throw new Exception("Cannot have pixel size of 0");
+                  }
+                  zStepPx = NumberUtils.coreStringToDouble(metadata.getString("z-step_um")) / pixelSize;
                }
             } else {
                ip = IJ.getImage();
@@ -387,11 +390,15 @@ public class DataAnalysisPanel extends ListeningJPanel {
                windowTitle = ip.getTitle(); 
  	            ReportingUtils.logDebugMessage("Deskew may be incorrect because don't have Micro-Manager dataset with metadata");
             }
-            
+
             // if zStepPx wasn't set from MM metadata then get value from ImagePlus object  
- 	         if (zStepPx < 1e-6) { 
- 	            zStepPx = ip.getCalibration().pixelDepth / ip.getCalibration().pixelWidth; 
- 	         }
+            if (zStepPx < 1e-6) {
+               double pixelSize = ip.getCalibration().pixelWidth;
+               if (pixelSize < 1e-6) {
+                  throw new Exception("Cannot have pixel size of 0");
+               }
+               zStepPx = ip.getCalibration().pixelDepth / pixelSize;
+            }
 
             // for 45 degrees we shift the same amount as the interplane spacing, so factor of 1.0 
             // assume diSPIM unless marked specifically otherwise 
