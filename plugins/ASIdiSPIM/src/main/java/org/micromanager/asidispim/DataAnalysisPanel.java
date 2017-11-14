@@ -344,7 +344,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
             long startTime = System.currentTimeMillis();
             final DisplayWindow currentWindow = gui_.displays().getCurrentWindow();
             final ImagePlus ip;
-            boolean firstSideIsA;
+            final boolean firstSideIsA;
+            final boolean twoSided;
             String windowTitle;
             final AcquisitionModes.Keys acqMode;
             double zStepPx = 0.0;
@@ -362,6 +363,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                   throw new Exception("Can only deskew stage scanning data");
                }
                firstSideIsA = !metadata.getString("FirstSide").equals("B");
+               twoSided = metadata.getString("NumberOfSides").equals("2"); 
 
                if (metadata.containsKey("AcquisitionName")) {
                   windowTitle = metadata.getString("AcquisitionName");
@@ -380,6 +382,7 @@ public class DataAnalysisPanel extends ListeningJPanel {
                }
                // guess at settings since we can't access MM metadata 
                firstSideIsA = true;
+               twoSided = true; 
                acqMode = AcquisitionModes.Keys.STAGE_SCAN;
                windowTitle = ip.getTitle(); 
  	            ReportingUtils.logDebugMessage("Deskew may be incorrect because don't have Micro-Manager dataset with metadata");
@@ -415,7 +418,13 @@ public class DataAnalysisPanel extends ListeningJPanel {
                IJ.selectWindow("C" + (c + 1) + "-" + title);
                switch (acqMode) {
                   case STAGE_SCAN:
-                     dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B 
+                     if (twoSided) {
+                        dir = (c % 2) * 2 - 1;  // -1 for path A which are odd channels, 1 for path B 
+                     } else {
+                        // single-sided is path A for all channels 
+                        dir = -1;
+                     }
+                     // invert direction if we started with path B, regardless of single- or double-sided 
                      if (!firstSideIsA) {
                         dir *= -1;
                      }
