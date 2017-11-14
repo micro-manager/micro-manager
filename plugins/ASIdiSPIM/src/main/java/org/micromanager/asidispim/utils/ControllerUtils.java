@@ -341,14 +341,14 @@ public class ControllerUtils {
       }
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_REPEATS, delayRepeats, skipScannerWarnings);
       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_NUM_REPEATS, numVolumesPerTrigger, skipScannerWarnings);
-       props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_SIDE, 
+      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_DELAY_SIDE, 
  		            settings.isStageScanning ? 0 : // minimal delay on micro-mirror card for stage scanning (can't actually be less than 2ms but this will get as small as possible) 
  		               props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_DELAY_BEFORE_SIDE),  // this is usual behavior 
  		            skipScannerWarnings); 
        
       // figure out the piezo parameters
       float piezoCenter;
-      if (settings.isStageScanning) {
+      if (settings.isStageScanning && devices_.isValidMMDevice(piezoDevice)) {
          // for stage scanning we define the piezo position to be the home position (normally 0) 
          // this is basically required for interleaved mode (otherwise piezo would be moving every slice) 
          //    and by convention we'll do it for all stage scanning 
@@ -601,7 +601,7 @@ public class ControllerUtils {
  	         props_.getPropValueFloat(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG), skipScannerWarnings); 
       
       // move piezo back to desired position
-      if (movePiezo) {
+      if (movePiezo && devices_.isValidMMDevice(piezoDevice)) {
          positions_.setPosition(piezoDevice, piezoPosition, true); 
       }
       

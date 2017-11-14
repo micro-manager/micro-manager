@@ -405,8 +405,7 @@ public final class SetupPanel extends ListeningJPanel {
       tmp_but.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            autofocus_.runFocus(setupPanel, side_, true,
-                    ASIdiSPIM.getFrame().getAcquisitionPanel().getSliceTiming(), true);
+            runAutofocus();
          }
       });
       slopeCalibrationPanel.add(tmp_but);
@@ -481,7 +480,8 @@ public final class SetupPanel extends ListeningJPanel {
             ASIdiSPIM.getFrame().getAcquisitionPanel().runTestAcquisition(side_);
             refreshCameraBeamSettings();
             centerPiezoAndGalvo();  // put piezo and galvo back to the imaging center 
-                                    // acquisition code puts them back to zero, this is better and maybe should be done globally 
+                                    // acquisition code puts them back to zero, 
+                                    // this is better and maybe should be done globally 
          }
       });
       slicePanel.add(testAcqButton, "center, span 2, wrap");
