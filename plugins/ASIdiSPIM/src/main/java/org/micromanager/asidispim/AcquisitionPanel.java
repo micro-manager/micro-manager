@@ -1925,16 +1925,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          // in hardwareTimepoints case we trigger controller once for all timepoints => need to 
          //   adjust number of frames we expect back from the camera during MM's SequenceAcquisition 
          if (acqSettings.cameraMode == CameraModes.Keys.OVERLAP) {
-            // For overlap mode we are send one extra trigger per side for PLogic slice-switching 
-            //   and one extra trigger be channel per side for volume-switching (both PLogic and not). 
+            // For overlap mode we are send one extra trigger per side 
+            // for volume-switching (both PLogic and not) 
+            // This holds for all multi-channel modes, just the order in which the extra trigger comes varies 
             // Very last trigger won't ever return a frame so subtract 1. 
-            if (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-               nrSlicesSoftware = (((acqSettings.numSlices * acqSettings.numChannels) + 1) * acqSettings.numTimepoints) - 1;
-            } else {
-               nrSlicesSoftware = ((acqSettings.numSlices + 1) * 
-                       acqSettings.numChannels * 
-                       acqSettings.numTimepoints) - 1;
-            }
+            nrSlicesSoftware = ((acqSettings.numSlices + 1) * 
+                    acqSettings.numChannels * acqSettings.numTimepoints) - 1; 
          } else {
             // we get back one image per trigger for all trigger modes other than OVERLAP 
             //   and we have already computed how many images that is (nrSlicesSoftware) 
@@ -2577,10 +2573,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         int[] frNumber = new int[2 * acqSettings.numChannels];  // keep track of how many frames we have received for each "channel" (MM channel is our channel * 2 for the 2 cameras)
                         int[] cameraFrNumber = new int[2];       // keep track of how many frames we have received from the camera
                         int[] tpNumber = new int[2 * acqSettings.numChannels];  // keep track of which timepoint we are on for hardware timepoints
-                        boolean skipNextImage = false;  // hardware timepoints with overlap mode sometimes have to drop spurious image 
-                        final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP); 
- 	                     final boolean skipPerSide = acqSettings.useChannels && (acqSettings.numChannels > 1) 
- 	                              && (acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW);  
+                        int imagesToSkip = 0; // hardware timepoints have to drop spurious images with overlap mode 
+                        final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);   
                         boolean done = false;
                         final long timeout2 = Math.max(1000, Math.round(5*sliceDuration)); 
                         start = System.currentTimeMillis();
@@ -2594,8 +2588,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
                                  TaggedImage timg = core_.popNextTaggedImage();
                                  
-                                 if (skipNextImage) { 
- 	                                 skipNextImage = false; 
+                                 if (checkForSkips && imagesToSkip != 0) { 
+ 	                                 imagesToSkip--;
  	                                 continue;  // goes to next iteration of this loop without doing anything else 
  	                              } 
 
@@ -2665,16 +2659,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     tpNumber[channelIndex]++;
                                     
                                     // see if we are supposed to skip next image 
- 		                              if (checkForSkips) { 
- 		                                 if (skipPerSide) {  // one extra image per side, only happens with per-slice HW switching 
- 	                                       if ((channelIndex == (acqSettings.numChannels - 1))  // final channel index is last one of side 
- 	                                          || (twoSided && (channelIndex == (acqSettings.numChannels - 2)))) {  // 2nd-to-last channel index for two-sided is also last one of side                        skipNextImage = true; 
- 		                                    } 
- 		                                 } else {  // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected) 
- 		                                    skipNextImage = true; 
- 		                                 } 
- 		                              }
-                                    
+                                    if (checkForSkips) {
+                                       // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected) 
+                                       // if we are interleaving by slice then next nrChannel images will be from extra slice position 
+                                       // any other configuration we will just drop the next image 
+                                       if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
+                                          imagesToSkip = acqSettings.numChannels;
+                                       } else {
+                                          imagesToSkip = 1;
+                                       }
+                                    }
+
                                     // update acquisition status message if needed
                                     //   (don't otherwise reach code that does this)
                                     //   Arbitrarily choose one possible channel to do this on 
