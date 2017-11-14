@@ -24,7 +24,6 @@ package org.micromanager.asidispim.api;
 import mmcorej.CMMCore;
 
 import java.rmi.RemoteException;
-import java.util.List;
 
 import org.micromanager.PositionList;
 import org.micromanager.asidispim.ASIdiSPIM;
@@ -32,15 +31,14 @@ import org.micromanager.asidispim.ASIdiSPIMFrame;
 import org.micromanager.asidispim.AcquisitionPanel;
 import org.micromanager.asidispim.AutofocusPanel;
 import org.micromanager.asidispim.AutofocusPanel.Modes;
+import org.micromanager.asidispim.DataAnalysisPanel;
 import org.micromanager.asidispim.NavigationPanel;
 import org.micromanager.asidispim.SetupPanel;
 import org.micromanager.asidispim.data.AcquisitionModes.Keys;
 import org.micromanager.asidispim.data.AcquisitionSettings;
 import org.micromanager.asidispim.data.Devices;
 import org.micromanager.asidispim.data.Devices.Sides;
-import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.MMScriptException;
 
 /**
  * Implementation of the ASidiSPIMInterface
@@ -755,9 +753,17 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    public void refreshEstimatedTiming() throws ASIdiSPIMException, RemoteException {
       getAcquisitionPanel().updateDurationLabels();
    }
-   
-   
-   
+
+   @Override
+   public void setExportBaseName(String baseName) throws ASIdiSPIMException, RemoteException {
+      getDataAnalysisPanel().setExportBaseName(baseName);
+   }
+
+   @Override
+   public void doExportData() throws ASIdiSPIMException, RemoteException {
+      getDataAnalysisPanel().runExport();
+   }
+
    //** Private methods.  Only for internal use **//
 
    private MMStudio getGui() throws ASIdiSPIMException, RemoteException {
@@ -816,6 +822,14 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
       return autofocusPanel;
    }
    
+   private DataAnalysisPanel getDataAnalysisPanel() throws ASIdiSPIMException, RemoteException {
+      DataAnalysisPanel dataAnalysisPanel = getFrame().getDataAnalysisPanel();
+      if (dataAnalysisPanel == null) {
+         throw new ASIdiSPIMException("DataAnalysisPanel is not open");
+      }
+      return dataAnalysisPanel;
+   }
+
    private Devices getDevices() throws ASIdiSPIMException, RemoteException {
       Devices devices = getFrame().getDevices();
       if (devices == null) {
