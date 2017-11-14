@@ -106,14 +106,15 @@ public class CameraModes {
    }
 
    /**
-    * Does camera support pseudo overlap/synchronous mode? This is just PCO for
-    * the moment.
+    * Does camera support pseudo overlap/synchronous mode? 
+    * Both PCO and Photometrics 95B do
     *
     * @param devKey
     * @return
     */
    private static boolean cameraSupportsPseudoOverlap(Devices.Libraries camLib) {
-      return (camLib == Devices.Libraries.PCOCAM);
+      return (camLib == Devices.Libraries.PCOCAM || 
+              camLib == Devices.Libraries.PVCAM);
    }
 
    /**
