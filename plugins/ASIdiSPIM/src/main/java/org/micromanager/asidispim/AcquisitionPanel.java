@@ -87,6 +87,7 @@ import java.util.Date;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 
 import org.micromanager.MultiStagePosition;
 import org.micromanager.StagePosition;
@@ -200,6 +201,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final String lastAcquisitionName_;
    private String[] channelNames_;
    private int nrRepeats_;  // how many separate acquisitions to perform
+   private boolean resetXaxisSpeed_; 
    private final AcquisitionPanel acquisitionPanel_;
    private final JComponent[] simpleTimingComponents_; 
  	private final JPanel slicePanel_; 
@@ -236,6 +238,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       lastAcquisitionPath_ = "";
       lastAcquisitionName_ = "";
       channelNames_ = null;
+      resetXaxisSpeed_ = true;
       acquisitionPanel_ = this;
       
       PanelUtils pu = new PanelUtils(prefs_, props_, devices_);
@@ -1350,9 +1353,12 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       final double retraceSpeed = 0.67f * props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);  // retrace speed set to 67% of max speed in firmware 
       final double speedFactor = ASIdiSPIM.OSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
       final double scanDistance = acqSettings.numSlices * acqSettings.stepSizeUm * speedFactor;
-      ReportingUtils.logDebugMessage("stage retrace duration is " + scanDistance / retraceSpeed + " milliseconds");
-      return scanDistance / retraceSpeed;
-   }   
+      final double accelerationX = controller_.computeScanAcceleration(
+              controller_.computeScanSpeed(acqSettings)) + 1;  // extra 1 for rounding up that often happens in controller 
+      final double retraceDuration = scanDistance / retraceSpeed + accelerationX * 2;
+      ReportingUtils.logDebugMessage("stage retrace duration is " + retraceDuration + " milliseconds");
+      return retraceDuration;
+   }
 
    /**
     * Compute the volume duration in ms based on controller's timing settings.
@@ -2241,6 +2247,19 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Could not get XY stage position, speed, or acceleration for stage scan initialization");
             posUpdater_.pauseUpdates(false);
             return false;
+         }
+
+         // if X speed is less than 0.2 mm/s then it probably wasn't restored to correct speed some other time 
+         // we offer to set it to a more normal speed in that case, until the user declines and we stop asking 
+         if (origXSpeed < 0.2 && resetXaxisSpeed_) {
+            resetXaxisSpeed_ = MyDialogUtils.getConfirmDialogResult(
+                    "Max speed of X axis is small, perhaps it was not correctly restored after stage scanning previously.  Do you want to set it to 1 mm/s now?",
+                    JOptionPane.YES_NO_OPTION);
+            // once the user selects "no" then resetXaxisSpeed_ will be false and stay false until plugin is launched again 
+            if (resetXaxisSpeed_) {
+               props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MOTOR_SPEED, 1f);
+               origXSpeed = 1f;
+            }
          }
       }
 
