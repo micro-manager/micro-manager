@@ -2252,6 +2252,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             extraStageScanTimeout = (long) Math.ceil(computeActualVolumeDuration(acqSettings) / acqSettings.numChannels
                     - (acqSettings.numSlices * acqSettings.sliceTiming.sliceDuration)) / 2;
          }
+         
+         long extraMultiXYTimeout = 0;
+         if (acqSettings.useMultiPositions) {
+            // give 10 extra seconds to arrive at intended XY position instead 
+            // of trying to get fancy about computing actual move time 
+            extraMultiXYTimeout = 10000;
+         }
 
          try {
             if (save) {
@@ -2495,7 +2502,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      }
 
                      // setup stage scan at this position 
-                     if (acqSettings.isStageScanning) {
+                     // non-multi-position situation is handled in prepareControllerForAquisition instead 
+ 	                  if (acqSettings.useMultiPositions) { 
                         StagePosition pos = positionList.getPosition(positionNum).get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
                         controller_.prepareStageScanForAcquisition(pos.x, pos.y);
                      }
@@ -2548,7 +2556,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         long start = System.currentTimeMillis();
                         long now = start;
                         final long timeout = Math.max(3000, 
-                                Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide)) + extraStageScanTimeout; 
+                                Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide)) + 
+                                extraStageScanTimeout + extraMultiXYTimeout; 
                         while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
                                 && !cancelAcquisition_.get()) {
                            now = System.currentTimeMillis();
