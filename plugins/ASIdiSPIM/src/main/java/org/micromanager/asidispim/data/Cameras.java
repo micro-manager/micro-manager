@@ -563,6 +563,10 @@ public class Cameras {
     * @return reset time in ms
     */
    public float computeCameraResetTime(Devices.Keys camKey, CameraModes.Keys camMode) {
+      if (camKey == null) {
+         return 0.0f;
+      }
+         
       float resetTimeMs = 10;
       if (camMode == CameraModes.Keys.LIGHT_SHEET) {
          return resetTimeMs = 0f;
@@ -629,6 +633,10 @@ public class Cameras {
     */
    public float computeCameraReadoutTime(Devices.Keys camKey, CameraModes.Keys camMode) {
 
+      if (camKey == null) {
+         return 0.0f;
+      }
+      
       // TODO restructure code so that we don't keep calling this function over and over
       //      (e.g. could cache some values or something)
       float readoutTimeMs = 10f;

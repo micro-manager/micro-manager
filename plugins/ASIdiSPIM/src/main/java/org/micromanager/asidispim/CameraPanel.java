@@ -244,7 +244,9 @@ public class CameraPanel extends ListeningJPanel{
 
    private void setSPIMCameraROI(RoiPresets roi) {
       for (Devices.Keys devKey : Devices.SPIM_CAMERAS) {
-         cameras_.setCameraROI(devKey, roi);
+         if (devKey != null) {
+            cameras_.setCameraROI(devKey, roi);
+         }
       }
    }
    
