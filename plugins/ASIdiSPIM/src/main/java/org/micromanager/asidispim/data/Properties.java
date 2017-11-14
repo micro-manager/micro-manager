@@ -171,6 +171,7 @@ public class Properties {
       PVCAM_READOUT_TIME("Timing-ReadoutTimeNs"), // for PVCAM 
       PVCAM_POST_TIME("Timing-PostTriggerDelayNs"), // for PVCAM 
       PVCAM_PRE_TIME("Timing-PreTriggerDelayNs"), // for PVCAM 
+      PVCAM_CHIPNAME("ChipName"),                    // for PVCAM 
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
@@ -332,7 +333,9 @@ public class Properties {
  	   EDGE_TRIGGER("Edge Trigger"),
       NEVER("Never"), // for PVCam 
       PRE_EXPOSURE("Pre-Exposure"), // for PVCam 
-      PRE_SEQUENCE("Pre-Sequence"), // for PVCam 
+      PRE_SEQUENCE("Pre-Sequence"), // for PVCam
+      PRIME_CHIPNAME("CIS2020F"),            // for PVCam, original Prime 
+ 	   PRIME_95B_CHIPNAME("GS144BSI"),        // for PVCam, Prime 95B 
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
       SIXTEENBIT("16bit"),
