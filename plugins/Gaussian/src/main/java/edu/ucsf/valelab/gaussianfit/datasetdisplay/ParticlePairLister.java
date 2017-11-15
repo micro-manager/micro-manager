@@ -591,8 +591,6 @@ public class ParticlePairLister {
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> allSigmas = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
-               List<Double> allSigmasWeighted = new ArrayList<Double>(
-                       tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> sigmasFirstSpot  = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> sigmasSecondSpot = new ArrayList<Double>(
@@ -762,7 +760,9 @@ public class ParticlePairLister {
                   }
                   double[] sigmas = new double[distancesToUse.size()];
                   if (useIndividualSigmas_) {
-                     
+                     for (int j = 0; j < allSigmas.size(); j++) {
+                        sigmas[j] = allSigmas.get(j);
+                     }                     
                   }
                  
                   P2DFitter p2df = new P2DFitter(d, sigmas,
@@ -900,8 +900,10 @@ public class ParticlePairLister {
                               d[j] = distancesToUse.get( randomIndex );
                               s[j] = allSigmas.get(randomIndex);
                            }
-                           p2df = new P2DFitter(d, 
-                                   fitSigmaInP2D_ || useVectorDistances_, maxDistanceNm_);
+                           p2df = new P2DFitter(d, s,
+                                   fitSigmaInP2D_ || useVectorDistances_, 
+                                   maxDistanceNm_,
+                                   useIndividualSigmas_ );
                            distMean = ListUtils.avg(d);
                            distStd = sigmaUserGuess_;
                            if (fitSigmaInP2D_ || !useSigmaUserGuess_) {

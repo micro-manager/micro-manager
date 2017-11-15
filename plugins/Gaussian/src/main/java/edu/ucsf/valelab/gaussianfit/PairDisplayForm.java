@@ -65,7 +65,6 @@ public class PairDisplayForm extends GUFrame{
    private static final String SHOWIMAGEPREF = "showimage";
    private static final String SAVEPAIRTEXTFILEPREF = "savetextfile";
    private static final String FILEPATHPREF = "filepath";
-   private static final String SHOWSUMMARYPREF = "showsummary";
    private static final String SHOWGRAPHPREF = "showgraph";
    private static final String SHOWTRACKSPREF = "showtrack";
    private static final String SHOWTRACKSUMMARYPREF = "showtracksummary";
@@ -77,7 +76,10 @@ public class PairDisplayForm extends GUFrame{
    private static final String P2DFIXEDPREF = "p2dFixedSigma";
    private static final String P2DERRORESTIMATE = "p2dEstimateError";
    private static final String SIGMAPREF = "sigma";
-   private static final String SIGMAINPUTFROMDATA = "SigmaInputFromData";
+   private static final String SIGMAINPUT = "SigmaInput";
+   private static final String SIGMAINPUTUSER = "SigmaInputUser";
+   private static final String SIGMAINPUTDATAAVG = "SigmaInputDataAvg";
+   private static final String SIGMAINPUTDATAIND = "SigmaInputDataIdividual";
    public static FileDialogs.FileType PAIR_DATA 
            = new FileDialogs.FileType("PAIR_DATA",
                  "Export to Location",
@@ -183,7 +185,10 @@ public class PairDisplayForm extends GUFrame{
       final JRadioButton useUserSigmaValue = new JRadioButton("");
       
       // Select Sigma from data
-      final JRadioButton estimateSigmaValue = new JRadioButton("from data");
+      final JRadioButton estimateSigmaValue = new JRadioButton("from data (avg)");
+      
+      // Use Sigma from individual data
+      final JRadioButton useIndividualSigma = new JRadioButton("from data (individual)");
  
            // Whether or not to estimae the SEM of the P2D
       final JCheckBox estimateP2DError = 
@@ -191,21 +196,36 @@ public class PairDisplayForm extends GUFrame{
      
       ButtonGroup group = new ButtonGroup();
       group.add(useUserSigmaValue);
-      group.add(estimateSigmaValue);     
+      group.add(estimateSigmaValue);  
+      group.add(useIndividualSigma);
   
-      useUserSigmaValue.setSelected(up_.getBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, false) == false);
-      estimateSigmaValue.setSelected(up_.getBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, false));
+      String buttonSelection = up_.getString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTDATAAVG);
+      useUserSigmaValue.setSelected(buttonSelection.equals(SIGMAINPUTUSER));
+      estimateSigmaValue.setSelected(buttonSelection.equals(SIGMAINPUTDATAAVG));
+      useIndividualSigma.setSelected(buttonSelection.equals(SIGMAINPUTDATAIND));
       useUserSigmaValue.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            up_.setBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, !useUserSigmaValue.isSelected());
+            if (useUserSigmaValue.isSelected()) {
+               up_.setString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTUSER);
+            }
          }
       });
       estimateSigmaValue.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            up_.setBoolean(PairDisplayForm.class, SIGMAINPUTFROMDATA, estimateSigmaValue.isSelected());
+            if (estimateSigmaValue.isSelected()) {
+               up_.setString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTDATAAVG);
+            }
          }
+      });
+      useIndividualSigma.addActionListener(new ActionListener() {
+              @Override
+              public void actionPerformed(ActionEvent ae) {
+                 if (useIndividualSigma.isSelected()) {
+                    up_.setString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTDATAIND);
+                 }
+              }
       });
       
       sigmaTextField.getDocument().addDocumentListener(
@@ -273,6 +293,7 @@ public class PairDisplayForm extends GUFrame{
       panel.add(useUserSigmaValue, "split 2");
       panel.add(sigmaTextField, "wrap");
       panel.add(estimateSigmaValue, "skip 1, wrap");
+      panel.add(useIndividualSigma, "skip 1, wrap");
       panel.add(estimateP2DError, "gapleft 60, wrap");
       
       
@@ -332,6 +353,7 @@ public class PairDisplayForm extends GUFrame{
                     useVectorDistances(p2dUseVectDistance.isSelected()).
                     fitSigma(!distanceEstimateFixedSigma.isSelected()).
                     useSigmaEstimate(useUserSigmaValue.isSelected()).
+                    useIndividualSigmas(useIndividualSigma.isSelected()).
                     sigmaEstimate(sigmaValue).
                     estimateP2DError(estimateP2DError.isSelected());
             DataCollectionForm.getInstance().listPairTracks(ppb);
