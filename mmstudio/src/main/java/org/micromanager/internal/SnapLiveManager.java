@@ -133,12 +133,41 @@ public final class SnapLiveManager extends DataViewerListener
          PerformanceMonitor.createWithTimeConstantMs(1000.0);
    private final PerformanceMonitorUI pmUI_ =
          PerformanceMonitorUI.create(perfMon_, "SnapLiveManager Performance");
+   private DisplayInfo displayInfo_;
+   private final Object displayInfoLock_;
+   
+   private class DisplayInfo {
+      private int width_;
+      private int height_;
+      private int numComponents_;
+      private int bytesPerPixel_;
+      private Long imageNumber_;
+      
 
+      public int getWidth() { return width_; }
+      public int getHeight() { return height_; }
+      public int getNumComponents() { return numComponents_; }
+      public int getBytesPerPixel() { return bytesPerPixel_; }
+      public Long getImageNr() { return imageNumber_; }
+      public void setImageInfo (final int width, final int height, 
+              final int numComponents, final int bytesPerPixel) {
+         width_ = width;
+         height_ = height;
+         numComponents_ = numComponents;
+         bytesPerPixel_ = bytesPerPixel;
+      }
+      public void setImageNumber(Long imageNumber) { imageNumber_ = imageNumber; }
+      
+         
+   }
+   
+   
    public SnapLiveManager(Studio studio, CMMCore core) {
       studio_ = studio;
       core_ = core;
       clickToMoveManager_ = new UiMovesStageManager(studio_, core_);
       studio_.events().registerForEvents(clickToMoveManager_);
+      displayInfoLock_ = new Object();
    }
 
    @Override
@@ -238,6 +267,12 @@ public final class SnapLiveManager extends DataViewerListener
          return;
       }
       final String camName = core_.getCameraDevice();
+      
+      synchronized (displayInfoLock_) {
+         if (displayInfo_ != null) {
+            displayInfo_.setImageNumber(new Long(0));
+         }
+      }
 
       if (display_ != null) {
          ((DisplayController) display_).resetDisplayIntervalEstimate();
@@ -487,7 +522,12 @@ public final class SnapLiveManager extends DataViewerListener
       synchronized (lastImageForEachChannel_) {
          lastImageForEachChannel_.clear();
       }
-
+      
+      synchronized (displayInfoLock_) {
+         displayInfo_ = null;
+      }
+      
+      
    }
    
    @Subscribe
@@ -611,22 +651,24 @@ public final class SnapLiveManager extends DataViewerListener
                studio_.acquisitions().generateMetadata(image, true));
 
          int newImageChannel = newImage.getCoords().getChannel();
+         /*
          DefaultImage lastImage;
          synchronized (lastImageForEachChannel_) {
             lastImage = lastImageForEachChannel_.size() > newImageChannel
                     ? lastImageForEachChannel_.get(newImageChannel)
                     : null;
          }
-         if (lastImage != null
-                 && (newImage.getWidth() != lastImage.getWidth()
-                 || newImage.getHeight() != lastImage.getHeight()
-                 || newImage.getNumComponents() != lastImage.getNumComponents()
-                 || newImage.getBytesPerPixel() != lastImage.getBytesPerPixel())) {
+         */
+         if ( (displayInfo_ != null) &&
+                 (newImage.getWidth() != displayInfo_.getWidth()
+                 || newImage.getHeight() != displayInfo_.getHeight()
+                 || newImage.getNumComponents() != displayInfo_.getNumComponents()
+                 || newImage.getBytesPerPixel() != displayInfo_.getBytesPerPixel())) {
             // Format changing, channel changing, and/or we have no display;
             // we need to recreate everything.
             shouldReset = true;
-         } else if (lastImage != null) {
-            Long prevSeqNr = lastImage.getMetadata().getImageNumber();
+         } else if (displayInfo_ != null) {
+            Long prevSeqNr = displayInfo_.imageNumber_;
             Long newSeqNr = newImage.getMetadata().getImageNumber();
             if (prevSeqNr != null && newSeqNr != null) {
                if (prevSeqNr >= newSeqNr) {
@@ -647,12 +689,21 @@ public final class SnapLiveManager extends DataViewerListener
             createDisplay();
          }
 
-         synchronized (lastImageForEachChannel_) {
+         synchronized (displayInfoLock_) {
+            if (displayInfo_ == null) {
+               displayInfo_ = new DisplayInfo();
+            }
+            displayInfo_.setImageInfo(newImage.getWidth(),
+                    newImage.getHeight(), newImage.getNumComponents(),
+                    newImage.getBytesPerPixel()) ;
+            displayInfo_.setImageNumber(newImage.getMetadata().getImageNumber());
+            
             if (lastImageForEachChannel_.size() > newImageChannel) {
                lastImageForEachChannel_.set(newImageChannel, newImage);
             } else {
                lastImageForEachChannel_.add(newImageChannel, newImage);
             }
+            
          }
 
          synchronized (pipelineLock_) {
