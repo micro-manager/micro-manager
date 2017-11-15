@@ -398,20 +398,10 @@ public class ParticlePairLister {
                      for (MouseListener ms : tp.getMouseListeners()) {
                         tp.removeMouseListener(ms);
                      }
-                     for (KeyListener ks : tp.getKeyListeners()) {
-                        tp.removeKeyListener(ks);
-                     }
 
-                     ResultsTableListener myk = new ResultsTableListener(
-                             dc.getSpotData(row).dw_, siPlus,
-                             pairTable, win, dc.getSpotData(row).halfSize_);
-                     tp.addKeyListener(myk);
-                     tp.addMouseListener(myk);
-                     frame.toFront();
                   }
-
                }
-
+               
                // We have all pairs, assemble in tracks
                ij.IJ.showStatus("Analyzing pairs for row " + rowCounter);
 
@@ -540,6 +530,8 @@ public class ParticlePairLister {
                List<Double> allDistances = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> allSigmas = new ArrayList<Double>(
+                       tracks.size() * dc.getSpotData(row).nrFrames_);
+               List<Double> allSigmasWeighted = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> sigmasFirstSpot  = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
