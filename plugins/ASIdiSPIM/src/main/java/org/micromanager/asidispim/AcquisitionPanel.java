@@ -2065,6 +2065,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
+      String dataPathName = gui_.data().getUniqueSaveDirectory(
+              rootDir + File.separator + prefixField_.getText());
 
       if (acqSettings.separateTimepoints) {
          // because separate timepoints closes windows when done, force the user to save data to disk to avoid confusion 
@@ -2386,7 +2388,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
          try {
             if (save) {
-               store = gui_.data().createMultipageTIFFDatastore(rootDir, false,
+               store = gui_.data().createMultipageTIFFDatastore(dataPathName, false,
                        usePositionsCB_.isSelected());
             } else {
                store = gui_.data().createRAMDatastore();
