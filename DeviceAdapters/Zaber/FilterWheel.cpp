@@ -232,7 +232,7 @@ int FilterWheel::GetPositionLabel(long pos, char* label) const
    {
       std::string str("Filter ");
       char numBuf[15];
-      snprintf(numBuf, 15, "%d", pos);
+      snprintf(numBuf, 15, "%ld", pos);
       str.append(numBuf);
       CDeviceUtils::CopyLimitedString(label, str.c_str());
    }
