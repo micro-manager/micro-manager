@@ -86,6 +86,7 @@ public class ParticlePairLister {
    final private Boolean useSigmaUserGuess_;
    final private Boolean useVectorDistances_;
    final private Boolean estimateP2DError_;
+   final private Boolean useIndividualSigmas_;
    final private Double sigmaUserGuess_;
    final private String filePath_;
    
@@ -108,6 +109,7 @@ public class ParticlePairLister {
       private Boolean useSigmaUserGuess_;
       private Boolean useVectorDistances_;
       private Boolean estimateP2DError_;
+      private Boolean useIndividualSigmas_;
       private Double sigmaEstimate_;
       private String filePath_;
        
@@ -201,6 +203,11 @@ public class ParticlePairLister {
          return this;
       }
       
+      public Builder useIndividualSigmas(Boolean use) {
+         useIndividualSigmas_ = use;
+         return this;
+      }
+      
       public Builder estimateP2DError(Boolean estimateP2DError) {
          estimateP2DError_ = estimateP2DError;
          return this;
@@ -226,6 +233,7 @@ public class ParticlePairLister {
       useVectorDistances_ = builder.useVectorDistances_;
       sigmaUserGuess_ = builder.sigmaEstimate_;
       filePath_ = builder.filePath_;
+      useIndividualSigmas_ = builder.useIndividualSigmas_;
       estimateP2DError_ = builder.estimateP2DError_;
    }
 
@@ -442,54 +450,6 @@ public class ParticlePairLister {
                   }
                }
                
-/*
-               if (showSummary_) {
-                  ResultsTable summaryTable = new ResultsTable();
-                  summaryTable.setPrecision(2);
-                  List<Double> distances = new ArrayList<Double>();
-                  List<Double> errorX = new ArrayList<Double>();
-                  List<Double> errorY = new ArrayList<Double>();
-                  for (int pos : positions) {
-                     for (ArrayList<GsSpotPair> pairList : spotPairsByFrame.get(pos)) {
-                        for (GsSpotPair pair : pairList) {
-                           distances.add(pair.getFirstPoint().distance(pair.getSecondPoint()));
-                           errorX.add(pair.getFirstPoint().getX() - pair.getSecondPoint().getX());
-                           errorY.add(pair.getFirstPoint().getY() - pair.getSecondPoint().getY());
-                        }
-                     }
-                  }
-                  Double avg = ListUtils.listAvg(distances);
-                  Double stdDev = ListUtils.listStdDev(distances, avg);
-                  Double avgX = ListUtils.listAvg(errorX);
-                  Double stdDevX = ListUtils.listStdDev(errorX, avgX);
-                  Double avgY = ListUtils.listAvg(errorY);
-                  Double stdDevY = ListUtils.listStdDev(errorY, avgY);
-                  summaryTable.incrementCounter();
-                  summaryTable.addValue("Avg. distance", avg);
-                  summaryTable.addValue("StdDev distance", stdDev);
-                  summaryTable.addValue("X", avgX);
-                  summaryTable.addValue("StdDev X", stdDevX);
-                  summaryTable.addValue("Y", avgY);
-                  summaryTable.addValue("StdDevY", stdDevY);
-               }
-               
-               */
-               if (showImage_) {
-                  /*
-                                             distances.add(d);
-
-                           ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
-
-                           double ex = pCh2.getX() - pCh1.getX();
-                           //double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
-                           //ex = Math.sqrt(ex);
-                           errorX.add(ex);
-                           //double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
-                           //ey = Math.sqrt(ey);
-                           double ey = pCh2.getY() - pCh1.getY();
-                           errorY.add(ey);
-                  */
-               }
 
                // We have all pairs, assemble in tracks
                ij.IJ.showStatus("Analyzing pairs for row " + rowCounter);
@@ -630,6 +590,8 @@ public class ParticlePairLister {
                List<Double> allDistances = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> allSigmas = new ArrayList<Double>(
+                       tracks.size() * dc.getSpotData(row).nrFrames_);
+               List<Double> allSigmasWeighted = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> sigmasFirstSpot  = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
@@ -798,8 +760,15 @@ public class ParticlePairLister {
                   for (int j = 0; j < distancesToUse.size(); j++) {
                      d[j] = distancesToUse.get(j);
                   }
-                  P2DFitter p2df = new P2DFitter(d, 
-                          fitSigmaInP2D_ || useVectorDistances_, maxDistanceNm_);
+                  double[] sigmas = new double[distancesToUse.size()];
+                  if (useIndividualSigmas_) {
+                     
+                  }
+                 
+                  P2DFitter p2df = new P2DFitter(d, sigmas,
+                           fitSigmaInP2D_ || useVectorDistances_, 
+                           maxDistanceNm_,
+                           useIndividualSigmas_);
                   double distMean = ListUtils.listAvg(distancesToUse);
                   double distStd = sigmaUserGuess_;
                   if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
