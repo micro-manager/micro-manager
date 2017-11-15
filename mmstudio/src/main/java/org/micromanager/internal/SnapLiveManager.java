@@ -239,10 +239,6 @@ public final class SnapLiveManager extends DataViewerListener
       }
       final String camName = core_.getCameraDevice();
 
-      synchronized (this) {
-         lastImageForEachChannel_.clear();
-      }
-
       if (display_ != null) {
          ((DisplayController) display_).resetDisplayIntervalEstimate();
       }
@@ -487,6 +483,11 @@ public final class SnapLiveManager extends DataViewerListener
       if (MMMenuBar.getToolsMenu().getMouseMovesStage() && display_ != null) {
          clickToMoveManager_.activate(display_);
       }
+      
+      synchronized (lastImageForEachChannel_) {
+         lastImageForEachChannel_.clear();
+      }
+
    }
    
    @Subscribe
@@ -611,70 +612,62 @@ public final class SnapLiveManager extends DataViewerListener
 
          int newImageChannel = newImage.getCoords().getChannel();
          DefaultImage lastImage;
-         synchronized (this) {
-            lastImage = lastImageForEachChannel_.size() > newImageChannel ?
-                  lastImageForEachChannel_.get(newImageChannel) :
-                  null;
+         synchronized (lastImageForEachChannel_) {
+            lastImage = lastImageForEachChannel_.size() > newImageChannel
+                    ? lastImageForEachChannel_.get(newImageChannel)
+                    : null;
          }
-
-         if (lastImage != null &&
-               (newImage.getWidth() != lastImage.getWidth() ||
-               newImage.getHeight() != lastImage.getHeight() ||
-               newImage.getNumComponents() != lastImage.getNumComponents() ||
-               newImage.getBytesPerPixel() != lastImage.getBytesPerPixel()))
-         {
+         if (lastImage != null
+                 && (newImage.getWidth() != lastImage.getWidth()
+                 || newImage.getHeight() != lastImage.getHeight()
+                 || newImage.getNumComponents() != lastImage.getNumComponents()
+                 || newImage.getBytesPerPixel() != lastImage.getBytesPerPixel())) {
             // Format changing, channel changing, and/or we have no display;
             // we need to recreate everything.
             shouldReset = true;
-         }
-         else if (lastImage != null) {
+         } else if (lastImage != null) {
             Long prevSeqNr = lastImage.getMetadata().getImageNumber();
             Long newSeqNr = newImage.getMetadata().getImageNumber();
             if (prevSeqNr != null && newSeqNr != null) {
-               if (prevSeqNr >= newSeqNr)
-               {
+               if (prevSeqNr >= newSeqNr) {
                   perfMon_.sample(
-                        "Image rejected based on ImageNumber (%)", 100.0);
+                          "Image rejected based on ImageNumber (%)", 100.0);
                   return; // Already displayed this image
                }
                perfMon_.sample("Frames dropped at sequence buffer exit (%)",
-                     100.0 * (newSeqNr - prevSeqNr - 1) / (newSeqNr - prevSeqNr));
+                       100.0 * (newSeqNr - prevSeqNr - 1) / (newSeqNr - prevSeqNr));
             }
          }
          perfMon_.sample("Image rejected based on ImageNumber (%)", 0.0);
 
          if (shouldReset) {
             createOrResetDatastoreAndDisplay();
-         }
-         // Check for display having been closed on us by the user.
+         } // Check for display having been closed on us by the user.
          else if (display_ == null || display_.isClosed()) {
             createDisplay();
          }
 
-         synchronized (this) {
+         synchronized (lastImageForEachChannel_) {
             if (lastImageForEachChannel_.size() > newImageChannel) {
                lastImageForEachChannel_.set(newImageChannel, newImage);
-            }
-            else {
+            } else {
                lastImageForEachChannel_.add(newImageChannel, newImage);
             }
          }
 
-         synchronized(pipelineLock_) {
+         synchronized (pipelineLock_) {
             try {
                pipeline_.insertImage(newImage);
                perfMon_.sampleTimeInterval("Image inserted in pipeline");
-            }
-            catch (DatastoreRewriteException e) {
+            } catch (DatastoreRewriteException e) {
                // This should never happen, because we use an erasable
                // Datastore.
                studio_.logs().showError(e,
-                     "Unable to insert image into pipeline; this should never happen.");
-            }
-            catch (PipelineErrorException e) {
+                       "Unable to insert image into pipeline; this should never happen.");
+            } catch (PipelineErrorException e) {
                // Notify the user, and halt live.
                studio_.logs().showError(e,
-                     "An error occurred while processing images.");
+                       "An error occurred while processing images.");
                stopLiveMode();
                pipeline_.clearExceptions();
             }
@@ -709,10 +702,6 @@ public final class SnapLiveManager extends DataViewerListener
       createDisplay();
       if (displayLoc != null) {
          display_.getWindow().setLocation(displayLoc);
-      }
-
-      synchronized (this) {
-         lastImageForEachChannel_.clear();
       }
 
       // Set up the channel names in the store's summary metadata. This will
@@ -758,7 +747,7 @@ public final class SnapLiveManager extends DataViewerListener
       if (isLiveOn_) {
          // Just return the most recent images.
          // BUG: In theory this could transiently contain nulls
-         synchronized (this) {
+         synchronized (lastImageForEachChannel_) {
             return new ArrayList<Image>(lastImageForEachChannel_);
          }
       }
