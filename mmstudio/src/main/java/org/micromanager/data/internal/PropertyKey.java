@@ -534,7 +534,7 @@ public enum PropertyKey {
       @Override
       protected JsonElement convertToGson(PropertyMap pmap) {
          if (pmap.containsKey(key())) {
-            return new JsonPrimitive(pmap.getInteger(key(), 0));
+            return new JsonPrimitive(pmap.getLong(key(), 0));
          }
          return null;
       }
