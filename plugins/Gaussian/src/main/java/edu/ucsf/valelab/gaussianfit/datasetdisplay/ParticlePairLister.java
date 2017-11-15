@@ -531,8 +531,6 @@ public class ParticlePairLister {
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> allSigmas = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
-               List<Double> allSigmasWeighted = new ArrayList<Double>(
-                       tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> sigmasFirstSpot  = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> sigmasSecondSpot = new ArrayList<Double>(
