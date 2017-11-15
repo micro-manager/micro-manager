@@ -1246,6 +1246,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
          center.y = images.get(0).getHeight() -1;
       }
 
+      if (center.y > images.get(0).getHeight() || center.x > images.get(0).getWidth()) {
+         displayController_.postDisplayEvent(
+               DataViewerMousePixelInfoChangedEvent.createUnavailable());
+         return;
+      }
+      
       if (images.get(0).getCoords().hasAxis(Coords.CHANNEL)) {
          displayController_.postDisplayEvent(
                DataViewerMousePixelInfoChangedEvent.
