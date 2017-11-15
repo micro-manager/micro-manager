@@ -77,7 +77,7 @@ public class AutofocusPanel extends ListeningJPanel{
       super(MyStrings.PanelNames.AUTOFOCUS.toString(),
               new MigLayout(
               "",
-              "[center]8[center]",
+              "[center]8[center]8[center]",
               "[]16[]16[]"));
       gui_ = gui;
       prefs_ = prefs;
@@ -304,7 +304,7 @@ public class AutofocusPanel extends ListeningJPanel{
       // construct the main panel
       super.add(optionsPanel);
       super.add(acqOptionsPanel, "flowy, split 2");
-      super.add(setupOptionsPanel, "wrap");
+      super.add(setupOptionsPanel);
       super.add(movementCorrectionsPanel);
    }//constructor
 
