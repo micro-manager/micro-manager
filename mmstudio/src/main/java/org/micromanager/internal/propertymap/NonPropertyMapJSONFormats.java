@@ -30,6 +30,8 @@ public abstract class NonPropertyMapJSONFormats {
          new PositionListFormat();
    private static final NonPropertyMapJSONFormats MSP_INSTANCE =
          new MultiStagePositionFormat();
+   private static final NonPropertyMapJSONFormats OLD_MSP_INSTANCE =
+           new StagePosition();
    private static final NonPropertyMapJSONFormats COORDS_INSTANCE =
          new CoordsFormat();
    private static final NonPropertyMapJSONFormats IMAGE_FORMAT_INSTANCE =
@@ -49,6 +51,10 @@ public abstract class NonPropertyMapJSONFormats {
 
    public static NonPropertyMapJSONFormats multiStagePosition() {
       return MSP_INSTANCE;
+   }
+   
+   public static NonPropertyMapJSONFormats oldStagePosition() {
+      return OLD_MSP_INSTANCE;
    }
 
    public static NonPropertyMapJSONFormats coords() {

@@ -727,6 +727,10 @@ public enum PropertyKey {
                PropertyMap msp =
                      NonPropertyMapJSONFormats.multiStagePosition().
                      fromGson(jo);
+               
+               if (msp.size() == 0) { // this may be an old format stage position
+                  msp = NonPropertyMapJSONFormats.oldStagePosition().fromGson(jo);
+               }
 
                int n = msp.getInteger(STAGE_POSITION__NUMAXES.key(), 0);
                if (n < 1 || n > 3) {
@@ -1020,7 +1024,13 @@ public enum PropertyKey {
          if (SCOPE_DATA_KEYS.extractFromGsonObject(jo, tmp)) {
             PropertyMap.Builder builder = PropertyMaps.builder();
             for (String key : tmp.build().getStringList(SCOPE_DATA_KEYS.key())) {
-               builder.putString(key, jo.get(key).getAsString());
+               String val = "";
+               if (jo.get(key).isJsonObject()) {
+                  val = jo.get(key).getAsJsonObject().get("PropVal").getAsString();
+               } else if (jo.get(key).isJsonPrimitive()) {
+                  val = jo.get(key).getAsString();
+               }
+               builder.putString(key, val);
             }
             dest.putPropertyMap(key(), builder.build());
             return true;
@@ -1167,7 +1177,7 @@ public enum PropertyKey {
    STAGE_POSITION__NUMAXES("NumberOfAxes", "AXES", "numAxes", StagePosition.class) {
       @Override
       protected void convertFromGson(JsonElement je, PropertyMap.Builder dest) {
-         dest.putInteger(key(), je.getAsInt());
+         dest.putInteger(key(), je.getAsInt() * 3); // old style stage positions always had 3 axes...
       }
    },
 
