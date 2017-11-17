@@ -94,13 +94,13 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Override
    public Datastore show(Image image) {
       Datastore result = studio_.data().createRAMDatastore();
+      createDisplay(result);
       try {
          result.putImage(image);
       }
       catch (IOException e) {
          ReportingUtils.logError(e, "Failed to display image");
       }
-      createDisplay(result);
       return result;
    }
 
