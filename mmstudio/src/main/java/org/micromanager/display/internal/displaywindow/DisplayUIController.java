@@ -104,6 +104,7 @@ import org.micromanager.display.overlay.Overlay;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Manages the JFrame(s) for image displays.
@@ -714,7 +715,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
             for (int i = 0; i < ordered.size(); i++) {
                axisMap.put(ordered.get(i), i);
             }
-            return axisMap.get(o1) > axisMap.get(o2) ? 1 : -1;
+            if (axisMap.containsKey(o1) && axisMap.containsKey(o2)) {
+               return axisMap.get(o1) > axisMap.get(o2) ? 1 : -1;
+            } 
+            return 0; // Ugly, TODO: Report?
          }
       });
       scrollBarPanel_.setAxes(scrollableAxes);
@@ -903,11 +907,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
             }
          }
 
+         if (images.getResult().size() > statsIndex) {
          ImageStats stats = images.getResult().get(statsIndex);
          long min = stats.getComponentStats(0).getAutoscaleMinForQuantile(q);
          long max = Math.min(Integer.MAX_VALUE,
                stats.getComponentStats(0).getAutoscaleMaxForQuantile(q));
          ijBridge_.mm2ijSetIntensityScaling(i, (int) min, (int) max);
+         } else {
+            ReportingUtils.logError("DisplayUICOntroller: Received request to " +
+                    "autostretch image for which no statistics are available");
+         }
       }
    }
 
