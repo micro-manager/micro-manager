@@ -338,8 +338,6 @@ public class AutofocusUtils {
                if (showImages) {
                   if (gui_.displays().getAllImageWindows().contains(ourWindow_)) {
                       ourWindow_.getDataProvider().close();
-                      ourWindow_.requestToClose();
-                      ourWindow_.close();
                   }
                   store = gui_.data().createRAMDatastore();
                   store.setName(acqName);
@@ -427,8 +425,9 @@ public class AutofocusUtils {
                         Coords coords = Coordinates.builder().
                                 z(counter).build();
                         img = img.copyAtCoords(coords);
-                        if (store != null)
+                        if (store != null) {
                            store.putImage(img);
+                        }
                         //scoresToPlot[0].add(galvoPos, focusScores[counter]);
                      }
                      counter++;
@@ -535,11 +534,6 @@ public class AutofocusUtils {
             } finally {
                
                ASIdiSPIM.getFrame().setHardwareInUse(false);
-
-               // set result to be a dummy value for now; we will overwrite it later
-               // unless we encounter an exception in the meantime
-               lastFocusResult_ = new FocusResult(false,
-                       galvoPosition, piezoPosition, 0.0);
 
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
