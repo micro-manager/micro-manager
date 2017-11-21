@@ -634,6 +634,46 @@ int CLEDArray::Off(){
 	return DEVICE_OK;
 }
 
+int CLEDArray::UpdatePattern(){
+	if (pattern_ == "Bright Field"){
+		  NumA(numa_);
+		  ColorUpdate(red_,green_,blue_);
+		  BF();
+	  }
+	  else if(pattern_ == "Dark Field"){
+		  NumA(numa_);
+		  ColorUpdate(red_,green_,blue_);
+		  DF();
+	  }
+	  else if(pattern_ == "DPC"){
+		  NumA(numa_);
+		  ColorUpdate(red_,green_,blue_);
+		  DPC(type_);
+	  }
+	  else if(pattern_ == "Colored DPC"){
+		  NumA(numa_);
+		  ColorUpdate(red_,green_,blue_);
+		  CDPC(red_,green_,blue_);
+	  }
+	  else if(pattern_ == "Manual LED Indices"){
+		  if (indices_.size() > 0){
+			ColorUpdate(red_,green_,blue_);
+			MLED(indices_);
+		  }
+	  }
+	  else if(pattern_ == "Annulus"){
+		  ColorUpdate(red_,green_,blue_);
+		  Annul(minna_, maxna_);
+	  }
+	  else if(pattern_ == "Half Annulus"){
+		  ColorUpdate(red_,green_,blue_);
+		  hAnnul(type_,minna_,maxna_);
+	  }
+	  else{
+		  Off();
+	  }
+	  return DEVICE_OK;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -680,45 +720,8 @@ int CLEDArray::OnPattern(MM::PropertyBase* pProp, MM::ActionType pAct)
    }
    else if (pAct == MM::AfterSet)
    {
-      pProp->Get(pattern_);
-	  if (pattern_ == "Bright Field"){
-		  NumA(numa_);
-		  ColorUpdate(red_,green_,blue_);
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  NumA(numa_);
-		  ColorUpdate(red_,green_,blue_);
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  NumA(numa_);
-		  ColorUpdate(red_,green_,blue_);
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  NumA(numa_);
-		  ColorUpdate(red_,green_,blue_);
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if(pattern_ == "Manual LED Indices"){
-		  if (indices_.size() > 0){
-			ColorUpdate(red_,green_,blue_);
-			MLED(indices_);
-		  }
-	  }
-	  else if(pattern_ == "Annulus"){
-		  ColorUpdate(red_,green_,blue_);
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  ColorUpdate(red_,green_,blue_);
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
-	  return DEVICE_OK;
+      pProp->Get(pattern_);  
+	  return UpdatePattern();
    }
    return DEVICE_OK;
 }
@@ -741,7 +744,7 @@ int CLEDArray::OnMinNA(MM::PropertyBase* pProp, MM::ActionType pAct)
 	  else{
 		  Off();
 	  }
-	  return DEVICE_OK;
+	  return UpdatePattern();
    }
    return DEVICE_OK;
 }
@@ -781,7 +784,7 @@ int CLEDArray::OnMaxNA(MM::PropertyBase* pProp, MM::ActionType pAct)
 	  else{
 		  Off();
 	  }
-	  return DEVICE_OK;
+	  return UpdatePattern();
    }
    return DEVICE_OK;
 }
