@@ -269,6 +269,7 @@ private:
 	int NumA(double numa);
 	int ArrayDist(double dist);
 	int Off();
+	int UpdatePattern();
 
 	unsigned char lastModVal_;
 	
