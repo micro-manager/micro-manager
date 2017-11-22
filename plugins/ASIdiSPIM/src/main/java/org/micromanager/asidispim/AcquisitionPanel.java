@@ -126,7 +126,9 @@ import org.micromanager.asidispim.utils.MovementDetector;
 import org.micromanager.asidispim.utils.MovementDetector.Method;
 import org.micromanager.asidispim.utils.SPIMFrame;
 import org.micromanager.data.Coordinates;
+import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DisplaySettings;
+import org.micromanager.display.internal.DefaultChannelDisplaySettings;
 
 
 /**
@@ -2422,8 +2424,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 
             // set up channels (side A/B is treated as channel too)
             DisplaySettings.Builder dsb = display.getDisplaySettings().copyBuilder();
-
+            
             int channelNr = 1;
+            ChannelDisplaySettings.Builder cb = DefaultChannelDisplaySettings.builder();
             if (acqSettings.useChannels) {
                ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
                channelNr = channels.length;
@@ -2439,9 +2442,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   }
 
                   channelNames_[channelIndex] = firstCamera + chName;
+                  
+                  cb.color(colors[channelIndex % colors.length]);
+                  dsb.channel(channelIndex, cb.build());
                   viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                   if (twoSided) {
                      channelNames_[channelIndex + 1] = secondCamera + chName;
+                     cb.color(colors[(channelIndex + 1) % colors.length]);
+                     dsb.channel( channelIndex + 1, cb.build());
                      viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                   }
                }
@@ -2453,9 +2461,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                   channelNames_ = new String[channelNr];
                }
                channelNames_[0] = firstCamera;
+               cb.color(colors[0]);
+               dsb.channel(channelNr, cb.build());
                viewString += NumberUtils.intToDisplayString(0) + SEPARATOR;
                if (twoSided) {
                   channelNames_[1] = secondCamera;
+                  cb.color(colors[1]);
+                  dsb.channel(1, cb.build());
                   viewString += NumberUtils.intToDisplayString(90) + SEPARATOR;
                }
             }
