@@ -35,7 +35,7 @@ class CFWheel : public ASIPeripheralBase<CStateDeviceBase, CFWheel>
 {
 public:
    CFWheel(const char* name);
-   ~CFWheel() { Shutdown(); }
+   ~CFWheel() { }
   
    // Generic device API
    // ----------

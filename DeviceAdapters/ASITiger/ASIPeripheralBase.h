@@ -41,6 +41,7 @@ public:
       ASIBase<TDeviceBase, UConcreteDevice>(name),
       hub_(NULL),
       addressString_(g_EmptyCardAddressStr),
+      addressChar_(g_EmptyCardAddressChar),
       refreshProps_(false),
       refreshOverride_(false)
    {
@@ -57,10 +58,21 @@ public:
       }
    }
 
+   int Shutdown()
+   {
+      char deviceLabel[MM::MaxStrLength];
+      this->GetLabel(deviceLabel);
+      string str(deviceLabel);
+      hub_->UnRegisterPeripheral(str);
+      return (ASIBase<TDeviceBase, UConcreteDevice>::Shutdown());
+   }
+
    // The Initialize() of child (concrete peripheral) classes must call this.
    // Note that initialize_ is set by the concrete child class.
    int PeripheralInitialize(bool skipFirmware = false)
    {
+      ostringstream command; command.str("");
+
       // get the hub information
       MM::Hub* genericHub = this->GetParentHub();
       if (!genericHub)
@@ -75,7 +87,6 @@ public:
       //    FWheel: different serial terminator and command set => own Initialize() handles
       if (!skipFirmware)
       {
-         ostringstream command; command.str("");
          command << addressChar_ << "V";
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A v") );
          RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition(4, this->firmwareVersion_ ));
@@ -99,6 +110,12 @@ public:
          RETURN_ON_MM_ERROR ( this->CreateProperty(g_FirmwareBuildPropertyName, this->firmwareBuild_.c_str(), MM::String, true) );
       }
 
+      // register peripheral with the hub, get label in c-string and convert to c++ string
+      char deviceLabel[MM::MaxStrLength];
+      this->GetLabel(deviceLabel);
+      string str(deviceLabel);
+      hub_->RegisterPeripheral(str, addressChar_);
+
       // I can't seem to define action handlers here that will apply to derived classes
       // I'd like to do that to avoid so much boilerplate in separate device code
       // problem is likely my misunderstanding of inheritance
@@ -117,10 +134,8 @@ public:
 
 protected:
    ASIHub *hub_;           // pointer to hub object used for serial communication
-   string addressString_;  // address within hub, in hex format
-                           // generally two characters (e.g. '31') but could be four characters (e.g. '3132') if device axes are split between cards
-   string addressChar_;    // address within hub, in single character (possibly extended ASCII)
-                           // in case of XY device, the MM device is split across two HW cards so it will be two characters
+   string addressString_;  // address within hub, in hex format, should be two characters (e.g. '31')
+   string addressChar_;    // address within hub, in single character (allowed to be extended ASCII so use string to store)
    bool refreshProps_;     // true when property values should be read anew from controller each time
    bool refreshOverride_;  // true when device wants to manually force refreshes temporarily
 

@@ -82,6 +82,25 @@ AS_IF([test "x$want_hidapi" != xno],
 AM_CONDITIONAL([BUILD_HID], [test "x$use_hidapi" = xyes])
 
 
+# Check for libmodbus
+MM_ARG_WITH_OPTIONAL_LIB([libmodbus], [modbus], [MODBUS])
+AS_IF([test "x$want_modbus" != xno],
+[
+   MM_LIB_MODBUS([$MODBUS_PREFIX],
+   [
+      use_modbus=yes
+   ],
+   [
+      use_modbus=no
+      AS_IF([test "x$want_modbus" = xyes],
+            [MM_MSG_OPTIONAL_LIB_FAILURE([libmodbus], [modbus])])
+   ])
+],
+[use_modbus=no])
+
+AM_CONDITIONAL([BUILD_MODBUS], [test "x$use_modbus" = xyes])
+
+
 # Only build PVCAM if header files present.
 AC_MSG_CHECKING(for Pvcam)
 for dir in /usr/include/pvcam /Library/Frameworks/PVCAM.framework/Headers
@@ -406,6 +425,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    AndorSDK3
    Aquinas
    Arduino
+   BlueboxOptics_niji
    CARVII
    CNCMicroscope
    CNCMicroscope/ArduinoNeoPixelShutter
@@ -414,11 +434,13 @@ m4_define([device_adapter_dirs], [m4_strip([
    Cobolt
    CoherentCube
    CoherentOBIS
+   CoherentScientificRemote
    Conix
    Corvus
    DTOpenLayer
    DemoCamera
    Diskovery
+   FakeCamera
    FocalPoint
    FreeSerialPort
    HIDManager
@@ -440,6 +462,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Marzhauser-LStep
    MarzhauserLStepOld
    MicroPoint
+   Modbus
    Motic_mac
    Neos
    NewportCONEX
@@ -474,6 +497,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    SerialManager
    SimpleAutofocus
    SimpleCam
+   SmarActHCU-3D
    SpectralLMM5
    Spot
    SutterLambda
@@ -524,6 +548,9 @@ echo "m4_text_wrap([$use_freeimageplus],
 echo "m4_text_wrap([$use_hidapi],
                    [                                            ],
                    [    Build with HIDAPI:                      ])"
+echo "m4_text_wrap([$use_modbus],
+                   [                                            ],
+                   [    Build with Modbus:                      ])"
 echo "m4_text_wrap([$use_libdc1394],
                    [                                            ],
                    [    Build with libdc1394:                   ])"

@@ -33,7 +33,7 @@ class CPLogic : public ASIPeripheralBase<CShutterBase, CPLogic>
 {
 public:
    CPLogic(const char* name);
-   ~CPLogic() { Shutdown(); }
+   ~CPLogic() { }
   
    // Device API
    // ----------
