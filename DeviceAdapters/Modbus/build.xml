@@ -1,0 +1,12 @@
+<project name="Modbus">
+	<import file="../../buildscripts/deviceadapter.xml"/>
+
+	<target name="install-Win32">
+      <copy todir="${mm.dll.installdir}" file="lib/win32/modbus.dll"/>
+	</target>
+
+	<target name="install-x64">
+      <copy todir="${mm.dll.installdir}" file="lib/win64/modbus.dll"/>
+	</target>
+
+</project>

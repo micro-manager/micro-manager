@@ -26,8 +26,12 @@ endif
 if BUILD_ITC
    ITC = ITC18
 endif
+if BUILD_MODBUS
+   MODBUS = Modbus
+endif
 if BUILD_OPENCV
    OPENCVGRABBER = OpenCVgrabber
+   FAKECAMERA = FakeCamera
 endif
 if BUILD_PVCAM
    PVCAM = PVCAM PrincetonInstruments
@@ -63,12 +67,14 @@ SUBDIRS = \
 	$(ANDORLASERCOMBINER) \
 	$(ANDORSDK3) \
 	$(DC1394) \
+	$(FAKECAMERA) \
 	$(HIDMANAGER) \
 	$(IDSUEYE) \
 	$(IIDC) \
 	$(ITC) \
 	$(NIDAQ) \
 	$(OPENCVGRABBER) \
+	$(MODBUS) \
 	$(PVCAM) \
 	$(QCAM) \
 	$(SCION) \
@@ -87,12 +93,14 @@ SUBDIRS = \
 	Aladdin \
 	Aquinas \
 	Arduino \
+	BlueboxOptics_niji \
 	CARVII \
 	CNCMicroscope \
 	CSUW1 \
 	Cobolt \
 	CoherentCube \
 	CoherentOBIS \
+   CoherentScientificRemote \
 	Conix \
 	Corvus \
 	DemoCamera \
@@ -142,6 +150,7 @@ SUBDIRS = \
 	Scientifica \
 	SerialManager \
 	SimpleAutofocus \
+	SmarActHCU-3D \
 	SpectralLMM5 \
 	SutterLambda \
 	SutterStage \

@@ -879,8 +879,8 @@ int TEHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* type, 
    if (ret != DEVICE_OK)
    {
       LogError(ret, device, core, "ExecuteCommand-GetSerialAnswer");
-      // Keep on trying until we have an aneser or 5 seconds passed
-      MM::MMTime maxTimeMs (5000);
+      // Keep on trying until we have an answer or 5 seconds have passed
+      int maxTimeMs = 5000;
       // Wait 10 ms in between each try
       int delayMs = 10;
       // keep track of how often we tried
@@ -896,7 +896,7 @@ int TEHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* type, 
          else
          {
             CDeviceUtils::SleepMs(delayMs);
-            if ( (core.GetCurrentMMTime() - startTime) > maxTimeMs)
+            if ( (core.GetCurrentMMTime() - startTime) > (maxTimeMs*1000.0) )
                done = true;
          }
       }

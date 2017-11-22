@@ -281,7 +281,7 @@ int MDUSBDevice::Open(const char* /*portName*/)
          if ( (dev->descriptor.idVendor == g_knownDevices[i].idVendor) &&
             (dev->descriptor.idProduct == g_knownDevices[i].idProduct) ) {
                deviceHandle_ = usb_open(dev);
-               if (deviceHandle_ <= 0)
+               if (deviceHandle_ <= (void*) 0)
                   printf ("Received bad deviceHandle\n");
                if (TakeOverDevice(0) != DEVICE_OK) {
                   printf ("Failed taking over device \n");

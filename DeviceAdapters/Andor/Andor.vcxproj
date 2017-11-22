@@ -167,11 +167,13 @@
     <ClCompile Include="Andor.cpp" />
     <ClCompile Include="ReadModeControl.cpp" />
     <ClCompile Include="SpuriousNoiseFilterControl.cpp" />
+    <ClCompile Include="SRRFControl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Andor.h" />
     <ClInclude Include="ReadModeControl.h" />
     <ClInclude Include="SpuriousNoiseFilterControl.h" />
+    <ClInclude Include="SRRFControl.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\MMDevice\MMDevice-SharedRuntime.vcxproj">

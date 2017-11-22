@@ -126,7 +126,7 @@ public:
    void ShowError(const char* errTxt) {LogMessage(errTxt);}
 
 private:
-   static const int imageWidth_ = 410;
+   static const int imageWidth_ = 406;
    static const int maxFrames_ = 200;
 
    std::vector<ImgAccumulator> img_;

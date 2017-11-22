@@ -33,7 +33,7 @@ class CCRISP : public ASIPeripheralBase<CAutoFocusBase, CCRISP>
 {
 public:
    CCRISP(const char* name);
-   ~CCRISP() { Shutdown(); }
+   ~CCRISP() { }
   
    // Device API
    // ----------
