@@ -233,6 +233,7 @@ public:
 	  int OnMinNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnMaxNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnLED(MM::PropertyBase* pPropt, MM::ActionType eAct);
+	  int OnReset(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
 private:
    
@@ -270,6 +271,7 @@ private:
 	int ArrayDist(double dist);
 	int Off();
 	int UpdatePattern();
+	int Reset();
 
 	unsigned char lastModVal_;
 	
