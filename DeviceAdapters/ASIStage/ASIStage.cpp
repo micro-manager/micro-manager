@@ -2664,10 +2664,6 @@ int ZStage::SendStageSequence()
 
 int ZStage::ClearStageSequence()
 {
-   if (runningFastSequence_)
-   {
-      return DEVICE_OK;
-   }
 
    sequence_.clear();
 
