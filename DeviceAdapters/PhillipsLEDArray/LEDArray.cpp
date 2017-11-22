@@ -42,6 +42,7 @@ const char* g_DeviceNameLEDArray = "LED-Array";
 	const char * g_Keyword_minna = "Minimum NA"; 
 	const char * g_Keyword_maxna = "Maximum NA";
 	const char * g_Keyword_LEDlist = "Manual LED Indices";
+	const char * g_Keyword_Reset = "Reset";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -121,6 +122,11 @@ int CLEDArray::Initialize()
    ret = CreateProperty(MM::g_Keyword_Description, "LED Array", MM::String, true);
    assert(DEVICE_OK == ret);
 
+   //reset
+   CPropertyAction* pActreset = new CPropertyAction(this, &CLEDArray::OnReset);
+   ret = CreateProperty(g_Keyword_Reset,"0",MM::String,false,pActreset );
+   AddAllowedValue(g_Keyword_Reset,"0");
+   AddAllowedValue(g_Keyword_Reset,"1");
 
    //Color Intensities:
 	//Red:
@@ -178,21 +184,7 @@ int CLEDArray::Initialize()
    // Check that we have a controller:
    PurgeComPort(port_.c_str());
 
-   //reset LED arraya
-	unsigned char allData[6];
-	    
-	allData[0] = 'r';
-	allData[1] = 'e';
-	allData[2] = 's';
-	allData[3] = 'e';
-	allData[4] = 't';
-	allData[5] = 10;
-
-	ret =  WriteToComPort(port_.c_str(), allData, 6); //Writing to port
-	if (ret != DEVICE_OK){
-		PurgeComPort(port_.c_str());
-		return DEVICE_ERR;
-	}
+	Reset();
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -308,6 +300,25 @@ int CLEDArray::SetPixelsTo(unsigned char intensity) {
 	lastModVal_ = intensity;
 	return DEVICE_OK;
 }
+int CLEDArray::Reset() {
+	//reset LED arraya
+	unsigned char allData[6];
+
+	allData[0] = 'r';
+	allData[1] = 'e';
+	allData[2] = 's';
+	allData[3] = 'e';
+	allData[4] = 't';
+	allData[5] = 10;
+
+	int ret =  WriteToComPort(port_.c_str(), allData, 6); //Writing to port
+	if (ret != DEVICE_OK){
+		PurgeComPort(port_.c_str());
+		return DEVICE_ERR;
+	}
+	return ret;
+}
+
 //Lighting a single LED:
 int CLEDArray::SLED(std::string index){
 	PurgeComPort(port_.c_str());
@@ -690,6 +701,19 @@ int CLEDArray::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
    {
       pProp->Get(port_);
       portAvailable_ = true;
+   }
+   return DEVICE_OK;
+}
+
+int CLEDArray::OnReset(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+   if (pAct == MM::BeforeGet)
+   {
+      pProp->Set("0");
+   }
+   else if (pAct == MM::AfterSet)
+   {
+      Reset();
    }
    return DEVICE_OK;
 }
