@@ -89,7 +89,7 @@ void PIController::DeleteByLabel(const std::string& label)
 
 int PIController::InitStage(const std::string& axisName, const std::string& stageType)
 {
-    if (HasCST())
+    if (HasCST() && !stageType.empty())
     {
         std::string stageType_local = stageType;
         if (onlyIDSTAGEvalid_)
@@ -252,6 +252,25 @@ int PIController::Home(const std::string &axesNames, const std::string &homingMo
 		return DEVICE_INVALID_PROPERTY_VALUE;
 	}
 }
+
+bool PIController::CheckError(bool &hasCmdFlag)
+{
+	int err = GetError();
+	if (err == PI_CNTR_UNKNOWN_COMMAND)
+	{
+		hasCmdFlag = false;
+		return true;
+	}
+	m_ControllerError = err;
+	return ( err == PI_CNTR_NO_ERROR );
+}
+
+bool PIController::CheckError(void)
+{
+	m_ControllerError = GetError();
+	return ( m_ControllerError == PI_CNTR_NO_ERROR );
+}
+
 
 int PIController::GetTranslatedError()
 {

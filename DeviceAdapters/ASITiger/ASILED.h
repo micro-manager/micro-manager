@@ -33,7 +33,7 @@ class CLED : public ASIPeripheralBase<CShutterBase, CLED>
 {
 public:
    CLED(const char* name);
-   ~CLED() { Shutdown(); }
+   ~CLED() { }
   
    // Device API
    // ----------

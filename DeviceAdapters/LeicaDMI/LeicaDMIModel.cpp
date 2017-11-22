@@ -311,6 +311,19 @@ LeicaAFCModel::LeicaAFCModel() :
    offset_(0.0)
 {
 }
+int LeicaAFCModel::GetEdgePosition(double& edgeposition)
+{
+   MMThreadGuard guard(mutex_);
+   edgeposition = edgeposition_;
+   return DEVICE_OK;
+}
+
+int LeicaAFCModel::SetEdgePosition(double edgeposition)
+{
+   MMThreadGuard guard(mutex_);
+   edgeposition_ = edgeposition;
+   return DEVICE_OK;
+}
 
 int LeicaAFCModel::GetOffset(double& offset)
 {
@@ -339,7 +352,18 @@ int LeicaAFCModel::SetMode(bool on)
    mode_ = on;
    return DEVICE_OK;
 }
-
+int LeicaAFCModel::GetScore(double &score)
+{
+   MMThreadGuard guard(mutex_);
+   score = score_;
+   return DEVICE_OK;
+}
+int LeicaAFCModel::SetScore(double score)
+{
+   MMThreadGuard guard(mutex_);
+   score_ = score;
+   return DEVICE_OK;
+}
 int LeicaAFCModel::GetLEDColors(int& topColor, int& bottomColor)
 {
    MMThreadGuard guard(mutex_);
@@ -355,7 +379,18 @@ int LeicaAFCModel::SetLEDColors(int topColor, int bottomColor)
    bottomLEDColor_ = bottomColor;
    return DEVICE_OK;
 }
-
+int LeicaAFCModel::GetLEDIntensity(int &LEDintensity)
+{
+	MMThreadGuard guard(mutex_);
+   LEDintensity = LEDintensity_;
+   return DEVICE_OK;
+}
+int LeicaAFCModel::SetLEDIntensity(int LEDintensity)
+{
+   MMThreadGuard guard(mutex_);
+   LEDintensity_ = LEDintensity;
+   return DEVICE_OK;
+}
 /*
  * Class that keeps a model of the state of the Leica DMI microscope
  */

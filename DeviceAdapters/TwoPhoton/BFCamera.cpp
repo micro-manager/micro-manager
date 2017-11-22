@@ -240,8 +240,8 @@ const unsigned char* BFCamera::GetImageCont() {
 		char message[200];
 		strcpy(message,"interrupts before wait for channel ");
 		strcat(message,  CDeviceUtils::ConvertToString(i));
-		core_->LogMessage(caller_,message, true );
-		LogInterrupts();
+		//core_->LogMessage(caller_,message, true );
+		//LogInterrupts();
 
 		BFU32 numInterrupts;
 		BFRC ret = CiSignalWait(boards_[i], eofSignals_[i], timeoutMs_, &numInterrupts);
@@ -249,8 +249,8 @@ const unsigned char* BFCamera::GetImageCont() {
 		char message2[200];
 		strcpy(message2,"Interrupts after wait for channel ");
 		strcat(message2,  CDeviceUtils::ConvertToString(i));
-		core_->LogMessage(caller_,message2, true );
-		LogInterrupts();
+		//core_->LogMessage(caller_,message2, true );
+		//LogInterrupts();
 
 		if (SignalWaitErrorInterpret(ret) == 0) {
 			return 0;
@@ -275,7 +275,7 @@ int BFCamera::SignalWaitErrorInterpret(BFRC ret) {
 			core_->LogMessage(caller_,"BF Get image error: An invalid board handle was passed to the function",false);	
 		} else if (ret == BF_SIGNAL_TIMEOUT) { 
 			core_->LogMessage(caller_,"BF Get image error: Timeout has expired before interrupt occurred",false);
-			ReloadBoardsAfterTimeoutError();
+			//ReloadBoardsAfterTimeoutError();
 		} else if (ret == BF_SIGNAL_CANCEL ) {
 			core_->LogMessage(caller_,"BF Get image error: Signal was canceled by another thread (see CiSignalCancel)",false);	
 		} else if (ret == BF_BAD_SIGNAL ) {

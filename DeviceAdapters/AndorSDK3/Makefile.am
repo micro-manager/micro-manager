@@ -1,17 +1,16 @@
 AM_CXXFLAGS = $(MMDEVAPI_CXXFLAGS)
 deviceadapter_LTLIBRARIES = libmmgr_dal_AndorSDK3.la
 libmmgr_dal_AndorSDK3_la_SOURCES = \
-	AndorSDK3.cpp \
-	AndorSDK3.h \
-	AndorSDK3Strings.h \
 	AOIProperty.cpp \
 	AOIProperty.h \
 	AOIStrings.h \
-	atcore.h \
-	atcore++.h \
-	atutility.h \
+	AndorSDK3.cpp \
+	AndorSDK3.h \
+	AndorSDK3Strings.h \
 	BooleanProperty.cpp \
 	BooleanProperty.h \
+	BooleanPropertyWithPoiseControl.cpp \
+	BooleanPropertyWithPoiseControl.h \
 	CallBackManager.cpp \
 	CallBackManager.h \
 	EnumProperty.cpp \
@@ -26,12 +25,18 @@ libmmgr_dal_AndorSDK3_la_SOURCES = \
 	FloatProperty.h \
 	IntegerProperty.cpp \
 	IntegerProperty.h \
-	pevents.cpp \
-	pevents.h \
 	SnapShotControl.cpp \
 	SnapShotControl.h \
+	atcore++.h \
+	atcore.h \
+	atunpacker.h \
+	atutility.h \
+	pevents.cpp \
+	pevents.h \
+	stdafx.cpp \
+	stdafx.h \
+	targetver.h \
 	triggerremapper.h
-
 libmmgr_dal_AndorSDK3_la_LDFLAGS = $(MMDEVAPI_LDFLAGS) $(LIBATCORE) $(LIBATUTILITY)
 libmmgr_dal_AndorSDK3_la_LIBADD = $(MMDEVAPI_LIBADD)
 

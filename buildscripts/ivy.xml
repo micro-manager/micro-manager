@@ -23,7 +23,7 @@
 		<dependency org="com.google.guava" name="guava" rev="17.0"/>
 		<dependency org="com.google.protobuf" name="protobuf-java" rev="2.5.0"/><!-- transitive dep of TSFProto -->
 		<dependency org="com.miglayout" name="miglayout-swing" rev="4.2"/>
-		<dependency org="net.imglib2" name="imglib2" rev="2.9.0"/>
+		<dependency org="net.imglib2" name="imglib2" rev="2.4.0"/>
 		<dependency org="ome" name="formats-api" rev="5.1.1"/>
 		<dependency org="ome" name="formats-common" rev="5.1.1"/>
 		<dependency org="ome" name="ome-xml" rev="5.1.1"/>

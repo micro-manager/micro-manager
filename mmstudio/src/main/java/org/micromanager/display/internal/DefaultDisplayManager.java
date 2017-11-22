@@ -41,6 +41,8 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.internal.PropertyKey;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplayManager;
@@ -173,6 +175,21 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
    @Override
    public DisplaySettings.DisplaySettingsBuilder getDisplaySettingsBuilder() {
       return new DefaultDisplaySettings.LegacyBuilder();
+   }
+   
+   @Override 
+   public DisplaySettings.Builder displaySettingsBuilder() {
+      return DefaultDisplaySettings.builder();
+   }
+   
+   @Override
+   public ChannelDisplaySettings.Builder channelDisplaySettingsBuilder() {
+      return DefaultChannelDisplaySettings.builder();
+   }
+   
+   @Override
+   public ComponentDisplaySettings.Builder componentDisplaySettingsBuilder() {
+      return DefaultComponentDisplaySettings.builder();
    }
 
    @Override

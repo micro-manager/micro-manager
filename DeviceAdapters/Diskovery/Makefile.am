@@ -11,7 +11,7 @@ libmmgr_dal_Diskovery_la_SOURCES = \
 				   DiskoveryModel.h \
 				   MessageSender.cpp
 
-libmmgr_dal_Diskovery_la_LIBADD = $(MMDEVAPI_LIBADD)
+libmmgr_dal_Diskovery_la_LIBADD = $(MMDEVAPI_LIBADD) $(BOOST_SYSTEM_LIB) $(BOOST_THREAD_LIB)
 libmmgr_dal_Diskovery_la_LDFLAGS = $(MMDEVAPI_LDFLAGS)
 
 EXTRA_DIST = license.txt

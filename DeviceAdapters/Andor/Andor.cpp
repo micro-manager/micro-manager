@@ -58,6 +58,7 @@
 #include "Andor.h"
 #include "SpuriousNoiseFilterControl.h"
 #include "ReadModeControl.h"
+#include "SRRFControl.h"
 
 #include <string>
 #include <sstream>
@@ -65,8 +66,7 @@
 #include <math.h>
 
 #include <iostream>
-using namespace std;
-
+#include <algorithm>
 
 
 #pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
@@ -117,6 +117,7 @@ const char* g_OutputAmplifier_EM = "Standard EMCCD gain register";
 const char* g_OutputAmplifier_Conventional = "Conventional CCD register";
 
 const char* g_ADChannel = "AD_Converter";
+const char* g_VerticalSpeedProperty = "VerticalSpeed (microseconds)";
 
 const char* g_EMGain = "EMSwitch";
 const char* g_EMGainValue = "Gain";
@@ -136,6 +137,8 @@ const char* g_ExternalStart = "External Start";
 const char* g_FastExternal = "Fast External";
 const char* g_Internal = "Internal";
 const char* g_Software = "Software";
+
+const char* const g_Keyword_Metadata_SRRF_Frame_Time = "SRRFFrameTime-ms";
 
 const int NUMULTRA897CROPROIS = 9;
 AndorCamera::ROI g_Ultra897CropROIs[NUMULTRA897CROPROIS] = {
@@ -165,6 +168,10 @@ AndorCamera::ROI g_Ultra888CropROIs[NUMULTRA888CROPROIS] = {
    {  0,    509,  1024,  4     }
 };
 
+const at_u32 MAX_IMAGES_PER_DMA = 64;
+const at_u32 MAX_CHARS_PER_DESCRIPTION = 64;
+const at_u32 MAX_CHARS_PER_OA_DESCRIPTION = 256;
+
 // singleton instance
 AndorCamera* AndorCamera::instance_ = 0;
 unsigned int AndorCamera::refCount_ = 0;
@@ -190,8 +197,6 @@ MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_AndorName, MM::CameraDevice, "Generic Andor Camera Adapter");
 }
-
-char deviceName[64]; // jizhen 05.16.2007
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
@@ -271,7 +276,10 @@ optAcquireDescriptionStr_(""),
 iSnapImageDelay_(0),
 bSnapImageWaitForReadout_(false),
 stateBeforePause_(PREPAREDFORSINGLESNAP),
-metaDataAvailable_(false)
+metaDataAvailable_(false),
+spuriousNoiseFilterControl_(nullptr),
+readModeControl_(nullptr),
+SRRFControl_(nullptr)
 { 
    InitializeDefaultErrorMessages();
 
@@ -289,9 +297,10 @@ metaDataAvailable_(false)
    SetErrorText(ERR_INVALID_SHUTTER_MODE, g_ShutterModeInvalid);
    SetErrorText(DRV_ERROR_NOCAMERA, "DRV_ERROR_NOCAMERA: No Camera Detected");
    SetErrorText(DRV_NOT_AVAILABLE,"DRV_NOT_AVAILABLE: Feature not available");
+   SetErrorText(DRV_ERROR_PAGELOCK, "DRV_ERROR_PAGELOCK: Please ensure you have enough memory available to store the acquisition.");
 
    SetErrorText(ERR_INVALID_SNAPIMAGEDELAY, g_SnapImageDelayInvalid);
-
+   SRRFImage_ = new ImgBuffer();
    seqThread_ = new AcqSequenceThread(this);
 
 #ifdef __linux__
@@ -312,9 +321,12 @@ metaDataAvailable_(false)
 AndorCamera::~AndorCamera()
 {
    DriverGuard dg(this);
+   delete [] fullFrameBuffer_;
+   delete SRRFImage_;
    delete seqThread_;
    delete spuriousNoiseFilterControl_;
    delete readModeControl_;
+   delete SRRFControl_;
    refCount_--;
    if (refCount_ == 0) {
       // release resources
@@ -594,7 +606,7 @@ int AndorCamera::GetListOfAvailableCameras()
       }
       else
       {
-         CPropertyAction *pAct = new CPropertyAction (this, &AndorCamera::OnCameraName);
+         pAct = new CPropertyAction (this, &AndorCamera::OnCameraName);
          nRet = CreateProperty(g_CameraInformation, cameraName_[currentCameraIdx].c_str(), MM::String, true, pAct);
       }
       assert(nRet == DEVICE_OK);
@@ -652,18 +664,19 @@ int AndorCamera::GetListOfAvailableCameras()
       if (ret != DRV_SUCCESS)
          return ret;
 
+      char sz_ampName[MAX_CHARS_PER_DESCRIPTION];
       for(int i = 0; i < numAmplifiers; ++i) {
-         int i_nameLength(21);
-         char * sz_ampName = new char[i_nameLength];
-         GetAmpDesc(i, sz_ampName, i_nameLength);
+         memset(sz_ampName, '\0', MAX_CHARS_PER_DESCRIPTION);
+         GetAmpDesc(i, sz_ampName, MAX_CHARS_PER_DESCRIPTION);
          vAvailAmps.push_back(std::string(sz_ampName));
          mapAmps[std::string(sz_ampName)] = i;
       }
+
       if(numAmplifiers > 1)
       {
          if(!HasProperty(g_OutputAmplifier))
          {
-            CPropertyAction *pAct = new CPropertyAction (this, &AndorCamera::OnOutputAmplifier);
+            pAct = new CPropertyAction (this, &AndorCamera::OnOutputAmplifier);
             nRet = CreateProperty(g_OutputAmplifier, vAvailAmps[0].c_str(), MM::String, false, pAct);
          }
          nRet = SetAllowedValues(g_OutputAmplifier, vAvailAmps);
@@ -684,7 +697,7 @@ int AndorCamera::GetListOfAvailableCameras()
       for(int i = 0; i < numADChannels; ++i) {
          int depth;
          ::GetBitDepth(i, &depth);
-         char * buffer = new char[64];
+         char * buffer = new char[MAX_CHARS_PER_DESCRIPTION];
          sprintf(buffer, "%d. %dbit",(i+1), depth);
          std::string temp(buffer);
          vChannels.push_back(temp);
@@ -695,7 +708,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
          if(!HasProperty(g_ADChannel))
          {
-            CPropertyAction *pAct = new CPropertyAction (this, &AndorCamera::OnADChannel);
+            pAct = new CPropertyAction (this, &AndorCamera::OnADChannel);
             nRet = CreateProperty(g_ADChannel,vChannels[0].c_str() , MM::String, false, pAct);
             assert(nRet == DEVICE_OK);
          }
@@ -751,7 +764,7 @@ int AndorCamera::GetListOfAvailableCameras()
       // binning
       if(!HasProperty(MM::g_Keyword_Binning))
       {
-         CPropertyAction *pAct = new CPropertyAction (this, &AndorCamera::OnBinning);
+         pAct = new CPropertyAction (this, &AndorCamera::OnBinning);
          nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
          assert(nRet == DEVICE_OK);
       }
@@ -844,37 +857,37 @@ int AndorCamera::GetListOfAvailableCameras()
       // Vertical Shift Speed
       int numVSpeed;
       ret = GetNumberVSSpeeds(&numVSpeed);
-      if (ret != DRV_SUCCESS)
-         return ret;
-
-      char VSpeedBuf[10];
-      VSpeeds_.clear();
-      for (int i=0; i<numVSpeed; i++)
+      if (ret == DRV_SUCCESS)
       {
-         float vsp;
-         ret = GetVSSpeed(i, &vsp); 
-         if (ret != DRV_SUCCESS)
-            return ret;
-         sprintf(VSpeedBuf, "%.2f", vsp);
-         VSpeeds_.push_back(VSpeedBuf);
-      }
-      if (VSpeeds_.empty())
-         return ERR_INVALID_VSPEED;
 
-      if(!HasProperty("VerticalSpeed"))
-      {
-         pAct = new CPropertyAction (this, &AndorCamera::OnVSpeed);
-         if(numVSpeed>1)
-            nRet = CreateProperty("VerticalSpeed", VSpeeds_[numVSpeed-1].c_str(), MM::String, false, pAct);
-         else
-            nRet = CreateProperty("VerticalSpeed", VSpeeds_[numVSpeed-1].c_str(), MM::String, true, pAct);
+         char VSpeedBuf[10];
+         VSpeeds_.clear();
+         for (int i = 0; i < numVSpeed; i++)
+         {
+            float vsp;
+            ret = GetVSSpeed(i, &vsp);
+            if (ret != DRV_SUCCESS)
+               return ret;
+            sprintf(VSpeedBuf, "%.2f", vsp);
+            VSpeeds_.push_back(VSpeedBuf);
+         }
+         if (VSpeeds_.empty())
+            return ERR_INVALID_VSPEED;
+
+         if (!HasProperty(g_VerticalSpeedProperty))
+         {
+            pAct = new CPropertyAction(this, &AndorCamera::OnVSpeed);
+            if (numVSpeed > 1)
+               nRet = CreateProperty(g_VerticalSpeedProperty, VSpeeds_[numVSpeed - 1].c_str(), MM::String, false, pAct);
+            else
+               nRet = CreateProperty(g_VerticalSpeedProperty, VSpeeds_[numVSpeed - 1].c_str(), MM::String, true, pAct);
+            assert(nRet == DEVICE_OK);
+         }
+         nRet = SetAllowedValues(g_VerticalSpeedProperty, VSpeeds_);
+         assert(nRet == DEVICE_OK);
+         nRet = SetProperty(g_VerticalSpeedProperty, VSpeeds_[VSpeeds_.size() - 1].c_str());
          assert(nRet == DEVICE_OK);
       }
-      nRet = SetAllowedValues("VerticalSpeed", VSpeeds_);
-      assert(nRet == DEVICE_OK);
-      nRet = SetProperty("VerticalSpeed", VSpeeds_[VSpeeds_.size()-1].c_str());
-      VSpeed_ = VSpeeds_[numVSpeed-1];
-      assert(nRet == DEVICE_OK);
 
 
       // Vertical Clock Voltage 
@@ -1275,6 +1288,12 @@ int AndorCamera::GetListOfAvailableCameras()
       pAct = new CPropertyAction (this, &AndorCamera::OnTimeOut);
       nRet = CreateProperty(g_TimeOut, CDeviceUtils::ConvertToString(imageTimeOut_ms_), MM::Integer, false, pAct);
 
+	  //SRRF
+	  SRRFControl_ = new SRRFControl(this);
+	  if (SRRFControl_->GetLibraryStatus() != SRRFControl::READY) {
+         LogMessage(SRRFControl_->GetLastErrorString());
+	  }
+
 
       // synchronize all properties
       // --------------------------
@@ -1282,13 +1301,13 @@ int AndorCamera::GetListOfAvailableCameras()
       nRet = UpdateStatus();
       if (nRet != DEVICE_OK)
       return nRet;
-      */
 
       // setup the buffer
       // ----------------
       nRet = ResizeImageBuffer();
       if (nRet != DEVICE_OK)
          return nRet;
+      */
 
       // explicitely set properties which are not readable from the camera
       nRet = SetProperty(MM::g_Keyword_Binning, "1");
@@ -1349,7 +1368,8 @@ int AndorCamera::GetListOfAvailableCameras()
          }
       }
 
-       
+      SetDefaultVSSForUltra888WithValidSRRF();
+
 
       nRet = UpdateTimings();
       if (nRet != DRV_SUCCESS)
@@ -1381,7 +1401,7 @@ int AndorCamera::GetListOfAvailableCameras()
       caps.ulSize = sizeof(caps);
       unsigned int ret = GetCapabilities(&caps);
 
-      if(ret==DRV_SUCCESS && caps.ulFeatures & AC_FEATURES_METADATA != 0)
+      if(ret==DRV_SUCCESS && (caps.ulFeatures & AC_FEATURES_METADATA) != 0)
       {
          ret = SetMetaData(1);
          if(ret == DRV_SUCCESS)
@@ -1442,6 +1462,22 @@ int AndorCamera::GetListOfAvailableCameras()
       LogMessage(statStr,false);
    }
 
+   unsigned AndorCamera::GetImageWidth() const
+   {
+      return SRRFControl_->GetSRRFEnabled() ? SRRFImage_->Width() : img_.Width(); 
+   }
+
+   unsigned AndorCamera::GetImageHeight() const
+   {
+      return SRRFControl_->GetSRRFEnabled() ? SRRFImage_->Height() : img_.Height();
+   }
+
+   long AndorCamera::GetImageBufferSize() const
+   {
+      return SRRFControl_->GetSRRFEnabled() ? 
+         SRRFImage_->Width() * SRRFImage_->Height() * GetImageBytesPerPixel() :
+         img_.Width() * img_.Height() * GetImageBytesPerPixel();
+   }
 
    int AndorCamera::PrepareSnap()
    {
@@ -1492,69 +1528,147 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::SnapImage()
    {
-      { // scope for driver guard
+      {
          int ret;
-         
+         Log("[Snap Image] called...");
          DriverGuard dg(this);
 
          if (sequenceRunning_)   // If we are in the middle of a SequenceAcquisition
             return ERR_BUSY_ACQUIRING;
 
-         if(iCurrentTriggerMode_ == SOFTWARE) 
+         if (SRRFControl_->GetSRRFEnabled())
          {
-            ret = SendSoftwareTrigger();
-            if (DRV_SUCCESS != ret)
-               return ret;
-         }
-         else if (iCurrentTriggerMode_ == INTERNAL) 
-         {
-            ret = StartAcquisition();
-            if (DRV_SUCCESS != ret)
-               return ret;
+            int returnCodeFromSRRF = SRRFControl_->ApplySRRFParameters(&img_, false);
+            if (returnCodeFromSRRF != AT_SRRF_SUCCESS)
+            {
+               return DEVICE_SNAP_IMAGE_FAILED;
+            }
+
+            return SnapImageSRRF();
          }
 
-         if(bSnapImageWaitForReadout_)
+         ret = SnapImageNormal();
+
+         if (DRV_SUCCESS != ret)
+            return ret;
+      }
+
+      CDeviceUtils::SleepMs(iSnapImageDelay_);
+      return DEVICE_OK;
+   }
+
+   int AndorCamera::SnapImageNormal()
+   {
+      unsigned ret = DRV_SUCCESS;
+      if (iCurrentTriggerMode_ == SOFTWARE)
+      {
+         ret = SendSoftwareTrigger();
+         if (DRV_SUCCESS != ret)
+            return ret;
+      }
+      else if (iCurrentTriggerMode_ == INTERNAL)
+      {
+         ret = StartAcquisition();
+         if (DRV_SUCCESS != ret)
+            return ret;
+      }
+
+      if (bSnapImageWaitForReadout_)
+      {
+         ret = WaitForAcquisitionByHandleTimeOut(myCameraID_, imageTimeOut_ms_);
+         if (DRV_SUCCESS != ret)
+            return ret;
+      }
+      else
+      {
+         CDeviceUtils::SleepMs((long)(currentExpMS_ + 0.99));
+      }
+
+      return ret;
+   }
+
+   int AndorCamera::SnapImageSRRF()
+   {
+      unsigned ret = DRV_SUCCESS;
+      if (iCurrentTriggerMode_ == SOFTWARE)
+      {
+         //ostringstream oss;
+         ret = SendSoftwareTrigger();
+         //oss << "[SnapImageSRRF] SW TRIGGER MODE Send 1st ret: " << ret << endl;
+         //Log(oss.str().c_str());
+         if (DRV_SUCCESS != ret)
+            return ret;
+
+         AT_SRRF_U16 numberFramesPerBurst = SRRFControl_->GetFrameBurst();
+         for (int i = 1; i <= numberFramesPerBurst; ++i)
          {
+            //refactor later
             ret = WaitForAcquisitionByHandleTimeOut(myCameraID_, imageTimeOut_ms_);
+            //oss.str("");
+            //oss << "[SnapImageSRRF] WaitForAcquisitionByHandleTimeOut returned: " << ret << " for camera: " << myCameraID_ << endl;
+            //Log(oss.str().c_str());
+            if (ret != DRV_SUCCESS)
+               return ret;
+            
+            ret = (i == numberFramesPerBurst) ? DRV_SUCCESS : SendSoftwareTrigger();
+            //oss.str("");
+            //oss << "[SnapImageSRRF] Send [Next] Software Trigger returned: " << ret << " burst number: " << numberFramesPerBurst << endl;
+            //Log(oss.str().c_str());
             if (DRV_SUCCESS != ret)
                return ret;
+            
+            ret = GetMostRecentImage16((WORD*)img_.GetPixelsRW(), img_.Width()*img_.Height());
+            //oss.str("");
+            //oss << "[SnapImageSRRF] GetMostRecentImage16 returned: " << ret << endl;
+            //Log(oss.str().c_str());
+            if (ret != DRV_SUCCESS)
+               return ret;
+
+            SRRFControl_->ProcessSingleFrameOnCPU(img_.GetPixelsRW(), img_.Width()*img_.Height()*img_.Depth());
+            //oss.str("");
+            //oss << "[SnapImageSRRF] SRRFControl_->ProcessSingleFrameOnCPU returned: " << frameBurstComplete << endl;
+            //Log(oss.str().c_str());
          }
-         else
-         {
-            CDeviceUtils::SleepMs((long) (currentExpMS_ + 0.99));
-         }
-      }//release camera
-      
-      CDeviceUtils::SleepMs(iSnapImageDelay_);
+      }
+      else if (iCurrentTriggerMode_ == INTERNAL)
+      {
+         ret = StartAcquisition();
+         if (DRV_SUCCESS != ret)
+            return ret;
+         Log("Internal Trigger Mode - not yet supported!!!");
+      }
 
       return DEVICE_OK;
    }
 
-
    const unsigned char* AndorCamera::GetImageBuffer()
    {
-      DriverGuard dg(this);
+      Log("[GetImageBuffer] called...");
+      if (SRRFControl_->GetSRRFEnabled())
+      {
+         return GetAcquiredImageSRRF();
+      }
 
       if (IsAcquiring() && !bSnapImageWaitForReadout_)
       {
+         DriverGuard dg(this);
+
          int ret = WaitForAcquisitionByHandleTimeOut(myCameraID_, imageTimeOut_ms_);
          if (ret != DRV_SUCCESS)
             return 0;
       } 
 
-      pImgBuffer_ = GetAcquiredImage();
-      assert(img_.Depth() == 2);
-      assert(pImgBuffer_!=0);
-      unsigned char* rawBuffer = pImgBuffer_;
+      const unsigned char* rawBuffer = GetAcquiredImage();
 
       PrepareSnap();
-      return (unsigned char*)rawBuffer;
+      return rawBuffer;
    }
-
 
    unsigned char* AndorCamera::GetAcquiredImage() {
       assert(fullFrameBuffer_ != 0);
       int array_Length = roi_.xSize/binSize_ * roi_.ySize/binSize_;
+
+      DriverGuard dg(this);
 
       unsigned int ret = GetMostRecentImage16((WORD*)fullFrameBuffer_, array_Length);
       if(ret != DRV_SUCCESS) {
@@ -1567,6 +1681,14 @@ int AndorCamera::GetListOfAvailableCameras()
       return (unsigned char*)fullFrameBuffer_;
    }
 
+   const unsigned char* AndorCamera::GetAcquiredImageSRRF() {
+      DriverGuard dg(this);
+
+      AT_SRRF_U64 outputBufferSize = GetImageBufferSize();
+      SRRFControl_->GetSRRFResult(SRRFImage_->GetPixelsRW(), outputBufferSize);
+      PrepareSnap();
+      return SRRFImage_->GetPixels();
+   }
 
    /**
    * Readout time
@@ -1574,30 +1696,23 @@ int AndorCamera::GetListOfAvailableCameras()
    unsigned int AndorCamera::UpdateTimings()
    {
       unsigned int ret;
-      float fReadOutTime,fKeepCleanTime, fAccumTime, fExposure, fKinetic;
-      //TODO: remove fix when 2.97 is released
-      //ret = GetReadOutTime(&fReadOutTime);
-      //if(DRV_SUCCESS!=ret)
-      //   return ret;
-      SetExposureTime(0.0f);
-      ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fKinetic);
-      if(DRV_SUCCESS!=ret)
-        return ret;
-      fReadOutTime = fKinetic;
-      SetExposureTime(currentExpMS_/1000.0f);
+      float fReadOutTime, fKeepCleanTime, fAccumTime, fExposure, fKinetic;
 
-      
-      ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fKinetic);
-      if(DRV_SUCCESS!=ret)
-        return ret;
+      ret = GetAcquisitionTimings(&fExposure, &fAccumTime, &fKinetic);
+      if (DRV_SUCCESS != ret)
+         return ret;
+
+      ret = GetReadOutTime(&fReadOutTime);
+      if (DRV_SUCCESS != ret)
+         return ret;
 
       ret = GetKeepCleanTime(&fKeepCleanTime);
-      if(DRV_NOT_AVAILABLE == ret)
-         fKeepCleanTime=0.000f; 
-      else if(DRV_SUCCESS!=ret)
-         return ret; 
-      //TODO: remove fix when 2.97 is released
-      fReadOutTime = fReadOutTime - fKeepCleanTime;
+      if (DRV_NOT_AVAILABLE == ret)
+      {
+         fKeepCleanTime = 0.000f;
+      }
+      else if (DRV_SUCCESS != ret)
+         return ret;
 
       //convert to ms      
       fReadOutTime *= 1000.f;
@@ -1642,7 +1757,7 @@ int AndorCamera::GetListOfAvailableCameras()
          ActualInterval_ms_str_ += " (minimum)";
       }
 	  
-	  SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(fExposure));
+	   //SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(fExposure));
       OnPropertyChanged(MM::g_Keyword_ReadoutTime, CDeviceUtils::ConvertToString(ReadoutTime_));
       OnPropertyChanged(g_Keyword_KeepCleanTime, CDeviceUtils::ConvertToString(KeepCleanTime_));
       OnPropertyChanged(MM::g_Keyword_ActualInterval_ms,ActualInterval_ms_str_.c_str());
@@ -1658,6 +1773,14 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
    {
+      if (SRRFControl_->GetSRRFEnabled())
+      {
+         uX /= SRRFControl_->GetRadiality();
+         uY /= SRRFControl_->GetRadiality();
+         uXSize /= SRRFControl_->GetRadiality();
+         uYSize /= SRRFControl_->GetRadiality();
+      }
+
       int ret;
       int roiPosition = -1;
       //find it in list of predefined ROIs
@@ -1677,7 +1800,7 @@ int AndorCamera::GetListOfAvailableCameras()
       }
       if(roiPosition !=-1)
       {
-         char buffer[64];
+         char buffer[MAX_CHARS_PER_DESCRIPTION];
          GetROIPropertyName(roiPosition, customROI_.xSize, customROI_.ySize, buffer,cropModeSwitch_ );
          ret = SetProperty(g_ROIProperty, buffer);
       }
@@ -1689,14 +1812,11 @@ int AndorCamera::GetListOfAvailableCameras()
       return ret;
    }
 
-
-
    unsigned AndorCamera::GetBitDepth() const
    {
       DriverGuard dg(this);
 
       int depth;
-      // TODO: channel 0 hardwired ???
       unsigned ret = ::GetBitDepth(ADChannelIndex_, &depth);
       if (ret != DRV_SUCCESS)
          depth = 0;
@@ -1717,8 +1837,8 @@ int AndorCamera::GetListOfAvailableCameras()
 
    int AndorCamera::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSize)
    {
-      uX = roi_.x  / binSize_;
-      uY = roi_.y  / binSize_;
+      uX = roi_.x / binSize_;
+      uY = roi_.y / binSize_;
       uXSize = roi_.xSize / binSize_;
       uYSize = roi_.ySize / binSize_;
 
@@ -1738,6 +1858,19 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
 
+
+   double AndorCamera::GetPixelSizeUm() const
+   {
+      DriverGuard dg(this);
+      float x, y;
+      unsigned ret = ::GetPixelSize(&x, &y);
+      if (ret == DRV_SUCCESS)
+      {
+         return (double)x;
+      }
+
+      return GetBinning();
+   }
 
    ///////////////////////////////////////////////////////////////////////////////
    // Action handlers
@@ -2975,21 +3108,30 @@ int AndorCamera::GetListOfAvailableCameras()
       // NOTE: we are assuming 16-bit pixel type
       const int bytesPerPixel = 2;
       img_.Resize(roi_.xSize / binSize_, roi_.ySize / binSize_, bytesPerPixel);
+
+      unsigned int radiality = SRRFControl_->GetRadiality();
+      ResizeSRRFImage(radiality);
+
       return DEVICE_OK;
    }
    
+   void AndorCamera::ResizeSRRFImage(long radiality)
+   {
+      SRRFImage_->Resize(img_.Width()*radiality, img_.Height()*radiality, img_.Depth());
+   }
+
    void AndorCamera::UpdateOAParams(const char* OAModeName)
    {
       unsigned int ui_retVal;
       int i_temp;
       float f_temp;
-      char c_temp[256];
-      memset(c_temp, '\0', 256);  
+      char c_temp[MAX_CHARS_PER_OA_DESCRIPTION];
+      memset(c_temp, '\0', MAX_CHARS_PER_OA_DESCRIPTION);  
 
-      ui_retVal = ::OA_GetString(OAModeName, "mode_description", &c_temp[0], 256);
+      ui_retVal = ::OA_GetString(OAModeName, "mode_description", &c_temp[0], MAX_CHARS_PER_OA_DESCRIPTION);
       optAcquireDescriptionStr_ = c_temp;
       SetProperty("OptAcquireMode Description", c_temp);  
-      ui_retVal = ::OA_GetString(OAModeName, "frame_transfer", &c_temp[0], 256);
+      ui_retVal = ::OA_GetString(OAModeName, "frame_transfer", &c_temp[0], MAX_CHARS_PER_OA_DESCRIPTION);
       if (0 == stricmp(c_temp, "ON")){
         SetProperty("FrameTransfer", "On");  
       } 
@@ -3011,12 +3153,12 @@ int AndorCamera::GetListOfAvailableCameras()
       ui_retVal = GetNumberADChannels(&numADChannels);
 
       for(int i = 0; i < numADChannels; ++i) {
-        char * buffer = new char[64];
+        char * buffer = new char[MAX_CHARS_PER_DESCRIPTION];
         int depth;
         ::GetBitDepth(i, &depth);
         sprintf(buffer, "%d. %dbit",(i+1), depth);
 
-        char speedBuf[100];
+        char speedBuf[MAX_CHARS_PER_DESCRIPTION];
         int numSpeeds;
         unsigned ret = GetNumberHSSpeeds(i, OutputAmplifierIndex_, &numSpeeds);
         for (int j=0; j<numSpeeds; j++)
@@ -3033,7 +3175,7 @@ int AndorCamera::GetListOfAvailableCameras()
         delete [] buffer;
       }
 
-      ui_retVal = ::OA_GetString(OAModeName, "output_amplifier", &c_temp[0], 256);
+      ui_retVal = ::OA_GetString(OAModeName, "output_amplifier", &c_temp[0], MAX_CHARS_PER_OA_DESCRIPTION);
       SetProperty("Output_Amplifier", c_temp);  
 
       ui_retVal = ::OA_GetInt(OAModeName, "vertical_clock_amplitude", &i_temp);
@@ -3049,7 +3191,7 @@ int AndorCamera::GetListOfAvailableCameras()
       SetProperty("Pre-Amp-Gain", c_temp);  
       ui_retVal = ::OA_GetFloat(OAModeName, "shift_speed", &f_temp);
       sprintf(c_temp, "%.2f", f_temp);
-      SetProperty("VerticalSpeed", c_temp);        
+      SetProperty(g_VerticalSpeedProperty, c_temp);
    }
 
 
@@ -3177,7 +3319,7 @@ int AndorCamera::GetListOfAvailableCameras()
             }
 		      if(roiPosition !=-1)
             {
-               char buffer[64];
+               char buffer[MAX_CHARS_PER_DESCRIPTION];
                GetROIPropertyName(roiPosition, roi_.xSize, roi_.ySize, buffer,cropModeSwitch_);
                pProp->Set(buffer);
             }
@@ -3518,7 +3660,7 @@ int AndorCamera::GetListOfAvailableCameras()
                if(changeAmp) {
                   if(vAvailAmps.size() > 0) {
                      OutputAmplifierIndex_ = mapAmps[vAvailAmps[0]];
-                     int nRet = SetProperty(g_OutputAmplifier,  vAvailAmps[0].c_str());   
+                     nRet = SetProperty(g_OutputAmplifier,  vAvailAmps[0].c_str());   
                      assert(nRet == DEVICE_OK);
                      if (nRet != DEVICE_OK) {
                         return nRet;
@@ -3616,7 +3758,7 @@ int AndorCamera::GetListOfAvailableCameras()
         
             for (int i=0; i<numPreAmpGain; i++)
             {
-               int gainAvailable;
+               gainAvailable;
                ret = IsPreAmpGainAvailable(ADChannelIndex_, OutputAmplifierIndex_, HSSpeedIdx_, i, &gainAvailable);
                if(DRV_SUCCESS != ret)
                   return ret;
@@ -3724,8 +3866,35 @@ int AndorCamera::GetListOfAvailableCameras()
       return DRV_SUCCESS;
    }
 
-   
+void AndorCamera::CalculateAndSetupCameraImageBuffer(at_u32 & width, at_u32 & height, at_u32 & bytesPerPixel)
+{
+   width = img_.Width();
+   height = img_.Height();
+   bytesPerPixel = img_.Depth();
+   at_u32 imagesPerDMA = MAX_IMAGES_PER_DMA;
+   GetImagesPerDMA(&imagesPerDMA);
+   cameraBuffer_ = new ImgBuffer(width * imagesPerDMA, height, bytesPerPixel);
+   SetCameraImageBuffer(cameraBuffer_->GetPixelsRW());
+}
 
+int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
+{
+   DriverGuard dg(this);
+   at_32 acc = 0;
+   int ret = GetAcquisitionProgress(&acc, series);
+   //ostringstream os("GetAcquisitionProgress (retCode): ");
+   //os << ret << " | returned (series progress): " << *series << endl;
+   //GetCoreCallback()->LogMessage(this, os.str().c_str(), true);
+   if (ret != DRV_SUCCESS)
+   {
+      ostringstream os;
+      os << "Error in GetAcquisitionProgress: " << ret << " | Stopping Acquisition";
+      GetCoreCallback()->LogMessage(this, os.str().c_str(), true);
+      StopCameraAcquisition();
+   }
+
+   return ret;
+}
 
 
    ///////////////////////////////////////////////////////////////////////////////
@@ -3739,76 +3908,33 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AcqSequenceThread::svc(void)
    {
-      at_32 acc;
       at_32 series(0);
-      at_32 seriesInit;
+      at_32 seriesInit(0);
       unsigned ret;
+      std::ostringstream os;
 
-      printf("Starting Andor svc\n");
+      camera_->Log("Starting Andor svc\n");
+
+      at_u32 width(0);
+      at_u32 height(0);
+      at_u32 bytesPerPixel(0);
+
+      camera_->CalculateAndSetupCameraImageBuffer(width, height, bytesPerPixel);
 
       long timePrev = GetTickCount();
       long imageWait = 0;
 
-		std::ostringstream os;
-
-      {
-         DriverGuard dg(camera_);
-		   ret = GetAcquisitionProgress(&acc, &seriesInit);
-
-		   os << "GetAcquisitionProgress returned: " << acc << " and: " << seriesInit;
-		   printf ("%s\n", os.str().c_str());
-		   os.str("");
-
-		   if (ret != DRV_SUCCESS)
-		   {
-			   camera_->StopCameraAcquisition();
-			   os << "Error in GetAcquisitionProgress: " << ret;
-			   printf("%s\n", os.str().c_str());
-			   //core_->LogMessage(camera_, os.str().c_str(), true);
-			   return ret;
-		   }
-      }
-	  
-      /*
-      float fExposure, fAccumTime, fKineticTime;
-      printf ("Before GetAcquisition timings\n");
-      ret = GetAcquisitionTimings(&fExposure,&fAccumTime,&fKineticTime);
-      if (ret != DRV_SUCCESS)
-      printf ("Error in GetAcquisition Timings\n");
-      os << "Exposure: " << fExposure << " AcummTime: " << fAccumTime << " KineticTime: " << fKineticTime;
-      printf ("%s\n", os.str().c_str());
-      os.str("")
-      float ActualInterval_ms = fKineticTime * 1000.0f;
-      waitTime = (long) (ActualInterval_ms / 5);
-
-      os << "WaitTime: " << waitTime;
-      //core_->LogMessage(camera_, os.str().c_str(), true);
-      printf("%s\n", os.str().c_str());
-      os.str("");
-      */
-
       // wait for frames to start coming in
       do
       {
-         {
-            DriverGuard dg(camera_);
-            ret = GetAcquisitionProgress(&acc, &series);
-         }
+         ret = camera_->GetCameraAcquisitionProgress(&series);
          if (ret != DRV_SUCCESS)
-         {
-            camera_->StopCameraAcquisition();
-            os << "Error in GetAcquisitionProgress: " << ret;
-            printf("%s\n", os.str().c_str());
-            os.str("");
             return ret;
-         }
 
          CDeviceUtils::SleepMs(waitTime_);
 
       } while (series == seriesInit && !stop_);
-      os << "Images appearing";
-      printf("%s\n", os.str().c_str());
-      os.str("");
+      camera_->Log("Images appearing");
 
       at_32 seriesPrev = 0;
 
@@ -3817,6 +3943,9 @@ int AndorCamera::GetListOfAvailableCameras()
          {
             DriverGuard dg(camera_);
             ret = GetTotalNumberImagesAcquired(&series);
+            //os.str("");
+            //os << "[svc] Thread GetTotalNumberImagesAcquired returned: " << ret << " Series number returned was: " << series << endl;
+            //camera_->Log(os.str().c_str());
          }
 		
 		
@@ -3824,11 +3953,22 @@ int AndorCamera::GetListOfAvailableCameras()
          {
             if (series > seriesPrev)
             {
+               long imageCountFirst, imageCountLast;
+               int returnc;
+               returnc = GetNumberNewImages(&imageCountFirst, &imageCountLast);
+               if (ret != DRV_SUCCESS)
+               {
+                  os.str("");
+                  os << "GetNumberNewImages PushImage error : " << ret << " first: " << imageCountFirst << " last: " << imageCountLast << endl;
+                  camera_->Log(os.str().c_str());
+                  return (int)ret;
+               }
                // new frame arrived
-               int retCode = camera_->PushImage();
+               int retCode = camera_->PushImage(width, height, bytesPerPixel, imageCountFirst, imageCountLast);
                if (retCode != DEVICE_OK)
                {
                   os << "PushImage failed with error code " << retCode;
+                  camera_->Log(os.str().c_str());
                   printf("%s\n", os.str().c_str());
                   os.str("");
                   //camera_->StopSequenceAcquisition();
@@ -3838,12 +3978,10 @@ int AndorCamera::GetListOfAvailableCameras()
                // report time elapsed since previous frame
                //printf("Frame %d captured at %ld ms!\n", ++frameCounter, GetTickCount() - timePrev);
 			   
-
-			   //camera_->LogMessage("Aquire Thread: Aquired Frame!", true);
                seriesPrev = series;
                timePrev = GetTickCount();
-               // kdb 7/30/2009  
-            } else 
+            } 
+            else 
             {
                imageWait = GetTickCount() - timePrev;
                if (imageWait > imageTimeOut_) {
@@ -3881,19 +4019,19 @@ int AndorCamera::GetListOfAvailableCameras()
       if (stop_)
       {
          printf ("Acquisition interrupted by the user!\n");
-         return 0;
+         return DEVICE_OK;
       }
 
       if ((series-seriesInit) == numImages_)
       {
          printf("Did not get the intended number of images\n");
          camera_->StopCameraAcquisition();
-         return 0;
+         return DEVICE_OK;
       }
 
       os << "series: " << series << " seriesInit: " << seriesInit << " numImages: "<< numImages_;
       printf("%s\n", os.str().c_str());
-	  camera_->LogMessage("Aquire Thread: We can get here if we are not fast enough", true);
+      camera_->LogMessage("Aquire Thread: We can get here if we are not fast enough", true);
       camera_->StopCameraAcquisition();
       return 3; // we can get here if we are not fast enough.  Report?  
    }
@@ -3908,6 +4046,13 @@ int AndorCamera::GetListOfAvailableCameras()
       if (sequenceRunning_)
          return ERR_BUSY_ACQUIRING;
 
+      //Check here required to stop SDK blowing-up if was Live, and then change property, 
+      // subtraction occurs and sets number of kinetics to extremely large value.
+      if (LONG_MAX == sequenceLength_)
+      {
+         numImages = LONG_MAX;
+      }
+
       sequencePaused_ = false;
       stopOnOverflow_ = stopOnOverflow;
       sequenceLength_ = numImages;
@@ -3918,9 +4063,23 @@ int AndorCamera::GetListOfAvailableCameras()
          SetToIdle();
       }
 
+      // prepare the camera
+      bool kineticSeries = LONG_MAX != numImages;
+
+      if (SRRFControl_->GetSRRFEnabled())
+      {
+         int returnCodeFromSRRF = SRRFControl_->ApplySRRFParameters(&img_, !kineticSeries);
+         if (returnCodeFromSRRF != AT_SRRF_SUCCESS)
+         {
+            return DEVICE_ERR;
+         }
+
+         numImages *= kineticSeries ? SRRFControl_->GetFrameBurst() : 1;  //Live numImages=LONG_MAX; SRRF_Enabled may cause arithmetic overflow...
+      }
+
       ostringstream os;
 
-      os << "Started sequence acquisition: " << numImages << "images  at " << interval_ms << " ms" << endl;
+      os << "Started sequence acquisition: " << numImages << " images  at " << interval_ms << " ms" << endl;
       LogMessage(os.str().c_str());
 
       LogMessage("Setting DMA Parameters", true);
@@ -3928,7 +4087,7 @@ int AndorCamera::GetListOfAvailableCameras()
       if (EXTERNAL != iCurrentTriggerMode_ && EXTERNALEXPOSURE != iCurrentTriggerMode_ && FASTEXTERNAL != iCurrentTriggerMode_) {
         // optimise the DMA setting unless we are running in external trigger or external exposure
         // in those modes, the SDK set up the DMA to 1 which prevents time outs in case of slow trigger
-        int imagesPerDma = 64;
+        int imagesPerDma = MAX_IMAGES_PER_DMA;
         if(imagesPerDma>numImages)
            imagesPerDma=numImages;
 
@@ -3936,38 +4095,36 @@ int AndorCamera::GetListOfAvailableCameras()
       
         if (DRV_SUCCESS != ret)
            return (int)ret;
+
       }
       
-
       LogMessage("Setting Trigger Mode", true);
       int ret0;
       ret0 = ApplyTriggerMode(SOFTWARE == iCurrentTriggerMode_ ? INTERNAL : iCurrentTriggerMode_);
       if(DRV_SUCCESS!=ret0)
          return ret0;
 
-
-      // prepare the camera
-      bool kineticSeries = LONG_MAX != numImages;
+      if (interval_ms > 0 && SRRFControl_->GetSRRFEnabled())
+      {
+         kineticSeries = false;
+      }
 
       int ret = SetAcquisitionMode(kineticSeries ? 3 : 5); // kinetic series : run till abort
       if (ret != DRV_SUCCESS)
          return ret;
-      std::string debugMsg = "Set acquisition mode to ";
-      debugMsg.append(kineticSeries ? "3." : "5.");
-      LogMessage(debugMsg, true);
+      string s("Set acquisition mode to ");
+      s += kineticSeries ? "3 (Kinetic series)" : "5 (Run till abort)";
+      LogMessage(s, true);
 
       if(kineticSeries) {
         ret = SetNumberKinetics(numImages);
-        LogMessage("Set Number of kinetics to " + numImages, true);
+        os.str("");
+        os << "Set Number of kinetics to " << numImages;
+        LogMessage(os.str().c_str(), true);
           if (ret != DRV_SUCCESS) {
            return ret;
           }
       }
-
-      // set AD-channel to 14-bit
-      //   ret = SetADChannel(0);
-      //if (ret != DRV_SUCCESS)
-      //   return ret;
 
       SetExposureTime((float) (expMs_/1000.0));
 
@@ -3980,54 +4137,20 @@ int AndorCamera::GetListOfAvailableCameras()
       }
       LogMessage("Set Number of accumulations to 1", true);
 
-
-      ret = SetKineticCycleTime((float)(interval_ms / 1000.0));
-      if (ret != DRV_SUCCESS)
-      {
-         SetAcquisitionMode(1);
-         return ret;
+      if (kineticSeries) {
+         ret = SetKineticCycleTime((float)(interval_ms / 1000.0));
+         if (ret != DRV_SUCCESS)
+         {
+            SetAcquisitionMode(1);
+            return ret;
+         }
+         LogMessage("Set Kinetic cycle time", true);
       }
-      LogMessage("Set Kinetic cycle time", true);
-
-      at_32 size;
-      ret = GetSizeOfCircularBuffer(&size);
-      if (ret != DRV_SUCCESS)
-      {
-         SetAcquisitionMode(1);
-         return ret;
-      }
-      LogMessage("Get Size of circular Buffer", true);
-
-      // re-apply the frame transfer mode setting
-      /*char ftMode[MM::MaxStrLength];
-      if(HasProperty(m_str_frameTransferProp.c_str()))
-      {
-         ret = GetProperty(m_str_frameTransferProp.c_str(), ftMode);
-         assert(ret == DEVICE_OK);
-         int modeIdx = 0;
-         if (strcmp(g_FrameTransferOn, ftMode) == 0)
-            modeIdx = 1;
-         else if (strcmp(g_FrameTransferOff, ftMode) == 0)
-            modeIdx = 0;
-         else
-            return DEVICE_INVALID_PROPERTY_VALUE;
-         os.str("");
-         os << "Set Frame transfer mode to " << modeIdx;
-         LogMessage(os.str().c_str(), true);
-
-         
-      }
-      if (ret != DRV_SUCCESS)
-      {
-         SetAcquisitionMode(1);
-         return ret;
-      }*/
 
       ret = ApplyROI(false);
       if(DRV_SUCCESS!=ret)
          return ret;
          
-     
       // start thread
       imageCounter_ = 0;
 
@@ -4041,6 +4164,7 @@ int AndorCamera::GetListOfAvailableCameras()
       {
          return ret;
       }
+
       seqThread_->SetWaitTime((at_32) (ActualInterval_ms_ / 5));
       seqThread_->SetTimeOut(imageTimeOut_ms_);
 
@@ -4056,19 +4180,20 @@ int AndorCamera::GetListOfAvailableCameras()
          SetAcquisitionMode(1);
          return ret;
       }
+
       LogMessage("Starting acquisition in the camera", true);
       startTime_ = GetCurrentMMTime();
       ret = ::StartAcquisition();
 
       if (ret != DRV_SUCCESS)
       {
-         std::ostringstream os;
-         os << "Andor driver returned error value: " << ret;
-         LogMessage(os.str().c_str(), false);
-         SetAcquisitionMode(1);
+         os.str("");
+         os << "Andor driver returned error value : " << ret;
+         Log(os.str());
          return ret;
       } else 
       {
+         startSRRFImageTime_ = GetCurrentMMTime();
          seqThread_->Start();
          sequenceRunning_ = true;
       }
@@ -4155,9 +4280,11 @@ int AndorCamera::GetListOfAvailableCameras()
 
       seqThread_->Stop();
       seqThread_->wait();
+      delete cameraBuffer_;
 
       if (!temporary)
       {
+         sequenceLength_ = 0;
          PrepareSnap();
          int ret = UpdateExposureFromCamera();
          if(ret!=DRV_SUCCESS)
@@ -4175,30 +4302,20 @@ int AndorCamera::GetListOfAvailableCameras()
    * In case of error or if the sequence is finished StopSequenceAcquisition()
    * is called, which will raise the stop_ flag and cause the thread to exit.
    */
-   int AndorCamera::PushImage()
+   int AndorCamera::PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32 imageCountFirst, at_32 imageCountLast)
    {
-      unsigned int width;
-      unsigned int height;
-      unsigned int bytesPerPixel;
+      if (SRRFControl_->GetSRRFEnabled())
+      {
+         return PushImageWithSRRF(imageCountFirst, imageCountLast);
+      }
+
       at_u32 imagesPerDMA;
-      at_32 validFirst, validLast;
-      
+      at_32 validFirst = 0, validLast = 0;
+
       {
          DriverGuard dg(this);
          unsigned ret;
-         at_32 imageCountFirst, imageCountLast; 
-         
-         width =  GetImageWidth();
-         height = GetImageHeight();
-         bytesPerPixel = GetImageBytesPerPixel();
-
-         ret = GetNumberNewImages(&imageCountFirst, &imageCountLast);
-         if (ret != DRV_SUCCESS)
-            return (int)ret;
-
-         ret = GetImagesPerDMA (&imagesPerDMA);
-         if (ret != DRV_SUCCESS)
-            return (int)ret;
+         ret = GetImagesPerDMA(&imagesPerDMA);
 
          long imagesAvailable = imageCountLast - imageCountFirst;
 
@@ -4216,9 +4333,14 @@ int AndorCamera::GetListOfAvailableCameras()
             imageCountFirst = imageCountLast-imagesAvailable; //get newest images
          }
 
-         
+         unsigned long imageBufferSizePixels = (imagesAvailable + 1)*width*height;
+         if (NeedToAllocateExtraBuffers(imageBufferSizePixels))
+         {
+            delete[] fullFrameBuffer_;
+            fullFrameBuffer_ = new short[imageBufferSizePixels];
+         }
 
-         ret = GetImages16(imageCountFirst,imageCountLast, (WORD*) fullFrameBuffer_, imagesPerDMA*width*height, &validFirst, &validLast);
+         ret = GetImages16(imageCountFirst,imageCountLast, (WORD*) fullFrameBuffer_, imageBufferSizePixels, &validFirst, &validLast);
          if (ret == DRV_NO_NEW_DATA) {
            int status = 0;
            ret = GetStatus (&status);
@@ -4250,53 +4372,9 @@ int AndorCamera::GetListOfAvailableCameras()
          char label[MM::MaxStrLength];
          this->GetLabel(label);
 
-
-         MM::MMTime timestamp = this->GetCurrentMMTime();
          Metadata md;
-         // Copy the metadata inserted by other processes:
-         std::vector<std::string> keys = GetTagKeys();
-         for (unsigned int i= 0; i < keys.size(); i++) {
-            md.put(keys[i], GetTagValue(keys[i].c_str()).c_str());
-         }
+         AddMetadataInfo(md);
 
-         md.put("Camera", label);
-         md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(startTime_.getMsec()));
-         md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timestamp - startTime_).getMsec()));
-         md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
-         md.put(MM::g_Keyword_Binning, binSize_);
-
-         MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
-         mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
-         md.SetTag(mstStartTime);
-
-         MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, label, true);
-         mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
-         md.SetTag(mst);
-
-
-         if(metaDataAvailable_)
-         {
-            SYSTEMTIME timeOfStart;
-            float timeFromStart=0.f;
-            unsigned int ret = GetMetaDataInfo(&timeOfStart ,&timeFromStart, imageCounter_);
-            if(ret == DRV_SUCCESS)
-            {
-               MetadataSingleTag mstHW("ElapsedTime-ms(HW)", label, true);
-               mstHW.SetValue(CDeviceUtils::ConvertToString(timeFromStart));
-               md.SetTag(mstHW);
-            }
-         }
-         
-
-
-         MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
-         mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));      
-         md.SetTag(mstCount);
-
-         MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
-         mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));      
-         md.SetTag(mstB);
-         
          imageCounter_++;
 
          // This method inserts new image in the circular buffer (residing in MMCore)
@@ -4316,6 +4394,106 @@ int AndorCamera::GetListOfAvailableCameras()
                bytesPerPixel,
                md.Serialize().c_str(),
                false);
+         }
+
+         imagePtr += width*height;
+      }
+
+      return DEVICE_OK;
+   }
+
+
+   int AndorCamera::PushImageWithSRRF(at_32 imageCountFirst, at_32 imageCountLast)
+   {
+
+      unsigned int width;
+      unsigned int height;
+      unsigned int bytesPerPixel;
+      at_32 validFirst = 0, validLast = 0;
+
+      unsigned ret;
+
+      width = img_.Width();
+      height = img_.Height();
+      bytesPerPixel = GetImageBytesPerPixel();
+
+      {
+         DriverGuard dg(this);
+         //ostringstream oss;
+
+         //oss << "[PushSRRFImage] called GetNumberNewImages | first:" << imageCountFirst << " last:" << imageCountLast << "  Returned:" << ret << endl;
+         //Log(oss.str().c_str());
+         //oss.str("");
+         at_u32 numberOfPixels = width * height * (imageCountLast - imageCountFirst + 1);
+         cameraBuffer_->Resize(width * (imageCountLast - imageCountFirst + 1), height);
+         SetCameraImageBuffer(cameraBuffer_->GetPixelsRW());
+         WORD* cameraBufferImagePtr = (WORD*)pImgBuffer_;
+
+         ret = GetImages16(imageCountFirst, imageCountLast, cameraBufferImagePtr, numberOfPixels, &validFirst, &validLast);
+         //oss << "[PushSRRFImage] called GetImages16 | first:" << imageCountFirst << " last:" << imageCountLast << " numberOfPixels to get:" << numberOfPixels;
+         //oss << "  validFirst:" << validFirst << " validLast:" << validLast << "  Returned:" << ret << endl;
+         //Log(oss.str().c_str());
+         if (ret == DRV_NO_NEW_DATA) 
+         {
+            GetImages16(imageCountLast, imageCountLast, cameraBufferImagePtr, width*height, &validFirst, &validLast);
+            //oss << "[PushSRRFImage] called GetImages16 again (NO_NEW_DATA) | first:" << imageCountLast << " last:" << imageCountLast << " w x h:" << width*height;
+            //oss << "  validFirst:" << validFirst << " validLast:" << validLast << "  Returned:" << ret << endl;
+            //Log(oss.str().c_str());
+         }
+         else if (ret != DRV_SUCCESS) 
+         {
+            return ret;
+         }
+      }
+
+      for (int i = validFirst; i <= validLast; i++)
+      {
+         //ostringstream oss;
+         WORD* imagePtr = (WORD*)pImgBuffer_;
+         bool frameBurstComplete = SRRFControl_->ProcessSingleFrameOnCPU(imagePtr, width*height*bytesPerPixel);
+         if (frameBurstComplete)
+         {
+            AT_SRRF_U64 outputBufferSize = GetImageBufferSize();
+            SRRFControl_->GetSRRFResult(SRRFImage_->GetPixelsRW(), outputBufferSize);
+
+            Metadata md;
+            AddSRRFMetadataInfo(md);
+            startSRRFImageTime_ = GetCurrentMMTime();
+
+            // Only increment the image counter after metadata added, as uses this value...
+            imageCounter_++;
+
+            int corecallbackInsertImageReturn = GetCoreCallback()->InsertImage(
+               this,
+               SRRFImage_->GetPixels(),
+               SRRFImage_->Width(),
+               SRRFImage_->Height(),
+               SRRFImage_->Depth(),
+               md.Serialize().c_str(),
+               false);
+            //oss.str("");
+            //oss << "[PushImageWithSRRF] sent up an image to MMCore and returned: " << corecallbackInsertImageReturn << endl;
+            //Log(oss.str().c_str());
+
+            if (DEVICE_OK != corecallbackInsertImageReturn)
+            {
+               return corecallbackInsertImageReturn;
+            }
+
+            if (!stopOnOverflow_ && DEVICE_BUFFER_OVERFLOW == corecallbackInsertImageReturn)
+            {
+               // do not stop on overflow - just reset the buffer
+               //Log("[PushImageWithSRRF] Circular Buffer overflowed. Clearing and sending up image again...");
+               GetCoreCallback()->ClearImageBuffer(this);
+               GetCoreCallback()->InsertImage(
+                  this,
+                  SRRFImage_->GetPixels(),
+                  SRRFImage_->Width(),
+                  SRRFImage_->Height(),
+                  SRRFImage_->Depth(),
+                  md.Serialize().c_str(),
+                  false);
+            }
          }
 
          imagePtr += width*height;
@@ -4640,7 +4818,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
 
          roiList.push_back(roi);
 
-         char buffer[64];
+         char buffer[MAX_CHARS_PER_DESCRIPTION];
          GetROIPropertyName(uiROICount, roi.xSize, roi.ySize, buffer,cropModeSwitch_);
          AddAllowedValue(g_ROIProperty, buffer,uiROICount);
 
@@ -4662,7 +4840,7 @@ unsigned int AndorCamera::PopulateROIDropdown()
       {
          ROI roi = UltraCropROIs[i];
          roiList.push_back(roi);
-         char buffer[64];
+         char buffer[MAX_CHARS_PER_DESCRIPTION];
          GetROIPropertyName(uiROICount, roi.xSize, roi.ySize, buffer,cropModeSwitch_);
          AddAllowedValue(g_ROIProperty, buffer,uiROICount);
          uiROICount++;
@@ -4712,6 +4890,78 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
          return DRV_SUCCESS;
    }
 
+   void AndorCamera::AddSRRFMetadataInfo(Metadata & md)
+   {
+      char label[MM::MaxStrLength];
+      this->GetLabel(label);
+      MM::MMTime tEnd = GetCurrentMMTime();
+
+      // Copy the metadata inserted by other processes:
+      std::vector<std::string> keys = GetTagKeys();
+      for (unsigned int j = 0; j < keys.size(); j++) {
+         md.put(keys[j], GetTagValue(keys[j].c_str()).c_str());
+      }
+
+      MetadataSingleTag mstSRRFFrameTime(g_Keyword_Metadata_SRRF_Frame_Time, label, true);
+      mstSRRFFrameTime.SetValue(CDeviceUtils::ConvertToString((tEnd - startSRRFImageTime_).getMsec()));
+      md.SetTag(mstSRRFFrameTime);
+   }
+
+   void AndorCamera::AddMetadataInfo(Metadata & md)
+   {
+      // create metadata
+      char label[MM::MaxStrLength];
+      this->GetLabel(label);
+
+      MM::MMTime timestamp = this->GetCurrentMMTime();
+      // Copy the metadata inserted by other processes:
+      std::vector<std::string> keys = GetTagKeys();
+      for (unsigned int j = 0; j < keys.size(); j++) {
+         md.put(keys[j], GetTagValue(keys[j].c_str()).c_str());
+      }
+
+      //These append md tag name to label of device; transient props appear per image.  All in .txt file with stack.
+      //Plan of attack...
+      // remove binning - should always be present as part of MM GUI and unchanging property - doesn't need set every image
+      // remove first .put deprecated and check if any changes. Perhaps take 5seq MDA first using current build, then rebuild and check difference
+      // Check both MM Metadata, and .text file generated by stack images.
+      // add SRRF - may need better timings, perhaps a new m_var_ but can decide during impl.
+      //md.put("Camera", label);
+      //md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(startTime_.getMsec()));
+      //md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timestamp - startTime_).getMsec()));
+      //md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
+      //md.put(MM::g_Keyword_Binning, binSize_);
+
+      MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
+      mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
+      md.SetTag(mstStartTime);
+
+      MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, label, true);
+      mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
+      md.SetTag(mst);
+
+      if (metaDataAvailable_)
+      {
+         SYSTEMTIME timeOfStart;
+         float timeFromStart = 0.f;
+         unsigned int ret = GetMetaDataInfo(&timeOfStart, &timeFromStart, imageCounter_);
+         if (ret == DRV_SUCCESS)
+         {
+            MetadataSingleTag mstHW("ElapsedTime-ms(HW)", label, true);
+            mstHW.SetValue(CDeviceUtils::ConvertToString(timeFromStart));
+            md.SetTag(mstHW);
+         }
+      }
+
+      MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
+      mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));
+      md.SetTag(mstCount);
+
+      MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
+      mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));
+      md.SetTag(mstB);
+   }
+
    bool AndorCamera::IsIxonUltra()
    {
       AndorCapabilities caps;
@@ -4733,6 +4983,20 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
       return false;
    }
 
+   void AndorCamera::SetDefaultVSSForUltra888WithValidSRRF()
+   {
+      if (IsIxonUltra888())
+      {
+         if (SRRFControl_->GetLibraryStatus() == SRRFControl::READY) {
+            string requestedSpeed = "1.13";
+            ptrdiff_t pos = find(VSpeeds_.begin(), VSpeeds_.end(), requestedSpeed) - VSpeeds_.begin();
+            if (pos < (long long)VSpeeds_.size())
+            {
+               SetProperty(g_VerticalSpeedProperty, VSpeeds_[pos].c_str());
+            }
+         }
+      }
+   }
 
    unsigned int AndorCamera::createShutterProperty(AndorCapabilities * caps)
    {

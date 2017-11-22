@@ -26,7 +26,7 @@ void ReadModeControl::CreateProperty()
 	DriverGuard dg(camera_);
 	AndorCapabilities caps;
 	caps.ulSize = sizeof(AndorCapabilities);
-	unsigned int ret = GetCapabilities(&caps);
+	GetCapabilities(&caps);
 
 	if (caps.ulReadModes & AC_READMODE_FVB)
 	{

@@ -278,6 +278,10 @@ int CZStage::Initialize()
       AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_0);
       AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_1);
       AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_2);
+	  if (FirmwareVersionAtLeast(3.14))
+	   {	//sin pattern was implemeted much later atleast firmware 3/14 needed
+		   AddAllowedValue(g_SAPatternPropertyName, g_SAPattern_3);
+	   }
       UpdateProperty(g_SAPatternPropertyName);
       // generates a set of additional advanced properties that are rarely used
       pAct = new CPropertyAction (this, &CZStage::OnSAAdvanced);
@@ -342,6 +346,12 @@ int CZStage::Initialize()
    {
       ttl_trigger_supported_ = true;
    }
+
+   //VectorMove
+   pAct = new CPropertyAction (this, &CZStage::OnVector);
+   CreateProperty(g_VectorPropertyName, "0", MM::Float, false, pAct);
+   SetPropertyLimits(g_VectorPropertyName, maxSpeed*-1, maxSpeed);
+   UpdateProperty(g_VectorPropertyName);
 
    initialized_ = true;
    return DEVICE_OK;
@@ -531,6 +541,13 @@ int CZStage::AddToStageSequence(double position)
    return DEVICE_OK;
 }
 
+int CZStage::Move(double velocity)
+{
+ostringstream command; command.str("");
+command << "VE " << axisLetter_ << "=" << velocity;
+return hub_->QueryCommandVerify(command.str(), ":A") ;
+
+}
 
 ////////////////
 // action handlers
@@ -1530,7 +1547,8 @@ int CZStage::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
          case 0: success = pProp->Set(g_SAPattern_0); break;
          case 1: success = pProp->Set(g_SAPattern_1); break;
          case 2: success = pProp->Set(g_SAPattern_2); break;
-         default:success = 0;                      break;
+         case 3: success = pProp->Set(g_SAPattern_3); break;
+		 default:success = 0;                      break;
       }
       if (!success)
          return DEVICE_INVALID_PROPERTY_VALUE;
@@ -1544,7 +1562,9 @@ int CZStage::OnSAPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
          tmp = 1;
       else if (tmpstr.compare(g_SAPattern_2) == 0)
          tmp = 2;
-      else
+      else if (tmpstr.compare(g_SAPattern_3) == 0)
+         tmp = 3;
+	  else
          return DEVICE_INVALID_PROPERTY_VALUE;
       // have to get current settings and then modify bits 0-2 from there
       command << "SAP " << axisLetter_ << "?";
@@ -1919,3 +1939,26 @@ int CZStage::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CZStage::OnVector(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   ostringstream command; command.str("");
+   ostringstream response; response.str("");
+   double tmp = 0;
+   if (eAct == MM::BeforeGet)
+   {
+      if (!refreshProps_ && initialized_)
+         return DEVICE_OK;
+      command << "VE " << axisLetter_ << "?";
+      response << ":A " << axisLetter_ << "=";
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
+      if (!pProp->Set(tmp))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   else if (eAct == MM::AfterSet) {
+      pProp->Get(tmp);
+      command << "VE " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   }
+   return DEVICE_OK;
+}

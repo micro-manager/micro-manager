@@ -875,8 +875,14 @@ int SerialPort::OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (initialized_)
       {
-         pProp->Set(stopBits_.c_str());
-         return ERR_PORT_CHANGE_FORBIDDEN;
+         long stopBits;
+         int ret;
+
+         ret = GetCurrentPropertyData(MM::g_Keyword_StopBits, stopBits);
+
+         if (ret != DEVICE_OK)
+            return ret;
+         pPort_->ChangeStopBits(boost::asio::serial_port_base::stop_bits::type(stopBits));
       }
       pProp->Get(stopBits_);
    }
@@ -894,8 +900,14 @@ int SerialPort::OnParity(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (initialized_)
       {
-         pProp->Set(parity_.c_str());
-         return ERR_PORT_CHANGE_FORBIDDEN;
+         long parity;
+         int ret;
+
+         ret = GetCurrentPropertyData(MM::g_Keyword_Parity, parity);
+
+         if (ret != DEVICE_OK)
+            return ret;
+         pPort_->ChangeParity(boost::asio::serial_port_base::parity::type(parity));
       }
       pProp->Get(parity_);
    }
@@ -912,9 +924,16 @@ int SerialPort::OnBaud(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       if (initialized_)
-         return ERR_PORT_CHANGE_FORBIDDEN;
+      {
+         long baud;
+         int ret;
 
-      // TODO: allow changing baud rate on-the-fly
+         ret = GetCurrentPropertyData(MM::g_Keyword_BaudRate, baud);
+         if (ret != DEVICE_OK)
+            return ret;
+         pPort_->ChangeBaudRate((unsigned int)baud);
+         pPort_->Purge();
+      }
    }
 
    return DEVICE_OK;

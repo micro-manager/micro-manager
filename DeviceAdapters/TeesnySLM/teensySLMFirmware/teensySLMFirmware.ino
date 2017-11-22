@@ -7,7 +7,7 @@
 #include <elapsedMillis.h>
 
 #define FRAMESYNC_PIN 23
-#define LINESYNC_PIN 22
+#define LINESYNC_PIN 7
 #define BAUD 57600
 
 const byte GLOBAL_HEADER[] = {148,169};

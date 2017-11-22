@@ -54,9 +54,31 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.
     * @return A DisplaySettingsBuilder with no pre-set values.
+    * @Deprecated - use displaySettingsBuilder() instead
     */
    DisplaySettings.Builder getDisplaySettingsBuilder();
-
+   
+   
+   /**
+    * Generate a "blank" DisplaySettings.Builder with all null values.
+    * @return A DisplaySettingsBuilder with no pre-set values.
+    */
+   DisplaySettings.Builder displaySettingsBuilder();
+   
+   /**
+    * Generates a blank channelDisplaySettings Builder with all null values
+    * @return a blank ChannelDisplaySettings Builder
+    */
+   ChannelDisplaySettings.Builder channelDisplaySettingsBuilder();
+   
+   
+   /**
+    * Generates a blank componentSettings Builder with all null values
+    * @return a blank componentSettings builder
+    */
+   ComponentDisplaySettings.Builder componentDisplaySettingsBuilder();
+   
+   
    /**
     * Generate a ContrastSettings object with the provided values. This version
     * of the method is to be used for single-component images.

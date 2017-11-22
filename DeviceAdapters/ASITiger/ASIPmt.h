@@ -34,7 +34,7 @@ class CPMT : public ASIPeripheralBase<CSignalIOBase, CPMT>
 {
 public:
    CPMT(const char* name);
-   ~CPMT() {Shutdown(); }
+   ~CPMT() { }
 
    // Device API
    int Initialize();
