@@ -101,6 +101,7 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Coords.CoordsBuilder;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
@@ -108,6 +109,8 @@ import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.ChannelDisplaySettings;
+import org.micromanager.display.DisplaySettings;
 
 import org.micromanager.internal.dialogs.ComponentTitledBorder;
 import org.micromanager.internal.utils.FileDialogs;
@@ -125,10 +128,6 @@ import org.micromanager.asidispim.utils.AutofocusUtils;
 import org.micromanager.asidispim.utils.MovementDetector;
 import org.micromanager.asidispim.utils.MovementDetector.Method;
 import org.micromanager.asidispim.utils.SPIMFrame;
-import org.micromanager.data.Coordinates;
-import org.micromanager.display.ChannelDisplaySettings;
-import org.micromanager.display.DisplaySettings;
-import org.micromanager.display.internal.DefaultChannelDisplaySettings;
 
 
 /**
@@ -2426,7 +2425,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             DisplaySettings.Builder dsb = display.getDisplaySettings().copyBuilder();
             
             int channelNr = 1;
-            ChannelDisplaySettings.Builder cb = DefaultChannelDisplaySettings.builder();
+            ChannelDisplaySettings.Builder cb = gui_.displays().channelDisplaySettingsBuilder();
             if (acqSettings.useChannels) {
                ChannelSpec[] channels = multiChannelPanel_.getUsedChannels();
                channelNr = channels.length;
