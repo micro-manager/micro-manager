@@ -1032,6 +1032,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
          // TODO: report exception
       }
       animationController_.shutdown();
+      DefaultEventManager.getInstance().unregisterForEvents(this);
+      dataProvider_.unregisterForEvents(this);
       if (uiController_ == null) {
          ReportingUtils.logError("DisplayController's reference to UIController is null where it shouldn't be");
       } else {
