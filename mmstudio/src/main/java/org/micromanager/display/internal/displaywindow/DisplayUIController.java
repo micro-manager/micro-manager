@@ -1100,14 +1100,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       // We can rely on our sanitized canvas to report the max image size as
       // its max size
-      Dimension maxCanvasSize = ijBridge_.getIJImageCanvas().getMaximumSize();
+      Dimension canvasMaxSize = ijBridge_.getIJImageCanvas().getMaximumSize();
       if (isFullScreenMode()) {
          Insets frameInsets = fullScreenFrame_.getInsets();
          final int MARGIN = 16;
-         int newCanvasWidth = Math.min(maxCanvasSize.width,
+         int newCanvasWidth = Math.min(canvasMaxSize.width,
                fullScreenFrame_.getWidth() -
                      frameInsets.left - frameInsets.right - MARGIN);
-         int newCanvasHeight = Math.min(maxCanvasSize.height,
+         int newCanvasHeight = Math.min(canvasMaxSize.height,
                canvasPanel_.getHeight() - MARGIN);
          ijBridge_.getIJImageCanvas().setPreferredSize(
                new Dimension(newCanvasWidth, newCanvasHeight));
@@ -1124,10 +1124,10 @@ public final class DisplayUIController implements Closeable, WindowListener,
                Toolkit.getDefaultToolkit().getScreenInsets(gConfig));
 
          Insets frameInsets = frame_.getInsets();
-         int newCanvasWidth = Math.min(maxCanvasSize.width,
+         int newCanvasWidth = Math.min(canvasMaxSize.width,
                screenBounds.width - frameInsets.left - frameInsets.right -
                      2 * BORDER_THICKNESS);
-         int newCanvasHeight = Math.min(maxCanvasSize.height,
+         int newCanvasHeight = Math.min(canvasMaxSize.height,
                screenBounds.height - frameInsets.top - frameInsets.bottom -
                      2 * BORDER_THICKNESS -
                      topControlPanel_.getMinimumSize().height -
@@ -1138,12 +1138,18 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
          frame_.pack(); // Includes validation
 
+         // NS: I find the autonomous movement of the window highly annoying
+         // Uncomment if you disagree and want the window to move all by itself
          // If we extended beyond bottom or right of the screen, move up/left
+         /*
          int newFrameX = Math.min(frame_.getX(),
                screenBounds.x + screenBounds.width - frame_.getWidth());
+         newFrameX = Math.max(1, newFrameX);
          int newFrameY = Math.min(frame_.getY(),
                screenBounds.y + screenBounds.height - frame_.getHeight());
+         newFrameY = Math.max(1, newFrameY);
          frame_.setLocation(newFrameX, newFrameY);
+         */
       }
 
       ijBridge_.mm2ijRepaint();
