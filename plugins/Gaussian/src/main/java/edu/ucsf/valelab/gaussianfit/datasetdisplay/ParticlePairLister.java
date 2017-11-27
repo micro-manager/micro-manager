@@ -73,13 +73,13 @@ public class ParticlePairLister {
    final private Double maxDistanceNm_; //maximum distance in nm for two spots in different
                                         // channels to be considered a pair
    final private Boolean showPairs_;
-   final private Boolean showImage_;
-   final private Boolean savePairs_;
-   final private Boolean showGraph_;
-   final private Boolean showTrack_;
+   final private Boolean showImage_ = false;  // TODO: remove
+   final private Boolean savePairs_ = false;  // TODO: remove
+   final private Boolean showGraph_ = false;  // TODO: remove
+   final private Boolean showTrack_ = false;  // TODO: remove
    final private Boolean showSummary_;
    final private Boolean showOverlay_;
-   final private Boolean saveFile_;
+   final private Boolean saveFile_ = false;  // TODO: remove
    final private Boolean p2d_;
    final private Boolean doGaussianEstimate_;
    final private Boolean fitSigmaInP2D_;
@@ -88,7 +88,7 @@ public class ParticlePairLister {
    final private Boolean estimateP2DError_;
    final private Boolean useIndividualSigmas_;
    final private Double sigmaUserGuess_;
-   final private String filePath_;
+   final private String filePath_ = "";  // TODO: remove
    
 
    public static class Builder {
@@ -219,20 +219,14 @@ public class ParticlePairLister {
       rows_ = builder.rows_;
       maxDistanceNm_ = builder.maxDistanceNm_;
       showPairs_ = builder.showPairs_;
-      showImage_ = builder.showImage_;
-      savePairs_ = builder.savePairs_;
-      showGraph_ = builder.showGraph_;
-      showTrack_ = builder.showTrack_;
       showSummary_ = builder.showSummary_;
       showOverlay_ = builder.showOverlay_;
-      saveFile_ = builder.saveFile_;
       p2d_ = builder.p2d_;
       doGaussianEstimate_ = builder.doGaussianEstimate_;
       fitSigmaInP2D_ = builder.fitSigma_;
       useSigmaUserGuess_ = builder.useSigmaUserGuess_;
       useVectorDistances_ = builder.useVectorDistances_;
       sigmaUserGuess_ = builder.sigmaEstimate_;
-      filePath_ = builder.filePath_;
       useIndividualSigmas_ = builder.useIndividualSigmas_;
       estimateP2DError_ = builder.estimateP2DError_;
    }
@@ -471,7 +465,7 @@ public class ParticlePairLister {
                         GsSpotPair spotPair = iSpotPairs.next();
                         // for now, we only start tracks at frame number 1
                         if (!spotPair.partOfTrack()) {
-                           for (int frame = firstFrame; frame < dc.getSpotData(row).nrFrames_; frame++) {
+                           for (int frame = firstFrame; frame <= dc.getSpotData(row).nrFrames_; frame++) {
                               if (!spotPair.partOfTrack() && spotPair.getFirstSpot().getFrame() == frame) {
                                  ArrayList<GsSpotPair> track = new ArrayList<GsSpotPair>();
                                  track.add(spotPair);
