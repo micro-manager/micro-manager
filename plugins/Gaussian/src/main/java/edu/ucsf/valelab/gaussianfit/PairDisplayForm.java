@@ -113,10 +113,15 @@ public class PairDisplayForm extends GUFrame{
               makeCheckBox ("Show Pair list", SHOWPAIRLISTPREF);
       panel.add(showPairList, "wrap");
       
+      /* Removed, as it is not useful.
+      // TODO delete all code related to this
       final JCheckBox showImage = 
               makeCheckBox("Show Pair distances in an image", SHOWIMAGEPREF);
       panel.add(showImage, "wrap");
+      */
       
+      /* Removed, as it is not useful.
+      // TODO delete all code related to this
       // save pair list as text file (checkbox)
       final JCheckBox savePairTextFile = 
               makeCheckBox ("Save Pair List as Text File", SAVEPAIRTEXTFILEPREF);
@@ -138,6 +143,7 @@ public class PairDisplayForm extends GUFrame{
       savePairTextFile.addActionListener(fileSavingActionListener);
       panel.add(savePairTextFile, "wrap");
       
+      
       // graph of average distance in each frame
       final JCheckBox showGraph = 
               makeCheckBox("Show Graph with per Frame errors", SHOWGRAPHPREF);
@@ -150,7 +156,8 @@ public class PairDisplayForm extends GUFrame{
       
       panel.add(saveTrackSummaryFile, "wrap");
       saveTrackSummaryFile.addActionListener(fileSavingActionListener);
-     
+      */
+      
       final JCheckBox showPairTrackSummary =
               makeCheckBox("Show Pair Track Summary", SHOWTRACKSUMMARYPREF);
       panel.add(showPairTrackSummary, "wrap");
@@ -248,6 +255,9 @@ public class PairDisplayForm extends GUFrame{
             estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected() );
+            useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected() );
             estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
          }
       });
@@ -256,7 +266,8 @@ public class PairDisplayForm extends GUFrame{
          public void actionPerformed(ActionEvent ae){
             useUserSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());
             sigmaTextField.setEnabled(distanceEstimateFixedSigma.isSelected());
-            estimateSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());           
+            estimateSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());  
+            useIndividualSigma.setEnabled(distanceEstimateFixedSigma.isSelected());
          }
       });
       p2dUseVectDistance.addActionListener(new ActionListener() {
@@ -273,6 +284,9 @@ public class PairDisplayForm extends GUFrame{
             estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected() );
+            useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected() && 
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected() );
          }
       });
       distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected() && 
@@ -286,6 +300,9 @@ public class PairDisplayForm extends GUFrame{
       estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected());
+      useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected()&& 
+                    distanceEstimateFixedSigma.isSelected() && 
+                    !p2dUseVectDistance.isSelected());
       panel.add(gaussianEstimate, "wrap");
       panel.add(p2dDistanceEstimate);
       panel.add(p2dUseVectDistance, "wrap");
@@ -296,6 +313,9 @@ public class PairDisplayForm extends GUFrame{
       panel.add(useIndividualSigma, "skip 1, wrap");
       panel.add(estimateP2DError, "gapleft 60, wrap");
       
+      
+      /* 
+      Removed, as it is easier to right click, copy and save
       
       // basepath for the text file
       panel.add(filePathLabel, "split 3, span 3");
@@ -311,6 +331,7 @@ public class PairDisplayForm extends GUFrame{
          }
       });
       panel.add(dirButton, "wrap");
+      */
       
       // OK/Cancel buttons
       JButton okButton = new JButton("OK");
@@ -340,14 +361,14 @@ public class PairDisplayForm extends GUFrame{
             ParticlePairLister.Builder ppb = new ParticlePairLister.Builder();
             ppb.maxDistanceNm(maxDistance).
                     showPairs(showPairList.isSelected()).
-                    showImage(showImage.isSelected()).
-                    savePairs(savePairTextFile.isSelected()).
-                    showGraph(showGraph.isSelected()).
-                    showTrack(showTracks.isSelected()).
+                    //showImage(showImage.isSelected()).
+                    //savePairs(savePairTextFile.isSelected()).
+                    //showGraph(showGraph.isSelected()).
+                    //showTrack(showTracks.isSelected()).
                     showSummary(showPairTrackSummary.isSelected()).
                     showOverlay(showOverlay.isSelected()).
-                    saveFile(saveTrackSummaryFile.isSelected()).
-                    filePath(filePath.getText()).
+                    //saveFile(saveTrackSummaryFile.isSelected()).
+                    //filePath(filePath.getText()).
                     doGaussianEstimate(gaussianEstimate.isSelected()).
                     p2d(p2dDistanceEstimate.isSelected()).
                     useVectorDistances(p2dUseVectDistance.isSelected()).
