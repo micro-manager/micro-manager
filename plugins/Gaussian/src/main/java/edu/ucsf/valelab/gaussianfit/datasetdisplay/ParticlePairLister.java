@@ -398,7 +398,6 @@ public class ParticlePairLister {
                      for (MouseListener ms : tp.getMouseListeners()) {
                         tp.removeMouseListener(ms);
                      }
-
                   }
                }
                
