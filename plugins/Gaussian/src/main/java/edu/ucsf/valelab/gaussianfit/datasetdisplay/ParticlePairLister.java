@@ -40,7 +40,6 @@ import edu.ucsf.valelab.gaussianfit.utils.CalcUtils;
 import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 import edu.ucsf.valelab.gaussianfit.utils.ListUtils;
 import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
-import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Arrow;
@@ -52,8 +51,6 @@ import java.awt.Frame;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,13 +70,9 @@ public class ParticlePairLister {
    final private Double maxDistanceNm_; //maximum distance in nm for two spots in different
                                         // channels to be considered a pair
    final private Boolean showPairs_;
-   final private Boolean showImage_ = false;  // TODO: remove
-   final private Boolean savePairs_ = false;  // TODO: remove
-   final private Boolean showGraph_ = false;  // TODO: remove
    final private Boolean showTrack_ = false;  // TODO: remove
    final private Boolean showSummary_;
    final private Boolean showOverlay_;
-   final private Boolean saveFile_ = false;  // TODO: remove
    final private Boolean p2d_;
    final private Boolean doGaussianEstimate_;
    final private Boolean fitSigmaInP2D_;
@@ -87,8 +80,8 @@ public class ParticlePairLister {
    final private Boolean useVectorDistances_;
    final private Boolean estimateP2DError_;
    final private Boolean useIndividualSigmas_;
+   final private Boolean showHistogram_;
    final private Double sigmaUserGuess_;
-   final private String filePath_ = "";  // TODO: remove
    
 
    public static class Builder {
@@ -96,13 +89,8 @@ public class ParticlePairLister {
       private int[] rows_;
       private Double maxDistanceNm_; 
       private Boolean showPairs_;
-      private Boolean showImage_;
-      private Boolean savePairs_;
-      private Boolean showGraph_;
-      private Boolean showTrack_;
       private Boolean showSummary_;
       private Boolean showOverlay_;
-      private Boolean saveFile_;
       private Boolean p2d_;
       private Boolean doGaussianEstimate_;
       private Boolean fitSigma_;
@@ -110,8 +98,8 @@ public class ParticlePairLister {
       private Boolean useVectorDistances_;
       private Boolean estimateP2DError_;
       private Boolean useIndividualSigmas_;
+      private Boolean showHistogram_;
       private Double sigmaEstimate_;
-      private String filePath_;
        
       
       public ParticlePairLister build() {
@@ -133,23 +121,8 @@ public class ParticlePairLister {
          return this;
       }
       
-      public Builder showImage(final Boolean showImage) {
-         showImage_ = showImage;
-         return this;
-      }
-      
-      public Builder savePairs(final Boolean savePairs) {
-         savePairs_ = savePairs;
-         return this;
-      }
-      
-      public Builder showGraph(final Boolean showGraph) {
-         showGraph_ = showGraph;
-         return this;
-      }
-
-      public Builder showTrack(Boolean showTrack) {
-         showTrack_ = showTrack;
+      public Builder showHistogram(Boolean show) {
+         showHistogram_ = show;
          return this;
       }
 
@@ -160,11 +133,6 @@ public class ParticlePairLister {
 
       public Builder showOverlay(Boolean showOverlay) {
          showOverlay_ = showOverlay;
-         return this;
-      }
-
-      public Builder saveFile(Boolean saveFile) {
-         saveFile_ = saveFile;
          return this;
       }
 
@@ -198,11 +166,6 @@ public class ParticlePairLister {
          return this;
       }
 
-      public Builder filePath(String filePath) {
-         filePath_ = filePath;
-         return this;
-      }
-      
       public Builder useIndividualSigmas(Boolean use) {
          useIndividualSigmas_ = use;
          return this;
@@ -229,6 +192,7 @@ public class ParticlePairLister {
       sigmaUserGuess_ = builder.sigmaEstimate_;
       useIndividualSigmas_ = builder.useIndividualSigmas_;
       estimateP2DError_ = builder.estimateP2DError_;
+      showHistogram_ = builder.showHistogram_;
    }
 
    public Builder copy() {
@@ -236,20 +200,15 @@ public class ParticlePairLister {
               rows(rows_).
               maxDistanceNm(maxDistanceNm_).
               showPairs(showPairs_).
-              showImage(showImage_).
-              savePairs(savePairs_).
-              showGraph(showGraph_).
-              showTrack(showTrack_).
               showSummary(showSummary_).
               showOverlay(showOverlay_).
-              saveFile(saveFile_).
               p2d(p2d_).
               doGaussianEstimate(doGaussianEstimate_).
               fitSigma(fitSigmaInP2D_).
               useSigmaEstimate(useSigmaUserGuess_).
               useVectorDistances(useVectorDistances_).
               sigmaEstimate(sigmaUserGuess_).
-              filePath(filePath_).
+              showHistogram(showHistogram_).
               estimateP2DError(estimateP2DError_);
    }
 
@@ -374,7 +333,7 @@ public class ParticlePairLister {
                   }
                }
 
-               if (showPairs_ || savePairs_) {
+               if (showPairs_ ) {
                   ResultsTable pairTable = new ResultsTable();
                   pairTable.setPrecision(2);
                   for (int pos : positions) {
@@ -431,17 +390,7 @@ public class ParticlePairLister {
                         frame.toFront();
                      }
                   }
-
-                  if (savePairs_) {
-                     try {
-                        String fileName = filePath_ + File.separator
-                                + dc.getSpotData(row).getName() + "_Pairs.cvs";
-                        pairTable.saveAs(fileName);
-                        ij.IJ.log("Saved file: " + fileName);
-                     } catch (IOException ex) {
-                        ReportingUtils.showError(ex, "Failed to save file");
-                     }
-                  }
+                  
                }
                
 
@@ -558,18 +507,7 @@ public class ParticlePairLister {
                      frame.toFront();
                   }
                }
-
-               if (saveFile_) {
-                  try {
-                     String fileName = filePath_ + File.separator
-                             + dc.getSpotData(row).getName() + "_PairTracks.cvs";
-                     rt.saveAs(fileName);
-                     ij.IJ.log("Saved file: " + fileName);
-                  } catch (IOException ex) {
-                     ReportingUtils.showError(ex, "Failed to save file");
-                  }
-               }
-
+              
                ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
                if (showOverlay_) {
                   if (siPlus != null && siPlus.getOverlay() != null) {
@@ -731,7 +669,7 @@ public class ParticlePairLister {
                   try {
                      avgVectDistancesAsDouble = ListUtils.toArray(avgVectDistances);
                      gResult = fitGaussianToData(avgVectDistancesAsDouble, maxDistanceNm_);
-                     if (doGaussianEstimate_) {
+                     if (doGaussianEstimate_ && showHistogram_) {
                         GaussianUtils.plotGaussian("Gaussian fit of: "
                              + dc.getSpotData(row).getName() + " distances",
                              avgVectDistancesAsDouble, maxDistanceNm_, gResult);
@@ -843,8 +781,11 @@ public class ParticlePairLister {
                      if (fitSigmaInP2D_) {
                         muSigma = p2dfResult;
                      }
-                     GaussianUtils.plotP2D("P2D fit of: " + dc.getSpotData(row).getName() + " distances",
-                             d, maxDistanceNm_, muSigma);
+                     if (showHistogram_) {
+                        GaussianUtils.plotP2D("P2D fit of: " + 
+                                 dc.getSpotData(row).getName() + " distances",
+                                 d, maxDistanceNm_, muSigma);
+                     }
 
                      // The following is used to output results in a machine readable fashion
                      // Uncomment when needed:
