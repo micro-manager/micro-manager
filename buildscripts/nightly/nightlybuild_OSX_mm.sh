@@ -121,7 +121,7 @@ $EVAL ./configure \
    --with-freeimageplus \
    --with-python=/usr \
    $MM_CONFIGUREFLAGS \
-   "JAVA_HOME=\"/Library/Java/JavaVirtualMachines/1.8.0.jdk/Contents/Home\"" \
+   "JAVA_HOME=\"/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home\"" \
    "JNI_CPPFLAGS=\"-I/Library/Java/JavaVirtualMachines/jdk1.8.0/Contents/Home/include\"" \
    "JAVACFLAGS=\"-Xlint:all,-path,-serial -source 1.8 -target 1.8\"" \
    "OPENCV_LDFLAGS=\"-framework Cocoa -framework QTKit -framework QuartzCore -framework AppKit\"" \
