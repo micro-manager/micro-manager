@@ -198,7 +198,7 @@ for artifact_dir in compile optional runtime; do
       cp $MM_SRCDIR/dependencies/artifacts/$artifact_dir/*.jar $MM_JARDIR
    fi
 done
-cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ij.jar
+cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ImageJ.app/Contents/Java/ij.jar
 
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
 find $MM_STAGEDIR -name .svn -prune -exec rm -rf {} +
@@ -211,8 +211,8 @@ fi
 
 # Apply ad-hoc signature to the launchers, to prevent "damaged" messages on
 # Mountain Lion and later.
-codesign -s - -f $MM_STAGEDIR/ImageJ.app/Contents/MacOS/JavaApplicationStub
-codesign -s - -f $MM_STAGEDIR/ImageJ64.app/Contents/MacOS/JavaApplicationStub
+codesign -s - -f $MM_STAGEDIR/ImageJ.app/Contents/MacOS/ImageJ
+#codesign -s - -f $MM_STAGEDIR/ImageJ64.app/Contents/MacOS/JavaApplicationStub
 
 if [ "$make_disk_image" != yes ]; then
    exit 0
