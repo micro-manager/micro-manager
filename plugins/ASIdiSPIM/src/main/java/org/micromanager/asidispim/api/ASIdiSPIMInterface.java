@@ -63,7 +63,8 @@ public interface ASIdiSPIMInterface extends Remote {
     * settings may change in the future.  Throws exception if an acquisition
     * is currently running or has been requested.  Blocks until complete.
     * @return ImagePlus object with acquisition data
-    * @throws ASIdiSPIMException, RemoteException
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
     */
    public ij.ImagePlus runAcquisitionBlocking() throws ASIdiSPIMException, RemoteException;
    
@@ -77,7 +78,8 @@ public interface ASIdiSPIMInterface extends Remote {
     * @param y requested position of Y axis
     * @param f requested position of SPIM head, usually the F axis
     * @return ImagePlus object with acquisition data
-    * @throws ASIdiSPIMException, RemoteException
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
     */
    public ij.ImagePlus runAcquisitionBlocking(double x, double y, double f) 
            throws ASIdiSPIMException, RemoteException; 
@@ -116,7 +118,8 @@ public interface ASIdiSPIMInterface extends Remote {
    
    /**
     * @return ImagePlus object of last acquisition.
-    * @throws ASIdiSPIMException, RemoteException
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
     */
    public ij.ImagePlus getLastAcquisitionImagePlus() throws ASIdiSPIMException, RemoteException;
 
@@ -330,7 +333,7 @@ public interface ASIdiSPIMInterface extends Remote {
     * If the channels operation has been disabled
     *   (i.e. if getChannelsEnabled()==false) then this will always return false.
     * If the channel is valid but not present in the table then it will return false. 
-    * @see ASIdiSPIMInterface#getChannelsEnabled(String) to see if multi-channel operation is enabled
+    * @see ASIdiSPIMInterface#getChannelsEnabled() to see if multi-channel operation is enabled
     */
    public boolean getChannelEnabled(String channel) throws ASIdiSPIMException, RemoteException;
    
@@ -377,7 +380,7 @@ public interface ASIdiSPIMInterface extends Remote {
    /**
     * Sets the first side to be acquired (or only side if only 1 sided acquisition
     *   is done).
-    * @param firstSide Should be Devices.Sides.A or Devices.Sides.B.  If anything else
+    * @param side Should be Devices.Sides.A or Devices.Sides.B.  If anything else
     *   is passed an ASIdiSPIMException is thrown.
     */
    public void setVolumeFirstSide(Devices.Sides side) throws ASIdiSPIMException, RemoteException;
@@ -388,9 +391,11 @@ public interface ASIdiSPIMInterface extends Remote {
    public double getVolumeDelayBeforeSide() throws ASIdiSPIMException, RemoteException;
    
    /**
-    * @param delay the delay in milliseconds before each side.  Usually used
+    * @param delayMs the delay in milliseconds before each side.  Usually used
     *   to allow for mechanical settling, at least 50 ms.
     *   If delayMs is not between 0 and 10000 then ASIdiSPIMException is thrown.
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
     */
    public void setVolumeDelayBeforeSide(double delayMs) throws ASIdiSPIMException, RemoteException;
    
@@ -522,7 +527,6 @@ public interface ASIdiSPIMInterface extends Remote {
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
-    * @param position makes current position of the illumination piezo the new home position
     * @deprecated out of laziness, can add if needed
     */
    public void setSideIlluminationPiezoHome(Devices.Sides side) throws ASIdiSPIMException, RemoteException;
@@ -550,7 +554,7 @@ public interface ASIdiSPIMInterface extends Remote {
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
-    * @param the sheet offset from center in units of degrees (not calibration offset)
+    * @param offset the sheet offset from center in units of degrees (not calibration offset)
     * @deprecated out of laziness, can add if needed
     */
    public void setSideSheetOffset(Devices.Sides side, double offset) throws ASIdiSPIMException, RemoteException;
@@ -558,7 +562,8 @@ public interface ASIdiSPIMInterface extends Remote {
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
     * @return calibration slope for specified side
-    * @throws ASIdiSPIMException, RemoteException
+    * @throws ASIdiSPIMException
+    * @throws RemoteException
     * @deprecated out of laziness, can add if needed
     */
    public double getSideCalibrationSlope(Devices.Sides side) throws ASIdiSPIMException, RemoteException;
@@ -578,7 +583,7 @@ public interface ASIdiSPIMInterface extends Remote {
    
    /**
     * @param side Devices.Sides.A or Devices.Sides.B
-    * @param calibration offset in units of um
+    * @param offset offset in units of um
     */
    public void setSideCalibrationOffset(Devices.Sides side, double offset) throws ASIdiSPIMException, RemoteException;
    
@@ -593,7 +598,7 @@ public interface ASIdiSPIMInterface extends Remote {
     * Runs the autofocus just like a GUI button press.  If the autofocus
     *   is successful then slice or piezo will be adjusted to the best-focus
     *   position but the offset isn't updated automatically.
-    * @see ASIdiSPIMInterface#updateSideOffset()
+    * @see ASIdiSPIMInterface#updateSideCalibrationOffset(Sides)
     * @param side Devices.Sides.A or Devices.Sides.B
     */
    public void runAutofocusSide(Devices.Sides side) throws ASIdiSPIMException, RemoteException;

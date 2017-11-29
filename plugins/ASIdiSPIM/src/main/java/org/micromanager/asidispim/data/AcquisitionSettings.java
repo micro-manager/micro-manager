@@ -29,7 +29,8 @@ import org.micromanager.asidispim.utils.SliceTiming;
  * Associative container or "plain old data structure" for acquisition settings.
  * Public elements so they can be get/set directly, like C/C++ struct
  * Note that this container doesn't work with collections (https://www.artima.com/lejava/articles/equality.html)
- * @author Nico & Jon
+ * @author Nico 
+ * @author Jon
  */
 
 public class AcquisitionSettings {

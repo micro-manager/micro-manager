@@ -55,7 +55,7 @@ public interface LinkAnchor<T> {
     *
     * @return true if at least one linkable peer is available
     * @see AnchorDidBecomeLinkableEvent
-    * @see AnchorDidBecomeUnlinkableEvent
+    * @see AnchorWillBecomeUnlinkableEvent
     */
    boolean hasLinkablePeers();
 

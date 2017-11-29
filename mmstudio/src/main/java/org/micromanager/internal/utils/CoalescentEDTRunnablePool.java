@@ -13,15 +13,8 @@
 
 package org.micromanager.internal.utils;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.RunnableFuture;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 
 /**
@@ -50,12 +43,12 @@ public class CoalescentEDTRunnablePool {
     *
     * This is a mechanism to coalesce refresh-like tasks, in the manner of
     * Swing's {@code RepaintManager}, without having to replace the system
-    * global event queue via {@EventQueue.push}.
+    * global event queue via EventQueue.push.
     *
-    * The given {@runnable} is scheduled to run on the EDT, just as with
+    * The given runnable is scheduled to run on the EDT, just as with
     * {@code SwingUtilities.invokeLater}, but when invoked, all outstanding
     * runnables with the same "coalescence class"
-    * ({@see CoalescentRunnable.getCoalescenceClass}) will be coalesced and the
+    * (see CoalescentRunnable.getCoalescenceClass) will be coalesced and the
     * result will be run.
     *
     * @param runnable the coalescent runnable to invoke on the EDT

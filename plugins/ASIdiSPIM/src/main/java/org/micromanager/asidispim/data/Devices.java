@@ -636,7 +636,6 @@ public class Devices {
     * Reads mapping between Device keys and Micro-manager device names from
     * preferences. Assumes loadedDevices_ contains all available devices, and
     * sets any no-longer-existing device to empty string. Changes deviceInfo_.
-    * @return true if successful, false if problem (cancelled by user)
     * @throws ASIdiSPIMException 
     */
    public final void restoreSettings() throws ASIdiSPIMException {

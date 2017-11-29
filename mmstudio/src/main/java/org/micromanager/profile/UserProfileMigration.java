@@ -97,7 +97,6 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  * settings in the global or other fallback profile, so if the user was using
  * the global default, the migration will be skipped in the above example code.
  *
- * @see org.micromanager.UserProfileMigration
  * @author Mark A. Tsuchida
  */
 public interface UserProfileMigration {

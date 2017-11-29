@@ -311,7 +311,7 @@ public abstract class AbstractDataViewer implements DataViewer {
 
    /**
     * Implements {@code setDisplayedImageTo} by calling
-    * {@code setDisplayPosition).
+    * {@code setDisplayPosition}.
     * <p>
     * {@inheritDoc}
     *

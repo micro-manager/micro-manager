@@ -38,7 +38,7 @@ import java.util.List;
  * <p>
  * {@code Coords} objects are immutable.
  *
- * @Author Chris Weisiger, Mark A. Tsuchida
+ * @author Chris Weisiger, Mark A. Tsuchida
  */
 public interface Coords {
    /** Axis label for the time point (frame) axis. */
@@ -209,7 +209,8 @@ public interface Coords {
    public int getTimePoint();
 
    /** Same as {@link getTimePoint}.
-    * @Deprecated Due to looking like the physical time rather than an index. */
+    * @deprecated Due to looking like the physical time rather than an index.
+    */
    public int getTime();
 
    /** Shorthand for {@link getTimePoint}. */

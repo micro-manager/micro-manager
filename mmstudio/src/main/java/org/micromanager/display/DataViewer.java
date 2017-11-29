@@ -47,8 +47,8 @@ public interface DataViewer extends EventPublisher {
     * <ul>
     * <li>{@link DisplaySettingsChangedEvent} (on an arbitrary thread)
     * <li>{@link DisplayPositionChangedEvent} (on an arbitrary thread)
-    * <li>TODO {@link DisplayPositionRenderedEvent} (on the EDT)
-    * <li>TODO {@link DataViewerClosedEvent} (on the EDT)
+    * <li>TODO DisplayPositionRenderedEvent (on the EDT)
+    * <li>TODO DataViewerClosedEvent (on the EDT)
     * </ul>
     *
     * @param recipient the object to register

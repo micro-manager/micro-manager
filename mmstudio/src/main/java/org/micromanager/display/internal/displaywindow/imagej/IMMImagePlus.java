@@ -31,7 +31,7 @@ interface IMMImagePlus {
     * @param nSlices new number of Z slices
     * @param nFrames new number of time points
     *
-    * @see ij.ImagePlus.setDimensions
+    * see ij.ImagePlus.setDimensions
     */
    public void setDimensionsWithoutUpdate(
          int nChannels, int nSlices, int nFrames);
@@ -45,7 +45,7 @@ interface IMMImagePlus {
     *
     * @return the extent of the channel axis
     *
-    * @see ij.ImagePlus.getNChannels
+    * see ij.ImagePlus.getNChannels
     */
    public int getNChannelsWithoutSideEffect();
 
@@ -58,7 +58,7 @@ interface IMMImagePlus {
     *
     * @return the extent of the Z slice axis
     *
-    * @see ij.ImagePlus.getNSlices
+    * see ij.ImagePlus.getNSlices
     */
    public int getNSlicesWithoutSideEffect();
 
@@ -71,7 +71,7 @@ interface IMMImagePlus {
     *
     * @return the extent of the time axis
     *
-    * @see ij.ImagePlus.getNFrames
+    * see ij.ImagePlus.getNFrames
     */
    public int getNFramesWithoutSideEffect();
 }

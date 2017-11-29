@@ -54,7 +54,7 @@ public interface DisplayManager extends EventPublisher {
    /**
     * Generate a "blank" DisplaySettings.Builder with all null values.
     * @return A DisplaySettingsBuilder with no pre-set values.
-    * @Deprecated - use displaySettingsBuilder() instead
+    * @deprecated - use displaySettingsBuilder() instead
     */
    DisplaySettings.Builder getDisplaySettingsBuilder();
    

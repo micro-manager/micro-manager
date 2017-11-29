@@ -32,18 +32,18 @@ import java.util.UUID;
  * <strong>Methods to access primitive types</strong><br>
  * <pre><code>
  * PropertyMap pm = ...
- * pm.containsLong("key"); // -> true if "key" exists and type is long
- * pm.getLong("key", 0L);  // -> 0L if "key" is missing
+ * pm.containsLong("key"); // - true if "key" exists and type is long
+ * pm.getLong("key", 0L);  // - 0L if "key" is missing
  *                         // Throws ClassCastException if value is wrong type
- * pm.containsLongList("key2"); // -> true if "key2" exists and type is
+ * pm.containsLongList("key2"); // - true if "key2" exists and type is
  *                           // collection of longs
- * pm.getLongList("key2")       // -> long[] {} if "key2" is missing
+ * pm.getLongList("key2")       // - long[] {} if "key2" is missing
  *                           // Throws ClassCastException if value is wrong type
- * pm.getLongList("key2", 0L, 1L, 2L) // -> long[] { 0, 1, 2 } if "key2" is missing
+ * pm.getLongList("key2", 0L, 1L, 2L) // - long[] { 0, 1, 2 } if "key2" is missing
  * pm.getLongList("key2", new ArrayList{@literal <}Long{@literal >}());
  *                           // Return List{@literal <}Long{@literal >}, or
  *                           // the empty arraylist
- * pm.getLongList("key2", null); // -> (List{@literal <}Long{@literal >}) null if "key2" missing
+ * pm.getLongList("key2", null); // - (List{@literal <}Long{@literal >}) null if "key2" missing
  * </code></pre>
  * Note that, for the collections (plural) get methods, the returned value is
  * an array ({@code long[]} if the default value was given as an array or varargs,

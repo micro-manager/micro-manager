@@ -24,7 +24,7 @@ public interface OverlayListener {
     * due to its configuration changing.
     *
     * @param overlay the caller
-    * @see AbstractOverlay#fireOverlayNeedsRepaint
+    * @see AbstractOverlay#fireOverlayConfigurationChanged
     */
    void overlayConfigurationChanged(Overlay overlay);
 
