@@ -198,6 +198,8 @@ for artifact_dir in compile optional runtime; do
       cp $MM_SRCDIR/dependencies/artifacts/$artifact_dir/*.jar $MM_JARDIR
    fi
 done
+
+mkdir -p $MM_STAGEDIR/ImageJ.app/Contents/Java
 cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ImageJ.app/Contents/Java/ij.jar
 
 # Ensure no SVN data gets into the installer (e.g. when copying from bindist/)
