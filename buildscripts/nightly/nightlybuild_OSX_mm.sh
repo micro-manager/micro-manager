@@ -198,7 +198,11 @@ for artifact_dir in compile optional runtime; do
       cp $MM_SRCDIR/dependencies/artifacts/$artifact_dir/*.jar $MM_JARDIR
    fi
 done
+# Include jogl/gluegen native libraries.  
+mkdir -p $MM_STAGEDIR/natives/macosx-universal
+cp ../3rdpartypublic/javalib3d/lib/natives/macosx-universal/* $MM_STAGEDIR/natives/macosx-universal/
 
+# ij.jar goes into the ImageJ.app directory
 mkdir -p $MM_STAGEDIR/ImageJ.app/Contents/Java
 cp $MM_SRCDIR/dependencies/artifacts/imagej/ij-*.jar $MM_STAGEDIR/ImageJ.app/Contents/Java/ij.jar
 
@@ -214,7 +218,6 @@ fi
 # Apply ad-hoc signature to the launchers, to prevent "damaged" messages on
 # Mountain Lion and later.
 codesign -s - -f $MM_STAGEDIR/ImageJ.app/Contents/MacOS/ImageJ
-#codesign -s - -f $MM_STAGEDIR/ImageJ64.app/Contents/MacOS/JavaApplicationStub
 
 if [ "$make_disk_image" != yes ]; then
    exit 0
