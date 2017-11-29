@@ -246,7 +246,7 @@ public class Devices {
    }
 
    /**
-    * Takes a side specifier and returns the opposite side (A->B and B->A).
+    * Takes a side specifier and returns the opposite side (A-&gt;B and B-&gt;A).
     * NONE gets mapped to NONE.
     * 
     * @param side

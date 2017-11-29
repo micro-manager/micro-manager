@@ -74,7 +74,7 @@ import java.util.UUID;
  * {@link #getStringAsEnum}, and {@link #getStringListAsEnumList}. This is useful for
  * storing multiple-choice settings
  * <p>
- * For how to insert values of the various types, see {@link #Builder}.
+ * For how to insert values of the various types, see {@link PropertyMap.Builder}.
  */
 public interface PropertyMap {
    /**

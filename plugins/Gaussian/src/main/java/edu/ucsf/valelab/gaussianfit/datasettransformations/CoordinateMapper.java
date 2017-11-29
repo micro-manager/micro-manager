@@ -201,7 +201,7 @@ public class CoordinateMapper {
 
    /**
     * Selects a subset of points in the input PointMap, which is a:
-    *    HashMap<Point2D.Double, Point2D.Double> 
+    *    HashMap&lt;Point2D.Double, Point2D.Double&gt; 
     * @param points - Input pointMap
     * @param srcPoints - List with keys that we want to select in the input
     * @return PointMap (selected subset of the input)
@@ -376,7 +376,7 @@ public class CoordinateMapper {
     * Creates an AffineTransform object that maps a source planar coordinate system to
     * a destination planar coordinate system. At least three point pairs are needed.
     * 
-    * @param pointPairs - a Map of points measured in the two coordinates systems (srcPt->destPt)
+    * @param pointPairs - a Map of points measured in the two coordinates systems (srcPt-&gt;destPt)
     * @return 
     */
    public static AffineTransform generateAffineTransformFromPointPairs
@@ -423,7 +423,7 @@ public class CoordinateMapper {
     * Rigid body transform (rotation and translation only)
     * Creates an AffineTransform object that uses only rotation and translation
     * 
-    * @param pointPairs - a Map of points measured in the two coordinates systems (srcPt->destPt)
+    * @param pointPairs - a Map of points measured in the two coordinates systems (srcPt-&gt;destPt)
     * @return Affine transform object
     */
    public static AffineTransform generateRigidBodyTransform

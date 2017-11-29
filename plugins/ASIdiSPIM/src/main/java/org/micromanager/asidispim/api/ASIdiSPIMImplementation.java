@@ -60,7 +60,7 @@ import org.micromanager.internal.MMStudio;
  *  public final static String rmiName = "ASIdiSPIM_API";
  *  private AsiRmiClientStub() {}
  *  public static void main(String[] args) {
- *     String host = (args.length < 1) ? null : args[0];
+ *     String host = (args.length &lt; 1) ? null : args[0];
  *     {
  *        Registry registry;
  *        try {

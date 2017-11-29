@@ -48,7 +48,7 @@ public class FFTUtils {
    /**
     * simple and bad way to calculate next power of 2
     * @param n query number
-    * @return first number > n that is a power of 2
+    * @return first number &gt; n that is a power of 2
     */
    public static int nextPowerOf2(int n) {
       int res = 1;
@@ -61,7 +61,7 @@ public class FFTUtils {
    /**
     * simple and bad way to calculate the highest power of 2 contained in this number
     * @param n query
-    * @return highest number < n that is a power of 2
+    * @return highest number &lt; n that is a power of 2
     */
    public static int previousPowerOf2(int n) {
       int res = 1;

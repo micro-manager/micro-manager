@@ -34,7 +34,6 @@ public class MovementDetector {
     * returns the difference in XYZ position of that object with the 
     * previous time point (or a zeroed 3D point if this is the first timepoint).
     * @param prefs diSPIM preferences used to transmit user settings
-    * @param acq MMAcquisition for which we track movement
     * @param ch  Channel to be used to determine position of the object
     * @param pos Position in this acquisition that we track
     * @param rotation Rotation between this channel and the stages of the diSPIM

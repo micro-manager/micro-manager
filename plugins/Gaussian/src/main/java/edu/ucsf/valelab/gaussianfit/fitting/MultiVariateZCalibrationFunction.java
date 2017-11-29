@@ -71,7 +71,7 @@ public class MultiVariateZCalibrationFunction implements MultivariateRealFunctio
    
    /**
     * 
-    * @param - array of double with function parameters where:
+    * @param params  array of double with function parameters where:
     *       0: c
     *       1: w0 
     *       2: d

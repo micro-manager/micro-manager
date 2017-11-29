@@ -956,7 +956,7 @@ public class PanelUtils {
    
    /**
    * call setEnabled(boolean) on all top-level components in frame/panel
-    * @param panel
+    * @param container
     * @param enabled
     */
    public static void componentsSetEnabled(Container container, boolean enabled) {
@@ -967,7 +967,7 @@ public class PanelUtils {
    
    /**
    * call setEnabled(boolean) on all top-level components in list of frame/panel
-    * @param panel
+    * @param containers
     * @param enabled
     */
    public static void componentsSetEnabled(Container[] containers, boolean enabled) {

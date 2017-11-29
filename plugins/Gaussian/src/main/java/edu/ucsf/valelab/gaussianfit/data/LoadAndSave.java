@@ -453,12 +453,11 @@ public class LoadAndSave {
    /**
     * Save data set in TSF (Tagged Spot File) format
     *
-    * @param rowData
+    * @param rowData  row with spot data to be saved
     * @param bypassFileDialog
     * @param dir
     * @param caller
     * @return 
-    * @rowData - row with spot data to be saved
     */
    public static String saveData(final RowData rowData, boolean bypassFileDialog, 
            String dir, final JFrame caller) {

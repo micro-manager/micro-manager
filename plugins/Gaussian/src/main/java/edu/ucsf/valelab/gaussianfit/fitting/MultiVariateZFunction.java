@@ -71,7 +71,7 @@ public class MultiVariateZFunction implements MultivariateRealFunction {
    
    /**
     * 
-    * @param - array of double with function parameters where:
+    * @param params array of double with function parameters where:
     *       0: z
 
     *       
