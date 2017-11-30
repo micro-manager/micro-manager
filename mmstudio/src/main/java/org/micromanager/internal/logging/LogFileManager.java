@@ -61,11 +61,13 @@ public final class LogFileManager {
 
       File[] modernLogFiles =
          getLogFileDirectory().listFiles(coreLogFilter);
-      for (File file : Arrays.asList(modernLogFiles)) {
-         Calendar fileDate = getLogFileDate(file.getName());
-         if (fileDate != null && fileDate.before(cutoffDate)) {
-            if (!fileShouldBeExcluded(file, excludedFile)) {
-               file.delete();
+      if (modernLogFiles != null) {
+         for (File file : Arrays.asList(modernLogFiles)) {
+            Calendar fileDate = getLogFileDate(file.getName());
+            if (fileDate != null && fileDate.before(cutoffDate)) {
+               if (!fileShouldBeExcluded(file, excludedFile)) {
+                  file.delete();
+               }
             }
          }
       }
