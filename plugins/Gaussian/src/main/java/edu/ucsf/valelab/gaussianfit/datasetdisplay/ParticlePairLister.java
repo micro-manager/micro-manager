@@ -103,6 +103,12 @@ public class ParticlePairLister {
        
       
       public ParticlePairLister build() {
+         if (useVectorDistances_) {
+            useIndividualSigmas_ = false;
+         }
+         if (fitSigma_) {
+            useIndividualSigmas_ = false;
+         }
          return new ParticlePairLister(this);
       }
 
