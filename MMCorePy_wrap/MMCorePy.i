@@ -202,8 +202,8 @@ namespace std {
 
 
 // output arguments
-%apply double &OUTPUT { double &x };
-%apply double &OUTPUT { double &y };
+%apply double &OUTPUT { double &x_stage };
+%apply double &OUTPUT { double &y_stage };
 %apply int &OUTPUT { int &x };
 %apply int &OUTPUT { int &y };
 %apply int &OUTPUT { int &xSize };
