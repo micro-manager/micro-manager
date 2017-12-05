@@ -208,7 +208,7 @@ namespace std {
 %apply int &OUTPUT { int &y };
 %apply int &OUTPUT { int &xSize };
 %apply int &OUTPUT { int &ySize };
-
+%apply char* {unsigned char * };
 
 
 %include "../MMDevice/MMDeviceConstants.h"
