@@ -328,9 +328,12 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       // Note that this also initializes Autofocus plugins.
       // TODO: This should probably be run on a background thread, while we set
       // up GUI elements (but various managers will need to be aware of this)
-      if (!loadSystemConfiguration()) {
-         // TODO Do we still need to turn errors off to prevent spurious error messages?
-         ReportingUtils.showErrorOn(false);
+      if (sysConfigFile_ != null) {  // we do allow running Micro-Manager without 
+         // a config file!
+         if (!loadSystemConfiguration()) {
+            // TODO Do we still need to turn errors off to prevent spurious error messages?
+            ReportingUtils.showErrorOn(false);
+         }
       }
 
       try {
