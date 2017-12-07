@@ -365,6 +365,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
 
       ijBridge_ = ImageJBridge.create(this);
+      Double zoomRatio = getDisplayController().getDisplaySettings().getZoomRatio();
+      if (zoomRatio <= 0) {
+         zoomRatio = 1.0;
+      }
+      ijBridge_.mm2ijSetZoom(zoomRatio);
 
       canvasPanel_.removeAll();
       noImagesMessageLabel_ = null;
