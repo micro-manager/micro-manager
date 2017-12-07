@@ -16,7 +16,6 @@ package org.micromanager.display.internal.displaywindow.imagej;
 
 import com.google.common.base.Preconditions;
 import ij.CompositeImage;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.Menus;
 import ij.WindowManager;
@@ -39,7 +38,10 @@ import java.util.ArrayList;
 import java.util.List;
 import net.imglib2.display.ColorTable8;
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
+import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
@@ -181,20 +183,20 @@ public final class ImageJBridge {
       // need to be created in that order.
 
       imagePlus_ = MMImagePlus.create(this);
-      // TODO ImageJ Metadata: see old DefaultDisplayWindow.setImagePlusMetadata()
 
       imagePlus_.setStack("New µManager-ImageJ Bridge", proxyStack_);
       imagePlus_.setOpenAsHyperStack(true);
       applyColorMode(colorModeStrategy_);
 
       canvas_ = MMImageCanvas.create(this);
-      // TODO Set canvas's zoom to current display settings (1.0 if null).
 
       proxyWindow_ = ProxyImageWindow.create(this);
       imagePlus_.setWindow(proxyWindow_);
 
       // Undo the temporary pretence
       proxyStack_.setSingleImageMode(false);
+      
+      mm2ijSetMetadata();
    }
 
    @MustCallOnEDT
@@ -202,7 +204,6 @@ public final class ImageJBridge {
       proxyStack_.setSingleImageMode(true);
       MMCompositeImage composite = MMCompositeImage.create(this, imagePlus_);
       composite.setOpenAsHyperStack(true);
-      // TODO Metadata (formerly setImagePlusMetadata(ijImage_);)
       imagePlus_ = composite;
 
       // Much as we would like to reuse our canvas, ImageCanvas does not allow
@@ -219,6 +220,8 @@ public final class ImageJBridge {
       proxyStack_.setSingleImageMode(false);
       uiController_.canvasNeedsSwap();
    }
+
+   
 
    @MustCallOnEDT
    public void mm2ijWindowClosed() {
@@ -598,6 +601,65 @@ public final class ImageJBridge {
             template.getBytesPerPixel(), template.getNumComponents(), coords,
             new DefaultMetadata.Builder().build());
    }
+   
+   /**
+    * Tell the ImagePlus about certain properties of our data that it doesn't
+    * otherwise know how to access.
+    */
+   @MustCallOnEDT
+   public void mm2ijSetMetadata() {
+      // TODO: ImageJ only allows for one pixel size across all images, even
+      // if e.g. different channels actually vary.
+      // On the flipside, we only allow for square pixels, so we aren't
+      // exactly perfect either.
+      DataProvider dataProvider = uiController_.getDisplayController().getDataProvider();
+      try {
+         Image sample = dataProvider.getAnyImage();
+         if (sample == null) {
+            // TODO: log error
+            // studio_.logs().logError("Unable to get an image for setting ImageJ metadata properties");
+            return;
+         }
+         SummaryMetadata summaryMetadata = dataProvider.getSummaryMetadata();
+         Metadata metadata = sample.getMetadata();
+         if (summaryMetadata != null && metadata != null) {
+            // elaborate code to protect against missing info
+            double pixelSize = 0.0;
+            double zStepSize = 0.0;
+            double timeInterval = 0.0;
+            String dir = "";
+            String prefix = "";
+            if (metadata.getPixelSizeUm() != null) {
+               pixelSize = metadata.getPixelSizeUm();
+            }
+            if (summaryMetadata.getZStepUm() != null) {
+               zStepSize = summaryMetadata.getZStepUm();
+            }
+            if (summaryMetadata.getWaitInterval() != null) { 
+               timeInterval = summaryMetadata.getWaitInterval();
+            }
+            if (summaryMetadata.getDirectory() != null) {
+               dir = summaryMetadata.getDirectory();
+            } if (summaryMetadata.getPrefix() != null) {
+               prefix = summaryMetadata.getPrefix();
+            }
+            if (prefix.equals("")) {
+               prefix = uiController_.getDisplayController().getName();
+            }
+            mm2ijSetMetadata(pixelSize,
+                    pixelSize,  // TODO: add asepct ratio here, however, that currently throws a null pointer exception
+                    zStepSize,
+                    timeInterval,
+                    sample.getWidth(),
+                    sample.getHeight(),
+                    dir,
+                    prefix);
+         }
+      } catch (IOException ioe) {
+         // TODO: report
+      }
+
+   }
 
    @MustCallOnEDT
    public void mm2ijSetMetadata(double pixelWidthUm, double pixelHeightUm,
@@ -624,6 +686,9 @@ public final class ImageJBridge {
       finfo.directory = directory;
       finfo.fileName = fileName;
       imagePlus_.setFileInfo(finfo);
+      
+      // ensure that ImageJ saves files using our name, not "NewImageJBridge"...
+      imagePlus_.setStack(fileName, proxyStack_);
    }
 
    @MustCallOnEDT
