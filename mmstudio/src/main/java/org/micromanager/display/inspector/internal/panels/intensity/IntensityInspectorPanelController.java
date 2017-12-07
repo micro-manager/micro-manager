@@ -534,16 +534,13 @@ public class IntensityInspectorPanelController
       autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
 
       // A spinner's change listener, unlike an action listener, gets notified
-      // upon programmatic changes (which we don't want).
-      ChangeListener[] saveListeners = percentileSpinner_.getChangeListeners();
-      for (ChangeListener listener : saveListeners) {
-         percentileSpinner_.removeChangeListener(listener);
-      }
+      // upon programmatic changes.  Previously, there was code here to remove 
+      // ChangeListeners and add them back after setting the value.  As a 
+      // side effect, this cause the spinner to not display its value
+      // There does not seem to be a problem setting the value with the 
+      // ChangeListeners still attached, so do the easy thing:
       percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
-      for (ChangeListener listener : saveListeners) {
-         percentileSpinner_.addChangeListener(listener);
-      }
-      
+  
       List<Color> allChannelColors = settings.getAllChannelColors();
       if (! (ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors) || 
               ColorPalettes.getPrimaryColorPalette().containsAll(allChannelColors)) ) {
