@@ -643,7 +643,7 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
 
    public void setConfigText(String configFile) {
       // Recognize and specially treat empty config files.
-      if (configFile.equals("")) {
+      if (configFile == null || configFile.equals("")) {
          configFile = "(none)";
       }
       configFile_.setText("Config File: " + configFile);
