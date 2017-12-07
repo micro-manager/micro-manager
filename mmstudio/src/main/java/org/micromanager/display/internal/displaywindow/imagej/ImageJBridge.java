@@ -688,7 +688,7 @@ public final class ImageJBridge {
       imagePlus_.setFileInfo(finfo);
       
       // ensure that ImageJ saves files using our name, not "NewImageJBridge"...
-      imagePlus_.setStack(fileName, proxyStack_);
+      imagePlus_.setTitle(fileName);
    }
 
    @MustCallOnEDT
