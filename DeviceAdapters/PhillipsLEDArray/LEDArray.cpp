@@ -271,13 +271,13 @@ int CLEDArray::Shutdown()
 			allData[3 + i] = Red[i];
 		}
 
-		allData[3+i] = '.';
+		allData[3+i] = ',';
 
 		for(j = 0; j < green.size();j++){
 			allData[4 + i + j] = Green[j];
 		}
 
-		allData[4+i+j] = '.';
+		allData[4+i+j] = ',';
 
 		for(u = 0; u < blue.size();u++){
 			allData[5 + i + j + u] = Blue[u];
@@ -370,7 +370,7 @@ int CLEDArray::MLED(std::string indices){
 
 		for(i = 0; i < indices.size();i++){
 			if(Indices[i] == ' '){
-				allData[3 + i] = '.';
+				allData[3 + i] = ',';
 			}
 			else{
 				allData[3 + i] = Indices[i];
@@ -523,7 +523,7 @@ int CLEDArray::CDPC(long redint, long greenint, long blueint){
 		allData[5 + i] = Red[i];
 	}
 
-	allData[5+i] = '.';
+	allData[5+i] = ',';
 
 	for(j = 0; j < green.size();j++){
 		allData[6 + i + j] = Green[j];
@@ -564,7 +564,7 @@ int CLEDArray::Annul(double minna, double maxna){
 		allData[3 + i] = Minna[i];
 	}
 
-	allData[3+i] = '.';
+	allData[3+i] = ',';
 
 	for(j = 0; j < max.size();j++){
 		allData[4 + i + j] = Maxna[j];
@@ -608,13 +608,13 @@ int CLEDArray::hAnnul(std::string type, double minna, double maxna){
 	else{
 		allData[3] = 'r';
 	}
-	allData[4] = '.';
+	allData[4] = ',';
 
 	for(i = 0; i < min.size();i++){
 		allData[5 + i] = Minna[i];
 	}
 
-	allData[5+i] = '.';
+	allData[5+i] = ',';
 
 	for(j = 0; j < max.size();j++){
 		allData[6 + i + j] = Maxna[j];
