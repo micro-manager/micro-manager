@@ -36,8 +36,6 @@ import org.micromanager.plugins.magellan.bidc.FrameIntegrationMethod;
 import org.micromanager.plugins.magellan.channels.ChannelSetting;
 import org.micromanager.plugins.magellan.coordinates.AffineUtils;
 import java.awt.geom.AffineTransform;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.plugins.magellan.json.JSONArray;
 import org.micromanager.plugins.magellan.json.JSONObject;
 import org.micromanager.plugins.magellan.main.Magellan;
@@ -421,6 +419,7 @@ public class MagellanEngine {
                             core_.setExposure(setting.exposure_);
                             //set other channel props
                             core_.setConfig(setting.group_, setting.config_);
+                            core_.waitForConfig(setting.group_, setting.config_);
                         }
                     }, "Set channel group");
                 }
