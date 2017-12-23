@@ -67,6 +67,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.display.DisplayWindowControlsFactory;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.data.DataProviderHasNewImageEvent;
+import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.internal.DefaultDisplaySettings;
 
 /**
@@ -183,8 +184,14 @@ public final class MMAcquisition extends DataViewerListener {
             if (summaryMetadata != null && summaryMetadata.has("ChColors")) {
 
                JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
+               
+               // Use settings of last closed acquisition viewer
+               DisplaySettings dsTmp = DefaultDisplaySettings.restoreFromProfile(
+                  studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key() );
+      
                DisplaySettings.Builder displaySettingsBuilder
-                       = display_.getDisplaySettings().copyBuilder();
+                       = dsTmp.copyBuilder();
+               
                final int nrChannels = MDUtils.getNumChannels(summaryMetadata);
                // the do-while loop is a way to set display settings in a thread
                // safe way.  See docs to compareAndSetDisplaySettings.
@@ -253,6 +260,14 @@ public final class MMAcquisition extends DataViewerListener {
          return true;
       }
       boolean result = eng_.abortRequest();
+      if (result) {
+         if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
+            if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
+               ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
+                       studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
+            }
+         }
+      }
       return result;
    }
 
@@ -372,6 +387,9 @@ public final class MMAcquisition extends DataViewerListener {
       }
       if (display_ .getDisplaySettings() instanceof DefaultDisplaySettings) {
          ( (DefaultDisplaySettings) display_.getDisplaySettings() ).save(store_.getSavePath());
+         // save display settings to profile
+         ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
+               studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
       }
       display_.removeListener(this);
       DefaultEventManager.getInstance().unregisterForEvents(this);

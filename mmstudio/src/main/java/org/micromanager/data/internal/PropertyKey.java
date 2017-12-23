@@ -26,6 +26,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.SnapLiveManager;
 import org.micromanager.StagePosition;
+import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -67,7 +68,9 @@ public enum PropertyKey {
             putPropertyMapList("ChannelSettings", channelSettings).
    */
    
-   ACUTOSCALE_IGNORED_QUANTILE("AutoscaleIgnoredQuantile", DisplaySettings.class),
+   ACQUISITION_DISPLAY_SETTINGS("AcquisitionDisplaySettings", AcquisitionManager.class),
+   
+   AUTOSCALE_IGNORED_QUANTILE("AutoscaleIgnoredQuantile", DisplaySettings.class),
    
    AUTOSTRETCH("Autostretch", DisplaySettings.class),
    

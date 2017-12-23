@@ -1017,6 +1017,12 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
    @Override
    public void close() {
+      // close is called from DisplayUICOntroller.windowClosing and from 
+      // store.requestToClose, so we need to accomodate multiple calls
+      // This maybe a workaround a bug...
+      if (closeCompleted_) {
+         return;
+      }
       postEvent(DataViewerWillCloseEvent.create(this));
       // attempt to save Display Settings
       // TODO: Are there problems with multiple viewers on one Datastore?

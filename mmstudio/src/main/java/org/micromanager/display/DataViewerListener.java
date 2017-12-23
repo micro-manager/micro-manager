@@ -10,7 +10,7 @@ public abstract class DataViewerListener {
    
    /**
     * 
-    * @param viewer - DataViewer asking if can be closed
+    * @param viewer - DataViewer asking if it can be closed
     * @return if true, this delegate has no qualms about closing this dataViewer
     */
    
