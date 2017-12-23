@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
@@ -88,6 +89,7 @@ public class IntensityInspectorPanelController
    private final JComboBox colorModeComboBox_ = new JComboBox();
    private final JCheckBox autostretchCheckBox_ = new JCheckBox();
    private final JSpinner percentileSpinner_ = new JSpinner();
+   private final AtomicBoolean changingSpinner_ = new AtomicBoolean(false);
 
    private final JPanel channelHistogramsPanel_ = new JPanel();
 
@@ -236,7 +238,9 @@ public class IntensityInspectorPanelController
       percentileSpinner_.addChangeListener(new ChangeListener() {
          @Override
          public void stateChanged(ChangeEvent e) {
-            handleAutostretch();
+            if (!changingSpinner_.get()) {
+               handleAutostretch();
+            }
          }
       });
 
@@ -539,7 +543,9 @@ public class IntensityInspectorPanelController
       // side effect, this cause the spinner to not display its value
       // There does not seem to be a problem setting the value with the 
       // ChangeListeners still attached, so do the easy thing:
+      changingSpinner_.set(true);
       percentileSpinner_.setValue(settings.getAutoscaleIgnoredPercentile());
+      changingSpinner_.set(false);
   
       List<Color> allChannelColors = settings.getAllChannelColors();
       if (! (ColorPalettes.getColorblindFriendlyPalette().containsAll(allChannelColors) || 
