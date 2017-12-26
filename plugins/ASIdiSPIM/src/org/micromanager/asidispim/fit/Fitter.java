@@ -22,10 +22,6 @@
 package org.micromanager.asidispim.fit;
 
 import org.apache.commons.math3.analysis.function.Gaussian;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.analysis.solvers.BracketingNthOrderBrentSolver;
-import org.apache.commons.math3.analysis.solvers.UnivariateSolver;
-import org.apache.commons.math3.fitting.PolynomialCurveFitter;
 import org.apache.commons.math3.fitting.WeightedObservedPoints;
 import org.jfree.data.xy.XYSeries;
 
@@ -37,12 +33,9 @@ import org.jfree.data.xy.XYSeries;
 public class Fitter {
    
    private static final String NOFIT = "No fit (take max)";
-   private static final String POL1 = "Polynomial 1";
-   private static final String POL2 = "Polynomial 2";
-   private static final String POL3 = "Polynomial 3";
    private static final String GAUSSIAN = "Gaussian";
    
-   public static enum FunctionType {NoFit, Pol1, Pol2, Pol3, Gaussian};
+   public static enum FunctionType {NoFit, Gaussian};
    public static enum Algorithm {
       NONE("None", 0),
       EDGES("Edges", 1),
@@ -104,18 +97,6 @@ public class Fitter {
       
       double[] result = null;
       switch (type) {
-         case Pol1:
-            final PolynomialCurveFitter fitter1 = PolynomialCurveFitter.create(1);
-            result = fitter1.fit(obs.toList());
-            break;
-         case Pol2:
-            final PolynomialCurveFitter fitter2 = PolynomialCurveFitter.create(2);
-            result = fitter2.fit(obs.toList());
-            break;
-         case Pol3:
-            final PolynomialCurveFitter fitter3 = PolynomialCurveFitter.create(3);
-            result = fitter3.fit(obs.toList());
-            break;
          case Gaussian:
             final GaussianWithOffsetCurveFitter gf = GaussianWithOffsetCurveFitter.create();
             if (guess != null) {
@@ -155,17 +136,6 @@ public class Fitter {
                result.setKey(data.getItemCount() * 10);
             } catch (CloneNotSupportedException ex) {
                return null;
-            }
-            break;
-         case Pol1:
-         case Pol2:
-         case Pol3:
-            checkParms(type, parms);
-            PolynomialFunction polFunction = new PolynomialFunction(parms);
-            for (int i = 0; i < data.getItemCount() * 10; i++) {
-               double x = minRange + i * xStep;
-               double y = polFunction.value(x);
-               result.add(x, y);
             }
             break;
          case Gaussian:
@@ -213,21 +183,6 @@ public class Fitter {
                }
             }
             return data.getX(highestIndex).doubleValue();
-         case Pol1:
-         case Pol2:
-         case Pol3:
-            checkParms(type, parms);
-            PolynomialFunction derivativePolFunction =
-                    (new PolynomialFunction(parms)).polynomialDerivative();
-
-            final double relativeAccuracy = 1.0e-12;
-            final double absoluteAccuracy = 1.0e-8;
-            final int maxOrder = 5;
-            UnivariateSolver solver = 
-                    new BracketingNthOrderBrentSolver(relativeAccuracy, 
-                            absoluteAccuracy, maxOrder);
-            xAtMax = solver.solve(100, derivativePolFunction, minX, maxX);
-            break;
          case Gaussian:
             // for a Gaussian we can take the mean and be sure it is the maximum
             // note that this may be outside our range of X values, but 
@@ -339,13 +294,6 @@ public class Fitter {
          case NoFit: {
             return xValue;
          }
-         case Pol1:
-         case Pol2:
-         case Pol3:
-            checkParms(type, parms);
-            PolynomialFunction polFunction = new PolynomialFunction(parms);
-
-            return polFunction.value(xValue);
          case Gaussian:
             checkParms(type, parms);
             Gaussian.Parametric gf = new Gaussian.Parametric();
@@ -358,21 +306,6 @@ public class Fitter {
    
    private static void checkParms(FunctionType type, double[] parms) {
       switch (type) {
-         case Pol1:
-            if (parms.length != 2) {
-               throw new IllegalArgumentException("Needs a double[] of size 2");
-            }
-            break;
-         case Pol2:
-            if (parms.length != 3) {
-               throw new IllegalArgumentException("Needs a double[] of size 3");
-            }
-            break;
-         case Pol3:
-            if (parms.length != 4) {
-               throw new IllegalArgumentException("Needs a double[] of size 4");
-            }
-            break;
          case Gaussian:
             if (parms.length != 4) {
                throw new IllegalArgumentException("Needs a double[] of size 4");
@@ -387,9 +320,6 @@ public class Fitter {
    public static String getFunctionTypeAsString(FunctionType key) {
       switch (key) {
          case NoFit: return NOFIT;
-         case Pol1 : return POL1;
-         case Pol2 : return POL2;
-         case Pol3 : return POL2;
          case Gaussian : return GAUSSIAN;
       }
       return "";
@@ -398,19 +328,13 @@ public class Fitter {
    public static FunctionType getFunctionTypeAsType(String key) {
       if (key.equals(NOFIT))
          return FunctionType.NoFit;
-      if (key.equals(POL1))
-         return FunctionType.Pol1;
-      if (key.equals(POL2))
-         return FunctionType.Pol2;
-      if (key.equals(POL3))
-         return FunctionType.Pol3;
       if (key.equals(GAUSSIAN))
          return FunctionType.Gaussian;
       return FunctionType.NoFit;
    }
    
    public static String[] getFunctionTypes() {
-      return new String[] {NOFIT, POL1, POL2, POL3, GAUSSIAN};
+      return new String[] {NOFIT, GAUSSIAN};
    }
    
    public static Algorithm getAlgorithmFromPrefCode(int prefCode) {
