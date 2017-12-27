@@ -473,16 +473,18 @@ public void runDeskew(final ListeningJPanel caller) {
                if (deskewInvert_.isSelected()) {
                   dir *= -1;
                }
+               final boolean interpolate = deskewInterpolate_.isSelected();
                ImagePlus i = channels[c];
                i.setStack(resize.expandStack(i.getImageStack(), width + width_expansion, height, (dir < 0 ? width_expansion : 0), 0));
                for (int t=0; t<nrFrames; t++) {
                   for (int s=0; s<nrSlices; s++) {  // loop over slices in stack and shift each by an appropriate amount
                      i.setPositionWithoutUpdate(c+1, s+1, t+1);  // all 1-indexed
                      ImageProcessor proc = i.getProcessor();
-                     proc.setInterpolate(false);
+                     if (interpolate) {
+                        proc.setInterpolationMethod(ImageProcessor.BILINEAR);
+                     }
                      proc.translate(dx*s*dir, 0);
-                     nrImagesProcessed++;
-                     IJ.showProgress(nrImagesProcessed, nrImages);
+                     IJ.showProgress(++nrImagesProcessed, nrImages);
                   }
                }
             }
