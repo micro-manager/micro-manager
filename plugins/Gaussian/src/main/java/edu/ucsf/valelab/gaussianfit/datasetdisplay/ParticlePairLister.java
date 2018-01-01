@@ -40,7 +40,6 @@ import edu.ucsf.valelab.gaussianfit.utils.CalcUtils;
 import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 import edu.ucsf.valelab.gaussianfit.utils.ListUtils;
 import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
-import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Arrow;
@@ -52,8 +51,6 @@ import java.awt.Frame;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,21 +70,18 @@ public class ParticlePairLister {
    final private Double maxDistanceNm_; //maximum distance in nm for two spots in different
                                         // channels to be considered a pair
    final private Boolean showPairs_;
-   final private Boolean showImage_;
-   final private Boolean savePairs_;
-   final private Boolean showGraph_;
-   final private Boolean showTrack_;
+   final private Boolean showTrack_ = false;  // TODO: remove
    final private Boolean showSummary_;
    final private Boolean showOverlay_;
-   final private Boolean saveFile_;
    final private Boolean p2d_;
    final private Boolean doGaussianEstimate_;
    final private Boolean fitSigmaInP2D_;
    final private Boolean useSigmaUserGuess_;
    final private Boolean useVectorDistances_;
    final private Boolean estimateP2DError_;
+   final private Boolean useIndividualSigmas_;
+   final private Boolean showHistogram_;
    final private Double sigmaUserGuess_;
-   final private String filePath_;
    
 
    public static class Builder {
@@ -95,24 +89,26 @@ public class ParticlePairLister {
       private int[] rows_;
       private Double maxDistanceNm_; 
       private Boolean showPairs_;
-      private Boolean showImage_;
-      private Boolean savePairs_;
-      private Boolean showGraph_;
-      private Boolean showTrack_;
       private Boolean showSummary_;
       private Boolean showOverlay_;
-      private Boolean saveFile_;
       private Boolean p2d_;
       private Boolean doGaussianEstimate_;
       private Boolean fitSigma_;
       private Boolean useSigmaUserGuess_;
       private Boolean useVectorDistances_;
       private Boolean estimateP2DError_;
+      private Boolean useIndividualSigmas_;
+      private Boolean showHistogram_;
       private Double sigmaEstimate_;
-      private String filePath_;
        
       
       public ParticlePairLister build() {
+         if (useVectorDistances_) {
+            useIndividualSigmas_ = false;
+         }
+         if (fitSigma_) {
+            useIndividualSigmas_ = false;
+         }
          return new ParticlePairLister(this);
       }
 
@@ -131,23 +127,8 @@ public class ParticlePairLister {
          return this;
       }
       
-      public Builder showImage(final Boolean showImage) {
-         showImage_ = showImage;
-         return this;
-      }
-      
-      public Builder savePairs(final Boolean savePairs) {
-         savePairs_ = savePairs;
-         return this;
-      }
-      
-      public Builder showGraph(final Boolean showGraph) {
-         showGraph_ = showGraph;
-         return this;
-      }
-
-      public Builder showTrack(Boolean showTrack) {
-         showTrack_ = showTrack;
+      public Builder showHistogram(Boolean show) {
+         showHistogram_ = show;
          return this;
       }
 
@@ -158,11 +139,6 @@ public class ParticlePairLister {
 
       public Builder showOverlay(Boolean showOverlay) {
          showOverlay_ = showOverlay;
-         return this;
-      }
-
-      public Builder saveFile(Boolean saveFile) {
-         saveFile_ = saveFile;
          return this;
       }
 
@@ -196,8 +172,8 @@ public class ParticlePairLister {
          return this;
       }
 
-      public Builder filePath(String filePath) {
-         filePath_ = filePath;
+      public Builder useIndividualSigmas(Boolean use) {
+         useIndividualSigmas_ = use;
          return this;
       }
       
@@ -212,21 +188,17 @@ public class ParticlePairLister {
       rows_ = builder.rows_;
       maxDistanceNm_ = builder.maxDistanceNm_;
       showPairs_ = builder.showPairs_;
-      showImage_ = builder.showImage_;
-      savePairs_ = builder.savePairs_;
-      showGraph_ = builder.showGraph_;
-      showTrack_ = builder.showTrack_;
       showSummary_ = builder.showSummary_;
       showOverlay_ = builder.showOverlay_;
-      saveFile_ = builder.saveFile_;
       p2d_ = builder.p2d_;
       doGaussianEstimate_ = builder.doGaussianEstimate_;
       fitSigmaInP2D_ = builder.fitSigma_;
       useSigmaUserGuess_ = builder.useSigmaUserGuess_;
       useVectorDistances_ = builder.useVectorDistances_;
       sigmaUserGuess_ = builder.sigmaEstimate_;
-      filePath_ = builder.filePath_;
+      useIndividualSigmas_ = builder.useIndividualSigmas_;
       estimateP2DError_ = builder.estimateP2DError_;
+      showHistogram_ = builder.showHistogram_;
    }
 
    public Builder copy() {
@@ -234,20 +206,15 @@ public class ParticlePairLister {
               rows(rows_).
               maxDistanceNm(maxDistanceNm_).
               showPairs(showPairs_).
-              showImage(showImage_).
-              savePairs(savePairs_).
-              showGraph(showGraph_).
-              showTrack(showTrack_).
               showSummary(showSummary_).
               showOverlay(showOverlay_).
-              saveFile(saveFile_).
               p2d(p2d_).
               doGaussianEstimate(doGaussianEstimate_).
               fitSigma(fitSigmaInP2D_).
               useSigmaEstimate(useSigmaUserGuess_).
               useVectorDistances(useVectorDistances_).
               sigmaEstimate(sigmaUserGuess_).
-              filePath(filePath_).
+              showHistogram(showHistogram_).
               estimateP2DError(estimateP2DError_);
    }
 
@@ -372,7 +339,7 @@ public class ParticlePairLister {
                   }
                }
 
-               if (showPairs_ || savePairs_) {
+               if (showPairs_ ) {
                   ResultsTable pairTable = new ResultsTable();
                   pairTable.setPrecision(2);
                   for (int pos : positions) {
@@ -429,67 +396,9 @@ public class ParticlePairLister {
                         frame.toFront();
                      }
                   }
-
-                  if (savePairs_) {
-                     try {
-                        String fileName = filePath_ + File.separator
-                                + dc.getSpotData(row).getName() + "_Pairs.cvs";
-                        pairTable.saveAs(fileName);
-                        ij.IJ.log("Saved file: " + fileName);
-                     } catch (IOException ex) {
-                        ReportingUtils.showError(ex, "Failed to save file");
-                     }
-                  }
+                  
                }
                
-/*
-               if (showSummary_) {
-                  ResultsTable summaryTable = new ResultsTable();
-                  summaryTable.setPrecision(2);
-                  List<Double> distances = new ArrayList<Double>();
-                  List<Double> errorX = new ArrayList<Double>();
-                  List<Double> errorY = new ArrayList<Double>();
-                  for (int pos : positions) {
-                     for (ArrayList<GsSpotPair> pairList : spotPairsByFrame.get(pos)) {
-                        for (GsSpotPair pair : pairList) {
-                           distances.add(pair.getFirstPoint().distance(pair.getSecondPoint()));
-                           errorX.add(pair.getFirstPoint().getX() - pair.getSecondPoint().getX());
-                           errorY.add(pair.getFirstPoint().getY() - pair.getSecondPoint().getY());
-                        }
-                     }
-                  }
-                  Double avg = ListUtils.listAvg(distances);
-                  Double stdDev = ListUtils.listStdDev(distances, avg);
-                  Double avgX = ListUtils.listAvg(errorX);
-                  Double stdDevX = ListUtils.listStdDev(errorX, avgX);
-                  Double avgY = ListUtils.listAvg(errorY);
-                  Double stdDevY = ListUtils.listStdDev(errorY, avgY);
-                  summaryTable.incrementCounter();
-                  summaryTable.addValue("Avg. distance", avg);
-                  summaryTable.addValue("StdDev distance", stdDev);
-                  summaryTable.addValue("X", avgX);
-                  summaryTable.addValue("StdDev X", stdDevX);
-                  summaryTable.addValue("Y", avgY);
-                  summaryTable.addValue("StdDevY", stdDevY);
-               }
-               
-               */
-               if (showImage_) {
-                  /*
-                                             distances.add(d);
-
-                           ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
-
-                           double ex = pCh2.getX() - pCh1.getX();
-                           //double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
-                           //ex = Math.sqrt(ex);
-                           errorX.add(ex);
-                           //double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
-                           //ey = Math.sqrt(ey);
-                           double ey = pCh2.getY() - pCh1.getY();
-                           errorY.add(ey);
-                  */
-               }
 
                // We have all pairs, assemble in tracks
                ij.IJ.showStatus("Analyzing pairs for row " + rowCounter);
@@ -511,7 +420,7 @@ public class ParticlePairLister {
                         GsSpotPair spotPair = iSpotPairs.next();
                         // for now, we only start tracks at frame number 1
                         if (!spotPair.partOfTrack()) {
-                           for (int frame = firstFrame; frame < dc.getSpotData(row).nrFrames_; frame++) {
+                           for (int frame = firstFrame; frame <= dc.getSpotData(row).nrFrames_; frame++) {
                               if (!spotPair.partOfTrack() && spotPair.getFirstSpot().getFrame() == frame) {
                                  ArrayList<GsSpotPair> track = new ArrayList<GsSpotPair>();
                                  track.add(spotPair);
@@ -604,18 +513,7 @@ public class ParticlePairLister {
                      frame.toFront();
                   }
                }
-
-               if (saveFile_) {
-                  try {
-                     String fileName = filePath_ + File.separator
-                             + dc.getSpotData(row).getName() + "_PairTracks.cvs";
-                     rt.saveAs(fileName);
-                     ij.IJ.log("Saved file: " + fileName);
-                  } catch (IOException ex) {
-                     ReportingUtils.showError(ex, "Failed to save file");
-                  }
-               }
-
+              
                ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
                if (showOverlay_) {
                   if (siPlus != null && siPlus.getOverlay() != null) {
@@ -630,6 +528,10 @@ public class ParticlePairLister {
                List<Double> allDistances = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> allSigmas = new ArrayList<Double>(
+                       tracks.size() * dc.getSpotData(row).nrFrames_);
+               List<Double> sigmasFirstSpot  = new ArrayList<Double>(
+                       tracks.size() * dc.getSpotData(row).nrFrames_);
+               List<Double> sigmasSecondSpot = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                while (itTracks.hasNext()) {
                   ArrayList<GsSpotPair> track = itTracks.next();
@@ -656,6 +558,8 @@ public class ParticlePairLister {
                              * pair.getSecondSpot().getSigma());
                      sigmas.add(sigma);
                      allSigmas.add(sigma);
+                     sigmasFirstSpot.add(pair.getFirstSpot().getSigma());
+                     sigmasSecondSpot.add(pair.getSecondSpot().getSigma());
                      firstPoints.add(pair.getFirstPoint());
                      secondPoints.add(pair.getSecondPoint());
                   }
@@ -771,7 +675,7 @@ public class ParticlePairLister {
                   try {
                      avgVectDistancesAsDouble = ListUtils.toArray(avgVectDistances);
                      gResult = fitGaussianToData(avgVectDistancesAsDouble, maxDistanceNm_);
-                     if (doGaussianEstimate_) {
+                     if (doGaussianEstimate_ && showHistogram_) {
                         GaussianUtils.plotGaussian("Gaussian fit of: "
                              + dc.getSpotData(row).getName() + " distances",
                              avgVectDistancesAsDouble, maxDistanceNm_, gResult);
@@ -792,24 +696,32 @@ public class ParticlePairLister {
                   for (int j = 0; j < distancesToUse.size(); j++) {
                      d[j] = distancesToUse.get(j);
                   }
-                  P2DFitter p2df = new P2DFitter(d, 
-                          fitSigmaInP2D_ || useVectorDistances_, maxDistanceNm_);
+                  double[] sigmas = new double[distancesToUse.size()];
+                  if (useIndividualSigmas_) {
+                     for (int j = 0; j < allSigmas.size(); j++) {
+                        sigmas[j] = allSigmas.get(j);
+                     }                     
+                  }
+                 
+                  P2DFitter p2df = new P2DFitter(d, sigmas,
+                           fitSigmaInP2D_ || useVectorDistances_, 
+                           maxDistanceNm_,
+                           useIndividualSigmas_);
                   double distMean = ListUtils.listAvg(distancesToUse);
                   double distStd = sigmaUserGuess_;
                   if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
-                     // how do we best estimate sigma? If we have multiple
-                     // measurements per particle, it seems best to calculate it 
-                     // directly from the spread in those measurements
-                     // if we have only one particle per track, we need to
-                     // calculate it from the sigmas of the two spots in the particle
-                     // But where is the cutoff between these two methods?
-                     // From sigmas of two spots:
-                     // distStd = ListUtils.listAvg(avgSigmas);
-                     //if (ListUtils.listAvg(trackLengths) > 3.0) {
-                     //   distStd = ListUtils.listStdDev(avgToUse, distMean);
-                     //} else {
-                     distStd = ListUtils.listAvg(allSigmas);
-                     //}
+                     // how do we best estimate sigma? Stefan thinks that the 
+                     // localization errors themselves have an uncertainty that 
+                     // we should account for. Simulations show this is slightly 
+                     // better than just using the average of the quadratic 
+                     // addition of sigmas of individual spot pairs. 
+                     // See the upcoming manuscript:
+                     double sfsAvg = ListUtils.listAvg(sigmasFirstSpot);
+                     double sSsAvg = ListUtils.listAvg(sigmasSecondSpot);
+                     double sfsStdDev = ListUtils.listStdDev(sigmasFirstSpot, sfsAvg);
+                     double sSsStdDev = ListUtils.listStdDev(sigmasSecondSpot, sSsAvg);
+                     distStd = Math.sqrt(sfsAvg * sfsAvg  +  sSsAvg * sSsAvg  + 
+                             sfsStdDev * sfsStdDev  +  sSsStdDev * sSsStdDev);
                   }
                   if (gResult != null && gResult.length == 2 && useVectorDistances_){
                      p2df.setStartParams(gResult[0], gResult[1]);
@@ -875,8 +787,11 @@ public class ParticlePairLister {
                      if (fitSigmaInP2D_) {
                         muSigma = p2dfResult;
                      }
-                     GaussianUtils.plotP2D("P2D fit of: " + dc.getSpotData(row).getName() + " distances",
-                             d, maxDistanceNm_, muSigma);
+                     if (showHistogram_) {
+                        GaussianUtils.plotP2D("P2D fit of: " + 
+                                 dc.getSpotData(row).getName() + " distances",
+                                 d, maxDistanceNm_, muSigma);
+                     }
 
                      // The following is used to output results in a machine readable fashion
                      // Uncomment when needed:
@@ -926,8 +841,10 @@ public class ParticlePairLister {
                               d[j] = distancesToUse.get( randomIndex );
                               s[j] = allSigmas.get(randomIndex);
                            }
-                           p2df = new P2DFitter(d, 
-                                   fitSigmaInP2D_ || useVectorDistances_, maxDistanceNm_);
+                           p2df = new P2DFitter(d, s,
+                                   fitSigmaInP2D_ || useVectorDistances_, 
+                                   maxDistanceNm_,
+                                   useIndividualSigmas_ );
                            distMean = ListUtils.avg(d);
                            distStd = sigmaUserGuess_;
                            if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
