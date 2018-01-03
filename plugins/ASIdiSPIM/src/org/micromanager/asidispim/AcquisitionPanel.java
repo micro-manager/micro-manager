@@ -33,7 +33,6 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.Devices.Libraries;
 import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
@@ -215,6 +214,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JPanel slicePanelContainer_;
    private final JPanel lightSheetPanel_;
    private final JPanel normalPanel_;
+   double zStepUm_;  // hold onto local copy so we don't have to keep querying
+   double xPositionUm_;  // hold onto local copy so we don't have to keep querying
+   double yPositionUm_;  // hold onto local copy so we don't have to keep querying
+   double zPositionUm_;  // hold onto local copy so we don't have to keep querying
    
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
@@ -929,6 +932,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // included is calculating slice timing
       updateDurationLabels();
+      
+      // update local variables
+      zStepUm_ = PanelUtils.getSpinnerFloatValue(stepSize_);
+      refreshXYZPositions();
       
    }//end constructor
    
@@ -2514,6 +2521,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
 
+            zStepUm_ = acqSettings.stepSizeUm;  // should be same as PanelUtils.getSpinnerFloatValue(stepSize_)
             
             // initialize acquisition
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
@@ -2552,12 +2560,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "MVRotations", viewString);
             // save XY and SPIM head position in metadata
             // update positions first at expense of two extra serial transactions
-            positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);  // / will update cache for Y too
+            refreshXYZPositions();
             gui_.setAcquisitionProperty(acqName, "Position_X",
                   positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.X));
             gui_.setAcquisitionProperty(acqName, "Position_Y",
                   positions_.getPositionString(Devices.Keys.XYSTAGE, Directions.Y));
-            positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
             gui_.setAcquisitionProperty(acqName, "Position_SPIM_Head",
                   positions_.getPositionString(Devices.Keys.UPPERZDRIVE));
             gui_.setAcquisitionProperty(acqName, "SPIMAcqSettings", acqSettingsJSON);
@@ -2733,6 +2740,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         StagePosition pos = positionList.getPosition(positionNum).get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
                         controller_.prepareStageScanForAcquisition(pos.x, pos.y);
                      }
+                     
+                     refreshXYZPositions();
                      
                      // wait any extra time the user requests
                      Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
@@ -3364,8 +3373,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          MDUtils.setPositionIndex(tags, position);
          MDUtils.setElapsedTimeMs(tags, ms);
          MDUtils.setImageTime(tags, MDUtils.getCurrentTime());
-         MDUtils.setZStepUm(tags, PanelUtils.getSpinnerFloatValue(stepSize_));
+         MDUtils.setZStepUm(tags, zStepUm_);
          
+         // save cached positions of SPIM head for this stack
+         tags.put("SPIM_Position_X", xPositionUm_);  // TODO consider computing accurate X position per slice for stage scanning data
+         tags.put("SPIM_Position_Y", yPositionUm_);
+         tags.put("SPIM_Position_Z", zPositionUm_);  // NB this is SPIM head position, not position in stack
+  
          if (!tags.has(MMTags.Summary.SLICES_FIRST) && !tags.has(MMTags.Summary.TIME_FIRST)) {
             // add default setting
             tags.put(MMTags.Summary.SLICES_FIRST, true);
@@ -3389,6 +3403,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
 
       bq.put(taggedImg);
+   }
+   
+   /**
+    * Gets position of sample in XYZ, being XY stage and SPIM head. Used to mark metadata with center position
+    * that gets updated with multiple positions. 
+    */
+   private void refreshXYZPositions() {
+      positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);  // / will update cache for Y too
+      positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
+      xPositionUm_ = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.X);
+      yPositionUm_ = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.Y);
+      zPositionUm_ = positions_.getCachedPosition(Devices.Keys.UPPERZDRIVE, Directions.NONE);
    }
    
    

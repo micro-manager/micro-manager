@@ -210,6 +210,8 @@ public class ControllerUtils {
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, settings.delayBeforeSide);
          
          // TODO handle other multichannel modes with stage scanning (what does this mean??)
+      } else {
+         scanDistance_ = 0;
       }
       
       // sets PLogic "acquisition running" flag
@@ -878,6 +880,15 @@ public class ControllerUtils {
          sheetOffset = props_.getPropValueFloat(Devices.Keys.PLUGIN, offsetProp); 
       }
       return sheetOffset;
+   }
+   
+   /**
+    * Gets the total distance the stage will scan for stage scanning acquisitions.
+    * Only valid after call to prepareControllerForAquisition().
+    * @return
+    */
+   public double getScanDistance() {
+      return scanDistance_;
    }
 
 }
