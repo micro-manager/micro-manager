@@ -1,11 +1,12 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          TSICam.h
+// FILE:          TSI3Cam.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Thorlabs Scientific Imaging compatible camera adapter
+// DESCRIPTION:   Thorlabs Scientific Imaging compatible camera adapter,
+//                SDK 3
 //                
-// AUTHOR:        Nenad Amodaj, 2012
+// AUTHOR:        Nenad Amodaj, 2017
 // COPYRIGHT:     Thorlabs
 //
 // DISCLAIMER:    This file is provided WITHOUT ANY WARRANTY;
@@ -24,12 +25,8 @@
 #include <ImgBuffer.h>
 #include <DeviceUtils.h>
 #include <DeviceThreads.h>
-#include <TsiSDK.h>
-#include <TsiCamera.h>
-#include <TsiImage.h>
-#include <TsiColorImage.h>
-#include <TsiColorCamera.h>
 #include "TsiLibrary.h"
+#include "thorlabs_tsi_camera_sdk.h"
 
 #ifdef WIN32
 //...
@@ -46,35 +43,40 @@
 #include <string>
 #include <map>
 
+struct Tsi3RoiBin
+{
+   int xOrigin;
+   int yOrigin;
+   int xPixels;
+   int yPixels;
+   int xBin;
+   int yBin;
+   int pixDepth;
+   int bitDepth;
 
-class AcqSequenceThread;
-class TsiColorCamera;
-class TsiSDK;
-
-enum TriggerSource {
-   Software = 0,
-   HardwareEdge,
-   HardwareDuration
-};
-
-enum TriggerPolarity {
-   Positive = 0,
-   Negative
+   Tsi3RoiBin()
+   {
+      xOrigin = 0;
+      yOrigin = 0;
+      xPixels = 0;
+      yPixels = 0;
+      xBin = 1;
+      yBin = 1;
+      pixDepth = 2;
+      bitDepth = 16;
+   }
 };
 
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
-// for all TSI api compatible cameras
+// for all TSI SDK 3 api compatible cameras
 //
-class TsiCam : public CCameraBase<TsiCam>
+class Tsi3Cam : public CCameraBase<Tsi3Cam>
 {
-   friend AcqSequenceThread;
 
 public:
-   TsiCam();
-   ~TsiCam();
-
-   static TsiSDK* tsiSdk;
+   Tsi3Cam();
+   ~Tsi3Cam();
 
    // MMDevice API
    int Initialize();
@@ -94,7 +96,7 @@ public:
 
    unsigned GetImageWidth() const {return img.Width();}
    unsigned GetImageHeight() const {return img.Height();}
-   unsigned GetImageBytesPerPixel() const {return color ? colorImg.Depth() : img.Depth();} 
+   unsigned GetImageBytesPerPixel() const {return img.Depth();} 
    long GetImageBufferSize() const;
    unsigned GetBitDepth() const;
    int GetBinning() const;
@@ -119,87 +121,31 @@ public:
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnTaps(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnColorEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-   // stubs
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFps(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnChipName(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMultiplierGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnReadoutPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnUniversalProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-   int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   bool GetAttrValue(TSI_PARAM_ID ParamID, TSI_ATTR_ID AttrID, void *Data, uint32_t DataLength);
-   bool ParamSupported (TSI_PARAM_ID ParamID);
    int ResizeImageBuffer();
-   int ResizeImageBuffer(TSI_ROI_BIN& roiBin);
-   void SuspendSequence();
-   int ResumeSequence();
-   int GetImageParameters();
-   int PushImage(unsigned char* imgBuf);
+   void ResetImageBuffer();
    bool StopCamera();
-   bool StartCamera();
+   bool StartCamera(int frames);
 
-   static void ReadoutComplete(int callback_type_id, TsiImage *tsi_image, void *context);
-   TsiColorCamera* getColorCamera();
-   static void convertToRGBA32(TsiColorImage& tsiImg, ImgBuffer& img, int bitDepth);
-   int SetWhiteBalance();
-   void ClearWhiteBalance();
-   void ConfigureDefaultColorPipeline();
-   void ConfigureWhiteBalanceColorPipeline();
+   static void frame_available_callback(void* sender, unsigned short* image_buffer, int image_width, int image_height, int bit_depth, int number_of_color_channels, int frame_count, void* context);
 
    ImgBuffer img;
-   ImgBuffer colorImg;
    bool initialized;
    bool stopOnOverflow;
-   long acquiring;
-   TsiCamera* camHandle_;
-   int bitDepth;
-   TSI_ROI_BIN roiBinData;
-   TSI_ROI_BIN fullFrame;
-   TriggerSource trigger;
-   TriggerPolarity triggerPolarity;
+   int imageCount;
+   void* camHandle;
+   long acquiringSequence;
+   long acquiringFrame;
 
-   // color camera support
-   bool bayerMask;
-   bool color;
-   bool wb;
-   LONG whiteBalanceSelected;
+   Tsi3RoiBin roiBinData;
+   Tsi3RoiBin fullFrame;
 
-   friend class AcqSequenceThread;
-   AcqSequenceThread*   liveAcqThd_;
-};
-
-/*
- * Acquisition thread
- */
-class AcqSequenceThread : public MMDeviceThreadBase
-{
-   public:
-      AcqSequenceThread(TsiCam* camera) : 
-         stop(0), camInstance(camera), numFrames(0) {}
-      ~AcqSequenceThread() {}
-      int svc (void);
-
-      void Stop()
-      {
-         InterlockedExchange(&stop, 1);
-      }
-      void Start() {stop = false; activate();}
-      void SetNumFrames(unsigned numf) {numFrames = numf;}
-    
-   private:
-      long stop;
-      TsiCam* camInstance;
-      unsigned numFrames;
+   TRIGGER_TYPE trigger;
+   TRIGGER_POLARITY triggerPolarity;
 };
