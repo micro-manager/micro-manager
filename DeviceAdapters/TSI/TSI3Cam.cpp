@@ -140,6 +140,9 @@ int Tsi3Cam::Initialize()
       return ERR_CAMERA_OPEN_FAILED;
    }
 
+   // this must be done after connecting to the camera
+   tl_camera_disarm(camHandle);
+
    // TODO: figure out how to handle multiple cameras
 
    // set callback for collecting frames
