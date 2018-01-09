@@ -383,7 +383,7 @@ double Tsi3Cam::GetExposure() const
 
 void Tsi3Cam::SetExposure(double dExpMs)
 {
-   int exp = (int)(dExpMs + 0.5);
+   int exp = (int)(dExpMs * 1000 + 0.5);
    tl_camera_set_exposure_us(camHandle, exp);
 }
 
