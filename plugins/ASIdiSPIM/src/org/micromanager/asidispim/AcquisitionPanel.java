@@ -33,7 +33,6 @@ import org.micromanager.asidispim.Data.Prefs;
 import org.micromanager.asidispim.Data.Properties;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.ChannelSpec;
-import org.micromanager.asidispim.Data.Devices.Sides;
 import org.micromanager.asidispim.Data.Joystick.Directions;
 import org.micromanager.asidispim.Utils.DevicesListenerInterface;
 import org.micromanager.asidispim.Utils.ListeningJPanel;
@@ -952,7 +951,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       updateActualTimeLapseDurationLabel();
    }
    
-   private void updateCalibrationOffset(final Sides side, 
+   private void updateCalibrationOffset(final Devices.Sides side, 
            final AutofocusUtils.FocusResult score) {
       if (score.getFocusSuccess()) {
          double offsetDelta = score.getOffsetDelta();
@@ -2773,6 +2772,14 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         // deal with channel if needed (hardware channel switching doesn't happen here)
                         if (changeChannelPerVolumeSoftware) {
                            multiChannelPanel_.selectNextChannel();
+                        }
+                        
+                        // special case: single-sided piezo acquisition risks illumination piezo sleeping
+                        // prevent this from happening by sending relative move of 0 like we do in live mode before each trigger
+                        // NB: this won't help for hardware-timed timepoints
+                        final Devices.Keys piezoIllumKey = firstSideA ? Devices.Keys.PIEZOB : Devices.Keys.PIEZOA;
+                        if (!twoSided && props_.getPropValueInteger(piezoIllumKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
+                           core_.setRelativePosition(devices_.getMMDevice(piezoIllumKey), 0);
                         }
 
                         // trigger the state machine on the controller
