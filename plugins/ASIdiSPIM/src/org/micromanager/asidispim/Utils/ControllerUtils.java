@@ -32,6 +32,7 @@ import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.CameraModes;
+import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
@@ -52,6 +53,7 @@ public class ControllerUtils {
    final Prefs prefs_;
    final Devices devices_;
    final Positions positions_;
+   final Cameras cameras_;
    final CMMCore core_;
    double scanDistance_;   // cached value from last call to prepareControllerForAquisition()
    
@@ -61,12 +63,13 @@ public class ControllerUtils {
    final double geometricSpeedFactor_ = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
-           final Prefs prefs, final Devices devices, final Positions positions) {
+           final Prefs prefs, final Devices devices, final Positions positions, final Cameras cameras) {
       gui_ = gui;
       props_ = props;
       prefs_ = prefs;
       devices_ = devices;
       positions_ = positions;
+      cameras_ = cameras;
       core_ = gui_.getMMCore();
       scanDistance_ = 0;
    }
@@ -829,14 +832,17 @@ public class ControllerUtils {
     */
    public float getSheetWidth(CameraModes.Keys cameraMode, Devices.Keys cameraDevice, Devices.Sides side) {
       float sheetWidth;
+      final String cameraName = devices_.getMMDevice(cameraDevice);
+      if (cameraName == null || cameraName == "") {
+         ReportingUtils.logDebugMessage("Could get sheet width for invalid device " + cameraDevice.toString());
+         return 0f;
+      }
       if (cameraMode == CameraModes.Keys.LIGHT_SHEET) {
          final float sheetSlope = prefs_.getFloat(
                MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE, 2000);
-         Rectangle roi = null;
-         try {
-            roi = core_.getROI(devices_.getMMDevice(cameraDevice));
-         } catch (Exception e) {
+         Rectangle roi = cameras_.getCameraROI(cameraDevice);  // get binning-adjusted ROI so value can stay the same regardless of binning
+         if (roi == null || roi.height == 0) {
             ReportingUtils.logDebugMessage("Could not get camera ROI for light sheet mode");
             return 0f;
          }
@@ -846,15 +852,13 @@ public class ControllerUtils {
                MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                Properties.Keys.PREFS_AUTO_SHEET_WIDTH, false);
          if (autoSheet) {
-            Rectangle roi = null;
-            try {
-               roi = core_.getROI(devices_.getMMDevice(cameraDevice));
-            } catch (Exception e) {
+            Rectangle roi = cameras_.getCameraROI(cameraDevice);  // get binning-adjusted ROI so value can stay the same regardless of binning
+            if (roi == null || roi.height == 0) {
                ReportingUtils.logDebugMessage("Could not get camera ROI for auto sheet mode");
                return 0f;
             }
-            final float sheetSlope = prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-            Properties.Keys.PLUGIN_SLOPE_SHEET_WIDTH.toString(), 2);
+            final float sheetSlope = prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(),
+                  Properties.Keys.PLUGIN_SLOPE_SHEET_WIDTH.toString(), 2);
             sheetWidth = roi.height *  sheetSlope / 1000f;  // in millidegrees per pixel, convert to degrees
             // TODO add extra width to compensate for filter depending on sweep rate and filter freq
             // TODO calculation should account for sample exposure to make sure 0.25ms edges get appropriately compensated for

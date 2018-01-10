@@ -152,7 +152,7 @@ public class ASIdiSPIMFrame extends MMFrame
       positions_ = new Positions(gui_, devices_);
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui_, devices_, props_, prefs_);
-      controller_ = new ControllerUtils(gui_, props_, prefs_, devices_, positions_);
+      controller_ = new ControllerUtils(gui_, props_, prefs_, devices_, positions_, cameras_);
       
       // make sure Live mode is turned off
       gui_.enableLiveMode(false);
