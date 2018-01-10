@@ -171,8 +171,12 @@ public class ControllerUtils {
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
          
          final double requestedMotorSpeed = computeScanSpeed(settings);
-         if (requestedMotorSpeed > props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED)) {
+         if (requestedMotorSpeed > props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED)*0.8) {
             MyDialogUtils.showError("Required stage speed is too fast, please reduce step size or increase sample exposure.");
+            return false;
+         }
+         if (requestedMotorSpeed < 0.001) {
+            MyDialogUtils.showError("Required stage speed is too slow, please increase step size or decrease sample exposure.");
             return false;
          }
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
