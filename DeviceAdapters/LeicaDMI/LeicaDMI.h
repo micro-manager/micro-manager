@@ -533,7 +533,7 @@ public:
    virtual int GetPositionSteps(long& steps);
    virtual int SetPositionSteps(long steps);
    virtual int SetOrigin() { return DEVICE_UNSUPPORTED_COMMAND; }
-   virtual int GetLimits(double& lower, double& upper) { return DEVICE_UNSUPPORTED_COMMAND; }
+   virtual int GetLimits(double& /* lower */, double& /* upper */ ) { return DEVICE_UNSUPPORTED_COMMAND; }
    virtual bool IsContinuousFocusDrive() const { return true; }
    virtual int IsStageSequenceable(bool& flag) const { flag = false; return DEVICE_OK; }
 
