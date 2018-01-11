@@ -313,7 +313,7 @@ std::string MT20hub::GetBurnerStatus(long* status)
 	recvd_msg_iter_ = recvd_msg_buf_.begin();
 	
 	char state_id[] = "BB.0-LS.0";
-	char device_id[] = "BB.0-LS.0-Lamp.0";
+	// char device_id[] = "BB.0-LS.0-Lamp.0";
 
 	bool success = false;
 
@@ -631,7 +631,7 @@ std::string MT20hub::GetBurnerHours(long* hours)
 	recvd_msg_iter_ = recvd_msg_buf_.begin();
 	
 	char state_id[] = "BB.0-LS.0";
-	char device_id[] = "BB.0-LS.0-Lamp.0";
+	// char device_id[] = "BB.0-LS.0-Lamp.0";
 
 	while(recvd_msg_iter_ != recvd_msg_buf_.end())
 	{
@@ -698,7 +698,7 @@ std::string MT20hub::GetShutterState(long* state)
 	recvd_msg_iter_ = recvd_msg_buf_.begin();
 	
 	char state_id[] = "BB.0-LS.0";
-	char device_id[] = "BB.0-LS.0-Shut.0";
+	// char device_id[] = "BB.0-LS.0-Shut.0";
 
 	while(recvd_msg_iter_ != recvd_msg_buf_.end())
 	{
@@ -860,7 +860,7 @@ std::string MT20hub::GetFilterwheelPosition(long* pos)
 	recvd_msg_iter_ = recvd_msg_buf_.begin();
 	
 	char state_id[] = "BB.0-LS.0";
-	char device_id[] = "BB.0-LS.0-Filtwl.0";
+	// char device_id[] = "BB.0-LS.0-Filtwl.0";
 
 	while(recvd_msg_iter_ != recvd_msg_buf_.end())
 	{
@@ -1035,7 +1035,7 @@ std::string MT20hub::GetAttenuatorState(long* state)
 	recvd_msg_iter_ = recvd_msg_buf_.begin();
 	
 	char state_id[] = "BB.0-LS.0";
-	char device_id[] = "BB.0-LS.0-Att.0";
+	// char device_id[] = "BB.0-LS.0-Att.0";
 
 	while(recvd_msg_iter_ != recvd_msg_buf_.end())
 	{
