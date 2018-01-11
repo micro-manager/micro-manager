@@ -218,6 +218,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    double yPositionUm_;  // hold onto local copy so we don't have to keep querying
    double zPositionUm_;  // hold onto local copy so we don't have to keep querying
    
+   private static final int XYSTAGETIMEOUT = 20000;
+   
    public AcquisitionPanel(ScriptInterface gui, 
            Devices devices, 
            Properties props, 
@@ -2430,7 +2432,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          long extraMultiXYTimeout = 0;
          if (acqSettings.useMultiPositions) {
             // give 20 extra seconds to arrive at intended XY position instead of trying to get fancy about computing actual move time
-            extraMultiXYTimeout = 20000;
+            extraMultiXYTimeout = XYSTAGETIMEOUT;
+            // furthermore make sure that the main timeout value is at least 20ms because MM's position list uses this (via MultiStagePosition.goToPosition)
+            if (props_.getPropValueInteger(Devices.Keys.CORE, Properties.Keys.CORE_TIMEOUT_MS) < XYSTAGETIMEOUT) {
+               props_.setPropValue(Devices.Keys.CORE, Properties.Keys.CORE_TIMEOUT_MS, XYSTAGETIMEOUT);
+            }
          }
          
          VirtualAcquisitionDisplay vad = null;

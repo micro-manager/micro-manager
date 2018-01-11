@@ -175,6 +175,7 @@ public class Properties {
       PVCAM_CHIPNAME("ChipName"),                    // for PVCAM
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
+      CORE_TIMEOUT_MS("TimeoutMs"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
       PLUGIN_NUM_SIDES("NumberOfSides"),
       PLUGIN_FIRST_SIDE("FirstSide"),
