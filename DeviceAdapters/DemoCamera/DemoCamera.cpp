@@ -768,7 +768,7 @@ bool CDemoCamera::IsMultiROISet()
  */
 int CDemoCamera::GetMultiROICount(unsigned int& count)
 {
-   count = multiROIXs_.size();
+   count = (unsigned int) multiROIXs_.size();
    return DEVICE_OK;
 }
 
@@ -791,11 +791,11 @@ int CDemoCamera::SetMultiROI(const unsigned int* xs, const unsigned int* ys,
    multiROIYs_.clear();
    multiROIWidths_.clear();
    multiROIHeights_.clear();
-   int minX = INT_MAX;
-   int minY = INT_MAX;
-   int maxX = 0;
-   int maxY = 0;
-   for (int i = 0; i < numROIs; ++i)
+   unsigned int minX = UINT_MAX;
+   unsigned int minY = UINT_MAX;
+   unsigned int maxX = 0;
+   unsigned int maxY = 0;
+   for (unsigned int i = 0; i < numROIs; ++i)
    {
       multiROIXs_.push_back(xs[i]);
       multiROIYs_.push_back(ys[i]);
@@ -839,13 +839,13 @@ int CDemoCamera::SetMultiROI(const unsigned int* xs, const unsigned int* ys,
 int CDemoCamera::GetMultiROI(unsigned* xs, unsigned* ys, unsigned* widths,
       unsigned* heights, unsigned* length)
 {
-   unsigned roiCount = multiROIXs_.size();
+   unsigned int roiCount = (unsigned int) multiROIXs_.size();
    if (roiCount > *length)
    {
       // This should never happen.
       return DEVICE_INTERNAL_INCONSISTENCY;
    }
-   for (int i = 0; i < roiCount; ++i)
+   for (unsigned int i = 0; i < roiCount; ++i)
    {
       xs[i] = multiROIXs_[i];
       ys[i] = multiROIYs_[i];
@@ -1297,16 +1297,17 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
          {
             // calculate ROI using the previous bin settings
             double factor = (double) binFactor / (double) binSize_;
-            roiX_ /= factor;
-            roiY_ /= factor;
+            roiX_ = (unsigned int) (roiX_ / factor);
+            roiY_ = (unsigned int) (roiY_ / factor);
             for (int i = 0; i < multiROIXs_.size(); ++i)
             {
-               multiROIXs_[i] /= factor;
-               multiROIYs_[i] /= factor;
-               multiROIWidths_[i] /= factor;
-               multiROIHeights_[i] /= factor;
+               multiROIXs_[i]  = (unsigned int) (multiROIXs_[i] / factor);
+               multiROIYs_[i] = (unsigned int) (multiROIYs_[i] / factor);
+               multiROIWidths_[i] = (unsigned int) (multiROIWidths_[i] / factor);
+               multiROIHeights_[i] = (unsigned int) (multiROIHeights_[i] / factor);
             }
-            img_.Resize(img_.Width()/factor, img_.Height()/factor);
+            img_.Resize( (unsigned int) (img_.Width()/factor), 
+                           (unsigned int) (img_.Height()/factor) );
             binSize_ = binFactor;
             std::ostringstream os;
             os << binSize_;
@@ -1890,6 +1891,7 @@ int CDemoCamera::OnCrash(MM::PropertyBase* pProp, MM::ActionType eAct)
       {
          int* p = 0;
          volatile int i = *p;
+         i++;
       }
       else if (choice == "Divide by Zero")
       {
@@ -2314,12 +2316,12 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       // TODO: it would be more efficient to only populate pixel values that
       // *are* in an ROI, but that would require substantial refactoring of
       // this function.
-      for (int i = 0; i < imgWidth; ++i)
+      for (unsigned int i = 0; i < imgWidth; ++i)
       {
-         for (j = 0; j < img.Height(); ++j)
+         for (unsigned j = 0; j < img.Height(); ++j)
          {
             bool shouldKeep = false;
-            for (int k = 0; k < multiROIXs_.size(); ++k)
+            for (unsigned int k = 0; k < multiROIXs_.size(); ++k)
             {
                unsigned xOffset = multiROIXs_[k] - roiX_;
                unsigned yOffset = multiROIYs_[k] - roiY_;
@@ -2365,7 +2367,7 @@ bool CDemoCamera::GenerateColorTestPattern(ImgBuffer& img)
    {
       case 1:
       {
-         const unsigned long maxVal = 255;
+         const unsigned char maxVal = 255;
          unsigned char* rawBytes = img.GetPixelsRW();
          for (unsigned y = 0; y < height; ++y)
          {
@@ -2373,7 +2375,7 @@ bool CDemoCamera::GenerateColorTestPattern(ImgBuffer& img)
             {
                if (y == 0)
                {
-                  rawBytes[x] = maxVal * x / (width - 1);
+                  rawBytes[x] = (unsigned char) (maxVal * x / (width - 1));
                }
                else {
                   rawBytes[x + y * width] = rawBytes[x];
@@ -2384,7 +2386,7 @@ bool CDemoCamera::GenerateColorTestPattern(ImgBuffer& img)
       }
       case 2:
       {
-         const unsigned long maxVal = 65535;
+         const unsigned short maxVal = 65535;
          unsigned short* rawShorts =
             reinterpret_cast<unsigned short*>(img.GetPixelsRW());
          for (unsigned y = 0; y < height; ++y)
@@ -2393,7 +2395,7 @@ bool CDemoCamera::GenerateColorTestPattern(ImgBuffer& img)
             {
                if (y == 0)
                {
-                  rawShorts[x] = maxVal * x / (width - 1);
+                  rawShorts[x] = (unsigned short) (maxVal * x / (width - 1));
                }
                else {
                   rawShorts[x + y * width] = rawShorts[x];
@@ -2553,7 +2555,7 @@ void CDemoCamera::AddSignal(ImgBuffer& img, double photonFlux, double exp, doubl
 double CDemoCamera::GaussDistributedValue(double mean, double std)
 {
    double s = 2;
-   double u;
+   double u = 1; // incosequential, but avoid potantial use of uninitialized value
    double v;
    double halfRandMax = (double) RAND_MAX / 2.0;
    while (s >= 1 || s <= 0) 
@@ -4053,6 +4055,7 @@ DemoGalvo::DemoGalvo() :
    vMaxY_(10.0)
 {
    // handwritten 5x5 gaussian kernel, no longer used
+   /*
    unsigned short gaussianMask[5][5] = {
       {1, 4, 7, 4, 1},
       {4, 16, 26, 16, 4},
@@ -4060,6 +4063,7 @@ DemoGalvo::DemoGalvo() :
       {4, 16, 26, 16, 4},
       {1, 4, 7, 4, 1}
    };
+   */
 
 }
 
@@ -4083,7 +4087,7 @@ int DemoGalvo::Initialize()
    { 
       for (int y =0; y < ySize; y++) 
       {
-         gaussianMask_[x][y] = GaussValue(41, 0.5, 0.5, xSize / 2, ySize / 2, x, y);
+         gaussianMask_[x][y] =(unsigned short) GaussValue(41, 0.5, 0.5, xSize / 2, ySize / 2, x, y);
       }
    }
 
@@ -4341,8 +4345,8 @@ int DemoGalvo::ChangePixels(ImgBuffer& img)
       int xSpotSize = sizeof(gaussianMask_) / sizeof(gaussianMask_[0]);
       int ySpotSize = sizeof(gaussianMask_[0]) / 2;
 
-      if (xPos > xSpotSize && xPos < img.Width() - xSpotSize - 1  && yPos > ySpotSize && yPos < img.Height() - 
-            ySpotSize - 1)
+      if (xPos > xSpotSize && xPos < (int) (img.Width() - xSpotSize - 1)  && 
+         yPos > ySpotSize && yPos < (int) (img.Height() - ySpotSize - 1) )
       {
          if (img.Depth() == 1)
          {
