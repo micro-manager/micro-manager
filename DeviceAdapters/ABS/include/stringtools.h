@@ -300,7 +300,7 @@ namespace str
   {
     std::wstring strGuid;
     strGuid.resize( 40, 0 );
-    StringFromGUID2( guid, (LPOLESTR)strGuid.c_str(), strGuid.size() );
+    StringFromGUID2( guid, (LPOLESTR)strGuid.c_str(), (int) strGuid.size() );
     return strGuid;
   }
 
