@@ -366,7 +366,7 @@ const mm::ImgBuffer* CircularBuffer::GetNthFromTopImageBuffer(long n,
 
    long targetIndex = insertIndex_ - n - 1L;
    while (targetIndex < 0)
-      targetIndex += frameArray_.size();
+      targetIndex += (long) frameArray_.size();
    targetIndex %= frameArray_.size();
 
    return frameArray_[targetIndex].FindImage(channel);
