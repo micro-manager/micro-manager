@@ -1971,7 +1971,7 @@ int ZeissHub::GetModelTrajectoryVelocity(MM::Device& device, MM::Core& core, Zei
    return DEVICE_OK;
 }
 
-int ZeissHub::HasModelTrajectoryVelocity(MM::Device& device, MM::Core& core, ZeissUByte devId, bool& hasTV) 
+int ZeissHub::HasModelTrajectoryVelocity(MM::Device& /* device */, MM::Core& /* core */, ZeissUByte devId, bool& hasTV) 
 {
    hasTV = deviceInfo_[devId].hasTrajectoryInfo;
    return DEVICE_OK;
