@@ -1168,13 +1168,13 @@ void CMoticCamera::InitBinning()
       
   // binning
   CPropertyAction *pAct = new CPropertyAction (this, &CMoticCamera::OnBinning);
-  int ret = CreateProperty(MM::g_Keyword_Binning, itoa(m_iBinning,bin, 10), MM::Integer, false, pAct);
+  int ret = CreateProperty(MM::g_Keyword_Binning, _itoa(m_iBinning,bin, 10), MM::Integer, false, pAct);
   //assert(ret == DEVICE_OK);
 
   vector<string> binningValues;
   for(int i = 0; i < c; i++)
   {
-    binningValues.push_back(itoa(i,bin, 10));
+    binningValues.push_back(_itoa(i,bin, 10));
   }  
 
   ret = SetAllowedValues(MM::g_Keyword_Binning, binningValues);

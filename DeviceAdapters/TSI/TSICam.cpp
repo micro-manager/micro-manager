@@ -97,30 +97,6 @@ void BuildWhiteBalancedPipeline (TsiColorImage& tsiColorImg, TsiColorCamera* tsi
 
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// Exported MMDevice API
-///////////////////////////////////////////////////////////////////////////////
-MODULE_API void InitializeModuleData()
-{
-   RegisterDevice(g_DeviceTsiCam, MM::CameraDevice, "Thorlabs Scientific Imaging camera");
-}
-
-MODULE_API void DeleteDevice(MM::Device* pDevice)
-{
-   delete pDevice;
-}
-
-MODULE_API MM::Device* CreateDevice(const char* deviceName)
-{
-   if (deviceName == 0)
-      return 0;
-   
-   if (strcmp(deviceName, g_DeviceTsiCam) == 0)
-      return new TsiCam();
-   
-   return 0;
-}
-
 TsiCam::TsiCam() :
    initialized(0), stopOnOverflow(false),
    acquiring(0),
