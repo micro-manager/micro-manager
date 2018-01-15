@@ -686,9 +686,6 @@ int LeicaScopeInterface::GetAFCFocusScore(MM::Device& device, MM::Core& core)
 	// Get current offset
 	std::ostringstream command;
 	std::string answer, token;
-	int maxTries = 10;
-	bool scoreFound= false;
-	int count=0;
 	command << g_AFC << "030";
    
 	int ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");

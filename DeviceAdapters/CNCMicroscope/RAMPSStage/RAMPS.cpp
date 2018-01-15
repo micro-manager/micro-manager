@@ -231,7 +231,7 @@ bool RAMPSHub::Busy() {
   if (answer != "ok") {
     LogMessage(std::string("busy expected OK, didn't get it."));
     LogMessage(answer);
-    return ret;
+    return true;
   }
 
   sent_busy_ = false;

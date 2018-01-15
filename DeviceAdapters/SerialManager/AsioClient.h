@@ -85,7 +85,7 @@ public:
    }
 
 private:
-   void Construct(const std::string& deviceName,
+   void Construct(const std::string& /* deviceName */ ,
          unsigned int baud,
          boost::asio::serial_port::flow_control::type flow,
          boost::asio::serial_port::parity::type parity,

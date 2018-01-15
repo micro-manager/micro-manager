@@ -559,7 +559,7 @@ int MCL_NanoDrive_ZStage::SendStageSequence()
 		memcpy(seqCopy, &sequence_[0], sequence_.size() * sizeof(double));
 	}
 
-	int err = MCL_SequenceLoad(axis_, seqCopy, sequence_.size(), MCLhandle_);
+	int err = MCL_SequenceLoad(axis_, seqCopy, (int) sequence_.size(), MCLhandle_);
 	delete [] seqCopy;
 
 	return err;

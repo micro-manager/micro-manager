@@ -601,7 +601,7 @@ std::pair<int, int> FakeCamera::parsePrecision(const char*& it) const throw (par
 {
 	std::string pSpec = parseUntil(it, '}');
 
-	int dotPos = pSpec.find_first_of('.');
+	size_t dotPos = pSpec.find_first_of('.');
 
 	if (dotPos > 0)
 		return std::pair<int, int>(atoi(pSpec.substr(0, dotPos).c_str()), atoi(pSpec.substr(dotPos + 1).c_str()));
@@ -638,7 +638,7 @@ std::ostream & FakeCamera::printNum(std::ostream & o, std::pair<int, int> precSp
 //else, an empty string is returned if test is false, and spec otherwise
 std::string FakeCamera::iif(bool test, std::string spec)
 {
-	int sepPos = spec.find_first_of(':');
+	size_t sepPos = spec.find_first_of(':');
 	return test ? spec.substr(sepPos + 1) : spec.substr(0, sepPos + 1);
 }
 
