@@ -133,6 +133,60 @@ class P2D50 implements MultivariateFunction {
 }
 
 /**
+ * Implements fitting of pairwise distribution function as described in
+ *         http://dx.doi.org/10.1529/biophysj.105.065599
+ * 
+ * This version uses the measured sigmas for each individual spot (pair)
+ * 
+ * @author nico
+ */
+class P2DIndividualSigmasFunc implements MultivariateFunction {
+   private final double[] points_;
+   private final double[] sigmas_;
+   
+   /**
+    * 
+    * @param points array with measurements
+    * @param fitSigma whether sigma value should be fitted
+    * @param sigma  Fixed sigma, only needed when fitSigma is true
+    */
+   public P2DIndividualSigmasFunc(final double[] points, final double[] sigmas) {
+      points_ = points;
+      sigmas_ = sigmas;
+      
+      // TODO: bail out if these two arrays are not identical in size
+   }
+   
+   /**
+    * Calculate the sum of the likelihood function
+    * @param doubles array with parameters, here doubles[0] == mu, 
+    * doubles [1] == sigma
+    * @return -sum(logP2D(points, mu, sigma));
+    */
+   @Override
+   public double value(double[] doubles) {
+      double sum = 0.0;
+      for (int i = 0; i < points_.length; i++)  {
+         double predictedValue = P2DFitter.p2d(points_[i], doubles[0], sigmas_[i]);
+         sum += Math.log(predictedValue);
+      }
+      return sum;
+   }
+   
+   public double nonLogValue(double[] doubles) {
+      double sum = 0;
+      for (int i = 0; i < points_.length; i++)  {
+         double predictedValue = P2DFitter.p2d(points_[i], doubles[0], sigmas_[i]);
+         sum *= predictedValue;
+      }
+      return sum;
+   }
+     
+}
+
+
+
+/**
  * Class that uses the apache commons math3 library to fit a maximum likelihood
  * function for the probability density function of the distribution of measured
  * distances.
@@ -141,10 +195,12 @@ class P2D50 implements MultivariateFunction {
 
 public class P2DFitter {
    private final double[] points_;
-   private double muGuess_ = 0.0;
-   private double sigmaGuess_ = 10.0;
+   private final double[] sigmas_;
    private final double upperBound_;
    private final boolean fitSigma_;
+   private final boolean useIndividualSigmas_;
+   private double muGuess_ = 0.0;
+   private double sigmaGuess_ = 10.0;
    
    
     /**
@@ -170,16 +226,23 @@ public class P2DFitter {
    /**
     * 
     * @param points array with data points to be fitted
+    * @param sigmas array with sigmas forpoints above.  Only used when useIndvidualSigmas is true
     * @param fitSigma whether or not sigma should be fitted.  When false, the
     *                sigmaEstimate given in setStartParams will be used as 
     *                a fixed parameter in the P2D function
     * @param upperBound Upper bound for average and sigma
+    * @param useIndividualSigmas Use the sigmas for individual points in the fit function
     */
-   public P2DFitter(double[] points, final boolean fitSigma, 
-           final double upperBound) {
+   public P2DFitter(final double[] points, 
+           final double[] sigmas, 
+           final boolean fitSigma, 
+           final double upperBound, 
+           final boolean useIndividualSigmas) {
       points_ = points;
+      sigmas_ = sigmas;
       fitSigma_ = fitSigma;
       upperBound_ = upperBound;
+      useIndividualSigmas_ = useIndividualSigmas;
    }
    
    /**
@@ -201,7 +264,7 @@ public class P2DFitter {
       return getDistances(0.0, stepSize, upperBound_);
    }
    
-      /**
+   /**
     * Given a stepsize, generate an array with distances between 0 and upperBound
     * @param start first distance in the array
     * @param stepSize distance between values in output array
@@ -247,9 +310,28 @@ public class P2DFitter {
       
    public double[] solve() throws FittingException {
       SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
-      P2DFunc myP2DFunc = new P2DFunc(points_, fitSigma_, sigmaGuess_);
 
-      if (fitSigma_) {
+      if (useIndividualSigmas_) {
+         P2DIndividualSigmasFunc myP2DFunc = new P2DIndividualSigmasFunc(points_, sigmas_);
+         double[] lowerBounds = {0.0};
+         double[] upperBounds = {upperBound_};
+         MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
+                 myP2DFunc, lowerBounds, upperBounds);
+
+         try {
+            PointValuePair solution = optimizer.optimize(
+                    new ObjectiveFunction(mfma),
+                    new MaxEval(10000),
+                    GoalType.MAXIMIZE,
+                    new InitialGuess(mfma.boundedToUnbounded(new double[]{muGuess_})),
+                    new NelderMeadSimplex(new double[]{0.2})//,
+            );
+            return mfma.unboundedToBounded(solution.getPoint());
+         } catch (TooManyEvaluationsException tmee) {
+            throw new FittingException("P2D fit failed due to too many Evaluation Exceptions");
+         }
+      } else if (fitSigma_) {
+         P2DFunc myP2DFunc = new P2DFunc(points_, fitSigma_, sigmaGuess_);
          double[] lowerBounds = {0.0, 0.0};
          double[] upperBounds = {upperBound_, upperBound_};
          MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
@@ -268,6 +350,7 @@ public class P2DFitter {
             throw new FittingException("P2D fit failed due to too many Evaluation Exceptions");
          }
       } else {
+         P2DFunc myP2DFunc = new P2DFunc(points_, fitSigma_, sigmaGuess_);
          double[] lowerBounds = {0.0};
          double[] upperBounds = {upperBound_};
          MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(

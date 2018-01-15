@@ -3098,12 +3098,15 @@ int AFC::IncrementalFocus() {
 }
 
 int AFC::GetLEDIntensity(int &intensity){ 
-	int ret = g_ScopeInterface.GetAFCLEDIntensity(*this,*GetCoreCallback());
-    bool busy = true;
-    while (busy) {
+   int ret = g_ScopeInterface.GetAFCLEDIntensity(*this,*GetCoreCallback());
+   if (ret != DEVICE_OK) {
+      return ret;
+   }
+   bool busy = true;
+   while (busy) {
 		g_ScopeModel.afc_.GetBusy(busy);
 		CDeviceUtils::SleepMs(10);
-    }
+   }
 	return g_ScopeModel.afc_.GetLEDIntensity(intensity);
 }
 

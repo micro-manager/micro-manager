@@ -348,7 +348,7 @@ bool FilterWheel::Busy()
       msPerPosition = 400;
       break;
    }
-   long waitTimeMs = posMoved_ * msPerPosition + GetDelayMs();
+   long waitTimeMs = (long) (posMoved_ * msPerPosition + GetDelayMs());
    return elapsed.getMsec() < waitTimeMs;
 }
 

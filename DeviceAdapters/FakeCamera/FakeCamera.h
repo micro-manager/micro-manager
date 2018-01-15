@@ -41,7 +41,8 @@ extern const char* label_CV_16U;
 extern const char* label_CV_8UC4;
 extern const char* label_CV_16UC4;
 
-class parse_error : std::exception {};
+
+class parse_error : public std::exception {};
 
 class FakeCamera : public CCameraBase<FakeCamera>
 {
