@@ -166,15 +166,20 @@ int Tsi3Cam::Initialize()
    ret = CreateProperty(g_SerialNumber, serial_number, MM::String, true);
    assert(ret == DEVICE_OK);
 
-   // obtain full frame parameters
-   if (tl_camera_get_pixel_size_bytes(camHandle, &fullFrame.pixDepth))
+   // obtain full frame parameters and reset the frame
+   int minWidth, minHeight;
+   if (tl_camera_get_image_width_range_pixels(camHandle, &minWidth, &fullFrame.xPixels))
       return ERR_INTERNAL_ERROR;
-   if (tl_camera_get_image_width_pixels(camHandle, &fullFrame.xPixels))
+   if (tl_camera_get_image_height_range_pixels(camHandle, &minHeight, &fullFrame.yPixels))
       return ERR_INTERNAL_ERROR;
-   if (tl_camera_get_image_height_pixels(camHandle, &fullFrame.yPixels))
-      return ERR_INTERNAL_ERROR;
-   if (tl_camera_get_pixel_bit_depth(camHandle, &fullFrame.bitDepth))
-      return ERR_INTERNAL_ERROR;
+   
+   fullFrame.xOrigin = 0;
+   fullFrame.yOrigin = 0;
+   fullFrame.xBin = 1;
+   fullFrame.yBin = 1;
+   ResetImageBuffer();
+   tl_camera_get_pixel_size_bytes(camHandle, &fullFrame.pixDepth);
+   tl_camera_get_pixel_bit_depth(camHandle, &fullFrame.bitDepth);
 
    // assume that current roi is the same as full frame on startup
    roiBinData = fullFrame;
@@ -499,10 +504,14 @@ int Tsi3Cam::ResizeImageBuffer()
       return ERR_ROI_BIN_FAILED;
    }
 
-   img.Resize(roiBinData.xPixels / roiBinData.xBin, roiBinData.yPixels / roiBinData.yBin, roiBinData.pixDepth);
+   int w(0), h(0);
+   tl_camera_get_image_width_pixels(camHandle, &w);
+   tl_camera_get_image_height_pixels(camHandle, &h);
+
+   img.Resize(w, h, roiBinData.pixDepth);
    ostringstream os;
    os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", bin factor: "
-      << roiBinData.xBin;
+      << roiBinData.xBin << ", camera: " << w << "X" << h;
    LogMessage(os.str().c_str());
 
    return DEVICE_OK;
@@ -577,6 +586,11 @@ void Tsi3Cam::frame_available_callback(void* sender,
                                                   void* context)
 {
    Tsi3Cam* instance = static_cast<Tsi3Cam*>(context);
+   ostringstream os;
+   os << "Frame callback: " << image_width << " X " << image_height << ", frame: "
+      << frame_count << ", buffer: " << instance->img.Width() << "X" << instance->img.Height();
+   instance->LogMessage(os.str().c_str());
+   
    if (instance->acquiringFrame)
    {
       assert(number_of_color_channels == 1);
@@ -611,14 +625,23 @@ void Tsi3Cam::frame_available_callback(void* sender,
       // reformat image buffer
       instance->img.Resize(image_width, image_height, instance->roiBinData.pixDepth);
       memcpy(instance->img.GetPixelsRW(), image_buffer, instance->roiBinData.pixDepth * image_height * image_width);
-      instance->InsertImage();
+      int ret = instance->InsertImage();
+      if (ret != DEVICE_OK)
+      {
+         ostringstream osErr;
+         osErr << "Insert image failed: " << ret;
+
+      }
 
       if (instance->imageCount != 0)
          if (instance->imageCount <= frame_count)
             instance->StopCamera();
    }
    else
+   {
+      instance->LogMessage("Callback was not serviced!");
       return;
+   }
 }
 
 void Tsi3Cam::ResetImageBuffer()
