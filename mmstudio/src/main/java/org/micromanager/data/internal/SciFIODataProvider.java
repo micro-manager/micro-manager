@@ -37,6 +37,10 @@ public class SciFIODataProvider implements DataProvider {
          Logger.getLogger(SciFIODataProvider.class.getName()).log(Level.SEVERE, null, ex);
       }
       metadata_ = reader_.getMetadata();
+      int nrImages = reader_.getImageCount();
+      long nrPlanes = reader_.getPlaneCount(0);
+      System.out.println(path + "has " + nrImages + "images, and " + nrPlanes + " planes");
+      System.out.println("Format:" + reader_.getFormatName());
    }
    
    
@@ -61,6 +65,7 @@ public class SciFIODataProvider implements DataProvider {
    
    public static Coords planeAxisToCoords(Plane plane) {
       Coords.Builder cb = Coordinates.builder();
+      cb.c(0).t(0).p(0).z(0);
       ImageMetadata im = plane.getImageMetadata();
       List<CalibratedAxis> axes = im.getAxes();
       for (CalibratedAxis axis : axes) {
@@ -96,7 +101,7 @@ public class SciFIODataProvider implements DataProvider {
    @Override
    public Image getAnyImage() throws IOException {
       try {
-         return SciFIODataProvider.planeToImage(reader_.openPlane(0, 0));
+         return SciFIODataProvider.planeToImage(reader_.openPlane(0, 2));
       } catch (io.scif.FormatException ex) {
          throw new IOException(ex);
       }
