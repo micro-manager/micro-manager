@@ -3,7 +3,7 @@
   // PROJECT:       Micro-Manager
   // SUBSYSTEM:     DeviceAdapters
   //-----------------------------------------------------------------------------
-  // DESCRIPTION:   Interface for the Spectral LMM5
+  // DESCRIPTION:   Interface for the Andor Shamrock 
   //
   // COPYRIGHT:     University of California, San Francisco, 2009
   //
@@ -23,7 +23,6 @@
   #ifndef _SHAMROCK_H_
   #define _SHAMROCK_H_
 
-  #include "../../MMDevice/ModuleInterface.h"
   #include "../../MMDevice/DeviceBase.h"
   #include "../../MMDevice/MMDevice.h"
   #include <stdint.h>
@@ -34,13 +33,13 @@
   class AndorShamrock : public CDeviceBase<MM::Generic, AndorShamrock>
   {
   public:
-    AndorShamrock();
-    ~AndorShamrock();
+     AndorShamrock();
+     ~AndorShamrock();
 
     //Required by MM Device
-    int Initialize();
+    virtual int Initialize();
 
-    int Shutdown();
+    virtual int Shutdown();
     void GetName(char* pszName) const;
     bool Busy();
 
@@ -65,11 +64,13 @@
 
     int OnSetOutputPort(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnSetFocusMirror(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnSetDirectIrisPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnSetSideIrisPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
     void SetGratingsProperty();
     void SetCoefficientsProperty();
     void SetWavelengthProperty();
-	void SetRayleighWavelengthProperty();
+	  void SetRayleighWavelengthProperty();
     void SetPixelWidthProperty();
     void SetNumberPixelsProperty();
     void SetFilterProperty();
@@ -78,9 +79,11 @@
     void SetFlipperProperty();
     void SetDetectorOffsetProperty();
     void SetGratingOffsetProperty();
-    void SetFlipperMirrorProperty();
     void SetFocusMirrorProperty();
-	int GetDetectorOffsetIndices(int *index1, int *index2);
+	  int GetDetectorOffsetIndices(int *index1, int *index2);
+    void SetDirectIrisPositionProperty();
+    void SetSideIrisPositionProperty();
+
   private:
     std::vector<std::string> mvGratings;
     std::vector<std::string> mvFilters;
