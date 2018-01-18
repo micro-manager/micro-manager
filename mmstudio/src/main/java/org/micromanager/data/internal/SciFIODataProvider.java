@@ -209,7 +209,8 @@ public class SciFIODataProvider implements DataProvider {
       }
       for (CalibratedAxis axis : axes) {
          if (axis.type().getLabel().equals(sciFioAxis)) {
-            return (int) im.getAxisLength(axis);
+            int axisLength = (int) im.getAxisLength(axis);
+            return axisLength;
          }
       }
       // Axis not found, I guess it is correct that the length i 0?
@@ -270,18 +271,32 @@ public class SciFIODataProvider implements DataProvider {
 
    @Override
    public Iterable<Coords> getUnorderedImageCoords() {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      List<Coords> cList = new ArrayList<>();
+      ImageMetadata im = metadata_.get(IMAGEINDEX);
+      for (int i = 0; i < im.getPlaneCount(); i++) {
+         long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, i, metadata_);
+         cList.add(rasterPositionToCoords(im, rasterPosition));
+      }
+      return cList;
    }
 
    @Override
    public boolean hasImage(Coords coords) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      ImageMetadata im = metadata_.get(IMAGEINDEX);
+      for (int i = 0; i < im.getPlaneCount(); i++) {
+         long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, i, metadata_);
+         Coords tmpC = rasterPositionToCoords(im, rasterPosition);
+         if (tmpC.isSubspaceCoordsOf(coords)) {
+            return true;
+         }
+      }
+      return false;
    }
 
    @Override
    public String getName() {
       return sm_.getPrefix();
-      }
+   }
 
    @Override
    public void registerForEvents(Object obj) {
