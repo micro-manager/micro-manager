@@ -49,6 +49,10 @@ public final class FileDialogs {
    public static final FileType MM_DATA_SET = new FileType("MM_DATA_SET",
       "Micro-Manager Image Location", System.getProperty("user.home") + "/Untitled",
       false, (String[]) null);
+   
+   public static final FileType SCIFIO_DATA = new FileType("SciFIO_Data_Set",
+           "Image Location", System.getProperty("user.home") + "/Unitled.tif",
+            false, "tif", "jpg", "avi", "png", "jpg" );
 
    private static class GeneralFileFilter
            extends javax.swing.filechooser.FileFilter

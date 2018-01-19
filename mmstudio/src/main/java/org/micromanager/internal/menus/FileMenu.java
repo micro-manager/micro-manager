@@ -2,6 +2,7 @@ package org.micromanager.internal.menus;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,8 +12,11 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
+import org.micromanager.data.internal.SciFIODataProvider;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -75,6 +79,10 @@ public final class FileMenu {
       });
 
       fileMenu.add(makeOpenRecentMenu(false));
+      
+      GUIUtils.addMenuItem(fileMenu, "Open (SciFIO)...", null, () -> {
+         openSciFIO();
+      });
 
       fileMenu.addSeparator();
 
@@ -123,6 +131,23 @@ public final class FileMenu {
       }).start();
    }
    
+   
+   private void openSciFIO() {
+      File file = FileDialogs.openFile(null,
+            "Please select an image data set", FileDialogs.SCIFIO_DATA);
+      if (file != null) {
+         try {
+           SciFIODataProvider sdp = new SciFIODataProvider(studio_, file.getAbsolutePath());
+           if (sdp.getAnyImage() == null) {
+              studio_.logs().showError("Unable to load images");
+           }
+           studio_.displays().createDisplay(sdp);
+           //studio_.displays().manage(sdp);
+         } catch (IOException ioe) {
+            studio_.logs().showError(ioe, "There was an error when opening data");
+         } 
+      }
+   }
 
    private JMenu makeOpenRecentMenu(final boolean isVirtual) {
       JMenu result = new JMenu(String.format("Open Recent (%s)",
