@@ -21,6 +21,7 @@
 package org.micromanager.data.internal;
 
 import org.micromanager.data.Coords;
+import org.micromanager.data.DataProvider;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
@@ -30,11 +31,11 @@ import org.micromanager.data.Image;
  */
 public final class DefaultNewImageEvent implements DataProviderHasNewImageEvent {
    private final Image image_;
-   private final Datastore store_;
+   private final DataProvider provider_;
 
-   public DefaultNewImageEvent(Image image, Datastore store) {
+   public DefaultNewImageEvent(Image image, DataProvider provider) {
       image_ = image;
-      store_ = store;
+      provider_ = provider;
    }
 
    @Override
@@ -48,7 +49,7 @@ public final class DefaultNewImageEvent implements DataProviderHasNewImageEvent 
    }
 
    @Override
-   public Datastore getDatastore() {
-      return store_;
+   public DataProvider getDataProvider() {
+      return provider_;
    }
 }
