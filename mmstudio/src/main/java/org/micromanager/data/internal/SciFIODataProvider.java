@@ -1,6 +1,7 @@
 
 package org.micromanager.data.internal;
 
+import com.google.common.eventbus.EventBus;
 import io.scif.ImageMetadata;
 import io.scif.Metadata;
 import io.scif.Plane;
@@ -32,6 +33,7 @@ public class SciFIODataProvider implements DataProvider {
    private Reader reader_;
    private final Metadata metadata_;
    private final SummaryMetadata sm_;
+   private final EventBus bus_ = new EventBus();
    private double pixelSize_;
    private final static int IMAGEINDEX = 0; // ScioFIO image index.  It is unclear what this
    // is.  However, most datasets appear to have only a single imageindex (0)
@@ -60,7 +62,7 @@ public class SciFIODataProvider implements DataProvider {
       metadata_ = reader_.getMetadata();
       int nrImages = reader_.getImageCount();
       long nrPlanes = reader_.getPlaneCount(IMAGEINDEX);
-      System.out.println(path + "has " + nrImages + "images, and " + nrPlanes + " planes");
+      System.out.println(path + " has " + nrImages + "i mages, and " + nrPlanes + " planes");
       System.out.println("Format:" + reader_.getFormatName());
       
       SummaryMetadata.Builder smb = new DefaultSummaryMetadata.Builder();
@@ -108,7 +110,8 @@ public class SciFIODataProvider implements DataProvider {
       mb.bitDepth(plane.getImageMetadata().getBitsPerPixel());
       mb.pixelSizeUm(pixelSize_);
       // TODO: translate more metadata
-      Object pixels = Bytes.makeArray(plane.getBytes(), bytesPerPixel, false, true);
+      Object pixels = Bytes.makeArray(plane.getBytes(), bytesPerPixel, 
+              false, plane.getImageMetadata().isLittleEndian() );
       
       // TODO: How to recognize multiple components?
       return DefaultDataManager.getInstance().createImage(
@@ -329,12 +332,18 @@ public class SciFIODataProvider implements DataProvider {
 
    @Override
    public void registerForEvents(Object obj) {
-      // listeners_.add(obj);
+       bus_.register(obj);
+      try {
+         // Very bizar.  This is needed to convinde the viewer to display and image
+         bus_.post(new DefaultNewImageEvent(getAnyImage(), this));
+      } catch (IOException ex) {
+         // todo
+      }
    }
 
    @Override
    public void unregisterForEvents(Object obj) {
-      // listeners_.remove(obj);
+      bus_.unregister(obj);
    }
    
 }
