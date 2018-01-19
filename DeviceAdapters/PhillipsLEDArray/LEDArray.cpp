@@ -26,7 +26,8 @@
 #endif
 
 
-const char* g_DeviceNameLEDArray = "LED-Array";
+	const char* g_DeviceNameLEDArray = "LED-Array";
+	const char* g_DeviceNameLEDArrayVirtualShutter = "LED-Array-Vitrual-Shutter";
 
 	const char * g_Keyword_Width = "Width";
 	const char * g_Keyword_Height = "Height";
@@ -43,6 +44,9 @@ const char* g_DeviceNameLEDArray = "LED-Array";
 	const char * g_Keyword_maxna = "Maximum NA";
 	const char * g_Keyword_LEDlist = "Manual LED Indices";
 	const char * g_Keyword_Reset = "Reset";
+	const char * g_Keyword_Shutter = "ShutterOpen";
+
+	const char * g_Keyword_LEDArrayName = "LEDArrayDeviceName";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -50,6 +54,7 @@ const char* g_DeviceNameLEDArray = "LED-Array";
 MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_DeviceNameLEDArray, MM::SLMDevice, "LED Array");
+   RegisterDevice(g_DeviceNameLEDArrayVirtualShutter, MM::ShutterDevice, "LED Array Virtual shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -60,6 +65,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (strcmp(deviceName, g_DeviceNameLEDArray) == 0)
    {
       return new CLEDArray;
+   } else if (strcmp(deviceName, g_DeviceNameLEDArrayVirtualShutter) == 0) {
+	  return new CLEDArrayVirtualShutter;
    }
    return 0;
 }
@@ -68,6 +75,91 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
    delete pDevice;
 }
+///////////////////////////////////////////////////////////////////////////////
+//CLEDArrayVirtualShutter Implementation
+///////////////////////////////////////////////////////////////////////////////
+// VShutter control implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Constructor.
+ */
+CLEDArrayVirtualShutter::CLEDArrayVirtualShutter() : initialized_(false) {
+   // call the base class method to set-up default error codes/messages
+   InitializeDefaultErrorMessages();
+
+}
+
+CLEDArrayVirtualShutter::~CLEDArrayVirtualShutter()
+{
+   Shutdown();
+}
+
+/**
+ * Obtains device name.
+ */
+void CLEDArrayVirtualShutter::GetName(char* name) const {
+   CDeviceUtils::CopyLimitedString(name, g_DeviceNameLEDArrayVirtualShutter);
+}
+
+/**
+ * Intializes the hardware.
+ */
+int CLEDArrayVirtualShutter::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+
+   // set property list
+   // -----------------
+
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNameLEDArrayVirtualShutter, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Virtual dual shutter for turning LED Array on and off", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // name of LED array to control
+   ret = CreateProperty(g_Keyword_LEDArrayName, "", MM::String, false);
+   assert(ret == DEVICE_OK);
+
+   // synchronize all properties
+   // --------------------------
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+int CLEDArrayVirtualShutter::SetOpen(bool open) {
+   char arrayname[MM::MaxStrLength];
+   GetProperty(g_Keyword_LEDArrayName, arrayname);
+
+   if (strlen(arrayname) > 0)
+   {
+	  GetCoreCallback()->SetDeviceProperty(arrayname, g_Keyword_Shutter, open ? "1" : "0");
+   }
+
+   return DEVICE_OK;
+}
+
+
+int CLEDArrayVirtualShutter::GetOpen(bool& open) {
+	char arrayname[MM::MaxStrLength];
+    GetProperty(g_Keyword_LEDArrayName, arrayname);
+	char isopen[MM::MaxStrLength];
+	GetCoreCallback()->GetDeviceProperty(arrayname, g_Keyword_Shutter, isopen);
+	open = strcmp(isopen, "0");
+
+   return DEVICE_OK;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -75,7 +167,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CLEDArray::CLEDArray() : initialized_(false), name_(g_DeviceNameLEDArray), pixels_(0), width_(1), height_(581),
-	shutterOpen_(false), red_(600), green_(400), blue_(200), numa_(0.7), minna_(0.2), maxna_(0.6), type_("Top"), distMM_(50)
+	shutterOpen_(true), red_(600), green_(400), blue_(200), numa_(0.7), minna_(0.2), maxna_(0.6), type_("Top"), distMM_(50)
 {
    portAvailable_ = false;
 
@@ -121,6 +213,12 @@ int CLEDArray::Initialize()
    // Description
    ret = CreateProperty(MM::g_Keyword_Description, "LED Array", MM::String, true);
    assert(DEVICE_OK == ret);
+
+   //shutter
+   CPropertyAction* pActshutter = new CPropertyAction(this, &CLEDArray::OnShutterOpen);
+   ret = CreateProperty(g_Keyword_Shutter,"0",MM::Integer,false, pActshutter );
+   AddAllowedValue(g_Keyword_Shutter,"0");
+   AddAllowedValue(g_Keyword_Shutter,"1");
 
    //reset
    CPropertyAction* pActreset = new CPropertyAction(this, &CLEDArray::OnReset);
@@ -646,7 +744,9 @@ int CLEDArray::Off(){
 }
 
 int CLEDArray::UpdatePattern(){
-	if (pattern_ == "Bright Field"){
+	if (!shutterOpen_) {
+		Off();
+	} else if (pattern_ == "Bright Field"){
 		  NumA(numa_);
 		  ColorUpdate(red_,green_,blue_);
 		  BF();
@@ -726,12 +826,8 @@ int CLEDArray::OnShutterOpen(MM::PropertyBase* pProp, MM::ActionType pAct)
    }
    else if (pAct == MM::AfterSet)
    {
-      pProp->Get(shutterOpen_);
-	  if (shutterOpen_) {
-		//TestSerial();
-	  }
-
-	  return DEVICE_OK;
+      pProp->Get(shutterOpen_);	  
+	  return UpdatePattern();
    }
    return DEVICE_OK;
 }
