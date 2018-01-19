@@ -7,11 +7,10 @@ import io.scif.Plane;
 import io.scif.Reader;
 import io.scif.SCIFIO;
 import io.scif.util.FormatTools;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import net.imagej.axis.Axes;
 import net.imagej.axis.CalibratedAxis;
 import org.micromanager.Studio;
@@ -20,9 +19,12 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+import org.scijava.util.Bytes;
 
 /**
- *
+ * Wrap the SciFIO library in a Micro-Manager dataProvider
+ * So far, only uint8 and uint16 type datasources are supported
+ * 
  * @author nico
  */
 public class SciFIODataProvider implements DataProvider {
@@ -34,17 +36,26 @@ public class SciFIODataProvider implements DataProvider {
    private final static int IMAGEINDEX = 0; // ScioFIO image index.  It is unclear what this
    // is.  However, most datasets appear to have only a single imageindex (0)
    // Use it as a variable to be ready to use it if need be
-   private final List<Object> listeners_ = new ArrayList<>();
-   private final Studio studio_;
    
+   /**
+    * Initializes the reader and creates Micro-Manager's summaryMetData
+    * It appears that most SciFIO datasources have a single image and
+    * multiple Planes.  Conversion of plane index to Multi-D index is carried 
+    * out by the SciFIO utility function FormatTools.rasterToPosition().
+    * Data are always returned as Bytes.  
+    * 
+    * @param studio - only used to show error message
+    * @param path - path to the data to be read by SciFIO
+    */
    public SciFIODataProvider(Studio studio, String path) {
       // create the ScioFIO context that is needed for eveything
       scifio_ = new SCIFIO();
-      studio_ = studio;
       try {
          reader_ = scifio_.initializer().initializeReader(path);
       } catch (io.scif.FormatException | IOException ex) {
-         Logger.getLogger(SciFIODataProvider.class.getName()).log(Level.SEVERE, null, ex);
+         if (studio != null) {
+            studio.getLogManager().showError(ex, "Failed to open: " + path);
+         }
       }
       metadata_ = reader_.getMetadata();
       int nrImages = reader_.getImageCount();
@@ -52,7 +63,7 @@ public class SciFIODataProvider implements DataProvider {
       System.out.println(path + "has " + nrImages + "images, and " + nrPlanes + " planes");
       System.out.println("Format:" + reader_.getFormatName());
       
-      SummaryMetadata.Builder smb = studio_.data().getSummaryMetadataBuilder();
+      SummaryMetadata.Builder smb = new DefaultSummaryMetadata.Builder();
       ImageMetadata im = metadata_.get(IMAGEINDEX);
       List<String> channelNames = new ArrayList<>();
       List<CalibratedAxis> axes = im.getAxes();
@@ -66,15 +77,26 @@ public class SciFIODataProvider implements DataProvider {
                // TODO: once SciFIO supports channelnames. use those instead of numbering
                channelNames.add("Ch: " + i);
             }
-            smb.channelNames(channelNames);
          }
       }
-      smb.intendedDimensions(rasterPositionToCoords(im, im.getAxesLengthsNonPlanar()));
-      smb.prefix(im.getName());
+      // Note: The Inspector insists on there always being a channel name
+      // so, even if we do not have channels, provide one dummy channel name
+      if (channelNames.isEmpty()) {
+         channelNames.add("Ch: 0");
+      }
+      smb.channelNames(channelNames);
+      Coords.Builder cb = Coordinates.builder();
+      cb.c(1).t(1).p(1).z(1);
+      smb.intendedDimensions(rasterPositionToCoords(im, im.getAxesLengthsNonPlanar(), cb));
+      String name = metadata_.getDatasetName();
+      if (name.lastIndexOf(File.separator) > 0) {
+         name = name.substring(name.lastIndexOf(File.separator) + 1);
+      }
+      smb.prefix(name);
       sm_ = smb.build();
    }
    
-      public Image planeToImage(Plane plane, final Coords coords) {
+   public Image planeToImage(Plane plane, final Coords coords) {
       int pixelType = plane.getImageMetadata().getPixelType();
       int bytesPerPixel = 1;
       if (pixelType == FormatTools.UINT16) {
@@ -82,13 +104,15 @@ public class SciFIODataProvider implements DataProvider {
       } else if (pixelType == FormatTools.UINT32) {
          bytesPerPixel = 4;
       }
-      org.micromanager.data.Metadata.Builder mb = studio_.data().getMetadataBuilder();
+      org.micromanager.data.Metadata.Builder mb = new DefaultMetadata.Builder();
       mb.bitDepth(plane.getImageMetadata().getBitsPerPixel());
       mb.pixelSizeUm(pixelSize_);
-      // TODO: what to do with INT? How to recognize multiple components?
-      // TODO: convert metadata
+      // TODO: translate more metadata
+      Object pixels = Bytes.makeArray(plane.getBytes(), bytesPerPixel, false, true);
+      
+      // TODO: How to recognize multiple components?
       return DefaultDataManager.getInstance().createImage(
-              plane.getBytes(),
+              pixels,
               (int) plane.getLengths()[0], 
               (int) plane.getLengths()[1],
               bytesPerPixel, 
@@ -105,6 +129,11 @@ public class SciFIODataProvider implements DataProvider {
    public static Coords rasterPositionToCoords(final ImageMetadata im, final long[] rasterPosition) {
       Coords.Builder cb = Coordinates.builder();
       cb.c(0).t(0).p(0).z(0);
+      return rasterPositionToCoords(im, rasterPosition, cb);
+   }
+      
+   public static Coords rasterPositionToCoords(final ImageMetadata im, 
+           final long[] rasterPosition, Coords.Builder cb) {
       List<CalibratedAxis> axes = im.getAxes();
       for (CalibratedAxis axis : axes) {
          int index = im.getAxisIndex(axis) - 2;
@@ -214,7 +243,7 @@ public class SciFIODataProvider implements DataProvider {
          }
       }
       // Axis not found, I guess it is correct that the length i 0?
-      return 0;
+      return 1;
    }
 
    @Override
@@ -300,12 +329,12 @@ public class SciFIODataProvider implements DataProvider {
 
    @Override
    public void registerForEvents(Object obj) {
-      listeners_.add(obj);
+      // listeners_.add(obj);
    }
 
    @Override
    public void unregisterForEvents(Object obj) {
-      listeners_.remove(obj);
+      // listeners_.remove(obj);
    }
    
 }

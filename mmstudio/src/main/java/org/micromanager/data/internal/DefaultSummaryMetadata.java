@@ -75,8 +75,14 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       private final PropertyMap.Builder b_;
 
       public Builder() {
+         // Tests may run without an MMStudio instance, so check to avoid null 
+         // pointer errors
+         String version = "Unknown";
+         if (MMStudio.getInstance() != null) {
+            version = MMStudio.getInstance().compat().getVersion();
+         }
          b_ = PropertyMaps.builder().
-               putString(MICRO_MANAGER_VERSION.key(), MMStudio.getInstance().compat().getVersion()).
+               putString(MICRO_MANAGER_VERSION.key(), version).
                putString(METADATA_VERSION.key(), CURRENT_METADATA_VERSION);
       }
 

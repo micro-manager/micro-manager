@@ -235,6 +235,9 @@ public final class IntegerComponentStats {
    }
 
    private long[] computeCumulativeDistribution() {
+      if (histogram_ == null) {
+         return null;
+      }
       long[] cumulativeDistrib = new long[histogram_.length];
       cumulativeDistrib[0] = histogram_[0];
       for (int i = 1; i < histogram_.length; ++i) {
