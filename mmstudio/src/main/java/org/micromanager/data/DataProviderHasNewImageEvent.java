@@ -40,5 +40,5 @@ public interface DataProviderHasNewImageEvent {
     * code that listens to events from multiple Datastores.
     * @return the Datastore this image was added to.
     */
-   public Datastore getDatastore();
+   public DataProvider getDataProvider();
 }
