@@ -38,6 +38,9 @@ public class SciFIODataProvider implements DataProvider {
    private final static int IMAGEINDEX = 0; // ScioFIO image index.  It is unclear what this
    // is.  However, most datasets appear to have only a single imageindex (0)
    // Use it as a variable to be ready to use it if need be
+   private int xAxisIndex = 0;
+   private int yAxisIndex = 1;
+   private int channelAxisIndex = 2;
    
    /**
     * Initializes the reader and creates Micro-Manager's summaryMetData
@@ -62,19 +65,24 @@ public class SciFIODataProvider implements DataProvider {
       metadata_ = reader_.getMetadata();
       int nrImages = reader_.getImageCount();
       long nrPlanes = reader_.getPlaneCount(IMAGEINDEX);
-      System.out.println(path + " has " + nrImages + "i mages, and " + nrPlanes + " planes");
+      System.out.println(path + " has " + nrImages + " image(s), and " + nrPlanes + " plane(s)");
       System.out.println("Format:" + reader_.getFormatName());
       
       SummaryMetadata.Builder smb = new DefaultSummaryMetadata.Builder();
       ImageMetadata im = metadata_.get(IMAGEINDEX);
       List<String> channelNames = new ArrayList<>();
       List<CalibratedAxis> axes = im.getAxes();
-      for (CalibratedAxis axis : axes) {
+      for (int index = 0; index < axes.size(); index++) {
+         CalibratedAxis axis = axes.get(index);
          if (axis.type().equals(Axes.X)) {
              pixelSize_ = axis.calibratedValue(1.0);
+             xAxisIndex = index;
+         } if (axis.type().equals(Axes.Y)) {
+            yAxisIndex = index;
          } if (axis.type().equals(Axes.Z)) {
             smb.zStepUm(axis.calibratedValue(1.0));
          } if (axis.type().equals(Axes.CHANNEL)) {
+            channelAxisIndex = index;
             for (int i = 0; i < im.getAxisLength(axis); i++) {
                // TODO: once SciFIO supports channelnames. use those instead of numbering
                channelNames.add("Ch: " + i);
@@ -86,10 +94,12 @@ public class SciFIODataProvider implements DataProvider {
       if (channelNames.isEmpty()) {
          channelNames.add("Ch: 0");
       }
+      int interleaveCount = im.getInterleavedAxisCount();
+      boolean isMultichannel = im.isMultichannel();
       smb.channelNames(channelNames);
       Coords.Builder cb = Coordinates.builder();
       cb.c(1).t(1).p(1).z(1);
-      smb.intendedDimensions(rasterPositionToCoords(im, im.getAxesLengthsNonPlanar(), cb));
+      smb.intendedDimensions(rasterPositionToCoords(im, im.getAxesLengths(), cb));
       String name = metadata_.getDatasetName();
       if (name.lastIndexOf(File.separator) > 0) {
          name = name.substring(name.lastIndexOf(File.separator) + 1);
@@ -105,23 +115,49 @@ public class SciFIODataProvider implements DataProvider {
          bytesPerPixel = 2;
       } else if (pixelType == FormatTools.UINT32) {
          bytesPerPixel = 4;
+      } else if (pixelType == FormatTools.FLOAT) {
+         bytesPerPixel = 4;
       }
+      // note: Micro-Manager can not handle bytesPerPixel > 2
+      
       org.micromanager.data.Metadata.Builder mb = new DefaultMetadata.Builder();
       mb.bitDepth(plane.getImageMetadata().getBitsPerPixel());
       mb.pixelSizeUm(pixelSize_);
       // TODO: translate more metadata
       Object pixels = Bytes.makeArray(plane.getBytes(), bytesPerPixel, 
               false, plane.getImageMetadata().isLittleEndian() );
+      boolean isMultichannel = plane.getImageMetadata().isMultichannel();
+      int interleavedCount = 1;
+      if (isMultichannel && channelAxisIndex == 0) {
+         interleavedCount = (int) plane.getImageMetadata().getAxesLengths()[0];
+      }
+      if (interleavedCount == 3) {
+         if (bytesPerPixel == 1) {
+            byte[] tmpP = new byte[ ((byte[]) pixels).length / 3 ];
+            for (int i = 0; i < tmpP.length; i++) {
+               tmpP[i] = ( (byte[]) pixels)[3 * i + coords.getC()];
+            }
+            pixels = tmpP;
+         } else if (bytesPerPixel == 2) {
+            short[] tmpP = new short[ ((short[]) pixels).length / 3 ];
+            for (int i = 0; i < tmpP.length; i++) {
+               tmpP[i] = ( (short[]) pixels)[3 * i + coords.getC()];
+            }
+            pixels = tmpP;
+         }
+      }
       
       // TODO: How to recognize multiple components?
-      return DefaultDataManager.getInstance().createImage(
+      Image img =  DefaultDataManager.getInstance().createImage(
               pixels,
-              (int) plane.getLengths()[0], 
-              (int) plane.getLengths()[1],
+              (int) plane.getLengths()[xAxisIndex], 
+              (int) plane.getLengths()[yAxisIndex],
               bytesPerPixel, 
               1, 
               coords, 
               mb.build() );
+      // bus_.post(new DefaultNewImageEvent(img, this));
+      return img;
    }
    
    public Image planeToImage(final Plane plane, final long[] rasterPosition) {
@@ -129,17 +165,26 @@ public class SciFIODataProvider implements DataProvider {
       return planeToImage(plane, coords);
    }
    
-   public static Coords rasterPositionToCoords(final ImageMetadata im, final long[] rasterPosition) {
+   public Coords rasterPositionToCoords(final ImageMetadata im, final long[] rasterPosition) {
       Coords.Builder cb = Coordinates.builder();
       cb.c(0).t(0).p(0).z(0);
       return rasterPositionToCoords(im, rasterPosition, cb);
    }
       
-   public static Coords rasterPositionToCoords(final ImageMetadata im, 
+   public final Coords rasterPositionToCoords(final ImageMetadata im, 
            final long[] rasterPosition, Coords.Builder cb) {
       List<CalibratedAxis> axes = im.getAxes();
-      for (CalibratedAxis axis : axes) {
-         int index = im.getAxisIndex(axis) - 2;
+      int diff = rasterPosition.length - axes.size();
+      if (diff != 0) {
+         // this is bad, how can we ever translate one into the other???
+         // It looks like avis have only one rasterPostion
+         if (reader_.getFormatName().equals("Audio Video Interleave")) {
+            cb.t((int) rasterPosition[0]);
+            return cb.build();
+         }
+      }
+      for (int index = 0; index <axes.size(); index++) {
+         CalibratedAxis axis = axes.get(index);
          if (axis.type().getLabel().equals(Axes.CHANNEL.getLabel())) {
             cb.c((int) rasterPosition[index]);
          } else if  (axis.type().getLabel().equals(Axes.TIME.getLabel())) {
@@ -156,7 +201,13 @@ public class SciFIODataProvider implements DataProvider {
       return cb.build();
    }
    
-   public static long[] coordsToRasterPosition(final ImageMetadata im, Coords coords) {
+   public long[] coordsToRasterPosition(final ImageMetadata im, Coords coords) {
+      if (reader_.getFormatName().equals("Audio Video Interleave")) {
+         long[] planeIndices = new long[1];
+         planeIndices[0] = coords.getT();
+         return planeIndices;
+      }
+      
       long[] planeIndices = new long[im.getAxesNonPlanar().size()];
       List<CalibratedAxis> axes = im.getAxesNonPlanar();
       for (CalibratedAxis axis : axes) {
@@ -191,7 +242,7 @@ public class SciFIODataProvider implements DataProvider {
       try { 
          long planeIndex = 0; // TODO: check we actually have a plane at index 0?
          final long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, 
-                 planeIndex, reader_);
+                 planeIndex, reader_.getMetadata());
          return planeToImage(reader_.openPlane(IMAGEINDEX, planeIndex), 
                  rasterPosition);
       } catch (io.scif.FormatException ex) {
@@ -224,7 +275,7 @@ public class SciFIODataProvider implements DataProvider {
    @Override
    public int getAxisLength(String mmAxis) {
       ImageMetadata im = metadata_.get(IMAGEINDEX);
-      List<CalibratedAxis> axes = im.getAxesNonPlanar();
+      List<CalibratedAxis> axes = im.getAxes();
       String sciFioAxis = mmAxis;
       switch (mmAxis) {
          case Coords.C:
@@ -251,11 +302,14 @@ public class SciFIODataProvider implements DataProvider {
 
    @Override
    public Image getImage(Coords coords) throws IOException {
+      return planeToImage(getPlane(coords), coords);
+   }
+   
+   private Plane getPlane(Coords coords) throws IOException {
       try {
          long[] planeIndices = coordsToRasterPosition(metadata_.get(IMAGEINDEX), coords);
          long planeIndex = FormatTools.positionToRaster(IMAGEINDEX, reader_, planeIndices);
-         Plane plane = reader_.openPlane(IMAGEINDEX, planeIndex);
-         return planeToImage(plane, coords);
+         return reader_.openPlane(IMAGEINDEX, planeIndex);
       } catch (io.scif.FormatException ex) {
          throw new IOException(ex);
       }
@@ -269,7 +323,15 @@ public class SciFIODataProvider implements DataProvider {
          long[] rasterPosition = FormatTools.rasterToPosition(IMAGEINDEX, i, metadata_);
          Coords tmpC = rasterPositionToCoords(im, rasterPosition);
          if (tmpC.isSubspaceCoordsOf(coords)) {
-            result.add(getImage(tmpC));
+            Plane plane = getPlane(coords);
+            if (im.isMultichannel() && channelAxisIndex == 0) {
+               for (int c = 0; c < im.getAxisLength(channelAxisIndex); c++) {
+                  result.add(planeToImage(plane, 
+                          coords.copyBuilder().c(c).build()));
+               }
+            } else {
+               result.add(planeToImage(plane, coords));
+            }
          }
       }
       return result;
@@ -334,7 +396,7 @@ public class SciFIODataProvider implements DataProvider {
    public void registerForEvents(Object obj) {
        bus_.register(obj);
       try {
-         // Very bizar.  This is needed to convinde the viewer to display and image
+         // Very bizar.  This is needed to convince the viewer to display an image
          bus_.post(new DefaultNewImageEvent(getAnyImage(), this));
       } catch (IOException ex) {
          // todo
