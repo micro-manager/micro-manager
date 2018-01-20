@@ -223,6 +223,8 @@ int COpenCVgrabber::Initialize()
    {
      return DEVICE_NOT_CONNECTED;
    }
+   // ignore first frame to make it work with more cameras
+   cvQueryFrame(capture_);
    frame_ = cvQueryFrame(capture_);
    if (!frame_)
    {
