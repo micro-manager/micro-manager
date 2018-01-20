@@ -38,9 +38,10 @@ public class SciFIODataProvider implements DataProvider {
    private final static int IMAGEINDEX = 0; // ScioFIO image index.  It is unclear what this
    // is.  However, most datasets appear to have only a single imageindex (0)
    // Use it as a variable to be ready to use it if need be
-   private int xAxisIndex = 0;
-   private int yAxisIndex = 1;
-   private int channelAxisIndex = 2;
+   private int xAxisIndex_ = 0;
+   private int yAxisIndex_ = 1;
+   private int channelAxisIndex_ = 2;
+   private final Coords genCoords_; // tempplate for Coords that we feed MM
    
    /**
     * Initializes the reader and creates Micro-Manager's summaryMetData
@@ -76,13 +77,13 @@ public class SciFIODataProvider implements DataProvider {
          CalibratedAxis axis = axes.get(index);
          if (axis.type().equals(Axes.X)) {
              pixelSize_ = axis.calibratedValue(1.0);
-             xAxisIndex = index;
+             xAxisIndex_ = index;
          } if (axis.type().equals(Axes.Y)) {
-            yAxisIndex = index;
+            yAxisIndex_ = index;
          } if (axis.type().equals(Axes.Z)) {
             smb.zStepUm(axis.calibratedValue(1.0));
          } if (axis.type().equals(Axes.CHANNEL)) {
-            channelAxisIndex = index;
+            channelAxisIndex_ = index;
             for (int i = 0; i < im.getAxisLength(axis); i++) {
                // TODO: once SciFIO supports channelnames. use those instead of numbering
                channelNames.add("Ch: " + i);
@@ -94,12 +95,16 @@ public class SciFIODataProvider implements DataProvider {
       if (channelNames.isEmpty()) {
          channelNames.add("Ch: 0");
       }
-      int interleaveCount = im.getInterleavedAxisCount();
-      boolean isMultichannel = im.isMultichannel();
       smb.channelNames(channelNames);
       Coords.Builder cb = Coordinates.builder();
       cb.c(1).t(1).p(1).z(1);
       smb.intendedDimensions(rasterPositionToCoords(im, im.getAxesLengths(), cb));
+      Coords tmpCoords = cb.build();
+      Coords.Builder gcb = tmpCoords.copyBuilder();
+      for (String axis : tmpCoords.getAxes()) {
+         gcb.index(axis, 0);
+      }
+      genCoords_ = gcb.build();
       String name = metadata_.getDatasetName();
       if (name.lastIndexOf(File.separator) > 0) {
          name = name.substring(name.lastIndexOf(File.separator) + 1);
@@ -128,7 +133,7 @@ public class SciFIODataProvider implements DataProvider {
               false, plane.getImageMetadata().isLittleEndian() );
       boolean isMultichannel = plane.getImageMetadata().isMultichannel();
       int interleavedCount = 1;
-      if (isMultichannel && channelAxisIndex == 0) {
+      if (isMultichannel && channelAxisIndex_ == 0) {
          interleavedCount = (int) plane.getImageMetadata().getAxesLengths()[0];
       }
       if (interleavedCount == 3) {
@@ -147,14 +152,19 @@ public class SciFIODataProvider implements DataProvider {
          }
       }
       
+      // We need to set all the axes MM knows about
+      // This seems to me like a bug in MM...
+      Coords.Builder cb = genCoords_.copyBuilder();
+      for (String axis : coords.getAxes()) {
+         cb.index(axis, coords.getIndex(axis));
+      }
       // TODO: How to recognize multiple components?
-      Image img =  DefaultDataManager.getInstance().createImage(
-              pixels,
-              (int) plane.getLengths()[xAxisIndex], 
-              (int) plane.getLengths()[yAxisIndex],
+      Image img =  DefaultDataManager.getInstance().createImage(pixels,
+              (int) plane.getLengths()[xAxisIndex_], 
+              (int) plane.getLengths()[yAxisIndex_],
               bytesPerPixel, 
               1, 
-              coords, 
+              cb.build(), 
               mb.build() );
       // bus_.post(new DefaultNewImageEvent(img, this));
       return img;
@@ -181,6 +191,8 @@ public class SciFIODataProvider implements DataProvider {
          if (reader_.getFormatName().equals("Audio Video Interleave")) {
             cb.t((int) rasterPosition[0]);
             return cb.build();
+         } else {
+            axes = im.getAxesNonPlanar();
          }
       }
       for (int index = 0; index <axes.size(); index++) {
@@ -324,8 +336,8 @@ public class SciFIODataProvider implements DataProvider {
          Coords tmpC = rasterPositionToCoords(im, rasterPosition);
          if (tmpC.isSubspaceCoordsOf(coords)) {
             Plane plane = getPlane(coords);
-            if (im.isMultichannel() && channelAxisIndex == 0) {
-               for (int c = 0; c < im.getAxisLength(channelAxisIndex); c++) {
+            if (im.isMultichannel() && channelAxisIndex_ == 0) {
+               for (int c = 0; c < im.getAxisLength(channelAxisIndex_); c++) {
                   result.add(planeToImage(plane, 
                           coords.copyBuilder().c(c).build()));
                }
