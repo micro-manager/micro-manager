@@ -34,6 +34,7 @@
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceThreads.h"
+#include "DeviceEnumerator.h"
 #include <string>
 #include <map>
 #include <algorithm>
