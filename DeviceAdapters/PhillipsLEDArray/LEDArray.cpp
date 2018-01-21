@@ -855,15 +855,6 @@ int CLEDArray::OnMinNA(MM::PropertyBase* pProp, MM::ActionType pAct)
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(minna_);
-	  if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
 	  return UpdatePattern();
    }
    return DEVICE_OK;
@@ -871,17 +862,12 @@ int CLEDArray::OnMinNA(MM::PropertyBase* pProp, MM::ActionType pAct)
 
 int CLEDArray::OnLED(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-	if (pAct == MM::BeforeGet)
-   {
+	if (pAct == MM::BeforeGet) {
       pProp->Set(indices_.c_str());
    }
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(indices_);
-	  if(pattern_ == "Manual LED Indices"){
-		  MLED(indices_);
-	  }
-	  return DEVICE_OK;
    }
    return DEVICE_OK;
 }
@@ -895,16 +881,6 @@ int CLEDArray::OnMaxNA(MM::PropertyBase* pProp, MM::ActionType pAct)
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(maxna_);
-	  if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
-	  return UpdatePattern();
    }
    return DEVICE_OK;
 }
@@ -919,33 +895,6 @@ int CLEDArray::OnRed(MM::PropertyBase* pProp, MM::ActionType pAct)
    {
       pProp->Get(red_);
 	  ColorUpdate(red_,green_,blue_);
-	  if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if(pattern_ == "Manual LED Indices"){
-		  if (indices_.size() > 0){
-			MLED(indices_);
-		  }
-	  }
-	  else if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
-	  return DEVICE_OK;
    }
    return DEVICE_OK;
 }
@@ -959,33 +908,6 @@ int CLEDArray::OnBlue(MM::PropertyBase* pProp, MM::ActionType pAct)
    {
       pProp->Get(blue_);
 	  ColorUpdate(red_,green_,blue_);
-	  if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if(pattern_ == "Manual LED Indices"){
-		  if (indices_.size() > 0){
-			MLED(indices_);
-		  }
-	  }
-	  else if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
-	  return DEVICE_OK;
    }
    return DEVICE_OK;
 }
@@ -1000,33 +922,6 @@ int CLEDArray::OnGreen(MM::PropertyBase* pProp, MM::ActionType pAct)
    {
       pProp->Get(green_);
 	  ColorUpdate(red_,green_,blue_);
-      if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if(pattern_ == "Manual LED Indices"){
-		  if (indices_.size() > 0){
-			MLED(indices_);
-		  }
-	  }
-	  else if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
-	  return DEVICE_OK;
    }
    return DEVICE_OK;
 }
@@ -1041,22 +936,6 @@ int CLEDArray::OnDistance(MM::PropertyBase* pProp, MM::ActionType pAct)
 	{
 		pProp->Get(distMM_);
 		ArrayDist(distMM_);
-		if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if (pattern_ == "Off"){
-		  Off();
-	  }
-		return DEVICE_OK;
 	}
     return DEVICE_OK;
 }
@@ -1071,22 +950,6 @@ int CLEDArray::OnAperture(MM::PropertyBase* pProp, MM::ActionType pAct)
 	{
 		pProp->Get(numa_);
 		NumA(numa_);
-		if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if (pattern_ == "Off"){
-		  Off();
-	  }
-		return DEVICE_OK;
 	}
     return DEVICE_OK;
 }
@@ -1100,16 +963,6 @@ int CLEDArray::OnType(MM::PropertyBase* pProp, MM::ActionType pAct)
 	else if(pAct == MM::AfterSet)
 	{
 		pProp->Get(type_);
-	  if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else if(pattern_ == "Off"){
-		  Off();
-	  }
-		return DEVICE_OK;
 	}
     return DEVICE_OK;
 }
