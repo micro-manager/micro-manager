@@ -41,6 +41,7 @@ public class SciFIODataProvider implements DataProvider {
    private int xAxisIndex_ = 0;
    private int yAxisIndex_ = 1;
    private int channelAxisIndex_ = 2;
+   private boolean channelAxisNonPlanar_ = false;
    private final Coords genCoords_; // tempplate for Coords that we feed MM
    
    /**
@@ -84,6 +85,9 @@ public class SciFIODataProvider implements DataProvider {
             smb.zStepUm(axis.calibratedValue(1.0));
          } if (axis.type().equals(Axes.CHANNEL)) {
             channelAxisIndex_ = index;
+            if (im.getAxesNonPlanar().contains(axis)) {
+               channelAxisNonPlanar_ = true;
+            }
             for (int i = 0; i < im.getAxisLength(axis); i++) {
                // TODO: once SciFIO supports channelnames. use those instead of numbering
                channelNames.add("Ch: " + i);
@@ -116,14 +120,20 @@ public class SciFIODataProvider implements DataProvider {
    public Image planeToImage(Plane plane, final Coords coords) {
       int pixelType = plane.getImageMetadata().getPixelType();
       int bytesPerPixel = 1;
-      if (pixelType == FormatTools.UINT16) {
-         bytesPerPixel = 2;
-      } else if (pixelType == FormatTools.UINT32) {
-         bytesPerPixel = 4;
-      } else if (pixelType == FormatTools.FLOAT) {
-         bytesPerPixel = 4;
+      switch (pixelType) {
+         case FormatTools.UINT16:
+            bytesPerPixel = 2;
+            break;
+         // note: Micro-Manager can not handle bytesPerPixel > 2
+         case FormatTools.UINT32:
+            bytesPerPixel = 4;
+            break;
+         case FormatTools.FLOAT:
+            bytesPerPixel = 4;
+            break;
+         default:
+            break;
       }
-      // note: Micro-Manager can not handle bytesPerPixel > 2
       
       org.micromanager.data.Metadata.Builder mb = new DefaultMetadata.Builder();
       mb.bitDepth(plane.getImageMetadata().getBitsPerPixel());
@@ -133,8 +143,8 @@ public class SciFIODataProvider implements DataProvider {
               false, plane.getImageMetadata().isLittleEndian() );
       boolean isMultichannel = plane.getImageMetadata().isMultichannel();
       int interleavedCount = 1;
-      if (isMultichannel && channelAxisIndex_ == 0) {
-         interleavedCount = (int) plane.getImageMetadata().getAxesLengths()[0];
+      if (isMultichannel && !channelAxisNonPlanar_) {
+         interleavedCount = (int) plane.getImageMetadata().getAxesLengths()[channelAxisIndex_];
       }
       if (interleavedCount == 3) {
          if (bytesPerPixel == 1) {
@@ -158,7 +168,7 @@ public class SciFIODataProvider implements DataProvider {
       for (String axis : coords.getAxes()) {
          cb.index(axis, coords.getIndex(axis));
       }
-      // TODO: How to recognize multiple components?
+      
       Image img =  DefaultDataManager.getInstance().createImage(pixels,
               (int) plane.getLengths()[xAxisIndex_], 
               (int) plane.getLengths()[yAxisIndex_],
@@ -222,8 +232,8 @@ public class SciFIODataProvider implements DataProvider {
       
       long[] planeIndices = new long[im.getAxesNonPlanar().size()];
       List<CalibratedAxis> axes = im.getAxesNonPlanar();
-      for (CalibratedAxis axis : axes) {
-         int index = im.getAxisIndex(axis) - 2;
+      for (int index = 0; index < planeIndices.length; index++) {
+         CalibratedAxis axis = axes.get(index);
          if (axis.type().getLabel().equals(Axes.CHANNEL.getLabel())) {
             planeIndices[index] = coords.getC();
          } else if  (axis.type().getLabel().equals(Axes.TIME.getLabel())) {
