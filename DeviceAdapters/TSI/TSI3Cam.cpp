@@ -181,9 +181,6 @@ int Tsi3Cam::Initialize()
    tl_camera_get_pixel_size_bytes(camHandle, &fullFrame.pixDepth);
    tl_camera_get_pixel_bit_depth(camHandle, &fullFrame.bitDepth);
 
-   // assume that current roi is the same as full frame on startup
-   roiBinData = fullFrame;
-
    // exposure
    int exp_min = 0, exp_max = 0;
    if (tl_camera_get_exposure_range_us(camHandle, &exp_min, &exp_max))
@@ -369,7 +366,9 @@ unsigned Tsi3Cam::GetBitDepth() const
 
 int Tsi3Cam::GetBinning() const
 {
-   return roiBinData.xBin;
+   int bin(1);
+   tl_camera_get_hbin(camHandle, &bin); // vbin is the same
+   return bin;
 }
 
 int Tsi3Cam::SetBinning(int binSize)
@@ -394,32 +393,49 @@ void Tsi3Cam::SetExposure(double dExpMs)
 
 int Tsi3Cam::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   roiBinData.xPixels = xSize * roiBinData.xBin;
-   roiBinData.yPixels = ySize * roiBinData.yBin;
-   roiBinData.yOrigin = x * roiBinData.xBin;
-   roiBinData.yOrigin = y * roiBinData.yBin;
-   
+   // obtain current binning factor
+   int bin(1);
+   tl_camera_get_hbin(camHandle, &bin); // vbin is the same
+
+   // translate roi from screen coordinates to full frame
+   int xFull = x*bin;
+   int yFull = y*bin;
+   int xSizeFull = xSize * bin;
+   int ySizeFull = ySize * bin;
+
+   if (tl_camera_set_roi(camHandle, xFull, yFull, xFull + xSizeFull, yFull + ySizeFull))
+   {
+      ResetImageBuffer();
+      return ERR_ROI_BIN_FAILED;
+   }
    return ResizeImageBuffer();
 }
 
 int Tsi3Cam::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-   x = roiBinData.xOrigin / roiBinData.xBin;
-   y = roiBinData.yOrigin / roiBinData.yBin;
-   xSize = roiBinData.xPixels / roiBinData.xBin;
-   ySize = roiBinData.yPixels / roiBinData.yBin;
+   int bin(1);
+   tl_camera_get_hbin(camHandle, &bin); // vbin is the same
+
+   int xtl(0), ytl(0), xbr(0), ybr(0); 
+   if (tl_camera_get_roi(camHandle, &xtl, &ytl, &xbr, &ybr))
+      return ERR_ROI_BIN_FAILED;
+
+   x = xtl / bin;
+   y = ytl / bin;
+   xSize = (xbr - xtl) / bin;
+   ySize = (ybr - ytl) / bin;
 
    return DEVICE_OK;
 }
 
 int Tsi3Cam::ClearROI()
 {
-   // reset roi
-   roiBinData.xOrigin = 0;
-   roiBinData.yOrigin = 0;
-   roiBinData.xPixels = fullFrame.xPixels;
-   roiBinData.yPixels = fullFrame.yPixels;
-
+   // reset roi to full frame
+   if (tl_camera_set_roi(camHandle, 0, 0, fullFrame.xPixels, fullFrame.yPixels))
+   {
+      ResetImageBuffer();
+      return ERR_ROI_BIN_FAILED;
+   }
    return ResizeImageBuffer();
 }
 
@@ -483,35 +499,14 @@ bool Tsi3Cam::IsCapturing()
 
 int Tsi3Cam::ResizeImageBuffer()
 {
-   if (tl_camera_set_hbin(camHandle, roiBinData.xBin))
-   {
-      ResetImageBuffer();
-      return ERR_ROI_BIN_FAILED;
-   }
-   
-   if (tl_camera_set_vbin(camHandle, roiBinData.yBin))
-   {
-      ResetImageBuffer();
-      return ERR_ROI_BIN_FAILED;
-   }
-
-   if (tl_camera_set_roi(camHandle, roiBinData.xOrigin,
-      roiBinData.yOrigin,
-      roiBinData.xOrigin + roiBinData.xPixels,
-      roiBinData.yOrigin + roiBinData.yPixels))
-   {
-      ResetImageBuffer();
-      return ERR_ROI_BIN_FAILED;
-   }
-
-   int w(0), h(0);
+   int w(0), h(0), d(0);
    tl_camera_get_image_width_pixels(camHandle, &w);
    tl_camera_get_image_height_pixels(camHandle, &h);
+   tl_camera_get_pixel_size_bytes(camHandle, &d);
 
-   img.Resize(w, h, roiBinData.pixDepth);
+   img.Resize(w, h, d);
    ostringstream os;
-   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", bin factor: "
-      << roiBinData.xBin << ", camera: " << w << "X" << h;
+   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", camera: " << w << "X" << h;
    LogMessage(os.str().c_str());
 
    return DEVICE_OK;
@@ -604,9 +599,9 @@ void Tsi3Cam::frame_available_callback(void* sender,
       // we are not supporting color or 8-bit pixels
 
       // reformat image buffer
-      instance->img.Resize(image_width, image_height, instance->roiBinData.pixDepth);
+      instance->img.Resize(image_width, image_height, instance->fullFrame.pixDepth);
 
-      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->roiBinData.pixDepth * image_height * image_width);
+      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * image_height * image_width);
        InterlockedExchange(&instance->acquiringFrame, 0);
    }
    else if (instance->acquiringSequence)
@@ -623,8 +618,8 @@ void Tsi3Cam::frame_available_callback(void* sender,
       // we are not supporting color or 8-bit pixels
 
       // reformat image buffer
-      instance->img.Resize(image_width, image_height, instance->roiBinData.pixDepth);
-      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->roiBinData.pixDepth * image_height * image_width);
+      instance->img.Resize(image_width, image_height, instance->fullFrame.pixDepth);
+      memcpy(instance->img.GetPixelsRW(), image_buffer, instance->fullFrame.pixDepth * image_height * image_width);
       int ret = instance->InsertImage();
       if (ret != DEVICE_OK)
       {
@@ -646,30 +641,24 @@ void Tsi3Cam::frame_available_callback(void* sender,
 
 void Tsi3Cam::ResetImageBuffer()
 {
-   roiBinData = fullFrame;
-   if (tl_camera_set_hbin(camHandle, roiBinData.xBin))
+   if (tl_camera_set_hbin(camHandle, 1))
    {
       LogMessage("Error setting xbin factor");
    }
 
-   if (tl_camera_set_vbin(camHandle, roiBinData.yBin))
+   if (tl_camera_set_vbin(camHandle, 1))
    {
       LogMessage("Error setting ybin factor");
    }
 
-   if (tl_camera_set_roi(camHandle, roiBinData.xOrigin,
-      roiBinData.yOrigin,
-      roiBinData.xOrigin + roiBinData.xPixels,
-      roiBinData.yOrigin + roiBinData.yPixels))
+   if (tl_camera_set_roi(camHandle, 0, 0,
+      fullFrame.xPixels,
+      fullFrame.yPixels))
    {
       LogMessage("Error setting roi");
    }
 
-   img.Resize(roiBinData.xPixels / roiBinData.xBin, roiBinData.yPixels / roiBinData.yBin, roiBinData.pixDepth);
-   ostringstream os;
-   os << "TSI3 resized to: " << img.Width() << " X " << img.Height() << ", bin factor: "
-      << roiBinData.xBin;
-   LogMessage(os.str().c_str());
+   ResizeImageBuffer();
 
 }
 
