@@ -43,6 +43,7 @@ public class SciFIODataProvider implements DataProvider {
    private int channelAxisIndex_ = 2;
    private boolean channelAxisNonPlanar_ = false;
    private final Coords genCoords_; // tempplate for Coords that we feed MM
+   private final Studio studio_;
    
    /**
     * Initializes the reader and creates Micro-Manager's summaryMetData
@@ -55,6 +56,7 @@ public class SciFIODataProvider implements DataProvider {
     * @param path - path to the data to be read by SciFIO
     */
    public SciFIODataProvider(Studio studio, String path) {
+      studio_ = studio;
       // create the ScioFIO context that is needed for eveything
       scifio_ = new SCIFIO();
       try {
@@ -117,7 +119,7 @@ public class SciFIODataProvider implements DataProvider {
       sm_ = smb.build();
    }
    
-   public Image planeToImage(Plane plane, final Coords coords) {
+   public Image planeToImage(Plane plane, final Coords coords) throws IOException {
       int pixelType = plane.getImageMetadata().getPixelType();
       int bytesPerPixel = 1;
       switch (pixelType) {
@@ -133,6 +135,10 @@ public class SciFIODataProvider implements DataProvider {
             break;
          default:
             break;
+      }
+      
+      if (bytesPerPixel == 4) {
+         throw new IOException ("Unsupported image format");
       }
       
       org.micromanager.data.Metadata.Builder mb = new DefaultMetadata.Builder();
@@ -180,8 +186,10 @@ public class SciFIODataProvider implements DataProvider {
       return img;
    }
    
-   public Image planeToImage(final Plane plane, final long[] rasterPosition) {
-      final Coords coords = rasterPositionToCoords(plane.getImageMetadata(), rasterPosition);
+   public Image planeToImage(final Plane plane, final long[] rasterPosition) 
+           throws IOException {
+      final Coords coords = rasterPositionToCoords(plane.getImageMetadata(), 
+              rasterPosition);
       return planeToImage(plane, coords);
    }
    
@@ -368,10 +376,15 @@ public class SciFIODataProvider implements DataProvider {
    @Override
    public Coords getMaxIndices() {
       ImageMetadata im = metadata_.get(IMAGEINDEX);
-      long[] rasterLengths = new long[im.getAxesLengths().length - 2];
-      for (int i = 2; i < im.getAxesLengths().length; i++) {
-         rasterLengths[i - 2] = im.getAxesLengths()[i];
+      // assume that there are always an X and a Y axis
+      long[] rasterLengths = new long[im.getAxesLengths().length];
+      List<CalibratedAxis> axes = im.getAxes();
+      int index = 0; 
+      for (CalibratedAxis axis : axes) {
+            rasterLengths[index] = im.getAxisLength(axis);
+            index++;
       }
+      
       return rasterPositionToCoords(im, rasterLengths);
    }
 
