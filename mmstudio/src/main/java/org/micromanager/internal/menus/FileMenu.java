@@ -134,18 +134,23 @@ public final class FileMenu {
    
    private void openSciFIO() {
       File file = FileDialogs.openFile(null,
-            "Please select an image data set", FileDialogs.SCIFIO_DATA);
+              "Please select an image data set", FileDialogs.SCIFIO_DATA);
       if (file != null) {
-         try {
-           SciFIODataProvider sdp = new SciFIODataProvider(studio_, file.getAbsolutePath());
-           if (sdp.getAnyImage() == null) {
-              studio_.logs().showError("Unable to load images");
-           }
-           studio_.displays().createDisplay(sdp);
-           //studio_.displays().manage(sdp);
-         } catch (IOException ioe) {
-            studio_.logs().showError(ioe, "There was an error when opening data");
-         } 
+         new Thread(new Runnable() {
+            @Override
+            public void run() {
+               try {
+                  SciFIODataProvider sdp = new SciFIODataProvider(studio_, file.getAbsolutePath());
+                  if (sdp.getAnyImage() == null) {
+                     studio_.logs().showError("Unable to load images");
+                  }
+                  studio_.displays().createDisplay(sdp);
+                  //studio_.displays().manage(sdp);
+               } catch (IOException ioe) {
+                  studio_.logs().showError(ioe, "There was an error while opening data");
+               }
+            }
+         }).start();
       }
    }
 
@@ -179,7 +184,7 @@ public final class FileMenu {
                         updateFileHistory(path);
                      }
                      catch (IOException ex) {
-                        ReportingUtils.showError(ex, "There was an error when opening data");
+                        ReportingUtils.showError(ex, "There was an error while opening data");
                      }
                   }
                }).start();
