@@ -486,6 +486,9 @@ public class Hub {
    }
 
    public boolean setVisible(boolean isVisible) {
+      if (display_ == null) {
+         return false;
+      }
       return display_.setVisible(isVisible);
    }
 /*
