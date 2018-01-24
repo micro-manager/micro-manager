@@ -1164,7 +1164,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 			double startY = centerY - deltaY*numY/2;
 			double startZ = centerZ - deltaZ*numZ/2;
 			String xy_device = devices_.getMMDevice(Devices.Keys.XYSTAGE);
-			String z_device = devices_.getMMDevice(Devices.Keys.LOWERZDRIVE);
+			String z_device = devices_.getMMDevice(Devices.Keys.UPPERZDRIVE);
 			
 			if (useX) {
 				try {
