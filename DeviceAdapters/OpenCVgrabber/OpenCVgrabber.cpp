@@ -48,6 +48,7 @@ const double COpenCVgrabber::nominalPixelSizeUm_ = 1.0;
 // External names used used by the rest of the system
 // to load particular device from the "DemoCamera.dll" library
 const char* g_CameraDeviceName = "OpenCVgrabber";
+const char* cIDName = "Camera";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8bit";
@@ -161,12 +162,16 @@ COpenCVgrabber::COpenCVgrabber() :
    SetErrorText(CAMERA_NOT_INITIALIZED, "Camera was not initialized");
 
    CPropertyAction* pAct = new CPropertyAction(this, &COpenCVgrabber::OnCameraID);
-   String cIDName = "Camera Number";
-   CreateProperty(cIDName.c_str(), "0", MM::Integer, false, pAct, true);
-   AddAllowedValue(cIDName.c_str(), "0");
-   AddAllowedValue(cIDName.c_str(), "1");
-   AddAllowedValue(cIDName.c_str(), "2");
-   AddAllowedValue(cIDName.c_str(), "3");
+   CreateProperty(cIDName, "Undefined", MM::String, false, pAct, true);
+
+   DeviceEnumerator de;
+   // Video Devices
+   map<int, OpenCVDevice> devices = de.getVideoDevicesMap();
+
+   for (int i = 0; i++; devices.size())
+   {
+       AddAllowedValue(cIDName, devices.at(i).deviceName.c_str(), long(i));
+   }
 
    readoutStartTime_ = GetCurrentMMTime();
    thd_ = new MySequenceThread(this);
@@ -218,11 +223,13 @@ int COpenCVgrabber::Initialize()
 
    // start opencv capture_ from first device, 
    // we need to initialise hardware early on to discover properties
-   capture_ = cvCaptureFromCAM(CV_CAP_ANY);
+   capture_ = cvCaptureFromCAM(cameraID_);
    if (!capture_) // do we have a capture_ device?
    {
      return DEVICE_NOT_CONNECTED;
    }
+   // ignore first frame to make it work with more cameras
+   cvQueryFrame(capture_);
    frame_ = cvQueryFrame(capture_);
    if (!frame_)
    {
@@ -1051,10 +1058,9 @@ int COpenCVgrabber::OnCameraID(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
-      pProp->Get(cameraID_);
-   } else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(cameraID_);
+      string srcName;
+      pProp->Get(srcName);
+      GetPropertyData(cIDName, srcName.c_str(), cameraID_);
    }
 
    return DEVICE_OK;
