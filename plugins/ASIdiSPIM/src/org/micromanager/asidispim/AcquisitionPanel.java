@@ -217,6 +217,28 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    double xPositionUm_;  // hold onto local copy so we don't have to keep querying
    double yPositionUm_;  // hold onto local copy so we don't have to keep querying
    double zPositionUm_;  // hold onto local copy so we don't have to keep querying
+   private final JButton gridButton_; 
+   private final MMFrame gridFrame_;
+   private final JPanel gridPanel_;
+   private final JPanel gridXPanel_;
+   private final JCheckBox useXGridCB_;
+   private final JFormattedTextField gridXStartField_;
+   private final JFormattedTextField gridXStopField_;
+   private final JFormattedTextField gridXDeltaField_;
+   private final JLabel gridXCount_;
+   private final JPanel gridYPanel_;
+   private final JCheckBox useYGridCB_;
+   private final JFormattedTextField gridYStartField_;
+   private final JFormattedTextField gridYStopField_;
+   private final JFormattedTextField gridYDeltaField_;
+   private final JLabel gridYCount_;
+   private final JPanel gridZPanel_;
+   private final JCheckBox useZGridCB_;
+   private final JFormattedTextField gridZStartField_;
+   private final JFormattedTextField gridZStopField_;
+   private final JFormattedTextField gridZDeltaField_;
+   private final JLabel gridZCount_;
+   private final JButton computeGridButton_;
    
    private static final int XYSTAGETIMEOUT = 20000;
    
@@ -820,10 +842,407 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.showXYPositionList();
          }
       });
-      positionPanel.add(editPositionListButton, "span 2, center");
+      positionPanel.add(editPositionListButton);
       
-      // add empty fill space on right side of panel
-      positionPanel.add(new JLabel(""), "wrap, growx");
+      gridButton_ = new JButton("XYZ grid...");
+      positionPanel.add(gridButton_, "wrap");
+      
+      // start XYZ grid frame
+      // visibility of this frame is controlled from XYZ grid button
+      // this frame is separate from main plugin window
+      
+      gridXPanel_ = new JPanel(new MigLayout(
+              "",
+              "[right]10[center]",
+              "[]8[]"));
+
+      useXGridCB_ = pu.makeCheckBox("Slices from stage coordinates",
+            Properties.Keys.PREFS_USE_X_GRID, panelName_, true);
+      useXGridCB_.setEnabled(true);
+      useXGridCB_.setFocusPainted(false); 
+      componentBorder = 
+            new ComponentTitledBorder(useXGridCB_, gridXPanel_, 
+                  BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+      gridXPanel_.setBorder(componentBorder);
+      
+      // enable/disable panel elements depending on checkbox state
+      useXGridCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            PanelUtils.componentsSetEnabled(gridXPanel_, useXGridCB_.isSelected());
+         }
+      });
+            
+      gridXPanel_.add(new JLabel("X start [um]:"));
+      gridXStartField_ = pu.makeFloatEntryField(panelName_, "Grid_X_Start", -400, 5);
+      gridXStartField_.addActionListener(new ActionListener() {
+  		@Override
+  		public void actionPerformed(ActionEvent arg0) {
+  			updateGridXCount();
+  		}
+      });
+      gridXPanel_.add(gridXStartField_);
+      JButton tmp_but = new JButton("Set");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			gridXStartField_.setValue(positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X));
+			updateGridXCount();
+		}
+      });
+      gridXPanel_.add(tmp_but, "wrap");
+      
+      gridXPanel_.add(new JLabel("X stop [um]:"));
+      gridXStopField_ = pu.makeFloatEntryField(panelName_, "Grid_X_Stop", 400, 5);
+      gridXStopField_.addActionListener(new ActionListener() {
+    		@Override
+      		public void actionPerformed(ActionEvent arg0) {
+      			updateGridXCount();
+      		}
+          });
+      gridXPanel_.add(gridXStopField_);
+      tmp_but = new JButton("Set");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+    	  @Override
+    	  public void actionPerformed(ActionEvent arg0) {
+    		  gridXStopField_.setValue(positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X));
+    		  updateGridXCount();
+    	  }
+      });
+      gridXPanel_.add(tmp_but, "wrap");
+
+      gridXPanel_.add(new JLabel("X delta [um]:"));
+      gridXDeltaField_ = pu.makeFloatEntryField(panelName_, "Grid_X_Delta", 3, 5);
+      gridXDeltaField_.addActionListener(new ActionListener() {
+    		@Override
+      		public void actionPerformed(ActionEvent arg0) {
+      			updateGridXCount();
+      		}
+          });
+      gridXPanel_.add(gridXDeltaField_, "wrap");
+//      tmp_but = new JButton("Set");
+//      tmp_but.setBackground(Color.red);
+//      tmp_but.addActionListener(new ActionListener() {
+//    	  @Override
+//    	  public void actionPerformed(ActionEvent arg0) {
+//    		  // TODO figure out spacing, maybe to make reslicing trivial
+//    		  updateGridXCount();
+//    	  }
+//      });
+//      gridPanel_.add(tmp_but, "wrap");
+      
+      gridXPanel_.add(new JLabel("Slice count:"));
+      gridXCount_ = new JLabel("");
+      gridXPanel_.add(gridXCount_, "wrap");
+      updateGridXCount();
+      PanelUtils.componentsSetEnabled(gridXPanel_, useXGridCB_.isSelected());  // initialize
+      
+      gridYPanel_ = new JPanel(new MigLayout(
+              "",
+              "[right]10[center]",
+              "[]8[]"));
+
+      useYGridCB_ = pu.makeCheckBox("Grid in Y",
+            Properties.Keys.PREFS_USE_Y_GRID, panelName_, true);
+      useYGridCB_.setEnabled(true);
+      useYGridCB_.setFocusPainted(false); 
+      componentBorder = 
+            new ComponentTitledBorder(useYGridCB_, gridYPanel_, 
+                  BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+      gridYPanel_.setBorder(componentBorder);
+      
+      // enable/disable panel elements depending on checkbox state
+      useYGridCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) { 
+            PanelUtils.componentsSetEnabled(gridYPanel_, useYGridCB_.isSelected());
+         }
+      });
+            
+      gridYPanel_.add(new JLabel("Y start [um]:"));
+      gridYStartField_ = pu.makeFloatEntryField(panelName_, "Grid_Y_Start", -1200, 5);
+      gridYStartField_.addActionListener(new ActionListener() {
+  		@Override
+  		public void actionPerformed(ActionEvent arg0) {
+  			updateGridYCount();
+  		}
+      });
+      gridYPanel_.add(gridYStartField_);
+      tmp_but = new JButton("Set");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			gridYStartField_.setValue(positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.Y));
+			updateGridYCount();
+		}
+      });
+      gridYPanel_.add(tmp_but, "wrap");
+      
+      gridYPanel_.add(new JLabel("Y stop [um]:"));
+      gridYStopField_ = pu.makeFloatEntryField(panelName_, "Grid_Y_Stop", 1200, 5);
+      gridYStopField_.addActionListener(new ActionListener() {
+    		@Override
+      		public void actionPerformed(ActionEvent arg0) {
+      			updateGridYCount();
+      		}
+          });
+      gridYPanel_.add(gridYStopField_);
+      tmp_but = new JButton("Set");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+    	  @Override
+    	  public void actionPerformed(ActionEvent arg0) {
+    		  gridYStopField_.setValue(positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.Y));
+    		  updateGridYCount();
+    	  }
+      });
+      gridYPanel_.add(tmp_but, "wrap");
+
+      gridYPanel_.add(new JLabel("Y delta [um]:"));
+      gridYDeltaField_ = pu.makeFloatEntryField(panelName_, "Grid_Y_Delta", 700, 5);
+      gridYDeltaField_.addActionListener(new ActionListener() {
+    		@Override
+      		public void actionPerformed(ActionEvent arg0) {
+      			updateGridYCount();
+      		}
+          });
+      gridYPanel_.add(gridYDeltaField_);
+      tmp_but = new JButton("Set");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+    	  @Override
+    	  public void actionPerformed(ActionEvent arg0) {
+    		  Devices.Keys camDev = isFirstSideA() ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
+    		  int height = cameras_.getCameraROI(camDev).height;
+    		  float pixelSize = (float) core_.getPixelSizeUm();
+    		  double delta = height*pixelSize*0.9; // 10% overlap
+    		  // sanity checks, would be better handled with exceptions or more formal checks
+    		  if (height > 4100 || height < 4 || pixelSize < 1e-6) {
+    			  return;
+    		  }
+    		  gridYDeltaField_.setValue(delta);
+    		  updateGridYCount();
+    	  }
+      });
+      gridYPanel_.add(tmp_but, "wrap");
+      
+      gridYPanel_.add(new JLabel("Y count:"));
+      gridYCount_ = new JLabel("");
+      gridYPanel_.add(gridYCount_, "wrap");
+      updateGridYCount();
+      PanelUtils.componentsSetEnabled(gridYPanel_, useYGridCB_.isSelected());  // initialize
+
+
+      gridZPanel_ = new JPanel(new MigLayout(
+              "",
+              "[right]10[center]",
+              "[]8[]"));
+
+      useZGridCB_ = pu.makeCheckBox("Grid in Z",
+            Properties.Keys.PREFS_USE_Z_GRID, panelName_, true);
+      useZGridCB_.setEnabled(true);
+      useZGridCB_.setFocusPainted(false); 
+      componentBorder = 
+            new ComponentTitledBorder(useZGridCB_, gridZPanel_, 
+                  BorderFactory.createLineBorder(ASIdiSPIM.borderColor)); 
+      gridZPanel_.setBorder(componentBorder);
+      
+      // enable/disable panel elements depending on checkbox state
+      useZGridCB_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) { 
+            PanelUtils.componentsSetEnabled(gridZPanel_, useZGridCB_.isSelected());
+         }
+      });
+      
+      gridZPanel_.add(new JLabel("Z start [um]:"));
+      gridZStartField_ = pu.makeFloatEntryField(panelName_, "Grid_Z_Start", 0, 5);
+      gridZStartField_.addActionListener(new ActionListener() {
+  		@Override
+  		public void actionPerformed(ActionEvent arg0) {
+  			updateGridZCount();
+  		}
+      });
+      gridZPanel_.add(gridZStartField_);
+      tmp_but = new JButton("Set");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			gridZStartField_.setValue(positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE));
+			updateGridZCount();
+		}
+      });
+      gridZPanel_.add(tmp_but, "wrap");
+      
+      gridZPanel_.add(new JLabel("Z stop [um]:"));
+      gridZStopField_ = pu.makeFloatEntryField(panelName_, "Grid_Z_Stop", -800, 5);
+      gridZStopField_.addActionListener(new ActionListener() {
+    		@Override
+      		public void actionPerformed(ActionEvent arg0) {
+      			updateGridZCount();
+      		}
+          });
+      gridZPanel_.add(gridZStopField_);
+      tmp_but = new JButton("Set");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+    	  @Override
+    	  public void actionPerformed(ActionEvent arg0) {
+    		  gridZStopField_.setValue(positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE));
+    		  updateGridZCount();
+    	  }
+      });
+      gridZPanel_.add(tmp_but, "wrap");
+
+      gridZPanel_.add(new JLabel("Z delta [um]:"));
+      gridZDeltaField_ = pu.makeFloatEntryField(panelName_, "Grid_Z_Delta", 400, 5);
+      gridZDeltaField_.addActionListener(new ActionListener() {
+    		@Override
+      		public void actionPerformed(ActionEvent arg0) {
+      			updateGridZCount();
+      		}
+          });
+      gridZPanel_.add(gridZDeltaField_);
+      tmp_but = new JButton("Set");
+      tmp_but.setBackground(Color.red);
+      tmp_but.addActionListener(new ActionListener() {
+    	  @Override
+    	  public void actionPerformed(ActionEvent arg0) {
+    		  Devices.Keys camDev = isFirstSideA() ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
+    		  int width = cameras_.getCameraROI(camDev).width;
+    		  float pixelSize = (float) core_.getPixelSizeUm();
+    		  // sanity checks, would be better handled with exceptions or more formal checks
+    		  if (width > 4100 || width < 4 || pixelSize < 1e-6) {
+    			  return;
+    		  }
+    		  double delta = width*pixelSize/Math.sqrt(2)*0.9; // 10% overlap
+    		  gridZDeltaField_.setValue(delta);
+    		  updateGridZCount();
+    	  }
+      });
+      gridZPanel_.add(tmp_but, "wrap");
+      
+      gridZPanel_.add(new JLabel("Z count:"));
+      gridZCount_ = new JLabel("");
+      gridZPanel_.add(gridZCount_, "wrap");
+      updateGridZCount();
+      PanelUtils.componentsSetEnabled(gridZPanel_, useZGridCB_.isSelected());  // initialize
+      
+      computeGridButton_ = new JButton("Compute grid");
+      computeGridButton_.addActionListener(new ActionListener() {
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			final boolean useX = useYGridCB_.isSelected();
+			final boolean useY = useYGridCB_.isSelected();
+			final boolean useZ = useZGridCB_.isSelected();
+			if (!useY && !useZ && !useX) {
+				return;  // nothing to do
+			}
+			final int numX = useX ? updateGridXCount() : 1;
+			final int numY = useY ? updateGridYCount() : 1;
+			final int numZ = useZ ? updateGridZCount() : 1;
+			double centerX = (((Double)gridXStartField_.getValue()) + ((Double)gridXStopField_.getValue()))/2;
+			double centerY = (((Double)gridYStartField_.getValue()) + ((Double)gridYStopField_.getValue()))/2;
+			double centerZ = (((Double)gridZStartField_.getValue()) + ((Double)gridZStopField_.getValue()))/2;
+			double deltaX = (Double)gridXDeltaField_.getValue();
+			double deltaY = (Double)gridYDeltaField_.getValue();
+			double deltaZ = (Double)gridZDeltaField_.getValue();
+			double startY = centerY - deltaY*numY/2;
+			double startZ = centerZ - deltaZ*numZ/2;
+			String xy_device = devices_.getMMDevice(Devices.Keys.XYSTAGE);
+			String z_device = devices_.getMMDevice(Devices.Keys.LOWERZDRIVE);
+			
+			if (useX) {
+				try {
+					setVolumeSliceStepSize(Math.abs(deltaX)/Math.sqrt(2));
+					setVolumeSlicesPerVolume(numX);
+					if (!useY && !useZ) {
+						// move to X center if we aren't generating position list with it
+						positions_.setPosition(Devices.Keys.XYSTAGE, Directions.X, centerX);
+					}
+				} catch (Exception ex) {
+					// not sure what to do in case of error so ignore
+				}
+			} else {
+				// use current X value as center; this was original behavior
+				centerX = positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
+			}
+			
+			boolean overwrite = MyDialogUtils.getConfirmDialogResult(
+					"Do you really want to overwrite the existing position list?",
+					JOptionPane.YES_NO_OPTION);
+			if (!overwrite) {
+				return;  // nothing to do
+			}
+			PositionList pl = new PositionList();
+			// TODO find way of streamlining this code without writing out for loops
+			if (useY || useZ) {
+				for (int iX=0; iX<numZ; ++iX) {
+					for (int iY=0; iY<numY; ++iY) {
+						MultiStagePosition msp = new MultiStagePosition();
+						StagePosition s = new StagePosition();
+						s.stageName = xy_device;
+						s.numAxes = 2;
+						s.x = centerX;
+						s.y = startY + iY * deltaY;
+						msp.add(s);
+						StagePosition s2 = new StagePosition();
+						s2.stageName = z_device;
+						s2.x = startZ + iX * deltaZ;
+						msp.add(s2);
+						msp.setLabel("Pos_" + iX + "_" + iY);
+						pl.addPosition(msp);
+					}			
+				}
+			}
+			try {
+				gui_.setPositionList(pl);
+			} catch (MMScriptException ex) {
+				MyDialogUtils.showError(ex, "Couldn't overwrite position list with generated YZ grid");
+			}
+		}
+      });
+      
+      gridFrame_ = new MMFrame();
+      gridFrame_.setTitle("XYZ Grid");
+      gridFrame_.loadPosition(100, 100);
+
+      gridPanel_ = new JPanel(new MigLayout(
+              "",
+              "[right]10[center]",
+              "[]8[]"));
+      gridFrame_.add(gridPanel_);
+      
+      class GridFrameAdapter extends WindowAdapter {
+         @Override
+         public void windowClosing(WindowEvent e) {
+        	 gridButton_.setSelected(false);
+        	 gridFrame_.savePosition();
+         }
+      }
+      
+      gridFrame_.addWindowListener(new GridFrameAdapter());
+      
+      gridButton_.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+         	 gridFrame_.setVisible(true);
+          }
+      });
+      
+      gridPanel_.add(gridYPanel_);
+      gridPanel_.add(gridZPanel_, "wrap");
+      gridPanel_.add(gridXPanel_);
+      gridPanel_.add(computeGridButton_);
+      gridFrame_.pack();
+      gridFrame_.setResizable(false);
+
+      // end YZ grid frame
+
       
       positionPanel.add(new JLabel("Post-move delay [ms]:"));
       positionDelay_ = pu.makeSpinnerFloat(0.0, 10000.0, 100.0,
@@ -939,6 +1358,42 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       refreshXYZPositions();
       
    }//end constructor
+
+   private int updateGridXCount() {
+	   double range = ((Double)gridXStartField_.getValue()) - ((Double)gridXStopField_.getValue());
+	   double delta = ((Double)gridXDeltaField_.getValue());
+	   if (Math.signum(range) != Math.signum(delta)) {
+		   delta *= -1;
+		   gridXDeltaField_.setValue(delta);
+	   }
+	   Integer count = (Integer)((int)Math.ceil(range/delta)) + 1;
+	   gridXCount_.setText(count.toString());
+	   return count;
+   }
+   
+   private int updateGridYCount() {
+	   double range = ((Double)gridYStartField_.getValue()) - ((Double)gridYStopField_.getValue());
+	   double delta = ((Double)gridYDeltaField_.getValue());
+	   if (Math.signum(range) != Math.signum(delta)) {
+		   delta *= -1;
+		   gridYDeltaField_.setValue(delta);
+	   }
+	   Integer count = (Integer)((int)Math.ceil(range/delta)) + 1;
+	   gridYCount_.setText(count.toString());
+	   return count;
+   }
+   
+   private int updateGridZCount() {
+	   double range = ((Double)gridZStartField_.getValue()) - ((Double)gridZStopField_.getValue());
+	   double delta = ((Double)gridZDeltaField_.getValue());
+	   if (Math.signum(range) != Math.signum(delta)) {
+		   delta *= -1;
+		   gridZDeltaField_.setValue(delta);
+	   }
+	   Integer count = (Integer)((int)Math.ceil(range/delta)) + 1;
+	   gridZCount_.setText(count.toString());
+	   return count;
+   }
    
    private void updateJoysticks() {
       if (ASIdiSPIM.getFrame() != null) {
@@ -3301,6 +3756,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       sliceFrameAdvanced_.savePosition();
       sliceFrameAdvanced_.dispose();
+      gridFrame_.savePosition();
+      gridFrame_.dispose();
    }
    
    @Override

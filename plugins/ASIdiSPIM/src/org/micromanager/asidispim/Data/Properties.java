@@ -193,6 +193,9 @@ public class Properties {
       PREFS_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
       PREFS_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),
       PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
+      PREFS_USE_X_GRID("UseXGrid"),
+      PREFS_USE_Y_GRID("UseYGrid"),
+      PREFS_USE_Z_GRID("UseZGrid"),
       PLUGIN_USE_NAVIGATION_JOYSTICKS("UseNavigationJoysticks"),
       PLUGIN_PIEZO_SHEET_INCREMENT("PiezoSheetIncrement"),  // piezo increment for moving piezo and galvo together
       PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet calibration
