@@ -1015,15 +1015,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       tmp_but.addActionListener(new ActionListener() {
     	  @Override
     	  public void actionPerformed(ActionEvent arg0) {
-    		  Devices.Keys camDev = isFirstSideA() ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
-    		  int height = cameras_.getCameraROI(camDev).height;
+    		  Devices.Keys camKey = isFirstSideA() ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
+    		  int height;
+    		  try {
+    			  height = core_.getROI(devices_.getMMDevice(camKey)).height;
+    		  } catch (Exception e) {
+    			  height = 1;
+    		  }
     		  float pixelSize = (float) core_.getPixelSizeUm();
     		  double delta = height*pixelSize*0.9; // 10% overlap
     		  // sanity checks, would be better handled with exceptions or more formal checks
     		  if (height > 4100 || height < 4 || pixelSize < 1e-6) {
     			  return;
     		  }
-    		  gridYDeltaField_.setValue(delta);
+    		  gridYDeltaField_.setValue(Math.round(delta));
     		  updateGridYCount();
     	  }
       });
@@ -1112,8 +1117,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       tmp_but.addActionListener(new ActionListener() {
     	  @Override
     	  public void actionPerformed(ActionEvent arg0) {
-    		  Devices.Keys camDev = isFirstSideA() ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
-    		  int width = cameras_.getCameraROI(camDev).width;
+    		  Devices.Keys camKey = isFirstSideA() ? Devices.Keys.CAMERAA : Devices.Keys.CAMERAB;
+    		  int width;
+    		  try {
+    			  width = core_.getROI(devices_.getMMDevice(camKey)).width;
+    		  } catch (Exception e) {
+    			  width = 1;
+    		  }
     		  float pixelSize = (float) core_.getPixelSizeUm();
     		  // sanity checks, would be better handled with exceptions or more formal checks
     		  if (width > 4100 || width < 4 || pixelSize < 1e-6) {
@@ -1136,7 +1146,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       computeGridButton_.addActionListener(new ActionListener() {
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
-			final boolean useX = useYGridCB_.isSelected();
+			final boolean useX = useXGridCB_.isSelected();
 			final boolean useY = useYGridCB_.isSelected();
 			final boolean useZ = useZGridCB_.isSelected();
 			if (!useY && !useZ && !useX) {
@@ -1172,6 +1182,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 				centerX = positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
 			}
 			
+			if (!useY && !useZ) {
+				return;
+			}
 			boolean overwrite = MyDialogUtils.getConfirmDialogResult(
 					"Do you really want to overwrite the existing position list?",
 					JOptionPane.YES_NO_OPTION);
@@ -1179,25 +1192,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 				return;  // nothing to do
 			}
 			PositionList pl = new PositionList();
-			// TODO find way of streamlining this code without writing out for loops
-			if (useY || useZ) {
-				for (int iX=0; iX<numZ; ++iX) {
-					for (int iY=0; iY<numY; ++iY) {
-						MultiStagePosition msp = new MultiStagePosition();
-						StagePosition s = new StagePosition();
-						s.stageName = xy_device;
-						s.numAxes = 2;
-						s.x = centerX;
-						s.y = startY + iY * deltaY;
-						msp.add(s);
-						StagePosition s2 = new StagePosition();
-						s2.stageName = z_device;
-						s2.x = startZ + iX * deltaZ;
-						msp.add(s2);
-						msp.setLabel("Pos_" + iX + "_" + iY);
-						pl.addPosition(msp);
-					}			
-				}
+			for (int iX=0; iX<numZ; ++iX) {
+				for (int iY=0; iY<numY; ++iY) {
+					MultiStagePosition msp = new MultiStagePosition();
+					StagePosition s = new StagePosition();
+					s.stageName = xy_device;
+					s.numAxes = 2;
+					s.x = centerX;
+					s.y = startY + iY * deltaY;
+					msp.add(s);
+					StagePosition s2 = new StagePosition();
+					s2.stageName = z_device;
+					s2.x = startZ + iX * deltaZ;
+					msp.add(s2);
+					msp.setLabel("Pos_" + iX + "_" + iY);
+					pl.addPosition(msp);
+				}			
 			}
 			try {
 				gui_.setPositionList(pl);
