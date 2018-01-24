@@ -744,6 +744,9 @@ int CLEDArray::Off(){
 }
 
 int CLEDArray::UpdatePattern(){
+	//master function that gets called to send commands to LED array.
+	//Waits on response from serial port so that call blocks until pattern
+	//is corectly shown
 	if (!shutterOpen_) {
 		Off();
 	} else if (pattern_ == "Bright Field"){
@@ -783,7 +786,19 @@ int CLEDArray::UpdatePattern(){
 	  else{
 		  Off();
 	  }
-	  return DEVICE_OK;
+	return 	ReadResponse();
+}
+
+int CLEDArray::ReadResponse(){
+	  //try to read from serial port
+	  unsigned char response[1];
+	  unsigned long read = 0;
+	  int error  = ReadFromComPort(port_.c_str(),response,1, read);
+	  if (error==0) {
+		  return DEVICE_OK;
+	  }
+
+	  return DEVICE_ERR;
 }
 
 

@@ -298,6 +298,7 @@ private:
 	int Off();
 	int UpdatePattern();
 	int Reset();
+	int ReadResponse();
 
 	unsigned char lastModVal_;
 	
