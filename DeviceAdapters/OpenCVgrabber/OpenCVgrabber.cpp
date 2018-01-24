@@ -233,11 +233,7 @@ int COpenCVgrabber::Initialize()
 
    // start opencv capture_ from first device, 
    // we need to initialise hardware early on to discover properties
-#ifdef WIN32
    capture_ = cvCaptureFromCAM(cameraID_);
-#else
-   capture_ = cvCaptureFromCAM(CV_CAP_ANY);
-#endif
 
    if (!capture_) // do we have a capture_ device?
    {
