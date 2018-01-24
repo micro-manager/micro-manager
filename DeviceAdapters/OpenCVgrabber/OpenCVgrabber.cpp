@@ -168,10 +168,11 @@ COpenCVgrabber::COpenCVgrabber() :
    DeviceEnumerator de;
    // Video Devices
    map<int, OpenCVDevice> devices = de.getVideoDevicesMap();
+   map<int, OpenCVDevice>::iterator it;
 
-   for (int i = 0; i++; devices.size())
+   for ( it = devices.begin(); it != devices.end(); it++)
    {
-       AddAllowedValue(cIDName, devices.at(i).deviceName.c_str(), long(i));
+       AddAllowedValue(cIDName, it->second.deviceName.c_str(), long(it->first));
    }
 #else
    String cIDNameReally = "Camera Number";
