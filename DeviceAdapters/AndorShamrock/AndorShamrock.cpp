@@ -859,7 +859,6 @@ void AndorShamrock::SetSideIrisPositionProperty()
 int AndorShamrock::OnSetDirectIrisPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   int retVal = DEVICE_OK;
-  unsigned int returnCode;
   if (eAct == MM::BeforeGet)
   {
     int directIrisPosition;
@@ -885,7 +884,6 @@ int AndorShamrock::OnSetDirectIrisPosition(MM::PropertyBase* pProp, MM::ActionTy
 int AndorShamrock::OnSetSideIrisPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   int retVal = DEVICE_OK;
-  unsigned int returnCode;
   if (eAct == MM::BeforeGet)
   {
     int sideIrisPosition;
