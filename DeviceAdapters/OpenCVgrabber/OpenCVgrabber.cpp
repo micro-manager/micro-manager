@@ -161,6 +161,7 @@ COpenCVgrabber::COpenCVgrabber() :
    SetErrorText(FAILED_TO_GET_IMAGE, "Could not get an image from this camera");
    SetErrorText(CAMERA_NOT_INITIALIZED, "Camera was not initialized");
 
+#ifdef WIN32
    CPropertyAction* pAct = new CPropertyAction(this, &COpenCVgrabber::OnCameraID);
    CreateProperty(cIDName, "Undefined", MM::String, false, pAct, true);
 
@@ -172,6 +173,15 @@ COpenCVgrabber::COpenCVgrabber() :
    {
        AddAllowedValue(cIDName, devices.at(i).deviceName.c_str(), long(i));
    }
+#else
+   String cIDNameReally = "Camera Number";
+   CPropertyAction* pAct = new CPropertyAction(this, &COpenCVgrabber::OnCameraID);
+   CreateProperty(cIDNameReally.c_str(), "0", MM::Integer, false, pAct, true);
+   AddAllowedValue(cIDNameReally.c_str(), "0");
+   AddAllowedValue(cIDNameReally.c_str(), "1");
+   AddAllowedValue(cIDNameReally.c_str(), "2");
+   AddAllowedValue(cIDNameReally.c_str(), "3");
+#endif
 
    readoutStartTime_ = GetCurrentMMTime();
    thd_ = new MySequenceThread(this);
@@ -223,7 +233,12 @@ int COpenCVgrabber::Initialize()
 
    // start opencv capture_ from first device, 
    // we need to initialise hardware early on to discover properties
+#ifdef WIN32
    capture_ = cvCaptureFromCAM(cameraID_);
+#else
+   capture_ = cvCaptureFromCAM(CV_CAP_ANY);
+#endif
+
    if (!capture_) // do we have a capture_ device?
    {
      return DEVICE_NOT_CONNECTED;
@@ -270,8 +285,8 @@ int COpenCVgrabber::Initialize()
    assert(nRet == DEVICE_OK);
 
    // CameraID
-   nRet = CreateProperty(MM::g_Keyword_CameraID, "V1.0", MM::String, true);
-   assert(nRet == DEVICE_OK);
+   // nRet = CreateProperty(MM::g_Keyword_CameraID, "V1.0", MM::String, true);
+   // assert(nRet == DEVICE_OK);
 
    // binning
    CPropertyAction *pAct = new CPropertyAction (this, &COpenCVgrabber::OnBinning);
@@ -1056,12 +1071,22 @@ int COpenCVgrabber::OnFlipY(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int COpenCVgrabber::OnCameraID(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+#ifdef WIN32
    if (eAct == MM::AfterSet)
    {
       string srcName;
       pProp->Get(srcName);
       GetPropertyData(cIDName, srcName.c_str(), cameraID_);
    }
+#else
+   if (eAct == MM::AfterSet)
+   {
+      pProp->Get(cameraID_);
+   } else if (eAct == MM::BeforeGet) 
+   { 
+      pProp->Set(cameraID_);
+   } 
+#endif
 
    return DEVICE_OK;
 }
