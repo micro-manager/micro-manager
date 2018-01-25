@@ -274,6 +274,7 @@ public class Properties {
       PLUGIN_SHEET_OFFSET_EDGE_B("SheetOffsetEdgeSideB"),
       PLUGIN_LIGHTSHEET_SLOPE("LightSheetSlope"),
       PLUGIN_LIGHTSHEET_OFFSET("LightSheetOffset"),
+      PLUGIN_GRID_OVERLAP_PERCENT("GridOverlapPercent"),
       ;
       private final String text;
       private final boolean forceSet;

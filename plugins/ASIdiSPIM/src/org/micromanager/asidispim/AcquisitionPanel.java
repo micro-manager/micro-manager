@@ -238,6 +238,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JFormattedTextField gridZStopField_;
    private final JFormattedTextField gridZDeltaField_;
    private final JLabel gridZCount_;
+   private final JPanel gridSettingsPanel_;
    private final JButton computeGridButton_;
    
    private static final int XYSTAGETIMEOUT = 20000;
@@ -1023,7 +1024,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     			  height = 1;
     		  }
     		  float pixelSize = (float) core_.getPixelSizeUm();
-    		  double delta = height*pixelSize*0.9; // 10% overlap
+    		  double delta = height*pixelSize;
+    		  double overlap = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_GRID_OVERLAP_PERCENT); 
+    		  delta *= (1-overlap/100);
     		  // sanity checks, would be better handled with exceptions or more formal checks
     		  if (height > 4100 || height < 4 || pixelSize < 1e-6) {
     			  return;
@@ -1129,8 +1132,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     		  if (width > 4100 || width < 4 || pixelSize < 1e-6) {
     			  return;
     		  }
-    		  double delta = width*pixelSize/Math.sqrt(2)*0.9; // 10% overlap
-    		  gridZDeltaField_.setValue(delta);
+    		  double delta = width*pixelSize/Math.sqrt(2);
+    		  double overlap = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_GRID_OVERLAP_PERCENT); 
+    		  delta *= (1-overlap/100);
+    		  gridZDeltaField_.setValue(Math.round(delta));
     		  updateGridZCount();
     	  }
       });
@@ -1141,6 +1146,17 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       gridZPanel_.add(gridZCount_, "wrap");
       updateGridZCount();
       PanelUtils.componentsSetEnabled(gridZPanel_, useZGridCB_.isSelected());  // initialize
+      
+      gridSettingsPanel_ = new JPanel(new MigLayout(
+              "",
+              "[right]10[center]",
+              "[]8[]"));
+
+      gridSettingsPanel_.setBorder(PanelUtils.makeTitledBorder("Grid settings"));
+      gridSettingsPanel_.add(new JLabel("Overlap (Y and Z) [%]:"));
+      JSpinner tileOverlapPercent = pu.makeSpinnerFloat(0, 100, 1,
+              Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_GRID_OVERLAP_PERCENT, 10);
+      gridSettingsPanel_.add(tileOverlapPercent, "wrap");
       
       computeGridButton_ = new JButton("Compute grid");
       computeGridButton_.addActionListener(new ActionListener() {
@@ -1246,8 +1262,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       gridPanel_.add(gridYPanel_);
       gridPanel_.add(gridZPanel_, "wrap");
-      gridPanel_.add(gridXPanel_);
-      gridPanel_.add(computeGridButton_);
+      gridPanel_.add(gridXPanel_, "spany 2");
+      gridPanel_.add(gridSettingsPanel_, "growx, wrap");
+      gridPanel_.add(computeGridButton_, "growx, growy");
       gridFrame_.pack();
       gridFrame_.setResizable(false);
 
