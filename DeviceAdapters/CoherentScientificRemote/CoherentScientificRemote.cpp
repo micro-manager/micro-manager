@@ -3,7 +3,8 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Coherent Scientific Remote controller adapter for up to 6 Coherent Obis lasers
+// DESCRIPTION:   Coherent Scientific Remote laser controller adapter 
+//			      Support for the Coherent Scientific Remote for up to 6 Coherent Obis lasers and the Single Laser Remote 
 //    
 // COPYRIGHT:     35037 Marburg, Germany
 //                Max Planck Institute for Terrestrial Microbiology, 2017 
@@ -47,7 +48,7 @@ const char* g_Keyword_PowerSetpointPercent = "PowerSetpoint (%)";
 const char* g_Keyword_PowerReadback = "PowerReadback (mW)";
 const char* g_Keyword_TriggerNum = "Shutter Laser";
 
-const char * carriage_return = "\n";
+const char * carriage_return = "\n\r";
 const char * line_feed = "\n";
 
 const char* const g_Msg_LASERS_MISSING = "Label not defined";
@@ -87,6 +88,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 CoherentScientificRemote::CoherentScientificRemote(const char* name) :
    initialized_(false), 
    state_(0),
+   descriptionToken_("*IDN"),
    modulation_("Extern-Digital"),
    name_(name), 
    error_(0),
@@ -127,9 +129,7 @@ CoherentScientificRemote::CoherentScientificRemote(const char* name) :
    // create pre-initialization properties
    // ------------------------------------
 
-   // Description
-   CreateProperty(MM::g_Keyword_Description, g_ControllerName, MM::String, true);
-   
+
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &CoherentScientificRemote::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
@@ -185,8 +185,12 @@ int CoherentScientificRemote::Initialize()
 	   error_ = ERR_DEVICE_NOT_FOUND;
 	   return HandleErrors();
    }
+   
+   CPropertyAction* pAct = new CPropertyAction (this, &CoherentScientificRemote::OnRemoteDescription);
+   CreateProperty(MM::g_Keyword_Description, g_ControllerName, MM::String, true, pAct);
+   
    // Add selector for trigger
-   CPropertyAction* pAct = new CPropertyAction(this, &CoherentScientificRemote::OnTriggerNum);
+   pAct = new CPropertyAction(this, &CoherentScientificRemote::OnTriggerNum);
    CreateProperty(g_Keyword_TriggerNum, "None", MM::String, false, pAct);
 
    //Initialize laser
@@ -354,7 +358,7 @@ int CoherentScientificRemote::OnPort(MM::PropertyBase* pProp, MM::ActionType eAc
    return HandleErrors();
 }
 
-int CoherentScientificRemote::OnLaserPort(MM::PropertyBase* /* pProp */, MM::ActionType /* eAct */, long /* laserNum */)
+int CoherentScientificRemote::OnLaserPort(MM::PropertyBase* /*pProp*/, MM::ActionType /*eAct*/, long /*laserNum*/)
 {
    return HandleErrors();
 }
@@ -517,6 +521,19 @@ int CoherentScientificRemote::OnHeadID(MM::PropertyBase* pProp, MM::ActionType e
    if (eAct == MM::BeforeGet)
    {
       pProp->Set((this->queryLaser(replaceLaserNum(headSerialNoToken_, laserNum).c_str())).c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // never do anything!!
+   }
+   return HandleErrors();
+}
+
+int CoherentScientificRemote::OnRemoteDescription(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((this->queryLaser(descriptionToken_)).c_str());
    }
    else if (eAct == MM::AfterSet)
    {
