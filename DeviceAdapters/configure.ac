@@ -516,6 +516,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    Video4Linux
    Vincent
    Vortran
+   WieneckeSinske
    XCite120PC_Exacte
    XCiteLed
    XCiteXT600
