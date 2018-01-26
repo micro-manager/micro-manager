@@ -364,7 +364,7 @@ public final class CalibrationListDlg extends MMDialog {
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
       if (result == JOptionPane.OK_OPTION) {
          CalibrationEditor dlg =
-            new CalibrationEditor(calibrationName, pixelSize);
+            new CalibrationEditor(parentGUI_, calibrationName, pixelSize);
          dlg.setCore(core_);
          dlg.setVisible(true);
          if (dlg.isChanged()) {

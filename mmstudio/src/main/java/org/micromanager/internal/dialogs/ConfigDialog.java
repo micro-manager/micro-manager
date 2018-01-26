@@ -110,13 +110,13 @@ public abstract class ConfigDialog extends MMDialog {
       newItem_ = newItem;
       gui_ = gui;
       core_ = core;
-      setLayout(new MigLayout("fill, insets 2, gap 2"));
-      loadAndRestorePosition(100, 100, 550, 600);
-      setMinimumSize(new Dimension(400, 200));
+      super.setLayout(new MigLayout("fill, insets 2, gap 2"));
+      super.loadAndRestorePosition(100, 100, 550, 600);
+      super.setMinimumSize(new Dimension(400, 200));
    }
 
    public void initialize() {
-      flags_ = new ShowFlags();
+      flags_ = new ShowFlags(gui_);
       data_.setFlags(flags_);
 
       initializeWidgets();

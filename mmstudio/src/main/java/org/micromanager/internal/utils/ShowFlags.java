@@ -20,6 +20,7 @@
 
 package org.micromanager.internal.utils;
 
+import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 
 /**
@@ -33,6 +34,8 @@ public final class ShowFlags {
    public boolean state_ = true;
    public boolean other_ = true;
    public String searchFilter_ = "";
+   
+   private final Studio studio_;
 
    private static final String SHOW_CAMERAS = "show_cameras";
    private static final String SHOW_SHUTTERS = "show_shutters";
@@ -40,24 +43,28 @@ public final class ShowFlags {
    private static final String SHOW_STATE = "show_state";
    private static final String SHOW_OTHER = "show_other";
    private static final String SEARCH_FILTER = "search_filter";
+   
+   public ShowFlags(Studio studio) {
+      studio_ = studio;
+   }
 
    public void load(Class<?> c) {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
-      cameras_ = profile.getBoolean(c, SHOW_CAMERAS, cameras_);
-      shutters_ = profile.getBoolean(c, SHOW_SHUTTERS, shutters_);
-      stages_ = profile.getBoolean(c, SHOW_STAGES, stages_);
-      state_ = profile.getBoolean(c, SHOW_STATE, state_);
-      other_ = profile.getBoolean(c, SHOW_OTHER, other_);
-      searchFilter_ = profile.getString(c, SEARCH_FILTER, searchFilter_);
+      UserProfile profile = studio_.getUserProfile();
+      cameras_ = profile.getSettings(c).getBoolean(SHOW_CAMERAS, cameras_);
+      shutters_ = profile.getSettings(c).getBoolean(SHOW_SHUTTERS, shutters_);
+      stages_ = profile.getSettings(c).getBoolean(SHOW_STAGES, stages_);
+      state_ = profile.getSettings(c).getBoolean(SHOW_STATE, state_);
+      other_ = profile.getSettings(c).getBoolean(SHOW_OTHER, other_);
+      searchFilter_ = profile.getSettings(c).getString(SEARCH_FILTER, searchFilter_);
    }
 
    public void save(Class<?> c) {
-      UserProfile profile = UserProfileStaticInterface.getInstance();
-      profile.setBoolean(c, SHOW_CAMERAS, cameras_);
-      profile.setBoolean(c, SHOW_SHUTTERS, shutters_);
-      profile.setBoolean(c, SHOW_STAGES, stages_);
-      profile.setBoolean(c, SHOW_STATE, state_);
-      profile.setBoolean(c, SHOW_OTHER, other_);
-      profile.setString(c, SEARCH_FILTER, searchFilter_);
+      UserProfile profile = studio_.getUserProfile();
+      profile.getSettings(c).putBoolean(SHOW_CAMERAS, cameras_);
+      profile.getSettings(c).putBoolean(SHOW_SHUTTERS, shutters_);
+      profile.getSettings(c).putBoolean(SHOW_STAGES, stages_);
+      profile.getSettings(c).putBoolean(SHOW_STATE, state_);
+      profile.getSettings(c).putBoolean(SHOW_OTHER, other_);
+      profile.getSettings(c).putString(SEARCH_FILTER, searchFilter_);
    }
 }

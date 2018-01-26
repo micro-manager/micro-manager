@@ -809,6 +809,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       }
 
       propertyBrowser_ = new PropertyEditor(studio_);
+      this.events().registerForEvents(propertyBrowser_);
       propertyBrowser_.setVisible(true);
       propertyBrowser_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
    }

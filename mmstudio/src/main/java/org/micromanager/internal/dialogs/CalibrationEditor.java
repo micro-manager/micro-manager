@@ -83,7 +83,7 @@ public final class CalibrationEditor extends MMDialog {
    
    private JTable table_;
    private PropertyTableData data_;
-   private Studio parentGUI_;
+   private final Studio studio_;
    private ShowFlags flags_;
    
    private JCheckBox showCamerasCheckBox_;
@@ -96,15 +96,16 @@ public final class CalibrationEditor extends MMDialog {
    private final JScrollPane scrollPane_;
    private boolean tableEditable_ = true;
     
-   public CalibrationEditor(String label, String pixelSize) {
+   public CalibrationEditor(Studio studio, String label, String pixelSize) {
       super("calibration editor");
       setModal(true);
+      studio_ = studio;
       label_ = label;
       pixelSize_ = pixelSize;
       changed_ = false;
       initialCfg_ = new Configuration();
       
-      flags_ = new ShowFlags();
+      flags_ = new ShowFlags(studio);
       flags_.load(CalibrationEditor.class);
       
       springLayout = new SpringLayout();
@@ -407,11 +408,6 @@ public final class CalibrationEditor extends MMDialog {
       data_.updateStatus();
       
   }
-   
-   public void setParentGUI(Studio parent) {
-      parentGUI_ = parent;
-   }
-
 
    /**
     * Property table data model, representing MMCore data
@@ -625,8 +621,7 @@ public final class CalibrationEditor extends MMDialog {
 
                refresh();
 
-               if (parentGUI_ != null)
-                  parentGUI_.app().refreshGUI();
+               studio_.app().refreshGUI();
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
                ReportingUtils.showError(e);
@@ -925,7 +920,7 @@ public final class CalibrationEditor extends MMDialog {
                      slider_.setLimits(item_.lowerLimit, item_.upperLimit);
                      try {
                         value = NumberUtils.doubleToDisplayString(Double.parseDouble((String) value));
-                     } catch (Exception e) {
+                     } catch (NumberFormatException e) {
                         ReportingUtils.logError(e);
                      }
                   }
@@ -1022,7 +1017,7 @@ public final class CalibrationEditor extends MMDialog {
                      value = NumberUtils.doubleToDisplayString(Double.parseDouble((String) value));
                   else if (item_.isInteger())
                      value = NumberUtils.intToDisplayString(Integer.parseInt((String) value));
-               } catch (Exception e) {
+               } catch (NumberFormatException e) {
                   ReportingUtils.logError(e);
                }
                try {
