@@ -324,8 +324,12 @@ public:
    double getPixelSizeUm();
    double getPixelSizeUm(bool cached);
    double getPixelSizeUmByID(const char* resolutionID) throw (CMMError);
+   std::vector<double> getPixelSizeAffine() throw (CMMError);
+   std::vector<double> getPixelSizeAffine(bool cached) throw (CMMError);
+   std::vector<double> getPixelSizeAffineByID(const char* resolutionID) throw (CMMError);
    double getMagnificationFactor() const;
    void setPixelSizeUm(const char* resolutionID, double pixSize)  throw (CMMError);
+   void setPixelSizeAffine(const char* resolutionID, std::vector<double> affine)  throw (CMMError);
    void definePixelSizeConfig(const char* resolutionID,
          const char* deviceLabel, const char* propName,
          const char* value) throw (CMMError);

@@ -28,17 +28,24 @@ int Tsi3Cam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long bin = 1;
       pProp->Get(bin);
-      roiBinData.xBin = bin;
-      roiBinData.yBin = bin;
-      roiBinData.xPixels = fullFrame.xPixels / bin;
-      roiBinData.yPixels = fullFrame.yPixels / bin;
-      roiBinData.xPixels = fullFrame.xPixels;
-      roiBinData.yPixels = fullFrame.yPixels;
+      if (tl_camera_set_hbin(camHandle, bin))
+      {
+         ResetImageBuffer();
+         return ERR_ROI_BIN_FAILED;
+      }
+
+      if (tl_camera_set_vbin(camHandle, bin))
+      {
+         ResetImageBuffer();
+         return ERR_ROI_BIN_FAILED;
+      }
       return ResizeImageBuffer();
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set((long)roiBinData.xBin);
+      int bin(1);
+      tl_camera_get_hbin(camHandle, &bin); // vbin is the same
+      pProp->Set((long)bin);
    }
    return DEVICE_OK;
 }

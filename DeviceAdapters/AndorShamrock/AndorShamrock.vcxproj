@@ -115,7 +115,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\3rdparty\ShamrockSDK\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\3rdparty\ShamrockSDK\include;</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -126,7 +126,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>ShamrockCIFm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\3rdparty\ShamrockSDK\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\..\3rdparty\ShamrockSDK\lib\$(Platform);</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -180,9 +180,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AndorShamrock.cpp" />
+    <ClCompile Include="ModuleAPIFunctions.cpp" />
+    <ClCompile Include="ShamrockConstants.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AndorShamrock.h" />
+    <ClInclude Include="ModuleAPIFunctions.h" />
+    <ClInclude Include="SharedConstants.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

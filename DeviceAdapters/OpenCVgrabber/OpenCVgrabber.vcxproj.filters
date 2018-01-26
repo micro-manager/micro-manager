@@ -18,9 +18,15 @@
     <ClCompile Include="OpenCVgrabber.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DeviceEnumerator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OpenCVgrabber.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceEnumerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

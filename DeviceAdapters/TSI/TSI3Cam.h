@@ -143,7 +143,6 @@ private:
    long acquiringSequence;
    long acquiringFrame;
 
-   Tsi3RoiBin roiBinData;
    Tsi3RoiBin fullFrame;
 
    TRIGGER_TYPE trigger;
