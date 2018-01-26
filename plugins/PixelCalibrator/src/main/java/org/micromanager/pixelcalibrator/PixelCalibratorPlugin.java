@@ -159,7 +159,8 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
 
             }
             else {
-               CalibrationEditor editor = new CalibrationEditor("Res", NumberUtils.doubleToDisplayString(pixelSize));
+               CalibrationEditor editor = new CalibrationEditor(app_, 
+                       "Res", NumberUtils.doubleToDisplayString(pixelSize));
                editor.setCore(core_);
                editor.editNameOnly();
                editor.setVisible(true);
