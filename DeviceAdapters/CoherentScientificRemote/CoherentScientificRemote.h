@@ -96,6 +96,7 @@ public:
    
    // action interface
    // ----------------
+   int OnRemoteDescription(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerNum(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -131,6 +132,7 @@ private:
    std::string modulation_;
 
    std::string queryToken_;
+   std::string descriptionToken_;
    std::string powerSetpointToken_;
    std::string powerReadbackToken_;
    std::string CDRHToken_;  // if this is on, laser delays 5 SEC before turning on

@@ -165,6 +165,7 @@ SUBDIRS = \
 	VariLC \
 	Vincent \
 	Vortran \
+	WieneckeSinske \
 	XCite120PC_Exacte \
 	XCiteLed \
 	XCiteXT600 \

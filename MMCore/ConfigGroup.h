@@ -26,7 +26,9 @@
 #define _CONFIG_GROUP_H_
 
 #include "Configuration.h"
+#include "Error.h"
 #include <string>
+#include <vector>
 
 /**
  * Encapsulates a collection (map) of user-defined presets.
@@ -51,7 +53,7 @@ public:
    {
       PropertySetting setting(deviceLabel, propName, value);
       configs_[configName].addSetting(setting);
-	   }
+	}
 
    /**
     * Finds preset by name.
@@ -378,14 +380,36 @@ private:
 class PixelSizeConfiguration : public Configuration
 {
 public:
-   PixelSizeConfiguration() : pixelSizeUm_(0.0) {}
+   PixelSizeConfiguration() : pixelSizeUm_(0.0)  
+   {
+      affineMatrix_.push_back(1.0);
+      affineMatrix_.push_back(0.0);
+      affineMatrix_.push_back(0.0);
+      affineMatrix_.push_back(0.0);
+      affineMatrix_.push_back(1.0);
+      affineMatrix_.push_back(0.0);
+   }
    ~PixelSizeConfiguration() {}
 
    void setPixelSizeUm(double pixSize) {pixelSizeUm_ = pixSize;}
    double getPixelSizeUm() const {return pixelSizeUm_;}
+   void setPixelConfigAffineMatrix(std::vector<double> &affineMatrix) throw (CMMError)
+   { 
+      if (affineMatrix.size() != 6) 
+      {
+         throw new CMMError("PixelConfig affineMatrix has to have 6 elements");
+      }
+      for (int i=0; i < affineMatrix.size(); i++) 
+      {
+         affineMatrix_.at(i) = affineMatrix.at(i);
+      }
+   }
+
+   std::vector<double> getPixelConfigAffineMatrix() {return affineMatrix_;}
 
 private:
    double pixelSizeUm_;
+   std::vector<double> affineMatrix_;
 };
 
 /**
