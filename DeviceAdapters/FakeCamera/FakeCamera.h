@@ -27,7 +27,11 @@
 
 #include "DeviceBase.h"
 
+#ifdef WIN32
 #include "opencv/highgui.h"
+#else
+#include <opencv/cv.hpp>
+#endif
 
 #define ERR_INVALID_DEVICE_NAME 10000
 #define OUT_OF_RANGE 10001
