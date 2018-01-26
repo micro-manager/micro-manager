@@ -33,6 +33,32 @@
 #define ERR_NO_PORT_SET 108
 #define ERR_VERSION_MISMATCH 109
 
+class CLEDArrayVirtualShutter : public CShutterBase<CLEDArrayVirtualShutter>
+{
+public:
+   CLEDArrayVirtualShutter();
+   ~CLEDArrayVirtualShutter();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown() {initialized_ = false; return DEVICE_OK;}
+  
+   void GetName(char* pszName) const;
+   bool Busy(){return false;}
+
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire (double /* deltaT */) { return DEVICE_UNSUPPORTED_COMMAND;}
+
+private:
+   std::vector<std::string> availableDAs_;
+   std::string DADeviceName1_;
+   std::string DADeviceName2_;
+   MM::SignalIO* DADevice1_;
+   bool initialized_;
+};
 
 class CLEDArray: public  CSLMBase<CLEDArray>
 {
@@ -233,6 +259,7 @@ public:
 	  int OnMinNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnMaxNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnLED(MM::PropertyBase* pPropt, MM::ActionType eAct);
+	  int OnReset(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
 private:
    
@@ -270,6 +297,8 @@ private:
 	int ArrayDist(double dist);
 	int Off();
 	int UpdatePattern();
+	int Reset();
+	int ReadResponse();
 
 	unsigned char lastModVal_;
 	
@@ -279,4 +308,4 @@ private:
 
 };
 
-#endif //_Arduino_H_
+#endif 

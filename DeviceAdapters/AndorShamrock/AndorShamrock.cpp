@@ -1,73 +1,15 @@
 #include "AndorShamrock.h"
+#include "ModuleAPIFunctions.h"
 #include "ShamrockCIF.h"
-#include "../../MMDevice/ModuleInterface.h"
+//#include "ShamrockConstants.h"
 #include <sstream>
 
 using namespace std;
 
-const char* g_ShamrockName = "Andor Shamrock";
-const char* g_DeviceDescription = "Device Adapter for Andor Shamrock Spectrographs";
-const char* gsz_SerialNo = "Shamrock Serial No.";;
-const char* gsz_CentreWavelength = "Centre wavelength";
-const char* gsz_RayleighWavelength = "Rayleigh wavelength";
-const char* gsz_Grating = "Grating";
-const char* gsz_Filter = "Filter";
-const char* gsz_Shutter = "Shutter";
-const char* gsz_PixelWidth = "Detector Pixel Width (um)";
-const char* gsz_NoPixels = "No. of Detector Pixels";
-const char* gsz_gratingoffset = "Grating Offset";
-const char* gsz_detectoroffset = "Detector Offset";
-const char* gsz_Coefficients = "Calibration Coefficients";
-const char* gsz_SlitWidth[4] = {"Slit Width - Side Input (um)",
-                               "Slit Width - Direct Input (um)",
-                               "Slit Width - Side Output (um)",
-                               "Slit Width - Direct Output (um)"};
-const char* gsz_Port[2] = {"Port (Input)", "Port (Output)"};
-//const char* gsz_flipperMirror[2] = {"DIRECT","SIDE"};
-const char* gsz_FocusMirror = "Focus Mirror (Motor Steps)";
-
 std::vector<std::string> gsz_flipperMirror;
-
-const int NUM_PORTS = 2;
-const int NUM_DETECTORS = 4;
-const int NUM_DETECTORS_PER_PORT = 2;
-const int NUM_FLIPPER_POS = 2;
-const int PORT_1 = 1;
-const int PORT_2 = 2;
-const int MAX_NUM_SLITS = 4;
-const float MAX_SLIT_WIDTH = 2500;
-const float MIN_SLIT_WIDTH = 10;
-
-MODULE_API void InitializeModuleData()
-{
-   RegisterDevice(g_ShamrockName, MM::GenericDevice, g_DeviceDescription);
-}
-
-MODULE_API MM::Device* CreateDevice(const char* deviceName)
-{
-   if (deviceName == 0) {
-      return 0;
-   }
-
-   string strName(deviceName);
-
-   if (strcmp(deviceName, g_ShamrockName) == 0) {
-      MM::Device * device = new AndorShamrock();
-      return device;
-   }
-
-   return 0;
-}
-
-MODULE_API void DeleteDevice(MM::Device * pDevice)
-{
-   delete pDevice;
-}
-
 
 AndorShamrock::AndorShamrock()
 {
-
 }
 
 AndorShamrock::~AndorShamrock()
@@ -92,7 +34,7 @@ int AndorShamrock::Initialize()
       SetCoefficientsProperty();
       SetGratingsProperty();
       SetWavelengthProperty();
-	  SetRayleighWavelengthProperty();
+	    SetRayleighWavelengthProperty();
       SetPixelWidthProperty();
       SetNumberPixelsProperty();
       SetFilterProperty();
@@ -102,6 +44,10 @@ int AndorShamrock::Initialize()
       SetGratingOffsetProperty();
       SetDetectorOffsetProperty();
       SetFocusMirrorProperty();
+
+
+      SetDirectIrisPositionProperty();
+      SetSideIrisPositionProperty();
    }
    else {
       nRet = DEVICE_NOT_CONNECTED;
@@ -117,18 +63,18 @@ int AndorShamrock::Shutdown()
 
 void AndorShamrock::GetName(char* pszName) const
 {
-   CDeviceUtils::CopyLimitedString(pszName, g_ShamrockName);
+   CDeviceUtils::CopyLimitedString(pszName, g_SpectrographName);
 }
 
 int AndorShamrock::OnSetWavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int retVal=DEVICE_OK;
-   unsigned int rc;
+   unsigned int returnCode;
    if (eAct == MM::BeforeGet)
    {
       float currentwavelength(0.0f);
-      rc = ShamrockGetWavelength(0,&currentwavelength);
-	  if( SHAMROCK_SUCCESS == rc) {
+      returnCode = ShamrockGetWavelength(0,&currentwavelength);
+	  if( SHAMROCK_SUCCESS == returnCode) {
          pProp->Set(currentwavelength);
 	  }
    }
@@ -136,8 +82,8 @@ int AndorShamrock::OnSetWavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       double wavelength;
       pProp->Get(wavelength);
-      rc = ShamrockSetWavelength(0, static_cast<float>(wavelength));
-      if (SHAMROCK_SUCCESS != rc) {
+      returnCode = ShamrockSetWavelength(0, static_cast<float>(wavelength));
+      if (SHAMROCK_SUCCESS != returnCode) {
          retVal = DEVICE_CAN_NOT_SET_PROPERTY;
    }
    OnPropertyChanged(gsz_CentreWavelength, CDeviceUtils::ConvertToString(wavelength));
@@ -149,18 +95,21 @@ int AndorShamrock::OnSetWavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
 int AndorShamrock::OnSetPixelWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int retVal=DEVICE_OK;
+   unsigned int returnCode;
    if (eAct == MM::BeforeGet)
    {
       float pixelwidth(0.0f);
-      ShamrockGetPixelWidth(0,&pixelwidth);
-      pProp->Set(pixelwidth);
+      returnCode = ShamrockGetPixelWidth(0, &pixelwidth);
+      if (SHAMROCK_SUCCESS == returnCode) {
+      	 pProp->Set(pixelwidth);
+	  }
    }
    else if (eAct == MM::AfterSet)
    {
       double pixelwidth;
       pProp->Get(pixelwidth);
-      unsigned ret = ShamrockSetPixelWidth(0, static_cast<float>(pixelwidth));
-      if (SHAMROCK_SUCCESS != ret) {
+      unsigned returnCode = ShamrockSetPixelWidth(0, static_cast<float>(pixelwidth));
+      if (SHAMROCK_SUCCESS != returnCode) {
          retVal = DEVICE_CAN_NOT_SET_PROPERTY;
       }
       OnPropertyChanged(gsz_PixelWidth, CDeviceUtils::ConvertToString(pixelwidth));
@@ -172,18 +121,21 @@ int AndorShamrock::OnSetPixelWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
 int AndorShamrock::OnSetNumberOfPixels(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int retVal=DEVICE_OK;
+   unsigned int returnCode;
    if (eAct == MM::BeforeGet)
    {
       int nopixels(0);
-      ShamrockGetNumberPixels(0,&nopixels);
-      pProp->Set(static_cast<long>(nopixels));
+      returnCode = ShamrockGetNumberPixels(0, &nopixels);
+      if (SHAMROCK_SUCCESS == returnCode) {
+         pProp->Set(static_cast<long>(nopixels));
+      }
    }
    else if (eAct == MM::AfterSet)
    {
       long nopixels;
       pProp->Get(nopixels);
-      unsigned ret = ShamrockSetNumberPixels(0, static_cast<int>(nopixels));
-      if (SHAMROCK_SUCCESS != ret) {
+      returnCode = ShamrockSetNumberPixels(0, static_cast<int>(nopixels));
+      if (SHAMROCK_SUCCESS != returnCode) {
          retVal = DEVICE_CAN_NOT_SET_PROPERTY;
       }
       OnPropertyChanged(gsz_NoPixels, CDeviceUtils::ConvertToString(nopixels));
@@ -197,10 +149,12 @@ int AndorShamrock::OnSetGrating(MM::PropertyBase* pProp, MM::ActionType eAct)
    int retVal=DEVICE_OK;
    int currentgrating(0);
    int newgrating(0);
-   ShamrockGetGrating(0,&currentgrating);
+   unsigned int returnCode =  ShamrockGetGrating(0,&currentgrating);
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(mvGratings[currentgrating-1].c_str());
+      if (SHAMROCK_SUCCESS == returnCode) {
+         pProp->Set(mvGratings[currentgrating - 1].c_str());
+      }
    }
    else if (eAct == MM::AfterSet)
    {
@@ -213,8 +167,8 @@ int AndorShamrock::OnSetGrating(MM::PropertyBase* pProp, MM::ActionType eAct)
          }
       }
       if(newgrating!=currentgrating) {
-         unsigned ret = ShamrockSetGrating(0, newgrating);
-         if(SHAMROCK_SUCCESS == ret) {
+         returnCode = ShamrockSetGrating(0, newgrating);
+         if (SHAMROCK_SUCCESS == returnCode) {
             float Min(0.0f);
             float Max(0.0f);
             ShamrockGetWavelengthLimits(0, newgrating, &Min, &Max);
@@ -234,10 +188,12 @@ int AndorShamrock::OnSetFilter(MM::PropertyBase* pProp, MM::ActionType eAct)
    int retVal=DEVICE_OK;
    int currentfilter(0);
    int newfilter(0);
-   ShamrockGetFilter(0,&currentfilter);
+   unsigned int returnCode = ShamrockGetFilter(0,&currentfilter);
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(mvFilters[currentfilter].c_str());
+      if (SHAMROCK_SUCCESS == returnCode) {
+         pProp->Set(mvFilters[currentfilter].c_str());
+      }
    }
    else if (eAct == MM::AfterSet)
    {
@@ -250,8 +206,8 @@ int AndorShamrock::OnSetFilter(MM::PropertyBase* pProp, MM::ActionType eAct)
          }
       }
       if(newfilter!=currentfilter) {
-         unsigned ret = ShamrockSetFilter(0, newfilter);
-         if(SHAMROCK_SUCCESS != ret) {
+         returnCode = ShamrockSetFilter(0, newfilter);
+         if(SHAMROCK_SUCCESS != returnCode) {
             retVal = DEVICE_CAN_NOT_SET_PROPERTY;
             OnPropertyChanged(gsz_Filter, CDeviceUtils::ConvertToString(newfilter));
          }
@@ -290,16 +246,19 @@ void AndorShamrock::SetCoefficientsProperty()
 {
    float A,B,C,D;
    int nRet(0);
-   unsigned int rc = ShamrockGetPixelCalibrationCoefficients(0,&A,&B,&C,&D);
-   stringstream ss("");
-   ss << A << " " << B << " " << C << " " << D;
-   if(!HasProperty(gsz_Coefficients)) {
-    
-      nRet = CreateProperty(gsz_Coefficients,ss.str().c_str(),MM::String,false,0);
-   }
-   else {
-      if(rc == SHAMROCK_SUCCESS) {
-         nRet = SetProperty(gsz_Coefficients,ss.str().c_str()); 
+   unsigned int returnCode = ShamrockGetPixelCalibrationCoefficients(0,&A,&B,&C,&D);
+
+   if (returnCode == SHAMROCK_SUCCESS) {
+      stringstream ss("");
+      ss << A << " " << B << " " << C << " " << D;
+      if (!HasProperty(gsz_Coefficients)) {
+
+         nRet = CreateProperty(gsz_Coefficients, ss.str().c_str(), MM::String, false, 0);
+      }
+      else {
+         if (returnCode == SHAMROCK_SUCCESS) {
+            nRet = SetProperty(gsz_Coefficients, ss.str().c_str());
+         }
       }
    }
 }
@@ -308,21 +267,23 @@ void AndorShamrock::SetWavelengthProperty()
 {
    float wavelength(0.0f);
    int nRet(0);
-   ShamrockGetWavelength(0, &wavelength);
-   stringstream ss("");
-   ss << wavelength;
-   if(HasProperty(gsz_CentreWavelength)) {
-      nRet = SetProperty(gsz_CentreWavelength,ss.str().c_str()); 
-   }
-   else {
-      CPropertyAction *pAct = new CPropertyAction (this, &AndorShamrock::OnSetWavelength);
-      nRet = CreateProperty(gsz_CentreWavelength,ss.str().c_str(), MM::Float, false, pAct);
-      int grating(0);
-      ShamrockGetGrating(0, &grating);
-      float Min(0.0f);
-      float Max(0.0f);
-      ShamrockGetWavelengthLimits(0, grating, &Min, &Max);
-      SetPropertyLimits(gsz_CentreWavelength, Min, Max);
+   unsigned int returnCode = ShamrockGetWavelength(0, &wavelength);
+   if (returnCode == SHAMROCK_SUCCESS) {
+      stringstream ss("");
+      ss << wavelength;
+      if (HasProperty(gsz_CentreWavelength)) {
+         nRet = SetProperty(gsz_CentreWavelength, ss.str().c_str());
+      }
+      else {
+         CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetWavelength);
+         nRet = CreateProperty(gsz_CentreWavelength, ss.str().c_str(), MM::Float, false, pAct);
+         int grating(0);
+         ShamrockGetGrating(0, &grating);
+         float Min(0.0f);
+         float Max(0.0f);
+         ShamrockGetWavelengthLimits(0, grating, &Min, &Max);
+         SetPropertyLimits(gsz_CentreWavelength, Min, Max);
+      }
    }
    SetCoefficientsProperty();
 }
@@ -348,29 +309,33 @@ void AndorShamrock::SetRayleighWavelengthProperty()
 void AndorShamrock::SetNumberPixelsProperty()
 {
    int nopixels(0);
-   ShamrockGetNumberPixels(0,&nopixels);
-   stringstream ss("");
-   ss << nopixels;
-   if(HasProperty(gsz_NoPixels)) {
-      SetProperty(gsz_NoPixels,ss.str().c_str()); 
-   }
-   else {
-      CPropertyAction *pAct = new CPropertyAction (this, &AndorShamrock::OnSetNumberOfPixels);
-      CreateProperty(gsz_NoPixels,ss.str().c_str(), MM::Integer, false, pAct);
+   unsigned int returnCode = ShamrockGetNumberPixels(0,&nopixels);
+   if (returnCode == SHAMROCK_SUCCESS) {
+      stringstream ss("");
+      ss << nopixels;
+      if (HasProperty(gsz_NoPixels)) {
+         SetProperty(gsz_NoPixels, ss.str().c_str());
+      }
+      else {
+         CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetNumberOfPixels);
+         CreateProperty(gsz_NoPixels, ss.str().c_str(), MM::Integer, false, pAct);
+      }
    }
 }
 
 void AndorShamrock::SetPixelWidthProperty() {
    float pixelwidth(0.0f);
-   ShamrockGetPixelWidth(0, &pixelwidth);
-   stringstream ss("");
-   ss << pixelwidth;
-   if(HasProperty(gsz_PixelWidth)) {
-      SetProperty(gsz_PixelWidth,ss.str().c_str()); 
-   }
-   else {
-      CPropertyAction *pAct = new CPropertyAction (this, &AndorShamrock::OnSetPixelWidth);
-      CreateProperty(gsz_PixelWidth,ss.str().c_str(), MM::Float, false, pAct);
+   unsigned int returnCode = ShamrockGetPixelWidth(0, &pixelwidth);
+   if (returnCode == SHAMROCK_SUCCESS) {
+      stringstream ss("");
+      ss << pixelwidth;
+      if (HasProperty(gsz_PixelWidth)) {
+         SetProperty(gsz_PixelWidth, ss.str().c_str());
+      }
+      else {
+         CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetPixelWidth);
+         CreateProperty(gsz_PixelWidth, ss.str().c_str(), MM::Float, false, pAct);
+      }
    }
 }
 
@@ -378,6 +343,7 @@ void AndorShamrock::SetGratingsProperty()
 {
    int noGratings(0);
    unsigned int sham_status=ShamrockGetNumberGratings(0, &noGratings);
+   unsigned int returnCode;
    if((sham_status==SHAMROCK_SUCCESS) && noGratings>0){
       float Lines(0);
       char Blaze[10];
@@ -385,16 +351,20 @@ void AndorShamrock::SetGratingsProperty()
       int Offset(0);
       mvGratings.clear();
       for(int i = 1; i <= noGratings; ++i) {
-         ShamrockGetGratingInfo(0, i, &Lines, Blaze, &Home, &Offset);
-         stringstream ss("");
-         ss << i << ". Lines[" << Lines << "/mm] - Blaze[" << Blaze << "nm]";
-         mvGratings.push_back(ss.str());
+         returnCode = ShamrockGetGratingInfo(0, i, &Lines, Blaze, &Home, &Offset);
+         if (returnCode == SHAMROCK_SUCCESS) {
+            stringstream ss("");
+            ss << i << ". Lines[" << Lines << "/mm] - Blaze[" << Blaze << "nm]";
+            mvGratings.push_back(ss.str());
+         }
       }
       int grating(0);
-      ShamrockGetGrating(0, &grating);
-      CPropertyAction *pAct = new CPropertyAction (this, &AndorShamrock::OnSetGrating);
-      CreateProperty(gsz_Grating,mvGratings[grating].c_str() , MM::String, false, pAct);
-      SetAllowedValues(gsz_Grating, mvGratings);
+      returnCode = ShamrockGetGrating(0, &grating);
+      if (returnCode == SHAMROCK_SUCCESS) {
+         CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetGrating);
+         CreateProperty(gsz_Grating, mvGratings[grating - 1].c_str(), MM::String, false, pAct);
+         SetAllowedValues(gsz_Grating, mvGratings);
+      }
    }
 }
 
@@ -402,21 +372,27 @@ void AndorShamrock::SetFilterProperty()
 {
    int filterPresent(0);
    unsigned int sham_status=ShamrockFilterIsPresent(0, &filterPresent);
+   unsigned int returnCode;
    if((sham_status==SHAMROCK_SUCCESS) && filterPresent==1){
       char info[25];
 
       mvFilters.clear();
       for(int i = 0; i <= 6; ++i) {
-         ShamrockGetFilterInfo(0, i, info);
-         stringstream ss("");
-         ss << i+1 << ". " << info;
-         mvFilters.push_back(ss.str());
+         returnCode = ShamrockGetFilterInfo(0, i, info);
+         if (returnCode == SHAMROCK_SUCCESS) {
+            ShamrockGetFilterInfo(0, i, info);
+            stringstream ss("");
+            ss << i + 1 << ". " << info;
+            mvFilters.push_back(ss.str());
+         }
       }
       int filter(0);
-      ShamrockGetFilter(0, &filter);
-      CPropertyAction *pAct = new CPropertyAction (this, &AndorShamrock::OnSetFilter);
-      CreateProperty(gsz_Filter,mvFilters[filter].c_str() , MM::String, false, pAct);
-      SetAllowedValues(gsz_Filter, mvFilters);
+      returnCode = ShamrockGetFilter(0, &filter);
+      if (returnCode == SHAMROCK_SUCCESS) {
+         CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetFilter);
+         CreateProperty(gsz_Filter, mvFilters[filter].c_str(), MM::String, false, pAct);
+         SetAllowedValues(gsz_Filter, mvFilters);
+      }
    }
 }
 
@@ -428,22 +404,25 @@ void AndorShamrock::SetShutterProperty()
    
    int shutterPresent(0);
    unsigned int sham_status=ShamrockShutterIsPresent(0, &shutterPresent);
-   if((sham_status==SHAMROCK_SUCCESS) && shutterPresent==1){
+   unsigned int returnCode;
+   if ((sham_status == SHAMROCK_SUCCESS) && shutterPresent == 1) {
       int mode(0);
-      ShamrockGetShutter(0, &mode);
+      returnCode = ShamrockGetShutter(0, &mode);
 
-      if (mode == -1) {
-         mode = 0;
-         ShamrockSetShutter(0,mode);
+      if (returnCode == SHAMROCK_SUCCESS) {
+         if (mode == -1) {
+            mode = 0;
+            returnCode = ShamrockSetShutter(0, mode);
+         }
+         unsigned int returnCode = ShamrockSetShutter(0, 2);
+         if (returnCode == SHAMROCK_SUCCESS) {
+            mvShutters.push_back("External BNC");
+            returnCode = ShamrockSetShutter(0, mode);
+         }
+         CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetShutter);
+         CreateProperty(gsz_Shutter, mvShutters[mode].c_str(), MM::String, false, pAct);
+         SetAllowedValues(gsz_Shutter, mvShutters);
       }
-	  unsigned int rc = ShamrockSetShutter(0,2);
-	  if(rc == SHAMROCK_SUCCESS) {
-		  mvShutters.push_back("External BNC");
-		  ShamrockSetShutter(0,mode);
-	  }
-      CPropertyAction *pAct = new CPropertyAction (this, &AndorShamrock::OnSetShutter);
-      CreateProperty(gsz_Shutter,mvShutters[mode].c_str() , MM::String, false, pAct);
-      SetAllowedValues(gsz_Shutter, mvShutters);
    }
 }
 
@@ -455,39 +434,42 @@ void AndorShamrock::SetSlitProperty()
    for(int i = 1; i <= MAX_NUM_SLITS; ++i) {
 
       unsigned int sham_status = ShamrockAutoSlitIsPresent(0,i,&slitPresent);
+      unsigned int returnCode;
 
       if((sham_status==SHAMROCK_SUCCESS) && slitPresent==1) {
 
          float width;
-         ShamrockGetAutoSlitWidth(0, i, &width);
+         returnCode =ShamrockGetAutoSlitWidth(0, i, &width);
          sprintf(widthBuffer, "%.2f", width);
 
-         if(HasProperty(gsz_SlitWidth[i-1])) {
-            SetProperty(gsz_SlitWidth[i-1],widthBuffer); 
-         }
-         else {
-
-            CPropertyAction *pAct = 0;
-
-            switch(i){
-
-            case(1):
-               pAct = new CPropertyAction(this, &AndorShamrock::OnSetInputSideSlitWidth);
-               break;
-            case(2):
-               pAct = new CPropertyAction(this, &AndorShamrock::OnSetInputDirectSlitWidth);
-               break;
-            case(3):
-               pAct = new CPropertyAction(this, &AndorShamrock::OnSetOutputSideSlitWidth);
-               break;
-            case(4):
-               pAct = new CPropertyAction(this, &AndorShamrock::OnSetOutputDirectSlitWidth);
-               break;
+         if (returnCode == SHAMROCK_SUCCESS) {
+            if (HasProperty(gsz_SlitWidth[i - 1])) {
+               SetProperty(gsz_SlitWidth[i - 1], widthBuffer);
             }
+            else {
 
-            CreateProperty(gsz_SlitWidth[i-1], widthBuffer, MM::Float, false, pAct);
+               CPropertyAction *pAct = 0;
 
-            SetPropertyLimits(gsz_SlitWidth[i-1], MIN_SLIT_WIDTH, MAX_SLIT_WIDTH);
+               switch (i) {
+
+               case(1):
+                  pAct = new CPropertyAction(this, &AndorShamrock::OnSetInputSideSlitWidth);
+                  break;
+               case(2):
+                  pAct = new CPropertyAction(this, &AndorShamrock::OnSetInputDirectSlitWidth);
+                  break;
+               case(3):
+                  pAct = new CPropertyAction(this, &AndorShamrock::OnSetOutputSideSlitWidth);
+                  break;
+               case(4):
+                  pAct = new CPropertyAction(this, &AndorShamrock::OnSetOutputDirectSlitWidth);
+                  break;
+               }
+
+               CreateProperty(gsz_SlitWidth[i - 1], widthBuffer, MM::Float, false, pAct);
+
+               SetPropertyLimits(gsz_SlitWidth[i - 1], MIN_SLIT_WIDTH, MAX_SLIT_WIDTH);
+            }
          }
       }
    }
@@ -498,10 +480,12 @@ int AndorShamrock::OnSetShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
    int retVal=DEVICE_OK;
    int currentshutter(0);
    int newshutter(0);
-   ShamrockGetShutter(0,&currentshutter);
+   unsigned int returnCode = ShamrockGetShutter(0,&currentshutter);
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(mvShutters[currentshutter].c_str());
+      if (returnCode == SHAMROCK_SUCCESS) {
+         pProp->Set(mvShutters[currentshutter].c_str());
+      }
    }
    else if (eAct == MM::AfterSet)
    {
@@ -535,9 +519,9 @@ void AndorShamrock::SetFlipperProperty()
       unsigned int sham_status = ShamrockFlipperMirrorIsPresent(0,i,&flipperPresent);
 
       int port(0);
-      ShamrockGetFlipperMirror(0, i, &port);
+      unsigned int returnCode = ShamrockGetFlipperMirror(0, i, &port);
 
-      if((sham_status==SHAMROCK_SUCCESS) && flipperPresent==1) {
+      if((sham_status==SHAMROCK_SUCCESS) && flipperPresent==1 && returnCode == SHAMROCK_SUCCESS) {
       
          //create property
          if(HasProperty(gsz_Port[i-1])) {
@@ -584,10 +568,12 @@ int AndorShamrock::setPort(MM::PropertyBase* pProp, MM::ActionType eAct, int fli
    int retVal=DEVICE_OK;
    int currentport(0);
    int newport(0);
-   ShamrockGetFlipperMirror(0,flipper,&currentport);
+   unsigned int returnCode = ShamrockGetFlipperMirror(0,flipper,&currentport);
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(gsz_flipperMirror[currentport].c_str());
+      if (returnCode == SHAMROCK_SUCCESS) {
+         pProp->Set(gsz_flipperMirror[currentport].c_str());
+      }
    }
    else if (eAct == MM::AfterSet)
    {
@@ -615,17 +601,21 @@ void AndorShamrock::SetGratingOffsetProperty()
 {
    int offset(0);
    int currentGrating(0);
-   ShamrockGetGrating(0,&currentGrating);
-   ShamrockGetGratingOffset(0,currentGrating,&offset);
-   stringstream ss("");
-   ss << offset;
-   //create property
-   if(HasProperty(gsz_gratingoffset)) {
-      SetProperty(gsz_gratingoffset,ss.str().c_str()); 
-   }
-   else {
-      CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetGratingOffset);
-      CreateProperty(gsz_gratingoffset,ss.str().c_str(), MM::Integer, false, pAct);
+   unsigned int returnCode = ShamrockGetGrating(0,&currentGrating);
+   if (returnCode == SHAMROCK_SUCCESS) {
+      returnCode = ShamrockGetGratingOffset(0, currentGrating, &offset);
+      if (returnCode == SHAMROCK_SUCCESS) {
+         stringstream ss("");
+         ss << offset;
+         //create property
+         if (HasProperty(gsz_gratingoffset)) {
+            SetProperty(gsz_gratingoffset, ss.str().c_str());
+         }
+         else {
+            CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetGratingOffset);
+            CreateProperty(gsz_gratingoffset, ss.str().c_str(), MM::Integer, false, pAct);
+         }
+      }
    }
 }
 
@@ -636,17 +626,21 @@ void AndorShamrock::SetDetectorOffsetProperty()
    int offsetIndex2(0);
    stringstream currentOffsetStr("");
 
-   GetDetectorOffsetIndices(&offsetIndex1, &offsetIndex2);
-   ShamrockGetDetectorOffsetEx(0, offsetIndex1, offsetIndex2, &currentOffset);
+   unsigned int returnCode = GetDetectorOffsetIndices(&offsetIndex1, &offsetIndex2);
+   if (returnCode == SHAMROCK_SUCCESS) {
+      returnCode = ShamrockGetDetectorOffsetEx(0, offsetIndex1, offsetIndex2, &currentOffset);
 
-   currentOffsetStr << currentOffset;
+      if (returnCode == SHAMROCK_SUCCESS) {
+         currentOffsetStr << currentOffset;
 
-   if (HasProperty(gsz_detectoroffset)) {
-      SetProperty(gsz_detectoroffset,currentOffsetStr.str().c_str());
-   }
-   else {
-      CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetDetectorOffset);
-      CreateProperty(gsz_detectoroffset, currentOffsetStr.str().c_str(), MM::Integer, false, pAct);
+         if (HasProperty(gsz_detectoroffset)) {
+            SetProperty(gsz_detectoroffset, currentOffsetStr.str().c_str());
+         }
+         else {
+            CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetDetectorOffset);
+            CreateProperty(gsz_detectoroffset, currentOffsetStr.str().c_str(), MM::Integer, false, pAct);
+         }
+      }
    }
 }
 
@@ -658,21 +652,25 @@ int AndorShamrock::OnSetDetectorOffset(MM::PropertyBase* pProp, MM::ActionType e
    int offsetIndex1(0);
    int offsetIndex2(0);
 
-   GetDetectorOffsetIndices(&offsetIndex1, &offsetIndex2);
+   unsigned int returnCode = GetDetectorOffsetIndices(&offsetIndex1, &offsetIndex2);
 
-   if (eAct == MM::BeforeGet) {
-      ShamrockGetDetectorOffsetEx(0, offsetIndex1, offsetIndex2, &currentOffset);
-      pProp->Set(static_cast<long>(currentOffset));
-   }
-   else if (eAct == MM::AfterSet) {
+   if (returnCode == SHAMROCK_SUCCESS) {
+      if (eAct == MM::BeforeGet) {
+         returnCode = ShamrockGetDetectorOffsetEx(0, offsetIndex1, offsetIndex2, &currentOffset);
+         if (returnCode == SHAMROCK_SUCCESS) {
+            pProp->Set(static_cast<long>(currentOffset));
+         }
+      }
+      else if (eAct == MM::AfterSet) {
 
-      pProp->Get(newOffset);
-      ShamrockSetDetectorOffsetEx(0, offsetIndex1, offsetIndex2, newOffset);
-      OnPropertyChanged(gsz_detectoroffset, CDeviceUtils::ConvertToString(newOffset));
+         pProp->Get(newOffset);
+         ShamrockSetDetectorOffsetEx(0, offsetIndex1, offsetIndex2, newOffset);
+         OnPropertyChanged(gsz_detectoroffset, CDeviceUtils::ConvertToString(newOffset));
+      }
    }
 
    return DEVICE_OK;
-   }
+}
 
 int AndorShamrock::OnSetGratingOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -680,23 +678,27 @@ int AndorShamrock::OnSetGratingOffset(MM::PropertyBase* pProp, MM::ActionType eA
    int currentgrating(0);
    int currentoffset(0);
    long newoffset(0);
-   ShamrockGetGrating(0,&currentgrating);
-   ShamrockGetGratingOffset(0, currentgrating, &currentoffset);
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(static_cast<long>(currentoffset));
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      pProp->Get(newoffset);
+   unsigned int returnCode = ShamrockGetGrating(0,&currentgrating);
+   if (returnCode == SHAMROCK_SUCCESS) {
+      returnCode = ShamrockGetGratingOffset(0, currentgrating, &currentoffset);
+      if (returnCode == SHAMROCK_SUCCESS) {
+         if (eAct == MM::BeforeGet)
+         {
+            pProp->Set(static_cast<long>(currentoffset));
+         }
+         else if (eAct == MM::AfterSet)
+         {
+            pProp->Get(newoffset);
 
-      if(static_cast<int>(newoffset)!=currentoffset) {
-         unsigned int ret = ShamrockSetGratingOffset(0, currentgrating,static_cast<int>(newoffset));
-         if(SHAMROCK_SUCCESS != ret) {
-            retVal = DEVICE_CAN_NOT_SET_PROPERTY;
+            if (static_cast<int>(newoffset) != currentoffset) {
+               unsigned int ret = ShamrockSetGratingOffset(0, currentgrating, static_cast<int>(newoffset));
+               if (SHAMROCK_SUCCESS != ret) {
+                  retVal = DEVICE_CAN_NOT_SET_PROPERTY;
+               }
+            }
+            OnPropertyChanged(gsz_gratingoffset, CDeviceUtils::ConvertToString(newoffset));
          }
       }
-      OnPropertyChanged(gsz_gratingoffset, CDeviceUtils::ConvertToString(newoffset));
    }
    return retVal;
 }
@@ -707,11 +709,11 @@ int AndorShamrock::SetSlitWidth(MM::PropertyBase* pProp, MM::ActionType eAct, in
 
    if (eAct == MM::BeforeGet)
    {
-
       float currentwidth(0);
-      ShamrockGetAutoSlitWidth(0,slit,&currentwidth);
-      pProp->Set(currentwidth);
-
+      unsigned int returnCode = ShamrockGetAutoSlitWidth(0,slit,&currentwidth);
+      if (returnCode == SHAMROCK_SUCCESS) {
+         pProp->Set(currentwidth);
+      }
    }
    else if (eAct == MM::AfterSet)
    {
@@ -737,20 +739,26 @@ void AndorShamrock::SetFocusMirrorProperty()
    int maxSteps(0);
    stringstream currentPositionStr("");
 
-   ShamrockFocusMirrorIsPresent(0, &focusMirrorPresent);
-   ShamrockGetFocusMirror(0, &currentPosition);
-   ShamrockGetFocusMirrorMaxSteps(0, &maxSteps);
-   currentPositionStr << currentPosition;
+   unsigned int returnCode = ShamrockFocusMirrorIsPresent(0, &focusMirrorPresent);
+   if (returnCode == SHAMROCK_SUCCESS) {
+      returnCode = ShamrockGetFocusMirror(0, &currentPosition);
+      if (returnCode == SHAMROCK_SUCCESS) {
+         returnCode = ShamrockGetFocusMirrorMaxSteps(0, &maxSteps);
+         if (returnCode == SHAMROCK_SUCCESS) {
+            currentPositionStr << currentPosition;
 
-   if (focusMirrorPresent == 1) {
+            if (focusMirrorPresent == 1) {
 
-      if (HasProperty(gsz_FocusMirror)) {
-         SetProperty(gsz_FocusMirror, currentPositionStr.str().c_str());
-      }
-      else {
-         CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetFocusMirror);
-         CreateProperty(gsz_FocusMirror, currentPositionStr.str().c_str(), MM::Integer, false, pAct);
-         SetPropertyLimits(gsz_FocusMirror, 1, static_cast<double>(maxSteps));
+               if (HasProperty(gsz_FocusMirror)) {
+                  SetProperty(gsz_FocusMirror, currentPositionStr.str().c_str());
+               }
+               else {
+                  CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetFocusMirror);
+                  CreateProperty(gsz_FocusMirror, currentPositionStr.str().c_str(), MM::Integer, false, pAct);
+                  SetPropertyLimits(gsz_FocusMirror, 1, static_cast<double>(maxSteps));
+               }
+            }
+         }
       }
    }
 }
@@ -761,11 +769,13 @@ int AndorShamrock::OnSetFocusMirror(MM::PropertyBase* pProp, MM::ActionType eAct
    long newPosition(0);
    long calculatedNewPosition(0);
 
-   ShamrockGetFocusMirror(0, &currentPosition);
+   unsigned int returnCode = ShamrockGetFocusMirror(0, &currentPosition);
 
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(static_cast<long>(currentPosition));
+      if (returnCode == SHAMROCK_SUCCESS) {
+         pProp->Set(static_cast<long>(currentPosition));
+      }
    }
    else if (eAct == MM::AfterSet)
    {
@@ -797,4 +807,101 @@ int AndorShamrock::GetDetectorOffsetIndices(int *index1, int *index2)
    *index2 = currentIndices[1];
 
    return DEVICE_OK;
+}
+
+void AndorShamrock::SetDirectIrisPositionProperty()
+{
+  int directIrisPresent;
+  unsigned int returnCode = ShamrockIrisIsPresent(0, SHAMROCK_DIRECT_PORT, &directIrisPresent);
+
+  if (SHAMROCK_SUCCESS == returnCode && directIrisPresent == 1)
+  {
+    int directIrisPosition;
+    returnCode = ShamrockGetIris(0, SHAMROCK_DIRECT_PORT, &directIrisPosition);
+    if (SHAMROCK_SUCCESS == returnCode) {
+      stringstream ss("");
+      ss << directIrisPosition;
+      if (CDeviceBase<MM::Generic, AndorShamrock>::HasProperty(gsz_DirectIrisPosition)) {
+        CDeviceBase<MM::Generic, AndorShamrock>::SetProperty(gsz_DirectIrisPosition, ss.str().c_str());
+      }
+      else {
+
+        CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetDirectIrisPosition);
+        CreateProperty(gsz_DirectIrisPosition, ss.str().c_str(), MM::Integer, false, pAct);
+      }
+    }
+  }
+}
+
+void AndorShamrock::SetSideIrisPositionProperty()
+{
+  int sideIrisPresent;
+  unsigned int returnCode = ShamrockIrisIsPresent(0, SHAMROCK_SIDE_PORT, &sideIrisPresent);
+
+  if (SHAMROCK_SUCCESS == returnCode && sideIrisPresent == 1)
+  {
+    int sideIrisPosition;
+    returnCode = ShamrockGetIris(0, SHAMROCK_SIDE_PORT, &sideIrisPosition);
+    if (SHAMROCK_SUCCESS == returnCode) {
+      stringstream ss("");
+      ss << sideIrisPosition;
+      if (HasProperty(gsz_SideIrisPosition)) {
+        SetProperty(gsz_SideIrisPosition, ss.str().c_str());
+      }
+      else {
+        CPropertyAction *pAct = new CPropertyAction(this, &AndorShamrock::OnSetSideIrisPosition);
+        CreateProperty(gsz_SideIrisPosition, ss.str().c_str(), MM::Integer, false, pAct);
+      }
+    }
+  }
+}
+
+int AndorShamrock::OnSetDirectIrisPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  int retVal = DEVICE_OK;
+  if (eAct == MM::BeforeGet)
+  {
+    int directIrisPosition;
+    unsigned int returnCode = ShamrockGetIris(0, SHAMROCK_DIRECT_PORT, &directIrisPosition);
+    if (SHAMROCK_SUCCESS == returnCode) {
+      pProp->Set(static_cast<long>(directIrisPosition));
+    }
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    long directIrisPosition;
+    pProp->Get(directIrisPosition);
+    unsigned int returnCode = ShamrockSetIris(0, SHAMROCK_DIRECT_PORT, static_cast<int>(directIrisPosition));
+    if (SHAMROCK_SUCCESS != returnCode) {
+      retVal = DEVICE_CAN_NOT_SET_PROPERTY;
+    }
+    OnPropertyChanged(gsz_DirectIrisPosition, CDeviceUtils::ConvertToString(directIrisPosition));
+  }
+
+  return retVal;
+}
+
+int AndorShamrock::OnSetSideIrisPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  int retVal = DEVICE_OK;
+  if (eAct == MM::BeforeGet)
+  {
+    int sideIrisPosition;
+    unsigned int returnCode = ShamrockGetIris(0, SHAMROCK_SIDE_PORT, &sideIrisPosition);
+    if (SHAMROCK_SUCCESS == returnCode) {
+      pProp->Set(static_cast<long>(sideIrisPosition));
+    }
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    long sideIrisPosition;
+    pProp->Get(sideIrisPosition);
+    unsigned int returnCode = ShamrockSetIris(0, SHAMROCK_SIDE_PORT, static_cast<int>(sideIrisPosition));
+    if (SHAMROCK_SUCCESS != returnCode) {
+      retVal = DEVICE_CAN_NOT_SET_PROPERTY;
+    }
+    OnPropertyChanged(gsz_SideIrisPosition, CDeviceUtils::ConvertToString(sideIrisPosition));
+  }
+
+  return retVal;
 }

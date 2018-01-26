@@ -26,7 +26,8 @@
 #endif
 
 
-const char* g_DeviceNameLEDArray = "LED-Array";
+	const char* g_DeviceNameLEDArray = "LED-Array";
+	const char* g_DeviceNameLEDArrayVirtualShutter = "LED-Array-Vitrual-Shutter";
 
 	const char * g_Keyword_Width = "Width";
 	const char * g_Keyword_Height = "Height";
@@ -42,6 +43,10 @@ const char* g_DeviceNameLEDArray = "LED-Array";
 	const char * g_Keyword_minna = "Minimum NA"; 
 	const char * g_Keyword_maxna = "Maximum NA";
 	const char * g_Keyword_LEDlist = "Manual LED Indices";
+	const char * g_Keyword_Reset = "Reset";
+	const char * g_Keyword_Shutter = "ShutterOpen";
+
+	const char * g_Keyword_LEDArrayName = "LEDArrayDeviceName";
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -49,6 +54,7 @@ const char* g_DeviceNameLEDArray = "LED-Array";
 MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_DeviceNameLEDArray, MM::SLMDevice, "LED Array");
+   RegisterDevice(g_DeviceNameLEDArrayVirtualShutter, MM::ShutterDevice, "LED Array Virtual shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -59,6 +65,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (strcmp(deviceName, g_DeviceNameLEDArray) == 0)
    {
       return new CLEDArray;
+   } else if (strcmp(deviceName, g_DeviceNameLEDArrayVirtualShutter) == 0) {
+	  return new CLEDArrayVirtualShutter;
    }
    return 0;
 }
@@ -67,6 +75,91 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
    delete pDevice;
 }
+///////////////////////////////////////////////////////////////////////////////
+//CLEDArrayVirtualShutter Implementation
+///////////////////////////////////////////////////////////////////////////////
+// VShutter control implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+/**
+ * Constructor.
+ */
+CLEDArrayVirtualShutter::CLEDArrayVirtualShutter() : initialized_(false) {
+   // call the base class method to set-up default error codes/messages
+   InitializeDefaultErrorMessages();
+
+}
+
+CLEDArrayVirtualShutter::~CLEDArrayVirtualShutter()
+{
+   Shutdown();
+}
+
+/**
+ * Obtains device name.
+ */
+void CLEDArrayVirtualShutter::GetName(char* name) const {
+   CDeviceUtils::CopyLimitedString(name, g_DeviceNameLEDArrayVirtualShutter);
+}
+
+/**
+ * Intializes the hardware.
+ */
+int CLEDArrayVirtualShutter::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+
+   // set property list
+   // -----------------
+
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNameLEDArrayVirtualShutter, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Virtual dual shutter for turning LED Array on and off", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // name of LED array to control
+   ret = CreateProperty(g_Keyword_LEDArrayName, "", MM::String, false);
+   assert(ret == DEVICE_OK);
+
+   // synchronize all properties
+   // --------------------------
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+int CLEDArrayVirtualShutter::SetOpen(bool open) {
+   char arrayname[MM::MaxStrLength];
+   GetProperty(g_Keyword_LEDArrayName, arrayname);
+
+   if (strlen(arrayname) > 0)
+   {
+	  GetCoreCallback()->SetDeviceProperty(arrayname, g_Keyword_Shutter, open ? "1" : "0");
+   }
+
+   return DEVICE_OK;
+}
+
+
+int CLEDArrayVirtualShutter::GetOpen(bool& open) {
+	char arrayname[MM::MaxStrLength];
+    GetProperty(g_Keyword_LEDArrayName, arrayname);
+	char isopen[MM::MaxStrLength];
+	GetCoreCallback()->GetDeviceProperty(arrayname, g_Keyword_Shutter, isopen);
+	open = strcmp(isopen, "0");
+
+   return DEVICE_OK;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -74,7 +167,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CLEDArray::CLEDArray() : initialized_(false), name_(g_DeviceNameLEDArray), pixels_(0), width_(1), height_(581),
-	shutterOpen_(false), red_(600), green_(400), blue_(200), numa_(0.7), minna_(0.2), maxna_(0.6), type_("Top"), distMM_(50)
+	shutterOpen_(true), red_(600), green_(400), blue_(200), numa_(0.7), minna_(0.2), maxna_(0.6), type_("Top"), distMM_(50)
 {
    portAvailable_ = false;
 
@@ -121,6 +214,17 @@ int CLEDArray::Initialize()
    ret = CreateProperty(MM::g_Keyword_Description, "LED Array", MM::String, true);
    assert(DEVICE_OK == ret);
 
+   //shutter
+   CPropertyAction* pActshutter = new CPropertyAction(this, &CLEDArray::OnShutterOpen);
+   ret = CreateProperty(g_Keyword_Shutter,"0",MM::Integer,false, pActshutter );
+   AddAllowedValue(g_Keyword_Shutter,"0");
+   AddAllowedValue(g_Keyword_Shutter,"1");
+
+   //reset
+   CPropertyAction* pActreset = new CPropertyAction(this, &CLEDArray::OnReset);
+   ret = CreateProperty(g_Keyword_Reset,"0",MM::String,false,pActreset );
+   AddAllowedValue(g_Keyword_Reset,"0");
+   AddAllowedValue(g_Keyword_Reset,"1");
 
    //Color Intensities:
 	//Red:
@@ -178,21 +282,7 @@ int CLEDArray::Initialize()
    // Check that we have a controller:
    PurgeComPort(port_.c_str());
 
-   //reset LED arraya
-	unsigned char allData[6];
-	    
-	allData[0] = 'r';
-	allData[1] = 'e';
-	allData[2] = 's';
-	allData[3] = 'e';
-	allData[4] = 't';
-	allData[5] = 10;
-
-	ret =  WriteToComPort(port_.c_str(), allData, 6); //Writing to port
-	if (ret != DEVICE_OK){
-		PurgeComPort(port_.c_str());
-		return DEVICE_ERR;
-	}
+	Reset();
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -308,6 +398,25 @@ int CLEDArray::SetPixelsTo(unsigned char intensity) {
 	lastModVal_ = intensity;
 	return DEVICE_OK;
 }
+int CLEDArray::Reset() {
+	//reset LED arraya
+	unsigned char allData[6];
+
+	allData[0] = 'r';
+	allData[1] = 'e';
+	allData[2] = 's';
+	allData[3] = 'e';
+	allData[4] = 't';
+	allData[5] = 10;
+
+	int ret =  WriteToComPort(port_.c_str(), allData, 6); //Writing to port
+	if (ret != DEVICE_OK){
+		PurgeComPort(port_.c_str());
+		return DEVICE_ERR;
+	}
+	return ret;
+}
+
 //Lighting a single LED:
 int CLEDArray::SLED(std::string index){
 	PurgeComPort(port_.c_str());
@@ -635,7 +744,12 @@ int CLEDArray::Off(){
 }
 
 int CLEDArray::UpdatePattern(){
-	if (pattern_ == "Bright Field"){
+	//master function that gets called to send commands to LED array.
+	//Waits on response from serial port so that call blocks until pattern
+	//is corectly shown
+	if (!shutterOpen_) {
+		Off();
+	} else if (pattern_ == "Bright Field"){
 		  NumA(numa_);
 		  ColorUpdate(red_,green_,blue_);
 		  BF();
@@ -672,7 +786,19 @@ int CLEDArray::UpdatePattern(){
 	  else{
 		  Off();
 	  }
-	  return DEVICE_OK;
+	return 	ReadResponse();
+}
+
+int CLEDArray::ReadResponse(){
+	  //try to read from serial port
+	  unsigned char response[1];
+	  unsigned long read = 0;
+	  int error  = ReadFromComPort(port_.c_str(),response,1, read);
+	  if (error==0) {
+		  return DEVICE_OK;
+	  }
+
+	  return DEVICE_ERR;
 }
 
 
@@ -694,6 +820,19 @@ int CLEDArray::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
    return DEVICE_OK;
 }
 
+int CLEDArray::OnReset(MM::PropertyBase* pProp, MM::ActionType pAct)
+{
+   if (pAct == MM::BeforeGet)
+   {
+      pProp->Set("0");
+   }
+   else if (pAct == MM::AfterSet)
+   {
+      Reset();
+   }
+   return DEVICE_OK;
+}
+
 int CLEDArray::OnShutterOpen(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
    if (pAct == MM::BeforeGet)
@@ -702,12 +841,8 @@ int CLEDArray::OnShutterOpen(MM::PropertyBase* pProp, MM::ActionType pAct)
    }
    else if (pAct == MM::AfterSet)
    {
-      pProp->Get(shutterOpen_);
-	  if (shutterOpen_) {
-		//TestSerial();
-	  }
-
-	  return DEVICE_OK;
+      pProp->Get(shutterOpen_);	  
+	  return UpdatePattern();
    }
    return DEVICE_OK;
 }
@@ -735,15 +870,6 @@ int CLEDArray::OnMinNA(MM::PropertyBase* pProp, MM::ActionType pAct)
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(minna_);
-	  if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
 	  return UpdatePattern();
    }
    return DEVICE_OK;
@@ -751,17 +877,12 @@ int CLEDArray::OnMinNA(MM::PropertyBase* pProp, MM::ActionType pAct)
 
 int CLEDArray::OnLED(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
-	if (pAct == MM::BeforeGet)
-   {
+	if (pAct == MM::BeforeGet) {
       pProp->Set(indices_.c_str());
    }
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(indices_);
-	  if(pattern_ == "Manual LED Indices"){
-		  MLED(indices_);
-	  }
-	  return DEVICE_OK;
    }
    return DEVICE_OK;
 }
@@ -775,16 +896,6 @@ int CLEDArray::OnMaxNA(MM::PropertyBase* pProp, MM::ActionType pAct)
    else if (pAct == MM::AfterSet)
    {
       pProp->Get(maxna_);
-	  if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
-	  return UpdatePattern();
    }
    return DEVICE_OK;
 }
@@ -799,33 +910,6 @@ int CLEDArray::OnRed(MM::PropertyBase* pProp, MM::ActionType pAct)
    {
       pProp->Get(red_);
 	  ColorUpdate(red_,green_,blue_);
-	  if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if(pattern_ == "Manual LED Indices"){
-		  if (indices_.size() > 0){
-			MLED(indices_);
-		  }
-	  }
-	  else if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
-	  return DEVICE_OK;
    }
    return DEVICE_OK;
 }
@@ -839,33 +923,6 @@ int CLEDArray::OnBlue(MM::PropertyBase* pProp, MM::ActionType pAct)
    {
       pProp->Get(blue_);
 	  ColorUpdate(red_,green_,blue_);
-	  if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if(pattern_ == "Manual LED Indices"){
-		  if (indices_.size() > 0){
-			MLED(indices_);
-		  }
-	  }
-	  else if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
-	  return DEVICE_OK;
    }
    return DEVICE_OK;
 }
@@ -880,33 +937,6 @@ int CLEDArray::OnGreen(MM::PropertyBase* pProp, MM::ActionType pAct)
    {
       pProp->Get(green_);
 	  ColorUpdate(red_,green_,blue_);
-      if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if(pattern_ == "Manual LED Indices"){
-		  if (indices_.size() > 0){
-			MLED(indices_);
-		  }
-	  }
-	  else if(pattern_ == "Annulus"){
-		  Annul(minna_, maxna_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else{
-		  Off();
-	  }
-	  return DEVICE_OK;
    }
    return DEVICE_OK;
 }
@@ -921,22 +951,6 @@ int CLEDArray::OnDistance(MM::PropertyBase* pProp, MM::ActionType pAct)
 	{
 		pProp->Get(distMM_);
 		ArrayDist(distMM_);
-		if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if (pattern_ == "Off"){
-		  Off();
-	  }
-		return DEVICE_OK;
 	}
     return DEVICE_OK;
 }
@@ -951,22 +965,6 @@ int CLEDArray::OnAperture(MM::PropertyBase* pProp, MM::ActionType pAct)
 	{
 		pProp->Get(numa_);
 		NumA(numa_);
-		if (pattern_ == "Bright Field"){
-		  BF();
-	  }
-	  else if(pattern_ == "Dark Field"){
-		  DF();
-	  }
-	  else if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Colored DPC"){
-		  CDPC(red_,green_,blue_);
-	  }
-	  else if (pattern_ == "Off"){
-		  Off();
-	  }
-		return DEVICE_OK;
 	}
     return DEVICE_OK;
 }
@@ -980,16 +978,6 @@ int CLEDArray::OnType(MM::PropertyBase* pProp, MM::ActionType pAct)
 	else if(pAct == MM::AfterSet)
 	{
 		pProp->Get(type_);
-	  if(pattern_ == "DPC"){
-		  DPC(type_);
-	  }
-	  else if(pattern_ == "Half Annulus"){
-		  hAnnul(type_,minna_,maxna_);
-	  }
-	  else if(pattern_ == "Off"){
-		  Off();
-	  }
-		return DEVICE_OK;
 	}
     return DEVICE_OK;
 }
