@@ -272,8 +272,9 @@ public class SettingsPanel extends ListeningJPanel {
             stageScanPanel.add(scanOvershootDistance, "wrap");
          }
       } else {
-         stageScanPanel.add(new JLabel("Stage scanning not supported by your firmware."), "left, wrap");
-         stageScanPanel.add(new JLabel("See http://dispim.org for further information."), "left, wrap");
+         stageScanPanel.add(new JLabel("Stage scanning not supported by your"), "left, wrap");
+         stageScanPanel.add(new JLabel("Tiger firmware.  See http://dispim.org"), "left, wrap");
+         stageScanPanel.add(new JLabel("for further information."), "left, wrap");
       }
       
       // end stage scan panel
