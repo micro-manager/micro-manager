@@ -39,7 +39,7 @@ public final class PresetEditor extends ConfigDialog {
       instructionsText_ = "Here you can specifiy the property values\nin a configuration preset.";
       nameFieldLabelText_ = "Preset name:";
       initName_ = presetName_;
-      TITLE = "Preset editor for the \"" + groupName + "\" configuration group";
+      title_ = "Preset editor for the \"" + groupName + "\" configuration group";
       showUnused_ = false;
       showFlagsPanelVisible_ = false;
       scrollPaneTop_ = 70;

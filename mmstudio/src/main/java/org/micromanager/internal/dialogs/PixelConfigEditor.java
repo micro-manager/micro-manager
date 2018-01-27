@@ -1,0 +1,161 @@
+//////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman, 2018
+//
+// COPYRIGHT:    Regents of the University of California, 2018
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
+package org.micromanager.internal.dialogs;
+
+import java.awt.Font;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import mmcorej.Configuration;
+import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.internal.utils.PropertyTableData;
+import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.internal.utils.ShowFlagsPanel;
+
+/**
+ *
+ * @author nico
+ */
+public class PixelConfigEditor extends ConfigDialog {
+   
+   protected final String pixelSizeLabelText_;
+   protected JTextField pixelSizeField_;
+   protected String pixelSize_;
+
+   public  PixelConfigEditor(String presetName, Studio gui, String pixelSize, boolean newItem)
+   {
+      super("ConfigPixelSize", presetName, gui, gui.getCMMCore(), newItem);
+      instructionsText_ = "Specify all properties affecting pixel size.";
+      nameFieldLabelText_ = "Pixel Config Name:";
+      pixelSizeLabelText_ = "Pixel Size (um)";
+      pixelSize_ = pixelSize;
+      initName_ = groupName_;
+      title_ = "Pixel Config Editor";
+      showUnused_ = true;
+      showFlagsPanelVisible_ = true;
+      scrollPaneTop_ = 140;
+      numColumns_ = 3;
+      data_ = new PropertyTableData(core_, groupName_, presetName_, 2, 1, false);
+      super.initializeData();
+      data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
+      showShowReadonlyCheckBox_ = true;
+      super.initialize();
+   }
+   
+   @Override
+   public void okChosen() {
+      // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   }
+   
+   @Override
+    protected void initializeWidgets() {
+      JPanel leftPanel = new JPanel(
+            new MigLayout("filly, flowy, insets 0 6 0 0, gap 2"));
+      instructionsTextArea_ = new JTextArea();
+      instructionsTextArea_.setFont(new Font("Arial", Font.PLAIN, 12));
+      instructionsTextArea_.setWrapStyleWord(true);
+      instructionsTextArea_.setText(instructionsText_);
+      instructionsTextArea_.setEditable(false);
+      instructionsTextArea_.setOpaque(false);
+      leftPanel.add(instructionsTextArea_, "gaptop 2, gapbottom push");
+
+      if (showShowReadonlyCheckBox_) {
+         showReadonlyCheckBox_ = new JCheckBox("Show read-only properties");
+         showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
+         showReadonlyCheckBox_.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               // show/hide read-only properties
+               data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
+               data_.update(false);
+               data_.fireTableStructureChanged();
+             }
+         });
+         leftPanel.add(showReadonlyCheckBox_, "gaptop 5, gapbottom 10");
+      }
+
+      final Font boldArial = new Font("Arial", Font.BOLD, 12);
+      nameFieldLabel_ = new JLabel(nameFieldLabelText_);
+      nameFieldLabel_.setFont(boldArial);
+      leftPanel.add(nameFieldLabel_, "split 2, flowx, alignx right");
+
+      nameField_ = new JTextField();
+      nameField_.setText(presetName_);
+      nameField_.setEditable(true);
+      nameField_.setSelectionStart(0);
+      nameField_.setSelectionEnd(nameField_.getText().length());
+      leftPanel.add(nameField_, "width 90!");
+      
+      JLabel pixelSizeFieldLabel = new JLabel(pixelSizeLabelText_);
+      pixelSizeFieldLabel.setFont(boldArial);
+      leftPanel.add(pixelSizeFieldLabel, "split 2, flowx, alignx right");
+      
+      pixelSizeField_ = new JTextField();
+      pixelSizeField_.setText(pixelSize_);
+      pixelSizeField_.setEditable(true);
+      pixelSizeField_.setSelectionStart(0);
+      pixelSizeField_.setSelectionEnd(pixelSizeField_.getText().length());
+      leftPanel.add(pixelSizeField_, "width 90!");
+              
+      add(leftPanel, "growy, gapright push");
+
+      if (showFlagsPanelVisible_ ) {
+         flags_.load(ConfigDialog.class);
+         Configuration cfg;
+         try {
+            cfg = new Configuration();
+            showFlagsPanel_ = new ShowFlagsPanel(data_, flags_, core_, cfg);
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
+         }
+         add(showFlagsPanel_, "growx");
+      }
+
+      okButton_ = new JButton("OK");
+      okButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            if (table_.isEditing() && table_.getCellEditor() != null) {
+               table_.getCellEditor().stopCellEditing();
+            }
+            okChosen();
+         }
+      });
+      add(okButton_, "gapleft push, split 2, flowy, width 90!");
+
+      cancelButton_ = new JButton("Cancel");
+      cancelButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            dispose();
+         }
+      });
+      add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
+   }
+
+   
+}

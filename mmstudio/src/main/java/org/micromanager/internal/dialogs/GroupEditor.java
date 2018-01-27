@@ -48,7 +48,7 @@ public final class GroupEditor extends ConfigDialog {
       instructionsText_ = "Here you can specify the properties included\nin a configuration group.";
       nameFieldLabelText_ = "Group name:";
       initName_ = groupName_;
-      TITLE = "Group Editor";
+      title_ = "Group Editor";
       showUnused_ = true;
       showFlagsPanelVisible_ = true;
       scrollPaneTop_ = 140;

@@ -363,14 +363,19 @@ public final class CalibrationListDlg extends MMDialog {
             TITLE,
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
       if (result == JOptionPane.OK_OPTION) {
-         CalibrationEditor dlg =
-            new CalibrationEditor(parentGUI_, calibrationName, pixelSize);
-         dlg.setCore(core_);
-         dlg.setVisible(true);
-         if (dlg.isChanged()) {
-            ((MMStudio) parentGUI_).setConfigChanged(true);
+         if (calibrationList_.size() == 0) {
+            PixelConfigEditor pce = new PixelConfigEditor(calibrationName, parentGUI_, pixelSize, true); 
+            pce.setVisible(true);
+         } else {
+            CalibrationEditor dlg
+                    = new CalibrationEditor(parentGUI_, calibrationName, pixelSize);
+            dlg.setCore(core_);
+            dlg.setVisible(true);
+            if (dlg.isChanged()) {
+               ((MMStudio) parentGUI_).setConfigChanged(true);
+            }
+            return dlg.isChanged();
          }
-         return dlg.isChanged();
       }
       return false;
    }

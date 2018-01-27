@@ -71,23 +71,23 @@ public abstract class ConfigDialog extends MMDialog {
    protected CMMCore core_;
    protected Studio gui_;
 
-   private JTable table_;
+   protected JTable table_;
    protected PropertyTableData data_;
    private JScrollPane scrollPane_;
 
-   private ShowFlags flags_;
-   private ShowFlagsPanel showFlagsPanel_;
+   protected ShowFlags flags_;
+   protected ShowFlagsPanel showFlagsPanel_;
 
-   private JTextArea instructionsTextArea_;
-   private JCheckBox showReadonlyCheckBox_;
+   protected JTextArea instructionsTextArea_;
+   protected JCheckBox showReadonlyCheckBox_;
    protected boolean showShowReadonlyCheckBox_ = false;
    protected JTextField nameField_;
-   private JLabel nameFieldLabel_;
+   protected JLabel nameFieldLabel_;
 
-   private JButton okButton_;
-   private JButton cancelButton_;
+   protected JButton okButton_;
+   protected JButton cancelButton_;
 
-   protected String TITLE = "";
+   protected String title_ = "";
    protected String instructionsText_ = "Instructions go here.";
    protected String nameFieldLabelText_ = "GroupOrPreset Name";
    protected String initName_ = "";
@@ -123,7 +123,7 @@ public abstract class ConfigDialog extends MMDialog {
       initializePropertyTable();
       setupKeys();
       setVisible(true);
-      this.setTitle(TITLE);
+      this.setTitle(title_);
       nameField_.requestFocus();
       setFocusable(true);
       update();
