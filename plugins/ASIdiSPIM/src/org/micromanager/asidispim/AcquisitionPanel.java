@@ -239,6 +239,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JFormattedTextField gridZDeltaField_;
    private final JLabel gridZCount_;
    private final JPanel gridSettingsPanel_;
+   private final JCheckBox clearYZGridCB_;
    private final JButton computeGridButton_;
    
    private static final int XYSTAGETIMEOUT = 20000;
@@ -1157,6 +1158,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       JSpinner tileOverlapPercent = pu.makeSpinnerFloat(0, 100, 1,
               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_GRID_OVERLAP_PERCENT, 10);
       gridSettingsPanel_.add(tileOverlapPercent, "wrap");
+      clearYZGridCB_ = pu.makeCheckBox("Clear position list if YZ unused",
+              Properties.Keys.PREFS_CLEAR_YZ_GRID, panelName_, true);
+      gridSettingsPanel_.add(clearYZGridCB_, "span 2");
       
       computeGridButton_ = new JButton("Compute grid");
       computeGridButton_.addActionListener(new ActionListener() {
@@ -1165,9 +1169,6 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 			final boolean useX = useXGridCB_.isSelected();
 			final boolean useY = useYGridCB_.isSelected();
 			final boolean useZ = useZGridCB_.isSelected();
-			if (!useY && !useZ && !useX) {
-				return;  // nothing to do
-			}
 			final int numX = useX ? updateGridXCount() : 1;
 			final int numY = useY ? updateGridYCount() : 1;
 			final int numZ = useZ ? updateGridZCount() : 1;
@@ -1198,32 +1199,43 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 				centerX = positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
 			}
 			
-			if (!useY && !useZ) {
+			if (!useY && !useZ && !clearYZGridCB_.isSelected()) {
 				return;
 			}
-			boolean overwrite = MyDialogUtils.getConfirmDialogResult(
-					"Do you really want to overwrite the existing position list?",
-					JOptionPane.YES_NO_OPTION);
-			if (!overwrite) {
-				return;  // nothing to do
+			PositionList pl;
+			try {
+				pl = gui_.getPositionList();
+			} catch (MMScriptException e) {
+				pl = new PositionList();
 			}
-			PositionList pl = new PositionList();
-			for (int iX=0; iX<numZ; ++iX) {
-				for (int iY=0; iY<numY; ++iY) {
-					MultiStagePosition msp = new MultiStagePosition();
-					StagePosition s = new StagePosition();
-					s.stageName = xy_device;
-					s.numAxes = 2;
-					s.x = centerX;
-					s.y = startY + iY * deltaY;
-					msp.add(s);
-					StagePosition s2 = new StagePosition();
-					s2.stageName = z_device;
-					s2.x = startZ + iX * deltaZ;
-					msp.add(s2);
-					msp.setLabel("Pos_" + iX + "_" + iY);
-					pl.addPosition(msp);
-				}			
+			boolean isPositionListEmpty = pl.getNumberOfPositions() == 0;
+			if (!isPositionListEmpty) {
+				boolean overwrite = MyDialogUtils.getConfirmDialogResult(
+						"Do you really want to overwrite the existing position list?",
+						JOptionPane.YES_NO_OPTION);
+				if (!overwrite) {
+					return;  // nothing to do
+				}
+			}
+			pl = new PositionList();
+			if (useY || useZ) {
+				for (int iX=0; iX<numZ; ++iX) {
+					for (int iY=0; iY<numY; ++iY) {
+						MultiStagePosition msp = new MultiStagePosition();
+						StagePosition s = new StagePosition();
+						s.stageName = xy_device;
+						s.numAxes = 2;
+						s.x = centerX;
+						s.y = startY + iY * deltaY;
+						msp.add(s);
+						StagePosition s2 = new StagePosition();
+						s2.stageName = z_device;
+						s2.x = startZ + iX * deltaZ;
+						msp.add(s2);
+						msp.setLabel("Pos_" + iX + "_" + iY);
+						pl.addPosition(msp);
+					}			
+				}
 			}
 			try {
 				gui_.setPositionList(pl);
@@ -1282,9 +1294,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          @Override
          public void actionPerformed(ActionEvent e) { 
             PanelUtils.componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());
+            gridButton_.setEnabled(true);  // leave this always enabled
          }
       });
       PanelUtils.componentsSetEnabled(positionPanel, usePositionsCB_.isSelected());  // initialize
+      gridButton_.setEnabled(true);  // leave this always enabled
       
       // end of Position panel
       
