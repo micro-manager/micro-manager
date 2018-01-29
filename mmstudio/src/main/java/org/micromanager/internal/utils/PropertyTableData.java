@@ -1,6 +1,7 @@
 package org.micromanager.internal.utils;
 
 import java.util.ArrayList;
+import java.util.List;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -26,14 +27,16 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    public boolean showUnused_;
    protected boolean showReadOnly_;
    String[] columnNames_ = new String[3];
-   public ArrayList<PropertyItem> propList_ = new ArrayList<PropertyItem>(); // The table data is stored in here.
-   public ArrayList<PropertyItem> propListVisible_ = new ArrayList<PropertyItem>(); // The table data is stored in here.
+   public ArrayList<PropertyItem> propList_ = new ArrayList<PropertyItem>(); 
+       // The table data is stored in here.
+   public ArrayList<PropertyItem> propListVisible_ = new ArrayList<PropertyItem>(); 
+      // The table data is stored in here.
    protected CMMCore core_ = null;
    Configuration groupData_[];
    PropertySetting groupSignature_[];
-   private String[] presetNames_;
    private volatile boolean updating_;
-   private boolean groupOnly_;
+   private final boolean groupOnly_;
+   private final boolean allowChangingProperties_;
 
    /**
     * PropertyTableData constructor
@@ -44,10 +47,15 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
     * @param PropertyValueColumn
     * @param PropertyUsedColumn
     * @param groupOnly - indicates that only properties included in the group
-    * should be read
+    *                      should be show
+    * @param allowChangingProperties - when true, the PropertyValueColumn will
+    *                                  be editable, and changes will propagate
+    *                                  to the hardware. Otherwise, the column 
+    *                                  will be read-only
     */
    public PropertyTableData(CMMCore core, String groupName, String presetName,
-           int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly) {
+           int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly,
+           boolean allowChangingProperties) {
       core_ = core;
       groupName_ = groupName;
       presetName_ = presetName;
@@ -55,35 +63,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       PropertyValueColumn_ = PropertyValueColumn;
       PropertyUsedColumn_ = PropertyUsedColumn;
       groupOnly_ = groupOnly;
+      allowChangingProperties_ = allowChangingProperties;
    }
 
    public ArrayList<PropertyItem> getProperties() {
       return propList_;
-   }
-
-   public String findMatchingPreset() {
-      // find selected rows
-      ArrayList<PropertyItem> selectedItems = new ArrayList<PropertyItem>();
-      for (PropertyItem item : propList_) {
-         if (item.confInclude) {
-            selectedItems.add(item);
-         }
-      }
-
-      for (int i = 0; i < groupData_.length; i++) {
-         int matchCount = 0;
-         for (PropertyItem selectedItem : selectedItems) {
-            PropertySetting ps = new PropertySetting(selectedItem.device, selectedItem.name, selectedItem.value);
-            if (groupData_[i].isSettingIncluded(ps)) {
-               matchCount++;
-            }
-         }
-         if (matchCount == selectedItems.size()) {
-            return presetNames_[i];
-         }
-      }
-
-      return null;
    }
 
    public PropertyItem getItem(String device, String propName) {
@@ -119,10 +103,6 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    @Override
    public int getColumnCount() {
       return columnNames_.length;
-   }
-
-   public boolean isEditingGroup() {
-      return true;
    }
 
    @Override
@@ -175,7 +155,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             gui_.app().refreshGUIFromCache();
          }
       } else if (col == PropertyUsedColumn_) {
-         item.confInclude = ((Boolean) value).booleanValue();
+         item.confInclude = ((Boolean) value);
       }
       fireTableCellUpdated(row, col);
    }
@@ -188,18 +168,14 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    @Override
    public boolean isCellEditable(int nRow, int nCol) {
       if (nCol == PropertyValueColumn_) {
-         if (nCol == 2) // do not allow editing in the group editor view
+         if (!allowChangingProperties_) // do not allow editing in the group editor view
          {
             return false;
          } else {
             return !propListVisible_.get(nRow).readOnly;
          }
       } else if (nCol == PropertyUsedColumn_) {
-         if (!isEditingGroup()) {
-            return false;
-         } else {
-            return true;
-         }
+         return !groupOnly_;
       } else {
          return false;
       }
@@ -229,6 +205,16 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    public void update(ShowFlags flags, String groupName, String presetName,
            boolean fromCache) {
       try {
+         // when updating, we do need to keep track which properties have their
+         // Use checkbox checked.  Otherwise, this information get lost, which
+         // is annoying and confusing for the user
+         List<PropertyItem> usedItems = new ArrayList<PropertyItem>();
+         for (PropertyItem item : propListVisible_) {
+            if (item.confInclude) {
+               usedItems.add(item);
+            }
+         }   
+         
          StrVector devices = core_.getLoadedDevices();
          propList_.clear();
 
@@ -254,6 +240,12 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                         } else {
                            item.confInclude = false;
                            item.setValueFromCoreString(core_.getProperty(devices.get(i), properties.get(j)));
+                        }
+                        for (PropertyItem usedItem : usedItems) {
+                           if (item.device.equals(usedItem.device) &&
+                                   item.name.equals(usedItem.name)) {
+                              item.confInclude = true;
+                           }
                         }
                         propList_.add(item);
                      }
@@ -313,7 +305,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          handleException(e);
       }
 
-      Boolean showDevice = false;
+      Boolean showDevice;
       if (dType == DeviceType.SerialDevice) {
          showDevice = false;
       } else if (dType == DeviceType.CameraDevice) {

@@ -222,7 +222,8 @@ public final class PropertyEditor extends MMFrame {
       public PropertyEditorTableData(CMMCore core, String groupName, String presetName,
          int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
 
-         super(core, groupName, presetName, PropertyValueColumn, PropertyUsedColumn, false);
+         super(core, groupName, presetName, PropertyValueColumn, 
+                 PropertyUsedColumn, false, false);
       }
 
       private static final long serialVersionUID = 1L;

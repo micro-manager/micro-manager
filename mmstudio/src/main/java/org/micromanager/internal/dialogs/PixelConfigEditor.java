@@ -30,8 +30,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import mmcorej.Configuration;
+import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.ShowFlagsPanel;
@@ -41,37 +45,87 @@ import org.micromanager.internal.utils.ShowFlagsPanel;
  * @author nico
  */
 public class PixelConfigEditor extends ConfigDialog {
-   
+
+   private static final long serialVersionUID = 5109403088011441146L;
+
    protected final String pixelSizeLabelText_;
    protected JTextField pixelSizeField_;
    protected String pixelSize_;
 
-   public  PixelConfigEditor(String presetName, Studio gui, String pixelSize, boolean newItem)
-   {
-      super("ConfigPixelSize", presetName, gui, gui.getCMMCore(), newItem);
+   public PixelConfigEditor(String pixelSizeConfigName, Studio gui, String pixelSize, boolean newItem) {
+      super("ConfigPixelSize", pixelSizeConfigName, gui, gui.getCMMCore(), newItem);
+      // note: pixelSizeConfigName is called presetName_ in ConfigDialog
       instructionsText_ = "Specify all properties affecting pixel size.";
       nameFieldLabelText_ = "Pixel Config Name:";
       pixelSizeLabelText_ = "Pixel Size (um)";
       pixelSize_ = pixelSize;
-      initName_ = groupName_;
+      initName_ = pixelSizeConfigName;
       title_ = "Pixel Config Editor";
       showUnused_ = true;
       showFlagsPanelVisible_ = true;
       scrollPaneTop_ = 140;
       numColumns_ = 3;
-      data_ = new PropertyTableData(core_, groupName_, presetName_, 2, 1, false);
+      data_ = new PropertyTableData(core_, groupName_, presetName_, 2, 1, false, true);
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       showShowReadonlyCheckBox_ = true;
       super.initialize();
    }
-   
+
    @Override
    public void okChosen() {
-      // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+      writeGroup(nameField_.getText());
+      this.dispose();      
+   }
+
+   public boolean writeGroup(String newName) {
+
+      // Check that at least one property has been selected.
+      int itemsIncludedCount = 0;
+      for (PropertyItem item : data_.getPropList()) {
+         if (item.confInclude) {
+            itemsIncludedCount++;
+         }
+      }
+      if (itemsIncludedCount == 0) {
+         showMessageDialog("Please select at least one property for this group.");
+         return false;
+      }
+
+      // Check to make sure a group name has been specified.
+      if (newName.length() == 0) {
+         showMessageDialog("Please enter a name for this Pizel Size Configuration.");
+         return false;
+      }
+
+      // Check to make sure that no Pixel Size Configs have been defined yet
+      StrVector groups = core_.getAvailablePixelSizeConfigs();
+      if (!groups.isEmpty()) {
+         showMessageDialog("Properties for Pixel Size Config already selected. This is weird");
+         return false;
+      }
+
+      try {
+         core_.definePixelSizeConfig(newName);
+
+         for (PropertyItem item : data_.getPropList()) {
+            if (item.confInclude) {
+               core_.definePixelSizeConfig(newName, item.device, item.name, item.getValueInCoreFormat());              
+            }
+         }
+         pixelSize_ = pixelSizeField_.getText();
+         core_.setPixelSizeUm(newName, NumberUtils.displayStringToDouble(pixelSize_));
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+
+      ((MMStudio) gui_).setConfigChanged(true);
+      return true;
    }
    
+   
    @Override
+   @SuppressWarnings("Convert2Lambda")
     protected void initializeWidgets() {
       JPanel leftPanel = new JPanel(
             new MigLayout("filly, flowy, insets 0 6 0 0, gap 2"));
@@ -156,6 +210,5 @@ public class PixelConfigEditor extends ConfigDialog {
       });
       add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
    }
-
-   
+    
 }
