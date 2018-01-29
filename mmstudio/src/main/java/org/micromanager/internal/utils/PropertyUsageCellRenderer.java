@@ -26,6 +26,8 @@ public final class PropertyUsageCellRenderer implements TableCellRenderer {
       cb_.setBackground(DaytimeNighttime.getInstance().getBackgroundColor());
       if (item_.readOnly) {
          cb_.setEnabled(false);
+      } else {
+         cb_.setEnabled(true);
       }
       return (Component) cb_;
    }
