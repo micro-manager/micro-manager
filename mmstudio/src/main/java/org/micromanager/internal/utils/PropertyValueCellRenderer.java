@@ -62,10 +62,12 @@ public class PropertyValueCellRenderer implements TableCellRenderer {
          comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
       }
 
-      if (disable_) {
+      if (!table.isCellEditable(rowIndex, colIndex)) {
          comp.setEnabled(false);
          // For legibility's sake, we always use the "enabled" color.
          comp.setForeground(DaytimeNighttime.getInstance().getEnabledTextColor());
+      } else {
+         comp.setEnabled(true);
       }
 
       return comp;

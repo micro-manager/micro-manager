@@ -44,7 +44,7 @@ public final class PresetEditor extends ConfigDialog {
       showFlagsPanelVisible_ = false;
       scrollPaneTop_ = 70;
       numColumns_=2;
-      data_ = new PropertyTableData(core_,groupName_,presetName_,1,2, true, false);
+      data_ = new PropertyTableData(core_,groupName_,presetName_,1,2, true, true, true);
       initializeData();
       data_.setColumnNames("Property Name","Preset Value","");
       data_.setShowReadOnly(true);

@@ -51,7 +51,6 @@ import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.DaytimeNighttime;
-import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyNameCellRenderer;
@@ -112,7 +111,7 @@ public final class PropertyEditor extends MMFrame {
    }
 
    private void createComponents() {
-      final UserProfile profile = UserProfileStaticInterface.getInstance();
+      final UserProfile profile = studio_.getUserProfile();
 
       setIconImage(Toolkit.getDefaultToolkit().getImage(
               getClass().getResource("/org/micromanager/icons/microscope.gif") ) );
@@ -223,7 +222,7 @@ public final class PropertyEditor extends MMFrame {
          int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
 
          super(core, groupName, presetName, PropertyValueColumn, 
-                 PropertyUsedColumn, false, false);
+                 PropertyUsedColumn, false, true, false);
       }
 
       private static final long serialVersionUID = 1L;

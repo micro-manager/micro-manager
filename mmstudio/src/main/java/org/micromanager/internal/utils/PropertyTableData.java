@@ -37,25 +37,34 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    private volatile boolean updating_;
    private final boolean groupOnly_;
    private final boolean allowChangingProperties_;
+   private final boolean allowChangesOnlyWhenUsed_;
 
    /**
     * PropertyTableData constructor
     *
+    * This Table model is used by the Device/Property Browser, the GroupEditor,
+    * The PresetEditor, and the PixelSizeEditor.  Each of these has slightly
+    * different requirements, contributing to a multitude of flags in the
+    * constructor.  This code can likely be cleaned up with investment of time
+    * to think everything through a bit better.
+    *
     * @param core
-    * @param groupName
+    * @param groupName - Name of group to be edited.  Irrelevant for PixelSize editor
     * @param presetName
-    * @param PropertyValueColumn
-    * @param PropertyUsedColumn
+    * @param PropertyValueColumn # (zero-based) of "Value" column
+    * @param PropertyUsedColumn  # (zero-based) of "Use" column
     * @param groupOnly - indicates that only properties included in the group
-    *                      should be show
+    *                    should be shown
     * @param allowChangingProperties - when true, the PropertyValueColumn will
-    *                                  be editable, and changes will propagate
-    *                                  to the hardware. Otherwise, the column 
-    *                                  will be read-only
+    *                    be editable, and changes will propagate to the hardware.
+    *                    Otherwise, the column will be read-only.
+    * @param allowChangesOnlyWhenUsed - when allowChangingProperties is true
+    *              setting this flag will only allow changes to PropertyItems
+    *              that have the "confInclude" flag set to true
     */
    public PropertyTableData(CMMCore core, String groupName, String presetName,
            int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly,
-           boolean allowChangingProperties) {
+           boolean allowChangingProperties, boolean allowChangesOnlyWhenUsed) {
       core_ = core;
       groupName_ = groupName;
       presetName_ = presetName;
@@ -64,6 +73,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       PropertyUsedColumn_ = PropertyUsedColumn;
       groupOnly_ = groupOnly;
       allowChangingProperties_ = allowChangingProperties;
+      allowChangesOnlyWhenUsed_ = allowChangesOnlyWhenUsed;
    }
 
    public ArrayList<PropertyItem> getProperties() {
@@ -172,7 +182,15 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          {
             return false;
          } else {
-            return !propListVisible_.get(nRow).readOnly;
+            if (propListVisible_.get(nRow).readOnly) {
+               return false;
+            }
+            if (allowChangesOnlyWhenUsed_) {
+               return propListVisible_.get(nRow).confInclude;
+            }
+            else {
+               return true;
+            }
          }
       } else if (nCol == PropertyUsedColumn_) {
          return !groupOnly_;
