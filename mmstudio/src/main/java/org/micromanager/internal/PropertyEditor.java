@@ -222,7 +222,7 @@ public final class PropertyEditor extends MMFrame {
          int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
 
          super(core, groupName, presetName, PropertyValueColumn, 
-                 PropertyUsedColumn, false, true, false);
+                 PropertyUsedColumn, false, true, false, false);
       }
 
       private static final long serialVersionUID = 1L;
@@ -231,7 +231,7 @@ public final class PropertyEditor extends MMFrame {
       public void setValueAt(Object value, int row, int col) {
          PropertyItem item = propListVisible_.get(row);
          studio_.logs().logMessage("Setting value " + value + " at row " + row);
-         if (col == PropertyValueColumn_) {
+         if (col == propertyValueColumn_) {
             setValueInCore(item,value);
          }
          core_.updateSystemStateCache();

@@ -16,9 +16,9 @@ import org.micromanager.Studio;
 public class PropertyTableData extends AbstractTableModel implements MMPropertyTableModel {
 
    private static final long serialVersionUID = -5582899855072387637L;
-   int PropertyNameColumn_;
-   protected int PropertyValueColumn_;
-   int PropertyUsedColumn_;
+   int propertyNameColumn_;
+   protected int propertyValueColumn_;
+   int propertyUsedColumn_;
    public boolean disabled = false;
    public String groupName_;
    public String presetName_;
@@ -38,7 +38,68 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    private final boolean groupOnly_;
    private final boolean allowChangingProperties_;
    private final boolean allowChangesOnlyWhenUsed_;
+   private final boolean isPixelSizeConfig_;
 
+   public static class Builder {
+      private CMMCore core_ = null;
+      private String groupName_;
+      private String presetName_;
+      private int propertyValueColumn_;
+      private int propertyUsedColumn_;
+      private boolean groupOnly_;
+      private boolean allowChangingProperties_;
+      private boolean allowChangesOnlyWhenUsed_;
+      private boolean isPixelSizeConfig_;
+      
+      public Builder(final CMMCore core) {
+         core_ = core;
+      }
+      
+      public Builder groupName(final String groupName) {
+         groupName_ = groupName;
+         return this;
+      }
+      
+      public Builder presetName(final String presetName) {
+         presetName_ = presetName;
+         return this;
+      }
+      
+      public Builder propertyValueColumn(final int propertyValueColumn) {
+         propertyValueColumn_ = propertyValueColumn;
+         return this;
+      }
+      
+      public Builder propertyUsedColumn(final int propertyUsedColumn) {
+         propertyUsedColumn_ = propertyUsedColumn;
+         return this;
+      }
+      
+      public Builder groupOnly(final boolean groupOnly) {
+         groupOnly_ = groupOnly;
+         return this;
+      }
+      
+      public Builder allowChangingProperties(final boolean allow) {
+         allowChangingProperties_ = allow;
+         return this;
+      }
+      
+      public Builder allowChangesOnlyWhenUser(final boolean allow) {
+         allowChangesOnlyWhenUsed_ = allow;
+         return this;
+      }
+      
+      public Builder isPixelSizeConfig(final boolean is) {
+         isPixelSizeConfig_ = is;
+         return this;
+      }
+      
+      public PropertyTableData build() {
+         return new PropertyTableData(this);
+      }
+   }
+   
    /**
     * PropertyTableData constructor
     *
@@ -61,19 +122,36 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
     * @param allowChangesOnlyWhenUsed - when allowChangingProperties is true
     *              setting this flag will only allow changes to PropertyItems
     *              that have the "confInclude" flag set to true
+    * @param isPixelSizeConfig - indicates this is a pixel size config rather than
+    *                a standard config.  Pixel config-specific calls to the core
+    *                will be used.
     */
-   public PropertyTableData(CMMCore core, String groupName, String presetName,
+   protected PropertyTableData(CMMCore core, String groupName, String presetName,
            int PropertyValueColumn, int PropertyUsedColumn, boolean groupOnly,
-           boolean allowChangingProperties, boolean allowChangesOnlyWhenUsed) {
+           boolean allowChangingProperties, boolean allowChangesOnlyWhenUsed,
+           boolean isPixelSizeConfig) {
       core_ = core;
       groupName_ = groupName;
       presetName_ = presetName;
-      PropertyNameColumn_ = 0;
-      PropertyValueColumn_ = PropertyValueColumn;
-      PropertyUsedColumn_ = PropertyUsedColumn;
+      propertyNameColumn_ = 0;
+      propertyValueColumn_ = PropertyValueColumn;
+      propertyUsedColumn_ = PropertyUsedColumn;
       groupOnly_ = groupOnly;
       allowChangingProperties_ = allowChangingProperties;
       allowChangesOnlyWhenUsed_ = allowChangesOnlyWhenUsed;
+      isPixelSizeConfig_ = isPixelSizeConfig;
+   }
+   
+   protected PropertyTableData(Builder b) {
+      core_ = b.core_;
+      groupName_ = b.groupName_;
+      presetName_ = b.presetName_;
+      propertyValueColumn_ = b.propertyValueColumn_;
+      propertyUsedColumn_ = b.propertyUsedColumn_;
+      groupOnly_ = b.groupOnly_;
+      allowChangingProperties_ = b.allowChangingProperties_;
+      allowChangesOnlyWhenUsed_ = b.allowChangesOnlyWhenUsed_;
+      isPixelSizeConfig_ = b.isPixelSizeConfig_;
    }
 
    public ArrayList<PropertyItem> getProperties() {
@@ -124,11 +202,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    public Object getValueAt(int row, int col) {
 
       PropertyItem item = propListVisible_.get(row);
-      if (col == PropertyNameColumn_) {
+      if (col == propertyNameColumn_) {
          return item.device + "-" + item.name;
-      } else if (col == PropertyValueColumn_) {
+      } else if (col == propertyValueColumn_) {
          return item.value;
-      } else if (col == PropertyUsedColumn_) {
+      } else if (col == propertyUsedColumn_) {
          return item.confInclude;
       }
 
@@ -157,14 +235,14 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    public void setValueAt(Object value, int row, int col) {
       PropertyItem item = propListVisible_.get(row);
       ReportingUtils.logMessage("Setting value " + value + " at row " + row);
-      if (col == PropertyValueColumn_) {
+      if (col == propertyValueColumn_) {
          if (item.confInclude) {
             setValueInCore(item, value);
             core_.updateSystemStateCache();
             refresh(true);
             gui_.app().refreshGUIFromCache();
          }
-      } else if (col == PropertyUsedColumn_) {
+      } else if (col == propertyUsedColumn_) {
          item.confInclude = ((Boolean) value);
       }
       fireTableCellUpdated(row, col);
@@ -177,7 +255,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
    @Override
    public boolean isCellEditable(int nRow, int nCol) {
-      if (nCol == PropertyValueColumn_) {
+      if (nCol == propertyValueColumn_) {
          if (!allowChangingProperties_) // do not allow editing in the group editor view
          {
             return false;
@@ -192,7 +270,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                return true;
             }
          }
-      } else if (nCol == PropertyUsedColumn_) {
+      } else if (nCol == propertyUsedColumn_) {
          return !groupOnly_;
       } else {
          return false;
@@ -236,7 +314,25 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          StrVector devices = core_.getLoadedDevices();
          propList_.clear();
 
-         Configuration cfg = core_.getConfigGroupState(groupName);
+         Configuration cfg;
+         
+         if (isPixelSizeConfig_) {
+            try {
+               cfg = core_.getPixelSizeConfigData(presetName);
+            } catch (Exception ex) {
+               // it is possible that this is a new config, hence the pixelsize 
+               // config will not be found
+               // We need a config, preferably any pixel size config so:
+               StrVector availablePixelSizeConfigs = core_.getAvailablePixelSizeConfigs();
+               if (availablePixelSizeConfigs.size() > 0) {
+                  cfg = core_.getPixelSizeConfigData(availablePixelSizeConfigs.get(0));
+               } else {
+                  cfg = core_.getConfigGroupState(groupName);
+               }
+            }
+         } else {
+            cfg = core_.getConfigGroupState(groupName);
+         }
 
          gui_.live().setSuspended(true);
 

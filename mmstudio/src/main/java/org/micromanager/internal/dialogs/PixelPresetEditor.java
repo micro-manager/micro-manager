@@ -1,4 +1,4 @@
-//////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -44,18 +44,16 @@ import org.micromanager.internal.utils.ShowFlagsPanel;
  *
  * @author nico
  */
-public class PixelConfigEditor extends ConfigDialog {
-
-   private static final long serialVersionUID = 5109403088011441146L;
+public class PixelPresetEditor extends ConfigDialog {
 
    protected final String pixelSizeLabelText_;
    protected JTextField pixelSizeField_;
    protected String pixelSize_;
 
-   public PixelConfigEditor(String pixelSizeConfigName, Studio gui, String pixelSize, boolean newItem) {
+   public PixelPresetEditor(String pixelSizeConfigName, Studio gui, String pixelSize, boolean newItem) {
       super("ConfigPixelSize", pixelSizeConfigName, gui, gui.getCMMCore(), newItem);
       // note: pixelSizeConfigName is called presetName_ in ConfigDialog
-      instructionsText_ = "Specify all properties affecting pixel size.";
+      instructionsText_ = "Specify pixel size configuration";
       nameFieldLabelText_ = "Pixel Config Name:";
       pixelSizeLabelText_ = "Pixel Size (um)";
       pixelSize_ = pixelSize;
@@ -64,10 +62,10 @@ public class PixelConfigEditor extends ConfigDialog {
       showUnused_ = true;
       showFlagsPanelVisible_ = true;
       scrollPaneTop_ = 140;
-      numColumns_ = 3;
+      numColumns_ = 2;
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
-      data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(2).
-              propertyUsedColumn(1).groupOnly(false).allowChangingProperties(true).
+      data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
+              propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).
               allowChangesOnlyWhenUser(true).isPixelSizeConfig(true).build();
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
@@ -101,12 +99,6 @@ public class PixelConfigEditor extends ConfigDialog {
          return false;
       }
 
-      // Check to make sure that no Pixel Size Configs have been defined yet
-      StrVector groups = core_.getAvailablePixelSizeConfigs();
-      if (!groups.isEmpty()) {
-         showMessageDialog("Properties for Pixel Size Config already selected. This is weird");
-         return false;
-      }
 
       try {
          core_.definePixelSizeConfig(newName);

@@ -43,8 +43,11 @@ public final class PresetEditor extends ConfigDialog {
       showUnused_ = false;
       showFlagsPanelVisible_ = false;
       scrollPaneTop_ = 70;
-      numColumns_=2;
-      data_ = new PropertyTableData(core_,groupName_,presetName_,1,2, true, true, true);
+      numColumns_= 2;
+      PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
+      data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
+              propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).
+              allowChangesOnlyWhenUser(true).isPixelSizeConfig(false).build();
       initializeData();
       data_.setColumnNames("Property Name","Preset Value","");
       data_.setShowReadOnly(true);

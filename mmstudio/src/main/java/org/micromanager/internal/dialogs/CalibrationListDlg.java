@@ -271,7 +271,7 @@ public final class CalibrationListDlg extends MMDialog {
 
    public void addNewCalibration() {
       String name = "Res" + calibrationList_.size();
-      if (editPreset(name, "0.00")) {
+      if (editPreset(name, "0.00", true)) {
          // Clear calibrationlist and re-read from core
          calibrationList_.getCalibrationsFromCore();
          CalTableModel ptm = (CalTableModel)calTable_.getModel();
@@ -290,7 +290,7 @@ public final class CalibrationListDlg extends MMDialog {
       }
       String size = (String)ptm.getValueAt(idx, 1);
       String label = (String)ptm.getValueAt(idx, 0);
-      if (editPreset(label, size)) {
+      if (editPreset(label, size, false)) {
          calibrationList_.getCalibrationsFromCore();
          ptm.fireTableDataChanged();
          ((MMStudio) parentGUI_).setConfigChanged(true);
@@ -357,24 +357,26 @@ public final class CalibrationListDlg extends MMDialog {
       }
    }
 
-   public boolean editPreset(String calibrationName, String pixelSize) {
+   public boolean editPreset(String calibrationName, String pixelSize, boolean newConfig) {
       int result = JOptionPane.showConfirmDialog(this,
             "Devices will move to the settings being edited. Please make sure there is no danger of collision.",
             TITLE,
             JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
       if (result == JOptionPane.OK_OPTION) {
          if (calibrationList_.size() == 0) {
-            PixelConfigEditor pce = new PixelConfigEditor(calibrationName, parentGUI_, pixelSize, true); 
+            PixelConfigEditor pce = new PixelConfigEditor(calibrationName, 
+                    parentGUI_, pixelSize, true); 
             pce.setVisible(true);
          } else {
-            CalibrationEditor dlg
-                    = new CalibrationEditor(parentGUI_, calibrationName, pixelSize);
-            dlg.setCore(core_);
-            dlg.setVisible(true);
+            PixelPresetEditor ppe = new PixelPresetEditor(calibrationName, 
+                    parentGUI_, pixelSize, newConfig);
+            ppe.setVisible(true);
+            /*
             if (dlg.isChanged()) {
                ((MMStudio) parentGUI_).setConfigChanged(true);
             }
             return dlg.isChanged();
+            */
          }
       }
       return false;
