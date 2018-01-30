@@ -30,7 +30,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import mmcorej.Configuration;
-import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
@@ -45,6 +44,8 @@ import org.micromanager.internal.utils.ShowFlagsPanel;
  * @author nico
  */
 public class PixelPresetEditor extends ConfigDialog {
+
+   private static final long serialVersionUID = -3709174019188065514L;
 
    protected final String pixelSizeLabelText_;
    protected JTextField pixelSizeField_;
@@ -63,6 +64,13 @@ public class PixelPresetEditor extends ConfigDialog {
       showFlagsPanelVisible_ = true;
       scrollPaneTop_ = 140;
       numColumns_ = 2;
+      try {
+      if (gui.getCMMCore().isPixelSizeConfigDefined(pixelSizeConfigName)) {
+            gui.getCMMCore().setPixelSizeConfig(pixelSizeConfigName);
+      }
+      } catch (Exception ex) {
+         gui.logs().showError(ex, "Failed to set this Pixel Size configuration");
+      }
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
               propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).
@@ -95,12 +103,21 @@ public class PixelPresetEditor extends ConfigDialog {
 
       // Check to make sure a group name has been specified.
       if (newName.length() == 0) {
-         showMessageDialog("Please enter a name for this Pizel Size Configuration.");
+         showMessageDialog("Please enter a name for this Pixel Size Configuration.");
          return false;
       }
 
-
       try {
+         if (!newName.equals(presetName_)) {
+            if (core_.isPixelSizeConfigDefined(presetName_)) {
+               core_.deletePixelSizeConfig(presetName_);
+            }
+         }
+
+         if (core_.isPixelSizeConfigDefined(newName)) {
+            core_.deletePixelSizeConfig(newName);
+         }
+
          core_.definePixelSizeConfig(newName);
 
          for (PropertyItem item : data_.getPropList()) {
@@ -111,16 +128,16 @@ public class PixelPresetEditor extends ConfigDialog {
          pixelSize_ = pixelSizeField_.getText();
          core_.setPixelSizeUm(newName, NumberUtils.displayStringToDouble(pixelSize_));
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         ReportingUtils.showError(e);
+         return false;
       }
 
       ((MMStudio) gui_).setConfigChanged(true);
       return true;
    }
-   
+     
    
    @Override
-   @SuppressWarnings("Convert2Lambda")
     protected void initializeWidgets() {
       JPanel leftPanel = new JPanel(
             new MigLayout("filly, flowy, insets 0 6 0 0, gap 2"));

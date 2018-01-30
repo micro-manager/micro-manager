@@ -41,7 +41,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    private final boolean isPixelSizeConfig_;
 
    public static class Builder {
-      private CMMCore core_ = null;
+      private CMMCore core_;
       private String groupName_;
       private String presetName_;
       private int propertyValueColumn_;
@@ -179,10 +179,6 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       }
    }
 
-   public StrVector getAvailableConfigGroups() {
-      return core_.getAvailableConfigGroups();
-   }
-
    @Override
    public int getRowCount() {
       return propListVisible_.size();
@@ -298,11 +294,12 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
       showReadOnly_ = showReadOnly;
    }
 
+   // note: public since it is overridden in internal.PropertyEditor
    public void update(ShowFlags flags, String groupName, String presetName,
            boolean fromCache) {
       try {
          // when updating, we do need to keep track which properties have their
-         // Use checkbox checked.  Otherwise, this information get lost, which
+         // "Use" checkbox checked.  Otherwise, this information get lost, which
          // is annoying and confusing for the user
          List<PropertyItem> usedItems = new ArrayList<PropertyItem>();
          for (PropertyItem item : propListVisible_) {
@@ -317,19 +314,21 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          Configuration cfg;
          
          if (isPixelSizeConfig_) {
-            try {
+            if (core_.isPixelSizeConfigDefined(presetName)) {
                cfg = core_.getPixelSizeConfigData(presetName);
-            } catch (Exception ex) {
-               // it is possible that this is a new config, hence the pixelsize 
-               // config will not be found
+            } else {
                // We need a config, preferably any pixel size config so:
                StrVector availablePixelSizeConfigs = core_.getAvailablePixelSizeConfigs();
                if (availablePixelSizeConfigs.size() > 0) {
                   cfg = core_.getPixelSizeConfigData(availablePixelSizeConfigs.get(0));
+               } else if (fromCache) {
+                  cfg = core_.getConfigGroupStateFromCache(groupName);
                } else {
                   cfg = core_.getConfigGroupState(groupName);
                }
             }
+         } else if (fromCache) {
+            cfg = core_.getConfigGroupStateFromCache(groupName);
          } else {
             cfg = core_.getConfigGroupState(groupName);
          }
@@ -346,21 +345,22 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                for (int j = 0; j < properties.size(); j++) {
                   PropertyItem item = new PropertyItem();
                   if (!groupOnly_ || cfg.isPropertyIncluded(devices.get(i), properties.get(j))) {
-                     item.readFromCore(core_, devices.get(i), properties.get(j), false);
+                     item.readFromCore(core_, devices.get(i), properties.get(j), fromCache);
                      if ((!item.readOnly || showReadOnly_) && !item.preInit) {
+                        
                         if (cfg.isPropertyIncluded(item.device, item.name)) {
                            item.confInclude = true;
-                           item.setValueFromCoreString(cfg.getSetting(item.device, item.name).getPropertyValue());
                         } else {
                            item.confInclude = false;
-                           item.setValueFromCoreString(core_.getProperty(devices.get(i), properties.get(j)));
                         }
+                        
                         for (PropertyItem usedItem : usedItems) {
                            if (item.device.equals(usedItem.device) &&
                                    item.name.equals(usedItem.name)) {
                               item.confInclude = true;
                            }
                         }
+                        
                         propList_.add(item);
                      }
                   }

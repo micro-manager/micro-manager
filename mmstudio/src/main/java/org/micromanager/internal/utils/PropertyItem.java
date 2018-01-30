@@ -100,10 +100,11 @@ public class PropertyItem {
          sort();
 
          String coreVal;
-         if (cached)
+         if (cached) {
             coreVal = core.getPropertyFromCache(deviceName,propertyName);
-         else
+         } else {
             coreVal = core.getProperty(deviceName,propertyName);
+         }
          setValueFromCoreString(coreVal);
  		 } catch (Exception e) {
 			ReportingUtils.logError(e);
