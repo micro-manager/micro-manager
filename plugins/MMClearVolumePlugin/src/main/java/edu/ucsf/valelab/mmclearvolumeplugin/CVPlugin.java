@@ -19,6 +19,7 @@ package edu.ucsf.valelab.mmclearvolumeplugin;
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.display.DisplayGearMenuPlugin;
+import org.micromanager.display.DisplayWindow;
 
 import org.scijava.plugin.Plugin;
 import org.scijava.plugin.SciJavaPlugin;
@@ -29,11 +30,11 @@ import org.scijava.plugin.SciJavaPlugin;
  * @author nico
  */
 @Plugin(type = DisplayGearMenuPlugin.class)
-public class CVPlugin implements MenuPlugin, SciJavaPlugin {
+public class CVPlugin implements MenuPlugin, DisplayGearMenuPlugin, SciJavaPlugin {
 
    private Studio studio_;
-   static public final String VERSION_INFO = "1.5.0";
-   static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2015-2017";
+   static public final String VERSION_INFO = "1.5.1";
+   static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2015-2018";
    static private final String DESCRIPTION = "View Micro-Manager data in the ClearVolume viewer";
    static private final String NAME = "3D (ClearVolume)";
 
@@ -78,6 +79,18 @@ public class CVPlugin implements MenuPlugin, SciJavaPlugin {
    @Override
    public String getVersion() {
       return VERSION_INFO;
+   }
+
+   @Override
+   public void onPluginSelected(DisplayWindow display) {
+       try {
+         CVViewer viewer = new CVViewer(studio_, display.getDatastore());
+         viewer.register();
+      } catch (Exception ex) {
+         if (studio_ != null) {
+            studio_.logs().logError(ex);
+         }
+      }
    }
 
 }
