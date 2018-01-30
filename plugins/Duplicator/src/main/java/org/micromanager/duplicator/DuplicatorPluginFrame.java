@@ -65,7 +65,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class DuplicatorPluginFrame extends MMDialog {
    private final Studio studio_;
    private final DisplayWindow ourWindow_;
-   private final Datastore ourStore_;
+   private final DataProvider ourProvider_;
    
    public DuplicatorPluginFrame (Studio studio, DisplayWindow window) {
       studio_ = studio;
@@ -74,15 +74,17 @@ public class DuplicatorPluginFrame extends MMDialog {
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       
       ourWindow_ = window;
-      ourStore_ = ourWindow_.getDatastore();
+      ourProvider_ = ourWindow_.getDataProvider();
       
       // Not sure if this is needed, be safe for now
-      if (!ourStore_.isFrozen()) {
+      /*
+      if (!ourProvider_.isFrozen()) {
          studio_.logs().showMessage("Can not duplicate ongoing acquisitions", 
                  window.getWindow());
          super.dispose();
          return;
       }
+      */
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       File file = new File(window.getName());
@@ -91,7 +93,7 @@ public class DuplicatorPluginFrame extends MMDialog {
 
       super.loadAndRestorePosition(100, 100, 375, 275);
       
-      List<String> axes = ourStore_.getAxes();
+      List<String> axes = ourProvider_.getAxes();
       // Note: MM uses 0-based indices in the code, but 1-based indices
       // for the UI.  To avoid confusion, this storage of the desired
       // limits for each axis is 0-based, and translation to 1-based is made
@@ -104,13 +106,13 @@ public class DuplicatorPluginFrame extends MMDialog {
       super.add(new JLabel("max"), "wrap");
       
       for (final String axis : axes) {
-         if (ourStore_.getAxisLength(axis) > 1) {
+         if (ourProvider_.getAxisLength(axis) > 1) {
             mins.put(axis, 1);
-            maxes.put(axis, ourStore_.getAxisLength(axis));
+            maxes.put(axis, ourProvider_.getAxisLength(axis));
             
             super.add(new JLabel(axis));
             SpinnerNumberModel model = new SpinnerNumberModel( 1, 1,
-                    (int) ourStore_.getAxisLength(axis), 1);
+                    (int) ourProvider_.getAxisLength(axis), 1);
             mins.put(axis, 0);
             final JSpinner minSpinner = new JSpinner(model);
             JFormattedTextField field = (JFormattedTextField) 
@@ -136,9 +138,9 @@ public class DuplicatorPluginFrame extends MMDialog {
             });
             super.add(minSpinner, "wmin 60");
 
-            model = new SpinnerNumberModel((int) ourStore_.getAxisLength(axis),
-                     1, (int) ourStore_.getAxisLength(axis), 1);
-            maxes.put(axis, ourStore_.getAxisLength(axis) - 1);
+            model = new SpinnerNumberModel((int) ourProvider_.getAxisLength(axis),
+                     1, (int) ourProvider_.getAxisLength(axis), 1);
+            maxes.put(axis, ourProvider_.getAxisLength(axis) - 1);
             final JSpinner maxSpinner = new JSpinner(model);
             field = (JFormattedTextField) 
                     maxSpinner.getEditor().getComponent(0);
