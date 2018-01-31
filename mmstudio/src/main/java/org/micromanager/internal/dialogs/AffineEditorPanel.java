@@ -1,11 +1,11 @@
 
 package org.micromanager.internal.dialogs;
 
-import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
+import java.text.NumberFormat;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,6 +24,9 @@ import org.micromanager.internal.utils.PropertyItem;
  * @author nico
  */
 public class AffineEditorPanel extends JPanel {
+
+   private static final long serialVersionUID = 4110816363509484273L;
+   
    private final DoubleVector affineTransform_;
    private final AffineTableModel atm_;
    private final PixelSizeProvider pixelSizeProvider_;
@@ -40,6 +43,7 @@ public class AffineEditorPanel extends JPanel {
       
       final AffineCellRenderer acr = new AffineCellRenderer();
       JTable table = new DaytimeNighttime.Table() {
+         private static final long serialVersionUID = -2051835510654466735L;
          @Override
          public TableCellRenderer getCellRenderer(int rowIndex, int columnIndex) {
             return acr;
@@ -85,12 +89,19 @@ public class AffineEditorPanel extends JPanel {
    /*******************Renderer******************************/
    
    private class AffineCellRenderer implements TableCellRenderer {
-      // This method is called each time a cell in a column
-      // using this renderer needs to be rendered.
 
       PropertyItem item_;
       JLabel lab_ = new JLabel();
-
+      private final NumberFormat format_;
+      
+      public AffineCellRenderer() {
+         format_ = NumberFormat.getInstance();
+         format_.setMaximumFractionDigits(2);
+         format_.setMinimumFractionDigits(2);
+      }
+      
+      // This method is called each time a cell in a column
+      // using this renderer needs to be rendered.
       @Override
       public Component getTableCellRendererComponent(JTable table, Object value,
               boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
@@ -100,7 +111,7 @@ public class AffineEditorPanel extends JPanel {
 
          Component comp;
 
-         lab_.setText(NumberUtils.doubleToDisplayString((Double) value, 2));
+         lab_.setText(format_.format( (Double) value));
          comp = lab_;
 
          if (rowIndex == 2) {
@@ -120,6 +131,8 @@ public class AffineEditorPanel extends JPanel {
    /************************Table Model**********************/
    
    private class AffineTableModel extends AbstractTableModel {
+
+      private static final long serialVersionUID = 6310218493590295038L;
       private DoubleVector affineTransform_;
       
       public AffineTableModel(DoubleVector affineTransform) {
