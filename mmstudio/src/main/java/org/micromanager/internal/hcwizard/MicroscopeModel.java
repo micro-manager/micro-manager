@@ -36,6 +36,7 @@ import java.util.Vector;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
+import mmcorej.DoubleVector;
 import mmcorej.MMCoreJ;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
@@ -465,6 +466,7 @@ public final class MicroscopeModel {
             pcfg = core.getPixelSizeConfigData(pixelSizeConfigs.get(j));
             ConfigPreset p = new ConfigPreset(pixelSizeConfigs.get(j));
             p.setPixelSizeUm(core.getPixelSizeUmByID(pixelSizeConfigs.get(j)));
+            p.setAffineTransform(core.getPixelSizeAffineByID(pixelSizeConfigs.get(j)));
             for (int k = 0; k < pcfg.size(); k++) {
                PropertySetting ps = pcfg.getSetting(k);
                Setting s = new Setting(ps.getDeviceLabel(),
@@ -668,23 +670,33 @@ public final class MicroscopeModel {
 
                }
                pixelSizeGroup_.addConfigSetting(tokens[1], tokens[2],
-                     tokens[3], tokens[4]);
+                       tokens[3], tokens[4]);
 
             } else if (tokens[0].contentEquals(new StringBuffer()
-                  .append(MMCoreJ.getG_CFGCommand_PixelSize_um()))) {
+                    .append(MMCoreJ.getG_CFGCommand_PixelSize_um()))) {
                // -------------------------------------------------------------
                // "PixelSize" commands
                // -------------------------------------------------------------
-               if (tokens.length != 3) {
-                  throw new MMConfigFileException(
-                        "Invalid number of parameters (3 required):\n" + line);
+               if (tokens.length == 3) {
+                  ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
+                  if (cp != null) {
+                     cp.setPixelSizeUm(Double.parseDouble(tokens[2]));
+                  }
+               } else if (tokens.length == 8) {
+                  ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
+                  if (cp != null) {
+                     DoubleVector aft = new DoubleVector(6);
+                     for (int i = 0; i < 6; i++) {
+                        aft.set(i, Double.parseDouble(tokens[i + 2]));
+                     }
+                     cp.setAffineTransform(aft);
+                  } else {
 
+                     throw new MMConfigFileException(
+                             "Invalid number of parameters (3 or 8 required):\n" + line);
+                  }
                }
-               ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
-               if (cp != null) {
-                  cp.setPixelSizeUm(Double.parseDouble(tokens[2]));
-
-               }
+               
             } else if (tokens[0].contentEquals(new StringBuffer()
                   .append(MMCoreJ.getG_CFGCommand_Delay()))) {
                // -------------------------------------------------------------
@@ -1044,13 +1056,22 @@ public final class MicroscopeModel {
                // write setting
                out.write(MMCoreJ.getG_CFGCommand_ConfigPixelSize() + ","
                      + presets[j].getName() + "," + s.deviceName_ + ","
-                     + s.propertyName_ + "," + s.propertyValue_);
-               out.newLine();
-               out.write(MMCoreJ.getG_CFGGroup_PixelSizeUm() + ","
-                     + presets[j].getName() + ","
-                     + Double.toString(presets[j].getPixelSize()));
+                       + s.propertyName_ + "," + s.propertyValue_);
                out.newLine();
             }
+
+            // write actual pixel size
+            out.write(MMCoreJ.getG_CFGGroup_PixelSizeUm() + ","
+                    + presets[j].getName() + ","
+                    + Double.toString(presets[j].getPixelSize()));
+            out.newLine();
+            // write affine transform
+            out.write(MMCoreJ.getG_CFGCommand_PixelSizeAffine() + ","
+                    + presets[j].getName());
+            DoubleVector aft = presets[j].getAffineTransform();
+            for (int i = 0; i < aft.size(); i++) {
+               out.write("," + Double.toString(aft.get(i)));
+            } 
             out.newLine();
          }
          out.newLine();

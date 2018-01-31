@@ -24,6 +24,7 @@
 package org.micromanager.internal.hcwizard;
 
 import java.util.ArrayList;
+import mmcorej.DoubleVector;
 
 /**
  * Encapsulation of the preset data for use in the Configuration Wizard. 
@@ -31,14 +32,15 @@ import java.util.ArrayList;
  */
 public final class ConfigPreset {
    private String name_;
-   private ArrayList<Setting> settings_;
+   private final ArrayList<Setting> settings_;
    
-   // this field is used onluy in case the configuration preset
+   // these fields are only used when the configuration preset
    // belongs to the pixelSize group
    private double pixelSizeUm_ = 0.0;
+   private DoubleVector affineTransform_;
    
    public ConfigPreset() {
-      name_ = new String("Undefined");
+      name_ = "Undefined";
       settings_ = new ArrayList<Setting>();
    }
    
@@ -93,8 +95,9 @@ public final class ConfigPreset {
       return settings_.get(i);
    }
    
+   @Override
    public String toString() {
-      return new String("Preset: " + name_);
+      return "Preset: " + name_;
    }
 
    public void setName(String name) {
@@ -108,4 +111,13 @@ public final class ConfigPreset {
    public double getPixelSize() {
       return pixelSizeUm_;
    }
+   
+   public void setAffineTransform(DoubleVector aft) {
+      affineTransform_ = aft;
+   }
+   
+   public DoubleVector getAffineTransform() {
+      return affineTransform_;
+   }
+   
 }
