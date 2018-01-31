@@ -71,8 +71,6 @@ public class AffineEditorPanel extends JPanel {
             double scale = pixelSizeProvider_.pixelSize();
             javaAtf.scale(scale, scale);
             atm_.setAffineTransform(AffineUtils.affineToDouble(javaAtf));
-            
-            
          }
       });
       super.add(calcButton, "center, wrap");

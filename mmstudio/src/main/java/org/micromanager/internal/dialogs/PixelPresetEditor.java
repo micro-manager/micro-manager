@@ -28,8 +28,10 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import mmcorej.Configuration;
 import mmcorej.DoubleVector;
 import net.miginfocom.swing.MigLayout;
@@ -134,6 +136,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
          }
          pixelSize_ = pixelSizeField_.getText();
          core_.setPixelSizeUm(newName, NumberUtils.displayStringToDouble(pixelSize_));
+         core_.setPixelSizeAffine(newName, affineEditorPanel_.getAffineTransform() );
       } catch (Exception e) {
          ReportingUtils.showError(e);
          return false;
@@ -229,7 +232,10 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       });
       add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
       
-      add(affineEditorPanel_, "span 4, wrap"); 
+      add(new JSeparator(SwingConstants.HORIZONTAL),
+              "span4, gapleft push, gapright push, growx, wrap");
+
+      add(affineEditorPanel_, "span 4, wrap");
       
    }
 
