@@ -30,6 +30,7 @@ public class AffineEditorPanel extends JPanel {
    private final DoubleVector affineTransform_;
    private final AffineTableModel atm_;
    private final PixelSizeProvider pixelSizeProvider_;
+   private static final int PRECISION = 5;
    
    public AffineEditorPanel(PixelSizeProvider psp, DoubleVector affineTransform) {
       super(new MigLayout());
@@ -94,8 +95,8 @@ public class AffineEditorPanel extends JPanel {
       
       public AffineCellRenderer() {
          format_ = NumberFormat.getInstance();
-         format_.setMaximumFractionDigits(2);
-         format_.setMinimumFractionDigits(2);
+         format_.setMaximumFractionDigits(PRECISION);
+         format_.setMinimumFractionDigits(PRECISION);
       }
       
       // This method is called each time a cell in a column
