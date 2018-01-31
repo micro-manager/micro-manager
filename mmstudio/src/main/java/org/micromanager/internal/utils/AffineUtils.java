@@ -23,8 +23,8 @@ public class AffineUtils {
    }
    
    public static final AffineTransform doubleToAffine(DoubleVector atf) {
-      double[] flatMatrix = {atf.get(0), atf.get(1), atf.get(2),
-         atf.get(3), atf.get(5), atf.get(5)};
+      double[] flatMatrix = {atf.get(0), atf.get(3), atf.get(1),
+         atf.get(4), atf.get(2), atf.get(5)};
       return new AffineTransform(flatMatrix);
    }
    
