@@ -247,6 +247,8 @@ class DefiniteFocusModel
       int SetPeriod(ZeissULong period);
       int GetStatus(ZeissUShort& status);
       int SetStatus(ZeissUShort status);
+      int GetVersion(ZeissUShort& version);
+      int SetVersion(ZeissUShort version);
       int GetError(ZeissUShort& error);
       int SetError(ZeissUShort error);
       int GetDeviation(ZeissLong& deviation);
@@ -269,6 +271,7 @@ class DefiniteFocusModel
       ZeissByte controlOnOff_;
       ZeissULong period_;
       ZeissUShort status_;
+      ZeissUShort version_;
       ZeissUShort error_;
       ZeissLong deviation_;
       ZeissUByte dataLength_;
@@ -614,6 +617,7 @@ class ZeissScope : public CGenericBase<ZeissScope>
       // ----------------                                                       
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnVersionChange(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
    private:
       bool initialized_;
