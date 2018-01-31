@@ -23,6 +23,7 @@ package org.micromanager.internal.dialogs;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.ParseException;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -30,6 +31,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import mmcorej.Configuration;
+import mmcorej.DoubleVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
@@ -43,13 +45,15 @@ import org.micromanager.internal.utils.ShowFlagsPanel;
  *
  * @author nico
  */
-public class PixelPresetEditor extends ConfigDialog {
+public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider {
 
    private static final long serialVersionUID = -3709174019188065514L;
 
    protected final String pixelSizeLabelText_;
    protected JTextField pixelSizeField_;
    protected String pixelSize_;
+   private DoubleVector affineTransform_;
+   private final AffineEditorPanel affineEditorPanel_;;
 
    public PixelPresetEditor(String pixelSizeConfigName, Studio gui, String pixelSize, boolean newItem) {
       super("ConfigPixelSize", pixelSizeConfigName, gui, gui.getCMMCore(), newItem);
@@ -65,12 +69,14 @@ public class PixelPresetEditor extends ConfigDialog {
       scrollPaneTop_ = 140;
       numColumns_ = 2;
       try {
-      if (gui.getCMMCore().isPixelSizeConfigDefined(pixelSizeConfigName)) {
+         if (gui.getCMMCore().isPixelSizeConfigDefined(pixelSizeConfigName)) {
             gui.getCMMCore().setPixelSizeConfig(pixelSizeConfigName);
-      }
+            affineTransform_ = gui.getCMMCore().getPixelSizeAffineByID(presetName_);
+         }
       } catch (Exception ex) {
          gui.logs().showError(ex, "Failed to set this Pixel Size configuration");
       }
+      
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
               propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).
@@ -78,7 +84,8 @@ public class PixelPresetEditor extends ConfigDialog {
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       showShowReadonlyCheckBox_ = true;
-      super.initialize();
+      affineEditorPanel_ = new AffineEditorPanel(this, affineTransform_);
+      super.initialize();  // will cal out initializeWidgets, which overrides the base class
    }
 
    @Override
@@ -221,6 +228,20 @@ public class PixelPresetEditor extends ConfigDialog {
          }
       });
       add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
+      
+      add(affineEditorPanel_, "span 4, wrap"); 
+      
+   }
+
+   @Override
+   public Double pixelSize() {
+      try {
+         return NumberUtils.displayStringToDouble(pixelSizeField_.getText());
+      } catch (ParseException ex) {
+         gui_.logs().showError("Pixel Size is not a valid Number");
+         pixelSizeField_.requestFocus();
+      }
+      return 0.0;
    }
     
 }
