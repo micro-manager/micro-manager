@@ -25,7 +25,6 @@ nobase_mmplugin_DATA = \
 	MultiAndor.jar \
 	MultiChannelShading.jar \
 	PipelineSaver.jar \
-	PixelCalibrator.jar \
 	ProjectorPlugin.jar \
 	Recall.jar \
 	SequenceBufferMonitor.jar \
