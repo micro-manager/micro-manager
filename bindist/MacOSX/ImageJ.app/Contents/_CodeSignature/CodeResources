@@ -15,11 +15,11 @@
 		<dict>
 			<key>hash</key>
 			<data>
-			9BGDSZanzCut2PoBvjIbnsSYU7I=
+			3eKhNxPr9yiMlQMZE6ke4GI91Ho=
 			</data>
 			<key>hash2</key>
 			<data>
-			evEC4FxH+uYi7Hq6qfbYUk6CPWvHTZsPCAkzdvia7q0=
+			W9f1UbHMS/hvtD1ydrl1vfLdw95dBzGSxWlygYFRweA=
 			</data>
 		</dict>
 		<key>Resources/ImageJ.icns</key>
@@ -51,6 +51,11 @@
 			<true/>
 			<key>weight</key>
 			<real>1100</real>
+		</dict>
+		<key>^Resources/Base\.lproj/</key>
+		<dict>
+			<key>weight</key>
+			<real>1010</real>
 		</dict>
 		<key>^version.plist$</key>
 		<true/>
@@ -110,6 +115,11 @@
 			<true/>
 			<key>weight</key>
 			<real>1100</real>
+		</dict>
+		<key>^Resources/Base\.lproj/</key>
+		<dict>
+			<key>weight</key>
+			<real>1010</real>
 		</dict>
 		<key>^[^/]+$</key>
 		<dict>
