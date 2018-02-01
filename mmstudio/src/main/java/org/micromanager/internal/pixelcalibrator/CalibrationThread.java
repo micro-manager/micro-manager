@@ -1,5 +1,5 @@
 
-package org.micromanager.pixelcalibrator;
+package org.micromanager.internal.pixelcalibrator;
 
 import ij.IJ;
 import ij.ImagePlus;

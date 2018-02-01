@@ -5,7 +5,7 @@
  * Created on Mar 1, 2010, 10:21:50 AM
  */
 
-package org.micromanager.pixelcalibrator;
+package org.micromanager.internal.pixelcalibrator;
 
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;

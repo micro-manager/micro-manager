@@ -1,4 +1,4 @@
-package org.micromanager.pixelcalibrator;
+package org.micromanager.internal.pixelcalibrator;
 import org.apache.commons.math.util.MathUtils;
 
 import java.awt.geom.AffineTransform;
@@ -110,7 +110,7 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
          calibrationThread_.interrupt();
          try {
             calibrationThread_.join();
-         } catch (InterruptedException ex) {
+         } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       }
