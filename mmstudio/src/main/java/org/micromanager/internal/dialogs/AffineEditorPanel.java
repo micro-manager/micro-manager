@@ -40,6 +40,7 @@ public class AffineEditorPanel extends JPanel {
       }
       
       affineTransform_ = affineTransform;
+      final DoubleVector originalAffineTransform = affineTransform;
       pixelSizeProvider_ = psp;
       
       final AffineCellRenderer acr = new AffineCellRenderer();
@@ -76,8 +77,14 @@ public class AffineEditorPanel extends JPanel {
       });
       super.add(calcButton, "center, wrap");
       
-      JButton measureButton = new JButton ("Measure");
-      super.add(measureButton, "center");
+      JButton resetButton = new JButton ("Reset");
+      resetButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            atm_.setAffineTransform(originalAffineTransform);
+         }
+      });
+      super.add(resetButton, "center");
       
    }
    
