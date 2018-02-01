@@ -6,11 +6,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.text.NumberFormat;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import mmcorej.DoubleVector;
@@ -31,22 +33,24 @@ public class AffineEditorPanel extends JPanel {
    private final AffineTableModel atm_;
    private final PixelSizeProvider pixelSizeProvider_;
    private static final int PRECISION = 5;
+   private final NumberFormat format_;
    
    public AffineEditorPanel(PixelSizeProvider psp, DoubleVector affineTransform) {
-      super(new MigLayout());
+      super(new MigLayout("align center, flowx"));
       
       if (affineTransform == null) {
          affineTransform = AffineUtils.noTransform();
       }
       
       affineTransform_ = affineTransform;
-      // manual copy of aft into backup for reset button
-      final DoubleVector originalAffineTransform = new DoubleVector(affineTransform.size());
-      for (int i = 0; i < affineTransform.size(); i++) {
-         originalAffineTransform.set(i, affineTransform.get(i));
-      }
+      // manual copy of aft to backup for reset button
+      final DoubleVector originalAffineTransform = copyDoubleVector(affineTransform);
       pixelSizeProvider_ = psp;
-      
+
+      format_ = NumberFormat.getInstance();
+      format_.setMaximumFractionDigits(PRECISION);
+      format_.setMinimumFractionDigits(PRECISION);
+
       final AffineCellRenderer acr = new AffineCellRenderer();
       JTable table = new DaytimeNighttime.Table() {
          private static final long serialVersionUID = -2051835510654466735L;
@@ -57,17 +61,19 @@ public class AffineEditorPanel extends JPanel {
       };
       atm_ = new AffineTableModel(affineTransform_);
       table.setModel(atm_);
+      table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
       table.setCellSelectionEnabled(true);
       
       for (int col = 0; col < 3; col++) {
          table.getColumnModel().getColumn(col).setMaxWidth(75);
       }
       super.add( new JLabel("<html><center>Affine transforms define the relation between <br> " +
-              "camera and stage movement</center></html>"), "span 4, center, wrap") ;
-      JScrollPane scrollPane = new JScrollPane(table);
+              "camera and stage movement</center></html>"), " span 2, center, wrap") ;
+      //JScrollPane scrollPane = new JScrollPane(table);
       table.setFillsViewportHeight(true);
       
-      super.add(scrollPane, "span 1 2, shrink 100");
+      super.add(table.getTableHeader(), "flowy, split 2, shrink 100");
+      super.add(table);
       
       JButton calcButton = new JButton("Calculate");
       calcButton.addActionListener(new ActionListener() {
@@ -79,7 +85,16 @@ public class AffineEditorPanel extends JPanel {
             atm_.setAffineTransform(AffineUtils.affineToDouble(javaAtf));
          }
       });
-      super.add(calcButton, "center, wrap");
+      super.add(calcButton, "flowy, split 3, center, width 90!");
+      
+      JButton measureButton = new JButton ("Measure");
+      measureButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            //atm_.setAffineTransform(originalAffineTransform);
+         }
+      });
+      super.add(measureButton, "center, width 90!");
       
       JButton resetButton = new JButton ("Reset");
       resetButton.addActionListener(new ActionListener() {
@@ -88,7 +103,10 @@ public class AffineEditorPanel extends JPanel {
             atm_.setAffineTransform(originalAffineTransform);
          }
       });
-      super.add(resetButton, "center");
+      super.add(resetButton, "center, width 90!");
+      
+      Border clbb = BorderFactory.createEtchedBorder(EtchedBorder.LOWERED);
+      super.setBorder(clbb);
       
    }
    
@@ -96,18 +114,23 @@ public class AffineEditorPanel extends JPanel {
       return atm_.getAffineTransform();
    }
    
+   public static DoubleVector copyDoubleVector(DoubleVector in) {
+      DoubleVector out = new DoubleVector(in.size());
+      for (int i = 0; i < in.size(); i++) {
+         out.set(i, in.get(i));
+      }
+      return out;
+   }
+
    /*******************Renderer******************************/
    
    private class AffineCellRenderer implements TableCellRenderer {
 
       PropertyItem item_;
       JLabel lab_ = new JLabel();
-      private final NumberFormat format_;
       
       public AffineCellRenderer() {
-         format_ = NumberFormat.getInstance();
-         format_.setMaximumFractionDigits(PRECISION);
-         format_.setMinimumFractionDigits(PRECISION);
+
       }
       
       // This method is called each time a cell in a column
@@ -154,7 +177,7 @@ public class AffineEditorPanel extends JPanel {
       }
       
       public void setAffineTransform(DoubleVector aft) {
-         affineTransform_ = aft;
+         affineTransform_ = copyDoubleVector(aft);
          fireTableDataChanged();
       }
          

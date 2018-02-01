@@ -229,12 +229,8 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
          }
       });
       add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
-      
-            
-      add(new JSeparator(SwingConstants.HORIZONTAL),
-              "span4, gapleft push, gapright push, growx, wrap");
-      
-      add(affineEditorPanel_, "span 4, wrap");
+
+      add(affineEditorPanel_, "span 4, growx, wrap");
    }
 
   

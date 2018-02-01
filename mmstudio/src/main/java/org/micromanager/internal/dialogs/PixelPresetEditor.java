@@ -20,6 +20,7 @@
 
 package org.micromanager.internal.dialogs;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,6 +38,7 @@ import mmcorej.DoubleVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyTableData;
@@ -205,11 +207,8 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
          }
       });
       add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
-      
-      add(new JSeparator(SwingConstants.HORIZONTAL),
-              "span4, gapleft push, gapright push, growx, wrap");
 
-      add(affineEditorPanel_, "span 4, wrap");
+      add(affineEditorPanel_, "span 4, growx, center, wrap");
       
    }
 
