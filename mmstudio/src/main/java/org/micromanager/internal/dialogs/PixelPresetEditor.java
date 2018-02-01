@@ -55,7 +55,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
    protected JTextField pixelSizeField_;
    protected String pixelSize_;
    private DoubleVector affineTransform_;
-   private final AffineEditorPanel affineEditorPanel_;;
+   private final AffineEditorPanel affineEditorPanel_;
 
    public PixelPresetEditor(String pixelSizeConfigName, Studio gui, String pixelSize, boolean newItem) {
       super("ConfigPixelSize", pixelSizeConfigName, gui, gui.getCMMCore(), newItem);
@@ -67,7 +67,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       initName_ = pixelSizeConfigName;
       title_ = "Pixel Config Editor";
       showUnused_ = true;
-      showFlagsPanelVisible_ = true;
+      showFlagsPanelVisible_ = false;
       scrollPaneTop_ = 140;
       numColumns_ = 2;
       try {
@@ -83,6 +83,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
               propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).
               allowChangesOnlyWhenUser(true).isPixelSizeConfig(true).build();
+      data_.setShowReadOnly(true);
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       showShowReadonlyCheckBox_ = true;
@@ -159,21 +160,6 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       instructionsTextArea_.setOpaque(false);
       leftPanel.add(instructionsTextArea_, "gaptop 2, gapbottom push");
 
-      if (showShowReadonlyCheckBox_) {
-         showReadonlyCheckBox_ = new JCheckBox("Show read-only properties");
-         showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
-         showReadonlyCheckBox_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               // show/hide read-only properties
-               data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
-               data_.update(false);
-               data_.fireTableStructureChanged();
-             }
-         });
-         leftPanel.add(showReadonlyCheckBox_, "gaptop 5, gapbottom 10");
-      }
-
       final Font boldArial = new Font("Arial", Font.BOLD, 12);
       nameFieldLabel_ = new JLabel(nameFieldLabelText_);
       nameFieldLabel_.setFont(boldArial);
@@ -198,18 +184,6 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       leftPanel.add(pixelSizeField_, "width 90!");
               
       add(leftPanel, "growy, gapright push");
-
-      if (showFlagsPanelVisible_ ) {
-         flags_.load(ConfigDialog.class);
-         Configuration cfg;
-         try {
-            cfg = new Configuration();
-            showFlagsPanel_ = new ShowFlagsPanel(data_, flags_, core_, cfg);
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
-         }
-         add(showFlagsPanel_, "growx");
-      }
 
       okButton_ = new JButton("OK");
       okButton_.addActionListener(new ActionListener() {

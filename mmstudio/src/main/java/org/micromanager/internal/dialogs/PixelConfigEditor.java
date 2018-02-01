@@ -23,17 +23,21 @@ package org.micromanager.internal.dialogs;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.ParseException;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyTableData;
@@ -44,13 +48,14 @@ import org.micromanager.internal.utils.ShowFlagsPanel;
  *
  * @author nico
  */
-public class PixelConfigEditor extends ConfigDialog {
+public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider {
 
    private static final long serialVersionUID = 5109403088011441146L;
 
    protected final String pixelSizeLabelText_;
    protected JTextField pixelSizeField_;
    protected String pixelSize_;
+   private final AffineEditorPanel affineEditorPanel_;
 
    public PixelConfigEditor(String pixelSizeConfigName, Studio gui, String pixelSize, boolean newItem) {
       super("ConfigPixelSize", pixelSizeConfigName, gui, gui.getCMMCore(), newItem);
@@ -71,7 +76,8 @@ public class PixelConfigEditor extends ConfigDialog {
               allowChangesOnlyWhenUser(true).isPixelSizeConfig(true).build();
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
-      showShowReadonlyCheckBox_ = true;
+      showShowReadonlyCheckBox_ = true;      
+      affineEditorPanel_ = new AffineEditorPanel(this, AffineUtils.noTransform());
       super.initialize();
    }
 
@@ -118,6 +124,7 @@ public class PixelConfigEditor extends ConfigDialog {
          }
          pixelSize_ = pixelSizeField_.getText();
          core_.setPixelSizeUm(newName, NumberUtils.displayStringToDouble(pixelSize_));
+         core_.setPixelSizeAffine(newName, affineEditorPanel_.getAffineTransform() );
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -126,6 +133,16 @@ public class PixelConfigEditor extends ConfigDialog {
       return true;
    }
    
+    @Override
+   public Double pixelSize() {
+      try {
+         return NumberUtils.displayStringToDouble(pixelSizeField_.getText());
+      } catch (ParseException ex) {
+         gui_.logs().showError("Pixel Size is not a valid Number");
+         pixelSizeField_.requestFocus();
+      }
+      return 0.0;
+   }
    
    @Override
    @SuppressWarnings("Convert2Lambda")
@@ -212,6 +229,14 @@ public class PixelConfigEditor extends ConfigDialog {
          }
       });
       add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
+      
+            
+      add(new JSeparator(SwingConstants.HORIZONTAL),
+              "span4, gapleft push, gapright push, growx, wrap");
+      
+      add(affineEditorPanel_, "span 4, wrap");
    }
+
+  
     
 }

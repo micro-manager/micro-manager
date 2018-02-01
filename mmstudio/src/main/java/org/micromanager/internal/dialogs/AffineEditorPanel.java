@@ -40,7 +40,11 @@ public class AffineEditorPanel extends JPanel {
       }
       
       affineTransform_ = affineTransform;
-      final DoubleVector originalAffineTransform = affineTransform;
+      // manual copy of aft into backup for reset button
+      final DoubleVector originalAffineTransform = new DoubleVector(affineTransform.size());
+      for (int i = 0; i < affineTransform.size(); i++) {
+         originalAffineTransform.set(i, affineTransform.get(i));
+      }
       pixelSizeProvider_ = psp;
       
       final AffineCellRenderer acr = new AffineCellRenderer();
