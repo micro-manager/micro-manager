@@ -14,7 +14,6 @@ import mmcorej.CMMCore;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.MainFrame;
-import org.micromanager.internal.dialogs.IntroDlg;
 import org.micromanager.internal.hcwizard.ConfigWizard;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.GUIUtils;
@@ -24,7 +23,7 @@ import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
 
 public final class ConfigMenu {
 
-   private JMenu configMenu_;
+   private final JMenu configMenu_;
    private final JMenu switchConfigurationMenu_;
 
    private final MMStudio studio_;
