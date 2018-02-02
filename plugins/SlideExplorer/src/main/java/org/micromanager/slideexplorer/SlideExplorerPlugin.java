@@ -1,6 +1,5 @@
 package org.micromanager.slideexplorer;
 
-import mmcorej.CMMCore;
 
 import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
@@ -16,9 +15,8 @@ public class SlideExplorerPlugin implements MenuPlugin, SciJavaPlugin {
 		"Automatically acquire images as you pan and zoom, " +
 		"constructing a tiled map of the sample";
 
-	private CMMCore core_;
 	private Hub hub_;
-    private Studio app_;
+   private Studio app_;
 	
 	
 	public void configurationChanged() {

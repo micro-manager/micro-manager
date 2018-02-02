@@ -17,14 +17,14 @@ import mmcorej.CMMCore;
 
 import mmcorej.StrVector;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.MenuPlugin;
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
+import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class Hub {
-   public static Studio appRef_;
+   private final Studio studio_;
 
    Controller controller_;
    MultiTileCache cache_;
@@ -40,7 +40,6 @@ public class Hub {
    private boolean running_ = false;
    private CMMCore core_;
    private ConfigurationDialog configDialog_;
-   private final MMStudio app_;
    private RoiManager roiManager_;
    private String surveyPixelSizeConfig_ = "";
    private String navigatePixelSizeConfig_ = "";
@@ -51,9 +50,8 @@ public class Hub {
     * Hub constructor.
     */
    public Hub(Studio app) {
-      app_ = (MMStudio) app;
-      Hub.appRef_ = app;
-      core_ = app_.getCMMCore();
+      studio_ = app;
+      core_ = studio_.getCMMCore();
 
       int width = 950;
       int height = 600;
@@ -97,12 +95,11 @@ public class Hub {
    }
 
 
-   public static AffineTransform getCurrentAffineTransform(CMMCore core) {
+   public AffineTransform getCurrentAffineTransform(CMMCore core) {
 
       AffineTransform transform = null;
       try {
-         transform = MMStudio.getInstance().compat().getCameraTransform(
-            core.getCurrentPixelSizeConfig());
+         transform = AffineUtils.doubleToAffine(core.getPixelSizeAffine());
       }
       catch (Exception e) {
          ReportingUtils.logError(e, "Error getting pixel size config");
@@ -110,16 +107,15 @@ public class Hub {
 
       if (transform == null) {
          int result = JOptionPane.showConfirmDialog(null,
-                 "The current magnification setting needs to be calibrated.\n"
-                 + "Would you like to run automatic pixel calibration?",
-                 "Pixel caliberatrion required.",
+                 "No Pixel Size Calibration available.\n"
+                 + "Would you like create one?",
+                 "Pixel Size Calibratrion required.",
                  JOptionPane.YES_NO_OPTION);
          if (result == JOptionPane.YES_OPTION) {
             try {
-               MenuPlugin pixelCal = appRef_.plugins().getMenuPlugins().get("org.micromanager.pixelcalibrator.PixelCalibratorPlugin");
-               pixelCal.onPluginSelected();
+               ((MMStudio) studio_).createCalibrationListDlg();
             } catch (Exception ex) {
-               ReportingUtils.showError("Unable to load Pixel Calibrator Plugin.");
+               ReportingUtils.showError("Unable to start Pixel Size Calibration.");
             }
          }
       }
@@ -291,7 +287,7 @@ public class Hub {
    }
 
    Studio getApp() {
-      return app_;
+      return studio_;
    }
 
    public Dimension getTileDimensions() {
@@ -317,10 +313,10 @@ public class Hub {
    void acquireMosaics() {
       roiManager_.updateMappings();
       try {
-         app_.positions().setPositionList(roiManager_.convertRoiManagerToPositionList());
-         app_.app().showPositionList();
+         studio_.positions().setPositionList(roiManager_.convertRoiManagerToPositionList());
+         studio_.app().showPositionList();
       } catch (Exception ex) {
-         ex.printStackTrace();
+         studio_.logs().logError(ex);
       }
    }
 
@@ -351,14 +347,14 @@ public class Hub {
       for (int i = 0; i < resolutionNames.size(); ++i) {
          OffsetsRow offsetsRow = new OffsetsRow();
          offsetsRow.resolutionName = resolutionNames.get(i);
-         offsetsRow.readFromProfile(app_.profile());
+         offsetsRow.readFromProfile(studio_.profile());
          offsetsData_.put(offsetsRow.resolutionName, offsetsRow);
       }
    }
 
    public void saveOffsets() {
       for (OffsetsRow offsetsRow : offsetsData_.values()) {
-         offsetsRow.writeToProfile(app_.profile());
+         offsetsRow.writeToProfile(studio_.profile());
       }
    }
 
@@ -482,7 +478,7 @@ public class Hub {
    }
 
    void snap() {
-      app_.live().snap(true);
+      studio_.live().snap(true);
    }
 
    public boolean setVisible(boolean isVisible) {
@@ -684,7 +680,7 @@ public class Hub {
          Point mapPosition = coords_.tileToMap(tileIndex);
 
          if (!cache_.hasImage(tileIndex)) {
-            app_.getSnapLiveManager().setLiveMode(false);
+            studio_.getSnapLiveManager().setLiveMode(false);
             final ImageProcessor img = controller_.grabImageAtMapPosition(mapPosition);
             cache_.addImage(tileIndex, img);
          }
