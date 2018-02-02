@@ -153,8 +153,9 @@ public interface SummaryMetadata {
 
    /**
     * @return Array with channelname
-    * @Deprecated - Use getChannelNameList() instead
+    * @deprecated - Use getChannelNameList() instead
     */
+   @Deprecated
    String[] getChannelNames();
 
    /**
