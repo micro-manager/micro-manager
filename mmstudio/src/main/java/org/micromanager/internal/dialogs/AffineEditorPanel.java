@@ -93,6 +93,7 @@ public class AffineEditorPanel extends JPanel {
          @Override
          public void actionPerformed(ActionEvent e) {
             PixelCalibratorDialog pcd = new PixelCalibratorDialog(studio_, pixelSizeProvider_);
+            studio_.events().registerForEvents(pcd);
          }
       });
       super.add(measureButton, "center, width 90!");

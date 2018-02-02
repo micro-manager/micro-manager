@@ -22,6 +22,7 @@
 
 package org.micromanager.internal.pixelcalibrator;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
@@ -33,6 +34,7 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import org.apache.commons.math.util.MathUtils;
 import org.micromanager.Studio;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.dialogs.PixelSizeProvider;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
@@ -203,8 +205,20 @@ public class PixelCalibratorDialog extends MMFrame {
 
    @Override
    public void dispose() {
+      if (studio_ != null) {
+         studio_.events().unregisterForEvents(this);
+      }
       super.dispose();
    }
+   
+   /**
+    * @param event indicating that shutdown is happening
+    */
+   @Subscribe
+   public void onShutdownCommencing(ShutdownCommencingEvent event) {
+      this.dispose();
+   }
+
    
    private void startCalibration() {
       calibrationThread_ = new CalibrationThread(studio_, this);

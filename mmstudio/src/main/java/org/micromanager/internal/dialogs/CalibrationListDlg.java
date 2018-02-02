@@ -22,6 +22,7 @@
 
 package org.micromanager.internal.dialogs;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Rectangle;
@@ -31,6 +32,7 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import org.micromanager.Studio;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.Calibration;
 import org.micromanager.internal.utils.CalibrationList;
@@ -315,6 +317,23 @@ public final class CalibrationListDlg extends MMDialog {
 
    public void setParentGUI(Studio parent) {
       parentGUI_ = parent;
+      parentGUI_.events().registerForEvents(this);
+   }
+   
+   @Override
+   public void dispose() {
+      if (parentGUI_ != null) {
+         parentGUI_.events().unregisterForEvents(this);
+      }
+      super.dispose();
+   }
+         
+   /**
+    * @param event indicating that shutdown is happening
+    */
+   @Subscribe
+   public void onShutdownCommencing(ShutdownCommencingEvent event) {
+      this.dispose();
    }
 
    public void removeCalibration() {

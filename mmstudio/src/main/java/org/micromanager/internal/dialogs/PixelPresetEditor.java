@@ -87,6 +87,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       affineEditorPanel_ = new AffineEditorPanel(gui, this, affineTransform_);
 
       super.initialize();  // will cal out initializeWidgets, which overrides the base class
+
    }
 
    @Override
@@ -94,6 +95,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       writeGroup(nameField_.getText());
       this.dispose();      
    }
+
 
    public boolean writeGroup(String newName) {
 

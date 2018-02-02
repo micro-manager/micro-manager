@@ -23,6 +23,7 @@
 
 package org.micromanager.internal.dialogs;
 
+import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -49,6 +50,7 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.PropertyNameCellRenderer;
@@ -103,7 +105,8 @@ public abstract class ConfigDialog extends MMDialog {
 
    protected int scrollPaneTop_;
 
-   public ConfigDialog(String groupName, String presetName, Studio gui, CMMCore core, boolean newItem) {
+   public ConfigDialog(String groupName, String presetName, Studio gui, CMMCore core, 
+           boolean newItem) {
       super("config editing for " + groupName);
       groupName_ = groupName;
       presetName_ = presetName;
@@ -113,6 +116,8 @@ public abstract class ConfigDialog extends MMDialog {
       super.setLayout(new MigLayout("fill, insets 2, gap 2"));
       super.loadAndRestorePosition(100, 100, 550, 600);
       super.setMinimumSize(new Dimension(400, 200));
+      
+      gui.events().registerForEvents(this);
    }
 
    public void initialize() {
@@ -281,10 +286,21 @@ public abstract class ConfigDialog extends MMDialog {
 
    @Override
    public void dispose() {
+      gui_.events().unregisterForEvents(this);
       super.dispose();
       savePosition();
       gui_.app().refreshGUI();
    }
+   
+      
+   /**
+    * @param event indicating that shutdown is happening
+    */
+   @Subscribe
+   public void onShutdownCommencing(ShutdownCommencingEvent event) {
+      this.dispose();
+   }
+   
 
    public void update() {
       data_.update(false);
