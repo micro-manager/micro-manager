@@ -71,6 +71,7 @@ public class PatternOverlay extends AbstractOverlay {
    private static enum PatternType {
       // Enum constant names used for persistence; do not change
       CROSSHAIR_PLUS("Crosshair (+)") {
+         @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
             float centerX = 0.5f * width;
             float centerY = 0.5f * height;
@@ -81,6 +82,7 @@ public class PatternOverlay extends AbstractOverlay {
                   centerX + halfSize, centerY));
          }
 
+         @Override
          String getSizeString(int patternSize, double umPerImagePixel,
                float width, float height)
          {
@@ -97,6 +99,7 @@ public class PatternOverlay extends AbstractOverlay {
       },
 
       CROSSHAIR_X("Crosshair (X)") {
+         @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
             float s = 0.5f * patternSize / 100.0f;
             g.draw(new Line2D.Float((0.5f - s) * width, (0.5f - s) * height,
@@ -105,6 +108,7 @@ public class PatternOverlay extends AbstractOverlay {
                   (0.5f + s) * width, (0.5f - s) * height));
          }
 
+         @Override
          String getSizeString(int patternSize, double umPerImagePixel,
                float width, float height)
          {
@@ -122,6 +126,7 @@ public class PatternOverlay extends AbstractOverlay {
       },
 
       RECTANGULAR_GRID("Rectangular Grid") {
+         @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
             int nDivs = 2 + 9 * patternSize / 101;
             float hPixPerDiv = (float) width / nDivs;
@@ -134,6 +139,7 @@ public class PatternOverlay extends AbstractOverlay {
             }
          }
 
+         @Override
          String getSizeString(int patternSize, double umPerImagePixel,
                float width, float height)
          {
@@ -152,6 +158,7 @@ public class PatternOverlay extends AbstractOverlay {
       },
 
       SQUARE_GRID("Square Grid") {
+         @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
             int nominalDivs = 2 + 9 * patternSize / 101;
             float pixPerDiv = (float) Math.min(width, height) / nominalDivs;
@@ -169,6 +176,7 @@ public class PatternOverlay extends AbstractOverlay {
             }
          }
 
+         @Override
          String getSizeString(int patternSize, double umPerImagePixel,
                float width, float height)
          {
@@ -186,12 +194,14 @@ public class PatternOverlay extends AbstractOverlay {
       },
 
       CIRCLE("Circle") {
+         @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
             float r = 0.5f * patternSize * Math.min(width, height) / 100.0f;
             g.draw(new Ellipse2D.Float(0.5f * width - r, 0.5f * height - r,
                   2.0f * r, 2.0f * r));
          }
 
+         @Override   
          String getSizeString(int patternSize, double umPerImagePixel,
                float width, float height)
          {
@@ -210,6 +220,7 @@ public class PatternOverlay extends AbstractOverlay {
       TARGET("Target") {
          private static final int N = 3;
 
+         @Override
          void draw(Graphics2D g, int patternSize, float width, float height) {
             float r0 = 0.5f * patternSize * Math.min(width, height) / 100.0f;
             for (int i = 1; i <= N; ++i) {
@@ -220,6 +231,7 @@ public class PatternOverlay extends AbstractOverlay {
             }
          }
 
+         @Override
          String getSizeString(int patternSize, double umPerImagePixel,
                float width, float height)
          {
