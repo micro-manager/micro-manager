@@ -615,6 +615,7 @@ public final class SnapLiveManager extends DataViewerListener
     */
    @Override
    public void displayImage(final Image image) {
+
       if (!SwingUtilities.isEventDispatchThread()) {
          SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -622,6 +623,7 @@ public final class SnapLiveManager extends DataViewerListener
                displayImage(image);
             }
          });
+         return;
       }
 
       boolean shouldReset = shouldForceReset_;
