@@ -23,15 +23,14 @@ package org.micromanager.internal.dialogs;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
@@ -77,7 +76,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       showShowReadonlyCheckBox_ = true;      
-      affineEditorPanel_ = new AffineEditorPanel(this, AffineUtils.noTransform());
+      affineEditorPanel_ = new AffineEditorPanel(gui, this, AffineUtils.noTransform());
       super.initialize();
    }
 
@@ -134,7 +133,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    }
    
     @Override
-   public Double pixelSize() {
+   public Double getPixelSize() {
       try {
          return NumberUtils.displayStringToDouble(pixelSizeField_.getText());
       } catch (ParseException ex) {
@@ -233,6 +232,19 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       add(affineEditorPanel_, "span 4, growx, wrap");
    }
 
-  
-    
+   @Override
+   public void setPixelSize(double pixelSizeUm) {
+      pixelSize_ = NumberUtils.doubleToDisplayString(pixelSizeUm);
+      pixelSizeField_.setText(pixelSize_); }
+
+   @Override
+   public AffineTransform getAffineTransform() {
+      return AffineUtils.doubleToAffine(affineEditorPanel_.getAffineTransform());
+   }
+
+   @Override
+   public void setAffineTransform(AffineTransform aft) {
+      affineEditorPanel_.setAffineTransform(AffineUtils.affineToDouble(aft));
+   }
+
 }

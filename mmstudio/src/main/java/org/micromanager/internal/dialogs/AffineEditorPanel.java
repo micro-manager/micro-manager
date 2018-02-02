@@ -17,6 +17,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import mmcorej.DoubleVector;
 import net.miginfocom.swing.MigLayout;
+import org.micromanager.Studio;
+import org.micromanager.internal.pixelcalibrator.PixelCalibratorDialog;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.PropertyItem;
@@ -29,23 +31,23 @@ public class AffineEditorPanel extends JPanel {
 
    private static final long serialVersionUID = 4110816363509484273L;
    
+   private final Studio studio_;
+   private final PixelSizeProvider pixelSizeProvider_;
    private final DoubleVector affineTransform_;
    private final AffineTableModel atm_;
-   private final PixelSizeProvider pixelSizeProvider_;
    private static final int PRECISION = 5;
    private final NumberFormat format_;
    
-   public AffineEditorPanel(PixelSizeProvider psp, DoubleVector affineTransform) {
+   public AffineEditorPanel(Studio studio, PixelSizeProvider psp, DoubleVector affineTransform) {
       super(new MigLayout("align center, flowx"));
       
+      studio_ = studio;
+      pixelSizeProvider_ = psp;
       if (affineTransform == null) {
          affineTransform = AffineUtils.noTransform();
       }
-      
       affineTransform_ = affineTransform;
-      // manual copy of aft to backup for reset button
       final DoubleVector originalAffineTransform = copyDoubleVector(affineTransform);
-      pixelSizeProvider_ = psp;
 
       format_ = NumberFormat.getInstance();
       format_.setMaximumFractionDigits(PRECISION);
@@ -69,7 +71,6 @@ public class AffineEditorPanel extends JPanel {
       }
       super.add( new JLabel("<html><center>Affine transforms define the relation between <br> " +
               "camera and stage movement</center></html>"), " span 2, center, wrap") ;
-      //JScrollPane scrollPane = new JScrollPane(table);
       table.setFillsViewportHeight(true);
       
       super.add(table.getTableHeader(), "flowy, split 2, shrink 100");
@@ -80,7 +81,7 @@ public class AffineEditorPanel extends JPanel {
          @Override
          public void actionPerformed(ActionEvent e) {
             AffineTransform javaAtf = AffineUtils.doubleToAffine(AffineUtils.noTransform());
-            double scale = pixelSizeProvider_.pixelSize();
+            double scale = pixelSizeProvider_.getPixelSize();
             javaAtf.scale(scale, scale);
             atm_.setAffineTransform(AffineUtils.affineToDouble(javaAtf));
          }
@@ -91,7 +92,7 @@ public class AffineEditorPanel extends JPanel {
       measureButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            //atm_.setAffineTransform(originalAffineTransform);
+            PixelCalibratorDialog pcd = new PixelCalibratorDialog(studio_, pixelSizeProvider_);
          }
       });
       super.add(measureButton, "center, width 90!");
@@ -120,6 +121,10 @@ public class AffineEditorPanel extends JPanel {
          out.set(i, in.get(i));
       }
       return out;
+   }
+   
+   public void setAffineTransform(DoubleVector newAft) {
+      atm_.setAffineTransform(newAft);
    }
 
    /*******************Renderer******************************/

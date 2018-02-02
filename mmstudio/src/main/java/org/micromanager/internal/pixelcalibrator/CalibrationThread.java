@@ -1,3 +1,23 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Arthur Edelstin, 2010
+//               Nico Stuurman, 2018
+//
+// COPYRIGHT:    Regents of the University of California, 2010-2018
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.internal.pixelcalibrator;
 
@@ -34,7 +54,7 @@ public class CalibrationThread extends Thread {
    private AffineTransform result_ = null;
 
    private int progress_ = 0;
-   private final PixelCalibratorPlugin plugin_;
+   private final PixelCalibratorDialog dialog_;
    private DisplayWindow liveWin_;
    private ImageProcessor referenceImage_;
 
@@ -50,12 +70,11 @@ public class CalibrationThread extends Thread {
       }
    }
 
-   CalibrationThread(Studio app, PixelCalibratorPlugin plugin) {
+   CalibrationThread(Studio app, PixelCalibratorDialog dialog) {
       app_ = (MMStudio) app;
-      plugin_ = plugin;
+      dialog_ = dialog;
       core_ = app_.getCMMCore();
    }
-
 
 
    private ImageProcessor theSlide = null;
@@ -107,7 +126,7 @@ public class CalibrationThread extends Thread {
       } else {
          try {
             Point2D.Double p0 = app_.getCMMCore().getXYStagePosition();
-            if (p0.distance(x, y) > (plugin_.safeTravelRadiusUm_ / 2)) {
+            if (p0.distance(x, y) > (dialog_.safeTravelRadius() / 2)) {
                throw new CalibrationFailedException("XY stage safety limit reached.");
             }
             app_.getCMMCore().setXYPosition(x, y);
@@ -140,7 +159,7 @@ public class CalibrationThread extends Thread {
          ImageProcessor snap = snapImageAt(x1,y1,sim);
          Rectangle guessRect = new Rectangle((int) ((w-side_small)/2-d.x),(int) ((h-side_small)/2-d.y),side_small,side_small);
          ImageProcessor foundImage = getSubImage(snap,guessRect.x, guessRect.y, guessRect.width, guessRect.height);
-         liveWin_.getImagePlus().setRoi(guessRect);
+         //liveWin_.getImagePlus().setRoi(guessRect);
          Point2D.Double dChange = measureDisplacement(referenceImage_, foundImage, display);
          return new Point2D.Double(d.x + dChange.x,d.y + dChange.y);
    }
@@ -335,7 +354,7 @@ public class CalibrationThread extends Thread {
          // User canceled
          SwingUtilities.invokeLater(new Runnable() {
             @Override public void run() {
-               plugin_.calibrationFailed(true);
+               dialog_.calibrationFailed(true);
             }
          });
          return;
@@ -344,14 +363,14 @@ public class CalibrationThread extends Thread {
          SwingUtilities.invokeLater(new Runnable() {
             @Override public void run() {
                ReportingUtils.showError(e);
-               plugin_.calibrationFailed(false);
+               dialog_.calibrationFailed(false);
             }
          });
          return;
       }
       SwingUtilities.invokeLater(new Runnable() {
          @Override public void run() {
-            plugin_.calibrationDone();
+            dialog_.calibrationDone();
          }
       });
    }
@@ -366,7 +385,7 @@ public class CalibrationThread extends Thread {
 
    private synchronized void incrementProgress() {
       progress_++;
-      plugin_.update();
+      dialog_.update();
    }
 
    synchronized void setProgress(int value) {

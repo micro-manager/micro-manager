@@ -20,30 +20,25 @@
 
 package org.micromanager.internal.dialogs;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.AffineTransform;
 import java.text.ParseException;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
-import mmcorej.Configuration;
 import mmcorej.DoubleVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.utils.DaytimeNighttime;
+import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.ShowFlagsPanel;
 
 /**
  *
@@ -89,7 +84,8 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       showShowReadonlyCheckBox_ = true;
-      affineEditorPanel_ = new AffineEditorPanel(this, affineTransform_);
+      affineEditorPanel_ = new AffineEditorPanel(gui, this, affineTransform_);
+
       super.initialize();  // will cal out initializeWidgets, which overrides the base class
    }
 
@@ -213,7 +209,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
    }
 
    @Override
-   public Double pixelSize() {
+   public Double getPixelSize() {
       try {
          return NumberUtils.displayStringToDouble(pixelSizeField_.getText());
       } catch (ParseException ex) {
@@ -222,5 +218,20 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       }
       return 0.0;
    }
-    
+
+   @Override
+   public void setPixelSize(double pixelSizeUm) {
+      pixelSize_ = NumberUtils.doubleToDisplayString(pixelSizeUm);
+      pixelSizeField_.setText(pixelSize_); }
+
+   @Override
+   public AffineTransform getAffineTransform() {
+      return AffineUtils.doubleToAffine(affineEditorPanel_.getAffineTransform());
+   }
+
+   @Override
+   public void setAffineTransform(AffineTransform aft) {
+      affineEditorPanel_.setAffineTransform(AffineUtils.affineToDouble(aft));
+   }
+
 }
