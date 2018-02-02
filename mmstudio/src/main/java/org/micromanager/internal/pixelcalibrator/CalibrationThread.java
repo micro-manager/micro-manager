@@ -49,6 +49,7 @@ public class CalibrationThread extends Thread {
    private final Studio studio_;
    private final CMMCore core_;
    private final PixelCalibratorDialog dialog_;
+   private final RectangleOverlay overlay_;
    
    private Map<Point2D.Double, Point2D.Double> pointPairs_;
 
@@ -73,6 +74,7 @@ public class CalibrationThread extends Thread {
       studio_ = app;
       core_ = studio_.getCMMCore();
       dialog_ = dialog;
+      overlay_ = new RectangleOverlay();
    }
 
 
@@ -119,7 +121,8 @@ public class CalibrationThread extends Thread {
       return getSubImage(slideProc, x, y, width, height);
    }
 
-   private ImageProcessor snapImageAt(double x, double y, boolean simulate) throws CalibrationFailedException {
+   private ImageProcessor snapImageAt(double x, double y, boolean simulate) 
+           throws CalibrationFailedException {
       if (simulate) {
          return simulateAcquire(theSlide,(int) (x+(3*Math.random()-1.5)),(int) (y+(3*Math.random()-1.5)));
       } else {
@@ -133,12 +136,12 @@ public class CalibrationThread extends Thread {
             core_.snapImage();
             TaggedImage image = core_.getTaggedImage();
             studio_.live().displayImage(studio_.data().convertTaggedImage(image));
-            if (liveWin_ == null) {
-               liveWin_ = studio_.live().getDisplay();
-            }
-            // the window may not have created yet, so check to avoid null pointer
-            if (liveWin_ != null) {
-               liveWin_.setCustomTitle("Calibrating...");
+            if (studio_.live().getDisplay() != null) {
+               if (liveWin_ != studio_.live().getDisplay()) {
+                  liveWin_ = studio_.live().getDisplay();
+                  liveWin_.setCustomTitle("Calibrating...");
+                  liveWin_.addOverlay(overlay_);
+               }
             }
             return ImageUtils.makeMonochromeProcessor(image);
          } catch (CalibrationFailedException e) {
@@ -164,7 +167,7 @@ public class CalibrationThread extends Thread {
                  side_small, side_small);
          ImageProcessor foundImage = getSubImage(snap, 
                  guessRect.x, guessRect.y, guessRect.width, guessRect.height);
-         // TODO: liveWin_.getImagePlus().setRoi(guessRect);
+         overlay_.set(guessRect);
          Point2D.Double dChange = measureDisplacement(referenceImage_, 
                  foundImage, display);
          return new Point2D.Double(d.x + dChange.x,d.y + dChange.y);
@@ -341,8 +344,11 @@ public class CalibrationThread extends Thread {
       catch (Exception e) {
          throw new CalibrationFailedException(e.getMessage());
       }
-      liveWin_.setCustomTitle("Calibrating...done.");
-      // liveWin_.getImagePlus().killRoi();
+      overlay_.setVisible(false);
+      if (liveWin_ != null) {
+         liveWin_.setCustomTitle("Preview");
+         liveWin_.removeOverlay(overlay_);
+      }
       return secondApprox;
    }
 
