@@ -64,6 +64,8 @@ public interface CompatibilityInterface {
     * @param config The configuration (per core.getCurrentPixelSizeConfig())
     *        to find the affine transform for.
     * @return The transform describing how the camera maps to the stage.
+    *
+    * @deprecated - Use core.getPixelSizeAffineByID(config) instead
     */
    public AffineTransform getCameraTransform(String config);
 
@@ -73,6 +75,8 @@ public interface CompatibilityInterface {
     * @param transform The new transform to use.
     * @param config The configuration (per core.getCurrentPixelSizeConfig())
     *        to set the affine transform for.
+    * @deprecated - Use core.setPixelSizeAffine(config, DoubleVector transform)
+    *                instead
     */
    public void setCameraTransform(AffineTransform transform, String config);
 }
