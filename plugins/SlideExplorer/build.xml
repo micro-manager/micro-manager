@@ -5,7 +5,4 @@
 		<pathelement location="${plugin.outdir}/PixelCalibrator.jar"/>
 	</path>
 
-	<target name="prerequisites" depends="mm.javabuild.prerequisites">
-		<ant dir="../PixelCalibrator" target="jar" inheritAll="false" useNativeBasedir="true"/>
-	</target>
 </project>
