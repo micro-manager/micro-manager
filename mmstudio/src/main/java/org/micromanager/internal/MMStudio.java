@@ -26,7 +26,6 @@ import ij.WindowManager;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.gui.Toolbar;
-import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.WindowEvent;
@@ -35,7 +34,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import javax.swing.JFrame;
@@ -96,8 +94,6 @@ import org.micromanager.internal.hcwizard.MMConfigFileException;
 import org.micromanager.internal.hcwizard.MicroscopeModel;
 import org.micromanager.internal.logging.LogFileManager;
 import org.micromanager.internal.menus.MMMenuBar;
-import org.micromanager.internal.navigation.XYZKeyListener;
-import org.micromanager.internal.navigation.ZWheelListener;
 import org.micromanager.internal.pipelineinterface.PipelineFrame;
 import org.micromanager.internal.pluginmanagement.DefaultPluginManager;
 import org.micromanager.internal.positionlist.PositionListDlg;
@@ -125,7 +121,7 @@ import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 public final class MMStudio implements Studio, CompatibilityInterface, PositionListManager, Application {
 
    private static final long serialVersionUID = 3556500289598574541L;
-   private static final String SCRIPT_CORE_OBJECT = "mmc";
+   
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final int TOOLTIP_DISPLAY_DURATION_MILLISECONDS = 15000;
    private static final int TOOLTIP_DISPLAY_INITIAL_DELAY_MILLISECONDS = 2000;
@@ -136,8 +132,7 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private static final String AFFINE_TRANSFORM_LEGACY = "affine transform for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
    private static final String AFFINE_TRANSFORM = "affine transform parameters for mapping camera coordinates to stage coordinates for a specific pixel size config: ";
 
-   // cfg file saving
-   private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry";
+   
    // GUI components
    private boolean wasStartedAsImageJPlugin_;
    private PropertyEditor propertyBrowser_;
@@ -148,9 +143,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private DisplayManager displayManager_;
    private DefaultPluginManager pluginManager_;
    private SnapLiveManager snapLiveManager_;
-
-   private List<Component> MMFrames_
-           = Collections.synchronizedList(new ArrayList<Component>());
    private DefaultAutofocusManager afMgr_;
    private String sysConfigFile_;
 
@@ -166,8 +158,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    private ScriptPanel scriptPanel_;
    private PipelineFrame pipelineFrame_;
    private org.micromanager.internal.utils.HotKeys hotKeys_;
-   private ZWheelListener zWheelListener_;
-   private XYZKeyListener xyzKeyListener_;
 
    // Our instance
    private static MMStudio studio_;
@@ -926,8 +916,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
             return false;
          }
       }
-      if (v2.length < 2 || v2[1].equals("") )
+      if (v2.length < 2 || v2[1].equals("") ) {
          return false;
+      }
       if (v.length < 2 ) {
          ReportingUtils.showError("This code needs Micro-Manager version " + version + " or greater");
          return true;
@@ -1177,8 +1168,9 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          frame_.getConfigPad().saveSettings();
          hotKeys_.saveSettings();
       } catch (NullPointerException e) {
-         if (core_ != null)
+         if (core_ != null) {
             ReportingUtils.logError(e);
+         }
       }
       try {
          UserProfileStaticInterface.shutdown();
