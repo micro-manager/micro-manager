@@ -65,8 +65,21 @@ public class CalibrationThread extends Thread {
    private int side_small;
 
    private class CalibrationFailedException extends Exception {
+
+      private static final long serialVersionUID = 4749723616733251885L;
+
       public CalibrationFailedException(String msg) {
          super(msg);
+         if (overlay_ != null) {
+            overlay_.setVisible(false);
+         }
+         if (liveWin_ != null) {
+            liveWin_.setCustomTitle("Preview");
+            if (overlay_ != null) {
+               liveWin_.removeOverlay(overlay_);
+            }
+         }
+
       }
    }
 
@@ -95,7 +108,8 @@ public class CalibrationThread extends Thread {
    // Measures the displacement between two images by cross-correlating, and then finding the maximum value.
    // Accurate to one pixel only.
 
-   private Point2D.Double measureDisplacement(ImageProcessor proc1, ImageProcessor proc2, boolean display) {
+   private Point2D.Double measureDisplacement(ImageProcessor proc1, 
+           ImageProcessor proc2, boolean display) {
       ImageProcessor result = crossCorrelate(proc1, proc2);
       ImageProcessor resultCenter = getSubImage(result, result.getWidth() / 2 - 8, result.getHeight() / 2 - 8, 16, 16);
       resultCenter.setInterpolationMethod(ImageProcessor.BICUBIC);
@@ -104,8 +118,9 @@ public class CalibrationThread extends Thread {
       Point p = ImageUtils.findMaxPixel(img);
       Point d = new Point(p.x - img.getWidth() / 2, p.y - img.getHeight() / 2);
       Point2D.Double d2 = new Point2D.Double(d.x / 10., d.y / 10.);
-      if (display)
+      if (display) {
          img.show();
+      }
       return d2;
    }
 
@@ -159,8 +174,9 @@ public class CalibrationThread extends Thread {
          boolean display, boolean sim)
       throws InterruptedException, CalibrationFailedException
    {
-         if (CalibrationThread.interrupted())
+         if (CalibrationThread.interrupted()) {
             throw new InterruptedException();
+         }
          ImageProcessor snap = snapImageAt(x1,y1,sim);
          Rectangle guessRect = new Rectangle(
                  (int)  ((w-side_small)/2-d.x), (int) ((h-side_small)/2-d.y),
@@ -195,11 +211,11 @@ public class CalibrationThread extends Thread {
             break;
          }
 
-         dx = dx*2;
-         dy = dy*2;
+         dx *= 2;
+         dy *= 2;
          
-         d.x = d.x*2;
-         d.y = d.y*2;
+         d.x *= 2;
+         d.y *= 2;
 
          d = measureDisplacement(x+dx, y+dy, d, false, simulate);
          incrementProgress();
@@ -335,8 +351,9 @@ public class CalibrationThread extends Thread {
       final AffineTransform firstApprox = getFirstApprox(simulation);
       setProgress(20);
       final AffineTransform secondApprox = getSecondApprox(firstApprox, simulation);
-      if (secondApprox != null)
+      if (secondApprox != null) {
          ReportingUtils.logMessage(secondApprox.toString());
+      }
       try {
          core_.setXYPosition(xy0.x, xy0.y);
          studio_.live().snap(true);

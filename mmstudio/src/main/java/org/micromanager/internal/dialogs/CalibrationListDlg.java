@@ -54,6 +54,7 @@ public final class CalibrationListDlg extends MMDialog {
    private CMMCore core_;
    private CalibrationList calibrationList_;
    private Studio parentGUI_;
+   private boolean disposed_ = false;
 
    private class CalTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
@@ -85,12 +86,14 @@ public final class CalibrationListDlg extends MMDialog {
       @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
          Calibration cal = calibrationList.get(rowIndex);
-         if (columnIndex == 0) {
-            return cal.getLabel();
-         } else if (columnIndex == 1) {
-            return cal.getPixelSizeUm().toString();
-         } else
-            return null;
+         switch (columnIndex) {
+            case 0:
+               return cal.getLabel();
+            case 1:
+               return cal.getPixelSizeUm().toString();
+            default:
+               return null;
+         }
       }
 
       @Override
@@ -142,19 +145,21 @@ public final class CalibrationListDlg extends MMDialog {
    public CalibrationListDlg(CMMCore core) {
       super("calibration list");
       core_ = core;
-      setTitle("Pixel Size Calibration");
+      super.setTitle("Pixel Size Calibration");
       springLayout = new SpringLayout();
-      getContentPane().setLayout(springLayout);
+      super.getContentPane().setLayout(springLayout);
 
-      setMinimumSize(new Dimension(263, 239));
-      loadAndRestorePosition(100, 100, 365, 495);
-      Rectangle r = this.getBounds();
+      super.setMinimumSize(new Dimension(263, 239));
+      super.loadAndRestorePosition(100, 100, 365, 495);
+      Rectangle r = super.getBounds();
       r.x +=1;
       
       final JScrollPane scrollPane = new JScrollPane();
-      getContentPane().add(scrollPane);
-      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -16, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 15, SpringLayout.NORTH, getContentPane());
+      super.getContentPane().add(scrollPane);
+      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -16, 
+              SpringLayout.SOUTH, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 15, 
+              SpringLayout.NORTH, super.getContentPane());
 
       calibrationList_ = new CalibrationList(core_);
       calibrationList_.getCalibrationsFromCore();
@@ -168,8 +173,9 @@ public final class CalibrationListDlg extends MMDialog {
             String tip = "";
             java.awt.Point p = e.getPoint();
             int rowIndex = rowAtPoint(p);
-            if (rowIndex < 0)
+            if (rowIndex < 0) {
                return "";
+            }
             CalTableModel ptm = (CalTableModel)calTable_.getModel();
             String label = (String)ptm.getValueAt(rowIndex, 0);
             try {
@@ -189,6 +195,10 @@ public final class CalibrationListDlg extends MMDialog {
       model.setData(calibrationList_);
       calTable_.setModel(model);
       calTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      Integer activeIndex = calibrationList_.getActiveCalibration();
+      if (activeIndex != null) {
+         calTable_.setRowSelectionInterval(activeIndex, activeIndex);
+      }
       scrollPane.setViewportView(calTable_);
 
       final JButton newButton = new JButton();
@@ -200,10 +210,13 @@ public final class CalibrationListDlg extends MMDialog {
          }
       });
       newButton.setText("New");
-      getContentPane().add(newButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, newButton, 40, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, newButton, 17, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, newButton, -9, SpringLayout.EAST, getContentPane());
+      super.getContentPane().add(newButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, newButton, 40, 
+              SpringLayout.NORTH, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, newButton, 17, 
+              SpringLayout.NORTH, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, newButton, -9, 
+              SpringLayout.EAST, super.getContentPane());
 
       final JButton editButton = new JButton();
       editButton.setFont(new Font("", Font.PLAIN, 10));
@@ -214,12 +227,17 @@ public final class CalibrationListDlg extends MMDialog {
          }
       });
       editButton.setText("Edit");
-      getContentPane().add(editButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, editButton, 65, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, editButton, 42, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, editButton, -9, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, editButton, -109, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, newButton, 0, SpringLayout.WEST, editButton);
+      super.getContentPane().add(editButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, editButton, 65, 
+              SpringLayout.NORTH, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, editButton, 42, 
+              SpringLayout.NORTH, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, editButton, -9, 
+              SpringLayout.EAST, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, editButton, -109, 
+              SpringLayout.EAST, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, newButton, 0, 
+              SpringLayout.WEST, editButton);
 
       final JButton removeButton = new JButton();
       removeButton.setFont(new Font("", Font.PLAIN, 10));
@@ -231,12 +249,17 @@ public final class CalibrationListDlg extends MMDialog {
       });
      
       removeButton.setText("Remove");
-      getContentPane().add(removeButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, removeButton, 88, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, removeButton, 65, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, removeButton, -9, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, removeButton, -109, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, newButton, 0, SpringLayout.WEST, removeButton);
+      super.getContentPane().add(removeButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, removeButton, 88, 
+              SpringLayout.NORTH, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, removeButton, 65, 
+              SpringLayout.NORTH, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, removeButton, -9, 
+              SpringLayout.EAST, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, removeButton, -109, 
+              SpringLayout.EAST, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, newButton, 0, 
+              SpringLayout.WEST, removeButton);
 
       final JButton removeAllButton = new JButton();
       removeAllButton.setFont(new Font("", Font.PLAIN, 10));
@@ -247,11 +270,15 @@ public final class CalibrationListDlg extends MMDialog {
          }
       });
       removeAllButton.setText("Remove All");
-      getContentPane().add(removeAllButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, 111, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, removeAllButton, 88, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, removeAllButton, 100, SpringLayout.WEST, removeButton);
-      springLayout.putConstraint(SpringLayout.WEST, removeAllButton, 0, SpringLayout.WEST, removeButton);
+      super.getContentPane().add(removeAllButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, 111, 
+              SpringLayout.NORTH, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, removeAllButton, 88, 
+              SpringLayout.NORTH, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, removeAllButton, 100, 
+              SpringLayout.WEST, removeButton);
+      springLayout.putConstraint(SpringLayout.WEST, removeAllButton, 0, 
+              SpringLayout.WEST, removeButton);
       final JButton closeButton = new JButton();
       closeButton.setFont(new Font("", Font.PLAIN, 10));
       closeButton.addActionListener(new ActionListener() {
@@ -262,13 +289,19 @@ public final class CalibrationListDlg extends MMDialog {
       });
 
       closeButton.setText("Close");
-      getContentPane().add(closeButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, closeButton, 0, SpringLayout.SOUTH, scrollPane);
-      springLayout.putConstraint(SpringLayout.NORTH, closeButton, -23, SpringLayout.SOUTH, scrollPane);
-      springLayout.putConstraint(SpringLayout.EAST, scrollPane, -5, SpringLayout.WEST, closeButton);
-      springLayout.putConstraint(SpringLayout.WEST, scrollPane, 10, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, closeButton, -5, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, closeButton, 0, SpringLayout.WEST, removeButton);
+      super.getContentPane().add(closeButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, closeButton, 0, 
+              SpringLayout.SOUTH, scrollPane);
+      springLayout.putConstraint(SpringLayout.NORTH, closeButton, -23, 
+              SpringLayout.SOUTH, scrollPane);
+      springLayout.putConstraint(SpringLayout.EAST, scrollPane, -5, 
+              SpringLayout.WEST, closeButton);
+      springLayout.putConstraint(SpringLayout.WEST, scrollPane, 10, 
+              SpringLayout.WEST, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, closeButton, -5, 
+              SpringLayout.EAST, super.getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, closeButton, 0, 
+              SpringLayout.WEST, removeButton);
    }
 
    public void addNewCalibration() {
@@ -311,8 +344,9 @@ public final class CalibrationListDlg extends MMDialog {
       calibrationList_.getCalibrationsFromCore();
       ptm.fireTableDataChanged();
       int row = ptm.getCurrentPixelConfigRow();
-      if (row >= 0)
-          calTable_.setRowSelectionInterval(row, row);
+      if (row >= 0) {
+         calTable_.setRowSelectionInterval(row, row);
+      }
    }
 
    public void setParentGUI(Studio parent) {
@@ -322,12 +356,15 @@ public final class CalibrationListDlg extends MMDialog {
    
    @Override
    public void dispose() {
-      if (parentGUI_ != null) {
-         parentGUI_.events().unregisterForEvents(this);
+      if (!disposed_) {
+         if (parentGUI_ != null && !disposed_) {
+            parentGUI_.events().unregisterForEvents(this);
+         }
+         super.dispose();
+         disposed_ = true;
       }
-      super.dispose();
    }
-         
+    
    /**
     * @param event indicating that shutdown is happening
     */
