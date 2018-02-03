@@ -73,8 +73,12 @@ public class RectangleOverlay extends AbstractOverlay{
          List<Image> images, Image primaryImage,
          Rectangle2D.Float imageViewPort)
    {
+      final double zoomRatio = imageViewPort.width / screenRect.width;
       graphicsContext.setColor(Color.yellow);
-      drawRectangle(graphicsContext, x_, y_, width_, height_);
+      drawRectangle(graphicsContext, (int) (x_ / zoomRatio),
+              (int) (y_ / zoomRatio), 
+              (int) (width_ / zoomRatio), 
+              (int) (height_ / zoomRatio) );
    }
    
     void drawRectangle(Graphics2D g, final int x, final int y, final int width, 

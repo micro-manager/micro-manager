@@ -155,6 +155,7 @@ public class CalibrationThread extends Thread {
                if (liveWin_ != studio_.live().getDisplay()) {
                   liveWin_ = studio_.live().getDisplay();
                   liveWin_.setCustomTitle("Calibrating...");
+                  overlay_.setVisible(true);
                   liveWin_.addOverlay(overlay_);
                }
             }
