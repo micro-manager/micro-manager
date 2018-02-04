@@ -302,7 +302,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
          Color.MAGENTA, Color.RED, Color.GREEN, Color.BLUE, Color.ORANGE};
       Integer[] defaultIntColors = colorsToInts(defaultColors);
 
-      key = key + "_";
+      key += "_";
       // This value used to be an int, then got changed to a double, hence the
       // name change.
       builder.animationFPS(profile.getDouble(
@@ -348,7 +348,7 @@ public final class DefaultDisplaySettings implements DisplaySettings {
    
    
    /**
-    * Save these DisplaySettings to the User Profile.
+    * Retrieve DisplaySettings from the User Profile.
     * @param profile UserProfile to save these Display Settings to
     * @param key Key use to retrieve the DisplaySettings
     *             Will be pre-pended with PROFILEKEY
