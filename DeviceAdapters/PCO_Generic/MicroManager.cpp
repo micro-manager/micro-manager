@@ -459,6 +459,7 @@ int CPCOCam::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
   else if(eAct == MM::AfterSet)
   {
     int nErr = 0;
+    bool bwassoftwaretriggered = m_bSoftwareTriggered;
     long ihelp;
     string tmp;
     pProp->Get(tmp);
@@ -478,6 +479,11 @@ int CPCOCam::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
 
       nErr = SetupCamera(true, false);
+      if(bwassoftwaretriggered)
+      {
+        m_pCamera->StopCam(&nErr);
+        m_bRecording = false;
+      }
     }
 
     if(nErr != 0)
