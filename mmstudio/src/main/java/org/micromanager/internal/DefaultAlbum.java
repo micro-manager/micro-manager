@@ -70,10 +70,11 @@ public final class DefaultAlbum implements Album {
          // Need to create a new album.
          store_ = studio.data().createRAMDatastore();
          try {
-            SummaryMetadata summary = studio.acquisitions()
-               .generateSummaryMetadata().copy()
-               .channelNames(new String[] {curChannel}).build();
-            store_.setSummaryMetadata(summary);
+            SummaryMetadata.Builder smb = studio.acquisitions().
+                    generateSummaryMetadata().copyBuilder();
+            // TODO: can there be other axes than T?
+            smb.channelNames(new String[] {curChannel}).axisOrder(Coords.T);
+            store_.setSummaryMetadata(smb.build());
          }
          catch (DatastoreFrozenException e) {
             // This should never happen!
@@ -88,6 +89,24 @@ public final class DefaultAlbum implements Album {
          display.setCustomTitle("Album");
          curTime_ = null;
       }
+      
+      Coords newCoords = createAlbumCoords(image);
+
+      try {
+         store_.putImage(image.copyAtCoords(newCoords));
+      }
+      catch (DatastoreFrozenException e) {
+         ReportingUtils.showError(e, "Album datastore is locked.");
+      }
+      catch (DatastoreRewriteException e) {
+         // This should never happen.
+         ReportingUtils.showError(e, "Unable to add image at " + newCoords + 
+                 " to album as another image with those coords already exists.");
+      }
+      return mustCreateNew;
+   }
+   
+   public Coords createAlbumCoords(Image image) throws IOException {
       // We want to add new images to the next timepoint, or to the current
       // timepoint if there's no image for this channel at the current
       // timepoint.
@@ -106,19 +125,7 @@ public final class DefaultAlbum implements Album {
             curTime_++;
          }
       }
-      Coords newCoords = image.getCoords().copy().time(curTime_).build();
-      try {
-         image = image.copyAtCoords(newCoords);
-         store_.putImage(image);
-      }
-      catch (DatastoreFrozenException e) {
-         ReportingUtils.showError(e, "Album datastore is locked.");
-      }
-      catch (DatastoreRewriteException e) {
-         // This should never happen.
-         ReportingUtils.showError(e, "Unable to add image at " + newCoords + " to album as another image with those coords already exists.");
-      }
-      return mustCreateNew;
+      return image.getCoords().copy().time(curTime_).build();
    }
 
    @Override
