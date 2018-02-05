@@ -878,15 +878,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
          }
       }
       else {
-         int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
-         for (int i = 0; i < nComponents; ++i) {
-            ComponentDisplaySettings componentSettings =
-                  settings.getChannelSettings(0).getComponentSettings(i);
-            int max = Math.min(Integer.MAX_VALUE,
-                  (int) componentSettings.getScalingMaximum());
-            int min = Math.max(max - 1,
-                  (int) componentSettings.getScalingMinimum());
-            ijBridge_.mm2ijSetIntensityScaling(i, min, max);
+         for (int chNr = 0; chNr < nChannels; chNr++) {
+            int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
+            for (int i = 0; i < nComponents; ++i) {
+               ComponentDisplaySettings componentSettings
+                       = settings.getChannelSettings(0).getComponentSettings(i);
+               int max = Math.min(Integer.MAX_VALUE,
+                       (int) componentSettings.getScalingMaximum());
+               int min = Math.max(max - 1,
+                       (int) componentSettings.getScalingMinimum());
+               ijBridge_.mm2ijSetIntensityScaling(i, min, max);
+            }
          }
       }
       
