@@ -73,7 +73,8 @@ public final class DefaultAlbum implements Album {
             SummaryMetadata.Builder smb = studio.acquisitions().
                     generateSummaryMetadata().copyBuilder();
             // TODO: can there be other axes than T?
-            smb.channelNames(new String[] {curChannel}).axisOrder(Coords.T);
+            smb.channelNames(new String[] {curChannel}).axisOrder(
+                    Coords.T, Coords.C, Coords.Z, Coords.P);
             store_.setSummaryMetadata(smb.build());
          }
          catch (DatastoreFrozenException e) {
