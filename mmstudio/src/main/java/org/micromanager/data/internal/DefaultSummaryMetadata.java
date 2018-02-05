@@ -354,6 +354,12 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
       return pmap_.getStringList(AXIS_ORDER.key(), Collections.<String>emptyList());
    }
 
+   /**
+    * 
+    * @return Array with axes used in this data set in desired order
+    * @deprecated use getOrderedAxes instead
+    */
+   
    @Override
    @Deprecated
    public String[] getAxisOrder() {

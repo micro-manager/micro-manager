@@ -84,6 +84,9 @@ public class DataCoordsAnimationState implements AnimationStateDelegate<Coords> 
    {
       final Coords prevPos = getFullPosition(animationCoords_);
       final List<String> axes = delegate_.getOrderedAxes();
+      // TODO: this is coming from the summarymetadata.  If the axes list was not
+      // not set, bad thing will happen downstream.  At the very least log
+      // empty axes list
       final Collection<String> animatedAxes = delegate_.getAnimatedAxes();
 
       if (animatedAxes.isEmpty()) {
