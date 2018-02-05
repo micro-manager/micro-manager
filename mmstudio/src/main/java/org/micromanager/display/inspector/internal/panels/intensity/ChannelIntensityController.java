@@ -32,6 +32,7 @@ import org.micromanager.display.internal.event.DataViewerMousePixelInfoChangedEv
 import org.micromanager.display.internal.imagestats.ImageStats;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.internal.utils.MustCallOnEDT;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -487,17 +488,19 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private void handleColor(Color color) {
       color = JColorChooser.showDialog(histoPanel_.getTopLevelAncestor(),
             "Channel Color", color);
-
-      DisplaySettings oldDisplaySettings, newDisplaySettings;
-      do {
-         oldDisplaySettings = viewer_.getDisplaySettings();
-         ChannelDisplaySettings channelSettings =
-               oldDisplaySettings.getChannelSettings(channelIndex_);
-         newDisplaySettings = oldDisplaySettings.
-               copyBuilderWithChannelSettings(channelIndex_,
-                     channelSettings.copyBuilder().color(color).build()).
-               build();
-      } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
+      
+      if (color != null) {
+         DisplaySettings oldDisplaySettings, newDisplaySettings;
+         do {
+            oldDisplaySettings = viewer_.getDisplaySettings();
+            ChannelDisplaySettings channelSettings
+                    = oldDisplaySettings.getChannelSettings(channelIndex_);
+            newDisplaySettings = oldDisplaySettings.
+                    copyBuilderWithChannelSettings(channelIndex_,
+                            channelSettings.copyBuilder().color(color).build()).
+                    build();
+         } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
+      }
    }
 
    private void handleFullscale() {
@@ -509,9 +512,19 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          ChannelDisplaySettings.Builder builder = channelSettings.copyBuilder();
          int nComponents = 1; // TODO
          for (int i = 0; i < nComponents; ++i) {
+            try {
+            int cameraBits = viewer_.getDataProvider().getAnyImage(). // can throw IOException
+                    getMetadata().getBitDepth(); 
+            long max = 1 << cameraBits;
             builder.component(i,
                   channelSettings.getComponentSettings(i).copyBuilder().
-                        scalingRange(0L, Long.MAX_VALUE).build());
+                        scalingRange(0L, 
+                                max >= 0 ? max : Long.MAX_VALUE).
+                        build() );
+            } catch (IOException ioe) {
+               // if we could not find an image, we have bigger problems
+               ReportingUtils.logError(ioe);
+            }
          }
          newDisplaySettings = oldDisplaySettings.
                copyBuilderWithChannelSettings(channelIndex_, builder.build()).
