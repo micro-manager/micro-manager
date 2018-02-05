@@ -359,12 +359,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
    }
 
    @MustCallOnEDT
-   private void setupDisplayUI() {
+   private void setupDisplayUI(ImagesAndStats images) {
       if (ijBridge_ != null) {
          return;
       }
 
-      ijBridge_ = ImageJBridge.create(this);
+      ijBridge_ = ImageJBridge.create(this, images);
       Double zoomRatio = getDisplayController().getDisplaySettings().getZoomRatio();
       if (zoomRatio <= 0) {
          zoomRatio = 1.0;
@@ -748,7 +748,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       boolean firstTime = false;
       if (ijBridge_ == null) {
          firstTime = true;
-         setupDisplayUI();  // creates ijBridge amongst other things
+         setupDisplayUI(images);  // creates ijBridge amongst other things
       }
 
       displayedImages_ = images;
@@ -811,47 +811,52 @@ public final class DisplayUIController implements Closeable, WindowListener,
       int nChannels = ijBridge_.getIJNumberOfChannels();
       boolean autostretch = settings.isAutostretchEnabled()
             && displayedImages_ != null;
+      
+      // NS 2018-02-05: RGB display is quite broken, and it is unclear to me
+      // what the intentions are.  For now, at least get images to display, and
+      // someone with more interest in RGB can try to fix things.
+      
       boolean isRGB = ijBridge_.isIJRGB();
 
-      switch (settings.getColorMode()) {
-         case COLOR:
-            if (!ijBridge_.isIJColorModeColor()) {
-               ijBridge_.mm2ijSetColorModeColor(settings.getAllChannelColors());
-            }
-            break;
-         case COMPOSITE:
-            if (!ijBridge_.isIJColorModeComposite()) {
-               ijBridge_.mm2ijSetColorModeComposite(settings.getAllChannelColors());
-            }
-            break;
-         case GRAYSCALE:
-            if (!ijBridge_.isIJColorModeGrayscale()) {
-               ijBridge_.mm2ijSetColorModeGrayscale();
-            }
-            ijBridge_.mm2ijSetHighlightSaturatedPixels(false);
-            break;
-         case HIGHLIGHT_LIMITS:
-            if (!ijBridge_.isIJColorModeGrayscale()) {
-               ijBridge_.mm2ijSetColorModeGrayscale();
-            }
-            ijBridge_.mm2ijSetHighlightSaturatedPixels(true);
-            break;
-         case FIRE:
-            ijBridge_.mm2ijSetColorModeLUT(ColorMaps.fireColorMap());
-            break;
-         case RED_HOT:
-            ijBridge_.mm2ijSetColorModeLUT(ColorMaps.redHotColorMap());
-            break;
-         case SPECTRUM:
-         default:
-            ijBridge_.mm2ijSetColorModeGrayscale(); // Fallback
-            break;
-      }
-
       if (!isRGB) {
+         switch (settings.getColorMode()) {
+            case COLOR:
+               if (!ijBridge_.isIJColorModeColor()) {
+                  ijBridge_.mm2ijSetColorModeColor(settings.getAllChannelColors());
+               }
+               break;
+            case COMPOSITE:
+               if (!ijBridge_.isIJColorModeComposite()) {
+                  ijBridge_.mm2ijSetColorModeComposite(settings.getAllChannelColors());
+               }
+               break;
+            case GRAYSCALE:
+               if (!ijBridge_.isIJColorModeGrayscale()) {
+                  ijBridge_.mm2ijSetColorModeGrayscale();
+               }
+               ijBridge_.mm2ijSetHighlightSaturatedPixels(false);
+               break;
+            case HIGHLIGHT_LIMITS:
+               if (!ijBridge_.isIJColorModeGrayscale()) {
+                  ijBridge_.mm2ijSetColorModeGrayscale();
+               }
+               ijBridge_.mm2ijSetHighlightSaturatedPixels(true);
+               break;
+            case FIRE:
+               ijBridge_.mm2ijSetColorModeLUT(ColorMaps.fireColorMap());
+               break;
+            case RED_HOT:
+               ijBridge_.mm2ijSetColorModeLUT(ColorMaps.redHotColorMap());
+               break;
+            case SPECTRUM:
+            default:
+               ijBridge_.mm2ijSetColorModeGrayscale(); // Fallback
+               break;
+         }
+
          for (int i = 0; i < nChannels; ++i) {
-            ChannelDisplaySettings channelSettings =
-                  settings.getChannelSettings(i);
+            ChannelDisplaySettings channelSettings
+                    = settings.getChannelSettings(i);
             ComponentDisplaySettings componentSettings =
                   channelSettings.getComponentSettings(0);
             ijBridge_.mm2ijSetChannelColor(i, channelSettings.getColor());

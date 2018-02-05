@@ -47,6 +47,7 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultMetadata;
 import org.micromanager.display.internal.displaywindow.DisplayUIController;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
+import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MustCallOnEDT;
 
@@ -138,16 +139,17 @@ public final class ImageJBridge {
 
 
    @MustCallOnEDT
-   public static ImageJBridge create(DisplayUIController parent) {
-      ImageJBridge instance = new ImageJBridge(parent);
+   public static ImageJBridge create(final DisplayUIController parent, 
+           final ImagesAndStats images) {
+      ImageJBridge instance = new ImageJBridge(parent, images);
       instance.initialize();
       return instance;
    }
 
-   private ImageJBridge(DisplayUIController parent) {
+   private ImageJBridge(DisplayUIController parent, ImagesAndStats images) {
       uiController_ = parent;
-      if (!uiController_.getDisplayedImages().isEmpty() &&
-            uiController_.getDisplayedImages().get(0).getNumComponents() > 1) {
+      if (images != null && images.getRequest().getImages().size() > 0 && 
+              images.getRequest().getImage(0).getNumComponents() > 1) {
          colorModeStrategy_ = RGBColorModeStrategy.create();
       }
       else {
