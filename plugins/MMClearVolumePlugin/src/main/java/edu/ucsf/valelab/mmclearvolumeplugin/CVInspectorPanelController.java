@@ -186,45 +186,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       
    }
    
-   /**
-    * Called whenever we are attached to a new viewer 
-    * @param viewer 
-    
-   @Override
-   public void setDataViewer(DataViewer viewer) {
-      // although this should always be a valid viewer, check anyways
-      if (! (viewer instanceof CVViewer) )
-         return;
-      
-      // TODO: do we need to unregister the old viewer???
-      
-      viewer_ = (CVViewer) viewer;
-      
-      // update range sliders with clipped region of current viewer
-      float[] clipBox = viewer_.getClipBox();
-      if (clipBox != null) {
-         xSlider_.setValue(clipValToSliderVal(clipBox[0]));
-         xSlider_.setUpperValue(clipValToSliderVal(clipBox[1]));
-         ySlider_.setValue(clipValToSliderVal(clipBox[2]));
-         ySlider_.setUpperValue(clipValToSliderVal(clipBox[3]));
-         zSlider_.setValue(clipValToSliderVal(clipBox[4]));
-         zSlider_.setUpperValue(clipValToSliderVal(clipBox[5]));
-      }
-      Coords intendedDimensions = viewer_.getDatastore().getSummaryMetadata().getIntendedDimensions();
-      if (intendedDimensions != null) {
-         if (sp_ != null) {
-            sp_.stopUpdateThread();
-            this.remove(sp_);
-         }
-         sp_ = new ScrollerPanel(studio_, viewer_.getDatastore(), viewer_);
-         add(sp_, "span x 4, growx, wrap");
-      } 
-      super.revalidate();
-      super.repaint();
-      viewer_.updateHistograms();
-      viewer_.registerForEvents(this);
-   }
-   * 
+   /*
    
    @Subscribe
    public void OnNewDisplaySettinsgEvent(NewDisplaySettingsEvent ndse) {
@@ -294,6 +256,10 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       return "ClearVolume Viewer Panel";
    }
 
+   /**
+    * Called whenever the panel is attached to a DataViewer
+    * @param viewer - Viewer that the panel is attached to.
+    */
    @Override
    public void attachDataViewer(DataViewer viewer) {
         // although this should always be a valid viewer, check anyways
@@ -325,7 +291,6 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       } 
       panel_.revalidate();
       panel_.repaint();
-      //viewer_.updateHistograms();
       viewer_.registerForEvents(this);
    }
 

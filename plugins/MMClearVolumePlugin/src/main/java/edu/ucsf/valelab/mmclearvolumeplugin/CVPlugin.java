@@ -33,7 +33,7 @@ import org.scijava.plugin.SciJavaPlugin;
 public class CVPlugin implements MenuPlugin, DisplayGearMenuPlugin, SciJavaPlugin {
 
    private Studio studio_;
-   static public final String VERSION_INFO = "1.5.1";
+   static public final String VERSION_INFO = "1.5.2";
    static private final String COPYRIGHT_NOTICE = "Copyright by UCSF, 2015-2018";
    static private final String DESCRIPTION = "View Micro-Manager data in the ClearVolume viewer";
    static private final String NAME = "3D (ClearVolume)";
@@ -84,7 +84,7 @@ public class CVPlugin implements MenuPlugin, DisplayGearMenuPlugin, SciJavaPlugi
    @Override
    public void onPluginSelected(DisplayWindow display) {
        try {
-         CVViewer viewer = new CVViewer(studio_, display.getDatastore());
+         CVViewer viewer = new CVViewer(studio_, display.getDataProvider());
          viewer.register();
       } catch (Exception ex) {
          if (studio_ != null) {

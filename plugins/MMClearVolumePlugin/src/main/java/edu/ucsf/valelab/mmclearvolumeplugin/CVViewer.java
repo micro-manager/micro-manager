@@ -51,6 +51,7 @@ import javax.swing.SwingUtilities;
 
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
+import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
@@ -110,7 +111,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       this(studio, null);
    }
 
-   public CVViewer(Studio studio, Datastore store) {
+   public CVViewer(final Studio studio, final DataProvider provider) {
       // first make sure that our app's icon will not change:
       // This call still seems to generate a null pointer exception, at 
       // at jogamp.newt.driver.windows.DisplayDriver.<clinit>(DisplayDriver.java:70)
@@ -124,14 +125,14 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       ourClass_ = this.getClass();
       studio_ = studio;
       UserProfile profile = studio_.getUserProfile();
-      if (store == null) {
+      if (provider == null) {
          clonedDisplay_ = studio_.displays().getActiveDataViewer();
          if (clonedDisplay_ != null) {
             dataProvider_ = clonedDisplay_.getDataProvider();
             name_ = clonedDisplay_.getName() + "-ClearVolume";
          }
       } else {
-         dataProvider_ = store;
+         dataProvider_ = provider;
          clonedDisplay_ = getDisplay(dataProvider_);
          if (clonedDisplay_ != null) {
             name_ = clonedDisplay_.getName() + "-ClearVolume";
@@ -142,7 +143,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       int xLoc = profile.getSettings(ourClass_).getInteger(XLOC, 100);
       int yLoc = profile.getSettings(ourClass_).getInteger(YLOC, 100);
       cvFrame_.setLocation(xLoc, yLoc);
-      coordsBuilder_ = studio_.data().getCoordsBuilder();
+      coordsBuilder_ = Coordinates.builder();
       
       if (dataProvider_ == null) {
          studio_.logs().showMessage("No data set open");
@@ -155,7 +156,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
       // check if we have all z slices in the first time point
       // if not, rely on the onNewImage function to initialize the renderer
-      Coords zStackCoords = studio_.data().getCoordsBuilder().t(0).build();
+      Coords zStackCoords = Coordinates.builder().t(0).build();
       try {
          final int nrImages = dataProvider_.getImagesMatching(zStackCoords).size();
          currentlyShownTimePoint_ = -1; // set to make sure the first volume will be drawn
@@ -187,7 +188,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
       if (clonedDisplay_ != null) {
          name_ = clonedDisplay_.getName() + "-ClearVolume";
-         displaySettings_ = clonedDisplay_.getDisplaySettings().copy().build();
+         displaySettings_ = clonedDisplay_.getDisplaySettings().copyBuilder().build();
       } else {
          displaySettings_ = studio_.displays().getStandardDisplaySettings();
       }
@@ -411,10 +412,26 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                  displaySettings_.getColorMode() != ds.getColorMode() ) {
             clearVolumeRenderer_.setTransferFunction(ch, getGradientForColor(nc));
          }
-         
+
+         // Autostretch if set
+         if (!Objects.equals(ds.isAutostretchEnabled(),
+                 displaySettings_.isAutostretchEnabled())
+                 || !Objects.equals(ds.getAutoscaleIgnoredPercentile(),
+                         displaySettings_.getAutoscaleIgnoredPercentile())) {
+            if (ds.isAutostretchEnabled()) {
+               try {
+                  ds = autostretch(ds);
+                  //drawVolume(currentlyShownTimePoint_);
+                  //displayBus_.post(new CanvasDrawCompleteEvent());
+               } catch (IOException ioe) {
+                  studio_.logs().logError(ioe);
+               }
+            }
+         }
+
          ChannelDisplaySettings displayChannelSettings = displaySettings_.getChannelSettings(ch);
          ChannelDisplaySettings dsChannelSettings = ds.getChannelSettings(ch);
-         
+
          if ( displayChannelSettings.getComponentSettings(0).getScalingMaximum() != 
                  dsChannelSettings.getComponentSettings(0).getScalingMaximum()  ||
               displayChannelSettings.getComponentSettings(0).getScalingMinimum() != 
@@ -433,22 +450,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          }
          
       }
-      
-      // Autostretch if set
-      if (! Objects.equals( ds.isAutostretchEnabled(), 
-              displaySettings_.isAutostretchEnabled()) || 
-          ! Objects.equals( ds.getAutoscaleIgnoredPercentile(), 
-                  displaySettings_.getAutoscaleIgnoredPercentile()) ) {
-         if (ds.isAutostretchEnabled()) {
-            try {
-            autostretch();
-            drawVolume(currentlyShownTimePoint_);
-            displayBus_.post(new CanvasDrawCompleteEvent());
-            } catch (IOException ioe) {
-               studio_.logs().logError(ioe);
-            }
-         }
-      }
+  
       
       // Update the Inspector window
       this.postEvent(DefaultDisplaySettingsChangedEvent.create(
@@ -465,13 +467,13 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    @Override
    public void registerForEvents(Object o) {
-      System.out.println("Registering for event: " + o.toString());
+      // System.out.println("Registering for event: " + o.toString());
       displayBus_.register(o);
    }
 
    @Override
    public void unregisterForEvents(Object o) {
-      System.out.println("Unregistering for event: " + o.toString());
+      // System.out.println("Unregistering for event: " + o.toString());
       displayBus_.unregister(o);
    }
    
@@ -504,7 +506,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
       clearVolumeRenderer_.setCurrentRenderLayer(coords.getChannel());
       try {
-      drawVolume(coords.getTime());
+      drawVolume(coords.getT());
       } catch (IOException ioe) {
           studio_.logs().logError(ioe);
       }
@@ -553,7 +555,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    @Override
    public String getName() {
-      System.out.println("Name requested, gave: " + name_);
+      // System.out.println("Name requested, gave: " + name_);
       return name_;
    }
 
@@ -577,6 +579,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       return lTransfertFunction;
    }
 
+   /**
+    * Draws the volume of the given time point in the viewer
+    * @param timePoint zero-based index in the time axis
+    * @throws IOException 
+    */
    public final void drawVolume(final int timePoint) throws IOException {
       //if (timePoint == currentlyShownTimePoint_)
       //   return; // nothing to do, already showing requested timepoint
@@ -589,9 +596,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
       // long startTime = System.currentTimeMillis();
       clearVolumeRenderer_.setVolumeDataUpdateAllowed(false);
-     // if (displaySettings_.isAutostretchEnabled()) {
-     //    autostretch();
-      //}
+
       for (int ch = 0; ch < nrCh; ch++) {
          FragmentedMemory fragmentedMemory = new FragmentedMemory();
          for (int i = 0; i < nrZ; i++) {
@@ -650,6 +655,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          if (displaySettings_.getChannelColorMode() == ColorMode.GRAYSCALE) {
             chColor = Color.WHITE;
          }
+         clearVolumeRenderer_.setLayerVisible(ch, displaySettings_.isChannelVisible(ch) );
          clearVolumeRenderer_.setTransferFunction(ch, getGradientForColor(chColor));
          try {
             float max = (float) displaySettings_.getChannelContrastSettings()[ch].getContrastMaxes()[0]
@@ -662,7 +668,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                clearVolumeRenderer_.setGamma(ch, contrastGammas[0]);
             }
          } catch (NullPointerException ex) {
-            studio_.logs().showError(ex);
+            studio_.logs().logError(ex);
          }
       }
       currentlyShownTimePoint_ = timePoint;
@@ -814,9 +820,9 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    /**
-    * Find the first DisplayWindow attached to this datastore
+    * Find the first DisplayWindow attached to this dataprovider
     *
-    * @param store first DisplayWindow or null if not found
+    * @param provider first DisplayWindow or null if not found
     */
    private DisplayWindow getDisplay(DataProvider provider) {
       List<DisplayWindow> dataWindows = studio_.displays().getAllImageWindows();
@@ -828,14 +834,14 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       return null;
    }
    
-   private void autostretch() throws IOException {
+   private DisplaySettings autostretch(DisplaySettings displaySettings) throws IOException {
       if (lastCalculatedImagesAndStats_ == null) {
-         return;
+         return displaySettings;
       }
           
-      DisplaySettings.Builder newSettingsBuilder = displaySettings_.copyBuilder();
+      DisplaySettings.Builder newSettingsBuilder = displaySettings.copyBuilder();
       Coords baseCoords = getDisplayedImages().get(0).getCoords();
-      Double extremaPercentage = displaySettings_.getAutoscaleIgnoredPercentile();
+      Double extremaPercentage = displaySettings.getAutoscaleIgnoredPercentile();
       if (extremaPercentage < 0.0) {
          extremaPercentage = 0.0;
       }
@@ -843,7 +849,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          Image image = dataProvider_.getImage(baseCoords.copyBuilder().channel(ch).build());
          if (image != null) {
             ChannelDisplaySettings.Builder csCopyBuilder = 
-                    displaySettings_.getChannelSettings(ch).copyBuilder();
+                    displaySettings.getChannelSettings(ch).copyBuilder();
             for (int j = 0; j < image.getNumComponents(); ++j) {
                IntegerComponentStats componentStats = 
                        lastCalculatedImagesAndStats_.getResult().get(ch).getComponentStats(0);
@@ -852,7 +858,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
                        getAutoscaleMinForQuantile(extremaPercentage), 
                        componentStats.
                        getAutoscaleMaxForQuantile(extremaPercentage));
-               ccB.scalingGamma(displaySettings_.getChannelSettings(ch).
+               ccB.scalingGamma(displaySettings.getChannelSettings(ch).
                        getComponentSettings(j).getScalingGamma());
                csCopyBuilder.component(j, ccB.build());
             }
@@ -860,56 +866,12 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          }
       }
       DisplaySettings newSettings = newSettingsBuilder.build();
-      postEvent(DefaultDisplaySettingsChangedEvent.create(this, displaySettings_, 
+      postEvent(DefaultDisplaySettingsChangedEvent.create(this, displaySettings, 
               newSettings));
-      displaySettings_ = newSettings;
+      
+      return newSettings;
    }
-           // displaySettings_ = builder.safeUpdateContrastSettings(
-           //         studio_.displays().getContrastSettings(
-           //                 mins, maxes, gammas, true), ch).build();
-           // final int tmpCh = ch;
-            // TODO
-            /*
-            if (SwingUtilities.isEventDispatchThread()) {
-               postEvent(new NewHistogramsEvent(tmpCh, datas));
-            } else {
-               SwingUtilities.invokeLater(() -> {
-                  postEvent(new NewHistogramsEvent(tmpCh, datas));
-               });
-            }
-            */
-         
-      //}
-       //postEvent(new NewDisplaySettingsEvent(displaySettings_, this));
-   //}
-   /*
-   @Subscribe
-   public void onNewImage(NewImageEvent event) {
-      Coords coords = event.getCoords();
-      int t = coords.getTime();
-      if (t != currentlyShownTimePoint_) { 
-         // we are not yet showing this time point
-         // check if we have all z planes, if so draw the volume
-         // The following code is exact, but very slow
-         //Coords zStackCoords = studio_.data().getCoordsBuilder().time(t).build();
-         //final int nrImages = dataProvider_.getImagesMatching(zStackCoords).size();
-         
-         Coords intendedDimensions = dataProvider_.getSummaryMetadata().getIntendedDimensions();
-         // instead, keep our own counter, this assumes that all time points arrive in order
-         // TODO: work around this by keeping a list of counters
-         imgCounter_++;
-         if (imgCounter_ == intendedDimensions.getChannel() * intendedDimensions.getZ()) {
-            if (!open_) {
-               initializeRenderer(0);
-            } else {
-               // we are complete, so now draw the image
-               setDisplayedImageTo(coords);
-            }
-            imgCounter_ = 0;
-         }
-      }
-   }
-*/
+
      
    @Subscribe
    public void onShutdownCommencing(ShutdownCommencingEvent sce) {
@@ -957,17 +919,18 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    }
 
    @Override
-   public boolean compareAndSetDisplayPosition(Coords originalPosition, Coords newPosition, boolean forceRedisplay) {
-      throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+   public boolean compareAndSetDisplayPosition(Coords originalPosition, 
+           Coords newPosition, boolean forceRedisplay) {
+      boolean display = originalPosition != newPosition;
+      if (display || forceRedisplay) {
+         setDisplayedImageTo(newPosition);
+      }
+      return display;
    }
 
    @Override
    public boolean compareAndSetDisplayPosition(Coords originalPosition, Coords newPosition) {
-      boolean display = originalPosition != newPosition;
-      if (display) {
-         setDisplayedImageTo(newPosition);
-      }
-      return display;
+      return compareAndSetDisplayPosition(originalPosition, newPosition, false);
    }
 
    @Override
