@@ -247,6 +247,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          componentButtons_[i].setBorder(BorderFactory.createEmptyBorder());
          componentButtons_[i].setBorderPainted(false);
          componentButtons_[i].setOpaque(true);
+         // TODO: These buttons do nothing, so do not show until they are active
+         componentButtons_[i].setVisible(false);
       }
       componentButtons_[0].setSelected(true);
 
