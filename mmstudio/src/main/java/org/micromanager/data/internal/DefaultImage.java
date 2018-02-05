@@ -26,13 +26,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import ij.ImagePlus;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,15 +36,11 @@ import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
-import org.micromanager.data.Datastore;
-import org.micromanager.data.DatastoreFrozenException;
-import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.internal.utils.DirectBuffers;
 import org.micromanager.internal.utils.ImageUtils;
-import org.micromanager.internal.utils.MDUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -346,7 +338,7 @@ public final class DefaultImage implements Image {
       int offset = pixelType_.getComponentSampleOffset(component);
 
       int pixelIndex = y * pixelWidth_ + x;
-      int sampleIndex = pixelIndex * samplesPerPixel + offset + component;
+      int sampleIndex = pixelIndex * samplesPerPixel + offset;
       switch (pixelType_.getBytesPerComponent()) {
          case 1:
             return ImageUtils.unsignedValue(((ByteBuffer) rawPixels_).get(sampleIndex));

@@ -38,8 +38,11 @@ public enum PixelType {
     * <p>
     * As a native (C) array, this is a {@code uint8_t[]} with the samples
     * stored in B-G-R-_ order -- at least on little-endian systems.
+    * NS 2018/02/05: This seems to be the order RGB images are stored in our 
+    * ByteBuffers.  Since we use RGB in our UI, order the components this way
+    * here.  TODO: evaluate if this the right place for component ordering
     */
-   RGB32(4, 1, 3, new int[]{1, 2, 3}) {
+   RGB32(4, 1, 3, new int[]{2, 1, 0}) {
       @Override public int imageJConstant() {
          return 4;
       }
@@ -63,7 +66,7 @@ public enum PixelType {
 
       if (componentOffsets == null) {
          componentOffsets = new int[numComponents];
-         for (int i = 0; i < numComponents; ++i) {
+         for (int i = 0; i < numComponents; i++) {
             componentOffsets[i] = i;
          }
       }
