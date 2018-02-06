@@ -995,7 +995,11 @@ public final class DefaultPropertyMap implements PropertyMap {
    @Override
    @Deprecated
    public String[] getStringArray(String key, String[] defaultValue) {
-      return getStringList(key, defaultValue).toArray(new String[] {});
+      List<String> strList = getStringList(key, defaultValue);
+      if (strList != null) {
+         return strList.toArray(new String[] {});
+      }
+      return null;
    }
 
    @Override
