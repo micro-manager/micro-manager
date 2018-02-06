@@ -31,6 +31,7 @@ import org.micromanager.Studio;
  *
  * @author nico
  */
+@SuppressWarnings("serial")
 public class ShadingTableModel extends AbstractTableModel {
    private final Studio gui_;
    public final int PRESET = 0;
@@ -122,11 +123,10 @@ public class ShadingTableModel extends AbstractTableModel {
                     new String[presetList_.size()]);
             String[] files = fileList_.toArray(
                     new String[fileList_.size()]);
-
-            gui_.profile().setStringArray(this.getClass(), 
-                    channelGroup_ + "-channels", channels);
-            gui_.profile().setStringArray(this.getClass(), 
-                    channelGroup_ + "-files", files);
+            gui_.profile().getSettings(this.getClass()).putStringList(
+                  channelGroup_ + "-channels", channels);
+            gui_.profile().getSettings(this.getClass()).putStringList(
+                  channelGroup_ + "-files", files);
          }
          imageCollection_.clearFlatFields();
          channelGroup_ = newGroup;
@@ -134,15 +134,17 @@ public class ShadingTableModel extends AbstractTableModel {
          // then restore mapping from preferences
          fileList_.clear();
          presetList_.clear();
-         String[] channels = gui_.profile().getStringArray(this.getClass(), 
-                 channelGroup_ + "-channels", null);
-         String[] files = gui_.profile().getStringArray(this.getClass(), 
-                 channelGroup_ + "-files", null);
+         // Strange workaround since we can not pass null as default
+         List<String> emptyList = new ArrayList<String>(0);
+         List<String> channels = gui_.profile().getSettings(this.getClass()).
+               getStringList(channelGroup_ + "-channels", emptyList );
+         List<String> files = gui_.profile().getSettings(this.getClass()).
+               getStringList(channelGroup_ + "-files", emptyList);
          if (channels != null && files != null) {
-            for (int i = 0; i < channels.length && i < files.length; i++) {
-               imageCollection_.addFlatField(channels[i], files[i]);
-               presetList_.add(channels[i]);
-               fileList_.add(files[i]);
+            for (int i = 0; i < channels.size() && i < files.size(); i++) {
+               imageCollection_.addFlatField(channels.get(i), files.get(i));
+               presetList_.add(channels.get(i));
+               fileList_.add(files.get(i));
             }
          }
 
@@ -260,7 +262,8 @@ public class ShadingTableModel extends AbstractTableModel {
             } catch (ShadingException ex) {
                gui_.logs().showError(ex);
             }
-            gui_.profile().setString(this.getClass(), preset, fileList_.get(row));
+            gui_.profile().getSettings(this.getClass()).
+                  putString(preset, fileList_.get(row));
          }
       }
          
