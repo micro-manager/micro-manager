@@ -74,8 +74,8 @@ public class CalibrationThread extends Thread {
          super(msg);
          if (xy0_ != null) {
             try {
-            core_.setXYPosition( xy0_.x, xy0_.y);
-            studio_.live().snap(true);
+               core_.setXYPosition( xy0_.x, xy0_.y);
+               studio_.live().snap(true);
             } catch (Exception ex) {
                // annoying but at this point better to not bother the user 
                // with failure after failure
