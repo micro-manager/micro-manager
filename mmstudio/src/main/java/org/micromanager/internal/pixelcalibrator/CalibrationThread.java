@@ -57,6 +57,8 @@ public class CalibrationThread extends Thread {
    private int progress_ = 0;
    private DisplayWindow liveWin_;
    private ImageProcessor referenceImage_;
+   
+   private Point2D.Double xy0_;
 
    private double x;
    private double y;
@@ -70,6 +72,15 @@ public class CalibrationThread extends Thread {
 
       public CalibrationFailedException(String msg) {
          super(msg);
+         if (xy0_ != null) {
+            try {
+            core_.setXYPosition( xy0_.x, xy0_.y);
+            studio_.live().snap(true);
+            } catch (Exception ex) {
+               // annoying but at this point better to not bother the user 
+               // with failure after failure
+            }
+         }
          if (overlay_ != null) {
             overlay_.setVisible(false);
          }
@@ -313,7 +324,6 @@ public class CalibrationThread extends Thread {
       throws InterruptedException, CalibrationFailedException
    {
       pointPairs_.clear();
-      Point2D.Double s1 = new Point2D.Double();
       int ax = w/2 - side_small/2;
       int ay = h/2 - side_small/2;
 
@@ -325,9 +335,9 @@ public class CalibrationThread extends Thread {
          return MathFunctions.generateAffineTransformFromPointPairs(
                  pointPairs_, 2.0, Double.MAX_VALUE);
       } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         return null;
+         ReportingUtils.logError(ex.getMessage());
       }
+      return null;
    }
 
 
@@ -342,9 +352,8 @@ public class CalibrationThread extends Thread {
       throws InterruptedException, CalibrationFailedException
    {
       pointPairs_ = new HashMap<Point2D.Double, Point2D.Double>();
-      Point2D.Double xy0 = null;
       try {
-         xy0 = core_.getXYStagePosition();
+          xy0_ = core_.getXYStagePosition();
       }
       catch (Exception e) {
          throw new CalibrationFailedException(e.getMessage());
@@ -356,7 +365,7 @@ public class CalibrationThread extends Thread {
          ReportingUtils.logMessage(secondApprox.toString());
       }
       try {
-         core_.setXYPosition(xy0.x, xy0.y);
+         core_.setXYPosition( xy0_.x, xy0_.y);
          studio_.live().snap(true);
       }
       catch (Exception e) {
@@ -383,7 +392,8 @@ public class CalibrationThread extends Thread {
       catch (InterruptedException e) {
          // User canceled
          SwingUtilities.invokeLater(new Runnable() {
-            @Override public void run() {
+            @Override 
+            public void run() {
                dialog_.calibrationFailed(true);
             }
          });
@@ -391,7 +401,8 @@ public class CalibrationThread extends Thread {
       }
       catch (final CalibrationFailedException e) {
          SwingUtilities.invokeLater(new Runnable() {
-            @Override public void run() {
+            @Override 
+            public void run() {
                ReportingUtils.showError(e);
                dialog_.calibrationFailed(false);
             }
@@ -399,7 +410,8 @@ public class CalibrationThread extends Thread {
          return;
       }
       SwingUtilities.invokeLater(new Runnable() {
-         @Override public void run() {
+         @Override 
+         public void run() {
             dialog_.calibrationDone();
          }
       });
