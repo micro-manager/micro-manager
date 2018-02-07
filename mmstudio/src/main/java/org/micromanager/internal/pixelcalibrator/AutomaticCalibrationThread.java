@@ -45,7 +45,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class CalibrationThread extends Thread {
+public class AutomaticCalibrationThread extends CalibrationThread {
    private final Studio studio_;
    private final CMMCore core_;
    private final PixelCalibratorDialog dialog_;
@@ -53,8 +53,6 @@ public class CalibrationThread extends Thread {
    
    private Map<Point2D.Double, Point2D.Double> pointPairs_;
 
-   private AffineTransform result_ = null;
-   private int progress_ = 0;
    private DisplayWindow liveWin_;
    private ImageProcessor referenceImage_;
    
@@ -94,7 +92,7 @@ public class CalibrationThread extends Thread {
       }
    }
 
-   CalibrationThread(Studio app, PixelCalibratorDialog dialog) {
+   AutomaticCalibrationThread(Studio app, PixelCalibratorDialog dialog) {
       studio_ = app;
       core_ = studio_.getCMMCore();
       dialog_ = dialog;
@@ -183,22 +181,22 @@ public class CalibrationThread extends Thread {
 
 
    private Point2D.Double measureDisplacement(double x1, double y1, Point2D.Double d,
-         boolean display, boolean sim)
-      throws InterruptedException, CalibrationFailedException
-   {
-         if (CalibrationThread.interrupted()) {
-            throw new InterruptedException();
-         }
-         ImageProcessor snap = snapImageAt(x1,y1,sim);
-         Rectangle guessRect = new Rectangle(
-                 (int)  ((w-side_small)/2-d.x), (int) ((h-side_small)/2-d.y),
-                 side_small, side_small);
-         ImageProcessor foundImage = getSubImage(snap, 
-                 guessRect.x, guessRect.y, guessRect.width, guessRect.height);
-         overlay_.set(guessRect);
-         Point2D.Double dChange = measureDisplacement(referenceImage_, 
-                 foundImage, display);
-         return new Point2D.Double(d.x + dChange.x,d.y + dChange.y);
+           boolean display, boolean sim)
+           throws InterruptedException, CalibrationFailedException 
+   {      
+      if (AutomaticCalibrationThread.interrupted()) {
+         throw new InterruptedException();
+      }
+      ImageProcessor snap = snapImageAt(x1, y1, sim);
+      Rectangle guessRect = new Rectangle(
+              (int) ((w - side_small) / 2 - d.x), (int) ((h - side_small) / 2 - d.y),
+              side_small, side_small);
+      ImageProcessor foundImage = getSubImage(snap,
+              guessRect.x, guessRect.y, guessRect.width, guessRect.height);
+      overlay_.set(guessRect);
+      Point2D.Double dChange = measureDisplacement(referenceImage_,
+              foundImage, display);
+      return new Point2D.Double(d.x + dChange.x, d.y + dChange.y);
    }
 
 
@@ -415,14 +413,6 @@ public class CalibrationThread extends Thread {
             dialog_.calibrationDone();
          }
       });
-   }
-
-   AffineTransform getResult() {
-      return result_;
-   }
-
-   synchronized int getProgress() {
-      return progress_;
    }
 
    private synchronized void incrementProgress() {

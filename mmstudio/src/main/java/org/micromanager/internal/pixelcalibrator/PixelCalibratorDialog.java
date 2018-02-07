@@ -198,16 +198,18 @@ public class PixelCalibratorDialog extends MMFrame {
    
    private void startCalibration() {
       if (METHOD_AUTO.equals(methodComboBox_.getSelectedItem())) {
-         calibrationThread_ = new CalibrationThread(studio_, this);
-         if (!calibrationThread_.isAlive()) {
-            calibrationThread_.start();
-         }
-         updateStatus(true, 0);
+         calibrationThread_ = new AutomaticCalibrationThread(studio_, this);
+         
       } else if (METHOD_MANUAL_SIMPLE.equals(methodComboBox_.getSelectedItem())) {
-         // TODO
+         calibrationThread_ = new ManualSimpleCalibrationThread(studio_, this);
       } else if (METHOD_MANUAL_PRECISE.equals(methodComboBox_.getSelectedItem())) {
          // TODO
       }
+      if (calibrationThread_ != null && !calibrationThread_.isAlive()) {
+            calibrationThread_.start();
+      }
+      updateStatus(true, 0);
+      
    }
 
    
@@ -220,11 +222,7 @@ public class PixelCalibratorDialog extends MMFrame {
             ReportingUtils.logError(ex);
          }
       }
-   }
-   
-   
-   private double getPixelSize(AffineTransform cameraToStage) {
-      return Math.sqrt(Math.abs(cameraToStage.getDeterminant()));
+      updateStatus(false, 0);
    }
    
    private void promptToSaveResult() {
@@ -234,7 +232,8 @@ public class PixelCalibratorDialog extends MMFrame {
          return;
       }
 
-      double pixelSize = MathUtils.round(getPixelSize(result), 4);
+      double pixelSize = MathUtils.round( Math.sqrt( 
+              Math.abs(result.getDeterminant())), 4);
 
       int response = JOptionPane.showConfirmDialog(this,
             String.format("Affine transform parameters: XScale=%.2f YScale=%.2f XShear=%.4f YShear=%.4f\n", result.getScaleX(), result.getScaleY(), result.getShearX(), result.getShearY()) + 
@@ -258,6 +257,13 @@ public class PixelCalibratorDialog extends MMFrame {
             "Start to try again.");
    }
 
+   // The following functions are used by the spawend threads to communicate
+   // back to this dialog
+    
+
+   public Double getCalibratedPixelSize() {
+      return pixelSizeProvider_.getPixelSize();
+   }
    
    public void calibrationDone() {
       updateStatus(false, 1.);
