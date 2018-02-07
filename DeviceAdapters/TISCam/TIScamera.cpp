@@ -92,7 +92,9 @@ const char* g_On                   = "On";
 const char* g_Off                  = "Off";
 const char* g_Keyword_AutoExposure = "Exposure Auto";
 const char* g_Keyword_DeNoise      = "DeNoise";
-
+const char* g_Keyword_TriggerMode      = "TriggerMode";
+const char* g_internal ="Internal";
+const char* g_external= "External";
 
 // singleton instance
 CTIScamera*  CTIScamera::instance_ = 0;
@@ -240,6 +242,9 @@ CTIScamera::~CTIScamera()
      // clear the instance pointer
      instance_ = 0;
    }
+
+
+
 }
 
 
@@ -296,6 +301,7 @@ int CTIScamera::Initialize()
 {
    if (initialized_) return DEVICE_OK;
 
+  
    int nRet = DEVICE_OK;
    CPropertyAction *pAct = NULL;
 
@@ -495,8 +501,14 @@ int CTIScamera::Initialize()
    nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
 
+   if(pGrabber->hasExternalTrigger()){
+   pAct = new CPropertyAction (this, &CTIScamera::OnTriggerMode);
+   nRet = CreateProperty(g_Keyword_TriggerMode, g_internal, MM::String, false, pAct);
+   AddAllowedValue(g_Keyword_TriggerMode,g_internal);
+   AddAllowedValue(g_Keyword_TriggerMode,g_external);
+   UpdateProperty(g_Keyword_TriggerMode);
 
-
+   }
 
    if(pGrabber->isDevValid())
    {
@@ -505,6 +517,8 @@ int CTIScamera::Initialize()
 
    return DEVICE_OK;
 }
+
+
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -2253,9 +2267,66 @@ DriverGuard::~DriverGuard()
 }
 
 
+// GainAuto event handler
+int CTIScamera::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+		if (eAct == MM::BeforeGet)
+		{
+			if (pGrabber->getExternalTrigger())
+			{
+					pProp->Set(g_external);
+			}
+			else
+			{
+				pProp->Set(g_internal);
+			}
+		}
+		else if (eAct == MM::AfterSet)
+		{
+			string tmpstr;
+			pProp->Get(tmpstr);
+				if(pGrabber->isLive())
+				{
+				pGrabber->stopLive();
+				
+							if (tmpstr.compare(g_external) == 0)
+				{
+				pGrabber->setExternalTrigger(true);
+				}else{
+				 pGrabber->setExternalTrigger(false);
+				}
+				
+				
+				pGrabber->prepareLive(ACTIVEMOVIE);
+				//pGrabber->startLive();
+
+				}else{
+				
+				if (tmpstr.compare(g_external) == 0)
+				{
+				pGrabber->setExternalTrigger(true);
+				}else{
+				 pGrabber->setExternalTrigger(false);
+				}
+				
+				}	
 
 
+		}
 
+   return DEVICE_OK;
+}
+
+int DisableTrigger()
+{
+
+	if(pGrabber->hasExternalTrigger())
+	{
+	  return pGrabber->setExternalTrigger(false);
+	}
+	
+	return DEVICE_OK;
+}
 
 
 

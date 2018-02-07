@@ -444,6 +444,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    FocalPoint
    FreeSerialPort
    HIDManager
+   HydraLMT200
    IDS_uEye
    IIDC
    ITC18

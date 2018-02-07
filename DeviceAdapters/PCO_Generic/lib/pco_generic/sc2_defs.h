@@ -148,23 +148,10 @@
 #define CAMERASUBTYPE_PCO_DIMAX_HS2        0x217F   
 #define CAMERASUBTYPE_PCO_DIMAX_HS4        0x237F   
 
-#define CAMERASUBTYPE_PCO_DIMAX_CS_AM      0x407F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_1   0x417F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_2   0x427F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_3   0x437F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_4   0x447F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_5   0x457F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_6   0x467F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_RFU_7   0x477F   
-        
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_IX  0x507F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_1   0x517F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_2   0x527F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_3   0x537F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_4   0x547F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_5   0x557F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_6   0x567F   
-#define CAMERASUBTYPE_PCO_DIMAX_CS_OEM_7   0x577F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_AM_DEPRECATED      0x407F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_1       0x417F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_2       0x427F   
+#define CAMERASUBTYPE_PCO_DIMAX_CS_4       0x447F   
 
 
 // pco.sensicam types                   // tbd., all names are internal ids
@@ -238,7 +225,7 @@
 #define USB_PID_P5CTR_PROD        0x000A      // FTDI FT4232H (usb bridge for controlling the production tool for the P5CTR framegrabber)
 #define USB_PID_CAM_PANDA_20      0x000B      // Panda AVR32 USB2.0 Interface
 #define USB_PID_CAM_PANDA_30      0x000C      // Panda FX3 USB3.0 Interface
-#define USB_PID_DMCT_DEBUG        0x0080      // Microchip PIC32MZ / DMCT debug port
+#define USB_PID_DIMAX_CS          0x0001      // Microchip PIC32MZ / DMCT debug port
 
 
 //USB Device Endpoint addresses
@@ -252,6 +239,10 @@
 #define USB_EP_FX3_IMG_IN         0x82
 #define USB_EP_AVR32_CTRL_IN      0x81
 #define USB_EP_AVR32_CTRL_OUT     0x02
+#define USB_EP_DIMAX_CS_CTRL_IN   0x81     // debug interface, works with pco USB driver
+#define USB_EP_DIMAX_CS_CTRL_OUT  0x01     // debug interface, works with pco USB driver
+
+
 
 // ------------------------------------------------------------------------ //
 // -- Defines for CameraLink DataFormat  ---------------------------------- //
@@ -1054,6 +1045,7 @@ extern const int far PCO_SENSOR_TYPE_DEF_NUM;
 #define HDSDI_FORMAT_720P2997_SINGLE_LINK_RAW10BIT_2_IMAGES       0x0026
 #define HDSDI_FORMAT_720P5994_SINGLE_LINK_RAW10BIT_1_IMAGE        0x0027
 #define HDSDI_FORMAT_720P5994_SINGLE_LINK_RAW10BIT_2_IMAGES       0x0028
+#define HDSDI_FORMAT_1080P2498_SINGLE_LINK_RGB                    0x0029
 
 #define HDSDI_FORMAT_OPTIONS_TIMECODE_OUT                         0x0001
 #define HDSDI_FORMAT_OPTIONS_RECORD_ENABLE_FLAG                   0x0002

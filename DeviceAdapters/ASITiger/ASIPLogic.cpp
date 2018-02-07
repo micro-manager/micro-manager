@@ -180,6 +180,12 @@ int CPLogic::Initialize()
    if (FirmwareVersionAtLeast(3.17)) {
       AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode27, 27);
    }
+   if (FirmwareVersionAtLeast(3.19)) {
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode28, 28);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode29, 29);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode30, 30);
+      AddAllowedValue(g_SetCardPresetPropertyName, g_PresetCode31, 31);
+   }
    UpdateProperty(g_SetCardPresetPropertyName);
 
 
@@ -271,6 +277,12 @@ int CPLogic::Initialize()
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly6, 6);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly7, 7);
       AddAllowedValue(g_SetChannelPropertyName, g_ChannelOnly8, 8);
+      if (FirmwareVersionAtLeast(3.19)) {
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel6And7, 28);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel5To7, 29);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel5To8, 30);
+         AddAllowedValue(g_SetChannelPropertyName, g_Channel5To8Alt, 31);
+      }
       UpdateProperty(g_SetChannelPropertyName); // doesn't do anything right now
       // makes sure card actually gets initialized
       // SetProperty(g_SetChannelPropertyName, g_ChannelNone);  // done via SetProperty(g_SetCardPresetPropertyName, g_PresetCode14)
