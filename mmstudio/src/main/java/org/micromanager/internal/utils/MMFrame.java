@@ -109,7 +109,7 @@ public class MMFrame extends JFrame {
          bounds.x = x;
          bounds.y = y;
       }
-      setBounds(bounds);
+      super.setLocation(bounds.x, bounds.y);
       offsetIfNecessary();
    }
 
@@ -159,7 +159,7 @@ public class MMFrame extends JFrame {
    }
    
     /**
-    * Load window position and size from profile if possible.
+    * Load window position from profile if possible.
     * If not possible then sets it from arguments
     * Attaches a listener to the window that will save the position when the
     * window closing event is received
