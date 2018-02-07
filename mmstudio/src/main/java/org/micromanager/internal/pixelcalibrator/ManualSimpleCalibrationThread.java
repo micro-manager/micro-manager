@@ -205,27 +205,29 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
               Math.abs(points[2].getX() - points[0].getX() ) ) ) {
          return null;
       }
-      int xDirection = 1;
-      int yDirection = 1;
+      // Figured out direction experimentally..  It does not make sens to me either
+      int xDirection = -1;
+      int yDirection = -1;
       if (!rotate) {
          if (points[1].getX() < points[0].getX()) {
-            xDirection = -1;
+            xDirection = 1;
          }
          if (points[2].getY() < points[0].getY()) {
-            yDirection = -1;
+            yDirection = 1;
          }
       } else {
-         if (points[1].getX() < points[0].getX()) {
-            yDirection = -1;
-         }
-         if (points[2].getY() < points[0].getY()) {
+         xDirection = 1;
+         if (points[1].getY() > points[0].getY()) {
             xDirection = -1;
+         }
+         if (points[2].getX() > points[0].getX()) {
+            yDirection = 1;
          }
       }
       
       at.scale(xDirection * pixelSize, yDirection * pixelSize);
       if (rotate) {
-         at.rotate(Math.PI * 0.5);
+         at.rotate(-Math.PI * 0.5);
       }
             
       return at;
