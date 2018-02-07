@@ -458,6 +458,10 @@ const char* const g_PresetCode24 = "24 - BNC3 source = cell 1";
 const char* const g_PresetCode25 = "25 - BNC3 source = cell 8";
 const char* const g_PresetCode26 = "26 - counter clock = rising TTL3";
 const char* const g_PresetCode27 = "27 - BNC3 source = cell 10";
+const char* const g_PresetCode28 = "28 - BNC6 and BNC7 enabled";
+const char* const g_PresetCode29 = "29 - BNC5-BNC7 enabled";
+const char* const g_PresetCode30 = "30 - BNC5-BNC8 enabled";
+const char* const g_PresetCode31 = "31 - BNC5/7 side A, BNC6/8 side B";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
 const char* const g_ChannelNone = "none of outputs 5-8";
@@ -465,6 +469,10 @@ const char* const g_ChannelOnly5 = "output 5 only";
 const char* const g_ChannelOnly6 = "output 6 only";
 const char* const g_ChannelOnly7 = "output 7 only";
 const char* const g_ChannelOnly8 = "output 8 only";
+const char* const g_Channel6And7 = "output 6 and 7";
+const char* const g_Channel5To7 = "outputs 5-7";
+const char* const g_Channel5To8 = "outputs 5-8";
+const char* const g_Channel5To8Alt = "outputs 5/7 or 6/8";
 
 
 // SPIM enums
