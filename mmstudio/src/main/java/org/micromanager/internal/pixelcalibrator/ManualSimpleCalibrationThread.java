@@ -147,11 +147,14 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
                      core_.setRelativeXYPosition(0, -d * nrPixels);
                      // Done!  now calculate affine transform, and ask the user
                      // if OK.
-                     super.result_ = calculateAffineTransform(d, points_);
+                     counter_ = 0;
+                     super.result_ = calculateAffineTransform(d * nrPixels, 
+                             points_);
                      if (result_ == null) {
                         label1Text = "<html>Could not figure out orientation. <br>"
                              + "Try again?";
                         if (dialogFrame_ != null) {
+                           dialogFrame_.setLabelText(label1Text);
                            dialogFrame_.setOKButtonVisible(true);
                         }
                      } else {
@@ -166,7 +169,6 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
                studio_.live().snap(true);
 
                if (dialogFrame_ != null) {
-
                   dialogFrame_.setLabelText(label1Text);
                }
             } catch (Exception ex) {
@@ -176,8 +178,8 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       }
    }
    
-   private AffineTransform calculateAffineTransform(double pixelSize, 
-           Point2D[] points) {
+   private AffineTransform calculateAffineTransform( 
+           double stageDistanceMoved, Point2D[] points) {
       AffineTransform at = AffineUtils.doubleToAffine(AffineUtils.noTransform());
       boolean rotate = Math.abs(points[1].getX() - points[0].getX()) < 
               Math.abs(points[1].getY() - points[0].getY() );
@@ -204,8 +206,15 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          }
       }
       
+      // assume square pixels and average the x and y estimate to get the pixelsize
+      double pixelSize = stageDistanceMoved / ( points[1].distance(points[0]) +
+              points[2].distance(points[0])) / 2.0;
+      
+      
       at.scale(xDirection * pixelSize, yDirection * pixelSize);
-      at.rotate(Math.PI * 0.5);
+      if (rotate) {
+         at.rotate(Math.PI * 0.5);
+      }
             
       return at;
    }

@@ -73,12 +73,15 @@ public class PixelCalibratorDialog extends MMFrame {
      * @param studio - Current studio instance
      * @param psp - PixelSizeProvider that is requesting our services
      */
+   @SuppressWarnings("LeakingThisInConstructor")
    public PixelCalibratorDialog(Studio studio, PixelSizeProvider psp) {
       studio_ = studio;
       pixelSizeProvider_ = psp;
       initComponents();
       super.loadPosition(200, 200);
       super.setVisible(true);
+      
+      studio_.events().registerForEvents(this);
    }
 
    private void initComponents() {
@@ -106,7 +109,7 @@ public class PixelCalibratorDialog extends MMFrame {
               "of the current camera's pixels at the sample plane.<br><br>" +
               "To calibrate:<br><ol><li>Make sure you are using a correctly " +
               "calibrated motorized xy stage.</li><li>Choose a nonperiodic " +
-              "specimen (e.g., a cell) and adjust your illumination and focus " +
+              "specimen (e.g., a cell) and adjust <br>your illumination and focus " +
               "until you obtain crisp, high-contrast images. " +
               "<li>Press Start (below).</li></ol></html>");
 
@@ -114,6 +117,17 @@ public class PixelCalibratorDialog extends MMFrame {
       methodComboBox_.setModel(new DefaultComboBoxModel(
               new String[] {METHOD_AUTO, METHOD_MANUAL_SIMPLE,
                  METHOD_MANUAL_PRECISE} ) );
+      final String mKey = "methodComboxSelection";
+      final Class ourClass = this.getClass();
+      methodComboBox_.setSelectedItem(studio_.profile().getSettings(ourClass).
+              getString(mKey, METHOD_MANUAL_SIMPLE ) );
+      methodComboBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            studio_.profile().getSettings(ourClass).putString(mKey, 
+                    (String) methodComboBox_.getSelectedItem());
+         }
+      });
       
       JLabel safeTravelLabel = new JLabel("Safe travel radius, um:");
       safeTravelRadiusComboBox_.setModel(new DefaultComboBoxModel(
@@ -151,7 +165,6 @@ public class PixelCalibratorDialog extends MMFrame {
       
       super.pack();
 
-      //setSize(new java.awt.Dimension(400, 238));
    }
 
 
@@ -256,7 +269,8 @@ public class PixelCalibratorDialog extends MMFrame {
             "securely immobilized on the stage. When you are ready, press\n" +
             "Start to try again.");
    }
-
+   
+ 
    // The following functions are used by the spawend threads to communicate
    // back to this dialog
     
