@@ -19,4 +19,5 @@ public class CalibrationThread extends Thread {
    AffineTransform getResult() {
       return result_;
    }
+   
 }

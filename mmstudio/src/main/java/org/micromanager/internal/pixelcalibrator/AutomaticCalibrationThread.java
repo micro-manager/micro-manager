@@ -79,15 +79,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
                // with failure after failure
             }
          }
-         if (overlay_ != null) {
-            overlay_.setVisible(false);
-         }
-         if (liveWin_ != null) {
-            liveWin_.setCustomTitle("Preview");
-            if (overlay_ != null) {
-               liveWin_.removeOverlay(overlay_);
-            }
-         }
+         cleanup();
 
       }
    }
@@ -99,6 +91,17 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       overlay_ = new RectangleOverlay();
    }
 
+   private void cleanup() {
+         if (overlay_ != null) {
+            overlay_.setVisible(false);
+         }
+         if (liveWin_ != null) {
+            liveWin_.setCustomTitle("Preview");
+            if (overlay_ != null) {
+               liveWin_.removeOverlay(overlay_);
+            }
+         }
+   }
 
    private ImageProcessor theSlide = null;
 
@@ -392,6 +395,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
          SwingUtilities.invokeLater(new Runnable() {
             @Override 
             public void run() {
+               cleanup();
                dialog_.calibrationFailed(true);
             }
          });
@@ -401,6 +405,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
          SwingUtilities.invokeLater(new Runnable() {
             @Override 
             public void run() {
+               cleanup();
                ReportingUtils.showError(e);
                dialog_.calibrationFailed(false);
             }

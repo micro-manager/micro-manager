@@ -194,6 +194,7 @@ public class PixelCalibratorDialog extends MMFrame {
 
    @Override
    public void dispose() {
+      stopCalibration();
       if (studio_ != null) {
          studio_.events().unregisterForEvents(this);
       }
@@ -228,6 +229,9 @@ public class PixelCalibratorDialog extends MMFrame {
    
    private void stopCalibration() {
       if (calibrationThread_ != null && calibrationThread_.isAlive()) {
+         synchronized(CalibrationThread.class) {
+            CalibrationThread.class.notify();
+         }
          calibrationThread_.interrupt();
          try {
             calibrationThread_.join();

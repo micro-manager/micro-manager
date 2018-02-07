@@ -24,8 +24,11 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -56,6 +59,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
    private Point2D.Double initialStagePosition_;
    private final int nrPoints_;
    private final Point2D[] points_;
+   //private final AtomicBoolean running_;
    
    private int counter_;
 
@@ -68,6 +72,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       explanationLabel_ = new JLabel();
       nrPoints_ = 3;
       points_ = new Point2D[nrPoints_];
+      //running_ = new AtomicBoolean(false);
    }
 
    @Override
@@ -75,6 +80,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       synchronized (this) {
          progress_ = 0;
       }
+      final ManualSimpleCalibrationThread instance = this;
       result_ = null;
       counter_ = 0;
       
@@ -89,10 +95,11 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            dialogFrame_  = new DialogFrame(this);
+            dialogFrame_  = new DialogFrame(instance);
          }
       });
 
+      //running_.set(true);
       DisplayWindow display = studio_.live().getDisplay();
       if (display == null) {
          studio_.live().snap(true);
@@ -106,19 +113,28 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
                
             }
          }
-         if (display == null) {
-            ReportingUtils.showError("Preview window did not open. Is the exposure time very long?");
+      }
+      if (display == null) {
+         ReportingUtils.showError("Preview window did not open. Is the exposure time very long?");
+         dialogFrame_.dispose();
+      } else if (display instanceof DisplayController) {
+         dc_ = (DisplayController) display;
+         dc_.registerForEvents(this);
+         synchronized (CalibrationThread.class) {
+            try {
+               CalibrationThread.class.wait();
+            } catch (InterruptedException ie) {
+
+            }
             dialogFrame_.dispose();
-         } else if (display instanceof DisplayController) {
-            dc_ = (DisplayController) display;
-            dc_.registerForEvents(this);
          }
       }
    }
    
    @Subscribe
    public void processMouseEvent(DisplayMouseEvent dme) {
-      if (dme.getEvent().getClickCount() == 1 && dme.getEvent().getButton() == 1) {
+      if (dme.getEvent().getClickCount() == 1 && 
+              dme.getEvent().getButton() == 1) {
          int modifiersEx = dme.getEvent().getModifiersEx();
          boolean pressed  = InputEvent.BUTTON1_DOWN_MASK == (modifiersEx & InputEvent.BUTTON1_DOWN_MASK);
          if (pressed) {
@@ -133,14 +149,14 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
                   case 0:
                      points_[counter_] = dme.getCenterLocation();
                      core_.setRelativeXYPosition(d * nrPixels, 0.0);
-                     label1Text = "<html>Perfect!  The stage was moved " + d * nrPixels
-                             + " microns along the x axis.<br>" + " Click on the same object";
+                     label1Text = "<html>Perfect!  <br><br>The stage was moved " + d * nrPixels
+                             + " microns along the x axis.<br><br>" + " Click on the same object";
                      break;
                   case 1:
                      points_[counter_] = dme.getCenterLocation();
                      core_.setRelativeXYPosition(-d * nrPixels, d * nrPixels);
-                     label1Text = "<html>Nice!  The stage was moved " + d * nrPixels
-                             + " microns along the y axis.<br>" + " Click on the same object";
+                     label1Text = "<html>Nice!  <br><br>The stage was moved " + d * nrPixels
+                             + " microns along the y axis.<br><br>" + " Click on the same object";
                      break;
                   case 2:
                      points_[counter_] = dme.getCenterLocation();
@@ -148,16 +164,16 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
                      // Done!  now calculate affine transform, and ask the user
                      // if OK.
                      counter_ = 0;
-                     super.result_ = calculateAffineTransform(d * nrPixels, 
-                             points_);
+                     super.result_ = calculateAffineTransform(d,  points_);
                      if (result_ == null) {
-                        label1Text = "<html>Could not figure out orientation. <br>"
-                             + "Try again?";
+                        label1Text = "<html>Could not figure out orientation. <br><br>"
+                             + "Try again?<br><br>";
                         if (dialogFrame_ != null) {
                            dialogFrame_.setLabelText(label1Text);
                            dialogFrame_.setOKButtonVisible(true);
                         }
                      } else {
+                        dialogFrame_.dispose();
                         dialog_.calibrationDone();
                         return;
                      }
@@ -177,15 +193,16 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          }
       }
    }
+
    
    private AffineTransform calculateAffineTransform( 
-           double stageDistanceMoved, Point2D[] points) {
+           double pixelSize, Point2D[] points) {
       AffineTransform at = AffineUtils.doubleToAffine(AffineUtils.noTransform());
       boolean rotate = Math.abs(points[1].getX() - points[0].getX()) < 
               Math.abs(points[1].getY() - points[0].getY() );
       // sanity check for rotate
       if (! ( rotate == Math.abs(points[2].getY() - points[0].getY()) < 
-              Math.abs(points[2].getX() - points[2].getX() ) ) ) {
+              Math.abs(points[2].getX() - points[0].getX() ) ) ) {
          return null;
       }
       int xDirection = 1;
@@ -206,11 +223,6 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          }
       }
       
-      // assume square pixels and average the x and y estimate to get the pixelsize
-      double pixelSize = stageDistanceMoved / ( points[1].distance(points[0]) +
-              points[2].distance(points[0])) / 2.0;
-      
-      
       at.scale(xDirection * pixelSize, yDirection * pixelSize);
       if (rotate) {
          at.rotate(Math.PI * 0.5);
@@ -228,8 +240,14 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       public DialogFrame(Object caller) {
          caller_ = caller;
          super.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+         super.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent we) {
+               dispose();
+            }
+         });
          super.setLayout(new MigLayout());
-         String label1Text = "<html>This method creates an affine transform based on"
+         final String label1Text = "<html>This method creates an affine transform based on"
                  + " a <br>pixelSize of "
                  + NumberUtils.doubleToDisplayString(dialog_.getCalibratedPixelSize() * 1000.0)
                  + " nm per pixel.  If this is not "
@@ -244,6 +262,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
             @Override
             public void actionPerformed(ActionEvent ae){
                counter_ = 0;
+               explanationLabel_.setText(label1Text);
                okButton_.setVisible(false);
             }
          });
@@ -281,6 +300,10 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          if (dc_ != null) {
             dc_.unregisterForEvents(caller_);
          }
+         synchronized(CalibrationThread.class) {
+            CalibrationThread.class.notifyAll();
+         }
+         //running_.set(false);
          dialog_.calibrationFailed(true);
       }
       
