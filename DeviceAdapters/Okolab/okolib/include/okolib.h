@@ -70,6 +70,31 @@
  *
  * @tableofcontents
  *
+ * @section v130 1.3.0
+ * IMPROVED Increased maximum buffer
+ *
+ * @section v121 1.2.1
+ * FIXED Error code when operation cannot be executed by the device
+ *
+ * @section v120 1.2.0
+ * FIXED Search for sub-products was not performed at all
+ *
+ * @section v111 1.1.1
+ * FIXED busy error in @ref oko_DeviceOpen
+ *
+ * @section v101 1.0.1
+ * FIXED @ref oko_LibGetPortName now uses ports cached by @ref oko_LibGetNumberOfPorts
+ *
+ * @section v100 1.0.0
+ * ADDED @ref oko_DevicesDetectByName
+ *
+ * @section v094 0.9.4
+ * ADDED @ref oko_DeviceDetectSingleByName
+ *
+ * @section v093 0.9.3
+ * - Used new version (0.1.1) of libserialport that allows usb detection
+ * ADDED @ref oko_LibSetSuggestedUSBOnly
+ *
  * @section v092 0.9.2
  * - FIXED DEMO mode bug, modifying okolib.demo template
  *
@@ -387,7 +412,7 @@ oko_LibShutDown();
 
 /*!
  * Print the version of Okolib library on a string passed by reference.
- * @param[out] version	A pointer to a valid string where the version will be stored in.
+ * @param[out] version	A pointer to a valid string, pre-allocated by the caller, where the version will be stored in.
  * @return OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
@@ -396,12 +421,32 @@ oko_LibGetVersion(char *version);
 /*!
  * Return a text message that describes the error
  * for the most recent failed call on general library functions.
- * @param[out] errmsg	A pointer to a valid string where the error message will be stored in.
+ * @param[out] errmsg	A pointer to a valid string, pre-allocated by the caller, where the error message will be stored in.
  * @param[in] maxsize	Maximum size of the error message. If bigger, the message will be truncated.
  * @return OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
 oko_LibGetLastError(char *errmsg, unsigned int maxsize);
+
+
+/*!
+ * Turn on/off the filter on the USB serial ports
+ * @param[in] use	true to turn on the filter, false to torn off it
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_LibSetSuggestedUSBOnly(bool use);
+
+
+/*!
+ * Get the usage status of the USB serial ports filter
+ * @param[out] use filter in use (true/false)
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_LibGetSuggestedUSBOnly(bool *use);
+
+
 
 
 /**
@@ -450,8 +495,8 @@ oko_ModulesDetectSelected(const oko_module_type *selected_modules,
   * Returns all information about of the specified module of this device,
   * which is not changing during application runtime.
   * @param[in] module: valid module type
-  * @param[out] name: name of the module. Will be displayed in User Interface, therefore it should match the name on your hardware.
-  * @param[out] dim_unit: dimension unit of the module.
+  * @param[out] name: name of the module. String needs to be pre-allocated by the caller.
+  * @param[out] dim_unit: dimension unit of the module. String needs to be pre-allocated by the caller.
   * @param[out] can_disable: returns, if this module can be disabled or if it is always enabled. '1' for module can be disabled and '0' for module is always enabled.
   * @return OKO_OK upon success, an error code otherwise.
   */
@@ -538,26 +583,28 @@ oko_ModuleSetEnabled(oko_module_type module, bool enabled);
 */
 
 /*!
- * Obtains the number of available serial ports
- * @param[out] count the desired value
+ * Refresh available ports and return the number of them
+ * @param[out] count number of available ports
  * @return  OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
 oko_LibGetNumberOfPorts(uint32_t *count);
 
 /*!
- * Obtains the available port names
- * @param[out] names array of names (it must be already allocated)
+ * Refresh available ports and return their names
+ * @param[out] names array of names, pre-allocated by the caller
  * @return  OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
 oko_LibGetPortNames(char **names);
 
 /*!
- * Obtain the specified port name
+ * Get the name of the specified port, using the ports refreshed by @ref oko_LibGetNumberOfPorts
+
  * @param[in] portidx zero-based port index
- * @param[out] portname the specified port name
+ * @param[out] portname the specified port name, pre-allocated by the caller.
  * @return  OKO_OK upon success, an error code otherwise.
+ * @note It does <b>not</b> refresh available ports, so @ref oko_LibGetNumberOfPorts needs to be called first
  */
 OKO_API oko_res_type OKO_EXPORT
 oko_LibGetPortName(uint32_t portidx, char *portname);
@@ -581,6 +628,19 @@ oko_DeviceOpen(const char *port, uint32_t *deviceh);
 OKO_API oko_res_type OKO_EXPORT
 oko_DevicesDetect(uint32_t max_num,  uint32_t *devicesh, uint32_t *detected_num);
 
+
+/*!
+ * Detect the first available device matching the filter name and open it, returning a handle for it.
+ * @param[in] max_num The max number of devices to detect.
+ * @param[out] devicesh Array of handles to the detected devices.
+ * @param[in] name_filter The filter on the product name (Product.name). If void no filter will be applied on the name.
+ * @param[out] detected_num number of detected devices. It is the length of devicesh array.
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_DevicesDetectByName(uint32_t max_num,  uint32_t *devicesh, char *name_filter, uint32_t *detected_num);
+
+
 /*!
  * Detect the first available device and open it, returning a handle for it.
  * @param[out] deviceh The device handle.
@@ -588,6 +648,17 @@ oko_DevicesDetect(uint32_t max_num,  uint32_t *devicesh, uint32_t *detected_num)
  */
 OKO_API oko_res_type OKO_EXPORT
 oko_DeviceDetectSingle(uint32_t *deviceh);
+
+
+/*!
+ * Detect the first available device matching the filter name and open it, returning a handle for it.
+ * @param[out] deviceh The device handle.
+ * @param[in] name_filter The filter on the product name (Product.name)
+ * @return OKO_OK upon success, an error code otherwise.
+ */
+OKO_API oko_res_type OKO_EXPORT
+oko_DeviceDetectSingleByName(uint32_t *deviceh, char *name_filter);
+
 
 /*!
  * Close the specified device.
@@ -601,7 +672,7 @@ oko_DeviceClose(uint32_t deviceh);
  * Return a text message that describes the error
  * for the most recent failed call on a specified device.
  * @param[in] deviceh A valid device handle.
- * @param[out] errmsg	A pointer to a valid string where the error message will be stored in.
+ * @param[out] errmsg	A pointer to a valid string, pre-allocated by the caller, where the error message will be stored in.
  * @param[in] maxsize	Maximum size of the error message. If bigger, the message will be truncated.
  * @return OKO_OK upon success, an error code otherwise.
  */
@@ -623,7 +694,7 @@ oko_DevicesCloseAll(void);
 /*!
  * Get the Port Name of the specified device.
  * @param[in] deviceh A valid device handle.
- * @param[out] port The serial port name (eg. 'COM1' on Windows and '/dev/ttyS0' on Linux).
+ * @param[out] port The serial port name, pre-allocated by the caller (eg. 'COM1' on Windows and '/dev/ttyS0' on Linux).
  * @return OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
@@ -690,7 +761,7 @@ oko_PropertiesGetNumber(uint32_t deviceh, uint32_t *num);
  * This should be used at start to obtain the property names.
  * @param[in] deviceh A valid device handle.
  * @param[in] index Index of the property. Index is zero-based.
- * @param[out] name The name of the property.
+ * @param[out] name The name of the property. It needs to be pre-allocated by the caller.
  * @return OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
@@ -737,7 +808,7 @@ oko_PropertyGetEnumNumber(uint32_t deviceh, const char *name, unsigned int *num)
  * @param[in] deviceh A valid device handle.
  * @param[in] name The property name.
  * @param[in] enumh A valid enum handle.
- * @param[out] enumname the desired value
+ * @param[out] enumname the desired value. String needs to be pre-allocated by the caller.
  * @return OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
@@ -748,8 +819,8 @@ oko_PropertyGetEnumName(uint32_t deviceh, const char *name, uint32_t enumh, char
 /*!
  * Get the measure unit of the specified property.
  * @param[in] deviceh A valid device handle.
- * @param[in] name The property name.
- * @param[out] unit Unit of measure.
+ * @param[in] name The property name string, pre-allocated by the caller.
+ * @param[out] unit Unit of measure string,  pre-allocated by the caller.
  * @return OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
@@ -759,7 +830,7 @@ oko_PropertyGetUnit(uint32_t deviceh, const char *name, char *unit);
  * Get the description of the specified property.
  * @param[in] deviceh A valid device handle.
  * @param[in] name The property name.
- * @param[out] desc Description.
+ * @param[out] desc Description string, pre-allocated by the caller.
  * @return OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
@@ -865,8 +936,9 @@ oko_PropertyIsAdvanced(uint32_t deviceh, const char *name, bool *is_adv);
  * Get the current value of a string property.
  * @param[in] name The property name.
  * @param[in] deviceh A valid device handle.
- * @param[out] val Current value of the specified property.
+ * @param[out] val Current value of the specified property. String needs to be pre-allocated by the caller.
  * @return OKO_OK upon success, an error code otherwise.
+ * @note It returns the last updated value. To refresh the value, call @ref oko_PropertyUpdate first
  */
 OKO_API oko_res_type OKO_EXPORT
 oko_PropertyReadString(uint32_t deviceh, const char *name, char *val);
@@ -876,6 +948,7 @@ oko_PropertyReadString(uint32_t deviceh, const char *name, char *val);
  * @param[in] deviceh A valid device handle.
  * @param[in] name The property name.
  * @param[out] val Current value of the specified property.
+ * @note It returns the last updated value. To refresh the value, call @ref oko_PropertyUpdate first
  * @return OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
@@ -887,6 +960,7 @@ oko_PropertyReadInt(uint32_t deviceh, const char *name, int32_t *val);
  * @param[in] name The property name.
  * @param[out] val Current value of the specified property.
  * @return OKO_OK upon success, an error code otherwise.
+ * @note It returns the last updated value. To refresh the value, call @ref oko_PropertyUpdate first
  */
 OKO_API oko_res_type OKO_EXPORT
 oko_PropertyReadDouble(uint32_t deviceh, const char *name, double *val);
@@ -1053,7 +1127,7 @@ oko_StopPlayback(uint32_t deviceh);
 /*!
  * Get the file path used to playback the specified device.
  * @param[in] deviceh A valid device handle.
- * @param[in] filename The file path from which data will be loaded.
+ * @param[out] filename The file path from which data will be loaded. String needs to be pre-allocated by the caller.
  * @return OKO_OK upon success, an error code otherwise.
  */
 OKO_API oko_res_type OKO_EXPORT
@@ -1079,6 +1153,9 @@ oko_CommandExecute(uint32_t deviceh, const char *name);
 /*! \cond PRIVATE */
 OKO_API oko_res_type OKO_EXPORT
 oko_OkolabSetDebugPropertiesUsage(bool debug_properties);
+
+OKO_API oko_res_type OKO_EXPORT
+oko_OkolabGetLastProtocolError(uint32_t deviceh, const char *name, int *err);
 /*! \endcond */
 
 /**
