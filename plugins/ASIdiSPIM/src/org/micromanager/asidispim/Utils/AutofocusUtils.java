@@ -88,27 +88,24 @@ public class AutofocusUtils {
       posUpdater_ = stagePosUpdater;
       positions_ = positions;
       controller_ = controller;
-      lastFocusResult_ = new FocusResult(false, 0.0, 0.0, 0.0);
+      lastFocusResult_ = new FocusResult(false, 0.0, 0.0, 0.0, 0.0);
       
    }
 
    public class FocusResult {
-      private final boolean focusSuccess_;
-      private final double galvoPosition_;
-      private final double piezoPosition_;
-      private final double offsetDelta_;
+      public final boolean focusSuccess_;
+      public final double galvoPosition_;
+      public final double piezoPosition_;
+      public final double offsetDelta_;
+      public final double rSquared_;
       
-      public FocusResult(boolean focusSuccess, double galvoPosition, double piezoPosition, double offsetDelta) {
+      public FocusResult(boolean focusSuccess, double galvoPosition, double piezoPosition, double offsetDelta, double rSquared) {
          focusSuccess_ = focusSuccess;
          galvoPosition_ = galvoPosition;
          piezoPosition_ = piezoPosition;
          offsetDelta_ = offsetDelta;  // amount in um that the offset will shift, could be positive or negative
+         rSquared_ = rSquared;
       }
-      
-      public boolean getFocusSuccess()      { return focusSuccess_; }
-      public double getGalvoFocusPosition() { return galvoPosition_; }
-      public double getPiezoFocusPosition() { return piezoPosition_; }
-      public double getOffsetDelta()        { return offsetDelta_; }
    }
    
    public FocusResult getLastFocusResult() {
@@ -480,7 +477,7 @@ public class AutofocusUtils {
 
                // set result to be a dummy value for now; we will overwrite it later
                //  unless we encounter an exception in the meantime
-               lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0);
+               lastFocusResult_ = new FocusResult(false, galvoPosition, piezoPosition, 0.0, 0.0);
                
                try {
                   caller.setCursor(Cursor.getDefaultCursor());
@@ -528,7 +525,7 @@ public class AutofocusUtils {
                            && bestPiezoPosition > Math.min(end1, end2)
                            && bestPiezoPosition < Math.max(end1, end2));
                      double focusDelta = piezoCenter-bestPiezoPosition;
-                     lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition, focusDelta);
+                     lastFocusResult_ = new FocusResult(focusSuccess, galvoPosition, bestPiezoPosition, focusDelta, r2);
                   } else { // slice scan
                      final double end1 = galvoStart + 0.1*galvoRange;
                      final double end2 = galvoStart + 0.9*galvoRange;
@@ -536,7 +533,7 @@ public class AutofocusUtils {
                            && bestGalvoPosition > Math.min(end1, end2)
                            && bestGalvoPosition < Math.max(end1, end2));
                      double focusDelta = (galvoCenter-bestGalvoPosition) * calibrationRate;
-                     lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition, focusDelta);
+                     lastFocusResult_ = new FocusResult(focusSuccess, bestGalvoPosition, piezoPosition, focusDelta, r2);
                   }
                   
                   // if we are in Setup panel, move to either the best-focus position (if found)
@@ -581,8 +578,9 @@ public class AutofocusUtils {
                   }
                }
             }
-            ReportingUtils.logMessage("finished autofocus: " + (lastFocusResult_.getFocusSuccess() ? "successful" : "not successful")
-               + " with galvo position " + lastFocusResult_.getGalvoFocusPosition() + " and piezo position " + lastFocusResult_.getPiezoFocusPosition());
+            ReportingUtils.logMessage("finished autofocus: " + (lastFocusResult_.focusSuccess_ ? "successful" : "not successful")
+               + " with galvo position " + lastFocusResult_.galvoPosition_ + " and piezo position " + lastFocusResult_.piezoPosition_
+               + " and R^2 value of " + lastFocusResult_.rSquared_);
             return lastFocusResult_;
          }
 
@@ -615,7 +613,7 @@ public class AutofocusUtils {
       }
       
       // we can only return a bogus score 
-      return new FocusResult(false, 0.0, 0.0, 0.0);
+      return new FocusResult(false, 0.0, 0.0, 0.0, 0.0);
    }
 
    public static ImageProcessor makeProcessor(TaggedImage taggedImage)

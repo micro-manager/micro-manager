@@ -1451,11 +1451,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    
    private void updateCalibrationOffset(final Devices.Sides side, 
            final AutofocusUtils.FocusResult score) {
-      if (score.getFocusSuccess()) {
-         double offsetDelta = score.getOffsetDelta();
+      if (score.focusSuccess_) {
          double maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
                Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE);
-         if (Math.abs(offsetDelta) <= maxDelta) {
+         if (Math.abs(score.offsetDelta_) <= maxDelta) {
             ASIdiSPIM.getFrame().getSetupPanel(side).updateCalibrationOffset(score);
          } else {
             ReportingUtils.logMessage("autofocus successful for side " + side + " but offset change too much to automatically update");
