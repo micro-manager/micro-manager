@@ -85,6 +85,14 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       writeGroup(nameField_.getText());
       this.dispose();      
    }
+   
+   @Override
+   public void dispose() {
+      if (affineEditorPanel_ != null) {
+         affineEditorPanel_.cleanup();
+      }
+      super.dispose();
+   }
 
    public boolean writeGroup(String newName) {
 

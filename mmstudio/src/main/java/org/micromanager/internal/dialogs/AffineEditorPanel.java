@@ -37,6 +37,7 @@ public class AffineEditorPanel extends JPanel {
    private final AffineTableModel atm_;
    private static final int PRECISION = 5;
    private final NumberFormat format_;
+   private PixelCalibratorDialog pcd_;
    
    public AffineEditorPanel(Studio studio, PixelSizeProvider psp, DoubleVector affineTransform) {
       super(new MigLayout("align center, flowx"));
@@ -92,8 +93,13 @@ public class AffineEditorPanel extends JPanel {
       measureButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            PixelCalibratorDialog pcd = new PixelCalibratorDialog(studio_, pixelSizeProvider_);
-            studio_.events().registerForEvents(pcd);
+            if (pcd_ == null) {
+               pcd_ = new PixelCalibratorDialog(studio_, pixelSizeProvider_);
+               studio_.events().registerForEvents(pcd_);
+            } else {
+               pcd_.setVisible(true);
+               pcd_.toFront();
+            }
          }
       });
       super.add(measureButton, "center, width 90!");
@@ -126,6 +132,12 @@ public class AffineEditorPanel extends JPanel {
    
    public void setAffineTransform(DoubleVector newAft) {
       atm_.setAffineTransform(newAft);
+   }
+   
+   public void cleanup() {
+      if (pcd_ != null) {
+         pcd_.dispose();
+      }
    }
 
    /*******************Renderer******************************/
