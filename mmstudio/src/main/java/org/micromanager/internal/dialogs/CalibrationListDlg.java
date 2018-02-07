@@ -435,21 +435,31 @@ public final class CalibrationListDlg extends MMDialog {
       if (result == JOptionPane.OK_OPTION) {
          if (calibrationList_.size() == 0) {
             configDialog_ = new PixelConfigEditor(calibrationName, 
-                    parentGUI_, pixelSize, true);
+                    this, pixelSize, true);
          } else {
             configDialog_ = new PixelPresetEditor(calibrationName, 
-                    parentGUI_, pixelSize, newConfig);
+                    this, pixelSize, newConfig);
          }
          configDialog_.setVisible(true);
       }
       return false;
    }
+   
+   public void endedEditingPreset(ConfigDialog dialog) {
+      if (dialog.equals(configDialog_)) {
+         configDialog_ = null;
+      }
+   }
+   
+   public Studio getStudio() {
+      return parentGUI_;
+   }
 
    private void handleException (Exception e) {
-      ReportingUtils.showError(e);
+      ReportingUtils.showError(e, this);
    }
 
    private void handleError (String errText) {
-      ReportingUtils.showError(errText);
+      ReportingUtils.showError(errText, this);
    }
 }

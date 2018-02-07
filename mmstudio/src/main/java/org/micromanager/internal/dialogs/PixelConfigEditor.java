@@ -34,7 +34,6 @@ import javax.swing.JTextField;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
-import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.NumberUtils;
@@ -55,9 +54,12 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    protected JTextField pixelSizeField_;
    protected String pixelSize_;
    private final AffineEditorPanel affineEditorPanel_;
+   private final CalibrationListDlg parent_;
 
-   public PixelConfigEditor(String pixelSizeConfigName, Studio gui, String pixelSize, boolean newItem) {
-      super("ConfigPixelSize", pixelSizeConfigName, gui, gui.getCMMCore(), newItem);
+   public PixelConfigEditor(String pixelSizeConfigName, CalibrationListDlg parent, 
+         String pixelSize, boolean newItem) {
+      super("ConfigPixelSize", pixelSizeConfigName, parent.getStudio(), 
+            parent.getStudio().getCMMCore(), newItem);
       // note: pixelSizeConfigName is called presetName_ in ConfigDialog
       instructionsText_ = "Specify all properties affecting pixel size.";
       nameFieldLabelText_ = "Pixel Config Name:";
@@ -75,8 +77,10 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
               allowChangesOnlyWhenUser(true).isPixelSizeConfig(true).build();
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
-      showShowReadonlyCheckBox_ = true;      
-      affineEditorPanel_ = new AffineEditorPanel(gui, this, AffineUtils.noTransform());
+      showShowReadonlyCheckBox_ = true; 
+      parent_ = parent;
+      affineEditorPanel_ = new AffineEditorPanel(parent.getStudio(), this, 
+            AffineUtils.noTransform());
       super.initialize();
    }
 
@@ -88,6 +92,9 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    
    @Override
    public void dispose() {
+      if (parent_ != null) {
+         parent_.endedEditingPreset(this);
+      }
       if (affineEditorPanel_ != null) {
          affineEditorPanel_.cleanup();
       }
