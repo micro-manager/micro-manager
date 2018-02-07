@@ -21,9 +21,6 @@
 package org.micromanager.internal.pixelcalibrator;
 
 import com.google.common.eventbus.Subscribe;
-import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
-import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -41,6 +38,8 @@ import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -212,6 +211,8 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
    }
 
    private class DialogFrame extends MMFrame {
+
+      private static final long serialVersionUID = -7944616693940334489L;
       private final Object caller_;
       private final JButton okButton_;
       
@@ -221,8 +222,8 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
          super.setLayout(new MigLayout());
          String label1Text = "<html>This method creates an affine transform based on"
                  + " a <br>pixelSize of "
-                 + NumberUtils.doubleToDisplayString(dialog_.getCalibratedPixelSize(), 4)
-                 + " &mu; per pixel.  If this is not "
+                 + NumberUtils.doubleToDisplayString(dialog_.getCalibratedPixelSize() * 1000.0)
+                 + " nm per pixel.  If this is not "
                  + "correct, <br>please cancel and first set the correct pixelSize.<br><br>"
                  + "Focus the image in the Preview window and use the <br>mouse pointer to click "
                  + "on an object somehwere <br>near the center of the image.";
