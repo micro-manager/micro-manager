@@ -21,7 +21,9 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
+import com.google.common.util.concurrent.AtomicDouble;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import mmcorej.CMMCore;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.events.StagePositionChangedEvent;
@@ -31,16 +33,19 @@ import org.micromanager.internal.utils.ReportingUtils;
 /**
 */
 public final class ZWheelListener  {
+   private static final double MOVE_INCREMENT = 0.20;
    private final CMMCore core_;
    private final ExecutorService executorService_;
    private final ZStageMover zStageMover_;
-   private static final double MOVE_INCREMENT = 0.20;
+   private final AtomicDouble moveMemory_;
+   private Future<?> future_;
 
    public ZWheelListener(final CMMCore core, 
          final ExecutorService executorService) {
       core_ = core;
       executorService_ = executorService;
       zStageMover_ = new ZStageMover();
+      moveMemory_ = new AtomicDouble(0.0);
    }
    
       private class ZStageMover implements Runnable {
@@ -57,8 +62,8 @@ public final class ZWheelListener  {
       public void run() {
          // Move the stage
         try {
+           pos_ += moveMemory_.getAndSet(0.0);
            core_.setRelativePosition(stage_, pos_);
-
            double z = core_.getPosition(stage_);
            DefaultEventManager.getInstance().post(
                    new StagePositionChangedEvent(stage_, z));
@@ -67,33 +72,41 @@ public final class ZWheelListener  {
         }
       }
    }
-      
+
    /**
-    * Receives mouseWheel events from the display manager and moves the 
-    * z stage
+    * Receives mouseWheel events from the display manager and moves the z stage
+    *
     * @param e DisplayMouseWheelEvent containing a MouseWheel event
     */
-
    @Subscribe
    public void mouseWheelMoved(DisplayMouseWheelEvent e) {
-	  synchronized(this) {
-		  // Get needed info from core
-		  String zStage = core_.getFocusDevice();
-		  if (zStage == null || zStage.equals(""))
-			  return;
- 
-		  double moveIncrement = MOVE_INCREMENT;
-		  double pixSizeUm = core_.getPixelSizeUm();
-		  if (pixSizeUm > 0.0) {
-			  moveIncrement = 2 * pixSizeUm;
-		  }
-		  // Get coordinates of event
-		  int move = e.getEvent().getWheelRotation();
-		  
-        zStageMover_.setPosition(zStage, move * moveIncrement);
-        executorService_.submit(zStageMover_);
-	  }
-   } 
+      synchronized (this) {
+         // Get needed info from core
+         String zStage = core_.getFocusDevice();
+         if (zStage == null || zStage.equals("")) {
+            return;
+         }
+
+         double moveIncrement = MOVE_INCREMENT;
+         double pixSizeUm = core_.getPixelSizeUm(true);
+         if (pixSizeUm > 0.0) {
+            moveIncrement = 2 * pixSizeUm;
+         }
+         // Get coordinates of event
+         int move = e.getEvent().getWheelRotation();
+
+         double moveUm = move * moveIncrement;
+
+         // if the executor is busy, wait for the next move command, and pool
+         // the distance we want to move
+         if (future_ == null || future_.isDone()) {
+            zStageMover_.setPosition(zStage, moveUm);
+            future_ = executorService_.submit(zStageMover_);
+         } else {
+            moveMemory_.addAndGet(moveUm);
+         }
+      }
+   }
    
   
 }
