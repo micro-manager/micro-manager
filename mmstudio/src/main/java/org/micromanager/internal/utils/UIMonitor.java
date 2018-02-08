@@ -103,7 +103,7 @@ public final class UIMonitor {
             if (identifier != null && action != null) {
                try {
                   String message = "[UI] " + identifier + action + " in " + ((Window) SwingUtilities.getAncestorOfClass(Window.class, (Component) source)).getClass().getSimpleName() + ".";
-                  ReportingUtils.logMessage(message);
+                  ReportingUtils.logDebugMessage(message);
                } catch (NullPointerException npe) {}
             }
          }
