@@ -28,7 +28,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -46,7 +45,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
- * @author NicoLocal
+ * @author Nico
  */
 public class ManualSimpleCalibrationThread extends CalibrationThread {
    private final Studio studio_;
@@ -72,7 +71,6 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
       explanationLabel_ = new JLabel();
       nrPoints_ = 3;
       points_ = new Point2D[nrPoints_];
-      //running_ = new AtomicBoolean(false);
    }
 
    @Override
@@ -255,7 +253,7 @@ public class ManualSimpleCalibrationThread extends CalibrationThread {
                  + " nm per pixel.  If this is not "
                  + "correct, <br>please cancel and first set the correct pixelSize.<br><br>"
                  + "Focus the image in the Preview window and use the <br>mouse pointer to click "
-                 + "on an object somehwere <br>near the center of the image.";
+                 + "on an object somewhere <br>near the center of the image.";
          explanationLabel_.setText(label1Text);
          super.add(explanationLabel_, "span 2, wrap");
          
