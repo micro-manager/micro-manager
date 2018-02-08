@@ -21,6 +21,8 @@ package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
@@ -37,11 +39,12 @@ public final class UiMovesStageManager {
    private final HashMap<DisplayController, ZWheelListener> displayToWheelListener_;
    //private final HashMap<DisplayController, KeyAdapter> displayToKeyListener_;
    private final CMMCore core_;
-   private final Studio studio_;
+   private final ExecutorService executorService_; // all stage movements will
+             // go through this thread
 
    public UiMovesStageManager(Studio studio, CMMCore core) {
-      studio_ = studio;
       core_ = core;
+      executorService_ = Executors.newSingleThreadExecutor();
       displayToDragListener_ = new HashMap<DisplayController, CenterAndDragListener>();
       displayToWheelListener_ = new HashMap<DisplayController, ZWheelListener>();
       //displayToKeyListener_ = new HashMap<DisplayController, KeyAdapter>();
@@ -57,9 +60,9 @@ public final class UiMovesStageManager {
       ZWheelListener wheelListener = null;
       //KeyAdapter keyListener = null;
       if (MMMenuBar.getToolsMenu().getMouseMovesStage()) {
-         dragListener = new CenterAndDragListener(core_);
+         dragListener = new CenterAndDragListener(core_, executorService_);
          display.registerForEvents(dragListener);
-         wheelListener = new ZWheelListener(core_);
+         wheelListener = new ZWheelListener(core_, executorService_);
          display.registerForEvents(wheelListener);
          //keyListener = new StageShortcutListener();
       }

@@ -21,6 +21,7 @@
 package org.micromanager.internal.navigation;
 
 import com.google.common.eventbus.Subscribe;
+import java.util.concurrent.ExecutorService;
 import mmcorej.CMMCore;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.events.StagePositionChangedEvent;
@@ -31,10 +32,40 @@ import org.micromanager.internal.utils.ReportingUtils;
 */
 public final class ZWheelListener  {
    private final CMMCore core_;
+   private final ExecutorService executorService_;
+   private final ZStageMover zStageMover_;
    private static final double MOVE_INCREMENT = 0.20;
 
-   public ZWheelListener(final CMMCore core) {
+   public ZWheelListener(final CMMCore core, 
+         final ExecutorService executorService) {
       core_ = core;
+      executorService_ = executorService;
+      zStageMover_ = new ZStageMover();
+   }
+   
+      private class ZStageMover implements Runnable {
+
+      String stage_;
+      double pos_;
+
+      public void setPosition(String stage, double pos) {
+         stage_ = stage;
+         pos_ = pos;
+      }
+
+      @Override
+      public void run() {
+         // Move the stage
+        try {
+           core_.setRelativePosition(stage_, pos_);
+
+           double z = core_.getPosition(stage_);
+           DefaultEventManager.getInstance().post(
+                   new StagePositionChangedEvent(stage_, z));
+        } catch (Exception ex) {
+           ReportingUtils.showError(ex);
+        }
+      }
    }
       
    /**
@@ -59,16 +90,8 @@ public final class ZWheelListener  {
 		  // Get coordinates of event
 		  int move = e.getEvent().getWheelRotation();
 		  
-        // Move the stage
-        try {
-           core_.setRelativePosition(zStage, move * moveIncrement);
-
-           double z = core_.getPosition(zStage);
-           DefaultEventManager.getInstance().post(
-                   new StagePositionChangedEvent(zStage, z));
-        } catch (Exception ex) {
-           ReportingUtils.showError(ex);
-        }
+        zStageMover_.setPosition(zStage, move * moveIncrement);
+        executorService_.submit(zStageMover_);
 	  }
    } 
    

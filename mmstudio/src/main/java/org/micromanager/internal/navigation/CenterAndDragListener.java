@@ -27,7 +27,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
@@ -54,9 +53,10 @@ public final class CenterAndDragListener {
    
    private int lastX_, lastY_;
 
-   public CenterAndDragListener(CMMCore core) {
+   public CenterAndDragListener(final CMMCore core, 
+         final ExecutorService executorService) {
       core_ = core;
-      executorService_ = Executors.newSingleThreadExecutor();
+      executorService_ = executorService;
       stageMover_ = new StageMover();
 
       getOrientation();
@@ -79,18 +79,12 @@ public final class CenterAndDragListener {
 
          // Move the stage
          try {
-            // TODO: make sure to not run on EDT?
             core_.setRelativeXYPosition(xyStage_, xRel_, yRel_);
             double[] xs = new double[1];
             double[] ys = new double[1];
             core_.getXYPosition(xyStage_, xs, ys);
-            // studio_.updateXYStagePosition();
             DefaultEventManager.getInstance().post(
                     new XYStagePositionChangedEvent(xyStage_, xs[0], ys[0]));
-            // alternative, less convert but possibly faster:
-            //      if (studio_ instanceof MMStudio) {
-            //  ((MMStudio) studio_).updateXYPosRelative(mXUm, mYUm);
-            // }
          } catch (Exception ex) {
             ReportingUtils.showError(ex);
          }
@@ -254,7 +248,10 @@ public final class CenterAndDragListener {
       Point2D dest = new Point2D.Double();
       if (affineTransform_ != null) {
          Point2D source = new Point2D.Double(x, y);
-         return affineTransform_.transform(source, dest);
+         affineTransform_.transform(source, dest);
+         // not sure why, but for the stage movement to be correct, we need 
+         // to invert both axes"
+         dest.setLocation(-dest.getX(), -dest.getY());
       } else {
          // if camera does not toStageSpace image orientation, we'll toStageSpace for it here:
          dest.setLocation(x, y);
@@ -271,6 +268,7 @@ public final class CenterAndDragListener {
             }
          }
       }
+      
       return dest;
    }
 
