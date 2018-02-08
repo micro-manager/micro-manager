@@ -1,8 +1,28 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman, 2018
+//
+// COPYRIGHT:    Regents of the University of California, 2018
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.internal.utils;
 
 import java.awt.geom.AffineTransform;
 import mmcorej.DoubleVector;
+import org.apache.commons.math.util.MathUtils;
 
 /**
  * Utilities specific to the use of affine transforms in Micro-Manager
@@ -37,6 +57,11 @@ public class AffineUtils {
       out.set(4, atf.getScaleY());
       out.set(5, atf.getTranslateY());
       return out;
+   }
+   
+   public static double deducePixelSize(AffineTransform atf) {
+      return MathUtils.round( Math.sqrt( 
+              Math.abs(atf.getDeterminant())), 4);
    }
    
 }

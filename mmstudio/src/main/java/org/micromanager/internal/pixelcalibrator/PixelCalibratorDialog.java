@@ -34,10 +34,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import net.miginfocom.swing.MigLayout;
-import org.apache.commons.math.util.MathUtils;
 import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.dialogs.PixelSizeProvider;
+import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -248,8 +248,7 @@ public class PixelCalibratorDialog extends MMFrame {
          return;
       }
 
-      double pixelSize = MathUtils.round( Math.sqrt( 
-              Math.abs(result.getDeterminant())), 4);
+      double pixelSize = AffineUtils.deducePixelSize(result);
 
       int response = JOptionPane.showConfirmDialog(this,
             String.format("Affine transform parameters: XScale=%.2f YScale=%.2f XShear=%.4f YShear=%.4f\n", result.getScaleX(), result.getScaleY(), result.getShearX(), result.getShearY()) + 
