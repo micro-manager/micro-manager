@@ -115,8 +115,7 @@ public class PixelCalibratorDialog extends MMFrame {
 
       JLabel methodLabel = new JLabel("Select method:");
       methodComboBox_.setModel(new DefaultComboBoxModel(
-              new String[] {METHOD_AUTO, METHOD_MANUAL_SIMPLE,
-                 METHOD_MANUAL_PRECISE} ) );
+              new String[] {METHOD_AUTO, METHOD_MANUAL_SIMPLE} ) );
       final String mKey = "methodComboxSelection";
       final Class ourClass = this.getClass();
       methodComboBox_.setSelectedItem(studio_.profile().getSettings(ourClass).

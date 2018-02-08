@@ -30,7 +30,19 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
- *
+ * The idea is to calibrate the camera/stage spatial relation by displaying an 
+ * image, have the user click on something they clearly recognize, move the stage
+ * have the user click again, etc.., and then calculate an affine transform
+ * relating the stage movement with the user-provided image movement.
+ * It is not clear if this will ever be precise.  Matching could possibly 
+ * be augmented with cross-correlation.  
+ * Since we have automated calibration (sometimes) working, and a simple
+ * manual procedure to determine directionality, I will not finish this code
+ * now, but leave here if it turns out to be useful.  To finish, look for 
+ * inspiration in AutomaticCalibrationThread and ManualSImpleCalibrationThread.
+ * 
+ * If not used by 2019, delete.
+ * 
  * @author nico
  */
 public class ManualPreciseCalibrationThread extends CalibrationThread {
@@ -147,7 +159,7 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
          d.x *= 2;
          d.y *= 2;
 
-        // d = measureDisplacement(x+dx, y+dy, d, false, simulate);
+         d = measureDisplacement(x+dx, y+dy, d, false);
          incrementProgress();
       }
       Point2D.Double stagePos;
@@ -163,6 +175,24 @@ public class ManualPreciseCalibrationThread extends CalibrationThread {
 
    }
 
+   
+   private Point2D.Double measureDisplacement(double x1, double y1, Point2D.Double d,
+           boolean display)
+           throws InterruptedException, CalibrationFailedException 
+   {      
+      if (AutomaticCalibrationThread.interrupted()) {
+         throw new InterruptedException();
+      }
+      snapImageAt(x1, y1);
+      // TODO: 
+      // Prompt the user to click and register the location
+      
+      // overlay_.set(guessRect);
+      Point2D.Double dChange = new Point2D.Double();
+      // TODO: dChange should be the displacement from the reference point
+      return new Point2D.Double(d.x + dChange.x, d.y + dChange.y);
+   }
+   
    private int smallestPowerOf2LessThanOrEqualTo(int x) {
       return 1 << ((int) Math.floor(Math.log(x)/Math.log(2)));
    }
