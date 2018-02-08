@@ -64,10 +64,17 @@ public final class CenterAndDragListener {
    
    private class StageMover implements Runnable {
 
-      String xyStage_;
-      double xRel_;
-      double yRel_;
+      private String xyStage_;
+      private double xRel_;                                   
+      private double yRel_;
 
+      /**
+       * Always call this function first before executing the Runnable
+       * Otherwise, the previous movement will be repeated...
+       * @param xyStage - Stage to move
+       * @param xRel - relative movement in X in microns
+       * @param yRel - relative movement in Y in microns
+       */
       public void setPosition(String xyStage, double xRel, double yRel) {
          xyStage_ = xyStage;
          xRel_ = xRel;
