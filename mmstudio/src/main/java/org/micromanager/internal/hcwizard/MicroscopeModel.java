@@ -1066,12 +1066,15 @@ public final class MicroscopeModel {
                     + Double.toString(presets[j].getPixelSize()));
             out.newLine();
             // write affine transform
-            out.write(MMCoreJ.getG_CFGCommand_PixelSizeAffine() + ","
-                    + presets[j].getName());
             DoubleVector aft = presets[j].getAffineTransform();
-            for (int i = 0; i < aft.size(); i++) {
-               out.write("," + Double.toString(aft.get(i)));
-            } 
+            if (aft != null) {
+               out.write(MMCoreJ.getG_CFGCommand_PixelSizeAffine() + ","
+                       + presets[j].getName());
+
+               for (int i = 0; i < aft.size(); i++) {
+                  out.write("," + Double.toString(aft.get(i)));
+               }
+            }
             out.newLine();
          }
          out.newLine();
