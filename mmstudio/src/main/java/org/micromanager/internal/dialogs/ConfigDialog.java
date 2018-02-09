@@ -50,6 +50,8 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.events.PropertiesChangedEvent;
+import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.DaytimeNighttime;
 import org.micromanager.internal.utils.MMDialog;
@@ -71,7 +73,7 @@ public abstract class ConfigDialog extends MMDialog {
    private static final long serialVersionUID = 5819669941239786807L;
 
    protected CMMCore core_;
-   protected Studio gui_;
+   protected Studio studio_;
 
    protected JTable table_;
    protected PropertyTableData data_;
@@ -105,23 +107,24 @@ public abstract class ConfigDialog extends MMDialog {
 
    protected int scrollPaneTop_;
 
-   public ConfigDialog(String groupName, String presetName, Studio gui, CMMCore core, 
-           boolean newItem) {
+   @SuppressWarnings("LeakingThisInConstructor")
+   public ConfigDialog(String groupName, String presetName, Studio studio, 
+           CMMCore core,  boolean newItem) {
       super("config editing for " + groupName);
       groupName_ = groupName;
       presetName_ = presetName;
       newItem_ = newItem;
-      gui_ = gui;
+      studio_ = studio;
       core_ = core;
       super.setLayout(new MigLayout("fill, insets 2, gap 2"));
       super.loadAndRestorePosition(100, 100, 550, 600);
       super.setMinimumSize(new Dimension(400, 200));
       
-      gui.events().registerForEvents(this);
+      studio.events().registerForEvents(this);
    }
 
    public void initialize() {
-      flags_ = new ShowFlags(gui_);
+      flags_ = new ShowFlags(studio_);
       data_.setFlags(flags_);
 
       initializeWidgets();
@@ -174,7 +177,7 @@ public abstract class ConfigDialog extends MMDialog {
    }
 
    public void initializeData() {
-      data_.setGUI(gui_);
+      data_.setGUI(studio_);
       data_.setShowUnused(showUnused_);
    }
 
@@ -286,10 +289,10 @@ public abstract class ConfigDialog extends MMDialog {
 
    @Override
    public void dispose() {
-      gui_.events().unregisterForEvents(this);
+      studio_.events().unregisterForEvents(this);
       super.dispose();
       savePosition();
-      gui_.app().refreshGUI();
+      studio_.app().refreshGUI();
    }
    
       
@@ -309,6 +312,21 @@ public abstract class ConfigDialog extends MMDialog {
 
    public void showMessageDialog(String message) {
       JOptionPane.showMessageDialog(this, message);
+   }
+   
+   
+   @Subscribe
+   public void onPropertiesChanged(PropertiesChangedEvent event) {
+      // avoid re-executing a refresh because of callbacks while we are
+      // updating
+      if (!data_.updating()) {
+         data_.update(true);
+      }
+   }
+
+   @Subscribe
+   public void onPropertyChanged(PropertyChangedEvent event) {
+      data_.update(true);
    }
 
 }

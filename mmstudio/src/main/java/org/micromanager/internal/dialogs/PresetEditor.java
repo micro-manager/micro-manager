@@ -46,8 +46,7 @@ public final class PresetEditor extends ConfigDialog {
       numColumns_= 2;
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
-              propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).
-              allowChangesOnlyWhenUser(true).isPixelSizeConfig(false).build();
+              propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).allowChangesOnlyWhenUsed(true).isPixelSizeConfig(false).build();
       initializeData();
       data_.setColumnNames("Property Name","Preset Value","");
       data_.setShowReadOnly(true);
@@ -126,7 +125,7 @@ public final class PresetEditor extends ConfigDialog {
          }
       }
 
-      ((MMStudio) gui_).setConfigChanged(true);
+      ((MMStudio) studio_).setConfigChanged(true);
       return true;
 
    }

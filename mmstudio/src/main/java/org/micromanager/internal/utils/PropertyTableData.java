@@ -85,7 +85,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
          return this;
       }
       
-      public Builder allowChangesOnlyWhenUser(final boolean allow) {
+      public Builder allowChangesOnlyWhenUsed(final boolean allow) {
          allowChangesOnlyWhenUsed_ = allow;
          return this;
       }

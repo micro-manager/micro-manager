@@ -83,7 +83,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(1).
               propertyUsedColumn(2).groupOnly(true).allowChangingProperties(true).
-              allowChangesOnlyWhenUser(true).isPixelSizeConfig(true).build();
+              allowChangesOnlyWhenUsed(true).isPixelSizeConfig(true).build();
       data_.setShowReadOnly(true);
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
@@ -158,7 +158,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
          return false;
       }
 
-      ((MMStudio) gui_).setConfigChanged(true);
+      ((MMStudio) studio_).setConfigChanged(true);
       return true;
    }
      
@@ -230,7 +230,7 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       try {
          return NumberUtils.displayStringToDouble(pixelSizeField_.getText());
       } catch (ParseException ex) {
-         gui_.logs().showError("Pixel Size is not a valid Number");
+         studio_.logs().showError("Pixel Size is not a valid Number");
          pixelSizeField_.requestFocus();
       }
       return 0.0;

@@ -55,8 +55,7 @@ public final class GroupEditor extends ConfigDialog {
       numColumns_ = 3;
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
       data_ = ptdb.groupName(groupName).presetName(presetName).propertyValueColumn(2).
-              propertyUsedColumn(1).groupOnly(false).allowChangingProperties(false).
-              allowChangesOnlyWhenUser(false).isPixelSizeConfig(false).build();
+              propertyUsedColumn(1).groupOnly(false).allowChangingProperties(false).allowChangesOnlyWhenUsed(false).isPixelSizeConfig(false).build();
       initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       showShowReadonlyCheckBox_ = true;
@@ -87,11 +86,11 @@ public final class GroupEditor extends ConfigDialog {
             }
          }
          catch (Exception e) {
-            gui_.logs().logError(e, "Error getting information on device/property " + item.device + "/" + item.name);
+            studio_.logs().logError(e, "Error getting information on device/property " + item.device + "/" + item.name);
          }
       }
       // Warn user about including shutter state in config groups.
-      if (shutters.size() > 0 && gui_.profile().getBoolean(
+      if (shutters.size() > 0 && studio_.profile().getBoolean(
                GroupEditor.class, DISPLAY_SHUTTER_WARNING, true)) {
          JPanel contents = new JPanel(new MigLayout("fill, flowy"));
          // NB I would prefer to use a JTextArea here, and use its automatic
@@ -117,7 +116,7 @@ public final class GroupEditor extends ConfigDialog {
                contents, "Shutter State in Config Group",
                JOptionPane.WARNING_MESSAGE, 0, null,
                buttons, buttons[0]);
-         gui_.profile().setBoolean(GroupEditor.class, DISPLAY_SHUTTER_WARNING,
+         studio_.profile().setBoolean(GroupEditor.class, DISPLAY_SHUTTER_WARNING,
                !neverAgain.isSelected());
          if (selection == 2) {
             // User cancelled.
@@ -256,7 +255,7 @@ public final class GroupEditor extends ConfigDialog {
          }
          // Make the first preset.
          if (itemsIncludedCount > 1) {
-            new PresetEditor(newName, "NewPreset", gui_, core_, false);
+            new PresetEditor(newName, "NewPreset", studio_, core_, false);
          }
       } else {// An existing configuration group is being modified.
          // Apply configuration settings to all properties in the group.
@@ -290,7 +289,7 @@ public final class GroupEditor extends ConfigDialog {
          }
       }
 
-      ((MMStudio) gui_).setConfigChanged(true);
+      ((MMStudio) studio_).setConfigChanged(true);
       return true;
    }
 }

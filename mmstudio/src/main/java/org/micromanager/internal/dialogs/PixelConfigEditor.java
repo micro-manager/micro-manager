@@ -73,8 +73,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       numColumns_ = 3;
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(2).
-              propertyUsedColumn(1).groupOnly(false).allowChangingProperties(true).
-              allowChangesOnlyWhenUser(true).isPixelSizeConfig(true).build();
+              propertyUsedColumn(1).groupOnly(false).allowChangingProperties(true).allowChangesOnlyWhenUsed(true).isPixelSizeConfig(true).build();
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
       showShowReadonlyCheckBox_ = true; 
@@ -143,7 +142,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
          ReportingUtils.logError(e);
       }
 
-      ((MMStudio) gui_).setConfigChanged(true);
+      ((MMStudio) studio_).setConfigChanged(true);
       return true;
    }
    
@@ -152,7 +151,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       try {
          return NumberUtils.displayStringToDouble(pixelSizeField_.getText());
       } catch (ParseException ex) {
-         gui_.logs().showError("Pixel Size is not a valid Number");
+         studio_.logs().showError("Pixel Size is not a valid Number");
          pixelSizeField_.requestFocus();
       }
       return 0.0;
