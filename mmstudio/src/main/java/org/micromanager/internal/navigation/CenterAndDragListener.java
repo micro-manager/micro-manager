@@ -182,11 +182,11 @@ public final class CenterAndDragListener {
                        location.x + location.width / 2,
                        location.y + location.height / 2);
 
-               // calculate needed relative movement
-               double tmpXUm = ((0.5 * width) - center.x) * pixSizeUm;
-               double tmpYUm = ((0.5 * height) - center.y) * pixSizeUm;
+               // calculate needed relative movement in pixels
+               double tmpXUm = (0.5 * width) - center.x;
+               double tmpYUm = (0.5 * height) - center.y;
 
-               Point2D stagePos = toStageSpace(tmpXUm, tmpYUm);
+               Point2D stagePos = toStageSpace(pixSizeUm, tmpXUm, tmpYUm);
 
                moveStage(xyStage, stagePos.getX(), stagePos.getY());
 
@@ -234,9 +234,7 @@ public final class CenterAndDragListener {
             double tmpXUm = center2.x - lastX_;
             double tmpYUm = center2.y - lastY_;
 
-            tmpXUm *= pixSizeUm;
-            tmpYUm *= pixSizeUm;
-            Point2D stagePos = toStageSpace(tmpXUm, tmpYUm);
+            Point2D stagePos = toStageSpace(pixSizeUm, tmpXUm, tmpYUm);
 
             lastX_ = center2.x;
             lastY_ = center2.y;
@@ -251,7 +249,17 @@ public final class CenterAndDragListener {
       executorService_.submit(stageMover_);
    }
 
-   private Point2D toStageSpace(double x, double y) {
+   /**
+    * Converts Camera-Pixel Space to Stage-micron space
+    * Use the affine transform when available, otherwise uses pixelSize
+    * and orientation booleans, determined using the getOrientation function.
+    * 
+    * @param pixSizeUm - pixelSize in micron
+    * @param x - Desired x movement in pixels
+    * @param y - Desired y movement in pixels
+    * @return - Needed stage movement as a Point2D.Double
+    */
+   private Point2D toStageSpace(double pixSizeUm, double x, double y) {
       Point2D dest = new Point2D.Double();
       if (affineTransform_ != null) {
          Point2D source = new Point2D.Double(x, y);
@@ -261,11 +269,11 @@ public final class CenterAndDragListener {
          dest.setLocation(-dest.getX(), -dest.getY());
       } else {
          // if camera does not toStageSpace image orientation, we'll toStageSpace for it here:
-         dest.setLocation(x, y);
+         dest.setLocation(x * pixSizeUm, y * pixSizeUm);
          if (!correction_) {
             // Order: swapxy, then mirror axis
             if (transposeXY_) {
-               dest.setLocation(y, x);
+               dest.setLocation(y * pixSizeUm, x * pixSizeUm);
             }
             if (mirrorX_) {
                dest.setLocation(-dest.getX(), dest.getY());
