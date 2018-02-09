@@ -29,6 +29,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.ArrayList;
@@ -46,13 +47,15 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JTextField;
+import org.micromanager.data.Coordinates;
 
 import org.micromanager.data.Coords;
-import org.micromanager.data.Datastore;
-import org.micromanager.display.DisplaySettings;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.display.DataViewer;
 
 import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
 
 /**
@@ -64,7 +67,7 @@ public class ScrollerPanel extends JPanel {
    private static final long serialVersionUID = -2504635696950982031L;
 
   // private final Studio studio_;
-   private final Datastore store_;
+   private final DataProvider dataProvider_;
    private final DataViewer display_;
    private final Thread updateThread_;
    private final LinkedBlockingQueue<Coords> updateQueue_;
@@ -89,10 +92,10 @@ public class ScrollerPanel extends JPanel {
    // draw requests.
    private boolean shouldPostEvents_ = true;
 
-   public ScrollerPanel(final Datastore store, 
+   @SuppressWarnings("LeakingThisInConstructor")
+   public ScrollerPanel(final DataProvider dataProvider, 
            final DataViewer display) {
-      //studio_ = studio;
-      store_ = store;
+      dataProvider_ = dataProvider;
       display_ = display;
 
       updateQueue_ = new LinkedBlockingQueue<>();
@@ -119,16 +122,16 @@ public class ScrollerPanel extends JPanel {
       fpsMenu_ = new FPSPopupMenu(display_, animationFPS_);
 
       List<String> axes;
-      List<String> axisOrder = store_.getSummaryMetadata().getOrderedAxes();
+      List<String> axisOrder = dataProvider_.getSummaryMetadata().getOrderedAxes();
       if (axisOrder != null) {
          axes = axisOrder;
       }
       else {
-         axes = new ArrayList<>(store_.getAxes());
+         axes = new ArrayList<>(dataProvider_.getAxes());
       }
       for (String axis : axes) {
          // Don't bother creating scrollers for axes with a length of 1.
-         if (store_.getAxisLength(axis) > 1 && !axis.equals(Coords.Z)) {
+         if (dataProvider_.getAxisLength(axis) > 1 && !axis.equals(Coords.Z)) {
             addScroller(axis);
          }
       }
@@ -139,7 +142,7 @@ public class ScrollerPanel extends JPanel {
          runUpdateThread();
       }, "ClearVolume Scrollbar panel update thread");
       updateThread_.start();
-      store_.registerForEvents(this);
+      dataProvider_.registerForEvents(this);
       display_.registerForEvents(this);
    }
 
@@ -181,11 +184,11 @@ public class ScrollerPanel extends JPanel {
       });
       add(positionButton, "grow 0");
 
-      JLabel maxLabel = new JLabel("/ " + store_.getAxisLength(axis));
+      JLabel maxLabel = new JLabel("/ " + dataProvider_.getAxisLength(axis));
       add(maxLabel, "grow 0");
 
       final JScrollBar scrollbar = new JScrollBar(JScrollBar.HORIZONTAL, 0, 1,
-            0, store_.getAxisLength(axis));
+            0, dataProvider_.getAxisLength(axis));
 
       scrollbar.setMinimumSize(new Dimension(1, 1));
       scrollbar.addAdjustmentListener((AdjustmentEvent e) -> {
@@ -260,8 +263,7 @@ public class ScrollerPanel extends JPanel {
          scrollbar.setValue(pos);
       }
       // Add one so displayed values are 1-indexed.
-      String newText = String.valueOf(
-            Math.min(store_.getAxisLength(axis), Math.max(0, pos + 1)));
+      String newText = String.valueOf(Math.min(dataProvider_.getAxisLength(axis), Math.max(0, pos + 1)));
       JButton button = axisToState_.get(axis).posButton_;
       if (!button.getText().contentEquals(newText)) {
          button.setText(newText);
@@ -284,7 +286,7 @@ public class ScrollerPanel extends JPanel {
       DefaultCoords.Builder builder = new DefaultCoords.Builder();
       // Fill in default positions for all axes, including those we don't have
       // scrollbars for.
-      for (String axis : store_.getAxes()) {
+      for (String axis : dataProvider_.getAxes()) {
          builder.index(axis, 0);
       }
       for (String axis : axisToState_.keySet()) {
@@ -435,8 +437,8 @@ public class ScrollerPanel extends JPanel {
    }
 */
    /**
-    * Silently (i.e. without sending a draw event) update the specified
-    * scrollbar to the desired position. Lengthen the scrollbar if necessary,
+    * Update the specified  scrollbar to the desired position. 
+    * Lengthen the scrollbar if necessary,
     * and if it doesn't exist then create it. Returns true if a new scrollbar
     * was created.
     */
@@ -470,9 +472,9 @@ public class ScrollerPanel extends JPanel {
       int pos = scrollbar.getValue();
       //ScrollbarLockIcon.LockedState lockState = axisToState_.get(axis).lockState_;
       synchronized (this) {
-         shouldPostEvents_ = false;
+         // shouldPostEvents_ = false;
          scrollbar.setValue(newPos);
-         shouldPostEvents_ = true;
+         // shouldPostEvents_ = true;
          // if (lockState == ScrollbarLockIcon.LockedState.SUPERLOCKED) {
          // This axis is not allowed to move.
       }
@@ -496,6 +498,37 @@ public class ScrollerPanel extends JPanel {
       // }
       return didAddScroller;
    }
+   
+   @Subscribe
+   public void onDataProviderHasNewImage(DataProviderHasNewImageEvent newImage) {
+      if (dataProvider_ != newImage.getDataProvider()){
+         return;
+      }
+      Coords newImageCoords = newImage.getCoords();
+      if (timePointComplete(newImageCoords.getT())) {
+         updateScrollbar(Coords.T, newImageCoords.getT());
+      }
+   }       
+   
+   /**
+    * Check if we have all z slices for all channels at the given time point
+    * This code may be fooled by other axes in the data
+    * @param timePointIndex - time point index
+    * @return true if complete
+    */
+   private boolean timePointComplete (int timePointIndex) {
+      Coords zStackCoords = Coordinates.builder().t(timePointIndex).build();
+      try {
+         final int nrImages = dataProvider_.getImagesMatching(zStackCoords).size();
+         Coords intendedDimensions = dataProvider_.getSummaryMetadata().
+                 getIntendedDimensions();
+         return nrImages >= intendedDimensions.getChannel() * intendedDimensions.getZ(); 
+      } catch (IOException ioe) {
+         ReportingUtils.showError(ioe, "Error getting number of images from dataset");
+      }
+      return false;
+   }
+
 
    /**
     * The canvas has finished drawing an image; move to the next one in our

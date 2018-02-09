@@ -54,6 +54,7 @@ import org.micromanager.UserProfile;
 import org.micromanager.data.Coordinates;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -154,23 +155,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          name_ = dataProvider_.getSummaryMetadata().getPrefix();
       }
 
-      // check if we have all z slices in the first time point
-      // if not, rely on the onNewImage function to initialize the renderer
-      Coords zStackCoords = Coordinates.builder().t(0).build();
-      try {
-         final int nrImages = dataProvider_.getImagesMatching(zStackCoords).size();
-         currentlyShownTimePoint_ = -1; // set to make sure the first volume will be drawn
-         Coords intendedDimensions = dataProvider_.getSummaryMetadata().getIntendedDimensions();
-         if (dataProvider_.isFrozen()) {
-            initializeRenderer(0);
-         } else if (intendedDimensions != null
-                 && nrImages >= intendedDimensions.getChannel() * intendedDimensions.getZ()) {
-            initializeRenderer(0);
-         } else if (intendedDimensions == null) {
-            initializeRenderer(0);
-         }
-      } catch (IOException ioe) {
-         studio_.logs().showError(ioe, "Error getting number of images from dataset");
+      if (timePointComplete(0)) {
+         initializeRenderer(0);
       }
 
 
@@ -506,7 +492,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
       clearVolumeRenderer_.setCurrentRenderLayer(coords.getChannel());
       try {
-      drawVolume(coords.getT());
+         drawVolume(coords.getT());
       } catch (IOException ioe) {
           studio_.logs().logError(ioe);
       }
@@ -880,6 +866,40 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }
 
+   @Subscribe
+   public void onDataProviderHasNewImage(DataProviderHasNewImageEvent newImage) {
+      if (dataProvider_ != newImage.getDataProvider()){
+         return;
+      }
+      Coords newImageCoords = newImage.getCoords();
+      if (timePointComplete(newImageCoords.getT())) {
+         if (clearVolumeRenderer_ == null) {
+            initializeRenderer(newImageCoords.getT());
+         } else {
+            
+         // TODO - or should the scrollerpanel do this?
+         }
+      }
+   }       
+   
+   /**
+    * Check if we have all z slices for all channels at the given time point
+    * This code may be fooled by other axes in the data
+    * @param timePointIndex - time point index
+    * @return true if complete
+    */
+   private boolean timePointComplete (int timePointIndex) {
+      Coords zStackCoords = Coordinates.builder().t(timePointIndex).build();
+      try {
+         final int nrImages = dataProvider_.getImagesMatching(zStackCoords).size();
+         Coords intendedDimensions = dataProvider_.getSummaryMetadata().
+                 getIntendedDimensions();
+         return nrImages >= intendedDimensions.getChannel() * intendedDimensions.getZ(); 
+      } catch (IOException ioe) {
+         studio_.logs().showError(ioe, "Error getting number of images from dataset");
+      }
+      return false;
+   }
 
    @Override
    public boolean compareAndSetDisplaySettings(DisplaySettings originalSettings, DisplaySettings newSettings) {
