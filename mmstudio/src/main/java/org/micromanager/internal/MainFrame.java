@@ -76,7 +76,6 @@ import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
 import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.menus.MMMenuBar;
-//import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;

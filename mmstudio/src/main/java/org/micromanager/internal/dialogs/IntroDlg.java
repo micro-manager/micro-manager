@@ -101,14 +101,14 @@ public final class IntroDlg extends JDialog {
          }
       }
 
-      setFont(DEFAULT_FONT);
-      setTitle("Micro-Manager Startup");
-      setName("Intro");
-      setResizable(false);
-      setModal(true);
-      setUndecorated(true);
+      super.setFont(DEFAULT_FONT);
+      super.setTitle("Micro-Manager Startup");
+      super.setName("Intro");
+      super.setResizable(false);
+      super.setModal(true);
+      super.setUndecorated(true);
       if (!IJ.isMacOSX()) {
-        ((JPanel) getContentPane()).setBorder(BorderFactory.createLineBorder(Color.GRAY));
+        ((JPanel) super.getContentPane()).setBorder(BorderFactory.createLineBorder(Color.GRAY));
       }
 
       JPanel contentsPanel = new JPanel(new MigLayout(
@@ -186,7 +186,7 @@ public final class IntroDlg extends JDialog {
          }
       });
       okButton.setText("OK");
-      getRootPane().setDefaultButton(okButton);
+      super.getRootPane().setDefaultButton(okButton);
       okButton.requestFocusInWindow();
 
       final JButton cancelButton = new JButton();
@@ -205,18 +205,18 @@ public final class IntroDlg extends JDialog {
       contentsPanel.add(cancelButton,
             new CC().alignX("right").sizeGroup("btns").tag("cancel"));
 
-      setLayout(new MigLayout(new LC().fill().insets("0").gridGap("0", "0")));
-      getContentPane().add(contentsPanel, new CC().grow().push());
-      pack();
+      super.setLayout(new MigLayout(new LC().fill().insets("0").gridGap("0", "0")));
+      super.getContentPane().add(contentsPanel, new CC().grow().push());
+      super.pack();
 
       Dimension winSize = contentsPanel.getPreferredSize();
       GraphicsConfiguration config = GUIUtils.getGraphicsConfigurationContaining(0, 0);
       Rectangle bounds = config.getBounds();
-      setLocation(bounds.x + bounds.width / 2 - winSize.width / 2,
+      super.setLocation(bounds.x + bounds.width / 2 - winSize.width / 2,
             bounds.y + bounds.height / 2 - winSize.height / 2);
 
-      toFront();
-      setVisible(true);
+      super.toFront();
+      super.setVisible(true);
    }
 
    public boolean okChosen() {
