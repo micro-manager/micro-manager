@@ -68,7 +68,7 @@ public final class ImageStatsProcessor {
             ThreadFactoryFactory.createThreadFactory("ImageStatsProcessor"));
    }
 
-   void shutdown() {
+   public void shutdown() {
       executor_.shutdown();
    }
 
