@@ -85,11 +85,27 @@ public final class InspectorController
    private AttachmentStrategy attachmentStrategy_ =
          new NullAttachmentStrategy();
 
-   private final List<InspectorSectionController> sections_ =
-         new ArrayList<InspectorSectionController>();
+   private final List<SectionInfo> sections_ =
+         new ArrayList<SectionInfo>();
 
    private final EventBus eventBus_ = new EventBus(EventBusExceptionLogger.getInstance());
 
+   /**
+    * Since it is very difficult to associated an InpectorSectionController 
+    * and InspectorSectionController with a plugin, and/or each other, 
+    * we do it here manually.
+    */
+   private class SectionInfo {
+      public final InspectorPanelController inspectorPanelController_;
+      public final InspectorSectionController inspectorSectionController_;
+      public final InspectorPanelPlugin plugin_;
+      public SectionInfo (InspectorPanelController ipc, 
+              InspectorSectionController isc, InspectorPanelPlugin p){
+         inspectorPanelController_ = ipc;
+         inspectorSectionController_ = isc;
+         plugin_ = p;
+      }
+   }
    // Type for combo box items (data viewers)
    private static final class ViewerItem {
       private final DataViewer viewer_;
@@ -262,8 +278,12 @@ public final class InspectorController
       // not change when we reattach to another image.
       // TODO Also each panel needs to detach from previous viewer
 
-      sections_.clear();
 
+      for (SectionInfo sectionInfo : sections_) {
+         sectionInfo.inspectorPanelController_.detachDataViewer();
+      }
+      sections_.clear();
+      
       if (viewer != null && !viewer.isClosed()) {
          List<InspectorPanelPlugin> plugins = new ArrayList<InspectorPanelPlugin>(
                MMStudio.getInstance().plugins().getInspectorPlugins().values());
@@ -276,24 +296,35 @@ public final class InspectorController
             }
          });
 
-         boolean isFirst = true;
+         // This feels like a ball of tangled up wire:
          for (InspectorPanelPlugin plugin : plugins) {
             if (plugin.isApplicableToDataViewer(viewer)) {
-               InspectorPanelController panelController =
-                     plugin.createPanelController();
-               InspectorSectionController section =
-                     InspectorSectionController.create(this, panelController, isFirst);
-               panelController.addInspectorPanelListener(section);
-               panelController.attachDataViewer(viewer);
-               sections_.add(section);
-               isFirst = false;
+               SectionInfo locatedSection = null;
+               for (SectionInfo si : sections_) {
+                     if (si.plugin_.equals(plugin)) {
+                        locatedSection = si;
+                  }
+               }
+               if (locatedSection == null) {
+                  InspectorPanelController panelController
+                          = plugin.createPanelController();
+                  InspectorSectionController section
+                          = InspectorSectionController.create(this, panelController,
+                                  panelController.initiallyExpand());
+                  panelController.addInspectorPanelListener(section);
+                  locatedSection = new SectionInfo(panelController, section, plugin);
+               }
+               locatedSection.inspectorPanelController_.attachDataViewer(viewer);
+               sections_.add(locatedSection);
             }
          }
       }
 
+
       sectionsPane_ = VerticalMultiSplitPane.create(sections_.size(), true);
       for (int i = 0; i < sections_.size(); ++i) {
-         InspectorSectionController sectionController = sections_.get(i);
+         InspectorSectionController sectionController = 
+                 sections_.get(i).inspectorSectionController_;
          sectionsPane_.setComponentAtIndex(i,
                sectionController.getSectionPanel());
          sectionsPane_.setComponentResizeEnabled(i,
@@ -319,7 +350,12 @@ public final class InspectorController
 
    void inspectorSectionDidChangeHeight(InspectorSectionController section)
    {
-      int index = sections_.indexOf(section);
+      int index = -1;
+      for (int i=0; i < sections_.size(); i++) {
+         if (section.equals(sections_.get(i).inspectorSectionController_)) {
+            index = i;
+         }
+      }
       if (index < 0) {
          return;
       }
