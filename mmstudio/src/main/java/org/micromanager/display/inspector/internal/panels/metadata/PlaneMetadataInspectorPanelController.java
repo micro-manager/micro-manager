@@ -210,7 +210,13 @@ public final class PlaneMetadataInspectorPanelController extends AbstractInspect
    public boolean isVerticallyResizableByUser() {
       return true;
    }
-
+   
+   @Override
+   public boolean initiallyExpand() {
+      return false;
+      // TODO: remember last setting and restore
+   }
+   
    private void updateMetadata(Metadata metadata, boolean evenIfUnchanged) {
       if (!evenIfUnchanged && metadata == metadata_) {
          return;

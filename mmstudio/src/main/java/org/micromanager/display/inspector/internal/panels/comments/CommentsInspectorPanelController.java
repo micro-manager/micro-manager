@@ -155,6 +155,12 @@ public final class CommentsInspectorPanelController
    public JPanel getPanel() {
       return panel_;
    }
+   
+   @Override
+   public boolean initiallyExpand() {
+      return false;
+      // TODO: remember last setting and restore
+   }
 
    private void saveSummaryComments() {
       if (!summaryCommentEdited_) {
@@ -237,4 +243,5 @@ public final class CommentsInspectorPanelController
          planeCommentEdited_ = true;
       }
    }
+
 }

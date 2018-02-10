@@ -141,6 +141,12 @@ public class SummaryMetadataInspectorPanelController extends AbstractInspectorPa
    public boolean isVerticallyResizableByUser() {
       return true;
    }
+      
+   @Override
+   public boolean initiallyExpand() {
+      return false;
+      // TODO: remember last setting and restore
+   }
 
    private void updateSummaryMetadata(SummaryMetadata summaryMetadata) {
       if (summaryMetadata == previousMetadataRef_.get()) {

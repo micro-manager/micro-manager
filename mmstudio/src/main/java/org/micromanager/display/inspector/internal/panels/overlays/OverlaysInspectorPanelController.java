@@ -190,6 +190,12 @@ public final class OverlaysInspectorPanelController
       return panel_;
    }
 
+   @Override
+   public boolean initiallyExpand() {
+      return false;
+      // TODO: remember last setting and restore
+   }
+
    @Subscribe
    public void onEvent(DisplayWindowDidAddOverlayEvent e) {
       addConfigPanel(e.getOverlay());

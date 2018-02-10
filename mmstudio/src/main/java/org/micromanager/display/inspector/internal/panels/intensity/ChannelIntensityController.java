@@ -24,6 +24,7 @@ import net.miginfocom.layout.CC;
 import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
+import org.micromanager.data.Image;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.display.DataViewer;
@@ -413,7 +414,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             String.format("%1.2e", stdev));
 
       try {
-         int cameraBits = viewer_.getDataProvider().getAnyImage().getMetadata().getBitDepth(); // can throw IOException
+         Image anyImage = viewer_.getDataProvider().getAnyImage();
+         if (anyImage == null) {
+            return;
+         }
+         int cameraBits = anyImage.getMetadata().getBitDepth(); // can throw IOException
          int rangeBits = histoRangeComboBoxModel_.getBits(cameraBits);
          long[] data = componentStats.getInRangeHistogram();
          int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
@@ -643,7 +648,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       // TODO Error-free way to get number of components?
       int numComponents;
       try {
-         numComponents = viewer_.getDataProvider().getAnyImage().getNumComponents();
+         Image anyImage = viewer_.getDataProvider().getAnyImage();
+         if (anyImage == null) {
+            return;
+         }
+         numComponents = anyImage.getNumComponents();
       }
       catch (IOException e) {
          numComponents = 1;
