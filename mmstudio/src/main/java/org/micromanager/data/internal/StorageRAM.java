@@ -34,6 +34,12 @@ import org.micromanager.data.DataProviderHasNewSummaryMetadataEvent;
 /**
  * Simple RAM-based storage for Datastores. Methods that interact with the
  * HashMap that is our image storage are synchronized.
+ * 
+ * TODO: coordsToImage_ can be set to null in the close function
+ * if any of the member functions are called after "close", a null pointer exception
+ * will follow.  We can either check for null whenever coordsToImage is used,
+ * or make sure that no member is ever called after the close function 
+ * (which may be very difficult to guarantee).
  */
 public final class StorageRAM implements RewritableStorage {
    private HashMap<Coords, Image> coordsToImage_;
@@ -75,7 +81,7 @@ public final class StorageRAM implements RewritableStorage {
 
    @Override
    public synchronized Image getImage(Coords coords) {
-      if (coordsToImage_.containsKey(coords)) {
+      if (coordsToImage_ != null && coordsToImage_.containsKey(coords)) {
          return coordsToImage_.get(coords);
       }
       return null;
@@ -83,7 +89,7 @@ public final class StorageRAM implements RewritableStorage {
 
    @Override
    public synchronized Image getAnyImage() {
-      if (coordsToImage_.size() > 0) {
+      if (coordsToImage_ != null && coordsToImage_.size() > 0) {
          Coords coords = new ArrayList<Coords>(coordsToImage_.keySet()).get(0);
          return coordsToImage_.get(coords);
       }
@@ -92,6 +98,9 @@ public final class StorageRAM implements RewritableStorage {
 
    @Override
    public synchronized List<Image> getImagesMatching(Coords coords) {
+      if (coordsToImage_ == null) {
+         return null;
+      }
       ArrayList<Image> results = new ArrayList<Image>();
       for (Image image : coordsToImage_.values()) {
          if (image.getCoords().isSubspaceCoordsOf(coords)) {
