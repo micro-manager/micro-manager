@@ -26,7 +26,6 @@ import java.awt.Color;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -56,13 +55,14 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    static public final int YAXIS = 1;
    static public final int ZAXIS = 2;
    
-   private final String USE_FOR_ALL = "Use for all";
    
    //private final Studio studio_;
    private RangeSlider xSlider_, ySlider_, zSlider_;
    private ScrollerPanel sp_;
    private boolean animating_ = false;
-   private final AtomicBoolean attachToNew_ = new AtomicBoolean(false);
+   
+   //private final String USE_FOR_ALL = "Use for all";
+   //private final AtomicBoolean attachToNew_ = new AtomicBoolean(false);
    private final CVVideoRecorder recorder_;
    
    public CVInspectorPanelController() {
@@ -265,8 +265,8 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
         // although this should always be a valid viewer, check anyways
       if (! (viewer instanceof CVViewer) )
          return;
-      
-      // TODO: do we need to unregister the old viewer???
+
+      detachDataViewer();
       
       viewer_ = (CVViewer) viewer;
       
@@ -294,9 +294,19 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       viewer_.registerForEvents(this);
    }
 
+   /**
+    * Very strange, but Micro-Manager never calls detachDataViewer.  We have to
+    * do that ourselves in the attachDataViewer code.  This smells like a bug
+    */
    @Override
    public void detachDataViewer() {
-      System.err.println("VIewer detached");
+      if (viewer_ != null) {
+         viewer_.unregisterForEvents(this);
+      }
+      if (sp_ != null) {
+         sp_.stopUpdateThread();
+         panel_.remove(sp_);
+      }
    }
 
    @Override
@@ -308,6 +318,10 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
    public JPanel getPanel() {
       return panel_;
    }
-   
+      
+   @Override
+   public boolean initiallyExpand() {
+      return true;
+   }
 
 }

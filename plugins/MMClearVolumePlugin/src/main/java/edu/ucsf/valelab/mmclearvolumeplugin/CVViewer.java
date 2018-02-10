@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import org.micromanager.Studio;
@@ -59,6 +58,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.data.internal.DefaultDatastoreClosingEvent;
 import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
@@ -70,6 +70,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
 import org.micromanager.display.internal.imagestats.ImageStatsRequest;
@@ -77,6 +78,7 @@ import org.micromanager.display.internal.imagestats.ImagesAndStats;
 import org.micromanager.display.internal.imagestats.ImageStatsProcessor;
 import org.micromanager.display.internal.imagestats.IntegerComponentStats;
 import org.micromanager.events.ShutdownCommencingEvent;
+import org.micromanager.internal.utils.MMFrame;
 
 
 
@@ -88,16 +90,16 @@ import org.micromanager.events.ShutdownCommencingEvent;
 public class CVViewer implements DataViewer, ImageStatsPublisher {
 
    private DisplaySettings displaySettings_;
+   private ImageStatsProcessor imageStatsProcessor_;
    private final Studio studio_;
    private DataProvider dataProvider_;
    private DataViewer clonedDisplay_;
    private ClearVolumeRendererInterface clearVolumeRenderer_;
    private String name_;
    private final EventBus displayBus_;
-   private final JFrame cvFrame_;
+   private final CVFrame cvFrame_;
    private Coords.CoordsBuilder coordsBuilder_;
    private int maxValue_;
-   private int currentlyShownTimePoint_;
    private final String XLOC = "XLocation";
    private final String YLOC = "YLocation";
    private final Class<?> ourClass_;
@@ -107,6 +109,13 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private final Color[] colors = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA,
             Color.PINK, Color.CYAN, Color.YELLOW, Color.ORANGE};
    
+   
+   private class CVFrame extends MMFrame {
+      public CVFrame() {
+         super();
+         super.loadAndRestorePosition(100, 100);
+      }
+   }
    
    public CVViewer(Studio studio) {
       this(studio, null);
@@ -122,10 +131,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       } catch (NullPointerException npe) {
          // this seems to always happen, but otherwise not be a problem
       }
+            
+      imageStatsProcessor_ = ImageStatsProcessor.create();
       
       ourClass_ = this.getClass();
       studio_ = studio;
-      UserProfile profile = studio_.getUserProfile();
       if (provider == null) {
          clonedDisplay_ = studio_.displays().getActiveDataViewer();
          if (clonedDisplay_ != null) {
@@ -140,10 +150,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          }
       }
       displayBus_ = new EventBus();
-      cvFrame_ = new JFrame();
-      int xLoc = profile.getSettings(ourClass_).getInteger(XLOC, 100);
-      int yLoc = profile.getSettings(ourClass_).getInteger(YLOC, 100);
-      cvFrame_.setLocation(xLoc, yLoc);
+      cvFrame_ = new CVFrame();
       coordsBuilder_ = Coordinates.builder();
       
       if (dataProvider_ == null) {
@@ -185,6 +192,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
 
          // clean up ContrastSettings
+         // TODO: convert to new scheme of dealing with contrasSettings
          DisplaySettings.ContrastSettings[] contrastSettings
                  = displaySettings_.getChannelContrastSettings();
          if (contrastSettings == null || contrastSettings.length != nrCh) {
@@ -277,7 +285,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
          drawVolume(timePoint);
          displayBus_.post(new CanvasDrawCompleteEvent());
-         currentlyShownTimePoint_ = timePoint;
 
          // Multi-Pass rendering is active by default but causes bugs in the display
          clearVolumeRenderer_.toggleAdaptiveLOD();
@@ -285,8 +292,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          clearVolumeRenderer_.requestDisplay();
          clearVolumeRenderer_.toggleControlPanelDisplay();
          cvFrame_.pack();
-         
-         //studio_.getDisplayManager()..raisedToTop(this);
 
       } catch (IOException ioe) {
          studio_.logs().logError(ioe);
@@ -301,16 +306,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
     */
    public void register() {
 
-      // displayBus_.register(this);
       dataProvider_.registerForEvents(this);
       studio_.displays().addViewer(this);
       studio_.events().registerForEvents(this);
-                  
-      // Ensure there are histograms for our display.
-      //if (open_) {
-      //   updateHistograms();
-      //}
-      
+
       // used to reference our instance within the listeners:
       final CVViewer ourViewer = this;
 
@@ -320,7 +319,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          @Override
          public void windowGainedFocus(WindowEvent e) {
             postEvent(DataViewerDidBecomeActiveEvent.create(ourViewer));
-            //studio_.getDisplayManager()..raisedToTop(ourViewer);
          }
 
          @Override
@@ -348,11 +346,12 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       profile.getSettings(ourClass_).putInteger(XLOC, cvFrame_.getX());
       profile.getSettings(ourClass_).putInteger(YLOC, cvFrame_.getY());
       studio_.getDisplayManager().removeViewer(this);
-      // displayBus_.unregister(this);
+      studio_.events().post(DataViewerWillCloseEvent.create(this));
       dataProvider_.unregisterForEvents(this);
       studio_.events().unregisterForEvents(this);
       clearVolumeRenderer_.close();
       cvFrame_.dispose();
+      imageStatsProcessor_.shutdown();
    }
 
    private void setOneChannelVisible(int chToBeVisible) {
@@ -657,7 +656,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
             studio_.logs().logError(ex);
          }
       }
-      currentlyShownTimePoint_ = timePoint;
       clearVolumeRenderer_.setVolumeDataUpdateAllowed(true);
       
       // This call used to time out, now appears to work      
@@ -882,6 +880,15 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
    }       
    
+   @Subscribe
+   public void onDataStoreClosingEvent(DefaultDatastoreClosingEvent ddce) {
+      if (ddce.getDatastore() == dataProvider_) {
+         if (cvFrame_ != null) {
+            cleanup();
+         }
+      }
+   }
+   
    /**
     * Check if we have all z slices for all channels at the given time point
     * This code may be fooled by other axes in the data
@@ -998,6 +1005,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          // TODO Should display error
          images = Collections.emptyList();
       }
+      
+      if (images == null) {
+         return null;
+      }
 
       // Images are sorted by channel here, since we don't (yet) have any other
       // way to correctly recombine stats with newer images (when update rate
@@ -1010,13 +1021,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       BoundsRectAndMask selection = BoundsRectAndMask.unselected();
 
       ImageStatsRequest request = ImageStatsRequest.create(position, images, selection);
-      
-      ImageStatsProcessor isp = ImageStatsProcessor.create();
-      
+
       ImagesAndStats process = null;
       
       try {
-         process = isp.process(1, request, true);
+         process = imageStatsProcessor_.process(1, request, true);
       } catch (InterruptedException ex) {
          //Logger.getLogger(CVViewer.class.getName()).log(Level.SEVERE, null, ex);
       }
