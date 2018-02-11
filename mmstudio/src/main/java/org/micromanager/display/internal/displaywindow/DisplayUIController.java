@@ -77,6 +77,7 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
+import org.micromanager.data.Metadata;
 import org.micromanager.data.internal.DefaultCoords;
 import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.ComponentDisplaySettings;
@@ -148,6 +149,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private JButton zoomInButton_;
    private JButton zoomOutButton_;
    private JLabel pixelInfoLabel_;
+   private JLabel imageInfoLabel_;
    private JLabel newImageIndicator_;
    private JLabel fpsLabel_;
    private JLabel infoLabel_;
@@ -460,8 +462,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       pixelInfoLabel_ = new JLabel(" ");
       pixelInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
+      pixelInfoLabel_.setMinimumSize(new Dimension(0, 10));
       panel.add(pixelInfoLabel_, new CC().split(5));
-      panel.add(new JPanel(), new CC().growX());
+      imageInfoLabel_ = new JLabel("Image Info here");
+      imageInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
+      JPanel tempPanel = new JPanel();
+      panel.add(imageInfoLabel_, new CC().growX());
       newImageIndicator_ = new JLabel("NEW IMAGE");
       newImageIndicator_.setFont(newImageIndicator_.getFont().
             deriveFont(10.0f).deriveFont(Font.BOLD));
@@ -785,10 +791,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
       // redrawing the info line (which may be expensive), check if pixelsize
       // changed (which can happen for the snap/live window) and only redraw the 
       // info label if it changed.
-      if (!cachedPixelSize_.equals(images.getRequest().getImage(0).getMetadata().getPixelSizeUm())) {
+      if (!cachedPixelSize_.equals(images.getRequest().getImage(0).getMetadata().
+              getPixelSizeUm())) {
          infoLabel_.setText(this.getInfoString(images));
          ijBridge_.mm2ijSetMetadata();
-         cachedPixelSize_ = images.getRequest().getImage(0).getMetadata().getPixelSizeUm();
+         cachedPixelSize_ = images.getRequest().getImage(0).getMetadata().
+                 getPixelSizeUm();
       } 
       
       ijBridge_.mm2ijSetDisplayPosition(nominalCoords);
@@ -798,9 +806,49 @@ public final class DisplayUIController implements Closeable, WindowListener,
          updatePixelInformation(); // TODO Can skip if identical images
       }
       
+      imageInfoLabel_.setText(getImageInfoLabel(images));
+      
       repaintScheduledForNewImages_.set(true);
    }
 
+   private String getImageInfoLabel(ImagesAndStats images) {
+      StringBuilder sb = new StringBuilder();
+      // feeble and ugly way of getting the correct channel
+      Coords nominalCoords = images.getRequest().getNominalCoords();
+      Metadata metadata = images.getRequest().
+              getImage(nominalCoords.getC()).getMetadata();
+      for (int i = 0; i < displayedAxes_.size(); ++i) {
+         if (displayedAxisLengths_.get(i) > 1) {
+            switch (displayedAxes_.get(i)) {
+               case Coords.P:
+                  String positionName = metadata.getPositionName();
+                  if (positionName.length() > 0) {
+                     sb.append(positionName).append(" ");
+                  }  break;
+               case Coords.T:
+                  double elapsedTimeMs = metadata.getElapsedTimeMs();
+                  if (elapsedTimeMs > 10000) {
+                     sb.append(elapsedTimeMs / 1000).append("s ");
+                  } else {
+                     sb.append(elapsedTimeMs).append("ms ");
+                  }  break;
+               case Coords.Z:
+                  double zPositionUm = metadata.getZPositionUm();
+                  sb.append(zPositionUm).append("um ");
+                  break;
+               case Coords.C:
+                  int channelIndex = nominalCoords.getC();
+                  sb.append(displayController_.getChannelName(channelIndex));
+                  break;
+               default:
+                  break;
+            }
+         }
+      }
+      
+      return sb.toString();
+   }
+   
    @MustCallOnEDT
    public void applyDisplaySettings(DisplaySettings settings) {
       // Note: This applies to color settings, zoom and playback fps
@@ -1745,5 +1793,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
       pixelInfoLabel_.setText(String.format("%s = %s",
             e.getXYString(), valuesString));
+      if (pixelInfoLabel_.getSize().width > pixelInfoLabel_.getMinimumSize().width) {
+         pixelInfoLabel_.setMinimumSize(new Dimension(
+                 pixelInfoLabel_.getSize().width, 10));
+      }
    }
 }
