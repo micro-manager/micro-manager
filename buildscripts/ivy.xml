@@ -41,9 +41,9 @@
 		<dependency org="io.scif" name="scifio" rev="0.33.0"/>
       <dependency org="edu.ucsf.valelab.tsf" name="tsfproto" rev="1.0.0"/>
 
-      <dependency org="net.clearvolume" name="cleargl" rev="2.0.4"/>
+      <dependency org="net.clearvolume" name="cleargl" rev="2.1.0"/>
       <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/>
-      <dependency org="net.clearvolume" name="clearcl" rev="0.4.7"/>
+      <dependency org="net.clearvolume" name="clearcl" rev="0.5.2"/>
 
       <!--jogl and gluegen are a pain! They are in central, but named in a way that is hard to re-concile with ivy.  Rename and use a copy from 3rdpartypublic -->
       <dependency org="org.jogamp.gluegen" name="gluegen-rt-local" rev="2.3.2"/>
@@ -59,7 +59,7 @@
       <dependency org="org.jogamp.jogl" name="jogl-all-natives-windows-i586" rev="2.3.2"/>
 
       <!-- Patched version of clearvolume from Nico -->
-      <dependency org="net.clearvolume" name="ClearVolume" rev="1.0-MM-SNAPSHOT"/>
+      <dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
 
 		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.51g"/>
 
