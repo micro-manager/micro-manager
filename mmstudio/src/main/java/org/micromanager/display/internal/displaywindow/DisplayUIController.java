@@ -545,7 +545,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
       // TODO Avoid static studio
       panel.add(new SaveButton(MMStudio.getInstance(), displayController_));
       panel.add(new GearButton(displayController_, MMStudio.getInstance()));
-
+      
+      // automatic calculation of minimum size of bottom panel
+      // can be misleading because no minimum size for the scrollbars is included.
+      // So, help out a bit by setting a reasonable minimum
+      panel.setMinimumSize(new Dimension(345, 10));
+      
       return panel;
    }
 
@@ -1722,8 +1727,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       else {
          int lastChannel = 0;
          for (Coords c : coords) {
-            while (c.getChannel() > lastChannel++) {
+            while (c.getChannel() > lastChannel) {
                chStrings.add("_");
+               lastChannel++;
             }
             chStrings.add(e.getComponentValuesStringForCoords(c));
          }
