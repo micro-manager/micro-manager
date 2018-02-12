@@ -1323,7 +1323,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
             mouseLocationOnImage_.x + mouseLocationOnImage_.width / 2,
             mouseLocationOnImage_.y + mouseLocationOnImage_.height / 2);
 
-      if (center.y > images.get(0).getHeight() || center.x > images.get(0).getWidth()) {
+      if (center.y >= images.get(0).getHeight() || 
+              center.x >= images.get(0).getWidth()) {
          displayController_.postDisplayEvent(
                DataViewerMousePixelInfoChangedEvent.createUnavailable());
          return;
