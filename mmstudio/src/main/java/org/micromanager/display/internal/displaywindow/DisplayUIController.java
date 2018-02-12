@@ -458,22 +458,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
             new MigLayout(new LC().insets("1").gridGap("0", "0").fillX()));
 
       
-      JPanel tmpPanel = new JPanel(new MigLayout());
       pixelInfoLabel_ = new JLabel(" ");
       pixelInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
       pixelInfoLabel_.setMinimumSize(new Dimension(0, 10));
-      tmpPanel.add(pixelInfoLabel_, new CC().split(2).span(2));
+      panel.add(pixelInfoLabel_, new CC().split(3));
       imageInfoLabel_ = new JLabel("Image Info here");
       imageInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
-      tmpPanel.add(imageInfoLabel_, new CC().growX().wrap());
-      newImageIndicator_ = new JLabel("NEW IMAGE");
-      newImageIndicator_.setFont(newImageIndicator_.getFont().
-            deriveFont(10.0f).deriveFont(Font.BOLD));
-      newImageIndicator_.setVisible(false);
-      tmpPanel.add(newImageIndicator_, new CC().hideMode(2));
-      fpsLabel_ = new JLabel(" ");
-      fpsLabel_.setFont(fpsLabel_.getFont().deriveFont(10.0f));
-      panel.add(tmpPanel, new CC().split(2).growX());
+      panel.add(imageInfoLabel_, new CC().growX());
+      
       SpinnerModel fpsModel = new SpinnerNumberModel(10.0, 0.1, 1000.0, 5.0);
       playbackFpsSpinner_ = new JSpinner(fpsModel);
       playbackFpsSpinner_.addChangeListener(new ChangeListener() {
@@ -487,7 +479,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       int width = 24 + playbackFpsButton_.getFontMetrics(
             playbackFpsButton_.getFont()).stringWidth("Playback: 9999.0 fps");
       Dimension fpsButtonSize = new Dimension(width,
-            fpsLabel_.getPreferredSize().height + 12);
+            pixelInfoLabel_.getPreferredSize().height + 12);
       playbackFpsButton_.setMinimumSize(fpsButtonSize);
       playbackFpsButton_.setMaximumSize(fpsButtonSize);
       playbackFpsButton_.setPreferredSize(fpsButtonSize);
@@ -545,7 +537,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
 
       panel.add(customControlsPanel, new CC().split());
-      panel.add(new JPanel(), new CC().growX());
+      
+      JPanel tmp2Panel = new JPanel();
+      newImageIndicator_ = new JLabel("NEW IMAGE");
+      newImageIndicator_.setFont(newImageIndicator_.getFont().
+            deriveFont(10.0f).deriveFont(Font.BOLD));
+      newImageIndicator_.setVisible(false);
+      tmp2Panel.add(newImageIndicator_, new CC().hideMode(2));
+      fpsLabel_ = new JLabel(" ");
+      fpsLabel_.setFont(fpsLabel_.getFont().deriveFont(10.0f));
+      tmp2Panel.add(fpsLabel_, new CC());
+      panel.add(tmp2Panel, new CC().growX());
       // TODO Avoid static studio
       panel.add(new SaveButton(MMStudio.getInstance(), displayController_));
       panel.add(new GearButton(displayController_, MMStudio.getInstance()));
@@ -811,13 +813,17 @@ public final class DisplayUIController implements Closeable, WindowListener,
 
    private String getImageInfoLabel(ImagesAndStats images) {
       StringBuilder sb = new StringBuilder();
-      // feeble and ugly way of getting the correct channel
+      // feeble and ugly way of getting the correct metadata
       Coords nominalCoords = images.getRequest().getNominalCoords();
       Metadata metadata = null;
-      for (Image image : images.getRequest().getImages()) {
-         if (image.getCoords().getC() == nominalCoords.getC()) {
-            metadata = image.getMetadata();
-         }   
+      if (nominalCoords.hasC()) {
+         for (Image image : images.getRequest().getImages()) {
+            if (image.getCoords().getC() == nominalCoords.getC()) {
+               metadata = image.getMetadata();
+            }
+         }
+      } else {
+         metadata = images.getRequest().getImages().get(0).getMetadata();
       }
       if (metadata == null) {
          return "";
