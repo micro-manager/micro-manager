@@ -116,9 +116,6 @@ import org.micromanager.internal.utils.ReportingUtils;
  * This is the object that holds the state describing which images are
  * currently displayed (as opposed to {@code DisplayController}'s notion of
  * the current display position, which may update faster than the actual UI.
- * 
- * TODO: indication of the currently displayed time (in seconds), channel (name),
- * and z (in microns)
  *
  * @author Mark A. Tsuchida
  */
@@ -815,8 +812,15 @@ public final class DisplayUIController implements Closeable, WindowListener,
       StringBuilder sb = new StringBuilder();
       // feeble and ugly way of getting the correct channel
       Coords nominalCoords = images.getRequest().getNominalCoords();
-      Metadata metadata = images.getRequest().
-              getImage(nominalCoords.getC()).getMetadata();
+      Metadata metadata = null;
+      for (Image image : images.getRequest().getImages()) {
+         if (image.getCoords().getC() == nominalCoords.getC()) {
+            metadata = image.getMetadata();
+         }   
+      }
+      if (metadata == null) {
+         return "";
+      }
       for (int i = 0; i < displayedAxes_.size(); ++i) {
          if (displayedAxisLengths_.get(i) > 1) {
             switch (displayedAxes_.get(i)) {
@@ -1775,8 +1779,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
       else {
          int lastChannel = 0;
          for (Coords c : coords) {
+            if (c.getChannel() > lastChannel) {
             while (c.getChannel() > lastChannel) {
-               chStrings.add("_");
+               chStrings.add("-");
+               lastChannel++;
+            }
+            } else {
                lastChannel++;
             }
             chStrings.add(e.getComponentValuesStringForCoords(c));
