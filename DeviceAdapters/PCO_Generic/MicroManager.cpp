@@ -29,6 +29,7 @@
 
 #include "..\..\MMDevice/ModuleInterface.h"
 #include "MicroManager.h"
+#include "VersionNo.h"
 //#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 
 #if defined _WIN64
@@ -1790,6 +1791,10 @@ int CPCOCam::Initialize()
   nRet = CreateProperty("Description", "pco generic driver module", MM::String, true);
   if(nRet != DEVICE_OK)
     return nRet;
+
+  char szVersion[200];
+  sprintf_s(szVersion, 200, "pco generic device adapter - V%s", STRFILEVER);
+  LogMessage(szVersion, false);
 
   CPropertyAction* pAct;
   // Initialize the camera
