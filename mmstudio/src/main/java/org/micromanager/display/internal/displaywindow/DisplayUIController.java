@@ -465,8 +465,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
       imageInfoLabel_ = new JLabel("Image Info here");
       imageInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
       panel.add(imageInfoLabel_, new CC().growX());
-      
-      SpinnerModel fpsModel = new SpinnerNumberModel(10.0, 0.1, 1000.0, 5.0);
+          
+      SpinnerModel fpsModel = new FpsSpinnerNumberModel(10.0, 1.0, 1000.0);
       playbackFpsSpinner_ = new JSpinner(fpsModel);
       playbackFpsSpinner_.addChangeListener(new ChangeListener() {
          @Override
@@ -826,7 +826,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
          metadata = images.getRequest().getImages().get(0).getMetadata();
       }
       if (metadata == null) {
-         return "";
+         return "No Image";
       }
       for (int i = 0; i < displayedAxes_.size(); ++i) {
          if (displayedAxisLengths_.get(i) > 1) {
@@ -839,13 +839,15 @@ public final class DisplayUIController implements Closeable, WindowListener,
                case Coords.T:
                   double elapsedTimeMs = metadata.getElapsedTimeMs();
                   if (elapsedTimeMs > 10000) {
-                     sb.append(elapsedTimeMs / 1000).append("s ");
+                     sb.append(NumberUtils.doubleToDisplayString(
+                             (elapsedTimeMs / 1000), 1)).append("s ");
                   } else {
                      sb.append(elapsedTimeMs).append("ms ");
                   }  break;
                case Coords.Z:
                   double zPositionUm = metadata.getZPositionUm();
-                  sb.append(zPositionUm).append("um ");
+                  sb.append(NumberUtils.doubleToDisplayString(zPositionUm, 2)).
+                          append("um ");
                   break;
                case Coords.C:
                   int channelIndex = nominalCoords.getC();
@@ -1169,6 +1171,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       displayController_.setDisplaySettings(displayController_.getDisplaySettings().
               copyBuilder().zoomRatio(factor).build());
       updateTitle();
+      canvasDidChangeSize();
    }
 
    public void canvasDidChangeSize() {
@@ -1207,8 +1210,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          int newCanvasHeight = Math.min(canvasMaxSize.height,
                screenBounds.height - frameInsets.top - frameInsets.bottom -
                      2 * BORDER_THICKNESS -
-                     topControlPanel_.getMinimumSize().height -
-                     bottomControlPanel_.getMinimumSize().height);
+                     topControlPanel_.getSize().height -
+                     bottomControlPanel_.getSize().height);
          ijBridge_.getIJImageCanvas().setPreferredSize(
                new Dimension(newCanvasWidth, newCanvasHeight));
          ijBridge_.getIJImageCanvas().invalidate();

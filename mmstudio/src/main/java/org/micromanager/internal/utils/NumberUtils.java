@@ -28,77 +28,92 @@ import java.text.ParseException;
 import java.util.Locale;
 
 public final class NumberUtils {
-	private static final NumberFormat format_;
-	private static final DecimalFormat coreDoubleFormat_;
-	private static final DecimalFormat coreIntegerFormat_;
+	private static final NumberFormat FORMAT;
+	private static final DecimalFormat COREDOUBLEFORMAT;
+	private static final DecimalFormat COREINTEGERFORMAT;
+   private static final int MAXDIGITS;
 
 	static {
+      MAXDIGITS = 4;
 		// The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
-		format_ = NumberFormat.getInstance();
-		format_.setRoundingMode(RoundingMode.HALF_UP);
-      format_.setMaximumFractionDigits(4);
+		FORMAT = NumberFormat.getInstance();
+		FORMAT.setRoundingMode(RoundingMode.HALF_UP);
+      FORMAT.setMaximumFractionDigits(MAXDIGITS);
 
 		// The core always uses four decimal places in its double strings, and a dot for the decimal separator.
 		// This is equivalent to the US locale settings.
-		coreDoubleFormat_ = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
-		coreDoubleFormat_.setRoundingMode(RoundingMode.HALF_UP);
-		coreDoubleFormat_.applyPattern("0.0000"); 
+		COREDOUBLEFORMAT = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+		COREDOUBLEFORMAT.setRoundingMode(RoundingMode.HALF_UP);
+		COREDOUBLEFORMAT.applyPattern("0.0000"); 
 		
-		coreIntegerFormat_ = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
-		coreIntegerFormat_.applyPattern("0");
+		COREINTEGERFORMAT = (DecimalFormat) DecimalFormat.getInstance(Locale.US);
+		COREINTEGERFORMAT.applyPattern("0");
 	}
 
 	// Display string methods
 	
 	public static String intToDisplayString(int number) {
-		return format_.format(number);
+		return FORMAT.format(number);
 	}
    
    public static String longToDisplayString(long number) {
-		return format_.format(number);
+		return FORMAT.format(number);
 	}
 
 	public static String doubleToDisplayString(double number) {
-		return format_.format(number);
+		return FORMAT.format(number);
+	}
+   
+   /**
+    * TODO: Check if this is thread safe
+    * @param number Number to converted to a String
+    * @param maxPrecision - Maximum number of digits in the resulting String
+    * @return String representation of the number in given Locale
+    */
+   public static String doubleToDisplayString(double number, int maxPrecision) {
+      FORMAT.setMaximumFractionDigits(maxPrecision);
+      String result = FORMAT.format(number);
+      FORMAT.setMaximumFractionDigits(MAXDIGITS);
+		return result;
 	}
 
 	public static int displayStringToInt(Object numberString) throws ParseException {
-		return format_.parse((String) numberString).intValue();
+		return FORMAT.parse((String) numberString).intValue();
 	}
 
    public static long displayStringToLong(Object numberString) throws ParseException {
-		return format_.parse((String) numberString).longValue();
+		return FORMAT.parse((String) numberString).longValue();
 	}
    
 	public static double displayStringToDouble(Object numberString) throws ParseException {
-		return format_.parse((String) numberString).doubleValue();
+		return FORMAT.parse((String) numberString).doubleValue();
 	}
 
 	
     // Core string methods
 	
 	public static String intToCoreString(long number) {
-		return coreIntegerFormat_.format(number);
+		return COREINTEGERFORMAT.format(number);
 	}
 
    public static String longToCoreString(long number) {
-      return coreIntegerFormat_.format(number);
+      return COREINTEGERFORMAT.format(number);
    }
 
 	public static String doubleToCoreString(double number) {
-		return coreDoubleFormat_.format(number);
+		return COREDOUBLEFORMAT.format(number);
 	}
 
 	public static int coreStringToInt(Object numberString) throws ParseException {
-		return coreIntegerFormat_.parse((String) numberString).intValue();
+		return COREINTEGERFORMAT.parse((String) numberString).intValue();
 	}
 
    public static long coreStringToLong(Object numberString) throws ParseException {
-		return coreIntegerFormat_.parse((String) numberString).longValue();
+		return COREINTEGERFORMAT.parse((String) numberString).longValue();
 	}
 
 	public static double coreStringToDouble(Object numberString) throws ParseException {
-		return coreDoubleFormat_.parse((String) numberString).doubleValue();
+		return COREDOUBLEFORMAT.parse((String) numberString).doubleValue();
 	}
 
 	
