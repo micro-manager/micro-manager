@@ -457,22 +457,23 @@ public final class DisplayUIController implements Closeable, WindowListener,
       JPanel panel = makeValidationRootJPanel(
             new MigLayout(new LC().insets("1").gridGap("0", "0").fillX()));
 
+      
+      JPanel tmpPanel = new JPanel(new MigLayout());
       pixelInfoLabel_ = new JLabel(" ");
       pixelInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
       pixelInfoLabel_.setMinimumSize(new Dimension(0, 10));
-      panel.add(pixelInfoLabel_, new CC().split(5));
+      tmpPanel.add(pixelInfoLabel_, new CC().split(2).span(2));
       imageInfoLabel_ = new JLabel("Image Info here");
       imageInfoLabel_.setFont(pixelInfoLabel_.getFont().deriveFont(10.0f));
-      JPanel tempPanel = new JPanel();
-      panel.add(imageInfoLabel_, new CC().growX());
+      tmpPanel.add(imageInfoLabel_, new CC().growX().wrap());
       newImageIndicator_ = new JLabel("NEW IMAGE");
       newImageIndicator_.setFont(newImageIndicator_.getFont().
             deriveFont(10.0f).deriveFont(Font.BOLD));
       newImageIndicator_.setVisible(false);
-      panel.add(newImageIndicator_, new CC().hideMode(2));
+      tmpPanel.add(newImageIndicator_, new CC().hideMode(2));
       fpsLabel_ = new JLabel(" ");
       fpsLabel_.setFont(fpsLabel_.getFont().deriveFont(10.0f));
-      panel.add(fpsLabel_, new CC());
+      panel.add(tmpPanel, new CC().split(2).growX());
       SpinnerModel fpsModel = new SpinnerNumberModel(10.0, 0.1, 1000.0, 5.0);
       playbackFpsSpinner_ = new JSpinner(fpsModel);
       playbackFpsSpinner_.addChangeListener(new ChangeListener() {
