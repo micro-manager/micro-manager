@@ -161,6 +161,7 @@
       </ImportLibrary>
       <TargetMachine>MachineX64</TargetMachine>
       <AdditionalLibraryDirectories>$(MM_3RDPARTYPUBLIC)\TUCam\TUCam_SDK_C++_V1.0.0.9\sdk\lib\$(Platform)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>TuCam.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(TargetPath)" ..\..\bin</Command>
