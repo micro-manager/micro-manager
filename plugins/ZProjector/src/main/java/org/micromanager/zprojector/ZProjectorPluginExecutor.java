@@ -99,10 +99,18 @@ public class ZProjectorPluginExecutor {
                newStore.setSummaryMetadata(metadata);
                DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
                copyDisplay.setCustomTitle(newName);
+               copyDisplay.setDisplaySettings(
+                       theWindow.getDisplaySettings().copyBuilder().build());
                studio_.displays().manage(newStore);
-               for (int p = 0; p < oldStore.getAxisLength(Coords.STAGE_POSITION); p++) {
-                  for (int t = 0; t < oldStore.getAxisLength(Coords.T); t++) {
-                     for (int c = 0; t < oldStore.getAxisLength(Coords.CHANNEL); c++) {
+               // HACK: Micro-Manager deals very poorly with Coords that are 
+               // absent, so included axes lengths set to 0 (even though that is 
+               // physically impossible)
+               int nrPos = Math.max(oldStore.getAxisLength(Coords.STAGE_POSITION), 1);
+               int nrT = Math.max(oldStore.getAxisLength(Coords.T), 1);
+               int nrC = Math.max (oldStore.getAxisLength(Coords.CHANNEL), 1);
+               for (int p = 0; p < nrPos; p++) {
+                  for (int t = 0; t < nrT; t++) {
+                     for (int c = 0; c < nrC; c++) {
                         Coords.CoordsBuilder cbz = cb.stagePosition(p).time(t).channel(c);
                         Image tmpImg = oldStore.getImage(cbz.z(0).build());
                         ImageStack stack = new ImageStack(
