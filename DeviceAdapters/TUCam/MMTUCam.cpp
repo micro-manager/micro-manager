@@ -20,18 +20,12 @@
 #include <cstdio>
 #include <string>
 #include <math.h>
-#include "../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
 #include <algorithm>
 #include "WriteCompactTiffRGB.h"
 #include <iostream>
 #include <process.h>
-
-#ifndef _WIN64
-#pragma comment(lib, "./Lib/x86/TUCam.lib")
-#else
-#pragma comment(lib, "./Lib/x64/TUCam.lib")
-#endif
 
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")

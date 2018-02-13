@@ -20,10 +20,10 @@
 #ifndef _MMTUCAM_H_
 #define _MMTUCAM_H_
 
-#include "./Include/TUCamApi.h"
-#include "../MMDevice/DeviceBase.h"
-#include "../MMDevice/ImgBuffer.h"
-#include "../MMDevice/DeviceThreads.h"
+#include "TUCamApi.h"
+#include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/ImgBuffer.h"
+#include "../../MMDevice/DeviceThreads.h"
 #include <string>
 #include <map>
 #include <algorithm>
