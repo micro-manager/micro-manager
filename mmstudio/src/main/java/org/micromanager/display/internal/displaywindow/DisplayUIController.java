@@ -845,9 +845,11 @@ public final class DisplayUIController implements Closeable, WindowListener,
                      sb.append(elapsedTimeMs).append("ms ");
                   }  break;
                case Coords.Z:
-                  double zPositionUm = metadata.getZPositionUm();
-                  sb.append(NumberUtils.doubleToDisplayString(zPositionUm, 2)).
-                          append("um ");
+                  Double zPositionUm = metadata.getZPositionUm();
+                  if (zPositionUm != null) {
+                     sb.append(NumberUtils.doubleToDisplayString(zPositionUm, 2)).
+                             append("um ");
+                  }
                   break;
                case Coords.C:
                   int channelIndex = nominalCoords.getC();
