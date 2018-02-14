@@ -147,7 +147,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
       panel_.add(zSlider_, "wrap");
       
       if (viewer_ != null) {
-         sp_ = new ScrollerPanel(viewer_.getDatastore(), viewer_);
+         sp_ = new ScrollerPanel(viewer_);
          panel_.add(sp_, "span x 4, growx, wrap");
       }
       
@@ -286,7 +286,7 @@ public final class CVInspectorPanelController extends AbstractInspectorPanelCont
             sp_.stopUpdateThread();
             panel_.remove(sp_);
          }
-         sp_ = new ScrollerPanel(viewer_.getDatastore(), viewer_);
+         sp_ = new ScrollerPanel(viewer_);
          panel_.add(sp_, "span x 4, growx, wrap");
       } 
       panel_.revalidate();
