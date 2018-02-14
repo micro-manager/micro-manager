@@ -243,6 +243,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          displaySettings_ = displaySettings_.copy().
                  channelColors(channelColors.toArray((new Color[0]))).
                  channelContrastSettings(contrastSettings).
+                 autostretch(displaySettings_.isAutostretchEnabled()).
                  build();
 
          Image randomImage = dataProvider_.getAnyImage();
