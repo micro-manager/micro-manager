@@ -28,7 +28,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -40,13 +39,16 @@ import java.util.TimerTask;
 
 import net.miginfocom.swing.MigLayout;
 
-import javax.swing.event.MouseInputAdapter;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerModel;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import org.micromanager.data.Coordinates;
 
 import org.micromanager.data.Coords;
@@ -55,6 +57,8 @@ import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.display.DataViewer;
 
 import org.micromanager.data.internal.DefaultCoords;
+import org.micromanager.display.internal.displaywindow.FpsSpinnerNumberModel;
+import org.micromanager.internal.utils.PopupButton;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
 
@@ -75,8 +79,7 @@ public class ScrollerPanel extends JPanel {
 
    private final HashMap<String, AxisState> axisToState_;
    private final HashMap<String, Integer> axisToSavedPosition_;
-   private JButton fpsButton_;
-   private final FPSPopupMenu fpsMenu_;
+   private PopupButton fpsButton_;
 
    private Timer snapbackTimer_;
    private Timer animationTimer_;
@@ -119,7 +122,6 @@ public class ScrollerPanel extends JPanel {
 
       animationFPS_ = UserProfileStaticInterface.getInstance().
               getSettings(this.getClass()).getDouble(CV_ANIMATION_FPS, animationFPS_);
-      fpsMenu_ = new FPSPopupMenu(display_, animationFPS_);
 
       List<String> axes;
       List<String> axisOrder = dataProvider_.getSummaryMetadata().getOrderedAxes();
@@ -208,19 +210,44 @@ public class ScrollerPanel extends JPanel {
       axisToState_.put(axis, new AxisState(positionButton, scrollbar, maxLabel));
 
 
+      SpinnerModel fpsModel = new FpsSpinnerNumberModel(animationFPS_, 1.0, 50.0);
+
       if (fpsButton_ == null) {
          // We have at least one scroller, so add our FPS control button.
-         fpsButton_ = new JButton("FPS: " + animationFPS_);
-         //fpsButton_.setFont(GUIUtils.buttonFont);
+         
+         final JSpinner playbackFpsSpinner = new JSpinner(fpsModel);
+         fpsButton_ = PopupButton.create("FPS: " + animationFPS_, playbackFpsSpinner);
+         playbackFpsSpinner.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+               animationFPS_ = (Double) playbackFpsSpinner.getValue();
+               display_.setDisplaySettings(display_.
+                       getDisplaySettings().copyBuilder().playbackFPS(animationFPS_).build());
+               fpsButton_.setText("FPS: " + animationFPS_);
+               playbackFpsSpinner.setVisible(false);
+            }
+         });
+
+         fpsButton_.setFont(fpsButton_.getFont().deriveFont(10.0f));
+         int width = 24 + fpsButton_.getFontMetrics(
+                 fpsButton_.getFont()).stringWidth("FPS: 100.0");
+         fpsButton_.addPopupButtonListener(new PopupButton.Listener() {
+            @Override
+            public void popupButtonWillShowPopup(PopupButton button) {
+               playbackFpsSpinner.setValue(display_.getDisplaySettings().getPlaybackFPS());
+            }
+         });
+/*
          fpsButton_.addMouseListener(new MouseInputAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-               fpsMenu_.show(fpsButton_, e.getX(), e.getY());
+               playbackFpsSpinner.setVisible(true);
             }
          });
+         */
          add(fpsButton_, "dock east, growy");
       }
-      
+
    }
    
    public void stopUpdateThread() {
