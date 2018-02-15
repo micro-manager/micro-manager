@@ -98,6 +98,7 @@ import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.TimeIntervalRunningQuantile;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.displaywindow.imagej.MMImageCanvas;
 import org.micromanager.display.internal.event.DisplayMouseEvent;
 import org.micromanager.display.internal.event.DisplayMouseWheelEvent;
 import org.micromanager.display.internal.gearmenu.GearButton;
@@ -322,6 +323,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
    @MustCallOnEDT
    public ImagePlus getIJImagePlus() {
       return ijBridge_.getIJImagePlus();
+   }
+   
+   /**
+    * Not ideal, but the Image Exporter needs access to the canvas to 
+    * grab images
+    * 
+    * @return 
+    */
+   public MMImageCanvas getIJImageCanvas() {
+      return ijBridge_.getIJImageCanvas();
    }
 
    @MustCallOnEDT
@@ -1363,6 +1374,12 @@ public final class DisplayUIController implements Closeable, WindowListener,
       DisplaySettings displaySettings = displayController_.getDisplaySettings();
       List<Image> images = displayedImages_.getRequest().getImages();
       Coords nominalCoords = displayedImages_.getRequest().getNominalCoords();
+      // The eternal problem of missing axes rises its ugly head again
+      // This really  should be solved in a systematic way rather than patching
+      // all the stuff that breaks!!!
+      if (!nominalCoords.hasC()) {
+         nominalCoords = nominalCoords.copyBuilder().c(0).build();
+      }
       Image primaryImage = null;
       for (Image image : images) {
          if (image.getCoords().getChannel() == nominalCoords.getChannel()) {

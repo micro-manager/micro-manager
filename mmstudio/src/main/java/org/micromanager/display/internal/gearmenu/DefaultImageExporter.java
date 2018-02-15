@@ -21,10 +21,12 @@
 
 package org.micromanager.display.internal.gearmenu;
 
+import com.google.common.eventbus.Subscribe;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -37,10 +39,11 @@ import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.display.DisplayDidShowImageEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.display.ImageExporter.OutputFormat;
-//import org.micromanager.display.internal.events.CanvasDrawCompleteEvent;
+import org.micromanager.display.internal.displaywindow.imagej.ImageJBridge;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -195,52 +198,50 @@ public final class DefaultImageExporter implements ImageExporter {
     * then once for the display painting to our provided Graphics object.
     * @param event
     */
-   /*
    @Subscribe
-   public void onDrawComplete(CanvasDrawCompleteEvent event) {
-      try {
-         if (event.getGraphics() != currentGraphics_) {
-            // We now know that the correct image is visible on the canvas, so
-            // have it paint that image to our own Graphics object. This is
-            // inefficient (having to paint the same image twice), but
-            // unfortunately there's no way (so far as I'm aware) to get an
-            // Image from a component except by painting.
-            // HACK: the getCanvas() and paintImageWithGraphics methods aren't
-            // exposed in DisplayWindow; hence why we need display_ to be
-            // DefaultDisplayWindow.
-            Dimension canvasSize = display_.getCanvas().getSize();
-            currentImage_ = new BufferedImage(canvasSize.width,
-                  canvasSize.height, BufferedImage.TYPE_INT_RGB);
-            currentGraphics_ = currentImage_.getGraphics();
-            display_.paintDisplayedImageToGraphics(currentGraphics_);
-         }
-         else {
-            // Display just finished painting to currentGraphics_, so export
-            // now.
-            if (format_ == OutputFormat.OUTPUT_IMAGEJ) {
-               if (stack_ == null) {
-                  // Create the ImageJ stack object to add images to.
-                  stack_ = new ImageStack(currentImage_.getWidth(),
-                        currentImage_.getHeight());
+   public void onDrawComplete(DisplayDidShowImageEvent event) {
+      if (event.getDataViewer() instanceof DisplayController) {
+         DisplayController dc = (DisplayController) event.getDataViewer();
+         try {
+            if (dc.getUIController().getIJImageCanvas().getGraphics() != currentGraphics_) {
+               // We now know that the correct image is visible on the canvas, so
+               // have it paint that image to our own Graphics object. This is
+               // inefficient (having to paint the same image twice), but
+               // unfortunately there's no way (so far as I'm aware) to get an
+               // Image from a component except by painting.
+               // HACK: the getCanvas() and paintImageWithGraphics methods aren't
+               // exposed in DisplayWindow; hence why we need display_ to be
+               // DefaultDisplayWindow.
+               Dimension canvasSize = dc.getUIController().getIJImageCanvas().getSize();
+               currentImage_ = new BufferedImage(canvasSize.width,
+                       canvasSize.height, BufferedImage.TYPE_INT_RGB);
+               currentGraphics_ = currentImage_.getGraphics();
+               dc.getUIController().getIJImageCanvas().paint(currentGraphics_);
+
+               // Display just finished painting to currentGraphics_, so export
+               // now.
+               if (format_ == OutputFormat.OUTPUT_IMAGEJ) {
+                  if (stack_ == null) {
+                     // Create the ImageJ stack object to add images to.
+                     stack_ = new ImageStack(currentImage_.getWidth(),
+                             currentImage_.getHeight());
+                  }
+                  addToStack(stack_, currentImage_);
+               } else {
+                  // Save the image to disk in appropriate format.
+                  exportImage(currentImage_, sequenceNum_++);
                }
-               addToStack(stack_, currentImage_);
+               currentGraphics_.dispose();
+               drawFlag_.set(false);
+               if (isSingleShot_) {
+                  doneFlag_.set(true);
+               }
             }
-            else {
-               // Save the image to disk in appropriate format.
-               exportImage(currentImage_, sequenceNum_++);
-            }
-            currentGraphics_.dispose();
-            drawFlag_.set(false);
-            if (isSingleShot_) {
-               doneFlag_.set(true);
-            }
+         } catch (Exception e) {
+            ReportingUtils.logError(e, "Error handling draw complete");
          }
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Error handling draw complete");
       }
    }
-   */
 
    /**
     * Save a single image to disk.
@@ -248,35 +249,35 @@ public final class DefaultImageExporter implements ImageExporter {
    private void exportImage(BufferedImage image, int sequenceNum) {
       String filename = getOutputFilename(isSingleShot_ ? -1 : sequenceNum);
       File file = new File(filename);
-      if (format_ == OutputFormat.OUTPUT_PNG) {
-         try {
-            ImageIO.write(image, "png", file);
-         }
-         catch (IOException e) {
-            ReportingUtils.logError(e, "Error writing exported PNG image");
-         }
-      }
-      else if (format_ == OutputFormat.OUTPUT_JPG) {
-         // Set the compression quality.
-         float quality = jpegQuality_ / ((float) 10.0);
-         ImageWriter writer = ImageIO.getImageWritersByFormatName(
-               "jpeg").next();
-         ImageWriteParam param = writer.getDefaultWriteParam();
-         param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-         param.setCompressionQuality(quality);
-         try {
-            ImageOutputStream stream = ImageIO.createImageOutputStream(file);
-            writer.setOutput(stream);
-            writer.write(image);
-            stream.close();
-         }
-         catch (IOException e) {
-            ReportingUtils.logError(e, "Error writing exported JPEG image");
-         }
-         writer.dispose();
-      }
-      else {
-         ReportingUtils.logError("Unrecognized save format " + format_);
+      if (null != format_) switch (format_) {
+         case OUTPUT_PNG:
+            try {
+               ImageIO.write(image, "png", file);
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Error writing exported PNG image");
+            }  break;
+         case OUTPUT_JPG:
+            // Set the compression quality.
+            float quality = jpegQuality_ / ((float) 10.0);
+            ImageWriter writer = ImageIO.getImageWritersByFormatName(
+                    "jpeg").next();
+            ImageWriteParam param = writer.getDefaultWriteParam();
+            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            param.setCompressionQuality(quality);
+            try {
+               ImageOutputStream stream = ImageIO.createImageOutputStream(file);
+               writer.setOutput(stream);
+               writer.write(image);
+               stream.close();
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e, "Error writing exported JPEG image");
+            }  writer.dispose();
+            break;
+         default:
+            ReportingUtils.logError("Unrecognized save format " + format_);
+            break;
       }
    }
 
@@ -392,7 +393,7 @@ public final class DefaultImageExporter implements ImageExporter {
             @Override
             public void run() {
                // TODO
-               //display_.requestRedraw();
+              display_.setDisplayPosition(coords.get(0));
             }
          }, "Image export thread");
       }
@@ -406,7 +407,7 @@ public final class DefaultImageExporter implements ImageExporter {
                   // Setting the displayed image will result in our
                   // CanvasDrawCompleteEvent handler being invoked, which
                   // causes images to be exported.
-                  display_.setDisplayedImageTo(imageCoords);
+                  display_.setDisplayPosition(imageCoords);
                   // Wait until drawing is done.
                   while (drawFlag_.get()) {
                      try {
