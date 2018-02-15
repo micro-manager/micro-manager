@@ -150,16 +150,23 @@ DiskoveryHub::~DiskoveryHub()
 
 int DiskoveryHub::Initialize() 
 {
-   // it is possible that the Controller was rebooting because the serial port just opened
-   // Check if the device is present, if not, wait up to 25 seconds
+   // The Discovery reboots when the USB-serial connection is first made
+   // (usually the first time we connect), and it takes up to 3 minutes.
+   // Keep retrying every 10 seconds, up to 5 minutes.
+   const long sleepMs = 10000;
    bool present = false;
-   IsControllerPresent(port_, present);
-   if (!present) 
+   for (int i = 0; i < (5 * 60 / 10); ++i)
    {
-      CDeviceUtils::SleepMs(25000);
-      IsControllerPresent(port_, present);
-      if (!present)
-         return DEVICE_NOT_CONNECTED;
+      int err = IsControllerPresent(port_, present);
+      if (err != DEVICE_OK)
+         return err;
+      if (present)
+         break;
+
+      CDeviceUtils::SleepMs(sleepMs);
+   }
+   if (!present) {
+      return DEVICE_NOT_CONNECTED;
    }
 
    model_ = new DiskoveryModel(this, *GetCoreCallback());
@@ -321,6 +328,8 @@ int DiskoveryHub::IsControllerPresent(const std::string port, bool& present)
             "\r\n") );
    std::string answer;
    RETURN_ON_MM_ERROR( GetSerialAnswer(port.c_str(), "\r\n", answer) );
+   if (answer.empty()) // We should get at least garbage if attached
+      return DEVICE_NOT_CONNECTED;
    while (answer == "STATUS=1")
       RETURN_ON_MM_ERROR( GetSerialAnswer(port.c_str(), "\r\n", answer) );
    if (answer == "PRODUCT_MODEL=DISKOVERY")
