@@ -6,7 +6,6 @@
 // AUTHOR:       Chris Weisiger, cweisiger@msg.ucsf.edu, June 2015
 //
 // COPYRIGHT:    University of California, San Francisco, 2006
-// COPYRIGHT:    University of California, San Francisco, 2006
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -27,6 +26,7 @@ import com.bulenkov.iconloader.IconLoader;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import java.awt.Color;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -98,7 +99,7 @@ public final class ExportMovieDlg extends MMDialog {
          super(new MigLayout("flowx"));
          super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
          store_ = display.getDataProvider();
-         ArrayList<String> axes = new ArrayList<String>(
+         List<String> axes = new ArrayList<String>(
                parent.getNonZeroAxes());
          Collections.sort(axes);
          axisSelector_ = new JComboBox(axes.toArray(new String[] {}));
@@ -238,14 +239,18 @@ public final class ExportMovieDlg extends MMDialog {
     */
    public ExportMovieDlg(DisplayWindow display) {
       super();
-      super.loadAndRestorePosition(100, 100);
+      // position the export dialog over the center of the display:
+      Window dw = display.getWindow();
+      int centerX = dw.getX() + dw.getWidth() / 2;
+      int centerY = dw.getY() + dw.getHeight() / 2;
+      
       display_ = display;
       provider_ = display.getDataProvider();
       axisPanels_ = new ArrayList<AxisPanel>();
 
       File file = new File(display.getName());
       String shortName = file.getName();
-      setTitle("Export Image Series: " + shortName);
+      super.setTitle("Export Image Series: " + shortName);
 
       contentsPanel_ = new JPanel(new MigLayout("flowy"));
 
@@ -327,10 +332,12 @@ public final class ExportMovieDlg extends MMDialog {
       contentsPanel_.add(cancelButton, "split 2, flowx, align right");
       contentsPanel_.add(exportButton);
 
-      getContentPane().add(contentsPanel_);
+      super.getContentPane().add(contentsPanel_);
       outputFormatSelector_.setSelectedItem(getDefaultExportFormat());
-      pack();
-      setVisible(true);
+      super.pack();
+      super.setLocation(centerX - super.getWidth() / 2, 
+              centerY - super.getHeight() / 2);
+      super.setVisible(true);
    }
 
    private void export() {
@@ -520,32 +527,35 @@ public final class ExportMovieDlg extends MMDialog {
     * Get the default mode the user wants to use for exporting movies.
     */
    private static String getDefaultExportFormat() {
-      return UserProfileStaticInterface.getInstance().getString(ExportMovieDlg.class,
-            DEFAULT_EXPORT_FORMAT, FORMAT_PNG);
+      return UserProfileStaticInterface.getInstance().
+              getSettings(ExportMovieDlg.class).
+              getString(DEFAULT_EXPORT_FORMAT, FORMAT_PNG);
    }
 
    /**
     * Set the default mode to use for exporting movies.
     */
    private static void setDefaultExportFormat(String format) {
-      UserProfileStaticInterface.getInstance().setString(ExportMovieDlg.class,
-            DEFAULT_EXPORT_FORMAT, format);
+      UserProfileStaticInterface.getInstance().getSettings(ExportMovieDlg.class).
+              putString(DEFAULT_EXPORT_FORMAT, format);
    }
 
    /**
     * Get the default filename prefix.
     */
    private static String getDefaultPrefix() {
-      return UserProfileStaticInterface.getInstance().getString(ExportMovieDlg.class,
-            DEFAULT_FILENAME_PREFIX, "exported");
+      return UserProfileStaticInterface.getInstance().
+              getSettings(ExportMovieDlg.class).
+              getString(DEFAULT_FILENAME_PREFIX, "exported");
    }
 
    /**
     * Set a new default filename prefix.
     */
    private static void setDefaultPrefix(String prefix) {
-      UserProfileStaticInterface.getInstance().setString(ExportMovieDlg.class,
-            DEFAULT_FILENAME_PREFIX, prefix);
+      UserProfileStaticInterface.getInstance().
+              getSettings(ExportMovieDlg.class).
+              putString(DEFAULT_FILENAME_PREFIX, prefix);
    }
 }
 
