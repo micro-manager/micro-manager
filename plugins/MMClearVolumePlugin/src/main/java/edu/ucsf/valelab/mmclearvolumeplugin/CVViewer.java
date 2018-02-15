@@ -162,10 +162,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          name_ = dataProvider_.getSummaryMetadata().getPrefix();
       }
 
-      if (timePointComplete(0)) {
-         initializeRenderer(0);
-      }
-
+      initializeRenderer(0);
 
    }
    

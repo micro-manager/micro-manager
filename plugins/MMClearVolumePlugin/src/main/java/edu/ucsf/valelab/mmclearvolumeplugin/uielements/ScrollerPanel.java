@@ -119,7 +119,7 @@ public class ScrollerPanel extends JPanel {
       // separate fps for 3D
 
       animationFPS_ = UserProfileStaticInterface.getInstance().
-              getSettings(this.getClass()).getDouble(CV_ANIMATION_FPS, animationFPS_);
+              getSettings(ScrollerPanel.class).getDouble(CV_ANIMATION_FPS, animationFPS_);
       
       List<String> axes;
       List<String> axisOrder = dataProvider_.getSummaryMetadata().getOrderedAxes();
@@ -223,7 +223,7 @@ public class ScrollerPanel extends JPanel {
                        getDisplaySettings().copyBuilder().playbackFPS(animationFPS_).build());
                fpsButton_.setText("FPS: " + animationFPS_);
                UserProfileStaticInterface.getInstance().
-                     getSettings(this.getClass()).putDouble(CV_ANIMATION_FPS, 
+                     getSettings(ScrollerPanel.class).putDouble(CV_ANIMATION_FPS, 
                           animationFPS_);
             }
          });
