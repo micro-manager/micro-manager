@@ -26,6 +26,7 @@ import ij.gui.Roi;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -75,23 +76,12 @@ public class DuplicatorPluginFrame extends MMDialog {
       
       ourWindow_ = window;
       ourProvider_ = ourWindow_.getDataProvider();
-      
-      // Not sure if this is needed, be safe for now
-      /*
-      if (!ourProvider_.isFrozen()) {
-         studio_.logs().showMessage("Can not duplicate ongoing acquisitions", 
-                 window.getWindow());
-         super.dispose();
-         return;
-      }
-      */
+
       
       super.setLayout(new MigLayout("flowx, fill, insets 8"));
       File file = new File(window.getName());
       String shortName = file.getName();
       super.setTitle(DuplicatorPlugin.MENUNAME + shortName);
-
-      super.loadAndRestorePosition(100, 100, 375, 275);
       
       List<String> axes = ourProvider_.getAxes();
       // Note: MM uses 0-based indices in the code, but 1-based indices
@@ -100,73 +90,73 @@ public class DuplicatorPluginFrame extends MMDialog {
       // in the UI code
       final Map<String, Integer> mins = new HashMap<String, Integer>();
       final Map<String, Integer> maxes = new HashMap<String, Integer>();
-      
-      super.add(new JLabel(" "));
-      super.add(new JLabel("min"));
-      super.add(new JLabel("max"), "wrap");
-      
-      for (final String axis : axes) {
-         if (ourProvider_.getAxisLength(axis) > 1) {
-            mins.put(axis, 1);
-            maxes.put(axis, ourProvider_.getAxisLength(axis));
-            
-            super.add(new JLabel(axis));
-            SpinnerNumberModel model = new SpinnerNumberModel( 1, 1,
-                    (int) ourProvider_.getAxisLength(axis), 1);
-            mins.put(axis, 0);
-            final JSpinner minSpinner = new JSpinner(model);
-            JFormattedTextField field = (JFormattedTextField) 
-                    minSpinner.getEditor().getComponent(0);
-            DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
-            formatter.setCommitsOnValidEdit(true);
-            minSpinner.addChangeListener(new ChangeListener(){
-               @Override
-               public void stateChanged(ChangeEvent ce) {
-                  // check to stay below max, this could be annoying at times
-                  if ( (Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
-                     minSpinner.setValue(maxes.get(axis) + 1);
-                  }
-                  mins.put(axis, (Integer) minSpinner.getValue() - 1);
-                  try {
-                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                     coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
-                     ourWindow_.setDisplayPosition(coord);
-                  } catch (IOException ioe) {
-                     ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
-                  }
-               }
-            });
-            super.add(minSpinner, "wmin 60");
 
-            model = new SpinnerNumberModel((int) ourProvider_.getAxisLength(axis),
-                     1, (int) ourProvider_.getAxisLength(axis), 1);
-            maxes.put(axis, ourProvider_.getAxisLength(axis) - 1);
-            final JSpinner maxSpinner = new JSpinner(model);
-            field = (JFormattedTextField) 
-                    maxSpinner.getEditor().getComponent(0);
-            formatter = (DefaultFormatter) field.getFormatter();
-            formatter.setCommitsOnValidEdit(true);
-            maxSpinner.addChangeListener(new ChangeListener(){
-               @Override
-               public void stateChanged(ChangeEvent ce) {
-                  // check to stay above min
-                  if ( (Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
-                     maxSpinner.setValue(mins.get(axis) + 1);
+      if (axes.size() > 0) {
+         super.add(new JLabel(" "));
+         super.add(new JLabel("min"));
+         super.add(new JLabel("max"), "wrap");
+
+         for (final String axis : axes) {
+            if (ourProvider_.getAxisLength(axis) > 1) {
+               mins.put(axis, 1);
+               maxes.put(axis, ourProvider_.getAxisLength(axis));
+
+               super.add(new JLabel(axis));
+               SpinnerNumberModel model = new SpinnerNumberModel(1, 1,
+                       (int) ourProvider_.getAxisLength(axis), 1);
+               mins.put(axis, 0);
+               final JSpinner minSpinner = new JSpinner(model);
+               JFormattedTextField field = (JFormattedTextField) minSpinner.getEditor().getComponent(0);
+               DefaultFormatter formatter = (DefaultFormatter) field.getFormatter();
+               formatter.setCommitsOnValidEdit(true);
+               minSpinner.addChangeListener(new ChangeListener() {
+                  @Override
+                  public void stateChanged(ChangeEvent ce) {
+                     // check to stay below max, this could be annoying at times
+                     if ((Integer) minSpinner.getValue() > maxes.get(axis) + 1) {
+                        minSpinner.setValue(maxes.get(axis) + 1);
+                     }
+                     mins.put(axis, (Integer) minSpinner.getValue() - 1);
+                     try {
+                        Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                        coord = coord.copyBuilder().index(axis, mins.get(axis)).build();
+                        ourWindow_.setDisplayPosition(coord);
+                     } catch (IOException ioe) {
+                        ReportingUtils.logError(ioe, "IOException in DuplicatorPlugin");
+                     }
                   }
-                  maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
-                  try {
-                     Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
-                     coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
-                     ourWindow_.setDisplayPosition(coord);
-                  } catch (IOException ioe) {
-                     ReportingUtils.logError(ioe, "IOException in DuplcatorPlugin");
+               });
+               super.add(minSpinner, "wmin 60");
+
+               model = new SpinnerNumberModel((int) ourProvider_.getAxisLength(axis),
+                       1, (int) ourProvider_.getAxisLength(axis), 1);
+               maxes.put(axis, ourProvider_.getAxisLength(axis) - 1);
+               final JSpinner maxSpinner = new JSpinner(model);
+               field = (JFormattedTextField) maxSpinner.getEditor().getComponent(0);
+               formatter = (DefaultFormatter) field.getFormatter();
+               formatter.setCommitsOnValidEdit(true);
+               maxSpinner.addChangeListener(new ChangeListener() {
+                  @Override
+                  public void stateChanged(ChangeEvent ce) {
+                     // check to stay above min
+                     if ((Integer) maxSpinner.getValue() < mins.get(axis) + 1) {
+                        maxSpinner.setValue(mins.get(axis) + 1);
+                     }
+                     maxes.put(axis, (Integer) maxSpinner.getValue() - 1);
+                     try {
+                        Coords coord = ourWindow_.getDisplayedImages().get(0).getCoords();
+                        coord = coord.copyBuilder().index(axis, maxes.get(axis)).build();
+                        ourWindow_.setDisplayPosition(coord);
+                     } catch (IOException ioe) {
+                        ReportingUtils.logError(ioe, "IOException in DuplcatorPlugin");
+                     }
                   }
-               }
-            });
-            super.add(maxSpinner, "wmin 60, wrap");
+               });
+               super.add(maxSpinner, "wmin 60, wrap");
+            }
          }
       }
-      
+
       super.add(new JLabel("name"));
       final JTextField nameField = new JTextField(shortName);
       super.add(nameField, "span2, grow, wrap");
@@ -191,6 +181,13 @@ public class DuplicatorPluginFrame extends MMDialog {
       super.add(CancelButton, "tag cancel, wrap");     
       
       super.pack();
+      
+      Window w = ourWindow_.getWindow();
+      int xCenter = w.getX() + w.getWidth() / 2;
+      int yCenter = w.getY() + w.getHeight() / 2;
+      super.setLocation(xCenter - super.getWidth() / 2, 
+              yCenter - super.getHeight());
+      
       super.setVisible(true);
       
       
@@ -211,6 +208,12 @@ public class DuplicatorPluginFrame extends MMDialog {
       
       // TODO: provide options for disk-backed datastores
       Datastore newStore = studio_.data().createRAMDatastore();
+      
+      
+      DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
+      copyDisplay.setCustomTitle(newName);
+      copyDisplay.setDisplaySettings(
+              theWindow.getDisplaySettings().copyBuilder().build());
       
       // TODO: use Overlays instead
       Roi roi = theWindow.getImagePlus().getRoi();
@@ -296,6 +299,7 @@ public class DuplicatorPluginFrame extends MMDialog {
                   }
                }
                newStore.putImage(newImgShallow);
+               
             }
          }
 
@@ -314,8 +318,6 @@ public class DuplicatorPluginFrame extends MMDialog {
       } catch (IOException ioe) {
          studio_.logs().showError(ioe, "IOException freezing store in Duplicator plugin");
       }
-      DisplayWindow copyDisplay = studio_.displays().createDisplay(newStore);
-      copyDisplay.setCustomTitle(newName);
       studio_.displays().manage(newStore);
    }
    
