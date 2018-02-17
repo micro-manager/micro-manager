@@ -20,6 +20,7 @@
 
 package org.micromanager.data;
 
+import java.awt.Component;
 import java.awt.Window;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -200,6 +201,26 @@ public interface DataManager {
     */
    Datastore loadData(String directory, boolean isVirtual) throws IOException;
 
+   /**
+    * Load the image data at the specified location on disk, and return a
+    * Datastore for that data. This Datastore will not be managed by
+    * Micro-Manager by default (see the
+    * org.micromanager.api.display.DisplayManager.manage() method for more
+    * information).
+    * @param parent GUI object over which to place progress indicators
+    *                When null, center of the screen will be used
+    * @param directory Location on disk from which to pull image data.
+    * @param isVirtual If true, then only load images into RAM as they are
+    *        requested. This reduces RAM utilization and has a lesser delay
+    *        at the start of image viewing, but has worse performance if the
+    *        entire dataset needs to be viewed or manipulated.
+    * @return A Datastore backed by appropriate Storage that provides access
+    *        to the images.
+    * @throws IOException if there was any error in reading the data.
+    */
+   
+   Datastore loadData(Component parent, String directory, boolean isVirtual) throws IOException;
+   
    /**
     * Return the save mode that the user prefers to use. This is automatically
     * updated whenever the user saves a file.

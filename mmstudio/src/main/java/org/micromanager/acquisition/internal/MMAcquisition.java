@@ -69,6 +69,7 @@ import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.display.internal.DefaultDisplaySettings;
+import org.micromanager.internal.MMStudio;
 
 /**
  * This class is used to execute most of the acquisition and image display
@@ -440,7 +441,7 @@ public final class MMAcquisition extends DataViewerListener {
             case SINGLEPLANE_TIFF_SERIES:
                return new StorageSinglePlaneTiffSeries(store, path, isNew);
             case MULTIPAGE_TIFF:
-               return new StorageMultipageTiff(store, path, isNew);
+               return new StorageMultipageTiff(MMStudio.getFrame(), store, path, isNew);
          }
       }
       ReportingUtils.logError("Unrecognized save mode " + mode);

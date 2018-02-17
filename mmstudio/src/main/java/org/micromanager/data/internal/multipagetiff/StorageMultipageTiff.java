@@ -19,6 +19,7 @@
 package org.micromanager.data.internal.multipagetiff;
 
 import com.google.common.eventbus.Subscribe;
+import java.awt.Component;
 import java.awt.GraphicsEnvironment;
 import java.io.File;
 import java.io.IOException;
@@ -72,6 +73,7 @@ public final class StorageMultipageTiff implements Storage {
             Coords.STAGE_POSITION));
 
    private DefaultDatastore store_;
+   private Component parent_;
    private DefaultSummaryMetadata summaryMetadata_ = (new DefaultSummaryMetadata.Builder()).build();
    private String summaryMetadataString_ = NonPropertyMapJSONFormats.
          summaryMetadata().toJSON(summaryMetadata_.toPropertyMap());
@@ -102,9 +104,10 @@ public final class StorageMultipageTiff implements Storage {
    // Keeps track of our maximum extent along each axis.
    private Coords maxIndices_;
   
-   public StorageMultipageTiff(Datastore store, String dir, Boolean amInWriteMode)
+   public StorageMultipageTiff(Component parent, Datastore store, String dir, 
+           Boolean amInWriteMode)
          throws IOException {
-      this(store, dir, amInWriteMode, getShouldGenerateMetadataFile(),
+      this(parent, store, dir, amInWriteMode, getShouldGenerateMetadataFile(),
             getShouldSplitPositions());
    }
    
@@ -112,10 +115,11 @@ public final class StorageMultipageTiff implements Storage {
     * Constructor that doesn't make reference to MMStudio so it can be used
     * independently of MM GUI
     */
-   public StorageMultipageTiff(Datastore store, String dir,
+   public StorageMultipageTiff(Component parent, Datastore store, String dir,
          boolean amInWriteMode, boolean separateMDFile,
          boolean separateFilesForPositions) throws IOException {
       store_ = (DefaultDatastore) store;
+      parent_ = parent;
       // We must be notified of changes in the Datastore before everyone else,
       // so that others can read those changes out of the Datastore later.
       store_.registerForEvents(this, 0);
@@ -193,7 +197,8 @@ public final class StorageMultipageTiff implements Storage {
       ProgressBar progressBar = null;
       // Allow operation in headless mode.
       if (!GraphicsEnvironment.isHeadless()) {
-         progressBar = new ProgressBar("Reading " + directory_, 0, dir.listFiles().length);
+         progressBar = new ProgressBar(parent_, "Reading " + directory_, 0, 
+                 dir.listFiles().length);
       }
       int numRead = 0;
       if (progressBar != null) {
@@ -416,7 +421,8 @@ public final class StorageMultipageTiff implements Storage {
       }
       ProgressBar progressBar = null;
       if (!GraphicsEnvironment.isHeadless()) {
-         progressBar = new ProgressBar("Finishing Files", 0, positionToFileSet_.size());
+         progressBar = new ProgressBar(parent_, "Finishing Files", 0, 
+                 positionToFileSet_.size());
       }
       try {
          int count = 0;
@@ -534,7 +540,8 @@ public final class StorageMultipageTiff implements Storage {
       Map<Coords, MultipageTiffReader> oldImageMap = coordsToReader_;
       coordsToReader_ = new HashMap<Coords, MultipageTiffReader>();
       if (showProgress && !GraphicsEnvironment.isHeadless()) {
-         ProgressBar progressBar = new ProgressBar("Building image location map", 0, oldImageMap.keySet().size());
+         ProgressBar progressBar = new ProgressBar(parent_, 
+                 "Building image location map", 0, oldImageMap.keySet().size());
          progressBar.setProgress(0);
          progressBar.setVisible(true);
          int i = 1;

@@ -87,6 +87,10 @@ public final class MultipageTiffReader {
 
    /**
     * This constructor is used for a file that is currently being written.
+    * @param masterStorage
+    * @param summaryMD
+    * @param summaryPmap
+    * @param firstImage
     */
    public MultipageTiffReader(StorageMultipageTiff masterStorage,
          SummaryMetadata summaryMD, PropertyMap summaryPmap,
@@ -553,7 +557,7 @@ public final class MultipageTiffReader {
       long filePosition = firstIFD;
       coordsToOffset_ = new HashMap<Coords, Long>();
       long progBarMax = (fileChannel_.size() / 2L);
-      final ProgressBar progressBar = new ProgressBar("Fixing " + fileName, 0, 
+      final ProgressBar progressBar = new ProgressBar(null, "Fixing " + fileName, 0, 
               progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
       progressBar.setRange(0, progBarMax >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) progBarMax);
       progressBar.setProgress(0);

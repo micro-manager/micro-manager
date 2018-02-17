@@ -23,6 +23,7 @@
 package org.micromanager.internal.utils;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -32,10 +33,10 @@ import javax.swing.JProgressBar;
 
 public final class ProgressBar extends JPanel {
    private static final long serialVersionUID = 1L;
-   private JProgressBar progressBar;
-   private JFrame frame;
+   private final JProgressBar progressBar;
+   private final JFrame frame;
 
-   public ProgressBar (String windowName, int start, int end) {
+   public ProgressBar (Component parent, String windowName, int start, int end) {
       super(new BorderLayout());
       
       frame = new JFrame(windowName);
@@ -53,7 +54,7 @@ public final class ProgressBar extends JPanel {
       newContentPane.setOpaque(true);
       frame.setContentPane(newContentPane);
 
-      frame.setLocationRelativeTo(null);
+      frame.setLocationRelativeTo(parent);
       frame.setVisible(true);
    }
 

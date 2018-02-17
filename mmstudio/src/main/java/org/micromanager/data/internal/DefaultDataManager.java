@@ -20,6 +20,7 @@
 
 package org.micromanager.data.internal;
 
+import java.awt.Component;
 import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
@@ -61,9 +62,9 @@ public final class DefaultDataManager implements DataManager {
    private static final String CANCEL_OPTION = "Cancel";
    private static final String CONTINUE_OPTION = "Continue";
    private static final String VIRTUAL_OPTION = "Use Virtual";
-   private static final DefaultDataManager staticInstance_;
+   private static final DefaultDataManager STATICINSTANCE;
    static {
-      staticInstance_ = new DefaultDataManager();
+      STATICINSTANCE = new DefaultDataManager();
    }
 
    @Override
@@ -106,7 +107,7 @@ public final class DefaultDataManager implements DataManager {
          boolean shouldGenerateSeparateMetadata, boolean shouldSplitPositions)
          throws IOException {
       DefaultDatastore result = new DefaultDatastore();
-      result.setStorage(new StorageMultipageTiff(result, directory, true,
+      result.setStorage(new StorageMultipageTiff(null, result, directory, true,
                shouldGenerateSeparateMetadata, shouldSplitPositions));
       return result;
    }
@@ -172,11 +173,16 @@ public final class DefaultDataManager implements DataManager {
       if (file == null) {
          return null;
       }
-      return loadData(file.getPath(), isVirtual);
+      return loadData(parent, file.getPath(), isVirtual);
+   }
+   
+    @Override
+   public Datastore loadData(String directory, boolean isVirtual) throws IOException {
+      return loadData(null, directory, isVirtual);
    }
 
    @Override
-   public Datastore loadData(String directory, boolean isVirtual) throws IOException {
+   public Datastore loadData(Component parent, String directory, boolean isVirtual) throws IOException {
       // If the user selected a TIFF file, select the directory the file is
       // in.
       File dirFile = new File(directory);
@@ -189,7 +195,7 @@ public final class DefaultDataManager implements DataManager {
       // StorageSinglePlaneTiffSeries.
       boolean isMultipageTiff = MultipageTiffReader.isMMMultipageTiff(directory);
       if (isMultipageTiff) {
-         result.setStorage(new StorageMultipageTiff(result, directory, false));
+         result.setStorage(new StorageMultipageTiff(parent, result, directory, false));
       }
       else {
          result.setStorage(new StorageSinglePlaneTiffSeries(result, directory,
@@ -223,7 +229,7 @@ public final class DefaultDataManager implements DataManager {
             }
          }
          // Copy into a StorageRAM.
-         ProgressMonitor monitor = new ProgressMonitor(null,
+         ProgressMonitor monitor = new ProgressMonitor(parent,
                "Loading images into RAM...", null, 0, result.getNumImages());
          try {
             DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
@@ -359,6 +365,6 @@ public final class DefaultDataManager implements DataManager {
    }
 
    public static DataManager getInstance() {
-      return staticInstance_;
+      return STATICINSTANCE;
    }
 }

@@ -413,7 +413,8 @@ public class DefaultDatastore implements Datastore {
 
       Storage saver;
       if (mode == Datastore.SaveMode.MULTIPAGE_TIFF) {
-         saver = new StorageMultipageTiff(duplicate,
+         saver = new StorageMultipageTiff(MMStudio.getFrame(), 
+               duplicate,
                path, true, true,
                StorageMultipageTiff.getShouldSplitPositions());
       }

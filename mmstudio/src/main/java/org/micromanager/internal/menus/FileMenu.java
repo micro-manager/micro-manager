@@ -12,7 +12,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
-import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.SciFIODataProvider;
 import org.micromanager.internal.MMStudio;
@@ -172,8 +171,11 @@ public final class FileMenu {
                   @Override
                   public void run() {
                      try {
-                        Datastore store = studio_.data().loadData(path,
-                           isVirtual);
+                        MMStudio internalStudio = (MMStudio) studio_;
+                        Datastore store = studio_.data().loadData( 
+                                 internalStudio.getApplication().getMainWindow(), 
+                                 path,
+                                 isVirtual);
                         if (store != null && store.getAnyImage() != null) {
                            studio_.displays().loadDisplays(store);
                            studio_.displays().manage(store);
