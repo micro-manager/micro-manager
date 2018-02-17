@@ -50,6 +50,7 @@ import org.micromanager.data.internal.multipagetiff.MultipageTiffReader;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.data.internal.pipeline.DefaultPipeline;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.UserCancelledException;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -235,6 +236,12 @@ public final class DefaultDataManager implements DataManager {
             DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
             tmp.copyFrom(result, monitor);
             result = tmp;
+         }
+         catch (UserCancelledException uce) {
+            // HACK: to not add an exception to the api, add a message to the 
+            // exception that is in the api.  It would be much better to 
+            // extend the api....
+            throw new IOException ("User Canceled");
          }
          catch (OutOfMemoryError e) {
             // Unable to allocate enough direct memory for our images.

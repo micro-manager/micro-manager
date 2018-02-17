@@ -123,8 +123,11 @@ public final class FileMenu {
                studio_.displays().loadDisplays(store);
                studio_.displays().manage(store);
                updateFileHistory(store.getSavePath());
-            } catch (IOException e) {
-               ReportingUtils.showError(e, "There was an error when opening data");
+            } catch (IOException ex) {
+               // ugly overloading of IOException to indicate user cancelling.
+               if (!ex.getMessage().equals("User Canceled")) {
+                  ReportingUtils.showError(ex, "There was an error when opening data");
+               }
             }
          }
       }).start();
@@ -146,7 +149,10 @@ public final class FileMenu {
                   studio_.displays().createDisplay(sdp);
                   //studio_.displays().manage(sdp);
                } catch (IOException ioe) {
-                  studio_.logs().showError(ioe, "There was an error while opening data");
+                  // ugly overloading of IOException to indicate user cancelling.
+                  if (!ioe.getMessage().equals("User Canceled")) {
+                     studio_.logs().showError(ioe, "There was an error while opening data");
+                  }
                }
             }
          }).start();
@@ -185,8 +191,11 @@ public final class FileMenu {
                         }
                         updateFileHistory(path);
                      }
-                     catch (IOException ex) {
-                        ReportingUtils.showError(ex, "There was an error while opening data");
+                     catch (IOException ioe) {
+                        // ugly overloading of IOException to indicate user cancelling.
+                        if (!ioe.getMessage().equals("User Canceled")) {
+                           ReportingUtils.showError(ioe, "There was an error while opening data");
+                        }
                      }
                   }
                }).start();

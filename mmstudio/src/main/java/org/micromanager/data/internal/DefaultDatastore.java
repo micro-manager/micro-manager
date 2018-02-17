@@ -40,6 +40,7 @@ import org.micromanager.data.SummaryMetadata;
 import org.micromanager.data.internal.multipagetiff.StorageMultipageTiff;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.UserCancelledException;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.PrioritizedEventBus;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -94,9 +95,10 @@ public class DefaultDatastore implements Datastore {
     * @param alt Source Datastore
     * @param monitor can be used to keep callers appraised of our progress.
     * @throws java.io.IOException
+    * @throws UserCancelledException when the users cancels this action
     */
    public void copyFrom(Datastore alt, ProgressMonitor monitor)
-         throws IOException {
+         throws IOException, UserCancelledException {
       int imageCount = 0;
       try {
          setSummaryMetadata(alt.getSummaryMetadata());
@@ -105,6 +107,9 @@ public class DefaultDatastore implements Datastore {
             putImage(alt.getImage(coords));
             imageCount++;
             if (monitor != null) {
+               if (monitor.isCanceled()) {
+                  throw new UserCancelledException();
+               }
                monitor.setProgress(imageCount);
             }
          }
