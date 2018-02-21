@@ -265,6 +265,7 @@ namespace std {
     %template(StrMap)       map<string, string>;
 }
 
+
 // output arguments
 %apply double &OUTPUT { double &x_stage };
 %apply double &OUTPUT { double &y_stage };
