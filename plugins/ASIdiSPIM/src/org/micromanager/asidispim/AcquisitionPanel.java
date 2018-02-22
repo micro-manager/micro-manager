@@ -1178,8 +1178,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 			double deltaX = (Double)gridXDeltaField_.getValue();
 			double deltaY = (Double)gridYDeltaField_.getValue();
 			double deltaZ = (Double)gridZDeltaField_.getValue();
-			double startY = centerY - deltaY*numY/2;
-			double startZ = centerZ - deltaZ*numZ/2;
+			double startY = centerY - deltaY*(numY-1)/2;
+			double startZ = centerZ - deltaZ*(numZ-1)/2;
 			String xy_device = devices_.getMMDevice(Devices.Keys.XYSTAGE);
 			String z_device = devices_.getMMDevice(Devices.Keys.UPPERZDRIVE);
 			
@@ -1199,9 +1199,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 				centerX = positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);
 			}
 			
+			// if we aren't using one axis, use the current position instead of GUI position
+			if (useY && !useZ) {
+			   startZ =  positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
+			}
+         if (useZ && !useY) {
+            startY =  positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.Y);
+         }
+			
 			if (!useY && !useZ && !clearYZGridCB_.isSelected()) {
 				return;
 			}
+			
 			PositionList pl;
 			try {
 				pl = gui_.getPositionList();
@@ -1219,7 +1228,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 			}
 			pl = new PositionList();
 			if (useY || useZ) {
-				for (int iX=0; iX<numZ; ++iX) {
+				for (int iZ=0; iZ<numZ; ++iZ) {
 					for (int iY=0; iY<numY; ++iY) {
 						MultiStagePosition msp = new MultiStagePosition();
 						StagePosition s = new StagePosition();
@@ -1230,9 +1239,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
 						msp.add(s);
 						StagePosition s2 = new StagePosition();
 						s2.stageName = z_device;
-						s2.x = startZ + iX * deltaZ;
+						s2.x = startZ + iZ * deltaZ;
 						msp.add(s2);
-						msp.setLabel("Pos_" + iX + "_" + iY);
+						msp.setLabel("Pos_" + iZ + "_" + iY);
 						pl.addPosition(msp);
 					}			
 				}
@@ -3223,8 +3232,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               Properties.Keys.STAGESCAN_MOTOR_ACCEL, origXAccel);
                      }
                      
+                     final MultiStagePosition nextPosition = positionList.getPosition(positionNum);
+                     
                      // blocking call; will wait for stages to move
-                     MultiStagePosition.goToPosition(positionList.getPosition(positionNum), core_);
+                     MultiStagePosition.goToPosition(nextPosition, core_);
                      
                      // restore speed for stage scanning
                      if (acqSettings.isStageScanning) {
@@ -3237,7 +3248,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      // setup stage scan at this position
                      // non-multi-position situation is handled in prepareControllerForAquisition instead
                      if (acqSettings.useMultiPositions) {
-                        StagePosition pos = positionList.getPosition(positionNum).get(devices_.getMMDevice(Devices.Keys.XYSTAGE));
+                        StagePosition pos = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));  // get ideal position from position list, not current position
                         controller_.prepareStageScanForAcquisition(pos.x, pos.y);
                      }
                      
@@ -3920,11 +3931,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     * that gets updated with multiple positions. 
     */
    private void refreshXYZPositions() {
-      positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);  // / will update cache for Y too
-      positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
-      xPositionUm_ = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.X);
+      xPositionUm_ = positions_.getUpdatedPosition(Devices.Keys.XYSTAGE, Directions.X);  // / will update cache for Y too
       yPositionUm_ = positions_.getCachedPosition(Devices.Keys.XYSTAGE, Directions.Y);
-      zPositionUm_ = positions_.getCachedPosition(Devices.Keys.UPPERZDRIVE, Directions.NONE);
+      zPositionUm_ = positions_.getUpdatedPosition(Devices.Keys.UPPERZDRIVE);
    }
    
    
