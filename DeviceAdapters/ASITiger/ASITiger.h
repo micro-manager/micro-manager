@@ -93,6 +93,20 @@ const char* const g_Msg_ERR_CRISP_NOT_CALIBRATED = "CRISP is not calibrated.  Tr
 const char* const g_Msg_ERR_CRISP_NOT_LOCKED = "The CRISP failed to lock";
 
 #define ERR_ASICODE_OFFSET 10100  // offset when reporting error number from controller
+#define ERR_UNKNOWN_COMMAND         10101
+const char* const g_Msg_ERR_UNKNOWN_COMMAND = "Unknown serial command";
+#define ERR_UNKNOWN_AXIS            10102
+const char* const g_Msg_ERR_UNKNOWN_AXIS = "Unrecognized controller axis";
+#define ERR_MISSING_PARAM           10103
+const char* const g_Msg_ERR_MISSING_PARAM = "Missing required parameter";
+#define ERR_PARAM_OUT_OF_RANGE      10104
+const char* const g_Msg_ERR_PARAM_OUT_OF_RANGE = "Parameter out of range";
+#define ERR_OPERATION_FAILED        10105
+const char* const g_Msg_ERR_OPERATION_FAILED = "Controller operation failed";
+#define ERR_UNDEFINED_ERROR         10106
+const char* const g_Msg_ERR_UNDEFINED_ERROR = "Undefined controller error";
+#define ERR_INVALID_ADDRESS         10107
+const char* const g_Msg_ERR_INVALID_ADDRESS = "Invalid Tiger address (e.g. missing card)";
 
 
 // External device names used used by the rest of the system to load particular device from the .dll library
