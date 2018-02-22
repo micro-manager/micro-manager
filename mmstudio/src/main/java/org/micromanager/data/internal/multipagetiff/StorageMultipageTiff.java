@@ -206,8 +206,13 @@ public final class StorageMultipageTiff implements Storage {
          progressBar.setVisible(true);
       }
       for (File f : dir.listFiles()) {
-         if (f.getName().endsWith(".tif") || f.getName().endsWith(".TIF")) {
-            reader = loadFile(f);
+         // Heuristics to only read tiff files, and not files created by the
+         // OS (starting with ".")
+         String fileName = f.getName();
+         if (fileName.endsWith(".tif") || fileName.endsWith(".TIF") ) {
+            if (  !fileName.startsWith("._") ) {
+               reader = loadFile(f);
+            }
          }
          numRead++;
          if (progressBar != null) {
