@@ -327,7 +327,7 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
     * Currently, there is only a mechanism to store a single file with one set
     * of DisplaySettings to a datastore location. I can not think of an easy, quick,
     * reliable way to store the displaysettings for multiple viewers.  Moreover,
-    * this seems a bit estoric and currently not worth the effort to implement.
+    * this seems a bit esoteric and currently not worth the effort to implement.
     * @param store Datastore to open displays for
     * @return List with opened DisplayWindows
     * @throws IOException 
