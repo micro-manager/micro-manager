@@ -14,6 +14,7 @@ import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.internal.SciFIODataProvider;
+import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
@@ -120,8 +121,10 @@ public final class FileMenu {
                   studio_.logs().showError("Unable to load any images; file may be invalid.");
                   return;
                }
-               studio_.displays().loadDisplays(store);
+               // Note: the order is important, since the Inspector will only 
+               // become aware of the display once its store is managed.
                studio_.displays().manage(store);
+               studio_.displays().loadDisplays(store);
                updateFileHistory(store.getSavePath());
             } catch (IOException ex) {
                // ugly overloading of IOException to indicate user cancelling.
@@ -146,8 +149,8 @@ public final class FileMenu {
                   if (sdp.getAnyImage() == null) {
                      studio_.logs().showError("Unable to load images");
                   }
-                  studio_.displays().createDisplay(sdp);
-                  //studio_.displays().manage(sdp);
+                  DisplayWindow display = studio_.displays().createDisplay(sdp);
+                  studio_.displays().addViewer(display);
                } catch (IOException ioe) {
                   // ugly overloading of IOException to indicate user cancelling.
                   if (!ioe.getMessage().equals("User Canceled")) {
@@ -183,8 +186,8 @@ public final class FileMenu {
                                  path,
                                  isVirtual);
                         if (store != null && store.getAnyImage() != null) {
-                           studio_.displays().loadDisplays(store);
                            studio_.displays().manage(store);
+                           studio_.displays().loadDisplays(store);
                         }
                         else {
                            studio_.logs().showError("Unable to load any images; file may be invalid or missing.");
