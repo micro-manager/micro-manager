@@ -77,6 +77,7 @@ public class ParticlePairLister {
    final private Boolean p2d_;
    final private Boolean doGaussianEstimate_;
    final private Boolean fitSigmaInP2D_;
+   final private Boolean showXYHistogram_;
    final private Boolean useSigmaUserGuess_;
    final private Boolean useVectorDistances_;
    final private Boolean estimateP2DError_;
@@ -95,6 +96,7 @@ public class ParticlePairLister {
       private Boolean p2d_;
       private Boolean doGaussianEstimate_;
       private Boolean fitSigma_;
+      private Boolean showXYHistogram_;
       private Boolean useSigmaUserGuess_;
       private Boolean useVectorDistances_;
       private Boolean estimateP2DError_;
@@ -130,6 +132,11 @@ public class ParticlePairLister {
       
       public Builder showHistogram(Boolean show) {
          showHistogram_ = show;
+         return this;
+      }
+      
+      public Builder showXYHistogram(Boolean show) {
+         showXYHistogram_ = show;
          return this;
       }
 
@@ -194,6 +201,7 @@ public class ParticlePairLister {
       p2d_ = builder.p2d_;
       doGaussianEstimate_ = builder.doGaussianEstimate_;
       fitSigmaInP2D_ = builder.fitSigma_;
+      showXYHistogram_ = builder.showXYHistogram_;
       useSigmaUserGuess_ = builder.useSigmaUserGuess_;
       useVectorDistances_ = builder.useVectorDistances_;
       sigmaUserGuess_ = builder.sigmaEstimate_;
@@ -216,6 +224,7 @@ public class ParticlePairLister {
               useVectorDistances(useVectorDistances_).
               sigmaEstimate(sigmaUserGuess_).
               showHistogram(showHistogram_).
+              showXYHistogram(showXYHistogram_).
               estimateP2DError(estimateP2DError_);
    }
 
@@ -286,7 +295,6 @@ public class ParticlePairLister {
                Collections.sort(positions);
 
                // First go through all frames to find all pairs, organize by position
-               int nrSpotPairsInFrame1 = 0;
                for (int pos : positions) {
                   spotPairsByFrame.put(pos, new ArrayList<ArrayList<GsSpotPair>>());
 
@@ -376,35 +384,32 @@ public class ParticlePairLister {
                         }
                      }
                   }
+                  //  show Pairs panel and attach listener
+                  TextPanel tp;
+                  TextWindow win;
 
-                  if (showPairs_) {
-                     //  show Pairs panel and attach listener
-                     TextPanel tp;
-                     TextWindow win;
+                  String rtName = "Pairs found in " + dc.getSpotData(row).getName();
+                  pairTable.show(rtName);
+                  ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
+                  Frame frame = WindowManager.getFrame(rtName);
+                  if (frame != null && frame instanceof TextWindow && siPlus != null) {
+                     win = (TextWindow) frame;
+                     tp = win.getTextPanel();
 
-                     String rtName = "Pairs found in " + dc.getSpotData(row).getName();
-                     pairTable.show(rtName);
-                     ImagePlus siPlus = ij.WindowManager.getImage(dc.getSpotData(row).title_);
-                     Frame frame = WindowManager.getFrame(rtName);
-                     if (frame != null && frame instanceof TextWindow && siPlus != null) {
-                        win = (TextWindow) frame;
-                        tp = win.getTextPanel();
-
-                        // TODO: the following does not work, there is some voodoo going on here
-                        for (MouseListener ms : tp.getMouseListeners()) {
-                           tp.removeMouseListener(ms);
-                        }
-                        for (KeyListener ks : tp.getKeyListeners()) {
-                           tp.removeKeyListener(ks);
-                        }
-
-                        ResultsTableListener myk = new ResultsTableListener(
-                                dc.getSpotData(row).dw_, siPlus,
-                                pairTable, win, dc.getSpotData(row).halfSize_);
-                        tp.addKeyListener(myk);
-                        tp.addMouseListener(myk);
-                        frame.toFront();
+                     // TODO: the following does not work, there is some voodoo going on here
+                     for (MouseListener ms : tp.getMouseListeners()) {
+                        tp.removeMouseListener(ms);
                      }
+                     for (KeyListener ks : tp.getKeyListeners()) {
+                        tp.removeKeyListener(ks);
+                     }
+
+                     ResultsTableListener myk = new ResultsTableListener(
+                             dc.getSpotData(row).dw_, siPlus,
+                             pairTable, win, dc.getSpotData(row).halfSize_);
+                     tp.addKeyListener(myk);
+                     tp.addMouseListener(myk);
+                     frame.toFront();
                   }
 
                }
@@ -422,11 +427,9 @@ public class ParticlePairLister {
                              spotPairsByFrame.get(pos).get(frame - 1), maxDistanceNm_));
                   }
 
-                  //int i = 0;
                   for (int firstFrame = 1; firstFrame <= dc.getSpotData(row).nrFrames_; firstFrame++) {
                      Iterator<GsSpotPair> iSpotPairs = spotPairsByFrame.get(pos).get(firstFrame - 1).iterator();
                      while (iSpotPairs.hasNext()) {
-                        //ij.IJ.showProgress(i++, nrSpotPairsInFrame1);
                         GsSpotPair spotPair = iSpotPairs.next();
                         // for now, we only start tracks at frame number 1
                         if (!spotPair.partOfTrack()) {

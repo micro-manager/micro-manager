@@ -65,6 +65,7 @@ public class PairDisplayForm extends GUFrame{
    private static final String SHOWHISTOGRAMPREF = "showhistogram";
    private static final String SHOWTRACKSUMMARYPREF = "showtracksummary";
    private static final String SHOWOVERLAYPREF = "showoverlay";
+   private static final String SHOWXYHISTOGRAMPREF = "showXYHistogram";
    private static final String P2DPREF = "p2d";
    private static final String USEGAUSSIAN = "useGaussianOfVectDistances";
    private static final String P2DUSEVECTDISTANCE = "p2dUseVectDistances";
@@ -116,6 +117,11 @@ public class PairDisplayForm extends GUFrame{
       final JCheckBox showOverlay = 
               makeCheckBox("Show Pair Track Arrow overlay", SHOWOVERLAYPREF);
       panel.add(showOverlay, "wrap");
+      
+      // 2 histograms, one with X and other with Y distance of pair members
+      final JCheckBox showXYHistogram = 
+              makeCheckBox("Show X-Y distance histogram", SHOWXYHISTOGRAMPREF);
+      panel.add(showXYHistogram, "wrap");
       
       // Calculate Gaussian fit of vector distances (calculate distance from average x position and average y position)
       final JCheckBox gaussianEstimate = 
@@ -348,21 +354,6 @@ public class PairDisplayForm extends GUFrame{
    @Override
    public void dispose() {
       super.dispose();
-   }
-   
-   private void setEnabled(boolean state, JComponent[] comps) {
-      for (JComponent comp : comps) {
-         comp.setEnabled(state);
-      }
-   }
-   
-   private void setSaveDestinationDirectory(JTextField rootField) {
-      File result = FileDialogs.openDir(null,
-              "Please choose a directory to save pair data",
-              PAIR_DATA);
-      if (result != null) {
-         rootField.setText(result.getAbsolutePath());
-      }
    }
    
    private JCheckBox makeCheckBox(final String text, final String prefName) {
