@@ -388,18 +388,18 @@ public class GaussianUtils {
    }
    
     /**
-    * Plots a histogram of distance data and calculates the Gaussian function
+    * Plots a histogram of data and calculates the Gaussian function
     * and plots it
     * @param title - of the plot
     * @param data - distance measurements (in nm)
+    * @param min - lowest value in the histogram plot
     * @param max - highest value in the histogram plot
     * @param fitResult - double[0] is mu, double[1] is sigma
     */
    public static void plotGaussian(final String title, final double[] data, 
-           final double max, double[] fitResult) {
+           final double min, final double max, double[] fitResult) {
       final double testNrBins = (data.length / max) * 5.0;
       final int nrBins = testNrBins > 25 ? (int) testNrBins : 25;
-      final double min = 0.0;
       final HistogramDataset hds = new HistogramDataset();
       hds.addSeries("Distances", data, nrBins, min, max);
       

@@ -40,12 +40,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.Dimension;
-import java.io.File;
 import java.text.ParseException;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -319,6 +317,7 @@ public class PairDisplayForm extends GUFrame{
                     p2d(p2dDistanceEstimate.isSelected()).
                     useVectorDistances(p2dUseVectDistance.isSelected()).
                     fitSigma(!distanceEstimateFixedSigma.isSelected()).
+                    showXYHistogram(showXYHistogram.isSelected()).
                     useSigmaEstimate(useUserSigmaValue.isSelected()).
                     useIndividualSigmas(useIndividualSigma.isSelected()).
                     sigmaEstimate(sigmaValue).

@@ -88,6 +88,7 @@ public class Gaussian1DFitter {
    private double muGuess_ = 0.0;
    private double sigmaGuess_ = 10.0;
    private final double upperBound_;
+   private double lowerBound_ = 0.0;
    
    static double  sqrt2Pi = Math.sqrt(2 * Math.PI);
    
@@ -121,6 +122,16 @@ public class Gaussian1DFitter {
    public void setStartParams(double mu, double sigma) {
       muGuess_ = mu;
       sigmaGuess_ = sigma;
+   }
+   
+   /**
+    * In most cases, we work with distances and the lower bound is 0.0.
+    * To make this function useful for other data, provide the option 
+    * to set the lower bound
+    * @param lowerBound lowerBound to be used in Gaussian fit
+    */
+   public void setLowerBound(final double lowerBound) {
+      lowerBound_ = lowerBound;
    }
    
    /**
@@ -160,7 +171,7 @@ public class Gaussian1DFitter {
       SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
       Gaussian1DFunc myGaussianFunc = new Gaussian1DFunc(points_);
 
-      double[] lowerBounds = {0.0, 0.0};
+      double[] lowerBounds = {lowerBound_, lowerBound_};
       double[] upperBounds = {upperBound_, upperBound_};
       MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
               myGaussianFunc, lowerBounds, upperBounds);

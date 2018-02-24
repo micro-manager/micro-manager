@@ -655,6 +655,54 @@ public class ParticlePairLister {
                      siPlus.setHideOverlay(false);
                   }
                }
+               
+               if (showXYHistogram_) {
+                  List<Double> xDiff = new ArrayList<Double>();
+                  List<Double> yDiff = new ArrayList<Double>();
+                  for (int pos : positions) {
+                     for (ArrayList<GsSpotPair> pairList : spotPairsByFrame.get(pos)) {
+                        for (GsSpotPair pair : pairList) {
+                           xDiff.add(pair.getFirstPoint().getX() - 
+                                   pair.getSecondPoint().getX());
+                           yDiff.add(pair.getFirstPoint().getY() -
+                                   pair.getSecondPoint().getY());
+                        }
+                     }
+                  }
+                   try {
+                     double[] xDiffArray = ListUtils.toArray(xDiff);
+                     double[] xGaussian = fitGaussianToData(xDiffArray, 
+                             -maxDistanceNm_, 
+                             maxDistanceNm_);
+                        GaussianUtils.plotGaussian("Gaussian fit of: "
+                             + dc.getSpotData(row).getName() + "-X distances",
+                             xDiffArray, 
+                             -5.0 * xGaussian[1], 
+                             5.0 * xGaussian[1], 
+                             xGaussian);
+                     double[] yDiffArray = ListUtils.toArray(yDiff);
+                     double[] yGaussian = fitGaussianToData(yDiffArray, 
+                             -maxDistanceNm_, 
+                             maxDistanceNm_);
+                        GaussianUtils.plotGaussian("Gaussian fit of: "
+                             + dc.getSpotData(row).getName() + "-Y distances",
+                             yDiffArray, 
+                             -5.0 * yGaussian[1], 
+                             5.0 * yGaussian[1], 
+                             yGaussian);
+                     final double combinedError = Math.sqrt(
+                             xGaussian[0] * xGaussian[0] + 
+                             yGaussian[0] * yGaussian[0]);
+                     ij.IJ.log(dc.getSpotData(row).getName() + " X-error: " +
+                             NumberUtils.doubleToDisplayString(xGaussian[0], 3) + 
+                             ", Y-error: " + 
+                             NumberUtils.doubleToDisplayString(yGaussian[0],3) + 
+                             ", combined error: " + 
+                             NumberUtils.doubleToDisplayString(combinedError, 3));
+                  } catch (FittingException ex) {
+                     // TODO
+                  }
+               }
 
                if (showSummary_) {
                   rtName = dc.getSpotData(row).getName() + " Particle Summary";
@@ -688,11 +736,12 @@ public class ParticlePairLister {
                   // fit vector distances with gaussian function and plot
                   try {
                      avgVectDistancesAsDouble = ListUtils.toArray(avgVectDistances);
-                     gResult = fitGaussianToData(avgVectDistancesAsDouble, maxDistanceNm_);
+                     gResult = fitGaussianToData(avgVectDistancesAsDouble, 0.0, 
+                             maxDistanceNm_);
                      if (doGaussianEstimate_ && showHistogram_) {
                         GaussianUtils.plotGaussian("Gaussian fit of: "
                              + dc.getSpotData(row).getName() + " distances",
-                             avgVectDistancesAsDouble, maxDistanceNm_, gResult);
+                             avgVectDistancesAsDouble, 0.0, maxDistanceNm_, gResult);
                      }
                   } catch (FittingException ex) {
                      // TODO
@@ -864,7 +913,7 @@ public class ParticlePairLister {
                               distStd = ListUtils.avg(s);
                            }
                            if (useVectorDistances_) {
-                              gResult = fitGaussianToData(d, maxDistanceNm_);
+                              gResult = fitGaussianToData(d, 0.0, maxDistanceNm_);
                               p2df.setStartParams(gResult[0], gResult[1]);
                            } else {
                               p2df.setStartParams(distMean, distStd);
@@ -1151,14 +1200,16 @@ public class ParticlePairLister {
     *
     * @param input
     * @param max
-    * @return fitresult
+    * @param min
+    * @return fitresult, double[0] is mu, double[1] is sigma
     * @throws FittingException
     */
    public static double[] fitGaussianToData(final double[] input, 
-           final double max) throws FittingException {
+           final double min, final double max) throws FittingException {
       // fit vector distances with gaussian function
 
       Gaussian1DFitter gf = new Gaussian1DFitter(input, max);
+      gf.setLowerBound(min);
       double avg = ListUtils.avg(input);
       gf.setStartParams(avg, ListUtils.stdDev(input, avg));
       return gf.solve();
