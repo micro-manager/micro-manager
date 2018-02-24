@@ -397,7 +397,20 @@ public class ParticlePairLister {
                      // TODO: the following does not work, there is some voodoo going on here
                      for (MouseListener ms : tp.getMouseListeners()) {
                         tp.removeMouseListener(ms);
+<<<<<<< HEAD
+=======
                      }
+                     for (KeyListener ks : tp.getKeyListeners()) {
+                        tp.removeKeyListener(ks);
+>>>>>>> f88c3915d... Gaussian: Start adding histograms showing XY distance distributions.
+                     }
+
+                     ResultsTableListener myk = new ResultsTableListener(
+                             dc.getSpotData(row).dw_, siPlus,
+                             pairTable, win, dc.getSpotData(row).halfSize_);
+                     tp.addKeyListener(myk);
+                     tp.addMouseListener(myk);
+                     frame.toFront();
                   }
                }
                
@@ -417,7 +430,6 @@ public class ParticlePairLister {
                   for (int firstFrame = 1; firstFrame <= dc.getSpotData(row).nrFrames_; firstFrame++) {
                      Iterator<GsSpotPair> iSpotPairs = spotPairsByFrame.get(pos).get(firstFrame - 1).iterator();
                      while (iSpotPairs.hasNext()) {
-                        //ij.IJ.showProgress(i++, nrSpotPairsInFrame1);
                         GsSpotPair spotPair = iSpotPairs.next();
                         // for now, we only start tracks at frame number 1
                         if (!spotPair.partOfTrack()) {
