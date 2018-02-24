@@ -373,8 +373,8 @@ public class ParticlePairLister {
                            pairTable.addValue("X1", pair.getFirstSpot().getXCenter());
                            pairTable.addValue("Y1", pair.getFirstSpot().getYCenter());
                            pairTable.addValue("Sigma1", pair.getFirstSpot().getSigma());
-                           pairTable.addValue("X2", pair.getSecondSpot().getX());
-                           pairTable.addValue("Y2", pair.getSecondSpot().getY());
+                           pairTable.addValue("X2", pair.getSecondSpot().getXCenter());
+                           pairTable.addValue("Y2", pair.getSecondSpot().getYCenter());
                            pairTable.addValue("Sigma2", pair.getSecondSpot().getSigma());
                            double d2 = NearestPoint2D.distance2(pair.getFirstPoint(), pair.getSecondPoint());
                            double d = Math.sqrt(d2);
