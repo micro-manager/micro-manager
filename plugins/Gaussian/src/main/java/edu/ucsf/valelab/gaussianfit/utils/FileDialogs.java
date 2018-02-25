@@ -71,8 +71,10 @@ public class FileDialogs {
             return true;
          }
          for (int i=0; i<fileSuffixes_.length; ++i) {
-            if (fileSuffixes_[i] != null && fileSuffixes_[i].toLowerCase().contentEquals(suffix))
+            if (fileSuffixes_[i] != null && 
+                    fileSuffixes_[i].toLowerCase().contentEquals(suffix)) {
                return true;
+            }
          }
          return false;
       }
@@ -112,10 +114,11 @@ public class FileDialogs {
             fd = new FileDialog((Dialog) null, title, mode);
          }
          if (startFile != null) {
-            if (startFile.isDirectory())
+            if (startFile.isDirectory()) {
                fd.setDirectory(startFile.getAbsolutePath());
-            else
+            } else {
                fd.setDirectory(startFile.getParent());
+            }
             if (!load && suggestFileName) {
                fd.setFile(startFile.getName());
             }
@@ -141,11 +144,7 @@ public class FileDialogs {
       } else {
          JFileChooser fc = new JFileChooser();
          if (startFile != null) {
-            if ((!load && suggestFileName) || startFile.isDirectory()) {
-               fc.setSelectedFile(startFile);
-            } else {
-               fc.setSelectedFile(startFile.getParentFile());
-            }
+            fc.setSelectedFile(startFile);
          }
          fc.setDialogTitle(title);
          if (selectDirectories) {

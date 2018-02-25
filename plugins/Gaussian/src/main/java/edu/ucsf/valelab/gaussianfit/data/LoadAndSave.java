@@ -30,6 +30,7 @@ either expressed or implied, of the FreeBSD Project.
 package edu.ucsf.valelab.gaussianfit.data;
 
 import com.google.protobuf.ExtensionRegistry;
+import com.google.protobuf.InvalidProtocolBufferException;
 import edu.ucsf.valelab.tsf.MMLocM;
 import edu.ucsf.valelab.tsf.TaggedSpotsProtos;
 import edu.ucsf.valelab.gaussianfit.DataCollectionForm;
@@ -59,6 +60,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * Static functions for loading and saving files
@@ -213,7 +215,7 @@ public class LoadAndSave {
          HashMap<String, String> infoMap = new HashMap<String, String>();
          for (String info1 : infos) {
             String[] keyValue = info1.split(": ");
-            if (keyValue.length == 2) {
+            if (keyValue.length >= 2) {
                infoMap.put(keyValue[0], keyValue[1]);
             }
          }
@@ -328,6 +330,8 @@ public class LoadAndSave {
     */
    public static void loadTSF(File selectedFile, JFrame caller) {
       TaggedSpotsProtos.SpotList psl;
+      long spotsMissedWithErrors = 0;
+         
       try {
 
          ij.IJ.showStatus("Loading data..");
@@ -389,42 +393,47 @@ public class LoadAndSave {
          ArrayList<SpotData> spotList = new ArrayList<SpotData>();
          TaggedSpotsProtos.Spot pSpot;
          while (fi.available() > 0 && (expectedSpots == 0 || maxNrSpots < expectedSpots)) {
+        
+            try {
+               pSpot = TaggedSpotsProtos.Spot.parseDelimitedFrom(fi, registry);
 
-            pSpot = TaggedSpotsProtos.Spot.parseDelimitedFrom(fi, registry);
-
-            SpotData gSpot = new SpotData((ImageProcessor) null, pSpot.getChannel(),
-                    pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
-                    pSpot.getMolecule(), pSpot.getXPosition(), pSpot.getYPosition());
-            gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
-                    pSpot.getY(), 0.0, pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
-                    pSpot.getXPrecision());
-            if (appId == MMAPPID) {
-               gSpot.addKeyValue(SpotData.Keys.APERTUREINTENSITY, 
-                       pSpot.getExtension(MMLocM.intensityAperture));
-               gSpot.addKeyValue(SpotData.Keys.APERTUREBACKGROUND, 
-                       pSpot.getExtension(MMLocM.intensityBackground));
-               gSpot.addKeyValue(SpotData.Keys.INTENSITYRATIO, 
-                       pSpot.getExtension(MMLocM.intensityRatio));
-               gSpot.addKeyValue(SpotData.Keys.MSIGMA, 
-                       pSpot.getExtension(MMLocM.mSigma));
-            }
-            if (pSpot.hasZ()) {
-               double zc = pSpot.getZ();
-               gSpot.setZCenter(zc);
-               hasZ = true;
-               if (zc > maxZ) {
-                  maxZ = zc;
+               SpotData gSpot = new SpotData((ImageProcessor) null, pSpot.getChannel(),
+                       pSpot.getSlice(), pSpot.getFrame(), pSpot.getPos(),
+                       pSpot.getMolecule(), pSpot.getXPosition(), pSpot.getYPosition());
+               gSpot.setData(pSpot.getIntensity(), pSpot.getBackground(), pSpot.getX(),
+                       pSpot.getY(), 0.0, pSpot.getWidth(), pSpot.getA(), pSpot.getTheta(),
+                       pSpot.getXPrecision());
+               if (appId == MMAPPID) {
+                  gSpot.addKeyValue(SpotData.Keys.APERTUREINTENSITY,
+                          pSpot.getExtension(MMLocM.intensityAperture));
+                  gSpot.addKeyValue(SpotData.Keys.APERTUREBACKGROUND,
+                          pSpot.getExtension(MMLocM.intensityBackground));
+                  gSpot.addKeyValue(SpotData.Keys.INTENSITYRATIO,
+                          pSpot.getExtension(MMLocM.intensityRatio));
+                  gSpot.addKeyValue(SpotData.Keys.MSIGMA,
+                          pSpot.getExtension(MMLocM.mSigma));
                }
-               if (zc < minZ) {
-                  minZ = zc;
+               if (pSpot.hasZ()) {
+                  double zc = pSpot.getZ();
+                  gSpot.setZCenter(zc);
+                  hasZ = true;
+                  if (zc > maxZ) {
+                     maxZ = zc;
+                  }
+                  if (zc < minZ) {
+                     minZ = zc;
+                  }
                }
-            }
-            maxNrSpots++;
-            if ((esf > 0) && ((maxNrSpots % esf) == 0)) {
-               ij.IJ.showProgress((double) maxNrSpots / (double) expectedSpots);
-            }
+               maxNrSpots++;
+               if ((esf > 0) && ((maxNrSpots % esf) == 0)) {
+                  ij.IJ.showProgress((double) maxNrSpots / (double) expectedSpots);
+               }
 
-            spotList.add(gSpot);
+               spotList.add(gSpot);
+            } catch (InvalidProtocolBufferException ipbe) {
+               spotsMissedWithErrors++;
+               ReportingUtils.logError("ProtocolBuffer Exception: " + ipbe.getMessage());
+            }
          }
 
          RowData.Builder builder = new RowData.Builder();
@@ -446,20 +455,22 @@ public class LoadAndSave {
          caller.setCursor(Cursor.getDefaultCursor());
          ij.IJ.showStatus("");
          ij.IJ.showProgress(1.0);
+         if (spotsMissedWithErrors > 0) {
+            ReportingUtils.showError("Failed to read " + spotsMissedWithErrors + " spot(s)");
+         }
       }
    }
 
-   
    /**
     * Save data set in TSF (Tagged Spot File) format
     *
-    * @param rowData  row with spot data to be saved
+    * @param rowData row with spot data to be saved
     * @param bypassFileDialog
     * @param dir
     * @param caller
-    * @return 
+    * @return
     */
-   public static String saveData(final RowData rowData, boolean bypassFileDialog, 
+   public static String saveData(final RowData rowData, boolean bypassFileDialog,
            String dir, final JFrame caller) {
       String[] parts = rowData.getName().split(File.separator);
       String name = parts[parts.length - 1];
@@ -474,7 +485,7 @@ public class LoadAndSave {
          }
          fn = fd.getFile();
          if (!fn.contains(".")) {
-            fn = fn + EXTENSION;
+            fn += EXTENSION;
          }
          dir = fd.getDirectory();
       }
@@ -622,7 +633,7 @@ public class LoadAndSave {
       if (selectedItem != null) {
          String fn = fd.getFile();
          if (!fn.contains(".")) {
-            fn = fn + ".txt";
+            fn += ".txt";
          }
          final File selectedFile = new File(fd.getDirectory() + File.separator + fn);
 
