@@ -120,6 +120,7 @@ import org.micromanager.Studio;
 import org.micromanager.UserProfile;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 /**
@@ -137,6 +138,8 @@ public class DataCollectionForm extends JFrame {
    
    public final static String EXTENSION = ".tsf";
    
+   // Preference instance
+   private final MutablePropertyMapView settings_;
    // Pref-keys
    private static final String FRAMEXPOS = "DCXPos";
    private static final String FRAMEYPOS = "DCYPos";
@@ -209,8 +212,9 @@ public class DataCollectionForm extends JFrame {
     * @param jm 
     */
    public void setJitterMethod(int jm) {
-      if (jm == 0 || jm == 1)
+      if (jm == 0 || jm == 1) {
          jitterMethod_ = jm;
+      }
    }
    /**
     * Method to allow scripts to tune the jitter corrector
@@ -238,8 +242,9 @@ public class DataCollectionForm extends JFrame {
     * @return  Affine transform object calculated by the Coordinate Mapper
     */
    public AffineTransform getAffineTransform() {
-      if (c2t_ == null)
+      if (c2t_ == null) {
          return null;
+      }
       return c2t_.getAffineTransform();
    }
 
@@ -286,31 +291,32 @@ public class DataCollectionForm extends JFrame {
       // Read UI values bakc form Profile
       UserProfile up = studio_.getUserProfile();
       Class oc = DataCollectionForm.class;
-      int x = up.getInt(oc, FRAMEXPOS, 50);
-      int y = up.getInt(oc, FRAMEYPOS, 100);
-      int width = up.getInt(oc, FRAMEWIDTH, 800);
-      int height = up.getInt(oc, FRAMEHEIGHT, 250);
-      super.setBounds(x, y, width, height);
-      filterSigmaCheckBox_.setSelected(up.getBoolean(oc, USESIGMA, false));
-      sigmaMin_.setText(up.getString(oc, SIGMAMIN, "0.0"));
-      sigmaMax_.setText(up.getString(oc, SIGMAMAX, "20.0"));
-      filterIntensityCheckBox_.setSelected(up.getBoolean(oc, USEINT, false));
-      intensityMin_.setText(up.getString(oc, INTMIN, "0.0"));
-      intensityMax_.setText(up.getString(oc, INTMAX, "20000"));
-      loadTSFDir_ = up.getString(oc, LOADTSFDIR, "");
+      settings_ = up.getSettings(oc);
+      super.setBounds(
+            settings_.getInteger(FRAMEXPOS, 50),
+            settings_.getInteger(FRAMEYPOS, 100),
+            settings_.getInteger(FRAMEWIDTH, 800),
+            settings_.getInteger(FRAMEHEIGHT, 250) );
+      filterSigmaCheckBox_.setSelected(settings_.getBoolean(USESIGMA, false));
+      sigmaMin_.setText(settings_.getString(SIGMAMIN, "0.0"));
+      sigmaMax_.setText(settings_.getString(SIGMAMAX, "20.0"));
+      filterIntensityCheckBox_.setSelected(settings_.getBoolean(USEINT, false));
+      intensityMin_.setText(settings_.getString(INTMIN, "0.0"));
+      intensityMax_.setText(settings_.getString(INTMAX, "20000"));
+      loadTSFDir_ = settings_.getString(LOADTSFDIR, "");
       visualizationMagnification_.setSelectedIndex(up.getInt(oc, RENDERMAG, 0));
-      pairsMaxDistanceField_.setText(up.getString(oc, PAIRSMAXDISTANCE, "500"));
-      method2CBox_.setSelectedItem(up.getString(oc, METHOD2C, "LWM"));
+      pairsMaxDistanceField_.setText(settings_.getString(PAIRSMAXDISTANCE, "500"));
+      method2CBox_.setSelectedItem(settings_.getString(METHOD2C, "LWM"));
       
       mainTable_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
       TableColumnModel cm = mainTable_.getColumnModel();
-      cm.getColumn(0).setPreferredWidth(up.getInt(oc, COL0WIDTH, 25));
-      cm.getColumn(1).setPreferredWidth(up.getInt(oc, COL1WIDTH, 300));
-      cm.getColumn(2).setPreferredWidth(up.getInt(oc, COL2WIDTH, 150));
-      cm.getColumn(3).setPreferredWidth(up.getInt(oc, COL3WIDTH, 75));
-      cm.getColumn(4).setPreferredWidth(up.getInt(oc, COL4WIDTH, 75));
-      cm.getColumn(5).setPreferredWidth(up.getInt(oc, COL5WIDTH, 75));
-      cm.getColumn(6).setPreferredWidth(up.getInt(oc, COL6WIDTH, 75));
+      cm.getColumn(0).setPreferredWidth(settings_.getInteger(COL0WIDTH, 25));
+      cm.getColumn(1).setPreferredWidth(settings_.getInteger(COL1WIDTH, 300));
+      cm.getColumn(2).setPreferredWidth(settings_.getInteger(COL2WIDTH, 150));
+      cm.getColumn(3).setPreferredWidth(settings_.getInteger(COL3WIDTH, 75));
+      cm.getColumn(4).setPreferredWidth(settings_.getInteger(COL4WIDTH, 75));
+      cm.getColumn(5).setPreferredWidth(settings_.getInteger(COL5WIDTH, 75));
+      cm.getColumn(6).setPreferredWidth(settings_.getInteger(COL6WIDTH, 75));
       
       DataTableRowSorter sorter = 
               new DataTableRowSorter(mainTableModel_);
@@ -887,7 +893,7 @@ public class DataCollectionForm extends JFrame {
        final File[] selectedFiles;
        if ((modifiers & java.awt.event.InputEvent.META_MASK) > 0) {
           // The Swing fileopener looks ugly but allows for selection of multiple files
-          final JFileChooser jfc = new JFileChooser(loadTSFDir_);
+          final JFileChooser jfc = new JFileChooser(settings_.getString(LOADTSFDIR, ""));
           jfc.setMultiSelectionEnabled(true);
           jfc.setDialogTitle("Load Spot Data");
           int ret = jfc.showOpenDialog(this);
@@ -923,7 +929,7 @@ public class DataCollectionForm extends JFrame {
     */
    private void loadFiles(File[] selectedFiles) {
       for (File selectedFile : selectedFiles) {
-         loadTSFDir_ = selectedFile.getParent();
+         settings_.putString(LOADTSFDIR, selectedFile.getParent());
          if (selectedFile.getName().endsWith(".txt")) {
             LoadAndSave.loadText(selectedFile, this);
          } else if (selectedFile.getName().endsWith(".tsf")) {
@@ -942,12 +948,13 @@ public class DataCollectionForm extends JFrame {
        if (rows.length > 0) {
           for (int i = 0; i < rows.length; i++) {
              if (saveFormatBox_.getSelectedIndex() == 0) {
-                if (i == 0)
+                if (i == 0) {
                    dir_ = LoadAndSave.saveData(mainTableModel_.getRow(rows[i]), false, 
                            dir_, this);
-                else
-                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(rows[i]), true, 
+                } else {
+                   dir_ = LoadAndSave.saveData(mainTableModel_.getRow(rows[i]), true,
                            dir_, this);
+                }
              } else {
                 LoadAndSave.saveDataAsText(mainTableModel_.getRow(rows[i]), this);
              }
@@ -1100,8 +1107,10 @@ public class DataCollectionForm extends JFrame {
          } catch (InterruptedException ex) {
             ReportingUtils.showError(ex);
          }
-      } else
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset to color correct");
+      } else {
+         JOptionPane.showMessageDialog(getInstance(), 
+                 "Please select a dataset to color correct");
+      }
    }
 
    private void unjitterButton_ActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1110,11 +1119,12 @@ public class DataCollectionForm extends JFrame {
          Runnable doWorkRunnable = new Runnable() {
             @Override
             public void run() {
-               if (jitterMethod_ == 0)
+               if (jitterMethod_ == 0) {
                   DriftCorrector.unJitter(mainTableModel_.getRow(row));
-               else
-                  new DriftCorrector().unJitter2(mainTableModel_.getRow(row), 
+               } else {
+                  new DriftCorrector().unJitter2(mainTableModel_.getRow(row),
                           jitterMaxFrames_, jitterMaxSpots_);
+               }
             }
          };
          (new Thread(doWorkRunnable)).start();
@@ -1125,31 +1135,30 @@ public class DataCollectionForm extends JFrame {
 
 
    private void formWindowClosing(java.awt.event.WindowEvent evt) {
-      UserProfile up = studio_.profile();
-      Class oc = DataCollectionForm.class;
-      up.setInt(oc, FRAMEXPOS, getX());
-      up.setInt(oc, FRAMEYPOS, getY());
-      up.setInt(oc, FRAMEWIDTH, getWidth());
-      up.setInt(oc, FRAMEHEIGHT, getHeight());
+      settings_.putInteger(FRAMEXPOS, getX());
+      settings_.putInteger(FRAMEYPOS, getY());
+      settings_.putInteger(FRAMEWIDTH, getWidth());
+      settings_.putInteger(FRAMEHEIGHT, getHeight());
        
-      up.setBoolean(oc, USESIGMA, filterSigmaCheckBox_.isSelected());
-      up.setString(oc, SIGMAMIN, sigmaMin_.getText());
-      up.setString(oc, SIGMAMAX, sigmaMax_.getText());
-      up.setBoolean(oc, USEINT, filterIntensityCheckBox_.isSelected());
-      up.setString(oc, INTMIN, intensityMin_.getText());
-      up.setString(oc, INTMAX, intensityMax_.getText());
-      up.setString(oc, LOADTSFDIR, loadTSFDir_);
-      up.setInt(oc, RENDERMAG, visualizationMagnification_.getSelectedIndex());
-      up.setString(oc, PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
+      settings_.putBoolean(USESIGMA, filterSigmaCheckBox_.isSelected());
+      settings_.putString(SIGMAMIN, sigmaMin_.getText());
+      settings_.putString(SIGMAMAX, sigmaMax_.getText());
+      settings_.putBoolean(USEINT, filterIntensityCheckBox_.isSelected());
+      settings_.putString(INTMIN, intensityMin_.getText());
+      settings_.putString(INTMAX, intensityMax_.getText());
+      settings_.putString(LOADTSFDIR, loadTSFDir_);
+      settings_.putInteger(RENDERMAG, 
+              visualizationMagnification_.getSelectedIndex());
+      settings_.putString(PAIRSMAXDISTANCE, pairsMaxDistanceField_.getText());
        
       TableColumnModel cm = mainTable_.getColumnModel();
-      up.setInt(oc, COL0WIDTH, cm.getColumn(0).getWidth());
-      up.setInt(oc, COL1WIDTH, cm.getColumn(1).getWidth());
-      up.setInt(oc, COL2WIDTH, cm.getColumn(2).getWidth());
-      up.setInt(oc, COL3WIDTH, cm.getColumn(3).getWidth());
-      up.setInt(oc, COL4WIDTH, cm.getColumn(4).getWidth());
-      up.setInt(oc, COL5WIDTH, cm.getColumn(5).getWidth());
-      up.setInt(oc, COL6WIDTH, cm.getColumn(6).getWidth());
+      settings_.putInteger(COL0WIDTH, cm.getColumn(0).getWidth());
+      settings_.putInteger(COL1WIDTH, cm.getColumn(1).getWidth());
+      settings_.putInteger(COL2WIDTH, cm.getColumn(2).getWidth());
+      settings_.putInteger(COL3WIDTH, cm.getColumn(3).getWidth());
+      settings_.putInteger(COL4WIDTH, cm.getColumn(4).getWidth());
+      settings_.putInteger(COL5WIDTH, cm.getColumn(5).getWidth());
+      settings_.putInteger(COL6WIDTH, cm.getColumn(6).getWidth());
 
       studio_.events().unregisterForEvents(this);
       this.dispose();
@@ -1180,8 +1189,9 @@ public class DataCollectionForm extends JFrame {
                  "Nr. of Slices: " + rowData.nrSlices_ + "\n" +
                  "Nr. of Positions: " + rowData.nrPositions_ + "\n" +
                  "Is a Track: " + rowData.isTrack_;
-         if (!rowData.isTrack_)
+         if (!rowData.isTrack_) {
             data += "\nHas Z info: " + rowData.hasZ_;
+         }
          if (rowData.hasZ_) {
             data += "\nMinZ: " + String.format("%.2f",rowData.minZ_) + "\n";
             data += "MaxZ: " + String.format("%.2f",rowData.maxZ_);
@@ -1203,8 +1213,10 @@ public class DataCollectionForm extends JFrame {
          TextWindow tw = new TextWindow("Info for " + rowData.getName(), data, 300, 300);
          tw.setVisible(true);
        }
-       else
-         JOptionPane.showMessageDialog(getInstance(), "Please select a dataset first");
+       else {
+         JOptionPane.showMessageDialog(getInstance(), 
+                 "Please select a dataset first");
+      }
    }
 
    /**
@@ -1282,8 +1294,9 @@ public class DataCollectionForm extends JFrame {
       } else {
          RowData[] myRows = new RowData[rows.length];
          // TODO: check that these are tracks 
-         for (int i = 0; i < rows.length; i++)
+         for (int i = 0; i < rows.length; i++) {
             myRows[i] = mainTableModel_.getRow(rows[i]);
+         }
          TrackPlotter.plotData(myRows, 
                  plotComboBox_.getSelectedIndex(), 
                  logLogCheckBox_.isSelected(), 
@@ -1676,8 +1689,9 @@ public class DataCollectionForm extends JFrame {
             if (rowData.coordinate_ == Coordinates.NM) {
                rt.addValue(Terms.XNM, gd.getXCenter());
                rt.addValue(Terms.YNM, gd.getYCenter());
-               if (rowData.hasZ_)
+               if (rowData.hasZ_) {
                   rt.addValue(Terms.ZNM, gd.getZCenter());
+               }
             } else if (rowData.coordinate_ == Coordinates.PIXELS) {
                rt.addValue(Terms.XFITPIX, gd.getXCenter());
                rt.addValue(Terms.YFITPIX, gd.getYCenter());
