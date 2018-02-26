@@ -472,7 +472,11 @@ public class LoadAndSave {
     */
    public static String saveData(final RowData rowData, boolean bypassFileDialog,
            String dir, final JFrame caller) {
-      String[] parts = rowData.getName().split(File.separator);
+      String regex = File.separator;
+      if (regex.equals("\\")) {
+         regex = "\\\\";
+      }
+      String[] parts = rowData.getName().split(regex);
       String name = parts[parts.length - 1];
       String fn = name + EXTENSION;
       if (!bypassFileDialog) {
@@ -617,7 +621,11 @@ public class LoadAndSave {
     */
    public static void saveDataAsText(final RowData rowData, final JFrame caller) {
       FileDialog fd = new FileDialog(caller, "Save Spot Data", FileDialog.SAVE);
-      String[] parts = rowData.getName().split(File.separator);
+      String regex = File.separator;
+      if (regex.equals("\\")) {
+         regex = "\\\\";
+      }
+      String[] parts = rowData.getName().split(regex);
       String name = parts[parts.length - 1];
       fd.setFile(name + ".txt");
       FilenameFilter fnf = new FilenameFilter() {
