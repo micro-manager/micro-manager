@@ -187,7 +187,7 @@ public class Gaussian1DFitter {
 
          return mfma.unboundedToBounded(solution.getPoint());
       } catch (TooManyEvaluationsException tmee) {
-         throw new FittingException("P2D fit failed due to too many Evaluation Exceptions");
+         throw new FittingException("Gaussian fit failed due to too many Evaluation Exceptions");
       }
 
    }

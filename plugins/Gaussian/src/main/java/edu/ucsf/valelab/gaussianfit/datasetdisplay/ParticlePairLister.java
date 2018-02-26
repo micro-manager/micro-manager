@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.micromanager.internal.MMStudio;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -682,7 +683,7 @@ public class ParticlePairLister {
                              xGaussian);
                      double[] yDiffArray = ListUtils.toArray(yDiff);
                      double[] yGaussian = fitGaussianToData(yDiffArray, 
-                             -maxDistanceNm_, 
+                              -maxDistanceNm_, 
                              maxDistanceNm_);
                         GaussianUtils.plotGaussian("Gaussian fit of: "
                              + dc.getSpotData(row).getName() + "-Y distances",
@@ -695,12 +696,13 @@ public class ParticlePairLister {
                              yGaussian[0] * yGaussian[0]);
                      ij.IJ.log(dc.getSpotData(row).getName() + " X-error: " +
                              NumberUtils.doubleToDisplayString(xGaussian[0], 3) + 
-                             ", Y-error: " + 
+                             "nm, Y-error: " + 
                              NumberUtils.doubleToDisplayString(yGaussian[0],3) + 
-                             ", combined error: " + 
-                             NumberUtils.doubleToDisplayString(combinedError, 3));
+                             "nm, combined error: " + 
+                             NumberUtils.doubleToDisplayString(combinedError, 3) +
+                             "nm.");
                   } catch (FittingException ex) {
-                     // TODO
+                     ReportingUtils.showError("Failed to fit Gaussian, try decreasing the Maximum Distance value");
                   }
                }
 
@@ -744,7 +746,7 @@ public class ParticlePairLister {
                              avgVectDistancesAsDouble, 0.0, maxDistanceNm_, gResult);
                      }
                   } catch (FittingException ex) {
-                     // TODO
+                     ReportingUtils.showError("Gaussian fit failed.  Try decresing the Maximum Distance value");
                   }
 
                }
@@ -949,9 +951,9 @@ public class ParticlePairLister {
                      rt3.show("P2D Summary");
 
                   } catch (FittingException fe) {
-                     // ReportingUtils.showError(fe.getMessage());
+                     ReportingUtils.showError(fe.getMessage());
                   } catch (TooManyEvaluationsException tmee) {
-                     // ReportingUtils.showError(tmee.getMessage());
+                     ReportingUtils.showError(tmee.getMessage());
                   }
                }
                ij.IJ.showProgress(100.0);
@@ -966,234 +968,7 @@ public class ParticlePairLister {
       
    }
 
-   /**
-    * Cycles through the spots of the selected data set and finds the most
-    * nearby spot in channel 2. It will list this as a pair if the two spots are
-    * within MAXMATCHDISTANCE nm of each other. In addition, it will list the
-    * average distance, and average distance in x and y for each frame.
-    *
-    * spots in channel 2 that are within MAXMATCHDISTANCE of
-    *
-    * @param row
-    * @param maxDistance
-    * @param showPairs
-    * @param showImage
-    * @param savePairs
-    * @param filePath
-    * @param showSummary
-    * @param showGraph
-    *
-   public static void ListParticlePairs(final int row, final double maxDistance,
-           final boolean showPairs, final boolean showImage,
-           final boolean savePairs, final String filePath,
-           final boolean showSummary, final boolean showGraph) {
-
-      Runnable doWorkRunnable = new Runnable() {
-
-         @Override
-         public void run() {
-
-            RowData spotData = DataCollectionForm.getInstance().getSpotData(row);
-
-            ResultsTable rt = new ResultsTable();
-            rt.reset();
-            rt.setPrecision(2);
-
-            ResultsTable rt2 = new ResultsTable();
-            rt2.reset();
-            rt2.setPrecision(2);
-
-            int width = spotData.width_;
-            int height = spotData.height_;
-            double factor = spotData.pixelSizeNm_;
-            boolean useS = spotData.useSeconds();
-            ij.ImageStack stack = new ij.ImageStack(width, height);
-
-            XYSeries xData = new XYSeries("XError");
-            XYSeries yData = new XYSeries("YError");
-
-            ij.IJ.showStatus("Creating Pairs...");
-
-            for (int frame = 1; frame <= spotData.nrFrames_; frame++) {
-               ij.IJ.showProgress(frame, spotData.nrFrames_);
-               ImageProcessor ip = new ShortProcessor(width, height);
-               short pixels[] = new short[width * height];
-               ip.setPixels(pixels);
-               stack.addSlice("frame: " + frame, ip);
-
-               // Get points from both channels in each frame as ArrayLists        
-               ArrayList<SpotData> gsCh1 = new ArrayList<SpotData>();
-               ArrayList<Point2D.Double> xyPointsCh2 = new ArrayList<Point2D.Double>();
-               for (SpotData gs : spotData.spotList_) {
-                  if (gs.getFrame() == frame) {
-                     if (gs.getChannel() == 1) {
-                        gsCh1.add(gs);
-                     } else if (gs.getChannel() == 2) {
-                        Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                        xyPointsCh2.add(point);
-                     }
-                  }
-               }
-
-               if (xyPointsCh2.isEmpty()) {
-                  ReportingUtils.logError("Pairs function in Localization plugin: no points found in second channel in frame " + frame);
-                  continue;
-               }
-
-               // Find matching points in the two ArrayLists
-               Iterator it2 = gsCh1.iterator();
-               NearestPoint2D np = new NearestPoint2D(xyPointsCh2,
-                       maxDistance);
-               ArrayList<Double> distances = new ArrayList<Double>();
-               ArrayList<Double> errorX = new ArrayList<Double>();
-               ArrayList<Double> errorY = new ArrayList<Double>();
-               while (it2.hasNext()) {
-                  SpotData gs = (SpotData) it2.next();
-                  Point2D.Double pCh1 = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-                  Point2D.Double pCh2 = np.findKDWSE(pCh1);
-                  if (pCh2 != null) {
-                     rt.incrementCounter();
-                     rt.addValue(Terms.FRAME, gs.getFrame());
-                     rt.addValue(Terms.SLICE, gs.getSlice());
-                     rt.addValue(Terms.CHANNEL, gs.getSlice());
-                     rt.addValue(Terms.POSITION, gs.getPosition());
-                     rt.addValue(Terms.XPIX, gs.getX());
-                     rt.addValue(Terms.YPIX, gs.getY());
-                     rt.addValue("X1", pCh1.getX());
-                     rt.addValue("Y1", pCh1.getY());
-                     rt.addValue("X2", pCh2.getX());
-                     rt.addValue("Y2", pCh2.getY());
-                     double d2 = NearestPoint2D.distance2(pCh1, pCh2);
-                     double d = Math.sqrt(d2);
-                     rt.addValue("Distance", d);
-                     rt.addValue("Orientation (sine)",
-                             NearestPoint2D.orientation(pCh1, pCh2));
-                     distances.add(d);
-
-                     ip.putPixel((int) (pCh1.x / factor), (int) (pCh1.y / factor), (int) d);
-
-                     double ex = pCh2.getX() - pCh1.getX();
-                     //double ex = (pCh1.getX() - pCh2.getX()) * (pCh1.getX() - pCh2.getX());
-                     //ex = Math.sqrt(ex);
-                     errorX.add(ex);
-                     //double ey = (pCh1.getY() - pCh2.getY()) * (pCh1.getY() - pCh2.getY());
-                     //ey = Math.sqrt(ey);
-                     double ey = pCh2.getY() - pCh1.getY();
-                     errorY.add(ey);
-                  }
-               }
-               Double avg = ListUtils.listAvg(distances);
-               Double stdDev = ListUtils.listStdDev(distances, avg);
-               Double avgX = ListUtils.listAvg(errorX);
-               Double stdDevX = ListUtils.listStdDev(errorX, avgX);
-               Double avgY = ListUtils.listAvg(errorY);
-               Double stdDevY = ListUtils.listStdDev(errorY, avgY);
-               rt2.incrementCounter();
-               rt2.addValue("Frame Nr.", frame);
-               rt2.addValue("Avg. distance", avg);
-               rt2.addValue("StdDev distance", stdDev);
-               rt2.addValue("X", avgX);
-               rt2.addValue("StdDev X", stdDevX);
-               rt2.addValue("Y", avgY);
-               rt2.addValue("StdDevY", stdDevY);
-               double timePoint = frame;
-               if (spotData.timePoints_ != null) {
-                  timePoint = spotData.timePoints_.get(frame);
-                  if (useS) {
-                     timePoint /= 1000;
-                  }
-               }
-               xData.add(timePoint, avgX);
-               yData.add(timePoint, avgY);
-            }
-
-            if (rt.getCounter() == 0) {
-               MessageDialog md = new MessageDialog(DataCollectionForm.getInstance(),
-                       "No Pairs found", "No Pairs found");
-               return;
-            }
-
-            if (showSummary) {
-               // show summary in resultstable
-               rt2.show("Summary of Pairs found in " + spotData.getName());
-            }
-
-            if (showGraph) {
-               String xAxis = "Time (frameNr)";
-               if (spotData.timePoints_ != null) {
-                  xAxis = "Time (ms)";
-                  if (useS) {
-                     xAxis = "Time (s)";
-                  }
-               }
-               GaussianUtils.plotData2("Error in " + spotData.getName(),
-                       xData, yData, xAxis, "Error(nm)", 0, 400);
-
-               ij.IJ.showStatus("");
-            }
-
-            if (showPairs) {
-               //  show Pairs panel and attach listener
-               TextPanel tp;
-               TextWindow win;
-
-               String rtName = "Pairs found in " + spotData.getName();
-               rt.show(rtName);
-               ImagePlus siPlus = ij.WindowManager.getImage(spotData.title_);
-               Frame frame = WindowManager.getFrame(rtName);
-               if (frame != null && frame instanceof TextWindow && siPlus != null) {
-                  win = (TextWindow) frame;
-                  tp = win.getTextPanel();
-
-                  // TODO: the following does not work, there is some voodoo going on here
-                  for (MouseListener ms : tp.getMouseListeners()) {
-                     tp.removeMouseListener(ms);
-                  }
-                  for (KeyListener ks : tp.getKeyListeners()) {
-                     tp.removeKeyListener(ks);
-                  }
-
-                  ResultsTableListener myk = new ResultsTableListener(
-                          MMStudio.getInstance(), spotData.dw_, siPlus,
-                          rt, win, spotData.halfSize_);
-                  tp.addKeyListener(myk);
-                  tp.addMouseListener(myk);
-                  frame.toFront();
-               }
-            }
-
-            if (showImage) {
-               ImagePlus sp = new ImagePlus("Errors in pairs");
-               sp.setOpenAsHyperStack(true);
-               sp.setStack(stack, 1, 1, stack.getSize());
-               sp.setDisplayRange(0, 20);
-               sp.setTitle(spotData.title_);
-
-               ImageWindow w = new StackWindow(sp);
-               w.setTitle("Error in " + spotData.getName());
-
-               w.setImage(sp);
-               w.setVisible(true);
-            }
-
-            if (savePairs) {
-               try {
-                  String fileName = filePath + File.separator
-                          + spotData.getName() + "_Pairs.cvs";
-                  rt.saveAs(fileName);
-                  ij.IJ.log("Saved file: " + fileName);
-               } catch (IOException ex) {
-                  ReportingUtils.showError(ex, "Failed to save file");
-               }
-            }
-
-         }
-      };
-
-      (new Thread(doWorkRunnable)).start();
-
-   }
-   */
+  
 
    /**
     * Fits a list of numbers to a Gaussian function using Maximum Likelihood
