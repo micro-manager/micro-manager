@@ -397,12 +397,9 @@ public class ParticlePairLister {
                      // TODO: the following does not work, there is some voodoo going on here
                      for (MouseListener ms : tp.getMouseListeners()) {
                         tp.removeMouseListener(ms);
-<<<<<<< HEAD
-=======
-                     }
+                    }
                      for (KeyListener ks : tp.getKeyListeners()) {
                         tp.removeKeyListener(ks);
->>>>>>> f88c3915d... Gaussian: Start adding histograms showing XY distance distributions.
                      }
 
                      ResultsTableListener myk = new ResultsTableListener(
