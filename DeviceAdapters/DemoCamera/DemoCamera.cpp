@@ -2426,7 +2426,7 @@ bool CDemoCamera::GenerateColorTestPattern(ImgBuffer& img)
                         sample = maxVal * x / (width - 1);
                      }
                      sample &= 0xff; // Just in case
-                     rawPixels[x + y * width] |= sample << (8 * (3 - component));
+                     rawPixels[x + y * width] |= sample << (8 * component);
                   }
                }
             }
