@@ -2184,21 +2184,21 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          {
             long lIndex = imgWidth*j + k;
             unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * lSinePeriod * k) / lPeriod)));
-            theBytes[0] = value0;
+            theBytes[3] = value0;
             if( NULL != pTmpBuffer)
-               pTmp2[2] = value0;
+               pTmp2[1] = value0;
             unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * lSinePeriod * k) / lPeriod)));
-            theBytes[1] = value1;
+            theBytes[2] = value1;
             if( NULL != pTmpBuffer)
-               pTmp2[1] = value1;
+               pTmp2[2] = value1;
             unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * lSinePeriod * k) / lPeriod)));
-            theBytes[2] = value2;
+            theBytes[1] = value2;
 
             if( NULL != pTmpBuffer){
-               pTmp2[0] = value2;
+               pTmp2[3] = value2;
                pTmp2+=3;
             }
-            theBytes[3] = 0;
+            theBytes[0] = 0;
             unsigned long tvalue = *(unsigned long*)(&theBytes[0]);
             if (tvalue > maxDrawnVal) {
                 maxDrawnVal = tvalue;
