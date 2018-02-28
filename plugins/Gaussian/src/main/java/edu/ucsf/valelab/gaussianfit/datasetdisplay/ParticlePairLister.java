@@ -430,7 +430,7 @@ public class ParticlePairLister {
                         GsSpotPair spotPair = iSpotPairs.next();
                         // for now, we only start tracks at frame number 1
                         if (!spotPair.partOfTrack()) {
-                           for (int frame = firstFrame; frame < dc.getSpotData(row).nrFrames_; frame++) {
+                           for (int frame = firstFrame; frame <= dc.getSpotData(row).nrFrames_; frame++) {
                               if (!spotPair.partOfTrack() && spotPair.getFirstSpot().getFrame() == frame) {
                                  ArrayList<GsSpotPair> track = new ArrayList<GsSpotPair>();
                                  track.add(spotPair);
@@ -451,12 +451,13 @@ public class ParticlePairLister {
                            }
                         }
                      }
-                  }
-
-                  if (tracks.isEmpty()) {
-                     MMStudio.getInstance().alerts().postAlert("P2D fit error", null, "ID: " + dc.getSpotData(row).ID_ + 
-                             ", No Pairs found");
-                  }
+                  }                  
+               }
+               
+               if (tracks.isEmpty()) {
+                  MMStudio.getInstance().alerts().postAlert("P2D fit error", 
+                            null, "ID: " + dc.getSpotData(row).ID_ + 
+                            ", No Pairs found");
                }
 
                Iterator<ArrayList<GsSpotPair>> itTracks = tracks.iterator();
@@ -947,13 +948,21 @@ public class ParticlePairLister {
                      rt3.show("P2D Summary");
 
                   } catch (FittingException fe) {
+                     String msg =  "ID: " + dc.getSpotData(row).ID_ + 
+                             ", Failed to fit p2d function";
                      MMStudio.getInstance().alerts().postAlert("P2D fit error", 
-                             null, "ID: " + dc.getSpotData(row).ID_ + 
-                             ", Failed to fit p2d function");
-                  } catch (TooManyEvaluationsException tmee) {    
+                             null, msg);
+                     if (row == rows_[rows_.length - 1]) {
+                        ReportingUtils.showError(msg);
+                     }
+                  } catch (TooManyEvaluationsException tmee) {  
+                     String msg = "ID: " + dc.getSpotData(row).ID_ + 
+                             ", Too many evaluations while fitting";
                      MMStudio.getInstance().alerts().postAlert("P2D fit error", 
-                             null, "ID: " + dc.getSpotData(row).ID_ + 
-                             ", Too many evaluations while fitting");
+                             null, msg);
+                     if (row == rows_[rows_.length - 1]) {
+                        ReportingUtils.showError(msg);
+                     }
                   }
                }
                ij.IJ.showProgress(100.0);
