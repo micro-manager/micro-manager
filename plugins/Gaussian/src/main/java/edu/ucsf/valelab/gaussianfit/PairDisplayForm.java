@@ -144,10 +144,7 @@ public class PairDisplayForm extends GUFrame{
       
       // Select fixed sigma
       final JRadioButton useUserSigmaValue = new JRadioButton("");
-      
-      // Select Sigma from data
-      final JRadioButton estimateSigmaValue = new JRadioButton("from data (avg)");
-      
+            
       // Use Sigma from individual data
       final JRadioButton useIndividualSigma = new JRadioButton("from data (individual)");
  
@@ -160,26 +157,18 @@ public class PairDisplayForm extends GUFrame{
      
       ButtonGroup group = new ButtonGroup();
       group.add(useUserSigmaValue);
-      group.add(estimateSigmaValue);  
+      // group.add(estimateSigmaValue);  
       group.add(useIndividualSigma);
   
       String buttonSelection = up_.getString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTDATAAVG);
       useUserSigmaValue.setSelected(buttonSelection.equals(SIGMAINPUTUSER));
-      estimateSigmaValue.setSelected(buttonSelection.equals(SIGMAINPUTDATAAVG));
+      // estimateSigmaValue.setSelected(buttonSelection.equals(SIGMAINPUTDATAAVG));
       useIndividualSigma.setSelected(buttonSelection.equals(SIGMAINPUTDATAIND));
       useUserSigmaValue.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
             if (useUserSigmaValue.isSelected()) {
                up_.setString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTUSER);
-            }
-         }
-      });
-      estimateSigmaValue.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent ae) {
-            if (estimateSigmaValue.isSelected()) {
-               up_.setString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTDATAAVG);
             }
          }
       });
@@ -218,9 +207,6 @@ public class PairDisplayForm extends GUFrame{
             useUserSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected());
-            estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected() );
             useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected() && 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected() );
@@ -233,8 +219,7 @@ public class PairDisplayForm extends GUFrame{
          @Override
          public void actionPerformed(ActionEvent ae){
             useUserSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());
-            sigmaTextField.setEnabled(distanceEstimateFixedSigma.isSelected());
-            estimateSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());  
+            sigmaTextField.setEnabled(distanceEstimateFixedSigma.isSelected()); 
             useIndividualSigma.setEnabled(distanceEstimateFixedSigma.isSelected());
          }
       });
@@ -249,9 +234,6 @@ public class PairDisplayForm extends GUFrame{
             useUserSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected());
-            estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected() );
             useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected() && 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected() );
@@ -265,9 +247,6 @@ public class PairDisplayForm extends GUFrame{
       useUserSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected());
-      estimateSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected());
       useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected()&& 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected());
@@ -277,7 +256,6 @@ public class PairDisplayForm extends GUFrame{
       panel.add(distanceEstimateFixedSigma, "gapleft 60");
       panel.add(useUserSigmaValue, "split 2");
       panel.add(sigmaTextField, "wrap");
-      panel.add(estimateSigmaValue, "skip 1, wrap");
       panel.add(useIndividualSigma, "skip 1, wrap");
       panel.add(estimateP2DError, "gapleft 60, wrap");
       panel.add(showHistogram, "gapleft 30, wrap");
