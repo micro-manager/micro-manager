@@ -8,6 +8,8 @@
 
 package edu.ucsf.valelab.gaussianfit.utils;
 
+import org.apache.commons.math3.analysis.function.Exp;
+
 /**
  * Code from stackoverflow:
  * http://stackoverflow.com/questions/8797722/modified-bessel-functions-of-order-n
@@ -24,6 +26,7 @@ public class Besseli {
    public static final double ACC = 4.0;
    public static final double BIGNO = 1.0e10;
    public static final double BIGNI = 1.0e-10;
+   private final static Exp EXP = new Exp();
 
    public static final double bessi0(double x) {
       double answer;
@@ -37,8 +40,8 @@ public class Besseli {
          double y = 3.75 / ax;
          answer = 0.39894228 + y * (0.1328592e-1 + y * (0.225319e-2
                  + y * (-0.157565e-2 + y * (0.916281e-2 + y * (-0.2057706e-1
-                 + y * (0.2635537e-1 + y * (-0.1647633e-1 + y * 0.392377e-2)))))));
-         answer *= (Math.exp(ax) / Math.sqrt(ax));
+                 + y * (0.2635537e-1 + y * (-0.1647633e-1 + y * 0.392377e-2))))))); 
+         answer *= (EXP.value(ax) / Math.sqrt(ax));
       }
       return answer;
    }
@@ -54,7 +57,7 @@ public class Besseli {
          double y = 3.75 / ax;
          answer = 0.2282967e-1 + y * (-0.2895312e-1 + y * (0.1787654e-1 - y * 0.420059e-2));
          answer = 0.39894228 + y * (-0.3988024e-1 + y * (-0.362018e-2 + y * (0.163801e-2 + y * (-0.1031555e-1 + y * answer))));
-         answer *= (Math.exp(ax) / Math.sqrt(ax));
+         answer *= (EXP.value(ax) / Math.sqrt(ax));
       }
       return answer;
    }

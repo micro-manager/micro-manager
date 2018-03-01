@@ -143,14 +143,19 @@ class P2D50 implements MultivariateFunction {
 class P2DIndividualSigmasFunc implements MultivariateFunction {
    private final double[] points_;
    private final double[] sigmas_;
+   private final boolean useApproximation_;
    
    /**
-    * 
+    * @param useApproximation Use approximation to p2d if true. This is 
+    *                         needed to accurately solve instances where 
+    *                         mu >> sigma
     * @param points array with measurements
     * @param fitSigma whether sigma value should be fitted
     * @param sigma  Fixed sigma, only needed when fitSigma is true
     */
-   public P2DIndividualSigmasFunc(final double[] points, final double[] sigmas) {
+   public P2DIndividualSigmasFunc(final boolean useApproximation, 
+           final double[] points, final double[] sigmas) {
+      useApproximation_ = useApproximation;
       points_ = points;
       sigmas_ = sigmas;
       
@@ -166,18 +171,32 @@ class P2DIndividualSigmasFunc implements MultivariateFunction {
    @Override
    public double value(double[] doubles) {
       double sum = 0.0;
-      for (int i = 0; i < points_.length; i++)  {
-         double predictedValue = P2DFitter.p2d(points_[i], doubles[0], sigmas_[i]);
-         sum += Math.log(predictedValue);
+      if (useApproximation_) {
+         for (int i = 0; i < points_.length; i++) {
+            double predictedValue = P2DFitter.p2dApproximation(points_[i], doubles[0], sigmas_[i]);
+            sum += Math.log(predictedValue);
+         }
+      } else {
+         for (int i = 0; i < points_.length; i++) {
+            double predictedValue = P2DFitter.p2d(points_[i], doubles[0], sigmas_[i]);
+            sum += Math.log(predictedValue);
+         }
       }
       return sum;
    }
    
    public double nonLogValue(double[] doubles) {
       double sum = 0;
-      for (int i = 0; i < points_.length; i++)  {
-         double predictedValue = P2DFitter.p2d(points_[i], doubles[0], sigmas_[i]);
-         sum *= predictedValue;
+      if (useApproximation_) {
+         for (int i = 0; i < points_.length; i++) {
+            double predictedValue = P2DFitter.p2dApproximation(points_[i], doubles[0], sigmas_[i]);
+            sum *= predictedValue;
+         }
+      } else {
+         for (int i = 0; i < points_.length; i++) {
+            double predictedValue = P2DFitter.p2d(points_[i], doubles[0], sigmas_[i]);
+            sum *= predictedValue;
+         }
       }
       return sum;
    }
@@ -194,6 +213,8 @@ class P2DIndividualSigmasFunc implements MultivariateFunction {
  */
 
 public class P2DFitter {
+   
+   private final static Exp EXP = new Exp();
    private final double[] points_;
    private final double[] sigmas_;
    private final double upperBound_;
@@ -214,13 +235,28 @@ public class P2DFitter {
     */
    public static double p2d (double r, double mu, double sigma) {
       double first = r / (sigma * sigma);
-      Exp exp = new Exp();
-      double second = exp.value(- (mu * mu + r * r)/ (2 * sigma * sigma));
+      double second = EXP.value(- (mu * mu + r * r)/ (2 * sigma * sigma));
       double third = Besseli.bessi(0, (r * mu) / (sigma * sigma) );
+      
+      if (second < 1e-300) {
+         second = 1e-300;
+      }
+      if (Double.isInfinite(third)) {
+         third = Double.MAX_VALUE;
+      }
       
       return first * second * third;
    }
    
+   public static double p2dApproximation(double r, double mu, double sigma) {
+      
+      double result = Math.sqrt(r / (2 * Math.PI * sigma * mu)) * 
+              EXP.value(- (r - mu) * (r - mu) / (2 * sigma * sigma) );
+      if (result < Double.MIN_NORMAL) {
+         result = Double.MIN_NORMAL;
+      }
+      return result; 
+   }
    
    
    /**
@@ -312,7 +348,9 @@ public class P2DFitter {
       SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
 
       if (useIndividualSigmas_) {
-         P2DIndividualSigmasFunc myP2DFunc = new P2DIndividualSigmasFunc(points_, sigmas_);
+         boolean useApproximation = sigmaGuess_ < muGuess_ / 2;
+         P2DIndividualSigmasFunc myP2DFunc = new P2DIndividualSigmasFunc(
+                 useApproximation, points_, sigmas_);
          double[] lowerBounds = {0.0};
          double[] upperBounds = {upperBound_};
          MultivariateFunctionMappingAdapter mfma = new MultivariateFunctionMappingAdapter(
