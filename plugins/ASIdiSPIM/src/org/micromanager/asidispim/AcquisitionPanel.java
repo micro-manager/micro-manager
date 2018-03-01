@@ -3237,17 +3237,13 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      // blocking call; will wait for stages to move
                      MultiStagePosition.goToPosition(nextPosition, core_);
                      
-                     // restore speed for stage scanning
+                     // for stage scanning: restore speed and set up scan at new position 
+                     // non-multi-position situation is handled in prepareControllerForAquisition instead
                      if (acqSettings.isStageScanning) {
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_SPEED, scanXSpeed);
                         props_.setPropValue(Devices.Keys.XYSTAGE,
                               Properties.Keys.STAGESCAN_MOTOR_ACCEL, scanXAccel);
-                     }
-                     
-                     // setup stage scan at this position
-                     // non-multi-position situation is handled in prepareControllerForAquisition instead
-                     if (acqSettings.useMultiPositions) {
                         StagePosition pos = nextPosition.get(devices_.getMMDevice(Devices.Keys.XYSTAGE));  // get ideal position from position list, not current position
                         controller_.prepareStageScanForAcquisition(pos.x, pos.y);
                      }
@@ -3542,6 +3538,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         }
                         if ((twoSided || acqBothCameras) && core_.isSequenceRunning(secondCamera)) {
                            core_.stopSequenceAcquisition(secondCamera);
+                        }
+
+                        // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
+                        if ((acqSettings.numSides > 1) || acqSettings.firstSideIsA) {
+                           props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+                                 Properties.Values.SPIM_IDLE, true);
+                        }
+                        if ((acqSettings.numSides > 1) || !acqSettings.firstSideIsA) {
+                           props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+                                 Properties.Values.SPIM_IDLE, true);
+                        }
+                        if (acqSettings.isStageScanning) {
+                           props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
+                                 Properties.Values.SPIM_IDLE);
                         }
                      }
                   }

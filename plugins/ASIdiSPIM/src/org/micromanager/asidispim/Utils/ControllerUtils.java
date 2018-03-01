@@ -615,13 +615,7 @@ public class ControllerUtils {
          positions_.setPosition(piezoDevice, piezoPosition, true); 
       }
 
-      // TODO consider whether we need to do anything different for stage scanning case,
-      //   in particular clearing STAGESCAN_STATE of XY card
-      
-      // make sure to stop the SPIM state machine in case the acquisition was cancelled
-      // even if the acquisition wasn't cancelled make sure the Micro-Manager properties are updated
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
-            Properties.Values.SPIM_IDLE, true);
+      // make sure we stop SPIM and SCAN state machines every time we trigger controller (in AcquisitionPanel code)
       
       return true;
    }
