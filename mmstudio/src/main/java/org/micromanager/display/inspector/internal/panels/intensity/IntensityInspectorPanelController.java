@@ -287,13 +287,17 @@ public class IntensityInspectorPanelController
          channelHistogramsPanel_.add(new JSeparator(JSeparator.HORIZONTAL),
                new CC().span(2).growX().wrap());
 
-         ChannelIntensityController chanController =
-               ChannelIntensityController.create(viewer_, i);
-         channelControllers_.add(chanController);
-         channelHistogramsPanel_.add(chanController.getChannelPanel(),
-               new CC().growY());
-         channelHistogramsPanel_.add(chanController.getHistogramPanel(),
-               new CC().grow().wrap());
+         if (viewer_ != null) {
+            ChannelIntensityController chanController
+                    = ChannelIntensityController.create(viewer_, i);
+            channelControllers_.add(chanController);
+            channelHistogramsPanel_.add(chanController.getChannelPanel(),
+                    new CC().growY());
+            channelHistogramsPanel_.add(chanController.getHistogramPanel(),
+                    new CC().grow().wrap());
+         } else {
+            ReportingUtils.logError("IntensityInspectorPanelController: Viewer is unexpectedly null");
+         }
       }
 
       fireInspectorPanelDidChangeHeight();

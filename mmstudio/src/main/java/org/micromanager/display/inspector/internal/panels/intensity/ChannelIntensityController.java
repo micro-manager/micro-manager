@@ -378,7 +378,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
       updateHistoRangeButtonStates();
       // Needed to pick up the current DisplaySettings, 
-      newDisplaySettings(viewer.getDisplaySettings());
+      if (viewer != null) {
+         newDisplaySettings(viewer.getDisplaySettings());
+      }
    }
 
    void detach() {
