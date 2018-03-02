@@ -99,7 +99,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    private String name_;
    private final EventBus displayBus_;
    private final CVFrame cvFrame_;
-   private Coords.CoordsBuilder coordsBuilder_;
    private int maxValue_;
    private final String XLOC = "XLocation";
    private final String YLOC = "YLocation";
@@ -152,7 +151,6 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
       displayBus_ = new EventBus();
       cvFrame_ = new CVFrame();
-      coordsBuilder_ = Coordinates.builder();
       
       if (dataProvider_ == null) {
          studio_.logs().showMessage("No data set open");
@@ -519,8 +517,9 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          */
 
          // Only return the middle image
-         coordsBuilder_ = coordsBuilder_.z(nrZ / 2).channel(ch).time(0).stagePosition(0);
-         Coords coords = coordsBuilder_.build();
+         
+         Coords coords = Coordinates.builder().z(nrZ / 2).channel(ch).t(0).
+                           stagePosition(0).build();
          imageList.add(dataProvider_.getImage(coords));
 
       }
@@ -584,8 +583,8 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       for (int ch = 0; ch < nrCh; ch++) {
          FragmentedMemory fragmentedMemory = new FragmentedMemory();
          for (int i = 0; i < nrZ; i++) {
-            coordsBuilder_ = coordsBuilder_.z(i).channel(ch).time(timePoint).stagePosition(0);
-            Coords coords = coordsBuilder_.build();
+            Coords coords = Coordinates.builder().z(i).channel(ch).t(timePoint).
+                                                   stagePosition(0).build();
             lastDisplayedCoords_ = coords;
 
             // Bypass Micro-Manager api to get access to the ByteBuffers
