@@ -71,6 +71,7 @@ import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.inspector.internal.panels.intensity.ImageStatsPublisher;
 import org.micromanager.display.internal.event.DataViewerDidBecomeActiveEvent;
 import org.micromanager.display.internal.event.DataViewerDidBecomeInactiveEvent;
+import org.micromanager.display.internal.event.DataViewerDidBecomeVisibleEvent;
 import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.event.DefaultDisplaySettingsChangedEvent;
 import org.micromanager.display.internal.imagestats.BoundsRectAndMask;
@@ -276,6 +277,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
          SwingUtilities.invokeLater(() -> {
             cvFrame_.setVisible(true);
+            postEvent(DataViewerDidBecomeVisibleEvent.create(this));
          });
 
          clearVolumeRenderer_.setTransferFunction(TransferFunctions.getDefault());
