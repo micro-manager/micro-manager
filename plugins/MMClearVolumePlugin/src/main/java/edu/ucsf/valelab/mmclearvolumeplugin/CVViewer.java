@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.swing.SwingUtilities;
+import org.micromanager.LogManager;
 
 import org.micromanager.Studio;
 import org.micromanager.UserProfile;
@@ -868,13 +869,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          return;
       }
       Coords newImageCoords = newImage.getCoords();
-      if (timePointComplete(newImageCoords.getT())) {
+      if (timePointComplete(newImageCoords.getT(), dataProvider_, studio_.logs())) {
          if (clearVolumeRenderer_ == null) {
             initializeRenderer(newImageCoords.getT());
-         } else {
-            
-         // TODO - or should the scrollerpanel do this?
-         }
+         } 
       }
    }       
    
@@ -891,17 +889,20 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
     * Check if we have all z slices for all channels at the given time point
     * This code may be fooled by other axes in the data
     * @param timePointIndex - time point index
+    * @param dataProvider
+    * @param logger
     * @return true if complete
     */
-   private boolean timePointComplete (int timePointIndex) {
+   public static boolean timePointComplete (final int timePointIndex, 
+           final DataProvider dataProvider, final LogManager logger ) {
       Coords zStackCoords = Coordinates.builder().t(timePointIndex).build();
       try {
-         final int nrImages = dataProvider_.getImagesMatching(zStackCoords).size();
-         Coords intendedDimensions = dataProvider_.getSummaryMetadata().
+         final int nrImages = dataProvider.getImagesMatching(zStackCoords).size();
+         Coords intendedDimensions = dataProvider.getSummaryMetadata().
                  getIntendedDimensions();
          return nrImages >= intendedDimensions.getChannel() * intendedDimensions.getZ(); 
       } catch (IOException ioe) {
-         studio_.logs().showError(ioe, "Error getting number of images from dataset");
+         logger.showError(ioe, "Error getting number of images from dataset");
       }
       return false;
    }

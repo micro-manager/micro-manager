@@ -21,6 +21,7 @@
 package edu.ucsf.valelab.mmclearvolumeplugin.uielements;
 
 import com.google.common.eventbus.Subscribe;
+import edu.ucsf.valelab.mmclearvolumeplugin.CVViewer;
 import edu.ucsf.valelab.mmclearvolumeplugin.events.CanvasDrawCompleteEvent;
 
 import java.awt.Dimension;
@@ -28,7 +29,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.ArrayList;
@@ -49,7 +49,6 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.micromanager.data.Coordinates;
 
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
@@ -78,14 +77,13 @@ public class ScrollerPanel extends JPanel {
    private final AtomicBoolean shouldStopUpdates_;
 
    private final HashMap<String, AxisState> axisToState_;
-   private final HashMap<String, Integer> axisToSavedPosition_;
    private PopupButton fpsButton_;
 
-   private Timer snapbackTimer_;
    private Timer animationTimer_;
    private double animationFPS_ = 3.0;
    private int animationStepSize_ = 0;
    private long lastAnimationTimeMs_ = 0;
+   private long lastShownTimePoint_ = 0;;
    private static final int MAXFPS = 30;
    
    private final String CV_ANIMATION_FPS = "Animation fps";
@@ -104,7 +102,6 @@ public class ScrollerPanel extends JPanel {
       shouldStopUpdates_ = new AtomicBoolean(false);
 
       axisToState_ = new HashMap<>();
-      axisToSavedPosition_ = new HashMap<>();
 
       // Only the scrollbar column is allowed to grow in width
       // Columns are animate, current position, max position, scrollbar,
@@ -323,7 +320,7 @@ public class ScrollerPanel extends JPanel {
       Coords target = builder.build();
       // Coordinate our linkers.
       //display_.postEvent(new ImageCoordsEvent(target));
-      display_.setDisplayedImageTo(target);
+      display_.setDisplayPosition(target);
    }
 
    /**
@@ -411,6 +408,16 @@ public class ScrollerPanel extends JPanel {
          }
       }
    }
+   
+   private boolean isAnimating() {
+      boolean isAnimating = false;
+      for (String axis : axisToState_.keySet()) {
+         if (axisToState_.get(axis).isAnimated_) {
+            isAnimating = true;
+         }
+      }
+      return isAnimating;
+   }
 
    /**
     * Update the specified  scrollbar to the desired position. 
@@ -445,33 +452,15 @@ public class ScrollerPanel extends JPanel {
          axisToState_.get(axis).maxLabel_.setText(
                  "/ " + (String.valueOf(axisLen)));
       }
-      int pos = scrollbar.getValue();
-      //ScrollbarLockIcon.LockedState lockState = axisToState_.get(axis).lockState_;
       synchronized (this) {
-         // shouldPostEvents_ = false;
-         scrollbar.setValue(newPos);
-         // shouldPostEvents_ = true;
-         // if (lockState == ScrollbarLockIcon.LockedState.SUPERLOCKED) {
-         // This axis is not allowed to move.
+         if (!isAnimating()) {
+            scrollbar.setValue(newPos);
+         }
+
       }
-      // else if (lockState == ScrollbarLockIcon.LockedState.LOCKED) {
-      // This axis can change, but must be snapped back later. Only if
-      // we don't already have a saved index, though.
-      //     if (!axisToSavedPosition_.containsKey(axis)) {
-      //        axisToSavedPosition_.put(axis, pos);
-      //     }
-      //     scrollbar.setValue(newPos);
-      //  }
-      //   else {
-      // This axis is allowed to move and we don't need to snap it
-      // back later.
-      //     if (axisToSavedPosition_.containsKey(axis)) {
-      //        axisToSavedPosition_.remove(axis);
-      //      }
-      //      scrollbar.setValue(newPos);
-      //  }
-      //  shouldPostEvents_ = true;
-      // }
+      if (axis.equals(Coords.T)) {
+         lastShownTimePoint_ = newPos;
+      }
       return didAddScroller;
    }
    
@@ -481,31 +470,15 @@ public class ScrollerPanel extends JPanel {
          return;
       }
       Coords newImageCoords = newImage.getCoords();
-      if (timePointComplete(newImageCoords.getT())) {
+      if (CVViewer.timePointComplete(newImageCoords.getT(), dataProvider_, 
+              ReportingUtils.getWrapper())) {
          updateScrollbar(Coords.T, newImageCoords.getT());
+      } else if (newImageCoords.getT() > lastShownTimePoint_ + 1) {
+         updateScrollbar (Coords.T, newImageCoords.getT() - 1);
       }
    }       
    
-   /**
-    * Check if we have all z slices for all channels at the given time point
-    * This code may be fooled by other axes in the data
-    * @param timePointIndex - time point index
-    * @return true if complete
-    */
-   private boolean timePointComplete (int timePointIndex) {
-      Coords zStackCoords = Coordinates.builder().t(timePointIndex).build();
-      try {
-         final int nrImages = dataProvider_.getImagesMatching(zStackCoords).size();
-         Coords intendedDimensions = dataProvider_.getSummaryMetadata().
-                 getIntendedDimensions();
-         return nrImages >= intendedDimensions.getChannel() * intendedDimensions.getZ(); 
-      } catch (IOException ioe) {
-         ReportingUtils.showError(ioe, "Error getting number of images from dataset");
-      }
-      return false;
-   }
-
-
+  
    /**
     * The canvas has finished drawing an image; move to the next one in our
     * animation.
