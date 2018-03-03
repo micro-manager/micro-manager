@@ -161,6 +161,9 @@ public class DataCollectionForm extends JFrame {
    private static final String USEINT = "DCIntensity";
    private static final String INTMIN = "DCIntMin";
    private static final String INTMAX = "DCIntMax";
+   private static final String PAIRMAXDIST = "DCPairMaxDist";
+   private static final String PAIRMAXSIGMA = "DCPairSigma";
+   private static final String PAIRNRQUADRANTS = "DCPairNrQuadrants";
    private static final String LOADTSFDIR = "TSFDir";
    private static final String RENDERMAG = "VisualizationMagnification";
    private static final String PAIRSMAXDISTANCE = "PairsMaxDistance";
@@ -209,6 +212,9 @@ public class DataCollectionForm extends JFrame {
    private JCheckBox filterSigmaCheckBox_;
    private JTextField sigmaMax_;
    private JTextField sigmaMin_;
+   private JTextField pairMaxDist_;
+   private JTextField pairMaxSigma_;
+   private JTextField pairNrQuadrants_;
        
    
    private static DataCollectionForm instance_ = null;
@@ -317,6 +323,9 @@ public class DataCollectionForm extends JFrame {
       filterIntensityCheckBox_.setSelected(settings_.getBoolean(USEINT, false));
       intensityMin_.setText(settings_.getString(INTMIN, "0.0"));
       intensityMax_.setText(settings_.getString(INTMAX, "20000"));
+      pairMaxDist_.setText(settings_.getString(PAIRMAXDIST, "100.0"));
+      pairMaxSigma_.setText(settings_.getString(PAIRMAXSIGMA, "2.0"));
+      pairNrQuadrants_.setText(settings_.getString(PAIRNRQUADRANTS, "36"));
       loadTSFDir_ = settings_.getString(LOADTSFDIR, "");
       visualizationMagnification_.setSelectedIndex(up.getInt(oc, RENDERMAG, 0));
       pairsMaxDistanceField_.setText(settings_.getString(PAIRSMAXDISTANCE, "500"));
@@ -788,8 +797,55 @@ public class DataCollectionForm extends JFrame {
       sigmaUnitLabel.setFont(gFont);
       filterPanel.add(sigmaUnitLabel, "wrap");
       
+      JSeparator hLine = new JSeparator();
+      hLine.setOrientation(SwingConstants.HORIZONTAL);
+      hLine.setMinimumSize(new Dimension (60, 2));
+      filterPanel.add(hLine, "growx, span 5, wrap");
       
+      JLabel pairFilterLabel = new JLabel("Pair Filters:");
+      pairFilterLabel.setFont(hFont); 
+      filterPanel.add(pairFilterLabel, "span 5, gapleft 30, split 2, center");
+      
+      JButton pairFilterButton = new JButton("Filter Now");
+      pairFilterButton.setFont(gFont); 
+      pairFilterButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            pairFilterNow_ActionPerformed();
+         }
+      });
+      pairFilterButton.setMaximumSize(buttonSize);
+      filterPanel.add(pairFilterButton, "center, wrap");
 
+      // filterPairs(50, 2.0, 36);
+      JLabel maxPairDistLabel = new JLabel("Max dist.(nm)");
+      maxPairDistLabel.setFont(gFont);
+      filterPanel.add(maxPairDistLabel);
+      
+      pairMaxDist_ = new JTextField("100.0");
+      pairMaxDist_.setFont(gFont);
+      pairMaxDist_.setMinimumSize(textFieldSize);
+      filterPanel.add(pairMaxDist_);
+      
+      JLabel sigmaDistLabel = new JLabel("Max sigma");
+      sigmaDistLabel.setFont(gFont);
+      filterPanel.add(sigmaDistLabel, "span 3, split 2");
+      
+      pairMaxSigma_ = new JTextField("2.0");
+      pairMaxSigma_.setFont(gFont);
+      pairMaxSigma_.setMinimumSize(textFieldSize);
+      filterPanel.add(pairMaxSigma_, "wrap");
+      
+      JLabel pairNrQuadLabel = new JLabel("# Quadrants");
+      pairNrQuadLabel.setFont(gFont);
+      filterPanel.add(pairNrQuadLabel);
+      
+      pairNrQuadrants_ = new JTextField("36");
+      pairNrQuadrants_.setFont(gFont);
+      pairNrQuadrants_.setMinimumSize(textFieldSize);
+      filterPanel.add(pairNrQuadrants_);
+      
+      
       
 /************************* Localization Microscopy *******************/  
       JPanel visualizationPanel = new JPanel(new MigLayout(insets, 
@@ -1268,6 +1324,9 @@ public class DataCollectionForm extends JFrame {
       settings_.putBoolean(USEINT, filterIntensityCheckBox_.isSelected());
       settings_.putString(INTMIN, intensityMin_.getText());
       settings_.putString(INTMAX, intensityMax_.getText());
+      settings_.putString(PAIRMAXDIST, pairMaxDist_.getText());
+      settings_.putString(PAIRMAXSIGMA, pairMaxSigma_.getText());
+      settings_.putString(PAIRNRQUADRANTS, pairNrQuadrants_.getText());
       settings_.putString(LOADTSFDIR, loadTSFDir_);
       settings_.putInteger(RENDERMAG, 
               visualizationMagnification_.getSelectedIndex());
@@ -2443,6 +2502,28 @@ public class DataCollectionForm extends JFrame {
                        NumberUtils.displayStringToDouble(sigmaMax_.getText()) );
                }
                filterSpots(sdf);
+            } catch (ParseException ex) {
+              ReportingUtils.showError("Filter inputs are not all numeric");
+            }
+         }
+      };
+      doWorkRunnable.run();
+   }
+   
+    public void pairFilterNow_ActionPerformed() {
+            
+      Runnable doWorkRunnable = new Runnable() {
+
+         @Override
+         public void run() {
+            try {
+               double maxDist = NumberUtils.displayStringToDouble(
+                       pairMaxDist_.getText());
+               double maxStd = NumberUtils.displayStringToDouble(
+                        pairMaxSigma_.getText());
+               int nrQuadrants = (int) Math.round(NumberUtils.displayStringToDouble(
+                        pairNrQuadrants_.getText()));
+               filterPairs(maxDist, maxStd, nrQuadrants);
             } catch (ParseException ex) {
               ReportingUtils.showError("Filter inputs are not all numeric");
             }
