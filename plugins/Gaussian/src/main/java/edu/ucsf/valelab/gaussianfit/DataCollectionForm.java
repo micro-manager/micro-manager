@@ -728,9 +728,21 @@ public class DataCollectionForm extends JFrame {
               "[fill]0[fill]0[fill]0[fill]0[fill]", 
               "[]3[]0[]0[]0[]"));
       
-      JLabel filterLabel = new JLabel("Filters:");
+      JLabel filterLabel = new JLabel("Spot Filters:");
       filterLabel.setFont(hFont); 
-      filterPanel.add(filterLabel, "span 5, gapleft 90, wrap");
+      filterPanel.add(filterLabel, "span 5, gapleft 30, split 2, center");
+      
+      JButton filterNowButton = new JButton("Filter Now");
+            filterNowButton.setFont(gFont); 
+      filterNowButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            filterNow_ActionPerformed();
+         }
+      });
+      filterNowButton.setMaximumSize(buttonSize);
+      filterPanel.add(filterNowButton, "center, wrap");
+      
            
       filterIntensityCheckBox_.setFont(gFont);
       filterIntensityCheckBox_.setText("Intensity");
@@ -776,16 +788,7 @@ public class DataCollectionForm extends JFrame {
       sigmaUnitLabel.setFont(gFont);
       filterPanel.add(sigmaUnitLabel, "wrap");
       
-      JButton filterNowButton = new JButton("Filter Now");
-            filterNowButton.setFont(gFont); 
-      filterNowButton.addActionListener(new java.awt.event.ActionListener() {
-         @Override
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            filterNow_ActionPerformed();
-         }
-      });
-      filterNowButton.setMaximumSize(buttonSize);
-      filterPanel.add(filterNowButton, "span 5, center, wrap");
+      
 
       
 /************************* Localization Microscopy *******************/  
