@@ -4,6 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   niji controller adapter
+// APPLIES TO:    niji with firmware version >= V2.101.000(Beta)
+//                (please contact Bluebox Optics if your firmware is older)
+//
 // COPYRIGHT:     University of California, San Francisco, 2009
 //
 // AUTHOR:        Egor Zindy, ezindy@gmail.com, 2017-08-15
@@ -192,20 +195,20 @@ int Controller::Initialize()
    GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, (char *)buf_ );
    PurgeComPort(port_.c_str());
 
-   ReadFirmware();
-   ReadUpdate();
-
    //The channels are hard coded for now.
    int result = ReadChannelLabels();
    if (result != DEVICE_OK)
       return result;
 
-   GenerateIntensityProperties();
    GenerateStateProperties();
+   GenerateIntensityProperties();
    GenerateChannelChooser();
    GenerateTriggerProperties();
    GenerateReadOnlyProperties();
    
+   //This queries the number of lines returned by the "r" and "?" commands
+   ReadGreeting();
+
    initialized_ = true;
 
    mThread_ = new PollingThread(*this);
@@ -294,7 +297,8 @@ void Controller::GenerateStateProperties()
       AddAllowedValue(propertyName.c_str(), "1");
 
       //channel states are initialized to 0
-      channelStates_.push_back(0);
+      channelStates_.push_back(-1);
+      SetChannelState(0, index);
    }
 }
 
@@ -457,6 +461,7 @@ int Controller::OnChannelState(MM::PropertyBase* pProp, MM::ActionType eAct, lon
    {
       pProp->Get(state);
       SetChannelState(state, index);
+      UpdateChannelLabel();
       hasUpdated_ = true;
    }
 
@@ -476,9 +481,7 @@ int Controller::OnChannelIntensity(MM::PropertyBase* pProp, MM::ActionType eAct,
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(intensity);
-
       SetChannelIntensity(intensity, index);
-
       hasUpdated_ = true;
    }
 
@@ -729,13 +732,44 @@ void Controller::GetState(long &state)
    state = state_;
 }
 
+void Controller::UpdateChannelLabel()
+{
+   //Count how many LED channels are currently active
+   long nActive = 0;
+   long index = 0;
+   for (long i=0; i<NLED; i++)
+   {
+      if (channelStates_[i] == 1) {
+         nActive++;
+         index = i;
+      }
+   }
+
+   if (nActive == 1)
+   {
+      //With exactly one channel active, the current channel label
+      //is set according to the index passed to SetChannelState()
+      currentChannelLabel_ = g_ChannelNames[index];
+      state_ = 1;
+   }
+   else if (nActive > 1)
+   {
+      //The channel label is changed to the multiple selection string
+      //if we have more than one LED selected
+      currentChannelLabel_ = g_Keyword_MultipleSelection;
+      state_ = 1;
+   }
+   else state_ = 0;
+}
+
 void Controller::SetChannelState(long state, long index)
 {
    long channelState = channelStates_[index];
    channelStates_[index] = state;
 
    //Only send a serial command if the shutter is open (and we are actually changing the channel state)
-   if (state_ == 1 && channelState != state)
+   //However, when we are initializing, we really want all the LEDs to be off
+   if (channelState < 0 || (state_ == 1 && channelState != state))
    {
       stringstream msg;
       msg << "D," << index+1 << "," << state;
@@ -747,15 +781,6 @@ void Controller::SetChannelState(long state, long index)
          ReceiveOneLine();
       }
    }
-
-   //The channel label needs to be changed if we have more than one LED selected
-   long nActive = 0;
-   for (index=0; index<NLED; index++)
-      nActive += channelStates_[index];
-
-   if (nActive > 1)
-      currentChannelLabel_ = g_Keyword_MultipleSelection;
-      //SetProperty(g_Keyword_ChannelLabel,g_Keyword_MultipleSelection);
 }
 
 //TODO We do not have a means of getting the current state, so relying on the saved version
@@ -878,34 +903,48 @@ int Controller::HandleErrors()
 }
 
 
-void Controller::ReadFirmware()
-{
-   MMThreadGuard myLock(lock_);
-   {
-      Purge();
-      Send("?");
-      ReadResponseLines(2);
-   }
-}
-
 void Controller::ReadUpdate()
 {
    MMThreadGuard myLock(lock_);
    {
-      Purge();
+      //Any new response?
+      //TODO This logs a 107 error if the read buffer is empty.
+      //Any way round it?
+      ReadResponseLines(-1);
+
+      //TODO Use a time counter in the polling thread, no need to update those every cycle.
+
       //To update the global status
+      /*
       Send("?");
-      ReadResponseLines(2);
+      ReadResponseLines(n_lines1);
 
       //To update the temperatures
       Send("r");
-      ReadResponseLines(3);
+      ReadResponseLines(n_lines2);
+      */
    }
 }
 
 void Controller::ReadGreeting()
 {
-   ReadResponseLines(-1);
+   //The number of lines returned by the niji may vary from firmware to firmware.
+   //The first time we interrogate the niji, we let Readstaty
+   //Then we know how many lines are returned by the niji in response to these commands
+   MMThreadGuard myLock(lock_);
+   {
+      Purge();
+      //Any greeting message when the niji is first turned on are parsed by ReadResponseLines()
+      //ReadResponseLines(-1);
+
+      //To update the global status (and store the number of lines returned by the command)
+      Send("?");
+      n_lines1 = ReadResponseLines(-1);
+
+      //To update the temperatures (and store the number of lines returned by the command)
+      Send("r");
+      n_lines2 = ReadResponseLines(-1);
+   }
 }
 
 //Here we analyze any possible response and return the number of lines actually read
@@ -978,10 +1017,17 @@ int Controller::ReadResponseLines(int n)
       // Status,0,
       prefix = "Status,";
       if(buf_string_.substr(0, prefix.size()) == prefix) {
-         globalStatus_ = atoi(buf_string_.substr(prefix.size()).c_str());
-         if (globalStatus_ > 0)
-            state_ = 0;
-            //SetProperty(MM::g_Keyword_State, "0");
+         long status = atoi(buf_string_.substr(prefix.size()).c_str());
+         if (status != globalStatus_)
+         {
+             globalStatus_ = status;
+
+             //This is used to kill the ligh in case we have a globalStatus error
+             if (globalStatus_ > 0) {
+                Illuminate();
+                LogMessage("Keyswitch Off, Lid Open or Light Guide Missing - Lockout!");
+             }
+         }
          continue;
       }
 
@@ -990,6 +1036,34 @@ int Controller::ReadResponseLines(int n)
       // <- OpAmp OFF
       prefix = "OpAmp";
       if(buf_string_.substr(0, prefix.size()) == prefix) {
+         continue;
+      }
+
+      //intensity response
+      //d,4,80,
+      prefix = "d,";
+      if(buf_string_.substr(0, prefix.size()) == prefix) {
+         long index = atoi(buf_string_.substr(2).c_str())-1;  //need 0-index for arrays
+         long intensity = atoi(buf_string_.substr(4).c_str());
+
+         if (index >=0 && index < NLED) {
+            channelIntensities_[index] = intensity;
+         }
+
+         continue;
+      }
+
+      //State response
+      //D,3,0,
+      prefix = "D,";
+      if(buf_string_.substr(0, prefix.size()) == prefix) {
+         long index = atoi(buf_string_.substr(2).c_str())-1;  //need 0-index for arrays
+         long state = atoi(buf_string_.substr(4).c_str());
+
+         if (index >=0 && index < NLED) {
+            channelStates_[index] = state;
+            UpdateChannelLabel();
+         }
          continue;
       }
 
@@ -1073,12 +1147,6 @@ int PollingThread::svc()
          aController_.OnPropertyChanged(g_Keyword_GlobalStatus, CDeviceUtils::ConvertToString(globalStatus_));
       }
 
-      if (state_ != aController_.state_)
-      {
-         state_ = aController_.state_;
-         aController_.OnPropertyChanged(MM::g_Keyword_State, CDeviceUtils::ConvertToString(state_));
-      }
-
       for (long index=0; index<NLED; index++) 
       {
          //individual intensities
@@ -1098,18 +1166,29 @@ int PollingThread::svc()
          }
       }
 
+      //State_ is also modified if one of the channel states is modified (state_ follows nactive>0)
+      if (state_ != aController_.state_)
+      {
+         state_ = aController_.state_;
+         aController_.OnPropertyChanged(MM::g_Keyword_State, CDeviceUtils::ConvertToString(state_));
+      }
+
+
+      //TODO Not probing for those at the moment
       if (tempOutput_ != aController_.tempOutput_)
       {
          tempOutput_ = aController_.tempOutput_;
          aController_.OnPropertyChanged(g_Keyword_Temp1, CDeviceUtils::ConvertToString(tempOutput_));
       }
 
+      //TODO Not probing for those at the moment
       if (tempAmbient_ != aController_.tempAmbient_)
       {
          tempAmbient_ = aController_.tempAmbient_;
          aController_.OnPropertyChanged(g_Keyword_Temp2, CDeviceUtils::ConvertToString(tempAmbient_));
       }
 
+      //currentChannelLabel is also updated when states are changed (MM or external keypad)
       if (currentChannelLabel_ != aController_.currentChannelLabel_)
       {
          currentChannelLabel_ = aController_.currentChannelLabel_;
@@ -1143,3 +1222,4 @@ void PollingThread::Start()
    stop_ = false;
    activate();
 }
+

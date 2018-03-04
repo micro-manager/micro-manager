@@ -4,6 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   niji controller adapter
+// APPLIES TO:    niji with firmware version >= V2.101.000(Beta)
+//                (please contact Bluebox Optics if your firmware is older)
+//
 // COPYRIGHT:     University of California, San Francisco, 2009
 // 
 // AUTHOR:        Egor Zindy, ezindy@gmail.com, 2017-08-15
@@ -137,6 +140,10 @@ private:
 
    double answerTimeoutMs_;
 
+   //The number of lines returned by the "?" and "r" commands.
+   int n_lines1;
+   int n_lines2;
+
    void GenerateChannelChooser();
    void GenerateIntensityProperties();
    void GenerateStateProperties();
@@ -154,6 +161,7 @@ private:
    void SetGlobalIntensity(long intensity);
    void SetChannelIntensity(long intensity, long index);
    void GetChannelIntensity(long& intensity, long index);
+   void UpdateChannelLabel();
 
    void Illuminate();
 
@@ -165,7 +173,6 @@ private:
    int HandleErrors();
 
    void ReadGreeting();
-   void ReadFirmware();
    void ReadUpdate();
    int ReadResponseLines(int n);
 
