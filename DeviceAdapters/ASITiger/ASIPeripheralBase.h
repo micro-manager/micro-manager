@@ -63,7 +63,9 @@ public:
       char deviceLabel[MM::MaxStrLength];
       this->GetLabel(deviceLabel);
       string str(deviceLabel);
-      hub_->UnRegisterPeripheral(str);
+      if (hub_) {
+         hub_->UnRegisterPeripheral(str);
+      }
       return (ASIBase<TDeviceBase, UConcreteDevice>::Shutdown());
    }
 
