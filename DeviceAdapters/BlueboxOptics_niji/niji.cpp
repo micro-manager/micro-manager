@@ -49,6 +49,7 @@ const char* g_Keyword_ChannelLabel = "ChannelLabel";
 const char* g_Keyword_TriggerSource = "TriggerSource";
 const char* g_Keyword_TriggerLogic = "TriggerLogic";
 const char* g_Keyword_TriggerResistor = "TriggerResistor";
+const char* g_Keyword_OutputMode = "OutputMode";
 
 //Readonly properties
 const char* g_Keyword_Temp1 = "OutputTemp";
@@ -64,6 +65,7 @@ const char* g_ChannelNames[] = {"395/14", "445/15", "470/25", "515/30", "575/25 
 const char* g_TriggerSources[] = {"Internal", "External"};
 const char* g_TriggerLogics[] = {"Active Low", "Active High"};
 const char* g_TriggerResistors[] = {"Pull Down", "Pull Up"};
+const char* g_OutputModes[] = {"Constant Current", "Constant Optical Power"};
 
 
 void CreatePropertyName(string& Name, const char* prefix, const char *suffix, long index)
@@ -125,6 +127,7 @@ Controller::Controller(const char* name) :
    triggerSource_(0),
    triggerLogic_(1),
    triggerResistor_(1),
+   outputMode_(0),
    changedTime_(0.0)
 {
    assert(strlen(name) < (unsigned int) MM::MaxStrLength);
@@ -205,6 +208,7 @@ int Controller::Initialize()
    GenerateChannelChooser();
    GenerateTriggerProperties();
    GenerateReadOnlyProperties();
+   GenerateOtherProperties();
    
    //This queries the number of lines returned by the "r" and "?" commands
    ReadGreeting();
@@ -345,6 +349,17 @@ void Controller::GenerateReadOnlyProperties()
    CreateProperty(g_Keyword_GlobalStatus, CDeviceUtils::ConvertToString(globalStatus_), MM::Integer, true, pAct);
 }
 
+void Controller::GenerateOtherProperties()
+{
+   CPropertyAction* pAct;
+
+   //Power Output mode.
+   pAct = new CPropertyAction (this, &Controller::OnOutputMode);
+   CreateProperty(g_Keyword_OutputMode , g_OutputModes[0], MM::String, false, pAct);
+   AddAllowedValue(g_Keyword_OutputMode , g_OutputModes[0]);
+   AddAllowedValue(g_Keyword_OutputMode , g_OutputModes[1]);
+   SetProperty(g_Keyword_OutputMode , g_OutputModes[0]);
+}
 
 int Controller::Shutdown()
 {
@@ -585,6 +600,33 @@ int Controller::OnTriggerResistor(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+int Controller::OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(g_OutputModes[outputMode_]);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string mode;
+      pProp->Get(mode);
+
+      for (long index=0; index<2; index++) 
+      {
+         if (mode.compare(g_OutputModes[index])==0)
+         {
+            outputMode_ = index;
+            break;
+         }
+      }
+      SetOutputMode();
+      hasUpdated_ = true;
+   }
+   return HandleErrors();
+}
+
+
 //
 //Read-only properties...
 //
@@ -664,6 +706,19 @@ void Controller::SetTrigger()
 {
    stringstream msg;
    msg << "TTL," << triggerSource_ << "," << triggerLogic_ << "," << triggerResistor_;
+   {
+      MMThreadGuard myLock(lock_);
+      Purge();
+      Send(msg.str());
+      ReadResponseLines(1);
+   }
+}
+
+// <constant current> or <constant optical power>
+void Controller::SetOutputMode()
+{
+   stringstream msg;
+   msg << "CC," << outputMode_ << ",";
    {
       MMThreadGuard myLock(lock_);
       Purge();
@@ -1005,11 +1060,17 @@ int Controller::ReadResponseLines(int n)
          continue;
       }
 
-      // The response to a TTL setup
+      // The response to a TTL setup. First bool is trigger on/off, second bool is active low / active high, third bool is pull down / pull up
       // -> TTL,0,1,0
       // <- TTL,0,0,0,
       prefix = "TTL,";
       if(buf_string_.substr(0, prefix.size()) == prefix) {
+         long source = atoi(buf_string_.substr(prefix.size()).c_str());
+         long logic = atoi(buf_string_.substr(prefix.size()+2).c_str());
+         long resistor = atoi(buf_string_.substr(prefix.size()+4).c_str());
+         triggerSource_ = source;
+         triggerLogic_ = logic;
+         triggerResistor_ = resistor;
          continue;
       }
 
@@ -1066,6 +1127,14 @@ int Controller::ReadResponseLines(int n)
          }
          continue;
       }
+
+      //Output Mode
+      prefix = "CC,";
+      if(buf_string_.substr(0, prefix.size()) == prefix) {
+         long mode = atoi(buf_string_.substr(prefix.size()).c_str());
+         outputMode_ = mode;
+      }
+
 
       //if we got here, that means buf_string_ could not be parsed...
       std::ostringstream ss;
@@ -1188,6 +1257,34 @@ int PollingThread::svc()
          aController_.OnPropertyChanged(g_Keyword_Temp2, CDeviceUtils::ConvertToString(tempAmbient_));
       }
 
+      //Trigger Source
+      if (triggerSource_ != aController_.triggerSource_)
+      {
+         triggerSource_ = aController_.triggerSource_;
+         aController_.OnPropertyChanged(g_Keyword_TriggerSource, g_TriggerSources[triggerSource_]);
+      }
+
+      //Trigger Logic
+      if (triggerLogic_ != aController_.triggerLogic_)
+      {
+         triggerLogic_ = aController_.triggerLogic_;
+         aController_.OnPropertyChanged(g_Keyword_TriggerLogic, g_TriggerLogics[triggerLogic_]);
+      }
+
+      //Trigger Resistor
+      if (triggerResistor_ != aController_.triggerResistor_)
+      {
+         triggerResistor_ = aController_.triggerResistor_;
+         aController_.OnPropertyChanged(g_Keyword_TriggerResistor, g_TriggerResistors[triggerResistor_]);
+      }
+
+      //output power mode
+      if (outputMode_ != aController_.outputMode_)
+      {
+         outputMode_ = aController_.outputMode_;
+         aController_.OnPropertyChanged(g_Keyword_OutputMode, g_OutputModes[outputMode_]);
+      }
+
       //currentChannelLabel is also updated when states are changed (MM or external keypad)
       if (currentChannelLabel_ != aController_.currentChannelLabel_)
       {
@@ -1213,6 +1310,8 @@ void PollingThread::ResetVariables()
 
    tempOutput_ = aController_.tempOutput_;
    tempAmbient_ = aController_.tempAmbient_;
+
+   outputMode_ = aController_.outputMode_;
 
    currentChannelLabel_ = aController_.currentChannelLabel_;
 }

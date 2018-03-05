@@ -82,6 +82,8 @@ public:
    int OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGlobalStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   int OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+
    // Shutter API
    int SetOpen(bool open = true);
    int GetOpen(bool& open);
@@ -120,6 +122,8 @@ protected:
 
    string firmwareVersion_;
 
+   long outputMode_;
+
    int ReadChannelLabels();
 
 private:
@@ -149,8 +153,10 @@ private:
    void GenerateStateProperties();
    void GenerateTriggerProperties();
    void GenerateReadOnlyProperties();
+   void GenerateOtherProperties();
 
    void SetTrigger();
+   void SetOutputMode();
    void SetActiveChannel(long state);
    void SetActiveChannel(string channelName);
    void GetActiveChannel(long &state);
@@ -236,6 +242,9 @@ private:
    //Temperatures (towards the light output and ambient)
    double tempOutput_;
    double tempAmbient_;
+
+   //power output mode
+   long outputMode_;
 };
 
 
