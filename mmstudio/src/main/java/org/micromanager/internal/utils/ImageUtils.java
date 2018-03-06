@@ -9,6 +9,7 @@ import ij.process.LUT;
 import ij.process.ShortProcessor;
 import java.awt.Color;
 import java.awt.Point;
+import java.nio.ByteBuffer;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -392,25 +393,17 @@ public final class ImageUtils {
    }
 
    public static byte[] convertRGB32IntToBytes(int [] pixels) {
-      byte[] bytes = new byte[pixels.length*4];
-      int j = 0;
-      for (int i = 0; i<pixels.length;++i) {
-         bytes[j++] = (byte) (pixels[i] & 0xff);
-         bytes[j++] = (byte) ((pixels[i] >> 8) & 0xff);
-         bytes[j++] = (byte) ((pixels[i] >> 16) & 0xff);
-         bytes[j++] = 0;
-      }
-      return bytes;
+      byte[] result = new byte[pixels.length * 4];
+      ByteBuffer bbuf = ByteBuffer.wrap(result);
+      bbuf.asIntBuffer().put(pixels);
+      return result;
    }
 
    public static int[] convertRGB32BytesToInt(byte[] pixels) {
-      int[] ints = new int[pixels.length/4];
-      for (int i=0; i<ints.length; ++i) {
-         ints[i] =  pixels[4*i]
-                 + (pixels[4*i + 1] << 8)
-                 + (pixels[4*i + 2] << 16);
-      }
-      return ints;
+      ByteBuffer bbuf = ByteBuffer.wrap(pixels);
+      int[] result = new int[pixels.length / 4];
+      bbuf.asIntBuffer().get(result);
+      return result;
    }
 
    public static byte[] getRGB32PixelsFromColorPanes(byte[][] planes) {
