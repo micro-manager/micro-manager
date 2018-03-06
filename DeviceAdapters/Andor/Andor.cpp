@@ -3953,7 +3953,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          {
             if (series > seriesPrev)
             {
-               long imageCountFirst, imageCountLast;
+               at_32 imageCountFirst, imageCountLast;
                int returnc;
                returnc = GetNumberNewImages(&imageCountFirst, &imageCountLast);
                if (ret != DRV_SUCCESS)
