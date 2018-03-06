@@ -4,14 +4,14 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Wienecke & Sinske CAN29 communication
-//             
+//
 //
 // AUTHOR:        S3L GmbH, info@s3l.de, www.s3l.de,  11/21/2017
 // COPYRIGHT:     S3L GmbH, Rosdorf, 2017
 // LICENSE:       This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
 //                License as published by the Free Software Foundation.
-//                
+//
 //                You should have received a copy of the GNU Lesser General Public
 //                License along with the source distribution; if not, write to
 //                the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
@@ -23,12 +23,14 @@
 //
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
 #ifdef WIN32
 #include <windows.h>
-#define snprintf _snprintf 
+#define snprintf _snprintf
+#elif __linux__
+#include <arpa/inet.h>
 #endif
 
 #include "CAN29.h"
@@ -61,7 +63,7 @@ CAN29Component::~CAN29Component()
 ///////////////////////////////////////////////////////////////////////////////
 // Message
 //
-Message::Message(unsigned char canDst, unsigned char canSrc, unsigned char cmdCls, unsigned char cmdNr, unsigned char procID, unsigned char subID, unsigned char* data, int dataLen): 
+Message::Message(unsigned char canDst, unsigned char canSrc, unsigned char cmdCls, unsigned char cmdNr, unsigned char procID, unsigned char subID, unsigned char* data, int dataLen):
 CanSrc(canSrc),
 	CanDst(canDst),
 	CmdCls(cmdCls),
@@ -69,7 +71,7 @@ CanSrc(canSrc),
 	ProcID(procID),
 	SubID(subID),
 	Data(data, data+dataLen)
-{	
+{
 };
 
 
@@ -132,7 +134,7 @@ port_("Undefined"),
 	hasSendReadAnswer_(false),
 	sendReadAnswer_(),
 	sendReadMessage_()
-{	
+{
 }
 
 
@@ -161,7 +163,7 @@ int CAN29::Initialize(MM::Device* device, MM::Core* core)
 
 int CAN29::Send(Message msg)
 {
-	assert(msg.Data.size() <= 253);   
+	assert(msg.Data.size() <= 253);
 
 	// Prepare command according to CAN29 Protocol
 	std::vector<unsigned char> preparedCommand(msg.Data.size() + 20); // make provision for escaping special charactes
@@ -185,10 +187,10 @@ int CAN29::Send(Message msg)
 
 	// send command
 	int ret = core_->WriteToSerial(device_, port_.c_str(), &(preparedCommand[0]), (unsigned long) nextIdx);
-	if (ret != DEVICE_OK)                                                     
-		return ret;                                                            
+	if (ret != DEVICE_OK)
+		return ret;
 
-	return DEVICE_OK; 
+	return DEVICE_OK;
 }
 
 int CAN29::SendRead(Message msg, Message& answer, int timeoutMilliSec)
@@ -204,7 +206,7 @@ int CAN29::SendRead(Message msg, Message& answer, int timeoutMilliSec)
 	// wait for answer
 	MM::MMTime dTimeout = MM::MMTime (timeoutMilliSec*1000);
 	MM::MMTime start = core_->GetCurrentMMTime();
-	while(!hasSendReadAnswer_ && ((core_->GetCurrentMMTime() - start) < dTimeout)) 
+	while(!hasSendReadAnswer_ && ((core_->GetCurrentMMTime() - start) < dTimeout))
 	{
 		CDeviceUtils::SleepMs(20);
 	}
@@ -261,12 +263,12 @@ int CAN29::AppendByte(std::vector<unsigned char>& command, int& nextIndex, unsig
 	// add data byte
 	command[nextIndex++] = byte;
 
-	return DEVICE_OK; 
+	return DEVICE_OK;
 }
 
 int CAN29::ClearPort()
 {
-	// Clear contents of serial port 
+	// Clear contents of serial port
 	const unsigned int bufSize = 255;
 	unsigned char clear[bufSize];
 	unsigned long read = bufSize;
@@ -278,7 +280,7 @@ int CAN29::ClearPort()
 			return ret;
 	}
 	return DEVICE_OK;
-} 
+}
 
 
 int CAN29::AddReceiveMessageHandler(CAN29Component* component)
@@ -317,7 +319,7 @@ index_(0)
 }
 
 /*
-* Find a message starting with 0x10 0x02 and ends with 0x10 0x03.  
+* Find a message starting with 0x10 0x02 and ends with 0x10 0x03.
 * Strips escaped 0x10 and 0x0D chars (which are escaped with 0x10)
 */
 int CAN29MessageParser::GetNextMessage(unsigned char* nextMessage, int& nextMessageLength) {
@@ -374,11 +376,11 @@ int CAN29MessageParser::GetNextMessage(unsigned char* nextMessage, int& nextMess
 // Thread that continuously monitors messages from CAN29.
 //
 CAN29ReceiveThread::CAN29ReceiveThread(CAN29* can29) :
-can29_ (can29),  
+can29_ (can29),
 	stop_ (true),
 	debug_(true),
-	intervalUs_(10000) // check every 10 ms for new messages, 
-{  
+	intervalUs_(10000) // check every 10 ms for new messages,
+{
 }
 
 CAN29ReceiveThread::~CAN29ReceiveThread()
@@ -404,34 +406,34 @@ int CAN29ReceiveThread::svc() {
 	unsigned char rcvBuf[RCV_BUF_LENGTH];
 	memset(rcvBuf, 0, RCV_BUF_LENGTH);
 
-	while (!stop_) 
+	while (!stop_)
 	{
-		do { 
+		do {
 			dataLength = RCV_BUF_LENGTH - charsRemaining;
-			int ret = can29_->core_->ReadFromSerial(can29_->device_, can29_->port_.c_str(), rcvBuf + charsRemaining, dataLength, charsRead); 
+			int ret = can29_->core_->ReadFromSerial(can29_->device_, can29_->port_.c_str(), rcvBuf + charsRemaining, dataLength, charsRead);
 
-			if (ret != DEVICE_OK) 
+			if (ret != DEVICE_OK)
 			{
 				std::ostringstream oss;
 				oss << "CAN29ReceiveThread: ERROR while reading from serial port, error code: " << ret;
 				can29_->core_->LogMessage(can29_->device_, oss.str().c_str(), false);
-			} 
-			else if (charsRead > 0) 
+			}
+			else if (charsRead > 0)
 			{
 				CAN29MessageParser parser(rcvBuf, charsRead + charsRemaining);
-				do 
+				do
 				{
 					unsigned char message[RCV_BUF_LENGTH];
 					int messageLength;
 					ret = parser.GetNextMessage(message, messageLength);
-					if (ret == 0) 
-					{                  
-						// Report 
-						if (debug_) 
+					if (ret == 0)
+					{
+						// Report
+						if (debug_)
 						{
 							std::ostringstream os;
 							os << "CAN29ReceiveThread incoming message: ";
-							for (int i=0; i< messageLength; i++) 
+							for (int i=0; i< messageLength; i++)
 							{
 								os << std::hex << (unsigned int)message[i] << " ";
 							}
@@ -440,14 +442,14 @@ int CAN29ReceiveThread::svc() {
 						// and do the real stuff
 						interpretMessage(message);
 					}
-					else 
+					else
 					{
 						// no more messages, copy remaining (if any) back to beginning of buffer
-						if (debug_ && messageLength > 0) 
+						if (debug_ && messageLength > 0)
 						{
 							std::ostringstream os;
 							os << "CAN29ReceiveThread no message found!: ";
-							for (int i = 0; i < messageLength; i++) 
+							for (int i = 0; i < messageLength; i++)
 							{
 								os << std::hex << (unsigned int)message[i] << " ";
 								rcvBuf[i] = message[i];
@@ -455,7 +457,7 @@ int CAN29ReceiveThread::svc() {
 							can29_->core_->LogMessage(can29_->device_, os.str().c_str(), true);
 						}
 						memset(rcvBuf, 0, RCV_BUF_LENGTH);
-						for (int i = 0; i < messageLength; i++) 
+						for (int i = 0; i < messageLength; i++)
 						{
 							rcvBuf[i] = message[i];
 						}
@@ -463,8 +465,8 @@ int CAN29ReceiveThread::svc() {
 					}
 				} while (ret == 0);
 			}
-		} 
-		while ((charsRead != 0) && (!stop_)); 
+		}
+		while ((charsRead != 0) && (!stop_));
 		CDeviceUtils::SleepMs(intervalUs_/1000);
 	}
 	can29_->core_->LogMessage(can29_->device_, "CAN29ReceiveThread finished", true);
