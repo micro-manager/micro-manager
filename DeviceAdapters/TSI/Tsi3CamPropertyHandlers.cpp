@@ -189,15 +189,19 @@ int Tsi3Cam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
-int Tsi3Cam::OnTemperature(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
+int Tsi3Cam::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
+      int temp(0);
+      if (tl_camera_get_temperature_degrees_c(camHandle, &temp))
+         return ERR_TEMPERATURE_FAILED;
+      pProp->Set((long)temp);
    }
    return DEVICE_OK;
 }
 
+// not implemented
 int Tsi3Cam::OnTemperatureSetPoint(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
@@ -205,6 +209,77 @@ int Tsi3Cam::OnTemperatureSetPoint(MM::PropertyBase* /*pProp*/, MM::ActionType e
    }
    else if (eAct == MM::BeforeGet)
    {
+   }
+   return DEVICE_OK;
+}
+
+int Tsi3Cam::OnEEP( MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      int ret = 0;
+      if (val.compare(g_On) == 0)
+         ret = tl_camera_set_eep_enabled(camHandle, 1);
+      else
+         ret = tl_camera_set_eep_enabled(camHandle, 0);
+      if (ret != 0)
+         return ERR_EEP_FAILED;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      EEP_STATUS eepStat;
+      if(tl_camera_get_eep_status(camHandle, &eepStat))
+         return ERR_EEP_FAILED;
+      if (eepStat == OFF)
+         pProp->Set(g_Off);
+      else
+         pProp->Set(g_On);
+   }
+   return DEVICE_OK;
+}
+
+int Tsi3Cam::OnHotPixEnable( MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+   if (eAct == MM::AfterSet)
+   {
+      string val;
+      pProp->Get(val);
+      int ret = 0;
+      if (val.compare(g_On) == 0)
+         ret = tl_camera_set_hot_pixel_correction(camHandle, 1);
+      else
+         ret = tl_camera_set_hot_pixel_correction(camHandle, 0);
+      if (ret != 0)
+         return ERR_HOT_PIXEL_FAILED;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      int val(0);
+      if(tl_camera_get_hot_pixel_correction(camHandle, &val))
+         return ERR_HOT_PIXEL_FAILED;
+      
+      val == 0 ? pProp->Set(g_Off) : pProp->Set(g_On);
+   }
+   return DEVICE_OK;
+}
+
+int Tsi3Cam::OnHotPixThreshold( MM::PropertyBase* pProp, MM::ActionType eAct )
+{
+   if (eAct == MM::AfterSet)
+   {
+      long val(0);
+      pProp->Get(val);
+      if (tl_camera_set_hot_pixel_correction_threshold(camHandle, (int)val))
+         return ERR_HOT_PIXEL_FAILED;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      int hpt(0);
+      if (tl_camera_get_hot_pixel_correction_threshold(camHandle, &hpt))
+         return ERR_HOT_PIXEL_FAILED;
+      pProp->Set((long)hpt);
    }
    return DEVICE_OK;
 }

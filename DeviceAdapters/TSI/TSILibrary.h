@@ -53,6 +53,11 @@ static const char* g_TriggerPolarity = "TriggerPolarity";
 static const char* g_ColorEnable = "Color";
 static const char* g_FirmwareVersion = "FirmwareVersion";
 static const char* g_SerialNumber = "SerialNumber";
+static const char* g_Temperature = "TemperatureC";
+static const char* g_TemperatureSetPoint = "TemperatureSetPointC";
+static const char* g_EEP = "EEP";
+static const char* g_HotPixThreshold = "HotPixelThreshold";
+static const char* g_HotPix = "HotPixel";
 
 
 static const char* g_Set = "SetNow";
@@ -80,6 +85,9 @@ static const char* g_Negative = "Negative";
 #define ERR_INTERNAL_ERROR                16017
 #define ERR_ROI_BIN_FAILED                16018
 #define ERR_TRIGGER_FAILED                16019
+#define ERR_TEMPERATURE_FAILED            16020
+#define ERR_EEP_FAILED                    16021
+#define ERR_HOT_PIXEL_FAILED              16022
 
 //////////////////////////////////////////////////////////////////////////////
 // Region of Interest

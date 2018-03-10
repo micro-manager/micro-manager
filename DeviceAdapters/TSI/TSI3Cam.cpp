@@ -47,12 +47,12 @@ using namespace std;
 
 namespace
 {
-   void camera_connect_callback(char* cameraSerialNumber, enum USB_BUS_SPEED usb_bus_speed, void* context)
+   void camera_connect_callback(char* /*cameraSerialNumber*/, enum USB_BUS_SPEED /*usb_bus_speed*/, void* /*context*/)
    {
       // TODO
    }
 
-   void camera_disconnect_callback(char* cameraSerialNumber, void* context)
+   void camera_disconnect_callback(char* /*cameraSerialNumber*/, void* /*context*/)
    {
       // TODO
    }
@@ -230,6 +230,35 @@ int Tsi3Cam::Initialize()
    ret = CreateProperty(g_TriggerPolarity, g_Positive, MM::String, false, pAct);
    AddAllowedValue(g_TriggerPolarity, g_Positive);
    AddAllowedValue(g_TriggerPolarity, g_Negative);
+
+   // create temperature property
+   pAct = new CPropertyAction(this, &Tsi3Cam::OnTemperature);
+   ret = CreateProperty(g_Temperature, "0", MM::Integer, true, pAct);
+
+   // create EEP On/Off property
+   pAct = new CPropertyAction(this, &Tsi3Cam::OnEEP);
+   ret = CreateProperty(g_EEP, g_Off, MM::String, false, pAct);
+   AddAllowedValue(g_EEP, g_Off);
+   AddAllowedValue(g_EEP, g_On);
+
+   // create HotPixel threshold property
+   int thrMin(0), thrMax(0);
+   if (tl_camera_get_hot_pixel_correction_threshold_range(camHandle, &thrMin, &thrMax))
+      return ERR_HOT_PIXEL_FAILED;
+
+   if (thrMax != 0)
+   {
+      pAct = new CPropertyAction(this, &Tsi3Cam::OnHotPixThreshold);
+      ret = CreateProperty(g_HotPixThreshold, "0", MM::Integer, false, pAct);
+      SetPropertyLimits(g_HotPixThreshold, thrMin, thrMax);
+
+      // create HotPixel On/Off property
+      pAct = new CPropertyAction(this, &Tsi3Cam::OnHotPixEnable);
+      ret = CreateProperty(g_HotPix, g_Off, MM::String, false, pAct);
+      AddAllowedValue(g_HotPix, g_Off);
+      AddAllowedValue(g_HotPix, g_On);
+  }
+
 
    ret = ResizeImageBuffer();
    if (ret != DEVICE_OK)
@@ -573,9 +602,9 @@ bool Tsi3Cam::StartCamera( int frames )
 /// <param name="number_of_color_channels">The number of color channels.  This parameter will be 1 for monochrome images and 3 for color images.</param>
 /// <param name="frame_count">The image count corresponding to the received image during the current acquisition run.</param>
 /// <param name="context">A pointer to a user specified context.  This parameter is ignored by the SDK.</param>
-void Tsi3Cam::frame_available_callback(void* sender,
+void Tsi3Cam::frame_available_callback(void*       /*sender*/,
                                                   unsigned short* image_buffer,
-                                                  int image_width, int image_height, int bit_depth,
+                                                  int image_width, int image_height, int /*bit_depth*/,
                                                   int number_of_color_channels,
                                                   int frame_count,
                                                   void* context)
