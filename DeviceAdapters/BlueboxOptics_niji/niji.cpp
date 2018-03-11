@@ -51,10 +51,11 @@ const char* g_Keyword_TriggerLogic = "TriggerLogic";
 const char* g_Keyword_TriggerResistor = "TriggerResistor";
 const char* g_Keyword_OutputMode = "OutputMode";
 
-//Readonly properties
+// Readonly properties
 const char* g_Keyword_Temp1 = "OutputTemp";
 const char* g_Keyword_Temp2 = "AmbientTemp";
 const char* g_Keyword_Firmware = "FirmwareVersion";
+const char* g_Keyword_ErrorCode = "ErrorCode";
 const char* g_Keyword_GlobalStatus = "GlobalStatus";
 const char* g_Keyword_GlobalIntensity = "GlobalIntensity";
 
@@ -62,11 +63,29 @@ const char* terminator = "\r\n";
 
 // The wavelengths expected in a 7 LED niji...
 const char* g_ChannelNames[] = {"395/14", "445/15", "470/25", "515/30", "575/25 or 554/23", "630/20", "745/30"};
+
 const char* g_TriggerSources[] = {"Internal", "External"};
 const char* g_TriggerLogics[] = {"Active Low", "Active High"};
 const char* g_TriggerResistors[] = {"Pull Down", "Pull Up"};
 const char* g_OutputModes[] = {"Constant Current", "Constant Optical Power"};
 
+// The global status strings
+const char* g_StatusNames[] = {"Light Output Enabled", "Key Switch / Light Guide / Lid open Lockout", "Key Switch Lockout", "Light Guide Lockout", "Lid Open Lockout", "Unknowm Error"};
+
+const char *GetStatus(int errorCode)
+{
+   const char *statusMessage = NULL;
+   switch(errorCode)
+   {
+      case 0: statusMessage = g_StatusNames[0]; break; //no error
+      case 1: statusMessage = g_StatusNames[1]; break; //v1 error
+      case 2: statusMessage = g_StatusNames[2]; break; //key switch
+      case 4: statusMessage = g_StatusNames[3]; break; //light guide
+      case 8: statusMessage = g_StatusNames[4]; break; //lid open
+      default: statusMessage = g_StatusNames[5]; //Last one is unknown error
+   }
+   return statusMessage;
+}
 
 void CreatePropertyName(string& Name, const char* prefix, const char *suffix, long index)
 {
@@ -120,7 +139,7 @@ Controller::Controller(const char* name) :
    error_(0),
    mThread_(0),
    hasUpdated_(true),
-   globalStatus_(0),
+   errorCode_(0),
    tempOutput_(0.0),
    tempAmbient_(0.0),
    firmwareVersion_(""),
@@ -346,7 +365,10 @@ void Controller::GenerateReadOnlyProperties()
    CreateProperty(g_Keyword_Temp2, CDeviceUtils::ConvertToString(tempAmbient_), MM::Float, true, pAct);
    
    pAct = new CPropertyAction(this, &Controller::OnGlobalStatus);
-   CreateProperty(g_Keyword_GlobalStatus, CDeviceUtils::ConvertToString(globalStatus_), MM::Integer, true, pAct);
+   CreateProperty(g_Keyword_GlobalStatus, GetStatus(errorCode_), MM::String, true, pAct);
+
+   pAct = new CPropertyAction(this, &Controller::OnErrorCode);
+   CreateProperty(g_Keyword_ErrorCode, CDeviceUtils::ConvertToString(errorCode_), MM::Integer, true, pAct);
 }
 
 void Controller::GenerateOtherProperties()
@@ -677,7 +699,22 @@ int Controller::OnGlobalStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(globalStatus_);
+      const char *statusMessage = GetStatus(errorCode_);
+      pProp->Set(statusMessage);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+         // never do anything!!
+   }
+   return HandleErrors();
+}
+
+
+int Controller::OnErrorCode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(errorCode_);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -1079,12 +1116,12 @@ int Controller::ReadResponseLines(int n)
       prefix = "Status,";
       if(buf_string_.substr(0, prefix.size()) == prefix) {
          long status = atoi(buf_string_.substr(prefix.size()).c_str());
-         if (status != globalStatus_)
+         if (status != errorCode_)
          {
-             globalStatus_ = status;
+             errorCode_ = status;
 
              //This is used to kill the ligh in case we have a globalStatus error
-             if (globalStatus_ > 0) {
+             if (errorCode_ > 0) {
                 Illuminate();
                 LogMessage("Keyswitch Off, Lid Open or Light Guide Missing - Lockout!");
              }
@@ -1210,10 +1247,11 @@ int PollingThread::svc()
 
       aController_.ReadUpdate();
 
-      if (globalStatus_ != aController_.globalStatus_)
+      if (errorCode_ != aController_.errorCode_)
       {
-         globalStatus_ = aController_.globalStatus_;
-         aController_.OnPropertyChanged(g_Keyword_GlobalStatus, CDeviceUtils::ConvertToString(globalStatus_));
+         errorCode_ = aController_.errorCode_;
+         aController_.OnPropertyChanged(g_Keyword_ErrorCode, CDeviceUtils::ConvertToString(errorCode_));
+         aController_.OnPropertyChanged(g_Keyword_GlobalStatus, GetStatus(errorCode_));
       }
 
       for (long index=0; index<NLED; index++) 
@@ -1306,7 +1344,7 @@ void PollingThread::ResetVariables()
    triggerLogic_ = aController_.triggerLogic_;
    triggerResistor_ = aController_.triggerResistor_;
 
-   globalStatus_ = aController_.globalStatus_;
+   errorCode_ = aController_.errorCode_;
 
    tempOutput_ = aController_.tempOutput_;
    tempAmbient_ = aController_.tempAmbient_;

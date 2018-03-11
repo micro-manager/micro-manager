@@ -80,6 +80,7 @@ public:
    int OnTemperature1(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperature2(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnErrorCode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGlobalStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -114,7 +115,7 @@ protected:
    long triggerResistor_;
 
    //the niji status
-   long globalStatus_;
+   long errorCode_;
 
    //Temperatures (towards the light output and ambient)
    double tempOutput_;
@@ -234,7 +235,7 @@ private:
    long triggerResistor_;
 
    //the niji status
-   long globalStatus_;
+   long errorCode_;
 
    //the current channel label
    string currentChannelLabel_;
