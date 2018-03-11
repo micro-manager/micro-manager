@@ -50,7 +50,7 @@ int Tsi3Cam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int Tsi3Cam::OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Tsi3Cam::OnReadoutRate(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {

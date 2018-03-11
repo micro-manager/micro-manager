@@ -106,5 +106,8 @@ struct ROI {
    void clear() {x=0; y=0; xSize=0; ySize=0;}
 };
 
+bool isTsiSDKAvailable();
+bool isTsiSDK3Available();
+
 
 

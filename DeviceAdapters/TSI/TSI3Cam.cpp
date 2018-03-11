@@ -29,8 +29,6 @@
 #include "Tsi3Cam.h"
 
 #ifdef WIN32
-   // global DLL handle
-   HMODULE g_tsi3DllHandle = 0;
 #endif
 
 #ifdef __APPLE__
@@ -258,7 +256,6 @@ int Tsi3Cam::Initialize()
       AddAllowedValue(g_HotPix, g_Off);
       AddAllowedValue(g_HotPix, g_On);
   }
-
 
    ret = ResizeImageBuffer();
    if (ret != DEVICE_OK)
