@@ -4960,6 +4960,14 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
       MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
       mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));
       md.SetTag(mstB);
+
+      char Buf[MM::MaxStrLength];
+      Buf[0] = '\0';
+      GetProperty(MM::g_Keyword_CCDTemperature, Buf);
+
+      MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
+      mstTemperature.SetValue(Buf);
+      md.SetTag(mstTemperature);
    }
 
    bool AndorCamera::IsIxonUltra()
