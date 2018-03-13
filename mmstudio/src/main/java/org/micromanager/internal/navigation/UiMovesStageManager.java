@@ -72,22 +72,26 @@ public final class UiMovesStageManager {
    }
 
    public void deActivate(final DataViewer displayToDeActivate) {
-      for (DisplayController display : displayToDragListener_.keySet()) {
-         if (display.equals(displayToDeActivate)) {
-            // Deactivate listener for this display.
-            if (null != displayToDragListener_.get(display)) {
-               display.unregisterForEvents(displayToDragListener_.get(display));
+      synchronized (displayToDragListener_) {
+         for (DisplayController display : displayToDragListener_.keySet()) {
+            if (display.equals(displayToDeActivate)) {
+               // Deactivate listener for this display.
+               if (null != displayToDragListener_.get(display)) {
+                  display.unregisterForEvents(displayToDragListener_.get(display));
+               }
+               displayToDragListener_.remove(display);
             }
-            displayToDragListener_.remove(display);
          }
       }
       
-      for (DisplayController display : displayToWheelListener_.keySet()) {
-         if (display.equals(displayToDeActivate)) {
-            if (displayToWheelListener_.get(display) != null) {
-               display.unregisterForEvents(displayToWheelListener_.get(display));
+      synchronized (displayToWheelListener_) {
+         for (DisplayController display : displayToWheelListener_.keySet()) {
+            if (display.equals(displayToDeActivate)) {
+               if (displayToWheelListener_.get(display) != null) {
+                  display.unregisterForEvents(displayToWheelListener_.get(display));
+               }
+               displayToWheelListener_.remove(display);
             }
-            displayToWheelListener_.remove(display);
          }
       }
    }
