@@ -120,7 +120,6 @@ public abstract class ConfigDialog extends MMDialog {
       super.loadAndRestorePosition(100, 100, 550, 600);
       super.setMinimumSize(new Dimension(400, 200));
       
-      studio.events().registerForEvents(this);
    }
 
    public void initialize() {
@@ -135,6 +134,7 @@ public abstract class ConfigDialog extends MMDialog {
       nameField_.requestFocus();
       setFocusable(true);
       update();
+      studio_.events().registerForEvents(this);
    }
 
 
