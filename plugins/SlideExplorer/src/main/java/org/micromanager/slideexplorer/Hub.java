@@ -58,7 +58,7 @@ public class Hub {
 
       applyVendorSpecificSettings();
 
-      controller_ = new Controller(core_);
+      controller_ = new Controller(studio_, core_);
 
       AffineTransform transform = getCurrentAffineTransform(core_);
 

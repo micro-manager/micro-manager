@@ -4,28 +4,36 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 
 import ij.process.ImageProcessor;
+import java.util.List;
 
 import org.micromanager.internal.utils.ImageUtils;
 
 import mmcorej.CMMCore;
+import org.micromanager.Studio;
+import org.micromanager.data.Image;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class Hardware {
 
     CMMCore core_;
     String stage_;
+    Studio studio_;
 
-    Hardware(CMMCore core) {
+    Hardware(Studio studio, CMMCore core) {
         core_ = core;
         stage_ = core_.getXYStageDevice();
+        studio_ = studio;
     }
 
     // Camera commands -----------------------
     ImageProcessor acquireImage() {
         try {
-            core_.snapImage();
-            Object img = core_.getImage();
-            return ImageUtils.makeProcessor(core_, img);
+            List<Image> snaps = studio_.live().snap(false);
+            //core_.snapImage();
+            //Object img = core_.getImage();
+            Image snap = snaps.get(0);
+            return studio_.data().ij().createProcessor(snap);
+            //return ImageUtils.makeProcessor(core_, img);
         } catch (Exception e) {
             ReportingUtils.logError(e);
             return null;

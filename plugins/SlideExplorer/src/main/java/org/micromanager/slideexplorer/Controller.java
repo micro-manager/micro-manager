@@ -11,6 +11,7 @@ import java.awt.geom.Point2D;
 
 
 import mmcorej.CMMCore;
+import org.micromanager.Studio;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -30,8 +31,8 @@ public class Controller {
     private double zOffset_ = Double.NEGATIVE_INFINITY;
     private double lastZPosition_;
 
-    public Controller(CMMCore core) {
-        hardware_ = new Hardware(core);
+    public Controller(Studio studio, CMMCore core) {
+        hardware_ = new Hardware(studio, core);
         slideexplorerROI_ = hardware_.getROI();
     }
 
