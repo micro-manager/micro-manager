@@ -267,6 +267,9 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       linkManager_ = linkManager;
 
       computeQueue_.setPerformanceMonitor(perfMon_);
+      
+      ReportingUtils.logMessage("Class: " + this.getClass());
+      ReportingUtils.logMessage("Classloader: " + this.getClass().getClassLoader());
    }
 
    @MustCallOnEDT

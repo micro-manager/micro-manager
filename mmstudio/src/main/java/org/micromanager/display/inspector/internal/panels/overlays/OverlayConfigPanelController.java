@@ -23,6 +23,7 @@ import net.miginfocom.layout.LC;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.display.overlay.Overlay;
 import org.micromanager.display.overlay.OverlayListener;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -88,6 +89,10 @@ final class OverlayConfigPanelController implements OverlayListener {
          panel_.add(configUI, new CC().grow().push());
       }
       panel_.validate();
+            
+      ReportingUtils.logMessage("Class: " + this.getClass());
+      ReportingUtils.logMessage("Classloader: " + this.getClass().getClassLoader());
+      
    }
 
    JPanel getConfigPanel() {

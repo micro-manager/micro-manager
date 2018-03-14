@@ -46,6 +46,7 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplaySettings;
 import org.micromanager.display.overlay.AbstractOverlay;
 import org.micromanager.internal.utils.DynamicTextField;
+import org.micromanager.internal.utils.ReportingUtils;
 
 
 /**
@@ -163,6 +164,9 @@ public final class ScaleBarOverlay extends AbstractOverlay {
    }
 
    private ScaleBarOverlay() {
+            
+      ReportingUtils.logMessage("Class: " + this.getClass());
+      ReportingUtils.logMessage("Classloader: " + this.getClass().getClassLoader());
    }
 
    @Override
