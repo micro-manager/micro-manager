@@ -95,8 +95,9 @@ public final class PluginFinder {
          try {
             PluginClassLoader loader = new PluginClassLoader(jarURL,
                     MMStudio.getInstance().getClass().getClassLoader());
-            loader.setBlockInheritedResources(false);
+            loader.setBlockInheritedResources(true);
             result.addAll(findPluginsWithLoader(loader));
+            loader.setBlockInheritedResources(false);
          }
          catch (Throwable e) {
             ReportingUtils.logError(e, "Unable to load JAR at " + jarURL);
