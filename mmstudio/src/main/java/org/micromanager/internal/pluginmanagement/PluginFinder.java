@@ -94,8 +94,7 @@ public final class PluginFinder {
          // cause the entire process of loading plugins to fail.
          try {
             PluginClassLoader loader = new PluginClassLoader(jarURL,
-                    ij.IJ.getClassLoader() );
-                   // MMStudio.getInstance().getClass().getClassLoader());
+                   MMStudio.getInstance().getClass().getClassLoader());
             loader.setBlockInheritedResources(true);
             result.addAll(findPluginsWithLoader(loader));
             loader.setBlockInheritedResources(false);
