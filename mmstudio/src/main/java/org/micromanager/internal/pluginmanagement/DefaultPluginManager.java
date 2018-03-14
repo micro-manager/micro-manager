@@ -123,7 +123,7 @@ public final class DefaultPluginManager implements PluginManager {
       // file, since otherwise we won't be able to cast the new plugin to
       // MMPlugin in loadPlugins(), below.
       loadPlugins(PluginFinder.findPluginsWithLoader(
-            getClass().getClassLoader()));
+            ij.IJ.getClassLoader()));
 
       ReportingUtils.logMessage("Plugin loading took " +
             (System.currentTimeMillis() - startTime) + "ms");
