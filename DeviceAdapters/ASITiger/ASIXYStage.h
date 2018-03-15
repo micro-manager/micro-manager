@@ -79,6 +79,7 @@ public:
    int OnWaitTime             (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNrExtraMoveReps      (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeedGeneric         (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
+   int OnSpeedXMicronsPerSec  (MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeedX               (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnSpeedGeneric(pProp, eAct, axisLetterX_); }
    int OnSpeedY               (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnSpeedGeneric(pProp, eAct, axisLetterY_); }
    int OnBacklashGeneric      (MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter);
@@ -148,6 +149,7 @@ private:
    string axisLetterY_;
    bool advancedPropsEnabled_;
    bool speedTruth_;
+   double lastSpeedX_;
 
    // private helper functions
    int OnSaveJoystickSettings();

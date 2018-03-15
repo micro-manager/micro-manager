@@ -60,6 +60,7 @@ public:
 
    int Shutdown()
    {
+      // NB: can be called even if the device was never fully initialized
       char deviceLabel[MM::MaxStrLength];
       this->GetLabel(deviceLabel);
       string str(deviceLabel);
