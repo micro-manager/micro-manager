@@ -220,7 +220,9 @@ fi
 
 # Apply ad-hoc signature to the launchers, to prevent "damaged" messages on
 # Mountain Lion and later.
-codesign -s - -f $MM_STAGEDIR/ImageJ.app/Contents/MacOS/ImageJ
+# This now creates problems.  Try to verbatim copy the ImageJ.app
+# Revisit once we have our own developer keys
+#codesign -s - -f $MM_STAGEDIR/ImageJ.app/Contents/MacOS/ImageJ
 
 if [ "$make_disk_image" != yes ]; then
    exit 0
