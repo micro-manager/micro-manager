@@ -183,6 +183,7 @@ const char* const g_StageWaitTimePropertyName = "WaitTime(ms)";
 const char* const g_NrExtraMoveRepsPropertyName = "ExtraMoveRepetitions";
 const char* const g_MotorSpeedPropertyName = "MotorSpeed-S(mm/s)";
 const char* const g_MotorSpeedXPropertyName = "MotorSpeedX-S(mm/s)";
+const char* const g_MotorSpeedXMicronsPerSecPropertyName = "MotorSpeedX(um/s)";
 const char* const g_MotorSpeedYPropertyName = "MotorSpeedY-S(mm/s)";
 const char* const g_MaxMotorSpeedPropertyName = "MotorSpeedMaximum(mm/s)";
 const char* const g_MaxMotorSpeedXPropertyName = "MotorSpeedMaximumX(mm/s)";
