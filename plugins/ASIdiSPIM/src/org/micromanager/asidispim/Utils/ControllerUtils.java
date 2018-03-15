@@ -56,6 +56,7 @@ public class ControllerUtils {
    final Cameras cameras_;
    final CMMCore core_;
    double scanDistance_;   // cached value from last call to prepareControllerForAquisition()
+   double actualStepSizeUm_;  // cached value from last call to prepareControllerForAquisition()
    
    // stage has to go faster than the slice spacing because viewing at an angle
    // with diSPIM, angle is 45 degrees so go 1.41x faster
@@ -171,22 +172,23 @@ public class ControllerUtils {
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
          
          final double requestedMotorSpeed = computeScanSpeed(settings);
-         if (requestedMotorSpeed > props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED)*0.8) {
+         final double maxMotorSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);
+         if (requestedMotorSpeed > maxMotorSpeed*0.8) {  // trying to go near max speed smooth scanning will be compromised
             MyDialogUtils.showError("Required stage speed is too fast, please reduce step size or increase sample exposure.");
             return false;
          }
-         if (requestedMotorSpeed < 0.001) {
+         if (requestedMotorSpeed < maxMotorSpeed*0.0005) {  // 1/2000 of the max speed is approximate place where smooth scanning breaks down (speed quantum is ~1/12000 max speed); this also prevents setting to 0 which the controller rejects
             MyDialogUtils.showError("Required stage speed is too slow, please increase step size or decrease sample exposure.");
             return false;
          }
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
          
          // ask for the actual speed and calculate the actual step size
-         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
-         final double actualStepSizeUm = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
+         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_MICRONS)/1000;
+         actualStepSizeUm_ = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
          
          // cache how far we scan each pass for later use
-         scanDistance_ = settings.numSlices * actualStepSizeUm * geometricSpeedFactor_;
+         scanDistance_ = settings.numSlices * actualStepSizeUm_ * geometricSpeedFactor_;
          
          // set the acceleration to a reasonable value for the (usually very slow) scan speed
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL, (float)computeScanAcceleration(actualMotorSpeed));
@@ -885,12 +887,12 @@ public class ControllerUtils {
    }
    
    /**
-    * Gets the total distance the stage will scan for stage scanning acquisitions.
+    * Gets the actual step size for stage scanning acquisitions.
     * Only valid after call to prepareControllerForAquisition().
     * @return
     */
-   public double getScanDistance() {
-      return scanDistance_;
+   public double getActualStepSizeUm() {
+      return actualStepSizeUm_;
    }
 
 }

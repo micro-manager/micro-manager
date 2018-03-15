@@ -3030,7 +3030,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
             }
 
-            zStepUm_ = acqSettings.stepSizeUm;  // should be same as PanelUtils.getSpinnerFloatValue(stepSize_)
+            zStepUm_ = acqSettings.isStageScanning
+                  ? controller_.getActualStepSizeUm()  // computed step size, accounting for quantization of controller
+                  : acqSettings.stepSizeUm;  // should be same as PanelUtils.getSpinnerFloatValue(stepSize_)
             
             // initialize acquisition
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(),
@@ -3061,8 +3063,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "SeparateTimepoints", 
                   acqSettings.separateTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName, "CameraMode", acqSettings.cameraMode.toString()); 
-            gui_.setAcquisitionProperty(acqName, "z-step_um",
-                  NumberUtils.doubleToDisplayString(acqSettings.stepSizeUm));
+            gui_.setAcquisitionProperty(acqName, "z-step_um", NumberUtils.doubleToDisplayString(zStepUm_));
             // Properties for use by MultiViewRegistration plugin
             // Format is: x_y_z, set to 1 if we should rotate around this axis.
             gui_.setAcquisitionProperty(acqName, "MVRotationAxis", "0_1_0");

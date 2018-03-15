@@ -141,6 +141,7 @@ public class Properties {
       STAGESCAN_SLOW_STOP("ScanSlowAxisStopPosition(mm)", false),
       STAGESCAN_SETTLING_TIME("ScanSettlingTime(ms)", false),
       STAGESCAN_MOTOR_SPEED("MotorSpeedX-S(mm/s)", false),
+      STAGESCAN_MOTOR_SPEED_MICRONS("MotorSpeedX(um/s)"),
       STAGESCAN_MAX_MOTOR_SPEED("MotorSpeedMaximumX(mm/s)", false),
       STAGESCAN_MOTOR_ACCEL("AccelerationX-AC(ms)", false),
       STAGESCAN_OVERSHOOT_DIST("ScanOvershootDistance(um)", false),
