@@ -278,6 +278,10 @@ public class PanelUtils {
       // changing type to float which necessitates this code
       // this should call change listener
       try {
+         float f_orig = (float) ((Double) sp.getValue()).doubleValue();
+         if (MyNumberUtils.floatsEqual(f, f_orig)) {
+            return;
+         }
          sp.setValue((Double)((double)f));
       } catch (Exception ex) {
          sp.setValue((Float)f);
@@ -293,6 +297,10 @@ public class PanelUtils {
       // TODO figure out why the type of value in the numbermodel is 
       // changing type to float which necessitates this code
       try {
+         float d_orig = (float) ((Double) sp.getValue()).doubleValue();
+         if (MyNumberUtils.floatsEqual(d, d_orig)) {
+            return;
+         }
          sp.setValue((Double)d);
       } catch (Exception ex) {
          sp.setValue((Float)((float)d));
