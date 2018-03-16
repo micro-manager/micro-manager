@@ -26,7 +26,8 @@ import org.micromanager.display.DisplaySettings;
 public abstract class AbstractOverlay implements Overlay {
    private boolean visible_ = true;
    private final EventListenerSupport<OverlayListener> listeners_ =
-         EventListenerSupport.create(OverlayListener.class);
+         new EventListenerSupport(OverlayListener.class,
+               this.getClass().getClassLoader());
 
    /**
     * {@inheritDoc}
