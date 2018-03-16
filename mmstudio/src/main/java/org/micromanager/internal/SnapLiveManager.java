@@ -174,6 +174,9 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
       // in certain circumstances we can get a deadlock.
       try {
          amStartingSequenceAcquisition_ = true;
+         if (core_.getAutoShutter()) {
+            core_.setShutterOpen(true);
+         }
          core_.startContinuousSequenceAcquisition(0);
          amStartingSequenceAcquisition_ = false;
       }
@@ -217,6 +220,9 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
       try {
          if (core_.isSequenceRunning()) {
             core_.stopSequenceAcquisition();
+            if (core_.getAutoShutter()) {
+                core_.setShutterOpen(false);
+            }
          }
       }
       catch (Exception e) {
