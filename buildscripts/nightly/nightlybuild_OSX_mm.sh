@@ -222,7 +222,7 @@ fi
 # Mountain Lion and later.
 # This now creates problems.  Try to verbatim copy the ImageJ.app
 # Revisit once we have our own developer keys
-codesign -s - -f $MM_STAGEDIR/ImageJ.app
+# codesign -s - -f $MM_STAGEDIR/ImageJ.app
 
 if [ "$make_disk_image" != yes ]; then
    exit 0
