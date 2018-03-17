@@ -5410,7 +5410,9 @@ int Universal::applyAcqConfig(bool forceSetup)
         if (acqCfgNew_.AcquisitionType == AcqType_Live)
         {
             nRet = resizeImageBufferContinuous();
-            sequenceModeReady_ = true;
+            // Cannot say sequenceModeReady_ = true here, because that would
+            // preclude the call to PrepareForAcq() when starting a sequence
+            // acquisition.
         }
         else
         {
