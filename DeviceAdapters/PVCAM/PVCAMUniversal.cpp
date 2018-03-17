@@ -1603,7 +1603,6 @@ int Universal::PrepareSequenceAcqusition()
             if ( nRet != DEVICE_OK )
                 return nRet;
             GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-            GetCoreCallback()->PrepareForAcq(this);
             sequenceModeReady_ = true;
         }
     }
@@ -1617,11 +1616,12 @@ int Universal::PrepareSequenceAcqusition()
             if ( nRet != DEVICE_OK )
                 return nRet;
             GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-            GetCoreCallback()->PrepareForAcq(this);
             singleFrameModeReady_ = true;
         }
     }
 
+    // this callback should always be made when starting sequence acquisition
+    GetCoreCallback()->PrepareForAcq(this);
     return DEVICE_OK;
 }
 
