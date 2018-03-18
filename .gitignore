@@ -68,10 +68,6 @@ test-reports/
 /stage/
 /symbols/
 
-# Testing
-/testing/gmock-*.zip
-/testing/gmock/
-
 # Generated source
 /buildscripts/launchers/micromanager
 /buildscripts/launchers/mmimagej

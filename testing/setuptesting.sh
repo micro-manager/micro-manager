@@ -6,24 +6,24 @@
 set -e
 
 cd `dirname $0`
-rm -rf gmock
+rm -rf googletest
 
-GMOCK_VERSION=1.7.0
-GMOCK="gmock-$GMOCK_VERSION"
-GMOCK_SHA1=d6d2aa97886446dd8cbdb13930e451ff94a81481
+GOOGLETEST_VERSION=1.8.0
+GOOGLETEST="googletest-$GOOGLETEST_VERSION"
+GOOGLETEST_SHA1=667f873ab7a4d246062565fad32fb6d8e203ee73
 
-if test -f $GMOCK.zip
+if test -f $GOOGLETEST.zip
 then
    :
 else
-   curl -o $GMOCK.zip -L https://github.com/google/googlemock/archive/release-$GMOCK_VERSION.zip
+   curl -o $GOOGLETEST.zip -L https://github.com/google/googletest/archive/release-$GOOGLETEST_VERSION.zip
 fi
 
 cat >sha1sums.tmp <<EOF
-$GMOCK_SHA1  $GMOCK.zip
+$GOOGLETEST_SHA1  $GOOGLETEST.zip
 EOF
 shasum -c sha1sums.tmp
 rm sha1sums.tmp
 
-unzip -q $GMOCK.zip
-mv googlemock-release-$GMOCK_VERSION gmock
+unzip -q $GOOGLETEST.zip
+mv googletest-release-$GOOGLETEST_VERSION googletest
