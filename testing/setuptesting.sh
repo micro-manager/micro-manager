@@ -10,13 +10,13 @@ rm -rf gmock
 
 GMOCK_VERSION=1.7.0
 GMOCK="gmock-$GMOCK_VERSION"
-GMOCK_SHA1=f9d9dd882a25f4069ed9ee48e70aff1b53e3c5a5
+GMOCK_SHA1=d6d2aa97886446dd8cbdb13930e451ff94a81481
 
 if test -f $GMOCK.zip
 then
    :
 else
-   curl -LO https://googlemock.googlecode.com/files/$GMOCK.zip
+   curl -o $GMOCK.zip -L https://github.com/google/googlemock/archive/release-$GMOCK_VERSION.zip
 fi
 
 cat >sha1sums.tmp <<EOF
@@ -26,4 +26,4 @@ shasum -c sha1sums.tmp
 rm sha1sums.tmp
 
 unzip -q $GMOCK.zip
-mv $GMOCK gmock
+mv googlemock-release-$GMOCK_VERSION gmock
