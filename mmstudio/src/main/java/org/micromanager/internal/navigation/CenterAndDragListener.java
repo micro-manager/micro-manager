@@ -111,13 +111,17 @@ public final class CenterAndDragListener {
       // If there is an affine transform, use that, otherwise fallbakc to 
       // the old mechanism
       try {
-         affineTransform_ = AffineUtils.doubleToAffine(core_.getPixelSizeAffine(true));
          double pixelSize = core_.getPixelSizeUm();
-         if (Math.abs(pixelSize - 
-                 AffineUtils.deducePixelSize(affineTransform_)) > 0.1 * pixelSize) {
-            // affine transform does not correspond to pixelSize, so do not 
-            // trust it and fallback to old mechanism
-            affineTransform_ = null;
+         try {
+            affineTransform_ = AffineUtils.doubleToAffine(core_.getPixelSizeAffine(true));
+            if (Math.abs(pixelSize
+                    - AffineUtils.deducePixelSize(affineTransform_)) > 0.1 * pixelSize) {
+               // affine transform does not correspond to pixelSize, so do not 
+               // trust it and fallback to old mechanism
+               affineTransform_ = null;
+            }
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex, "Failed to find affine transform");
          }
       } catch (Exception exc) {
          ReportingUtils.showError(exc);
