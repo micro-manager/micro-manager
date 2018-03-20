@@ -4961,13 +4961,30 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
       mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));
       md.SetTag(mstB);
 
-      char Buf[MM::MaxStrLength];
-      Buf[0] = '\0';
-      GetProperty(MM::g_Keyword_CCDTemperature, Buf);
+      float temp = 0.;
+      unsigned int ret = GetTemperatureF(&temp);
 
-      MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
-      mstTemperature.SetValue(Buf);
-      md.SetTag(mstTemperature);
+      if(ret == DRV_NOT_INITIALIZED || ret == DRV_ACQUIRING || ret == DRV_ERROR_ACK)
+      {
+        MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
+        ostringstream os;
+
+        os << "Get Temperature failed with error: " << ret << endl;
+
+        mstTemperature.SetValue(os.str().c_str());
+        md.SetTag(mstTemperature);
+      }
+      else
+      {
+        char * buffer = new char[MAX_CHARS_PER_DESCRIPTION];
+        sprintf(buffer, "%.2f", temp);
+
+        MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
+        mstTemperature.SetValue(buffer);
+        md.SetTag(mstTemperature);
+        delete buffer;
+      }
+
    }
 
    bool AndorCamera::IsIxonUltra()
