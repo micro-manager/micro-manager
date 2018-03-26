@@ -2,9 +2,8 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-//                
-//
 // COPYRIGHT:     Tucsen Photonics Co., Ltd., 2018
+//
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -26,6 +25,7 @@
 #include "WriteCompactTiffRGB.h"
 #include <iostream>
 #include <process.h>
+
 
 #include <shlwapi.h>
 #pragma comment(lib, "shlwapi.lib")
@@ -175,7 +175,7 @@ CMMTUCam::CMMTUCam() :
     thd_ = new CTUCamThread(this);
 
     // parent ID display
-    //   CreateHubIDProperty();
+//   CreateHubIDProperty();
 
     m_fCurTemp    = 0.0f;
     m_fValTemp    = 0.0f;
@@ -357,8 +357,8 @@ int CMMTUCam::Initialize()
         double dblMax = (int)propAttr.dbValMax > 1000 ? (propAttr.dbValMax * 100 / 967) : (int)propAttr.dbValMax;
         SetPropertyLimits(MM::g_Keyword_Exposure, propAttr.dbValMin, dblMax);
         
-//      SetPropertyLimits(MM::g_Keyword_Exposure, propAttr.dbValMin, 10/*propAttr.dbValMax*/);
-//      SetPropertyLimits(MM::g_Keyword_Exposure, propAttr.dbValMin, (propAttr.dbValMax * 100 / 967)); // rainfan
+//         SetPropertyLimits(MM::g_Keyword_Exposure, propAttr.dbValMin, 10/*propAttr.dbValMax*/);
+//        SetPropertyLimits(MM::g_Keyword_Exposure, propAttr.dbValMin, (propAttr.dbValMax * 100 / 967)); // rainfan
     }
 
     // Global Gain
@@ -919,15 +919,25 @@ int CMMTUCam::SnapImage()
     ++callCounter;
 
     MM::MMTime startTime = GetCurrentMMTime();
-    double exp = GetExposure();
-    if (sequenceRunning_ && IsCapturing()) 
+    
+	double exp = GetExposure();
+    if (sequenceRunning_) 
     {
+		// Change the exposure time
         exp = GetSequenceExposure();
+		TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_EXPOSURETM, exp);	
     }
+
+	bool bLive = IsCapturing();
+
+	if (!bLive)
+	{
+		StartCapture();
+	}
 
     if (!fastImage_)
     {
-        //  GenerateSyntheticImage(img_, exp);  //ȡͼ
+    //  GenerateSyntheticImage(img_, exp);  // ȡͼ
         WaitForFrame(img_);
     }
 
@@ -947,6 +957,11 @@ int CMMTUCam::SnapImage()
 
     }
     readoutStartTime_ = GetCurrentMMTime();
+
+	if (!bLive)
+	{
+		StopCapture();
+	}
 
     return DEVICE_OK;
 }
@@ -1624,7 +1639,6 @@ void CMMTUCam::OnThreadExiting() throw()
       LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
    }
 }
-
 
 CTUCamThread::CTUCamThread(CMMTUCam* pCam)
    :intervalMs_(default_intervalMS)
@@ -3942,7 +3956,6 @@ void CMMTUCam::TestImage(ImgBuffer& img, double exp)
 */
 void CMMTUCam::GenerateSyntheticImage(ImgBuffer& img, double exp)
 { 
-
     MMThreadGuard g(imgPixelsLock_);
 
     TestImage(img, exp);
