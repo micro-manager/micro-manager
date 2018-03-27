@@ -17,34 +17,8 @@
 #include "winuser.h"
 #endif
 
-const char* g_DeviceOmicronName = "Omicron";
+const char* g_DeviceoldOmicronName = "Omicron";
 
-//-----------------------------------------------------------------------------
-// MMDevice API
-//-----------------------------------------------------------------------------
-
-MODULE_API void InitializeModuleData()
-{
-   RegisterDevice(g_DeviceOmicronName, MM::GenericDevice, "Omicron Laser Controller");
-}
-
-MODULE_API MM::Device* CreateDevice(const char* deviceName)
-{
-    if (deviceName == 0)
-	   return 0;
-
-    if (strcmp(deviceName, g_DeviceOmicronName) == 0)
-    {
-	   return new Omicron;
-    }
-
-    return 0;
-}
-
-MODULE_API void DeleteDevice(MM::Device* pDevice)
-{
-   delete pDevice;
-}
 
 //-----------------------------------------------------------------------------
 // Omicron device adapter
@@ -81,7 +55,7 @@ Omicron::~Omicron()
 
 void Omicron::GetName(char* Name) const
 {
-     CDeviceUtils::CopyLimitedString(Name, g_DeviceOmicronName);
+     CDeviceUtils::CopyLimitedString(Name, g_DeviceoldOmicronName);
 }
 
 int Omicron::Initialize()
