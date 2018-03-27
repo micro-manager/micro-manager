@@ -556,6 +556,8 @@ int CLens::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
    string tmpstr;
    ostringstream command; command.str("");
    if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       command << addressChar_ << "SS ";
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
@@ -565,7 +567,7 @@ int CLens::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (tmpstr.compare(g_SaveSettingsX) == 0)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsY) == 0)
-         command << 'X';
+         command << 'Y';
       else if (tmpstr.compare(g_SaveSettingsZ) == 0)
          command << 'Z';
       else if (tmpstr.compare(g_SaveSettingsZJoystick) == 0)
@@ -576,6 +578,8 @@ int CLens::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note 200ms delay added
       pProp->Set(g_SaveSettingsDone);
+      command.str(""); command << g_SaveSettingsDone;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -730,6 +734,8 @@ int CLens::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmp);
       char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
@@ -738,6 +744,8 @@ int CLens::OnJoystickFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << addressChar_ << "JS X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -761,6 +769,8 @@ int CLens::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmp);
       char joystickMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, joystickMirror) );
@@ -769,6 +779,8 @@ int CLens::OnJoystickSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << addressChar_ << "JS Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -796,6 +808,8 @@ int CLens::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       string tmpstr;
       pProp->Get(tmpstr);
       double joystickFast = 0.0;
@@ -807,6 +821,8 @@ int CLens::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << addressChar_ << "JS X=" << joystickFast << " Y=" << joystickSlow;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmpstr;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -879,6 +895,8 @@ int CLens::OnWheelFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmp);
       char wheelMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_WheelMirrorPropertyName, wheelMirror) );
@@ -887,6 +905,8 @@ int CLens::OnWheelFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << addressChar_ << "JS F=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -910,6 +930,8 @@ int CLens::OnWheelSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmp);
       char wheelMirror[MM::MaxStrLength];
       RETURN_ON_MM_ERROR ( GetProperty(g_JoystickMirrorPropertyName, wheelMirror) );
@@ -918,6 +940,8 @@ int CLens::OnWheelSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << addressChar_ << "JS T=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -945,6 +969,8 @@ int CLens::OnWheelMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       string tmpstr;
       pProp->Get(tmpstr);
       double wheelFast = 0.0;
@@ -956,6 +982,8 @@ int CLens::OnWheelMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << addressChar_ << "JS F=" << wheelFast << " T=" << wheelSlow;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmpstr;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -1452,7 +1480,8 @@ int CLens::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
-
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_RB_OnePoint_1) == 0)
@@ -1465,6 +1494,8 @@ int CLens::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
       command << addressChar_ << "RM " << pseudoAxisChar << "=" << tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
+      command.str(""); command << tmpstr;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -1476,6 +1507,8 @@ int CLens::OnRBTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Set(g_IdleState);
    }
    else  if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       string tmpstr;
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_DoItState) == 0)
@@ -1520,6 +1553,8 @@ int CLens::OnRBRunning(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       justSet = true;
       return OnRBRunning(pProp, MM::BeforeGet);
+      // TODO determine how to handle this with shared properties since ring buffer is per-card and not per-axis
+      // the reason this property exists (and why it's not a read-only property) are a bit hazy as of mid-2017
    }
    return DEVICE_OK;
 }
@@ -1539,9 +1574,13 @@ int CLens::OnRBDelayBetweenPoints(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmp);
       command << addressChar_ << "RT Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -1598,7 +1637,7 @@ int CLens::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command <<addressChar_<< "TTL X?";
+      command << addressChar_<< "TTL X?";
       response << ":A X=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
@@ -1606,9 +1645,13 @@ int CLens::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmp);
-      command <<addressChar_<< "TTL X=" << tmp;
+      command << addressChar_<< "TTL X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -1622,7 +1665,7 @@ int CLens::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       if (!refreshProps_ && initialized_)
          return DEVICE_OK;
-      command <<addressChar_<< "TTL Y?";
+      command << addressChar_<< "TTL Y?";
       response << ":A Y=";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
@@ -1630,9 +1673,13 @@ int CLens::OnUseSequence(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
    else if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmp);
-      command <<addressChar_<< "TTL Y=" << tmp;
+      command << addressChar_<< "TTL Y=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }

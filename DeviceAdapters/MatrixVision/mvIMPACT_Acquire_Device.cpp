@@ -54,8 +54,8 @@ class mvIMPACT_Acquire_Device;
          LogMessage( oss.str() ); \
          result = DEVICE_ERR; \
       } \
-   } \
-    
+   }
+
 #define MICRO_MANAGER_INTERFACE_PROLOGUE \
    int result = DEVICE_OK; \
    try \
@@ -79,8 +79,8 @@ class mvIMPACT_Acquire_Device;
    catch( const ImpactAcquireException& e ) \
    { \
       LOG_MVIMPACT_ACQUIRE_EXCEPTION( e ) \
-   } \
-    
+   }
+
 //=============================================================================
 //=========================== static variables ================================
 //=============================================================================
@@ -205,7 +205,7 @@ const double mvIMPACT_Acquire_Device::s_exposureTimeConvertFactor_ = 1000.;
 //-----------------------------------------------------------------------------
 mvIMPACT_Acquire_Device::mvIMPACT_Acquire_Device( mvIMPACT::acquire::Device* pDev ) : pDev_( pDev ),
    pFI_( 0 ), pCurrentRequest_( 0 ), pCurrentRequestBufferLayout_( 0 ), pIRC_( 0 ), pID_( 0 ), pCS_( 0 ),
-   expose_us_(), pIFC_( 0 ), pAC_( 0 ), features_(), featuresToIgnore_(), sequenceStartTime_( 0 ), stopOnOverflow_( false ),
+   pIFC_( 0 ), pAC_( 0 ), features_(), featuresToIgnore_(), sequenceStartTime_( 0 ), stopOnOverflow_( false ),
    readoutStartTime_( 0 ), pSequenceThread_( 0 )
 //-----------------------------------------------------------------------------
 {
@@ -278,12 +278,12 @@ double mvIMPACT_Acquire_Device::GetExposure( void ) const
    {
       if( pAC_->exposureTime.isValid() )
       {
-         pAC_->exposureTime.read();
+         exposureTime = pAC_->exposureTime.read();
       }
    }
-   else if( expose_us_.isValid() )
+   else if( pCS_ && pCS_->expose_us.isValid() )
    {
-      exposureTime = static_cast<double>( expose_us_.read() );
+      exposureTime = static_cast<double>( pCS_->expose_us.read() );
    }
    exposureTime /= s_exposureTimeConvertFactor_;
    MICRO_MANAGER_INTERFACE_EPILOGUE_NO_RESULT
@@ -303,9 +303,9 @@ void mvIMPACT_Acquire_Device::SetExposure( double exp )
          pAC_->exposureTime.write( exp );
       }
    }
-   else if( expose_us_.isValid() )
+   else if( pCS_ && pCS_->expose_us.isValid() )
    {
-      expose_us_.write( static_cast<int>( exp ) );
+      pCS_->expose_us.write( static_cast<int>( exp ) );
    }
    MICRO_MANAGER_INTERFACE_EPILOGUE_NO_RESULT
 }
@@ -572,30 +572,30 @@ int mvIMPACT_Acquire_Device::Initialize( void )
          if( !pIFC_ )
          {
             pIFC_ = new mvIMPACT::acquire::GenICam::ImageFormatControl( pDev_ );
+            SetUpBinningProperties_GenICam();
          }
          if( !pAC_ )
          {
             pAC_ = new mvIMPACT::acquire::GenICam::AcquisitionControl( pDev_ );
             if( pAC_->exposureTime.isValid() )
             {
-               result = CreateFloatProperty( MM::g_Keyword_Exposure, pAC_->exposureTime.read() * s_exposureTimeConvertFactor_, false );
+               result = CreateFloatProperty( MM::g_Keyword_Exposure, pAC_->exposureTime.read() / s_exposureTimeConvertFactor_, false );
                assert( result == DEVICE_OK );
-               SetPropertyLimits( MM::g_Keyword_Exposure, pAC_->exposureTime.getMinValue() * s_exposureTimeConvertFactor_, pAC_->exposureTime.getMaxValue() * s_exposureTimeConvertFactor_ );
+               SetPropertyLimits( MM::g_Keyword_Exposure, pAC_->exposureTime.getMinValue() / s_exposureTimeConvertFactor_, pAC_->exposureTime.getMaxValue() / s_exposureTimeConvertFactor_ );
             }
          }
          break;
       case dilDeviceSpecific:
          if( !pCS_ )
          {
-            pCS_ = new mvIMPACT::acquire::CameraSettingsFrameGrabber( pDev_ );
+            pCS_ = new mvIMPACT::acquire::CameraSettingsBlueDevice( pDev_ );
+            SetUpBinningProperties_DeviceSpecific();
          }
-         ComponentLocator locator( pCS_->hObj() );
-         locator.bindComponent( expose_us_, "Expose_us" );
-         if( expose_us_.isValid() )
+         if( pCS_->expose_us.isValid() )
          {
-            result = CreateFloatProperty( MM::g_Keyword_Exposure, static_cast<double>( expose_us_.read() ) * s_exposureTimeConvertFactor_, false );
+            result = CreateFloatProperty( MM::g_Keyword_Exposure, static_cast<double>( pCS_->expose_us.read() ) / s_exposureTimeConvertFactor_, false );
             assert( result == DEVICE_OK );
-            SetPropertyLimits( MM::g_Keyword_Exposure, static_cast<double>( expose_us_.getMinValue() ) * s_exposureTimeConvertFactor_, static_cast<double>( expose_us_.getMaxValue() ) * s_exposureTimeConvertFactor_ );
+            SetPropertyLimits( MM::g_Keyword_Exposure, static_cast<double>( pCS_->expose_us.getMinValue() ) / s_exposureTimeConvertFactor_, static_cast<double>( pCS_->expose_us.getMaxValue() ) / s_exposureTimeConvertFactor_ );
          }
          break;
       }
@@ -999,13 +999,194 @@ int mvIMPACT_Acquire_Device::RunSequenceOnThread( MM::MMTime startTime )
    return result;
 }
 
+//-----------------------------------------------------------------------------
+int mvIMPACT_Acquire_Device::SetUpBinningProperties_DeviceSpecific( void )
+//-----------------------------------------------------------------------------
+{
+   // We always provide the Binning property!
+   CPropertyAction* pAct = new CPropertyAction( this, &mvIMPACT_Acquire_Device::OnBinning );
+   vector<string> supportedBinningModes;
+   string currentValue( "Off" );
+   if( pCS_ && pCS_->binningMode.isValid() )
+   {
+      pCS_->binningMode.getTranslationDictStrings( supportedBinningModes );
+      currentValue = pCS_->binningMode.readS();
+   }
+   else
+   {
+      supportedBinningModes.push_back( "Off" );
+   }
+
+   int nRet = CreateProperty( MM::g_Keyword_Binning, currentValue.c_str(), MM::String, false, pAct );
+   if( nRet == DEVICE_OK )
+   {
+      nRet = SetAllowedValues( MM::g_Keyword_Binning, supportedBinningModes );
+   }
+   return nRet;
+}
+
+//-----------------------------------------------------------------------------
+vector<int64_type> mvIMPACT_Acquire_Device::GetSupportedBinningValues_GenICam( PropertyI64 prop ) const
+//-----------------------------------------------------------------------------
+{
+   vector<int64_type> values;
+   if( prop.isValid() )
+   {
+      if( prop.hasDict() )
+      {
+         prop.getTranslationDictValues( values );
+      }
+      else if( prop.hasMinValue() && prop.hasMaxValue() )
+      {
+         const int64_type min = prop.getMinValue();
+         const int64_type max = prop.getMaxValue();
+         for( int64_type i = min; i <= max; i *= 2 )
+         {
+            values.push_back( i );
+         }
+         sort( values.begin(), values.end() );
+      }
+   }
+   if( values.empty() )
+   {
+      values.push_back( 1 );
+   }
+   return values;
+}
+
+//-----------------------------------------------------------------------------
+int mvIMPACT_Acquire_Device::SetUpBinningProperties_GenICam( void )
+//-----------------------------------------------------------------------------
+{
+   // note that the GenICam spec separates vertical and horizontal binning and does
+   // not provide a single, unified binning property. The various OnBinning methods
+   // will do their best to provide this illusion of a unified binning when possible.
+
+   // We always provide the Binning property, regardless of support for non-unity binning.
+   CPropertyAction* pAct = new CPropertyAction( this, &mvIMPACT_Acquire_Device::OnBinning );
+   vector<int64_type> binningVerticalValues = GetSupportedBinningValues_GenICam( pIFC_->binningVertical );
+   const vector<int64_type>::size_type binningVerticalValueCount = binningVerticalValues.size();
+   vector<int64_type> binningHorizontalValues = GetSupportedBinningValues_GenICam( pIFC_->binningHorizontal );
+   const vector<int64_type>::size_type binningHorizontalValueCount = binningHorizontalValues.size();
+   vector<string> supportedBinningModes;
+   for( vector<int64_type>::size_type i = 0; i < binningVerticalValueCount; i++ )
+   {
+      for( vector<int64_type>::size_type j = 0; j < binningHorizontalValueCount; j++ )
+      {
+         ostringstream oss;
+         oss << binningHorizontalValues[j] << "x" << binningVerticalValues[i];
+         supportedBinningModes.push_back( oss.str() );
+      }
+   }
+
+   ostringstream currentValue;
+   if( pIFC_ )
+   {
+      currentValue << ( pIFC_->binningHorizontal.isValid() ? pIFC_->binningHorizontal.readS() : "1" )
+                   << "x"
+                   << ( pIFC_->binningVertical.isValid() ? pIFC_->binningVertical.readS() : "1" );
+   }
+   else
+   {
+      currentValue << "1x1";
+   }
+
+   int nRet = CreateProperty( MM::g_Keyword_Binning, currentValue.str().c_str(), MM::String, false, pAct );
+   if( nRet == DEVICE_OK )
+   {
+      nRet = SetAllowedValues( MM::g_Keyword_Binning, supportedBinningModes );
+   }
+   return nRet;
+}
+
+//-----------------------------------------------------------------------------
+void mvIMPACT_Acquire_Device::SetBinningProperty( Property prop, const string& value, int& ret, bool& boMustRefreshCaptureBufferLayout )
+//-----------------------------------------------------------------------------
+{
+   if( prop.isValid() )
+   {
+      if( prop.isWriteable() )
+      {
+         try
+         {
+            if( prop.readS() != value )
+            {
+               prop.writeS( value );
+               boMustRefreshCaptureBufferLayout = true;
+            }
+         }
+         catch( const ImpactAcquireException& e )
+         {
+            LOG_MVIMPACT_ACQUIRE_EXCEPTION( e )
+            ret = DEVICE_ERR;
+         }
+      }
+      else
+      {
+         ostringstream oss;
+         oss << "'" << prop.name() << "' doesn't seem to be writable at the moment! Cannot change this parameter.";
+         LogMessage( oss.str() );
+      }
+   }
+}
+
+//-----------------------------------------------------------------------------
+int mvIMPACT_Acquire_Device::OnBinning( MM::PropertyBase* pProp, MM::ActionType eAct )
+//-----------------------------------------------------------------------------
+{
+   int ret = DEVICE_OK;
+   switch( eAct )
+   {
+   case MM::AfterSet:
+      {
+         if( IsCapturing() )
+         {
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
+         }
+
+         // try to set the vertical and horizontal binning
+         string value;
+         pProp->Get( value );
+         bool boMustRefreshCaptureBufferLayout = false;
+         if( pIFC_ )
+         {
+            string::size_type separatorPosition = value.find_first_of( "x" );
+            if( separatorPosition != string::npos )
+            {
+               SetBinningProperty( pIFC_->binningVertical, value.substr( separatorPosition + 1 ), ret, boMustRefreshCaptureBufferLayout );
+               SetBinningProperty( pIFC_->binningHorizontal, value.substr( 0, separatorPosition ), ret, boMustRefreshCaptureBufferLayout );
+            }
+
+         }
+         else if( pCS_ )
+         {
+            SetBinningProperty( pCS_->binningMode, value, ret, boMustRefreshCaptureBufferLayout );
+         }
+         if( boMustRefreshCaptureBufferLayout )
+         {
+            RefreshCaptureBufferLayout();
+         }
+      }
+      break;
+   case MM::BeforeGet:
+      {
+         // the user is requesting the current value for the property, so
+         // either ask the 'hardware' or let the system return the value
+         // cached in the property.
+         ret = DEVICE_OK;
+      }
+      break;
+   }
+   return ret;
+}
+
 //=============================================================================
 //==================== Implementation MySequenceThread ========================
 //=============================================================================
 //-----------------------------------------------------------------------------
 MySequenceThread::MySequenceThread( mvIMPACT_Acquire_Device* pmvIMPACT_Acquire_Device ) :
    intervalMs_( default_intervalMS ), numImages_( default_numImages ), imageCounter_( 0 ),
-   stop_( true ) , suspend_( false ), pmvIMPACT_Acquire_Device_( pmvIMPACT_Acquire_Device ),
+   stop_( true ), suspend_( false ), pmvIMPACT_Acquire_Device_( pmvIMPACT_Acquire_Device ),
    startTime_( 0 ), actualDuration_( 0 ), lastFrameTime_( 0 )
 //-----------------------------------------------------------------------------
 {

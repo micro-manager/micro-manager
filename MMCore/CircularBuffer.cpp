@@ -140,99 +140,15 @@ bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int wid
 }
 
 /**
-* Inserts a multi-channel frame in the buffer.
+* Inserts a single image, possibly with multiple channels, but with 1 component, in the buffer.
 */
 bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd) throw (CMMError)
 {
-   MMThreadGuard guard(g_insertLock);
-
-   mm::ImgBuffer* pImg;
-   unsigned long singleChannelSize = (unsigned long)width * height * byteDepth;
-
-   {
-      MMThreadGuard guard(g_bufferLock);
-
-      // check image dimensions
-      if (width != width_ || height != height_ || byteDepth != pixDepth_)
-         throw CMMError("Incompatible image dimensions in the circular buffer", MMERR_CircularBufferIncompatibleImage);
-
-      bool overflowed = (insertIndex_ - saveIndex_) >= static_cast<long>(frameArray_.size());
-      if (overflowed) {
-         overflow_ = true;
-         return false;
-      }
-   }
-
-   for (unsigned i=0; i<numChannels; i++)
-   {
-      Metadata md;
-      {
-         MMThreadGuard guard(g_bufferLock);
-         // we assume that all buffers are pre-allocated
-         pImg = frameArray_[insertIndex_ % frameArray_.size()].FindImage(i);
-         if (!pImg)
-            return false;
-
-         if (pMd)
-         {
-            // TODO: the same metadata is inserted for each channel ???
-            // Perhaps we need to add specific tags to each channel
-            md = *pMd;
-         }
-
-         std::string cameraName = md.GetSingleTag("Camera").GetValue();
-         if (imageNumbers_.end() == imageNumbers_.find(cameraName))
-         {
-            imageNumbers_[cameraName] = 0;
-         }
-
-         // insert image number. 
-         md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageNumbers_[cameraName]));
-         ++imageNumbers_[cameraName];
-      }
-
-      if (!md.HasTag(MM::g_Keyword_Elapsed_Time_ms))
-      {
-         // if time tag was not supplied by the camera insert current timestamp
-         MM::MMTime timestamp = GetMMTimeNow();
-         md.PutImageTag(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString(timestamp.getMsec()));
-      }
-
-      md.PutImageTag("Width",width);
-      md.PutImageTag("Height",height);
-      if (byteDepth == 1)
-         md.PutImageTag("PixelType","GRAY8");
-      else if (byteDepth == 2)
-         md.PutImageTag("PixelType","GRAY16");
-      else if (byteDepth == 4)
-         md.PutImageTag("PixelType","RGB32");
-      else if (byteDepth == 8)
-         md.PutImageTag("PixelType","RGB64");
-      else
-         md.PutImageTag("PixelType","Unknown"); 
-
-      pImg->SetMetadata(md);
-      pImg->SetPixels(pixArray + i*singleChannelSize);
-   }
-
-   {
-      MMThreadGuard guard(g_bufferLock);
-
-      imageCounter_++;
-      insertIndex_++;
-      if ((insertIndex_ - (long)frameArray_.size()) > adjustThreshold && (saveIndex_- (long)frameArray_.size()) > adjustThreshold)
-      {
-         // adjust buffer indices to avoid overflowing integer size
-         insertIndex_ -= adjustThreshold;
-         saveIndex_ -= adjustThreshold;
-      }
-   }
-
-   return true;
+   return InsertMultiChannel(pixArray, numChannels, width, height, byteDepth, 1, pMd);
 }
 
 /**
-* Inserts a single image in the buffer.
+* Inserts a single image, possibly with multiple components, in the buffer.
 */
 bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int width, unsigned int height, unsigned int byteDepth, unsigned int nComponents, const Metadata* pMd) throw (CMMError)
 {

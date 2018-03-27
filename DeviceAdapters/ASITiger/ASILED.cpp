@@ -142,18 +142,13 @@ int CLED::Initialize()
 }
 
 
-
 int CLED::SetOpen(bool open)
 {
    ostringstream command; command.str("");
-   if(open)
-   {
+   if (open)
       command << addressChar_ << "LED " << channelAxisChar_ << "="<< intensity_;
-   }
    else
-   {
       command << addressChar_ << "LED " << channelAxisChar_ << "=0";
-   }
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
    open_ = open;
    return DEVICE_OK;
@@ -178,15 +173,9 @@ int CLED::UpdateOpenIntensity()
    replyprefix << channelAxisChar_ << "=";
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), replyprefix.str()) );
    RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
-   if (tmp > 0)
-   {
-      open_ = true;
+   open_ = tmp > 0;
+   if (open_)
       intensity_ = tmp;
-   }
-   else
-   {
-      open_ = false;
-   }
    return DEVICE_OK;
 }
 
@@ -200,6 +189,8 @@ int CLED::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
    string tmpstr;
    ostringstream command; command.str("");
    if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       command << addressChar_ << "SS ";
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
@@ -209,11 +200,13 @@ int CLED::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (tmpstr.compare(g_SaveSettingsX) == 0)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsY) == 0)
-         command << 'X';
+         command << 'Y';
       else if (tmpstr.compare(g_SaveSettingsZ) == 0)
          command << 'Z';
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A", (long)200) );  // note 200ms delay added
       pProp->Set(g_SaveSettingsDone);
+      command.str(""); command << g_SaveSettingsDone;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -263,13 +256,9 @@ int CLED::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       if(open_)
-      {
          pProp->Set(g_OpenState);
-      }
       else
-      {
          pProp->Set(g_ClosedState);
-      }
    }
    else if (eAct == MM::AfterSet)
    {
@@ -301,10 +290,14 @@ int CLED::OnCurrentLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmp);
       tmp /= 12;  // convert from milliamps into percent of 1.2A
       command << addressChar_ << "WRDAC X="<< tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
+      command.str(""); command << tmp;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
 
    return DEVICE_OK;

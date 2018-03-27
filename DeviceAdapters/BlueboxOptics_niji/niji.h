@@ -4,6 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   niji controller adapter
+// APPLIES TO:    niji with firmware version >= V2.101.000(Beta)
+//                (please contact Bluebox Optics if your firmware is older)
+//
 // COPYRIGHT:     University of California, San Francisco, 2009
 // 
 // AUTHOR:        Egor Zindy, ezindy@gmail.com, 2017-08-15
@@ -77,7 +80,10 @@ public:
    int OnTemperature1(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperature2(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFirmwareVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnErrorCode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGlobalStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   int OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Shutter API
    int SetOpen(bool open = true);
@@ -109,13 +115,15 @@ protected:
    long triggerResistor_;
 
    //the niji status
-   long globalStatus_;
+   long errorCode_;
 
    //Temperatures (towards the light output and ambient)
    double tempOutput_;
    double tempAmbient_;
 
    string firmwareVersion_;
+
+   long outputMode_;
 
    int ReadChannelLabels();
 
@@ -137,13 +145,19 @@ private:
 
    double answerTimeoutMs_;
 
+   //The number of lines returned by the "?" and "r" commands.
+   int n_lines1;
+   int n_lines2;
+
    void GenerateChannelChooser();
    void GenerateIntensityProperties();
    void GenerateStateProperties();
    void GenerateTriggerProperties();
    void GenerateReadOnlyProperties();
+   void GenerateOtherProperties();
 
    void SetTrigger();
+   void SetOutputMode();
    void SetActiveChannel(long state);
    void SetActiveChannel(string channelName);
    void GetActiveChannel(long &state);
@@ -154,6 +168,7 @@ private:
    void SetGlobalIntensity(long intensity);
    void SetChannelIntensity(long intensity, long index);
    void GetChannelIntensity(long& intensity, long index);
+   void UpdateChannelLabel();
 
    void Illuminate();
 
@@ -165,7 +180,6 @@ private:
    int HandleErrors();
 
    void ReadGreeting();
-   void ReadFirmware();
    void ReadUpdate();
    int ReadResponseLines(int n);
 
@@ -221,7 +235,7 @@ private:
    long triggerResistor_;
 
    //the niji status
-   long globalStatus_;
+   long errorCode_;
 
    //the current channel label
    string currentChannelLabel_;
@@ -229,6 +243,9 @@ private:
    //Temperatures (towards the light output and ambient)
    double tempOutput_;
    double tempAmbient_;
+
+   //power output mode
+   long outputMode_;
 };
 
 
