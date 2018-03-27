@@ -480,6 +480,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    PVCAM
    ParallelPort
    Pecon
+   PIEZOCONCEPT
    Piezosystem_30DV50
    Piezosystem_NV120_1
    Piezosystem_NV40_1
