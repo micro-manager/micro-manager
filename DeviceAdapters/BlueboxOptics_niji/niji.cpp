@@ -747,7 +747,7 @@ void Controller::SetTrigger()
       MMThreadGuard myLock(lock_);
       Purge();
       Send(msg.str());
-      ReadResponseLines(1);
+      ReceiveOneLine();
    }
 }
 
@@ -760,7 +760,7 @@ void Controller::SetOutputMode()
       MMThreadGuard myLock(lock_);
       Purge();
       Send(msg.str());
-      ReadResponseLines(1);
+      ReceiveOneLine();
    }
 }
 
@@ -816,6 +816,7 @@ void Controller::GetActiveChannel(long &channel)
 
 void Controller::SetState(long state)
 {
+   std::ostringstream ss;
    state_ = state;
 }
 
@@ -824,11 +825,12 @@ void Controller::GetState(long &state)
    state = state_;
 }
 
-void Controller::UpdateChannelLabel()
+long Controller::UpdateChannelLabel()
 {
    //Count how many LED channels are currently active
    long nActive = 0;
    long index = 0;
+   long state = 1;
    for (long i=0; i<NLED; i++)
    {
       if (channelStates_[i] == 1) {
@@ -842,16 +844,16 @@ void Controller::UpdateChannelLabel()
       //With exactly one channel active, the current channel label
       //is set according to the index passed to SetChannelState()
       currentChannelLabel_ = g_ChannelNames[index];
-      state_ = 1;
    }
    else if (nActive > 1)
    {
       //The channel label is changed to the multiple selection string
       //if we have more than one LED selected
       currentChannelLabel_ = g_Keyword_MultipleSelection;
-      state_ = 1;
    }
-   else state_ = 0;
+   else state = 0;
+
+   return state;
 }
 
 void Controller::SetChannelState(long state, long index)
@@ -900,9 +902,10 @@ void Controller::SetGlobalIntensity(long intensity)
          intensity = channelIntensities_[index];
          msg << "d," << index+1 << "," << (long)(0.01*(double)intensity_*(double)intensity);
          Send(msg.str());
-         ReadResponseLines(1);
+         ReceiveOneLine();
       }
    }
+   CDeviceUtils::SleepMs(100);
 }
 
 void Controller::SetChannelIntensity(long intensity, long index)
@@ -916,7 +919,7 @@ void Controller::SetChannelIntensity(long intensity, long index)
       MMThreadGuard myLock(lock_);
       Purge();
       Send(msg.str());
-      ReadResponseLines(1);
+      ReceiveOneLine();
    }
 }
 
@@ -937,12 +940,14 @@ void Controller::Illuminate()
       Purge();
       for (long index=0; index<NLED; index++)
       {
-         channelState = (state_ == 0)?0:channelStates_[index];
+         //std::ostringstream ss; ss << "Illuminate: " << index << " " << state_; LogMessage(ss.str().c_str(), true);
          msg.str("");
          msg.clear();
+
+         channelState = (state_ == 0)?0:channelStates_[index];
          msg << "D," << index+1 << "," << channelState;
          Send(msg.str());
-         ReadResponseLines(1);
+         ReceiveOneLine();
       }
    }
 }
@@ -1158,9 +1163,9 @@ int Controller::ReadResponseLines(int n)
          long index = atoi(buf_string_.substr(2).c_str())-1;  //need 0-index for arrays
          long state = atoi(buf_string_.substr(4).c_str());
 
-         if (index >=0 && index < NLED) {
+         //Is the LED channel ON but state_ is 0 (unknown)
+         if (index >=0 && index < NLED && state_ == 1) {
             channelStates_[index] = state;
-            UpdateChannelLabel();
          }
          continue;
       }
@@ -1170,13 +1175,12 @@ int Controller::ReadResponseLines(int n)
       if(buf_string_.substr(0, prefix.size()) == prefix) {
          long mode = atoi(buf_string_.substr(prefix.size()).c_str());
          outputMode_ = mode;
+         continue;
       }
 
 
       //if we got here, that means buf_string_ could not be parsed...
-      std::ostringstream ss;
-      ss << "Not parsed: " << buf_string_;
-      LogMessage(ss.str().c_str(), true);
+      std::ostringstream ss; ss << "Not parsed: " << buf_string_; LogMessage(ss.str().c_str(), true);
    } 
 
    //CDeviceUtils::SleepMs(5);
@@ -1279,7 +1283,6 @@ int PollingThread::svc()
          state_ = aController_.state_;
          aController_.OnPropertyChanged(MM::g_Keyword_State, CDeviceUtils::ConvertToString(state_));
       }
-
 
       //TODO Not probing for those at the moment
       if (tempOutput_ != aController_.tempOutput_)

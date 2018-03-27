@@ -168,7 +168,7 @@ private:
    void SetGlobalIntensity(long intensity);
    void SetChannelIntensity(long intensity, long index);
    void GetChannelIntensity(long& intensity, long index);
-   void UpdateChannelLabel();
+   long UpdateChannelLabel();
 
    void Illuminate();
 
