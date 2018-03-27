@@ -44,6 +44,7 @@ _MMCorePy_la_LDFLAGS = -module -avoid-version -shrext .so
 _MMCorePy_la_LIBADD = ../MMCore/libMMCore.la
 
 install-exec-hook:
+	$(MKDIR_P) $(DESTDIR)/$(wrappermoduledir)
 	$(INSTALL_DATA) MMCorePy.py $(DESTDIR)$(wrappermoduledir)
 
 uninstall-hook:
