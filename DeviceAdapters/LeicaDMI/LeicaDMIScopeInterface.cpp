@@ -678,6 +678,7 @@ int LeicaScopeInterface::GetAFCMode(MM::Device& device, MM::Core& core)
 				scopeModel_->afc_.SetMode(mode==1);
 			}
 		}
+	return ret;
 }
 
 int LeicaScopeInterface::GetAFCFocusScore(MM::Device& device, MM::Core& core)
@@ -769,7 +770,29 @@ int LeicaScopeInterface::GetDevicesPresent(MM::Device& device, MM::Core& core)
          ss >> stand;
          int devId;
          while (ss >> devId) {
-            scopeModel_->SetDeviceAvailable(devId);
+            std::ostringstream cmd2;
+            cmd2 << devId << "001";
+            int ret = core.SetSerialCommand(&device, port_.c_str(), cmd2.str().c_str(), "\r");
+            if (ret != DEVICE_OK)
+               return ret;
+            char resp2[RCV_BUF_LENGTH] = "";
+            unsigned long respLen2 = RCV_BUF_LENGTH;
+            ret = core.GetSerialAnswer(&device, port_.c_str(), respLen2, resp2, "\r");
+            if (ret != DEVICE_OK)
+               return ret;
+            std::istringstream iss2;
+            std::string word;
+            iss2 >> word;
+            if (word != cmd2.str())
+               continue;
+            iss2 >> word;
+            core.LogMessage(&device, word.c_str(), true);
+            if (word.find("MANUAL") == 0)
+               continue;
+            else if (word.find("CODED") == 0)
+               scopeModel_->SetDeviceCoded(devId);
+            else
+               scopeModel_->SetDeviceAvailable(devId);
          }
       }
    }

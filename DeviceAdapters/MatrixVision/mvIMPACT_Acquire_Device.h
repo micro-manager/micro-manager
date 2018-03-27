@@ -30,7 +30,7 @@
 #include <mvIMPACT_CPP/mvIMPACT_acquire_GenICam.h>
 #include <set>
 #include <string>
-
+#include <vector>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -85,11 +85,13 @@ public:
    }
    virtual int GetBinning( void ) const
    {
-      return 1;
+      char buf[MM::MaxStrLength];
+      const int ret = GetProperty( MM::g_Keyword_Binning, buf );
+      return ( ret == DEVICE_OK ) ? atoi( buf ) : 1;
    }
-   virtual int SetBinning( int /*binSize*/ )
+   virtual int SetBinning( int binSize )
    {
-      return DEVICE_OK;
+      return SetProperty( MM::g_Keyword_Binning, CDeviceUtils::ConvertToString( binSize ) );
    }
 
    virtual int PrepareSequenceAcqusition( void )
@@ -113,11 +115,18 @@ private:
       return ( pCurrentRequest_ && pCurrentRequest_->isOK() ) ? pCurrentRequest_ : pCurrentRequestBufferLayout_;
    }
    int InsertImage( void );
+   int OnBinning( MM::PropertyBase* pProp, MM::ActionType eAct );
    int OnPixelType( MM::PropertyBase* pProp, MM::ActionType eAct );
    int OnPropertyChanged( MM::PropertyBase* pProp, MM::ActionType eAct );
    void PopulateMap( DeviceFeatureContainer& map, mvIMPACT::acquire::ComponentIterator it, const std::string& currentPath, int searchMode = 0 );
    void RefreshCaptureBufferLayout( void );
    int RunSequenceOnThread( MM::MMTime startTime );
+
+   // binning
+   std::vector<int64_type> GetSupportedBinningValues_GenICam( PropertyI64 prop ) const;
+   int SetUpBinningProperties_DeviceSpecific( void );
+   int SetUpBinningProperties_GenICam( void );
+   void SetBinningProperty( Property prop, const std::string& value, int& ret, bool& boMustRefreshCaptureBufferLayout );
 
    // common interface objects
    mvIMPACT::acquire::Device* pDev_;
@@ -127,8 +136,7 @@ private:
    mvIMPACT::acquire::ImageRequestControl* pIRC_;
    mvIMPACT::acquire::ImageDestination* pID_;
    // device specific interface layout
-   mvIMPACT::acquire::CameraSettingsFrameGrabber* pCS_;
-   PropertyI expose_us_;
+   mvIMPACT::acquire::CameraSettingsBlueDevice* pCS_;
    static const double s_exposureTimeConvertFactor_; // mvIMPACT Acquire uses 'us' while micro-manager uses 'ms'
    // GenICam interface layout
    mvIMPACT::acquire::GenICam::ImageFormatControl* pIFC_;
@@ -147,7 +155,7 @@ private:
 
 //-----------------------------------------------------------------------------
 class MySequenceThread : public MMDeviceThreadBase
-   //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 {
    friend class mvIMPACT_Acquire_Device;
    enum

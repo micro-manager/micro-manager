@@ -3953,7 +3953,7 @@ int AndorCamera::GetCameraAcquisitionProgress(at_32* series)
          {
             if (series > seriesPrev)
             {
-               long imageCountFirst, imageCountLast;
+               at_32 imageCountFirst, imageCountLast;
                int returnc;
                returnc = GetNumberNewImages(&imageCountFirst, &imageCountLast);
                if (ret != DRV_SUCCESS)
@@ -4960,6 +4960,31 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
       MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
       mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));
       md.SetTag(mstB);
+
+      float temp = 0.;
+      unsigned int ret = GetTemperatureF(&temp);
+
+      if(ret == DRV_NOT_INITIALIZED || ret == DRV_ACQUIRING || ret == DRV_ERROR_ACK)
+      {
+        MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
+        ostringstream os;
+
+        os << "Get Temperature failed with error: " << ret << endl;
+
+        mstTemperature.SetValue(os.str().c_str());
+        md.SetTag(mstTemperature);
+      }
+      else
+      {
+        char * buffer = new char[MAX_CHARS_PER_DESCRIPTION];
+        sprintf(buffer, "%.2f", temp);
+
+        MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
+        mstTemperature.SetValue(buffer);
+        md.SetTag(mstTemperature);
+        delete buffer;
+      }
+
    }
 
    bool AndorCamera::IsIxonUltra()

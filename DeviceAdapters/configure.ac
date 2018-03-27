@@ -11,7 +11,7 @@ LT_INIT([disable-static])
 AC_PROG_CXX([clang++ llvm-g++ g++ c++])
 AC_PROG_CC([clang llvm-gcc gcc cc])
 
-MM_GMOCK([$srcdir/../testing/gmock], [\$(top_srcdir)/../testing/gmock])
+MM_GMOCK([$srcdir/../testing/googletest], [\$(top_srcdir)/../testing/googletest])
 AM_CONDITIONAL([BUILD_CPP_TESTS], [test "x$have_gmock" = xyes])
 
 # TODO: Following should decide whether adapters depending on BOOST get build
@@ -480,6 +480,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    PVCAM
    ParallelPort
    Pecon
+   PIEZOCONCEPT
    Piezosystem_30DV50
    Piezosystem_NV120_1
    Piezosystem_NV40_1

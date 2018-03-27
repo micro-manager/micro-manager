@@ -1926,8 +1926,21 @@ int Wheel::Initialize()
    ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
-   AddAllowedValue(MM::g_Keyword_State, "0");
-   AddAllowedValue(MM::g_Keyword_State, "1");
+
+   // Gate Closed Position
+   ret = CreateProperty(MM::g_Keyword_Closed_Position,"0", MM::Integer, false);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   const int bufSize = 64;
+   char buf[bufSize];
+
+   for (int i=0; i<numPos_; i++) 
+   {
+      snprintf(buf, bufSize, "%d", i);
+      AddAllowedValue(MM::g_Keyword_State, buf);
+      AddAllowedValue(MM::g_Keyword_Closed_Position, buf);
+   }
 
    /*
    // Label
@@ -1939,8 +1952,6 @@ int Wheel::Initialize()
    */
 
    // create default positions and labels
-   const int bufSize = 64;
-   char buf[bufSize];
    for (int i=0; i< numPos_; i++)
    {
       snprintf(buf, bufSize, "Filter-%d", i + 1);
@@ -1953,6 +1964,8 @@ int Wheel::Initialize()
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
+
+   GetGateOpen(open_);
 
    initialized_ = true;
 
@@ -2014,14 +2027,28 @@ int Wheel::HomeWheel()
 int Wheel::SetWheelPosition(int position)
 {
    int ret;
+   bool gateOpen;
+
+   GetGateOpen(gateOpen);
+
    Hub* hub = static_cast<Hub*>(GetParentHub());
    if (!hub || !hub->isInitialized())
    {
       return ERR_NO_CONTROLLER;
    }
 
+   if ((position == pos_) && (open_ == gateOpen))
+      return DEVICE_OK;
+
    //select the right card
    OI_SelectCard(hub->GetBoardID());
+
+   if (!gateOpen) {
+      //Need to retrieve the closed position
+      char closedPos[MM::MaxStrLength];
+      GetProperty(MM::g_Keyword_Closed_Position, closedPos);
+      position = atoi(closedPos);
+   }
 
    ret = OI_MoveToFilterEx( wheelNumber_-1, position, 0 );
    pos_ = position;

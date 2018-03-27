@@ -46,7 +46,6 @@
 MODULE_API void InitializeModuleData()
 {
    RegisterDevice(g_DeviceTsiCam, MM::CameraDevice, "Thorlabs Scientific Imaging camera");
-   RegisterDevice(g_DeviceTsi3Cam, MM::CameraDevice, "Thorlabs TSI3 SDK camera");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
@@ -60,10 +59,60 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return 0;
    
    if (strcmp(deviceName, g_DeviceTsiCam) == 0)
-      return new TsiCam();
-
-   if (strcmp(deviceName, g_DeviceTsi3Cam) == 0)
-      return new Tsi3Cam();
+   {
+      // first try if old SDK is installed
+      if (isTsiSDKAvailable())
+         return new TsiCam(); // instantiate old camera
+      // then try SDK3
+      if (isTsiSDK3Available())
+         return new Tsi3Cam(); // instantiate new camera
+   }
 
    return 0;
+}
+
+/**
+ * Checks whether SDK3 is installed on the system
+ *
+ * @return bool - true if SDK3 is installed
+ */
+bool isTsiSDK3Available()
+{
+   if (init_camera_sdk_dll())
+   {
+      return false;
+   }
+
+   if (tl_camera_open_sdk())
+   {
+      return false;
+   }
+
+   tl_camera_close_sdk();
+   free_camera_sdk_dll();
+
+   return true;
+}
+
+/**
+ * Checks whether "old" SDK is installed on the system
+ *
+ * @return bool - true if SDK is installed
+ */
+bool isTsiSDKAvailable()
+{
+   HMODULE libHandle = LoadLibrary("tsi_sdk.dll");
+   if (!libHandle)
+      return false;
+
+   // test loading one function
+   TSI_CREATE_SDK tsi_create_sdk = (TSI_CREATE_SDK)GetProcAddress(libHandle, "tsi_create_sdk");
+   if(tsi_create_sdk == 0)
+   {
+      FreeLibrary(libHandle);
+      return false;
+   }
+
+   FreeLibrary(libHandle);
+   return true;
 }

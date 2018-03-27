@@ -53,7 +53,8 @@ CXYStage::CXYStage(const char* name) :
    axisLetterX_(g_EmptyAxisLetterStr),    // value determined by extended name
    axisLetterY_(g_EmptyAxisLetterStr),    // value determined by extended name
    advancedPropsEnabled_(false),
-   speedTruth_(false)
+   speedTruth_(false),
+   lastSpeedX_(1.0)
 {
    if (IsExtendedName(name))  // only set up these properties if we have the required information in the name
    {
@@ -137,6 +138,8 @@ int CXYStage::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
    // Motor speed (S) for X and Y
+   pAct = new CPropertyAction (this, &CXYStage::OnSpeedXMicronsPerSec);  // allow reading actual speed at higher precision by using different units
+   CreateProperty(g_MotorSpeedXMicronsPerSecPropertyName , "1000", MM::Float, true, pAct);  // read-only property updated when X speed is set
    pAct = new CPropertyAction (this, &CXYStage::OnSpeedX);
    CreateProperty(g_MotorSpeedXPropertyName, "1", MM::Float, false, pAct);
    SetPropertyLimits(g_MotorSpeedXPropertyName, 0, maxSpeedX);
@@ -747,6 +750,16 @@ int CXYStage::OnWaitTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CXYStage::OnSpeedXMicronsPerSec(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet || eAct == MM::AfterSet)
+   {
+      if (!pProp->Set(lastSpeedX_*1000))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+   }
+   return DEVICE_OK;
+}
+
 int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, string axisLetter)
 {
    ostringstream command; command.str("");
@@ -759,10 +772,14 @@ int CXYStage::OnSpeedGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, strin
       refreshOverride_ = false;
       command << "S " << axisLetter << "?";
       response << ":A " << axisLetter << "=";
-      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()) );
       RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
       if (!pProp->Set(tmp))
          return DEVICE_INVALID_PROPERTY_VALUE;
+      if (axisLetter.compare(axisLetterX_) == 0) {
+         lastSpeedX_ = tmp;
+         RETURN_ON_MM_ERROR( SetProperty(g_MotorSpeedXMicronsPerSecPropertyName, "1") );  // set to a dummy value, will read from lastSpeedX_ variable
+      }
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);

@@ -1,3 +1,5 @@
+#pragma warning( push )
+#pragma warning( disable : 4055)
 #include "thorlabs_tsi_camera_sdk.h"
 
 #ifndef THORLABS_TSI_BUILD_DLL
@@ -600,3 +602,5 @@ int free_camera_sdk_dll(void)
 }
 
 #endif
+
+#pragma warning( pop )

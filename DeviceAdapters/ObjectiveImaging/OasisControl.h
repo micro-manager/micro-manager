@@ -136,6 +136,7 @@ class Hub : public HubBase<Hub>
       int transmissionDelay_;
       bool initialized_;
       bool busy_;
+      bool open_;
 };
 
 
@@ -273,10 +274,12 @@ class Wheel : public CStateDeviceBase<Wheel>
       int HomeWheel();
       std::string name_;
       long pos_;
+      long closedPos_;
       bool initialized_;
       unsigned wheelNumber_;
       double wheelHomeTimeoutS_;
       int numPos_;
+      bool open_;
 };
 
 

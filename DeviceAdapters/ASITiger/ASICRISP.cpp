@@ -36,6 +36,7 @@
 
 using namespace std;
 
+// shared properties not implemented for CRISP because as of mid-2017 only can have one per card
 
 ///////////////////////////////////////////////////////////////////////////////
 // CCRISP
@@ -56,6 +57,8 @@ int CCRISP::Initialize()
 {
    // call generic Initialize first, this gets hub
    RETURN_ON_MM_ERROR( PeripheralInitialize() );
+
+
 
    // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
    ostringstream command;
