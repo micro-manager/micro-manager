@@ -2,10 +2,10 @@
 	<import file="../../buildscripts/deviceadapter.xml"/>
 
 	<target name="install-Win32">
-		<copy todir="${mm.dll.installdir}" file="OmicronxXDevices.dll"/>
+		<copy todir="${mm.dll.installdir}" file="lib/OmicronxXDevices.dll"/>
 	</target>
 
 	<target name="install-x64">
-		<copy todir="${mm.dll.installdir}" file="OmicronxXDevices64.dll"/>
+		<copy todir="${mm.dll.installdir}" file="lib/OmicronxXDevices64.dll"/>
 	</target>
 </project>

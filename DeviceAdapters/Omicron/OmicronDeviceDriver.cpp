@@ -141,6 +141,8 @@ void checkforDevices(void) {
 						alldevices[i].name = getDevName(&alldevices[i].devID);
 						devNameToID[alldevices[i].name] = i;
 					}
+					else
+						alldevices[i].available = false;
 				}
 			}
 		}

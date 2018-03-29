@@ -54,8 +54,8 @@ private:
 	std::string devname;
 	//std::vector<std::string> channels;
 	std::map<int,std::string> channelNrToName;
-	int shuttermask=0;
-	bool hasModShutter = false;
+	int shuttermask;
+	bool hasModShutter;
 	bool initialized;
 };
 

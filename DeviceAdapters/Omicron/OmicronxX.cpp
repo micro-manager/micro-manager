@@ -62,7 +62,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 	}
 }
 
-OmicronDevice::OmicronDevice():Index(-2), initialized(false)
+OmicronDevice::OmicronDevice():Index(-2), initialized(false),hasModShutter(false),shuttermask(0)
 {
 	InitializeDefaultErrorMessages();
 	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the device after device has been initialized.");
@@ -141,6 +141,7 @@ int OmicronDevice::Initialize()
 				AddAllowedValue("Device Modulation Shutter", "Close");
 				AddAllowedValue("Device Modulation Shutter", "Open");
 			}
+
 				
 
 			

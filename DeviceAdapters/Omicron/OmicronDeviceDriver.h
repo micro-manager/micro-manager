@@ -9,7 +9,7 @@ struct xXDevice
 {
 	TDeviceID devID;
 	std::string name;
-	bool available=false;
+	bool available;
 };
 	bool openDriver();
 	void closeDriver();
