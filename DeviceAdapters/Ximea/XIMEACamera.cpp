@@ -1045,7 +1045,7 @@ double XIMEACamera::GetExposure() const
 void XIMEACamera::SetExposure(double exp)
 {
 	if(exposureMs_ != exp){
-		int ret = xiSetParamInt( handle, XI_PRM_EXPOSURE, (int)exp*1000);
+		int ret = xiSetParamInt( handle, XI_PRM_EXPOSURE, (int) (exp*1000.0));
 		if(ret == XI_OK)
 			exposureMs_ = exp;
 	}
