@@ -150,7 +150,6 @@ private:
 
 class MySequenceThread : public MMDeviceThreadBase
 {
-   friend class CDemoCamera;
    enum { default_numImages=1, default_intervalMS = 100 };
    public:
       MySequenceThread(XIMEACamera* pCam);
