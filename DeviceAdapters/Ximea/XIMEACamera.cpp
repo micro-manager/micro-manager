@@ -945,6 +945,12 @@ long XIMEACamera::GetImageBufferSize() const
 int XIMEACamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
 	int ret = DEVICE_OK;
+   int width_inc, height_inc, x_inc, y_inc;
+   xiGetParamInt(handle, XI_PRM_WIDTH XI_PRM_INFO_INCREMENT, &width_inc);
+   xiGetParamInt(handle, XI_PRM_HEIGHT XI_PRM_INFO_INCREMENT, &height_inc);
+   xiGetParamInt(handle, XI_PRM_OFFSET_X XI_PRM_INFO_INCREMENT, &x_inc);
+   xiGetParamInt(handle, XI_PRM_OFFSET_Y XI_PRM_INFO_INCREMENT, &y_inc);
+
 	if (xSize == 0 && ySize == 0)
 	{
 		// effectively clear ROI
@@ -954,8 +960,8 @@ int XIMEACamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 		xiGetParamInt( handle, XI_PRM_WIDTH XI_PRM_INFO_MAX, &width);
 		xiGetParamInt( handle, XI_PRM_HEIGHT XI_PRM_INFO_MAX, &height);
 		
-		xiSetParamInt( handle, XI_PRM_WIDTH, width - (width%4));
-		xiSetParamInt( handle, XI_PRM_HEIGHT, height);
+		xiSetParamInt( handle, XI_PRM_WIDTH, width - (width % width_inc));
+		xiSetParamInt( handle, XI_PRM_HEIGHT, height - (height % height_inc) );
 
 		ResizeImageBuffer();
 		roiX_ = 0;
@@ -964,26 +970,26 @@ int XIMEACamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 	else
 	{
 		// apply ROI
-		ret = xiSetParamInt( handle, XI_PRM_WIDTH, xSize - (xSize%4));
+		ret = xiSetParamInt( handle, XI_PRM_WIDTH, (int) (xSize - (xSize % width_inc)) );
 		if(ret != XI_OK)
 			return ret;
 
-		ret = xiSetParamInt( handle, XI_PRM_HEIGHT, ySize - (ySize%2));
+		ret = xiSetParamInt( handle, XI_PRM_HEIGHT, ySize - (ySize % height_inc));
 		if(ret != XI_OK)
 			return ret;
 
-		ret = xiSetParamInt( handle, XI_PRM_OFFSET_X, x - (x%2));
+		ret = xiSetParamInt( handle, XI_PRM_OFFSET_X, x - (x % x_inc));
 		if(ret != XI_OK)
 			return ret;
 		
-		ret = xiSetParamInt( handle, XI_PRM_OFFSET_Y, y - (y%2));
+		ret = xiSetParamInt( handle, XI_PRM_OFFSET_Y, y - (y % y_inc));
 		if(ret != XI_OK)
 			return ret;
 		
 
-		img_->Resize(xSize - (xSize%4), ySize - (ySize%2));
-		roiX_ = x - (x%2);
-		roiY_ = y - (y%2);
+		img_->Resize(xSize - (xSize % width_inc), ySize - (ySize % height_inc));
+		roiX_ = x - (x % x_inc);
+		roiY_ = y - (y % y_inc);
 	}
 	return ret;
 }
