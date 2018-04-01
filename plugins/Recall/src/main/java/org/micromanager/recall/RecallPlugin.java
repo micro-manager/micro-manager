@@ -94,6 +94,11 @@ public class RecallPlugin implements MenuPlugin, SciJavaPlugin {
       // display animation to stop working....
       orderedAxis.add(Coords.Z);
       orderedAxis.add(Coords.P);
+      String[] channelNames = new String[numCameraChannels];
+      for (int i = 0; i < numCameraChannels; i++) {
+         channelNames[i] = "ch" + i;
+      }
+      metadataBuilder.channelNames(channelNames);
       try {
          store_.setSummaryMetadata(metadataBuilder.axisOrder(orderedAxis).build());
       } catch (IOException ioe) {
