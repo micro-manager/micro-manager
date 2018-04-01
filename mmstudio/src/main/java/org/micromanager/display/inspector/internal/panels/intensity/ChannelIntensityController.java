@@ -11,6 +11,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
@@ -280,9 +281,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       Font labelFont = channelNameLabel_.getFont().
             deriveFont(11.0f).deriveFont(Font.BOLD);
       channelNameLabel_.setFont(labelFont);
-      try {
-         channelNameLabel_.setText(viewer.getDataProvider().getSummaryMetadata().
-              getChannelNameList().get(channelIndex));
+     try {
+         List<String> channelNameList = viewer.getDataProvider().getSummaryMetadata().
+                 getChannelNameList();
+         if (channelNameList != null && channelNameList.size() < channelIndex) {
+            channelNameLabel_.setText(channelNameList.get(channelIndex));
+         }
       } catch (NullPointerException npe) {
          ReportingUtils.logError(npe, "Investigate what causes this null pointer error!");
       }
