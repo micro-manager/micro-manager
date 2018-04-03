@@ -21,9 +21,27 @@
     <ClCompile Include="TsiCamPropertyHandlers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Tsi3CamPropertyHandlers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TSI3Cam.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TSILibrary.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="thorlabs_tsi_camera_sdk_load.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TSICam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TSI3Cam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TSILibrary.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

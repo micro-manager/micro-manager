@@ -113,6 +113,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
    // First component of text displayed in our title bar.
    private String title_;
    private int numComponents_;
+   private int pixelType_ = 0;
    // This queue holds images waiting to be displayed.
    private LinkedBlockingQueue<JSONObject> imageTagsQueue_;
    // This thread consumes images from the above queue.
@@ -401,6 +402,7 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       } catch (MMScriptException ex) {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
+      pixelType_ = type;
       if (virtualStack != null) {
          virtualStack_ = virtualStack;
       } else {
@@ -940,7 +942,9 @@ public class VirtualAcquisitionDisplay implements ImageCacheListener {
       JMenuItem multi = new JMenuItem("Save as image stack file");
       JMenuItem cancel = new JMenuItem("Cancel");
       menu.add(single);
-      menu.add(multi);
+      if (pixelType_ != 2) {
+         menu.add(multi);
+      }
       menu.addSeparator();
       menu.add(cancel);
       final AtomicInteger ai = new AtomicInteger(-1);

@@ -51,7 +51,6 @@ class LeicaScope : public HubBase<LeicaScope>
       int Shutdown();
       void GetName(char* pszName) const;
       bool Busy();
-      bool SupportsDeviceDetection(void);
       MM::DeviceDetectionStatus DetectDevice();
 
       // HUB interface
@@ -498,20 +497,25 @@ public:
    int FullFocus();
    int IncrementalFocus();
    int GetLastFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
-   int GetCurrentFocusScore(double& score) {score = 0.0; return DEVICE_OK;}
+   int GetCurrentFocusScore(double& score);
    int GetOffset(double &offset);
    int SetOffset(double offset);
+   int GetLEDIntensity(int &intensity);
+   int SetLEDIntensity(int intensity);
 
    //Action Handlers
    int OnDichroicMirrorPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFullFocusTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLockThreshold(MM::PropertyBase* pProp,  MM::ActionType eAct);
+   int OnLEDIntensity(MM::PropertyBase* pProp,  MM::ActionType eAct);
 
-private:
    bool initialized_;
    std::string name_;
    long timeOut_;
    long fullFocusTime_;
+   double lockThreshold_;
+   long LEDIntensity_;
 };
 
 class AFCOffset : public CStageBase<AFCOffset>
@@ -529,7 +533,7 @@ public:
    virtual int GetPositionSteps(long& steps);
    virtual int SetPositionSteps(long steps);
    virtual int SetOrigin() { return DEVICE_UNSUPPORTED_COMMAND; }
-   virtual int GetLimits(double& lower, double& upper) { return DEVICE_UNSUPPORTED_COMMAND; }
+   virtual int GetLimits(double& /* lower */, double& /* upper */ ) { return DEVICE_UNSUPPORTED_COMMAND; }
    virtual bool IsContinuousFocusDrive() const { return true; }
    virtual int IsStageSequenceable(bool& flag) const { flag = false; return DEVICE_OK; }
 

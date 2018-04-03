@@ -16,6 +16,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.MMStudio;
 import org.micromanager.api.MMTags;
 
 /**
@@ -262,6 +263,9 @@ public class MDUtils {
          case ImagePlus.GRAY16:
             map.put("PixelType", "GRAY16");
          break;
+         case ImagePlus.GRAY32:
+            map.put("PixelType", "GRAY32");
+         break;
          case ImagePlus.COLOR_RGB:
             map.put("PixelType", "RGB32");
          break;
@@ -284,7 +288,12 @@ public class MDUtils {
             map.put("PixelType", "GRAY16");
          break;
          case 4:
-            map.put("PixelType", "RGB32");
+            if (MMStudio.getInstance().getCore().getNumberOfComponents() == 1) {
+               map.put("PixelType", "GRAY32");
+            }
+            else {
+               map.put("PixelType", "RGB32");
+            }
          break;
          case 8:
             map.put("PixelType", "RGB64");
@@ -362,6 +371,10 @@ public class MDUtils {
 
    public static boolean isGRAY16(TaggedImage img) throws JSONException, MMScriptException {
       return isGRAY16(img.tags);
+   }
+
+   public static boolean isGRAY32(TaggedImage img) throws JSONException, MMScriptException {
+      return isGRAY32(img.tags);
    }
 
    public static boolean isRGB32(TaggedImage img) throws JSONException, MMScriptException {
@@ -498,6 +511,8 @@ public class MDUtils {
          return 1;
       else if (pixelType.contains(MMTags.Values.PIX_TYPE_GRAY_16))
          return 2;
+      else if (pixelType.contains(MMTags.Values.PIX_TYPE_GRAY_32))
+         return 4;
       else if (pixelType.contains(MMTags.Values.PIX_TYPE_RGB_32))
          return 4;
       else if (pixelType.contains(MMTags.Values.PIX_TYPE_RGB_64))

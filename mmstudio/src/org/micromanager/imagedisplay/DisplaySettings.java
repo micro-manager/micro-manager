@@ -59,6 +59,9 @@ public class DisplaySettings {
             if (MDUtils.isGRAY8(summaryMetadata) || MDUtils.isRGB32(summaryMetadata)) {
                bitDepth = 8;
             }
+            else if (MDUtils.isGRAY32(summaryMetadata)) {
+               bitDepth = 32;
+            }
          }
          int max = (chMaxes != null && chMaxes.length() > k) ? chMaxes.getInt(k) : (int) (Math.pow(2, bitDepth) - 1);
          JSONObject channelObject = new JSONObject();

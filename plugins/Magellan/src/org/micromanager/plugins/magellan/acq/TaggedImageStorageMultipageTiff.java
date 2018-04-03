@@ -30,13 +30,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import javax.imageio.IIOException;
 import org.micromanager.plugins.magellan.json.JSONException;
 import org.micromanager.plugins.magellan.json.JSONObject;
 import org.micromanager.plugins.magellan.misc.JavaUtils;
@@ -52,7 +50,7 @@ public final class TaggedImageStorageMultipageTiff   {
    private boolean newDataSet_;
    private String directory_;
    private boolean separateMetadataFile_;
-   private boolean splitByXYPosition_ = true;
+   private boolean splitByXYPosition_ = false;
    private volatile boolean finished_ = false;
    private int numChannels_;
    private boolean fastStorageMode_;
@@ -60,17 +58,14 @@ public final class TaggedImageStorageMultipageTiff   {
     private String summaryMetadataString_ = null; 
    private ThreadPoolExecutor writingExecutor_;
    private int maxSliceIndex_ = 0, maxFrameIndex_ = 0, maxChannelIndex_ = 0, minSliceIndex_ = 0;
-
    // Images currently being written (need to keep around so that they can be
    // returned upon request via getImage()). The data structure must be
    // synchronized because the write completion is detected on a background
    // thread.
    private ConcurrentHashMap<String, MagellanTaggedImage> writePendingImages_ =
       new ConcurrentHashMap<String, MagellanTaggedImage>();
-
    //map of position indices to objects associated with each
    private HashMap<Integer, FileSet> fileSets_;
-   
    //Map of image labels to file 
    private HashMap<String, MultipageTiffReader> tiffReadersByLabel_;
 
@@ -80,7 +75,7 @@ public final class TaggedImageStorageMultipageTiff   {
    public TaggedImageStorageMultipageTiff(String dir, boolean newDataSet, JSONObject summaryMetadata) throws IOException {
       fastStorageMode_ = true;
       separateMetadataFile_ = false;
-      splitByXYPosition_ = true;
+      splitByXYPosition_ = false;
 
       newDataSet_ = newDataSet;
       directory_ = dir;
@@ -170,7 +165,6 @@ public final class TaggedImageStorageMultipageTiff   {
 
       progressBar.setProgress(1);
       progressBar.setVisible(false);
-
    }
 
    public int getMaxFrameIndexOpenedDataset() {
@@ -216,7 +210,11 @@ public final class TaggedImageStorageMultipageTiff   {
     */
    public void overwritePixels(Object pix, int channel, int slice, int frame, int position) throws IOException {
       //asumes only one position
-      fileSets_.get(position).overwritePixels(pix, channel, slice, frame, position); 
+      int fileSetIndex = 0;
+      if (splitByXYPosition_) {
+         fileSetIndex = position;
+      }
+      fileSets_.get(fileSetIndex).overwritePixels(pix, channel, slice, frame, position); 
    }
 
    public void putImage(MagellanTaggedImage MagellanTaggedImage) throws IOException {

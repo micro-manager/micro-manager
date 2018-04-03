@@ -13,11 +13,15 @@ libmmgr_dal_ASITiger_la_SOURCES = \
 	ASIHub.h \
 	ASILED.cpp \
 	ASILED.h \
+	ASILens.cpp \
+	ASILens.h \
+	ASIPLogic.cpp \
+	ASIPLogic.h \
 	ASIPeripheralBase.h \
 	ASIPiezo.cpp \
 	ASIPiezo.h \
-	ASIPLogic.cpp \
-	ASIPLogic.h \
+	ASIPmt.cpp \
+	ASIPmt.h \
 	ASIScanner.cpp \
 	ASIScanner.h \
 	ASITiger.cpp \

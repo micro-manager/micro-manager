@@ -36,6 +36,7 @@ FilterWheel::FilterWheel()
 : ZaberBase(this)
 , deviceAddress_(1)
 , numPositions_(0)
+, changedTime_(0.0)
 {
    this->LogMessage("FilterWheel::FilterWheel\n", true);
 
@@ -45,6 +46,8 @@ FilterWheel::FilterWheel()
    SetErrorText(ERR_BUSY_TIMEOUT, g_Msg_BUSY_TIMEOUT);
    SetErrorText(ERR_COMMAND_REJECTED, g_Msg_COMMAND_REJECTED);
    SetErrorText(ERR_SETTING_FAILED, g_Msg_SETTING_FAILED);
+
+   EnableDelay(); // signals that the delay setting will be used
 
    // Pre-initialization properties
    CreateProperty(MM::g_Keyword_Name, g_FilterWheelName, MM::String, true);
@@ -164,6 +167,13 @@ int FilterWheel::Initialize()
    CPropertyAction* pAct = new CPropertyAction(this, &FilterWheel::PositionGetSet);
    CreateIntegerProperty(MM::g_Keyword_State, index, false, pAct, false);
 
+   pAct = new CPropertyAction (this, &FilterWheel::DelayGetSet);
+   ret = CreateProperty(MM::g_Keyword_Delay, "0.0", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);
    ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
    if (ret != DEVICE_OK)
@@ -205,7 +215,14 @@ int FilterWheel::Shutdown()
 bool FilterWheel::Busy()
 {
    this->LogMessage("FilterWheel::Busy\n", true);
-   return IsBusy(deviceAddress_);
+
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   MM::MMTime delay(GetDelayMs()*1000.0);
+
+   if (interval < delay)
+      return true;
+   else
+      return IsBusy(deviceAddress_);
 }
 
 
@@ -215,7 +232,7 @@ int FilterWheel::GetPositionLabel(long pos, char* label) const
    {
       std::string str("Filter ");
       char numBuf[15];
-      snprintf(numBuf, 15, "%d", pos);
+      snprintf(numBuf, 15, "%ld", pos);
       str.append(numBuf);
       CDeviceUtils::CopyLimitedString(label, str.c_str());
    }
@@ -228,6 +245,22 @@ int FilterWheel::GetPositionLabel(long pos, char* label) const
 // Action handlers
 // Handle changes and updates to property values.
 ///////////////////////////////////////////////////////////////////////////////
+
+int FilterWheel::DelayGetSet(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(this->GetDelayMs());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double delay;
+      pProp->Get(delay);
+      this->SetDelayMs(delay);
+   }
+
+   return DEVICE_OK;
+}
 
 int FilterWheel::PortGetSet(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -306,6 +339,7 @@ int FilterWheel::PositionGetSet(MM::PropertyBase* pProp, MM::ActionType eAct)
             {
                return ret;
             }
+            changedTime_ = GetCurrentMMTime();
 		 }
          else
          {

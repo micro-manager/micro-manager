@@ -66,8 +66,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private static final String EXPOSURE = "Exposure";
    private static final String SHOW_IMAGES = "ShowImages";
    private static final String SCORING_METHOD = "Maximize";
-   private static final String showValues[] = {"Yes", "No"};
-   private final static String scoringMethods[] = {"Edges", "StdDev", "Mean", 
+   private static final String[] SHOWVALUES = {"Yes", "No"};
+   private final static String[] SCORINGMETHODS = {"Edges", "StdDev", "Mean", 
       "NormalizedVariance", "SharpEdges", "Redondo", "Volath", "Volath5", 
       "MedianEdges", "Tenengrad", "FFTBandpass"
    };
@@ -90,14 +90,14 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public OughtaFocus() {
       super();
-      createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
-      createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
-      createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
-      createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
-      createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fft_lower_cutoff));
-      createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fft_upper_cutoff));
-      createProperty(SHOW_IMAGES, show, showValues);
-      createProperty(SCORING_METHOD, scoringMethod, scoringMethods);
+      super.createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
+      super.createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
+      super.createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
+      super.createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
+      super.createProperty(FFT_LOWER_CUTOFF, NumberUtils.doubleToDisplayString(fft_lower_cutoff));
+      super.createProperty(FFT_UPPER_CUTOFF, NumberUtils.doubleToDisplayString(fft_upper_cutoff));
+      super.createProperty(SHOW_IMAGES, show, SHOWVALUES);
+      super.createProperty(SCORING_METHOD, scoringMethod, SCORINGMETHODS);
       imageCount_ = 0;
    }
 
@@ -180,6 +180,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private double runAutofocusAlgorithm() throws Exception {
       UnivariateRealFunction scoreFun = new UnivariateRealFunction() {
 
+         @Override
          public double value(double d) throws FunctionEvaluationException {
             try {
                return measureFocusScore(d);
@@ -265,6 +266,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
             if (show.contentEquals("Yes")) {
                SwingUtilities.invokeLater(new Runnable() {
 
+                  @Override
                   public void run() {
                      app_.displayImage(img1);
                   }
@@ -464,13 +466,14 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       int[] ken1 = {2, 1, 0, 1, 0, -1, 0, -1, -2};
       int[] ken2 = {0, 1, 2, -1, 0, 1, -2, -1, 0};
 
-      proc.medianFilter();    // 3x3 median filter
-      ImageProcessor proc2 = proc.duplicate();
-      proc.convolve3x3(ken1);
+      ImageProcessor proc1 = proc.duplicate();
+      proc1.medianFilter();    // 3x3 median filter
+      ImageProcessor proc2 = proc1.duplicate();
+      proc1.convolve3x3(ken1);
       proc2.convolve3x3(ken2);
       for (int i=0; i<w; i++){
          for (int j=0; j<h; j++){
-            sum += Math.sqrt(Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2));
+            sum += Math.sqrt(Math.pow(proc1.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2));
          }
       }
       return sum;
@@ -490,12 +493,13 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       int[] ken1 = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
       int[] ken2 = {1, 2, 1, 0, 0, 0, -1, -2, -1};
 
+      ImageProcessor proc1 = proc.duplicate();
       ImageProcessor proc2 = proc.duplicate();
-      proc.convolve3x3(ken1);
+      proc1.convolve3x3(ken1);
       proc2.convolve3x3(ken2);
       for (int i=0; i<w; i++){
          for (int j=0; j<h; j++){
-            sum += Math.pow(proc.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2);
+            sum += Math.pow(proc1.getPixel(i,j),2) + Math.pow(proc2.getPixel(i, j), 2);
          }
       }
       return sum;
@@ -562,6 +566,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       }
    }
 
+   @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
       CMMCore core = app_.getMMCore();
@@ -682,19 +687,19 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          transposeR(x, maxN);
 
          int mRow, mCol;
-         float A,B,C,D,E;
+         float A,B,Cf,D,E;
          for (int row=0; row<=maxN/2; row++) { // Now calculate actual Hartley transform
             for (int col=0; col<=maxN/2; col++) {
                mRow = (maxN - row) % maxN;
                mCol = (maxN - col)  % maxN;
                A = x[row * maxN + col];    //  see Bracewell, 'Fast 2D Hartley Transf.' IEEE Procs. 9/86
                B = x[mRow * maxN + col];
-               C = x[row * maxN + mCol];
+               Cf = x[row * maxN + mCol];
                D = x[mRow * maxN + mCol];
-               E = ((A + D) - (B + C)) / 2;
+               E = ((A + D) - (B + Cf)) / 2;
                x[row * maxN + col] = A - E;
                x[mRow * maxN + col] = B + E;
-               x[row * maxN + mCol] = C + E;
+               x[row * maxN + mCol] = Cf + E;
                x[mRow * maxN + mCol] = D - E;
             }
          }
@@ -810,10 +815,10 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       }
 
       private void BitRevRArr (float[] x, int base, int bitlen, int maxN) {
-         for (int i=0; i<maxN; i++)
+         for (int i=0; i<maxN; i++) {
             tempArr[i] = x[base+bitrev[i]];
-         for (int i=0; i<maxN; i++)
-            x[base+i] = tempArr[i];
+         }
+         System.arraycopy(tempArr, 0, x, base, maxN);
       }
 
       private int bitRevX (int  x, int bitlen) {

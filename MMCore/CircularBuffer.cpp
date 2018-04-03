@@ -140,45 +140,61 @@ bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int wid
 }
 
 /**
-* Inserts a multi-channel frame in the buffer.
+* Inserts a single image, possibly with multiple channels, but with 1 component, in the buffer.
 */
 bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd) throw (CMMError)
 {
-   MMThreadGuard guard(g_insertLock);
+   return InsertMultiChannel(pixArray, numChannels, width, height, byteDepth, 1, pMd);
+}
 
-   mm::ImgBuffer* pImg;
-   unsigned long singleChannelSize = (unsigned long)width * height * byteDepth;
-
-   {
-      MMThreadGuard guard(g_bufferLock);
-
-      // check image dimensions
-      if (width != width_ || height != height_ || byteDepth != pixDepth_)
-         throw CMMError("Incompatible image dimensions in the circular buffer", MMERR_CircularBufferIncompatibleImage);
-
-      bool overflowed = (insertIndex_ - saveIndex_) >= static_cast<long>(frameArray_.size());
-      if (overflowed) {
-         overflow_ = true;
-         return false;
-      }
-   }
-
-   for (unsigned i=0; i<numChannels; i++)
-   {
-      Metadata md;
-      {
-         MMThreadGuard guard(g_bufferLock);
-         // we assume that all buffers are pre-allocated
-         pImg = frameArray_[insertIndex_ % frameArray_.size()].FindImage(i);
-         if (!pImg)
-            return false;
-
-         if (pMd)
-         {
-            // TODO: the same metadata is inserted for each channel ???
-            // Perhaps we need to add specific tags to each channel
-            md = *pMd;
-         }
+/**
+* Inserts a single image, possibly with multiple components, in the buffer.
+*/
+bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int width, unsigned int height, unsigned int byteDepth, unsigned int nComponents, const Metadata* pMd) throw (CMMError)
+{
+    return InsertMultiChannel(pixArray, 1, width, height, byteDepth, nComponents, pMd);
+}
+ 
+/**
+* Inserts a multi-channel frame in the buffer.
+*/
+bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, unsigned nComponents, const Metadata* pMd) throw (CMMError)
+{
+    MMThreadGuard guard(g_insertLock);
+ 
+    mm::ImgBuffer* pImg;
+    unsigned long singleChannelSize = (unsigned long)width * height * byteDepth;
+ 
+    {
+       MMThreadGuard guard(g_bufferLock);
+ 
+       // check image dimensions
+       if (width != width_ || height != height_ || byteDepth != pixDepth_)
+          throw CMMError("Incompatible image dimensions in the circular buffer", MMERR_CircularBufferIncompatibleImage);
+ 
+       bool overflowed = (insertIndex_ - saveIndex_) >= static_cast<long>(frameArray_.size());
+       if (overflowed) {
+          overflow_ = true;
+          return false;
+       }
+    }
+ 
+    for (unsigned i=0; i<numChannels; i++)
+    {
+       Metadata md;
+       {
+          MMThreadGuard guard(g_bufferLock);
+          // we assume that all buffers are pre-allocated
+          pImg = frameArray_[insertIndex_ % frameArray_.size()].FindImage(i);
+          if (!pImg)
+             return false;
+ 
+          if (pMd)
+          {
+             // TODO: the same metadata is inserted for each channel ???
+             // Perhaps we need to add specific tags to each channel
+             md = *pMd;
+          }
 
          std::string cameraName = md.GetSingleTag("Camera").GetValue();
          if (imageNumbers_.end() == imageNumbers_.find(cameraName))
@@ -205,7 +221,12 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
       else if (byteDepth == 2)
          md.PutImageTag("PixelType","GRAY16");
       else if (byteDepth == 4)
-         md.PutImageTag("PixelType","RGB32");
+      {
+         if (nComponents == 1)
+            md.PutImageTag("PixelType","GRAY32");
+         else
+            md.PutImageTag("PixelType","RGB32");
+      }
       else if (byteDepth == 8)
          md.PutImageTag("PixelType","RGB64");
       else
@@ -230,7 +251,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
 
    return true;
 }
-
+ 
 
 const unsigned char* CircularBuffer::GetTopImage() const
 {
@@ -261,7 +282,7 @@ const mm::ImgBuffer* CircularBuffer::GetNthFromTopImageBuffer(long n,
 
    long targetIndex = insertIndex_ - n - 1L;
    while (targetIndex < 0)
-      targetIndex += frameArray_.size();
+      targetIndex += (long) frameArray_.size();
    targetIndex %= frameArray_.size();
 
    return frameArray_[targetIndex].FindImage(channel);

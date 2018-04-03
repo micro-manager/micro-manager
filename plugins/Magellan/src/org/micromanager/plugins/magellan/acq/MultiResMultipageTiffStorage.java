@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -186,6 +185,14 @@ public class MultiResMultipageTiffStorage {
 
    public boolean isRGB() {
        return rgb_;
+   }
+   
+   public int getXOverlap() {
+      return xOverlap_;
+   }
+
+   public int getYOverlap() {
+      return yOverlap_;
    }
    
    private void processSummaryMetadata() {
@@ -829,6 +836,14 @@ public class MultiResMultipageTiffStorage {
       return directory_;
    }
    
+   public String getChannelName(int index) {
+      try {
+         return summaryMD_.getJSONArray("ChNames").getString(index);
+      } catch (JSONException ex) {
+         throw new RuntimeException("Channel names missing");
+      }
+   }
+   
    public int getNumChannels() {
       return fullResStorage_.getNumChannels();
    }
@@ -929,5 +944,9 @@ public class MultiResMultipageTiffStorage {
    public long getMinCol() {
       return posManager_.getMinCol();
    }
+
+    int getPositionIndexFromStageCoords(double xPos, double yPos) {
+        return posManager_.getFullResPositionIndexFromStageCoords(xPos, yPos);
+    }
    
 }

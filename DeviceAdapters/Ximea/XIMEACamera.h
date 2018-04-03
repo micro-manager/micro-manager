@@ -112,6 +112,8 @@ public:
    int OnLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnBpc(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   int OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    
    int OnCooling(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTargetTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -150,7 +152,6 @@ private:
 
 class MySequenceThread : public MMDeviceThreadBase
 {
-   friend class CDemoCamera;
    enum { default_numImages=1, default_intervalMS = 100 };
    public:
       MySequenceThread(XIMEACamera* pCam);

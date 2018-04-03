@@ -28,7 +28,7 @@
     <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
-    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,3,-93,0,0,3,-60"/>
+    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,3,111,0,0,3,-57"/>
   </AuxValues>
 
   <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBoxLayout"/>
@@ -73,7 +73,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="deviceControlScrollPane_" alignment="0" pref="943" max="32767" attributes="0"/>
+                      <Component id="deviceControlScrollPane_" alignment="0" pref="962" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -295,13 +295,13 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="jScrollPane2" pref="943" max="32767" attributes="0"/>
+                      <Component id="jScrollPane2" pref="962" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace min="-2" pref="78" max="-2" attributes="0"/>
                           <Component id="saveButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="loadButton_" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="147" max="32767" attributes="0"/>
+                          <EmptySpace pref="254" max="32767" attributes="0"/>
                           <Component id="deleteSelectedRegionButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="41" max="-2" attributes="0"/>
                           <Component id="deleteAllRegionsButton_" min="-2" max="-2" attributes="0"/>
@@ -404,7 +404,7 @@
                           <Component id="deleteAllSurfacesButton_" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="362" max="-2" attributes="0"/>
                       </Group>
-                      <Component id="jScrollPane3" alignment="0" pref="943" max="32767" attributes="0"/>
+                      <Component id="jScrollPane3" alignment="0" pref="962" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -845,13 +845,13 @@
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Group type="102" attributes="0">
+                                  <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
                                       <EmptySpace min="6" pref="6" max="-2" attributes="0"/>
                                       <Component id="savingNameTextField_" min="-2" pref="686" max="-2" attributes="0"/>
                                   </Group>
-                                  <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="245" max="32767" attributes="0"/>
+                              <EmptySpace pref="260" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -862,7 +862,7 @@
                               <Component id="savingNameLabel_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="savingNameTextField_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="310" max="32767" attributes="0"/>
+                              <EmptySpace pref="298" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -904,7 +904,7 @@
                                   <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                                   <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="710" max="32767" attributes="0"/>
+                              <EmptySpace pref="723" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -915,7 +915,7 @@
                               <Component id="timePointsCheckBox_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="timePointsPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="241" max="32767" attributes="0"/>
+                              <EmptySpace pref="231" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1138,7 +1138,7 @@
                                   </Group>
                                   <Component id="panel2D_" alignment="0" min="-2" pref="69" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="63" max="32767" attributes="0"/>
+                              <EmptySpace pref="66" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -1735,15 +1735,15 @@
                                   <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="collectionPlaneLabel_" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                                  <Component id="collectionPlaneCombo_" min="-2" pref="270" max="-2" attributes="0"/>
-                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  <Component id="collectionPlaneCombo_" max="32767" attributes="0"/>
+                                  <EmptySpace max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="footprin2DLabel_" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="footprint2DComboBox_" min="-2" pref="241" max="-2" attributes="0"/>
-                                  <EmptySpace max="32767" attributes="0"/>
+                                  <EmptySpace pref="92" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                         </DimensionLayout>
@@ -1805,16 +1805,13 @@
                         </Component>
                         <Component class="javax.swing.JCheckBox" name="collectionPlaneCheckBox_">
                           <Properties>
-                            <Property name="text" type="java.lang.String" value="Use XY plane"/>
+                            <Property name="text" type="java.lang.String" value="Use focus surface"/>
                           </Properties>
                           <Events>
                             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="collectionPlaneCheckBox_ActionPerformed"/>
                           </Events>
                         </Component>
                         <Component class="javax.swing.JLabel" name="collectionPlaneLabel_">
-                          <Properties>
-                            <Property name="text" type="java.lang.String" value="Collection plane:"/>
-                          </Properties>
                         </Component>
                       </SubComponents>
                     </Container>
@@ -1920,7 +1917,7 @@
                   <Layout>
                     <DimensionLayout dim="0">
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jScrollPane1" pref="943" max="32767" attributes="0"/>
+                          <Component id="jScrollPane1" pref="962" max="32767" attributes="0"/>
                           <Group type="102" attributes="0">
                               <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
@@ -1937,7 +1934,7 @@
                                   <Component id="ChannelGroupCombo_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
-                              <Component id="jScrollPane1" pref="333" max="32767" attributes="0"/>
+                              <Component id="jScrollPane1" pref="326" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2001,7 +1998,7 @@
                                   <Group type="102" attributes="0">
                                       <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                                       <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace min="244" pref="393" max="32767" attributes="0"/>
+                                      <EmptySpace min="244" pref="413" max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="propertyPairingsScrollpane_" pref="0" max="32767" attributes="0"/>
                               </Group>
@@ -2038,7 +2035,7 @@
                               </Group>
                               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="propertyPairValuesScrollpane_" pref="300" max="32767" attributes="0"/>
+                                  <Component id="propertyPairValuesScrollpane_" pref="288" max="32767" attributes="0"/>
                                   <Component id="propertyPairingsScrollpane_" pref="0" max="32767" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
@@ -2205,7 +2202,7 @@
                                   <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
                                   <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="593" max="32767" attributes="0"/>
+                              <EmptySpace pref="615" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2216,7 +2213,7 @@
                               <Component id="useAutofocusCheckBox_" min="-2" max="-2" attributes="0"/>
                               <EmptySpace max="-2" attributes="0"/>
                               <Component id="autofocusComponentsPanel_" min="-2" max="-2" attributes="0"/>
-                              <EmptySpace pref="137" max="32767" attributes="0"/>
+                              <EmptySpace pref="141" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>
@@ -2412,7 +2409,7 @@
                                           <Component id="frameAverageRadioButton_" alignment="0" min="-2" max="-2" attributes="0"/>
                                           <Component id="frameSummationButton_" min="-2" max="-2" attributes="0"/>
                                       </Group>
-                                      <EmptySpace min="0" pref="794" max="32767" attributes="0"/>
+                                      <EmptySpace min="0" pref="817" max="32767" attributes="0"/>
                                   </Group>
                                   <Group type="102" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
@@ -2429,7 +2426,7 @@
                                           <Group type="102" alignment="0" attributes="0">
                                               <EmptySpace min="-2" pref="71" max="-2" attributes="0"/>
                                               <Component id="offsetsLabel_" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace min="0" pref="670" max="32767" attributes="0"/>
+                                              <EmptySpace min="0" pref="683" max="32767" attributes="0"/>
                                           </Group>
                                           <Group type="102" alignment="0" attributes="0">
                                               <EmptySpace min="-2" pref="55" max="-2" attributes="0"/>
@@ -2452,7 +2449,7 @@
                                                   <Component id="ch4OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
                                                   <Component id="ch0OffsetSpinner_" alignment="0" min="-2" pref="46" max="-2" attributes="0"/>
                                               </Group>
-                                              <EmptySpace min="187" pref="644" max="32767" attributes="0"/>
+                                              <EmptySpace min="187" pref="658" max="32767" attributes="0"/>
                                           </Group>
                                       </Group>
                                   </Group>
@@ -2503,7 +2500,7 @@
                                   <Component id="ch5OffsetSpinner_" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="ch5OffsetLabel_" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
-                              <EmptySpace pref="136" max="32767" attributes="0"/>
+                              <EmptySpace pref="145" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                     </DimensionLayout>

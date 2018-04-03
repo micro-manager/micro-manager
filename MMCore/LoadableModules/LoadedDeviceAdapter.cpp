@@ -82,7 +82,7 @@ LoadedDeviceAdapter::GetAvailableDeviceNames() const
    for (unsigned i = 0; i < deviceCount; ++i)
    {
       ModuleStringBuffer nameBuf(this, "GetDeviceName");
-      bool ok = GetDeviceName(i, nameBuf.GetBuffer(), nameBuf.GetMaxStrLen());
+      bool ok = GetDeviceName(i, nameBuf.GetBuffer(), (unsigned int) nameBuf.GetMaxStrLen());
       if (!ok)
       {
          throw CMMError("Cannot get device name at index " + ToString(i) +
@@ -99,7 +99,7 @@ LoadedDeviceAdapter::GetDeviceDescription(const std::string& deviceName) const
 {
    ModuleStringBuffer descBuf(this, "GetDeviceDescription");
    bool ok = GetDeviceDescription(deviceName.c_str(), descBuf.GetBuffer(),
-         descBuf.GetMaxStrLen());
+        (unsigned int) descBuf.GetMaxStrLen());
    if (!ok)
    {
       throw CMMError("Cannot get description for device " +

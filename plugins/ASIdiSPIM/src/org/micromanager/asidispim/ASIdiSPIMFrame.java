@@ -93,7 +93,8 @@ import org.micromanager.utils.MMFrame;
 //TODO Make it easier to adjust stack center (or start and end) including autodetect start/end based on content
 //TODO allow different stack center, number of slices, offset, or other settings for each XY position
 //TODO iconify tab labels and/or other parts of plugin
-//TODO use new J *=0 to more efficiently clear joystick settings (require comm card version 3.1)\
+//TODO use new J *=0 to more efficiently clear joystick settings (require comm card version 3.1)
+//TODO use new W * to more efficiently get positions (will return in same order as comm card parses)
 //TODO be more efficient in serial commands, including not resending same commands (largely obviated once shared properties on same card are implemented)
 
 /**
@@ -151,7 +152,7 @@ public class ASIdiSPIMFrame extends MMFrame
       positions_ = new Positions(gui_, devices_);
       joystick_ = new Joystick(devices_, props_);
       cameras_ = new Cameras(gui_, devices_, props_, prefs_);
-      controller_ = new ControllerUtils(gui_, props_, prefs_, devices_, positions_);
+      controller_ = new ControllerUtils(gui_, props_, prefs_, devices_, positions_, cameras_);
       
       // make sure Live mode is turned off
       gui_.enableLiveMode(false);

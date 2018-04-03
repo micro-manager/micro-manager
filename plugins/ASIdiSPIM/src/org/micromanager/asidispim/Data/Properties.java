@@ -141,6 +141,7 @@ public class Properties {
       STAGESCAN_SLOW_STOP("ScanSlowAxisStopPosition(mm)", false),
       STAGESCAN_SETTLING_TIME("ScanSettlingTime(ms)", false),
       STAGESCAN_MOTOR_SPEED("MotorSpeedX-S(mm/s)", false),
+      STAGESCAN_MOTOR_SPEED_MICRONS("MotorSpeedX(um/s)"),
       STAGESCAN_MAX_MOTOR_SPEED("MotorSpeedMaximumX(mm/s)", false),
       STAGESCAN_MOTOR_ACCEL("AccelerationX-AC(ms)", false),
       STAGESCAN_OVERSHOOT_DIST("ScanOvershootDistance(um)", false),
@@ -151,9 +152,11 @@ public class Properties {
       READOUTTIME("ReadoutTime"),         // for Hamamatsu
       SENSOR_MODE("SENSOR MODE"),         // for Hamamatsu
       SCAN_MODE("ScanMode"),              // for Hamamatsu, 1 = slow scan, 2 = fast scan
+      CAMERA_BUS("Camera Bus"),           // for Hamamatsu interface type, USB3 or ??
       TRIGGER_MODE_PCO("Triggermode"),         // for PCO
       PIXEL_RATE("PixelRate"),                 // for PCO
       CAMERA_TYPE("CameraType"),               // for PCO
+      LINE_TIME("Line Time [us]"),             // for PCO
       TRIGGER_MODE("TriggerMode"),             // for Andor Zyla, PVCAM
       CAMERA_NAME("CameraName"),               // for Andor Zyla
       PIXEL_READOUT_RATE("PixelReadoutRate"),  // for Andor Zyla
@@ -170,8 +173,10 @@ public class Properties {
       PVCAM_READOUT_TIME("Timing-ReadoutTimeNs"),    // for PVCAM
       PVCAM_POST_TIME("Timing-PostTriggerDelayNs"),  // for PVCAM
       PVCAM_PRE_TIME("Timing-PreTriggerDelayNs"),    // for PVCAM
+      PVCAM_CHIPNAME("ChipName"),                    // for PVCAM
       FIRMWARE_VERSION("FirmwareVersion"),
       CAMERA("Camera"),
+      CORE_TIMEOUT_MS("TimeoutMs"),
       PLUGIN_POSITION_REFRESH_INTERVAL("PositionRefreshInterval(s)"),
       PLUGIN_NUM_SIDES("NumberOfSides"),
       PLUGIN_FIRST_SIDE("FirstSide"),
@@ -183,10 +188,16 @@ public class Properties {
       PLUGIN_NAME_PREFIX("NamePrefix"),
       PLUGIN_TESTACQ_PATH("TestAcquisitionPath"),
       PLUGIN_TESTACQ_SAVE("TestAcquisitionSave"),
+      PLUGIN_WRITE_ACQ_SETTINGS_FILE("WriteAcquisitionSettingsFile"),
+      PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT("AcquireBothCamerasSimult"),
       PLUGIN_USE_TOOLSET("UseImageJToolset"),
       PREFS_SAVE_WHILE_ACQUIRING("SaveWhileAcquiring"),
       PREFS_HIDE_WHILE_ACQUIRING("HideWhileAcquiring"),
       PREFS_SEPARATE_VIEWERS_FOR_TIMEPOINTS("SeparateViewersForTimePoints"),
+      PREFS_USE_X_GRID("UseXGrid"),
+      PREFS_USE_Y_GRID("UseYGrid"),
+      PREFS_USE_Z_GRID("UseZGrid"),
+      PREFS_CLEAR_YZ_GRID("ClearYZGrid"),
       PLUGIN_USE_NAVIGATION_JOYSTICKS("UseNavigationJoysticks"),
       PLUGIN_PIEZO_SHEET_INCREMENT("PiezoSheetIncrement"),  // piezo increment for moving piezo and galvo together
       PLUGIN_OFFSET_PIEZO_SHEET("OffsetPiezoSheet"),  // Offset in piezo/sheet calibration
@@ -265,6 +276,7 @@ public class Properties {
       PLUGIN_SHEET_OFFSET_EDGE_B("SheetOffsetEdgeSideB"),
       PLUGIN_LIGHTSHEET_SLOPE("LightSheetSlope"),
       PLUGIN_LIGHTSHEET_OFFSET("LightSheetOffset"),
+      PLUGIN_GRID_OVERLAP_PERCENT("GridOverlapPercent"),
       ;
       private final String text;
       private final boolean forceSet;
@@ -339,9 +351,12 @@ public class Properties {
       NEVER("Never"),                        // for PVCam
       PRE_EXPOSURE("Pre-Exposure"),          // for PVCam
       PRE_SEQUENCE("Pre-Sequence"),          // for PVCam
+      PRIME_CHIPNAME("CIS2020F"),            // for PVCam, original Prime
+      PRIME_95B_CHIPNAME("GS144BSI"),        // for PVCam, Prime 95B
       POSITIVE("POSITIVE"),
       NEGATIVE("NEGATIVE"),
       SIXTEENBIT("16bit"),
+      USB3("USB3"),
       AREA("AREA"),                // for Hamamatsu's SENSOR MODE
       PROGRESSIVE("PROGRESSIVE"),  // for Hamamatsu's SENSOR MODE, the "lightsheet" mode
       SYNCREADOUT("SYNCREADOUT"),  // for Hamamatsu's TRIGGER ACTIVE

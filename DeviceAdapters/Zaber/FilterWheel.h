@@ -55,6 +55,7 @@ public:
 
    // Properties
    // ----------------
+   int DelayGetSet(MM::PropertyBase* pProp, MM::ActionType eAct);
    int PortGetSet(MM::PropertyBase* pProp, MM::ActionType eAct);
    int DeviceAddressGetSet(MM::PropertyBase* pProp, MM::ActionType eAct);
    int PositionGetSet(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -62,6 +63,7 @@ public:
 private:
    long deviceAddress_;
    long numPositions_;
+   MM::MMTime changedTime_;
 };
 
 #endif // Include guard

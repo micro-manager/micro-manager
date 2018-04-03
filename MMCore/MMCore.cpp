@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 5, MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 6, MMCore_versionPatch = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4812,6 +4812,39 @@ void CMMCore::setPixelSizeUm(const char* resolutionID, double pixSize)  throw (C
 }
 
 /**
+ * Sets the raw affine transform for the specific pixel size configuration
+ * The affine transform consists of the first two rows of a 3x3 matrix,
+ * the third row is alsways assumed to be 0.0 0.0 1.0.
+ * The transform should be valid for binning 1 and no magnification device
+ * (as given by the getMagnification() function).
+ * Order: row[0]col[0] row[0]c[1] row[0]c[2] row[1]c[0] row[1]c[1] row[1]c[2]
+ * The given vector has to have 6 doubles, or bad stuff will happen
+ */ 
+void CMMCore::setPixelSizeAffine(const char* resolutionID, std::vector<double> affine)  throw (CMMError)
+{
+   CheckConfigPresetName(resolutionID);
+
+   PixelSizeConfiguration* psc = pixelSizeGroup_->Find(resolutionID);
+   if (psc == 0)
+      throw CMMError(ToQuotedString(resolutionID) + ": " + getCoreErrorText(MMERR_NoConfigGroup),
+            MMERR_NoConfigGroup);
+   if (affine.size() != 6) 
+      throw CMMError(getCoreErrorText(MMERR_BadAffineTransform));
+
+   psc->setPixelConfigAffineMatrix(affine);
+
+   LOG_DEBUG(coreLogger_) << "Pixel size config: "
+      "preset " << resolutionID << ": set affine matrix to " <<
+      std::fixed << std::setprecision(5) << affine[0] << ", " <<
+      std::fixed << std::setprecision(5) << affine[1] << ", " <<
+      std::fixed << std::setprecision(5) << affine[2] << ", " <<
+      std::fixed << std::setprecision(5) << affine[3] << ", " <<
+      std::fixed << std::setprecision(5) << affine[4] << ", " <<
+      std::fixed << std::setprecision(5) << affine[5];
+}
+
+
+/**
  * Applies a Pixel Size Configuration. The command will fail if the
  * configuration was not previously defined.
  * 
@@ -5252,6 +5285,91 @@ double CMMCore::getPixelSizeUmByID(const char* resolutionID) throw (CMMError)
    return psc->getPixelSizeUm();
 }
 
+/**
+ * Returns the current Affine Transform to related camera pixels with stage movement..
+ * This function returns the stored affine transform corrected for binning
+ */
+std::vector<double> CMMCore::getPixelSizeAffine() throw (CMMError)
+{
+	 return getPixelSizeAffine(false);
+}
+
+/**
+ * Returns the current Affine Transform to related camera pixels with stage movement..
+ * This function returns the stored affine transform corrected for binning
+ * and known magnification devices
+ */
+std::vector<double> CMMCore::getPixelSizeAffine(bool cached) throw (CMMError)
+{
+   std::string resolutionID = getCurrentPixelSizeConfig(cached);
+   if (resolutionID.length() > 0)
+   {
+      // check which one matches the current state
+      PixelSizeConfiguration* pCfg = pixelSizeGroup_->Find(resolutionID.c_str());
+      std::vector<double> af = pCfg->getPixelConfigAffineMatrix();
+
+      boost::shared_ptr<CameraInstance> camera = currentCameraDevice_.lock();
+      int binning = 1;
+      if (camera)
+      {
+         mm::DeviceModuleLockGuard guard(camera);
+         binning = camera->GetBinning();
+      }
+
+      double factor = binning / getMagnificationFactor();
+
+      if (factor != 1.0) 
+      {
+         // create a scaling matrix
+         double scaleM[3][3]= { {factor, 0.0, 0.0}, {0.0, factor, 0.0}, {0.0, 0.0, 1.0} };
+         // and multiply scaling matrix with the affine transform
+         double input[3][3] = { {af.at(0), af.at(1), af.at(2)}, {af.at(3), af.at(4), af.at(5)}, {0.0, 0.0, 1.0} };
+         double output[3][3];
+         for (int r = 0; r < 3; r++)
+         {
+            for (int c = 0; c < 3; c++)
+            {
+               output[r][c] = 0.0;
+               for (int i = 0; i < 3; i++)
+               {
+                  output[r][c] = output[r][c] + scaleM[r][i] * input[i][c];
+               }
+            }
+         }
+         // copy result back into affine transform
+         for (int i = 0; i < 3; i++)
+            af.at(i) = output[0][i];
+         for (int i = 0; i < 3; i++)
+            af.at(i + 3) = output[1][i];
+      }
+
+      return af;
+   }
+   else
+   {
+      throw CMMError(ToQuotedString(resolutionID) + ": " + getCoreErrorText(MMERR_NoConfigGroup),
+            MMERR_NoConfigGroup);
+   }
+}
+
+/**
+ * Returns the  Affine Transform to related camera pixels with stage movement
+ * for the requested pixel size group 
+ * The raw affine transform without correction for binning and magnification
+ * will be returned.
+ */
+std::vector<double> CMMCore::getPixelSizeAffineByID(const char* resolutionID) throw (CMMError)
+{
+   CheckConfigPresetName(resolutionID);
+
+   PixelSizeConfiguration* psc = pixelSizeGroup_->Find(resolutionID);
+   if (psc == 0)
+      throw CMMError(ToQuotedString(resolutionID) + ": " + getCoreErrorText(MMERR_NoConfigGroup),
+            MMERR_NoConfigGroup);
+   std::vector<double> affineTransform = psc->getPixelConfigAffineMatrix();
+
+   return affineTransform;
+}
 
 /**
  * Returns the product of all Magnifiers in the system or 1.0 when none is found
@@ -6516,6 +6634,26 @@ void CMMCore::loadSystemConfigurationImpl(const char* fileName) throw (CMMError)
                         ToQuotedString(line) + ")",
                         MMERR_InvalidCFGEntry);
             }
+            else if(tokens[0].compare(MM::g_CFGCommand_PixelSizeAffine) == 0)
+            {
+               // set affine transform
+               // --------------
+               //
+               if (tokens.size() == 8) 
+               {
+                  std::vector<double> *affineT = new std::vector<double>(6);
+                  for (int i = 0; i < 6; i++) 
+                  {
+                     affineT->at(i) = atof(tokens[i + 2].c_str());
+                  }
+                  setPixelSizeAffine(tokens[1].c_str(), *affineT);
+                  delete affineT;
+               }
+               else
+                  throw CMMError(getCoreErrorText(MMERR_InvalidCFGEntry) + " (" +
+                        ToQuotedString(line) + ")",
+                        MMERR_InvalidCFGEntry);
+            }
             else if(tokens[0].compare(MM::g_CFGCommand_Equipment) == 0)
             {
                // define configuration command
@@ -6883,6 +7021,7 @@ void CMMCore::InitializeErrorMessages()
    errorText_[MMERR_InvalidImageSequence] = "Issue snapImage before getImage.";
    errorText_[MMERR_NullPointerException] = "Null Pointer Exception.";
    errorText_[MMERR_CreatePeripheralFailed] = "Hub failed to create specified peripheral device.";
+   errorText_[MMERR_BadAffineTransform] = "Bad affine transform.  Affine transforms need to have 6 numbers; 2 rows of 3 column.";
 }
 
 void CMMCore::CreateCoreProperties()

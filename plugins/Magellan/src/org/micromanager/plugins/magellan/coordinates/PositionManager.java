@@ -127,6 +127,14 @@ public class PositionManager {
       }
    }
    
+   public int getFullResPositionIndexFromStageCoords(double x, double y) {
+       LongPoint pixelCoords = getPixelCoordsFromStageCoords(x, y);
+       long rowIndex = Math.round((double) (pixelCoords.y_ - displayTileHeight_ /2) / (double) displayTileHeight_);
+       long colIndex = Math.round((double) (pixelCoords.x_ - displayTileWidth_ / 2) / (double) displayTileWidth_);
+       int[] posIndex = getPositionIndices(new int[]{(int)rowIndex}, new int[]{(int)colIndex});
+       return posIndex[0];
+   }
+   
    public int getNumRows() {
       return 1 + maxRow_ - minRow_;
    }

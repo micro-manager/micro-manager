@@ -85,7 +85,7 @@ public:
    }
 
 private:
-   void Construct(const std::string& deviceName,
+   void Construct(const std::string& /* deviceName */ ,
          unsigned int baud,
          boost::asio::serial_port::flow_control::type flow,
          boost::asio::serial_port::parity::type parity,
@@ -101,67 +101,11 @@ private:
          boost::asio::serial_port_base::baud_rate baud_option(baud); 
          boost::system::error_code anError;
 
-         LogMessage(("Attempting to set baud of " + deviceName + " to " +
-                  boost::lexical_cast<std::string>(baud)).c_str(), true);
-#ifdef __APPLE__
-         // Use ioctl() instead of Boost's implementation (which uses termios),
-         // so that nonstandard baudrates can be set.
-         speed_t speed = static_cast<speed_t>(baud);
-         boost::asio::serial_port::native_handle_type portFd =
-            serialPortImplementation_.native_handle();
-         if (ioctl(portFd, IOSSIOSPEED, &speed))
-         {
-            const char* msg = strerror(errno);
-            LogMessage((std::string("Error setting baud: ") + msg).c_str(),
-                  false);
-         }
-#else
-         serialPortImplementation_.set_option(baud_option, anError);
-         if (!!anError)
-         {
-            LogMessage(("error setting baud: " +
-                     boost::lexical_cast<std::string>(anError.value()) + " " +
-                     anError.message()).c_str(), false);
-         }
-#endif
-
+         ChangeBaudRate(baud);
          ChangeFlowControl(flow);
+         ChangeParity(parity);
+         ChangeStopBits(stopBits);
 
-         std::string sparity;
-         switch( parity)
-         {
-         case boost::asio::serial_port_base::parity::none:
-            sparity = "none";
-            break;
-         case boost::asio::serial_port_base::parity::odd:
-            sparity = "odd";
-            break;
-         case boost::asio::serial_port_base::parity::even:
-            sparity = "even";
-            break;
-         };
-         LogMessage(("Attempting to set parity of " + deviceName + " to " + sparity).c_str(), true);
-         serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity), anError); 
-         if( !!anError)
-            LogMessage(("error setting parity in AsioClient(): " + boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
-
-         std::string sstopbits;
-         switch( stopBits)
-         {
-         case boost::asio::serial_port_base::stop_bits::one:
-            sstopbits = "1";
-            break;
-         case boost::asio::serial_port_base::stop_bits::onepointfive:
-            sstopbits = "1.5";
-            break;
-         case boost::asio::serial_port_base::stop_bits::two:
-            sstopbits = "2";
-            break;
-         };      
-         LogMessage(("Attempting to set stopBits of " + deviceName + " to " + sstopbits).c_str(), true);
-         serialPortImplementation_.set_option( boost::asio::serial_port_base::stop_bits(stopBits), anError ); 
-         if( !!anError)
-            LogMessage(("error setting stop_bits in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
          serialPortImplementation_.set_option( boost::asio::serial_port_base::character_size( 8 ), anError ); 
          if( !!anError)
             LogMessage(("error setting character_size in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
@@ -193,6 +137,82 @@ public:
       serialPortImplementation_.set_option(  boost::asio::serial_port_base::flow_control(flow) , anError ); 
       if( !!anError)
          LogMessage(("error setting flow_control in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+   }
+
+   void ChangeParity(const boost::asio::serial_port_base::parity::type& parity)
+   {
+         
+      boost::system::error_code anError;
+
+      std::string sparity;
+      switch( parity)
+      {
+      case boost::asio::serial_port_base::parity::none:
+         sparity = "none";
+         break;
+      case boost::asio::serial_port_base::parity::odd:
+         sparity = "odd";
+         break;
+      case boost::asio::serial_port_base::parity::even:
+         sparity = "even";
+         break;
+      };
+      LogMessage(("Attempting to set parity of " + device_ + " to " + sparity).c_str(), true);
+      serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity), anError); 
+      if( !!anError)
+         LogMessage(("error setting parity in AsioClient(): " + boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+   }
+
+   void ChangeStopBits(const boost::asio::serial_port::stop_bits::type& stopBits)
+   {
+      boost::system::error_code anError;
+
+      std::string sstopbits;
+      switch( stopBits)
+      {
+      case boost::asio::serial_port_base::stop_bits::one:
+         sstopbits = "1";
+         break;
+      case boost::asio::serial_port_base::stop_bits::onepointfive:
+         sstopbits = "1.5";
+         break;
+      case boost::asio::serial_port_base::stop_bits::two:
+         sstopbits = "2";
+         break;
+      };      
+      LogMessage(("Attempting to set stopBits of " + device_ + " to " + sstopbits).c_str(), true);
+      serialPortImplementation_.set_option( boost::asio::serial_port_base::stop_bits(stopBits), anError ); 
+      if( !!anError)
+         LogMessage(("error setting stop_bits in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+   }
+
+   void ChangeBaudRate(unsigned int baud)
+   {
+      boost::system::error_code anError;
+      boost::asio::serial_port_base::baud_rate baud_option(baud); 
+
+#ifdef __APPLE__
+         // Use ioctl() instead of Boost's implementation (which uses termios),
+         // so that nonstandard baudrates can be set.
+         speed_t speed = static_cast<speed_t>(baud);
+         boost::asio::serial_port::native_handle_type portFd =
+            serialPortImplementation_.native_handle();
+         if (ioctl(portFd, IOSSIOSPEED, &speed))
+         {
+            const char* msg = strerror(errno);
+            LogMessage((std::string("Error setting baud: ") + msg).c_str(),
+                  false);
+         }
+#else
+         serialPortImplementation_.set_option(baud_option, anError);
+         if (!!anError)
+         {
+            LogMessage(("error setting baud: " +
+                     boost::lexical_cast<std::string>(anError.value()) + " " +
+                     anError.message()).c_str(), false);
+         }
+#endif
+
    }
 
    void WriteOneCharacterAsynchronously(const char ch)

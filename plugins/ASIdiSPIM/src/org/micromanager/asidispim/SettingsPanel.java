@@ -180,6 +180,24 @@ public class SettingsPanel extends ListeningJPanel {
       
       // end scanner panel
       
+      // start acquisition panel
+      
+      final JPanel acqusitionPanel = new JPanel(new MigLayout(
+            "",
+            "[left]",
+            "[]8[]"));
+      acqusitionPanel.setBorder(PanelUtils.makeTitledBorder("Acquisition"));
+
+      final JCheckBox acqSettingsWrite = pu.makeCheckBox("Write file with acquisition settings",
+            Properties.Keys.PLUGIN_WRITE_ACQ_SETTINGS_FILE, panelName_, false);
+      acqusitionPanel.add(acqSettingsWrite, "wrap");
+      
+      final JCheckBox acqBothCamerasSimult = pu.makeCheckBox("Acquire from both cameras simultaneously",
+            Properties.Keys.PLUGIN_ACQUIRE_BOTH_CAMERAS_SIMULT, panelName_, false);
+      acqusitionPanel.add(acqBothCamerasSimult, "wrap");
+      
+      // end acquisiton panel
+      
       
       // start test acquisition panel
       
@@ -254,8 +272,9 @@ public class SettingsPanel extends ListeningJPanel {
             stageScanPanel.add(scanOvershootDistance, "wrap");
          }
       } else {
-         stageScanPanel.add(new JLabel("Stage scanning not supported by your firmware."), "left, wrap");
-         stageScanPanel.add(new JLabel("See http://dispim.org for further information."), "left, wrap");
+         stageScanPanel.add(new JLabel("Stage scanning not supported by your"), "left, wrap");
+         stageScanPanel.add(new JLabel("Tiger firmware.  See http://dispim.org"), "left, wrap");
+         stageScanPanel.add(new JLabel("for further information."), "left, wrap");
       }
       
       // end stage scan panel
@@ -283,7 +302,8 @@ public class SettingsPanel extends ListeningJPanel {
       
       // construct main panel
       super.add(guiPanel);
-      super.add(scannerPanel, "wrap");
+      super.add(scannerPanel);
+      super.add(acqusitionPanel, "wrap");
       super.add(testAcqPanel);
       super.add(stageScanPanel, "growx");
       super.add(imageJPanel, "growx");

@@ -47,6 +47,19 @@ public class MyNumberUtils {
    }
    
    /**
+    * Does "equality" test on floats using commons-math3 library
+    * and epsilon of 100*maxUlps
+    * (before r14315 used locally-defined epsilon of 1e-12, 
+    *   then in changed to 10*maxUlps, then to 100*maxUlps in r15867
+    * @param f1
+    * @param f2
+    * @return
+    */
+   public static boolean floatsEqual(double f1, double f2) {
+      return Precision.equals(f1, f2, 100);
+   }
+   
+   /**
     * 
     * @param f
     * @param place number of places after decimal point, between 0 and 9

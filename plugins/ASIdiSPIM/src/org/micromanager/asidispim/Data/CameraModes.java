@@ -136,7 +136,7 @@ public class CameraModes {
    private static boolean cameraSupportsLightSheetTrigger(Devices.Libraries camLib) {
       return (camLib == Devices.Libraries.HAMCAM ||
             camLib == Devices.Libraries.ANDORCAM ||
-            camLib == Devices.Libraries.PVCAM ||
+            camLib == Devices.Libraries.PVCAM || // not sure about this
             camLib == Devices.Libraries.DEMOCAM  // for testing only
             );
    }

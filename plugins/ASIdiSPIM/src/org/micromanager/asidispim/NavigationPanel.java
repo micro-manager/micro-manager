@@ -586,21 +586,12 @@ public class NavigationPanel extends ListeningJPanel implements LiveModeListener
    public void haltAllMotion() {
       try {
          final Set<Devices.Keys> TigerDevices = EnumSet.of(
-               Devices.Keys.UPPERZDRIVE, Devices.Keys.LOWERZDRIVE, Devices.Keys.XYSTAGE);
-         String mmDevice = null;
+               Devices.Keys.UPPERZDRIVE, Devices.Keys.XYSTAGE, Devices.Keys.LOWERZDRIVE);
          for (Devices.Keys dev : TigerDevices) {
             if (devices_.isValidMMDevice(dev)
                   && devices_.getMMDeviceLibrary(dev) == Devices.Libraries.ASITIGER) {
-               mmDevice = devices_.getMMDevice(dev);
-               break;
+               core_.stop(devices_.getMMDevice(dev));
             }
-         }
-         if (mmDevice != null) {
-            String hubname = core_.getParentLabel(mmDevice);
-            String port = core_.getProperty(hubname, Properties.Keys.SERIAL_COM_PORT.toString());
-            core_.setSerialPortCommand(port, "\\",  "\r");
-         } else {
-            throw new Exception("could not find a valid Tiger device");
          }
       } catch (Exception ex) {
          MyDialogUtils.showError(ex, "could not halt motion");

@@ -69,6 +69,7 @@
 class AcqSequenceThread;
 class SpuriousNoiseFilterControl;
 class ReadModeControl;
+class SRRFControl;
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
 //
@@ -92,10 +93,10 @@ public:
    // MMCamera API
    int SnapImage();
    const unsigned char* GetImageBuffer();
-   unsigned GetImageWidth() const {return img_.Width();}
-   unsigned GetImageHeight() const {return img_.Height();}
+   unsigned GetImageWidth() const;
+   unsigned GetImageHeight() const;
    unsigned GetImageBytesPerPixel() const {return img_.Depth();} 
-   long GetImageBufferSize() const {return img_.Width() * img_.Height() * GetImageBytesPerPixel();}
+   long GetImageBufferSize() const;
    unsigned GetBitDepth() const;
    int GetBinning() const;
    int SetBinning(int binSize);
@@ -105,6 +106,7 @@ public:
    int GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSize);
    int ClearROI();
    int IsExposureSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   void ResizeSRRFImage(long radiality);
 
    // high-speed interface
    int PrepareSequenceAcqusition()
@@ -180,15 +182,21 @@ public:
 
 
    // custom interface for the thread
-   int PushImage();
+   void CalculateAndSetupCameraImageBuffer(at_u32 & width, at_u32 & height, at_u32 & bytesPerPixel);
+   int PushImage(at_u32 width, at_u32 height, at_u32 bytesPerPixel, at_32 imageCountFirst, at_32 imageCountLast);
+   unsigned char * GetCameraImageBuffer() const { return pImgBuffer_; }
+   void SetCameraImageBuffer(unsigned char * pBuffer) { pImgBuffer_ = pBuffer; }
 
+   int PushImageWithSRRF(at_32 imageCountFirst, at_32 imageCountLast);
+   int GetCameraAcquisitionProgress(at_32 *);
    //static void ReleaseInstance(AndorCamera * AndorCamera);
 
-    int AddProperty(const char* name, const char* value, MM::PropertyType eType, 
-                   bool readOnly, MM::ActionFunctor* pAct);
+   int AddProperty(const char* name, const char* value, MM::PropertyType eType, 
+                  bool readOnly, MM::ActionFunctor* pAct);
 
-    int GetNumberOfWorkableCameras() const { return NumberOfWorkableCameras_; } 
-    int GetMyCameraID() const { return myCameraID_; } 
+   int GetNumberOfWorkableCameras() const { return NumberOfWorkableCameras_; } 
+   int GetMyCameraID() const { return myCameraID_; } 
+   void Log(std::string message) { LogMessage(message); }
 
 private:
    AndorCamera();
@@ -217,11 +225,13 @@ private:
    static AndorCamera* instance_;
    static unsigned refCount_;
    ImgBuffer img_;
+   unsigned char* pImgBuffer_;
    bool initialized_;
    bool snapInProgress_;
    bool sequenceRunning_;
    long imageCounter_;
    MM::MMTime startTime_;
+   MM::MMTime startSRRFImageTime_;
    long imageTimeOut_ms_;
    long sequenceLength_;
    bool stopOnOverflow_;
@@ -275,7 +285,7 @@ private:
    ROI roi_, customROI_;
    std::vector<ROI> roiList;
 
-
+   double GetPixelSizeUm() const;
 
    int binSize_;
    double expMs_; //value used by camera
@@ -289,6 +299,9 @@ private:
    int minTemp_, maxTemp_;
    //Daigang 24-may-2007
    bool ThermoSteady_;
+
+   ImgBuffer *SRRFImage_;
+   ImgBuffer *cameraBuffer_;
 
    AcqSequenceThread* seqThread_;
 
@@ -374,8 +387,8 @@ private:
    std::string m_str_camType;
    std::vector<std::string> vCameraType;
 
-   unsigned char* pImgBuffer_;
    unsigned char* GetAcquiredImage();
+   const unsigned char* GetAcquiredImageSRRF();
    std::string getCameraType();
    unsigned int createGainProperty(AndorCapabilities * caps);
    unsigned int createROIProperties(AndorCapabilities * caps);
@@ -388,7 +401,13 @@ private:
    unsigned int createSnapTriggerMode();
    unsigned int createShutterProperty(AndorCapabilities * caps);
    unsigned int AddTriggerProperty(int mode);
+   void SetDefaultVSSForUltra888WithValidSRRF();
+   void AddMetadataInfo(Metadata & md);
+   void AddSRRFMetadataInfo(Metadata & md);
+   int SnapImageNormal();
+   int SnapImageSRRF();
 
+   bool NeedToAllocateExtraBuffers(unsigned long bufferSizePixels) { return (unsigned long)(fullFrameX_ * fullFrameY_) < bufferSizePixels; }
 
    bool mb_canUseFan;
    bool mb_canSetTemp;
@@ -398,6 +417,7 @@ private:
 
    SpuriousNoiseFilterControl* spuriousNoiseFilterControl_;
    ReadModeControl* readModeControl_;
+   SRRFControl *SRRFControl_;
 };
 
 
@@ -410,7 +430,7 @@ public:
    AcqSequenceThread(AndorCamera* pCam) : 
       intervalMs_(100.0), 
       numImages_(1),
-      waitTime_(10),
+      waitTime_(50),
       busy_(false), 
       stop_(false) 
    {

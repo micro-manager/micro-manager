@@ -108,6 +108,7 @@ public:
   // action interface
   //int OnBoard(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnLineTime(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnCCDType(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnAcquireMode(MM::PropertyBase* pProp, MM::ActionType eAct);

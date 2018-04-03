@@ -213,11 +213,6 @@ LeicaScope::~LeicaScope()
 }
 
 
-bool LeicaScope::SupportsDeviceDetection(void)
-{
-   return true;
-}
-
 MM::DeviceDetectionStatus LeicaScope::DetectDevice()
 {
    MM::Device* pS = GetCoreCallback()->GetDevice(this, g_ScopeInterface.port_.c_str());
@@ -898,6 +893,7 @@ int ILTurret::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_IL_Turret))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_IL_Turret);
 
    // set property list
    // ----------------
@@ -905,14 +901,14 @@ int ILTurret::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &ILTurret::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1078,18 +1074,19 @@ int ObjectiveTurret::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_Revolver))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_IL_Turret);
 
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &ObjectiveTurret::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1412,6 +1409,7 @@ ZDrive::~ZDrive()
 bool ZDrive::Busy()
 {
    bool busy;
+   //g_scopeInterface.
    int ret = g_ScopeModel.ZDrive_.GetBusy(busy);
    if (ret != DEVICE_OK)  // This is bad and should not happen
       return false;
@@ -2129,6 +2127,7 @@ int MagChanger::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_Mag_Changer_Mot))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_Mag_Changer_Mot);
 
    // set property list
    // ----------------
@@ -2136,7 +2135,7 @@ int MagChanger::Initialize()
    // Position 
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &MagChanger::OnPosition);
-   ret = CreateProperty("Position", "1", MM::String, false, pAct);
+   ret = CreateProperty("Position", "1", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2281,6 +2280,7 @@ int TLPolarizer::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_TL_Polarizer))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_TL_Polarizer);
 
    // set property list
    // ----------------
@@ -2288,14 +2288,14 @@ int TLPolarizer::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &TLPolarizer::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2418,6 +2418,7 @@ int DICTurret::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_DIC_Turret))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_DIC_Turret);
 
    // set property list
    // ----------------
@@ -2425,17 +2426,14 @@ int DICTurret::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &DICTurret::OnState);
-   if (g_ScopeModel.dicTurret_.isMotorized())
-      ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
-   else
-      ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, true, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2592,6 +2590,7 @@ int CondensorTurret::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_Condensor))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_Condensor);
 
    // set property list
    // ----------------
@@ -2599,14 +2598,14 @@ int CondensorTurret::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &CondensorTurret::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2933,7 +2932,8 @@ AFC::AFC() :
    initialized_(false),    
    name_(g_LeicaAFC),
    timeOut_(5000),
-   fullFocusTime_(300)
+   fullFocusTime_(300),
+   lockThreshold_(3)
 {
 
    // create pre-initialization properties
@@ -2944,6 +2944,7 @@ AFC::AFC() :
    
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "Leica Adaptive Focus Control (Hardware autofocus)", MM::String, true);
+ 
    
 }
 
@@ -2994,9 +2995,13 @@ int AFC::Initialize()
 
    pAct = new CPropertyAction(this, &AFC::OnOffset);
    ret = CreateProperty("Offset", "0.0", MM::Float, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
 
+   pAct = new CPropertyAction(this, &AFC::OnLockThreshold);
+   ret = CreateProperty("LockThreshold","1.0",MM::Float,false,pAct);
+  
+   pAct = new CPropertyAction(this, &AFC::OnLEDIntensity);
+   ret = CreateProperty("LEDIntensity","200",MM::Integer,false,pAct);
+   SetPropertyLimits("LEDIntensity",0,255);
    initialized_ = true;
    return 0;
 }
@@ -3029,18 +3034,45 @@ int AFC::GetContinuousFocusing(bool& state) {
    return g_ScopeModel.afc_.GetMode(state);
 }
 
+int AFC::GetCurrentFocusScore(double& score){
+   //std::ostringstream command;
+   //std::string answer;
+   
+   int ret;
+   ret = g_ScopeInterface.GetAFCFocusScore(*this,*GetCoreCallback());
+   bool busy = true;
+   while (busy) {
+		g_ScopeModel.afc_.GetBusy(busy);
+		CDeviceUtils::SleepMs(10);
+   }
+   ret = g_ScopeModel.afc_.GetScore(score);
+   if (ret != DEVICE_OK)
+     return ret;
+   return ret;
+}
 bool AFC::IsContinuousFocusLocked() {
    int topColor, bottomColor;
    int ret;
    ret = g_ScopeModel.afc_.GetLEDColors(topColor, bottomColor);
    if (ret != DEVICE_OK)
       return false;
-   
    if (bottomColor == 2 /* green */) {
-      return true;
-   } else {
-      return false;
+       return true;
+    } else {
+       return false;
    }
+  /* double score;
+   ret = GetCurrentFocusScore(score);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (abs(score)<lockThreshold_){
+	   return true;
+   }
+   else{
+	   return false;
+   }
+*/
 }
 
 int AFC::FullFocus() {
@@ -3068,6 +3100,23 @@ int AFC::IncrementalFocus() {
    return FullFocus();
 }
 
+int AFC::GetLEDIntensity(int &intensity){ 
+   int ret = g_ScopeInterface.GetAFCLEDIntensity(*this,*GetCoreCallback());
+   if (ret != DEVICE_OK) {
+      return ret;
+   }
+   bool busy = true;
+   while (busy) {
+		g_ScopeModel.afc_.GetBusy(busy);
+		CDeviceUtils::SleepMs(10);
+   }
+	return g_ScopeModel.afc_.GetLEDIntensity(intensity);
+}
+
+int AFC::SetLEDIntensity(int intensity){
+	return g_ScopeInterface.SetAFCLEDIntensity(*this, *GetCoreCallback(),intensity);
+}
+
 int AFC::GetOffset(double &offset) {
    return g_ScopeModel.afc_.GetOffset(offset);
 }
@@ -3075,7 +3124,12 @@ int AFC::GetOffset(double &offset) {
 int AFC::SetOffset(double offset) {
    return g_ScopeInterface.SetAFCOffset(*this, *GetCoreCallback(), offset);;
 }
-
+//int AFC::GetLockThreshold(double &threshold){
+//	return g_ScopeModel.afc_.GetThreshold(threshold);
+//}
+//int AFC::SetLockThreshold(double threshold){
+//	return g_ScopeModel.afc_.SetThreshold(threshold);
+//}
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
@@ -3111,6 +3165,46 @@ int AFC::OnFullFocusTime(MM::PropertyBase* pProp, MM::ActionType eAct)
       return DEVICE_OK;
    }
    return DEVICE_OK;
+}
+
+int AFC::OnLockThreshold(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(lockThreshold_);
+	
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      
+      pProp->Get(lockThreshold_);
+	 
+      return DEVICE_OK;
+   }
+
+   return DEVICE_OK;
+}
+
+int AFC::OnLEDIntensity(MM::PropertyBase* pProp,MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+	  int intensity;
+	  int ret = GetLEDIntensity(intensity);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long) intensity);
+	
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      
+      pProp->Get(LEDIntensity_);
+	  return SetLEDIntensity((int) LEDIntensity_);
+   }
+
+   return DEVICE_OK;
+
 }
 
 int AFC::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -3272,6 +3366,7 @@ int SidePort::Initialize()
    // check if this turret exists:
 	if (! g_ScopeModel.IsDeviceAvailable(::g_Side_Port))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_Side_Port);
 
    // set property list
    // ----------------
@@ -3289,13 +3384,13 @@ int SidePort::Initialize()
 
 
    CPropertyAction* pAct = new CPropertyAction (this, &SidePort::OnState);
-	(void)CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+	(void)CreateProperty(MM::g_Keyword_State, "0", MM::Integer, readOnly, pAct);
 
 
    // Label
    // -----
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   (void)CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, false, pAct);
+   (void)CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, readOnly, pAct);
    
 
 	std::ostringstream dmess;

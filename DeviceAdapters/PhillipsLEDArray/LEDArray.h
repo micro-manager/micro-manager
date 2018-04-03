@@ -33,6 +33,32 @@
 #define ERR_NO_PORT_SET 108
 #define ERR_VERSION_MISMATCH 109
 
+class CLEDArrayVirtualShutter : public CShutterBase<CLEDArrayVirtualShutter>
+{
+public:
+   CLEDArrayVirtualShutter();
+   ~CLEDArrayVirtualShutter();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown() {initialized_ = false; return DEVICE_OK;}
+  
+   void GetName(char* pszName) const;
+   bool Busy(){return false;}
+
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire (double /* deltaT */) { return DEVICE_UNSUPPORTED_COMMAND;}
+
+private:
+   std::vector<std::string> availableDAs_;
+   std::string DADeviceName1_;
+   std::string DADeviceName2_;
+   MM::SignalIO* DADevice1_;
+   bool initialized_;
+};
 
 class CLEDArray: public  CSLMBase<CLEDArray>
 {
@@ -227,11 +253,13 @@ public:
 	  int OnGreen(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnBlue(MM::PropertyBase* pPropt, MM::ActionType eAct);
       int OnShutterOpen(MM::PropertyBase* pPropt, MM::ActionType eAct);
-	  int Aperture(MM::PropertyBase* pPropt, MM::ActionType eAct);
+	  int OnAperture(MM::PropertyBase* pPropt, MM::ActionType eAct);	 
+	  int OnDistance(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnType(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnMinNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnMaxNA(MM::PropertyBase* pPropt, MM::ActionType eAct);
 	  int OnLED(MM::PropertyBase* pPropt, MM::ActionType eAct);
+	  int OnReset(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
 private:
    
@@ -247,7 +275,7 @@ private:
 	bool IsPortAvailable() {return portAvailable_;}
 
 	long shutterOpen_, bf_, df_;
-	double numa_,minna_, maxna_;
+	double numa_,minna_, maxna_, distMM_;
 	long red_, green_, blue_;
 	long lsingle_; // LED index
 	std::string lmult_;
@@ -266,16 +294,18 @@ private:
 	int Annul(double minna, double maxna);
 	int hAnnul(std::string type, double minna, double maxna);
 	int NumA(double numa);
+	int ArrayDist(double dist);
 	int Off();
+	int UpdatePattern();
+	int Reset();
+	int ReadResponse();
 
 	unsigned char lastModVal_;
 	
    	 MMThreadLock& GetLock() {return lock_;}
-	 int readCommandSuccess();
-	 int WriteImage(bool applyImmediately);
 
 
 
 };
 
-#endif //_Arduino_H_
+#endif 

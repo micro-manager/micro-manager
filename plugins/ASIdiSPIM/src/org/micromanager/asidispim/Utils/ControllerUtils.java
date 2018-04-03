@@ -32,6 +32,7 @@ import org.micromanager.asidispim.ASIdiSPIM;
 import org.micromanager.asidispim.Data.AcquisitionModes;
 import org.micromanager.asidispim.Data.AcquisitionSettings;
 import org.micromanager.asidispim.Data.CameraModes;
+import org.micromanager.asidispim.Data.Cameras;
 import org.micromanager.asidispim.Data.ChannelSpec;
 import org.micromanager.asidispim.Data.Devices;
 import org.micromanager.asidispim.Data.Joystick;
@@ -52,8 +53,10 @@ public class ControllerUtils {
    final Prefs prefs_;
    final Devices devices_;
    final Positions positions_;
+   final Cameras cameras_;
    final CMMCore core_;
    double scanDistance_;   // cached value from last call to prepareControllerForAquisition()
+   double actualStepSizeUm_;  // cached value from last call to prepareControllerForAquisition()
    
    // stage has to go faster than the slice spacing because viewing at an angle
    // with diSPIM, angle is 45 degrees so go 1.41x faster
@@ -61,12 +64,13 @@ public class ControllerUtils {
    final double geometricSpeedFactor_ = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
-           final Prefs prefs, final Devices devices, final Positions positions) {
+           final Prefs prefs, final Devices devices, final Positions positions, final Cameras cameras) {
       gui_ = gui;
       props_ = props;
       prefs_ = prefs;
       devices_ = devices;
       positions_ = positions;
+      cameras_ = cameras;
       core_ = gui_.getMMCore();
       scanDistance_ = 0;
    }
@@ -168,18 +172,23 @@ public class ControllerUtils {
          final Devices.Keys xyDevice = Devices.Keys.XYSTAGE;
          
          final double requestedMotorSpeed = computeScanSpeed(settings);
-         if (requestedMotorSpeed > props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED)) {
+         final double maxMotorSpeed = props_.getPropValueFloat(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_MAX_MOTOR_SPEED);
+         if (requestedMotorSpeed > maxMotorSpeed*0.8) {  // trying to go near max speed smooth scanning will be compromised
             MyDialogUtils.showError("Required stage speed is too fast, please reduce step size or increase sample exposure.");
+            return false;
+         }
+         if (requestedMotorSpeed < maxMotorSpeed*0.0005) {  // 1/2000 of the max speed is approximate place where smooth scanning breaks down (speed quantum is ~1/12000 max speed); this also prevents setting to 0 which the controller rejects
+            MyDialogUtils.showError("Required stage speed is too slow, please increase step size or decrease sample exposure.");
             return false;
          }
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED, (float)requestedMotorSpeed);
          
          // ask for the actual speed and calculate the actual step size
-         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED);
-         final double actualStepSizeUm = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
+         final double actualMotorSpeed = props_.getPropValueFloat(xyDevice, Properties.Keys.STAGESCAN_MOTOR_SPEED_MICRONS)/1000;
+         actualStepSizeUm_ = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
          
          // cache how far we scan each pass for later use
-         scanDistance_ = settings.numSlices * actualStepSizeUm * geometricSpeedFactor_;
+         scanDistance_ = settings.numSlices * actualStepSizeUm_ * geometricSpeedFactor_;
          
          // set the acceleration to a reasonable value for the (usually very slow) scan speed
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL, (float)computeScanAcceleration(actualMotorSpeed));
@@ -210,6 +219,8 @@ public class ControllerUtils {
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_SETTLING_TIME, settings.delayBeforeSide);
          
          // TODO handle other multichannel modes with stage scanning (what does this mean??)
+      } else {
+         scanDistance_ = 0;
       }
       
       // sets PLogic "acquisition running" flag
@@ -595,7 +606,7 @@ public class ControllerUtils {
       Properties.Keys offsetProp = (side == Devices.Sides.A) ?
             Properties.Keys.PLUGIN_SHEET_OFFSET_A : Properties.Keys.PLUGIN_SHEET_OFFSET_B;
       
-      // restore sheet width and offset in case they got clobbered
+      // restore sheet width and offset in case they got clobbered by the code implementing light sheet mode
       props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG,
             props_.getPropValueFloat(Devices.Keys.PLUGIN, widthProp), skipScannerWarnings);
       props_.setPropValue(Devices.Keys.PLUGIN, offsetProp, 
@@ -606,13 +617,7 @@ public class ControllerUtils {
          positions_.setPosition(piezoDevice, piezoPosition, true); 
       }
 
-      // TODO consider whether we need to do anything different for stage scanning case,
-      //   in particular clearing STAGESCAN_STATE of XY card
-      
-      // make sure to stop the SPIM state machine in case the acquisition was cancelled
-      // even if the acquisition wasn't cancelled make sure the Micro-Manager properties are updated
-      props_.setPropValue(galvoDevice, Properties.Keys.SPIM_STATE,
-            Properties.Values.SPIM_IDLE, true);
+      // make sure we stop SPIM and SCAN state machines every time we trigger controller (in AcquisitionPanel code)
       
       return true;
    }
@@ -827,14 +832,17 @@ public class ControllerUtils {
     */
    public float getSheetWidth(CameraModes.Keys cameraMode, Devices.Keys cameraDevice, Devices.Sides side) {
       float sheetWidth;
+      final String cameraName = devices_.getMMDevice(cameraDevice);
+      if (cameraName == null || cameraName == "") {
+         ReportingUtils.logDebugMessage("Could get sheet width for invalid device " + cameraDevice.toString());
+         return 0f;
+      }
       if (cameraMode == CameraModes.Keys.LIGHT_SHEET) {
          final float sheetSlope = prefs_.getFloat(
                MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE, 2000);
-         Rectangle roi = null;
-         try {
-            roi = core_.getROI(devices_.getMMDevice(cameraDevice));
-         } catch (Exception e) {
+         Rectangle roi = cameras_.getCameraROI(cameraDevice);  // get binning-adjusted ROI so value can stay the same regardless of binning
+         if (roi == null || roi.height == 0) {
             ReportingUtils.logDebugMessage("Could not get camera ROI for light sheet mode");
             return 0f;
          }
@@ -844,15 +852,13 @@ public class ControllerUtils {
                MyStrings.PanelNames.SETUP.toString() + side.toString(), 
                Properties.Keys.PREFS_AUTO_SHEET_WIDTH, false);
          if (autoSheet) {
-            Rectangle roi = null;
-            try {
-               roi = core_.getROI(devices_.getMMDevice(cameraDevice));
-            } catch (Exception e) {
+            Rectangle roi = cameras_.getCameraROI(cameraDevice);  // get binning-adjusted ROI so value can stay the same regardless of binning
+            if (roi == null || roi.height == 0) {
                ReportingUtils.logDebugMessage("Could not get camera ROI for auto sheet mode");
                return 0f;
             }
-            final float sheetSlope = prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(), 
-            Properties.Keys.PLUGIN_SLOPE_SHEET_WIDTH.toString(), 2);
+            final float sheetSlope = prefs_.getFloat(MyStrings.PanelNames.SETUP.toString() + side.toString(),
+                  Properties.Keys.PLUGIN_SLOPE_SHEET_WIDTH.toString(), 2);
             sheetWidth = roi.height *  sheetSlope / 1000f;  // in millidegrees per pixel, convert to degrees
             // TODO add extra width to compensate for filter depending on sweep rate and filter freq
             // TODO calculation should account for sample exposure to make sure 0.25ms edges get appropriately compensated for
@@ -878,6 +884,15 @@ public class ControllerUtils {
          sheetOffset = props_.getPropValueFloat(Devices.Keys.PLUGIN, offsetProp); 
       }
       return sheetOffset;
+   }
+   
+   /**
+    * Gets the actual step size for stage scanning acquisitions.
+    * Only valid after call to prepareControllerForAquisition().
+    * @return
+    */
+   public double getActualStepSizeUm() {
+      return actualStepSizeUm_;
    }
 
 }

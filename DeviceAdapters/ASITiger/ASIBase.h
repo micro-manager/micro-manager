@@ -115,6 +115,13 @@ protected:
       this->SetErrorText(ERR_TIGER_DEV_NOT_SUPPORTED, g_Msg_ERR_TIGER_DEV_NOT_SUPPORTED);
       this->SetErrorText(ERR_CRISP_NOT_CALIBRATED, g_Msg_ERR_CRISP_NOT_CALIBRATED);
       this->SetErrorText(ERR_CRISP_NOT_LOCKED, g_Msg_ERR_CRISP_NOT_LOCKED);
+      this->SetErrorText(ERR_UNKNOWN_COMMAND, g_Msg_ERR_UNKNOWN_COMMAND);
+      this->SetErrorText(ERR_UNKNOWN_AXIS, g_Msg_ERR_UNKNOWN_AXIS);
+      this->SetErrorText(ERR_MISSING_PARAM, g_Msg_ERR_MISSING_PARAM);
+      this->SetErrorText(ERR_PARAM_OUT_OF_RANGE, g_Msg_ERR_PARAM_OUT_OF_RANGE);
+      this->SetErrorText(ERR_OPERATION_FAILED, g_Msg_ERR_OPERATION_FAILED);
+      this->SetErrorText(ERR_UNDEFINED_ERROR, g_Msg_ERR_UNDEFINED_ERROR);
+      this->SetErrorText(ERR_INVALID_ADDRESS, g_Msg_ERR_INVALID_ADDRESS);
    }
 };
 

@@ -166,7 +166,6 @@ public class DeviceUtils {
          case PCOCAM:
             // trigger polarity not accessible in Micro-Manager, so we have to trust it is correct
             checkPropertyExists(key, Properties.Keys.TRIGGER_MODE_PCO);
-            checkPropertyExists(key, Properties.Keys.PIXEL_RATE);
             break;
          case ANDORCAM:
             // TODO check trigger polarity
@@ -183,8 +182,10 @@ public class DeviceUtils {
             checkPropertyExists(key, Properties.Keys.CAMERA_X_DIMENSION);
             checkPropertyExists(key, Properties.Keys.CAMERA_Y_DIMENSION);
             checkPropertyExists(key, Properties.Keys.PVCAM_CLEARING_MODE);
-            checkPropertyExists(key, Properties.Keys.PVCAM_EXPOSURE_TIME);
-            checkPropertyExists(key, Properties.Keys.PVCAM_PRE_TIME);
+            if (props_.getPropValueString(key, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
+               checkPropertyExists(key, Properties.Keys.PVCAM_EXPOSURE_TIME);
+               checkPropertyExists(key, Properties.Keys.PVCAM_PRE_TIME);
+            }
             break;
          default:
             MyDialogUtils.showError("Plugin doesn't support your camera for SPIM yet;"

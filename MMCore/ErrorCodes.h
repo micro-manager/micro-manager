@@ -77,4 +77,5 @@
 #define MMERR_NullPointerException     49
 #define MMERR_CreatePeripheralFailed   50
 #define MMERR_PropertyNotInCache       51
+#define MMERR_BadAffineTransform       52
 #endif //_ERRORCODES_H_

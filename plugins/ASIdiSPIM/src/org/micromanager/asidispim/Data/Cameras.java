@@ -282,14 +282,16 @@ public class Cameras {
       case ANDORCAM:
          // work-around to bug in SDK3 device adapter, can't switch from light sheet mode
          //  to "normal" center out simultaneous but works if we always go through the in-between mode
-         props_.setPropValue(devKey,
-               Properties.Keys.SENSOR_READOUT_MODE,
-               Properties.Values.BOTTOM_UP_SIM_ANDOR);
-         props_.setPropValue(devKey,
-               Properties.Keys.SENSOR_READOUT_MODE,
-               (mode == CameraModes.Keys.LIGHT_SHEET
-               ? Properties.Values.BOTTOM_UP_ANDOR
-                     : Properties.Values.CENTER_OUT_ANDOR));
+         if (props_.hasProperty(devKey, Properties.Keys.SENSOR_READOUT_MODE)) {  // skip step if property is missing
+            props_.setPropValue(devKey,
+                  Properties.Keys.SENSOR_READOUT_MODE,
+                  Properties.Values.BOTTOM_UP_SIM_ANDOR);
+            props_.setPropValue(devKey,
+                  Properties.Keys.SENSOR_READOUT_MODE,
+                  (mode == CameraModes.Keys.LIGHT_SHEET
+                  ? Properties.Values.BOTTOM_UP_ANDOR
+                        : Properties.Values.CENTER_OUT_ANDOR));
+         }
          switch (mode) {
          case EDGE:
          case LIGHT_SHEET:
@@ -495,18 +497,22 @@ public class Cameras {
             return (2592 / 266e3);
          }
       case PCOCAM:
-         if (isEdge55(camKey)) {
-            if (isSlowReadout(camKey)) {
-               return 0.02752;
-            } else {
-               return 0.00917;
-            }       
-         } else {  // 4.2
-            if (isSlowReadout(camKey)) {
-               return 0.0276;
-            } else {
-               return 0.00965;
-            }            
+         if (props_.hasProperty(camKey, Properties.Keys.LINE_TIME)) {  // should be present as of 20170926 nightly build
+            return ((double) props_.getPropValueFloat(camKey, Properties.Keys.LINE_TIME))/1000d;
+         } else {  // assumes CameraLink interface
+            if (isEdge55(camKey)) {
+               if (isSlowReadout(camKey)) {
+                  return 0.02752;
+               } else {
+                  return 0.00917;
+               }       
+            } else {  // 4.2
+               if (isSlowReadout(camKey)) {
+                  return 0.0276;
+               } else {
+                  return 0.00965;
+               }            
+            }
          }
       case ANDORCAM:
          if (isZyla55(camKey)) {
@@ -524,8 +530,12 @@ public class Cameras {
          }
       case PVCAM:
          Rectangle roi = getCameraROI(camKey);
-         float readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
-         return (readoutTimeMs / roi.height);
+         if (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
+            float readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
+            return (readoutTimeMs / roi.height);
+         } else {
+            return 0.01;  // TODO get more accurate value
+         }
       case DEMOCAM:
          return(10e-3);  // dummy 10us row time
       default:
@@ -554,8 +564,9 @@ public class Cameras {
       } else {
          Devices.Libraries camLibrary = devices_.getMMDeviceLibrary(camKey);
          
-         // Photometrics is very different from other cameras so handle it as special case
-         if (camLibrary == Devices.Libraries.PVCAM) {
+         // Photometrics Prime 95B is very different from other cameras so handle it as special case
+         if (camLibrary == Devices.Libraries.PVCAM 
+               && props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
             int trigToGlobal = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_POST_TIME)
                   + props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME);
             // it appears as of end-May 2017 that the clearing time is actually rolled into the post-trigger
@@ -630,11 +641,15 @@ public class Cameras {
             readoutTimeMs = 0.25f;
             break;
          case PVCAM:
-            int preTime = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME);
-            readoutTimeMs = (float) preTime / 1e6f;
-            // for safety we make sure to wait at least a quarter millisecond to trigger
-            //   (may have hidden assumptions in other code about at least one tic wait)
-            if (readoutTimeMs < 0.249f) {
+            if (props_.getPropValueString(camKey, Properties.Keys.PVCAM_CHIPNAME).equals(Properties.Values.PRIME_95B_CHIPNAME)) {
+               int preTime = props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_PRE_TIME);
+               readoutTimeMs = (float) preTime / 1e6f;
+               // for safety we make sure to wait at least a quarter millisecond to trigger
+               //   (may have hidden assumptions in other code about at least one tic wait)
+               if (readoutTimeMs < 0.249f) {
+                  readoutTimeMs = 0.25f;
+               }
+            } else {  // original Prime
                readoutTimeMs = 0.25f;
             }
             break;
@@ -643,7 +658,9 @@ public class Cameras {
          }
          break;
       case LIGHT_SHEET:
-         if (camLibrary == Devices.Libraries.PVCAM) {
+         if (camLibrary == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
+            readoutTimeMs = 10000;  // absurdly large, light sheet mode over USB3 isn't supported by Flash4 but we are set up to decide available modes by device library and not a property
+         } else if (camLibrary == Devices.Libraries.PVCAM) {
             readoutTimeMs = (float) props_.getPropValueInteger(camKey, Properties.Keys.PVCAM_READOUT_TIME) / 1e6f;
          } else {
             Rectangle roi = getCameraROI(camKey);
@@ -665,16 +682,20 @@ public class Cameras {
 
          switch (camLibrary) {
          case HAMCAM:
-            // device adapter provides readout time rounded to nearest 0.1ms; we
-            // calculate it ourselves instead
-            // note that Flash4's ROI is always set in increments of 4 pixels
-            if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE)
-                  .equals(Properties.Values.PROGRESSIVE.toString())) {
-               numReadoutRows = roi.height;
-            } else {
-               numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+            if (camLibrary == Devices.Libraries.HAMCAM && props_.getPropValueString(camKey, Properties.Keys.CAMERA_BUS).equals(Properties.Values.USB3)) {
+               // trust the device adapter's calculation for USB3
+               readoutTimeMs = props_.getPropValueFloat(camKey, Properties.Keys.READOUTTIME)*1000f;
+            } else {  // Camera Link interface, original implementation
+               // device adapter provides readout time rounded to nearest 0.1ms; we calculate it ourselves instead
+               // note that Flash4's ROI is always set in increments of 4 pixels
+               if (props_.getPropValueString(camKey, Properties.Keys.SENSOR_MODE)
+                     .equals(Properties.Values.PROGRESSIVE.toString())) {
+                  numReadoutRows = roi.height;
+               } else {
+                  numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);
+               }
+               readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
             }
-            readoutTimeMs = ((float) (numReadoutRows * rowReadoutTime));
             break;
          case PCOCAM:
             numReadoutRows = roiReadoutRowsSplitReadout(roi, sensorSize);

@@ -259,17 +259,26 @@ class LeicaAFCModel : public LeicaDeviceModel
 public:
    LeicaAFCModel();
 
-   int GetOffset(double& mag); // Set point
-   int SetOffset(double mag);  // Measured value
+   int GetOffset(double& offset); // Set point
+   int SetOffset(double offset);  // Measured value
    int GetMode(bool& mode);
    int SetMode(bool mode);
+   int GetScore(double& score);
+   int SetScore(double score);
+   int GetEdgePosition(double& edgeposition);
+   int SetEdgePosition(double edgeposition);
    int GetLEDColors(int& topColor, int& bottomColor);
    int SetLEDColors(int topColor, int bottomColor);
+   int GetLEDIntensity(int& LEDintensity);
+   int SetLEDIntensity(int LEDintensity);
 private:
+   double edgeposition_;
    double offset_;
+   double score_;
    bool mode_;
    int topLEDColor_;
    int bottomLEDColor_;
+   int LEDintensity_;
 };
 
 
@@ -307,6 +316,8 @@ public:
 
    bool IsDeviceAvailable(int deviceID);
    void SetDeviceAvailable(int devId);
+   bool IsDeviceCoded(int deviceID);
+   void SetDeviceCoded(int devId);
    bool IsMethodAvailable(int methodId);
    std::string GetMethod(int methodId);
    int GetMethodID(std::string method);
@@ -349,7 +360,8 @@ public:
 
 private:
    bool usesMethods_;
-   std::vector<bool> availableDevices_;
+   std::vector<bool> availableDevices_; // Motorized + coded
+   std::vector<bool> codedDevices_;
    std::vector<bool> availableMethods_;
    std::vector<std::string> methodNames_;
 

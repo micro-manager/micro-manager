@@ -162,9 +162,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DeviceEnumerator.cpp" />
     <ClCompile Include="OpenCVgrabber.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DeviceEnumerator.h" />
     <ClInclude Include="OpenCVgrabber.h" />
   </ItemGroup>
   <ItemGroup>

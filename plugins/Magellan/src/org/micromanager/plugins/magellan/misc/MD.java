@@ -46,6 +46,7 @@ public class MD {
    private static final String NUM_FRAMES = "Frames";
    private static final String NUM_SLICES = "Slices";
    private static final String NUM_CHANNELS = "Channels";
+   private static final String EXPOSURE = "Exposure";
    private static final String CHANNEL_NAME = "Channel";
    private static final String CHANNEL_NAMES = "ChNames";
    private static final String CHANNEL_COLORS = "ChColors";
@@ -572,6 +573,23 @@ public class MD {
       }
    }
 
+      public static double getExposure(JSONObject tags)   {
+      try {
+         return  tags.getDouble(EXPOSURE);
+      } catch (JSONException ex) {
+        Log.log("Exposure tag missiing");
+        throw new RuntimeException();
+      }
+   }
+   
+   public static void setExposure(JSONObject tags, double exp) {
+      try {
+         tags.put(EXPOSURE, exp);
+      } catch (JSONException ex) {
+         Log.log("couldnt set exposure");
+      }
+   }
+   
      public static void setSurfacePoints(JSONObject tags, JSONArray arr) {
       try {
          tags.put(FIXED_SURFACE_POINTS, arr);

@@ -440,22 +440,44 @@
    }
    else if ((arg1)->getBytesPerPixel() == 4)
    {
-      // create a new byte[] object in Java
-      jbyteArray data = JCALL1(NewByteArray, jenv, lSize * 4);
-      if (data == 0)
+      if ((arg1)->getNumberOfComponents() == 1)
       {
-         jclass excep = jenv->FindClass("java/lang/OutOfMemoryError");
-         if (excep)
-            jenv->ThrowNew(excep, "The system ran out of memory!");
+         // create a new float[] object in Java
+         jfloatArray data = JCALL1(NewFloatArray, jenv, lSize);
+         if (data == 0)
+         {
+            jclass excep = jenv->FindClass("java/lang/OutOfMemoryError");
+            if (excep)
+               jenv->ThrowNew(excep, "The system ran out of memory!");
 
-         $result = 0;
-         return $result;
+            $result = 0;
+            return $result;
+         }
+
+         // copy pixels from the image buffer
+         JCALL4(SetFloatArrayRegion, jenv, data, 0, lSize, (jfloat*)result);
+
+         $result = data;
       }
-   
-      // copy pixels from the image buffer
-      JCALL4(SetByteArrayRegion, jenv, data, 0, lSize * 4, (jbyte*)result);
+      else
+      {
+         // create a new byte[] object in Java
+         jbyteArray data = JCALL1(NewByteArray, jenv, lSize * 4);
+         if (data == 0)
+         {
+            jclass excep = jenv->FindClass("java/lang/OutOfMemoryError");
+            if (excep)
+               jenv->ThrowNew(excep, "The system ran out of memory!");
 
-      $result = data;
+            $result = 0;
+            return $result;
+         }
+
+         // copy pixels from the image buffer
+         JCALL4(SetByteArrayRegion, jenv, data, 0, lSize * 4, (jbyte*)result);
+
+         $result = data;
+      }
    }
    else if ((arg1)->getBytesPerPixel() == 8)
    {
@@ -492,7 +514,7 @@
 // unsigned GetImageWidth()
 // unsigned GetImageHeight()
 // unsigned GetImageDepth()
-// unsigned GetNumberOfComponents
+// unsigned GetNumberOfComponents()
 
 
 %typemap(jni) unsigned int* "jobject"
@@ -638,14 +660,19 @@
    }
 
    private String getPixelType() {
-     int depth = (int) getBytesPerPixel();
-     switch (depth) {
+      int depth = (int) getBytesPerPixel();
+      int numComponents = (int) getNumberOfComponents();
+      switch (depth) {
          case 1:
             return "GRAY8";
          case 2:
             return "GRAY16";
-         case 4:
-            return "RGB32";
+         case 4: {
+            if (numComponents == 1)
+               return "GRAY32";
+            else
+               return "RGB32";
+            }
          case 8:
             return "RGB64";
      }

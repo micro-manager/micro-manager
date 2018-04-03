@@ -2685,6 +2685,11 @@ int ZStage::ClearStageSequence()
 
 int ZStage::AddToStageSequence(double position)
 {
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
    sequence_.push_back(position);
 
    return DEVICE_OK;

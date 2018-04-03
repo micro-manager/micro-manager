@@ -138,7 +138,7 @@ SUBDIRS = \
 	$(JAVA_APP_DIRS) \
 	DeviceAdapters \
 	$(SECRETDEVICEADAPTERS) \
-	$(SYSTEMTEST_DIR)
+	$(SYSTEMTEST_DIR) \
 	bindist
 
 

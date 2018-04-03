@@ -27,8 +27,9 @@
 #include <TsiSDK.h>
 #include <TsiCamera.h>
 #include <TsiImage.h>
-#include <TsiColorCamera.h>
 #include <TsiColorImage.h>
+#include <TsiColorCamera.h>
+#include "TsiLibrary.h"
 
 #ifdef WIN32
 //...
@@ -45,70 +46,21 @@
 #include <string>
 #include <map>
 
-static const char* g_DeviceTsiCam = "TSICam";
-static const char* g_ReadoutRate = "ReadoutRate";
-static const char* g_Gain = "Gain";
-static const char* g_NumberOfTaps = "Taps";
-static const char* g_ColorFilterArray = "SensorArray";
-static const char* g_WhiteBalance = "WhiteBalance";
-static const char* g_TriggerMode = "TriggerMode";
-static const char* g_TriggerPolarity = "TriggerPolarity";
-static const char* g_ColorEnable = "Color";
-
-static const char* g_Set = "SetNow";
-static const char* g_Off = "Off";
-static const char* g_On = "On";
-static const char* g_Yes = "Yes";
-static const char* g_No = "No";
-static const char* g_Software = "Software";
-static const char* g_HardwareEdge = "HardwareStandard";
-static const char* g_HardwareDuration = "HardwareBulb";
-static const char* g_Positive = "Positive";
-static const char* g_Negative = "Negative";
-
-
-//////////////////////////////////////////////////////////////////////////////
-// Error codes
-//
-#define ERR_TSI_DLL_LOAD_FAILED           10010
-#define ERR_TSI_SDK_LOAD_FAILED           10011
-#define ERR_TSI_CAMERA_NOT_FOUND          10012
-#define ERR_TSI_OPEN_FAILED               10013
-#define ERR_CAMERA_OPEN_FAILED            10014
-#define ERR_IMAGE_TIMED_OUT               10015
-#define ERR_INVALID_CHANNEL_INDEX         16016
-#define ERR_INTERNAL_ERROR                16017
-
-//////////////////////////////////////////////////////////////////////////////
-// Region of Interest
-struct ROI {
-   unsigned x;
-   unsigned y;
-   unsigned xSize;
-   unsigned ySize;
-
-   ROI() : x(0), y(0), xSize(0), ySize(0) {}
-   ROI(unsigned _x, unsigned _y, unsigned _xSize, unsigned _ySize )
-      : x(_x), y(_y), xSize(_xSize), ySize(_ySize) {}
-   ~ROI() {}
-
-   bool isEmpty() {return x==0 && y==0 && xSize==0 && ySize == 0;}
-   void clear() {x=0; y=0; xSize=0; ySize=0;}
-};
-
-enum TriggerSource {
-	Software = 0,
-	HardwareEdge,
-	HardwareDuration
-};
-
-enum TriggerPolarity {
-	Positive = 0,
-	Negative
-};
 
 class AcqSequenceThread;
 class TsiColorCamera;
+class TsiSDK;
+
+enum TriggerSource {
+   Software = 0,
+   HardwareEdge,
+   HardwareDuration
+};
+
+enum TriggerPolarity {
+   Positive = 0,
+   Negative
+};
 
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces

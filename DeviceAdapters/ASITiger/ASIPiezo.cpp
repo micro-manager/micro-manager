@@ -38,6 +38,9 @@
 
 using namespace std;
 
+// Shared properties not implemented for piezo because as of mid-2017 any piezo
+//   occupies an entire card and so never would have another device sharing the same card.
+//   Exception is save settings b/c focus device could be on the same card but they won't share any properties.
 
 ///////////////////////////////////////////////////////////////////////////////
 // CPiezo
@@ -631,8 +634,10 @@ int CPiezo::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
    string tmpstr;
    ostringstream command; command.str("");
    if (eAct == MM::AfterSet) {
-      command << addressChar_ << "SS ";
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmpstr);
+      command << addressChar_ << "SS ";
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
          return DEVICE_OK;
       if (tmpstr.compare(g_SaveSettingsDone) == 0)
@@ -640,7 +645,7 @@ int CPiezo::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (tmpstr.compare(g_SaveSettingsX) == 0)
          command << 'X';
       else if (tmpstr.compare(g_SaveSettingsY) == 0)
-         command << 'X';
+         command << 'Y';
       else if (tmpstr.compare(g_SaveSettingsZ) == 0)
          command << 'Z';
       else if (tmpstr.compare(g_SaveSettingsZJoystick) == 0)
@@ -651,6 +656,8 @@ int CPiezo::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       RETURN_ON_MM_ERROR (hub_->QueryCommandVerify(command.str(), ":A", (long)200));  // note 200ms delay added
       pProp->Set(g_SaveSettingsDone);
+      command.str(""); command << g_SaveSettingsDone;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }

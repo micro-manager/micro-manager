@@ -858,7 +858,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
     */
    public void updateCalibrationOffset(AutofocusUtils.FocusResult score) {
       double rate = (Double) rateField_.getValue();
-      double newOffset = score.getPiezoFocusPosition() - rate * score.getGalvoFocusPosition();         
+      double newOffset = score.piezoPosition_ - rate * score.galvoPosition_;         
       offsetField_.setValue((Double) newOffset);
       ReportingUtils.logMessage("autofocus updated offset for side " + side_ + "; new value is " + newOffset);
    }
@@ -903,12 +903,13 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    
   /**
    * Centers the piezo and micro-mirror.  Doesn't do anything if the devices
-   * aren't assigned to prevent spurious exceptions.
+   * aren't assigned to prevent spurious exceptions, but will move micro-mirror
+   * if piezo isn't assigned.
    * @throws Exception 
    */
    private void centerPiezoAndGalvo() {
       boolean success = positions_.setPosition(piezoImagingDeviceKey_, imagingCenterPos_, true);
-      if (success) {
+      if (success || !devices_.isValidMMDevice(piezoImagingDeviceKey_)) {
          positions_.setPosition(micromirrorDeviceKey_, Directions.Y,
             computeGalvoFromPiezo(imagingCenterPos_));
       }
@@ -1081,12 +1082,11 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             Properties.Keys.PLUGIN_AUTOFOCUS_AUTOUPDATE_OFFSET, false)) {
          // cannot put this where we call runFocus because autofocus runs on a
          //   separate asynchronous thread
-         AutofocusUtils.FocusResult score = autofocus_.getLastFocusResult();
-         if (score.getFocusSuccess()) {
-            double offsetDelta = score.getOffsetDelta();
+         final AutofocusUtils.FocusResult score = autofocus_.getLastFocusResult();
+         if (score.focusSuccess_) {
             double maxDelta = props_.getPropValueFloat(Devices.Keys.PLUGIN,
                   Properties.Keys.PLUGIN_AUTOFOCUS_MAXOFFSETCHANGE_SETUP);
-            if (Math.abs(offsetDelta) <= maxDelta) {
+            if (Math.abs(score.offsetDelta_) <= maxDelta) {
                updateCalibrationOffset(score);
             } else {
                ReportingUtils.logMessage("autofocus successful for side " + side_ + " but offset change too much to automatically update");

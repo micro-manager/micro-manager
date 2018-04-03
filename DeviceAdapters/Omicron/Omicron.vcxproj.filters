@@ -18,9 +18,24 @@
     <ClCompile Include="Omicron.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="OmicronDeviceDriver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OmicronxX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Omicron.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OmicronDeviceDriver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OmicronxXDevices.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OmicronxX.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -35,6 +35,7 @@
 
 using namespace std;
 
+// shared properties not implemented for filter wheel except for save settings because no shared properties
 
 ///////////////////////////////////////////////////////////////////////////////
 // CFWheel
@@ -280,6 +281,8 @@ int CFWheel::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
    string tmpstr;
    ostringstream command; command.str("");
    if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
@@ -303,6 +306,8 @@ int CFWheel::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (tmpstr.compare(g_SaveSettingsX) || tmpstr.compare(g_SaveSettingsY)) {
          ForcePropertyRefresh();
       }
+      command.str(""); command << g_SaveSettingsDone;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }

@@ -143,7 +143,72 @@ import_array();
    }
 }
 
+/* tell SWIG to treat char ** as a list of strings */
+/* From https://stackoverflow.com/questions/3494598/passing-a-list-of-strings-to-from-python-ctypes-to-c-function-expecting-char */
+/* XXX No need to freearg the vector, right? */
+%typemap(in) std::vector<unsigned char *> {
+    // check if is a list
+    if(PyList_Check($input))
+    {
+        long expectedLength = (arg1)->getSLMWidth(arg2) * (arg1)->getSLMHeight(arg2);
 
+        Py_ssize_t size = PyList_Size($input);
+        std::vector<unsigned char*> inputVector;
+
+        for(Py_ssize_t i = 0; i < size; i++)
+        {
+            //printf("Pushing %d\n",  i);
+            PyObject * o = PyList_GetItem($input, i);
+            if(PyString_Check(o))
+            {
+                if (PyString_Size(o) != expectedLength)
+                {
+                    PyErr_SetString(PyExc_TypeError, "One of the Image strings is the wrong length for this SLM.");
+                    return NULL;
+                }
+   
+                inputVector.push_back((unsigned char *)PyString_AsString(o));
+            }
+            else
+            {
+                PyErr_SetString(PyExc_TypeError, "list must contain strings");
+                return NULL;
+            }
+        }
+        $1 = inputVector;
+    }
+    else
+    {
+        PyErr_SetString(PyExc_TypeError, "not a list");
+        return NULL;
+    }
+}
+
+%rename(setSLMImage) setSLMImage_pywrap;
+%apply (char *STRING, int LENGTH) { (char *pixels, int receivedLength) };
+%extend CMMCore {
+PyObject *setSLMImage_pywrap(const char* slmLabel, char *pixels, int receivedLength)
+{
+   long expectedLength = self->getSLMWidth(slmLabel) * self->getSLMHeight(slmLabel);
+   //printf("expected: %d -- received: %d\n",expectedLength,receivedLength);
+
+   if (receivedLength == expectedLength)
+   {
+      self->setSLMImage(slmLabel, (unsigned char *)pixels);
+   }
+   else if (receivedLength == 4*expectedLength)
+   {
+      self->setSLMImage(slmLabel, (imgRGB32)pixels);
+   }
+   else
+   {
+      PyErr_SetString(PyExc_TypeError, "Image dimensions are wrong for this SLM.");
+      return (PyObject *) NULL;
+   }
+   return PyInt_FromLong(0);
+}
+}
+%ignore setSLMImage;
 
 %{
 #define SWIG_FILE_WITH_INIT
@@ -202,13 +267,12 @@ namespace std {
 
 
 // output arguments
-%apply double &OUTPUT { double &x };
-%apply double &OUTPUT { double &y };
+%apply double &OUTPUT { double &x_stage };
+%apply double &OUTPUT { double &y_stage };
 %apply int &OUTPUT { int &x };
 %apply int &OUTPUT { int &y };
 %apply int &OUTPUT { int &xSize };
 %apply int &OUTPUT { int &ySize };
-
 
 
 %include "../MMDevice/MMDeviceConstants.h"
