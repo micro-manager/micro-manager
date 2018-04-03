@@ -1,9 +1,12 @@
+#include "OmicronDeviceDriver.h"
+
+#ifdef OMICRON_XDEVICES
 #include <windows.h>
 #include "OmicronxXDevices.h"
 #include <vector>
 #include <map>
 #include <sstream>
-#include "OmicronDeviceDriver.h"
+
 #include <float.h>
 
 #ifdef _WIN64
@@ -316,4 +319,6 @@ TxX_Error OMIGetString(int Index, int channelID, TxX_Parameter parameter, char *
 	return xXer_Internal;
 }
 
+
+#endif
 

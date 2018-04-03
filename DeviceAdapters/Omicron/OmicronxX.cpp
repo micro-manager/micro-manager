@@ -5,6 +5,11 @@
 #include <sstream>
 #include "stdlib.h"
 #include <algorithm>
+
+#ifdef OMICRON_XDEVICES
+#include "OmicronxXDevices.h"
+#endif
+
 //#include <cstring>
 
 const char* g_DeviceOmicronName = "Omicron";
@@ -19,6 +24,8 @@ BOOL APIENTRY DllMain(HANDLE /*hModule*/,
 	DWORD ul_reason_for_call,
 	LPVOID /*lpReserved*/)
 {
+
+#ifdef OMICRON_XDEVICES
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
@@ -28,13 +35,19 @@ BOOL APIENTRY DllMain(HANDLE /*hModule*/,
 		closeDriver();
 		break;
 	}
+#endif // OMICRON_XDEVICES
+
+	
 	return TRUE;
 }
 
 MODULE_API void InitializeModuleData()
 {
 	RegisterDevice(g_DeviceOmicronName, MM::GenericDevice, "Omicron Laser Controller");
+#ifdef OMICRON_XDEVICES
 	RegisterDevice(g_DeviceOmicronxXName, MM::ShutterDevice, "Omicron Device");
+#endif // OMICRON_XDEVICES
+	
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -45,10 +58,13 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	{
 		return new Omicron;
 	}
+#ifdef OMICRON_XDEVICES
 	else if (strcmp(deviceName, g_DeviceOmicronxXName) == 0)
 	{
 		return new OmicronDevice;
 	}
+#endif // OMICRON_XDEVICES
+	
 	return 0;
 }
 
@@ -61,6 +77,9 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 		MessageBox(NULL, "Fehler DeleteDevice", "Fehler", MB_OK | MB_TASKMODAL | MB_ICONWARNING);
 	}
 }
+
+
+#ifdef OMICRON_XDEVICES
 
 OmicronDevice::OmicronDevice():Index(-2), initialized(false),hasModShutter(false),shuttermask(0)
 {
@@ -576,3 +595,6 @@ int OmicronDevice::OnChannelPreset(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	return DEVICE_OK;
 }
+
+
+#endif // OMICRON_XDEVICES
