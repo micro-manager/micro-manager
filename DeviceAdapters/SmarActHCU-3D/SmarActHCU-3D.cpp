@@ -171,8 +171,8 @@ int XYStage::Initialize()
    
    // Frequency
    pAct = new CPropertyAction (this, &XYStage::OnFrequency);
-   CreateProperty("Speed", "5000", MM::Integer, false, pAct);
-   SetPropertyLimits("Speed", 1, 18500);
+   CreateProperty("Frequency", "5000", MM::Integer, false, pAct);
+   SetPropertyLimits("Frequency", 1, 18500);
 
    /////////////////////////////////////////////////////////////////
    // get identification
@@ -486,8 +486,21 @@ int ZStage::Initialize()
    if (ret != DEVICE_OK){
       return ret;
    }
-   channelZ_ = atoi(charbuff);  
+   channelZ_ = atoi(charbuff); 
 
+   const char* command=":GID";		
+   ret = SendSerialCommand(port_.c_str(), command, "\n");
+ 
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\n", answer);	
+
+   CreateProperty("ID", answer.substr(3).c_str(), MM::String, true);
+   
+    if (ret != DEVICE_OK)
+	{
+   	    return ret;
+	}
+   
    // Frequency
    CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnFrequency);
    CreateProperty("Frequency", "5000", MM::Integer, false, pAct);
