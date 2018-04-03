@@ -123,6 +123,10 @@ const char* g_BPC_Off            = "Off";
 
 /////////////////////////////////////////////////////
 
+const char* g_FrameRate          = "FrameRate";
+
+/////////////////////////////////////////////////////
+
 const char* g_Cooling            = "Cooling";
 const char* g_Cooling_On         = "On";
 const char* g_Cooling_Off        = "Off";
@@ -719,6 +723,12 @@ int XIMEACamera::Initialize()
 	bpcValues.push_back(g_BPC_Off); 
 
 	ret = SetAllowedValues(g_BPC, bpcValues);
+	assert(ret == DEVICE_OK);
+
+	//-------------------------------------------------------------------------------------
+	// Frame rate. For now, read-only
+	pAct = new CPropertyAction (this, &XIMEACamera::OnFrameRate);
+	ret = CreateProperty(g_FrameRate, "0.0", MM::Float, true, pAct);
 	assert(ret == DEVICE_OK);
 
 	//-------------------------------------------------------------------------------------
@@ -1322,7 +1332,14 @@ int XIMEACamera::OnDataFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
 			nComponents_ = 4;
 		}else
 			assert(false);
-		
+
+      // Remember ROI so that it can be restored
+		int offx = 0, offy = 0,  width = 0, height = 0;
+	   xiGetParamInt( handle, XI_PRM_OFFSET_X, &offx);
+	   xiGetParamInt( handle, XI_PRM_OFFSET_Y, &offy);
+	   xiGetParamInt( handle, XI_PRM_WIDTH, &width);
+	   xiGetParamInt( handle, XI_PRM_HEIGHT, &height);
+
 		ret = xiSetParamInt( handle, XI_PRM_IMAGE_DATA_FORMAT, img_format);
 		if(ret != XI_OK) return ret;
 		if(update_bpp)
@@ -1330,6 +1347,10 @@ int XIMEACamera::OnDataFormat(MM::PropertyBase* pProp, MM::ActionType eAct)
 			ret = xiSetParamInt( handle, XI_PRM_OUTPUT_DATA_BIT_DEPTH, adc_);
 			if(ret != XI_OK) return ret;
 		}
+
+      // Restore ROI
+      SetROI(offx, offy, width, height);
+
 		ResizeImageBuffer();
 		return ret;
 	}
@@ -2038,6 +2059,19 @@ int XIMEACamera::OnBpc(MM::PropertyBase* pProp, MM::ActionType eAct)
 	return ret;
 }
 
+/***********************************************************************
+* Handles "FrameRate" property.
+*/
+int XIMEACamera::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+	{
+		float fps=0;
+      xiGetParamFloat(handle, XI_PRM_FRAMERATE, &fps);
+      pProp->Set(fps);
+   }
+   return DEVICE_OK;
+}
 
 /***********************************************************************
 * Handles "Cooling" property.

@@ -112,6 +112,8 @@ public:
    int OnLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnBpc(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   int OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    
    int OnCooling(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTargetTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
