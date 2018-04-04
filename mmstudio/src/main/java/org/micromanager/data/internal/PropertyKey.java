@@ -116,7 +116,26 @@ public enum PropertyKey {
                dest.putStringList(key(), axes);
                return true;
             }
+         } else {
+            // This could be a scripted acquisition that has no information 
+            // about axis order.  It is better to guess given what we know
+            // about the available axis than not setting this field, since 
+            // too much of the downstream code depends on this information
+            INTENDED_DIMENSIONS.extractFromGsonObject(jo, builder);
+            PropertyMap id = builder.build();
+            if (id.containsPropertyMap(INTENDED_DIMENSIONS.key())) {
+               PropertyMap id2 = id.getPropertyMap(INTENDED_DIMENSIONS.key(), null);
+               String[] axesString = {Coords.P, Coords.T, Coords.Z, Coords.C};
+               for (String axis : axesString) {
+                  if (id2.containsInteger(axis) && id2.getInteger(axis, 0) > 0) {
+                     axes.add(axis);
+                  }
+               }
+               dest.putStringList(key(), axes);
+               return true;
+            }
          }
+      
          return false;
       }
 
