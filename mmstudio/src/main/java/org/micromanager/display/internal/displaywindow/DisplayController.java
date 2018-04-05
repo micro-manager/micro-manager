@@ -408,7 +408,8 @@ public final class DisplayController extends DisplayWindowAPIAdapter
 
             perfMon_.sample("Scheduling identical images (%)", imagesDiffer ? 0.0 : 100.0);
 
-            if (imagesDiffer || getDisplaySettings().isAutostretchEnabled()) {
+            if (imagesDiffer || getDisplaySettings().isAutostretchEnabled() || 
+                    getDisplaySettings().getColorMode() != DisplaySettings.ColorMode.COMPOSITE) {
                uiController_.displayImages(images);
             }
 
