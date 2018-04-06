@@ -100,6 +100,7 @@ public:
 	void     OnThreadExiting() throw(); ;
 	//////////////////////////////////////////////////////////////
 	// action interface
+   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct);
 	XimeaParam* GetXimeaParam(string param_name, bool use_xiapi_param_name = false);
 	
@@ -258,7 +259,7 @@ public:
 	{
 		enum_values.insert(std::pair<string, int>(name, value) );
 	}
-	int CountEnumEntries(){ return enum_values.size(); };
+	int CountEnumEntries(){ return (int) enum_values.size(); };
 	vector<string> GetEnumValues()
 	{
 		vector<string> vals;

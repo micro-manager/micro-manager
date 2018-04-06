@@ -200,6 +200,26 @@ int XimeaCamera::Initialize()
 		camera->FreeCameraManifest();
 		CreateCameraProperties();
 
+      // create binning property needed by Micro-Manager GUI
+      CPropertyAction *pAct = new CPropertyAction (this, &XimeaCamera::OnBinning);
+	   int ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
+      assert(ret == DEVICE_OK);
+
+      int maxBin = 0;
+	   vector<string> binningValues;
+      camera->GetXIAPIParamInt(XI_PRM_DOWNSAMPLING XI_PRM_INFO_MAX, &maxBin);
+	   for(int i = 1; i <= maxBin; i++) {
+         try {
+            camera->SetXIAPIParamInt(XI_PRM_DOWNSAMPLING, i); // will throw exception if it fails
+			   char buf[16];
+			   sprintf(buf, "%d", i);
+			   binningValues.push_back(buf);
+         } catch(xiAPIplus_Exception exc) { /* No need to log or take action */}
+      }
+      camera->SetXIAPIParamInt(XI_PRM_DOWNSAMPLING, 1);
+	   ret = SetAllowedValues(MM::g_Keyword_Binning, binningValues);
+      assert(ret == DEVICE_OK);
+
 		// prepare internal image buffer
 		int width = camera->GetXIAPIParamInt(XI_PRM_WIDTH);
 		int height = camera->GetXIAPIParamInt(XI_PRM_HEIGHT);
@@ -665,7 +685,7 @@ bool XimeaCamera::IsMultiROISet()
 	return false;
 }
 
-int XimeaCamera::GetMultiROICount(unsigned& count)
+int XimeaCamera::GetMultiROICount(unsigned& /* count */)
 {
 	/*TODO
 	Add MultiROI support
@@ -673,7 +693,8 @@ int XimeaCamera::GetMultiROICount(unsigned& count)
 	return DEVICE_ERR;
 }
 
-int XimeaCamera::SetMultiROI(const unsigned* xs, const unsigned* ys, const unsigned* widths, const unsigned* heights, unsigned numROIs)
+int XimeaCamera::SetMultiROI(const unsigned* /*xs */, const unsigned* /* ys */, const unsigned* /* widths */, 
+            const unsigned* /* heights */, unsigned /* numROIs */)
 {
 	/*TODO
 	Add MultiROI support
@@ -681,7 +702,8 @@ int XimeaCamera::SetMultiROI(const unsigned* xs, const unsigned* ys, const unsig
 	return DEVICE_ERR;
 }
 
-int XimeaCamera::GetMultiROI(unsigned* xs, unsigned* ys, unsigned* widths, unsigned* heights, unsigned* length)
+int XimeaCamera::GetMultiROI(unsigned*  /*xs */, unsigned* /* ys */, unsigned* /* widths */, unsigned* /* heights */, 
+            unsigned* /* length */)
 {
 	/*TODO
 	Add MultiROI support
@@ -882,6 +904,24 @@ bool XimeaCamera::IsCapturing()
 // XimeaCamera Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
+
+int XimeaCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	int ret = DEVICE_OK;
+	if (eAct == MM::AfterSet)
+	{
+		long binSize;
+		pProp->Get(binSize);
+		return SetBinning(binSize);
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		pProp->Set((long)GetBinning());
+	}
+
+	return ret;
+}
+
 int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	// acquisition timeout is not among standard parameters
@@ -924,7 +964,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 					if(param->GetXiParamName() == XI_PRM_EXPOSURE ||
 						param->GetXiParamName() == XI_PRM_AE_MAX_LIMIT)
 					{
-						value = value * 1000.0;
+						value = value * 1000;
 					}
 					camera->SetXIAPIParamInt(param_name.c_str(), (int) value);
 				}
@@ -972,7 +1012,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 				{
 					string value = "";
 					pProp->Get(value);
-					camera->SetXIAPIParamString(param_name.c_str(), value.c_str(), value.size());
+					camera->SetXIAPIParamString(param_name.c_str(), value.c_str(), (unsigned int) value.size());
 				}
 				break;
 			default:
@@ -1284,7 +1324,7 @@ void XimeaCamera::CreateCameraProperties()
 				LogMessage("CreateCameraProperties(): Unknown exception");
 			}
 			// log success of parameter adding
-			LogMessage("Addied parameter " + param->GetName());
+			LogMessage("Added parameter " + param->GetName());
 		}
 
 		// update enum values of property
