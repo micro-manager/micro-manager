@@ -281,16 +281,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       Font labelFont = channelNameLabel_.getFont().
             deriveFont(11.0f).deriveFont(Font.BOLD);
       channelNameLabel_.setFont(labelFont);
-     try {
-         List<String> channelNameList = viewer.getDataProvider().getSummaryMetadata().
-                 getChannelNameList();
-         if (channelNameList != null && channelNameList.size() < channelIndex) {
-            channelNameLabel_.setText(channelNameList.get(channelIndex));
-         }
-      } catch (NullPointerException npe) {
-         ReportingUtils.logError(npe, "Investigate what causes this null pointer error!");
-      }
-
+      channelNameLabel_.setText(viewer.getDataProvider().getSummaryMetadata().
+            getSafeChannelName(channelIndex));
+   
       channelVisibleButton_.setMargin(new Insets(0, 0, 0, 0));
       channelVisibleButton_.setPreferredSize(new Dimension(23, 23));
       channelVisibleButton_.setMaximumSize(new Dimension(23, 23));
