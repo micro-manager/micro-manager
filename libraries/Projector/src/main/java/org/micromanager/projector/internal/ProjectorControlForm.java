@@ -724,7 +724,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   app_.live().setSuspended(false);
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));
-                  loadMapping();
+                  mapping_ = loadMapping();
                   IJ.getImage().setRoi(originalROI);
                } catch (HeadlessException e) {
                   ReportingUtils.showError(e);
@@ -1440,7 +1440,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          dev_ = null;
       }
      
-      loadMapping();
+      mapping_ = loadMapping();
       pointAndShootMouseListener = createPointAndShootMouseListenerInstance();
 
       Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
