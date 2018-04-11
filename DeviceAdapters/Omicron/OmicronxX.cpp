@@ -1,31 +1,26 @@
 #include "OmicronxX.h"
+#include "Omicron.h"
+
+#ifdef _WINDOWS
 #include "OmicronDeviceDriver.h"
 #include "OmicronxXDevices.h"
-#include "Omicron.h"
-#include <sstream>
-#include "stdlib.h"
-#include <algorithm>
-
-#ifdef OMICRON_XDEVICES
-#include "OmicronxXDevices.h"
+#define OMICRON_XDEVICES
 #endif
 
-//#include <cstring>
+#include <algorithm>
+#include <cstdlib>
+#include <sstream>
+
 
 const char* g_DeviceOmicronName = "Omicron";
 const char* g_DeviceOmicronxXName = "Omicron USB";
 
-//#define _NOSPECSTRING
 
-//-----------------------------------------------------------------------------
-// MMDevice API
-//-----------------------------------------------------------------------------
+#ifdef OMICRON_XDEVICES
 BOOL APIENTRY DllMain(HANDLE /*hModule*/,
 	DWORD ul_reason_for_call,
 	LPVOID /*lpReserved*/)
 {
-
-#ifdef OMICRON_XDEVICES
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
@@ -35,11 +30,10 @@ BOOL APIENTRY DllMain(HANDLE /*hModule*/,
 		closeDriver();
 		break;
 	}
-#endif // OMICRON_XDEVICES
-
 	
 	return TRUE;
 }
+#endif // OMICRON_XDEVICES
 
 MODULE_API void InitializeModuleData()
 {
@@ -70,12 +64,16 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
+#ifdef _WINDOWS
 	try {
-	delete pDevice;
+#endif
+		delete pDevice;
+#ifdef _WINDOWS
 	}
 	catch (...) {
 		MessageBox(NULL, "Fehler DeleteDevice", "Fehler", MB_OK | MB_TASKMODAL | MB_ICONWARNING);
 	}
+#endif
 }
 
 
@@ -595,6 +593,5 @@ int OmicronDevice::OnChannelPreset(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	return DEVICE_OK;
 }
-
 
 #endif // OMICRON_XDEVICES
