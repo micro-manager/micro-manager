@@ -93,29 +93,24 @@ int CScanner::Initialize()
    // read the unit multiplier for X and Y axes
    // ASI's unit multiplier is how many units per degree rotation for the micromirror card
    ostringstream command;
-   command.str("");
-   command << "UM " << axisLetterX_ << "? ";
+   command.str(""); command << "UM " << axisLetterX_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(unitMultX_) );
-   command.str("");
-   command << "UM " << axisLetterY_ << "? ";
+   command.str(""); command << "UM " << axisLetterY_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(unitMultY_) );
 
    // read the home position (used for beam shuttering)
-   command.str("");
-   command << "HM " << axisLetterX_ << "? ";
+   command.str(""); command << "HM " << axisLetterX_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(shutterX_) );  // already in units of degrees
 
-   command.str("");
-   command << "HM " << axisLetterY_ << "? ";
+   command.str(""); command << "HM " << axisLetterY_ << "? ";
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":") );
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(shutterY_) ); // already in units of degrees
 
    // set controller card to return positions with 1 decimal places (3 is max allowed currently, units are millidegrees)
-   command.str("");
-   command << addressChar_ << "VB Z=1";
+   command.str(""); command << addressChar_ << "VB Z=1";
    RETURN_ON_MM_ERROR ( hub_->QueryCommand(command.str()) );  // special case, no :A returned
 
    // create MM description; this doesn't work during hardware configuration wizard but will work afterwards
@@ -269,8 +264,7 @@ int CScanner::Initialize()
    if (FirmwareVersionAtLeast(2.83))  // added in v2.83
    {
       // scanner range
-      command.str("");
-      command << "PR " << axisLetterX_ << "?";
+      command.str(""); command << "PR " << axisLetterX_ << "?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       command.str("");
       long scannerrange;
@@ -559,8 +553,7 @@ int CScanner::Initialize()
    if (FirmwareVersionAtLeast(2.88))  // 2.88+
    {
       // populate laser_side_ appropriately
-      command.str("");
-      command << "Z2B " << axisLetterX_ << "?";
+      command.str(""); command << "Z2B " << axisLetterX_ << "?";
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(axisIndexX_) );
       // pre-1.94 comm firmware with 2.88+ micro-mirror firmware doesn't give back equals
@@ -694,8 +687,7 @@ int CScanner::GetPosition(double& x, double& y)
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(x) );
    x = x/unitMultX_;
-   command.str("");
-   command << "W " << axisLetterY_;
+   command.str(""); command << "W " << axisLetterY_;
    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(y) );
    y = y/unitMultY_;
@@ -728,8 +720,7 @@ void CScanner::UpdateIlluminationState()
             illuminationState_ = true;
             return;
          }
-         command.str("");
-         command << "RS " << axisLetterY_ << "-";
+         command.str(""); command << "RS " << axisLetterY_ << "-";
          if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // don't choke on comm error
             return;
          if (hub_->LastSerialAnswer().at(3) != 'U')
@@ -813,8 +804,7 @@ int CScanner::SetIlluminationStateHelper(bool on)
             tmp &= ~0x02;
       }
 
-      command.str("");
-      command << addressChar_ << "LED X=" << tmp;
+      command.str(""); command << addressChar_ << "LED X=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(),":A") );
    }
    return DEVICE_OK;
@@ -1020,8 +1010,7 @@ int CScanner::SetSpotInterval(double pulseInterval_us)
    command << targetExposure;
    RETURN_ON_MM_ERROR ( SetProperty(g_TargetExposureTimePropertyName, command.str().c_str()) );
    long intervalMs = targetExposure_ + targetSettling_ + 3;  // 3 ms extra cushion, need 1-2 ms for busy signal to go low beyond wait time
-   command.str("");
-   command << intervalMs;
+   command.str(""); command << intervalMs;
    RETURN_ON_MM_ERROR ( SetProperty(g_RB_DelayPropertyName, command.str().c_str()) );
    return DEVICE_OK;
 }
@@ -1053,8 +1042,7 @@ int CScanner::PointAndFire(double x, double y, double time_us)
       // restore prior exposure time
       if (changeExposure)
       {
-         command.str("");
-         command << orig_exposure;
+         command.str(""); command << orig_exposure;
          SetProperty(g_TargetExposureTimePropertyName, command.str().c_str());
       }
 
@@ -1086,18 +1074,14 @@ int CScanner::OnSaveJoystickSettings()
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
    RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
    tmp += 100;
-   command.str("");
-   command << "J " << axisLetterX_ << "=" << tmp;
+   command.str(""); command << "J " << axisLetterX_ << "=" << tmp;
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-   command.str("");
-   response.str("");
-   command << "J " << axisLetterY_ << "?";
-   response << ":A " << axisLetterY_ << "=";
+   command.str(""); command << "J " << axisLetterY_ << "?";
+   response.str(""); response << ":A " << axisLetterY_ << "=";
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), response.str()));
    RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
    tmp += 100;
-   command.str("");
-   command << "J " << axisLetterY_ << "=" << tmp;
+   command.str(""); command << "J " << axisLetterY_ << "=" << tmp;
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
    return DEVICE_OK;
 }
@@ -1713,8 +1697,7 @@ int CScanner::OnSAPatternX(MM::PropertyBase* pProp, MM::ActionType eAct)
          RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
          current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
          tmp += current;
-         command.str("");
-         command << "SAP " << axisLetterX_ << "=" << tmp;
+         command.str(""); command << "SAP " << axisLetterX_ << "=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
          saStateX_.pattern = tmp;
       }
@@ -1886,8 +1869,7 @@ int CScanner::OnSAPatternY(MM::PropertyBase* pProp, MM::ActionType eAct)
          RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
          current = current & (~(long)(BIT2|BIT1|BIT0));  // set lowest 3 bits to zero
          tmp += current;
-         command.str("");
-         command << "SAP " << axisLetterY_ << "=" << tmp;
+         command.str(""); command << "SAP " << axisLetterY_ << "=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
          saStateY_.pattern = tmp;
       }
@@ -1981,8 +1963,7 @@ int CScanner::OnSAClkSrcX(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT7));  // clear bit 7
       tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterX_ << "=" << tmp;
+      command.str(""); command << "SAP " << axisLetterX_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -2031,8 +2012,7 @@ int CScanner::OnSAClkSrcY(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT7));  // clear bit 7
       tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterY_ << "=" << tmp;
+      command.str(""); command << "SAP " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -2079,8 +2059,7 @@ int CScanner::OnSAClkPolX(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT6));  // clear bit 6
       tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterX_ << "=" << tmp;
+      command.str(""); command << "SAP " << axisLetterX_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -2127,8 +2106,7 @@ int CScanner::OnSAClkPolY(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT6));  // clear bit 6
       tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterY_ << "=" << tmp;
+      command.str(""); command << "SAP " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -2175,8 +2153,7 @@ int CScanner::OnSATTLOutX(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT5));  // clear bit 5
       tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterX_ << "=" << tmp;
+      command.str(""); command << "SAP " << axisLetterX_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -2223,8 +2200,7 @@ int CScanner::OnSATTLOutY(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT5));  // clear bit 5
       tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterY_ << "=" << tmp;
+      command.str(""); command << "SAP " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -2271,8 +2247,7 @@ int CScanner::OnSATTLPolX(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT4));  // clear bit 4
       tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterX_ << "=" << tmp;
+      command.str(""); command << "SAP " << axisLetterX_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -2319,8 +2294,7 @@ int CScanner::OnSATTLPolY(MM::PropertyBase* pProp, MM::ActionType eAct)
       RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(current) );
       current = current & (~(long)(BIT4));  // clear bit 4
       tmp += current;
-      command.str("");
-      command << "SAP " << axisLetterY_ << "=" << tmp;
+      command.str(""); command << "SAP " << axisLetterY_ << "=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
    }
    return DEVICE_OK;
@@ -2439,8 +2413,7 @@ int CScanner::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << addressChar_ << "JS X=" << joystickFast << " Y=" << joystickSlow;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
@@ -2795,6 +2768,7 @@ int CScanner::OnSPIMNumSides(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       char FirstSideVal[MM::MaxStrLength];
       pProp->Get(tmp);
+      long origVal = tmp;
       RETURN_ON_MM_ERROR ( GetProperty(g_SPIMFirstSidePropertyName, FirstSideVal) );
       if (strcmp(FirstSideVal, g_SPIMSideBFirst) == 0)
       {
@@ -2808,11 +2782,10 @@ int CScanner::OnSPIMNumSides(MM::PropertyBase* pProp, MM::ActionType eAct)
       tmp += (tmp2 & (0xFC));  // preserve the upper 6 bits from before, change only the two LSBs
       if (tmp == tmp2)
          return DEVICE_OK;  // don't need to set value if it's already correct
-      command.str("");
-      command << addressChar_ << "NR Z=" << tmp;
+      command.str(""); command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      command.str(""); command << tmp;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), FirstSideVal) );
+      command.str(""); command << origVal;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -2864,8 +2837,7 @@ int CScanner::OnSPIMFirstSide(MM::PropertyBase* pProp, MM::ActionType eAct)
       tmp += (tmp2 & (0xFC));  // preserve the upper 6 bits from before, change only the two LSBs
       if (tmp == tmp2)
          return DEVICE_OK;  // don't need to set value if it's already correct
-      command.str("");
-      command << addressChar_ << "NR Z=" << tmp;
+      command.str(""); command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
@@ -2943,11 +2915,9 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), "Z="));
          RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterEquals(tmp2) );
          tmp += (tmp2 & (0xFC));  // preserve the upper 6 bits from prior setting
-         command.str("");
-         command << addressChar_ << "LED Z=" << tmp;
+         command.str(""); command << addressChar_ << "LED Z=" << tmp;
          RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-         command.str(""); command << tmpstr;
-         RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+         RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
       }
    }
    else  // before v2.88
@@ -2992,11 +2962,9 @@ int CScanner::OnLaserOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
                tmp += (tmp2 & (0xF3));  // preserve the upper 4 bits and the two LSBs from prior setting, add bits 2 and 3 in manually
                if (tmp == tmp2)
                   return DEVICE_OK;  // don't need to set value if it's already correct
-               command.str("");
-               command << addressChar_ << "NR Z=" << tmp;
+               command.str(""); command << addressChar_ << "NR Z=" << tmp;
                RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-               command.str(""); command << tmpstr;
-               RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+               RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
             }
    }
    return DEVICE_OK;
@@ -3046,11 +3014,9 @@ int CScanner::OnSPIMScannerHomeDisable(MM::PropertyBase* pProp, MM::ActionType e
       tmp += (tmp2 & (0xFB));  // keep bit 2 from tmp, all others use current setting
       if (tmp == tmp2)
          return DEVICE_OK;  // don't need to set value if it's already correct
-      command.str("");
-      command << addressChar_ << "NR Z=" << tmp;
+      command.str(""); command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
@@ -3100,11 +3066,9 @@ int CScanner::OnSPIMPiezoHomeDisable(MM::PropertyBase* pProp, MM::ActionType eAc
       tmp += (tmp2 & (0xF7));  // keep bit 3 from tmp, all others use current setting
       if (tmp == tmp2)
          return DEVICE_OK;  // don't need to set value if it's already correct
-      command.str("");
-      command << addressChar_ << "NR Z=" << tmp;
+      command.str(""); command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
@@ -3152,11 +3116,9 @@ int CScanner::OnSPIMInterleaveSidesEnable(MM::PropertyBase* pProp, MM::ActionTyp
       tmp += (tmp2 & (0xEF));  // keep bit 4 from tmp, all others use current setting
       if (tmp == tmp2)
          return DEVICE_OK;  // don't need to set value if it's already correct
-      command.str("");
-      command << addressChar_ << "NR Z=" << tmp;
+      command.str(""); command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
@@ -3204,11 +3166,9 @@ int CScanner::OnSPIMAlternateDirectionsEnable(MM::PropertyBase* pProp, MM::Actio
       tmp += (tmp2 & (0xDF));  // keep bit 5 from tmp, all others use current setting
       if (tmp == tmp2)
          return DEVICE_OK;  // don't need to set value if it's already correct
-      command.str("");
-      command << addressChar_ << "NR Z=" << tmp;
+      command.str(""); command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
@@ -3512,11 +3472,9 @@ int CScanner::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
          {
             // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself before we send the next command
             // after we stop it, it will automatically go to idle state
-            command.str("");
-            command << addressChar_ << "SN X=" << (int)g_SPIMStateCode_Stop;
+            command.str(""); command << addressChar_ << "SN X=" << (int)g_SPIMStateCode_Stop;
             RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-            command.str(""); command << tmpstr;
-            RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+            RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
          }
       }
       else if (tmpstr.compare(g_SPIMStateArmed) == 0)
@@ -3528,16 +3486,13 @@ int CScanner::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (c!=g_SPIMStateCode_Idle)
          {
             // this will stop state machine if it's running, if we do SN without args we run the risk of it stopping itself (e.g. finishing) before we send the next command
-            command.str("");
-            command << addressChar_ << "SN X=" << (int)g_SPIMStateCode_Stop;
+            command.str(""); command << addressChar_ << "SN X=" << (int)g_SPIMStateCode_Stop;
             RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
          }
          // now change to armed state
-         command.str("");
-         command << addressChar_ << "SN X=" << (int)g_SPIMStateCode_Arm;
+         command.str(""); command << addressChar_ << "SN X=" << (int)g_SPIMStateCode_Arm;
          RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-         command.str(""); command << tmpstr;
-         RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+         RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
       }
       else if (tmpstr.compare(g_SPIMStateRunning) == 0)
       {
@@ -3549,11 +3504,9 @@ int CScanner::OnSPIMState(MM::PropertyBase* pProp, MM::ActionType eAct)
          {
             // if we are idle or armed then start it
             // assume that nothing else could have started it since our query moments ago
-            command.str("");
-            command << addressChar_ << "SN";
+            command.str(""); command << addressChar_ << "SN";
             RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-            command.str(""); command << tmpstr;
-            RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+            RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
          }
       }
       else
@@ -3607,8 +3560,7 @@ int CScanner::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
       command << addressChar_ << "RM " << pseudoAxisChar << "=" << tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
