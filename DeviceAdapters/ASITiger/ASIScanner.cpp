@@ -2812,7 +2812,7 @@ int CScanner::OnSPIMNumSides(MM::PropertyBase* pProp, MM::ActionType eAct)
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
       command.str(""); command << tmp;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), FirstSideVal) );
    }
    return DEVICE_OK;
 }
