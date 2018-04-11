@@ -65,7 +65,9 @@ public class PairDisplayForm extends GUFrame{
    private static final String SHOWOVERLAYPREF = "showoverlay";
    private static final String SHOWXYHISTOGRAMPREF = "showXYHistogram";
    private static final String P2DPREF = "p2d";
-   private static final String USEGAUSSIAN = "useGaussianOfVectDistances";
+   private static final String P2DFRAMES = "p2dframes";
+   private static final String P2DSINGLE = "p2dsingle";
+   private static final String P2DMULTIPLE = "p2dmultiple";
    private static final String P2DUSEVECTDISTANCE = "p2dUseVectDistances";
    private static final String P2DFIXEDPREF = "p2dFixedSigma";
    private static final String P2DERRORESTIMATE = "p2dEstimateError";
@@ -118,35 +120,25 @@ public class PairDisplayForm extends GUFrame{
       
       // 2 histograms, one with X and other with Y distance of pair members
       final JCheckBox showXYHistogram = 
-              makeCheckBox("Show X-Y distance histogram", SHOWXYHISTOGRAMPREF);
-      panel.add(showXYHistogram, "wrap");
+              makeCheckBox("Show X-Y distance histogram (registration error)", SHOWXYHISTOGRAMPREF);
+      panel.add(showXYHistogram, "span 2, wrap");
       
       // Calculate Gaussian fit of vector distances (calculate distance from average x position and average y position)
-      final JCheckBox gaussianEstimate = 
-              makeCheckBox("Use Gaussian fit of Vector distances", USEGAUSSIAN);
+      // final JCheckBox gaussianEstimate = 
+      //        makeCheckBox("Use Gaussian fit of Vector distances", USEGAUSSIAN);
       
       // Distance estimate
       final JCheckBox p2dDistanceEstimate =
-              makeCheckBox("Estimate average distance (P2D)", P2DPREF);
+              makeCheckBox("Calculate distance (P2D)", P2DPREF);
       
-      // Use vector distances (calculate distance from average x position and average y position) in p2d
-      final JCheckBox p2dUseVectDistance = 
-              makeCheckBox("Use Vector distances", P2DUSEVECTDISTANCE);
-      
-      // Distance estimate with fixed sigma
-      final JCheckBox distanceEstimateFixedSigma =
-              makeCheckBox("P2D with fixed sigma: ", P2DFIXEDPREF);
-      
-      // Sigma to use when doing P2D fit with fixed sigma
+      final JRadioButton p2dSingle = new JRadioButton("from single frames");
+      final JRadioButton p2dMultiple = new JRadioButton ("from multiple frames"); 
+
+        // Sigma to use when doing P2D fit with fixed sigma
       final JTextField sigmaTextField = new JTextField();
       sigmaTextField.setMinimumSize(new Dimension(60, 20));
       sigmaTextField.setText(up_.getString(this.getClass(), SIGMAPREF, "10.0"));
-      
-      // Select fixed sigma
-      final JRadioButton useUserSigmaValue = new JRadioButton("");
-            
-      // Use Sigma from individual data
-      final JRadioButton useIndividualSigma = new JRadioButton("from data (individual)");
+     
  
            // Whether or not to estimae the SEM of the P2D
       final JCheckBox estimateP2DError = 
@@ -156,27 +148,26 @@ public class PairDisplayForm extends GUFrame{
               makeCheckBox("Show histogram", SHOWHISTOGRAMPREF);
      
       ButtonGroup group = new ButtonGroup();
-      group.add(useUserSigmaValue);
-      // group.add(estimateSigmaValue);  
-      group.add(useIndividualSigma);
+      group.add(p2dSingle);
+      group.add(p2dMultiple);
   
-      String buttonSelection = up_.getString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTDATAAVG);
-      useUserSigmaValue.setSelected(buttonSelection.equals(SIGMAINPUTUSER));
-      // estimateSigmaValue.setSelected(buttonSelection.equals(SIGMAINPUTDATAAVG));
-      useIndividualSigma.setSelected(buttonSelection.equals(SIGMAINPUTDATAIND));
-      useUserSigmaValue.addActionListener(new ActionListener() {
+      String buttonSelection = up_.getString(PairDisplayForm.class, P2DFRAMES, P2DSINGLE);
+      p2dSingle.setSelected(buttonSelection.equals(P2DSINGLE));
+      p2dMultiple.setSelected(buttonSelection.equals(P2DMULTIPLE));
+      
+      p2dSingle.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            if (useUserSigmaValue.isSelected()) {
-               up_.setString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTUSER);
+            if (p2dSingle.isSelected()) {
+               up_.setString(PairDisplayForm.class, P2DFRAMES, P2DSINGLE);
             }
          }
       });
-      useIndividualSigma.addActionListener(new ActionListener() {
+      p2dMultiple.addActionListener(new ActionListener() {
               @Override
               public void actionPerformed(ActionEvent ae) {
-                 if (useIndividualSigma.isSelected()) {
-                    up_.setString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTDATAIND);
+                 if (p2dMultiple.isSelected()) {
+                    up_.setString(PairDisplayForm.class, P2DFRAMES, P2DMULTIPLE);
                  }
               }
       });
@@ -186,8 +177,8 @@ public class PairDisplayForm extends GUFrame{
       
       p2dUseVectDistance.setEnabled(p2dDistanceEstimate.isSelected());
       estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
-      showHistogram.setEnabled(p2dDistanceEstimate.isSelected() || 
-              gaussianEstimate.isSelected());
+      showHistogram.setEnabled(p2dDistanceEstimate.isSelected() );
+      /*
       gaussianEstimate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
@@ -195,6 +186,7 @@ public class PairDisplayForm extends GUFrame{
                      gaussianEstimate.isSelected());
          }
       });
+      */
       p2dDistanceEstimate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
@@ -211,8 +203,7 @@ public class PairDisplayForm extends GUFrame{
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected() );
             estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
-            showHistogram.setEnabled(p2dDistanceEstimate.isSelected() || 
-                     gaussianEstimate.isSelected());
+            showHistogram.setEnabled(p2dDistanceEstimate.isSelected());
          }
       });
       distanceEstimateFixedSigma.addActionListener(new ActionListener(){
@@ -250,7 +241,6 @@ public class PairDisplayForm extends GUFrame{
       useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected()&& 
                     distanceEstimateFixedSigma.isSelected() && 
                     !p2dUseVectDistance.isSelected());
-      panel.add(gaussianEstimate, "wrap");
       panel.add(p2dDistanceEstimate);
       panel.add(p2dUseVectDistance, "wrap");
       panel.add(distanceEstimateFixedSigma, "gapleft 60");
@@ -291,7 +281,6 @@ public class PairDisplayForm extends GUFrame{
                     showPairs(showPairList.isSelected()).
                     showSummary(showPairTrackSummary.isSelected()).
                     showOverlay(showOverlay.isSelected()).
-                    doGaussianEstimate(gaussianEstimate.isSelected()).
                     p2d(p2dDistanceEstimate.isSelected()).
                     useVectorDistances(p2dUseVectDistance.isSelected()).
                     fitSigma(!distanceEstimateFixedSigma.isSelected()).
