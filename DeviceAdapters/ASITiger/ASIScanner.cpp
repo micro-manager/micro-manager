@@ -2867,8 +2867,7 @@ int CScanner::OnSPIMFirstSide(MM::PropertyBase* pProp, MM::ActionType eAct)
       command.str("");
       command << addressChar_ << "NR Z=" << tmp;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
