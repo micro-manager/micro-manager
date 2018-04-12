@@ -397,9 +397,12 @@ public class GaussianUtils {
     * @param min - lowest value in the histogram plot
     * @param max - highest value in the histogram plot
     * @param fitResult - double[0] is mu, double[1] is sigma
+    * @param x - X position of the window on screen (pixels)
+    * @param y - Y position of the window on screen (pixels)
     */
    public static void plotGaussian(final String title, final double[] data, 
-           final double min, final double max, double[] fitResult) {
+           final double min, final double max, double[] fitResult,
+           int x, int y) {
       final double testNrBins = (data.length / max) * 5.0;
       final int nrBins = testNrBins > 25 ? (int) testNrBins : 25;
       final HistogramDataset hds = new HistogramDataset();
@@ -466,7 +469,7 @@ public class GaussianUtils {
       ChartFrame graphFrame = new ChartFrame(title, chart);
       graphFrame.getChartPanel().setMouseWheelEnabled(true);
       graphFrame.pack();
-      graphFrame.setLocation(300, 300);
+      graphFrame.setLocation(x, y);
       graphFrame.setVisible(true);  
    }
    
