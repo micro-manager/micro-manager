@@ -74,16 +74,13 @@ public class ParticlePairLister {
    final private Boolean showTrack_ = false;  // TODO: remove
    final private Boolean showSummary_;
    final private Boolean showOverlay_;
-   final private Boolean p2d_;
-   final private Boolean doGaussianEstimate_;
-   final private Boolean fitSigmaInP2D_;
    final private Boolean showXYHistogram_;
-   final private Boolean useSigmaUserGuess_;
-   final private Boolean useVectorDistances_;
-   final private Boolean estimateP2DError_;
-   final private Boolean useIndividualSigmas_;
+   final private Boolean p2dDistanceCalc_;
+   final private Boolean doGaussianEstimate_ = false; // TODO: remove
+   final private Boolean p2dSingleFrames_;
+   final private Double registrationError_; 
    final private Boolean showHistogram_;
-   final private Double sigmaUserGuess_;
+   final private Boolean estimateP2DError_;
    
 
    public static class Builder {
@@ -93,25 +90,15 @@ public class ParticlePairLister {
       private Boolean showPairs_;
       private Boolean showSummary_;
       private Boolean showOverlay_;
-      private Boolean p2d_;
-      private Boolean doGaussianEstimate_;
-      private Boolean fitSigma_;
+      private Boolean p2dDistanceCalc_;
       private Boolean showXYHistogram_;
-      private Boolean useSigmaUserGuess_;
-      private Boolean useVectorDistances_;
-      private Boolean estimateP2DError_;
-      private Boolean useIndividualSigmas_;
+      private Boolean p2dSingleFrames_;
+      private Double registrationError_;
       private Boolean showHistogram_;
-      private Double sigmaEstimate_;
+      private Boolean estimateP2DError_;
        
       
       public ParticlePairLister build() {
-         if (useVectorDistances_) {
-            useIndividualSigmas_ = false;
-         }
-         if (fitSigma_) {
-            useIndividualSigmas_ = false;
-         }
          return new ParticlePairLister(this);
       }
 
@@ -151,37 +138,18 @@ public class ParticlePairLister {
       }
 
       public Builder p2d(Boolean p2d) {
-         p2d_ = p2d;
+         p2dDistanceCalc_ = p2d;
          return this;
       }
 
-      public Builder doGaussianEstimate(Boolean doGaussianEstimate) {
-         doGaussianEstimate_ = doGaussianEstimate;
+      public Builder p2dSingleFrames(Boolean p2dSingleFrames) {
+         p2dSingleFrames_ = p2dSingleFrames;
          return this;
       }
 
-      public Builder fitSigma(Boolean fixSigma) {
-         fitSigma_ = fixSigma;
-         return this;
-      }
 
-      public Builder useSigmaEstimate(Boolean useSigmaEstimate) {
-         useSigmaUserGuess_ = useSigmaEstimate;
-         return this;
-      }
-      
-      public Builder useVectorDistances(Boolean useVectorDistances) {
-         useVectorDistances_ = useVectorDistances;
-         return this;
-      }
-
-      public Builder sigmaEstimate(Double sigmaEstimate) {
-         sigmaEstimate_ = sigmaEstimate;
-         return this;
-      }
-
-      public Builder useIndividualSigmas(Boolean use) {
-         useIndividualSigmas_ = use;
+      public Builder registrationError(Double registrationError) {
+         registrationError_ = registrationError;
          return this;
       }
       
@@ -189,6 +157,7 @@ public class ParticlePairLister {
          estimateP2DError_ = estimateP2DError;
          return this;
       }
+
 
    }
 
@@ -198,16 +167,12 @@ public class ParticlePairLister {
       showPairs_ = builder.showPairs_;
       showSummary_ = builder.showSummary_;
       showOverlay_ = builder.showOverlay_;
-      p2d_ = builder.p2d_;
-      doGaussianEstimate_ = builder.doGaussianEstimate_;
-      fitSigmaInP2D_ = builder.fitSigma_;
+      p2dDistanceCalc_ = builder.p2dDistanceCalc_;
       showXYHistogram_ = builder.showXYHistogram_;
-      useSigmaUserGuess_ = builder.useSigmaUserGuess_;
-      useVectorDistances_ = builder.useVectorDistances_;
-      sigmaUserGuess_ = builder.sigmaEstimate_;
-      useIndividualSigmas_ = builder.useIndividualSigmas_;
-      estimateP2DError_ = builder.estimateP2DError_;
+      p2dSingleFrames_ = builder.p2dSingleFrames_;
+      registrationError_ = builder.registrationError_;
       showHistogram_ = builder.showHistogram_;
+      estimateP2DError_ = builder.estimateP2DError_;
    }
 
    public Builder copy() {
@@ -217,13 +182,10 @@ public class ParticlePairLister {
               showPairs(showPairs_).
               showSummary(showSummary_).
               showOverlay(showOverlay_).
-              p2d(p2d_).
-              doGaussianEstimate(doGaussianEstimate_).
-              fitSigma(fitSigmaInP2D_).
-              useSigmaEstimate(useSigmaUserGuess_).
-              useVectorDistances(useVectorDistances_).
-              sigmaEstimate(sigmaUserGuess_).
+              p2d(p2dDistanceCalc_).
               showHistogram(showHistogram_).
+              p2dSingleFrames(p2dSingleFrames_).
+              registrationError(registrationError_).
               showXYHistogram(showXYHistogram_).
               estimateP2DError(estimateP2DError_);
    }
@@ -730,7 +692,7 @@ public class ParticlePairLister {
 
                double[] gResult = null;
                double[] avgVectDistancesAsDouble;
-               if (doGaussianEstimate_ || (p2d_ && useVectorDistances_) ) {
+               if (doGaussianEstimate_ || (p2dDistanceCalc_) ) {
                   // fit vector distances with gaussian function and plot
                   try {
                      avgVectDistancesAsDouble = ListUtils.toArray(avgVectDistances);
@@ -742,49 +704,38 @@ public class ParticlePairLister {
                              avgVectDistancesAsDouble, 0.0, maxDistanceNm_, gResult);
                      }
                   } catch (FittingException ex) {
-                     ReportingUtils.showError("Gaussian fit failed.  Try decresing the Maximum Distance value");
+                     ReportingUtils.showError("Gaussian fit failed.  Try decreasing the Maximum Distance value");
                   }
 
                }
 
                List<Double> distancesToUse = allDistances;
-               if (useVectorDistances_) {
-                  distancesToUse = avgVectDistances;
-               }
 
-               if (p2d_ && distancesToUse.size() > 0) {
+
+               if (p2dDistanceCalc_ && distancesToUse.size() > 0) {
                   double[] d = new double[distancesToUse.size()];
                   for (int j = 0; j < distancesToUse.size(); j++) {
                      d[j] = distancesToUse.get(j);
                   }
                   double[] sigmas = new double[distancesToUse.size()];
-                  if (useIndividualSigmas_) {
                      for (int j = 0; j < allSigmas.size(); j++) {
                         sigmas[j] = allSigmas.get(j);
-                     }                     
-                  }
-                 
-                  P2DFitter p2df = new P2DFitter(d, sigmas,
-                           fitSigmaInP2D_ || useVectorDistances_, 
-                           maxDistanceNm_,
-                           useIndividualSigmas_);
+                     }    
+         
+                  P2DFitter p2df = new P2DFitter(d, sigmas, false, maxDistanceNm_,
+                          true);
                   double distMean = ListUtils.listAvg(distancesToUse);
-                  double distStd = sigmaUserGuess_;
-                  if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
-                     // how do we best estimate sigma? Stefan thinks that the 
-                     // localization errors themselves have an uncertainty that 
-                     // we should account for. Simulations show this is slightly 
-                     // better than just using the average of the quadratic 
-                     // addition of sigmas of individual spot pairs. 
-                     // See the upcoming manuscript:
-                     double sfsAvg = ListUtils.listAvg(sigmasFirstSpot);
-                     double sSsAvg = ListUtils.listAvg(sigmasSecondSpot);
-                     double sfsStdDev = ListUtils.listStdDev(sigmasFirstSpot, sfsAvg);
-                     double sSsStdDev = ListUtils.listStdDev(sigmasSecondSpot, sSsAvg);
-                     distStd = Math.sqrt(sfsAvg * sfsAvg  +  sSsAvg * sSsAvg  + 
-                             sfsStdDev * sfsStdDev  +  sSsStdDev * sSsStdDev);
-                  }
-                  if (gResult != null && gResult.length == 2 && useVectorDistances_){
+
+                  // Generate a population average of the distance sigma
+                  double sfsAvg = ListUtils.listAvg(sigmasFirstSpot);
+                  double sSsAvg = ListUtils.listAvg(sigmasSecondSpot);
+                  double sfsStdDev = ListUtils.listStdDev(sigmasFirstSpot, sfsAvg);
+                  double sSsStdDev = ListUtils.listStdDev(sigmasSecondSpot, sSsAvg);
+                  double distStd = Math.sqrt(sfsAvg * sfsAvg + sSsAvg * sSsAvg
+                          + sfsStdDev * sfsStdDev + sSsStdDev * sSsStdDev +
+                          registrationError_ * registrationError_);
+
+                  if (gResult != null && gResult.length == 2) {
                      p2df.setStartParams(gResult[0], gResult[1]);
                   } else {
                      p2df.setStartParams(distMean, distStd);
@@ -794,12 +745,13 @@ public class ParticlePairLister {
                      double[] p2dfResult = p2df.solve();
                      // Confidence interval calculation as in matlab code by Stirling Churchman
                      double mu = p2dfResult[0];
-                     double sigma = distStd;
-                     if (fitSigmaInP2D_ || useVectorDistances_) {
-                        sigma = p2dfResult[1];
-                     }
-                     double sigmaRange = 4.0 * sigma / Math.sqrt(d.length);
-                     double resolution = 0.001 * sigma;
+                     double[] muSigma = {mu, distStd};
+                     // double sigma = distStd;
+                     //if (fitSigmaInP2D_ || useVectorDistances_) {
+                     //double sigma = p2dfResult[1];
+                     //}
+                     double sigmaRange = 4.0 * distStd / Math.sqrt(d.length);
+                     double resolution = 0.001 * distStd;
                      double[] distances;
                      distances = p2df.getDistances(mu - sigmaRange, resolution, mu + sigmaRange);
                      double[] logLikelihood = p2df.logLikelihood(p2dfResult, distances);
@@ -830,7 +782,7 @@ public class ParticlePairLister {
                              + " + "
                              + NumberUtils.doubleToDisplayString(highConflim, 2)
                              + "  nm, sigma = "
-                             + NumberUtils.doubleToDisplayString(sigma, 2)
+                             + NumberUtils.doubleToDisplayString(distStd, 2)
                              + " nm, ";
                      MMStudio.getInstance().alerts().postAlert(msg1, null, msg2);
 
@@ -844,10 +796,7 @@ public class ParticlePairLister {
                              + NumberUtils.doubleToDisplayString(distStd, 2) + " nm");
 
                      // plot function and histogram
-                     double[] muSigma = {p2dfResult[0], sigma};
-                     if (fitSigmaInP2D_) {
-                        muSigma = p2dfResult;
-                     }
+
                      if (showHistogram_) {
                         GaussianUtils.plotP2D("P2D fit of: " + 
                                  dc.getSpotData(row).getName() + " distances",
@@ -859,19 +808,18 @@ public class ParticlePairLister {
                      rt3.incrementCounter();
                      rt3.addValue("Max. Dist.", maxDistanceNm_);
                      rt3.addValue("File", dc.getSpotData(row).getName());
-                     String useVect = useVectorDistances_ ? "yes" : "no";
+                     String useVect = p2dSingleFrames_ ? "no" : "yes";
                      rt3.addValue("Vect. Dist.", useVect);
-                     String fittedSigma = fitSigmaInP2D_ ? "yes" : "no";
+                     String fittedSigma =  "yes";
                      rt3.addValue("Fit Sigma", fittedSigma);
-                     String sigmaFromData = useSigmaUserGuess_ || fitSigmaInP2D_ ? "no" : "yes";
-                     rt3.addValue("Sigma from data", sigmaFromData);
+                     rt3.addValue("Sigma from data", "yes");
                      rt3.addValue("n", distancesToUse.size());
                      rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
                      rt3.addValue("Positions", dc.getSpotData(row).nrPositions_);
                      rt3.addValue("mu", mu);
                      rt3.addValue("mu-lowConf", lowConflim);
                      rt3.addValue("mu-highConf", highConflim);
-                     rt3.addValue("sigma", muSigma[1]);
+                     rt3.addValue("sigma", distStd);
                      rt3.addValue("mean", distMean);
                      rt3.addValue("std", distStd);
                      if (gResult != null) {
@@ -902,24 +850,15 @@ public class ParticlePairLister {
                               d[j] = distancesToUse.get( randomIndex );
                               s[j] = allSigmas.get(randomIndex);
                            }
-                           p2df = new P2DFitter(d, s,
-                                   fitSigmaInP2D_ || useVectorDistances_, 
-                                   maxDistanceNm_,
-                                   useIndividualSigmas_ );
-                           distMean = ListUtils.avg(d);
-                           distStd = sigmaUserGuess_;
-                           if (fitSigmaInP2D_ || !useSigmaUserGuess_) {
-                              distStd = ListUtils.avg(s);
-                           }
-                           if (useVectorDistances_) {
-                              gResult = fitGaussianToData(d, 0.0, maxDistanceNm_);
-                              p2df.setStartParams(gResult[0], gResult[1]);
-                           } else {
-                              p2df.setStartParams(distMean, distStd);
-                           }
-                 
+
+                           p2df = new P2DFitter(d, s, true, maxDistanceNm_,
+                                   true);
+
+                           gResult = fitGaussianToData(d, 0.0, maxDistanceNm_);
+                           p2df.setStartParams(gResult[0], gResult[1]);
+
                            p2dfResult = p2df.solve();
-                           
+
                            bootsTrapMus.add(p2dfResult[0]);
                            
                            if (test % checkEach == 0  && test != 0) {
