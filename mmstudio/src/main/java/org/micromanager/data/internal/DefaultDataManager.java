@@ -232,10 +232,9 @@ public final class DefaultDataManager implements DataManager {
          // Copy into a StorageRAM.
          ProgressMonitor monitor = new ProgressMonitor(parent,
                "Loading images into RAM...", null, 0, result.getNumImages());
+         DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
          try {
-            DefaultDatastore tmp = (DefaultDatastore) createRAMDatastore();
             tmp.copyFrom(result, monitor);
-            result = tmp;
          }
          catch (UserCancelledException uce) {
             // HACK: to not add an exception to the api, add a message to the 
@@ -249,6 +248,8 @@ public final class DefaultDataManager implements DataManager {
             return null;
          }
          finally {
+            result.close();
+            result = tmp;
             monitor.close();
          }
       }
