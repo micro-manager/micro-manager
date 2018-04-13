@@ -68,14 +68,9 @@ public class PairDisplayForm extends GUFrame{
    private static final String P2DFRAMES = "p2dframes";
    private static final String P2DSINGLE = "p2dsingle";
    private static final String P2DMULTIPLE = "p2dmultiple";
-   private static final String P2DUSEVECTDISTANCE = "p2dUseVectDistances";
-   private static final String P2DFIXEDPREF = "p2dFixedSigma";
    private static final String P2DERRORESTIMATE = "p2dEstimateError";
    private static final String SIGMAPREF = "sigma";
-   private static final String SIGMAINPUT = "SigmaInput";
-   private static final String SIGMAINPUTUSER = "SigmaInputUser";
-   private static final String SIGMAINPUTDATAAVG = "SigmaInputDataAvg";
-   private static final String SIGMAINPUTDATAIND = "SigmaInputDataIdividual";
+   
    public static FileDialogs.FileType PAIR_DATA 
            = new FileDialogs.FileType("PAIR_DATA",
                  "Export to Location",
@@ -138,12 +133,14 @@ public class PairDisplayForm extends GUFrame{
       group.add(p2dMultiple);
       
         // Registration error Sigma to use when doing P2D fit with fixed sigma
+      final JLabel registrationLabel = new JLabel("Registration error: ");
       final JTextField registrationErrorTextField = new JTextField();
       registrationErrorTextField.setMinimumSize(new Dimension(60, 20));
       registrationErrorTextField.setText(settings_.getString(SIGMAPREF, "10.0"));
-     
+      registrationErrorTextField.getDocument().addDocumentListener(
+              makeDocumentListener(SIGMAPREF, registrationErrorTextField));
  
-           // Whether or not to estimae the SEM of the P2D
+           // Whether or not to estimate the SEM of the P2D
       final JCheckBox estimateP2DError = 
               makeCheckBox("Estimate Error (slow!)", P2DERRORESTIMATE);
       
@@ -154,57 +151,53 @@ public class PairDisplayForm extends GUFrame{
       String buttonSelection = settings_.getString(P2DFRAMES, P2DSINGLE);
       p2dSingle.setSelected(buttonSelection.equals(P2DSINGLE));
       p2dMultiple.setSelected(buttonSelection.equals(P2DMULTIPLE));
-      
+      registrationErrorTextField.setEnabled(p2dSingle.isSelected());
+      registrationLabel.setEnabled(p2dSingle.isSelected());
+
       p2dSingle.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
             if (p2dSingle.isSelected()) {
-              settings_.putString(P2DFRAMES, P2DSINGLE);
+               settings_.putString(P2DFRAMES, P2DSINGLE);
+               registrationErrorTextField.setEnabled(p2dSingle.isSelected());
+               registrationLabel.setEnabled(p2dSingle.isSelected());
             }
          }
       });
       p2dMultiple.addActionListener(new ActionListener() {
-              @Override
-              public void actionPerformed(ActionEvent ae) {
-                 if (p2dMultiple.isSelected()) {
-                    settings_.putString(P2DFRAMES, P2DMULTIPLE);
-                 }
-              }
-      });
-      
-      registrationErrorTextField.getDocument().addDocumentListener(makeDocumentListener(SIGMAPREF, registrationErrorTextField));
-      
-      // p2dUseVectDistance.setEnabled(p2dDistanceEstimate.isSelected());
-      estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
-      showHistogram.setEnabled(p2dDistanceEstimate.isSelected() );
-      /*
-      gaussianEstimate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            showHistogram.setEnabled(p2dDistanceEstimate.isSelected() || 
-                     gaussianEstimate.isSelected());
+            if (p2dMultiple.isSelected()) {
+               settings_.putString(P2DFRAMES, P2DMULTIPLE);
+               registrationErrorTextField.setEnabled(!p2dMultiple.isSelected());
+               registrationLabel.setEnabled(!p2dMultiple.isSelected());
+            }
          }
       });
-      */
+
+      
+      estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
+      showHistogram.setEnabled(p2dDistanceEstimate.isSelected() );
+     
       p2dDistanceEstimate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
             p2dSingle.setEnabled(p2dDistanceEstimate.isSelected());
             p2dMultiple.setEnabled(p2dDistanceEstimate.isSelected());
-            registrationErrorTextField.setEnabled(p2dDistanceEstimate.isSelected() );
+            registrationErrorTextField.setEnabled(
+                    p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
             estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
             showHistogram.setEnabled(p2dDistanceEstimate.isSelected());
          }
       });
-     
-     
-     
-      registrationErrorTextField.setEnabled(p2dDistanceEstimate.isSelected());
+
+      registrationErrorTextField.setEnabled(
+              p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
      
       panel.add(p2dDistanceEstimate, "wrap");
       panel.add(p2dSingle, "gapleft 30, wrap");
       panel.add(p2dMultiple, "gapleft 30, wrap");
-      panel.add(new JLabel("Registration error: "), "split 2, gapleft 35");
+      panel.add(registrationLabel, "split 2, gapleft 35");
       panel.add(registrationErrorTextField, "wrap");
       panel.add(estimateP2DError, "gapleft 30, wrap");
       panel.add(showHistogram, "gapleft 30, wrap");

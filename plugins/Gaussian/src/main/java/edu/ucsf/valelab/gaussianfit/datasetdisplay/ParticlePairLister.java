@@ -458,8 +458,8 @@ public class ParticlePairLister {
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> vectorDistances = new ArrayList<Double>(
                        tracks.size() );
-               List<MultiFrameTrackData> trackData = 
-                       new ArrayList<MultiFrameTrackData>(tracks.size());
+              // List<MultiFrameTrackData> trackData = 
+               //        new ArrayList<MultiFrameTrackData>(tracks.size());
                while (itTracks.hasNext()) {
                   ArrayList<GsSpotPair> track = itTracks.next();
                   ArrayList<Double> distances = new ArrayList<Double>();
@@ -514,6 +514,7 @@ public class ParticlePairLister {
                   
                   // only needed when using p2d - multiframe
                   if (p2dDistanceCalc_ && !p2dSingleFrames_) {
+                     /*
                      double sigmaAvgFirst = ListUtils.listAvg(sigmasFirstSpot);
                      double sigmaAvgSecond = ListUtils.listAvg(sigmasSecondSpot);
                      double sigmasigmaFirst =  ListUtils.listStdDev(
@@ -527,6 +528,7 @@ public class ParticlePairLister {
                              + sigmasigmaSecond * sigmasigmaSecond
                              + registrationError_ * registrationError_ );
                      trackData.add(new MultiFrameTrackData(distances, sigmas, sigmaD));
+                     */
                      double xDiffAvg = ListUtils.listAvg(xDiff);
                      double yDiffAvg = ListUtils.listAvg(yDiff);
                      vectorDistances.add (Math.sqrt( xDiffAvg * xDiffAvg + 
@@ -635,6 +637,7 @@ public class ParticlePairLister {
                   }
                }
 
+               /***************** Single frame calculations *******************/
                
                if (p2dDistanceCalc_ && p2dSingleFrames_ && allDistances.size() > 0) {
                   double[] d = ListUtils.toArray(allDistances);
@@ -729,6 +732,7 @@ public class ParticlePairLister {
                      String fittedSigma =  "yes";
                      rt3.addValue("Fit Sigma", fittedSigma);
                      rt3.addValue("Sigma from data", "yes");
+                     rt3.addValue("Registration error", registrationError_);
                      rt3.addValue("n", allDistances.size());
                      rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
                      rt3.addValue("Positions", dc.getSpotData(row).nrPositions_);
@@ -823,7 +827,8 @@ public class ParticlePairLister {
 
                
                
-               // P2D - Multi-Frame
+               /****************** P2D - Multi-Frame ***********************/
+               
                if (p2dDistanceCalc_ && !p2dSingleFrames_ && allDistances.size() > 0) {
                   
                   double[] d = ListUtils.toArray(vectorDistances);
@@ -831,8 +836,9 @@ public class ParticlePairLister {
                           false);
 
                   double vectMean = ListUtils.listAvg(vectorDistances);
-                  p2df.setStartParams(vectMean, ListUtils.listStdDev(
-                          vectorDistances, vectMean));
+                  double stdDev = ListUtils.listStdDev(vectorDistances, 
+                          vectMean);
+                  p2df.setStartParams(vectMean, stdDev);
 
                   double[] p2dfResult = { 0.0, 0.0};
                   try {
@@ -881,14 +887,15 @@ public class ParticlePairLister {
                   rt3.addValue("File", dc.getSpotData(row).getName());
                   String useVect = p2dSingleFrames_ ? "no" : "yes";
                   rt3.addValue("Vect. Dist.", useVect);
-                  String fittedSigma = "yes";
-                  rt3.addValue("Fit Sigma", fittedSigma);
-                  rt3.addValue("Sigma from data", "yes");
+                  rt3.addValue("Fit Sigma", "no");
+                  rt3.addValue("Sigma from data", "no");
                   rt3.addValue("n", allDistances.size());
                   rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
                   rt3.addValue("Positions", dc.getSpotData(row).nrPositions_);
                   rt3.addValue("mu", mu);
+                  rt3.addValue("sigma", sigma);
                   rt3.addValue("mean", vectMean);
+                  rt3.addValue("std. dev.", stdDev);
                   
                   
                   rt3.show("P2D Summary");
