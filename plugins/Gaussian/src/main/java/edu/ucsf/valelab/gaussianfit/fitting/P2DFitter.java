@@ -262,7 +262,7 @@ public class P2DFitter {
    /**
     * 
     * @param points array with data points to be fitted
-    * @param sigmas array with sigmas forpoints above.  Only used when useIndvidualSigmas is true
+    * @param sigmas array with sigmas for points above.  Only used when useIndvidualSigmas is true
     * @param fitSigma whether or not sigma should be fitted.  When false, the
     *                sigmaEstimate given in setStartParams will be used as 
     *                a fixed parameter in the P2D function

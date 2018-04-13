@@ -188,6 +188,20 @@ public class ParticlePairLister {
               estimateP2DError(estimateP2DError_);
    }
 
+   private class MultiFrameTrackData {
+      private final List<Double> distances_;
+      private final double sigmaD_;
+      
+      public MultiFrameTrackData (List<Double> d, double sigmaD) {
+         distances_ = d;
+         sigmaD_ = sigmaD;
+      }
+      
+      public List<Double> getDistances() { return distances_; }
+      public double getSigmaD() { return sigmaD_; }
+      
+   }
+   
    /**
     * Cycles through the spots of the selected data set and finds the most
     * nearby spot in channel 2. It will list this as a pair if the two spots are
@@ -439,6 +453,8 @@ public class ParticlePairLister {
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> sigmasSecondSpot = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
+               List<MultiFrameTrackData> trackData = 
+                       new ArrayList<MultiFrameTrackData>(tracks.size());
                while (itTracks.hasNext()) {
                   ArrayList<GsSpotPair> track = itTracks.next();
                   ArrayList<Double> distances = new ArrayList<Double>();
@@ -474,8 +490,7 @@ public class ParticlePairLister {
                   rt2.addValue(Terms.XPIX, pair.getFirstSpot().getX());
                   rt2.addValue(Terms.YPIX, pair.getFirstSpot().getY());
                   rt2.addValue("n", track.size());
-                  
-                    
+                 
                   // Average of Euclidean distances in this strack
                   double avg = ListUtils.listAvg(distances);
                   rt2.addValue("Distance-Avg", avg);
@@ -491,6 +506,23 @@ public class ParticlePairLister {
                   // Average of weighted sigmas: Sqrt(sigma1(^2) + sigma2(^2) in this track
                   double avgSigma = ListUtils.listAvg(sigmas);
                   rt2.addValue("Distance Uncertainty", avgSigma);
+                  
+                  // only needed when using p2d - multiframe
+                  if (p2dDistanceCalc_ && !p2dSingleFrames_) {
+                     double sigmaAvgFirst = ListUtils.listAvg(sigmasFirstSpot);
+                     double sigmaAvgSecond = ListUtils.listAvg(sigmasSecondSpot);
+                     double sigmasigmaFirst =  ListUtils.listStdDev(
+                             sigmasFirstSpot, sigmaAvgFirst);
+                     double sigmasigmaSecond = ListUtils.listStdDev(
+                             sigmasSecondSpot, sigmaAvgSecond);
+                     double sigmaD = Math.sqrt(
+                             sigmaAvgFirst * sigmaAvgFirst
+                             + sigmaAvgSecond * sigmaAvgSecond
+                             + sigmasigmaFirst * sigmasigmaFirst
+                             + sigmasigmaSecond * sigmasigmaSecond
+                             + registrationError_ * registrationError_ );
+                     trackData.add(new MultiFrameTrackData(distances, sigmaD));
+                  }
 
                   if (showOverlay_) {
                      /* draw arrows in overlay */
@@ -765,23 +797,95 @@ public class ParticlePairLister {
                      rt3.show("P2D Summary");
 
                   } catch (FittingException fe) {
-                     String msg =  "ID: " + dc.getSpotData(row).ID_ + 
-                             ", Failed to fit p2d function";
-                     MMStudio.getInstance().alerts().postAlert("P2D fit error", 
+                     String msg = "ID: " + dc.getSpotData(row).ID_
+                             + ", Failed to fit p2d function";
+                     MMStudio.getInstance().alerts().postAlert("P2D fit error",
                              null, msg);
                      if (row == rows_[rows_.length - 1]) {
                         ReportingUtils.showError(msg);
                      }
-                  } catch (TooManyEvaluationsException tmee) {  
-                     String msg = "ID: " + dc.getSpotData(row).ID_ + 
-                             ", Too many evaluations while fitting";
-                     MMStudio.getInstance().alerts().postAlert("P2D fit error", 
+                  } catch (TooManyEvaluationsException tmee) {
+                     String msg = "ID: " + dc.getSpotData(row).ID_
+                             + ", Too many evaluations while fitting";
+                     MMStudio.getInstance().alerts().postAlert("P2D fit error",
                              null, msg);
                      if (row == rows_[rows_.length - 1]) {
                         ReportingUtils.showError(msg);
                      }
                   }
                }
+
+               if (p2dDistanceCalc_ && !p2dSingleFrames_ && allDistances.size() > 0) {
+                  List<Double> individualParticleDistances = 
+                          new ArrayList<Double>(trackData.size());
+                  for (MultiFrameTrackData mfd : trackData) {
+                     double[] d = ListUtils.toArray(mfd.getDistances());
+
+                     P2DFitter p2df = new P2DFitter(d, null, false, maxDistanceNm_,
+                             false);
+
+                     double distMean = ListUtils.listAvg(mfd.getDistances());
+                     p2df.setStartParams(distMean, mfd.getSigmaD());
+
+                     try {
+                        double[] p2dfResult = p2df.solve();
+                        // Confidence interval calculation as in matlab code by Stirling Churchman
+                        double mu = p2dfResult[0];
+                        individualParticleDistances.add(mu);
+                     } catch (FittingException fe) {
+                        String msg = "ID: " + dc.getSpotData(row).ID_
+                                + ", Failed to fit p2d function";
+                        MMStudio.getInstance().alerts().postAlert("P2D fit error",
+                                null, msg);
+                        if (row == rows_[rows_.length - 1]) {
+                           ReportingUtils.showError(msg);
+                        }
+                     } catch (TooManyEvaluationsException tmee) {
+                        String msg = "ID: " + dc.getSpotData(row).ID_
+                                + ", Too many evaluations while fitting";
+                        MMStudio.getInstance().alerts().postAlert("P2D fit error",
+                                null, msg);
+                        if (row == rows_[rows_.length - 1]) {
+                           ReportingUtils.showError(msg);
+                        }
+                     }
+                  }
+                  // we have the distance of each individual particle, now fit 
+                  // with classic Churchman p2d
+                  double[] d = ListUtils.toArray(individualParticleDistances);
+                  P2DFitter p2df = new P2DFitter(d, null, true, maxDistanceNm_,
+                          false);
+
+                  double distMean = ListUtils.listAvg(individualParticleDistances);
+                  p2df.setStartParams(distMean, ListUtils.listStdDev(
+                          individualParticleDistances, distMean));
+
+                  try {
+                     double[] p2dfResult = p2df.solve();
+                     // Confidence interval calculation as in matlab code by Stirling Churchman
+                     double mu = p2dfResult[0];
+                     double sigma = p2dfResult[1];
+                  } catch (FittingException fe) {
+                     String msg = "ID: " + dc.getSpotData(row).ID_
+                             + ", Failed to fit p2d function";
+                     MMStudio.getInstance().alerts().postAlert("P2D fit error",
+                             null, msg);
+                     if (row == rows_[rows_.length - 1]) {
+                        ReportingUtils.showError(msg);
+                     }
+                  } catch (TooManyEvaluationsException tmee) {
+                     String msg = "ID: " + dc.getSpotData(row).ID_
+                             + ", Too many evaluations while fitting";
+                     MMStudio.getInstance().alerts().postAlert("P2D fit error",
+                             null, msg);
+                     if (row == rows_[rows_.length - 1]) {
+                        ReportingUtils.showError(msg);
+                     }
+                  }
+               }  // end of p2dCalc using multiple frames
+
+               
+               
                ij.IJ.showProgress(100.0);
                ij.IJ.showStatus("Done listing pairs");
 
