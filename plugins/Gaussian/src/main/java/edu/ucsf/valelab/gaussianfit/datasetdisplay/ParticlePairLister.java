@@ -609,8 +609,7 @@ public class ParticlePairLister {
                      return;
                   }
                          
-                  P2DFitter p2df = new P2DFitter(d, sigmas, false, maxDistanceNm_,
-                          true);
+                  P2DFitter p2df = new P2DFitter(d, sigmas, true, false, maxDistanceNm_);
 
                   // Generate a population average of the distance sigma
                   double distMean = ListUtils.listAvg(allDistances);
@@ -677,6 +676,16 @@ public class ParticlePairLister {
                              + " nm, std = "
                              + NumberUtils.doubleToDisplayString(distStd, 2) + " nm");
 
+                     /*
+                     // we have a good estimate of mu, use this to estimate an average std      
+                     P2DFitter p2df2 = new P2DFitter(d, null, false, true, maxDistanceNm_);
+                     p2df2.setStartParams(mu, distStd);
+
+                     double[] p2df2Result = p2df2.solve();
+                     // Confidence interval calculation as in matlab code by Stirling Churchman
+                     double[] fitResult2 = new double[] {mu, p2df2Result[0]};
+                     */
+                     
                      // plot function and histogram
                      if (showHistogram_) {
                         GaussianUtils.plotP2D("P2D fit of: " + 
@@ -734,8 +743,7 @@ public class ParticlePairLister {
                               s[j] = allSigmas.get(randomIndex);
                            }
 
-                           p2df = new P2DFitter(d, s, true, maxDistanceNm_,
-                                   true);
+                           p2df = new P2DFitter(d, s, true, false, maxDistanceNm_);
 
                            gResult = fitGaussianToData(d, 0.0, maxDistanceNm_);
                            p2df.setStartParams(gResult[0], gResult[1]);
@@ -795,8 +803,7 @@ public class ParticlePairLister {
                if (p2dDistanceCalc_ && !p2dSingleFrames_ && allDistances.size() > 0) {
                   
                   double[] d = ListUtils.toArray(vectorDistances);
-                  P2DFitter p2df = new P2DFitter(d, null, true, maxDistanceNm_,
-                          false);
+                  P2DFitter p2df = new P2DFitter(d, null, true, true, maxDistanceNm_);
 
                   double vectMean = ListUtils.listAvg(vectorDistances);
                   double stdDev = ListUtils.listStdDev(vectorDistances, 
