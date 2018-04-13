@@ -190,14 +190,17 @@ public class ParticlePairLister {
 
    private class MultiFrameTrackData {
       private final List<Double> distances_;
+      private final List<Double> sigmas_;
       private final double sigmaD_;
       
-      public MultiFrameTrackData (List<Double> d, double sigmaD) {
+      public MultiFrameTrackData (List<Double> d, List<Double>s, double sigmaD) {
          distances_ = d;
+         sigmas_ = s;
          sigmaD_ = sigmaD;
       }
       
       public List<Double> getDistances() { return distances_; }
+      public List<Double> getSigmas() { return sigmas_; }
       public double getSigmaD() { return sigmaD_; }
       
    }
@@ -453,6 +456,8 @@ public class ParticlePairLister {
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> sigmasSecondSpot = new ArrayList<Double>(
                        tracks.size() * dc.getSpotData(row).nrFrames_);
+               List<Double> vectorDistances = new ArrayList<Double>(
+                       tracks.size() );
                List<MultiFrameTrackData> trackData = 
                        new ArrayList<MultiFrameTrackData>(tracks.size());
                while (itTracks.hasNext()) {
@@ -521,7 +526,11 @@ public class ParticlePairLister {
                              + sigmasigmaFirst * sigmasigmaFirst
                              + sigmasigmaSecond * sigmasigmaSecond
                              + registrationError_ * registrationError_ );
-                     trackData.add(new MultiFrameTrackData(distances, sigmaD));
+                     trackData.add(new MultiFrameTrackData(distances, sigmas, sigmaD));
+                     double xDiffAvg = ListUtils.listAvg(xDiff);
+                     double yDiffAvg = ListUtils.listAvg(yDiff);
+                     vectorDistances.add (Math.sqrt( xDiffAvg * xDiffAvg + 
+                             yDiffAvg * yDiffAvg));
                   }
 
                   if (showOverlay_) {
@@ -657,10 +666,7 @@ public class ParticlePairLister {
                      // Confidence interval calculation as in matlab code by Stirling Churchman
                      double mu = p2dfResult[0];
                      double[] muSigma = {mu, distStd};
-                     // double sigma = distStd;
-                     //if (fitSigmaInP2D_ || useVectorDistances_) {
-                     //double sigma = p2dfResult[1];
-                     //}
+
                      double sigmaRange = 4.0 * distStd / Math.sqrt(d.length);
                      double resolution = 0.001 * distStd;
                      double[] distances;
@@ -815,56 +821,22 @@ public class ParticlePairLister {
                   }
                }
 
+               
+               
+               // P2D - Multi-Frame
                if (p2dDistanceCalc_ && !p2dSingleFrames_ && allDistances.size() > 0) {
-                  List<Double> individualParticleDistances = 
-                          new ArrayList<Double>(trackData.size());
-                  for (MultiFrameTrackData mfd : trackData) {
-                     double[] d = ListUtils.toArray(mfd.getDistances());
-
-                     P2DFitter p2df = new P2DFitter(d, null, false, maxDistanceNm_,
-                             false);
-
-                     double distMean = ListUtils.listAvg(mfd.getDistances());
-                     p2df.setStartParams(distMean, mfd.getSigmaD());
-
-                     try {
-                        double[] p2dfResult = p2df.solve();
-                        // Confidence interval calculation as in matlab code by Stirling Churchman
-                        double mu = p2dfResult[0];
-                        individualParticleDistances.add(mu);
-                     } catch (FittingException fe) {
-                        String msg = "ID: " + dc.getSpotData(row).ID_
-                                + ", Failed to fit p2d function";
-                        MMStudio.getInstance().alerts().postAlert("P2D fit error",
-                                null, msg);
-                        if (row == rows_[rows_.length - 1]) {
-                           ReportingUtils.showError(msg);
-                        }
-                     } catch (TooManyEvaluationsException tmee) {
-                        String msg = "ID: " + dc.getSpotData(row).ID_
-                                + ", Too many evaluations while fitting";
-                        MMStudio.getInstance().alerts().postAlert("P2D fit error",
-                                null, msg);
-                        if (row == rows_[rows_.length - 1]) {
-                           ReportingUtils.showError(msg);
-                        }
-                     }
-                  }
-                  // we have the distance of each individual particle, now fit 
-                  // with classic Churchman p2d
-                  double[] d = ListUtils.toArray(individualParticleDistances);
+                  
+                  double[] d = ListUtils.toArray(vectorDistances);
                   P2DFitter p2df = new P2DFitter(d, null, true, maxDistanceNm_,
                           false);
 
-                  double distMean = ListUtils.listAvg(individualParticleDistances);
-                  p2df.setStartParams(distMean, ListUtils.listStdDev(
-                          individualParticleDistances, distMean));
+                  double vectMean = ListUtils.listAvg(vectorDistances);
+                  p2df.setStartParams(vectMean, ListUtils.listStdDev(
+                          vectorDistances, vectMean));
 
+                  double[] p2dfResult = { 0.0, 0.0};
                   try {
-                     double[] p2dfResult = p2df.solve();
-                     // Confidence interval calculation as in matlab code by Stirling Churchman
-                     double mu = p2dfResult[0];
-                     double sigma = p2dfResult[1];
+                     p2dfResult = p2df.solve();
                   } catch (FittingException fe) {
                      String msg = "ID: " + dc.getSpotData(row).ID_
                              + ", Failed to fit p2d function";
@@ -882,9 +854,49 @@ public class ParticlePairLister {
                         ReportingUtils.showError(msg);
                      }
                   }
+
+                  double mu = p2dfResult[0];
+                  double sigma = p2dfResult[1];
+
+                  String msg1 = "P2D fit for " + dc.getSpotData(row).getName();
+                  String msg2 = "n = " + allDistances.size() + ", mu = "
+                          + NumberUtils.doubleToDisplayString(mu, 2)
+                          + " - "
+                          + "  nm, sigma = "
+                          + NumberUtils.doubleToDisplayString(sigma, 2)
+                          + " nm, ";
+                  MMStudio.getInstance().alerts().postAlert(msg1, null, msg2);
+
+                  // plot function and histogram
+                  if (showHistogram_) {
+                     GaussianUtils.plotP2D("P2D fit of: "
+                             + dc.getSpotData(row).getName() + " distances",
+                             d, maxDistanceNm_, p2dfResult);
+                  }
+
+                  // The following is used to output results in a machine readable fashion
+                  // Uncomment when needed:
+                  rt3.incrementCounter();
+                  rt3.addValue("Max. Dist.", maxDistanceNm_);
+                  rt3.addValue("File", dc.getSpotData(row).getName());
+                  String useVect = p2dSingleFrames_ ? "no" : "yes";
+                  rt3.addValue("Vect. Dist.", useVect);
+                  String fittedSigma = "yes";
+                  rt3.addValue("Fit Sigma", fittedSigma);
+                  rt3.addValue("Sigma from data", "yes");
+                  rt3.addValue("n", allDistances.size());
+                  rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
+                  rt3.addValue("Positions", dc.getSpotData(row).nrPositions_);
+                  rt3.addValue("mu", mu);
+                  rt3.addValue("mean", vectMean);
+                  
+                  
+                  rt3.show("P2D Summary");
+
+
                }  // end of p2dCalc using multiple frames
 
-               
+
                
                ij.IJ.showProgress(100.0);
                ij.IJ.showStatus("Done listing pairs");
