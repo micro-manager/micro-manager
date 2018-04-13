@@ -188,23 +188,7 @@ public class ParticlePairLister {
               estimateP2DError(estimateP2DError_);
    }
 
-   private class MultiFrameTrackData {
-      private final List<Double> distances_;
-      private final List<Double> sigmas_;
-      private final double sigmaD_;
       
-      public MultiFrameTrackData (List<Double> d, List<Double>s, double sigmaD) {
-         distances_ = d;
-         sigmas_ = s;
-         sigmaD_ = sigmaD;
-      }
-      
-      public List<Double> getDistances() { return distances_; }
-      public List<Double> getSigmas() { return sigmas_; }
-      public double getSigmaD() { return sigmaD_; }
-      
-   }
-   
    /**
     * Cycles through the spots of the selected data set and finds the most
     * nearby spot in channel 2. It will list this as a pair if the two spots are
@@ -458,8 +442,6 @@ public class ParticlePairLister {
                        tracks.size() * dc.getSpotData(row).nrFrames_);
                List<Double> vectorDistances = new ArrayList<Double>(
                        tracks.size() );
-              // List<MultiFrameTrackData> trackData = 
-               //        new ArrayList<MultiFrameTrackData>(tracks.size());
                while (itTracks.hasNext()) {
                   ArrayList<GsSpotPair> track = itTracks.next();
                   ArrayList<Double> distances = new ArrayList<Double>();
@@ -502,33 +484,13 @@ public class ParticlePairLister {
                   // Standard Deviation of Euclidean distances in this track
                   double std = ListUtils.listStdDev(distances, avg);
                   rt2.addValue("Distance-StdDev", std);
-                  
-                  //Point2D.Double avgPositionFirstSpot = ListUtils.avgXYList(firstPoints);
-                  //Point2D.Double avgPositionSecondSpot = ListUtils.avgXYList(secondPoints);
-                  //rt2.addValue("StdDev-1", ListUtils.stdDevXYList(firstPoints, avgPositionFirstSpot));
-                  //rt2.addValue("StdDev-2", ListUtils.stdDevXYList(secondPoints, avgPositionSecondSpot));
-                               
+                 
                   // Average of weighted sigmas: Sqrt(sigma1(^2) + sigma2(^2) in this track
                   double avgSigma = ListUtils.listAvg(sigmas);
                   rt2.addValue("Distance Uncertainty", avgSigma);
                   
                   // only needed when using p2d - multiframe
                   if (p2dDistanceCalc_ && !p2dSingleFrames_) {
-                     /*
-                     double sigmaAvgFirst = ListUtils.listAvg(sigmasFirstSpot);
-                     double sigmaAvgSecond = ListUtils.listAvg(sigmasSecondSpot);
-                     double sigmasigmaFirst =  ListUtils.listStdDev(
-                             sigmasFirstSpot, sigmaAvgFirst);
-                     double sigmasigmaSecond = ListUtils.listStdDev(
-                             sigmasSecondSpot, sigmaAvgSecond);
-                     double sigmaD = Math.sqrt(
-                             sigmaAvgFirst * sigmaAvgFirst
-                             + sigmaAvgSecond * sigmaAvgSecond
-                             + sigmasigmaFirst * sigmasigmaFirst
-                             + sigmasigmaSecond * sigmasigmaSecond
-                             + registrationError_ * registrationError_ );
-                     trackData.add(new MultiFrameTrackData(distances, sigmas, sigmaD));
-                     */
                      double xDiffAvg = ListUtils.listAvg(xDiff);
                      double yDiffAvg = ListUtils.listAvg(yDiff);
                      vectorDistances.add (Math.sqrt( xDiffAvg * xDiffAvg + 
@@ -763,6 +725,7 @@ public class ParticlePairLister {
                         int test = 0;
                         int randomIndex;
                         while (test < maxRepeats && !done) {
+                          
                            // create a new data set, same size as original
                            // by randomly drawing from original distances
                            for (int j = 0; j < size; j++) {
