@@ -393,7 +393,6 @@ public class P2DFitter {
       double[] localEstimators = estimators.clone();
       P2DFunc myP2DFunc = new P2DFunc(points_, fitSigma_, sigmaGuess_);
       double[] output = new double[distances.length];
-      double r = 0.0;
       for (int i = 0; i < output.length; i++) {
          localEstimators[0] = distances[i];
          output[i] = myP2DFunc.value(localEstimators); 

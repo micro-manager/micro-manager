@@ -627,10 +627,23 @@ public class ParticlePairLister {
 
                   try {
                      double[] p2dfResult = p2df.solve();
-                     // Confidence interval calculation as in matlab code by Stirling Churchman
                      double mu = p2dfResult[0];
                      double[] muSigma = {mu, distStd};
 
+                     // calculate standard devication accoring to Fisher information theory
+                     // algorithm by Jongmin Sung
+                     // stdDev (of mu) = 1 / sqrt(info), where info:
+                     // info = abs (LL(mu + dmu) + LL (mu-dmu) - 2 * LL(mu) / dmu^2)
+                     // where dmu of 0.001nm should be small enough
+                     
+                     double dMu = 0.0001;
+                     double[] llTest = {mu - dMu, mu, mu + dMu};
+                     double[] llResult = p2df.logLikelihood(muSigma, llTest);
+                     double info = Math.abs(
+                             llResult[2] + llResult[0] - 2 * llResult[1]) / dMu; 
+                     double fisherStdDev = 1 / Math.sqrt(info);
+                     
+                     // Confidence interval calculation as in matlab code by Stirling Churchman
                      double sigmaRange = 4.0 * distStd / Math.sqrt(d.length);
                      double resolution = 0.001 * distStd;
                      double[] distances;
@@ -708,6 +721,7 @@ public class ParticlePairLister {
                      rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
                      rt3.addValue("Positions", dc.getSpotData(row).nrPositions_);
                      rt3.addValue("mu", mu);
+                     rt3.addValue("Fisher-StdDev", fisherStdDev);
                      rt3.addValue("mu-lowConf", lowConflim);
                      rt3.addValue("mu-highConf", highConflim);
                      rt3.addValue("sigma", distStd);
