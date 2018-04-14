@@ -573,6 +573,12 @@ public final class DefaultDisplayManager extends DataViewerListener implements D
                if (store.getSavePath() != null) {
                   // Data have been saved already, but save our last display settings
                   removeDisplay(window);
+                  // if we do not close the datastore, nobody will...
+                  try {
+                     store.close();
+                  } catch (IOException ioe) {
+                     ReportingUtils.logError(ioe, "Error while closing datastore");
+                  }
                   return true;
                }
                // Prompt the user to save their data.
