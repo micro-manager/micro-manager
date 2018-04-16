@@ -51,7 +51,7 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import org.micromanager.Studio;
-import org.micromanager.UserProfile;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
@@ -65,26 +65,22 @@ public class PairDisplayForm extends GUFrame{
    private static final String SHOWOVERLAYPREF = "showoverlay";
    private static final String SHOWXYHISTOGRAMPREF = "showXYHistogram";
    private static final String P2DPREF = "p2d";
-   private static final String USEGAUSSIAN = "useGaussianOfVectDistances";
-   private static final String P2DUSEVECTDISTANCE = "p2dUseVectDistances";
-   private static final String P2DFIXEDPREF = "p2dFixedSigma";
-   private static final String P2DERRORESTIMATE = "p2dEstimateError";
+   private static final String P2DFRAMES = "p2dframes";
+   private static final String P2DSINGLE = "p2dsingle";
+   private static final String P2DMULTIPLE = "p2dmultiple";
    private static final String SIGMAPREF = "sigma";
-   private static final String SIGMAINPUT = "SigmaInput";
-   private static final String SIGMAINPUTUSER = "SigmaInputUser";
-   private static final String SIGMAINPUTDATAAVG = "SigmaInputDataAvg";
-   private static final String SIGMAINPUTDATAIND = "SigmaInputDataIdividual";
+   
    public static FileDialogs.FileType PAIR_DATA 
            = new FileDialogs.FileType("PAIR_DATA",
                  "Export to Location",
                  System.getProperty("user.home") + "/Untitled",
                  false, (String[]) null);
-   final UserProfile up_;
+   final MutablePropertyMapView settings_;
    
    public PairDisplayForm(final Studio studio) {
       super(studio, PairDisplayForm.class);
       final GUFrame myFrame = this;
-      up_ = studio.profile();
+      settings_ = studio.profile().getSettings(this.getClass());
       super.loadPosition(100, 100, 250, 75);
       JPanel panel = new JPanel(new MigLayout(
               "ins 5", 
@@ -96,7 +92,7 @@ public class PairDisplayForm extends GUFrame{
       panel.add(new JLabel("Maximum distance:" ), "split 2, span 2");
       final JTextField distanceTextField = new JTextField();
       distanceTextField.setMinimumSize(new Dimension(60, 20));
-      distanceTextField.setText(up_.getString(this.getClass(), MAXDISTANCEPREF, "50.0"));
+      distanceTextField.setText(settings_.getString(MAXDISTANCEPREF, "50.0"));
       distanceTextField.getDocument().addDocumentListener(
               makeDocumentListener(MAXDISTANCEPREF, distanceTextField));
       panel.add (distanceTextField, "wrap");
@@ -118,146 +114,82 @@ public class PairDisplayForm extends GUFrame{
       
       // 2 histograms, one with X and other with Y distance of pair members
       final JCheckBox showXYHistogram = 
-              makeCheckBox("Show X-Y distance histogram", SHOWXYHISTOGRAMPREF);
-      panel.add(showXYHistogram, "wrap");
+              makeCheckBox("Show X-Y distance histogram (registration error)", SHOWXYHISTOGRAMPREF);
+      panel.add(showXYHistogram, "span 2, wrap");
       
       // Calculate Gaussian fit of vector distances (calculate distance from average x position and average y position)
-      final JCheckBox gaussianEstimate = 
-              makeCheckBox("Use Gaussian fit of Vector distances", USEGAUSSIAN);
+      // final JCheckBox gaussianEstimate = 
+      //        makeCheckBox("Use Gaussian fit of Vector distances", USEGAUSSIAN);
       
       // Distance estimate
       final JCheckBox p2dDistanceEstimate =
-              makeCheckBox("Estimate average distance (P2D)", P2DPREF);
+              makeCheckBox("Calculate distance (P2D)", P2DPREF);
       
-      // Use vector distances (calculate distance from average x position and average y position) in p2d
-      final JCheckBox p2dUseVectDistance = 
-              makeCheckBox("Use Vector distances", P2DUSEVECTDISTANCE);
+      final JRadioButton p2dSingle = new JRadioButton("from single frames");
+      final JRadioButton p2dMultiple = new JRadioButton ("from multiple frames"); 
+      ButtonGroup group = new ButtonGroup();
+      group.add(p2dSingle);
+      group.add(p2dMultiple);
       
-      // Distance estimate with fixed sigma
-      final JCheckBox distanceEstimateFixedSigma =
-              makeCheckBox("P2D with fixed sigma: ", P2DFIXEDPREF);
-      
-      // Sigma to use when doing P2D fit with fixed sigma
-      final JTextField sigmaTextField = new JTextField();
-      sigmaTextField.setMinimumSize(new Dimension(60, 20));
-      sigmaTextField.setText(up_.getString(this.getClass(), SIGMAPREF, "10.0"));
-      
-      // Select fixed sigma
-      final JRadioButton useUserSigmaValue = new JRadioButton("");
-            
-      // Use Sigma from individual data
-      final JRadioButton useIndividualSigma = new JRadioButton("from data (individual)");
- 
-           // Whether or not to estimae the SEM of the P2D
-      final JCheckBox estimateP2DError = 
-              makeCheckBox("Estimate Error (slow!)", P2DERRORESTIMATE);
-      
+        // Registration error Sigma to use when doing P2D fit with fixed sigma
+      final JLabel registrationLabel = new JLabel("Registration error: ");
+      final JTextField registrationErrorTextField = new JTextField();
+      registrationErrorTextField.setMinimumSize(new Dimension(60, 20));
+      registrationErrorTextField.setText(settings_.getString(SIGMAPREF, "10.0"));
+      registrationErrorTextField.getDocument().addDocumentListener(
+              makeDocumentListener(SIGMAPREF, registrationErrorTextField));
+
       final JCheckBox showHistogram =
               makeCheckBox("Show histogram", SHOWHISTOGRAMPREF);
-     
-      ButtonGroup group = new ButtonGroup();
-      group.add(useUserSigmaValue);
-      // group.add(estimateSigmaValue);  
-      group.add(useIndividualSigma);
-  
-      String buttonSelection = up_.getString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTDATAAVG);
-      useUserSigmaValue.setSelected(buttonSelection.equals(SIGMAINPUTUSER));
-      // estimateSigmaValue.setSelected(buttonSelection.equals(SIGMAINPUTDATAAVG));
-      useIndividualSigma.setSelected(buttonSelection.equals(SIGMAINPUTDATAIND));
-      useUserSigmaValue.addActionListener(new ActionListener() {
+
+      String buttonSelection = settings_.getString(P2DFRAMES, P2DSINGLE);
+      p2dSingle.setSelected(buttonSelection.equals(P2DSINGLE));
+      p2dMultiple.setSelected(buttonSelection.equals(P2DMULTIPLE));
+      registrationErrorTextField.setEnabled(p2dSingle.isSelected());
+      registrationLabel.setEnabled(p2dSingle.isSelected());
+
+      p2dSingle.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            if (useUserSigmaValue.isSelected()) {
-               up_.setString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTUSER);
+            if (p2dSingle.isSelected()) {
+               settings_.putString(P2DFRAMES, P2DSINGLE);
+               registrationErrorTextField.setEnabled(p2dSingle.isSelected());
+               registrationLabel.setEnabled(p2dSingle.isSelected());
             }
          }
       });
-      useIndividualSigma.addActionListener(new ActionListener() {
-              @Override
-              public void actionPerformed(ActionEvent ae) {
-                 if (useIndividualSigma.isSelected()) {
-                    up_.setString(PairDisplayForm.class, SIGMAINPUT, SIGMAINPUTDATAIND);
-                 }
-              }
-      });
-      
-      sigmaTextField.getDocument().addDocumentListener(
-              makeDocumentListener(SIGMAPREF, sigmaTextField));
-      
-      p2dUseVectDistance.setEnabled(p2dDistanceEstimate.isSelected());
-      estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
-      showHistogram.setEnabled(p2dDistanceEstimate.isSelected() || 
-              gaussianEstimate.isSelected());
-      gaussianEstimate.addActionListener(new ActionListener() {
+      p2dMultiple.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            showHistogram.setEnabled(p2dDistanceEstimate.isSelected() || 
-                     gaussianEstimate.isSelected());
+            if (p2dMultiple.isSelected()) {
+               settings_.putString(P2DFRAMES, P2DMULTIPLE);
+               registrationErrorTextField.setEnabled(!p2dMultiple.isSelected());
+               registrationLabel.setEnabled(!p2dMultiple.isSelected());
+            }
          }
       });
+
+      showHistogram.setEnabled(p2dDistanceEstimate.isSelected() );
+     
       p2dDistanceEstimate.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent ae) {
-            p2dUseVectDistance.setEnabled(p2dDistanceEstimate.isSelected());
-            distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected() &&
-                    !p2dUseVectDistance.isSelected() );
-            sigmaTextField.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected() );
-            useUserSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected());
-            useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected() );
-            estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
-            showHistogram.setEnabled(p2dDistanceEstimate.isSelected() || 
-                     gaussianEstimate.isSelected());
+            p2dSingle.setEnabled(p2dDistanceEstimate.isSelected());
+            p2dMultiple.setEnabled(p2dDistanceEstimate.isSelected());
+            registrationErrorTextField.setEnabled(
+                    p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
+            showHistogram.setEnabled(p2dDistanceEstimate.isSelected());
          }
       });
-      distanceEstimateFixedSigma.addActionListener(new ActionListener(){
-         @Override
-         public void actionPerformed(ActionEvent ae){
-            useUserSigmaValue.setEnabled(distanceEstimateFixedSigma.isSelected());
-            sigmaTextField.setEnabled(distanceEstimateFixedSigma.isSelected()); 
-            useIndividualSigma.setEnabled(distanceEstimateFixedSigma.isSelected());
-         }
-      });
-      p2dUseVectDistance.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected() &&
-                    !p2dUseVectDistance.isSelected() );
-            sigmaTextField.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected() );
-            useUserSigmaValue.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected());
-            useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected() );
-         }
-      });
-      distanceEstimateFixedSigma.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    !p2dUseVectDistance.isSelected());
-      sigmaTextField.setEnabled(p2dDistanceEstimate.isSelected() && 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected());
-      useUserSigmaValue.setEnabled(p2dDistanceEstimate.isSelected()&& 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected());
-      useIndividualSigma.setEnabled(p2dDistanceEstimate.isSelected()&& 
-                    distanceEstimateFixedSigma.isSelected() && 
-                    !p2dUseVectDistance.isSelected());
-      panel.add(gaussianEstimate, "wrap");
-      panel.add(p2dDistanceEstimate);
-      panel.add(p2dUseVectDistance, "wrap");
-      panel.add(distanceEstimateFixedSigma, "gapleft 60");
-      panel.add(useUserSigmaValue, "split 2");
-      panel.add(sigmaTextField, "wrap");
-      panel.add(useIndividualSigma, "skip 1, wrap");
-      panel.add(estimateP2DError, "gapleft 60, wrap");
+
+      registrationErrorTextField.setEnabled(
+              p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
+     
+      panel.add(p2dDistanceEstimate, "wrap");
+      panel.add(p2dSingle, "gapleft 30, wrap");
+      panel.add(p2dMultiple, "gapleft 30, wrap");
+      panel.add(registrationLabel, "split 2, gapleft 35");
+      panel.add(registrationErrorTextField, "wrap");
       panel.add(showHistogram, "gapleft 30, wrap");
       
       
@@ -274,33 +206,28 @@ public class PairDisplayForm extends GUFrame{
                ReportingUtils.showError("Maximum distance should be a number");
                return;
             }
-            final double sigmaValue;
-            if (distanceEstimateFixedSigma.isSelected()) {
+            final double registrationError;
+            if (p2dDistanceEstimate.isSelected()) {
                try {
-                  sigmaValue = NumberUtils.displayStringToDouble(sigmaTextField.getText());
+                  registrationError = NumberUtils.displayStringToDouble(registrationErrorTextField.getText());
                } catch (ParseException ex) {
                   ReportingUtils.showError("Maximum distance should be a number");
                   return;
                }
             } else {
-               sigmaValue = -1.0;
+               registrationError = -1.0;
             }
             
             ParticlePairLister.Builder ppb = new ParticlePairLister.Builder();
-            ppb.maxDistanceNm(maxDistance).
+                 ppb.maxDistanceNm(maxDistance).
                     showPairs(showPairList.isSelected()).
                     showSummary(showPairTrackSummary.isSelected()).
                     showOverlay(showOverlay.isSelected()).
-                    doGaussianEstimate(gaussianEstimate.isSelected()).
                     p2d(p2dDistanceEstimate.isSelected()).
-                    useVectorDistances(p2dUseVectDistance.isSelected()).
-                    fitSigma(!distanceEstimateFixedSigma.isSelected()).
                     showXYHistogram(showXYHistogram.isSelected()).
-                    useSigmaEstimate(useUserSigmaValue.isSelected()).
-                    useIndividualSigmas(useIndividualSigma.isSelected()).
-                    sigmaEstimate(sigmaValue).
-                    showHistogram(showHistogram.isSelected()).
-                    estimateP2DError(estimateP2DError.isSelected());
+                    p2dSingleFrames(p2dSingle.isSelected()).
+                    registrationError(registrationError).
+                    showHistogram(showHistogram.isSelected() );
             DataCollectionForm.getInstance().listPairTracks(ppb);
 
             myFrame.dispose();
@@ -335,11 +262,11 @@ public class PairDisplayForm extends GUFrame{
    
    private JCheckBox makeCheckBox(final String text, final String prefName) {
       final JCheckBox jcb =  new JCheckBox(text);
-      jcb.setSelected(up_.getBoolean(PairDisplayForm.class, prefName, false));
+      jcb.setSelected(settings_.getBoolean(prefName, false));
       jcb.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            up_.setBoolean(PairDisplayForm.class, prefName, jcb.isSelected());
+            settings_.putBoolean(prefName, jcb.isSelected());
          }
       });
       return jcb;
@@ -349,7 +276,7 @@ public class PairDisplayForm extends GUFrame{
            final JTextField textField) {
       return new DocumentListener() {
          private void savePref() {
-            up_.setString(PairDisplayForm.class, prefName, textField.getText());
+            settings_.putString(prefName, textField.getText());
          }
          @Override
          public void insertUpdate(DocumentEvent e) {
