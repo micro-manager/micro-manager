@@ -32,7 +32,8 @@ public class TestParticlePairLister {
       Assert.assertEquals(1,df.getResultsTable().getRowCount());
       ParticlePairLister.Builder pb = new ParticlePairLister.Builder();
       int [] selectedRows = {0};
-      ParticlePairLister pp = pb.maxDistanceNm(100.0).showPairs(true).rows(selectedRows).p2d(true).build();
+      ParticlePairLister pp = pb.maxDistanceNm(100.0).showPairs(true).
+              rows(selectedRows).p2d(true).p2dSingleFrames(true).build();
       pp.listParticlePairTracks();
       Thread.sleep(5000);
    }

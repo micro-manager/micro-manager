@@ -36,7 +36,6 @@ import edu.ucsf.valelab.gaussianfit.fitting.Gaussian1DFitter;
 import edu.ucsf.valelab.gaussianfit.fitting.P2DFitter;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPointByData;
-import edu.ucsf.valelab.gaussianfit.utils.CalcUtils;
 import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 import edu.ucsf.valelab.gaussianfit.utils.ListUtils;
 import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
@@ -58,7 +57,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
-import org.jfree.data.xy.XYSeries;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -79,22 +77,20 @@ public class ParticlePairLister {
    final private Boolean p2dSingleFrames_;
    final private Double registrationError_; 
    final private Boolean showHistogram_;
-   final private Boolean estimateP2DError_;
    
 
    public static class Builder {
 
       private int[] rows_;
-      private Double maxDistanceNm_; 
-      private Boolean showPairs_;
-      private Boolean showSummary_;
-      private Boolean showOverlay_;
-      private Boolean p2dDistanceCalc_;
-      private Boolean showXYHistogram_;
-      private Boolean p2dSingleFrames_;
-      private Double registrationError_;
-      private Boolean showHistogram_;
-      private Boolean estimateP2DError_;
+      private Double maxDistanceNm_ = 100.0; 
+      private Boolean showPairs_ = false;
+      private Boolean showSummary_ = false;
+      private Boolean showOverlay_ = false;
+      private Boolean p2dDistanceCalc_ = false;
+      private Boolean showXYHistogram_ = false;
+      private Boolean p2dSingleFrames_ = false;
+      private Double registrationError_ = 0.0;
+      private Boolean showHistogram_ = false;
        
       
       public ParticlePairLister build() {
@@ -151,12 +147,6 @@ public class ParticlePairLister {
          registrationError_ = registrationError;
          return this;
       }
-      
-      public Builder estimateP2DError(Boolean estimateP2DError) {
-         estimateP2DError_ = estimateP2DError;
-         return this;
-      }
-
 
    }
 
@@ -171,7 +161,6 @@ public class ParticlePairLister {
       p2dSingleFrames_ = builder.p2dSingleFrames_;
       registrationError_ = builder.registrationError_;
       showHistogram_ = builder.showHistogram_;
-      estimateP2DError_ = builder.estimateP2DError_;
    }
 
    public Builder copy() {
@@ -185,8 +174,7 @@ public class ParticlePairLister {
               showHistogram(showHistogram_).
               p2dSingleFrames(p2dSingleFrames_).
               registrationError(registrationError_).
-              showXYHistogram(showXYHistogram_).
-              estimateP2DError(estimateP2DError_);
+              showXYHistogram(showXYHistogram_);
    }
 
       
@@ -621,8 +609,7 @@ public class ParticlePairLister {
                   double distStd = Math.sqrt(sfsAvg * sfsAvg + sSsAvg * sSsAvg
                           + sfsStdDev * sfsStdDev + sSsStdDev * sSsStdDev +
                           registrationError_ * registrationError_);
-                  
-                  double[] gResult = null;                  
+            
 
                   p2df.setStartParams(distMean, distStd);
 
@@ -636,24 +623,22 @@ public class ParticlePairLister {
                      // stdDev (of mu) = 1 / sqrt(info), where info:
                      // info = abs (LL(mu + dmu) + LL (mu-dmu) - 2 * LL(mu) / dmu^2)
                      // where dmu of 0.001nm should be small enough
-                     
                      double dMu = 0.001;
                      double[] llTest = {mu - dMu, mu, mu + dMu};
                      double[] llResult = p2df.logLikelihood(p2dfResult, llTest);
                      double info = Math.abs(
-                             llResult[2] + llResult[0] - 2 * llResult[1]);
-                     double info2 = info /  (dMu * dMu);
-                     double fisherStdDev = 1 / Math.sqrt(info2);
+                             llResult[2] + llResult[0] - 2 * llResult[1]) / 
+                             (dMu * dMu);
+                     double fisherStdDev = 1 / Math.sqrt(info);
                      
-                     // Confidence interval calculation as in matlab code by Stirling Churchman
+                     // Uncomment the following to plot loglikelihood
+                     /*
                      double sigmaRange = 4.0 * distStd / Math.sqrt(d.length);
                      double resolution = 0.001 * distStd;
                      double[] distances;
                      distances = p2df.getDistances(mu - sigmaRange, resolution, mu + sigmaRange);
                      double[] logLikelihood = p2df.logLikelihood(p2dfResult, distances);
 
-                     // Uncomment the following to plot loglikelihood
-                     /*
                      XYSeries data = new XYSeries("distances(nm)");
                      for (int i = 0; i < distances.length && i < logLikelihood.length; i++) {
                          data.add(distances[i], logLikelihood[i]);
@@ -661,6 +646,9 @@ public class ParticlePairLister {
                      GaussianUtils.plotData("Log Likelihood for " + dc.getSpotData(row).getName(), 
                                       data, "Distance (nm)", "Likelihood", 100, 100);
                      */
+                     
+                     /*
+                     // Confidence interval calculation as in matlab code by Stirling Churchman
                      
                      int indexOfMaxLogLikelihood = CalcUtils.maxIndex(logLikelihood);
                      int[] halfMax = CalcUtils.indicesToValuesClosest(logLikelihood,
@@ -673,13 +661,12 @@ public class ParticlePairLister {
                         lowConflim = mu - dist2;
                         highConflim = dist1 - mu;
                      }
+                     */
                      String msg1 = "P2D fit for " + dc.getSpotData(row).getName();
                      String msg2 = "n = " + allDistances.size() + ", mu = "
                              + NumberUtils.doubleToDisplayString(mu, 2)
-                             + " - "
-                             + NumberUtils.doubleToDisplayString(lowConflim, 2)
-                             + " + "
-                             + NumberUtils.doubleToDisplayString(highConflim, 2)
+                             + "\u00b1" 
+                             + NumberUtils.doubleToDisplayString(fisherStdDev, 2)
                              + "  nm, sigma = "
                              + NumberUtils.doubleToDisplayString(distStd, 2)
                              + " nm, ";
@@ -702,13 +689,12 @@ public class ParticlePairLister {
                      double[] p2df2Result = p2df2.solve();
                      // Confidence interval calculation as in matlab code by Stirling Churchman
                      double[] fitResult2 = new double[] {mu, p2df2Result[0]};
-                     */
-                     
+                      */
                      // plot function and histogram
                      if (showHistogram_) {
-                        GaussianUtils.plotP2D("P2D fit of: " + 
-                                 dc.getSpotData(row).getName() + " distances",
-                                 d, maxDistanceNm_, muSigma);
+                        GaussianUtils.plotP2D("P2D fit of: "
+                                + dc.getSpotData(row).getName() + " distances",
+                                d, maxDistanceNm_, muSigma);
                      }
 
                      // The following is used to output results in a machine readable fashion
@@ -718,7 +704,7 @@ public class ParticlePairLister {
                      rt3.addValue("File", dc.getSpotData(row).getName());
                      String useVect = p2dSingleFrames_ ? "no" : "yes";
                      rt3.addValue("Vect. Dist.", useVect);
-                     String fittedSigma =  "yes";
+                     String fittedSigma = "yes";
                      rt3.addValue("Fit Sigma", fittedSigma);
                      rt3.addValue("Sigma from data", "yes");
                      rt3.addValue("Registration error", registrationError_);
@@ -726,74 +712,9 @@ public class ParticlePairLister {
                      rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
                      rt3.addValue("Positions", dc.getSpotData(row).nrPositions_);
                      rt3.addValue("mu", mu);
-                     rt3.addValue("Fisher-StdDev", fisherStdDev);
-                     rt3.addValue("mu-lowConf", lowConflim);
-                     rt3.addValue("mu-highConf", highConflim);
+                     rt3.addValue("stdDev", fisherStdDev);
                      rt3.addValue("sigma", distStd);
-                     rt3.addValue("mean", distMean);
-                     rt3.addValue("std", distStd);
-                     if (gResult != null) {
-                        rt3.addValue("Gaussian-center", gResult[0]);
-                        rt3.addValue("Gaussian-std", gResult[1]);
-                     }
-                     
-                     
-                     if (estimateP2DError_) {
-                        // use bootstrapping to estimate the error
-                        final int maxRepeats = 10000;
-                        final double maxErrorFrac = 0.001;  // 0.1 % error allowed
-                        final double checkEach = 50;  // check Each x runs 
-                        
-                        final int size = allDistances.size();
-                        List<Double> bootsTrapMus = new ArrayList<Double>();
-                        double[] s = new double[allDistances.size()];
-                        boolean done = false;
-                        double lastMu = -1.0;
-                        double lastSem = -1.0;
-                        int test = 0;
-                        int randomIndex;
-                        while (test < maxRepeats && !done) {
-                          
-                           // create a new data set, same size as original
-                           // by randomly drawing from original distances
-                           for (int j = 0; j < size; j++) {
-                              randomIndex = (int) (Math.random() * size);
-                              d[j] = allDistances.get( randomIndex );
-                              s[j] = allSigmas.get(randomIndex);
-                           }
 
-                           p2df = new P2DFitter(d, s, true, false, maxDistanceNm_);
-
-                           gResult = fitGaussianToData(d, 0.0, maxDistanceNm_);
-                           p2df.setStartParams(gResult[0], gResult[1]);
-
-                           p2dfResult = p2df.solve();
-
-                           bootsTrapMus.add(p2dfResult[0]);
-                           
-                           if (test % checkEach == 0  && test != 0) {
-                              double cmu = ListUtils.listAvg(bootsTrapMus);
-                              double sem = ListUtils.listStdDev(bootsTrapMus, cmu);
-                              if (lastMu > 0.0 && 
-                                      Math.abs(cmu - lastMu) / cmu < maxErrorFrac &&
-                                      Math.abs(sem - lastSem) / sem < maxErrorFrac) {
-                                 done = true;
-                              }
-                              lastMu = cmu;
-                              lastSem = sem;
-                              ij.IJ.showProgress(test, maxRepeats);
-                           }
-                           test++;
-                        }
-                        
-                        double realMu = ListUtils.listAvg(bootsTrapMus);
-                        double finalSem = ListUtils.listStdDev(bootsTrapMus, realMu);
-                        
-                        rt3.addValue("BootsTrap mu", realMu);
-                        rt3.addValue("BootsTrap sem", finalSem);
-                        rt3.addValue("BootsTrap nrTries", --test);
-                        
-                     }
                      rt3.show("P2D Summary");
 
                   } catch (FittingException fe) {
@@ -853,13 +774,27 @@ public class ParticlePairLister {
                   double mu = p2dfResult[0];
                   double sigma = p2dfResult[1];
 
+                  // calculate standard devication accoring to Fisher information theory
+                  // algorithm by Jongmin Sung
+                  // stdDev (of mu) = 1 / sqrt(info), where info:
+                  // info = abs (LL(mu + dmu) + LL (mu-dmu) - 2 * LL(mu) / dmu^2)
+                  // where dmu of 0.001nm should be small enough
+                  double dMu = 0.001;
+                  double[] llTest = {mu - dMu, mu, mu + dMu};
+                  double[] llResult = p2df.logLikelihood(p2dfResult, llTest);
+                  double info = Math.abs(
+                          llResult[2] + llResult[0] - 2 * llResult[1])
+                          / (dMu * dMu);
+                  double fisherStdDev = 1 / Math.sqrt(info);
+
                   String msg1 = "P2D fit for " + dc.getSpotData(row).getName();
                   String msg2 = "n = " + allDistances.size() + ", mu = "
                           + NumberUtils.doubleToDisplayString(mu, 2)
-                          + " - "
-                          + "  nm, sigma = "
+                          + "\u00b1"
+                          + NumberUtils.doubleToDisplayString(fisherStdDev, 2)
+                          + " nm , sigma = "
                           + NumberUtils.doubleToDisplayString(sigma, 2)
-                          + " nm, ";
+                          + " nm";
                   MMStudio.getInstance().alerts().postAlert(msg1, null, msg2);
 
                   // plot function and histogram
@@ -882,9 +817,10 @@ public class ParticlePairLister {
                   rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
                   rt3.addValue("Positions", dc.getSpotData(row).nrPositions_);
                   rt3.addValue("mu", mu);
+                  rt3.addValue("stdDev", fisherStdDev);
                   rt3.addValue("sigma", sigma);
-                  rt3.addValue("mean", vectMean);
-                  rt3.addValue("std. dev.", stdDev);
+                  //rt3.addValue("mean", vectMean);
+                  //rt3.addValue("std. dev.", stdDev);
                   
                   
                   rt3.show("P2D Summary");

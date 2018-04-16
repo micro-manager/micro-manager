@@ -68,7 +68,6 @@ public class PairDisplayForm extends GUFrame{
    private static final String P2DFRAMES = "p2dframes";
    private static final String P2DSINGLE = "p2dsingle";
    private static final String P2DMULTIPLE = "p2dmultiple";
-   private static final String P2DERRORESTIMATE = "p2dEstimateError";
    private static final String SIGMAPREF = "sigma";
    
    public static FileDialogs.FileType PAIR_DATA 
@@ -139,15 +138,10 @@ public class PairDisplayForm extends GUFrame{
       registrationErrorTextField.setText(settings_.getString(SIGMAPREF, "10.0"));
       registrationErrorTextField.getDocument().addDocumentListener(
               makeDocumentListener(SIGMAPREF, registrationErrorTextField));
- 
-           // Whether or not to estimate the SEM of the P2D
-      final JCheckBox estimateP2DError = 
-              makeCheckBox("Estimate Error (slow!)", P2DERRORESTIMATE);
-      
+
       final JCheckBox showHistogram =
               makeCheckBox("Show histogram", SHOWHISTOGRAMPREF);
 
-  
       String buttonSelection = settings_.getString(P2DFRAMES, P2DSINGLE);
       p2dSingle.setSelected(buttonSelection.equals(P2DSINGLE));
       p2dMultiple.setSelected(buttonSelection.equals(P2DMULTIPLE));
@@ -175,8 +169,6 @@ public class PairDisplayForm extends GUFrame{
          }
       });
 
-      
-      estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
       showHistogram.setEnabled(p2dDistanceEstimate.isSelected() );
      
       p2dDistanceEstimate.addActionListener(new ActionListener() {
@@ -186,7 +178,6 @@ public class PairDisplayForm extends GUFrame{
             p2dMultiple.setEnabled(p2dDistanceEstimate.isSelected());
             registrationErrorTextField.setEnabled(
                     p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
-            estimateP2DError.setEnabled(p2dDistanceEstimate.isSelected());
             showHistogram.setEnabled(p2dDistanceEstimate.isSelected());
          }
       });
@@ -199,7 +190,6 @@ public class PairDisplayForm extends GUFrame{
       panel.add(p2dMultiple, "gapleft 30, wrap");
       panel.add(registrationLabel, "split 2, gapleft 35");
       panel.add(registrationErrorTextField, "wrap");
-      panel.add(estimateP2DError, "gapleft 30, wrap");
       panel.add(showHistogram, "gapleft 30, wrap");
       
       
@@ -237,8 +227,7 @@ public class PairDisplayForm extends GUFrame{
                     showXYHistogram(showXYHistogram.isSelected()).
                     p2dSingleFrames(p2dSingle.isSelected()).
                     registrationError(registrationError).
-                    showHistogram(showHistogram.isSelected()).
-                    estimateP2DError(estimateP2DError.isSelected());
+                    showHistogram(showHistogram.isSelected() );
             DataCollectionForm.getInstance().listPairTracks(ppb);
 
             myFrame.dispose();
