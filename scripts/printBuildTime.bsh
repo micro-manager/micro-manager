@@ -1,0 +1,3 @@
+import org.micromanager.internal.utils.JavaUtils;
+
+mm.getScriptController().message("" + JavaUtils.getBuildTime());
