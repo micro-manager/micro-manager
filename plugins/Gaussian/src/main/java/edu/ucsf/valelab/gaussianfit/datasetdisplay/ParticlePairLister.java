@@ -804,8 +804,6 @@ public class ParticlePairLister {
                              d, maxDistanceNm_, p2dfResult);
                   }
 
-                  // The following is used to output results in a machine readable fashion
-                  // Uncomment when needed:
                   rt3.incrementCounter();
                   rt3.addValue("Max. Dist.", maxDistanceNm_);
                   rt3.addValue("File", dc.getSpotData(row).getName());
@@ -819,9 +817,6 @@ public class ParticlePairLister {
                   rt3.addValue("mu", mu);
                   rt3.addValue("stdDev", fisherStdDev);
                   rt3.addValue("sigma", sigma);
-                  //rt3.addValue("mean", vectMean);
-                  //rt3.addValue("std. dev.", stdDev);
-                  
                   
                   rt3.show("P2D Summary");
 
