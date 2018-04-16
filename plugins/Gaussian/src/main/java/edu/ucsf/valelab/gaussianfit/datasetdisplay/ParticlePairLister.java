@@ -58,6 +58,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
+import org.jfree.data.xy.XYSeries;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -636,12 +637,13 @@ public class ParticlePairLister {
                      // info = abs (LL(mu + dmu) + LL (mu-dmu) - 2 * LL(mu) / dmu^2)
                      // where dmu of 0.001nm should be small enough
                      
-                     double dMu = 0.0001;
+                     double dMu = 0.001;
                      double[] llTest = {mu - dMu, mu, mu + dMu};
-                     double[] llResult = p2df.logLikelihood(muSigma, llTest);
+                     double[] llResult = p2df.logLikelihood(p2dfResult, llTest);
                      double info = Math.abs(
-                             llResult[2] + llResult[0] - 2 * llResult[1]) / dMu; 
-                     double fisherStdDev = 1 / Math.sqrt(info);
+                             llResult[2] + llResult[0] - 2 * llResult[1]);
+                     double info2 = info /  (dMu * dMu);
+                     double fisherStdDev = 1 / Math.sqrt(info2);
                      
                      // Confidence interval calculation as in matlab code by Stirling Churchman
                      double sigmaRange = 4.0 * distStd / Math.sqrt(d.length);
@@ -651,12 +653,15 @@ public class ParticlePairLister {
                      double[] logLikelihood = p2df.logLikelihood(p2dfResult, distances);
 
                      // Uncomment the following to plot loglikelihood
-                     // XYSeries data = new XYSeries("distances(nm)");
-                     // for (int i = 0; i < distances.length && i < logLikelihood.length; i++) {
-                     //    data.add(distances[i], logLikelihood[i]);
-                     // }
-                     // GaussianUtils.plotData("Log Likelihood for " + dc.getSpotData(row).getName(), 
-                     //                 data, "Distance (nm)", "Likelihood", 100, 100);
+                     /*
+                     XYSeries data = new XYSeries("distances(nm)");
+                     for (int i = 0; i < distances.length && i < logLikelihood.length; i++) {
+                         data.add(distances[i], logLikelihood[i]);
+                     }
+                     GaussianUtils.plotData("Log Likelihood for " + dc.getSpotData(row).getName(), 
+                                      data, "Distance (nm)", "Likelihood", 100, 100);
+                     */
+                     
                      int indexOfMaxLogLikelihood = CalcUtils.maxIndex(logLikelihood);
                      int[] halfMax = CalcUtils.indicesToValuesClosest(logLikelihood,
                              logLikelihood[indexOfMaxLogLikelihood] - 0.5);
