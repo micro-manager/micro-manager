@@ -1121,6 +1121,22 @@ int MultiStage::SetPositionUm(double pos)
 }
 
 
+int MultiStage::SetRelativePositionUm(double d)
+{
+   for (unsigned i = 0; i < nrPhysicalStages_; ++i)
+   {
+      if (!physicalStages_[i])
+         continue;
+
+      double physicalRelPos = stageScalings_[i] * d;
+      int err = physicalStages_[i]->SetRelativePositionUm(physicalRelPos);
+      if (err != DEVICE_OK)
+         return err;
+   }
+   return DEVICE_OK;
+}
+
+
 int MultiStage::GetPositionUm(double& pos)
 {
    // TODO We should allow user to select which stage to use for position
