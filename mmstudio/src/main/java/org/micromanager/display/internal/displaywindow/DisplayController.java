@@ -716,10 +716,11 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       }
    }
 
-   // TODO: why this duplicate function?
    @Override
    public void overlayVisibleChanged(Overlay overlay) {
-      overlayConfigurationChanged(overlay);
+      if (uiController_ != null) {
+         uiController_.overlaysChanged();
+      }
    }
 
    //
