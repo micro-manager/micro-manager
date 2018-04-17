@@ -44,9 +44,9 @@ import edu.ucsf.valelab.gaussianfit.fitmanagement.FitAllThread;
 import com.google.common.eventbus.Subscribe;
 import edu.ucsf.valelab.gaussianfit.algorithm.FindLocalMaxima;
 import edu.ucsf.valelab.gaussianfit.data.GaussianInfo;
+import edu.ucsf.valelab.gaussianfit.datasetdisplay.SpotOverlay;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import java.awt.Color;
@@ -56,6 +56,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
 import edu.ucsf.valelab.gaussianfit.utils.ReportingUtils;
+import ij.process.ImageProcessor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -65,6 +66,8 @@ import java.text.ParseException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -181,6 +184,8 @@ public class MainForm extends JFrame {
    
    private final int nrThreads_;
    private final ExecutorService threadPool_;
+   
+   private final SpotOverlay spotOverlay_;
 
 
     /**
@@ -189,7 +194,7 @@ public class MainForm extends JFrame {
      * @param studio Instance of the Micro-Manager 2.0 api
      */
    public MainForm(Studio studio) {
-       
+ 
       studio_ = studio;
       int nrThreads = ij.Prefs.getThreads();
       if (nrThreads > 8) {
@@ -197,83 +202,84 @@ public class MainForm extends JFrame {
       }
       nrThreads_ = nrThreads;
       threadPool_ = Executors.newFixedThreadPool(nrThreads_);
-       
+
       initComponents();
-       
-       UserProfile up = studio_.getUserProfile();
-       Class oc = MainForm.class;
-       noiseToleranceTextField_.setText((up.getString(oc, NOISETOLERANCE, "100")));
-       photonConversionTextField_.setText(Double.toString(up.getDouble(oc, PCF, 10.41)));
-       emGainTextField_.setText(Double.toString(up.getDouble(oc, GAIN, 50.0)));
-       pixelSizeTextField_.setText(Double.toString(up.getDouble(oc, PIXELSIZE, 107.0)));
-       baseLevelTextField_.setText(Double.toString(up.getDouble(oc, BACKGROUNDLEVEL, 100.0)));
-       readNoiseTextField_.setText(Double.toString(up.getDouble(oc, READNOISE, 0.0)));
-       timeIntervalTextField_.setText(Double.toString(up.getDouble(oc, TIMEINTERVALMS, 1.0)));
-       zStepTextField_.setText(Double.toString(up.getDouble(oc, ZSTEPSIZE, 50.0))); 
-       
-       pixelSizeTextField_.getDocument().addDocumentListener(new BackgroundCleaner(pixelSizeTextField_));
-       emGainTextField_.getDocument().addDocumentListener(new BackgroundCleaner(emGainTextField_));      
-       timeIntervalTextField_.getDocument().addDocumentListener(new BackgroundCleaner(timeIntervalTextField_));
-       
-       minSigmaTextField_.setText(Double.toString(up.getDouble(oc, SIGMAMIN, 100.0)));
-       maxSigmaTextField_.setText(Double.toString(up.getDouble(oc, SIGMAMAX, 200.0)));
-       minNrPhotonsTextField_.setText(Double.toString(up.getDouble(oc, NRPHOTONSMIN, 500.0)));
-       maxNrPhotonsTextField_.setText(Double.toString(up.getDouble(oc, NRPHOTONSMAX, 50000.0)));
-       filterDataCheckBoxNrPhotons_.setSelected(up.getBoolean(oc, USENRPHOTONSFILTER, false));
-       fitDimensionsComboBox1_.setSelectedIndex(up.getInt(oc, FITSHAPE, 1) - 1);
-       fitMethodComboBox1_.setSelectedIndex(up.getInt(oc, FITMODE, 0));
-       maxIterationsTextField_.setText(Integer.toString(up.getInt(oc, MAXITERATIONS, 250)));
-       boxSizeTextField.setText(Integer.toString(up.getInt(oc, BOXSIZE, 8)));
-       useFixedWidthInFit_.setSelected(up.getBoolean(oc, USEFIXEDWIDTH, false));
-       fixedWidthInFit_.setText(Double.toString(up.getDouble(oc, FIXEDWIDTH, 250.0)));
-       fixedWidthInFit_.setEnabled(useFixedWidthInFit_.isSelected());
-       filterDataCheckBoxWidth_.setSelected(up.getBoolean(oc, USEFILTER, false));
-       preFilterComboBox_.setSelectedIndex(up.getInt(oc, PREFILTER, 0));
-       endTrackCheckBox_.setSelected(up.getBoolean(oc, ENDTRACKBOOL, false));
-       endTrackSpinner_.setValue(up.getInt(oc, ENDTRACKINT, 0));
-       skipChannelsCheckBox_.setSelected(up.getBoolean(oc, SKIPCHANNELS, false));
-       channelsToSkip_.setText(up.getString(oc, CHANNELSKIPSTRING, ""));
-             
-       DocumentListener updateNoiseOverlay = new DocumentListener() {
 
-          @Override
-          public void changedUpdate(DocumentEvent documentEvent) {
-             updateDisplay();
-          }
+      spotOverlay_ = new SpotOverlay();
 
-          @Override
-          public void insertUpdate(DocumentEvent documentEvent) {
-             updateDisplay();
-          }
+      UserProfile up = studio_.getUserProfile();
+      Class oc = MainForm.class;
+      noiseToleranceTextField_.setText((up.getString(oc, NOISETOLERANCE, "100")));
+      photonConversionTextField_.setText(Double.toString(up.getDouble(oc, PCF, 10.41)));
+      emGainTextField_.setText(Double.toString(up.getDouble(oc, GAIN, 50.0)));
+      pixelSizeTextField_.setText(Double.toString(up.getDouble(oc, PIXELSIZE, 107.0)));
+      baseLevelTextField_.setText(Double.toString(up.getDouble(oc, BACKGROUNDLEVEL, 100.0)));
+      readNoiseTextField_.setText(Double.toString(up.getDouble(oc, READNOISE, 0.0)));
+      timeIntervalTextField_.setText(Double.toString(up.getDouble(oc, TIMEINTERVALMS, 1.0)));
+      zStepTextField_.setText(Double.toString(up.getDouble(oc, ZSTEPSIZE, 50.0)));
 
-          @Override
-          public void removeUpdate(DocumentEvent documentEvent) {
-             updateDisplay();
-          }
+      pixelSizeTextField_.getDocument().addDocumentListener(new BackgroundCleaner(pixelSizeTextField_));
+      emGainTextField_.getDocument().addDocumentListener(new BackgroundCleaner(emGainTextField_));
+      timeIntervalTextField_.getDocument().addDocumentListener(new BackgroundCleaner(timeIntervalTextField_));
 
-          private void updateDisplay() {
-             if (WINDOWOPEN && showOverlay_.isSelected()) {
-                showNoiseTolerance();
-             }
-          }
-       };
+      minSigmaTextField_.setText(Double.toString(up.getDouble(oc, SIGMAMIN, 100.0)));
+      maxSigmaTextField_.setText(Double.toString(up.getDouble(oc, SIGMAMAX, 200.0)));
+      minNrPhotonsTextField_.setText(Double.toString(up.getDouble(oc, NRPHOTONSMIN, 500.0)));
+      maxNrPhotonsTextField_.setText(Double.toString(up.getDouble(oc, NRPHOTONSMAX, 50000.0)));
+      filterDataCheckBoxNrPhotons_.setSelected(up.getBoolean(oc, USENRPHOTONSFILTER, false));
+      fitDimensionsComboBox1_.setSelectedIndex(up.getInt(oc, FITSHAPE, 1) - 1);
+      fitMethodComboBox1_.setSelectedIndex(up.getInt(oc, FITMODE, 0));
+      maxIterationsTextField_.setText(Integer.toString(up.getInt(oc, MAXITERATIONS, 250)));
+      boxSizeTextField.setText(Integer.toString(up.getInt(oc, BOXSIZE, 8)));
+      useFixedWidthInFit_.setSelected(up.getBoolean(oc, USEFIXEDWIDTH, false));
+      fixedWidthInFit_.setText(Double.toString(up.getDouble(oc, FIXEDWIDTH, 250.0)));
+      fixedWidthInFit_.setEnabled(useFixedWidthInFit_.isSelected());
+      filterDataCheckBoxWidth_.setSelected(up.getBoolean(oc, USEFILTER, false));
+      preFilterComboBox_.setSelectedIndex(up.getInt(oc, PREFILTER, 0));
+      endTrackCheckBox_.setSelected(up.getBoolean(oc, ENDTRACKBOOL, false));
+      endTrackSpinner_.setValue(up.getInt(oc, ENDTRACKINT, 0));
+      skipChannelsCheckBox_.setSelected(up.getBoolean(oc, SKIPCHANNELS, false));
+      channelsToSkip_.setText(up.getString(oc, CHANNELSKIPSTRING, ""));
 
-       updateWidthDisplay();
-       updateNrPhotonsDisplay();
-       updateEndTrack();
-       noiseToleranceTextField_.getDocument().addDocumentListener(updateNoiseOverlay);
-       boxSizeTextField.getDocument().addDocumentListener(updateNoiseOverlay);
-       
-       super.getRootPane().setDefaultButton(fitAllButton_);
-          
-       super.setTitle("Localization Microscopy");
-       
-       super.setLocation(up.getInt(oc, FRAMEXPOS, 100), up.getInt(oc, FRAMEYPOS, 100));
-       
-       super.setVisible(true);
+      DocumentListener updateNoiseOverlay = new DocumentListener() {
+
+         @Override
+         public void changedUpdate(DocumentEvent documentEvent) {
+            updateDisplay();
+         }
+
+         @Override
+         public void insertUpdate(DocumentEvent documentEvent) {
+            updateDisplay();
+         }
+
+         @Override
+         public void removeUpdate(DocumentEvent documentEvent) {
+            updateDisplay();
+         }
+
+         private void updateDisplay() {
+            if (WINDOWOPEN && showOverlay_.isSelected()) {
+               showNoiseTolerance();
+            }
+         }
+      };
+
+      updateWidthDisplay();
+      updateNrPhotonsDisplay();
+      updateEndTrack();
+      noiseToleranceTextField_.getDocument().addDocumentListener(updateNoiseOverlay);
+      boxSizeTextField.getDocument().addDocumentListener(updateNoiseOverlay);
+
+      super.getRootPane().setDefaultButton(fitAllButton_);
+
+      super.setTitle("Localization Microscopy");
+
+      super.setLocation(up.getInt(oc, FRAMEXPOS, 100), up.getInt(oc, FRAMEYPOS, 100));
+
+      super.setVisible(true);
    }
-    
-    
+
    private class BackgroundCleaner implements DocumentListener {
 
       JTextField field_;
@@ -914,33 +920,31 @@ public class MainForm extends JFrame {
 
 
    private boolean showNoiseTolerance() {
-      ImagePlus siPlus;
-      try {
-         siPlus = IJ.getImage();
-      } catch (Exception e) {
-         return false;
-      }
-      if (ip_ != siPlus) {
-         ip_ = siPlus;
-      }
+      DisplayWindow dw = studio_.displays().getCurrentWindow();
 
       // Roi originalRoi = siPlus.getRoi();
       // Find maximum in Roi, might not be needed....
-      try {
-         int val = Integer.parseInt(noiseToleranceTextField_.getText());
-         int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
-         Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 * halfSize, val, preFilterType_);
-         Overlay ov = new Overlay();
-         for (int i = 0; i < pol.npoints; i++) {
-            int x = pol.xpoints[i];
-            int y = pol.ypoints[i];
-            ov.add(new Roi(x - halfSize, y - halfSize, 2 * halfSize, 2 * halfSize));
+      if (dw != null) {
+         spotOverlay_.clearSquares();
+         try {
+            ImageProcessor iProc = studio_.data().ij().
+                    createProcessor(dw.getDisplayedImages().get(0));
+            ImagePlus siPlus = new ImagePlus("tmp", iProc);
+            int val = Integer.parseInt(noiseToleranceTextField_.getText());
+            int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
+            Polygon pol = FindLocalMaxima.FindMax(siPlus, 2 * halfSize, val, preFilterType_);
+            for (int i = 0; i < pol.npoints; i++) {
+               int x = pol.xpoints[i];
+               int y = pol.ypoints[i];
+               spotOverlay_.addSquare(x, y, 2 * halfSize);
+            }
+            labelNPoints_.setText("n: " + pol.npoints);
+            dw.addOverlay(spotOverlay_);
+         } catch (NumberFormatException nfEx) {
+            // nothing to do
+         } catch (IOException ex) {
+            Logger.getLogger(MainForm.class.getName()).log(Level.SEVERE, null, ex);
          }
-         labelNPoints_.setText("n: " + pol.npoints);
-         siPlus.setOverlay(ov);
-         siPlus.setHideOverlay(false);
-      } catch (NumberFormatException nfEx) {
-         // nothing to do
       }
       return true;
    }
@@ -999,13 +1003,17 @@ public class MainForm extends JFrame {
 
    @Subscribe
    public void OnImageChanged(DisplayPositionChangedEvent pe) {
-      showNoiseTolerance();
+      if (spotOverlay_.isVisible()) {
+         showNoiseTolerance();
+      }
    }
 
    private void showOverlay_ActionPerformed(java.awt.event.ActionEvent evt) {
       DataViewer viewer = studio_.displays().getActiveDataViewer();
+
       if (showOverlay_.isSelected()) {
          if (showNoiseTolerance()) {
+            spotOverlay_.setVisible(true);
             showOverlay_.setText("hide");
             if (viewer != null) {
                viewer.registerForEvents(this);
@@ -1015,13 +1023,7 @@ public class MainForm extends JFrame {
          if (viewer != null) {
             viewer.unregisterForEvents(this);
          }
-         ImagePlus siPlus;
-         try {
-            siPlus = IJ.getImage();
-         } catch (Exception e) {
-            return;
-         }
-         siPlus.setHideOverlay(true);
+         spotOverlay_.setVisible(false);
          showOverlay_.setText("show");
       }
    }
@@ -1088,17 +1090,11 @@ public class MainForm extends JFrame {
    }
 
    private void allPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      ImagePlus ip;
-      try {
-         ip = IJ.getImage();
-      } catch (Exception e) {
-         return;
-      }
-      DisplayWindow dw = studio_.displays().getCurrentWindow();
+      DataViewer dw = studio_.displays().getActiveDataViewer();
 
       int nrPos = 1;
-      if (!(dw == null || ip != dw.getImagePlus())) {
-         nrPos = dw.getDatastore().getAxisLength(Coords.STAGE_POSITION);
+      if (dw != null) {
+         nrPos = dw.getDataProvider().getAxisLength(Coords.STAGE_POSITION);
       }
       if (nrPos > 1) {
          posTextField_.setText("1-" + nrPos);
@@ -1107,17 +1103,11 @@ public class MainForm extends JFrame {
    }
 
    private void currentPosButton_ActionPerformed(java.awt.event.ActionEvent evt) {
-      ImagePlus ip;
-      try {
-         ip = IJ.getImage();
-      } catch (Exception e) {
-         return;
-      }
-      DisplayWindow dw = studio_.displays().getCurrentWindow();
+      DataViewer dw = studio_.displays().getActiveDataViewer();
 
       try {
          int pos = 1;
-         if (!(dw == null || ip != dw.getImagePlus())) {
+         if (dw != null ) {
             pos = dw.getDisplayedImages().get(0).getCoords().getStagePosition() + 1;
          }
          posTextField_.setText("" + pos);

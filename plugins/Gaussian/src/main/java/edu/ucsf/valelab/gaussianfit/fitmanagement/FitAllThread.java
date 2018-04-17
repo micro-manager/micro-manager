@@ -150,16 +150,16 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
 
       // take the active ImageJ image
       ImagePlus siPlus;
+      Roi originalRoi = null;
       try {
          siPlus = IJ.getImage();
+         originalRoi = siPlus.getRoi();
       } catch (Exception ex) {
          stop();
          return;
       }
       
       DisplayWindow dw = studio_.displays().getCurrentWindow();
-
-      Roi originalRoi = siPlus.getRoi();
 
       long startTime = System.nanoTime();
       int nrPositions = 1;
@@ -169,7 +169,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
       // int maxNrSpots = 0;
 
       // If we have a Micro-Manager window:
-      if (! (dw == null || siPlus != dw.getImagePlus()) ) {
+      if (dw != null) {
 
          String[] parts = positionString_.split("-");
          nrPositions = dw.getDataProvider().getAxisLength(Coords.STAGE_POSITION);
@@ -229,9 +229,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          } catch (IOException ioe) {
             ReportingUtils.logError(ioe, "In Gaussian plugin");
          }
-      }
-
-      if (dw == null || siPlus != dw.getImagePlus()) {
+      } else {
          analyzeImagePlus(siPlus, 1, originalRoi);
       }
 
@@ -453,8 +451,7 @@ public class FitAllThread extends GaussianInfo implements Runnable  {
          try {
             futures[i].get();
             gfsThreads_[i] = null;
-         } catch (ExecutionException ie) {
-         } catch (InterruptedException ex) {
+         } catch (ExecutionException | InterruptedException ie) {
          }
       }
 
