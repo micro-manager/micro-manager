@@ -241,14 +241,16 @@ public class ParticlePairLister {
                   spotListsByPosition.get(spot.getPosition()).add(spot);
                }
                Collections.sort(positions);
+               final int maxPos = positions.get(positions.size() - 1);
 
                // First go through all frames to find all pairs, organize by position
                for (int pos : positions) {
                   spotPairsByFrame.put(pos, new ArrayList<ArrayList<GsSpotPair>>());
 
                   for (int frame = 1; frame <= dc.getSpotData(row).nrFrames_; frame++) {
-                     // TODO: show correct progress
-                     ij.IJ.showProgress(frame, dc.getSpotData(row).nrFrames_);
+                     
+                     ij.IJ.showProgress(pos * dc.getSpotData(row).nrFrames_ + frame, 
+                             maxPos * dc.getSpotData(row).nrFrames_);
 
                      spotPairsByFrame.get(pos).add(new ArrayList<GsSpotPair>());
 
