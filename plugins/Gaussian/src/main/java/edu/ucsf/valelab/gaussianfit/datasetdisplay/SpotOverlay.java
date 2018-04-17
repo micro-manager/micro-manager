@@ -55,13 +55,15 @@ public class SpotOverlay extends AbstractOverlay {
 
       Double umPerImagePixel = primaryImage.getMetadata().getPixelSizeUm();
      
-      final double zoomRatio = imageViewPort.width / screenRect.width;
+      final double zoomRatio =  screenRect.width / imageViewPort.width;
      
 
       for (Square s : squares_) {
-         int halfWidth = (int) (0.5 * s.getWidth());
-         g.drawRect(s.getX() - halfWidth, s.getY() - halfWidth, 
-                 s.getWidth(), s.getWidth());
+         int zoomedWidth = (int) (zoomRatio * s.getWidth());
+         int halfWidth = (int) (0.5 * zoomedWidth);
+         int x = (int) (zoomRatio * (s.getX() - imageViewPort.x)) - halfWidth;
+         int y = (int) (zoomRatio * (s.getY() - imageViewPort.y)) - halfWidth;
+         g.drawRect(x, y, zoomedWidth, zoomedWidth);
       }
 
    }

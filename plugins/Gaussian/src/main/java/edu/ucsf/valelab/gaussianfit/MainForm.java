@@ -920,15 +920,15 @@ public class MainForm extends JFrame {
 
 
    private boolean showNoiseTolerance() {
-      DisplayWindow dw = studio_.displays().getCurrentWindow();
+      DataViewer dv = studio_.displays().getActiveDataViewer();
 
       // Roi originalRoi = siPlus.getRoi();
       // Find maximum in Roi, might not be needed....
-      if (dw != null) {
+      if (dv != null) {
          spotOverlay_.clearSquares();
          try {
             ImageProcessor iProc = studio_.data().ij().
-                    createProcessor(dw.getDisplayedImages().get(0));
+                    createProcessor(dv.getDisplayedImages().get(0));
             ImagePlus siPlus = new ImagePlus("tmp", iProc);
             int val = Integer.parseInt(noiseToleranceTextField_.getText());
             int halfSize = Integer.parseInt(boxSizeTextField.getText()) / 2;
@@ -939,7 +939,6 @@ public class MainForm extends JFrame {
                spotOverlay_.addSquare(x, y, 2 * halfSize);
             }
             labelNPoints_.setText("n: " + pol.npoints);
-            dw.addOverlay(spotOverlay_);
          } catch (NumberFormatException nfEx) {
             // nothing to do
          } catch (IOException ex) {
@@ -1009,10 +1008,12 @@ public class MainForm extends JFrame {
    }
 
    private void showOverlay_ActionPerformed(java.awt.event.ActionEvent evt) {
-      DataViewer viewer = studio_.displays().getActiveDataViewer();
+      DataViewer viewer = studio_.displays().getActiveDataViewer(); 
+      DisplayWindow dw = studio_.displays().getCurrentWindow();
 
       if (showOverlay_.isSelected()) {
          if (showNoiseTolerance()) {
+            dw.addOverlay(spotOverlay_);
             spotOverlay_.setVisible(true);
             showOverlay_.setText("hide");
             if (viewer != null) {
@@ -1025,6 +1026,7 @@ public class MainForm extends JFrame {
          }
          spotOverlay_.setVisible(false);
          showOverlay_.setText("show");
+         dw.removeOverlay(spotOverlay_);
       }
    }
 
