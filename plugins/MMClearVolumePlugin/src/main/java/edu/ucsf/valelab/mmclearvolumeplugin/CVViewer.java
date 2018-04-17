@@ -162,11 +162,11 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          name_ = dataProvider_.getSummaryMetadata().getPrefix();
       }
 
-      initializeRenderer(0);
+      initializeRenderer(0, 0);
 
    }
    
-   private void initializeRenderer(int timePoint) {
+   private void initializeRenderer(final int timePoint, final int position) {
 
       final double preferredGamma = 0.5;
       final int min = 0;
@@ -282,7 +282,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
 
          clearVolumeRenderer_.setTransferFunction(TransferFunctions.getDefault());
 
-         drawVolume(timePoint);
+         drawVolume(timePoint, position);
          displayBus_.post(new CanvasDrawCompleteEvent());
 
          // Multi-Pass rendering is active by default but causes bugs in the display
@@ -490,7 +490,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       }
       clearVolumeRenderer_.setCurrentRenderLayer(coords.getChannel());
       try {
-         drawVolume(coords.getT());
+         drawVolume(coords.getT(), coords.getP());
       } catch (IOException ioe) {
           studio_.logs().logError(ioe);
       }
@@ -567,9 +567,10 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
    /**
     * Draws the volume of the given time point in the viewer
     * @param timePoint zero-based index in the time axis
+    * @param position zero-based index into the position axis
     * @throws IOException 
     */
-   public final void drawVolume(final int timePoint) throws IOException {
+   public final void drawVolume(final int timePoint, final int position) throws IOException {
       //if (timePoint == currentlyShownTimePoint_)
       //   return; // nothing to do, already showing requested timepoint
       // create fragmented memory for each stack that needs sending to CV:
@@ -578,6 +579,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       final SummaryMetadata summary = dataProvider_.getSummaryMetadata();
       final int nrZ = dataProvider_.getAxisLength(Coords.Z);
       final int nrCh = dataProvider_.getAxisLength(Coords.CHANNEL);
+      final int nrPos = dataProvider_.getAxisLength(Coords.STAGE_POSITION);
 
       // long startTime = System.currentTimeMillis();
       clearVolumeRenderer_.setVolumeDataUpdateAllowed(false);
@@ -586,7 +588,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
          FragmentedMemory fragmentedMemory = new FragmentedMemory();
          for (int i = 0; i < nrZ; i++) {
             Coords coords = Coordinates.builder().z(i).channel(ch).t(timePoint).
-                                                   stagePosition(0).build();
+                                                   stagePosition(position).build();
             lastDisplayedCoords_ = coords;
 
             // Bypass Micro-Manager api to get access to the ByteBuffers
@@ -872,7 +874,7 @@ public class CVViewer implements DataViewer, ImageStatsPublisher {
       Coords newImageCoords = newImage.getCoords();
       if (timePointComplete(newImageCoords.getT(), dataProvider_, studio_.logs())) {
          if (clearVolumeRenderer_ == null) {
-            initializeRenderer(newImageCoords.getT());
+            initializeRenderer(newImageCoords.getT(), newImageCoords.getP());
          } 
       }
    }       
