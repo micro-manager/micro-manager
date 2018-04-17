@@ -272,9 +272,9 @@ public class ParticlePairLister {
                      }
 
                      if (xyPointsCh2.isEmpty()) {
-                        MMStudio.getInstance().alerts().postAlert("No points found error", null,
-                                "Pairs function in Localization plugin: no points found in second channel in frame "
-                                + frame);
+                        //MMStudio.getInstance().alerts().postAlert("No points found error", null,
+                        //        "Pairs function in Localization plugin: no points found in second channel in frame "
+                        //        + frame);
                         continue;
                      }
 
