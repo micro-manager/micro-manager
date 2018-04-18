@@ -44,6 +44,7 @@ import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunna
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.data.DataProviderHasNewImageEvent;
+import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
 
@@ -401,9 +402,13 @@ public class IntensityInspectorPanelController
          // whatever the range was before autostretch was enabled, we want to
          // keep the current actual range. That can be accomplished by the
          // equivalent of clicking on Auto Once for each channel.
-         for (ChannelIntensityController ch : channelControllers_) {
-            ch.handleAutoscale();
-         }
+         // NS: This does not currently work, and I can not figure out
+         // how to keep the display min and max at whatever the Autostretch set 
+         // them.  Whatever I try, things go into infinte loops.  This may need 
+         // a redesign fo parts of the viewer code...
+         //  for (ChannelIntensityController ch : channelControllers_) {
+         //     ch.handleAutoscale();
+         // }
       }
    }
 
