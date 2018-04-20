@@ -67,7 +67,7 @@ public class AffineEditorPanel extends JPanel {
       table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
       table.setCellSelectionEnabled(true);
       
-      for (int col = 0; col < 3; col++) {
+      for (int col = 0; col < table.getColumnModel().getColumnCount(); col++) {
          table.getColumnModel().getColumn(col).setMaxWidth(75);
       }
       super.add( new JLabel("<html><center>Affine transforms define the relation between <br> " +
@@ -196,6 +196,12 @@ public class AffineEditorPanel extends JPanel {
       
       public void setAffineTransform(DoubleVector aft) {
          affineTransform_ = copyDoubleVector(aft);
+         // ensure that there is no translation component in the affine transform
+         // setting this accidentally can lead to bad stuff.
+         // Not sure if this should be in the core instead
+         affineTransform_.set(2, 0.0);
+         affineTransform_.set(5, 0.0);
+         
          fireTableDataChanged();
       }
          
@@ -206,10 +212,10 @@ public class AffineEditorPanel extends JPanel {
       }
       
       @Override
-      public int getRowCount() {return 3;}
+      public int getRowCount() {return 2;}
 
       @Override
-      public int getColumnCount() {return 3;}
+      public int getColumnCount() {return 2;}
 
       @Override
       public Object getValueAt(int rowIndex, int columnIndex) {
