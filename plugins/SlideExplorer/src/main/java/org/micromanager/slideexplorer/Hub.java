@@ -421,7 +421,10 @@ public class Hub {
          core_.waitForSystem();
          controller_.rememberZPosition();
          core_.waitForSystem();
-         turnOffContinuousAutofocus();
+         boolean autofocusWasOn = isContinuousFocusEnabled();
+         if (autofocusWasOn) {
+            turnOffContinuousAutofocus();
+         }
          //core_.setPixelSizeConfig(pixelConfig);
          //core_.waitForSystem();
          setOffsets(pixelConfig);
@@ -436,16 +439,30 @@ public class Hub {
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }*/
-         turnOnContinuousAutofocus();
+         if (autofocusWasOn) {
+            turnOnContinuousAutofocus();
+         }
 
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
       coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
    }
+   
+   public boolean isContinuousFocusEnabled() {
+      boolean result = false;
+      String autofocusDevice = core_.getAutoFocusDevice();
+      if (autofocusDevice.length() > 0) {
+         try {
+            result = core_.isContinuousFocusEnabled();
+         } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+      }
+      return result;
+   }
 
    public void turnOffContinuousAutofocus() {
-      //TODO: Make this general.
       try {
          String autofocusDevice = core_.getAutoFocusDevice();
          if (autofocusDevice.length() > 0) {
@@ -465,11 +482,6 @@ public class Hub {
          String autofocusDevice = core_.getAutoFocusDevice();
          if (autofocusDevice.length() > 0) {
             core_.enableContinuousFocus(true);
-
-            //if (autofocusDevice.equals("PerfectFocus")) {
-            //   core_.setProperty(autofocusDevice, "State", "on");
-            //}
-
             core_.waitForDevice(autofocusDevice);
          }
       } catch (Exception ex) {
