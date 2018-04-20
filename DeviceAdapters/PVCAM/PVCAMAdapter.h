@@ -707,6 +707,7 @@ private: // Static
     bool            snappingSingleFrame_;  // Single frame mode acquisition ongoing
     bool            singleFrameModeReady_; // Single frame mode acquisition prepared
     bool            sequenceModeReady_;    // Continuous acquisition prepared
+    bool            callPrepareForAcq_;    // Call PrepareForAcq after {sequence,singleFrame}ModeReady_ is set
 
     bool            isAcquiring_;
 
