@@ -50,8 +50,8 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.UserProfile;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
@@ -72,8 +72,8 @@ public class ExtractTracksDialog  {
       jf.getContentPane().setLayout(new MigLayout("insets 20", "[fill]5[]", ""));
       
       Font gFont = new Font("Lucida Grande", 0, 10);
-      final UserProfile up = studio.profile();
-      final Class us = ExtractTracksDialog.class;
+      final MutablePropertyMapView settings = 
+              studio.profile().getSettings(ExtractTracksDialog.class);
       
       JLabel label = new JLabel("Minimum # of Frames:");
       label.setFont(gFont);
@@ -82,7 +82,7 @@ public class ExtractTracksDialog  {
       minFramesSp.setFont(gFont);
       String w = "width 60:60:60";
       minFramesSp.setModel(new SpinnerNumberModel(
-              up.getInt(us, MINIMUM_NUMBER_OF_FRAMES, 10),1, null, 1));
+              settings.getInteger(MINIMUM_NUMBER_OF_FRAMES, 10),1, null, 1));
       jf.getContentPane().add(minFramesSp, w + ", wrap");
       
       JLabel label2 = new JLabel("Max # missing Frames:");
@@ -91,14 +91,14 @@ public class ExtractTracksDialog  {
       final JSpinner maxMissingSp = new JSpinner();
       maxMissingSp.setFont(gFont);
       maxMissingSp.setModel(new SpinnerNumberModel(
-              up.getInt(us, MAXIMUM_NUMBER_OF_MISSING_FRAMES, 0), 0, null, 1));
+              settings.getInteger(MAXIMUM_NUMBER_OF_MISSING_FRAMES, 0), 0, null, 1));
       jf.getContentPane().add(maxMissingSp, w + ", wrap");
       
       JLabel label3 = new JLabel("Max. distance (nm)");
       label3.setFont(gFont);
       jf.getContentPane().add(label3);
       final JTextField distanceTF = new JTextField(
-              NumberUtils.doubleToDisplayString(up.getDouble(us, 
+              NumberUtils.doubleToDisplayString(settings.getDouble(
                       MAXIMUM_DISTANCE_BETWEEN_FRAMES, 90.0)));
       distanceTF.setFont(gFont);
       jf.getContentPane().add(distanceTF, w + ", wrap");
@@ -107,19 +107,19 @@ public class ExtractTracksDialog  {
       label4.setFont(gFont);
       jf.getContentPane().add(label4);
       final JTextField minTotalDistanceTF = new JTextField(
-               NumberUtils.doubleToDisplayString(up.getDouble(us, 
+               NumberUtils.doubleToDisplayString(settings.getDouble(
                        MINIMUM_TOTAL_DISTANCE, 300.0)) );
       minTotalDistanceTF.setFont(gFont);
       jf.getContentPane().add(minTotalDistanceTF, w + ", wrap");
       
       final JLabel maxPairLabel = new JLabel("Max. pair distance (nm)");
       final JTextField maxPairDistance = new JTextField(
-              NumberUtils.doubleToDisplayString(up.getDouble(us,
+              NumberUtils.doubleToDisplayString(settings.getDouble(
                       MAX_CHANNEL_DISTANCE, 100.0)));
       
       final JCheckBox combineChannels = new JCheckBox("Combine tracks from all channels");
       combineChannels.setFont(gFont);
-      combineChannels.setSelected(up.getBoolean(us, COMBINE_CHANNELS, false));
+      combineChannels.setSelected(settings.getBoolean(COMBINE_CHANNELS, false));
       maxPairLabel.setEnabled(combineChannels.isSelected());
       maxPairDistance.setEnabled(combineChannels.isSelected());
       combineChannels.addActionListener(new ActionListener() {
@@ -142,20 +142,20 @@ public class ExtractTracksDialog  {
             try {
                int start = DataCollectionForm.getInstance().getNumberOfSpotData();
                int minFrames = (Integer) minFramesSp.getValue();
-               up.setInt(us, MINIMUM_NUMBER_OF_FRAMES, minFrames);
+               settings.putInteger(MINIMUM_NUMBER_OF_FRAMES, minFrames);
                int maxMissing = (Integer) maxMissingSp.getValue();
-               up.setInt(us, MAXIMUM_NUMBER_OF_MISSING_FRAMES, maxMissing);
+               settings.putInteger(MAXIMUM_NUMBER_OF_MISSING_FRAMES, maxMissing);
                double distance = NumberUtils.displayStringToDouble(
                        distanceTF.getText());
-               up.setDouble(us, MAXIMUM_DISTANCE_BETWEEN_FRAMES, distance);
+               settings.putDouble(MAXIMUM_DISTANCE_BETWEEN_FRAMES, distance);
                double minTotalDistance = NumberUtils.displayStringToDouble(
                        minTotalDistanceTF.getText());
-               up.setDouble(us, MINIMUM_TOTAL_DISTANCE, minTotalDistance);
+               settings.putDouble(MINIMUM_TOTAL_DISTANCE, minTotalDistance);
                boolean multiChannel = combineChannels.isSelected();
-               up.setBoolean(us, COMBINE_CHANNELS, multiChannel);
+               settings.putBoolean(COMBINE_CHANNELS, multiChannel);
                double maxPairDistanceD = NumberUtils.displayStringToDouble(
                        maxPairDistance.getText());
-               up.setDouble(us, MAX_CHANNEL_DISTANCE, maxPairDistanceD);
+               settings.putDouble(MAX_CHANNEL_DISTANCE, maxPairDistanceD);
                int nrExtractedTracks = SpotLinker.extractTracks(rowData, 
                        minFrames, maxMissing, distance, minTotalDistance,
                        multiChannel, maxPairDistanceD);

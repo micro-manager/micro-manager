@@ -295,7 +295,7 @@ public class SpotLinker {
                               // TODO: do we really need a copy here?
                               SpotData newSpot = (SpotData) nsp.findKDWSE(new Point2D.Double(
                                       tSpot.getXCenter(), tSpot.getYCenter()));
-                              if (newSpot == null) {
+                              if (newSpot == null || markedSpots.contains(newSpot)) {
                                  track.addMissing();
                                  if (track.missingMoreThan(nrMissing)) {
                                     // track could not be extended, finalize it
