@@ -56,7 +56,6 @@ import org.micromanager.data.DataProviderHasNewImageEvent;
 import org.micromanager.display.DataViewer;
 
 import org.micromanager.data.internal.DefaultCoords;
-import org.micromanager.display.internal.displaywindow.FpsSpinnerNumberModel;
 import org.micromanager.internal.utils.PopupButton;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
