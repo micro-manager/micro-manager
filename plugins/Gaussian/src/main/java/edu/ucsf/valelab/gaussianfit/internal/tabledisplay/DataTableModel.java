@@ -78,6 +78,14 @@ public class DataTableModel extends AbstractTableModel {
       super.fireTableRowsDeleted(rowNr, rowNr);
    }
    
+   public void removeRows(int[] rows) {
+      for (int row = rows.length - 1; row >= 0; row--) {
+         rowData_.remove(rows[row]);
+      }
+      super.fireTableDataChanged();
+   }
+   
+   
    
    /**
     * Return a dataset

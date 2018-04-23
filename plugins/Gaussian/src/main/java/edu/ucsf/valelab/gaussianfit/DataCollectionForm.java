@@ -1145,9 +1145,7 @@ public class DataCollectionForm extends JFrame {
     private void removeButtonActionPerformed(java.awt.event.ActionEvent evt) {
        int rows[] = mainTable_.getSelectedRowsSorted();
        if (rows.length > 0) {
-          for (int row = rows.length - 1; row >= 0; row--) {
-             mainTableModel_.removeRow(rows[row]);
-          }
+             mainTableModel_.removeRows(rows);
        } else {
           JOptionPane.showMessageDialog(this, "No dataset selected");
        }
