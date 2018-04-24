@@ -436,6 +436,8 @@ m4_define([device_adapter_dirs], [m4_strip([
    CoherentOBIS
    CoherentScientificRemote
    Conix
+   CoolLEDpE300
+   CoolLEDpE4000
    Corvus
    DTOpenLayer
    DemoCamera
