@@ -30,16 +30,15 @@ import org.micromanager.Studio;
 
 public class RatioImagingFactory implements ProcessorFactory {
    private final Studio studio_;
-   private final String orientation_;
-   private final int numSplits_;
+   private final PropertyMap settings_;
+   
    public RatioImagingFactory(Studio studio, PropertyMap settings) {
       studio_ = studio;
-      orientation_ = settings.getString("orientation", RatioImagingFrame.LR);
-      numSplits_ = settings.getInteger("splits", 2);
+      settings_ = settings;
    }
 
    @Override
    public Processor createProcessor() {
-      return new RatioImagingProcessor(studio_, orientation_, numSplits_);
+      return new RatioImagingProcessor(studio_, settings_);
    }
 }
