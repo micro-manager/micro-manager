@@ -19,18 +19,17 @@ import org.micromanager.internal.utils.ReportingUtils;
 
 public class Display {
 
-	private ImagePlus imgp_;
-	private Window win_;
-	private Canvas cvs_;
+	private final ImagePlus imgp_;
+	private final Window win_;
+	private final Canvas cvs_;
 	private ImageProcessor proc_;
-	private Hub hub_;
+	private final Hub hub_;
 	private double displayRangeMin_;
 	private double displayRangeMax_;
-        private int type_;
-	private int imgCount_ = 0;
-    private boolean currentlyPanning_ = false;
-    private RoiManager roiManager_;
-    private Coordinates coords_;
+   private final int type_;
+   private boolean currentlyPanning_ = false;
+   private RoiManager roiManager_;
+   private Coordinates coords_;
    private boolean windowExists_ = true;
 
 	public Display(Hub hub, int imageType, int width, int height) {
@@ -51,7 +50,6 @@ public class Display {
             windowExists_ = false;
          }
       });
-		imgCount_=0;
 		win_.setVisible(true);
 
         }
@@ -89,7 +87,6 @@ public class Display {
 
 	public void placeImage(Point offScreenPosition, ImageProcessor img) {
 		proc_.insert(img, offScreenPosition.x, offScreenPosition.y);
-        imgCount_++;
 	}
 
 	public void pan(Rectangle panRectangle, boolean update) {
@@ -267,9 +264,11 @@ public class Display {
     }
 
     public void reactivateRoiManager() {
-    	roiManager_.runCommand("Reset");
-    	roiManager_.setVisible(true);
-    	roiManager_.close();
+       if (roiManager_ != null) {
+          roiManager_.runCommand("Reset");
+          roiManager_.setVisible(true);
+    	    roiManager_.close();
+       }
     }
 
     public boolean setVisible(boolean isVisible) {
