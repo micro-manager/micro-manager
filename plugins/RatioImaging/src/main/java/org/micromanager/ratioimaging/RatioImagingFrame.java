@@ -31,13 +31,18 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
+import java.text.ParseException;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
@@ -46,11 +51,11 @@ import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.data.ProcessorConfigurator;
 import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
 import org.micromanager.Studio;
 import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMFrame;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -61,8 +66,11 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
+   private static final String CHANNEL1 = "Channel1";
+   private static final String CHANNEL2 = "Channel2";
    private static final String BACKGROUND1 = "Background1";
    private static final String BACKGROUND2 = "Background2";
+   private static final String FACTOR = "Factor";
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
 
    private final Studio studio_;
@@ -79,30 +87,52 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       studio_ = studio;
       core_ = studio_.getCMMCore();
       settings_ = studio_.profile().getSettings(this.getClass());
+      copySettings(settings_, configuratorSettings);
 
       super.setTitle("Ratio Imaging");
       super.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
-      ch1Combo_ = new JComboBox();
-      populateWithChannels(ch1Combo_);
-      ch2Combo_ = new JComboBox();
-      populateWithChannels(ch2Combo_);
+      ch1Combo_ = createChannelCombo(settings_, CHANNEL1);
+      ch2Combo_ = createChannelCombo(settings_, CHANNEL2);
       
       super.setLayout(new MigLayout("flowx"));
       
       JLabel darkImageLabel = new JLabel("background");
       
-      background1TextField_ = new JTextField(20);
-      createBackgroundTextField(background1TextField_, settings_, BACKGROUND1);
-      background2TextField_ = new JTextField(20);
-      createBackgroundTextField(background2TextField_, settings_, BACKGROUND2);
+      background1TextField_ = createBackgroundTextField(settings_, BACKGROUND1);
+      background2TextField_ = createBackgroundTextField(settings_, BACKGROUND2);
 
-      background1Button_ = new JButton();
-      backgroundButton(background1Button_, background1TextField_, settings_, 
+      background1Button_ =  createBackgroundButton(background1TextField_, settings_, 
               BACKGROUND1);
-      background2Button_ = new JButton();
-      backgroundButton(background2Button_, background2TextField_, settings_, 
+      background2Button_ = createBackgroundButton(background2TextField_, settings_, 
               BACKGROUND2);
+      
+      final int maxValue = 2 << core_.getImageBitDepth();
+      final JTextField factorTextField = new JTextField(5);
+      factorTextField.setText(settings_.getString(FACTOR, 
+              NumberUtils.intToDisplayString( (int) (0.5 * maxValue))));
+      factorTextField.getDocument().addDocumentListener(new DocumentListener(){
+         @Override
+         public void insertUpdate(DocumentEvent e) {
+            processEvent(e);
+         }
+         @Override
+         public void removeUpdate(DocumentEvent e) {
+             processEvent(e);
+         }
+         @Override
+         public void changedUpdate(DocumentEvent e) {
+             processEvent(e);
+         }
+         private void processEvent(DocumentEvent e) {
+            try {
+               int factor = NumberUtils.displayStringToInt(factorTextField.getText());
+               settings_.putString(FACTOR, NumberUtils.intToDisplayString(factor));
+            } catch (ParseException p) {
+               // ignore
+            }
+         }
+      });
 
       super.add (darkImageLabel, "skip 2, center");
       super.add(new JLabel("background-constant"), "skip 1, center, wrap");
@@ -118,20 +148,17 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       super.add(background2Button_, "wrap");
       
       super.add(new JLabel("(Ch1 - background) / (Ch2 - background) *"), "span 5, split 2");
-      super.add(new JTextField(5), "wrap");
+      super.add(factorTextField, "wrap");
       
       super.pack();
 
       super.loadAndRestorePosition(DEFAULT_WIN_X, DEFAULT_WIN_Y);
       
-      studio_.events().registerForEvents(this);
    }
 
    @Override
    public PropertyMap getSettings() {
-      PropertyMap.Builder builder =  PropertyMaps.builder();
-      
-      return builder.build();
+      return settings_.toPropertyMap();
    }
 
    @Override
@@ -146,6 +173,36 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
    }
 
    
+   private void copySettings (MutablePropertyMapView settings, PropertyMap configuratorSettings) {
+      settings.putString(CHANNEL1, configuratorSettings.getString(CHANNEL1, ""));
+      settings.putString(CHANNEL2, configuratorSettings.getString(CHANNEL2, ""));
+      settings.putString(BACKGROUND1, configuratorSettings.getString(BACKGROUND1, ""));
+      settings.putString(BACKGROUND2, configuratorSettings.getString(BACKGROUND2, ""));
+   }
+   
+   private JComboBox createChannelCombo( 
+           MutablePropertyMapView settings, String prefKey) {
+      
+      final JComboBox cBox = new JComboBox();
+      String ch = "";
+      if (settings.containsString(prefKey)) {
+         ch = settings.getString(prefKey, "");
+      }
+      populateWithChannels(cBox);
+      for (int i = 0; i < cBox.getItemCount(); i++) {
+          if (ch.equals( (String) cBox.getItemAt(i))){
+             cBox.setSelectedItem(ch);
+          }
+      }
+      cBox.addActionListener(new ActionListener(){
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            settings.putString(prefKey, (String) cBox.getSelectedItem());
+         }
+      });
+      return cBox;
+   }
+   
    private void populateWithChannels(JComboBox cBox) {
       cBox.removeAllItems();
       String channelGroup = core_.getChannelGroup();
@@ -157,9 +214,10 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
    
    final JTextField darkFieldTextField = new JTextField(50);
    
-   private void createBackgroundTextField(final JTextField backgroundTextField, 
-           MutablePropertyMapView settings, String prefKey) {
-      //backgroundTextField.setMinimumSize(new Dimension());
+   private JTextField createBackgroundTextField(MutablePropertyMapView settings, 
+           String prefKey) {
+      
+      final JTextField backgroundTextField = new JTextField(20);
       backgroundTextField.setText(settings.getString(prefKey, ""));
       backgroundTextField.setHorizontalAlignment(JTextField.RIGHT);
       backgroundTextField.addActionListener(new java.awt.event.ActionListener() {
@@ -182,7 +240,10 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       });
       backgroundTextField.setText(processBackgroundImage(
               backgroundTextField.getText(), settings, prefKey));
+      
+      return backgroundTextField;
    }
+   
    
    private String processBackgroundImage(String bFile, 
            MutablePropertyMapView settings, String prefKey) {
@@ -190,9 +251,10 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       return bFile;
    }
    
-   private void backgroundButton(final JButton button, 
+   private JButton createBackgroundButton(
            final JTextField backgroundField, MutablePropertyMapView settings, 
            String prefKey) {
+      final JButton button = new JButton();
       Font arialSmallFont = new Font("Arial", Font.PLAIN, 12);
       Dimension buttonSize = new Dimension(70, 21);
       button.setPreferredSize(buttonSize);
@@ -213,7 +275,7 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
             }
          }
       });
-      
+      return button;
       
    }
    

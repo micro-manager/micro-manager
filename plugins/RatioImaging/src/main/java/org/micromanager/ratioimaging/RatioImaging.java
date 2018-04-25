@@ -50,7 +50,9 @@ public class RatioImaging implements ProcessorPlugin, SciJavaPlugin {
 
    @Override
    public ProcessorConfigurator createConfigurator(PropertyMap settings) {
-      return new RatioImagingFrame(settings, studio_);
+      RatioImagingFrame ratioImagingFrame = new RatioImagingFrame(settings, studio_);
+      studio_.events().registerForEvents(ratioImagingFrame);
+      return ratioImagingFrame;
    }
 
    @Override
