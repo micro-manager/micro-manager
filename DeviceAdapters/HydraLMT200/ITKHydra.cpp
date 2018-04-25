@@ -425,7 +425,7 @@ int ret;
 
 
 /**
- * Sets position in µm
+ * Sets position in coordinate
  */
 int XYStage::SetPositionUm(double x, double y)
 {
@@ -465,7 +465,7 @@ int XYStage::SetRelativePositionUm(double dx, double dy)
 
    // format the command
    ostringstream cmd;
-   cmd << dx << " " << dy << " " << "r";
+   cmd << dx/1000 << " " << dy/1000 << " " << "r";
 
    int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
    if (ret != DEVICE_OK)
