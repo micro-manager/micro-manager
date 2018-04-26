@@ -66,11 +66,11 @@ import org.micromanager.propertymap.MutablePropertyMapView;
 public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator {
    private static final int DEFAULT_WIN_X = 100;
    private static final int DEFAULT_WIN_Y = 100;
-   private static final String CHANNEL1 = "Channel1";
-   private static final String CHANNEL2 = "Channel2";
-   private static final String BACKGROUND1 = "Background1";
-   private static final String BACKGROUND2 = "Background2";
-   private static final String FACTOR = "Factor";
+   static final String CHANNEL1 = "Channel1";
+   static final String CHANNEL2 = "Channel2";
+   static final String BACKGROUND1 = "Background1";
+   static final String BACKGROUND2 = "Background2";
+   static final String FACTOR = "Factor";
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
 
    private final Studio studio_;

@@ -46,7 +46,7 @@ public class RatioImagingProcessor extends Processor {
 
    private final Studio studio_;
    private final PropertyMap settings_;
-   private  ArrayList<String> channelSuffixes_;
+   private Image img_;
 
    public RatioImagingProcessor(Studio studio, PropertyMap settings) {
       studio_ = studio;
@@ -57,17 +57,34 @@ public class RatioImagingProcessor extends Processor {
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
       // Update channel names in summary metadata.
       List<String> chNames = summary.getChannelNameList();
-      if (chNames == null || chNames.isEmpty()) {
+      if (chNames == null || chNames.isEmpty() || chNames.size() < 2) {
          // Can't do anything as we don't know how many names there'll be.
          return summary;
       }
-      String[] newNames = new String[chNames.size()];
+      String[] newNames = new String[chNames.size() + 1];
+      for (int i = 0; i < chNames.size(); i++) {
+         newNames[i] = (String) chNames.get(i);
+      }
+      newNames[chNames.size() ] = "ratio " + 
+              settings_.getString(RatioImagingFrame.CHANNEL1, "") + " / " +
+              settings_.getString(RatioImagingFrame.CHANNEL1, "");
       
       return summary.copyBuilder().channelNames(newNames).build();
    }
 
    @Override
    public void processImage(Image image, ProcessorContext context) {
+      if (img_ == null) {
+         img_ = image;
+         context.outputImage(image);
+         return;
+      }
+      Coords newCoords = image.getCoords();
+      Coords oldCoords = img_.getCoords();
+      if (newCoords.copyRemovingAxes(Coords.C) == oldCoords.copyRemovingAxes(Coords.C)) {
+         // may have found it.
+      }
+      
       ImageProcessor proc = studio_.data().ij().createProcessor(image);
 
       int width = image.getWidth();
@@ -75,16 +92,6 @@ public class RatioImagingProcessor extends Processor {
       int xStep = 0;
       int yStep = 0;
 
-      int channelIndex = image.getCoords().getChannel();
-      for (int i = 0; i < 2; ++i) {
-         proc.setRoi(i * xStep, i * yStep, width, height);
-
-         Coords coords = image.getCoords().copy()
-            .channel(channelIndex * 2 + i).build();
-         Image output = studio_.data().createImage(proc.crop().getPixels(),
-               width, height, image.getBytesPerPixel(),
-               image.getNumComponents(), coords, image.getMetadata());
-         context.outputImage(output);
-      }
+     
    }
 }
