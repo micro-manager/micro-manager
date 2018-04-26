@@ -47,6 +47,7 @@ public class RatioImagingProcessor extends Processor {
    private final Studio studio_;
    private final PropertyMap settings_;
    private Image img_;
+   private boolean process_;
 
    public RatioImagingProcessor(Studio studio, PropertyMap settings) {
       studio_ = studio;
@@ -61,20 +62,27 @@ public class RatioImagingProcessor extends Processor {
          // Can't do anything as we don't know how many names there'll be.
          return summary;
       }
+      String ch1Name = settings_.getString(RatioImagingFrame.CHANNEL1, "");
+      String ch2Name = settings_.getString(RatioImagingFrame.CHANNEL2, "");
+      if (! (chNames.contains(ch1Name) && chNames.contains(ch2Name))) {
+         process_ = false;
+         return summary;
+      }
+      
+      process_ = true;
       String[] newNames = new String[chNames.size() + 1];
       for (int i = 0; i < chNames.size(); i++) {
          newNames[i] = (String) chNames.get(i);
       }
-      newNames[chNames.size() ] = "ratio " + 
-              settings_.getString(RatioImagingFrame.CHANNEL1, "") + " / " +
-              settings_.getString(RatioImagingFrame.CHANNEL1, "");
+      newNames[chNames.size() ] = "ratio " + ch1Name + " / " + ch2Name;
       
       return summary.copyBuilder().channelNames(newNames).build();
    }
 
    @Override
    public void processImage(Image image, ProcessorContext context) {
-      if (img_ == null) {
+      
+      if (img_ == null || !process_) {
          img_ = image;
          context.outputImage(image);
          return;
