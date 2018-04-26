@@ -110,7 +110,7 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       final int maxValue = 2 << core_.getImageBitDepth();
       final JTextField factorTextField = new JTextField(5);
       factorTextField.setText(settings_.getString(FACTOR, 
-              NumberUtils.intToDisplayString( (int) (0.5 * maxValue))));
+              NumberUtils.intToDisplayString( (maxValue))));
       factorTextField.getDocument().addDocumentListener(new DocumentListener(){
          @Override
          public void insertUpdate(DocumentEvent e) {
@@ -133,6 +133,7 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
             }
          }
       });
+      settings_.putString(FACTOR, factorTextField.getText());
 
       super.add (darkImageLabel, "skip 2, center");
       super.add(new JLabel("background-constant"), "skip 1, center, wrap");
@@ -200,6 +201,7 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
             settings.putString(prefKey, (String) cBox.getSelectedItem());
          }
       });
+      settings.putString(prefKey, (String) cBox.getSelectedItem());
       return cBox;
    }
    

@@ -23,7 +23,11 @@
 
 package org.micromanager.ratioimaging;
 
+import ij.process.Blitter;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import java.text.ParseException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +40,7 @@ import org.micromanager.data.ProcessorContext;
 import org.micromanager.data.SummaryMetadata;
 
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.NumberUtils;
 
 /**
  * DataProcessor that splits images as instructed in SplitViewFrame
@@ -46,16 +51,21 @@ public class RatioImagingProcessor extends Processor {
 
    private final Studio studio_;
    private final PropertyMap settings_;
-   private Image img_;
+   private final List<Image> images_;
    private boolean process_;
+   private int ch1Index_;
+   private int ch2Index_;
+   private int ratioIndex_;
 
    public RatioImagingProcessor(Studio studio, PropertyMap settings) {
       studio_ = studio;
       settings_ = settings;
+      images_ = new ArrayList<Image>();
    }
 
    @Override
    public SummaryMetadata processSummaryMetadata(SummaryMetadata summary) {
+      
       // Update channel names in summary metadata.
       List<String> chNames = summary.getChannelNameList();
       if (chNames == null || chNames.isEmpty() || chNames.size() < 2) {
@@ -64,42 +74,138 @@ public class RatioImagingProcessor extends Processor {
       }
       String ch1Name = settings_.getString(RatioImagingFrame.CHANNEL1, "");
       String ch2Name = settings_.getString(RatioImagingFrame.CHANNEL2, "");
-      if (! (chNames.contains(ch1Name) && chNames.contains(ch2Name))) {
+      
+      process_ = true;
+      
+      ch1Index_ = -1;
+      ch2Index_ = -1;
+      for (int i = 0; i < chNames.size(); i++) {
+         if (chNames.get(i).equals(ch1Name)) {
+            ch1Index_ = i;
+         }
+         if (chNames.get(i).equals(ch2Name)) {
+            ch2Index_ = i;
+         }
+      }
+      if (ch1Index_ < 0 || ch2Index_ < 0) {
          process_ = false;
          return summary;
       }
       
-      process_ = true;
       String[] newNames = new String[chNames.size() + 1];
       for (int i = 0; i < chNames.size(); i++) {
          newNames[i] = (String) chNames.get(i);
       }
       newNames[chNames.size() ] = "ratio " + ch1Name + " / " + ch2Name;
+      ratioIndex_ = chNames.size();
       
       return summary.copyBuilder().channelNames(newNames).build();
    }
 
    @Override
-   public void processImage(Image image, ProcessorContext context) {
+   public void processImage(Image newImage, ProcessorContext context) {
       
-      if (img_ == null || !process_) {
-         img_ = image;
-         context.outputImage(image);
+      context.outputImage(newImage);
+      
+      if (newImage.getNumComponents() > 1) {
          return;
       }
-      Coords newCoords = image.getCoords();
-      Coords oldCoords = img_.getCoords();
-      if (newCoords.copyRemovingAxes(Coords.C) == oldCoords.copyRemovingAxes(Coords.C)) {
-         // may have found it.
+      if (! (newImage.getBytesPerPixel() == 1 || newImage.getBytesPerPixel() == 2) ) {
+         return;
       }
       
-      ImageProcessor proc = studio_.data().ij().createProcessor(image);
+      if (!process_) {
+         return;
+      }
 
-      int width = image.getWidth();
-      int height = image.getHeight();
-      int xStep = 0;
-      int yStep = 0;
+      Coords newCoords = newImage.getCoords();
+      int c = newImage.getCoords().getC();
+      if (!(c == ch1Index_ || c == ch2Index_)) {
+         return;
+      }
 
-     
+      for (Image oldImage : images_) {
+         Coords oldCoords = oldImage.getCoords();
+         if (newCoords.copyRemovingAxes(Coords.C).equals(oldCoords.copyRemovingAxes(Coords.C))) {
+            if (newCoords.getC() == ch1Index_ && oldCoords.getC() == ch2Index_) {
+               process(newImage, oldImage, context);
+               images_.remove(oldImage);
+               return;
+            }
+         
+            if (oldCoords.getC() == ch1Index_ && newCoords.getC() == ch2Index_) {
+               process(oldImage, newImage, context);
+               images_.remove(oldImage);
+               return;
+            }
+         }
+      }
+      
+      // if we are still here, there was no match, so add this image to our list
+      images_.add(newImage);
+
+   }
+      
+   private void process(Image ch1Image, Image ch2Image, ProcessorContext context) {
+      Coords ratioCoords = ch1Image.getCoords().copyBuilder().c(ratioIndex_).build();
+      
+      ImageProcessor ch1Proc = studio_.data().ij().createProcessor(ch1Image);
+      ImageProcessor ch2Proc = studio_.data().ij().createProcessor(ch2Image);
+      ch1Proc = ch1Proc.convertToFloat();
+      ch2Proc = ch2Proc.convertToFloat();
+      ImageProcessor ch3Proc = ch1Proc.createProcessor(ch1Proc.getWidth(), 
+              ch1Proc.getHeight());
+      ch3Proc.insert(ch1Proc, 0, 0);
+      ch3Proc.copyBits(ch2Proc, 0, 0, Blitter.DIVIDE);
+      try {
+         double factor = NumberUtils.displayStringToInt(
+              settings_.getString(RatioImagingFrame.FACTOR, "1"));
+         ch3Proc.multiply(factor);
+      } catch (ParseException pe) {
+         return;
+      }
+      if (ch1Image.getBytesPerPixel() == 1) {
+         // check this actually works....
+         ch3Proc = ch3Proc.convertToByteProcessor();
+      } else if (ch1Image.getBytesPerPixel() == 2) {
+         // ImageJ method seems to be broken. Copied code from ImageJ1 here
+         ch3Proc = convertFloatToShort( (FloatProcessor) ch3Proc);
+      }
+      
+      Image ratioImage = studio_.data().ij().createImage(ch3Proc, ratioCoords, 
+              ch1Image.getMetadata().copyBuilderWithNewUUID().build());
+      
+      context.outputImage(ratioImage);
+   }
+   
+   /**
+    * Copied from https://github.com/imagej/imagej1/blob/master/ij/process/TypeConverter.java
+    * 
+    * The call to chrProc.convertToShortProcess results in pixel values of -1
+    * Not sure why (but in included ImageJ version?) 
+    * Copying the relevant code from the ImageJ1 source fixes it
+    *  
+    * @param ip FloatProcessor to be converted
+    * @return Shortprocessor
+    */
+   ShortProcessor convertFloatToShort(FloatProcessor ip) {
+		float[] pixels32 = (float[])ip.getPixels();
+		short[] pixels16 = new short[ip.getWidth()*ip.getHeight()];
+		double min = ip.getMin();
+		double max = ip.getMax();
+		double scale;
+		if ((max-min)==0.0)
+			scale = 1.0;
+		else
+			scale = 65535.0/(max-min);
+		double value;
+		for (int i=0,j=0; i< (ip.getWidth() * ip.getHeight()); i++) {
+			value = pixels32[i];
+			if (value<0.0) value = 0.0;
+			if (value>65535.0) value = 65535.0;
+			pixels16[i] = (short)(value+0.5);
+		}
+	    return new ShortProcessor(ip.getWidth(), ip.getHeight(), pixels16, 
+               ip.getColorModel());
    }
 }
