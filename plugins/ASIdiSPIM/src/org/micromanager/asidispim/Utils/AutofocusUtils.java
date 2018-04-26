@@ -215,7 +215,7 @@ public class AutofocusUtils {
 
             final int nrImages = props_.getPropValueInteger(
                     Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_NRIMAGES);
-            final boolean showImages = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
+            final boolean showImages = runAsynchronously && prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
                     Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, true);
             final boolean showPlot = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
                     Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, true);
