@@ -3085,7 +3085,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                       
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
-            core_.initializeCircularBuffer();
+            core_.initializeCircularBuffer();  // superset of clearCircularBuffer()
             
             // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
@@ -3205,6 +3205,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      if (acqSettings.useChannels && acqSettings.channelMode != MultichannelModes.Keys.VOLUME) {
                         controller_.setupHardwareChannelSwitching(acqSettings);
                      }
+                     // make sure circular buffer is cleared
+                     core_.clearCircularBuffer();
                   }
                }
 

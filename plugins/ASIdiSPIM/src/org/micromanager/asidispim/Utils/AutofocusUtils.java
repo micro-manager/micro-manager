@@ -332,8 +332,7 @@ public class AutofocusUtils {
                           (int) gui_.getMMCore().getBytesPerPixel(),
                           (int) gui_.getMMCore().getImageBitDepth());
                }
-               gui_.getMMCore().clearCircularBuffer();
-               gui_.getMMCore().initializeCircularBuffer();
+               gui_.getMMCore().initializeCircularBuffer();  // also does clearCircularBuffer()
                cameras_.setCameraForAcquisition(cameraDevice, true);
                prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
                      Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(),
