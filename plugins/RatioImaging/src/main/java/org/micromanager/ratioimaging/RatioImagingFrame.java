@@ -136,7 +136,7 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       settings_.putString(FACTOR, factorTextField.getText());
 
       super.add (darkImageLabel, "skip 2, center");
-      super.add(new JLabel("background-constant"), "skip 1, center, wrap");
+      super.add(new JLabel("constant"), "skip 1, center, wrap");
       
       super.add(new JLabel("Ch. 1"));
       super.add(ch1Combo_);
@@ -148,7 +148,8 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       super.add(background2TextField_);
       super.add(background2Button_, "wrap");
       
-      super.add(new JLabel("(Ch1 - background) / (Ch2 - background) *"), "span 5, split 2");
+      super.add(new JLabel("(Ch1 - (background + constact)) / (Ch2 - (background + constant) *"), 
+              "span 5, split 2");
       super.add(factorTextField, "wrap");
       
       super.pack();
