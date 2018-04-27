@@ -51,6 +51,9 @@ public class RatioImagingProcessor extends Processor {
 
    private final Studio studio_;
    private final PropertyMap settings_;
+   private final int factor_;
+   private final int bc1Constant_;
+   private final int bc2Constant_;
    private final List<Image> images_;
    private boolean process_;
    private int ch1Index_;
@@ -61,6 +64,19 @@ public class RatioImagingProcessor extends Processor {
       studio_ = studio;
       settings_ = settings;
       images_ = new ArrayList<Image>();
+      int factor = 1; int bc1Constant = 0; int bc2Constant = 0;
+      try {
+         factor = NumberUtils.displayStringToInt(
+              settings_.getString(RatioImagingFrame.FACTOR, "1"));
+         bc1Constant = NumberUtils.displayStringToInt(
+              settings_.getString(RatioImagingFrame.BACKGROUND1CONSTANT, "0"));
+         bc2Constant = NumberUtils.displayStringToInt(
+              settings_.getString(RatioImagingFrame.BACKGROUND2CONSTANT, "0"));
+      } catch (ParseException pe) { // What to do? 
+      }
+      factor_ = factor;
+      bc1Constant_ = bc1Constant;
+      bc2Constant_ = bc2Constant;
    }
 
    @Override
@@ -153,17 +169,14 @@ public class RatioImagingProcessor extends Processor {
       ImageProcessor ch2Proc = studio_.data().ij().createProcessor(ch2Image);
       ch1Proc = ch1Proc.convertToFloat();
       ch2Proc = ch2Proc.convertToFloat();
+      ch1Proc.subtract(bc1Constant_);
+      ch2Proc.subtract(bc2Constant_);
       ImageProcessor ch3Proc = ch1Proc.createProcessor(ch1Proc.getWidth(), 
               ch1Proc.getHeight());
       ch3Proc.insert(ch1Proc, 0, 0);
       ch3Proc.copyBits(ch2Proc, 0, 0, Blitter.DIVIDE);
-      try {
-         double factor = NumberUtils.displayStringToInt(
-              settings_.getString(RatioImagingFrame.FACTOR, "1"));
-         ch3Proc.multiply(factor);
-      } catch (ParseException pe) {
-         return;
-      }
+      ch3Proc.multiply(factor_);
+      
       if (ch1Image.getBytesPerPixel() == 1) {
          // check this actually works....
          ch3Proc = ch3Proc.convertToByteProcessor();
@@ -171,9 +184,15 @@ public class RatioImagingProcessor extends Processor {
          // ImageJ method seems to be broken. Copied code from ImageJ1 here
          ch3Proc = convertFloatToShort( (FloatProcessor) ch3Proc);
       }
+      int max = (int) ch3Proc.getMax();
+      int bitDepth = 1;
+      while ( (1 << bitDepth) < max && bitDepth <= ch1Image.getBytesPerPixel() * 8) {
+         bitDepth += 1;
+      }
       
       Image ratioImage = studio_.data().ij().createImage(ch3Proc, ratioCoords, 
-              ch1Image.getMetadata().copyBuilderWithNewUUID().build());
+              ch1Image.getMetadata().copyBuilderWithNewUUID().bitDepth(bitDepth).
+                      build());
       
       context.outputImage(ratioImage);
    }
@@ -191,18 +210,15 @@ public class RatioImagingProcessor extends Processor {
    ShortProcessor convertFloatToShort(FloatProcessor ip) {
 		float[] pixels32 = (float[])ip.getPixels();
 		short[] pixels16 = new short[ip.getWidth()*ip.getHeight()];
-		double min = ip.getMin();
-		double max = ip.getMax();
-		double scale;
-		if ((max-min)==0.0)
-			scale = 1.0;
-		else
-			scale = 65535.0/(max-min);
 		double value;
 		for (int i=0,j=0; i< (ip.getWidth() * ip.getHeight()); i++) {
 			value = pixels32[i];
-			if (value<0.0) value = 0.0;
-			if (value>65535.0) value = 65535.0;
+			if (value<0.0) {
+            value = 0.0;
+         }
+			if (value>65535.0) {
+            value = 65535.0;
+         }
 			pixels16[i] = (short)(value+0.5);
 		}
 	    return new ShortProcessor(ip.getWidth(), ip.getHeight(), pixels16, 

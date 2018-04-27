@@ -59,7 +59,7 @@ import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
- * Micro-Manager plugin 
+ * Micro-Manager plugin for ratio imaging
  *
  * @author nico
  */
@@ -70,6 +70,8 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
    static final String CHANNEL2 = "Channel2";
    static final String BACKGROUND1 = "Background1";
    static final String BACKGROUND2 = "Background2";
+   static final String BACKGROUND1CONSTANT = "Background1Constant";
+   static final String BACKGROUND2CONSTANT = "Background2Constant";
    static final String FACTOR = "Factor";
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
 
@@ -107,49 +109,43 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       background2Button_ = createBackgroundButton(background2TextField_, settings_, 
               BACKGROUND2);
       
+      final JTextField bc1TextField = new JTextField(5);
+      bc1TextField.setText(settings_.getString(BACKGROUND1CONSTANT, "0"));
+      bc1TextField.getDocument().addDocumentListener(
+              new TextFieldUpdater(bc1TextField, BACKGROUND1CONSTANT, settings_));
+      settings_.putString(BACKGROUND1CONSTANT, bc1TextField.getText());
+      
+      final JTextField bc2TextField = new JTextField(5);
+      bc2TextField.setText(settings_.getString(BACKGROUND2CONSTANT, "0"));
+      bc2TextField.getDocument().addDocumentListener(
+              new TextFieldUpdater(bc2TextField, BACKGROUND2CONSTANT, settings_));
+      settings_.putString(BACKGROUND2CONSTANT, bc2TextField.getText());
+      
       final int maxValue = 2 << core_.getImageBitDepth();
       final JTextField factorTextField = new JTextField(5);
       factorTextField.setText(settings_.getString(FACTOR, 
               NumberUtils.intToDisplayString( (maxValue))));
-      factorTextField.getDocument().addDocumentListener(new DocumentListener(){
-         @Override
-         public void insertUpdate(DocumentEvent e) {
-            processEvent(e);
-         }
-         @Override
-         public void removeUpdate(DocumentEvent e) {
-             processEvent(e);
-         }
-         @Override
-         public void changedUpdate(DocumentEvent e) {
-             processEvent(e);
-         }
-         private void processEvent(DocumentEvent e) {
-            try {
-               int factor = NumberUtils.displayStringToInt(factorTextField.getText());
-               settings_.putString(FACTOR, NumberUtils.intToDisplayString(factor));
-            } catch (ParseException p) {
-               // ignore
-            }
-         }
-      });
+      factorTextField.getDocument().addDocumentListener(
+              new TextFieldUpdater(factorTextField, FACTOR, settings_));
       settings_.putString(FACTOR, factorTextField.getText());
 
       super.add (darkImageLabel, "skip 2, center");
-      super.add(new JLabel("constant"), "skip 1, center, wrap");
+      super.add(new JLabel("constant"), "skip 1, center, gap 20:push, wrap");
       
       super.add(new JLabel("Ch. 1"));
       super.add(ch1Combo_);
-      super.add(background1TextField_);
-      super.add(background1Button_, "wrap");
+      super.add(background1TextField_,  "gap 20:push");
+      super.add(background1Button_);
+      super.add(bc1TextField, "gap 20:push, wrap");
       
       super.add(new JLabel("Ch. 2"));
       super.add(ch2Combo_);
-      super.add(background2TextField_);
-      super.add(background2Button_, "wrap");
+      super.add(background2TextField_, "gap 20:push");
+      super.add(background2Button_);
+      super.add(bc2TextField, "gap 20:push, wrap");
       
       super.add(new JLabel("(Ch1 - (background + constact)) / (Ch2 - (background + constant) *"), 
-              "span 5, split 2");
+              "gapy 20:push, span 5, split 2");
       super.add(factorTextField, "wrap");
       
       super.pack();
@@ -180,6 +176,11 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       settings.putString(CHANNEL2, configuratorSettings.getString(CHANNEL2, ""));
       settings.putString(BACKGROUND1, configuratorSettings.getString(BACKGROUND1, ""));
       settings.putString(BACKGROUND2, configuratorSettings.getString(BACKGROUND2, ""));
+      settings.putString(BACKGROUND1CONSTANT, 
+              configuratorSettings.getString(BACKGROUND1CONSTANT, ""));
+      settings.putString(BACKGROUND2CONSTANT, 
+              configuratorSettings.getString(BACKGROUND2CONSTANT, ""));
+      settings.putString(FACTOR, configuratorSettings.getString(FACTOR, ""));
    }
    
    private JComboBox createChannelCombo( 
@@ -259,7 +260,7 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
            String prefKey) {
       final JButton button = new JButton();
       Font arialSmallFont = new Font("Arial", Font.PLAIN, 12);
-      Dimension buttonSize = new Dimension(70, 21);
+      Dimension buttonSize = new Dimension(40, 21);
       button.setPreferredSize(buttonSize);
       button.setMinimumSize(buttonSize);
       button.setFont(arialSmallFont);
@@ -289,5 +290,41 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       pack();
    }
 
- 
+   private class TextFieldUpdater implements DocumentListener {
+
+      private final JTextField field_;
+      private final String key_;
+      private final MutablePropertyMapView settings_;
+
+      public TextFieldUpdater(JTextField field, String key, MutablePropertyMapView settings) {
+         field_ = field;
+         key_ = key;
+         settings_ = settings;
+      }
+
+      @Override
+      public void insertUpdate(DocumentEvent e) {
+         processEvent(e);
+      }
+
+      @Override
+      public void removeUpdate(DocumentEvent e) {
+         processEvent(e);
+      }
+
+      @Override
+      public void changedUpdate(DocumentEvent e) {
+         processEvent(e);
+      }
+
+      private void processEvent(DocumentEvent e) {
+         try {
+            int factor = NumberUtils.displayStringToInt(field_.getText());
+            settings_.putString(key_, NumberUtils.intToDisplayString(factor));
+         } catch (ParseException p) {
+            // ignore
+         }
+      }
+   }
+
 }
