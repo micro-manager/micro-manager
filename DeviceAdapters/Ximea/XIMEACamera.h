@@ -100,6 +100,7 @@ public:
 	void     OnThreadExiting() throw(); ;
 	//////////////////////////////////////////////////////////////
 	// action interface
+   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct);
 	XimeaParam* GetXimeaParam(string param_name, bool use_xiapi_param_name = false);
 	
@@ -193,6 +194,7 @@ private:
 #define TAG_ENUM_VALUE        "Value"
 #define TAG_IS_PATH           "IsPath"
 #define TAG_APP_DEFAULT       "AppDefault"
+#define TAG_VISIBILITY        "Visibility"
 
 #define FEAT_ACCESS_RO        "RO"
 #define FEAT_ACCESS_WO        "WO"
@@ -200,6 +202,11 @@ private:
 
 #define BOOL_VALUE_ON         "On"
 #define BOOL_VALUE_OFF        "Off"
+
+#define BOOL_VALUE_YES        "Yes"
+#define BOOL_VALUE_NO         "No"
+
+#define FEAT_INVISIBLE        "Invisible"
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -218,8 +225,8 @@ enum access_t
 {
 	access_undef = 0,
 	access_readwrite,
-	acces_read,
-	acces_write
+	access_read,
+	access_write
 };
 
 class XimeaParam
@@ -229,25 +236,27 @@ public:
 	XimeaParam()
 	{
 		param_type = type_undef;
-		access_type = acces_read;
+		access_type = access_read;
 		is_path = false;
 	}
 
 	void SetName(string name){ display_name = name; }
 	void SetXiParamName(string name){xiapi_param_name = name;}
 	void SetAppDefault(string val){ app_default = val; };
+	void SetVisibility(string val){ visiblility = val; };
 	void SetParamType(type_t type){ param_type = type; };
 	void SetAccessType(string access)
 	{
 		if(access == FEAT_ACCESS_RW)      access_type = access_readwrite;
-		else if(access == FEAT_ACCESS_RO) access_type = acces_read;
-		else if(access == FEAT_ACCESS_WO) access_type = acces_write;
+		else if(access == FEAT_ACCESS_RO) access_type = access_read;
+		else if(access == FEAT_ACCESS_WO) access_type = access_write;
 		else                              access_type = access_undef;
 	};
 
 	string GetName () { return display_name; }
 	string GetXiParamName(){ return xiapi_param_name; };
 	string GetAppDefault(){ return app_default; };
+	string GetVisibility(){ return visiblility; };
 	type_t GetParamType(){ return param_type; };
 	access_t GetAccessType(){ return access_type; };
 
@@ -258,7 +267,7 @@ public:
 	{
 		enum_values.insert(std::pair<string, int>(name, value) );
 	}
-	int CountEnumEntries(){ return enum_values.size(); };
+	int CountEnumEntries(){ return (int) enum_values.size(); };
 	vector<string> GetEnumValues()
 	{
 		vector<string> vals;
@@ -309,6 +318,7 @@ private:
 	string   display_name;
 	string   xiapi_param_name;
 	string   app_default;
+	string   visiblility;
 	type_t   param_type;
 	access_t access_type;
 	bool     is_path;

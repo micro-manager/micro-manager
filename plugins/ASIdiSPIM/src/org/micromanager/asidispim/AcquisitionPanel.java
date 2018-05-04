@@ -703,6 +703,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_.add(dirRootLabel);
 
       DefaultFormatter formatter = new DefaultFormatter();
+      formatter.setOverwriteMode(false);
       rootField_ = new JFormattedTextField(formatter);
       rootField_.setText( prefs_.getString(panelName_, 
               Properties.Keys.PLUGIN_DIRECTORY_ROOT, "") );
@@ -3080,10 +3081,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "SPIMAcqSettings", acqSettingsJSON);
             gui_.setAcquisitionProperty(acqName, "SPIMtype", ASIdiSPIM.oSPIM ? "oSPIM" : "diSPIM");
             gui_.setAcquisitionProperty(acqName, "AcquisitionName", acqName);
+            gui_.setAcquisitionProperty(acqName, "Prefix", acqName);
                       
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
-            core_.initializeCircularBuffer();
+            core_.initializeCircularBuffer();  // superset of clearCircularBuffer()
             
             // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
@@ -3203,6 +3205,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      if (acqSettings.useChannels && acqSettings.channelMode != MultichannelModes.Keys.VOLUME) {
                         controller_.setupHardwareChannelSwitching(acqSettings);
                      }
+                     // make sure circular buffer is cleared
+                     core_.clearCircularBuffer();
                   }
                }
 
@@ -3639,6 +3643,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // gui_.closeAcquisition(acqName);
                ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
                      " took: " + (System.currentTimeMillis() - acqButtonStart) + "ms");
+               
+//               while(gui_.isAcquisitionRunning()) {
+//            	   Thread.sleep(10);
+//            	   ReportingUtils.logMessage("waiting for acquisition to finish.");
+//               }
                
                // flag that we are done with acquisition
                acquisitionRunning_.set(false);

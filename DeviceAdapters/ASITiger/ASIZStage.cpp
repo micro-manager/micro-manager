@@ -1197,8 +1197,7 @@ int CZStage::OnJoystickMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << addressChar_ << "JS X=" << joystickFast << " Y=" << joystickSlow;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
@@ -1358,8 +1357,7 @@ int CZStage::OnWheelMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          command << addressChar_ << "JS F=" << wheelFast << " T=" << wheelSlow;
       RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }
@@ -1869,8 +1867,7 @@ int CZStage::OnRBMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_INVALID_PROPERTY_VALUE;
       command << addressChar_ << "RM " << pseudoAxisChar << "=" << tmp;
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A"));
-      command.str(""); command << tmpstr;
-      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), tmpstr.c_str()) );
    }
    return DEVICE_OK;
 }

@@ -665,7 +665,7 @@ bool XimeaCamera::IsMultiROISet()
 	return false;
 }
 
-int XimeaCamera::GetMultiROICount(unsigned& count)
+int XimeaCamera::GetMultiROICount(unsigned& /* count */)
 {
 	/*TODO
 	Add MultiROI support
@@ -673,7 +673,8 @@ int XimeaCamera::GetMultiROICount(unsigned& count)
 	return DEVICE_ERR;
 }
 
-int XimeaCamera::SetMultiROI(const unsigned* xs, const unsigned* ys, const unsigned* widths, const unsigned* heights, unsigned numROIs)
+int XimeaCamera::SetMultiROI(const unsigned* /*xs */, const unsigned* /* ys */, const unsigned* /* widths */, 
+            const unsigned* /* heights */, unsigned /* numROIs */)
 {
 	/*TODO
 	Add MultiROI support
@@ -681,7 +682,8 @@ int XimeaCamera::SetMultiROI(const unsigned* xs, const unsigned* ys, const unsig
 	return DEVICE_ERR;
 }
 
-int XimeaCamera::GetMultiROI(unsigned* xs, unsigned* ys, unsigned* widths, unsigned* heights, unsigned* length)
+int XimeaCamera::GetMultiROI(unsigned*  /*xs */, unsigned* /* ys */, unsigned* /* widths */, unsigned* /* heights */, 
+            unsigned* /* length */)
 {
 	/*TODO
 	Add MultiROI support
@@ -882,6 +884,24 @@ bool XimeaCamera::IsCapturing()
 // XimeaCamera Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
+
+int XimeaCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	int ret = DEVICE_OK;
+	if (eAct == MM::AfterSet)
+	{
+		long binSize;
+		pProp->Get(binSize);
+		return SetBinning(binSize);
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		pProp->Set((long)GetBinning());
+	}
+
+	return ret;
+}
+
 int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	// acquisition timeout is not among standard parameters
@@ -924,7 +944,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 					if(param->GetXiParamName() == XI_PRM_EXPOSURE ||
 						param->GetXiParamName() == XI_PRM_AE_MAX_LIMIT)
 					{
-						value = value * 1000.0;
+						value = value * 1000;
 					}
 					camera->SetXIAPIParamInt(param_name.c_str(), (int) value);
 				}
@@ -958,9 +978,9 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 					string value = "";
 					pProp->Get(value);
 					int cmd_val = 0;
-					if( value == BOOL_VALUE_ON)                
+					if (value == BOOL_VALUE_ON || value == BOOL_VALUE_YES)
 						cmd_val = 1;
-					else if( value == BOOL_VALUE_OFF)         
+					else if (value == BOOL_VALUE_OFF || value == BOOL_VALUE_NO)
 						cmd_val = 0;
 					else 
 						return DEVICE_INVALID_PROPERTY_VALUE;
@@ -972,7 +992,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 				{
 					string value = "";
 					pProp->Get(value);
-					camera->SetXIAPIParamString(param_name.c_str(), value.c_str(), value.size());
+					camera->SetXIAPIParamString(param_name.c_str(), value.c_str(), (unsigned int) value.size());
 				}
 				break;
 			default:
@@ -994,7 +1014,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 		else if(eAct == MM::BeforeGet)
 		{
 			// do not read write-only parameters
-			if(param->GetAccessType() == acces_write)
+			if(param->GetAccessType() == access_write)
 			{
 				return DEVICE_OK;
 			}
@@ -1034,8 +1054,16 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 			case type_bool:
 				{
 					int value = camera->GetXIAPIParamInt(param_name);
-					if(value == 0) pProp->Set(BOOL_VALUE_OFF);
-					else           pProp->Set(BOOL_VALUE_ON);
+					if (param->GetAccessType() == access_read)
+					{
+						if (value == 0) pProp->Set(BOOL_VALUE_NO);
+						else            pProp->Set(BOOL_VALUE_YES);
+					}
+					else
+					{
+						if (value == 0) pProp->Set(BOOL_VALUE_OFF);
+						else            pProp->Set(BOOL_VALUE_ON);
+					}					
 				}
 				break;
 			case type_string:
@@ -1111,6 +1139,27 @@ void XimeaCamera::UpdateRoiParams()
 
 void XimeaCamera::CreateCameraProperties()
 {
+	// create binning property needed by Micro-Manager GUI
+	CPropertyAction *pAct = new CPropertyAction (this, &XimeaCamera::OnBinning);
+	int ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
+	assert(ret == DEVICE_OK);
+
+	int maxBin = 0;
+	vector<string> binningValues;
+	camera->GetXIAPIParamInt(XI_PRM_DOWNSAMPLING XI_PRM_INFO_MAX, &maxBin);
+	for(int i = 1; i <= maxBin; i++) 
+	{
+		try {
+			char buf[16] = "";
+			camera->SetXIAPIParamInt(XI_PRM_DOWNSAMPLING, i); // will throw exception if it fails
+			sprintf(buf, "%d", i);
+			binningValues.push_back(buf);
+		} catch(xiAPIplus_Exception exc) { /* No need to log or take action */}
+	}
+	camera->SetXIAPIParamInt(XI_PRM_DOWNSAMPLING, 1);
+	ret = SetAllowedValues(MM::g_Keyword_Binning, binningValues);
+	assert(ret == DEVICE_OK);
+
 	// remove unsupported pixel formats
 	XimeaParam* param = GetXimeaParam(XI_PRM_IMAGE_DATA_FORMAT, true);
 	if(param != NULL)
@@ -1127,6 +1176,12 @@ void XimeaCamera::CreateCameraProperties()
 		vector<string> enum_values;
 		bool is_read_only = true;
 
+		// invisible parameters will not be added to UI
+		if (param->GetVisibility() == FEAT_INVISIBLE)
+		{
+			continue;
+		}
+
 		// check if parameter is not already in list
 		if(HasProperty(param->GetName().c_str()))
 		{
@@ -1134,7 +1189,7 @@ void XimeaCamera::CreateCameraProperties()
 		}
 
 		// prepare readonly flag
-		if(param->GetAccessType() == acces_write ||
+		if(param->GetAccessType() == access_write ||
 		   param->GetAccessType() ==  access_readwrite)
 		{
 			is_read_only = false;
@@ -1183,8 +1238,17 @@ void XimeaCamera::CreateCameraProperties()
 			case type_bool:
 				{
 					property_type = MM::String;
-					param->AddEnumValue(BOOL_VALUE_OFF, 0);
-					param->AddEnumValue(BOOL_VALUE_ON, 1);
+					// use different text values for readonly bool parameters
+					if (param->GetAccessType() == access_read)
+					{
+						param->AddEnumValue(BOOL_VALUE_NO, 0);
+						param->AddEnumValue(BOOL_VALUE_YES, 1);
+					}
+					else
+					{
+						param->AddEnumValue(BOOL_VALUE_OFF, 0);
+						param->AddEnumValue(BOOL_VALUE_ON, 1);
+					}					
 					enum_values = param->GetEnumValues();
 
 					string def_val = param->GetAppDefault();
@@ -1284,7 +1348,7 @@ void XimeaCamera::CreateCameraProperties()
 				LogMessage("CreateCameraProperties(): Unknown exception");
 			}
 			// log success of parameter adding
-			LogMessage("Addied parameter " + param->GetName());
+			LogMessage("Added parameter " + param->GetName());
 		}
 
 		// update enum values of property
@@ -1363,6 +1427,7 @@ void XimeaCamera::ParseCameraManifest(char* manifest)
 	check_feats.push_back(TAG_XIAPI_PARAM);
 	check_feats.push_back(TAG_ENUM_ENTRY);
 	check_feats.push_back(TAG_IS_PATH);
+	check_feats.push_back(TAG_VISIBILITY);
 
 	pugi::xml_document doc;
 	if(doc.load(manifest))
@@ -1414,6 +1479,7 @@ void XimeaCamera::ParseCameraManifest(char* manifest)
 						if (feat == TAG_ACCES_MODE)  param.SetAccessType(value);
 						if (feat == TAG_XIAPI_PARAM) param.SetXiParamName(value);
 						if (feat == TAG_APP_DEFAULT) param.SetAppDefault(value);
+						if (feat == TAG_VISIBILITY)  param.SetVisibility(value);
 						if (feat == TAG_IS_PATH && value == "1")
 						{
 							param.SetParamTypePath();
