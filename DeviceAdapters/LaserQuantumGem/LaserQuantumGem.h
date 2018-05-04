@@ -24,7 +24,12 @@
 //-----------------------------------------------------------------------------
 
 #define ERR_PORT_CHANGE_FORBIDDEN    101
-
+#define ERR_CURRENT_CONTROL    4001
+#define ERR_CONTROL_MODE_NOT_CURRENT    4002
+#define ERR_CONTROL_MODE_NOT_POWER    4003
+#define ERR_UNEXPECTED_ANSWER    4004
+#define ERR_ERROR_ANSWER    4005
+#define ERR_ERROR_67    4006
 //-----------------------------------------------------------------------------
 
 class LaserQuantumGem: public CGenericBase<LaserQuantumGem>
@@ -39,47 +44,40 @@ public:
 
     void GetName(char* pszName) const;
     bool Busy();
+	int supportsCurrentControl(bool* supports);
+	std::string to_string(double x);
+	bool string_contains(std::string s1, std::string s2);
 
-	int write();
-	std::string getVersion();
-	
-	int getPower(double*);
-	int getCurrent(double*);
-	int getControlMode(bool*);
-	int getLaserTemperature(double*);
-	int getPSUTemperature(double*);
-	int getStatus(bool*);
-	int getTimers(double* psutime, double* laserenabletime, double* laseroperationtime);
+	// get
+	int getVersion(std::string* version);
+	int getStatus(bool* status);
+	int getControlMode(bool* mode);
+	int getCurrent(double* current);
+	int getPower(double* power);
+	int getLaserTemperature(double* temp);
+	int getPSUTemperature(double* temp);
+	int getTimers(double* psutimer, double* lasertimer, double* operationtimer);
 
-	int setLaserOnOff(bool b);
-	int setPower(double pow);
+	// set
+	int setLaserOnOff(bool status);
 	int setCurrent(double current);
 	int setControlMode(bool mode);
-	int setStartupPower(double pow);
-	int setStartupStatus(bool b);
-	int setAPCCalibration(double pow);
-
-	std::string to_string(double x){
-		std::ostringstream x_convert;
-		x_convert << x;
-		return x_convert.str();
-	}
-	double getMaxPower(){return maxpower_;};
+	int setPower(double power);
 
     // action properties
+	// read only
 	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
-    int OnLaserOnOFF(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnMaximumPower(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnStartUpPower(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnStartUpStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnAPCCalibration(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnEnableCurrentControl(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLaserTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPSUTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnTimers(MM::PropertyBase* pProp, MM::ActionType eAct, long tempnumber);
+	int OnTimers(MM::PropertyBase* pProp, MM::ActionType eAct, long timer);
+
+	int OnLaserOnOff(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnPower(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 	std::string port_;
@@ -87,6 +85,7 @@ private:
 	bool initialized_;
 	bool busy_;
 	bool controlmode_;
+	bool enabledCurrentControl_;
 	double power_;
 	double maxpower_;
 	double current_;
