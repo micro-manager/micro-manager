@@ -23,10 +23,13 @@
 
 package org.micromanager.ratioimaging;
 
+import ij.ImagePlus;
 import ij.process.Blitter;
+import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.awt.Rectangle;
 import java.text.ParseException;
 
 import java.util.ArrayList;
@@ -54,6 +57,10 @@ public class RatioImagingProcessor extends Processor {
    private final int factor_;
    private final int bc1Constant_;
    private final int bc2Constant_;
+   private final String bc1Path_;
+   private final String bc2Path_;
+   private ImagePlus bc1_;
+   private ImagePlus bc2_;
    private final List<Image> images_;
    private boolean process_;
    private int ch1Index_;
@@ -74,6 +81,8 @@ public class RatioImagingProcessor extends Processor {
               settings_.getString(RatioImagingFrame.BACKGROUND2CONSTANT, "0"));
       } catch (ParseException pe) { // What to do? 
       }
+      bc1Path_ = settings_.getString(RatioImagingFrame.BACKGROUND1, "");
+      bc2Path_ = settings_.getString(RatioImagingFrame.BACKGROUND2, "");
       factor_ = factor;
       bc1Constant_ = bc1Constant;
       bc2Constant_ = bc2Constant;
@@ -108,6 +117,8 @@ public class RatioImagingProcessor extends Processor {
          return summary;
       }
       
+
+      
       String[] newNames = new String[chNames.size() + 1];
       for (int i = 0; i < chNames.size(); i++) {
          newNames[i] = (String) chNames.get(i);
@@ -117,6 +128,63 @@ public class RatioImagingProcessor extends Processor {
       
       return summary.copyBuilder().channelNames(newNames).build();
    }
+   
+   
+   public ImagePlus getBackground(String path, int binning, Rectangle roi, int nrBytesPerPixel) {
+
+      if (path.equals("")) {
+         return null;
+      }
+      ij.io.Opener opener = new ij.io.Opener();
+      ImagePlus ip = opener.openImage(path);
+      if (ip == null) {
+         return null;
+      }
+
+      return makeDerivedImage(ip, binning, roi, nrBytesPerPixel);
+   }
+   
+   /**
+    * Generates a new ImagePlus from this one by applying the requested binning
+    * and setting the desired ROI. Should only be called on the original image
+    * (i.e. binning = 1, full field image) If the original image was normalized,
+    * this one will be as well (as it is derived from the normalized image)
+    *
+    * @param ipi
+    * @param binning
+    * @param roi
+    * @return
+    * @throws org.micromanager.internal.utils.MMException
+    */
+   private ImagePlus makeDerivedImage(ImagePlus ipi, int binning, Rectangle roi,
+           int nrBytesPerPixel) {
+
+      ImageProcessor resultProcessor;
+      if (binning != 1) {
+         resultProcessor = ipi.getProcessor().bin(binning);
+      } else {
+         resultProcessor = ipi.getProcessor().duplicate();
+      }
+      // HACK/Fix: The Andor Zyla often returns an ROI with roi.x ==-1 pr roi.y == -1
+      // That creates problems because the image after setRoi will be one pixel
+      // to small (i.e., the image should always have the correct height and width
+      // This can be removed once ROIs can be trusted to have all number >= 0
+      if (roi.x < 0) {
+         roi.x = 0;
+      }
+      if (roi.y < 0) {
+         roi.y = 0;
+      }
+      if (nrBytesPerPixel == 1) {
+         resultProcessor.convertToByteProcessor(false);
+      } else if (nrBytesPerPixel == 2) {
+         resultProcessor.convertToShortProcessor(false);
+      }
+      resultProcessor.setRoi(roi);
+      ImagePlus newIp = new ImagePlus("", resultProcessor.crop());
+      return newIp;
+   }
+   
 
    @Override
    public void processImage(Image newImage, ProcessorContext context) {
@@ -128,6 +196,16 @@ public class RatioImagingProcessor extends Processor {
       }
       if (! (newImage.getBytesPerPixel() == 1 || newImage.getBytesPerPixel() == 2) ) {
          return;
+      }
+      
+      int binning = newImage.getMetadata().getBinning();
+      Rectangle roi = newImage.getMetadata().getROI();
+      int nrBytesPerPixel = newImage.getBytesPerPixel();
+      if (bc1_ == null) {
+         bc1_ = getBackground(bc1Path_, binning, roi, nrBytesPerPixel);
+      }
+      if (bc2_ == null) {
+         bc2_ = getBackground(bc2Path_, binning, roi, nrBytesPerPixel);
       }
       
       if (!process_) {
@@ -163,10 +241,17 @@ public class RatioImagingProcessor extends Processor {
    }
       
    private void process(Image ch1Image, Image ch2Image, ProcessorContext context) {
+      
       Coords ratioCoords = ch1Image.getCoords().copyBuilder().c(ratioIndex_).build();
       
       ImageProcessor ch1Proc = studio_.data().ij().createProcessor(ch1Image);
       ImageProcessor ch2Proc = studio_.data().ij().createProcessor(ch2Image);
+      if (bc1_ != null) {
+         ch1Proc = subtractImageProcessors(ch1Proc, bc1_.getProcessor());
+      }
+      if (bc2_ != null) {
+         ch2Proc = subtractImageProcessors(ch2Proc, bc2_.getProcessor());
+      }
       ch1Proc = ch1Proc.convertToFloat();
       ch2Proc = ch2Proc.convertToFloat();
       ch1Proc.subtract(bc1Constant_);
@@ -223,5 +308,62 @@ public class RatioImagingProcessor extends Processor {
 		}
 	    return new ShortProcessor(ip.getWidth(), ip.getHeight(), pixels16, 
                ip.getColorModel());
+   }
+   
+   private static ByteProcessor subtractByteProcessors(ByteProcessor proc1, ByteProcessor proc2) {
+      return new ByteProcessor(proc1.getWidth(), proc1.getHeight(),
+              subtractPixelArrays((byte []) proc1.getPixels(), (byte []) proc2.getPixels()),
+              null);
+   }
+   
+   
+   private static ShortProcessor subtractShortProcessors(ShortProcessor proc1, ShortProcessor proc2) {
+      return new ShortProcessor(proc1.getWidth(), proc1.getHeight(),
+              subtractPixelArrays((short []) proc1.getPixels(), (short []) proc2.getPixels()),
+              null);
+   }
+   
+    public static byte[] subtractPixelArrays(byte[] array1, byte[] array2) {
+      int l = array1.length;
+      byte[] result = new byte[l];
+      for (int i=0;i<l;++i) {
+         result[i] = (byte) Math.max(0, unsignedValue(array1[i]) - 
+                 unsignedValue(array2[i]) );
+      }
+      return result;
+   }
+   
+   public static short[] subtractPixelArrays(short[] array1, short[] array2) {
+      int l = array1.length;
+      short[] result = new short[l];
+      for (int i=0;i<l;++i) {
+         result[i] = (short) Math.max(0, unsignedValue(array1[i]) - unsignedValue(array2[i]));
+      }
+      return result;
+   }
+   
+   public static int unsignedValue(byte b) {
+      // Sign-extend, then mask
+      return ((int) b) & 0x000000ff;
+   }
+
+   public static int unsignedValue(short s) {
+      // Sign-extend, then mask
+      return ((int) s) & 0x0000ffff;
+   }
+   
+   public static ImageProcessor subtractImageProcessors(ImageProcessor proc1, ImageProcessor proc2) {
+      if ((proc1.getWidth() != proc2.getWidth())
+              || (proc1.getHeight() != proc2.getHeight())) {
+         return null;
+      }
+
+      if (proc1 instanceof ByteProcessor && proc2 instanceof ByteProcessor) {
+         return subtractByteProcessors((ByteProcessor) proc1, (ByteProcessor) proc2);
+      } else if (proc1 instanceof ShortProcessor && proc2 instanceof ShortProcessor) {
+         return subtractShortProcessors((ShortProcessor) proc1, (ShortProcessor) proc2);
+      }
+      
+      return null;
    }
 }

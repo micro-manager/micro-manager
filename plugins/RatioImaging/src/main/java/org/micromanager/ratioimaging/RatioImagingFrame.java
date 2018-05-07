@@ -144,7 +144,7 @@ public class RatioImagingFrame extends MMFrame implements ProcessorConfigurator 
       super.add(background2Button_);
       super.add(bc2TextField, "gap 20:push, wrap");
       
-      super.add(new JLabel("(Ch1 - (background + constact)) / (Ch2 - (background + constant) *"), 
+      super.add(new JLabel("(Ch1 - (background + constant)) / (Ch2 - (background + constant) *"), 
               "gapy 20:push, span 5, split 2");
       super.add(factorTextField, "wrap");
       
