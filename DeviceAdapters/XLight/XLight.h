@@ -123,6 +123,37 @@ private:
     std::string name_;
 }; 
 
+class Excitation : public CStateDeviceBase<Excitation> {
+public:
+    Excitation();
+    ~Excitation();
+
+    // MMDevice API                                                           
+    // ------------                                                           
+    int Initialize();
+    int Shutdown();
+
+    void GetName(char* pszName) const;
+    bool Busy();
+
+    unsigned long GetNumberOfPositions()const {
+        return numPos_;
+    }
+
+    // action interface                                                       
+    // ----------------                                                       
+    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+	static const char cmd_letter = 'E'; // use 'B' for testing, revert to 'E' before shipping
+    bool initialized_;
+	bool use_new_command_;
+    unsigned numPos_;
+    long pos_;
+    std::string name_;
+}; 
+
+
 class SpinMotor : public CStateDeviceBase<SpinMotor> {
 public:
     SpinMotor();

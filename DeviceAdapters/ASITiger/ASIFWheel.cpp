@@ -35,6 +35,7 @@
 
 using namespace std;
 
+// shared properties not implemented for filter wheel except for save settings because no shared properties
 
 ///////////////////////////////////////////////////////////////////////////////
 // CFWheel
@@ -130,16 +131,29 @@ int CFWheel::Initialize()
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsOrig);
    AddAllowedValue(g_SaveSettingsPropertyName, g_SaveSettingsDone);
 
-   // get current position and cache in curPosition_
-   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("MP", "MP ", g_SerialTerminatorFW) );
-   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition3(curPosition_) );
-
    // property for spinning or not
    pAct = new CPropertyAction (this, &CFWheel::OnSpin);
    CreateProperty(g_FWSpinStatePropertyName, g_OffState, MM::String, false, pAct);
    AddAllowedValue(g_FWSpinStatePropertyName, g_OffState);
    AddAllowedValue(g_FWSpinStatePropertyName, g_OnState);
    UpdateProperty(g_FWSpinStatePropertyName);
+
+   // a busy signal indicates a mechanical offset so try to move to home by turning off spin
+   //   which will invoke home (HO) command and make the wheel move
+   if (Busy())
+   {
+      SetProperty(g_FWSpinStatePropertyName, g_OffState);
+      // query busy until we see that we've stopped, give up after 100 times
+      int count = 0;
+      while (Busy() && ++count<100)
+      {
+         CDeviceUtils::SleepMs(20);
+      }
+   }
+
+   // get current position and cache in curPosition_
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify("MP", "MP ", g_SerialTerminatorFW) );
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition3(curPosition_) );
 
    // max velocity
    pAct = new CPropertyAction (this, &CFWheel::OnVelocity);
@@ -280,6 +294,8 @@ int CFWheel::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
    string tmpstr;
    ostringstream command; command.str("");
    if (eAct == MM::AfterSet) {
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       RETURN_ON_MM_ERROR ( SelectWheel() );
       pProp->Get(tmpstr);
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
@@ -303,6 +319,8 @@ int CFWheel::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (tmpstr.compare(g_SaveSettingsX) || tmpstr.compare(g_SaveSettingsY)) {
          ForcePropertyRefresh();
       }
+      command.str(""); command << g_SaveSettingsDone;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }

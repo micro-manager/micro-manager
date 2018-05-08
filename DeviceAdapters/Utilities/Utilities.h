@@ -202,6 +202,7 @@ public:
 
    virtual int SetPositionUm(double pos);
    virtual int GetPositionUm(double& pos);
+   virtual int SetRelativePositionUm(double pos);
    virtual int SetPositionSteps(long steps);
    virtual int GetPositionSteps(long& steps);
 

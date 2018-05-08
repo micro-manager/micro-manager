@@ -158,7 +158,7 @@ private:
    MM::MMTime changedTime_;
    bool initialized_;
    std::string name_;
-   int isOpen_;
+   bool isOpen_;
 };
 
 
@@ -364,7 +364,7 @@ private:
    MM::MMTime changedTime_;
    bool initialized_;
    std::string name_;
-   int isOpen_;
+   bool isOpen_;
 };
 
 #endif //_CSUW1_H_

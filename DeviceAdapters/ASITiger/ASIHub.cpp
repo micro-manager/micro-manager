@@ -158,17 +158,18 @@ int ASIHub::QueryCommandVerify(const char *command, const char *expectedReplyPre
 {
    RETURN_ON_MM_ERROR ( QueryCommand(command, replyTerminator, delayMs) );
    // if doesn't match expected prefix, then look for ASI error code
-   if (serialAnswer_.substr(0, strlen(expectedReplyPrefix)).compare(expectedReplyPrefix) != 0)
+   size_t len = strlen(expectedReplyPrefix);
+   if (serialAnswer_.length() < len ||
+         serialAnswer_.substr(0, len).compare(expectedReplyPrefix) != 0)
    {
-      int errNo = ParseErrorReply();
-      return errNo;
+      return ParseErrorReply();
    }
    return DEVICE_OK;
 }
 
 int ASIHub::ParseErrorReply() const
 {
-   if (serialAnswer_.substr(0, 2).compare(":N") == 0 && serialAnswer_.length() > 2)
+   if (serialAnswer_.length() > 3 && serialAnswer_.substr(0, 2).compare(":N") == 0)
    {
       int errNo = atoi(serialAnswer_.substr(3).c_str());
       return ERR_ASICODE_OFFSET + errNo;

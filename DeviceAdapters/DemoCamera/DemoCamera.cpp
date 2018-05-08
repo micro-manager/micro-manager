@@ -2184,21 +2184,21 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          {
             long lIndex = imgWidth*j + k;
             unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * lSinePeriod * k) / lPeriod)));
-            theBytes[0] = value0;
+            theBytes[3] = value0;
             if( NULL != pTmpBuffer)
-               pTmp2[2] = value0;
+               pTmp2[1] = value0;
             unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * lSinePeriod * k) / lPeriod)));
-            theBytes[1] = value1;
+            theBytes[2] = value1;
             if( NULL != pTmpBuffer)
-               pTmp2[1] = value1;
+               pTmp2[2] = value1;
             unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * lSinePeriod * k) / lPeriod)));
-            theBytes[2] = value2;
+            theBytes[1] = value2;
 
             if( NULL != pTmpBuffer){
-               pTmp2[0] = value2;
+               pTmp2[3] = value2;
                pTmp2+=3;
             }
-            theBytes[3] = 0;
+            theBytes[0] = 0;
             unsigned long tvalue = *(unsigned long*)(&theBytes[0]);
             if (tvalue > maxDrawnVal) {
                 maxDrawnVal = tvalue;
@@ -2375,7 +2375,7 @@ bool CDemoCamera::GenerateColorTestPattern(ImgBuffer& img)
             {
                if (y == 0)
                {
-                  rawBytes[x] = (unsigned char) (maxVal * x / (width - 1));
+                  rawBytes[x] = (unsigned char) (maxVal * (x + 1) / (width - 1));
                }
                else {
                   rawBytes[x + y * width] = rawBytes[x];
@@ -2395,7 +2395,7 @@ bool CDemoCamera::GenerateColorTestPattern(ImgBuffer& img)
             {
                if (y == 0)
                {
-                  rawShorts[x] = (unsigned short) (maxVal * x / (width - 1));
+                  rawShorts[x] = (unsigned short) (maxVal * (x + 1) / (width - 1));
                }
                else {
                   rawShorts[x + y * width] = rawShorts[x];
@@ -2423,10 +2423,10 @@ bool CDemoCamera::GenerateColorTestPattern(ImgBuffer& img)
                      if (component == section ||
                            (section >= 4 && section - 4 != component))
                      {
-                        sample = maxVal * x / (width - 1);
+                        sample = maxVal * (x + 1) / (width - 1);
                      }
                      sample &= 0xff; // Just in case
-                     rawPixels[x + y * width] |= sample << (8 * (3 - component));
+                     rawPixels[x + y * width] |= sample << (8 * component);
                   }
                }
             }

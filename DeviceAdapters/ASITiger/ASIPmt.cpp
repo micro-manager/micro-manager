@@ -147,10 +147,8 @@ int CPMT::Initialize()
 int CPMT::SetGateOpen(bool open)
 {
 	ostringstream command; command.str("");
-   if(open)
-   {
+   if (open)
       command << addressChar_ << "LOCK " << channelAxisChar_ ;
-   }
    else
    {
      // can't do opposite the reset
@@ -163,39 +161,26 @@ int CPMT::SetGateOpen(bool open)
 int CPMT::GetGateOpen(bool& open)
 {
    unsigned int val;
-	// This is the overload reset 
-	ostringstream command; command.str("");
-    command << addressChar_ << "LOCK " << channelAxisChar_ << "?" ;
-  // reply is 0 or 1 , 0 is overloaded , 1 is enabled
-      RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-      RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
-   if(val)
-   {
-   open = true;
-  
-   }
-   else
-   {
-   open=false;
-
-   }
-	return DEVICE_OK;
+   ostringstream command; command.str("");
+   command << addressChar_ << "LOCK " << channelAxisChar_ << "?" ;
+   // reply is 0 or 1 , 0 is overloaded , 1 is enabled
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
+   open = val ? true : false;  // cast to boolean
+   return DEVICE_OK;
 }
 
 // Get PMT's ADC reading
 int CPMT::GetSignal(double& volts)
 {
    unsigned int val;
-	// This is the overload reset 
-	ostringstream command; command.str("");
-    command << addressChar_ << "RDADC " << channelAxisChar_ << "?" ;
+   ostringstream command; command.str("");
+   command << addressChar_ << "RDADC " << channelAxisChar_ << "?" ;
    // reply is 0 or 1 , 0 is overloaded , 1 is enabled
-    RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
-    RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
-   
-    volts=val;
-
-	return DEVICE_OK;
+   RETURN_ON_MM_ERROR ( hub_->QueryCommandVerify(command.str(), ":A") );
+   RETURN_ON_MM_ERROR ( hub_->ParseAnswerAfterPosition2(val) );
+   volts = val;
+   return DEVICE_OK;
 }
 
 int CPMT::UpdateGain()
@@ -219,8 +204,7 @@ int CPMT::UpdateAvg()
    ostringstream command; command.str("");
    ostringstream replyprefix; replyprefix.str("");
    long tmp = 0;
-  // command << addressChar_ << "RT F?";
-   command << "E "<<axisLetter_<<"?";
+   command << "E " << axisLetter_ << "?";
    replyprefix << ":" << axisLetter_ << "=";
    RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), replyprefix.str()) );
    RETURN_ON_MM_ERROR( hub_->ParseAnswerAfterEquals(tmp) );
@@ -237,8 +221,10 @@ int CPMT::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
    string tmpstr;
    ostringstream command; command.str("");
    if (eAct == MM::AfterSet) {
-      command << addressChar_ << "SS ";
+      if (hub_->UpdatingSharedProperties())
+         return DEVICE_OK;
       pProp->Get(tmpstr);
+      command << addressChar_ << "SS ";
       if (tmpstr.compare(g_SaveSettingsOrig) == 0)
          return DEVICE_OK;
       if (tmpstr.compare(g_SaveSettingsDone) == 0)
@@ -251,6 +237,8 @@ int CPMT::OnSaveCardSettings(MM::PropertyBase* pProp, MM::ActionType eAct)
          command << 'Z';
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A", (long)200) );  // note 200ms delay added
       pProp->Set(g_SaveSettingsDone);
+      command.str(""); command << g_SaveSettingsDone;
+      RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
    }
    return DEVICE_OK;
 }
@@ -267,7 +255,6 @@ int CPMT::OnOverloadReset(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
 	  else if (tmpstr.compare(g_OnState) == 0)
          command << addressChar_ << "LOCK " << channelAxisChar_ ;
-
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A", (long)200) );  // note 200ms delay added
       pProp->Set(g_PMTOverloadDone);
    }
@@ -311,7 +298,6 @@ int CPMT::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 //Get and Set PMT Average length
-//Note this is a common property for both the channels
 int CPMT::OnAverage(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    ostringstream command; command.str("");
@@ -326,11 +312,9 @@ int CPMT::OnAverage(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-         //command << addressChar_ << "RT F=" << tmp;
-      command << "E "<<axisLetter_<<"="<<tmp;   
-	  RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
-         avg_length_ = tmp;
-
+      command << "E " << axisLetter_ << "=" << tmp;
+      RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
+      avg_length_ = tmp;
    }
    return DEVICE_OK;
 }

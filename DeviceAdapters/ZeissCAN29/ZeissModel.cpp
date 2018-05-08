@@ -93,6 +93,20 @@ int DefiniteFocusModel::SetStatus(ZeissUShort status)
    return DEVICE_OK;
 } 
 
+int DefiniteFocusModel::GetVersion(ZeissUShort& version) 
+{
+   MMThreadGuard(this->dfLock_); 
+   version = version_; 
+   return DEVICE_OK;
+} 
+
+int DefiniteFocusModel::SetVersion(ZeissUShort version) 
+{
+   MMThreadGuard(this->dfLock_); 
+   version_ = version; 
+   return DEVICE_OK;
+} 
+
 int DefiniteFocusModel::GetError(ZeissUShort& error) 
 {
    MMThreadGuard(this->dfLock_); 

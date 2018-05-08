@@ -300,9 +300,9 @@ void MultiAnalogOutHub::RemovePortFromSequencing(const std::string& port)
 int MultiAnalogOutHub::GetVoltageRangeForDevice(
    const std::string& device, double& minVolts, double& maxVolts)
 {
-   const int MAX_PORTS = 64;
-   float64 ranges[2 * MAX_PORTS];
-   for (int i = 0; i < MAX_PORTS; ++i)
+   const int MAX_RANGES = 64;
+   float64 ranges[2 * MAX_RANGES];
+   for (int i = 0; i < MAX_RANGES; ++i)
    {
       ranges[2 * i] = 0.0;
       ranges[2 * i + 1] = 0.0;
@@ -316,22 +316,26 @@ int MultiAnalogOutHub::GetVoltageRangeForDevice(
       return TranslateNIError(nierr);
    }
 
-   // Find the common min and max.
-   double commonMin = ranges[0];
-   double commonMax = ranges[1];
-   for (int i = 0; i < MAX_PORTS; ++i)
+   minVolts = ranges[0];
+   maxVolts = ranges[1];
+   for (int i = 0; i < MAX_RANGES; ++i)
    {
       if (ranges[2 * i] == 0.0 && ranges[2 * i + 1] == 0.0)
          break;
-
-      if (ranges[2 * i] != commonMin)
-         return ERR_NONUNIFORM_CHANNEL_VOLTAGE_RANGES;
-      if (ranges[2 * i + 1] != commonMax)
-         return ERR_NONUNIFORM_CHANNEL_VOLTAGE_RANGES;
+      LogMessage(("Possible voltage range " +
+         boost::lexical_cast<std::string>(ranges[2 * i]) + " V to " +
+         boost::lexical_cast<std::string>(ranges[2 * i + 1]) + " V").c_str(),
+         true);
+      if (ranges[2 * i + 1] > maxVolts)
+      {
+         minVolts = ranges[2 * i];
+         maxVolts = ranges[2 * i + 1];
+      }
    }
-
-   minVolts = commonMin;
-   maxVolts = commonMax;
+      LogMessage(("Selected voltage range " +
+         boost::lexical_cast<std::string>(minVolts) + " V to " +
+         boost::lexical_cast<std::string>(maxVolts) + " V").c_str(),
+         true);
 
    return DEVICE_OK;
 }

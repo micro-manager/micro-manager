@@ -4,6 +4,9 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   niji controller adapter
+// APPLIES TO:    niji with firmware version >= V2.101.000(Beta)
+//                (please contact Bluebox Optics if your firmware is older)
+//
 // COPYRIGHT:     University of California, San Francisco, 2009
 //
 // AUTHOR:        Egor Zindy, ezindy@gmail.com, 2017-08-15
@@ -46,11 +49,13 @@ const char* g_Keyword_ChannelLabel = "ChannelLabel";
 const char* g_Keyword_TriggerSource = "TriggerSource";
 const char* g_Keyword_TriggerLogic = "TriggerLogic";
 const char* g_Keyword_TriggerResistor = "TriggerResistor";
+const char* g_Keyword_OutputMode = "OutputMode";
 
-//Readonly properties
+// Readonly properties
 const char* g_Keyword_Temp1 = "OutputTemp";
 const char* g_Keyword_Temp2 = "AmbientTemp";
 const char* g_Keyword_Firmware = "FirmwareVersion";
+const char* g_Keyword_ErrorCode = "ErrorCode";
 const char* g_Keyword_GlobalStatus = "GlobalStatus";
 const char* g_Keyword_GlobalIntensity = "GlobalIntensity";
 
@@ -58,10 +63,29 @@ const char* terminator = "\r\n";
 
 // The wavelengths expected in a 7 LED niji...
 const char* g_ChannelNames[] = {"395/14", "445/15", "470/25", "515/30", "575/25 or 554/23", "630/20", "745/30"};
+
 const char* g_TriggerSources[] = {"Internal", "External"};
 const char* g_TriggerLogics[] = {"Active Low", "Active High"};
 const char* g_TriggerResistors[] = {"Pull Down", "Pull Up"};
+const char* g_OutputModes[] = {"Constant Current", "Constant Optical Power"};
 
+// The global status strings
+const char* g_StatusNames[] = {"Light Output Enabled", "Key Switch / Light Guide / Lid open Lockout", "Key Switch Lockout", "Light Guide Lockout", "Lid Open Lockout", "Unknowm Error"};
+
+const char *GetStatus(int errorCode)
+{
+   const char *statusMessage = NULL;
+   switch(errorCode)
+   {
+      case 0: statusMessage = g_StatusNames[0]; break; //no error
+      case 1: statusMessage = g_StatusNames[1]; break; //v1 error
+      case 2: statusMessage = g_StatusNames[2]; break; //key switch
+      case 4: statusMessage = g_StatusNames[3]; break; //light guide
+      case 8: statusMessage = g_StatusNames[4]; break; //lid open
+      default: statusMessage = g_StatusNames[5]; //Last one is unknown error
+   }
+   return statusMessage;
+}
 
 void CreatePropertyName(string& Name, const char* prefix, const char *suffix, long index)
 {
@@ -115,13 +139,14 @@ Controller::Controller(const char* name) :
    error_(0),
    mThread_(0),
    hasUpdated_(true),
-   globalStatus_(0),
+   errorCode_(0),
    tempOutput_(0.0),
    tempAmbient_(0.0),
    firmwareVersion_(""),
    triggerSource_(0),
    triggerLogic_(1),
    triggerResistor_(1),
+   outputMode_(0),
    changedTime_(0.0)
 {
    assert(strlen(name) < (unsigned int) MM::MaxStrLength);
@@ -192,20 +217,21 @@ int Controller::Initialize()
    GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, (char *)buf_ );
    PurgeComPort(port_.c_str());
 
-   ReadFirmware();
-   ReadUpdate();
-
    //The channels are hard coded for now.
    int result = ReadChannelLabels();
    if (result != DEVICE_OK)
       return result;
 
-   GenerateIntensityProperties();
    GenerateStateProperties();
+   GenerateIntensityProperties();
    GenerateChannelChooser();
    GenerateTriggerProperties();
    GenerateReadOnlyProperties();
+   GenerateOtherProperties();
    
+   //This queries the number of lines returned by the "r" and "?" commands
+   ReadGreeting();
+
    initialized_ = true;
 
    mThread_ = new PollingThread(*this);
@@ -265,7 +291,7 @@ void Controller::GenerateIntensityProperties()
       CreateProperty(propertyName.c_str(), "100", MM::Integer, false, pActEx);
       SetPropertyLimits(propertyName.c_str(), 0, 100);
 
-      // channel intensities are initialized to 100%
+      //channel intensities are initialized to 100%
       channelIntensities_.push_back(100);
       SetChannelIntensity(100, index);
    }
@@ -294,7 +320,9 @@ void Controller::GenerateStateProperties()
       AddAllowedValue(propertyName.c_str(), "1");
 
       //channel states are initialized to 0
-      channelStates_.push_back(0);
+      channelStates_.push_back(-1);
+      ledStates_.push_back(-1);
+      SetChannelState(0, index);
    }
 }
 
@@ -338,9 +366,23 @@ void Controller::GenerateReadOnlyProperties()
    CreateProperty(g_Keyword_Temp2, CDeviceUtils::ConvertToString(tempAmbient_), MM::Float, true, pAct);
    
    pAct = new CPropertyAction(this, &Controller::OnGlobalStatus);
-   CreateProperty(g_Keyword_GlobalStatus, CDeviceUtils::ConvertToString(globalStatus_), MM::Integer, true, pAct);
+   CreateProperty(g_Keyword_GlobalStatus, GetStatus(errorCode_), MM::String, true, pAct);
+
+   pAct = new CPropertyAction(this, &Controller::OnErrorCode);
+   CreateProperty(g_Keyword_ErrorCode, CDeviceUtils::ConvertToString(errorCode_), MM::Integer, true, pAct);
 }
 
+void Controller::GenerateOtherProperties()
+{
+   CPropertyAction* pAct;
+
+   //Power Output mode.
+   pAct = new CPropertyAction (this, &Controller::OnOutputMode);
+   CreateProperty(g_Keyword_OutputMode , g_OutputModes[0], MM::String, false, pAct);
+   AddAllowedValue(g_Keyword_OutputMode , g_OutputModes[0]);
+   AddAllowedValue(g_Keyword_OutputMode , g_OutputModes[1]);
+   SetProperty(g_Keyword_OutputMode , g_OutputModes[0]);
+}
 
 int Controller::Shutdown()
 {
@@ -457,6 +499,7 @@ int Controller::OnChannelState(MM::PropertyBase* pProp, MM::ActionType eAct, lon
    {
       pProp->Get(state);
       SetChannelState(state, index);
+      UpdateChannelLabel();
       hasUpdated_ = true;
    }
 
@@ -476,9 +519,7 @@ int Controller::OnChannelIntensity(MM::PropertyBase* pProp, MM::ActionType eAct,
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(intensity);
-
       SetChannelIntensity(intensity, index);
-
       hasUpdated_ = true;
    }
 
@@ -582,6 +623,33 @@ int Controller::OnTriggerResistor(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+int Controller::OnOutputMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(g_OutputModes[outputMode_]);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string mode;
+      pProp->Get(mode);
+
+      for (long index=0; index<2; index++) 
+      {
+         if (mode.compare(g_OutputModes[index])==0)
+         {
+            outputMode_ = index;
+            break;
+         }
+      }
+      SetOutputMode();
+      hasUpdated_ = true;
+   }
+   return HandleErrors();
+}
+
+
 //
 //Read-only properties...
 //
@@ -632,7 +700,22 @@ int Controller::OnGlobalStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(globalStatus_);
+      const char *statusMessage = GetStatus(errorCode_);
+      pProp->Set(statusMessage);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+         // never do anything!!
+   }
+   return HandleErrors();
+}
+
+
+int Controller::OnErrorCode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(errorCode_);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -665,7 +748,22 @@ void Controller::SetTrigger()
       MMThreadGuard myLock(lock_);
       Purge();
       Send(msg.str());
-      ReadResponseLines(1);
+      CDeviceUtils::SleepMs(10);
+      ReceiveOneLine();
+   }
+}
+
+// <constant current> or <constant optical power>
+void Controller::SetOutputMode()
+{
+   stringstream msg;
+   msg << "CC," << outputMode_ << ",";
+   {
+      MMThreadGuard myLock(lock_);
+      Purge();
+      Send(msg.str());
+      CDeviceUtils::SleepMs(10);
+      ReceiveOneLine();
    }
 }
 
@@ -729,33 +827,62 @@ void Controller::GetState(long &state)
    state = state_;
 }
 
+long Controller::UpdateChannelLabel()
+{
+   //Count how many LED channels are currently active
+   long nActive = 0;
+   long index = 0;
+   long state = 1;
+   for (long i=0; i<NLED; i++)
+   {
+      if (channelStates_[i] == 1) {
+         nActive++;
+         index = i;
+      }
+   }
+
+   if (nActive == 1)
+   {
+      //With exactly one channel active, the current channel label
+      //is set according to the index passed to SetChannelState()
+      currentChannelLabel_ = g_ChannelNames[index];
+   }
+   else if (nActive > 1)
+   {
+      //The channel label is changed to the multiple selection string
+      //if we have more than one LED selected
+      currentChannelLabel_ = g_Keyword_MultipleSelection;
+   }
+   else state = 0;
+
+   return state;
+}
+
 void Controller::SetChannelState(long state, long index)
 {
    long channelState = channelStates_[index];
    channelStates_[index] = state;
 
    //Only send a serial command if the shutter is open (and we are actually changing the channel state)
-   if (state_ == 1 && channelState != state)
+   //However, when we are initializing, we really want all the LEDs to be off
+   if (channelState < 0 || (state_ == 1 && channelState != state))
    {
-      stringstream msg;
-      msg << "D," << index+1 << "," << state;
-
+      if (state != ledStates_[index])
       {
-         MMThreadGuard myLock(lock_);
-         Purge();
-         Send(msg.str());
-         ReceiveOneLine();
+         ledStates_[index] = state;
+
+         stringstream msg;
+         msg << "D," << index+1 << "," << state;
+
+         {
+            MMThreadGuard myLock(lock_);
+            Purge();
+            Send(msg.str());
+            CDeviceUtils::SleepMs(10);
+            ReceiveOneLine();
+         }
       }
    }
-
-   //The channel label needs to be changed if we have more than one LED selected
-   long nActive = 0;
-   for (index=0; index<NLED; index++)
-      nActive += channelStates_[index];
-
-   if (nActive > 1)
-      currentChannelLabel_ = g_Keyword_MultipleSelection;
-      //SetProperty(g_Keyword_ChannelLabel,g_Keyword_MultipleSelection);
 }
 
 //TODO We do not have a means of getting the current state, so relying on the saved version
@@ -783,7 +910,8 @@ void Controller::SetGlobalIntensity(long intensity)
          intensity = channelIntensities_[index];
          msg << "d," << index+1 << "," << (long)(0.01*(double)intensity_*(double)intensity);
          Send(msg.str());
-         ReadResponseLines(1);
+         CDeviceUtils::SleepMs(10);
+         ReceiveOneLine();
       }
    }
 }
@@ -799,7 +927,8 @@ void Controller::SetChannelIntensity(long intensity, long index)
       MMThreadGuard myLock(lock_);
       Purge();
       Send(msg.str());
-      ReadResponseLines(1);
+      CDeviceUtils::SleepMs(10);
+      ReceiveOneLine();
    }
 }
 
@@ -821,11 +950,21 @@ void Controller::Illuminate()
       for (long index=0; index<NLED; index++)
       {
          channelState = (state_ == 0)?0:channelStates_[index];
-         msg.str("");
-         msg.clear();
-         msg << "D," << index+1 << "," << channelState;
-         Send(msg.str());
-         ReadResponseLines(1);
+
+         //we check against ledStates_ to only change channel states that need changing
+         //ledStates_ is updated through the background loop when changed via the secondary port
+         if (channelState != ledStates_[index])
+         {
+            ledStates_[index] = channelState;
+
+            msg.str("");
+            msg.clear();
+
+            msg << "D," << index+1 << "," << channelState;
+            Send(msg.str());
+            CDeviceUtils::SleepMs(10);
+            ReceiveOneLine();
+         }
       }
    }
 }
@@ -853,7 +992,6 @@ void Controller::Send(string cmd)
 void Controller::ReceiveOneLine()
 {
    buf_string_.clear();
-   //CDeviceUtils::SleepMs(100);
    GetSerialAnswer(port_.c_str(), terminator, buf_string_);
 
    // Set timer for the Busy signal
@@ -878,34 +1016,48 @@ int Controller::HandleErrors()
 }
 
 
-void Controller::ReadFirmware()
-{
-   MMThreadGuard myLock(lock_);
-   {
-      Purge();
-      Send("?");
-      ReadResponseLines(2);
-   }
-}
-
 void Controller::ReadUpdate()
 {
    MMThreadGuard myLock(lock_);
    {
-      Purge();
+      //Any new response?
+      //TODO This logs a 107 error if the read buffer is empty.
+      //Any way round it?
+      ReadResponseLines(-1);
+
+      //TODO Use a time counter in the polling thread, no need to update those every cycle.
+
       //To update the global status
+      /*
       Send("?");
-      ReadResponseLines(2);
+      ReadResponseLines(n_lines1);
 
       //To update the temperatures
       Send("r");
-      ReadResponseLines(3);
+      ReadResponseLines(n_lines2);
+      */
    }
 }
 
 void Controller::ReadGreeting()
 {
-   ReadResponseLines(-1);
+   //The number of lines returned by the niji may vary from firmware to firmware.
+   //The first time we interrogate the niji, we let Readstaty
+   //Then we know how many lines are returned by the niji in response to these commands
+   MMThreadGuard myLock(lock_);
+   {
+      Purge();
+      //Any greeting message when the niji is first turned on are parsed by ReadResponseLines()
+      //ReadResponseLines(-1);
+
+      //To update the global status (and store the number of lines returned by the command)
+      Send("?");
+      n_lines1 = ReadResponseLines(-1);
+
+      //To update the temperatures (and store the number of lines returned by the command)
+      Send("r");
+      n_lines2 = ReadResponseLines(-1);
+   }
 }
 
 //Here we analyze any possible response and return the number of lines actually read
@@ -918,8 +1070,10 @@ int Controller::ReadResponseLines(int n)
    {
       i++;
       ReceiveOneLine();
-      if (buf_string_.empty())
+      if (buf_string_.empty()) {
+          std::ostringstream ss; ss << "Nothing to parse (buffer empty)"; LogMessage(ss.str().c_str(), true);
           break;
+      }
 
       // Output temperature
       // R,22.5, 0, 3, 0, 0, 0, 0, 1, 6, 94,
@@ -966,11 +1120,17 @@ int Controller::ReadResponseLines(int n)
          continue;
       }
 
-      // The response to a TTL setup
+      // The response to a TTL setup. First bool is trigger on/off, second bool is active low / active high, third bool is pull down / pull up
       // -> TTL,0,1,0
       // <- TTL,0,0,0,
       prefix = "TTL,";
       if(buf_string_.substr(0, prefix.size()) == prefix) {
+         long source = atoi(buf_string_.substr(prefix.size()).c_str());
+         long logic = atoi(buf_string_.substr(prefix.size()+2).c_str());
+         long resistor = atoi(buf_string_.substr(prefix.size()+4).c_str());
+         triggerSource_ = source;
+         triggerLogic_ = logic;
+         triggerResistor_ = resistor;
          continue;
       }
 
@@ -978,10 +1138,17 @@ int Controller::ReadResponseLines(int n)
       // Status,0,
       prefix = "Status,";
       if(buf_string_.substr(0, prefix.size()) == prefix) {
-         globalStatus_ = atoi(buf_string_.substr(prefix.size()).c_str());
-         if (globalStatus_ > 0)
-            state_ = 0;
-            //SetProperty(MM::g_Keyword_State, "0");
+         long status = atoi(buf_string_.substr(prefix.size()).c_str());
+         if (status != errorCode_)
+         {
+             errorCode_ = status;
+
+             //This is used to kill the ligh in case we have a globalStatus error
+             if (errorCode_ > 0) {
+                Illuminate();
+                LogMessage("Keyswitch Off, Lid Open or Light Guide Missing - Lockout!");
+             }
+         }
          continue;
       }
 
@@ -993,13 +1160,51 @@ int Controller::ReadResponseLines(int n)
          continue;
       }
 
+      //intensity response
+      //d,4,80,
+      prefix = "d,";
+      if(buf_string_.substr(0, prefix.size()) == prefix) {
+         long index = atoi(buf_string_.substr(2).c_str())-1;  //need 0-index for arrays
+         long intensity = atoi(buf_string_.substr(4).c_str());
+
+         if (index >=0 && index < NLED) {
+            channelIntensities_[index] = intensity;
+         }
+
+         continue;
+      }
+
+      //State response
+      //D,3,0,
+      prefix = "D,";
+      if(buf_string_.substr(0, prefix.size()) == prefix) {
+         long index = atoi(buf_string_.substr(2).c_str())-1;  //need 0-index for arrays
+         long state = atoi(buf_string_.substr(4).c_str());
+
+         //Is the LED channel ON but state_ is 0 (unknown)
+         if (index >=0 && index < NLED) {
+            //We keep a record of the real LED state as sent by the niji
+            ledStates_[index] = state;
+            channelStates_[index] = state;
+
+            //Update global state accordingly (do we have at least one on? none?
+            state_ = UpdateChannelLabel();
+         }
+         continue;
+      }
+
+      //Output Mode
+      prefix = "CC,";
+      if(buf_string_.substr(0, prefix.size()) == prefix) {
+         long mode = atoi(buf_string_.substr(prefix.size()).c_str());
+         outputMode_ = mode;
+         continue;
+      }
+
       //if we got here, that means buf_string_ could not be parsed...
-      std::ostringstream ss;
-      ss << "Not parsed: " << buf_string_;
-      LogMessage(ss.str().c_str(), true);
+      std::ostringstream ss; ss << "Not parsed: " << buf_string_; LogMessage(ss.str().c_str(), true);
    } 
 
-   //CDeviceUtils::SleepMs(5);
    return i;
 }
 
@@ -1067,16 +1272,11 @@ int PollingThread::svc()
 
       aController_.ReadUpdate();
 
-      if (globalStatus_ != aController_.globalStatus_)
+      if (errorCode_ != aController_.errorCode_)
       {
-         globalStatus_ = aController_.globalStatus_;
-         aController_.OnPropertyChanged(g_Keyword_GlobalStatus, CDeviceUtils::ConvertToString(globalStatus_));
-      }
-
-      if (state_ != aController_.state_)
-      {
-         state_ = aController_.state_;
-         aController_.OnPropertyChanged(MM::g_Keyword_State, CDeviceUtils::ConvertToString(state_));
+         errorCode_ = aController_.errorCode_;
+         aController_.OnPropertyChanged(g_Keyword_ErrorCode, CDeviceUtils::ConvertToString(errorCode_));
+         aController_.OnPropertyChanged(g_Keyword_GlobalStatus, GetStatus(errorCode_));
       }
 
       for (long index=0; index<NLED; index++) 
@@ -1098,18 +1298,56 @@ int PollingThread::svc()
          }
       }
 
+      //State_ is also modified if one of the channel states is modified (state_ follows nactive>0)
+      if (state_ != aController_.state_)
+      {
+         state_ = aController_.state_;
+         aController_.OnPropertyChanged(MM::g_Keyword_State, CDeviceUtils::ConvertToString(state_));
+      }
+
+      //TODO Not probing for those at the moment
       if (tempOutput_ != aController_.tempOutput_)
       {
          tempOutput_ = aController_.tempOutput_;
          aController_.OnPropertyChanged(g_Keyword_Temp1, CDeviceUtils::ConvertToString(tempOutput_));
       }
 
+      //TODO Not probing for those at the moment
       if (tempAmbient_ != aController_.tempAmbient_)
       {
          tempAmbient_ = aController_.tempAmbient_;
          aController_.OnPropertyChanged(g_Keyword_Temp2, CDeviceUtils::ConvertToString(tempAmbient_));
       }
 
+      //Trigger Source
+      if (triggerSource_ != aController_.triggerSource_)
+      {
+         triggerSource_ = aController_.triggerSource_;
+         aController_.OnPropertyChanged(g_Keyword_TriggerSource, g_TriggerSources[triggerSource_]);
+      }
+
+      //Trigger Logic
+      if (triggerLogic_ != aController_.triggerLogic_)
+      {
+         triggerLogic_ = aController_.triggerLogic_;
+         aController_.OnPropertyChanged(g_Keyword_TriggerLogic, g_TriggerLogics[triggerLogic_]);
+      }
+
+      //Trigger Resistor
+      if (triggerResistor_ != aController_.triggerResistor_)
+      {
+         triggerResistor_ = aController_.triggerResistor_;
+         aController_.OnPropertyChanged(g_Keyword_TriggerResistor, g_TriggerResistors[triggerResistor_]);
+      }
+
+      //output power mode
+      if (outputMode_ != aController_.outputMode_)
+      {
+         outputMode_ = aController_.outputMode_;
+         aController_.OnPropertyChanged(g_Keyword_OutputMode, g_OutputModes[outputMode_]);
+      }
+
+      //currentChannelLabel is also updated when states are changed (MM or external keypad)
       if (currentChannelLabel_ != aController_.currentChannelLabel_)
       {
          currentChannelLabel_ = aController_.currentChannelLabel_;
@@ -1130,10 +1368,12 @@ void PollingThread::ResetVariables()
    triggerLogic_ = aController_.triggerLogic_;
    triggerResistor_ = aController_.triggerResistor_;
 
-   globalStatus_ = aController_.globalStatus_;
+   errorCode_ = aController_.errorCode_;
 
    tempOutput_ = aController_.tempOutput_;
    tempAmbient_ = aController_.tempAmbient_;
+
+   outputMode_ = aController_.outputMode_;
 
    currentChannelLabel_ = aController_.currentChannelLabel_;
 }
@@ -1143,3 +1383,4 @@ void PollingThread::Start()
    stop_ = false;
    activate();
 }
+

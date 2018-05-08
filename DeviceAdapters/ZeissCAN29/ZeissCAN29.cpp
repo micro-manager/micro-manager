@@ -737,6 +737,11 @@ ZeissScope::ZeissScope() :
    // AnswerTimeOut                                                                  
    pAct = new CPropertyAction (this, &ZeissScope::OnAnswerTimeOut);
    CreateProperty("AnswerTimeOut", "250", MM::Float, false, pAct, true);
+   
+   // Definite Focus version property
+   pAct = new CPropertyAction(this, &ZeissScope::OnVersionChange);
+   CreateProperty("DefiniteFocusVersion", "1", MM::Integer, false, pAct, true);
+   SetPropertyLimits("DefiniteFocusVersion", 1, 2);
 }
 
 ZeissScope::~ZeissScope() 
@@ -767,6 +772,20 @@ int ZeissScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
 
    return DEVICE_OK;
+}
+
+int ZeissScope::OnVersionChange(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+    if (eAct == MM::BeforeGet) {
+       ZeissUShort version;
+       g_hub.definiteFocusModel_.GetVersion(version);
+       pProp->Set((long)version);
+    } else if (eAct == MM::AfterSet) {
+       long int version;
+       pProp->Get(version);
+       g_hub.definiteFocusModel_.SetVersion((ZeissUShort) version);
+    }
+    return DEVICE_OK;
 }
 
 int ZeissScope::OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2096,11 +2115,17 @@ int DefiniteFocus::Shutdown()
  */
 int DefiniteFocus::StabilizeThisPosition(ZeissUByte dataLength, ZeissUByte* data)
 {
+   // Get Definite Focus version (1 or 2)
+   ZeissUShort version;
+   g_hub.definiteFocusModel_.GetVersion(version);
+   // Offset for Definite Focus 1 should be 0, for Definite Focus 2 should be 1
+   const char dataOffset = version == 1 ? 0 : 1;
+
    // - Stabilize This Position (0x02)
-   const int commandLength = 7 + dataLength;
+   const int commandLength = 7 + dataLength - dataOffset;
    unsigned char command[7 + UCHAR_MAX];
    // Size of data block
-   command[0] = 0x04 + dataLength;
+   command[0] = 0x04 + dataLength - dataOffset;
    // Command, request completion message
    command[1] = 0x19;
    // 'Definite Focus command number'
@@ -2111,8 +2136,8 @@ int DefiniteFocus::StabilizeThisPosition(ZeissUByte dataLength, ZeissUByte* data
    command[4] = 0x02;
    // DevID (0x0 for Definite Focus)
    command[5] = 0x00;
-   command[6] = dataLength;
-   for (ZeissUByte i = 0; i < dataLength; i++)
+   command[6] = dataLength - dataOffset;
+   for (ZeissUByte i = 0; i < dataLength - dataOffset; i++)
       command[7+i] = data[i];
 
    g_hub.definiteFocusModel_.SetBusy(true);

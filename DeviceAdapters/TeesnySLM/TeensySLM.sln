@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArduinoSerial", "ArduinoSerial.vcxproj", "{2289E020-8729-4785-8EEA-168303BF6A35}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TeensySLM", "TeensySLM.vcxproj", "{2289E020-8729-4785-8EEA-168303BF6A35}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -80,6 +80,14 @@ public:
     */
     PvRoiCollection Rois;
     /**
+    * Number of sensor clearing cycles.
+    */
+    int ClearCycles;
+    /**
+    * Selected clearing mode. PARAM_CLEAR_MODE values.
+    */
+    int ClearMode;
+    /**
     * Color on or off.
     */
     bool ColorProcessingEnabled;
