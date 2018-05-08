@@ -102,6 +102,8 @@ SUBDIRS = \
 	CoherentOBIS \
    CoherentScientificRemote \
 	Conix \
+	CoolLEDpE300 \
+	CoolLEDpE4000 \
 	Corvus \
 	DemoCamera \
 	Diskovery \

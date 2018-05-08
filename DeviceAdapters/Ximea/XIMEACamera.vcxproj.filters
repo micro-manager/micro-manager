@@ -13,15 +13,33 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Source Files\xiApiPlus">
+      <UniqueIdentifier>{e9c9d69f-14a9-4f87-a1e7-4a193ab00e76}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\pugixml">
+      <UniqueIdentifier>{c3184ada-90ac-4823-859b-0c7116cde839}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XIMEACamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="xiApiPlus\xiAPIplus_core.cpp">
+      <Filter>Source Files\xiApiPlus</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\3rdpartypublic\pugixml\pugixml-1.8\src\pugixml.cpp">
+      <Filter>Source Files\pugixml</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="XIMEACamera.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xiApiPlus\xiapiplus.h">
+      <Filter>Source Files\xiApiPlus</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\3rdpartypublic\pugixml\pugixml-1.8\src\pugixml.hpp">
+      <Filter>Source Files\pugixml</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

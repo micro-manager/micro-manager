@@ -291,7 +291,7 @@ void Controller::GenerateIntensityProperties()
       CreateProperty(propertyName.c_str(), "100", MM::Integer, false, pActEx);
       SetPropertyLimits(propertyName.c_str(), 0, 100);
 
-      // channel intensities are initialized to 100%
+      //channel intensities are initialized to 100%
       channelIntensities_.push_back(100);
       SetChannelIntensity(100, index);
    }
@@ -321,6 +321,7 @@ void Controller::GenerateStateProperties()
 
       //channel states are initialized to 0
       channelStates_.push_back(-1);
+      ledStates_.push_back(-1);
       SetChannelState(0, index);
    }
 }
@@ -747,7 +748,8 @@ void Controller::SetTrigger()
       MMThreadGuard myLock(lock_);
       Purge();
       Send(msg.str());
-      ReadResponseLines(1);
+      CDeviceUtils::SleepMs(10);
+      ReceiveOneLine();
    }
 }
 
@@ -760,7 +762,8 @@ void Controller::SetOutputMode()
       MMThreadGuard myLock(lock_);
       Purge();
       Send(msg.str());
-      ReadResponseLines(1);
+      CDeviceUtils::SleepMs(10);
+      ReceiveOneLine();
    }
 }
 
@@ -824,11 +827,12 @@ void Controller::GetState(long &state)
    state = state_;
 }
 
-void Controller::UpdateChannelLabel()
+long Controller::UpdateChannelLabel()
 {
    //Count how many LED channels are currently active
    long nActive = 0;
    long index = 0;
+   long state = 1;
    for (long i=0; i<NLED; i++)
    {
       if (channelStates_[i] == 1) {
@@ -842,16 +846,16 @@ void Controller::UpdateChannelLabel()
       //With exactly one channel active, the current channel label
       //is set according to the index passed to SetChannelState()
       currentChannelLabel_ = g_ChannelNames[index];
-      state_ = 1;
    }
    else if (nActive > 1)
    {
       //The channel label is changed to the multiple selection string
       //if we have more than one LED selected
       currentChannelLabel_ = g_Keyword_MultipleSelection;
-      state_ = 1;
    }
-   else state_ = 0;
+   else state = 0;
+
+   return state;
 }
 
 void Controller::SetChannelState(long state, long index)
@@ -863,14 +867,20 @@ void Controller::SetChannelState(long state, long index)
    //However, when we are initializing, we really want all the LEDs to be off
    if (channelState < 0 || (state_ == 1 && channelState != state))
    {
-      stringstream msg;
-      msg << "D," << index+1 << "," << state;
-
+      if (state != ledStates_[index])
       {
-         MMThreadGuard myLock(lock_);
-         Purge();
-         Send(msg.str());
-         ReceiveOneLine();
+         ledStates_[index] = state;
+
+         stringstream msg;
+         msg << "D," << index+1 << "," << state;
+
+         {
+            MMThreadGuard myLock(lock_);
+            Purge();
+            Send(msg.str());
+            CDeviceUtils::SleepMs(10);
+            ReceiveOneLine();
+         }
       }
    }
 }
@@ -900,7 +910,8 @@ void Controller::SetGlobalIntensity(long intensity)
          intensity = channelIntensities_[index];
          msg << "d," << index+1 << "," << (long)(0.01*(double)intensity_*(double)intensity);
          Send(msg.str());
-         ReadResponseLines(1);
+         CDeviceUtils::SleepMs(10);
+         ReceiveOneLine();
       }
    }
 }
@@ -916,7 +927,8 @@ void Controller::SetChannelIntensity(long intensity, long index)
       MMThreadGuard myLock(lock_);
       Purge();
       Send(msg.str());
-      ReadResponseLines(1);
+      CDeviceUtils::SleepMs(10);
+      ReceiveOneLine();
    }
 }
 
@@ -938,11 +950,21 @@ void Controller::Illuminate()
       for (long index=0; index<NLED; index++)
       {
          channelState = (state_ == 0)?0:channelStates_[index];
-         msg.str("");
-         msg.clear();
-         msg << "D," << index+1 << "," << channelState;
-         Send(msg.str());
-         ReadResponseLines(1);
+
+         //we check against ledStates_ to only change channel states that need changing
+         //ledStates_ is updated through the background loop when changed via the secondary port
+         if (channelState != ledStates_[index])
+         {
+            ledStates_[index] = channelState;
+
+            msg.str("");
+            msg.clear();
+
+            msg << "D," << index+1 << "," << channelState;
+            Send(msg.str());
+            CDeviceUtils::SleepMs(10);
+            ReceiveOneLine();
+         }
       }
    }
 }
@@ -970,7 +992,6 @@ void Controller::Send(string cmd)
 void Controller::ReceiveOneLine()
 {
    buf_string_.clear();
-   //CDeviceUtils::SleepMs(100);
    GetSerialAnswer(port_.c_str(), terminator, buf_string_);
 
    // Set timer for the Busy signal
@@ -1049,8 +1070,10 @@ int Controller::ReadResponseLines(int n)
    {
       i++;
       ReceiveOneLine();
-      if (buf_string_.empty())
+      if (buf_string_.empty()) {
+          std::ostringstream ss; ss << "Nothing to parse (buffer empty)"; LogMessage(ss.str().c_str(), true);
           break;
+      }
 
       // Output temperature
       // R,22.5, 0, 3, 0, 0, 0, 0, 1, 6, 94,
@@ -1158,9 +1181,14 @@ int Controller::ReadResponseLines(int n)
          long index = atoi(buf_string_.substr(2).c_str())-1;  //need 0-index for arrays
          long state = atoi(buf_string_.substr(4).c_str());
 
+         //Is the LED channel ON but state_ is 0 (unknown)
          if (index >=0 && index < NLED) {
+            //We keep a record of the real LED state as sent by the niji
+            ledStates_[index] = state;
             channelStates_[index] = state;
-            UpdateChannelLabel();
+
+            //Update global state accordingly (do we have at least one on? none?
+            state_ = UpdateChannelLabel();
          }
          continue;
       }
@@ -1170,16 +1198,13 @@ int Controller::ReadResponseLines(int n)
       if(buf_string_.substr(0, prefix.size()) == prefix) {
          long mode = atoi(buf_string_.substr(prefix.size()).c_str());
          outputMode_ = mode;
+         continue;
       }
 
-
       //if we got here, that means buf_string_ could not be parsed...
-      std::ostringstream ss;
-      ss << "Not parsed: " << buf_string_;
-      LogMessage(ss.str().c_str(), true);
+      std::ostringstream ss; ss << "Not parsed: " << buf_string_; LogMessage(ss.str().c_str(), true);
    } 
 
-   //CDeviceUtils::SleepMs(5);
    return i;
 }
 
@@ -1279,7 +1304,6 @@ int PollingThread::svc()
          state_ = aController_.state_;
          aController_.OnPropertyChanged(MM::g_Keyword_State, CDeviceUtils::ConvertToString(state_));
       }
-
 
       //TODO Not probing for those at the moment
       if (tempOutput_ != aController_.tempOutput_)

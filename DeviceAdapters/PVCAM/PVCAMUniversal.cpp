@@ -223,6 +223,7 @@ Universal::Universal(short cameraId) :
     snappingSingleFrame_(false),
     singleFrameModeReady_(false),
     sequenceModeReady_(false),
+    callPrepareForAcq_(true),
     isAcquiring_(false),
     triggerTimeout_(10),
     microsecResSupported_(false),
@@ -1594,32 +1595,40 @@ int Universal::PrepareSequenceAcqusition()
     if (isAcquiring_)
         return ERR_BUSY_ACQUIRING;
 
+    bool& modeReadyFlag = sequenceModeReady_;
+    int (Universal::*resizeImageBufferFn)() = &Universal::resizeImageBufferContinuous;
+    //auto resizeImageBufferFn = &Universal::resizeImageBufferContinuous;
+
     if (acqCfgCur_.CircBufEnabled)
     {
-        if (!sequenceModeReady_)
-        {
-            // reconfigure anything that has to do with pl_exp_setup_cont
-            int nRet = resizeImageBufferContinuous();
-            if ( nRet != DEVICE_OK )
-                return nRet;
-            GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-            GetCoreCallback()->PrepareForAcq(this);
-            sequenceModeReady_ = true;
-        }
+        modeReadyFlag = sequenceModeReady_;
+        // Reconfigure anything that has to do with pl_exp_setup_cont
+        resizeImageBufferFn =  &Universal::resizeImageBufferContinuous;
     }
     else
     {
+        modeReadyFlag = singleFrameModeReady_;
         // For non-circular buffer acquisition we use the single frame buffer
         // and all the single frame mode logic.
-        if (!singleFrameModeReady_)
-        {
-            int nRet = resizeImageBufferSingle();
-            if ( nRet != DEVICE_OK )
-                return nRet;
-            GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-            GetCoreCallback()->PrepareForAcq(this);
-            singleFrameModeReady_ = true;
-        }
+        resizeImageBufferFn =  &Universal::resizeImageBufferSingle;
+    }
+
+    if (!modeReadyFlag)
+    {
+        int ret = (this->*resizeImageBufferFn)();
+        if (ret != DEVICE_OK)
+            return ret;
+        GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+        modeReadyFlag = true;
+        callPrepareForAcq_ = true;
+    }
+
+    if (callPrepareForAcq_)
+    {
+        int ret = GetCoreCallback()->PrepareForAcq(this);
+        if (ret != DEVICE_OK)
+            return ret;
+        callPrepareForAcq_ = false;
     }
 
     return DEVICE_OK;
@@ -3094,7 +3103,7 @@ void  Universal::LogAdapterMessage(const std::string& message, bool debug) const
 int Universal::FrameAcquired()
 {
     MMThreadGuard acqGuard(&acqLock_);
-    START_METHOD("Universal::FrameDone");
+    START_METHOD("Universal::FrameAcquired");
 
     // Ignore any callbacks that might be arriving after stopping the acquisition
     if (!isAcquiring_)
@@ -3240,7 +3249,7 @@ int Universal::FrameAcquired()
 
     imagesAcquired_++; // A new frame has been successfully retrieved from the camera
 
-    // The FrameDone() is also called for SnapImage() when using callbacks, so we have to
+    // The FrameAcquired() is also called for SnapImage() when using callbacks, so we have to
     // check. In case of SnapImage the img_ already contains the data (since its passed
     // to pl_start_seq() and no PushImage is done - the single image is retrieved with GetImageBuffer()
     if ( !snappingSingleFrame_ )
@@ -3506,7 +3515,8 @@ void Universal::PollingThreadExiting() throw ()
         isAcquiring_       = false;
 
         LogAdapterMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
-        GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
+        if (GetCoreCallback())
+            GetCoreCallback()->AcqFinished(this, 0);
     }
     catch (...)
     {
@@ -3813,7 +3823,7 @@ int Universal::initializeSpeedTable()
     if (pl_get_param(hPVCAM_, PARAM_READOUT_PORT, ATTR_CURRENT, (void_ptr)&portCurIdx) != PV_OK)
         return LogPvcamError(__LINE__, "pl_get_param PARAM_READOUT_PORT ATTR_CURRENT" );
     if (pl_get_param(hPVCAM_, PARAM_SPDTAB_INDEX, ATTR_CURRENT, (void_ptr)&spdCurIdx) != PV_OK)
-        return LogPvcamError(__LINE__, "pl_get_param PARAM_READOUT_PORT ATTR_COUNT" );
+        return LogPvcamError(__LINE__, "pl_get_param PARAM_SPDTAB_INDEX ATTR_CURRENT" );
 
     // Iterate through each port and fill in the speed table
     for (uns32 portIndex = 0; portIndex < portCount; portIndex++)
@@ -5309,11 +5319,20 @@ int Universal::applyAcqConfig(bool forceSetup)
     if (prmSmartStreamingEnabled_->IsAvailable())
     {
         if (acqCfgNew_.AcquisitionType != acqCfgCur_.AcquisitionType)
+        {
             doReconfigureSmart = true;
+            // No GUI property changed thus no need to set configChanged
+        }
         if (acqCfgNew_.SmartStreamingEnabled != acqCfgCur_.SmartStreamingEnabled)
+        {
             doReconfigureSmart = true;
+            configChanged = true;
+        }
         if (acqCfgNew_.SmartStreamingExposures != acqCfgCur_.SmartStreamingExposures)
+        {
             doReconfigureSmart = true;
+            configChanged = true;
+        }
     }
     if (doReconfigureSmart)
     {
@@ -5381,7 +5400,6 @@ int Universal::applyAcqConfig(bool forceSetup)
             acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
             return nRet; // Error logged in SetAndApply()
         }
-        configChanged = true;
         bufferResizeRequired = true;
     }
 
@@ -5410,16 +5428,14 @@ int Universal::applyAcqConfig(bool forceSetup)
         if (acqCfgNew_.AcquisitionType == AcqType_Live)
         {
             nRet = resizeImageBufferContinuous();
-            // Cannot say sequenceModeReady_ = true here, because that would
-            // preclude the call to PrepareForAcq() when starting a sequence
-            // acquisition.
+            sequenceModeReady_ = true;
         }
         else
         {
             nRet = resizeImageBufferSingle();
             singleFrameModeReady_ = true;
         }
-        if (nRet != DEVICE_OK) 
+        if (nRet != DEVICE_OK)
         {
             sequenceModeReady_ = false;
             singleFrameModeReady_ = false;
@@ -5427,6 +5443,7 @@ int Universal::applyAcqConfig(bool forceSetup)
         }
 
         GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+        callPrepareForAcq_ = true;
     }
 
     // Update the Device/Property browser UI
@@ -5447,7 +5464,7 @@ int Universal::applyAcqConfig(bool forceSetup)
 #ifdef PVCAM_CALLBACKS_SUPPORTED
 void Universal::PvcamCallbackEofEx3(PFRAME_INFO /*pFrameInfo*/, void* pContext)
 {
-    // We don't need the FRAME_INFO because we will get it in FrameDone via get_latest_frame
+    // We don't need the FRAME_INFO because we will get it in FrameAcquired via get_latest_frame
     Universal* pCam = (Universal*)pContext;
     pCam->FrameAcquired();
     // Do not call anything else here, handle it in the Universal class.
