@@ -418,14 +418,14 @@ int ret;
    char iBuf[256]; //?? what is this for
    strcpy(iBuf,resp.c_str());
    sscanf(iBuf, "%f %f\r\n", &xx, &yy);
-   x = xx;
-   y = yy;
+   x = xx*1000;
+   y = yy*1000;
    return DEVICE_OK;
 }
 
 
 /**
- * Sets position in µm
+ * Sets position in coordinate
  */
 int XYStage::SetPositionUm(double x, double y)
 {
@@ -435,7 +435,7 @@ int XYStage::SetPositionUm(double x, double y)
 
    // format the command
    ostringstream cmd;
-   cmd << x << " " << y << " m";
+   cmd << x/1000 << " " << y/1000 << " m";
 
    int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
    if (ret != DEVICE_OK)
@@ -465,7 +465,7 @@ int XYStage::SetRelativePositionUm(double dx, double dy)
 
    // format the command
    ostringstream cmd;
-   cmd << dx << " " << dy << " " << "r";
+   cmd << dx/1000 << " " << dy/1000 << " " << "r";
 
    int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
    if (ret != DEVICE_OK)

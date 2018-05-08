@@ -101,9 +101,12 @@ protected:
    vector<string> channelLabels_;
    string currentChannelLabel_;
 
-   //individual channels intensity and state
+   //individual channels intensity and state.
+   //ledStates_ is a vector of the real LED state as sent back from the niji.
+   //channelStates_ holds the desired states when combined (boolean and) with the niji shutter state_
    vector<long> channelIntensities_;
    vector<long> channelStates_;
+   vector<long> ledStates_;
 
    //Are we using external or internal trigger
    long triggerSource_;
@@ -168,7 +171,7 @@ private:
    void SetGlobalIntensity(long intensity);
    void SetChannelIntensity(long intensity, long index);
    void GetChannelIntensity(long& intensity, long index);
-   void UpdateChannelLabel();
+   long UpdateChannelLabel();
 
    void Illuminate();
 

@@ -293,8 +293,7 @@ int CLED::OnCurrentLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (hub_->UpdatingSharedProperties())
          return DEVICE_OK;
       pProp->Get(tmp);
-      tmp /= 12;  // convert from milliamps into percent of 1.2A
-      command << addressChar_ << "WRDAC X="<< tmp;
+      command << addressChar_ << "WRDAC X="<< (tmp/12);  // convert from milliamps into percent of 1.2A
       RETURN_ON_MM_ERROR( hub_->QueryCommandVerify(command.str(), ":A") );
       command.str(""); command << tmp;
       RETURN_ON_MM_ERROR ( hub_->UpdateSharedProperties(addressChar_, pProp->GetName(), command.str()) );
