@@ -93,6 +93,20 @@ const char* const g_Msg_ERR_CRISP_NOT_CALIBRATED = "CRISP is not calibrated.  Tr
 const char* const g_Msg_ERR_CRISP_NOT_LOCKED = "The CRISP failed to lock";
 
 #define ERR_ASICODE_OFFSET 10100  // offset when reporting error number from controller
+#define ERR_UNKNOWN_COMMAND         10101
+const char* const g_Msg_ERR_UNKNOWN_COMMAND = "Unknown serial command";
+#define ERR_UNKNOWN_AXIS            10102
+const char* const g_Msg_ERR_UNKNOWN_AXIS = "Unrecognized controller axis";
+#define ERR_MISSING_PARAM           10103
+const char* const g_Msg_ERR_MISSING_PARAM = "Missing required parameter";
+#define ERR_PARAM_OUT_OF_RANGE      10104
+const char* const g_Msg_ERR_PARAM_OUT_OF_RANGE = "Parameter out of range";
+#define ERR_OPERATION_FAILED        10105
+const char* const g_Msg_ERR_OPERATION_FAILED = "Controller operation failed";
+#define ERR_UNDEFINED_ERROR         10106
+const char* const g_Msg_ERR_UNDEFINED_ERROR = "Undefined controller error";
+#define ERR_INVALID_ADDRESS         10107
+const char* const g_Msg_ERR_INVALID_ADDRESS = "Invalid Tiger address (e.g. missing card)";
 
 
 // External device names used used by the rest of the system to load particular device from the .dll library
@@ -169,6 +183,7 @@ const char* const g_StageWaitTimePropertyName = "WaitTime(ms)";
 const char* const g_NrExtraMoveRepsPropertyName = "ExtraMoveRepetitions";
 const char* const g_MotorSpeedPropertyName = "MotorSpeed-S(mm/s)";
 const char* const g_MotorSpeedXPropertyName = "MotorSpeedX-S(mm/s)";
+const char* const g_MotorSpeedXMicronsPerSecPropertyName = "MotorSpeedX(um/s)";
 const char* const g_MotorSpeedYPropertyName = "MotorSpeedY-S(mm/s)";
 const char* const g_MaxMotorSpeedPropertyName = "MotorSpeedMaximum(mm/s)";
 const char* const g_MaxMotorSpeedXPropertyName = "MotorSpeedMaximumX(mm/s)";
@@ -199,6 +214,7 @@ const char* const g_OvershootPropertyName = "Overshoot-O(um)";
 const char* const g_KIntegralPropertyName = "ServoIntegral-KI";
 const char* const g_KProportionalPropertyName = "ServoProportional-KP";
 const char* const g_KDerivativePropertyName = "ServoIntegral-KD";
+const char* const g_KFeedforwardPropertyName = "ServoFeedforward-KA";
 const char* const g_AAlignPropertyName = "MotorAlign-AA";
 const char* const g_AZeroXPropertyName = "AutoZeroXResult-AZ";
 const char* const g_AZeroYPropertyName = "AutoZeroYResult-AZ";
@@ -457,6 +473,10 @@ const char* const g_PresetCode24 = "24 - BNC3 source = cell 1";
 const char* const g_PresetCode25 = "25 - BNC3 source = cell 8";
 const char* const g_PresetCode26 = "26 - counter clock = rising TTL3";
 const char* const g_PresetCode27 = "27 - BNC3 source = cell 10";
+const char* const g_PresetCode28 = "28 - BNC6 and BNC7 enabled";
+const char* const g_PresetCode29 = "29 - BNC5-BNC7 enabled";
+const char* const g_PresetCode30 = "30 - BNC5-BNC8 enabled";
+const char* const g_PresetCode31 = "31 - BNC5/7 side A, BNC6/8 side B";
 const char* const g_PLogicModeNone = "None";
 const char* const g_PLogicModediSPIMShutter = "diSPIM Shutter";
 const char* const g_ChannelNone = "none of outputs 5-8";
@@ -464,6 +484,10 @@ const char* const g_ChannelOnly5 = "output 5 only";
 const char* const g_ChannelOnly6 = "output 6 only";
 const char* const g_ChannelOnly7 = "output 7 only";
 const char* const g_ChannelOnly8 = "output 8 only";
+const char* const g_Channel6And7 = "output 6 and 7";
+const char* const g_Channel5To7 = "outputs 5-7";
+const char* const g_Channel5To8 = "outputs 5-8";
+const char* const g_Channel5To8Alt = "outputs 5/7 or 6/8";
 
 
 // SPIM enums

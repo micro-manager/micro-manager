@@ -108,8 +108,8 @@ void DAQDevice::SetContext(MM::Core* core, MM::Device* device)
 std::vector<std::string> DAQDevice::GetDevices()
 {
    std::vector<std::string> result;
-   char devNames[2048];
-   DAQmxGetSysDevNames(devNames, 2048);
+   char devNames[4096];
+   DAQmxGetSysDevNames(devNames, 4096);
    // Names are comma-separated.
    std::string allNames = devNames;
    size_t index = allNames.find(", ");
@@ -134,10 +134,10 @@ std::vector<std::string> DAQDevice::GetDevices()
 // Provide a list of all digital ports on the device.
 std::vector<std::string> DAQDevice::GetDigitalPortsForDevice(std::string device)
 {
-   char ports[2048];
+   char ports[4096];
    // Provides a comma-separated list of individual lines,
    // e.g. "Dev1/port0/line0, Dev1/port0/line1"
-   DAQmxGetDevDOLines(device.c_str(), ports, 2048);
+   DAQmxGetDevDOLines(device.c_str(), ports, 4096);
    std::string allPorts = ports;
    size_t index = std::string::npos;
    std::vector<std::string> result;
@@ -151,10 +151,10 @@ std::vector<std::string> DAQDevice::GetDigitalPortsForDevice(std::string device)
 // Provide a list of all analog ports on the device.
 std::vector<std::string> DAQDevice::GetAnalogPortsForDevice(std::string device)
 {
-   char ports[2048];
+   char ports[4096];
    // Provides a comma-separated list of analog channels,
    // e.g. "Dev1/ao0, Dev1/ao1"
-   DAQmxGetDevAOPhysicalChans(device.c_str(), ports, 2048);
+   DAQmxGetDevAOPhysicalChans(device.c_str(), ports, 4096);
    std::string allPorts = ports;
    size_t index = std::string::npos;
    std::vector<std::string> result;
@@ -492,8 +492,8 @@ int DigitalIO::Initialize()
    {
       return nRet;
    }
-   char terminalsBuf[2048];
-   int error = DAQmxGetDevTerminals(deviceName_.c_str(), terminalsBuf, 2048);
+   char terminalsBuf[4096];
+   int error = DAQmxGetDevTerminals(deviceName_.c_str(), terminalsBuf, 4096);
    if (error)
    {
       return LogError(error, "GetDevTerminals");
@@ -941,8 +941,8 @@ int AnalogIO::Initialize()
    {
       return nRet;
    }
-   char terminalsBuf[2048];
-    int error = DAQmxGetDevTerminals(deviceName_.c_str(), terminalsBuf, 2048);
+   char terminalsBuf[4096];
+    int error = DAQmxGetDevTerminals(deviceName_.c_str(), terminalsBuf, 4096);
    if (error)
    {
       return LogError(error, "GetDevTerminals");

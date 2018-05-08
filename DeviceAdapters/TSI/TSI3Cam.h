@@ -126,6 +126,9 @@ public:
    int OnFps(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEEP(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnHotPixEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnHotPixThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ResizeImageBuffer();

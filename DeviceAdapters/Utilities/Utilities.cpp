@@ -1121,6 +1121,22 @@ int MultiStage::SetPositionUm(double pos)
 }
 
 
+int MultiStage::SetRelativePositionUm(double d)
+{
+   for (unsigned i = 0; i < nrPhysicalStages_; ++i)
+   {
+      if (!physicalStages_[i])
+         continue;
+
+      double physicalRelPos = stageScalings_[i] * d;
+      int err = physicalStages_[i]->SetRelativePositionUm(physicalRelPos);
+      if (err != DEVICE_OK)
+         return err;
+   }
+   return DEVICE_OK;
+}
+
+
 int MultiStage::GetPositionUm(double& pos)
 {
    // TODO We should allow user to select which stage to use for position
@@ -2560,9 +2576,6 @@ int DAZStage::Initialize()
    if (DADevice_ != 0)
       DADevice_->GetLimits(minDAVolt_, maxDAVolt_);
 
-   if (minStageVolt_ < minDAVolt_)
-      return ERR_VOLT_OUT_OF_RANGE;
-
    originPos_ = minStagePos_;
 
    initialized_ = true;
@@ -2756,6 +2769,7 @@ int DAZStage::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
 int DAZStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -2774,6 +2788,7 @@ int DAZStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
 int DAZStage::OnStageMinVolt(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -2782,12 +2797,7 @@ int DAZStage::OnStageMinVolt(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      double minStageVolt;
-      pProp->Get(minStageVolt);
-      if (minStageVolt >= minDAVolt_ && minStageVolt < maxDAVolt_)
-         minStageVolt_ = minStageVolt;
-      else
-         return ERR_VOLT_OUT_OF_RANGE;
+      pProp->Get(minStageVolt_);
    }
    return DEVICE_OK;
 }
@@ -2800,12 +2810,7 @@ int DAZStage::OnStageMaxVolt(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      double maxStageVolt;
-      pProp->Get(maxStageVolt);
-      if (maxStageVolt > minDAVolt_ && maxStageVolt <= maxDAVolt_)
-         maxStageVolt_ = maxStageVolt;
-      else
-         return ERR_VOLT_OUT_OF_RANGE;
+      pProp->Get(maxStageVolt_);
    }
    return DEVICE_OK;
 }

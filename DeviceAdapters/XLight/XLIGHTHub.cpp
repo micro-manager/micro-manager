@@ -38,6 +38,8 @@ XLIGHTHub::XLIGHTHub() {
     // CARVII does not confirm successful device movement; wait time
     // in millisec to ensure movement has ended
     deviceWaitMs_ = 20;
+	enableDeviceWaitByDelay_ = false;
+	commandExecutionTimeoutMs_ = defaultCmdExecutionTimeout;
 
     ClearRcvBuf();
 }
@@ -50,7 +52,7 @@ XLIGHTHub::~XLIGHTHub() {
 // Device commands
 ///////////////////////////////////////////////////////////////////////////////
 
- 
+#if 0 
 int XLIGHTHub::SetDichroicPosition(MM::Device& device, MM::Core& core, int pos, int delay) {
     int posCommand = pos + 1; //MM positions start at 0, CARVII pos start at 1
     ostringstream os;
@@ -60,7 +62,7 @@ int XLIGHTHub::SetDichroicPosition(MM::Device& device, MM::Core& core, int pos, 
     int ret = DEVICE_OK;
 	deviceWaitMs_ = delay;
 
- 
+#if 0 
 	 while (!succeeded ) {
         ret = ExecuteCommand(device, core, os.str().c_str());
 
@@ -81,10 +83,16 @@ int XLIGHTHub::SetDichroicPosition(MM::Device& device, MM::Core& core, int pos, 
     }
     if (!succeeded)
         return ret;
+#endif
 
-    return DEVICE_OK;
+	ret = ExecuteCommandEx(device, core, os.str().c_str());
+
+    return ret;
 }
+#endif
 
+
+#if 0
 int XLIGHTHub::GetDichroicPositionEcho(MM::Device& device, MM::Core& core, int pos) {
     ClearAllRcvBuf(device, core);
     int ret = ExecuteCommand(device, core, "rC");
@@ -96,7 +104,9 @@ int XLIGHTHub::GetDichroicPositionEcho(MM::Device& device, MM::Core& core, int p
 
     return DEVICE_OK;
 }
+#endif
 
+#if 0
 int XLIGHTHub::SetEmissionWheelPosition(MM::Device& device, MM::Core& core, int pos) {
     int posCommand = pos + 1; //MM positions start at 0, CARVII pos start at 1
     ostringstream os;
@@ -105,6 +115,7 @@ int XLIGHTHub::SetEmissionWheelPosition(MM::Device& device, MM::Core& core, int 
     //int counter = 0;  
     int ret = DEVICE_OK;
 
+#if 0
     // try up to 10 times
     while (!succeeded) {
         ret = ExecuteCommand(device, core, os.str().c_str());
@@ -121,10 +132,16 @@ int XLIGHTHub::SetEmissionWheelPosition(MM::Device& device, MM::Core& core, int 
     }
     if (!succeeded)
         return ret;
+#endif
 
-    return DEVICE_OK;
+	ret = ExecuteCommandEx(device, core, os.str().c_str());
+
+    return ret;
 }
+#endif
 
+
+#if 0
 int XLIGHTHub::GetEmissionWheelPosition(MM::Device& device, MM::Core& core, int pos) {
     ClearAllRcvBuf(device, core);
     int ret = ExecuteCommand(device, core, "rE");
@@ -137,7 +154,9 @@ int XLIGHTHub::GetEmissionWheelPosition(MM::Device& device, MM::Core& core, int 
 
     return DEVICE_OK;
 }
- 
+#endif
+
+
 int XLIGHTHub::SetSpinMotorState(MM::Device& device, MM::Core& core, int state) {
     ostringstream os;
     os << "N" << state;
@@ -145,6 +164,7 @@ int XLIGHTHub::SetSpinMotorState(MM::Device& device, MM::Core& core, int state) 
     int counter = 0;
     int ret = DEVICE_OK;
 	deviceWaitMs_ = 15;
+#if 0
     // try up to 10 times
     while (!succeeded && counter < 10) {
         ret = ExecuteCommand(device, core, os.str().c_str());
@@ -159,10 +179,12 @@ int XLIGHTHub::SetSpinMotorState(MM::Device& device, MM::Core& core, int state) 
     }
     if (!succeeded)
         return ret;
-
-    return DEVICE_OK;
+#endif
+	ret = ExecuteCommandEx(device, core, os.str().c_str());
+    return ret;
 }
 
+#if 0
 int XLIGHTHub::GetSpinMotorState(MM::Device& device, MM::Core& core, int state) {
     ClearAllRcvBuf(device, core);
     int ret = ExecuteCommand(device, core, "rN");
@@ -175,6 +197,8 @@ int XLIGHTHub::GetSpinMotorState(MM::Device& device, MM::Core& core, int state) 
 
     return DEVICE_OK;
 }
+#endif
+
 
 int XLIGHTHub::SetTouchScreenState(MM::Device& device, MM::Core& core, int state) {
     ostringstream os;
@@ -183,7 +207,7 @@ int XLIGHTHub::SetTouchScreenState(MM::Device& device, MM::Core& core, int state
     int counter = 0;
 
     int ret = DEVICE_OK;
-
+#if 0
     // try up to 10 times, wait 50 ms in between tries
     while (!succeeded && counter < 10) {
         ret = ExecuteCommand(device, core, os.str().c_str());
@@ -196,8 +220,12 @@ int XLIGHTHub::SetTouchScreenState(MM::Device& device, MM::Core& core, int state
     if (!succeeded)
         return ret;
     else return DEVICE_OK;
-}
+#endif
 
+	ret = ExecuteCommandEx(device, core, os.str().c_str());
+    return ret;
+}
+#if 0
 int XLIGHTHub::GetTouchScreenState(MM::Device& device, MM::Core& core, int state) {
     ClearAllRcvBuf(device, core);
     int ret = ExecuteCommand(device, core, "rM");
@@ -210,7 +238,10 @@ int XLIGHTHub::GetTouchScreenState(MM::Device& device, MM::Core& core, int state
 
     return DEVICE_OK;
 }
+#endif
 
+
+#if 0
 int XLIGHTHub::SetDiskSliderPosition(MM::Device& device, MM::Core& core, int pos, int delay) {
 	
     deviceWaitMs_ = delay;
@@ -243,7 +274,8 @@ int XLIGHTHub::SetDiskSliderPosition(MM::Device& device, MM::Core& core, int pos
 	 
 	return DEVICE_OK;
 }
-
+#endif
+#if 0
 int XLIGHTHub::GetXlightCommandEcho(MM::Device& device, MM::Core& core) {
      ClearAllRcvBuf(device, core);
 	 int ret = 0;
@@ -264,6 +296,7 @@ int XLIGHTHub::GetXlightCommandEcho(MM::Device& device, MM::Core& core) {
 	 else 
 		 return ret;
 }
+#endif
 
  
 ///////////////////////////////////////////////////////////////////////////////
@@ -294,18 +327,26 @@ bool XLIGHTHub::IsBusy() {
 
 int XLIGHTHub::StartSpinningDisk(MM::Device& device, MM::Core& core) {
     //D1 slides disk into light path, N1 starts motor spinning
-    return ExecuteCommand(device, core, "D1N1");
+    //return ExecuteCommand(device, core, "D1N1"); // DEPRECATED
+	int ret = DEVICE_OK;
+	ret = ExecuteCommandEx(device, core, "D1");
+	if (DEVICE_OK != ret)
+		return ret;
+	ret = ExecuteCommandEx(device, core, "N1");
+	return ret;
 }
 
 int XLIGHTHub::LockoutTouchscreen(MM::Device& device, MM::Core& core) {
     //Freezes touch screen to prevent catastrophic crash by simultaneous serial
     //and screen control
-    return ExecuteCommand(device, core, "M1");
+    //return ExecuteCommand(device, core, "M1");
+	return ExecuteCommandEx(device, core, "M1");
 }
 
 int XLIGHTHub::ActivateTouchscreen(MM::Device& device, MM::Core& core) {
     //Activates touchscreen control
-    return ExecuteCommand(device, core, "M0");
+    //return ExecuteCommand(device, core, "M0");
+	return ExecuteCommandEx(device, core, "M0");
 }
 
 /**
@@ -321,3 +362,91 @@ int XLIGHTHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* co
  	
 	
 }
+
+int XLIGHTHub::GetDevicePosition(void)
+{
+	return (rcvBuf_[2]-'0');
+}
+
+/**
+ * Sends serial command to the MMCore virtual serial port and waits for device echo.
+ */
+int XLIGHTHub::ExecuteCommandEx(MM::Device& device, MM::Core& core, const char* command) 
+{
+	int ret = DEVICE_OK;
+	bool succeeded = false;
+
+    // empty the Rx serial buffer before sending command
+    ClearAllRcvBuf(device, core);
+
+
+	// try up to 10 times -- TBD
+	while ( !succeeded ) 
+	{
+		// send command
+		rcvBuf_[0] = '\0';
+		ret = core.SetSerialCommand(&device, port_.c_str(), command, "\r");
+		if (DEVICE_OK != ret)
+			return ret;
+
+		//to ensure wheel finishes movement, query the serial line waiting for echoed 
+		// command executed which means XLight accomplished the movement
+        
+		MM::MMTime startTime = core.GetCurrentMMTime();
+		//unsigned long bytesRead = 0;
+		//GetXlightCommandEcho(device,core);
+		while (('\0' == rcvBuf_[0]) && /* (bytesRead < 1) && */ ( (core.GetCurrentMMTime() - startTime).getMsec() < commandExecutionTimeoutMs_))
+		{
+			ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+			if (DEVICE_OK != ret)
+				return ret;
+		}
+		if ('\0' != rcvBuf_[0])
+		{
+			if (strncmp(rcvBuf_, command, strlen(command)) == 0)
+			{
+				succeeded = true;
+				ret = DEVICE_OK;
+			}
+			else
+			{
+				return ERR_COMMAND_EXECUTION_ERROR;
+			}
+		}
+		else // timeout
+		{
+			return ERR_COMMUNICATION_TIMEOUT;
+		}
+
+		if (enableDeviceWaitByDelay_)
+		{
+			CDeviceUtils::SleepMs(deviceWaitMs_);
+			succeeded = true;
+		}
+	}
+		
+	return DEVICE_OK;
+}
+
+#if 0
+   hub->PurgeComPortH();
+
+   unsigned char command[2];
+   command[0] = 1;
+   command[1] = (unsigned char) value;
+   int ret = hub->WriteToComPortH((const unsigned char*) command, 2);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   MM::MMTime startTime = GetCurrentMMTime();
+   unsigned long bytesRead = 0;
+   unsigned char answer[1];
+   while ((bytesRead < 1) && ( (GetCurrentMMTime() - startTime).getMsec() < 250)) {
+      ret = hub->ReadFromComPortH(answer, 1, bytesRead);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   if (answer[0] != 1)
+      return ERR_COMMUNICATION;
+
+#endif

@@ -142,10 +142,38 @@ int TEnumProperty::OnEnum(MM::PropertyBase * pProp, MM::ActionType eAct)
       {
          wchar_t buf[MAX_CHARS_ENUM_VALUE_BUFFER];
          string temp_s;
-         pProp->Get(temp_s);
-         enum_feature_->Set(convertToWString(temp_s, buf, MAX_CHARS_ENUM_VALUE_BUFFER));
+		 pProp->Get(temp_s);
+
+		 if (temp_s.find("(not available from sequential)") == std::string::npos)
+		 {
+			 enum_feature_->Set(convertToWString(temp_s, buf, MAX_CHARS_ENUM_VALUE_BUFFER));
+		 }
       }
       camera_->UpdateProperty(MM_name_.c_str());
+
+	  if(MM_name_.compare("LightScanPlus-SensorReadoutMode") == 0)
+	  {
+		  vector<string> allowed_values;
+		  char buf[MAX_CHARS_ENUM_VALUE_BUFFER];
+		  for (int i = 0; i < enum_feature_->Count(); i++)
+		  {
+			  if (enum_feature_->IsIndexImplemented(i))
+			  {
+				  if (enum_feature_->IsIndexAvailable(i))
+				  {
+					  wstring value_ws = enum_feature_->GetStringByIndex(i);
+					  allowed_values.push_back(convertFromWString(value_ws, buf, MAX_CHARS_ENUM_VALUE_BUFFER));
+				  }
+				  else
+				  {
+					  wstring value_ws = enum_feature_->GetStringByIndex(i) + L" (not available from sequential)";
+					  allowed_values.push_back(convertFromWString(value_ws, buf, MAX_CHARS_ENUM_VALUE_BUFFER));
+				  }
+			  }
+
+		  }
+		  camera_->SetAllowedValues(MM_name_.c_str(), allowed_values);
+	  }
 
       if (0 == MM_name_.compare(MM::g_Keyword_Binning))
       {

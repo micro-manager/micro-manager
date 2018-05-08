@@ -295,7 +295,7 @@ int SRRFControl::OnRawDataPathChange(MM::PropertyBase* pProp, MM::ActionType eAc
 {
    if (eAct == MM::BeforeGet)
    {
-      SetPropertyReadOnly(pProp, saveOriginalDataValue_ == None);
+      //Removed read-only logic from here - ensures that correct preset values are loaded
    }
    else if (eAct == MM::AfterSet)
    {
@@ -396,7 +396,7 @@ void SRRFControl::AddSRRFPropertiesToDevice()
    camera_->SetProperty(String_EnableSRRF_, String_SRRFDisabled_);
 
    CPropertyAction *pActRawDataPath = new CPropertyAction(this, &SRRFControl::OnRawDataPathChange);
-   camera_->AddProperty(String_OriginalDataPath_, GetDefaultDirectoryPath().c_str(), MM::String, true, pActRawDataPath);
+   camera_->AddProperty(String_OriginalDataPath_, GetDefaultDirectoryPath().c_str(), MM::String, false, pActRawDataPath);
 
    CPropertyAction *pActSaveRawData = new CPropertyAction(this, &SRRFControl::OnRawDataSaveOptionChange);
    camera_->CreateProperty(String_OriginalDataSaveOption_, "", MM::String, false, pActSaveRawData);

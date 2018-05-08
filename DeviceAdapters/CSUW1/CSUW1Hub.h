@@ -72,8 +72,8 @@ public:
    int SetDichroicPosition(MM::Device& device, MM::Core& core, long dichroic);
    int GetDichroicPosition(MM::Device& device, MM::Core& core, long &dichroic);
 
-   int SetShutterPosition(MM::Device& device, MM::Core& core, int pos);
-   int GetShutterPosition(MM::Device& device, MM::Core& core, int& pos);
+   int SetShutterPosition(MM::Device& device, MM::Core& core, bool open);
+   int GetShutterPosition(MM::Device& device, MM::Core& core, bool& open);
 
    int SetDriveSpeed(MM::Device& device, MM::Core& core, int pos);
    int GetDriveSpeed(MM::Device& device, MM::Core& core, long& pos);
@@ -99,8 +99,8 @@ public:
    int SetMagnifierPosition(MM::Device& device, MM::Core& core, int nr, int pos);
    int GetMagnifierPosition(MM::Device& device, MM::Core& core, int nr, int& pos);
 
-   int SetNIRShutterPosition(MM::Device& device, MM::Core& core, int pos);
-   int GetNIRShutterPosition(MM::Device& device, MM::Core& core, int& pos);
+   int SetNIRShutterPosition(MM::Device& device, MM::Core& core, bool open);
+   int GetNIRShutterPosition(MM::Device& device, MM::Core& core, bool& open);
 
 private:
    int ExecuteCommand(MM::Device& device, MM::Core& core, const char* command);
