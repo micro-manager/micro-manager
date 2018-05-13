@@ -79,21 +79,21 @@ public class PtcToolsFrame extends MMFrame {
       add(new JLabel(PtcToolsTerms.MINIMUMEXPOSURE), "");
       minExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, 
               "0.0"));
-      add(minExpTF_, "wrap");
+      add(minExpTF_, "w 40, wrap");
       add(new JLabel(PtcToolsTerms.MAXIMUMEXPOSURE), "");
-      maxExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, 
+      maxExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MAXIMUMEXPOSURE, 
               "0.0"));
-      add(maxExpTF_, "wrap");
+      add(maxExpTF_, "w 40, wrap");
       add(new JLabel(PtcToolsTerms.NREXPOSURES), "");
       nrExpSp_ = new JSpinner();
       nrExpSp_.setModel(new SpinnerNumberModel(
               settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30), 1, null, 1));
-      add(nrExpSp_, "wrap");
+      add(nrExpSp_, "w 40, wrap");
       add(new JLabel(PtcToolsTerms.NRFRAMES), "");
       nrFramesSp_ = new JSpinner();
       nrFramesSp_.setModel(new SpinnerNumberModel(
               settings_.getInteger(PtcToolsTerms.NRFRAMES, 100), 1, null, 1));
-      add(nrFramesSp_, "wrap");
+      add(nrFramesSp_, "w 40, wrap");
       
       MMFrame ptf = this;
       JButton cancelButton = new JButton ("Cancel");
@@ -104,7 +104,7 @@ public class PtcToolsFrame extends MMFrame {
             ptf.setVisible(false);
          }
       });
-      add(cancelButton);
+      add(cancelButton, "span 2, split 2, tag cancel");
       
       JButton okButton = new JButton("OK");
       okButton.addActionListener(new ActionListener() {
@@ -113,10 +113,11 @@ public class PtcToolsFrame extends MMFrame {
             storeSettings();
             PtcToolsExecutor pte = new PtcToolsExecutor(studio_, 
                     settings_.toPropertyMap());
+            pte.start();
             ptf.setVisible(false);
          }
       });
-      add(okButton);
+      add(okButton, "tag ok");
       
       pack();
    }
