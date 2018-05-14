@@ -115,25 +115,12 @@ public class PtcToolsExecutor extends Thread  {
             lc.add(storeDark.getImage(cb.t(i).build()).getRawPixels());
          }
          Image ri = storeDark.getAnyImage();
-         FloatProcessor mean = new FloatProcessor(ri.getWidth(), ri.getHeight());
-         for (int p = 0; p < mean.getPixelCount(); p++) {
-            float sum = 0.0f;
-            for (int i = 0; i < nrFrames; i++) {
-               short[] rawPixels = (short[]) lc.get(i);
-               sum += rawPixels[p]&0xffff;
-            }
-            mean.setf(p, sum/nrFrames);
-         }
-         FloatProcessor stdDev = new FloatProcessor(ri.getWidth(), ri.getHeight());
-         for (int p = 0; p < mean.getPixelCount(); p++) {
-            float sumSqDif = 0.0f;
-            for (int i = 0; i < nrFrames; i++) {
-               short[] rawPixels = (short[]) lc.get(i);
-               sumSqDif += (rawPixels[p]&0xffff - mean.get(p) *
-                       (rawPixels[p]&0xffff - mean.get(p)));
-            }
-            stdDev.setf(p, (float) Math.sqrt(sumSqDif) / (nrFrames -1 ) );
-         }
+         // mean offset
+         FloatProcessor mean = getMeanImg(ri, lc);
+         // stddev
+         FloatProcessor stdDev = getStdDevImg(ri, mean, lc);
+         
+      
          ImagePlus tmp = new ImagePlus("mean", mean);
          tmp.show();
          ImagePlus tmp2 = new ImagePlus("stdDev", stdDev);
@@ -141,10 +128,34 @@ public class PtcToolsExecutor extends Thread  {
       } catch (IOException ex) {
          //Logger.getLogger(PtcToolsExecutor.class.getName()).log(Level.SEVERE, null, ex);
       }
-      
-      
-      
-      
-      
+
    }
+   
+   public FloatProcessor getMeanImg(Image ri, List<Object> lc) {
+      FloatProcessor mean = new FloatProcessor(ri.getWidth(), ri.getHeight());
+      for (int p = 0; p < mean.getPixelCount(); p++) {
+         float sum = 0.0f;
+         for (int i = 0; i < lc.size(); i++) {
+            short[] rawPixels = (short[]) lc.get(i);
+            sum += rawPixels[p] & 0xffff;
+         }
+         mean.setf(p, sum / lc.size());
+      }
+      return mean;
+   }
+
+   public FloatProcessor getStdDevImg(Image ri, FloatProcessor mean, List<Object> lc) {
+      FloatProcessor stdDev = new FloatProcessor(ri.getWidth(), ri.getHeight());
+      for (int p = 0; p < mean.getPixelCount(); p++) {
+         float sumSqDif = 0.0f;
+         for (int i = 0; i < lc.size(); i++) {
+            short[] rawPixels = (short[]) lc.get(i);
+            sumSqDif += (rawPixels[p] & 0xffff - mean.get(p)
+                    * (rawPixels[p] & 0xffff - mean.get(p)));
+         }
+         stdDev.setf(p, (float) Math.sqrt(sumSqDif) / (lc.size() - 1));
+      }
+      return stdDev;
+   }
+
 }
