@@ -79,21 +79,21 @@ public class PtcToolsFrame extends MMFrame {
       add(new JLabel(PtcToolsTerms.MINIMUMEXPOSURE), "");
       minExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, 
               "0.0"));
-      add(minExpTF_, "w 40, wrap");
+      add(minExpTF_, "w 60, wrap");
       add(new JLabel(PtcToolsTerms.MAXIMUMEXPOSURE), "");
       maxExpTF_ = new JTextField(settings_.getString(PtcToolsTerms.MAXIMUMEXPOSURE, 
               "0.0"));
-      add(maxExpTF_, "w 40, wrap");
+      add(maxExpTF_, "w 60, wrap");
       add(new JLabel(PtcToolsTerms.NREXPOSURES), "");
       nrExpSp_ = new JSpinner();
       nrExpSp_.setModel(new SpinnerNumberModel(
               settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30), 1, null, 1));
-      add(nrExpSp_, "w 40, wrap");
+      add(nrExpSp_, "w 60, wrap");
       add(new JLabel(PtcToolsTerms.NRFRAMES), "");
       nrFramesSp_ = new JSpinner();
       nrFramesSp_.setModel(new SpinnerNumberModel(
               settings_.getInteger(PtcToolsTerms.NRFRAMES, 100), 1, null, 1));
-      add(nrFramesSp_, "w 40, wrap");
+      add(nrFramesSp_, "w 60, wrap");
       
       MMFrame ptf = this;
       JButton cancelButton = new JButton ("Cancel");

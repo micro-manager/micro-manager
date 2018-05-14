@@ -23,7 +23,10 @@
 
 package org.micromanager.ptctools;
 
+import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.measure.ResultsTable;
 import ij.process.FloatProcessor;
 import java.io.IOException;
 import java.text.ParseException;
@@ -53,82 +56,158 @@ public class PtcToolsExecutor extends Thread  {
 
    @Override
    public void run() {
+      
+      CMMCore core = studio_.getCMMCore(); // to reduce typing
+      final int nrFrames = settings_.getInteger(PtcToolsTerms.NRFRAMES, 100);
+        
+      
       boolean dr = ij.IJ.showMessageWithCancel("PTC Tools", "Prevent all light going to the"
               + " camera.  Press OK when ready");
       if (!dr) {
          return;
       }
       
-      Datastore storeDark = studio_.data().createRAMDatastore();
-      SummaryMetadata.Builder smbDark = studio_.data().getSummaryMetadataBuilder();
-      Coords.Builder cb = Coordinates.builder();
+      // Stack that holds the resulting images
+      ImageStack stack = new ImageStack((int) core.getImageWidth(), 
+              (int) core.getImageHeight());
+      
+      // temporary store to hold images while calculating mean and stdDev
+      Datastore store = studio_.data().createRAMDatastore();
+      final SummaryMetadata.Builder smb = studio_.data().getSummaryMetadataBuilder();
+      final Coords.Builder cb = Coordinates.builder();
       Coords coords = cb.c(1).p(1).
-              t(settings_.getInteger(PtcToolsTerms.NRFRAMES, 100)).z(1).build();
+              t(nrFrames).z(1).build();
       try {
-         storeDark.setSummaryMetadata(smbDark.intendedDimensions(coords).startDate(
+         store.setSummaryMetadata(smb.intendedDimensions(coords).startDate(
                  new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date())).build());
       } catch (IOException ex) {
          // should never happen with a RAMDatastore...
       }
       
-      CMMCore core = studio_.getCMMCore(); // to reduce typing
       double exposure;
       try {
          exposure = NumberUtils.displayStringToDouble(
                  settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
       } catch (ParseException ex) {
-         studio_.logs().showError("Minimum exposire should be a number");
-         return;
-      }
-      try {
-         core.setExposure(exposure);
-      } catch (Exception ex) {
-         studio_.logs().showError("Failed to set exposure time");
+         studio_.logs().showError("Minimum exposure should be a number");
          return;
       }
       
-      int nrFrames = settings_.getInteger(PtcToolsTerms.NRFRAMES, 100);
-        
       try {
-         core.startSequenceAcquisition(nrFrames, 0.0, true);
-         int frCounter = 0;
-         // TODO: this can hang
-         while (core.isSequenceRunning() || core.getRemainingImageCount() > 0) {
-            if (core.getRemainingImageCount() > 0) {
-               TaggedImage nextImage = core.popNextTaggedImage();
-               if (nextImage != null) {
-                  Image img = studio_.data().convertTaggedImage(nextImage);
-                  storeDark.putImage(img.copyAtCoords(cb.t(frCounter).build()));
-                  frCounter++;
-               }
-            }
-         }
-         storeDark.freeze();
+         runSequence(core, store, nrFrames, exposure);
       } catch (Exception ex) {
          studio_.logs().showError(ex, "Error while acquiring images");
+         return;
       }
-      
+           
       // TODO: make sure that we have 16-bit (short) images
       try {
-         List<Object> lc = new ArrayList<Object>(nrFrames);
-         for (int i = 0; i < nrFrames; i++) {
-            lc.add(storeDark.getImage(cb.t(i).build()).getRawPixels());
+         calculateAndAddToStack(stack, store);
+         store.freeze();
+         store.close();
+      } catch (IOException ex) {
+         studio_.logs().showError(ex, "Error while calculating mean and stdDev");
+         return;
+      }
+
+      
+      dr = ij.IJ.showMessageWithCancel("PTC Tools", "Now switch on the light, and make sure it can reach the"
+              + " camera.  Press OK when ready");
+      if (!dr) {
+         return;
+      }
+      
+      // establish the exposure times we will use as a logarthimically spaced series
+      int nrExposures = settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30);
+      double minExposure, maxExposure;
+      try {
+         minExposure = NumberUtils.displayStringToDouble(
+                 settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
+         maxExposure = NumberUtils.displayStringToDouble(
+                 settings_.getString(PtcToolsTerms.MAXIMUMEXPOSURE, "100.0"));
+      } catch (ParseException ex) {
+         studio_.logs().showError("Minimum exposure should be a number");
+         return;
+      }
+      double[] exposures = new double[nrExposures];
+      double minExpLog = Math.log(minExposure);
+      double maxExpLog = Math.log(maxExposure);
+      double expLogStep = (maxExpLog - minExpLog) / (nrExposures -1);
+      ResultsTable rt = ResultsTable.getResultsTable();
+      rt.setPrecision(4);    
+      
+      for (int i = 0; i < nrExposures; i++) {
+         ij.IJ.showProgress(i, nrExposures);
+         exposures[i] = Math.exp(minExpLog + i * expLogStep);
+         rt.incrementCounter(); 
+         rt.addValue("Exposure", exposures[i]);
+         store = studio_.data().createRAMDatastore();
+         try {
+            runSequence(core, store, nrFrames, exposures[i]);
+         } catch (Exception ex) {
+            studio_.logs().showError(ex, "Error while acquiring images");
+            return;
          }
-         Image ri = storeDark.getAnyImage();
+
+         // TODO: make sure that we have 16-bit (short) images
+         try {
+            calculateAndAddToStack(stack, store);
+            store.freeze();
+            store.close();
+         } catch (IOException ex) {
+            studio_.logs().showError(ex, "Error while calculating mean and stdDev");
+            return;
+         }
+
+      }
+      
+      rt.show("Results");
+      ij.IJ.showProgress(1.0);
+      ImagePlus imp = new ImagePlus("PTCTools stack", stack);
+      imp.setDimensions(2, 1, stack.getSize() / 2);
+      CompositeImage comp = new CompositeImage(imp, CompositeImage.COLOR);
+      comp.show();
+
+   }
+   
+
+   private void runSequence(CMMCore core, Datastore store, int nrFrames,
+           double exposure) throws Exception {
+      final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
+      core.setExposure(exposure);
+
+      core.startSequenceAcquisition(nrFrames, 0.0, true);
+      int frCounter = 0;
+      // TODO: this can hang
+      while (core.isSequenceRunning() || core.getRemainingImageCount() > 0) {
+         if (core.getRemainingImageCount() > 0) {
+            TaggedImage nextImage = core.popNextTaggedImage();
+            if (nextImage != null) {
+               Image img = studio_.data().convertTaggedImage(nextImage);
+               store.putImage(img.copyAtCoords(cb.t(frCounter).build()));
+               frCounter++;
+            }
+         }
+      }
+      store.freeze();
+   }
+   
+   private void calculateAndAddToStack(ImageStack stack, Datastore store) 
+            throws IOException {
+      final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
+      int nrFrames = store.getAxisLength(Coords.T);
+      List<Object> lc = new ArrayList<Object>(nrFrames);
+         for (int i = 0; i < nrFrames; i++) {
+            lc.add(store.getImage(cb.t(i).build()).getRawPixels());
+         }
+         Image ri = store.getAnyImage();
          // mean offset
          FloatProcessor mean = getMeanImg(ri, lc);
          // stddev
          FloatProcessor stdDev = getStdDevImg(ri, mean, lc);
          
-      
-         ImagePlus tmp = new ImagePlus("mean", mean);
-         tmp.show();
-         ImagePlus tmp2 = new ImagePlus("stdDev", stdDev);
-         tmp2.show();
-      } catch (IOException ex) {
-         //Logger.getLogger(PtcToolsExecutor.class.getName()).log(Level.SEVERE, null, ex);
-      }
-
+         stack.addSlice(mean);
+         stack.addSlice(stdDev);
    }
    
    public FloatProcessor getMeanImg(Image ri, List<Object> lc) {
