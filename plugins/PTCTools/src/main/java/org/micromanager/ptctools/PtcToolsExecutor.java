@@ -27,7 +27,9 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.ResultsTable;
+import ij.plugin.ZProjector;
 import ij.process.FloatProcessor;
+import ij.process.ShortProcessor;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -137,6 +139,7 @@ public class PtcToolsExecutor extends Thread  {
       rt.setPrecision(4);    
       
       for (int i = 0; i < nrExposures; i++) {
+         ij.IJ.showStatus("PTCTools, working on exposure: " + i);
          ij.IJ.showProgress(i, nrExposures);
          exposures[i] = Math.exp(minExpLog + i * expLogStep);
          rt.incrementCounter(); 
@@ -152,12 +155,12 @@ public class PtcToolsExecutor extends Thread  {
          // TODO: make sure that we have 16-bit (short) images
          try {
             calculateAndAddToStack(stack, store);
-            store.freeze();
             store.close();
          } catch (IOException ex) {
             studio_.logs().showError(ex, "Error while calculating mean and stdDev");
             return;
          }
+         System.gc();
 
       }
       
@@ -175,7 +178,6 @@ public class PtcToolsExecutor extends Thread  {
            double exposure) throws Exception {
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
       core.setExposure(exposure);
-
       core.startSequenceAcquisition(nrFrames, 0.0, true);
       int frCounter = 0;
       // TODO: this can hang
@@ -193,48 +195,30 @@ public class PtcToolsExecutor extends Thread  {
    }
    
    private void calculateAndAddToStack(ImageStack stack, Datastore store) 
-            throws IOException {
+            throws IOException, OutOfMemoryError {
       final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
       int nrFrames = store.getAxisLength(Coords.T);
-      List<Object> lc = new ArrayList<Object>(nrFrames);
+      ImageStack tmpStack = new ImageStack(stack.getWidth(), stack.getHeight());
+      List<ShortProcessor> lc = new ArrayList<ShortProcessor>(nrFrames);
          for (int i = 0; i < nrFrames; i++) {
-            lc.add(store.getImage(cb.t(i).build()).getRawPixels());
+            ShortProcessor tmpShortProc = new ShortProcessor(stack.getWidth(), 
+                    stack.getHeight());
+            tmpShortProc.setPixels(store.getImage(cb.t(i).build()).getRawPixels());
+            tmpStack.addSlice(tmpShortProc);
          }
-         Image ri = store.getAnyImage();
-         // mean offset
-         FloatProcessor mean = getMeanImg(ri, lc);
-         // stddev
-         FloatProcessor stdDev = getStdDevImg(ri, mean, lc);
+         ZProjector zProj = new ZProjector(new ImagePlus("tmp", tmpStack));
+         zProj.setMethod(ZProjector.AVG_METHOD);
+         zProj.doProjection();
+         ImagePlus  meanP = zProj.getProjection();
+         FloatProcessor mean = (FloatProcessor) meanP.getProcessor().convertToFloat();
+         zProj.setMethod(ZProjector.SD_METHOD);
+         zProj.doProjection();
+         ImagePlus  stdDevP = zProj.getProjection();
+         FloatProcessor stdDev = (FloatProcessor) stdDevP.getProcessor().convertToFloat();
          
          stack.addSlice(mean);
          stack.addSlice(stdDev);
    }
    
-   public FloatProcessor getMeanImg(Image ri, List<Object> lc) {
-      FloatProcessor mean = new FloatProcessor(ri.getWidth(), ri.getHeight());
-      for (int p = 0; p < mean.getPixelCount(); p++) {
-         float sum = 0.0f;
-         for (int i = 0; i < lc.size(); i++) {
-            short[] rawPixels = (short[]) lc.get(i);
-            sum += rawPixels[p] & 0xffff;
-         }
-         mean.setf(p, sum / lc.size());
-      }
-      return mean;
-   }
-
-   public FloatProcessor getStdDevImg(Image ri, FloatProcessor mean, List<Object> lc) {
-      FloatProcessor stdDev = new FloatProcessor(ri.getWidth(), ri.getHeight());
-      for (int p = 0; p < mean.getPixelCount(); p++) {
-         float sumSqDif = 0.0f;
-         for (int i = 0; i < lc.size(); i++) {
-            short[] rawPixels = (short[]) lc.get(i);
-            sumSqDif += (rawPixels[p] & 0xffff - mean.get(p)
-                    * (rawPixels[p] & 0xffff - mean.get(p)));
-         }
-         stdDev.setf(p, (float) Math.sqrt(sumSqDif) / (lc.size() - 1));
-      }
-      return stdDev;
-   }
-
+  
 }

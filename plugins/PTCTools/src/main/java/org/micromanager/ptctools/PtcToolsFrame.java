@@ -111,9 +111,7 @@ public class PtcToolsFrame extends MMFrame {
          @Override
          public void actionPerformed(ActionEvent evt) {
             storeSettings();
-            PtcToolsExecutor pte = new PtcToolsExecutor(studio_, 
-                    settings_.toPropertyMap());
-            pte.start();
+            (new PtcToolsExecutor(studio_, settings_.toPropertyMap())).start();
             ptf.setVisible(false);
          }
       });
