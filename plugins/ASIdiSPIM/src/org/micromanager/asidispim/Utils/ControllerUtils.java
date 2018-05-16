@@ -58,11 +58,6 @@ public class ControllerUtils {
    double scanDistance_;   // cached value from last call to prepareControllerForAquisition()
    double actualStepSizeUm_;  // cached value from last call to prepareControllerForAquisition()
    
-   // stage has to go faster than the (orthogonal) slice spacing because viewing at an angle
-   // with diSPIM, angle is 45 degrees so go 1/sin(45deg) = 1.41x faster
-   // with oSPIM, angle is 30 degrees so go 1/sin(30deg) = 2x faster
-   final double geometricSpeedFactor_ = ASIdiSPIM.oSPIM ? 2 : Math.sqrt(2.);
-   
    public ControllerUtils(ScriptInterface gui, final Properties props, 
            final Prefs prefs, final Devices devices, final Positions positions, final Cameras cameras) {
       gui_ = gui;
@@ -73,6 +68,7 @@ public class ControllerUtils {
       cameras_ = cameras;
       core_ = gui_.getMMCore();
       scanDistance_ = 0;
+      actualStepSizeUm_ = 0;
    }
    
    /**
@@ -188,7 +184,7 @@ public class ControllerUtils {
          actualStepSizeUm_ = settings.stepSizeUm * (actualMotorSpeed / requestedMotorSpeed);
          
          // cache how far we scan each pass for later use
-         scanDistance_ = settings.numSlices * actualStepSizeUm_ * geometricSpeedFactor_;
+         scanDistance_ = settings.numSlices * actualStepSizeUm_ * getStageGeometricSpeedFactor(settings.firstSideIsA);
          
          // set the acceleration to a reasonable value for the (usually very slow) scan speed
          props_.setPropValue(xyDevice, Properties.Keys.STAGESCAN_MOTOR_ACCEL, (float)computeScanAcceleration(actualMotorSpeed));
@@ -244,7 +240,7 @@ public class ControllerUtils {
          sliceDuration *= 2;
       }
       final int channelsPerPass = computeScanChannelsPerPass(settings);
-      return settings.stepSizeUm * geometricSpeedFactor_ / sliceDuration / channelsPerPass;
+      return settings.stepSizeUm * getStageGeometricSpeedFactor(settings.firstSideIsA) / sliceDuration / channelsPerPass;
    }
    
    /**
@@ -254,6 +250,24 @@ public class ControllerUtils {
     */
    private int computeScanChannelsPerPass(AcquisitionSettings settings) {
       return settings.channelMode == MultichannelModes.Keys.SLICE_HW ? settings.numChannels : 1;
+   }
+   
+   /***
+    * compute how far we need to move the stage relative to the Z-step size (orthogonal to image) based on user-specified angle
+    * e.g. with diSPIM, angle is 45 degrees so go 1/cos(45deg) = 1.41x faster, with oSPIM, angle is 60 degrees so go 1/cos(60deg) = 2x faster
+    * if pathA is false then we compute based on Path B angle (assumed to be 90 degrees minus one specified for Path A)
+    * @param pathA true if using Path A
+    * @return factor, e.g. 1.41 for 45 degrees, 2 for 60 degrees, etc.
+    */
+   private double getStageGeometricSpeedFactor(boolean pathA) {
+      double angle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);
+      if (angle < 1) {  // case when property not defined
+         angle = ASIdiSPIM.oSPIM ? 60.0 : 45.0; 
+      }
+      if (!pathA) {
+         angle = 90.0 - angle;
+      }
+      return 1/(Math.cos(angle/180.0*Math.PI));
    }
    
    /**
