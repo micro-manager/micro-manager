@@ -3,6 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
+// AUTHOR:        Zhang Ren, zhangren@tucsen.com, 27/03/2017
 //
 // COPYRIGHT:     Tucsen Photonics Co., Ltd.  2018
 //
@@ -176,6 +177,13 @@ public:
     int OnLeftLevels(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnRightLevels(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnImageFormat(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriggerExpMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriggerEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTriggerDoSoftware(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnSharpness(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnDPCLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
 /*
    int OnMaxExposure(MM::PropertyBase* pProp, MM::ActionType eAct);             // 设置曝光最大值上限
  
@@ -217,6 +225,7 @@ private:
     static const double nominalPixelSizeUm_;
 
     double exposureMaximum_;
+    double exposureMinimum_;
     double dPhase_;
     ImgBuffer img_;
     bool busy_;
@@ -297,6 +306,7 @@ private:
     TUCAM_INIT       m_itApi;               // The initialize SDK environment
     TUCAM_OPEN       m_opCam;               // The camera open parameters
     TUCAM_FRAME      m_frame;               // The frame object
+	TUCAM_TRIGGER_ATTR m_tgrAttr;			// The trigger parameters
 };
 
 class CTUCamThread : public MMDeviceThreadBase
