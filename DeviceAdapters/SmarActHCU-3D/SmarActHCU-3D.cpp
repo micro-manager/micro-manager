@@ -310,9 +310,14 @@ int XYStage::SetErrorReporting(boolean reporting){
 int XYStage::SetRelativePositionUm(double x, double y){
 	int ret = 0;
 	if(x != 0){ // if non null relative position in first channel
+
+		// need to round off to first decimal otherwise the stage 
+		// cannot process the position
+		double xpos = ceil(x*10)/10;
+
 		// send command
 		std::stringstream command;
-		command << ":MPR" << channelX_ << "P" << x*reverseX_ << "H" << holdtime_;
+		command << ":MPR" << channelX_ << "P" << xpos*reverseX_ << "H" << holdtime_;
 		ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
 
 		// check for answer
@@ -329,9 +334,11 @@ int XYStage::SetRelativePositionUm(double x, double y){
 	}
 
 	if(y != 0){ // if non null relative position in second channel
+		double ypos = ceil(y*10)/10;
+
 		// send command
 		std::stringstream command2;
-		command2 << ":MPR" << channelY_ << "P" << y*reverseY_ << "H" << holdtime_;
+		command2 << ":MPR" << channelY_ << "P" << ypos*reverseY_ << "H" << holdtime_;
 		ret = SendSerialCommand(port_.c_str(), command2.str().c_str(), "\n");
 		
 		// check for answer
@@ -352,9 +359,14 @@ int XYStage::SetRelativePositionUm(double x, double y){
 }
 
 int XYStage::SetPositionUm(double x, double y){
+	// round to first decimal, otherwise the stage cannot
+	// process the value
+	double xpos = ceil(x*10)/10;
+	double ypos = ceil(y*10)/10;
+
 	// set position of the first channel
 	std::stringstream command;
-	command << ":MPA" << channelX_ << "P" << x*reverseX_ << "H" << holdtime_;
+	command << ":MPA" << channelX_ << "P" << xpos*reverseX_ << "H" << holdtime_;
 	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
 	if (ret != DEVICE_OK){
 		return ret;
@@ -374,7 +386,7 @@ int XYStage::SetPositionUm(double x, double y){
 
 	// set position of the second channel
 	std::stringstream command2;
-	command2 << ":MPA" << channelY_ << "P" << y*reverseY_ << "H" << holdtime_;
+	command2 << ":MPA" << channelY_ << "P" << ypos*reverseY_ << "H" << holdtime_;
 	ret = SendSerialCommand(port_.c_str(), command2.str().c_str(), "\n");
 	if (ret != DEVICE_OK){
 		return ret;
@@ -830,8 +842,11 @@ int ZStage::SetErrorReporting(boolean reporting){
 
 int ZStage::SetPositionUm(double pos)
 {
+	// round to first decimal	
+	double npos = ceil(pos*10)/10;
+
 	std::stringstream command;
-	command << ":MPA" << channelZ_ << "P" << pos*reverseZ_ << "H" << holdtime_;
+	command << ":MPA" << channelZ_ << "P" << npos*reverseZ_ << "H" << holdtime_;
 	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
 	if (ret != DEVICE_OK){
 		return ret;
@@ -854,8 +869,11 @@ int ZStage::SetPositionUm(double pos)
 
 int ZStage::SetRelativePositionUm(double pos)
 {
+	// round to first decimal	
+	double npos = ceil(pos*10)/10;
+
 	std::stringstream command;
-	command << ":MPR" << channelZ_ << "P" << pos*reverseZ_ << "H" << holdtime_;
+	command << ":MPR" << channelZ_ << "P" << npos*reverseZ_ << "H" << holdtime_;
 	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
 	if (ret != DEVICE_OK){
 		return ret;
