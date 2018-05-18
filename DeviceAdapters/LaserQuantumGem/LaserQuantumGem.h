@@ -67,8 +67,6 @@ public:
     // action properties
 	// read only
 	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnMaximumPower(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnEnableCurrentControl(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnLaserTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPSUTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);

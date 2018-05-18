@@ -33,25 +33,25 @@ const char* STR_ERROR = "Error";
 
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_DeviceGemName, MM::GenericDevice, "LaserQuantum gem laser");
+	RegisterDevice(g_DeviceGemName, MM::GenericDevice, "LaserQuantum gem laser");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-    if (deviceName == 0)
-	   return 0;
+	if (deviceName == 0)
+		return 0;
 
-    if (strcmp(deviceName, g_DeviceGemName) == 0)
-    {
-	   return new LaserQuantumGem;
-    }
+	if (strcmp(deviceName, g_DeviceGemName) == 0)
+	{
+		return new LaserQuantumGem;
+	}
 
-    return 0;
+	return 0;
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
-   delete pDevice;
+	delete pDevice;
 }
 
 //-----------------------------------------------------------------------------
@@ -59,104 +59,110 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 //-----------------------------------------------------------------------------
 
 LaserQuantumGem::LaserQuantumGem():
-   port_("Undefined"),
-   version_("Undefined"),
-   initialized_(false),
-   busy_(false),
-   controlmode_(true),
-   enabledCurrentControl_(false),
-   power_(0.00),
-   current_(0),
-   startupstatus_(true),
-   apccalibpower_(0),
-   lasertemperature_(0),
-   psutemperature_(0),
-   status_(true),
-   psutime_(0),
-   laserenabledtime_(0),
-   laseroperationtime_(0)
+port_("Undefined"),
+	version_("Undefined"),
+	initialized_(false),
+	busy_(false),
+	controlmode_(true),
+	enabledCurrentControl_(false),
+	power_(0.00),
+	current_(0),
+	startupstatus_(true),
+	apccalibpower_(0),
+	lasertemperature_(0),
+	psutemperature_(0),
+	status_(true),
+	psutime_(0),
+	laserenabledtime_(0),
+	laseroperationtime_(0)
 {
-     InitializeDefaultErrorMessages();
-     SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
-     SetErrorText(ERR_CURRENT_CONTROL, "The laser does not support current control.");
-     SetErrorText(ERR_CONTROL_MODE_NOT_CURRENT, "Can't change current, the laser is currently in power mode.");
-     SetErrorText(ERR_CONTROL_MODE_NOT_POWER, "Can't change power, the laser is currently in current mode.");
-     SetErrorText(ERR_UNEXPECTED_ANSWER, "Laser gave an unexpected answer.");
-     SetErrorText(ERR_ERROR_ANSWER, "Laser returned error.");
+	InitializeDefaultErrorMessages();
+	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
+	SetErrorText(ERR_CURRENT_CONTROL, "The laser does not support current control.");
+	SetErrorText(ERR_CONTROL_MODE_NOT_CURRENT, "The current percentage cannot be change because the laser is in power mode.");
+	SetErrorText(ERR_CONTROL_MODE_NOT_POWER, "The power level cannot because the laser is in current mode.");
+	SetErrorText(ERR_UNEXPECTED_ANSWER, "The laser gave an unexpected answer.");
+	SetErrorText(ERR_ERROR_ANSWER, "The laser returned an error.");
 
-     // Description
-     CreateProperty(MM::g_Keyword_Description, "LaserQuantum gem Controller", MM::String, true);
+	// Description
+	CreateProperty(MM::g_Keyword_Description, "LaserQuantum gem Controller", MM::String, true);
 
-     // Port
-     CPropertyAction* pAct = new CPropertyAction (this, &LaserQuantumGem::OnPort);
-     CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
-	 
-	 // Maximum power
-	 pAct = new CPropertyAction (this, &LaserQuantumGem::OnMaximumPower);
-     CreateProperty("Maximum power (mW)", "500", MM::Float, false, pAct, true);
+	// Port
+	CPropertyAction* pAct = new CPropertyAction (this, &LaserQuantumGem::OnPort);
+	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+	// Maximum power
+	CreateProperty("Maximum power (mW)", "500", MM::Float, false, 0, true);
 }
 
 LaserQuantumGem::~LaserQuantumGem()
 {
-     Shutdown();
+	Shutdown();
 }
 
 void LaserQuantumGem::GetName(char* Name) const
 {
-     CDeviceUtils::CopyLimitedString(Name, g_DeviceGemName);
+	CDeviceUtils::CopyLimitedString(Name, g_DeviceGemName);
 }
 
 int LaserQuantumGem::Initialize()
 {
-	 std::vector<std::string> commandsOnOff;
-     commandsOnOff.push_back(OFF);
-     commandsOnOff.push_back(ON);
-	 
-	 std::vector<std::string> controlModes;
-     controlModes.push_back(POWER);
-     controlModes.push_back(CURRENT);
+	// Get maximum power
+	char charbuff[MM::MaxStrLength];
+	int ret = GetProperty("Maximum power (mW)", charbuff);
+	if (ret != DEVICE_OK)
+		return ret;
+	maxpower_ = atoi(charbuff); 
 
-	 std::vector<std::string> startupStatus;
-     startupStatus.push_back(ENABLED);
-     startupStatus.push_back(DISABLED);
-	 
-	 // Version number
-	 int ret = getVersion(&version_); 
-	 if (DEVICE_OK != ret)
+	std::vector<std::string> commandsOnOff;
+	commandsOnOff.push_back(OFF);
+	commandsOnOff.push_back(ON);
+
+	std::vector<std::string> controlModes;
+	controlModes.push_back(POWER);
+	controlModes.push_back(CURRENT);
+
+	std::vector<std::string> startupStatus;
+	startupStatus.push_back(ENABLED);
+	startupStatus.push_back(DISABLED);
+
+	// Version number
+	ret = getVersion(&version_); 
+	if (DEVICE_OK != ret)
 		return ret;
 
-     ret = CreateProperty("Version", version_.c_str(), MM::String, true);
-	 if (DEVICE_OK != ret)
-          return ret;
-	 
-	 // Laser On/Off
-	 CPropertyAction* pAct = new CPropertyAction (this, &LaserQuantumGem::OnLaserOnOff);
-     ret = CreateProperty("Laser Operation", OFF, MM::String, false, pAct);
-     if (DEVICE_OK != ret)
-		return ret;
-     
-	 SetAllowedValues("Laser Operation", commandsOnOff);
-
-	 // Enable current control
-	 ret = supportsCurrentControl(&enabledCurrentControl_);
-     if (DEVICE_OK != ret)
+	ret = CreateProperty("Version", version_.c_str(), MM::String, true);
+	if (DEVICE_OK != ret)
 		return ret;
 
-	 if(enabledCurrentControl_){ // if the laser supports current control
+	// Laser On/Off
+	CPropertyAction* pAct = new CPropertyAction (this, &LaserQuantumGem::OnLaserOnOff);
+	ret = CreateProperty("Laser Operation", OFF, MM::String, false, pAct);
+	if (DEVICE_OK != ret)
+		return ret;
+
+	SetAllowedValues("Laser Operation", commandsOnOff);
+
+	// Enable current control
+	ret = supportsCurrentControl(&enabledCurrentControl_);
+	if (DEVICE_OK != ret)
+		return ret;
+
+	if(enabledCurrentControl_){ // if the laser supports current control
 		CreateProperty("Current control", ENABLED, MM::String, true);
-	 } else {
+	} else {
 		CreateProperty("Current control", DISABLED, MM::String, true);
-	 }
+	}
 
-	 // Control mode
-	 if(!enabledCurrentControl_){ // if the current control mode is not enabled
+	// Control mode
+	if(!enabledCurrentControl_){ // if the current control mode is not enabled
 		ret = CreateProperty("Control mode", POWER, MM::String, true);
 		if (DEVICE_OK != ret)
 			return ret;
 
 		// no current property (should not change?)
 
-	 } else { // if current control enabled
+	} else { // if current control enabled
 		ret = getControlMode(&controlmode_);
 		if (DEVICE_OK != ret)
 			return ret;
@@ -181,75 +187,75 @@ int LaserQuantumGem::Initialize()
 		SetPropertyLimits("Current (%)", 0, 100);
 		if (DEVICE_OK != ret)
 			return ret;
-	 }
+	}
 
-	 // Power
-	 getPower(&power_);
+	// Power
+	getPower(&power_);
 
-	 if(power_ > maxpower_){ // if power higher than set by user
-		 setPower(maxpower_);
-		 power_ = maxpower_;
-	 }
-	 pAct = new CPropertyAction (this, &LaserQuantumGem::OnPower);
-     ret = CreateProperty("Power (mW)", to_string(power_).c_str(), MM::Float, false, pAct);
-	 SetPropertyLimits("Power (mW)", 0, maxpower_);
-     if (DEVICE_OK != ret)
-          return ret;
+	if(power_ > maxpower_){ // if power higher than set by user
+		setPower(maxpower_);
+		power_ = maxpower_;
+	}
+	pAct = new CPropertyAction (this, &LaserQuantumGem::OnPower);
+	ret = CreateProperty("Power (mW)", to_string(power_).c_str(), MM::Float, false, pAct);
+	SetPropertyLimits("Power (mW)", 0, maxpower_);
+	if (DEVICE_OK != ret)
+		return ret;
 
-	 /////////////////// read only
-	 // Laser temperature
-	 getLaserTemperature(&lasertemperature_);
+	/////////////////// read only
+	// Laser temperature
+	getLaserTemperature(&lasertemperature_);
 
-     pAct = new CPropertyAction (this, &LaserQuantumGem::OnLaserTemperature);
-	 ret = CreateProperty("Temperature laser (C)", to_string(lasertemperature_).c_str(), MM::Float, true, pAct);
-     if (DEVICE_OK != ret)
-          return ret;
+	pAct = new CPropertyAction (this, &LaserQuantumGem::OnLaserTemperature);
+	ret = CreateProperty("Temperature laser (C)", to_string(lasertemperature_).c_str(), MM::Float, true, pAct);
+	if (DEVICE_OK != ret)
+		return ret;
 
-	 // PSU temperature
-	 getPSUTemperature(&psutemperature_);
+	// PSU temperature
+	getPSUTemperature(&psutemperature_);
 
-	 pAct = new CPropertyAction (this, &LaserQuantumGem::OnPSUTemperature);
-	 ret = CreateProperty("Temperature PSU (C)", to_string(psutemperature_).c_str(), MM::Float, true, pAct);
-     if (DEVICE_OK != ret)
-          return ret;
+	pAct = new CPropertyAction (this, &LaserQuantumGem::OnPSUTemperature);
+	ret = CreateProperty("Temperature PSU (C)", to_string(psutemperature_).c_str(), MM::Float, true, pAct);
+	if (DEVICE_OK != ret)
+		return ret;
 
-	 //////////////// timers
-	 getTimers(&psutime_, &laserenabledtime_, &laseroperationtime_);
+	//////////////// timers
+	getTimers(&psutime_, &laserenabledtime_, &laseroperationtime_);
 
-	 // PSU Timer
-	 CPropertyActionEx* pActex = new CPropertyActionEx(this, &LaserQuantumGem::OnTimers,0);
-	 ret = CreateProperty("Time PSU (h)", to_string(psutime_).c_str(), MM::Float, true, pActex);
-     if (DEVICE_OK != ret)
-          return ret;
+	// PSU Timer
+	CPropertyActionEx* pActex = new CPropertyActionEx(this, &LaserQuantumGem::OnTimers,0);
+	ret = CreateProperty("Time PSU (h)", to_string(psutime_).c_str(), MM::Float, true, pActex);
+	if (DEVICE_OK != ret)
+		return ret;
 
-     // Laser enabled timer
-	 pActex = new CPropertyActionEx(this, &LaserQuantumGem::OnTimers,1);
-     ret = CreateProperty("Time enabled (h)", to_string(laserenabledtime_).c_str(), MM::Float, true, pActex);
-     if (DEVICE_OK != ret)
-          return ret;
+	// Laser enabled timer
+	pActex = new CPropertyActionEx(this, &LaserQuantumGem::OnTimers,1);
+	ret = CreateProperty("Time enabled (h)", to_string(laserenabledtime_).c_str(), MM::Float, true, pActex);
+	if (DEVICE_OK != ret)
+		return ret;
 
-	 // Laser operation timer
-	 pActex = new CPropertyActionEx(this, &LaserQuantumGem::OnTimers,2);
-     ret = CreateProperty("Time operation (h)", to_string(laseroperationtime_).c_str(), MM::Float, true, pActex);
-     if (DEVICE_OK != ret)
-          return ret;
-	 
+	// Laser operation timer
+	pActex = new CPropertyActionEx(this, &LaserQuantumGem::OnTimers,2);
+	ret = CreateProperty("Time operation (h)", to_string(laseroperationtime_).c_str(), MM::Float, true, pActex);
+	if (DEVICE_OK != ret)
+		return ret;
 
-     initialized_ = true;
-     return DEVICE_OK;
+
+	initialized_ = true;
+	return DEVICE_OK;
 }
 
 int LaserQuantumGem::Shutdown()
 {
-   if (initialized_){
+	if (initialized_){
 		setLaserOnOff(false);
 		initialized_ = false;	 
-   }
-   return DEVICE_OK;
+	}
+	return DEVICE_OK;
 }
 
 bool LaserQuantumGem::Busy(){
-   return busy_;
+	return busy_;
 }
 
 
@@ -274,7 +280,7 @@ bool LaserQuantumGem::string_contains(std::string s1, std::string s2){
 
 int LaserQuantumGem::supportsCurrentControl(bool* supportsCurrent){
 	std::ostringstream command, command2, command3;
-    std::string answer, answer2;
+	std::string answer, answer2;
 
 	*supportsCurrent = false;
 
@@ -299,7 +305,7 @@ int LaserQuantumGem::supportsCurrentControl(bool* supportsCurrent){
 	}
 
 	// Try to set current to value
-    ret = setCurrent(current_);
+	ret = setCurrent(current_);
 
 	if (ret == ERR_ERROR_67){ // error that should appear if current control is not supported
 
@@ -332,17 +338,17 @@ int LaserQuantumGem::supportsCurrentControl(bool* supportsCurrent){
 
 int LaserQuantumGem::getVersion(std::string* version){
 	std::ostringstream command;
-    std::string answer;
-	
-    command << "VERSION?";
+	std::string answer;
+
+	command << "VERSION?";
 	int ret =SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 	if (ret != DEVICE_OK) 
 		return ret;
- 
+
 	ret = GetSerialAnswer(port_.c_str(), "\r", answer);
 	if (ret != DEVICE_OK) 
 		return ret;
-	
+
 	// check sanity of answer
 	if(string_contains(answer,"SMD12")){
 		*version = answer;
@@ -357,9 +363,9 @@ int LaserQuantumGem::getVersion(std::string* version){
 
 int LaserQuantumGem::getStatus(bool* status){
 	std::ostringstream command;
-    std::string answer;
+	std::string answer;
 
-    command << "STATUS?";
+	command << "STATUS?";
 	int ret =SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 	if (ret != DEVICE_OK) 
 		return ret;
@@ -367,7 +373,7 @@ int LaserQuantumGem::getStatus(bool* status){
 	ret = GetSerialAnswer(port_.c_str(), "\r", answer);
 	if (ret != DEVICE_OK) 
 		return ret;
-	
+
 	if (string_contains(answer,"ENABLED")){
 		*status = true;
 		return DEVICE_OK;
@@ -384,7 +390,7 @@ int LaserQuantumGem::getStatus(bool* status){
 
 int LaserQuantumGem::getControlMode(bool* mode){
 	std::ostringstream command;
-    std::string answer;
+	std::string answer;
 
 	command << "CONTROL?";
 	int ret =SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
@@ -394,7 +400,7 @@ int LaserQuantumGem::getControlMode(bool* mode){
 	ret = GetSerialAnswer(port_.c_str(), "\r", answer);
 	if (ret != DEVICE_OK) 
 		return ret;
-	
+
 	if (string_contains(answer,"POWER")){
 		*mode = true;
 		return DEVICE_OK;
@@ -410,7 +416,7 @@ int LaserQuantumGem::getControlMode(bool* mode){
 
 int LaserQuantumGem::getCurrent(double* current){
 	std::ostringstream command;
-    std::string answer;
+	std::string answer;
 
 	command << "CURRENT?";
 	int ret =SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
@@ -420,7 +426,7 @@ int LaserQuantumGem::getCurrent(double* current){
 	ret = GetSerialAnswer(port_.c_str(), "\r", answer);
 	if (ret != DEVICE_OK) 
 		return ret;
-	
+
 	if (string_contains(answer,"%")){
 		double curr = 0;
 		std::string s = answer.substr(0,s.length()-1);
@@ -443,9 +449,9 @@ int LaserQuantumGem::getCurrent(double* current){
 
 int LaserQuantumGem::getPower(double* power){
 	std::ostringstream command;
-    std::string answer;
+	std::string answer;
 
-    command << "POWER?";
+	command << "POWER?";
 	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 	if (ret != DEVICE_OK) 
 		return ret;
@@ -472,9 +478,9 @@ int LaserQuantumGem::getPower(double* power){
 
 int LaserQuantumGem::getLaserTemperature(double* temperature){
 	std::ostringstream command;
-    std::string answer;
+	std::string answer;
 
-    command << "LASTEMP?";
+	command << "LASTEMP?";
 	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 	if (ret != DEVICE_OK) 
 		return ret;
@@ -482,7 +488,7 @@ int LaserQuantumGem::getLaserTemperature(double* temperature){
 	ret = GetSerialAnswer(port_.c_str(), "\r", answer);
 	if (ret != DEVICE_OK) 
 		return ret;
-	
+
 	if (string_contains(answer,"C")){
 		double temp = 0;
 
@@ -501,9 +507,9 @@ int LaserQuantumGem::getLaserTemperature(double* temperature){
 
 int LaserQuantumGem::getPSUTemperature(double* temperature){
 	std::ostringstream command;
-    std::string answer;
+	std::string answer;
 
-    command << "PSUTEMP?";
+	command << "PSUTEMP?";
 	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 	if (ret != DEVICE_OK) 
 		return ret;
@@ -511,7 +517,7 @@ int LaserQuantumGem::getPSUTemperature(double* temperature){
 	ret = GetSerialAnswer(port_.c_str(), "\r", answer);
 	if (ret != DEVICE_OK) 
 		return ret;
-	
+
 	if (string_contains(answer,"C")){
 		double temp = 0;
 
@@ -530,9 +536,9 @@ int LaserQuantumGem::getPSUTemperature(double* temperature){
 
 int LaserQuantumGem::getTimers(double* psutime, double* laserenabletime, double* laseroperationtime){
 	std::ostringstream command;
-    std::string answer, answer1, answer2, answer3;
+	std::string answer, answer1, answer2, answer3;
 
-    command << "TIMERS?";
+	command << "TIMERS?";
 	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 	if (ret != DEVICE_OK) 
 		return ret;
@@ -541,7 +547,7 @@ int LaserQuantumGem::getTimers(double* psutime, double* laserenabletime, double*
 	ret = GetSerialAnswer(port_.c_str(), "\r", answer);
 	if (ret != DEVICE_OK) 
 		return ret;
-	
+
 	double temp = 0;
 	double temp1 = 0;
 	double temp2 = 0;
@@ -560,7 +566,7 @@ int LaserQuantumGem::getTimers(double* psutime, double* laserenabletime, double*
 	} else {
 		return ERR_UNEXPECTED_ANSWER;
 	}
-		
+
 	// Laser enabled
 	ret = GetSerialAnswer(port_.c_str(), "\r", answer1);
 	if (ret != DEVICE_OK) 
@@ -613,7 +619,7 @@ int LaserQuantumGem::getTimers(double* psutime, double* laserenabletime, double*
 
 int LaserQuantumGem::setLaserOnOff(bool b){
 	std::ostringstream command;
-    std::string answer;
+	std::string answer;
 
 	if(b){
 		command << "ON";
@@ -635,23 +641,23 @@ int LaserQuantumGem::setLaserOnOff(bool b){
 		int ret =SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
 		if (ret != DEVICE_OK) 
 			return ret;
-	
+
 
 		ret = GetSerialAnswer(port_.c_str(), "\r", answer);
 		if (ret != DEVICE_OK) 
 			return ret;
-		
+
 		if(string_contains(answer, STR_ERROR)){
 			return ERR_ERROR_ANSWER;
 		}
 	}
-	
+
 	return DEVICE_OK;
 }
 
 int LaserQuantumGem::setControlMode(bool mode){
 	std::ostringstream command;
-    std::string answer;
+	std::string answer;
 
 	if(mode){
 		command << "CONTROL=POWER";
@@ -689,7 +695,7 @@ int LaserQuantumGem::setCurrent(double current){
 	getControlMode(&controlmode_);
 
 	if(enabledCurrentControl_ && !controlmode_){ // if can current control and in current control mode
-		
+
 		if(current >= 0 && current<=100){ // sanity check
 			std::ostringstream command;
 			std::string answer;
@@ -710,7 +716,7 @@ int LaserQuantumGem::setCurrent(double current){
 			}
 		}
 	}
-	
+
 	return DEVICE_OK;
 }
 
@@ -718,7 +724,7 @@ int LaserQuantumGem::setPower(double power){
 	getControlMode(&controlmode_);
 
 	if(controlmode_){ // if in power control mode
-		
+
 		if(power >= 0 && power<=maxpower_){ // sanity check
 			std::ostringstream command;
 			std::string answer;
@@ -737,7 +743,7 @@ int LaserQuantumGem::setPower(double power){
 			}
 		}
 	}
-	
+
 	return DEVICE_OK;
 }
 
@@ -746,27 +752,20 @@ int LaserQuantumGem::setPower(double power){
 //---------------------------------------------------------------------------
 
 int LaserQuantumGem::OnPort(MM::PropertyBase* pProp , MM::ActionType eAct){
-     if (eAct == MM::BeforeGet){
-          pProp->Set(port_.c_str());
-     }
-     else if (eAct == MM::AfterSet) {
-          if (initialized_)
-          {
-               // revert
-               pProp->Set(port_.c_str());
-               return ERR_PORT_CHANGE_FORBIDDEN;
-          }
+	if (eAct == MM::BeforeGet){
+		pProp->Set(port_.c_str());
+	}
+	else if (eAct == MM::AfterSet) {
+		if (initialized_)
+		{
+			// revert
+			pProp->Set(port_.c_str());
+			return ERR_PORT_CHANGE_FORBIDDEN;
+		}
 
-          pProp->Get(port_);
-     }
-     return DEVICE_OK;
-}
-
-int LaserQuantumGem::OnMaximumPower(MM::PropertyBase* pProp, MM::ActionType eAct){
-   if (eAct == MM::AfterSet){
-      pProp->Get(maxpower_);
-   }
-   return DEVICE_OK;
+		pProp->Get(port_);
+	}
+	return DEVICE_OK;
 }
 
 int LaserQuantumGem::OnLaserTemperature(MM::PropertyBase* pProp, MM::ActionType eAct){
@@ -777,7 +776,7 @@ int LaserQuantumGem::OnLaserTemperature(MM::PropertyBase* pProp, MM::ActionType 
 
 		pProp->Set(lasertemperature_);
 	}
-    return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int LaserQuantumGem::OnPSUTemperature(MM::PropertyBase* pProp, MM::ActionType eAct){
@@ -788,7 +787,7 @@ int LaserQuantumGem::OnPSUTemperature(MM::PropertyBase* pProp, MM::ActionType eA
 
 		pProp->Set(psutemperature_);
 	}
-    return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int LaserQuantumGem::OnTimers(MM::PropertyBase* pProp, MM::ActionType eAct, long timer){
@@ -803,7 +802,7 @@ int LaserQuantumGem::OnTimers(MM::PropertyBase* pProp, MM::ActionType eAct, long
 			pProp->Set(laseroperationtime_);
 		}
 	}
-    return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 //---------------------------------------------------------------------------
@@ -823,20 +822,20 @@ int LaserQuantumGem::OnLaserOnOff(MM::PropertyBase* pProp, MM::ActionType eAct){
 		}
 	} else if (eAct == MM::AfterSet){
 		std::string status;
-        pProp->Get(status);
+		pProp->Get(status);
 
 		if(status.compare(ON) == 0){
 			status_ = true;
 		} else {
 			status_ = false;
 		}
-		
+
 		int ret = setLaserOnOff(status_);
 		if (ret != DEVICE_OK) 
 			return ret;
-   }
+	}
 
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int LaserQuantumGem::OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct){	
@@ -852,20 +851,20 @@ int LaserQuantumGem::OnControlMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 		}
 	} else if (eAct == MM::AfterSet){
 		std::string mode;
-        pProp->Get(mode);
+		pProp->Get(mode);
 
 		if(mode.compare(POWER) == 0){
 			controlmode_ = true;
 		} else {
 			controlmode_ = false;
 		}
-		
+
 		int ret = setControlMode(controlmode_);
 		if (ret != DEVICE_OK) 
 			return ret;
-   }
+	}
 
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int LaserQuantumGem::OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct){	
@@ -890,9 +889,9 @@ int LaserQuantumGem::OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct){
 			}
 		}
 
-   }
+	}
 
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int LaserQuantumGem::OnPower(MM::PropertyBase* pProp, MM::ActionType eAct){	
@@ -917,7 +916,7 @@ int LaserQuantumGem::OnPower(MM::PropertyBase* pProp, MM::ActionType eAct){
 			}
 		}
 
-   }
+	}
 
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
