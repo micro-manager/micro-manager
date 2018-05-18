@@ -10,10 +10,8 @@
 //-----------------------------------------------------------------------------
 
 #include "Omicron.h"
-// Code compiles on Mac without this include
-// If needed on PC, use ifdefs
 
-#ifdef WIN32
+#ifdef _WINDOWS
 #include "winuser.h"
 #endif
 

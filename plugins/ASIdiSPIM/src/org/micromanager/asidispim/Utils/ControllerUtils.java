@@ -58,10 +58,10 @@ public class ControllerUtils {
    double scanDistance_;   // cached value from last call to prepareControllerForAquisition()
    double actualStepSizeUm_;  // cached value from last call to prepareControllerForAquisition()
    
-   // stage has to go faster than the slice spacing because viewing at an angle
-   // with diSPIM, angle is 45 degrees so go 1.41x faster
-   // with oSPIM, angle is 60 degrees so go 1.15x faster
-   final double geometricSpeedFactor_ = ASIdiSPIM.oSPIM ? (2 / Math.sqrt(3.)) : Math.sqrt(2.);
+   // stage has to go faster than the (orthogonal) slice spacing because viewing at an angle
+   // with diSPIM, angle is 45 degrees so go 1/sin(45deg) = 1.41x faster
+   // with oSPIM, angle is 30 degrees so go 1/sin(30deg) = 2x faster
+   final double geometricSpeedFactor_ = ASIdiSPIM.oSPIM ? 2 : Math.sqrt(2.);
    
    public ControllerUtils(ScriptInterface gui, final Properties props, 
            final Prefs prefs, final Devices devices, final Positions positions, final Cameras cameras) {

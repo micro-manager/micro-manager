@@ -2,10 +2,6 @@
 #define _OMICRONXDRIVER_H_
 #endif
 
-#ifdef _WINDOWS
-#define OMICRON_XDEVICES
-#endif
-
 #include "OmicronxXDevices.h"
 #include <string>
 #include <vector>

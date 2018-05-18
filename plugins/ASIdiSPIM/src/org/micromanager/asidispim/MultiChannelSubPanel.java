@@ -319,7 +319,8 @@ public class MultiChannelSubPanel extends ListeningJPanel {
     * @param enabled
     */
    public void setPanelEnabled(boolean enabled) {
-      useChannelsCB_.setSelected(enabled);
+      useChannelsCB_.setSelected(!enabled);
+      useChannelsCB_.doClick();  // would be better to use ItemListener on checkbox; doClick() required to trigger ActionListener
    }
 
    /**
