@@ -57,6 +57,7 @@ import org.micromanager.utils.NumberUtils;
 @SuppressWarnings("serial")
 public class DataAnalysisPanel extends ListeningJPanel {
    private final Prefs prefs_;
+   private final Properties props_;
    private final JPanel exportPanel_;
    private final JPanel deskewPanel_;
 //   private final JPanel otherPanel_;
@@ -91,7 +92,8 @@ public class DataAnalysisPanel extends ListeningJPanel {
               "[right]",
               "[]16[]"));
       prefs_ = prefs;
-      PanelUtils pu = new PanelUtils(prefs_, props, devices);
+      props_ = props;
+      PanelUtils pu = new PanelUtils(prefs, props, devices);
       final DataAnalysisPanel dataAnalysisPanel = this;
             
       int textFieldWidth = 35;
@@ -350,6 +352,24 @@ public class DataAnalysisPanel extends ListeningJPanel {
    }
    
    
+   /***
+    * compute how far we need to shift each image for deskew relative to Z-step size (orthogonal to image) based on user-specified angle
+    * e.g. with diSPIM, angle is 45 degrees so factor is 1.0, for oSPIM the factor is tan(60 degrees) = sqrt(3), etc.
+    * if pathA is false then we compute based on Path B angle (assumed to be 90 degrees minus one specified for Path A)
+    * @param pathA true if using Path A
+    * @return factor, e.g. 1.0 for 45 degrees, sqrt(3) for 60 degrees, etc.
+    */
+   private double getStageGeometricShiftFactor(boolean pathA) {
+      double angle = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA);
+      if (angle < 1) {  // case when property not defined
+         angle = ASIdiSPIM.oSPIM ? 60.0 : 45.0; 
+      }
+      if (!pathA) {
+         angle = 90.0 - angle;
+      }
+      return Math.tan(angle/180.0*Math.PI);
+   }
+   
 public void runDeskew(final ListeningJPanel caller) {
       
       /**
@@ -418,10 +438,7 @@ public void runDeskew(final ListeningJPanel caller) {
                zStepPx = ip.getCalibration().pixelDepth / pixelSize;
             }
             
-            // for diSPIM: we shift the same amount as the interplane spacing (45 degrees), so factor of 1.0
-            // for oSPIM the factor is tan(60 degrees) = 0.577
-            final double geometricShiftFactor_ = ASIdiSPIM.oSPIM ? Math.sqrt(3) : 1.0;
-            final double dx = zStepPx * geometricShiftFactor_ * (Double) deskewFactor_.getValue();
+            final double dx = zStepPx * getStageGeometricShiftFactor(firstSideIsA) * (Double) deskewFactor_.getValue();
 
             final int nrChannels = ip.getNChannels();
             final int width = ip.getWidth();
