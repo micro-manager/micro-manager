@@ -44,6 +44,7 @@ const char* g_DeviceNameMultiShutter = "Multi Shutter";
 const char* g_DeviceNameComboXYStage = "Combo XY Stage";
 const char* g_DeviceNameMultiCamera = "Multi Camera";
 const char* g_DeviceNameMultiStage = "Multi Stage";
+const char* g_DeviceNameSingleAxisStage = "Single Axis Stage";
 const char* g_DeviceNameDAShutter = "DA Shutter";
 const char* g_DeviceNameDAMonochromator = "DA Monochromator";
 const char* g_DeviceNameDAZStage = "DA Z Stage";
@@ -78,6 +79,7 @@ MODULE_API void InitializeModuleData()
    RegisterDevice(g_DeviceNameMultiCamera, MM::CameraDevice, "Combine multiple physical cameras into a single logical camera");
    RegisterDevice(g_DeviceNameMultiStage, MM::StageDevice, "Combine multiple physical 1D stages into a single logical 1D stage");
    RegisterDevice(g_DeviceNameComboXYStage, MM::XYStageDevice, "Combine two single-axis stages into an XY stage");
+   RegisterDevice(g_DeviceNameSingleAxisStage, MM::StageDevice, "Use single axis of XY stage as a logical 1D stage");
    RegisterDevice(g_DeviceNameDAShutter, MM::ShutterDevice, "DA used as a shutter");
    RegisterDevice(g_DeviceNameDAMonochromator, MM::ShutterDevice, "DA used to control a monochromator");
    RegisterDevice(g_DeviceNameDAZStage, MM::StageDevice, "DA-controlled Z-stage");
@@ -101,6 +103,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new MultiStage();
    } else if (strcmp(deviceName, g_DeviceNameComboXYStage) == 0) {
       return new ComboXYStage();
+   } else if (strcmp(deviceName, g_DeviceNameSingleAxisStage) == 0) {
+      return new SingleAxisStage();
    } else if (strcmp(deviceName, g_DeviceNameDAShutter) == 0) { 
       return new DAShutter();
    } else if (strcmp(deviceName, g_DeviceNameDAMonochromator) == 0) {
@@ -1999,6 +2003,362 @@ int ComboXYStage::OnTranslationUm(MM::PropertyBase* pProp, MM::ActionType eAct, 
    }
    return DEVICE_OK;
 }
+
+
+/*
+ * SingleAxisStage implementation
+ */
+SingleAxisStage::SingleAxisStage() :
+   useXaxis_(true),
+   simulatedStepSizeUm_(0.1),
+   initialized_(false),
+   usedStage_(g_Undefined),
+   physicalStage_(0)
+{
+   InitializeDefaultErrorMessages();
+   SetErrorText(ERR_INVALID_DEVICE_NAME, "Invalid stage device");
+   SetErrorText(ERR_AUTOFOCUS_NOT_SUPPORTED, "Cannot use autofocus offset device as physical stage");
+   SetErrorText(ERR_NO_PHYSICAL_STAGE, "No physical stage assigned");
+
+   CreateStringProperty(MM::g_Keyword_Name, g_DeviceNameSingleAxisStage, true);
+   CreateStringProperty(MM::g_Keyword_Description,
+         "Use single axis of XY stage as a logical 1D stage", true);
+
+   CreateFloatProperty("SimulatedStepSizeUm", simulatedStepSizeUm_, false,
+         new CPropertyAction(this, &SingleAxisStage::OnStepSize),
+         true);
+}
+
+
+SingleAxisStage::~SingleAxisStage()
+{
+   Shutdown();
+}
+
+
+void SingleAxisStage::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_DeviceNameSingleAxisStage);
+}
+
+
+int SingleAxisStage::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   std::vector<std::string> availableStages;
+   availableStages.push_back(g_Undefined);
+   char stageLabel[MM::MaxStrLength];
+   unsigned int index = 0;
+   for (;;)
+   {
+      GetLoadedDeviceOfType(MM::XYStageDevice, stageLabel, index++);
+      if (strlen(stageLabel))
+      {
+         availableStages.push_back(stageLabel);
+      }
+      else
+      {
+         break;
+      }
+   }
+
+   const std::string propPhysStage("PhysicalStage");
+   CreateStringProperty(propPhysStage.c_str(), usedStage_.c_str(), false,
+         new CPropertyAction(this, &SingleAxisStage::OnPhysicalStage));
+   SetAllowedValues(propPhysStage.c_str(), availableStages);
+
+   const std::string propAxisUsed("PhysicalAxis");
+   CreateStringProperty(propAxisUsed.c_str(), "X", false,
+            new CPropertyAction(this, &SingleAxisStage::OnAxisUsed));
+   AddAllowedValue(propAxisUsed.c_str(), "X");
+   AddAllowedValue(propAxisUsed.c_str(), "Y");
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+
+int SingleAxisStage::Shutdown()
+{
+   if (!initialized_)
+      return DEVICE_OK;
+
+   return DEVICE_OK;
+}
+
+
+bool SingleAxisStage::Busy()
+{
+   if (!physicalStage_)
+      return DEVICE_OK;
+
+   return physicalStage_->Busy();
+}
+
+
+int SingleAxisStage::Stop()
+{
+   if (!physicalStage_)
+      return DEVICE_OK;
+
+   return physicalStage_->Stop();
+}
+
+
+int SingleAxisStage::SetPositionUm(double pos)
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   double xpos, ypos;
+   int err = physicalStage_->GetPositionUm(xpos, ypos);
+   if (err != DEVICE_OK)
+      return err;
+   if (useXaxis_)
+   {
+      return physicalStage_->SetPositionUm(pos, ypos);
+   }
+   else
+   {
+      return physicalStage_->SetPositionUm(xpos, pos);
+   }
+}
+
+
+int SingleAxisStage::SetRelativePositionUm(double d)
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   if (useXaxis_)
+   {
+      return physicalStage_->SetRelativePositionUm(d, 0.0);
+   }
+   else
+   {
+      return physicalStage_->SetRelativePositionUm(0.0, d);
+   }
+}
+
+
+int SingleAxisStage::GetPositionUm(double& pos)
+{
+   // not sure why this is called on startup but not the MultiStage version
+   // for now just ignore situation where we don't have a physical stage defined
+
+   if (!physicalStage_)
+      return DEVICE_OK;
+
+   double xpos, ypos;
+   int err = physicalStage_->GetPositionUm(xpos, ypos);
+   if (err != DEVICE_OK)
+      return err;
+   if (useXaxis_)
+   {
+      pos = xpos;
+   }
+   else
+   {
+      pos = ypos;
+   }
+   return DEVICE_OK;
+}
+
+
+int SingleAxisStage::SetPositionSteps(long steps)
+{
+   double posUm = simulatedStepSizeUm_ * steps;
+   return SetPositionUm(posUm);
+}
+
+
+int SingleAxisStage::GetPositionSteps(long& steps)
+{
+   double posUm;
+   int err = GetPositionUm(posUm);
+   if (err != DEVICE_OK)
+      return err;
+   steps = Round(posUm / simulatedStepSizeUm_);
+   return DEVICE_OK;
+}
+
+
+int SingleAxisStage::GetLimits(double& lower, double& upper)
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   double xMin, xMax, yMin, yMax;
+   int err = physicalStage_->GetLimitsUm(xMin, xMax, yMin, yMax);
+   if (err != DEVICE_OK)
+      return err;
+   if (useXaxis_)
+   {
+      lower = xMin;
+      upper = xMax;
+   }
+   else
+   {
+      lower = yMin;
+      upper = yMax;
+   }
+   return DEVICE_OK;
+}
+
+
+bool SingleAxisStage::IsContinuousFocusDrive() const
+{
+   // We disallow setting physical stages to autofocus stages, so always return
+   // false.
+   return false;
+}
+
+
+int SingleAxisStage::IsStageSequenceable(bool& isSequenceable) const
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   return physicalStage_->IsXYStageSequenceable(isSequenceable);
+}
+
+
+int SingleAxisStage::GetStageSequenceMaxLength(long& nrEvents) const
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   return physicalStage_->GetXYStageSequenceMaxLength(nrEvents);
+}
+
+
+int SingleAxisStage::StartStageSequence()
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   return physicalStage_->StartXYStageSequence();
+}
+
+
+int SingleAxisStage::StopStageSequence()
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   return physicalStage_->StopXYStageSequence();
+}
+
+
+int SingleAxisStage::ClearStageSequence()
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   return physicalStage_->ClearXYStageSequence();
+}
+
+
+int SingleAxisStage::AddToStageSequence(double pos)
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   double xpos, ypos;
+   int err = physicalStage_->GetPositionUm(xpos, ypos);
+   if (err != DEVICE_OK)
+      return err;
+   if (useXaxis_)
+   {
+      return physicalStage_->AddToXYStageSequence(pos, ypos);
+   }
+   else
+   {
+      return physicalStage_->AddToXYStageSequence(xpos, pos);
+   }
+}
+
+
+int SingleAxisStage::SendStageSequence()
+{
+   if (!physicalStage_)
+      return ERR_NO_PHYSICAL_STAGE;
+
+   return physicalStage_->SendXYStageSequence();
+}
+
+
+int SingleAxisStage::OnAxisUsed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (useXaxis_)
+      {
+         pProp->Set("X");
+      }
+      else
+      {
+         pProp->Set("Y");
+      }
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string tmpstr;
+      pProp->Get(tmpstr);
+      useXaxis_ = (tmpstr.compare("X") == 0);
+   }
+   return DEVICE_OK;
+}
+
+
+int SingleAxisStage::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(simulatedStepSizeUm_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(simulatedStepSizeUm_);
+   }
+   return DEVICE_OK;
+}
+
+
+int SingleAxisStage::OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(usedStage_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string stageLabel;
+      pProp->Get(stageLabel);
+
+      if (stageLabel == g_Undefined)
+      {
+         usedStage_ = g_Undefined;
+         physicalStage_ = 0;
+      }
+      else
+      {
+         MM::XYStage* stage = (MM::XYStage*)GetDevice(stageLabel.c_str());
+         if (!stage)
+         {
+            pProp->Set(g_Undefined);
+            physicalStage_ = 0;
+            return ERR_INVALID_DEVICE_NAME;
+         }
+         usedStage_ = stageLabel;
+         physicalStage_ = stage;
+      }
+   }
+   return DEVICE_OK;
+}
+
 
 
 /**********************************************************************
