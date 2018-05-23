@@ -1,2 +1,2 @@
-System.setErr(new PrintStream("/Users/nico/tmp/err.txt"));
+System.setErr(new PrintStream("C:\\temp\\err.txt"));
 org.micromanager.internal.utils.JavaUtils.printAllStackTraces();
