@@ -61,7 +61,7 @@
       <!-- Patched version of clearvolume from Nico -->
       <dependency org="net.clearvolume" name="clearvolume" rev="1.4.1"/>
 
-		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.51g"/>
+		<dependency conf="imagej" org="net.imagej" name="ij" rev="1.51s"/>
 
 		<!-- Not in Maven yet (resolved in 3rdpartypublic/classext) -->
 		<dependency org="" name="iconloader" rev="GIT"/>
