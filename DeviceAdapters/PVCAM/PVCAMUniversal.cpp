@@ -1299,11 +1299,20 @@ int Universal::SnapImage()
 
         if(!singleFrameModeReady_)
         {
+            // TODO: Do this at the end of previous snap.
+            //       The live mode is always stopped by pl_exp_abort
+            //       (which is the same as pl_exp_stop_cont)
+            //       and pl_exp_finish_seq should be called for sequence acquisitions only.
             g_pvcamLock.Lock();
             if (pl_exp_stop_cont(hPVCAM_, CCS_HALT) != PV_OK)
-                LogPvcamError(__LINE__, "pl_exp_stop_cont() failed", pl_error_code());
-            if (pl_exp_finish_seq(hPVCAM_, circBuf_.Data(), 0) != PV_OK)
-                LogPvcamError(__LINE__, "pl_exp_finish_seq() failed", pl_error_code());
+                LogPvcamError(__LINE__, "pl_exp_stop_cont() failed");
+            // Address the TODO above and this workaround won't be needed
+            void* buf = circBuf_.Data();
+            if (buf != NULL)
+            {
+                if (pl_exp_finish_seq(hPVCAM_, circBuf_.Data(), 0) != PV_OK)
+                    LogPvcamError(__LINE__, "pl_exp_finish_seq() failed");
+            }
             g_pvcamLock.Unlock();
 
             nRet = resizeImageBufferSingle();
@@ -1668,9 +1677,8 @@ int Universal::StartSequenceAcquisition(long numImages, double interval_ms, bool
         g_pvcamLock.Lock();
         if (!pl_exp_start_cont(hPVCAM_, circBuf_.Data(), static_cast<uns32>(circBuf_.Size())))
         {
-            const int16 pvErr = pl_error_code();
-            g_pvcamLock.Unlock();
-            const int mmErr = LogPvcamError(__LINE__, "pl_exp_start_cont()", pvErr);
+            const int mmErr = LogPvcamError(__LINE__, "pl_exp_start_cont()");
+            g_pvcamLock.Unlock(); // Next calls require unlocked  g_pvcamLock
             resizeImageBufferSingle();
             return mmErr;
         }
@@ -4087,9 +4095,8 @@ int Universal::resizeImageBufferContinuous()
         uns32           frameSize = 0;
         if (!pl_exp_setup_cont(hPVCAM_, rgnTot, rgnArr, pvExposureMode, pvExposure, &frameSize, CIRC_OVERWRITE)) 
         {
-            const int16 pvErr = pl_error_code();
-            g_pvcamLock.Unlock();
-            nRet = LogPvcamError(__LINE__, "pl_exp_setup_cont() failed", pvErr);
+            nRet = LogPvcamError(__LINE__, "pl_exp_setup_cont() failed");
+            g_pvcamLock.Unlock(); // Next calls require unlocked  g_pvcamLock
             SetBinning(1); // The error might have been caused by not supported BIN or ROI, so do a reset
             this->GetCoreCallback()->OnPropertiesChanged(this); // Notify the MM UI to update the BIN and ROI
             SetErrorText( nRet, "Failed to setup the acquisition" );
@@ -4189,9 +4196,8 @@ int Universal::resizeImageBufferSingle()
         uns32           expSize = 0;
         if (!pl_exp_setup_seq(hPVCAM_, expTot, rgnTot, rgnArr, pvExposureMode, pvExposure, &expSize))
         {
-            const int16 pvErr = pl_error_code();
-            g_pvcamLock.Unlock();
-            nRet = LogPvcamError(__LINE__, "pl_exp_setup_seq() failed", pvErr);
+            nRet = LogPvcamError(__LINE__, "pl_exp_setup_seq() failed");
+            g_pvcamLock.Unlock(); // Next calls require unlocked  g_pvcamLock
             SetBinning(1); // The error might have been caused by not supported BIN or ROI, so do a reset
             this->GetCoreCallback()->OnPropertiesChanged(this); // Notify the MM UI to update the BIN and ROI
             SetErrorText( nRet, "Failed to setup the acquisition" );
@@ -4364,10 +4370,7 @@ int Universal::acquireFrameSeq()
 
     g_pvcamLock.Lock();
     if (pl_exp_start_seq(hPVCAM_, singleFrameBufRaw_) != PV_OK)
-    {
-        const int16 pvErr = pl_error_code();
-        nRet = LogPvcamError(__LINE__, "pl_exp_start_seq() FAILED", pvErr);
-    }
+        nRet = LogPvcamError(__LINE__, "pl_exp_start_seq() FAILED");
     g_pvcamLock.Unlock();
 
     return nRet;
@@ -4438,11 +4441,13 @@ int Universal::waitForFrameSeqPolling(const MM::MMTime& timeout)
     }
     else
     {
+        g_pvcamLock.Lock();
         // Abort the acquisition (ignore error if abort fails, just log it)
         if (!pl_exp_abort(hPVCAM_, CCS_HALT))
             LogPvcamError(__LINE__, "waitForFrameSeqPolling(): pl_exp_abort() failed");
+        g_pvcamLock.Unlock();
         if (pvRet == FALSE)
-            return LogPvcamError(__LINE__, "waitForFrameSeqPolling(): pl_exp_check_cont_status() failed.", pvErr);
+            return LogPvcamError(__LINE__, "waitForFrameSeqPolling(): pl_exp_check_cont_status() failed", pvErr);
         if (pvStatus == READOUT_FAILED)
             return LogAdapterError(ERR_FRAME_READOUT_FAILED, __LINE__, "waitForFrameSeqPolling(): pvStatus == READOUT_FAILED");
         if (timeElapsed > timeout)
@@ -4457,14 +4462,11 @@ int Universal::waitForFrameSeqCallbacks(const MM::MMTime& timeout)
     if (!arrivedInTime)
     {
         g_pvcamLock.Lock();
+        // Abort the acquisition (ignore error if abort fails, just log it)
         if (!pl_exp_abort(hPVCAM_, CCS_HALT))
-        {
-            // If abort fails log the error but do not report it back
-            const int16 pvErr = pl_error_code();
-            LogPvcamError(__LINE__, "pl_exp_abort() failed", pvErr);
-        }
+            LogPvcamError(__LINE__, "waitForFrameSeqCallbacks(): pl_exp_abort() failed");
         g_pvcamLock.Unlock();
-        return LogAdapterError(ERR_OPERATION_TIMED_OUT, __LINE__, "Readout has timed out");
+        return LogAdapterError(ERR_OPERATION_TIMED_OUT, __LINE__, "waitForFrameSeqCallbacks(): Readout has timed out");
     }
     else
     {
@@ -4524,11 +4526,13 @@ int Universal::waitForFrameConPolling(const MM::MMTime& timeout)
     }
     else
     {
+        g_pvcamLock.Lock();
         // Abort the acquisition (ignore error if abort fails, just log it)
         if (!pl_exp_abort(hPVCAM_, CCS_HALT))
             LogPvcamError(__LINE__, "waitForFrameConPolling(): pl_exp_abort() failed");
+        g_pvcamLock.Unlock();
         if (pvRet == FALSE)
-            return LogPvcamError(__LINE__, "waitForFrameConPolling(): pl_exp_check_cont_status() failed.", pvErr);
+            return LogPvcamError(__LINE__, "waitForFrameConPolling(): pl_exp_check_cont_status() failed", pvErr);
         if (pvStatus == READOUT_FAILED)
             return LogAdapterError(ERR_FRAME_READOUT_FAILED, __LINE__, "waitForFrameConPolling(): pvStatus == READOUT_FAILED");
         if (timeElapsed > timeout)
@@ -5281,13 +5285,15 @@ int Universal::applyAcqConfig(bool forceSetup)
     {
         configChanged = true;
         bufferResizeRequired = true;
+        g_pvcamLock.Lock();
         if (acqCfgNew_.CallbacksEnabled)
         {
             if (pl_cam_register_callback_ex3(hPVCAM_, PL_CALLBACK_EOF, PvcamCallbackEofEx3, this) != PV_OK)
             {
                 acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
-                const int16 pvErr = pl_error_code();
-                return LogPvcamError(__LINE__, "pl_cam_register_callback_ex3() failed", pvErr);
+                nRet = LogPvcamError(__LINE__, "pl_cam_register_callback_ex3() failed");
+                g_pvcamLock.Unlock();
+                return nRet;
             }
         }
         else
@@ -5295,10 +5301,12 @@ int Universal::applyAcqConfig(bool forceSetup)
             if (pl_cam_deregister_callback(hPVCAM_, PL_CALLBACK_EOF) != PV_OK)
             {
                 acqCfgNew_ = acqCfgCur_; // New settings not accepted, reset it back to previous state
-                const int16 pvErr = pl_error_code();
-                return LogPvcamError(__LINE__, "pl_cam_deregister_callback() failed", pvErr);
+                nRet = LogPvcamError(__LINE__, "pl_cam_deregister_callback() failed");
+                g_pvcamLock.Unlock();
+                return nRet;
             }
         }
+        g_pvcamLock.Unlock();
     }
 
     // Change in exposure only means to reconfigure the acquisition
