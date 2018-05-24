@@ -55,7 +55,7 @@ bool Event::Wait(unsigned int timeoutMs)
     bool bInTime = true;
     // condition_variable::timed_wait(): returns false if the call is returning
     // because the time specified was reached, true otherwise.
-    while (!signalled_)
+    while (!signalled_ && bInTime)
         bInTime = condVar_.timed_wait(lock, boost::posix_time::milliseconds(timeoutMs));
 
     if (!manualReset_ && bInTime)
