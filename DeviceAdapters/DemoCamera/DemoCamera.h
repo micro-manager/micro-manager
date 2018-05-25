@@ -197,6 +197,8 @@ public:
    int OnIsSequenceable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPCF(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPhotonFlux(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnReadNoise(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCrash(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Special public DemoCamera methods
@@ -268,6 +270,8 @@ private:
    int mode_;
    ImgManipulator* imgManpl_;
    double pcf_;
+   double photonFlux_;
+   double readNoise_;
 };
 
 class MySequenceThread : public MMDeviceThreadBase

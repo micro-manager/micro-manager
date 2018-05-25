@@ -244,7 +244,9 @@ CDemoCamera::CDemoCamera() :
    nComponents_(1),
    mode_(MODE_ARTIFICIAL_WAVES),
    imgManpl_(0),
-   pcf_(1.0)
+   pcf_(1.0),
+   photonFlux_(50.0),
+   readNoise_(2.5)
 {
    memset(testProperty_,0,sizeof(testProperty_));
 
@@ -503,7 +505,19 @@ int CDemoCamera::Initialize()
    pAct = new CPropertyAction(this, &CDemoCamera::OnPCF);
    propName = "Photon Conversion Factor";
    CreateFloatProperty(propName.c_str(), pcf_, false, pAct);
-   SetPropertyLimits(propName.c_str(), 0.4, 4.0);
+   SetPropertyLimits(propName.c_str(), 0.01, 10.0);
+
+   // Read Noise (expressed in electrons) for the Noise type camera
+   pAct = new CPropertyAction(this, &CDemoCamera::OnReadNoise);
+   propName = "ReadNoise (electrons)";
+   CreateFloatProperty(propName.c_str(), readNoise_, false, pAct);
+   SetPropertyLimits(propName.c_str(), 0.25, 50.0);
+
+   // Photon Flux for the Noise type camera
+   pAct = new CPropertyAction(this, &CDemoCamera::OnPhotonFlux);
+   propName = "Photon Flux";
+   CreateFloatProperty(propName.c_str(), photonFlux_, false, pAct);
+   SetPropertyLimits(propName.c_str(), 2.0, 5000.0);
 
    // Simulate application crash
    pAct = new CPropertyAction(this, &CDemoCamera::OnCrash);
@@ -1873,6 +1887,32 @@ int CDemoCamera::OnPCF(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CDemoCamera::OnPhotonFlux(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(photonFlux_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(photonFlux_);
+   }
+   return DEVICE_OK;
+}
+
+int CDemoCamera::OnReadNoise(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(readNoise_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(readNoise_);
+   }
+   return DEVICE_OK;
+}
+
 
 int CDemoCamera::OnCrash(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -1980,9 +2020,9 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       {
          offset = 100;
       }
-	   double readNoise = 3.0;
+	   double readNoise = readNoise_ * pcf_;
       AddBackgroundAndNoise(img, offset, readNoise);
-      AddSignal (img, 50.0, exp, pcf_);
+      AddSignal (img, photonFlux_, exp, pcf_);
       if (imgManpl_ != 0)
       {
          imgManpl_->ChangePixels(img);
