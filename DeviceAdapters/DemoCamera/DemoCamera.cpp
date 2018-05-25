@@ -2020,8 +2020,8 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       {
          offset = 100;
       }
-	   double readNoise = readNoise_ * pcf_;
-      AddBackgroundAndNoise(img, offset, readNoise);
+	   double readNoiseDN = readNoise_ / pcf_;
+      AddBackgroundAndNoise(img, offset, readNoiseDN);
       AddSignal (img, photonFlux_, exp, pcf_);
       if (imgManpl_ != 0)
       {
