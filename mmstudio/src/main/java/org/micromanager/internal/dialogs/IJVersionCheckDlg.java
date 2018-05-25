@@ -49,7 +49,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public final class IJVersionCheckDlg extends JDialog {
    private static final String HAS_OPTED_OUT = "user has opted out of receiving warnings about compatibility with the version of ImageJ they are using";
    private static final ArrayList<String> ALLOWED_VERSIONS = new ArrayList<String>(
-         Arrays.asList(new String[] {"1.51g"}));;
+         Arrays.asList(new String[] {"1.51s"}));;
 
    /**
     * Show the warning dialog, if applicable and user has not opted out.
@@ -88,6 +88,7 @@ public final class IJVersionCheckDlg extends JDialog {
 
    /**
     * Show the dialog.
+    * @param badVersion - User's version.  
     */
    public IJVersionCheckDlg(String badVersion) {
       super();
@@ -99,7 +100,7 @@ public final class IJVersionCheckDlg extends JDialog {
       // Build a comma-delimited string of good versions.
       String goodVersions = "";
       for (String version : ALLOWED_VERSIONS) {
-         if (version != ALLOWED_VERSIONS.get(0)) {
+         if (!version.equals(ALLOWED_VERSIONS.get(ALLOWED_VERSIONS.size() -1))) {
             goodVersions += ", ";
          }
          goodVersions += version;
