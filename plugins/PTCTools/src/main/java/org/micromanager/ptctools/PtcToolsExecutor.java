@@ -29,6 +29,8 @@ import ij.ImageStack;
 import ij.measure.ResultsTable;
 import ij.plugin.ZProjector;
 import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 import java.io.IOException;
 import java.text.ParseException;
@@ -50,10 +52,22 @@ import org.micromanager.internal.utils.NumberUtils;
 public class PtcToolsExecutor extends Thread  {
    private final Studio studio_;
    private final PropertyMap settings_;
+   private final List<ExpMeanStdDev> expMeanStdDev_;;
+   
+   /**
+    * Simple class to hold Avg. Intensity and StdDev of Avg. intensities
+    * for a stack of images at identical exposure time.  Used to
+    * estimate stability of light source
+    */
+   private class ExpMeanStdDev {
+      public double mean_;
+      public double stdDev_;
+   }
    
    public PtcToolsExecutor(Studio studio, PropertyMap settings) {
       studio_ = studio;
       settings_ = settings;
+      expMeanStdDev_ = new ArrayList<ExpMeanStdDev>();
    }
 
    @Override
@@ -61,8 +75,9 @@ public class PtcToolsExecutor extends Thread  {
       
       CMMCore core = studio_.getCMMCore(); // to reduce typing
       final int nrFrames = settings_.getInteger(PtcToolsTerms.NRFRAMES, 100);
-        
-      
+      final ResultsTable rt = ResultsTable.getResultsTable();
+      rt.setPrecision(4);
+     
       boolean dr = ij.IJ.showMessageWithCancel("PTC Tools", "Prevent all light going to the"
               + " camera.  Press OK when ready");
       if (!dr) {
@@ -105,6 +120,13 @@ public class PtcToolsExecutor extends Thread  {
       // TODO: make sure that we have 16-bit (short) images
       try {
          calculateAndAddToStack(stack, store);
+         ExpMeanStdDev cemsd = calcExpMeanStdDev(store);
+         expMeanStdDev_.add(cemsd);
+         rt.incrementCounter();
+         rt.addValue("Exposure", 0.0);
+         rt.addValue("Mean", cemsd.mean_);
+         rt.addValue("Std.Dev", cemsd.stdDev_);  
+      
          store.freeze();
          store.close();
       } catch (IOException ex) {
@@ -135,15 +157,12 @@ public class PtcToolsExecutor extends Thread  {
       double minExpLog = Math.log(minExposure);
       double maxExpLog = Math.log(maxExposure);
       double expLogStep = (maxExpLog - minExpLog) / (nrExposures -1);
-      ResultsTable rt = ResultsTable.getResultsTable();
-      rt.setPrecision(4);    
       
       for (int i = 0; i < nrExposures; i++) {
          ij.IJ.showStatus("PTCTools, working on exposure: " + i);
          ij.IJ.showProgress(i, nrExposures);
          exposures[i] = Math.exp(minExpLog + i * expLogStep);
-         rt.incrementCounter(); 
-         rt.addValue("Exposure", exposures[i]);
+         
          store = studio_.data().createRAMDatastore();
          try {
             runSequence(core, store, nrFrames, exposures[i]);
@@ -155,6 +174,12 @@ public class PtcToolsExecutor extends Thread  {
          // TODO: make sure that we have 16-bit (short) images
          try {
             calculateAndAddToStack(stack, store);
+            ExpMeanStdDev cemsd = calcExpMeanStdDev(store);
+            expMeanStdDev_.add(cemsd);
+            rt.incrementCounter();
+            rt.addValue("Exposure", exposures[i]);
+            rt.addValue("Mean", cemsd.mean_);
+            rt.addValue("Std.Dev", cemsd.stdDev_);  
             store.close();
          } catch (IOException ex) {
             studio_.logs().showError(ex, "Error while calculating mean and stdDev");
@@ -218,6 +243,47 @@ public class PtcToolsExecutor extends Thread  {
          
          stack.addSlice(mean);
          stack.addSlice(stdDev);
+   }
+   
+   
+   private ExpMeanStdDev calcExpMeanStdDev(Datastore store) throws IOException {
+      ExpMeanStdDev result = new ExpMeanStdDev();
+      final Coords.Builder cb = Coordinates.builder().c(1).p(1).t(1).z(1);
+      final int nrFrames = store.getAxisLength(Coords.T);
+      double[] means = new double[nrFrames];
+      for (int i = 0; i < nrFrames; i++) {
+         Image image = store.getImage(cb.t(i).build());
+         ImageProcessor proc = studio_.data().ij().createProcessor(image);
+         ImageStatistics stats = ImageStatistics.getStatistics(proc,
+              ImageStatistics.MEAN, null);
+         means[i] = stats.mean;
+      }
+      result.mean_ = avg(means);
+      result.stdDev_ = stdDev(means, result.mean_);
+      
+      return result;
+   }
+   
+   public static double avg(double[] numbers) {
+      double sum = 0.0;
+      for (double num : numbers) {
+         sum += num;
+      }
+      return sum / numbers.length;
+   }
+   
+      
+   public static double stdDev(double[] numbers, double avg) {
+      double result = 0.0;
+      for (double val : numbers) {
+         result += (val - avg) * (val - avg);
+      }
+      if (numbers.length < 2) {
+         return 0.0;
+      }
+      result = result / (numbers.length -1);
+      
+      return Math.sqrt(result);
    }
    
   
