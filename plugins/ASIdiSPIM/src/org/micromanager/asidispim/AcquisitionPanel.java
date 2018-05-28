@@ -3334,6 +3334,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
                         boolean done = false;
                         long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
+                        int totalImages = 0;
                         if (acqSettings.isStageScanning) {  // for stage scanning have to allow extra time for turn-around
                            timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
                            timeout2 += 5000;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
@@ -3356,7 +3357,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     imagesToSkip--;
                                     continue;  // goes to next iteration of this loop without doing anything else
                                  }
-
+                                 totalImages++;
                                  // figure out which channel index this frame belongs to
                                  // "channel index" is channel of MM acquisition
                                  // channel indexes will go from 0 to (numSides * numChannels - 1) for standard (non-reflective) imaging
@@ -3494,6 +3495,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  done = cancelAcquisition_.get();
                                  Thread.sleep(1);
                                  if (now - last >= timeout2) {
+                                    ReportingUtils.logError("First cam seq: " + core_.isSequenceRunning(firstCamera) +
+                                          ((twoSided || acqBothCameras) ? ("   Second cam seq: " + core_.isSequenceRunning(secondCamera)) : "") +
+                                          "   nrSlicesSoftware: " + nrSlicesSoftware +
+                                          "   total images: " + totalImages);
                                     ReportingUtils.logError("Camera did not send all expected images within" +
                                           " a reasonable period for timepoint " + numTimePointsDone_ + ".  Continuing anyway.");
                                     nonfatalError = true;
