@@ -184,11 +184,11 @@ public final class ConfigGroupPad extends JScrollPane {
       @Override
       public Object getValueAt(int row, int col) {
          StateItem item = groupList_.get(row);
-         if (col == 0)
+         if (col == 0) {
             return item.group;
-         else if (col == 1)
+         } else if (col == 1) {
             return item.config;
-
+         }
          return null;
       }
 
@@ -197,16 +197,15 @@ public final class ConfigGroupPad extends JScrollPane {
       public void setValueAt(Object value, int row, int col) {
          StateItem item = groupList_.get(row);
          if (col == 1) {
-            try {
-               if (value != null && value.toString().length() > 0)
-               {
+            if (value != null && value.toString().length() > 0) {
+               try {
                   parentGUI_.live().setSuspended(true);
                   if (item.singleProp) {
                      if (item.hasLimits && item.isInteger()) {
                         core_.setProperty(item.device, item.name, NumberUtils.intStringDisplayToCore(value));
                      } else if (item.hasLimits && !item.isInteger()) {
                         core_.setProperty(item.device, item.name, NumberUtils.doubleStringDisplayToCore(value));
-                     } else  {
+                     } else {
                         core_.setProperty(item.device, item.name, value.toString());
                      }
                      core_.waitForDevice(item.device);
@@ -214,14 +213,14 @@ public final class ConfigGroupPad extends JScrollPane {
                      core_.setConfig(item.group, value.toString());
                      core_.waitForConfig(item.group, value.toString());
                   }
-                  
+
                   // Associate exposure time with presets in current channel group
                   if (item.group.equals(core_.getChannelGroup())) {
                      core_.setExposure(
-                           parentGUI_.app().getChannelExposureTime(
-                             item.group, value.toString(), core_.getExposure()) );
+                             parentGUI_.app().getChannelExposureTime(
+                                     item.group, value.toString(), core_.getExposure()));
                   }
-                  
+
                   refreshStatus();
                   table_.repaint();
                   if (parentGUI_ != null) {
@@ -236,18 +235,18 @@ public final class ConfigGroupPad extends JScrollPane {
                         // state cache update, which can be very slow.
                         MMStudio parentGUI = (MMStudio) parentGUI_;
                         parentGUI.updateGUI(false);
-                     }
-                     else {
+                     } else {
                         parentGUI_.app().refreshGUI();
                      }
                   }
-                  
+
+               } catch (Exception e) {
+                  handleException(e);
+               } finally {
                   parentGUI_.live().setSuspended(false);
                }
-            } catch (Exception e) {
-               handleException(e);
             }
-         }         
+         }
       }
 
       @Override
@@ -257,10 +256,7 @@ public final class ConfigGroupPad extends JScrollPane {
 
       @Override
       public boolean isCellEditable(int nRow, int nCol) {
-         if (nCol == 0)
-            return false;
-                  
-         return true;
+         return nCol != 0;
       }
 
       public void rebuildModel(boolean fromCache) {

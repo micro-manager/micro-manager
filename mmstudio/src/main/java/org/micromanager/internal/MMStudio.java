@@ -675,16 +675,15 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    public void clearROI() {
+      live().setSuspended(true);
       try {
-         boolean liveRunning = false;
-         live().setSuspended(true);
          core_.clearROI();
          staticInfo_.refreshValues();
-         live().setSuspended(false);
 
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
+      live().setSuspended(false);
    }
 
    @Override
@@ -771,26 +770,26 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    }
 
    protected void changeBinning() {
+      String mode = frame_.getBinMode();
+      live().setSuspended(true);
       try {
-         String mode = frame_.getBinMode();
          if (!isCameraAvailable() || mode == null) {
             // No valid option.
+            live().setSuspended(false);
             return;
          }
          if (core_.getProperty(StaticInfo.cameraLabel_,
-                  MMCoreJ.getG_Keyword_Binning()).equals(mode)) {
+                 MMCoreJ.getG_Keyword_Binning()).equals(mode)) {
             // No change in binning mode.
+            live().setSuspended(false);
             return;
          }
-
-         live().setSuspended(true);
          core_.setProperty(StaticInfo.cameraLabel_, MMCoreJ.getG_Keyword_Binning(), mode);
          staticInfo_.refreshValues();
-         live().setSuspended(false);
-
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
+      live().setSuspended(false);
    }
 
    public void createPropertyEditor() {
@@ -1325,14 +1324,14 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
          new Thread() {
             @Override
             public void run() {
+               live().setSuspended(true);
                try {
-                  live().setSuspended(true);
                   afMgr_.getAutofocusMethod().fullFocus();
-                  live().setSuspended(false);
                }
                catch (Exception ex) {
                   ReportingUtils.showError(ex, "An error occurred during autofocus");
                }
+               live().setSuspended(false);
             }
          }.start();
       }

@@ -249,17 +249,18 @@ public final class PropertyEditor extends MMFrame {
          }
       }
 
-      @Override
-      public void update(ShowFlags flags, String groupName, String presetName, boolean fromCache) {
-         try {
-            StrVector devices = core_.getLoadedDevices();
+       @Override
+       public void update(ShowFlags flags, String groupName, String presetName, boolean fromCache) {
+          if (!fromCache) {
+             // Some properties may not be readable if we are
+             // mid-acquisition.
+             studio_.live().setSuspended(true);
+          }
+          try {
+             StrVector devices = core_.getLoadedDevices();
             propList_.clear();
 
-            if (!fromCache) {
-               // Some properties may not be readable if we are
-               // mid-acquisition.
-               studio_.live().setSuspended(true);
-            }
+            
             for (int i = 0; i < devices.size(); i++) {
                if (data_.showDevice(flags, devices.get(i))) {
                   StrVector properties = core_.getDevicePropertyNames(devices.get(i));
@@ -276,11 +277,12 @@ public final class PropertyEditor extends MMFrame {
 
             updateRowVisibility(flags);
 
-            if (!fromCache) {
-               studio_.live().setSuspended(false);
-            }
          } catch (Exception e) {
             ReportingUtils.showError(e, "Error updating Device Property Browser");
+         } finally {
+             if (!fromCache) {
+               studio_.live().setSuspended(false);
+            }
          }
          this.fireTableStructureChanged();
 

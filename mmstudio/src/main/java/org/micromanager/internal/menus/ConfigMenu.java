@@ -132,20 +132,21 @@ public final class ConfigMenu {
          }).start();
          return;
       }
-      try {
-         if (studio_.getIsConfigChanged()) {
-            Object[] options = {"Yes", "No"};
-            int n = JOptionPane.showOptionDialog(null,
-                  "Save Hardware Configuration?", "Micro-Manager",
-                  JOptionPane.YES_NO_OPTION,
-                  JOptionPane.QUESTION_MESSAGE, null, options,
-                  options[0]);
-            if (n == JOptionPane.YES_OPTION) {
-               studio_.promptToSaveConfigPresets();
-            }
-            studio_.setConfigChanged(false);
+      
+      if (studio_.getIsConfigChanged()) {
+         Object[] options = {"Yes", "No"};
+         int n = JOptionPane.showOptionDialog(null,
+                 "Save Hardware Configuration?", "Micro-Manager",
+                 JOptionPane.YES_NO_OPTION,
+                 JOptionPane.QUESTION_MESSAGE, null, options,
+                 options[0]);
+         if (n == JOptionPane.YES_OPTION) {
+            studio_.promptToSaveConfigPresets();
          }
-
+         studio_.setConfigChanged(false);
+      }
+      
+      try {
          studio_.live().setSuspended(true);
 
          // Show a "please wait" dialog.
@@ -182,9 +183,10 @@ public final class ConfigMenu {
          studio_.setSysConfigFile(cfg.getFileName());
 
          GUIUtils.preventDisplayAdapterChangeExceptions();
-         studio_.live().setSuspended(false);
       } catch (Exception e) {
          ReportingUtils.showError(e);
+      } finally {
+         studio_.live().setSuspended(false);
       }
    }
 

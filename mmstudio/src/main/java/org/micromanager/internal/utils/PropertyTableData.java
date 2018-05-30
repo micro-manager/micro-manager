@@ -297,22 +297,23 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    // note: public since it is overridden in internal.PropertyEditor
    public void update(ShowFlags flags, String groupName, String presetName,
            boolean fromCache) {
-      try {
-         // when updating, we do need to keep track which properties have their
-         // "Use" checkbox checked.  Otherwise, this information get lost, which
-         // is annoying and confusing for the user
-         List<PropertyItem> usedItems = new ArrayList<PropertyItem>();
-         for (PropertyItem item : propListVisible_) {
-            if (item.confInclude) {
-               usedItems.add(item);
-            }
-         }   
-         
-         StrVector devices = core_.getLoadedDevices();
-         propList_.clear();
+      // when updating, we do need to keep track which properties have their
+      // "Use" checkbox checked.  Otherwise, this information get lost, which
+      // is annoying and confusing for the user
+      List<PropertyItem> usedItems = new ArrayList<PropertyItem>();
+      for (PropertyItem item : propListVisible_) {
+         if (item.confInclude) {
+            usedItems.add(item);
+         }
+      }
 
-         Configuration cfg;
-         
+      StrVector devices = core_.getLoadedDevices();
+      propList_.clear();
+
+      Configuration cfg;
+
+      gui_.live().setSuspended(true);
+      try {
          if (isPixelSizeConfig_) {
             if (core_.isPixelSizeConfigDefined(presetName)) {
                cfg = core_.getPixelSizeConfigData(presetName);
@@ -333,8 +334,6 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
             cfg = core_.getConfigGroupState(groupName);
          }
 
-         gui_.live().setSuspended(true);
-
          setUpdating(true);
 
          for (int i = 0; i < devices.size(); i++) {
@@ -347,20 +346,16 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
                   if (!groupOnly_ || cfg.isPropertyIncluded(devices.get(i), properties.get(j))) {
                      item.readFromCore(core_, devices.get(i), properties.get(j), fromCache);
                      if ((!item.readOnly || showReadOnly_) && !item.preInit) {
-                        
-                        if (cfg.isPropertyIncluded(item.device, item.name)) {
-                           item.confInclude = true;
-                        } else {
-                           item.confInclude = false;
-                        }
-                        
+
+                        item.confInclude = cfg.isPropertyIncluded(item.device, item.name);
+
                         for (PropertyItem usedItem : usedItems) {
-                           if (item.device.equals(usedItem.device) &&
-                                   item.name.equals(usedItem.name)) {
+                           if (item.device.equals(usedItem.device)
+                                   && item.name.equals(usedItem.name)) {
                               item.confInclude = true;
                            }
                         }
-                        
+
                         propList_.add(item);
                      }
                   }
@@ -373,10 +368,12 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
          updateRowVisibility(flags);
 
-         gui_.live().setSuspended(false);
       } catch (Exception e) {
          handleException(e);
+      } finally {
+         gui_.live().setSuspended(false);
       }
+
       this.fireTableStructureChanged();
 
    }
