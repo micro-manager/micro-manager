@@ -721,7 +721,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   if (!stopRequested_.get()) {
                      saveMapping(mapping);
                   }
-                  app_.live().setSuspended(false);
                   JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                         + (!stopRequested_.get() ? "finished." : "canceled."));
                   mapping_ = loadMapping();
@@ -731,6 +730,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                } catch (RuntimeException e) {
                   ReportingUtils.showError(e);
                } finally {
+                  app_.live().setSuspended(false);
                   isRunning_.set(false);
                   stopRequested_.set(false);
                   calibrateButton_.setText("Calibrate");
