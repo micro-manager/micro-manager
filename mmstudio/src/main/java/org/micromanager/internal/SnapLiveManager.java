@@ -63,7 +63,6 @@ import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.internal.DefaultEventManager;
 import org.micromanager.events.internal.DefaultLiveModeEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
-import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -102,8 +101,6 @@ public final class SnapLiveManager extends DataViewerListener
    private DefaultRewritableDatastore store_;
    private Pipeline pipeline_;
    private final Object pipelineLock_ = new Object();
-   private final ArrayList<LiveModeListener> listeners_ =
-         new ArrayList<LiveModeListener>();
    private boolean isLiveOn_ = false;
    private final Object liveModeLock_ = new Object();
    private int numCameraChannels_ = -1;
@@ -184,9 +181,6 @@ public final class SnapLiveManager extends DataViewerListener
          }
          else {
             stopLiveMode();
-         }
-         for (LiveModeListener listener : listeners_) {
-            listener.liveModeEnabled(isLiveOn_);
          }
          DefaultEventManager.getInstance().post(new DefaultLiveModeEvent(isLiveOn_));
       }
@@ -455,18 +449,6 @@ public final class SnapLiveManager extends DataViewerListener
       }
       catch (JSONException e) {
          ReportingUtils.logError(e, "Exception in image grabber thread.");
-      }
-   }
-
-   public void addLiveModeListener(LiveModeListener listener) {
-      if (!listeners_.contains(listener)) {
-         listeners_.add(listener);
-      }
-   }
-
-   public void removeLiveModeListener(LiveModeListener listener) {
-      if (listeners_.contains(listener)) {
-         listeners_.remove(listener);
       }
    }
 

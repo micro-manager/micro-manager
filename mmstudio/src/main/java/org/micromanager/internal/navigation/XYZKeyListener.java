@@ -18,6 +18,7 @@
 
 package org.micromanager.internal.navigation;
 
+import com.google.common.eventbus.Subscribe;
 import ij.IJ;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
@@ -27,15 +28,15 @@ import java.awt.event.KeyListener;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
+import org.micromanager.events.LiveModeEvent;
 import org.micromanager.internal.MMStudio;
-import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  * @author OD
  *
  */
-public final class XYZKeyListener implements KeyListener, LiveModeListener {
+public final class XYZKeyListener implements KeyListener {
 	private final CMMCore core_;
    private final MMStudio studio_;
 	private ImageCanvas canvas_;
@@ -57,6 +58,7 @@ public final class XYZKeyListener implements KeyListener, LiveModeListener {
 	public XYZKeyListener(CMMCore core, MMStudio gui) {
 		core_ = core;
       studio_ = gui;
+      studio_.events().registerForEvents(this);
 	}
 
    @Override
@@ -263,13 +265,14 @@ public final class XYZKeyListener implements KeyListener, LiveModeListener {
 			ReportingUtils.showError(exc);
 		}
 	}
-
-   @Override
-   public void liveModeEnabled(boolean enabled) {
-      if (enabled) {
+   
+   @Subscribe
+   public void onLiveMode(LiveModeEvent event) {
+      if (event.getIsOn()) {
          start();
       } else {
          stop();
       }
    }
+
 }

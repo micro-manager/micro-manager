@@ -75,7 +75,6 @@ import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.events.internal.ShutterDevicesEvent;
 import org.micromanager.internal.dialogs.OptionsDlg;
 import org.micromanager.internal.dialogs.StageControlFrame;
-import org.micromanager.internal.interfaces.LiveModeListener;
 import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.utils.DragDropUtil;
 import org.micromanager.internal.utils.GUIUtils;
@@ -89,7 +88,7 @@ import org.micromanager.quickaccess.internal.controls.ShutterControl;
 /**
  * GUI code for the primary window of the program. And nothing else.
  */
-public final class MainFrame extends MMFrame implements LiveModeListener {
+public final class MainFrame extends MMFrame {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager";
    private static final String MAIN_EXPOSURE = "exposure";
@@ -144,7 +143,6 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
       studio_ = studio;
       core_ = core;
       snapLiveManager_ = manager;
-      snapLiveManager_.addLiveModeListener(this);
 
       super.setTitle(String.format("%s %s", MICRO_MANAGER_TITLE,
                MMVersion.VERSION_STRING));
@@ -683,11 +681,6 @@ public final class MainFrame extends MMFrame implements LiveModeListener {
       } catch (Exception e1) {
          ReportingUtils.showError(e1);
       }
-   }
-
-   @Override
-   public void liveModeEnabled(boolean isEnabled) {
-      snapButton_.setEnabled(!isEnabled);
    }
 
    @Subscribe
