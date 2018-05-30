@@ -24,9 +24,9 @@
 //-----------------------------------------------------------------------------
 
 #define ERR_PORT_CHANGE_FORBIDDEN    101
-#define ERR_CURRENT_CONTROL    4001
-#define ERR_CONTROL_MODE_NOT_CURRENT    4002
-#define ERR_CONTROL_MODE_NOT_POWER    4003
+#define ERR_CURRENT_CONTROL_UNSUPPORTED    4001
+#define ERR_NOT_IN_CURRENT_CONTROL_MODE   4002
+#define ERR_NOT_IN_CURRENT_POWER_MODE    4003
 #define ERR_UNEXPECTED_ANSWER    4004
 #define ERR_ERROR_ANSWER    4005
 #define ERR_ERROR_67    4006

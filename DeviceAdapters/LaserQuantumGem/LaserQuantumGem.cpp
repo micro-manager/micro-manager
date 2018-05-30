@@ -64,7 +64,7 @@ port_("Undefined"),
 	initialized_(false),
 	busy_(false),
 	controlmode_(true),
-	enabledCurrentControl_(false),
+	enabledCurrentControl_(true),
 	power_(0.00),
 	current_(0),
 	startupstatus_(true),
@@ -78,11 +78,12 @@ port_("Undefined"),
 {
 	InitializeDefaultErrorMessages();
 	SetErrorText(ERR_PORT_CHANGE_FORBIDDEN, "You can't change the port after device has been initialized.");
-	SetErrorText(ERR_CURRENT_CONTROL, "The laser does not support current control.");
-	SetErrorText(ERR_CONTROL_MODE_NOT_CURRENT, "The current percentage cannot be change because the laser is in power mode.");
-	SetErrorText(ERR_CONTROL_MODE_NOT_POWER, "The power level cannot because the laser is in current mode.");
+	SetErrorText(ERR_CURRENT_CONTROL_UNSUPPORTED, "The laser does not support current control.");
+	SetErrorText(ERR_NOT_IN_CURRENT_CONTROL_MODE, "The current percentage cannot be change because the laser is in power mode.");
+	SetErrorText(ERR_NOT_IN_CURRENT_POWER_MODE, "The power level cannot because the laser is in current mode.");
 	SetErrorText(ERR_UNEXPECTED_ANSWER, "The laser gave an unexpected answer.");
 	SetErrorText(ERR_ERROR_ANSWER, "The laser returned an error.");
+	SetErrorText(ERR_ERROR_67, "The laser returned an error 67.");
 
 	// Description
 	CreateProperty(MM::g_Keyword_Description, "LaserQuantum gem Controller", MM::String, true);
@@ -278,18 +279,17 @@ bool LaserQuantumGem::string_contains(std::string s1, std::string s2){
 	}
 }
 
-int LaserQuantumGem::supportsCurrentControl(bool* supportsCurrent){
+int LaserQuantumGem::supportsCurrentControl(bool* supportsCurrent){  
 	std::ostringstream command, command2, command3;
 	std::string answer, answer2;
 
-	*supportsCurrent = false;
+	*supportsCurrent = true;
 
 	// get control mode
 	bool controlmode;
 	int ret = getControlMode(&controlmode);
 	if (ret != DEVICE_OK) // propagates error
 		return ret;
-
 
 	// set to current control if not already
 	if(controlmode_){
@@ -353,7 +353,10 @@ int LaserQuantumGem::getVersion(std::string* version){
 	if(string_contains(answer,"SMD12")){
 		*version = answer;
 		return DEVICE_OK;
-	} else if(string_contains(answer,STR_ERROR)){
+	} else if(string_contains(answer,STR_ERROR)){	
+		std::stringstream log;
+		log << "LaserQuantumGem get version error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	}
 
@@ -381,6 +384,9 @@ int LaserQuantumGem::getStatus(bool* status){
 		*status = false;
 		return DEVICE_OK;
 	} else if (string_contains(answer,STR_ERROR)){
+		std::stringstream log;
+		log << "LaserQuantumGem get status error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	}
 
@@ -408,6 +414,9 @@ int LaserQuantumGem::getControlMode(bool* mode){
 		*mode = false;
 		return DEVICE_OK;
 	} else if (string_contains(answer,STR_ERROR)){
+		std::stringstream log;
+		log << "LaserQuantumGem get control mode error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	}
 
@@ -441,6 +450,9 @@ int LaserQuantumGem::getCurrent(double* current){
 		*current = curr;
 		return DEVICE_OK;
 	} else if (string_contains(answer,STR_ERROR)){
+		std::stringstream log;
+		log << "LaserQuantumGem get current error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	}
 
@@ -470,6 +482,9 @@ int LaserQuantumGem::getPower(double* power){
 		*power = pow;
 		return DEVICE_OK;
 	} else if (string_contains(answer,STR_ERROR)){
+		std::stringstream log;
+		log << "LaserQuantumGem get power error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	}
 
@@ -499,6 +514,9 @@ int LaserQuantumGem::getLaserTemperature(double* temperature){
 		*temperature = temp;
 		return DEVICE_OK;
 	} else if (string_contains(answer,STR_ERROR)){
+		std::stringstream log;
+		log << "LaserQuantumGem get laser temperature error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	}
 
@@ -528,6 +546,9 @@ int LaserQuantumGem::getPSUTemperature(double* temperature){
 		*temperature = temp;
 		return DEVICE_OK;
 	} else if (string_contains(answer,STR_ERROR)){
+		std::stringstream log;
+		log << "LaserQuantumGem get PSU temperature error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	}
 
@@ -562,6 +583,9 @@ int LaserQuantumGem::getTimers(double* psutime, double* laserenabletime, double*
 
 		*psutime = temp;
 	} else if (string_contains(answer,STR_ERROR)){
+		std::stringstream log;
+		log << "LaserQuantumGem get timers error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	} else {
 		return ERR_UNEXPECTED_ANSWER;
@@ -582,6 +606,9 @@ int LaserQuantumGem::getTimers(double* psutime, double* laserenabletime, double*
 
 		*laserenabletime = temp1;
 	} else if (string_contains(answer1,STR_ERROR)){
+		std::stringstream log;
+		log << "LaserQuantumGem get timers error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	} else {
 		return ERR_UNEXPECTED_ANSWER;
@@ -602,6 +629,9 @@ int LaserQuantumGem::getTimers(double* psutime, double* laserenabletime, double*
 
 		*laseroperationtime = temp2;
 	} else if (string_contains(answer2,STR_ERROR)){
+		std::stringstream log;
+		log << "LaserQuantumGem get timers error: " << answer;
+		LogMessage(log.str(), true);
 		return ERR_ERROR_ANSWER;
 	} else {
 		return ERR_UNEXPECTED_ANSWER;
@@ -633,6 +663,9 @@ int LaserQuantumGem::setLaserOnOff(bool b){
 
 
 		if(string_contains(answer, STR_ERROR)){
+			std::stringstream log;
+			log << "LaserQuantumGem set on error: " << answer;
+			LogMessage(log.str(), true);
 			return ERR_ERROR_ANSWER;
 		} 
 	} else {
@@ -648,6 +681,9 @@ int LaserQuantumGem::setLaserOnOff(bool b){
 			return ret;
 
 		if(string_contains(answer, STR_ERROR)){
+			std::stringstream log;
+			log << "LaserQuantumGem set off error: " << answer;
+			LogMessage(log.str(), true);
 			return ERR_ERROR_ANSWER;
 		}
 	}
@@ -669,8 +705,12 @@ int LaserQuantumGem::setControlMode(bool mode){
 		if (ret != DEVICE_OK) 
 			return ret;
 
-		if(string_contains(answer, STR_ERROR))
+		if(string_contains(answer, STR_ERROR)){
+			std::stringstream log;
+			log << "LaserQuantumGem set power mode error: " << answer;
+			LogMessage(log.str(), true);
 			return ERR_ERROR_ANSWER;
+		}
 	} else {
 
 		command << "CONTROL=CURRENT";
@@ -684,6 +724,9 @@ int LaserQuantumGem::setControlMode(bool mode){
 			return ret;
 
 		if(string_contains(answer, STR_ERROR)){
+			std::stringstream log;
+			log << "LaserQuantumGem set current mode error: " << answer;
+			LogMessage(log.str(), true);
 			return ERR_ERROR_ANSWER;
 		}
 	}
@@ -694,7 +737,7 @@ int LaserQuantumGem::setControlMode(bool mode){
 int LaserQuantumGem::setCurrent(double current){
 	getControlMode(&controlmode_);
 
-	if(enabledCurrentControl_ && !controlmode_){ // if can current control and in current control mode
+	if(!controlmode_){ // if can current control and in current control mode
 
 		if(current >= 0 && current<=100){ // sanity check
 			std::ostringstream command;
@@ -710,11 +753,19 @@ int LaserQuantumGem::setCurrent(double current){
 				return ret;
 
 			if(string_contains(answer,"67")){ // expected error number if current control not available
+				std::stringstream log;
+				log << "LaserQuantumGem error 67 when setting current: " << answer;
+				LogMessage(log.str(), true);
 				return ERR_ERROR_67;
 			} else if(string_contains(answer,STR_ERROR)){ 
+				std::stringstream log;
+				log << "LaserQuantumGem set current error: " << answer;
+				LogMessage(log.str(), true);
 				return ERR_ERROR_ANSWER;
 			}
 		}
+	} else {
+		return ERR_NOT_IN_CURRENT_CONTROL_MODE;
 	}
 
 	return DEVICE_OK;
@@ -738,10 +789,15 @@ int LaserQuantumGem::setPower(double power){
 			if (ret != DEVICE_OK) 
 				return ret;
 
-			if(string_contains(answer,STR_ERROR)){ 
+			if(string_contains(answer,STR_ERROR)){
+				std::stringstream log;
+				log << "LaserQuantumGem set power error: " << answer;
+				LogMessage(log.str(), true); 
 				return ERR_ERROR_ANSWER;
 			}
 		}
+	} else {
+		return ERR_NOT_IN_CURRENT_POWER_MODE;
 	}
 
 	return DEVICE_OK;
