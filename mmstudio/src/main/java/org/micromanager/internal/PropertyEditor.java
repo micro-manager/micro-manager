@@ -36,7 +36,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -46,7 +45,6 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
-import org.micromanager.UserProfile;
 import org.micromanager.events.PropertiesChangedEvent;
 import org.micromanager.events.PropertyChangedEvent;
 import org.micromanager.events.ShutdownCommencingEvent;
@@ -75,8 +73,6 @@ public final class PropertyEditor extends MMFrame {
    private PropertyEditorTableData data_;
    private final ShowFlags flags_;
 
-   private static final String PREF_SHOW_READONLY = "show_readonly";
-   private JCheckBox showReadonlyCheckBox_;
    private JScrollPane scrollPane_;
    private final Studio studio_;
    private final CMMCore core_;
@@ -92,6 +88,9 @@ public final class PropertyEditor extends MMFrame {
 
       createTable();
       createComponents();
+      
+      loadAndRestorePosition(100, 100, 550, 600);
+      setMinimumSize(new Dimension(420, 400));
    }
 
    private void createTable() {
@@ -111,62 +110,38 @@ public final class PropertyEditor extends MMFrame {
    }
 
    private void createComponents() {
-      final UserProfile profile = studio_.getUserProfile();
-
       setIconImage(Toolkit.getDefaultToolkit().getImage(
               getClass().getResource("/org/micromanager/icons/microscope.gif") ) );
 
-      setMinimumSize(new Dimension(400, 400));
-      setLayout(new MigLayout("fill, insets 2"));
+      setLayout(new MigLayout("fill, insets 2, flowy"));
 
       addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
-            profile.setBoolean(PropertyEditor.class, PREF_SHOW_READONLY,
-               showReadonlyCheckBox_.isSelected());
             flags_.save(PropertyEditor.class);
          }
          @Override
          public void windowOpened(WindowEvent e) {
             // restore values from the previous session
-            showReadonlyCheckBox_.setSelected(
-               profile.getBoolean(PropertyEditor.class,
-                  PREF_SHOW_READONLY, true));
             data_.update(false);
             data_.fireTableStructureChanged();
         }
       });
       setTitle("Device Property Browser");
 
-      loadAndRestorePosition(100, 100, 400, 300);
+      loadAndRestorePosition(100, 100, 550, 600);
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-      add(new ShowFlagsPanel(data_, flags_, core_,
-               core_.getSystemStateCache()),
-            "split 2, flowy");
-
-      Font defaultFont = new Font("Arial", Font.PLAIN, 10);
-
-      showReadonlyCheckBox_ = new JCheckBox("Show Read-Only Properties");
-      showReadonlyCheckBox_.setFont(defaultFont);
-      showReadonlyCheckBox_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            // show/hide read-only properties
-            data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
-            data_.update(false);
-            data_.fireTableStructureChanged();
-          }
-      });
-      // restore values from the previous session
-      showReadonlyCheckBox_.setSelected(profile.getSettings(PropertyEditor.class).
-              getBoolean(PREF_SHOW_READONLY, true));
-      data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
-      add(showReadonlyCheckBox_);
-
+      
       final JButton refreshButton = new JButton("Refresh",
             new ImageIcon(getClass().getResource(
               "/org/micromanager/icons/arrow_refresh.png")));
+      
+      Font defaultFont = new Font("Arial", Font.PLAIN, 10);
+      
+      add(new ShowFlagsPanel(data_, flags_, core_,
+               core_.getSystemStateCache()),
+            "split 2, aligny top, gapbottom 10");
+      
       refreshButton.setFont(defaultFont);
       refreshButton.addActionListener(new ActionListener() {
          @Override
@@ -174,7 +149,7 @@ public final class PropertyEditor extends MMFrame {
             refresh();
          }
       });
-      add(refreshButton, "width 100!, alignx left, aligny top, gaptop 20, gapbottom push, wrap");
+      add(refreshButton, "width 100!, center, wrap");
 
       scrollPane_ = new JScrollPane();
       scrollPane_.setViewportView(table_);
@@ -249,18 +224,17 @@ public final class PropertyEditor extends MMFrame {
          }
       }
 
-       @Override
-       public void update(ShowFlags flags, String groupName, String presetName, boolean fromCache) {
-          if (!fromCache) {
-             // Some properties may not be readable if we are
-             // mid-acquisition.
-             studio_.live().setSuspended(true);
-          }
-          try {
-             StrVector devices = core_.getLoadedDevices();
+      @Override
+      public void update(ShowFlags flags, String groupName, String presetName, boolean fromCache) {
+         try {
+            StrVector devices = core_.getLoadedDevices();
             propList_.clear();
 
-            
+            if (!fromCache) {
+               // Some properties may not be readable if we are
+               // mid-acquisition.
+               studio_.live().setSuspended(true);
+            }
             for (int i = 0; i < devices.size(); i++) {
                if (data_.showDevice(flags, devices.get(i))) {
                   StrVector properties = core_.getDevicePropertyNames(devices.get(i));
@@ -277,12 +251,11 @@ public final class PropertyEditor extends MMFrame {
 
             updateRowVisibility(flags);
 
-         } catch (Exception e) {
-            ReportingUtils.showError(e, "Error updating Device Property Browser");
-         } finally {
-             if (!fromCache) {
+            if (!fromCache) {
                studio_.live().setSuspended(false);
             }
+         } catch (Exception e) {
+            ReportingUtils.showError(e, "Error updating Device Property Browser");
          }
          this.fireTableStructureChanged();
 

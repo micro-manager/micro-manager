@@ -21,6 +21,7 @@
 package org.micromanager.internal.dialogs;
 
 
+import java.awt.Dimension;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
@@ -36,7 +37,7 @@ public final class PresetEditor extends ConfigDialog {
 
    public PresetEditor(String groupName, String presetName, Studio gui, CMMCore core, boolean newItem) {
       super(groupName, presetName, gui, core, newItem);
-      instructionsText_ = "Here you can specifiy the property values\nin a configuration preset.";
+      instructionsText_ = "Specify property values for this preset:";
       nameFieldLabelText_ = "Preset name:";
       initName_ = presetName_;
       title_ = "Preset editor for the \"" + groupName + "\" configuration group";
@@ -51,7 +52,8 @@ public final class PresetEditor extends ConfigDialog {
       data_.setColumnNames("Property Name","Preset Value","");
       data_.setShowReadOnly(true);
       initialize();
-
+      super.loadAndRestorePosition(100, 100, 420, 300);
+      super.setMinimumSize(new Dimension(400, 250));
    }
 
    @Override

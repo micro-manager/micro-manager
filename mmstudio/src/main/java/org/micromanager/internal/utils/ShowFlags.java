@@ -33,6 +33,7 @@ public final class ShowFlags {
    public boolean stages_ = true;
    public boolean state_ = true;
    public boolean other_ = true;
+   public boolean readonly_ = true;
    public String searchFilter_ = "";
    
    private final Studio studio_;
@@ -42,7 +43,12 @@ public final class ShowFlags {
    private static final String SHOW_STAGES = "show_stages";
    private static final String SHOW_STATE = "show_state";
    private static final String SHOW_OTHER = "show_other";
+   private static final String SHOW_READONLY = "show_readonly";
    private static final String SEARCH_FILTER = "search_filter";
+
+   // TODO consider requiring class at construction
+   // then no need to remember which class it is associated with (can't change during use)
+   //   but also wouldn't be flexible to change class on the fly (would there ever be a need?)
    
    public ShowFlags(Studio studio) {
       studio_ = studio;
@@ -55,6 +61,7 @@ public final class ShowFlags {
       stages_ = profile.getSettings(c).getBoolean(SHOW_STAGES, stages_);
       state_ = profile.getSettings(c).getBoolean(SHOW_STATE, state_);
       other_ = profile.getSettings(c).getBoolean(SHOW_OTHER, other_);
+      readonly_ = profile.getSettings(c).getBoolean(SHOW_READONLY, readonly_);
       searchFilter_ = profile.getSettings(c).getString(SEARCH_FILTER, searchFilter_);
    }
 
@@ -65,6 +72,7 @@ public final class ShowFlags {
       profile.getSettings(c).putBoolean(SHOW_STAGES, stages_);
       profile.getSettings(c).putBoolean(SHOW_STATE, state_);
       profile.getSettings(c).putBoolean(SHOW_OTHER, other_);
+      profile.getSettings(c).putBoolean(SHOW_READONLY, readonly_);
       profile.getSettings(c).putString(SEARCH_FILTER, searchFilter_);
    }
 }

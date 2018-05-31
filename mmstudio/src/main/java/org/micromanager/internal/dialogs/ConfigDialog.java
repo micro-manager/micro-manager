@@ -24,7 +24,6 @@
 package org.micromanager.internal.dialogs;
 
 import com.google.common.eventbus.Subscribe;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,7 +32,6 @@ import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -83,8 +81,6 @@ public abstract class ConfigDialog extends MMDialog {
    protected ShowFlagsPanel showFlagsPanel_;
 
    protected JTextArea instructionsTextArea_;
-   protected JCheckBox showReadonlyCheckBox_;
-   protected boolean showShowReadonlyCheckBox_ = false;
    protected JTextField nameField_;
    protected JLabel nameFieldLabel_;
 
@@ -96,18 +92,24 @@ public abstract class ConfigDialog extends MMDialog {
    protected String nameFieldLabelText_ = "GroupOrPreset Name";
    protected String initName_ = "";
 
+   // following only used when showPixelSize_ is true
+   protected boolean showPixelSize_ = false;
+   protected String pixelSizeFieldLabelText_ = "Pixel Size (um):";
+   protected JTextField pixelSizeField_;
+   protected String pixelSize_;
+
    protected String groupName_;
    protected String presetName_;
 
    protected Boolean showUnused_ = true;
    protected int numColumns_ = 3;
+   protected int numRowsBeforeFilters_ = 1;
 
    protected boolean newItem_ = true;
    protected boolean showFlagsPanelVisible_ = true;
 
    protected int scrollPaneTop_;
 
-   @SuppressWarnings("LeakingThisInConstructor")
    public ConfigDialog(String groupName, String presetName, Studio studio, 
            CMMCore core,  boolean newItem) {
       super("config editing for " + groupName);
@@ -116,10 +118,8 @@ public abstract class ConfigDialog extends MMDialog {
       newItem_ = newItem;
       studio_ = studio;
       core_ = core;
-      super.setLayout(new MigLayout("fill, insets 2, gap 2"));
-      super.loadAndRestorePosition(100, 100, 550, 600);
-      super.setMinimumSize(new Dimension(400, 200));
-      
+      super.setLayout(new MigLayout("fill, insets 2, gap 2, flowy"));
+      // call loadAndRestorePosition and setMinimumSize from concrete subclasses
    }
 
    public void initialize() {
@@ -127,6 +127,7 @@ public abstract class ConfigDialog extends MMDialog {
       data_.setFlags(flags_);
 
       initializeWidgets();
+      initializeBetweenWidgetsAndTable();
       initializePropertyTable();
       setupKeys();
       setVisible(true);
@@ -181,45 +182,17 @@ public abstract class ConfigDialog extends MMDialog {
       data_.setShowUnused(showUnused_);
    }
 
+   /**
+    * Override this method to insert any GUI elements between
+    * initializeWidgets() and initializePropertyTable().
+    * Used for affine transform in pixel editors.
+    */
+   protected void initializeBetweenWidgetsAndTable() {
+      return;
+   }
+
    protected void initializeWidgets() {
-      JPanel leftPanel = new JPanel(
-            new MigLayout("filly, flowy, insets 0 6 0 0, gap 2"));
-      instructionsTextArea_ = new JTextArea();
-      instructionsTextArea_.setFont(new Font("Arial", Font.PLAIN, 12));
-      instructionsTextArea_.setWrapStyleWord(true);
-      instructionsTextArea_.setText(instructionsText_);
-      instructionsTextArea_.setEditable(false);
-      instructionsTextArea_.setOpaque(false);
-      leftPanel.add(instructionsTextArea_, "gaptop 2, gapbottom push");
-
-      if (showShowReadonlyCheckBox_) {
-         showReadonlyCheckBox_ = new JCheckBox("Show read-only properties");
-         showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
-         showReadonlyCheckBox_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               // show/hide read-only properties
-               data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
-               data_.update(false);
-               data_.fireTableStructureChanged();
-             }
-         });
-         leftPanel.add(showReadonlyCheckBox_, "gaptop 5, gapbottom 10");
-      }
-
-      nameFieldLabel_ = new JLabel(nameFieldLabelText_);
-      nameFieldLabel_.setFont(new Font("Arial", Font.BOLD, 12));
-      leftPanel.add(nameFieldLabel_, "split 2, flowx, alignx right");
-
-      nameField_ = new JTextField();
-      nameField_.setText(initName_);
-      nameField_.setEditable(true);
-      nameField_.setSelectionStart(0);
-      nameField_.setSelectionEnd(nameField_.getText().length());
-      leftPanel.add(nameField_, "width 180!");
-
-      add(leftPanel, "growy, gapright push");
-
+      
       if (showFlagsPanelVisible_ ) {
          flags_.load(ConfigDialog.class);
          Configuration cfg;
@@ -231,11 +204,53 @@ public abstract class ConfigDialog extends MMDialog {
                cfg = core_.getConfigState(groupName_, presetName_);
             }
             showFlagsPanel_ = new ShowFlagsPanel(data_, flags_, core_, cfg);
+            add(showFlagsPanel_, "skip " + numRowsBeforeFilters_ + ", aligny top, span 1 3, wrap");
          } catch (Exception e) {
             ReportingUtils.showError(e);
          }
-         add(showFlagsPanel_, "growx");
       }
+
+      JPanel topMidPanel = new JPanel(
+            new MigLayout("flowx, insets 0 6 0 0, gap 2"));
+
+      instructionsTextArea_ = new JTextArea();
+      instructionsTextArea_.setFont(new Font("Arial", Font.PLAIN, 12));
+      instructionsTextArea_.setWrapStyleWord(true);
+      instructionsTextArea_.setText(instructionsText_);
+      instructionsTextArea_.setEditable(false);
+      instructionsTextArea_.setOpaque(false);
+      topMidPanel.add(instructionsTextArea_, "gaptop 2, wrap");
+
+      nameFieldLabel_ = new JLabel(nameFieldLabelText_);
+      nameFieldLabel_.setFont(new Font("Arial", Font.BOLD, 12));
+      topMidPanel.add(nameFieldLabel_, "split 2, alignx right");
+
+      nameField_ = new JTextField();
+      nameField_.setFont(new Font("Arial", Font.PLAIN, 12));
+      // nameField_.setFont(new Font("Arial", Font.BOLD, 16));  // should consider increasing font size for entry field for readability, but would want to do it in multiple places for consistency
+      nameField_.setText(initName_);
+      nameField_.setEditable(true);
+      nameField_.setSelectionStart(0);
+      nameField_.setSelectionEnd(nameField_.getText().length());
+      int fieldWidth = showPixelSize_ ? 90 : 180;
+      topMidPanel.add(nameField_, "width " + fieldWidth + "!, gaptop 2, wrap");
+
+      if (showPixelSize_) {
+         JLabel pixelSizeFieldLabel = new JLabel(pixelSizeFieldLabelText_);
+         pixelSizeFieldLabel.setFont(new Font("Arial", Font.BOLD, 12));
+         topMidPanel.add(pixelSizeFieldLabel, "split 2, alignx right");
+
+         pixelSizeField_ = new JTextField();
+         pixelSizeField_.setFont(new Font("Arial", Font.PLAIN, 12));
+         pixelSizeField_.setText(pixelSize_);
+         pixelSizeField_.setEditable(true);
+         pixelSizeField_.setSelectionStart(0);
+         pixelSizeField_.setSelectionEnd(pixelSizeField_.getText().length());
+         topMidPanel.add(pixelSizeField_, "width " + fieldWidth + "!, gaptop 2, wrap");
+      }
+
+      JPanel topRightPanel = new JPanel(
+            new MigLayout("flowy, insets 0 6 0 0, gap 2"));
 
       okButton_ = new JButton("OK");
       okButton_.addActionListener(new ActionListener() {
@@ -247,7 +262,7 @@ public abstract class ConfigDialog extends MMDialog {
             okChosen();
          }
       });
-      add(okButton_, "gapleft push, split 2, flowy, width 90!");
+      topRightPanel.add(okButton_, "gapleft push, split 2, width 90!");
 
       cancelButton_ = new JButton("Cancel");
       cancelButton_.addActionListener(new ActionListener() {
@@ -256,14 +271,18 @@ public abstract class ConfigDialog extends MMDialog {
             dispose();
          }
       });
-      add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
+      topRightPanel.add(cancelButton_, "width 90!");
+
+      add(topMidPanel, "flowx, split 2");
+      add(topRightPanel, "gapleft push, flowx");
    }
 
    public void initializePropertyTable() {
         scrollPane_ = new JScrollPane();
         scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));
         scrollPane_.setBorder(new BevelBorder(BevelBorder.LOWERED));
-        add(scrollPane_, "span, growx, growy, pushy, wrap");
+        int extraWidth = scrollPane_.getVerticalScrollBar().getPreferredSize().width;
+        add(scrollPane_, "flowy, span, growx, growy, push, width pref+" + extraWidth + "px");
 
         table_ = new DaytimeNighttime.Table();
         table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);

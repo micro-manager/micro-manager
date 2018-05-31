@@ -22,9 +22,11 @@
 package org.micromanager.internal.utils;
 
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -37,14 +39,18 @@ import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
 
 public final class ShowFlagsPanel extends JPanel {
+   
+   // TODO consider changing checkbox ActionListeners to ItemListeners so that we can trigger
+   //   the desired behavior using setSelected() programatically
 
-   private static final long serialVersionUID = 2414705031299832388L;
+   private static final long serialVersionUID = 2414705031299832388L; // need to change? added new field
    private JCheckBox showCamerasCheckBox_;
    private JCheckBox showShuttersCheckBox_;
    private JCheckBox showStagesCheckBox_;
    private JCheckBox showStateDevicesCheckBox_;
    private JCheckBox showOtherCheckBox_;
    private JTextField searchFilterText_;
+   private JCheckBox showReadonlyCheckBox_;
    private Configuration initialCfg_;
 
    private ShowFlags flags_;
@@ -56,15 +62,39 @@ public final class ShowFlagsPanel extends JPanel {
       flags_ = flags;
       core_ = core;
       initialCfg_ = initialCfg;
-      setBorder(BorderFactory.createTitledBorder("Show"));
       // We need very little vertical space between components.
-      setLayout(new MigLayout("fill, insets 0, gap -3"));
+      setLayout(new MigLayout("fill, insets 0, gap 0"));
       createComponents();
       initializeComponents();
    }
 
    public void createComponents() {
       Font font = new Font("", Font.PLAIN, 10);
+      Font entryFont = new Font("", Font.PLAIN, 12);
+      
+      JPanel deviceTypePanel = new JPanel(new MigLayout("fill, insets 0, gap -3"));
+      deviceTypePanel.setBorder(BorderFactory.createTitledBorder("Device type:"));
+      
+      JButton showAllTypesButton = new JButton("All");
+      showAllTypesButton.setFont(font);
+      showAllTypesButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            selectAllTypes(true);
+         }
+      });
+      deviceTypePanel.add(showAllTypesButton, "growx, split 2, gapbottom 3");
+      
+      JButton showNoTypesButton = new JButton("None");
+      showNoTypesButton.setFont(font);
+      showNoTypesButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            selectAllTypes(false);
+         }
+      });
+      deviceTypePanel.add(showNoTypesButton, "growx, wrap");
+      
       showCamerasCheckBox_ = new JCheckBox("cameras");
       showCamerasCheckBox_.setFont(font);
       showCamerasCheckBox_.addActionListener(new ActionListener() {
@@ -74,7 +104,7 @@ public final class ShowFlagsPanel extends JPanel {
             data_.updateRowVisibility(flags_);
          }
       });
-      add(showCamerasCheckBox_, "wrap");
+      deviceTypePanel.add(showCamerasCheckBox_, "wrap");
 
       showShuttersCheckBox_ = new JCheckBox("shutters");
       showShuttersCheckBox_.setFont(font);
@@ -85,7 +115,7 @@ public final class ShowFlagsPanel extends JPanel {
             data_.updateRowVisibility(flags_);
          }
       });
-      add(showShuttersCheckBox_, "wrap");
+      deviceTypePanel.add(showShuttersCheckBox_, "wrap");
 
       showStagesCheckBox_ = new JCheckBox("stages");
       showStagesCheckBox_.setFont(font);
@@ -96,7 +126,7 @@ public final class ShowFlagsPanel extends JPanel {
             data_.updateRowVisibility(flags_);
          }
       });
-      add(showStagesCheckBox_, "wrap");
+      deviceTypePanel.add(showStagesCheckBox_, "wrap");
 
       showStateDevicesCheckBox_ = new JCheckBox("wheels, turrets, etc.");
       showStateDevicesCheckBox_.setFont(font);
@@ -107,7 +137,7 @@ public final class ShowFlagsPanel extends JPanel {
             data_.updateRowVisibility(flags_);
          }
       });
-      add(showStateDevicesCheckBox_, "wrap");
+      deviceTypePanel.add(showStateDevicesCheckBox_, "wrap");
 
       showOtherCheckBox_ = new JCheckBox("other devices");
       showOtherCheckBox_.setFont(font);
@@ -118,10 +148,13 @@ public final class ShowFlagsPanel extends JPanel {
             data_.updateRowVisibility(flags_);
          }
       });
-      add(showOtherCheckBox_, "wrap");
+      deviceTypePanel.add(showOtherCheckBox_, "wrap");
+      
+      add(deviceTypePanel, "gapbottom 10, wrap");
 
-      add(new JLabel("Filter by name:"), "gaptop 1, gapbottom 1, wrap");
+      add(new JLabel("Device or property name:"), "gapleft 3, growx, wrap");
       searchFilterText_ = new JTextField();
+      searchFilterText_.setFont(entryFont);
       searchFilterText_.getDocument().addDocumentListener(
             new DocumentListener() {
          @Override
@@ -135,9 +168,51 @@ public final class ShowFlagsPanel extends JPanel {
             updateSearchFilter();
          }
       });
-      add(searchFilterText_, "growx, wrap");
+      add(searchFilterText_, "gapleft 3, gapbottom 10, growx, split 2");
+      JButton clearFilterButton = new JButton("Clear");
+      clearFilterButton.setFont(font);
+      clearFilterButton.setMargin(new Insets(3,6,3,6));
+      clearFilterButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            searchFilterText_.setText("");
+         }
+      });
+      add(clearFilterButton, "gapbottom 10, growy, aligny center, wrap");
+      
+      JPanel propertyTypePanel = new JPanel(new MigLayout("fill, insets 0, gap -3"));
+      propertyTypePanel.setBorder(BorderFactory.createTitledBorder("Property type:"));
+      
+      showReadonlyCheckBox_ = new JCheckBox("Show read-only");
+      showReadonlyCheckBox_.setFont(font);
+      showReadonlyCheckBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            // show/hide read-only properties
+            data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
+            data_.update(false);
+            data_.fireTableStructureChanged();
+          }
+      });
+      propertyTypePanel.add(showReadonlyCheckBox_, "wrap");
+
+      add(propertyTypePanel, "growx");
    }
 
+   private void selectAllTypes(boolean all) {
+      showCamerasCheckBox_.setSelected(all);
+      flags_.cameras_ = all;
+      showShuttersCheckBox_.setSelected(all);
+      flags_.shutters_ = all;
+      showStagesCheckBox_.setSelected(all);
+      flags_.stages_ = all;
+      showStateDevicesCheckBox_.setSelected(all);
+      flags_.state_ = all;
+      showOtherCheckBox_.setSelected(all);
+      flags_.other_ = all;
+      data_.updateRowVisibility(flags_);
+   }
+   
    private void updateSearchFilter() {
       flags_.searchFilter_ = searchFilterText_.getText();
       data_.updateRowVisibility(flags_);
@@ -153,6 +228,8 @@ public final class ShowFlagsPanel extends JPanel {
          showStateDevicesCheckBox_.setSelected(flags_.state_);
          showOtherCheckBox_.setSelected(flags_.other_);
          searchFilterText_.setText(flags_.searchFilter_);
+         showReadonlyCheckBox_.setSelected(flags_.readonly_);
+         data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
 
          // get properties contained in the current config
 

@@ -20,27 +20,16 @@
 
 package org.micromanager.internal.dialogs;
 
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Dimension;
 import java.awt.geom.AffineTransform;
 import java.text.ParseException;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import mmcorej.Configuration;
 import mmcorej.StrVector;
-import net.miginfocom.swing.MigLayout;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AffineUtils;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.PropertyItem;
 import org.micromanager.internal.utils.PropertyTableData;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.ShowFlagsPanel;
 
 /**
  *
@@ -50,8 +39,6 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
 
    private static final long serialVersionUID = 5109403088011441146L;
 
-   protected final String pixelSizeLabelText_;
-   protected JTextField pixelSizeField_;
    protected String pixelSize_;
    private final AffineEditorPanel affineEditorPanel_;
    private final CalibrationListDlg parent_;
@@ -63,7 +50,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       // note: pixelSizeConfigName is called presetName_ in ConfigDialog
       instructionsText_ = "Specify all properties affecting pixel size.";
       nameFieldLabelText_ = "Pixel Config Name:";
-      pixelSizeLabelText_ = "Pixel Size (um)";
+      showPixelSize_ = true;
       pixelSize_ = pixelSize;
       initName_ = pixelSizeConfigName;
       title_ = "Pixel Config Editor";
@@ -71,22 +58,24 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       showFlagsPanelVisible_ = true;
       scrollPaneTop_ = 140;
       numColumns_ = 3;
+      numRowsBeforeFilters_ = 2;
       PropertyTableData.Builder ptdb = new PropertyTableData.Builder(core_);
       data_ = ptdb.groupName(groupName_).presetName(presetName_).propertyValueColumn(2).
               propertyUsedColumn(1).groupOnly(false).allowChangingProperties(true).allowChangesOnlyWhenUsed(true).isPixelSizeConfig(true).build();
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
-      showShowReadonlyCheckBox_ = true; 
       parent_ = parent;
       affineEditorPanel_ = new AffineEditorPanel(parent.getStudio(), this, 
             AffineUtils.noTransform());
       super.initialize();
+      super.loadAndRestorePosition(100, 100, 550, 600);
+      super.setMinimumSize(new Dimension(500, 530));
    }
 
    @Override
    public void okChosen() {
       writeGroup(nameField_.getText());
-      this.dispose();      
+      this.dispose();
    }
    
    @Override
@@ -146,7 +135,7 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
       return true;
    }
    
-    @Override
+   @Override
    public Double getPixelSize() {
       try {
          return NumberUtils.displayStringToDouble(pixelSizeField_.getText());
@@ -158,92 +147,14 @@ public class PixelConfigEditor extends ConfigDialog implements PixelSizeProvider
    }
    
    @Override
-   @SuppressWarnings("Convert2Lambda")
-    protected void initializeWidgets() {
-      JPanel leftPanel = new JPanel(
-            new MigLayout("filly, flowy, insets 0 6 0 0, gap 2"));
-      instructionsTextArea_ = new JTextArea();
-      instructionsTextArea_.setFont(new Font("Arial", Font.PLAIN, 12));
-      instructionsTextArea_.setWrapStyleWord(true);
-      instructionsTextArea_.setText(instructionsText_);
-      instructionsTextArea_.setEditable(false);
-      instructionsTextArea_.setOpaque(false);
-      leftPanel.add(instructionsTextArea_, "gaptop 2, gapbottom push");
-
-      if (showShowReadonlyCheckBox_) {
-         showReadonlyCheckBox_ = new JCheckBox("Show read-only properties");
-         showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
-         showReadonlyCheckBox_.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-               // show/hide read-only properties
-               data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
-               data_.update(false);
-               data_.fireTableStructureChanged();
-             }
-         });
-         leftPanel.add(showReadonlyCheckBox_, "gaptop 5, gapbottom 10");
-      }
-
-      final Font boldArial = new Font("Arial", Font.BOLD, 12);
-      nameFieldLabel_ = new JLabel(nameFieldLabelText_);
-      nameFieldLabel_.setFont(boldArial);
-      leftPanel.add(nameFieldLabel_, "split 2, flowx, alignx right");
-
-      nameField_ = new JTextField();
-      nameField_.setText(presetName_);
-      nameField_.setEditable(true);
-      nameField_.setSelectionStart(0);
-      nameField_.setSelectionEnd(nameField_.getText().length());
-      leftPanel.add(nameField_, "width 90!");
-      
-      JLabel pixelSizeFieldLabel = new JLabel(pixelSizeLabelText_);
-      pixelSizeFieldLabel.setFont(boldArial);
-      leftPanel.add(pixelSizeFieldLabel, "split 2, flowx, alignx right");
-      
-      pixelSizeField_ = new JTextField();
-      pixelSizeField_.setText(pixelSize_);
-      pixelSizeField_.setEditable(true);
-      pixelSizeField_.setSelectionStart(0);
-      pixelSizeField_.setSelectionEnd(pixelSizeField_.getText().length());
-      leftPanel.add(pixelSizeField_, "width 90!");
-              
-      add(leftPanel, "growy, gapright push");
-
-      if (showFlagsPanelVisible_ ) {
-         flags_.load(ConfigDialog.class);
-         Configuration cfg;
-         try {
-            cfg = new Configuration();
-            showFlagsPanel_ = new ShowFlagsPanel(data_, flags_, core_, cfg);
-         } catch (Exception e) {
-            ReportingUtils.showError(e);
-         }
-         add(showFlagsPanel_, "growx");
-      }
-
-      okButton_ = new JButton("OK");
-      okButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (table_.isEditing() && table_.getCellEditor() != null) {
-               table_.getCellEditor().stopCellEditing();
-            }
-            okChosen();
-         }
-      });
-      add(okButton_, "gapleft push, split 2, flowy, width 90!");
-
-      cancelButton_ = new JButton("Cancel");
-      cancelButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            dispose();
-         }
-      });
-      add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
-
-      add(affineEditorPanel_, "span 4, growx, wrap");
+   protected void initializeWidgets() {
+      presetName_ = "";  // makes sure initializeWidgets() has the right behavior when loading ShowFlagsPanel
+      super.initializeWidgets();
+   }
+   
+   @Override
+   protected void initializeBetweenWidgetsAndTable() {
+      add(affineEditorPanel_, "growx, center");
    }
 
    @Override
