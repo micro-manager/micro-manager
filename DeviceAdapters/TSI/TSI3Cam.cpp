@@ -364,13 +364,14 @@ int Tsi3Cam::SnapImage()
 
    // grayscale image snap
    MM::MMTime start = GetCurrentMMTime();
-   MM::MMTime timeout(4, 0); // 4 sec timeout
+   MM::MMTime timeout(30, 0); // we are setting the upper limit on exposure
 
    // block until done
    while (acquiringFrame)
    {
       if ((GetCurrentMMTime() - start) > timeout)
          break;
+      Sleep(1);
    };
 
    tl_camera_disarm(camHandle);
