@@ -19,6 +19,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 package org.micromanager.internal.dialogs;
 
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javax.swing.JCheckBox;
@@ -45,7 +46,7 @@ public final class GroupEditor extends ConfigDialog {
 
    public GroupEditor(String groupName, String presetName, Studio gui, CMMCore core, boolean newItem) {
       super(groupName, presetName, gui, core, newItem);
-      instructionsText_ = "Here you can specify the properties included\nin a configuration group.";
+      instructionsText_ = "Specify properties in this configuration group:";
       nameFieldLabelText_ = "Group name:";
       initName_ = groupName_;
       title_ = "Group Editor";
@@ -58,8 +59,9 @@ public final class GroupEditor extends ConfigDialog {
               propertyUsedColumn(1).groupOnly(false).allowChangingProperties(false).allowChangesOnlyWhenUsed(false).isPixelSizeConfig(false).build();
       initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
-      showShowReadonlyCheckBox_ = true;
       initialize();
+      super.loadAndRestorePosition(100, 100, 550, 600);
+      super.setMinimumSize(new Dimension(520, 400));
    }
 
    @Override

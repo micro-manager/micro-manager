@@ -20,18 +20,10 @@
 
 package org.micromanager.internal.dialogs;
 
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Dimension;
 import java.awt.geom.AffineTransform;
 import java.text.ParseException;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import mmcorej.DoubleVector;
-import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.AffineUtils;
@@ -48,9 +40,6 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
 
    private static final long serialVersionUID = -3709174019188065514L;
 
-   protected final String pixelSizeLabelText_;
-   protected JTextField pixelSizeField_;
-   protected String pixelSize_;
    private DoubleVector affineTransform_;
    private final AffineEditorPanel affineEditorPanel_;
    private final CalibrationListDlg parent_;
@@ -62,10 +51,10 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       // note: pixelSizeConfigName is called presetName_ in ConfigDialog
       instructionsText_ = "Specify pixel size configuration";
       nameFieldLabelText_ = "Pixel Config Name:";
-      pixelSizeLabelText_ = "Pixel Size (um)";
+      showPixelSize_ = true;
       pixelSize_ = pixelSize;
       initName_ = pixelSizeConfigName;
-      title_ = "Pixel Config Editor";
+      title_ = "Pixel Preset Editor";
       showUnused_ = true;
       showFlagsPanelVisible_ = false;
       scrollPaneTop_ = 140;
@@ -87,12 +76,12 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
       data_.setShowReadOnly(true);
       super.initializeData();
       data_.setColumnNames("Property Name", "Use in Group?", "Current Property Value");
-      showShowReadonlyCheckBox_ = true;
       parent_ = parent;
       affineEditorPanel_ = new AffineEditorPanel(parent_.getStudio(), this, affineTransform_);
 
-      super.initialize();  // will cal out initializeWidgets, which overrides the base class
-
+      super.initialize();  // will call initializeWidgets, which overrides the base class
+      super.loadAndRestorePosition(100, 100, 450, 400);
+      super.setMinimumSize(new Dimension(380, 350));
    }
 
    @Override
@@ -165,64 +154,12 @@ public class PixelPresetEditor extends ConfigDialog implements PixelSizeProvider
    
    @Override
     protected void initializeWidgets() {
-      JPanel leftPanel = new JPanel(
-            new MigLayout("filly, flowy, insets 0 6 0 0, gap 2"));
-      instructionsTextArea_ = new JTextArea();
-      instructionsTextArea_.setFont(new Font("Arial", Font.PLAIN, 12));
-      instructionsTextArea_.setWrapStyleWord(true);
-      instructionsTextArea_.setText(instructionsText_);
-      instructionsTextArea_.setEditable(false);
-      instructionsTextArea_.setOpaque(false);
-      leftPanel.add(instructionsTextArea_, "gaptop 2, gapbottom push");
-
-      final Font boldArial = new Font("Arial", Font.BOLD, 12);
-      nameFieldLabel_ = new JLabel(nameFieldLabelText_);
-      nameFieldLabel_.setFont(boldArial);
-      leftPanel.add(nameFieldLabel_, "split 2, flowx, alignx right");
-
-      nameField_ = new JTextField();
-      nameField_.setText(presetName_);
-      nameField_.setEditable(true);
-      nameField_.setSelectionStart(0);
-      nameField_.setSelectionEnd(nameField_.getText().length());
-      leftPanel.add(nameField_, "width 90!");
-      
-      JLabel pixelSizeFieldLabel = new JLabel(pixelSizeLabelText_);
-      pixelSizeFieldLabel.setFont(boldArial);
-      leftPanel.add(pixelSizeFieldLabel, "split 2, flowx, alignx right");
-      
-      pixelSizeField_ = new JTextField();
-      pixelSizeField_.setText(pixelSize_);
-      pixelSizeField_.setEditable(true);
-      pixelSizeField_.setSelectionStart(0);
-      pixelSizeField_.setSelectionEnd(pixelSizeField_.getText().length());
-      leftPanel.add(pixelSizeField_, "width 90!");
-              
-      add(leftPanel, "growy, gapright push");
-
-      okButton_ = new JButton("OK");
-      okButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            if (table_.isEditing() && table_.getCellEditor() != null) {
-               table_.getCellEditor().stopCellEditing();
-            }
-            okChosen();
-         }
-      });
-      add(okButton_, "gapleft push, split 2, flowy, width 90!");
-
-      cancelButton_ = new JButton("Cancel");
-      cancelButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            dispose();
-         }
-      });
-      add(cancelButton_, "gapleft push, gapbottom push, wrap, width 90!");
-
-      add(affineEditorPanel_, "span 4, growx, center, wrap");
-      
+      super.initializeWidgets();
+   }
+   
+   @Override protected void initializeBetweenWidgetsAndTable() {
+      numRowsBeforeFilters_++;
+      add(affineEditorPanel_, "growx, center");
    }
 
    @Override
