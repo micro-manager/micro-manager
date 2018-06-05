@@ -19,7 +19,6 @@ import com.google.common.eventbus.Subscribe;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -726,18 +725,14 @@ public final class SnapLiveManager extends DataViewerListener
          numCameraChannels_ = (int) core_.getNumberOfCameraChannels();
       }
 
-      // Remember the position of the window.
-      Point displayLoc = null;
+      setSuspended(true);
       if (display_ != null && !display_.isClosed()) {
-         displayLoc = display_.getWindow().getLocation();
+         //displayLoc = display_.getWindow().getLocation();
+         saveDisplaySettings();
          display_.close();
       }
 
       createDatastore();
-      createDisplay();
-      if (displayLoc != null) {
-         display_.getWindow().setLocation(displayLoc);
-      }
 
       // Set up the channel names in the store's summary metadata. This will
       // as a side-effect ensure that our channels are displayed with the
@@ -760,7 +755,11 @@ public final class SnapLiveManager extends DataViewerListener
       catch (Exception e) {
          ReportingUtils.logError(e, "Error getting channel name");
       }
+      
+      createDisplay();
+      
       shouldForceReset_ = false;
+      setSuspended(false);
    }
 
    /**
@@ -834,13 +833,17 @@ public final class SnapLiveManager extends DataViewerListener
       }
    }
 
+   private void saveDisplaySettings() {
+      if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
+         ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
+                 studio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
+      }
+   }
+
    @Override
    public boolean canCloseViewer(DataViewer viewer) {
       if (viewer instanceof DisplayWindow && viewer.equals(display_)) {
-         if (display_.getDisplaySettings() instanceof DefaultDisplaySettings) {
-            ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
-                    studio_.profile(), PropertyKey.SNAP_LIVE_DISPLAY_SETTINGS.key());
-         }
+         saveDisplaySettings();
          setLiveMode(false);
       }
       return true;
