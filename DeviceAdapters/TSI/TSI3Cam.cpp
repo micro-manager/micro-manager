@@ -64,7 +64,8 @@ Tsi3Cam::Tsi3Cam() :
    trigger(NONE),
    camHandle(nullptr),
    acquiringSequence(false),
-   acquiringFrame(false)
+   acquiringFrame(false),
+   maxExposureMs(10000)
 {
    // set default error messages
    InitializeDefaultErrorMessages();
@@ -187,7 +188,8 @@ int Tsi3Cam::Initialize()
    CPropertyAction *pAct = new CPropertyAction (this, &Tsi3Cam::OnExposure);
    ret = CreateProperty(MM::g_Keyword_Exposure, "2.0", MM::Float, false, pAct);
    assert(ret == DEVICE_OK);
-   SetPropertyLimits(MM::g_Keyword_Exposure, exp_min / 1000.0, exp_max / 1000.0);
+   maxExposureMs = exp_max / 1000.0;
+   SetPropertyLimits(MM::g_Keyword_Exposure, exp_min / 1000.0, maxExposureMs);
 
    // binning
    int hbin_min = 0, hbin_max = 0, vbin_min = 0, vbin_max = 0;
@@ -364,7 +366,7 @@ int Tsi3Cam::SnapImage()
 
    // grayscale image snap
    MM::MMTime start = GetCurrentMMTime();
-   MM::MMTime timeout(30, 0); // we are setting the upper limit on exposure
+   MM::MMTime timeout(maxExposureMs / 1000 + 1000, 0); // we are setting the upper limit on exposure
 
    // block until done
    while (acquiringFrame)

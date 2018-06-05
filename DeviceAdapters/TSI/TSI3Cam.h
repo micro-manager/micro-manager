@@ -145,6 +145,7 @@ private:
    void* camHandle;
    long acquiringSequence;
    long acquiringFrame;
+   double maxExposureMs;
 
    Tsi3RoiBin fullFrame;
 
