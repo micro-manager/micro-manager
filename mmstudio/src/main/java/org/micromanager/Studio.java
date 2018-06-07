@@ -29,7 +29,6 @@ import org.micromanager.alerts.AlertManager;
 import org.micromanager.data.DataManager;
 import org.micromanager.display.DisplayManager;
 import org.micromanager.events.EventManager;
-import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.quickaccess.QuickAccessManager;
 
 
@@ -210,14 +209,6 @@ public interface Studio {
     * @return UserProfile instance
     */
    public UserProfile getUserProfile();
-   
-   /**
-    * Convenience method to access the profile settings for the specified class.
-    * Equivalent to profile().getSettings(owner)
-    * @param owner
-    * @return MutablePropertyMapView instance
-    */
-   public MutablePropertyMapView getProfileSettings(Class<?> owner);
 
    /**
     * Provides access to the PluginManager for accessing plugin instances.

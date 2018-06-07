@@ -110,7 +110,6 @@ import org.micromanager.internal.utils.WaitDialog;
 import org.micromanager.profile.internal.DefaultUserProfile;
 import org.micromanager.profile.internal.UserProfileAdmin;
 import org.micromanager.profile.internal.gui.HardwareConfigurationManager;
-import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.quickaccess.QuickAccessManager;
 import org.micromanager.quickaccess.internal.DefaultQuickAccessManager;
 
@@ -1572,10 +1571,6 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
    @Override
    public UserProfile getUserProfile() {
       return profile();
-   }
-   @Override
-   public MutablePropertyMapView getProfileSettings(Class<?> owner) {
-      return profile().getSettings(owner);
    }
 
    @Override
