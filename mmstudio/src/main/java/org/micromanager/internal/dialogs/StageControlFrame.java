@@ -62,11 +62,12 @@ public final class StageControlFrame extends MMFrame {
    private final CMMCore core_;
 
    private String currentZDrive_ = "";
+   private static final int maxNumZPanels_ = 4;
    private boolean initialized_ = false;
 
-   private final int frameXPos_ = 100;
-   private final int frameYPos_ = 100;
-
+   private static final int frameXDefaultPos_ = 100;
+   private static final int frameYDefaultPos_ = 100;
+   
    private final ExecutorService stageMotionExecutor_;
 
    private static final String[] XY_MOVEMENTS = new String[] {
@@ -82,9 +83,9 @@ public final class StageControlFrame extends MMFrame {
    private JPanel errorPanel_;
    private JPanel xyPanel_;
    private JLabel xyPositionLabel_;
-   private JPanel zPanel_;
-   private JComboBox<String> zDriveSelect_;
-   private JLabel zPositionLabel_;
+   private JPanel zPanel_[] = new JPanel[maxNumZPanels_];
+   private JComboBox<String>[] zDriveSelect_ = new JComboBox[maxNumZPanels_];
+   private JLabel zPositionLabel_[] = new JLabel[maxNumZPanels_];
    private JPanel settingsPanel_;
    private JCheckBox enableRefreshCB_;
    private Timer timer_ = null;
@@ -92,10 +93,8 @@ public final class StageControlFrame extends MMFrame {
    private JTextField[] xyStepTexts_ = new JTextField[] {
       new JTextField(), new JTextField(), new JTextField()
    };
-   // Ordered small, medium.
-   private JTextField[] zStepTexts_ = new JTextField[] {
-      new JTextField(), new JTextField()
-   };
+   private JTextField[] zStepTextsSmall_ = new JTextField[maxNumZPanels_];
+   private JTextField[] zStepTextsMedium_ = new JTextField[maxNumZPanels_];
 
    public static void showStageControl() {
       Studio studio = org.micromanager.internal.MMStudio.getInstance();
@@ -123,7 +122,7 @@ public final class StageControlFrame extends MMFrame {
 
       initComponents();
 
-      super.loadAndRestorePosition(frameXPos_, frameYPos_);
+      super.loadAndRestorePosition(frameXDefaultPos_, frameYDefaultPos_);
    }
 
    /**
@@ -154,39 +153,48 @@ public final class StageControlFrame extends MMFrame {
       final boolean haveZ = !zDrives.isEmpty();
 
       xyPanel_.setVisible(haveXY);
-      zPanel_.setVisible(haveZ);
+      zPanel_[0].setVisible(haveZ);
+      zPanel_[1].setVisible(zDrives.size() > 1);
+      zPanel_[2].setVisible(zDrives.size() > 2);
+      zPanel_[3].setVisible(zDrives.size() > 3);
       settingsPanel_.setVisible(haveXY || haveZ);
       errorPanel_.setVisible(!haveXY && !haveZ);
 
       boolean zDriveFound = false;
-      if (haveZ) {
-         zDriveSelect_.setVisible(zDrives.size() > 1);
+      for (int idx=0; idx<maxNumZPanels_; ++idx) {
+         if (haveZ) {
+            zDriveSelect_[idx].setVisible(zDrives.size() > 1);
 
-         if (zDriveSelect_.getItemCount() != 0) {
-            zDriveSelect_.removeAllItems();
-         }
-
-         ActionListener[] zDriveActionListeners =
-                 zDriveSelect_.getActionListeners();
-         for (ActionListener l : zDriveActionListeners) {
-            zDriveSelect_.removeActionListener(l);
-         }
-         for (int i = 0; i < zDrives.size(); i++) {
-            String drive = zDrives.get(i);
-            zDriveSelect_.addItem(drive);
-            if (currentZDrive_.equals(zDrives.get(i))) {
-               zDriveFound = true;
+            if (zDriveSelect_[idx].getItemCount() != 0) {
+               zDriveSelect_[idx].removeAllItems();
             }
+
+            ActionListener[] zDriveActionListeners =
+                  zDriveSelect_[idx].getActionListeners();
+            for (ActionListener l : zDriveActionListeners) {
+               zDriveSelect_[idx].removeActionListener(l);
+            }
+            for (int i = 0; i < zDrives.size(); i++) {
+               String drive = zDrives.get(i);
+               zDriveSelect_[idx].addItem(drive);
+               if (currentZDrive_.equals(zDrives.get(i))) {
+                  zDriveFound = true;
+               }
+            }
+            if (!zDriveFound) {
+               currentZDrive_ = zDrives.get(0);
+            } else {
+               zDriveSelect_[idx].setSelectedItem(currentZDrive_);
+            }
+            for (ActionListener l : zDriveActionListeners) {
+               zDriveSelect_[idx].addActionListener(l);
+            }
+            updateZMovements(idx);
          }
-         if (!zDriveFound) {
-            currentZDrive_ = zDrives.get(0);
-         } else {
-            zDriveSelect_.setSelectedItem(currentZDrive_);
+         // guarantee that the z-position shown is correct:
+         if (zDriveFound) {
+            updateZDriveInfo(idx);
          }
-         for (ActionListener l : zDriveActionListeners) {
-            zDriveSelect_.addActionListener(l);
-         }
-         updateZMovements();
       }
 
       initialized_ = true;
@@ -199,19 +207,18 @@ public final class StageControlFrame extends MMFrame {
             studio_.logs().logError(e, "Unable to get XY stage position");
          }
       }
-      // guarantee that the z-position shown is correct:
-      if (zDriveFound) {
-         updateZDriveInfo();
-      }
+      
+      pack();
    }
 
-   private void updateZMovements() {
+   private void updateZMovements(int idx) {
+      final String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
       double smallMovement = studio_.profile().getSettings(StageControlFrame.class)
-            .getDouble(SMALLMOVEMENTZ + currentZDrive_, 1.0);
-      zStepTexts_[0].setText(NumberUtils.doubleToDisplayString(smallMovement));
+            .getDouble(SMALLMOVEMENTZ + curDrive, 1.0);
+      zStepTextsSmall_[idx].setText(NumberUtils.doubleToDisplayString(smallMovement));
       double mediumMovement = studio_.profile().getSettings(StageControlFrame.class)
-            .getDouble(MEDIUMMOVEMENTZ + currentZDrive_, 10.0);
-      zStepTexts_[1].setText(NumberUtils.doubleToDisplayString(mediumMovement));
+            .getDouble(MEDIUMMOVEMENTZ + curDrive, 10.0);
+      zStepTextsMedium_[idx].setText(NumberUtils.doubleToDisplayString(mediumMovement));
    }
 
    private void initComponents() {
@@ -222,15 +229,21 @@ public final class StageControlFrame extends MMFrame {
 
       xyPanel_ = createXYPanel();
       add(xyPanel_, "hidemode 2");
-
+      
       // Vertically align Z panel with XY panel. createZPanel() also makes
       // several assumptions about the layout of the XY panel so that its
       // components are nicely vertically aligned.
-      zPanel_ = createZPanel();
-      add(zPanel_, "aligny top, gapleft 20, hidemode 2, flowy, split 2");
+      zPanel_[0] = createZPanel(0);
+      add(zPanel_[0], "aligny top, gapleft 20, hidemode 2, flowy, split 2");
       
       settingsPanel_ = createSettingsPanel();
       add(settingsPanel_, "center");
+      
+      // create the rest of the Z panels
+      for (int idx=1; idx<maxNumZPanels_; ++idx) {
+         zPanel_[idx] = createZPanel(idx);
+         add(zPanel_[idx], "aligny top, gapleft 20, hidemode 2");
+      }
 
       errorPanel_ = createErrorPanel();
       add(errorPanel_, "grow, hidemode 2");
@@ -379,21 +392,21 @@ public final class StageControlFrame extends MMFrame {
     * that the step size controls are 20px tall, and that there is a 20px gap
     * between the chevrons and the step size controls.
     */
-   private JPanel createZPanel() {
+   private JPanel createZPanel(int idx) {
       final JFrame theWindow = this;
       JPanel result = new JPanel(new MigLayout("insets 0, gap 0, flowy"));
       result.add(new JLabel("Z Stage", JLabel.CENTER), "growx, alignx center");
-      zDriveSelect_ = new JComboBox();
-      zDriveSelect_.addActionListener(new ActionListener() {
+      zDriveSelect_[idx] = new JComboBox<String>();
+      zDriveSelect_[idx].addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            updateZDriveInfo();
+            updateZDriveInfo(idx);
          }
       });
       // HACK: this defined height for the combobox matches the height of one
       // of the chevron buttons, and helps to align components between the XY
       // and Z panels.
-      result.add(zDriveSelect_, "height 30!, hidemode 0, growx");
+      result.add(zDriveSelect_[idx], "height 30!, hidemode 0, growx");
 
       // Create buttons for stepping up/down.
       // Icon name prefix: double, single, single, double
@@ -415,7 +428,7 @@ public final class StageControlFrame extends MMFrame {
             public void actionPerformed(ActionEvent e) {
                int dz = (index < 2) ? 1 : -1;
                double stepSize;
-               JTextField text = (index == 0 || index == 3) ? zStepTexts_[1] : zStepTexts_[0];
+               JTextField text = (index == 0 || index == 3) ? zStepTextsMedium_[idx] : zStepTextsSmall_[idx];
                try {
                   stepSize = NumberUtils.displayStringToDouble(text.getText());
                }
@@ -423,7 +436,7 @@ public final class StageControlFrame extends MMFrame {
                   JOptionPane.showMessageDialog(theWindow, "Z-step value is not a number");
                   return;
                }
-               setRelativeStagePosition(dz * stepSize);
+               setRelativeStagePosition(dz * stepSize, idx);
             }
          });
          result.add(button, "alignx center, growx");
@@ -431,8 +444,8 @@ public final class StageControlFrame extends MMFrame {
             // Stick the Z position text in the middle.
             // HACK: As above HACK, this height matches the height of the
             // chevron buttons in the XY panel.
-            zPositionLabel_ = new JLabel("", JLabel.CENTER);
-            result.add(zPositionLabel_,
+            zPositionLabel_[idx] = new JLabel("", JLabel.CENTER);
+            result.add(zPositionLabel_[idx],
                   "height 30!, width 100:, alignx center, growx");
          }
       }
@@ -445,21 +458,23 @@ public final class StageControlFrame extends MMFrame {
       // Create the controls for setting the step size.
       // These heights again must match those of the corresponding stepsize
       // controls in the XY panel.
+      String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
       double size = studio_.profile().getSettings(StageControlFrame.class)
-               .getDouble(SMALLMOVEMENTZ + currentZDrive_, 1.0);
-      
-      zStepTexts_[0].setText(NumberUtils.doubleToDisplayString(size));
+               .getDouble(SMALLMOVEMENTZ + curDrive, 1.0);
+      zStepTextsSmall_[idx] = new JTextField();
+      zStepTextsSmall_[idx].setText(NumberUtils.doubleToDisplayString(size));
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
             "height 20!, span, split 3, flowx");
-      result.add(zStepTexts_[0], "height 20!, width 50");
+      result.add(zStepTextsSmall_[idx], "height 20!, width 50");
       result.add(new JLabel("\u00b5m"), "height 20!");
 
       size = studio_.profile().getSettings(StageControlFrame.class)
-               .getDouble(MEDIUMMOVEMENTZ + currentZDrive_, 10.0);
-      zStepTexts_[1].setText(NumberUtils.doubleToDisplayString(size));
+               .getDouble(MEDIUMMOVEMENTZ + curDrive, 10.0);
+      zStepTextsMedium_[idx] = new JTextField();
+      zStepTextsMedium_[idx].setText(NumberUtils.doubleToDisplayString(size));
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
-      result.add(zStepTexts_[1], "width 50");
+      result.add(zStepTextsMedium_[idx], "width 50");
       result.add(new JLabel("\u00b5m"));
 
       return result;
@@ -480,7 +495,7 @@ public final class StageControlFrame extends MMFrame {
       });
       enableRefreshCB_.setSelected(studio_.profile().getSettings(StageControlFrame.class)
             .getBoolean(REFRESH, false));
-      result.add(enableRefreshCB_, "center");
+      result.add(enableRefreshCB_, "center, wrap");
       return result;
    }
    
@@ -527,8 +542,9 @@ public final class StageControlFrame extends MMFrame {
             if (xyPanel_.isVisible()) {
                getXYPosLabelFromCore();
             }
-            if (zPanel_.isVisible()) {
-               getZPosLabelFromCore();
+            for (int idx=0; idx<maxNumZPanels_; idx++)
+            if (zPanel_[idx].isVisible()) {
+               getZPosLabelFromCore(idx);
             }
          }
       } catch (Exception ex) {
@@ -550,34 +566,35 @@ public final class StageControlFrame extends MMFrame {
       return panel;
    }
    
-   private void storeZValuesInProfile() {
+   private void storeZValuesInProfile(int idx) {
+      final String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
        try {
-         double stepSize = NumberUtils.displayStringToDouble(zStepTexts_[0].getText());
+         double stepSize = NumberUtils.displayStringToDouble(zStepTextsSmall_[idx].getText());
          studio_.profile().getSettings(StageControlFrame.class)
-               .putDouble(SMALLMOVEMENTZ + currentZDrive_, stepSize);
+               .putDouble(SMALLMOVEMENTZ + curDrive, stepSize);
       } catch (ParseException pe) {// ignore, it would be annoying to ask for user input}
       } 
       try {
-         double stepSize = NumberUtils.displayStringToDouble(zStepTexts_[1].getText());
+         double stepSize = NumberUtils.displayStringToDouble(zStepTextsMedium_[idx].getText());
          studio_.profile().getSettings(StageControlFrame.class)
-               .putDouble(MEDIUMMOVEMENTZ + currentZDrive_, stepSize);
+               .putDouble(MEDIUMMOVEMENTZ + curDrive, stepSize);
       } catch (ParseException pe) {// ignore, it would be annoying to ask for user input}
       }
    }
 
-   private void updateZDriveInfo() {
+   private void updateZDriveInfo(int idx) {
       // First store current Z step sizes:
-      storeZValuesInProfile();
+      storeZValuesInProfile(idx);
       // then update the current Z Drive
-      String curDrive = (String) zDriveSelect_.getSelectedItem();
+      final String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
       if (curDrive != null && initialized_) {
          currentZDrive_ = curDrive;
          studio_.profile().getSettings(StageControlFrame.class)
                .putString(CURRENTZDRIVE, currentZDrive_);
          // Remember step sizes for this new drive.
-         updateZMovements();
+         updateZMovements(idx);
          try {
-            getZPosLabelFromCore();
+            getZPosLabelFromCore(idx);
          } catch (Exception ex) {
             studio_.logs().logError(ex, "Failed to pull position from core for Z drive " + currentZDrive_);
          }
@@ -595,10 +612,11 @@ public final class StageControlFrame extends MMFrame {
       }
    }
 
-   private void setRelativeStagePosition(double z) {
+   private void setRelativeStagePosition(double z, int idx) {
       try {
-         if (!core_.deviceBusy(currentZDrive_)) {
-            StageThread st = new StageThread(currentZDrive_, z);
+         String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
+         if (!core_.deviceBusy(curDrive)) {
+            StageThread st = new StageThread(curDrive, z);
             stageMotionExecutor_.execute(st);
          }
       } catch (Exception ex) {
@@ -618,13 +636,13 @@ public final class StageControlFrame extends MMFrame {
               TextUtils.removeNegativeZero(NumberUtils.doubleToDisplayString(y)) ));
    }
 
-   private void getZPosLabelFromCore() throws Exception {
-      double zPos = core_.getPosition(currentZDrive_);
-      setZPosLabel(zPos);
+   private void getZPosLabelFromCore(int idx) throws Exception {
+      double zPos = core_.getPosition((String) zDriveSelect_[idx].getSelectedItem());
+      setZPosLabel(zPos, idx);
    }
 
-   private void setZPosLabel(double z) {
-      zPositionLabel_.setText(
+   private void setZPosLabel(double z, int idx) {
+      zPositionLabel_[idx].setText(
               TextUtils.removeNegativeZero(
                       NumberUtils.doubleToDisplayString(z)) + 
                " \u00B5m");
@@ -637,8 +655,10 @@ public final class StageControlFrame extends MMFrame {
 
    @Subscribe
    public void onStagePositionChanged(StagePositionChangedEvent event) {
-      if (event.getDeviceName().contentEquals(currentZDrive_)) {
-         setZPosLabel(event.getPos());
+      for (int idx=0; idx<maxNumZPanels_; ++idx) {
+         if (event.getDeviceName().equals((String) zDriveSelect_[idx].getSelectedItem())) {
+            setZPosLabel(event.getPos(), idx);
+         }
       }
    }
 
@@ -667,7 +687,9 @@ public final class StageControlFrame extends MMFrame {
             // since we are closing, no need to warn the user
          }
       }
-      storeZValuesInProfile();
+      for (int idx=0; idx<maxNumZPanels_; ++idx) {
+         storeZValuesInProfile(idx);
+      }
       stopTimer();
       super.dispose();
    }
@@ -709,7 +731,9 @@ public final class StageControlFrame extends MMFrame {
                getXYPosLabelFromCore();
             }
             else {
-               getZPosLabelFromCore();
+               for (int idx=0; idx<maxNumZPanels_; ++idx) {
+                  getZPosLabelFromCore(idx);
+               }
             }
          } catch (Exception ex) {
             studio_.logs().logError(ex);
