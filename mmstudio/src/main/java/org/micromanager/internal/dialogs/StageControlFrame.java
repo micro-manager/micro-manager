@@ -131,6 +131,7 @@ public final class StageControlFrame extends MMFrame {
     * configuration change)
     */
    public final void initialize() {
+      stopTimer();
       double[] xyStepSizes = new double[] {1.0, 10.0, 100.0};
       double pixelSize = core_.getPixelSizeUm();
       long nrPixelsX = core_.getImageWidth();
@@ -191,24 +192,23 @@ public final class StageControlFrame extends MMFrame {
             }
             updateZMovements(idx);
          }
-         // guarantee that the z-position shown is correct:
-         if (zDriveFound) {
-            updateZDriveInfo(idx);
-         }
       }
 
       initialized_ = true;
 
-      if (haveXY) {
-         try {
-            getXYPosLabelFromCore();
-         }
-         catch (Exception e) {
-            studio_.logs().logError(e, "Unable to get XY stage position");
-         }
+      // make sure that positions are correct
+      updateStagePositions();
+      
+      // put the polling checkbox in XY panel if possible, below 1st Z panel if not
+      if (xyPanel_.isVisible()) {
+         xyPanel_.add(settingsPanel_, "pos 140 20");
+      } else {
+         add(settingsPanel_, "cell 1 2, center");
       }
       
       pack();
+      
+      refreshTimer();
    }
 
    private void updateZMovements(int idx) {
@@ -228,25 +228,24 @@ public final class StageControlFrame extends MMFrame {
       setLayout(new MigLayout("fill, insets 5, gap 2"));
 
       xyPanel_ = createXYPanel();
-      add(xyPanel_, "hidemode 2");
+      add(xyPanel_, "hidemode 3");
       
       // Vertically align Z panel with XY panel. createZPanel() also makes
       // several assumptions about the layout of the XY panel so that its
       // components are nicely vertically aligned.
       zPanel_[0] = createZPanel(0);
-      add(zPanel_[0], "aligny top, gapleft 20, hidemode 2, flowy, split 2");
+      add(zPanel_[0], "aligny top, gapleft 20, hidemode 3");
       
       settingsPanel_ = createSettingsPanel();
-      add(settingsPanel_, "center");
       
       // create the rest of the Z panels
       for (int idx=1; idx<maxNumZPanels_; ++idx) {
          zPanel_[idx] = createZPanel(idx);
-         add(zPanel_[idx], "aligny top, gapleft 20, hidemode 2");
+         add(zPanel_[idx], "aligny top, gapleft 20, hidemode 3");
       }
 
       errorPanel_ = createErrorPanel();
-      add(errorPanel_, "grow, hidemode 2");
+      add(errorPanel_, "grow, hidemode 3");
       errorPanel_.setVisible(false);
       pack();
    }
@@ -346,7 +345,7 @@ public final class StageControlFrame extends MMFrame {
       xyPositionLabel_ = new JLabel("", JLabel.LEFT);
       result.add(xyPositionLabel_,
             "pos 5 20, width 120!, alignx left");
-
+      
       // Gap between the chevrons and the step size controls.
       result.add(new JLabel(), "height 20!, wrap");
 
@@ -522,7 +521,9 @@ public final class StageControlFrame extends MMFrame {
         public void run() {
            // update positions if we aren't already doing it or paused
            // this prevents building up task queue if something slows down
-           updateStagePositions();
+           if (staticFrame_!=null && staticFrame_.isVisible()) {  // don't update if stage control is hidden
+              updateStagePositions();
+           }
         }
       }, 0, 1000);  // 1 sec interval
    }
@@ -538,15 +539,13 @@ public final class StageControlFrame extends MMFrame {
    
    private void updateStagePositions() {
       try {
-         if (this.isVisible()) {  // don't update if stage control is hiddenh
-            if (xyPanel_.isVisible()) {
-               getXYPosLabelFromCore();
-            }
-            for (int idx=0; idx<maxNumZPanels_; idx++)
+         if (xyPanel_.isVisible()) {
+            getXYPosLabelFromCore();
+         }
+         for (int idx=0; idx<maxNumZPanels_; idx++)
             if (zPanel_[idx].isVisible()) {
                getZPosLabelFromCore(idx);
             }
-         }
       } catch (Exception ex) {
          studio_.logs().logError(ex);
       }
@@ -588,15 +587,14 @@ public final class StageControlFrame extends MMFrame {
       // then update the current Z Drive
       final String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
       if (curDrive != null && initialized_) {
-         currentZDrive_ = curDrive;
          studio_.profile().getSettings(StageControlFrame.class)
-               .putString(CURRENTZDRIVE, currentZDrive_);
-         // Remember step sizes for this new drive.
+               .putString(CURRENTZDRIVE, curDrive);
+         // Remember step sizes for this drive.
          updateZMovements(idx);
          try {
             getZPosLabelFromCore(idx);
          } catch (Exception ex) {
-            studio_.logs().logError(ex, "Failed to pull position from core for Z drive " + currentZDrive_);
+            studio_.logs().logError(ex, "Failed to pull position from core for Z drive " + curDrive);
          }
       }
    }
