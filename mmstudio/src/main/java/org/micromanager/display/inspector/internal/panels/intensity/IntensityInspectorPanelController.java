@@ -44,7 +44,6 @@ import org.micromanager.internal.utils.CoalescentEDTRunnablePool.CoalescentRunna
 import org.micromanager.internal.utils.ColorPalettes;
 import org.micromanager.internal.utils.MustCallOnEDT;
 import org.micromanager.data.DataProviderHasNewImageEvent;
-import org.micromanager.display.ComponentDisplaySettings;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
 
@@ -92,7 +91,7 @@ public class IntensityInspectorPanelController
    private final JCheckBox autostretchCheckBox_ = new JCheckBox();
    private final JSpinner percentileSpinner_ = new JSpinner();
    private final AtomicBoolean changingSpinner_ = new AtomicBoolean(false);
-
+   private Boolean displaySettingsUpdateSuspended_ = false;
    private final JPanel channelHistogramsPanel_ = new JPanel();
 
    private final List<ChannelIntensityController> channelControllers_ =
@@ -402,13 +401,11 @@ public class IntensityInspectorPanelController
          // whatever the range was before autostretch was enabled, we want to
          // keep the current actual range. That can be accomplished by the
          // equivalent of clicking on Auto Once for each channel.
-         // NS: This does not currently work, and I can not figure out
-         // how to keep the display min and max at whatever the Autostretch set 
-         // them.  Whatever I try, things go into infinte loops.  This may need 
-         // a redesign fo parts of the viewer code...
-         //  for (ChannelIntensityController ch : channelControllers_) {
-         //     ch.handleAutoscale();
-         // }
+         displaySettingsUpdateSuspended_ = true;
+         for (ChannelIntensityController ch : channelControllers_) {
+              ch.handleAutoscale();
+         }
+         displaySettingsUpdateSuspended_ = false;
       }
    }
 
@@ -522,6 +519,21 @@ public class IntensityInspectorPanelController
 
    @MustCallOnEDT
    private void newDisplaySettings(DisplaySettings settings) {
+      if (displaySettingsUpdateSuspended_) {
+         return;
+      }
+      
+      if (autostretchCheckBox_.isSelected() && 
+              !settings.isAutostretchEnabled()) {
+         displaySettingsUpdateSuspended_ = true;
+         for (ChannelIntensityController ch : channelControllers_) {
+              ch.handleAutoscale();
+         }
+         displaySettingsUpdateSuspended_ = false;
+      }
+      
+      autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
+       
       gearMenuUseROIItem_.setSelected(settings.isROIAutoscaleEnabled());
 
       // TODO Disable color mode and show RGB if image is RGB
@@ -549,9 +561,7 @@ public class IntensityInspectorPanelController
       ((ColorModeCell) colorModeComboBox_.getRenderer()).
             setChannelColors(settings.getAllChannelColors());
       colorModeComboBox_.repaint();
-
-      autostretchCheckBox_.setSelected(settings.isAutostretchEnabled());
-
+     
       // A spinner's change listener, unlike an action listener, gets notified
       // upon programmatic changes.  Previously, there was code here to remove 
       // ChangeListeners and add them back after setting the value.  As a 
