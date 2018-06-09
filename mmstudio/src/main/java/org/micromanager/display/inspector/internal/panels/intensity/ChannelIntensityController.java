@@ -11,7 +11,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
-import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.Icon;
@@ -115,8 +114,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       private int stdevWidth_;
 
       StatsPanel() {
-         setOpaque(true);
-         FontMetrics keyFontMetrics = getFontMetrics(keyFont_);
+         super.setOpaque(true);
+         FontMetrics keyFontMetrics = super.getFontMetrics(keyFont_);
 
          maxMinMaxWidth_ = valueFontMetrics_.stringWidth("99999") + 2;
          maxAvgStdWidth_ = valueFontMetrics_.stringWidth("9.99e+99") + 2;
@@ -139,9 +138,9 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          int height = y2 + keyFontMetrics.getMaxDescent();
 
          Dimension size = new Dimension(width, height);
-         setMinimumSize(size);
-         setPreferredSize(size);
-         setMaximumSize(size);
+         super.setMinimumSize(size);
+         super.setPreferredSize(size);
+         super.setMaximumSize(size);
 
          min_ = max_ = mean_ = stdev_ = "-";
          minWidth_ = maxWidth_ = meanWidth_ = stdevWidth_ =
@@ -203,11 +202,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       private Color color_ = Color.WHITE;
 
       ColorSwatch() {
-         setPreferredSize(new Dimension(16, 16));
-         setMinimumSize(new Dimension(16, 16));
-         setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-         setOpaque(true); // Needed for background to be drawn
-         setBackground(color_);
+         super.setPreferredSize(new Dimension(16, 16));
+         super.setMinimumSize(new Dimension(16, 16));
+         super.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+         super.setOpaque(true); // Needed for background to be drawn
+         super.setBackground(color_);
       }
 
       void setColor(Color color) {
@@ -496,10 +495,10 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    }
 
    private void handleColor(Color color) {
-      color = JColorChooser.showDialog(histoPanel_.getTopLevelAncestor(),
-            "Channel Color", color);
+      Color newColor = JColorChooser.showDialog(
+              histoPanel_.getTopLevelAncestor(), "Channel Color", color);
       
-      if (color != null) {
+      if (newColor != null) {
          DisplaySettings oldDisplaySettings, newDisplaySettings;
          do {
             oldDisplaySettings = viewer_.getDisplaySettings();
@@ -507,7 +506,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                     = oldDisplaySettings.getChannelSettings(channelIndex_);
             newDisplaySettings = oldDisplaySettings.
                     copyBuilderWithChannelSettings(channelIndex_,
-                            channelSettings.copyBuilder().color(color).build()).
+                            channelSettings.copyBuilder().color(newColor).build()).
                     build();
          } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
       }
