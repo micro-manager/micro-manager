@@ -32,6 +32,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.swing.BorderFactory;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -61,8 +62,8 @@ public final class StageControlFrame extends MMFrame {
    private final Studio studio_;
    private final CMMCore core_;
 
-   private String currentZDrive_ = "";
-   private static final int maxNumZPanels_ = 4;
+   private static final int maxNumZPanels_ = 1;
+   private String currentZDrive_[] = new String[maxNumZPanels_];
    private boolean initialized_ = false;
 
    private static final int frameXDefaultPos_ = 100;
@@ -116,10 +117,6 @@ public final class StageControlFrame extends MMFrame {
       core_ = studio_.getCMMCore();
       stageMotionExecutor_ = Executors.newFixedThreadPool(2);
 
-      // Get active Z drive from profile
-      currentZDrive_ = studio_.profile().getSettings(StageControlFrame.class)
-            .getString(CURRENTZDRIVE, currentZDrive_);
-
       initComponents();
 
       super.loadAndRestorePosition(frameXDefaultPos_, frameYDefaultPos_);
@@ -155,21 +152,20 @@ public final class StageControlFrame extends MMFrame {
 
       xyPanel_.setVisible(haveXY);
       zPanel_[0].setVisible(haveZ);
-      zPanel_[1].setVisible(zDrives.size() > 1);
-      zPanel_[2].setVisible(zDrives.size() > 2);
-      zPanel_[3].setVisible(zDrives.size() > 3);
+      for (int idx=1; idx<maxNumZPanels_; ++idx) {
+         zPanel_[idx].setVisible(zDrives.size() > (idx+1));
+      }
       settingsPanel_.setVisible(haveXY || haveZ);
       errorPanel_.setVisible(!haveXY && !haveZ);
 
-      boolean zDriveFound = false;
-      for (int idx=0; idx<maxNumZPanels_; ++idx) {
-         if (haveZ) {
+      if (haveZ) {
+         for (int idx=0; idx<maxNumZPanels_; ++idx) {
             zDriveSelect_[idx].setVisible(zDrives.size() > 1);
-
             if (zDriveSelect_[idx].getItemCount() != 0) {
                zDriveSelect_[idx].removeAllItems();
             }
-
+            
+            // remove action listeners temporarily
             ActionListener[] zDriveActionListeners =
                   zDriveSelect_[idx].getActionListeners();
             for (ActionListener l : zDriveActionListeners) {
@@ -178,22 +174,27 @@ public final class StageControlFrame extends MMFrame {
             for (int i = 0; i < zDrives.size(); i++) {
                String drive = zDrives.get(i);
                zDriveSelect_[idx].addItem(drive);
-               if (currentZDrive_.equals(zDrives.get(i))) {
-                  zDriveFound = true;
-               }
             }
-            if (!zDriveFound) {
-               currentZDrive_ = zDrives.get(0);
+            
+            currentZDrive_[idx] = studio_.profile().getSettings(StageControlFrame.class)
+                  .getString(CURRENTZDRIVE + idx, currentZDrive_[idx]);
+            DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) zDriveSelect_[idx].getModel();
+            int cbIndex = model.getIndexOf(currentZDrive_[idx]);  // returns -1 if not found
+            if ( cbIndex >= 0) {
+               zDriveSelect_[idx].setSelectedIndex(cbIndex);
             } else {
-               zDriveSelect_[idx].setSelectedItem(currentZDrive_);
+               zDriveSelect_[idx].setSelectedIndex(0);
             }
+            
+            // restore action listeners
             for (ActionListener l : zDriveActionListeners) {
                zDriveSelect_[idx].addActionListener(l);
             }
+            
             updateZMovements(idx);
          }
       }
-
+      
       initialized_ = true;
 
       // make sure that positions are correct
@@ -567,16 +568,16 @@ public final class StageControlFrame extends MMFrame {
    
    private void storeZValuesInProfile(int idx) {
       final String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
-       try {
+      try {
          double stepSize = NumberUtils.displayStringToDouble(zStepTextsSmall_[idx].getText());
          studio_.profile().getSettings(StageControlFrame.class)
-               .putDouble(SMALLMOVEMENTZ + curDrive, stepSize);
+         .putDouble(SMALLMOVEMENTZ + curDrive, stepSize);
       } catch (ParseException pe) {// ignore, it would be annoying to ask for user input}
       } 
       try {
          double stepSize = NumberUtils.displayStringToDouble(zStepTextsMedium_[idx].getText());
          studio_.profile().getSettings(StageControlFrame.class)
-               .putDouble(MEDIUMMOVEMENTZ + curDrive, stepSize);
+         .putDouble(MEDIUMMOVEMENTZ + curDrive, stepSize);
       } catch (ParseException pe) {// ignore, it would be annoying to ask for user input}
       }
    }
@@ -588,7 +589,7 @@ public final class StageControlFrame extends MMFrame {
       final String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
       if (curDrive != null && initialized_) {
          studio_.profile().getSettings(StageControlFrame.class)
-               .putString(CURRENTZDRIVE, curDrive);
+               .putString(CURRENTZDRIVE + idx, curDrive);
          // Remember step sizes for this drive.
          updateZMovements(idx);
          try {
