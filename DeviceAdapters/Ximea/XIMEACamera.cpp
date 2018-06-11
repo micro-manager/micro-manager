@@ -187,9 +187,6 @@ int XimeaCamera::Initialize()
 		// open camera
 		camera->OpenBySN(device_name.c_str());
 		initialized_ = true;
-
-		// set default exposure
-		//camera->SetXIAPIParamInt(XI_PRM_EXPOSURE, DEF_EXP_TIME);
 		
 		// clear current parameter list
 		cam_params.clear();
@@ -940,12 +937,6 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 				{
 					long value = 0;
 					pProp->Get(value);
-					// exposure time values must be devided by 1000
-					if(param->GetXiParamName() == XI_PRM_EXPOSURE ||
-						param->GetXiParamName() == XI_PRM_AE_MAX_LIMIT)
-					{
-						value = value * 1000;
-					}
 					camera->SetXIAPIParamInt(param_name.c_str(), (int) value);
 				}
 				break;
@@ -1006,7 +997,13 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 			// resize image buffer when data format and downsampling are changed
 			if(param->GetXiParamName() == XI_PRM_IMAGE_DATA_FORMAT ||
 				param->GetXiParamName() == XI_PRM_DOWNSAMPLING ||
-				param->GetXiParamName() == XI_PRM_DOWNSAMPLING_TYPE)
+				param->GetXiParamName() == XI_PRM_DOWNSAMPLING_TYPE ||
+				param->GetXiParamName() == XI_PRM_BINNING_VERTICAL ||
+				param->GetXiParamName() == XI_PRM_BINNING_HORIZONTAL ||
+				param->GetXiParamName() == XI_PRM_DECIMATION_VERTICAL ||
+				param->GetXiParamName() == XI_PRM_DECIMATION_HORIZONTAL ||
+				param->GetXiParamName() == XI_PRM_WIDTH ||
+				param->GetXiParamName() == XI_PRM_HEIGHT)
 			{
 				ResizeImageBuffer();
 			}
@@ -1025,17 +1022,7 @@ int XimeaCamera::OnPropertyChange(MM::PropertyBase* pProp, MM::ActionType eAct)
 			case type_int:
 				{
 					long value = camera->GetXIAPIParamInt(param_name);
-					// exposure time values must be devided by 1000
-					if(param->GetXiParamName() == XI_PRM_EXPOSURE ||
-						param->GetXiParamName() == XI_PRM_AE_MAX_LIMIT)
-					{
-						double d_value = (double) value / 1000.0; 
-						pProp->Set(d_value);
-					}
-					else
-					{
-						pProp->Set(value);
-					}
+					pProp->Set(value);
 				}
 				break;
 			case type_float:
@@ -1182,6 +1169,12 @@ void XimeaCamera::CreateCameraProperties()
 			continue;
 		}
 
+		// exposure time already in MM UI
+		if (param->GetXiParamName() == XI_PRM_EXPOSURE)
+		{
+			continue;
+		}
+
 		// check if parameter is not already in list
 		if(HasProperty(param->GetName().c_str()))
 		{
@@ -1204,14 +1197,6 @@ void XimeaCamera::CreateCameraProperties()
 					property_type = MM::Integer;
 					ostringstream convert;
 					int int_value = camera->GetXIAPIParamInt(param->GetXiParamName());
-
-					// exposure time values must be devided by 1000
-					if(param->GetXiParamName() == XI_PRM_EXPOSURE ||
-						param->GetXiParamName() == XI_PRM_AE_MAX_LIMIT)
-					{
-						int_value = int_value/ 1000;			
-					}
-
 					convert << int_value;
 					property_value = convert.str();
 				}
@@ -1219,7 +1204,7 @@ void XimeaCamera::CreateCameraProperties()
 			case type_float:
 				{
 					property_type = MM::Float;
-					property_value = camera->GetParamString(param->GetXiParamName());
+					property_value = camera->GetParamString(param->GetXiParamName());					
 				}
 				break;
 			case type_enum:
@@ -1324,13 +1309,6 @@ void XimeaCamera::CreateCameraProperties()
 				min = camera->GetXIAPIParamFloat(param_min);
 				max = camera->GetXIAPIParamFloat(param_max);
 
-				// exposure time values must be devided by 1000
-				if(param->GetXiParamName() == XI_PRM_EXPOSURE ||
-					param->GetXiParamName() == XI_PRM_AE_MAX_LIMIT)
-				{
-					min = min / 1000.0;
-					max = max / 1000.0;
-				}
 				// values must be different
 				if(min != max)
 				{
