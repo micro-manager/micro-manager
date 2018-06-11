@@ -366,7 +366,7 @@ int Tsi3Cam::SnapImage()
 
    // grayscale image snap
    MM::MMTime start = GetCurrentMMTime();
-   MM::MMTime timeout(maxExposureMs / 1000 + 1000, 0); // we are setting the upper limit on exposure
+   MM::MMTime timeout((long)(maxExposureMs / 1000.0) + 1000L, 0); // we are setting the upper limit on exposure
 
    // block until done
    while (acquiringFrame)
@@ -581,7 +581,6 @@ bool Tsi3Cam::StartCamera( int frames )
 {
    tl_camera_set_frame_available_callback(camHandle, &Tsi3Cam::frame_available_callback, this);
    tl_camera_set_number_of_frames_per_trigger(camHandle, frames);
-   imageCount = frames;
 
    if (tl_camera_get_hardware_trigger_mode(camHandle, &trigger, &triggerPolarity))
       ERR_TRIGGER_FAILED;
@@ -656,10 +655,6 @@ void Tsi3Cam::frame_available_callback(void*       /*sender*/,
          osErr << "Insert image failed: " << ret;
 
       }
-
-      if (instance->imageCount != 0)
-         if (instance->imageCount <= frame_count)
-            instance->StopCamera();
    }
    else
    {
