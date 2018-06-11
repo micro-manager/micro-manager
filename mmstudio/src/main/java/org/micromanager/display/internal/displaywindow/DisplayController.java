@@ -1035,7 +1035,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
    public void close() {
       // close is called from DisplayUICOntroller.windowClosing and from 
       // store.requestToClose, so we need to accomodate multiple calls
-      // This maybe a workaround a bug...
+      // This is a workaround a bug...
       if (closeCompleted_) {
          return;
       }
@@ -1056,13 +1056,16 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       animationController_.shutdown();
       DefaultEventManager.getInstance().unregisterForEvents(this);
       dataProvider_.unregisterForEvents(this);
+      // need to set the flag before closing the UIController,
+      // otherwise we wil re-enter this function and write bad
+      // display settings to file
+      closeCompleted_ = true;
       if (uiController_ == null) {
          ReportingUtils.logError("DisplayController's reference to UIController is null where it shouldn't be");
       } else {
          uiController_.close();
          uiController_ = null;
       }
-      closeCompleted_ = true;
       dispose();
 
       // TODO This event should probably be posted in response to window event
