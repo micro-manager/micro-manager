@@ -399,6 +399,11 @@ public final class StageControlFrame extends MMFrame {
          public void itemStateChanged(ItemEvent e) {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                settings_.putString(CURRENTZDRIVE + idx, zDriveSelect_[idx].getSelectedItem().toString());
+               try {
+                  getZPosLabelFromCore(idx);
+               } catch (Exception ex) {
+                  studio_.logs().logError(ex);
+               }
             }
          }
       });
@@ -636,7 +641,6 @@ public final class StageControlFrame extends MMFrame {
                tf_.setValue(settings_.getDouble(toString(), aDefault));
             }
          }
-         
       }
       
       JFormattedTextField tf = new JFormattedTextField(NumberFormat.getNumberInstance());
