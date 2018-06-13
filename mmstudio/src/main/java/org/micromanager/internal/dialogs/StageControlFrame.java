@@ -26,6 +26,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -40,7 +43,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.JFormattedTextField;
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
@@ -53,18 +56,20 @@ import org.micromanager.events.internal.InternalShutdownCommencingEvent;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
  * @author nico
+ * @author Jon
  */
 public final class StageControlFrame extends MMFrame {
    private final Studio studio_;
    private final CMMCore core_;
+   
+   private final MutablePropertyMapView settings_;
 
-   private static final int maxNumZPanels_ = 1;
-   private String currentZDrive_[] = new String[maxNumZPanels_];
-   private boolean initialized_ = false;
+   private static final int maxNumZPanels_ = 4;
 
    private static final int frameXDefaultPos_ = 100;
    private static final int frameYDefaultPos_ = 100;
@@ -91,11 +96,13 @@ public final class StageControlFrame extends MMFrame {
    private JCheckBox enableRefreshCB_;
    private Timer timer_ = null;
    // Ordered small, medium, large.
-   private JTextField[] xyStepTexts_ = new JTextField[] {
-      new JTextField(), new JTextField(), new JTextField()
+   private JFormattedTextField[] xyStepTexts_ = new JFormattedTextField[] {
+      new JFormattedTextField(NumberFormat.getNumberInstance()),
+      new JFormattedTextField(NumberFormat.getNumberInstance()),
+      new JFormattedTextField(NumberFormat.getNumberInstance())
    };
-   private JTextField[] zStepTextsSmall_ = new JTextField[maxNumZPanels_];
-   private JTextField[] zStepTextsMedium_ = new JTextField[maxNumZPanels_];
+   private JFormattedTextField[] zStepTextsSmall_ = new JFormattedTextField[maxNumZPanels_];
+   private JFormattedTextField[] zStepTextsMedium_ = new JFormattedTextField[maxNumZPanels_];
 
    public static void showStageControl() {
       Studio studio = org.micromanager.internal.MMStudio.getInstance();
@@ -115,6 +122,7 @@ public final class StageControlFrame extends MMFrame {
    public StageControlFrame(Studio gui) {
       studio_ = gui;
       core_ = studio_.getCMMCore();
+      settings_ = studio_.profile().getSettings(StageControlFrame.class);
       stageMotionExecutor_ = Executors.newFixedThreadPool(2);
 
       initComponents();
@@ -125,7 +133,7 @@ public final class StageControlFrame extends MMFrame {
    /**
     * Initialized GUI components based on current hardware configuration
     * Can be called at any time to adjust display (for instance after hardware
-    * configuration change)
+    * configuration change). Also called when user requests window to be shown.
     */
    public final void initialize() {
       stopTimer();
@@ -139,8 +147,7 @@ public final class StageControlFrame extends MMFrame {
       }
       // Read XY stepsizes from profile
       for (int i = 0; i < 3; ++i) {
-         xyStepSizes[i] = studio_.profile().getSettings(StageControlFrame.class).
-               getDouble(XY_MOVEMENTS[i], xyStepSizes[i]);
+         xyStepSizes[i] = settings_.getDouble(XY_MOVEMENTS[i], xyStepSizes[i]);
          xyStepTexts_[i].setText(
                  NumberUtils.doubleToDisplayString(xyStepSizes[i]) );
       }
@@ -150,78 +157,67 @@ public final class StageControlFrame extends MMFrame {
       final boolean haveXY = !xyDrives.isEmpty();
       final boolean haveZ = !zDrives.isEmpty();
 
+      // set panels visible depending on what drives are actually present
       xyPanel_.setVisible(haveXY);
       zPanel_[0].setVisible(haveZ);
       for (int idx=1; idx<maxNumZPanels_; ++idx) {
-         zPanel_[idx].setVisible(zDrives.size() > (idx+1));
+         zPanel_[idx].setVisible(zDrives.size() > idx);
       }
       settingsPanel_.setVisible(haveXY || haveZ);
       errorPanel_.setVisible(!haveXY && !haveZ);
-
-      if (haveZ) {
-         for (int idx=0; idx<maxNumZPanels_; ++idx) {
-            zDriveSelect_[idx].setVisible(zDrives.size() > 1);
-            if (zDriveSelect_[idx].getItemCount() != 0) {
-               zDriveSelect_[idx].removeAllItems();
-            }
-            
-            // remove action listeners temporarily
-            ActionListener[] zDriveActionListeners =
-                  zDriveSelect_[idx].getActionListeners();
-            for (ActionListener l : zDriveActionListeners) {
-               zDriveSelect_[idx].removeActionListener(l);
-            }
-            for (int i = 0; i < zDrives.size(); i++) {
-               String drive = zDrives.get(i);
-               zDriveSelect_[idx].addItem(drive);
-            }
-            
-            currentZDrive_[idx] = studio_.profile().getSettings(StageControlFrame.class)
-                  .getString(CURRENTZDRIVE + idx, currentZDrive_[idx]);
-            DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) zDriveSelect_[idx].getModel();
-            int cbIndex = model.getIndexOf(currentZDrive_[idx]);  // returns -1 if not found
-            if ( cbIndex >= 0) {
-               zDriveSelect_[idx].setSelectedIndex(cbIndex);
-            } else {
-               zDriveSelect_[idx].setSelectedIndex(0);
-            }
-            
-            // restore action listeners
-            for (ActionListener l : zDriveActionListeners) {
-               zDriveSelect_[idx].addActionListener(l);
-            }
-            
-            updateZMovements(idx);
-         }
-      }
-      
-      initialized_ = true;
-
-      // make sure that positions are correct
-      updateStagePositions();
-      
-      // put the polling checkbox in XY panel if possible, below 1st Z panel if not
       if (xyPanel_.isVisible()) {
+         // put the polling checkbox in XY panel if possible, below 1st Z panel if not
          xyPanel_.add(settingsPanel_, "pos 140 20");
       } else {
          add(settingsPanel_, "cell 1 2, center");
       }
+      pack();  // re-layout the frame depending on what is visible now
+
+      // handle Z panels
+      for (int idx=0; idx<maxNumZPanels_; ++idx) {
+         zDriveSelect_[idx].setVisible(zDrives.size() > 1);
+
+         // remove item listeners temporarily
+         ItemListener[] zDriveItemListeners =
+               zDriveSelect_[idx].getItemListeners();
+         for (ItemListener l : zDriveItemListeners) {
+            zDriveSelect_[idx].removeItemListener(l);
+         }
+
+         // repopulate combo box
+         if (zDriveSelect_[idx].getItemCount() != 0) {
+            zDriveSelect_[idx].removeAllItems();
+         }
+         for (int i = 0; i < zDrives.size(); i++) {
+            String drive = zDrives.get(i);
+            zDriveSelect_[idx].addItem(drive);
+         }
+
+         // restore item listeners
+         for (ItemListener l : zDriveItemListeners) {
+            zDriveSelect_[idx].addItemListener(l);
+         }
+
+         // select correct drive, which will grab the correct step sizes via listeners
+         DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) zDriveSelect_[idx].getModel();
+         int cbIndex = model.getIndexOf(settings_.getString(CURRENTZDRIVE + idx, ""));  // returns -1 if not found
+         if ( cbIndex >= 0) {
+            zDriveSelect_[idx].setSelectedItem(cbIndex);
+         } else {
+            zDriveSelect_[idx].setSelectedIndex(0);
+         }
+      }
       
-      pack();
+      // make sure that positions are correct
+      updateStagePositions();
       
       refreshTimer();
    }
 
-   private void updateZMovements(int idx) {
-      final String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
-      double smallMovement = studio_.profile().getSettings(StageControlFrame.class)
-            .getDouble(SMALLMOVEMENTZ + curDrive, 1.0);
-      zStepTextsSmall_[idx].setText(NumberUtils.doubleToDisplayString(smallMovement));
-      double mediumMovement = studio_.profile().getSettings(StageControlFrame.class)
-            .getDouble(MEDIUMMOVEMENTZ + curDrive, 10.0);
-      zStepTextsMedium_[idx].setText(NumberUtils.doubleToDisplayString(mediumMovement));
-   }
-
+   /**
+    * Called during constructor and never again.  Creates GUI components and adds
+    *    them to JPanel but they may be turned visible/invisible during operation.
+    */
    private void initComponents() {
       setTitle("Stage Control");
       setLocationByPlatform(true);
@@ -231,23 +227,19 @@ public final class StageControlFrame extends MMFrame {
       xyPanel_ = createXYPanel();
       add(xyPanel_, "hidemode 3");
       
+      settingsPanel_ = createSettingsPanel();
+      
+      // create the Z panels
       // Vertically align Z panel with XY panel. createZPanel() also makes
       // several assumptions about the layout of the XY panel so that its
       // components are nicely vertically aligned.
-      zPanel_[0] = createZPanel(0);
-      add(zPanel_[0], "aligny top, gapleft 20, hidemode 3");
-      
-      settingsPanel_ = createSettingsPanel();
-      
-      // create the rest of the Z panels
-      for (int idx=1; idx<maxNumZPanels_; ++idx) {
+      for (int idx=0; idx<maxNumZPanels_; ++idx) {
          zPanel_[idx] = createZPanel(idx);
          add(zPanel_[idx], "aligny top, gapleft 20, hidemode 3");
       }
 
       errorPanel_ = createErrorPanel();
       add(errorPanel_, "grow, hidemode 3");
-      errorPanel_.setVisible(false);
       pack();
    }
 
@@ -397,12 +389,18 @@ public final class StageControlFrame extends MMFrame {
       JPanel result = new JPanel(new MigLayout("insets 0, gap 0, flowy"));
       result.add(new JLabel("Z Stage", JLabel.CENTER), "growx, alignx center");
       zDriveSelect_[idx] = new JComboBox<String>();
-      zDriveSelect_[idx].addActionListener(new ActionListener() {
+      
+      // use ItemListener here instead of ActionListener only so initialize() only has to worry about
+      //   one type of listener on the combo-box (there are also ItemListeners for step size fields)
+      zDriveSelect_[idx].addItemListener(new ItemListener() {
          @Override
-         public void actionPerformed(ActionEvent e) {
-            updateZDriveInfo(idx);
+         public void itemStateChanged(ItemEvent e) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+               settings_.putString(CURRENTZDRIVE + idx, zDriveSelect_[idx].getSelectedItem().toString());
+            }
          }
       });
+      
       // HACK: this defined height for the combobox matches the height of one
       // of the chevron buttons, and helps to align components between the XY
       // and Z panels.
@@ -428,7 +426,7 @@ public final class StageControlFrame extends MMFrame {
             public void actionPerformed(ActionEvent e) {
                int dz = (index < 2) ? 1 : -1;
                double stepSize;
-               JTextField text = (index == 0 || index == 3) ? zStepTextsMedium_[idx] : zStepTextsSmall_[idx];
+               JFormattedTextField text = (index == 0 || index == 3) ? zStepTextsMedium_[idx] : zStepTextsSmall_[idx];
                try {
                   stepSize = NumberUtils.displayStringToDouble(text.getText());
                }
@@ -458,20 +456,13 @@ public final class StageControlFrame extends MMFrame {
       // Create the controls for setting the step size.
       // These heights again must match those of the corresponding stepsize
       // controls in the XY panel.
-      String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
-      double size = studio_.profile().getSettings(StageControlFrame.class)
-               .getDouble(SMALLMOVEMENTZ + curDrive, 1.0);
-      zStepTextsSmall_[idx] = new JTextField();
-      zStepTextsSmall_[idx].setText(NumberUtils.doubleToDisplayString(size));
+      zStepTextsSmall_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(settings_, zDriveSelect_[idx], SMALLMOVEMENTZ, 1.1);
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-sr.png")),
             "height 20!, span, split 3, flowx");
       result.add(zStepTextsSmall_[idx], "height 20!, width 50");
       result.add(new JLabel("\u00b5m"), "height 20!");
 
-      size = studio_.profile().getSettings(StageControlFrame.class)
-               .getDouble(MEDIUMMOVEMENTZ + curDrive, 10.0);
-      zStepTextsMedium_[idx] = new JTextField();
-      zStepTextsMedium_[idx].setText(NumberUtils.doubleToDisplayString(size));
+      zStepTextsMedium_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(settings_, zDriveSelect_[idx], MEDIUMMOVEMENTZ, 11.1);
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
       result.add(zStepTextsMedium_[idx], "width 50");
@@ -487,14 +478,12 @@ public final class StageControlFrame extends MMFrame {
       enableRefreshCB_ = new JCheckBox("Polling updates");
       enableRefreshCB_.addItemListener(new ItemListener() {
          @Override
-         public void itemStateChanged(ItemEvent arg0) {
-            studio_.profile().getSettings(StageControlFrame.class)
-                  .putBoolean(REFRESH, enableRefreshCB_.isSelected());
+         public void itemStateChanged(ItemEvent e) {
+            settings_.putBoolean(REFRESH, enableRefreshCB_.isSelected());
             refreshTimer();
          }
       });
-      enableRefreshCB_.setSelected(studio_.profile().getSettings(StageControlFrame.class)
-            .getBoolean(REFRESH, false));
+      enableRefreshCB_.setSelected(settings_.getBoolean(REFRESH, false));
       result.add(enableRefreshCB_, "center, wrap");
       return result;
    }
@@ -543,10 +532,11 @@ public final class StageControlFrame extends MMFrame {
          if (xyPanel_.isVisible()) {
             getXYPosLabelFromCore();
          }
-         for (int idx=0; idx<maxNumZPanels_; idx++)
+         for (int idx=0; idx<maxNumZPanels_; idx++) {
             if (zPanel_[idx].isVisible()) {
                getZPosLabelFromCore(idx);
             }
+         }
       } catch (Exception ex) {
          studio_.logs().logError(ex);
       }
@@ -566,40 +556,6 @@ public final class StageControlFrame extends MMFrame {
       return panel;
    }
    
-   private void storeZValuesInProfile(int idx) {
-      final String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
-      try {
-         double stepSize = NumberUtils.displayStringToDouble(zStepTextsSmall_[idx].getText());
-         studio_.profile().getSettings(StageControlFrame.class)
-         .putDouble(SMALLMOVEMENTZ + curDrive, stepSize);
-      } catch (ParseException pe) {// ignore, it would be annoying to ask for user input}
-      } 
-      try {
-         double stepSize = NumberUtils.displayStringToDouble(zStepTextsMedium_[idx].getText());
-         studio_.profile().getSettings(StageControlFrame.class)
-         .putDouble(MEDIUMMOVEMENTZ + curDrive, stepSize);
-      } catch (ParseException pe) {// ignore, it would be annoying to ask for user input}
-      }
-   }
-
-   private void updateZDriveInfo(int idx) {
-      // First store current Z step sizes:
-      storeZValuesInProfile(idx);
-      // then update the current Z Drive
-      final String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
-      if (curDrive != null && initialized_) {
-         studio_.profile().getSettings(StageControlFrame.class)
-               .putString(CURRENTZDRIVE + idx, curDrive);
-         // Remember step sizes for this drive.
-         updateZMovements(idx);
-         try {
-            getZPosLabelFromCore(idx);
-         } catch (Exception ex) {
-            studio_.logs().logError(ex, "Failed to pull position from core for Z drive " + curDrive);
-         }
-      }
-   }
-
    private void setRelativeXYStagePosition(double x, double y) {
       try {
          if (!core_.deviceBusy(core_.getXYStageDevice())) {
@@ -613,7 +569,7 @@ public final class StageControlFrame extends MMFrame {
 
    private void setRelativeStagePosition(double z, int idx) {
       try {
-         String curDrive = (String) zDriveSelect_[idx].getSelectedItem();
+         String curDrive = zDriveSelect_[idx].getSelectedItem().toString();
          if (!core_.deviceBusy(curDrive)) {
             StageThread st = new StageThread(curDrive, z);
             stageMotionExecutor_.execute(st);
@@ -636,7 +592,7 @@ public final class StageControlFrame extends MMFrame {
    }
 
    private void getZPosLabelFromCore(int idx) throws Exception {
-      double zPos = core_.getPosition((String) zDriveSelect_[idx].getSelectedItem());
+      double zPos = core_.getPosition(zDriveSelect_[idx].getSelectedItem().toString());
       setZPosLabel(zPos, idx);
    }
 
@@ -645,6 +601,48 @@ public final class StageControlFrame extends MMFrame {
               TextUtils.removeNegativeZero(
                       NumberUtils.doubleToDisplayString(z)) + 
                " \u00B5m");
+   }
+   
+   private static JFormattedTextField createDoubleEntryFieldFromCombo(
+         final MutablePropertyMapView settings, final JComboBox<String> cb, final String prefix, final double aDefault) {
+      
+      class FieldListener implements PropertyChangeListener, ItemListener {
+         private final JFormattedTextField tf_;
+         private final JComboBox<String> cb_;
+         private final MutablePropertyMapView settings_;
+         private final String prefix_;
+
+         public FieldListener(JFormattedTextField tf, MutablePropertyMapView settings, JComboBox<String> cb, String prefix) {
+            tf_ = tf;
+            settings_ = settings;
+            cb_ = cb;
+            prefix_ = prefix;
+         }
+
+         public String toString() {
+            return (prefix_ + (String)cb_.getSelectedItem());
+         }
+         
+         @Override
+         public void propertyChange(PropertyChangeEvent evt) {
+            settings_.putDouble(toString(), ((Number)tf_.getValue()).doubleValue());
+         }
+
+         @Override
+         public void itemStateChanged(ItemEvent e) {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+               tf_.setValue(settings_.getDouble(toString(), aDefault));
+            }
+         }
+         
+      }
+      
+      JFormattedTextField tf = new JFormattedTextField(NumberFormat.getNumberInstance());
+      FieldListener listener = new FieldListener(tf, settings, cb, prefix);
+      tf.setValue(settings.getDouble(listener.toString(), aDefault));
+      tf.addPropertyChangeListener("value", listener);
+      cb.addItemListener(listener);
+      return tf;
    }
 
    @Subscribe
@@ -680,15 +678,15 @@ public final class StageControlFrame extends MMFrame {
    public void dispose() {
       for (int i = 0; i < 3; i++) {
          try {
-            studio_.profile().getSettings(StageControlFrame.class)
-                  .putDouble(XY_MOVEMENTS[i], NumberUtils.displayStringToDouble(xyStepTexts_[i].getText()));
+            settings_.putDouble(XY_MOVEMENTS[i],
+                  NumberUtils.displayStringToDouble(xyStepTexts_[i].getText()));
          } catch (ParseException pex) {
             // since we are closing, no need to warn the user
          }
       }
-      for (int idx=0; idx<maxNumZPanels_; ++idx) {
-         storeZValuesInProfile(idx);
-      }
+//      for (int idx=0; idx<maxNumZPanels_; ++idx) {
+//         storeZValuesInProfile(idx);
+//      }
       stopTimer();
       super.dispose();
    }
