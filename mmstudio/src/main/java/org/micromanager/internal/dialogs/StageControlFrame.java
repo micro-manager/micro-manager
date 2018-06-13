@@ -156,12 +156,13 @@ public final class StageControlFrame extends MMFrame {
       StrVector xyDrives = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
       final boolean haveXY = !xyDrives.isEmpty();
       final boolean haveZ = !zDrives.isEmpty();
+      final int nrZDrives = (int) zDrives.size();
 
       // set panels visible depending on what drives are actually present
       xyPanel_.setVisible(haveXY);
       zPanel_[0].setVisible(haveZ);
       for (int idx=1; idx<maxNumZPanels_; ++idx) {
-         zPanel_[idx].setVisible(zDrives.size() > idx);
+         zPanel_[idx].setVisible(nrZDrives > idx);
       }
       settingsPanel_.setVisible(haveXY || haveZ);
       errorPanel_.setVisible(!haveXY && !haveZ);
@@ -174,8 +175,8 @@ public final class StageControlFrame extends MMFrame {
       pack();  // re-layout the frame depending on what is visible now
 
       // handle Z panels
-      for (int idx=0; idx<maxNumZPanels_; ++idx) {
-         zDriveSelect_[idx].setVisible(zDrives.size() > 1);
+      for (int idx = 0; idx < maxNumZPanels_; ++idx) {
+         zDriveSelect_[idx].setVisible(nrZDrives > 1);
 
          // remove item listeners temporarily
          ItemListener[] zDriveItemListeners =
@@ -188,7 +189,7 @@ public final class StageControlFrame extends MMFrame {
          if (zDriveSelect_[idx].getItemCount() != 0) {
             zDriveSelect_[idx].removeAllItems();
          }
-         for (int i = 0; i < zDrives.size(); i++) {
+         for (int i = 0; i < nrZDrives; ++i) {
             String drive = zDrives.get(i);
             zDriveSelect_[idx].addItem(drive);
          }
@@ -200,13 +201,13 @@ public final class StageControlFrame extends MMFrame {
 
          // select correct drive, which will grab the correct step sizes via listeners
          DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) zDriveSelect_[idx].getModel();
-         int cbIndex = model.getIndexOf(settings_.getString(CURRENTZDRIVE + idx, ""));  // returns -1 if not found
-         zDriveSelect_[idx].setSelectedIndex(-1);  // needed to make sure setSelectedIndex fires an ItemListener for index 0
-         if ( cbIndex >= 0) {
-            zDriveSelect_[idx].setSelectedIndex(cbIndex);
-         } else {
-            zDriveSelect_[idx].setSelectedIndex(0);
+         String ourDefault = (idx < nrZDrives) ? zDrives.get(idx) : "";
+         int cbIndex = model.getIndexOf(settings_.getString(CURRENTZDRIVE + idx, ourDefault));  // returns -1 if not found
+         if (cbIndex < 0) {
+            cbIndex = 0;
          }
+         zDriveSelect_[idx].setSelectedIndex(-1);  // needed to make sure setSelectedIndex fires an ItemListener for index 0
+         zDriveSelect_[idx].setSelectedIndex(cbIndex);
       }
       
       // make sure that positions are correct
