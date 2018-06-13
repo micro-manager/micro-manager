@@ -201,8 +201,9 @@ public final class StageControlFrame extends MMFrame {
          // select correct drive, which will grab the correct step sizes via listeners
          DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) zDriveSelect_[idx].getModel();
          int cbIndex = model.getIndexOf(settings_.getString(CURRENTZDRIVE + idx, ""));  // returns -1 if not found
+         zDriveSelect_[idx].setSelectedIndex(-1);  // needed to make sure setSelectedIndex fires an ItemListener for index 0
          if ( cbIndex >= 0) {
-            zDriveSelect_[idx].setSelectedItem(cbIndex);
+            zDriveSelect_[idx].setSelectedIndex(cbIndex);
          } else {
             zDriveSelect_[idx].setSelectedIndex(0);
          }
