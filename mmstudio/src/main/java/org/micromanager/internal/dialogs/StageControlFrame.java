@@ -123,6 +123,7 @@ public final class StageControlFrame extends MMFrame {
       studio_ = gui;
       core_ = studio_.getCMMCore();
       settings_ = studio_.profile().getSettings(StageControlFrame.class);
+      settings_.clear();
       stageMotionExecutor_ = Executors.newFixedThreadPool(2);
 
       initComponents();
@@ -175,39 +176,44 @@ public final class StageControlFrame extends MMFrame {
       pack();  // re-layout the frame depending on what is visible now
 
       // handle Z panels
-      for (int idx = 0; idx < maxNumZPanels_; ++idx) {
-         zDriveSelect_[idx].setVisible(nrZDrives > 1);
+      if (haveZ) {
+         for (int idx = 0; idx < maxNumZPanels_; ++idx) {
+            zDriveSelect_[idx].setVisible(nrZDrives > 1);
 
-         // remove item listeners temporarily
-         ItemListener[] zDriveItemListeners =
-               zDriveSelect_[idx].getItemListeners();
-         for (ItemListener l : zDriveItemListeners) {
-            zDriveSelect_[idx].removeItemListener(l);
-         }
+            // remove item listeners temporarily
+            ItemListener[] zDriveItemListeners =
+                  zDriveSelect_[idx].getItemListeners();
+            for (ItemListener l : zDriveItemListeners) {
+               zDriveSelect_[idx].removeItemListener(l);
+            }
 
-         // repopulate combo box
-         if (zDriveSelect_[idx].getItemCount() != 0) {
-            zDriveSelect_[idx].removeAllItems();
-         }
-         for (int i = 0; i < nrZDrives; ++i) {
-            String drive = zDrives.get(i);
-            zDriveSelect_[idx].addItem(drive);
-         }
+            // repopulate combo box
+            if (zDriveSelect_[idx].getItemCount() != 0) {
+               zDriveSelect_[idx].removeAllItems();
+            }
+            for (int i = 0; i < nrZDrives; ++i) {
+               String drive = zDrives.get(i);
+               zDriveSelect_[idx].addItem(drive);
+            }
 
-         // restore item listeners
-         for (ItemListener l : zDriveItemListeners) {
-            zDriveSelect_[idx].addItemListener(l);
-         }
+            // restore item listeners
+            for (ItemListener l : zDriveItemListeners) {
+               zDriveSelect_[idx].addItemListener(l);
+            }
 
-         // select correct drive, which will grab the correct step sizes via listeners
-         DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) zDriveSelect_[idx].getModel();
-         String ourDefault = (idx < nrZDrives) ? zDrives.get(idx) : "";
-         int cbIndex = model.getIndexOf(settings_.getString(CURRENTZDRIVE + idx, ourDefault));  // returns -1 if not found
-         if (cbIndex < 0) {
-            cbIndex = 0;
+            // select correct drive, which will grab the correct step sizes via listeners
+            DefaultComboBoxModel<String> model = (DefaultComboBoxModel<String>) zDriveSelect_[idx].getModel();
+            // first attempt to find drive we previously used, then use the drives in ored
+            int cbIndex = model.getIndexOf(settings_.getString(CURRENTZDRIVE + idx, ""));  // returns -1 if not found
+            if (cbIndex < 0) {
+               cbIndex = model.getIndexOf((idx < nrZDrives) ? zDrives.get(idx) : "");  // returns -1 if not found
+            }
+            if (cbIndex < 0) {
+               cbIndex = 0;
+            }
+            zDriveSelect_[idx].setSelectedIndex(-1);  // needed to make sure setSelectedIndex fires an ItemListener for index 0
+            zDriveSelect_[idx].setSelectedIndex(cbIndex);
          }
-         zDriveSelect_[idx].setSelectedIndex(-1);  // needed to make sure setSelectedIndex fires an ItemListener for index 0
-         zDriveSelect_[idx].setSelectedIndex(cbIndex);
       }
       
       // make sure that positions are correct
