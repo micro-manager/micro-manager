@@ -430,9 +430,14 @@ public class IntensityInspectorPanelController
                   continue;
                }
                for (ImageStats channelStats : stats.getResult()) {
-                  int channel = stats.getRequest().
-                        getImage(channelStats.getIndex()).
-                        getCoords().getChannel();
+                  int channel = -1;
+                  // avoid index out of bounds exception
+                  if (stats.getRequest().getNumberOfImages()
+                          > channelStats.getIndex()) {
+                     channel = stats.getRequest().
+                             getImage(channelStats.getIndex()).
+                             getCoords().getChannel();
+                  }
                   if (channel == i) {
                      channelControllers_.get(i).setStats(channelStats);
                      break;
