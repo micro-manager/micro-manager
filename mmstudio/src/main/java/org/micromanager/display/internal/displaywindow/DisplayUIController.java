@@ -1354,10 +1354,16 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       
       if (images.get(0).getCoords().hasAxis(Coords.CHANNEL)) {
-         displayController_.postDisplayEvent(
+         try {
+            displayController_.postDisplayEvent(
                DataViewerMousePixelInfoChangedEvent.
                fromAxesAndImages(center.x, center.y,
                      new String[] { Coords.CHANNEL }, images));
+         } catch (IllegalArgumentException iea) {
+            ReportingUtils.logError(iea);
+            displayController_.postDisplayEvent(
+               DataViewerMousePixelInfoChangedEvent.createUnavailable());
+         }
       }
       else {
          displayController_.postDisplayEvent(
