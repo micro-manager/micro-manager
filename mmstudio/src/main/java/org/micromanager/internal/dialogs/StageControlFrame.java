@@ -53,6 +53,7 @@ import org.micromanager.events.StagePositionChangedEvent;
 import org.micromanager.events.SystemConfigurationLoadedEvent;
 import org.micromanager.events.XYStagePositionChangedEvent;
 import org.micromanager.events.internal.InternalShutdownCommencingEvent;
+import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.TextUtils;
@@ -69,7 +70,7 @@ public final class StageControlFrame extends MMFrame {
    
    private final MutablePropertyMapView settings_;
 
-   private static final int maxNumZPanels_ = 4;
+   private static final int maxNumZPanels_ = 5;
 
    private static final int frameXDefaultPos_ = 100;
    private static final int frameYDefaultPos_ = 100;
@@ -83,6 +84,7 @@ public final class StageControlFrame extends MMFrame {
    private static final String MEDIUMMOVEMENTZ = "MEDIUMMOVEMENTZ";
    private static final String CURRENTZDRIVE = "CURRENTZDRIVE";
    private static final String REFRESH = "REFRESH";
+   private static final String NRZPANELS = "NRZPANELS";
 
    private static StageControlFrame staticFrame_;
 
@@ -103,6 +105,8 @@ public final class StageControlFrame extends MMFrame {
    };
    private JFormattedTextField[] zStepTextsSmall_ = new JFormattedTextField[maxNumZPanels_];
    private JFormattedTextField[] zStepTextsMedium_ = new JFormattedTextField[maxNumZPanels_];
+   private JButton[] plusButtons_ = new JButton[maxNumZPanels_];
+   private JButton[] minusButtons_ = new JButton[maxNumZPanels_];
 
    public static void showStageControl() {
       Studio studio = org.micromanager.internal.MMStudio.getInstance();
@@ -123,7 +127,6 @@ public final class StageControlFrame extends MMFrame {
       studio_ = gui;
       core_ = studio_.getCMMCore();
       settings_ = studio_.profile().getSettings(StageControlFrame.class);
-      settings_.clear();
       stageMotionExecutor_ = Executors.newFixedThreadPool(2);
 
       initComponents();
@@ -162,19 +165,21 @@ public final class StageControlFrame extends MMFrame {
       // set panels visible depending on what drives are actually present
       xyPanel_.setVisible(haveXY);
       zPanel_[0].setVisible(haveZ);
+      String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
+      int nrZPanels = settings_.getInteger(NRZPANELS + sysConfigFile, nrZDrives);
+      settings_.putInteger(NRZPANELS + sysConfigFile, nrZPanels);
       for (int idx=1; idx<maxNumZPanels_; ++idx) {
-         zPanel_[idx].setVisible(nrZDrives > idx);
+         zPanel_[idx].setVisible(idx < nrZPanels);
       }
-      settingsPanel_.setVisible(haveXY || haveZ);
       errorPanel_.setVisible(!haveXY && !haveZ);
+      settingsPanel_.setVisible(haveXY || haveZ);
       if (xyPanel_.isVisible()) {
          // put the polling checkbox in XY panel if possible, below 1st Z panel if not
          xyPanel_.add(settingsPanel_, "pos 140 20");
       } else {
          add(settingsPanel_, "cell 1 2, center");
       }
-      pack();  // re-layout the frame depending on what is visible now
-
+      
       // handle Z panels
       if (haveZ) {
          for (int idx = 0; idx < maxNumZPanels_; ++idx) {
@@ -213,13 +218,23 @@ public final class StageControlFrame extends MMFrame {
             }
             zDriveSelect_[idx].setSelectedIndex(-1);  // needed to make sure setSelectedIndex fires an ItemListener for index 0
             zDriveSelect_[idx].setSelectedIndex(cbIndex);
+            
+            plusButtons_[idx].setVisible(false);
+            minusButtons_[idx].setVisible(false);
          }
+         
+         // make plus/minus buttons on last ZPanel visible
+         plusButtons_[nrZPanels-1].setVisible(true);
+         minusButtons_[nrZPanels-1].setVisible(true);
+         
+         // make sure not to underflow/overflow with plus/minus buttons
+         minusButtons_[0].setEnabled(false);
+         plusButtons_[maxNumZPanels_-1].setEnabled(false);
       }
       
-      // make sure that positions are correct
-      updateStagePositions();
-      
-      refreshTimer();
+      updateStagePositions();  // make sure that positions are correct
+      refreshTimer(); // start polling if enabled
+      pack();  // re-layout the frame depending on what is visible now
    }
 
    /**
@@ -248,6 +263,7 @@ public final class StageControlFrame extends MMFrame {
 
       errorPanel_ = createErrorPanel();
       add(errorPanel_, "grow, hidemode 3");
+      
       pack();
    }
 
@@ -417,7 +433,7 @@ public final class StageControlFrame extends MMFrame {
       // HACK: this defined height for the combobox matches the height of one
       // of the chevron buttons, and helps to align components between the XY
       // and Z panels.
-      result.add(zDriveSelect_[idx], "height 30!, hidemode 0, growx");
+      result.add(zDriveSelect_[idx], "height 22!, gaptop 4, gapbottom 4, hidemode 0, growx");
 
       // Create buttons for stepping up/down.
       // Icon name prefix: double, single, single, double
@@ -478,29 +494,41 @@ public final class StageControlFrame extends MMFrame {
       zStepTextsMedium_[idx] = StageControlFrame.createDoubleEntryFieldFromCombo(settings_, zDriveSelect_[idx], MEDIUMMOVEMENTZ, 11.1);
       result.add(new JLabel(IconLoader.getIcon("/org/micromanager/icons/stagecontrol/arrowhead-dr.png")),
             "span, split 3, flowx");
-      result.add(zStepTextsMedium_[idx], "width 50");
-      result.add(new JLabel("\u00b5m"));
-
-      return result;
-   }
-
-   private JPanel createSettingsPanel() {
-      JPanel result = new JPanel(new MigLayout("insets 0, gap 0, flowy"));
+      result.add(zStepTextsMedium_[idx], "height 20!, width 50");
+      result.add(new JLabel("\u00b5m"), "height 20!");
       
-      // checkbox to turn updates on and off
-      enableRefreshCB_ = new JCheckBox("Polling updates");
-      enableRefreshCB_.addItemListener(new ItemListener() {
+      minusButtons_[idx] = new JButton("-");
+      minusButtons_[idx].addActionListener(new ActionListener() {
          @Override
-         public void itemStateChanged(ItemEvent e) {
-            settings_.putBoolean(REFRESH, enableRefreshCB_.isSelected());
-            refreshTimer();
+         public void actionPerformed(ActionEvent arg0) {
+            String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
+            int nrZPanels = settings_.getInteger(NRZPANELS + sysConfigFile, 0);
+            if (nrZPanels > 1) {
+               settings_.putInteger(NRZPANELS + sysConfigFile, nrZPanels-1);
+               initialize();
+            }
          }
       });
-      enableRefreshCB_.setSelected(settings_.getBoolean(REFRESH, false));
-      result.add(enableRefreshCB_, "center, wrap");
+      
+      plusButtons_[idx] = new JButton("+");
+      plusButtons_[idx].addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            String sysConfigFile = org.micromanager.internal.MMStudio.getInstance().getSysConfigFile();  // TODO add method to API
+            int nrZPanels = settings_.getInteger(NRZPANELS + sysConfigFile, 0);
+            if (nrZPanels < maxNumZPanels_) {
+               settings_.putInteger(NRZPANELS + sysConfigFile, nrZPanels+1);
+               initialize();
+            }
+         }
+      });
+      
+      result.add(minusButtons_[idx], "center, split 2, flowx");
+      result.add(plusButtons_[idx]);
+
       return result;
    }
-   
+
    /**
     * Starts the timer if updates are enabled, or stops it otherwise.
     */
@@ -553,6 +581,23 @@ public final class StageControlFrame extends MMFrame {
       } catch (Exception ex) {
          studio_.logs().logError(ex);
       }
+   }
+   
+   private JPanel createSettingsPanel() {
+      JPanel result = new JPanel(new MigLayout("insets 0, gap 0"));
+      
+      // checkbox to turn updates on and off
+      enableRefreshCB_ = new JCheckBox("Polling updates");
+      enableRefreshCB_.addItemListener(new ItemListener() {
+         @Override
+         public void itemStateChanged(ItemEvent e) {
+            settings_.putBoolean(REFRESH, enableRefreshCB_.isSelected());
+            refreshTimer();
+         }
+      });
+      enableRefreshCB_.setSelected(settings_.getBoolean(REFRESH, false));
+      result.add(enableRefreshCB_, "center, wrap");
+      return result;
    }
    
    private JPanel createErrorPanel() {
