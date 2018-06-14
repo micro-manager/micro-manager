@@ -481,7 +481,8 @@ public class MosaicSequencingFrame extends MMFrame {
    // Get a list of SequenceEvents by extracting information from the sequenceTable_.
    private ArrayList<SequenceEvent> getSequenceEvents() {
       final ImagePlus snapLiveImage = gui_.live().getDisplay().getImagePlus();
-      List<FloatPolygon> availableFloatRoiPolygons = projectorControlForm_.transformROIs(snapLiveImage, getRois());
+      List<FloatPolygon> availableFloatRoiPolygons = 
+              projectorControlForm_.transformROIs(getRois());
       List<Polygon> availableRoiPolygons = Utils.FloatToNormalPolygon(
               availableFloatRoiPolygons);
       ArrayList<SequenceEvent> events = new ArrayList<SequenceEvent>();

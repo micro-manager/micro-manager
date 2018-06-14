@@ -1057,7 +1057,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    /**
     * Transform the Roi polygons with the given nonlinear mapping.
     */
-   private static List<FloatPolygon> transformRoiPolygons(final ImagePlus imgp, 
+   private static List<FloatPolygon> transformRoiPolygons( 
            Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
       ArrayList<FloatPolygon> transformedROIs = new ArrayList<FloatPolygon>();
       for (Polygon roiPolygon : roiPolygons) {
@@ -1087,13 +1087,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
      
    /**
     * Returns ROIs, transformed by the current mapping.
-    * @param contextImagePlus ImageJ Imageplus for the image we are working with
     * @param rois Array of ImageJ Rois to be converted
     * @return list of Rois converted into Polygons
     * 
     */
-   public List<FloatPolygon> transformROIs(ImagePlus contextImagePlus, Roi[] rois) {
-      return transformRoiPolygons(contextImagePlus, roisAsPolygons(rois), mapping_);
+   public List<FloatPolygon> transformROIs(Roi[] rois) {
+      return transformRoiPolygons(roisAsPolygons(rois), mapping_);
    }
    
    // Save ROIs in the acquisition path, if it exists.
@@ -1133,7 +1132,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (rois.length == 0) {
          throw new RuntimeException("Please first draw the desired phototargeting ROIs.");
       }
-      List<FloatPolygon> transformedRois = transformROIs(imgp, rois);
+      List<FloatPolygon> transformedRois = transformROIs(rois);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
@@ -1146,12 +1145,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (rois.length == 0) {
          throw new RuntimeException("Please provide ROIs.");
       }
+      /*
       ImageWindow window = WindowManager.getCurrentWindow();
       if (window == null) {
          throw new RuntimeException("No image window with ROIs is open.");
       }
       ImagePlus imgp = window.getImagePlus();
-      List<FloatPolygon> transformedRois = transformROIs(imgp, rois);
+      */
+      List<FloatPolygon> transformedRois = transformROIs(rois);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
