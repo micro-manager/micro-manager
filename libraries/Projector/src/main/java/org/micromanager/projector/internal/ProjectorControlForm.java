@@ -788,7 +788,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
       
    // Returns true if a particular image is mirrored.
-   private static boolean isImageMirrored(ImagePlus imgp) {
+   private static boolean isImageMirrored(/*ImagePlus imgp */) {
       // TODO: it is - rightfully - no longer possible to traverse back
       // from an ImagePlus to a MM datastructure.  Hence, this library will 
       // need to be structure very differently.  Until then, ignore mirroring
@@ -807,9 +807,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
 
    // Flips a point if it has been mirrored.
-   private static Point2D.Double mirrorIfNecessary(Point2D.Double pOffscreen, ImagePlus imgp) {
-      if (isImageMirrored(imgp)) {
-         return new Point2D.Double(imgp.getWidth() - pOffscreen.x, pOffscreen.y);
+   private static Point2D.Double mirrorIfNecessary(Point2D.Double pOffscreen, int imageWidth) {
+      if (isImageMirrored()) {
+         return new Point2D.Double(imageWidth - pOffscreen.x, pOffscreen.y);
       } else {
          return pOffscreen;
       }
@@ -818,9 +818,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // Transform and mirror (if necessary) a point on an image to 
    // a point on phototargeter coordinates.
    private static Point2D.Double transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, 
-           ImagePlus imgp, Point2D.Double pt) {
-      Point2D.Double pOffscreen = mirrorIfNecessary(pt, imgp);
-      return transformPoint(mapping, pOffscreen);
+           Point2D.Double pt) {
+      //Point2D.Double pOffscreen = mirrorIfNecessary(pt, imgp);
+      return transformPoint(mapping, pt);
    }
 
    // ## Point and shoot
@@ -836,7 +836,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                Point p = e.getPoint();
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               final Point2D.Double devP = transformAndMirrorPoint(loadMapping(), canvas.getImage(),
+               final Point2D.Double devP = transformAndMirrorPoint(loadMapping(), 
                        new Point2D.Double(pOffscreen.x, pOffscreen.y));
                final Configuration originalConfig = prepareChannel();
                final boolean originalShutterState = prepareShutter();
@@ -1067,7 +1067,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             for (int i = 0; i < roiPolygon.npoints; ++i) {
                Point2D.Double imagePoint = new Point2D.Double(
                        roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
-               targeterPoint = transformAndMirrorPoint(mapping, imgp, imagePoint);
+               targeterPoint = transformAndMirrorPoint(mapping, imagePoint);
                if (targeterPoint == null) {
                   throw new Exception();
                }
