@@ -379,14 +379,14 @@ public class VersionCompatTest {
             Assert.assertEquals("Bitdepth for " + coords, 16, (int) metadata.getBitDepth());
             Assert.assertEquals("Camera for " + coords, "", metadata.getCamera());
             Assert.assertEquals("elapsedTimeMs for " + coords,
-                    metadata.getElapsedTimeMs(), IMAGE_ELAPSED_TIMES.get(coords));
+                    metadata.getElapsedTimeMs(0.0), IMAGE_ELAPSED_TIMES.get(coords));
             Assert.assertEquals("Exposure time for " + coords,
                     coords.getChannel() == 0 ? 25.0 : 50.0,
                     metadata.getExposureMs(), .00001);
             Assert.assertEquals("pixelSizeUm for " + coords,
                     metadata.getPixelSizeUm(), 1.0, .00001);
             Assert.assertEquals("positionName for " + coords,
-                    metadata.getPositionName(),
+                    metadata.getPositionName(""),
                     String.format("1-Pos_%03d_%03d", column, row));
             Assert.assertEquals("receivedTime for " + coords,
                     metadata.getReceivedTime(), IMAGE_RECEIVED_TIMES.get(coords));

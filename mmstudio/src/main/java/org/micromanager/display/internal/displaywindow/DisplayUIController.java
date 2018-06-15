@@ -843,19 +843,14 @@ public final class DisplayUIController implements Closeable, WindowListener,
          if (displayedAxisLengths_.get(i) > 1) {
             switch (displayedAxes_.get(i)) {
                case Coords.P:
-                  String positionName = metadata.getPositionName();
-                  if (positionName.length() > 0) {
-                     sb.append(positionName).append(" ");
-                  }  break;
+                  String positionName = metadata.getPositionName("");
+                  sb.append(positionName).append(" ");
+                  break;
                case Coords.T:
-                  double elapsedTimeMs;                  
-                  try {
-                     elapsedTimeMs = metadata.getElapsedTimeMs();
-                  } catch (NullPointerException ne) {
+                  double elapsedTimeMs = metadata.getElapsedTimeMs(-1.0);
+                  if (elapsedTimeMs < 0) {
                      sb.append(" t=").append(nominalCoords.getT()).append(" ");
-                     break;
-                  }
-                  if (elapsedTimeMs > 10000) {
+                  } else if (elapsedTimeMs > 10000) {
                      sb.append(NumberUtils.doubleToDisplayString(
                              (elapsedTimeMs / 1000), 1)).append("s ");
                   } else {

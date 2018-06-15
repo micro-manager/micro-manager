@@ -123,6 +123,7 @@ public interface Metadata {
     * @return Builder, useful for command chaining
     */
    Builder copyBuilderPreservingUUID();
+   
    /** Return a builder with the same content, assigning a new image UUID. 
     * The UUID is a unique identifier for the image. Micro-Manager uses this
     * field to determine if two images are truly different, so if you copy this
@@ -130,6 +131,7 @@ public interface Metadata {
     * @return Builder, useful for command chaining
     */
    Builder copyBuilderWithNewUUID();
+   
    /** Return a builder with the same content but removing the image UUID. 
     * The UUID is a unique identifier for the image. Micro-Manager uses this
     * field to determine if two images are truly different.
@@ -152,8 +154,24 @@ public interface Metadata {
     * should not be assumed to be accurate to better than 20ms or so.
     * @return Milliseconds since the start of the acquisition up to the moment
     * this image was received by Micro-Manager
-    */
+    
+    * @deprecated - use Double {@link #getElapsedTimeMs(double) } instead
+   */
+   @Deprecated
    Double getElapsedTimeMs();
+   
+   
+   /**
+    * Time in milliseconds since the start of the given data acquisition
+    * at which the image was received by Micro-Manager.  This is a proxy 
+    * for the time at which the exposure happened, but there is considerable
+    * jitter so it should not be assumed to be accurate to more than ~20 ms. 
+    * @param defaultValue - value returned of the image metadata did not contain
+    * information about the elapsed time
+    * @return Milliseconds since the start of the acquisition up to the moment
+    * this image was received by Micro-Manager
+    */
+   Double getElapsedTimeMs(double defaultValue);
    
    /** 
     * How long of an exposure was used to collect this image 
@@ -225,7 +243,7 @@ public interface Metadata {
 
    /** 
     * Arbitrary additional metadata added by third-party code 
-    * @return rbitrary additional metadata added by third-party code 
+    * @return arbitrary additional metadata added by third-party code 
     */
    PropertyMap getUserData();
    
@@ -245,8 +263,18 @@ public interface Metadata {
     * Any name attached to the stage position at which this image was
     * acquired 
     * @return Name of the position at which this image was acquired
+    * @deprecated Use {@link #getPositionName(java.lang.String) } instead
     */
+   @Deprecated
    String getPositionName();
+   
+   /** 
+    * Any name attached to the stage position at which this image was
+    * acquired 
+    * @param defaultPosName Will be returned if no name is provided by the metadata
+    * @return Name of the position at which this image was acquired
+    */
+   String getPositionName(String defaultPosName);
    
    /**
     * The time at which the Java layer of Micro-Manager receives the image from

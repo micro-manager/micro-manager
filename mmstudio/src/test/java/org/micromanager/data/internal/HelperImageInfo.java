@@ -84,7 +84,7 @@ public class HelperImageInfo {
          Assert.assertEquals(metadata_.getBinning(), metadata.getBinning());
          Assert.assertEquals(metadata_.getBitDepth(), metadata.getBitDepth());
          Assert.assertEquals(metadata_.getCamera(), metadata.getCamera());
-         Assert.assertEquals(metadata_.getElapsedTimeMs(), metadata.getElapsedTimeMs());
+         Assert.assertEquals(metadata_.getElapsedTimeMs(0.0), metadata.getElapsedTimeMs(0.0));
          Assert.assertEquals(metadata_.getExposureMs(), metadata.getExposureMs());
          // Assert.assertEquals(metadata_.getIjType(), metadata.getIjType());
          Assert.assertEquals(metadata_.getImageNumber(), metadata.getImageNumber());
@@ -92,7 +92,7 @@ public class HelperImageInfo {
          // Assert.assertEquals(metadata_.getKeepShutterOpenSlices(), metadata.getKeepShutterOpenSlices());
          Assert.assertEquals(metadata_.getPixelAspect(), metadata.getPixelAspect());
          Assert.assertEquals(metadata_.getPixelSizeUm(), metadata.getPixelSizeUm());
-         Assert.assertEquals(metadata_.getPositionName(), metadata.getPositionName());
+         Assert.assertEquals(metadata_.getPositionName(""), metadata.getPositionName(""));
          Assert.assertEquals(metadata_.getReceivedTime(), metadata.getReceivedTime());
          Assert.assertEquals(metadata_.getROI(), metadata.getROI());
          Assert.assertEquals(metadata_.getScopeData(), metadata.getScopeData());

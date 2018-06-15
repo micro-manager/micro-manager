@@ -193,12 +193,12 @@ public final class DefaultMetadata implements Metadata {
       getROI();
       getBitDepth();
       getExposureMs();
-      getElapsedTimeMs();
+      getElapsedTimeMs(0.0);
       getImageNumber();
       getReceivedTime();
       getPixelSizeUm();
       getPixelAspect();
-      getPositionName();
+      getPositionName("");
       getXPositionUm();
       getYPositionUm();
       getZPositionUm();
@@ -258,12 +258,18 @@ public final class DefaultMetadata implements Metadata {
       return pmap_.containsKey(EXPOSURE_MS.key()) ?
             pmap_.getDouble(EXPOSURE_MS.key(), Double.NaN) : null;
    }
-
+      
    @Override
    public Double getElapsedTimeMs() {
       return pmap_.containsKey(ELAPSED_TIME_MS.key()) ?
             pmap_.getDouble(ELAPSED_TIME_MS.key(), Double.NaN) : null;
    }
+   
+   @Override
+   public Double getElapsedTimeMs(double exposureMs) {
+      return pmap_.getDouble(ELAPSED_TIME_MS.key(), exposureMs);
+   }
+
 
    @Override
    public Integer getBinning() {
@@ -277,10 +283,21 @@ public final class DefaultMetadata implements Metadata {
             pmap_.getLong(IMAGE_NUMBER.key(), 0L) : null;
    }
 
+   /**
+    * @return
+    * @deprecated use {@link #getPositionName(java.lang.String) } instead
+    */
    @Override
+   @Deprecated
    public String getPositionName() {
       return pmap_.getString(POSITION_NAME.key(), null);
    }
+   
+   @Override
+   public String getPositionName(String defaultPosName) {
+      return pmap_.getString(defaultPosName, defaultPosName);
+   }
+   
 
    @Override
    public Double getXPositionUm() {

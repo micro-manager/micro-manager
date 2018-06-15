@@ -350,13 +350,13 @@ public final class OMEMetadata {
          metadata_.setPlanePositionZ(new Length(zPositionUm, UNITS.MICROM),
                position, indices.planeIndex_);
       }
-      Double elapsedTimeMs = metadata.getElapsedTimeMs();
-      if (elapsedTimeMs != null) {
+      double elapsedTimeMs = metadata.getElapsedTimeMs(-1.0);
+      if (elapsedTimeMs >= 0.0) {
          metadata_.setPlaneDeltaT(new Time(elapsedTimeMs, UNITS.MS),
                position, indices.planeIndex_);
       }
-      String positionName = metadata.getPositionName();
-      if (positionName != null) {
+      String positionName = metadata.getPositionName("");
+      if (!positionName.isEmpty()) {
          metadata_.setStageLabelName(positionName, position);
       }
 

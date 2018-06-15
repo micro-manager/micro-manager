@@ -153,12 +153,13 @@ public final class TimestampOverlay extends AbstractOverlay {
       },
 
       RELATIVE_TIME("Relative to Start") {
+         @Override
          String formatTime(Image image) {
             Metadata metadata = image.getMetadata();
-            if (metadata.getElapsedTimeMs() == null) {
+            double elapsedMs = metadata.getElapsedTimeMs(-1.0);
+            if (elapsedMs < 0.0) {
                return "RELATIVE TIME UNAVAILABLE";
             }
-            double elapsedMs = metadata.getElapsedTimeMs();
             long totalSeconds = (long) Math.floor(elapsedMs / 1000.0);
             int milliseconds = (int) Math.round(elapsedMs - 1000 * totalSeconds);
             int hours = (int) totalSeconds / 3600;

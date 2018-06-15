@@ -990,8 +990,8 @@ public class MainForm extends JFrame {
          int nrFrames = dataStore.getAxisLength(Coords.T);
          Image img0 = dataStore.getImage(img.getCoords().copyBuilder().channel(0).t(0).build());
          Image imgLast = dataStore.getImage(img.getCoords().copyBuilder().channel(0).t(nrFrames - 1).build());
-         double startTimeMs = img0.getMetadata().getElapsedTimeMs();
-         double endTimeMs = imgLast.getMetadata().getElapsedTimeMs();
+         double startTimeMs = img0.getMetadata().getElapsedTimeMs(0.0);
+         double endTimeMs = imgLast.getMetadata().getElapsedTimeMs(0.0);
          double msPerFrame = (endTimeMs - startTimeMs) / nrFrames;
          timeIntervalTextField_.setText(NumberUtils.doubleToDisplayString(msPerFrame));
       } catch (IOException ioe) {
