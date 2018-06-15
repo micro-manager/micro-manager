@@ -160,6 +160,12 @@ public interface Metadata {
    @Deprecated
    Double getElapsedTimeMs();
    
+   /**
+    * Whether or not this image has metadata indicating the time elapsed
+    * since the start of the acquisition
+    * @return true if the image metadata has a field indicating the elapsed time
+    */
+   boolean hasElapsedTimeMs();
    
    /**
     * Time in milliseconds since the start of the given data acquisition
@@ -171,7 +177,8 @@ public interface Metadata {
     * @return Milliseconds since the start of the acquisition up to the moment
     * this image was received by Micro-Manager
     */
-   Double getElapsedTimeMs(double defaultValue);
+   double getElapsedTimeMs(double defaultValue);
+
    
    /** 
     * How long of an exposure was used to collect this image 
@@ -267,6 +274,8 @@ public interface Metadata {
     */
    @Deprecated
    String getPositionName();
+   
+   boolean hasPositionName();
    
    /** 
     * Any name attached to the stage position at which this image was

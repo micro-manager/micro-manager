@@ -266,7 +266,12 @@ public final class DefaultMetadata implements Metadata {
    }
    
    @Override
-   public Double getElapsedTimeMs(double exposureMs) {
+   public boolean hasElapsedTimeMs() {
+      return pmap_.containsKey(ELAPSED_TIME_MS.key());
+   }
+   
+   @Override
+   public double getElapsedTimeMs(double exposureMs) {
       return pmap_.getDouble(ELAPSED_TIME_MS.key(), exposureMs);
    }
 
@@ -291,6 +296,11 @@ public final class DefaultMetadata implements Metadata {
    @Deprecated
    public String getPositionName() {
       return pmap_.getString(POSITION_NAME.key(), null);
+   }
+   
+   @Override
+   public boolean hasPositionName() {
+      return pmap_.containsKey(POSITION_NAME.key());
    }
    
    @Override
