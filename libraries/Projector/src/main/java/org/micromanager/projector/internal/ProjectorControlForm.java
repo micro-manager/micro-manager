@@ -98,6 +98,7 @@ import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * The main window for the Projector plugin. Contains logic for calibration,
@@ -110,6 +111,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
    private final CMMCore core_;
    private final Studio app_;
+   private final MutablePropertyMapView settings_;
    private final boolean isSLM_;
    private Roi[] individualRois_ = {};
    private Map<Polygon, AffineTransform> mapping_ = null;
@@ -693,6 +695,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    public void runCalibration() {
       app_.live().setSuspended(true);
+      settings_.putString(DELAY, delayField_.getText());
       if (!isRunning_.get()) {
          stopRequested_.set(false);
          Thread th = new Thread("Projector calibration thread") {
@@ -1430,6 +1433,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       
       app_ = app;
       core_ = app.getCMMCore();
+      settings_ = app_.profile().getSettings(this.getClass());
       String slm = core_.getSLMDevice();
       String galvo = core_.getGalvoDevice();
 
@@ -1459,10 +1463,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       roiLoopLabel.setVisible(!isSLM_);
       roiLoopTimesLabel.setVisible(!isSLM_);
       pointAndShootOffButton.setSelected(true);
-      populateChannelComboBox(app_.profile().getString(
-              this.getClass(),"channel", ""));
-      populateShutterComboBox(app_.profile().getString(
-              this.getClass(), "shutter", ""));
+      populateChannelComboBox(settings_.getString("channel", ""));
+      populateShutterComboBox(settings_.getString("shutter", ""));
       super.addWindowFocusListener(new WindowAdapter() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
@@ -1493,22 +1495,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          }
       });
       
-      delayField_.setText(app_.profile().getString(this.getClass(), DELAY, "0"));
-      // Listen for changes in the text
-      delayField_.getDocument().addDocumentListener(new DocumentListener() {
-         @Override
-         public void insertUpdate(DocumentEvent e) { updateProfile(); }
-
-         @Override
-         public void removeUpdate(DocumentEvent e) { updateProfile(); }
-
-         @Override
-         public void changedUpdate(DocumentEvent e) { updateProfile(); }
-         
-         void updateProfile() {
-            app_.profile().setString(this.getClass(), DELAY, delayField_.getText());
-         }
-      });
+      delayField_.setText(settings_.getString( DELAY, "0"));
 
       super.loadAndRestorePosition(500, 300);
       updateROISettings();
@@ -1535,6 +1522,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    @Override
    public void dispose()
    {
+      formSingleton_ = null;
       disposing_ = true;
       super.dispose();
    }
@@ -1605,6 +1593,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootIntervalSpinner = new javax.swing.JSpinner();
       jLabel2 = new javax.swing.JLabel();
 
+      setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Projector Controls");
       setResizable(false);
 
