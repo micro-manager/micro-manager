@@ -379,7 +379,8 @@ public class VersionCompatTest {
             Assert.assertEquals("Bitdepth for " + coords, 16, (int) metadata.getBitDepth());
             Assert.assertEquals("Camera for " + coords, "", metadata.getCamera());
             Assert.assertEquals("elapsedTimeMs for " + coords,
-                    metadata.getElapsedTimeMs(0.0), IMAGE_ELAPSED_TIMES.get(coords));
+                    (Double) metadata.getElapsedTimeMs(0.0), 
+                    IMAGE_ELAPSED_TIMES.get(coords));
             Assert.assertEquals("Exposure time for " + coords,
                     coords.getChannel() == 0 ? 25.0 : 50.0,
                     metadata.getExposureMs(), .00001);
