@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.projector.internal;
+package org.micromanager.projector.internal.devices;
 
 import ij.process.FloatPolygon;
 import java.awt.geom.Point2D;
@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
+import org.micromanager.projector.internal.OnStateListener;
 
 public class Galvo implements ProjectionDevice {
    private final String galvo_;
@@ -73,9 +74,7 @@ public class Galvo implements ProjectionDevice {
       });
       try {
          result.get();
-      } catch (InterruptedException ex) {
-         app_.logs().logError(ex);
-      } catch (ExecutionException ex) {
+      } catch (InterruptedException | ExecutionException ex) {
          app_.logs().logError(ex);
       }
    }
@@ -98,10 +97,7 @@ public class Galvo implements ProjectionDevice {
             app_.logs().logError("Unable to get galvo width");
          }
          return result;
-      } catch (InterruptedException ex) {
-         app_.logs().logError("Unable to get galvo width");
-         return 0;
-      } catch (ExecutionException ex) {
+      } catch (InterruptedException | ExecutionException ex) {
          app_.logs().logError("Unable to get galvo width");
          return 0;
       }
@@ -125,10 +121,7 @@ public class Galvo implements ProjectionDevice {
             app_.logs().logError("Unable to get galvo height");
          }
          return result;
-      } catch (InterruptedException ex) {
-         app_.logs().logError("Unable to get galvo height");
-         return 0;
-      } catch (ExecutionException ex) {
+      } catch (InterruptedException | ExecutionException ex) {
          app_.logs().logError("Unable to get galvo height");
          return 0;
       }
@@ -152,10 +145,7 @@ public class Galvo implements ProjectionDevice {
             app_.logs().logError("Unable to get galvo X minimum");
          }
          return result;
-      } catch (InterruptedException ex) {
-         app_.logs().logError("Unable to get galvo X minimum");
-         return 0;
-      } catch (ExecutionException ex) {
+      } catch (InterruptedException | ExecutionException ex) {
          app_.logs().logError("Unable to get galvo X minimum");
          return 0;
       }
@@ -179,10 +169,7 @@ public class Galvo implements ProjectionDevice {
             app_.logs().logError("Unable to get galvo Y minimum");
          }
          return result;
-      } catch (InterruptedException ex) {
-         app_.logs().logError("Unable to get galvo Y minimum");
-         return 0;
-      } catch (ExecutionException ex) {
+      } catch (InterruptedException | ExecutionException ex) {
          app_.logs().logError("Unable to get galvo Y minimum");
          return 0;
       }
@@ -322,11 +309,9 @@ public class Galvo implements ProjectionDevice {
         });
         try {
             return channel.get();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException e) {
             return null;
-        } catch (ExecutionException e) {
-           return null;
-      }
+        }
     }
 
    @Override

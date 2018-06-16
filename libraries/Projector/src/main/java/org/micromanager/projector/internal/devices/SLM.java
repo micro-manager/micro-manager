@@ -14,7 +14,7 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.projector.internal;
+package org.micromanager.projector.internal.devices;
 
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
@@ -27,6 +27,8 @@ import java.util.HashSet;
 import java.util.List;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
+import org.micromanager.projector.internal.OnStateListener;
+import org.micromanager.projector.internal.Utils;
 
 public class SLM implements ProjectionDevice {
    private final String slm_;
@@ -155,7 +157,7 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
          mmc_.displaySLMImage(slm_);
-      } catch (Throwable e) {
+      } catch (Exception e) {
          app_.logs().showError("SLM not connecting properly.");
       }
     }
@@ -175,7 +177,7 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
          mmc_.displaySLMImage(slm_);
-      } catch (Throwable e) {
+      } catch (Exception e) {
          app_.logs().showError("SLM not connecting properly.");
       }
    }
