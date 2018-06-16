@@ -70,8 +70,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.swing.JOptionPane;
@@ -90,11 +88,12 @@ import org.micromanager.Studio;
 
 import org.micromanager.projector.internal.devices.SLM;
 import org.micromanager.projector.internal.devices.Galvo;
-import org.micromanager.projector.internal.devices.ProjectionDevice;
+import org.micromanager.projector.ProjectionDevice;
 
 // TODO should not depend on internal code.
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.projector.ProjectorActions;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -266,17 +265,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // ## Simple methods for device control.
      
-   /**
-    * Sets the exposure time for the phototargeting device.
-    * @param intervalUs  new exposure time in micros
-    */
-   public void setExposure(double intervalUs) {
-      long previousExposure = dev_.getExposure();
-      long newExposure = (long) intervalUs;
-      if (previousExposure != newExposure) {
-         dev_.setExposure(newExposure);
-      }
-   }
+   
    
    /** 
     * Turns the projection device on or off.
@@ -289,27 +278,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          dev_.turnOff();
       }
    }
-   
-   /**
-    * Illuminate a spot at position x,y.
-    */
-   private void displaySpot(double x, double y) {
-      if (x >= dev_.getXMinimum() && x < (dev_.getXRange() + dev_.getXMinimum())
-            && y >= dev_.getYMinimum() && y < (dev_.getYRange() + dev_.getYMinimum())) {
-         dev_.displaySpot(x, y);
-      }
-   }
-   
-   /**
-    * Illuminate a spot at the center of the Galvo/SLM range, for
-    * the exposure time.
-    */
-   void displayCenterSpot() {
-      double x = dev_.getXRange() / 2 + dev_.getXMinimum();
-      double y = dev_.getYRange() / 2 + dev_.getYMinimum();
-      dev_.displaySpot(x, y);
-   }
-   
+      
    /**
     * Runs the full calibration. First
     * generates a linear mapping (a first approximation) and then generates
@@ -331,6 +300,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                 result = runCalibration.get();
             } catch (InterruptedException | ExecutionException ex) {
                result = false;
+            }
+            if (result) {
+               mapping_ = Mapping.loadMapping(core_, dev_, settings_);
             }
             JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
                        + (!result ? "finished." : "canceled."));
@@ -360,11 +332,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          calibrator_.requestStop();
       }
    }
-   
-   // ## Transforming points according to a nonlinear calibration mapping.
      
-   
-   
       
    // Returns true if a particular image is mirrored.
    private static boolean isImageMirrored(/*ImagePlus imgp */) {
@@ -416,25 +384,25 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
                final Point2D.Double devP = transformAndMirrorPoint(
-                       Mapping.loadMapping(core_, dev_, settings_), 
+                       Mapping.loadMapping(core_, dev_, settings_),
                        new Point2D.Double(pOffscreen.x, pOffscreen.y));
                final Configuration originalConfig = prepareChannel();
                final boolean originalShutterState = prepareShutter();
-               makeRunnableAsync(
+               new Thread(
                        new Runnable() {
-                          @Override
-                          public void run() {
-                             try {
-                                if (devP != null) {
-                                   displaySpot(devP.x, devP.y);
-                                }
-                                returnShutter(originalShutterState);
-                                returnChannel(originalConfig);
-                             } catch (Exception e) {
-                                ReportingUtils.showError(e);
-                             }
-                          }
-                       }).run();
+                  @Override
+                  public void run() {
+                     try {
+                        if (devP != null) {
+                           ProjectorActions.displaySpot(dev_, devP.x, devP.y);
+                        }
+                        returnShutter(originalShutterState);
+                        returnChannel(originalConfig);
+                     } catch (Exception e) {
+                        ReportingUtils.showError(e);
+                     }
+                  }
+               }).start();
 
             }
          }
@@ -475,71 +443,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // ## Manipulating ROIs
    
-   // Convert an OvalRoi to an EllipseRoi.
-   private static Roi asEllipseRoi(OvalRoi roi) {
-      Rectangle bounds = roi.getBounds();
-      double aspectRatio = bounds.width / (double) bounds.height;
-      if (aspectRatio < 1) {
-         return new EllipseRoi(bounds.x + bounds.width / 2,
-               bounds.y,
-               bounds.x + bounds.width / 2,
-               bounds.y + bounds.height,
-               aspectRatio);
-      } else {
-         return new EllipseRoi(bounds.x,
-               bounds.y + bounds.height / 2,
-               bounds.x + bounds.width,
-               bounds.y + bounds.height / 2,
-               1 / aspectRatio);
-      }
-   }
-   
-   // Converts an ROI to a Polygon.
-   private static Polygon asPolygon(Roi roi) {
-      if ((roi.getType() == Roi.POINT)
-               || (roi.getType() == Roi.FREEROI)
-               || (roi.getType() == Roi.POLYGON)
-            || (roi.getType() == Roi.RECTANGLE)) {
-         return roi.getPolygon();
-      } else {
-         throw new RuntimeException("Can't use this type of ROI.");
-      }
-   }
-   
-   // We can't handle Ellipse Rois and compounds PointRois directly.
-   private static Roi[] homogenizeROIs(Roi[] rois) {
-      List<Roi> roiList = new ArrayList<Roi>();
-      for (Roi roi : rois) {
-         switch (roi.getType()) {
-            case Roi.POINT:
-               Polygon poly = ((PointRoi) roi).getPolygon();
-               for (int i = 0; i < poly.npoints; ++i) {
-                  roiList.add(new PointRoi(
-                          poly.xpoints[i],
-                          poly.ypoints[i]));
-               }  break;
-            case Roi.OVAL:
-               roiList.add(asEllipseRoi((OvalRoi) roi));
-               break;
-            default:
-               roiList.add(roi);
-               break;
-         }
-      }
-      return roiList.toArray(new Roi[roiList.size()]);
-   }
-   
-   // Coverts an array of ImageJ Rois to an array of Polygons.
-   // Handles EllipseRois and compound Point ROIs.
-   public static Polygon[] roisAsPolygons(Roi[] rois) {
-      Roi[] cleanROIs = homogenizeROIs(rois);
-      List<Polygon> roiPolygons = new ArrayList<Polygon>();
-      for (Roi roi : cleanROIs) {
-         roiPolygons.add(asPolygon(roi));
-      }
-      return roiPolygons.toArray(new Polygon[0]);
-   }
-   
+  
+  
    /**
     * Gets the label of an ROI with the given index n. Borrowed from ImageJ.
     */
@@ -634,46 +539,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return rois;
    }
    
-   /**
-    * Transform the Roi polygons with the given nonlinear mapping.
-    */
-   private static List<FloatPolygon> transformRoiPolygons( 
-           Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
-      ArrayList<FloatPolygon> transformedROIs = new ArrayList<FloatPolygon>();
-      for (Polygon roiPolygon : roiPolygons) {
-         FloatPolygon targeterPolygon = new FloatPolygon();
-         try {
-            Point2D targeterPoint;
-            for (int i = 0; i < roiPolygon.npoints; ++i) {
-               Point2D.Double imagePoint = new Point2D.Double(
-                       roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
-               targeterPoint = transformAndMirrorPoint(mapping, imagePoint);
-               if (targeterPoint == null) {
-                  throw new Exception();
-               }
-               targeterPolygon.addPoint( (float) targeterPoint.getX(), 
-                       (float) targeterPoint.getY() );
-            }
-            transformedROIs.add(targeterPolygon);
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex);
-            break;
-         }
-      }
-      return transformedROIs;
-   }
+  
        
    // ## Saving, sending, and running ROIs.
      
-   /**
-    * Returns ROIs, transformed by the current mapping.
-    * @param rois Array of ImageJ Rois to be converted
-    * @return list of Rois converted into Polygons
-    * 
-    */
-   public List<FloatPolygon> transformROIs(Roi[] rois) {
-      return transformRoiPolygons(roisAsPolygons(rois), mapping_);
-   }
+
    
    // Save ROIs in the acquisition path, if it exists.
    private void recordPolygons() {
@@ -712,7 +582,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (rois.length == 0) {
          throw new RuntimeException("Please first draw the desired phototargeting ROIs.");
       }
-      List<FloatPolygon> transformedRois = transformROIs(rois);
+      List<FloatPolygon> transformedRois = ProjectorActions.transformROIs(
+              rois, mapping_);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
@@ -732,7 +603,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       ImagePlus imgp = window.getImagePlus();
       */
-      List<FloatPolygon> transformedRois = transformROIs(rois);
+      List<FloatPolygon> transformedRois = ProjectorActions.transformROIs(rois, mapping_);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
@@ -823,36 +694,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       };
    }
    
-   /**
-    * Converts a Runnable to one that runs asynchronously.
-    * @param runnable synchronous Runnable
-    * @return asynchronously running Runnable
-    */
-   public static Runnable makeRunnableAsync(final Runnable runnable) { 
-      return new Runnable() {
-         @Override
-         public void run() {
-            new Thread() {
-               @Override
-               public void run() {
-                  runnable.run();            
-               }
-            }.start();
-         }
-      };
-   }  
-   
-   // Sleep until the designated clock time.
-   private static void sleepUntil(long clockTimeMillis) {
-      long delta = clockTimeMillis - System.currentTimeMillis();
-      if (delta > 0) {
-         try {
-            Thread.sleep(delta);
-         } catch (InterruptedException ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
-   }
+
    
    /**
     * Runs runnable starting at firstTimeMs after this function is called, and
@@ -873,7 +715,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                final long startTime = System.currentTimeMillis() + firstTimeMs;
                int reps = 0;
                while (shouldContinue.call()) {
-                  sleepUntil(startTime + reps * intervalTimeMs);
+                  Utils.sleepUntil(startTime + reps * intervalTimeMs);
                   runnable.run();
                   ++reps;
                   if (!rep) {
@@ -961,7 +803,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                }
             };
             attachRoisToMDA(1, false, 0,
-                  makeRunnableAsync(
+                  new Thread(
                         runAtIntervals((long) (1000. * getSpinnerDoubleValue(startTimeSpinner)),
                         repeatCheckBoxTime.isSelected(),
                         (long) (1000 * getSpinnerDoubleValue(repeatEveryIntervalSpinner)),
@@ -975,7 +817,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     
    // Set the exposure to whatever value is currently in the Exposure field.
    private void updateExposure() {
-       setExposure(1000 * Double.parseDouble(pointAndShootIntervalSpinner.getValue().toString()));
+       ProjectorActions.setExposure(dev_,
+               1000 * Double.parseDouble(
+                       pointAndShootIntervalSpinner.getValue().toString()));
    }
    
    // Method called if the phototargeting device has turned on or off.
@@ -1106,6 +950,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    public ProjectionDevice getDevice() {
       return dev_;
+   }
+   
+   public Map<Polygon, AffineTransform> getMapping() {
+      return mapping_;
    }
    
    // ## Generated code
@@ -1710,14 +1558,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }//GEN-LAST:event_roiLoopSpinnerStateChanged
 
    private void runROIsNowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runROIsNowButtonActionPerformed
-      makeRunnableAsync(
+      new Thread(
               new Runnable() {
-                 @Override
-                 public void run() {
-                    phototargetROIsRunnable("Asynchronous phototargeting of ROIs").run();
-                 }
-              }
-      ).run();
+         @Override
+         public void run() {
+            phototargetROIsRunnable("Asynchronous phototargeting of ROIs").run();
+         }
+      }
+      ).start();
    }//GEN-LAST:event_runROIsNowButtonActionPerformed
 
    private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
@@ -1732,7 +1580,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    private void centerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerButtonActionPerformed
       offButtonActionPerformed(null);
-      displayCenterSpot();
+      ProjectorActions.displayCenterSpot(dev_);
    }//GEN-LAST:event_centerButtonActionPerformed
 
    private void pointAndShootOffButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOffButtonActionPerformed

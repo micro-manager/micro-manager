@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -126,6 +127,18 @@ public class Utils {
          throw new RuntimeException("Unable to map point to device.");
       }
       return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
+   }
+   
+   // Sleep until the designated clock time.
+   public static void sleepUntil(long clockTimeMillis) {
+      long delta = clockTimeMillis - System.currentTimeMillis();
+      if (delta > 0) {
+         try {
+            Thread.sleep(delta);
+         } catch (InterruptedException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
    }
    
 }

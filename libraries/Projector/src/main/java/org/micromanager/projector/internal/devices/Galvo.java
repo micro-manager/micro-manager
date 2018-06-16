@@ -16,6 +16,7 @@
 
 package org.micromanager.projector.internal.devices;
 
+import org.micromanager.projector.ProjectionDevice;
 import ij.process.FloatPolygon;
 import java.awt.geom.Point2D;
 import java.util.HashSet;

@@ -36,6 +36,7 @@ import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -71,6 +72,7 @@ import org.micromanager.internal.utils.GUIUtils;
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.utils.TextUtils;
+import org.micromanager.projector.ProjectorActions;
 
 // The Mosaic Sequencing Window is for use with Andor's Mosaic3 device adapter.
 // It allows the creation of complex phototargeting sequences, for use with
@@ -482,8 +484,9 @@ public class MosaicSequencingFrame extends MMFrame {
    // Get a list of SequenceEvents by extracting information from the sequenceTable_.
    private ArrayList<SequenceEvent> getSequenceEvents() {
       final ImagePlus snapLiveImage = gui_.live().getDisplay().getImagePlus();
+      Map<Polygon, AffineTransform> mapping = projectorControlForm_.getMapping();
       List<FloatPolygon> availableFloatRoiPolygons = 
-              projectorControlForm_.transformROIs(getRois());
+              ProjectorActions.transformROIs(getRois(), mapping);
       List<Polygon> availableRoiPolygons = Utils.FloatToNormalPolygon(
               availableFloatRoiPolygons);
       ArrayList<SequenceEvent> events = new ArrayList<SequenceEvent>();
@@ -749,7 +752,7 @@ public class MosaicSequencingFrame extends MMFrame {
          throw new Exception("Please upload a sequence to the Mosaic for attaching to multi-dimensional acquisition.");
       }
       gui_.acquisitions().attachRunnable(0, 0, 0, 0,
-            ProjectorControlForm.makeRunnableAsync(
+            new Thread(
                   new Runnable() {
                      @Override
                      public void run() {

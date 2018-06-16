@@ -16,6 +16,7 @@
 
 package org.micromanager.projector.internal.devices;
 
+import org.micromanager.projector.ProjectionDevice;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;

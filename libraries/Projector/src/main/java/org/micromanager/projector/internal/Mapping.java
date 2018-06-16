@@ -8,7 +8,7 @@ import java.util.Map;
 import mmcorej.CMMCore;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
-import org.micromanager.projector.internal.devices.ProjectionDevice;
+import org.micromanager.projector.ProjectionDevice;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
