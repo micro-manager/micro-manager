@@ -393,6 +393,14 @@ public class Cameras {
    }
    
    /**
+    * Returns true if the camera is a Panda
+    */
+   private boolean isPanda(Devices.Keys camKey) {
+      return props_.getPropValueString(camKey, Properties.Keys.CAMERA_TYPE)
+            .contains("panda");
+   }
+   
+   /**
     * Goes to properties and sees if this camera has slow readout enabled
     * (which affects row transfer speed and thus reset/readout time).
     * @param camKey
@@ -497,21 +505,30 @@ public class Cameras {
             return (2592 / 266e3);
          }
       case PCOCAM:
-         if (props_.hasProperty(camKey, Properties.Keys.LINE_TIME)) {  // should be present as of 20170926 nightly build
+         if (props_.hasProperty(camKey, Properties.Keys.LINE_TIME)) {  // should be present as of 20170926 nightly build for Edge, but not for Panda as of May 2018
             return ((double) props_.getPropValueFloat(camKey, Properties.Keys.LINE_TIME))/1000d;
-         } else {  // assumes CameraLink interface
-            if (isEdge55(camKey)) {
-               if (isSlowReadout(camKey)) {
-                  return 0.02752;
-               } else {
-                  return 0.00917;
-               }       
-            } else {  // 4.2
-               if (isSlowReadout(camKey)) {
-                  return 0.0276;
-               } else {
-                  return 0.00965;
-               }            
+         } else {  
+            if (isPanda(camKey)) {
+               // documentation not clear but suggests line time < 13ms
+               // empirically observed 12.5us + 0.0056us*ROI height (centered), e.g. 24ms at full frame in one set of measurements
+               // another set of measurements it seemed approximately linear in log(height)
+               // for now just use pessimistic but safe 24us
+               // TODO get more accurate value
+               return 0.024;
+            } else {  // assume CameraLink interface
+               if (isEdge55(camKey)) {
+                  if (isSlowReadout(camKey)) {
+                     return 0.02752;
+                  } else {
+                     return 0.00917;
+                  }       
+               } else {  // 4.2
+                  if (isSlowReadout(camKey)) {
+                     return 0.0276;
+                  } else {
+                     return 0.00965;
+                  }            
+               }
             }
          }
       case ANDORCAM:

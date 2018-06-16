@@ -703,6 +703,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       savePanel_.add(dirRootLabel);
 
       DefaultFormatter formatter = new DefaultFormatter();
+      formatter.setOverwriteMode(false);
       rootField_ = new JFormattedTextField(formatter);
       rootField_.setText( prefs_.getString(panelName_, 
               Properties.Keys.PLUGIN_DIRECTORY_ROOT, "") );
@@ -3080,10 +3081,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "SPIMAcqSettings", acqSettingsJSON);
             gui_.setAcquisitionProperty(acqName, "SPIMtype", ASIdiSPIM.oSPIM ? "oSPIM" : "diSPIM");
             gui_.setAcquisitionProperty(acqName, "AcquisitionName", acqName);
+            gui_.setAcquisitionProperty(acqName, "Prefix", acqName);
                       
             // get circular buffer ready
             // do once here but not per-trigger; need to ensure ROI changes registered
-            core_.initializeCircularBuffer();
+            core_.initializeCircularBuffer();  // superset of clearCircularBuffer()
             
             // TODO: use new acquisition interface that goes through the pipeline
             //gui_.setAcquisitionAddImageAsynchronous(acqName); 
@@ -3203,6 +3205,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      if (acqSettings.useChannels && acqSettings.channelMode != MultichannelModes.Keys.VOLUME) {
                         controller_.setupHardwareChannelSwitching(acqSettings);
                      }
+                     // make sure circular buffer is cleared
+                     core_.clearCircularBuffer();
                   }
                }
 
@@ -3330,6 +3334,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
                         boolean done = false;
                         long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
+                        int totalImages = 0;
                         if (acqSettings.isStageScanning) {  // for stage scanning have to allow extra time for turn-around
                            timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
                            timeout2 += 5000;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
@@ -3352,7 +3357,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                     imagesToSkip--;
                                     continue;  // goes to next iteration of this loop without doing anything else
                                  }
-
+                                 totalImages++;
                                  // figure out which channel index this frame belongs to
                                  // "channel index" is channel of MM acquisition
                                  // channel indexes will go from 0 to (numSides * numChannels - 1) for standard (non-reflective) imaging
@@ -3490,6 +3495,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                  done = cancelAcquisition_.get();
                                  Thread.sleep(1);
                                  if (now - last >= timeout2) {
+                                    ReportingUtils.logError("First cam seq: " + core_.isSequenceRunning(firstCamera) +
+                                          ((twoSided || acqBothCameras) ? ("   Second cam seq: " + core_.isSequenceRunning(secondCamera)) : "") +
+                                          "   nrSlicesSoftware: " + nrSlicesSoftware +
+                                          "   total images: " + totalImages);
                                     ReportingUtils.logError("Camera did not send all expected images within" +
                                           " a reasonable period for timepoint " + numTimePointsDone_ + ".  Continuing anyway.");
                                     nonfatalError = true;
@@ -3639,6 +3648,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                // gui_.closeAcquisition(acqName);
                ReportingUtils.logMessage("diSPIM plugin acquisition " + acqName + 
                      " took: " + (System.currentTimeMillis() - acqButtonStart) + "ms");
+               
+//               while(gui_.isAcquisitionRunning()) {
+//            	   Thread.sleep(10);
+//            	   ReportingUtils.logMessage("waiting for acquisition to finish.");
+//               }
                
                // flag that we are done with acquisition
                acquisitionRunning_.set(false);

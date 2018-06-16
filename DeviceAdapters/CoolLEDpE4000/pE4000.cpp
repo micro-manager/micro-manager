@@ -269,13 +269,13 @@ void Controller::GenerateChannelSelector()
 		string channelName = g_Keyword_ChannelLabel;
 		channelName.push_back('A' + (char)channel);
 		pAct = new CPropertyActionEx(this, &Controller::OnChannelWave, long(channel));
-		snprintf(buf, 16, "%d", wavelengthLabels_[channel * 4]);
+		snprintf(buf, 16, "%ld", wavelengthLabels_[channel * 4]);
 		CreateProperty(channelName.c_str(), buf, MM::Integer, false, pAct);
 
 		vector<string> channelWavelengths;
 		for (int wavelength = 0; wavelength < 4; wavelength++)
 		{
-			snprintf(buf, 16, "%d", wavelengthLabels_[wavelength + channel * 4]);
+			snprintf(buf, 16, "%ld", wavelengthLabels_[wavelength + channel * 4]);
 			channelWavelengths.push_back(buf);
 			AddAllowedValue(channelName.c_str(), buf);
 		}

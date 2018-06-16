@@ -79,7 +79,7 @@ public class SettingsPanel extends ListeningJPanel {
     * @param stagePosUpdater Can query the controller for stage positionns
     */
    public SettingsPanel(final ScriptInterface gui, Devices devices, Properties props, 
-         Prefs prefs, StagePositionUpdater stagePosUpdater) {    
+         Prefs prefs, StagePositionUpdater stagePosUpdater) {
       super (MyStrings.PanelNames.SETTINGS.toString(), 
             new MigLayout(
               "", 
@@ -271,6 +271,12 @@ public class SettingsPanel extends ListeningJPanel {
                   Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_OVERSHOOT_DIST, 0);
             stageScanPanel.add(scanOvershootDistance, "wrap");
          }
+         stageScanPanel.add(new JLabel("Path A stage/objective angle [\u00B0]:"));
+         final JSpinner stageAnglePathA = pu.makeSpinnerFloat(1, 89, 1,
+               Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_STAGESCAN_ANGLE_PATHA,
+               ASIdiSPIM.oSPIM ? 60 : 45);
+         stageAnglePathA.setToolTipText("for Path A, e.g. 60 for oSPIM and 45 for symmetric diSPIM");
+         stageScanPanel.add(stageAnglePathA, "wrap");
       } else {
          stageScanPanel.add(new JLabel("Stage scanning not supported by your"), "left, wrap");
          stageScanPanel.add(new JLabel("Tiger firmware.  See http://dispim.org"), "left, wrap");

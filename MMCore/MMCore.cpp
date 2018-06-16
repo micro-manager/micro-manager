@@ -7383,8 +7383,17 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* label)
          std::string previousValue;
          for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
          {
-            previousValue = getProperty(port.c_str(), (*sit).c_str());
-            valuesToRestore[*sit] = std::string(previousValue);
+	    try
+            {
+               previousValue = getProperty(port.c_str(), (*sit).c_str());
+               valuesToRestore[*sit] = std::string(previousValue);
+	    }
+            catch(...)
+            {
+               LOG_ERROR(coreLogger_) <<
+                  "Device detection: error gathering property " << (*sit).c_str() <<
+                  " of port " << port << " while testing for device " << label;
+	    }
          }
       }
 

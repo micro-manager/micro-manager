@@ -215,7 +215,7 @@ public class AutofocusUtils {
 
             final int nrImages = props_.getPropValueInteger(
                     Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_AUTOFOCUS_NRIMAGES);
-            final boolean showImages = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
+            final boolean showImages = runAsynchronously && prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
                     Properties.Keys.PLUGIN_AUTOFOCUS_SHOWIMAGES, true);
             final boolean showPlot = prefs_.getBoolean(MyStrings.PanelNames.AUTOFOCUS.toString(),
                     Properties.Keys.PLUGIN_AUTOFOCUS_SHOWPLOT, true);
@@ -332,8 +332,7 @@ public class AutofocusUtils {
                           (int) gui_.getMMCore().getBytesPerPixel(),
                           (int) gui_.getMMCore().getImageBitDepth());
                }
-               gui_.getMMCore().clearCircularBuffer();
-               gui_.getMMCore().initializeCircularBuffer();
+               gui_.getMMCore().initializeCircularBuffer();  // also does clearCircularBuffer()
                cameras_.setCameraForAcquisition(cameraDevice, true);
                prefs_.putFloat(MyStrings.PanelNames.SETTINGS.toString(),
                      Properties.Keys.PLUGIN_CAMERA_LIVE_EXPOSURE_FIRST.toString(),

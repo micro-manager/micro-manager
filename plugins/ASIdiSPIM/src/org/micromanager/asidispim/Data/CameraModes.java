@@ -107,7 +107,7 @@ public class CameraModes {
    
    /**
     * Does camera support pseudo overlap/synchronous mode?
-    * Both PCO and Photometrics 95B do
+    * Both PCO and Photometrics 95B do (PCO panda seems to be exception but can't easily account for that)
     * @param devKey
     * @return
     */

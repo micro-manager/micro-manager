@@ -102,6 +102,8 @@ SUBDIRS = \
 	CoherentOBIS \
    CoherentScientificRemote \
 	Conix \
+	CoolLEDpE300 \
+	CoolLEDpE4000 \
 	Corvus \
 	DemoCamera \
 	Diskovery \
@@ -139,6 +141,7 @@ SUBDIRS = \
 	PI_GCS_2 \
 	ParallelPort \
 	Pecon \
+	PIEZOCONCEPT \
 	Piezosystem_30DV50 \
 	Piezosystem_NV120_1 \
 	Piezosystem_NV40_1 \
