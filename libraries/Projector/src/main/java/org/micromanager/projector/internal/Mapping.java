@@ -89,7 +89,7 @@ public class Mapping {
     * Load the mapping for the current calibration node. The mapping
     * maps each polygon cell to an AffineTransform.
     */
-   static Map<Polygon, AffineTransform> loadMapping(CMMCore core, ProjectionDevice dev, 
+   public static Map<Polygon, AffineTransform> loadMapping(CMMCore core, ProjectionDevice dev, 
            MutablePropertyMapView settings) {
       PropertyMap pMap = settings.getPropertyMap(getCalibrationKey(core, dev), null);
       if (pMap != null) {

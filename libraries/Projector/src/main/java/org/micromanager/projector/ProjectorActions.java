@@ -28,7 +28,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  *
  * @author Nico
  */
-public class ProjectorActions {
+public abstract class ProjectorActions {
    
    /**
     * Creates a ProjectionDevice from the first SLM (or Galvo if no SLM is 
@@ -254,6 +254,5 @@ public class ProjectorActions {
                1 / aspectRatio);
       }
    }
-
-   
+ 
 }

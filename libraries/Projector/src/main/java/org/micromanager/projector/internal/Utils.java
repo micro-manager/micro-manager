@@ -101,43 +101,7 @@ public class Utils {
       return new Point2D.Double(pt.x, pt.y);
    }
    
-      // Transform and mirror (if necessary) a point on an image to 
-   // a point on phototargeter coordinates.
-   public static Point2D.Double transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, 
-           Point2D.Double pt) {
-      //Point2D.Double pOffscreen = mirrorIfNecessary(pt, imgp);
-      return Utils.transformPoint(mapping, pt);
-   }
-   
-   /**
-    * Transform a point, pt, given the mapping, which is a Map of polygon cells
-   // to AffineTransforms.
-   */
-   public static Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, Point2D.Double pt) {
-      Set<Polygon> set = mapping.keySet();
-      // First find out if the given point is inside a cell, and if so,
-      // transform it with that cell's AffineTransform.
-      for (Polygon poly : set) {
-         if (poly.contains(pt)) {
-            return (Point2D.Double) mapping.get(poly).transform(pt, null);
-         }
-      }
-      // The point isn't inside any cell, so search for the closest cell
-      // and use the AffineTransform from that.
-      double minDistance = Double.MAX_VALUE;
-      Polygon bestPoly = null;
-      for (Polygon poly : set) {
-         double distance = Utils.meanPosition2D(Utils.getVertices(poly)).distance(pt.x, pt.y);
-         if (minDistance > distance) {
-            bestPoly = poly;
-            minDistance = distance;
-         }
-      }
-      if (bestPoly == null) {
-         throw new RuntimeException("Unable to map point to device.");
-      }
-      return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
-   }
+
    
    // Sleep until the designated clock time.
    public static void sleepUntil(long clockTimeMillis) {

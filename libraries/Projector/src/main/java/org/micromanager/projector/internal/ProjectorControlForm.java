@@ -850,17 +850,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       app_ = app;
       core_ = app.getCMMCore();
       settings_ = app_.profile().getSettings(this.getClass());
-      String slm = core_.getSLMDevice();
-      String galvo = core_.getGalvoDevice();
-
-      if (slm.length() > 0) {
-         dev_ = new SLM(app_, core_, 20);
-      } else if (galvo.length() > 0) {
-         dev_ = new Galvo(app_, core_);
-      } else {
-         dev_ = null;
-      }
-     
+      dev_ = ProjectorActions.getProjectionDevice(app_);     
       mapping_ = Mapping.loadMapping(core, dev_, settings_);
       pointAndShootMouseListener = createPointAndShootMouseListenerInstance();
 
