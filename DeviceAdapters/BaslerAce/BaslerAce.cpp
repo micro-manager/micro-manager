@@ -66,8 +66,6 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
 	if (deviceName == 0)
 		return 0;
-	// Before using any pylon methods, the pylon runtime must be initialized. 
-	PylonInitialize();
 
 	// decide which device class to create based on the deviceName parameter
 	if (strcmp(deviceName, g_BaslerCameraDeviceName) == 0) {
@@ -81,7 +79,6 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
 	delete pDevice;
-	PylonTerminate();  
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -93,7 +90,6 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 */
 BaslerCamera::BaslerCamera():
 CCameraBase<BaslerCamera> (),
-	camera_( CTlFactory::GetInstance().CreateFirstDevice()), //The inside method returns a pointer to the device
 	maxWidth_(0),
 	maxHeight_(0),
 	exposure_us_(0),
@@ -138,6 +134,9 @@ int BaslerCamera::Initialize()
 	if (initialized_)
 		return DEVICE_OK;
 
+	// Before using any pylon methods, the pylon runtime must be initialized. 
+	PylonInitialize();
+	camera_ = new CInstantCamera(CTlFactory::GetInstance().CreateFirstDevice()); // returns a pointer to the device
 
 	// Name
 	int ret = CreateProperty(MM::g_Keyword_Name, g_BaslerCameraDeviceName, MM::String, true);
@@ -151,13 +150,13 @@ int BaslerCamera::Initialize()
 
 
 
-	Pylon::String_t modelName = camera_.GetDeviceInfo().GetModelName();
+	Pylon::String_t modelName = camera_->GetDeviceInfo().GetModelName();
 	//Get information about camera (e.g. height, width, bytte depth)
 
 	//Call before reading/writing any paramters
-	camera_.Open();
+	camera_->Open();
 	// Get the camera nodeMap_ object.
-	nodeMap_ = &camera_.GetNodeMap();
+	nodeMap_ = &camera_->GetNodeMap();
 	const CIntegerPtr width = nodeMap_->GetNode("Width");
 	maxWidth_ = width->GetMax();
 	const CIntegerPtr height = nodeMap_->GetNode("Height");
@@ -270,7 +269,7 @@ int BaslerCamera::Initialize()
 	//preparation for snaps
 	ResizeSnapBuffer();
 	//preperation for sequences
-	camera_.RegisterImageEventHandler( new CircularBufferInserter(this), RegistrationMode_Append, Cleanup_Delete);
+	camera_->RegisterImageEventHandler( new CircularBufferInserter(this), RegistrationMode_Append, Cleanup_Delete);
 
 
 	initialized_ = true;
@@ -282,19 +281,21 @@ int BaslerCamera::Initialize()
 */
 int BaslerCamera::Shutdown()
 {
-	camera_.Close();
+	camera_->Close();
+	delete camera_;
 	initialized_ = false;
+	PylonTerminate();  
 	return DEVICE_OK;
 }
 
 int BaslerCamera::SnapImage()
 { 
-	camera_.StartGrabbing( 1, GrabStrategy_OneByOne, GrabLoop_ProvidedByUser);
+	camera_->StartGrabbing( 1, GrabStrategy_OneByOne, GrabLoop_ProvidedByUser);
 	// This smart pointer will receive the grab result data.
 	//When all smart pointers referencing a Grab Result Data object go out of scope, the grab result's image buffer is reused for grabbing
 	CGrabResultPtr ptrGrabResult;
 	int timeout_ms = 5000;
-	if (!camera_.RetrieveResult( timeout_ms, ptrGrabResult, TimeoutHandling_ThrowException)) {
+	if (!camera_->RetrieveResult( timeout_ms, ptrGrabResult, TimeoutHandling_ThrowException)) {
 		return DEVICE_ERR;
 	}
 	if (!ptrGrabResult->GrabSucceeded()) {
@@ -457,7 +458,7 @@ void BaslerCamera::SetExposure(double exp)
 	} else if (exp < exposureMin_) {
 		exp = exposureMin_;
 	}
-	INodeMap& nodeMap_ = camera_.GetNodeMap();
+	INodeMap& nodeMap_ = camera_->GetNodeMap();
 	CFloatPtr exposure( nodeMap_.GetNode( "ExposureTime"));
 	exposure->SetValue(exp);
 	exposure_us_ = exp;
@@ -484,7 +485,7 @@ int BaslerCamera::StartSequenceAcquisition(long numImages, double interval_ms, b
 	if (ret != DEVICE_OK) {
 		return ret;
 	}
-	camera_.StartGrabbing(numImages, GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
+	camera_->StartGrabbing(numImages, GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
 	return DEVICE_OK;
 }
 
@@ -493,18 +494,18 @@ int BaslerCamera::StartSequenceAcquisition(double interval_ms) {
 	if (ret != DEVICE_OK) {
 		return ret;
 	}
-	camera_.StartGrabbing( GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
+	camera_->StartGrabbing( GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
 	return DEVICE_OK;
 }
 
 bool BaslerCamera::IsCapturing()
 {
-	return camera_.IsGrabbing();
+	return camera_->IsGrabbing();
 }
 
 int BaslerCamera::StopSequenceAcquisition()
 {
-	camera_.StopGrabbing();
+	camera_->StopGrabbing();
 	GetCoreCallback()->AcqFinished(this, 0);
 	return DEVICE_OK;
 }
