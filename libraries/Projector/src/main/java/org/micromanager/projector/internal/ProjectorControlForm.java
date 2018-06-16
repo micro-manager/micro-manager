@@ -362,13 +362,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Transform and mirror (if necessary) a point on an image to 
-   // a point on phototargeter coordinates.
-   private static Point2D.Double transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, 
-           Point2D.Double pt) {
-      //Point2D.Double pOffscreen = mirrorIfNecessary(pt, imgp);
-      return Utils.transformPoint(mapping, pt);
-   }
+
 
    // ## Point and shoot
    
@@ -383,7 +377,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                Point p = e.getPoint();
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               final Point2D.Double devP = transformAndMirrorPoint(
+               final Point2D.Double devP = ProjectorActions.transformPoint(
                        Mapping.loadMapping(core_, dev_, settings_),
                        new Point2D.Double(pOffscreen.x, pOffscreen.y));
                final Configuration originalConfig = prepareChannel();
@@ -603,7 +597,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       ImagePlus imgp = window.getImagePlus();
       */
-      List<FloatPolygon> transformedRois = ProjectorActions.transformROIs(rois, mapping_);
+      List<FloatPolygon> transformedRois = ProjectorActions.transformROIs(
+              rois, mapping_);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }

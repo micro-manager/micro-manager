@@ -94,9 +94,19 @@ public class Utils {
 
    /**
     * Converts a Point with integer values to a Point with x and y doubles.
+    * @param pt
+    * @return 
     */
    public static Point2D.Double toDoublePoint(Point pt) {
       return new Point2D.Double(pt.x, pt.y);
+   }
+   
+      // Transform and mirror (if necessary) a point on an image to 
+   // a point on phototargeter coordinates.
+   public static Point2D.Double transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, 
+           Point2D.Double pt) {
+      //Point2D.Double pOffscreen = mirrorIfNecessary(pt, imgp);
+      return Utils.transformPoint(mapping, pt);
    }
    
    /**

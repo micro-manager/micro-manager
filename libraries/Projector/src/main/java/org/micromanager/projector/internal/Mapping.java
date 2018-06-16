@@ -21,7 +21,7 @@ public class Mapping {
    private final static String MAP_POLYGON_MAP = "polygonMap-";
    private final static String MAP_AFFINE_TRANSFORM = "affineTransform-";
    
-      /**
+   /**
     * Returns the key where we store the Calibration mapping.
     * Each channel/camera combination is assigned a different node.
     */
