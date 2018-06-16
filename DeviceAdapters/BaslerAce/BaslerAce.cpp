@@ -4,28 +4,34 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Device Adapter for Basler Ace Camera
 //
-// COPYRIGHT:     Henry Pinkard 2018
+// Copyright 2018 Henry Pinkard
 //
-// LICENSE:       This library is free software; you can redistribute it and/or
-//                modify it under the terms of the GNU Lesser General Public
-//                License as published by the Free Software Foundation.
-//                
-//                You should have received a copy of the GNU Lesser General Public
-//                License along with the source distribution; if not, write to
-//                the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
-//                Boston, MA  02111-1307  USA
+// Redistribution and use in source and binary forms, with or without modification, 
+// are permitted provided that the following conditions are met:
 //
-//                This file is distributed in the hope that it will be useful,
-//                but WITHOUT ANY WARRANTY; without even the implied warranty
-//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// 1. Redistributions of source code must retain the above copyright notice, this 
+// list of conditions and the following disclaimer.
 //
-//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
-//                
-// AUTHOR:        Henry Pinkard, March 2018
+// 2. Redistributions in binary form must reproduce the above copyright notice, this
+// list of conditions and the following disclaimer in the documentation and/or other 
+// materials provided with the distribution.
 //
-               
+// 3. Neither the name of the copyright holder nor the names of its contributors may
+// be used to endorse or promote products derived from this software without specific 
+// prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+// OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
+// SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+// TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
+// BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
+// DAMAGE.
+
+
 #include <pylon/PylonIncludes.h>
 //#include <pylon/usb/PylonUsbIncludes.h>
 #include <pylon/usb/_BaslerUsbCameraParams.h>
@@ -53,29 +59,29 @@ const char* g_PropertyChannel = "PropertyNAme";
 
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_BaslerCameraDeviceName, MM::CameraDevice, "Basler Ace Monochrome Camera");
+	RegisterDevice(g_BaslerCameraDeviceName, MM::CameraDevice, "Basler Ace Monochrome Camera");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-   if (deviceName == 0)
-      return 0;
-       // Before using any pylon methods, the pylon runtime must be initialized. 
-    PylonInitialize();
+	if (deviceName == 0)
+		return 0;
+	// Before using any pylon methods, the pylon runtime must be initialized. 
+	PylonInitialize();
 
-   // decide which device class to create based on the deviceName parameter
-   if (strcmp(deviceName, g_BaslerCameraDeviceName) == 0) {
-      // create camera
-      return new BaslerCamera();
-   } 
-   // ...supplied name not recognized
-   return 0;
+	// decide which device class to create based on the deviceName parameter
+	if (strcmp(deviceName, g_BaslerCameraDeviceName) == 0) {
+		// create camera
+		return new BaslerCamera();
+	} 
+	// ...supplied name not recognized
+	return 0;
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
-      delete pDevice;
-	  PylonTerminate();  
+	delete pDevice;
+	PylonTerminate();  
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -83,10 +89,10 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
- * Constructor.
- */
+* Constructor.
+*/
 BaslerCamera::BaslerCamera():
-   CCameraBase<BaslerCamera> (),
+CCameraBase<BaslerCamera> (),
 	camera_( CTlFactory::GetInstance().CreateFirstDevice()), //The inside method returns a pointer to the device
 	maxWidth_(0),
 	maxHeight_(0),
@@ -100,54 +106,54 @@ BaslerCamera::BaslerCamera():
 	shutterMode_("None"),
 	imgBuffer_(NULL),
 	nodeMap_(NULL),
-   initialized_(false)
+	initialized_(false)
 {
 
 
-   // call the base class method to set-up default error codes/messages
-   InitializeDefaultErrorMessages();
+	// call the base class method to set-up default error codes/messages
+	InitializeDefaultErrorMessages();
 
-   //pre-init properties
+	//pre-init properties
 
 }
 
 BaslerCamera::~BaslerCamera()
 {
-   free(imgBuffer_);
+	free(imgBuffer_);
 }
 
 /**
- * Obtains device name.
- */
+* Obtains device name.
+*/
 void BaslerCamera::GetName(char* name) const
 {
-   CDeviceUtils::CopyLimitedString(name, g_BaslerCameraDeviceName);
+	CDeviceUtils::CopyLimitedString(name, g_BaslerCameraDeviceName);
 }
 
 /**
- * Intializes the hardware.
- */
+* Intializes the hardware.
+*/
 int BaslerCamera::Initialize()
 {
-   if (initialized_)
-      return DEVICE_OK;
+	if (initialized_)
+		return DEVICE_OK;
 
 
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_BaslerCameraDeviceName, MM::String, true);
-   if (DEVICE_OK != ret)
-	   return ret;
+	// Name
+	int ret = CreateProperty(MM::g_Keyword_Name, g_BaslerCameraDeviceName, MM::String, true);
+	if (DEVICE_OK != ret)
+		return ret;
 
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Basler Ace monochrome device adapter", MM::String, true);
-   if (DEVICE_OK != ret)
-	   return ret;
+	// Description
+	ret = CreateProperty(MM::g_Keyword_Description, "Basler Ace monochrome device adapter", MM::String, true);
+	if (DEVICE_OK != ret)
+		return ret;
 
 
 
 	Pylon::String_t modelName = camera_.GetDeviceInfo().GetModelName();
 	//Get information about camera (e.g. height, width, bytte depth)
-	
+
 	//Call before reading/writing any paramters
 	camera_.Open();
 	// Get the camera nodeMap_ object.
@@ -168,24 +174,24 @@ int BaslerCamera::Initialize()
 	CPropertyAction *pAct = new CPropertyAction (this, &BaslerCamera::OnPixelType);
 	ret = CreateProperty(MM::g_Keyword_PixelType, "NA", MM::String, false, pAct);
 	vector<string> pixelTypeValues;
-	 CEnumerationPtr pixelFormat( nodeMap_->GetNode( "PixelFormat"));
-	 if (IsAvailable( pixelFormat->GetEntryByName( "Mono8"))) {
-		 pixelTypeValues.push_back("Mono8");
-		 pixelFormat->FromString("Mono8");
-		 pixelType_ = "Mono8";
-	 }
-	 if (IsAvailable( pixelFormat->GetEntryByName( "Mono10"))) {
-		 pixelTypeValues.push_back("Mono10");
-		 pixelFormat->FromString("Mono10");
-		 pixelType_ = "Mono10";
-	 }
-	 if (IsAvailable( pixelFormat->GetEntryByName( "Mono12"))) {
-		 pixelTypeValues.push_back("Mono12");
-		 pixelFormat->FromString("Mono12");
-		 pixelType_ = "Mono12"; //default to using highest bit depth
-	 }
-	 SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
-	 
+	CEnumerationPtr pixelFormat( nodeMap_->GetNode( "PixelFormat"));
+	if (IsAvailable( pixelFormat->GetEntryByName( "Mono8"))) {
+		pixelTypeValues.push_back("Mono8");
+		pixelFormat->FromString("Mono8");
+		pixelType_ = "Mono8";
+	}
+	if (IsAvailable( pixelFormat->GetEntryByName( "Mono10"))) {
+		pixelTypeValues.push_back("Mono10");
+		pixelFormat->FromString("Mono10");
+		pixelType_ = "Mono10";
+	}
+	if (IsAvailable( pixelFormat->GetEntryByName( "Mono12"))) {
+		pixelTypeValues.push_back("Mono12");
+		pixelFormat->FromString("Mono12");
+		pixelType_ = "Mono12"; //default to using highest bit depth
+	}
+	SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
+
 	/////Gain//////
 	//Turn off auto gain
 	CEnumerationPtr gainAuto( nodeMap_->GetNode( "GainAuto"));
@@ -226,59 +232,59 @@ int BaslerCamera::Initialize()
 	// SetAllowedValues("SensorReadoutMode", vals);
 
 
-    ////Shutter mode//////
+	////Shutter mode//////
 	pAct = new CPropertyAction (this, &BaslerCamera::OnShutterMode);
 	ret = CreateProperty("ShutterMode", "NA", MM::String, false, pAct);
 	vector<string> shutterVals;
 	CEnumerationPtr shutterMode( nodeMap_->GetNode( "ShutterMode"));
-	 if ( IsAvailable( shutterMode->GetEntryByName( "Global"))) {
-		 shutterVals.push_back("Global");
-	 }
-	 if ( IsAvailable( shutterMode->GetEntryByName( "Rolling"))) {
-		 shutterVals.push_back("Rolling");
-	 }
-	 if ( IsAvailable( shutterMode->GetEntryByName( "GlobalResetRelease"))) {
-		 shutterVals.push_back("GlobalResetRelease");
-	 }
-	 SetAllowedValues("ShutterMode", shutterVals);
+	if ( IsAvailable( shutterMode->GetEntryByName( "Global"))) {
+		shutterVals.push_back("Global");
+	}
+	if ( IsAvailable( shutterMode->GetEntryByName( "Rolling"))) {
+		shutterVals.push_back("Rolling");
+	}
+	if ( IsAvailable( shutterMode->GetEntryByName( "GlobalResetRelease"))) {
+		shutterVals.push_back("GlobalResetRelease");
+	}
+	SetAllowedValues("ShutterMode", shutterVals);
 
 
 
 	//// binning
-   pAct = new CPropertyAction (this, &BaslerCamera::OnBinning);
-   ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
-   assert(ret == DEVICE_OK);
+	pAct = new CPropertyAction (this, &BaslerCamera::OnBinning);
+	ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
+	assert(ret == DEVICE_OK);
 
-   vector<string> binValues;
-   binValues.push_back("1");
-   ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
-   if (ret != DEVICE_OK)
-      return ret;
+	vector<string> binValues;
+	binValues.push_back("1");
+	ret = SetAllowedValues(MM::g_Keyword_Binning, binValues);
+	if (ret != DEVICE_OK)
+		return ret;
 
-   // synchronize all properties
-   // --------------------------
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
+	// synchronize all properties
+	// --------------------------
+	ret = UpdateStatus();
+	if (ret != DEVICE_OK)
+		return ret;
 
-   //preparation for snaps
-   ResizeSnapBuffer();
-   //preperation for sequences
-   camera_.RegisterImageEventHandler( new CircularBufferInserter(this), RegistrationMode_Append, Cleanup_Delete);
+	//preparation for snaps
+	ResizeSnapBuffer();
+	//preperation for sequences
+	camera_.RegisterImageEventHandler( new CircularBufferInserter(this), RegistrationMode_Append, Cleanup_Delete);
 
 
-   initialized_ = true;
-   return DEVICE_OK;
+	initialized_ = true;
+	return DEVICE_OK;
 }
 
 /**
- * Shuts down (unloads) the device.
- */
+* Shuts down (unloads) the device.
+*/
 int BaslerCamera::Shutdown()
 {
 	camera_.Close();
-   initialized_ = false;
-   return DEVICE_OK;
+	initialized_ = false;
+	return DEVICE_OK;
 }
 
 int BaslerCamera::SnapImage()
@@ -302,8 +308,8 @@ int BaslerCamera::SnapImage()
 }
 
 /**
- * Returns pixel data.
- */
+* Returns pixel data.
+*/
 const unsigned char* BaslerCamera::GetImageBuffer()
 {  
 	return (unsigned char*) imgBuffer_;
@@ -326,48 +332,48 @@ unsigned BaslerCamera::GetImageHeight() const
 */
 unsigned BaslerCamera::GetImageBytesPerPixel() const
 {
-   if (pixelType_ == "Mono8") {
-		 return 1;
+	if (pixelType_ == "Mono8") {
+		return 1;
 	} else if (pixelType_ == "Mono10") {
-		 return 2;
+		return 2;
 	} else if (pixelType_ == "Mono12") {
-		 return 2;
+		return 2;
 	}
 	assert(0); //shouldn't happen
 	return 0;
 } 
 
 /**
- * Returns the bit depth (dynamic range) of the pixel.
- */
+* Returns the bit depth (dynamic range) of the pixel.
+*/
 unsigned BaslerCamera::GetBitDepth() const
 {
-   if (pixelType_ == "Mono8") {
-		 return 8;
+	if (pixelType_ == "Mono8") {
+		return 8;
 	} else if (pixelType_ == "Mono10") {
 		return 10;
-   } else if (pixelType_ == "Mono12") {
+	} else if (pixelType_ == "Mono12") {
 		return 12;
-   }
+	}
 	assert(0); //shoudlnt happen
 	return 0;
 }
 
 /**
- * Returns the size in bytes of the image buffer.
- */
+* Returns the size in bytes of the image buffer.
+*/
 long BaslerCamera::GetImageBufferSize() const
 {
 	return GetImageWidth()*GetImageHeight()*GetImageBytesPerPixel();
 }
 
 /**
- * Sets the camera Region Of Interest.
- * @param x - top-left corner coordinate
- * @param y - top-left corner coordinate
- * @param xSize - width
- * @param ySize - height
- */
+* Sets the camera Region Of Interest.
+* @param x - top-left corner coordinate
+* @param y - top-left corner coordinate
+* @param xSize - width
+* @param ySize - height
+*/
 int BaslerCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
 	const CIntegerPtr width = nodeMap_->GetNode("Width");
@@ -395,7 +401,7 @@ int BaslerCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 	height->SetValue(ySize);
 	offsetX->SetValue(x);
 	offsetY->SetValue(y);
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 /**
@@ -411,7 +417,7 @@ int BaslerCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& yS
 	y = offsetY->GetValue();
 	xSize = width->GetValue();
 	ySize = height->GetValue();
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 /**
@@ -436,13 +442,13 @@ int BaslerCamera::ClearROI()
 */
 double BaslerCamera::GetExposure() const
 {
-   return exposure_us_ / 1000.0;
+	return exposure_us_ / 1000.0;
 }
 
 /**
- * Sets exposure in milliseconds.
- * Required by the MM::Camera API.
- */
+* Sets exposure in milliseconds.
+* Required by the MM::Camera API.
+*/
 void BaslerCamera::SetExposure(double exp)
 {
 	exp *= 1000; //convert to us
@@ -458,11 +464,11 @@ void BaslerCamera::SetExposure(double exp)
 }
 
 /**
- * Returns the current binning factor.
- */
+* Returns the current binning factor.
+*/
 int BaslerCamera::GetBinning() const
 {
-   return 1;
+	return 1;
 }
 
 int BaslerCamera::SetBinning(int binFactor)
@@ -479,16 +485,16 @@ int BaslerCamera::StartSequenceAcquisition(long numImages, double interval_ms, b
 		return ret;
 	}
 	camera_.StartGrabbing(numImages, GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int BaslerCamera::StartSequenceAcquisition(double interval_ms) {
-		int ret = GetCoreCallback()->PrepareForAcq(this);
+	int ret = GetCoreCallback()->PrepareForAcq(this);
 	if (ret != DEVICE_OK) {
 		return ret;
 	}
-   camera_.StartGrabbing( GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
-   return DEVICE_OK;
+	camera_.StartGrabbing( GrabStrategy_OneByOne, GrabLoop_ProvidedByInstantCamera);
+	return DEVICE_OK;
 }
 
 bool BaslerCamera::IsCapturing()
@@ -498,15 +504,15 @@ bool BaslerCamera::IsCapturing()
 
 int BaslerCamera::StopSequenceAcquisition()
 {
-   camera_.StopGrabbing();
-   GetCoreCallback()->AcqFinished(this, 0);
-   return DEVICE_OK;
+	camera_.StopGrabbing();
+	GetCoreCallback()->AcqFinished(this, 0);
+	return DEVICE_OK;
 }
 
 int BaslerCamera::PrepareSequenceAcqusition()
 {
-   // nothing to prepare
-   return DEVICE_OK;
+	// nothing to prepare
+	return DEVICE_OK;
 }
 
 void BaslerCamera::ResizeSnapBuffer() {
@@ -523,7 +529,7 @@ int BaslerCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 	if (eAct == MM::BeforeGet) {
 		pProp->Set("1");
 	}
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -537,7 +543,7 @@ int BaslerCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 		pixelType_.assign(pixelFormat->ToString().c_str());
 		pProp->Set(pixelType_.c_str());
 	}
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 //Might need to find some way to access expert features to do this 
@@ -570,7 +576,7 @@ int BaslerCamera::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 		shutterMode_.assign(s);
 		pProp->Set(shutterMode_.c_str());
 	}
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int BaslerCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -617,7 +623,7 @@ int BaslerCamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 CircularBufferInserter::CircularBufferInserter(BaslerCamera* dev):
-	dev_(dev)
+dev_(dev)
 {}
 
 void CircularBufferInserter::OnImageGrabbed( CInstantCamera& camera, const CGrabResultPtr& ptrGrabResult)
@@ -632,9 +638,9 @@ void CircularBufferInserter::OnImageGrabbed( CInstantCamera& camera, const CGrab
 			//if circular buffer overflows, just clear it and keep putting stuff in so live mode can continue
 			dev_->GetCoreCallback()->ClearImageBuffer(dev_);
 		}
-		
+
 	} else {
 		//TODO: error handling
-		
+
 	}
 }

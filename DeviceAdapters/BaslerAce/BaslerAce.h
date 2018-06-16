@@ -4,27 +4,32 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Adapter for Basler Ace Cameras
 //
-// COPYRIGHT:     Henry Pinkard, 2018
+// Copyright 2018 Henry Pinkard
 //
-// LICENSE:       This library is free software; you can redistribute it and/or
-//                modify it under the terms of the GNU Lesser General Public
-//                License as published by the Free Software Foundation.
-//                
-//                You should have received a copy of the GNU Lesser General Public
-//                License along with the source distribution; if not, write to
-//                the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
-//                Boston, MA  02111-1307  USA
+// Redistribution and use in source and binary forms, with or without modification, 
+// are permitted provided that the following conditions are met:
 //
-//                This file is distributed in the hope that it will be useful,
-//                but WITHOUT ANY WARRANTY; without even the implied warranty
-//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// 1. Redistributions of source code must retain the above copyright notice, this 
+// list of conditions and the following disclaimer.
 //
-//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
-//                
-// AUTHOR:        Henry Pinkard, 2018
-//                
+// 2. Redistributions in binary form must reproduce the above copyright notice, this
+// list of conditions and the following disclaimer in the documentation and/or other 
+// materials provided with the distribution.
+//
+// 3. Neither the name of the copyright holder nor the names of its contributors may
+// be used to endorse or promote products derived from this software without specific 
+// prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+// OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
+// SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+// INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+// TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
+// BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN 
+// ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
+// DAMAGE.
 
 
 #pragma once
@@ -47,82 +52,82 @@
 
 class BaslerCamera : public CCameraBase<BaslerCamera>  {
 public:
-   BaslerCamera();
-   ~BaslerCamera();
-  
-   // MMDevice API
-   // ------------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* name) const;      
-   bool Busy() {return false;}
-  
-   // MMCamera API
-   // ------------
-   int SnapImage();
-   const unsigned char* GetImageBuffer();
+	BaslerCamera();
+	~BaslerCamera();
 
-   unsigned GetImageWidth() const;
-   unsigned GetImageHeight() const;
-   unsigned GetImageBytesPerPixel() const;
-   unsigned GetBitDepth() const;
-   long GetImageBufferSize() const;
-   double GetExposure() const;
-   void SetExposure(double exp);
-   int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
-   int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
-   int ClearROI();
-   int GetBinning() const;
-   int SetBinning(int binSize);
-   int IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
+	// MMDevice API
+	// ------------
+	int Initialize();
+	int Shutdown();
 
-    /**
-     * Starts continuous acquisition.
-     */
-    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
-    int StartSequenceAcquisition(double interval_ms);
-    int StopSequenceAcquisition();
-    int PrepareSequenceAcqusition();
-    
-    /**
-     * Flag to indicate whether Sequence Acquisition is currently running.
-     * Return true when Sequence acquisition is activce, false otherwise
-     */
-    bool IsCapturing();
+	void GetName(char* name) const;      
+	bool Busy() {return false;}
 
-   // action interface
-   // ----------------
-	   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
+	// MMCamera API
+	// ------------
+	int SnapImage();
+	const unsigned char* GetImageBuffer();
+
+	unsigned GetImageWidth() const;
+	unsigned GetImageHeight() const;
+	unsigned GetImageBytesPerPixel() const;
+	unsigned GetBitDepth() const;
+	long GetImageBufferSize() const;
+	double GetExposure() const;
+	void SetExposure(double exp);
+	int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
+	int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
+	int ClearROI();
+	int GetBinning() const;
+	int SetBinning(int binSize);
+	int IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
+
+	/**
+	* Starts continuous acquisition.
+	*/
+	int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+	int StartSequenceAcquisition(double interval_ms);
+	int StopSequenceAcquisition();
+	int PrepareSequenceAcqusition();
+
+	/**
+	* Flag to indicate whether Sequence Acquisition is currently running.
+	* Return true when Sequence acquisition is activce, false otherwise
+	*/
+	bool IsCapturing();
+
+	// action interface
+	// ----------------
+	int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
-  // int OnSensorReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
+	// int OnSensorReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
 
-   CInstantCamera camera_;
+	CInstantCamera *camera_;
 
 
-   unsigned maxWidth_, maxHeight_;
-   double exposure_us_, exposureMax_, exposureMin_;
-   double gain_, gainMax_, gainMin_;
-   double offset_, offsetMin_, offsetMax_;
-   unsigned bitDepth_;
-   std::string pixelType_;
-   std::string sensorReadoutMode_;
-   std::string shutterMode_;
-   void* imgBuffer_;
-   INodeMap* nodeMap_;
+	unsigned maxWidth_, maxHeight_;
+	double exposure_us_, exposureMax_, exposureMin_;
+	double gain_, gainMax_, gainMin_;
+	double offset_, offsetMin_, offsetMax_;
+	unsigned bitDepth_;
+	std::string pixelType_;
+	std::string sensorReadoutMode_;
+	std::string shutterMode_;
+	void* imgBuffer_;
+	INodeMap* nodeMap_;
 
-   bool initialized_;
+	bool initialized_;
 
-   //MM::MMTime startTime_;
+	//MM::MMTime startTime_;
 
 
-   void ResizeSnapBuffer();
+	void ResizeSnapBuffer();
 };
 
 //Callback class for putting frames in circular buffer as they arrive
