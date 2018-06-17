@@ -83,7 +83,10 @@ public final class DefaultSummaryMetadata implements SummaryMetadata {
          }
          b_ = PropertyMaps.builder().
                putString(MICRO_MANAGER_VERSION.key(), version).
-               putString(METADATA_VERSION.key(), CURRENT_METADATA_VERSION);
+               putString(METADATA_VERSION.key(), CURRENT_METADATA_VERSION). 
+                 // TODO: we should not depend on the defaults provided here
+                 // Many bugs manifest themselves if this field is not set
+               putStringList(AXIS_ORDER.key(), Coords.C, Coords.T, Coords.Z, Coords.P);
       }
 
       private Builder(PropertyMap toCopy) {
