@@ -140,8 +140,8 @@ public class SLM implements ProjectionDevice {
       }
    }
    
-       @Override
-    public void showCheckerBoard(int x, int y) {
+   @Override
+   public void showCheckerBoard(int x, int y) {
       ImageProcessor proc = new ByteProcessor(slmWidth_, slmHeight_);
       proc.setColor(Color.black);
       proc.fill();
@@ -161,7 +161,17 @@ public class SLM implements ProjectionDevice {
       } catch (Exception e) {
          app_.logs().showError("SLM not connecting properly.");
       }
-    }
+   }
+   
+   public void displaySLMImage (byte[] image) {
+      try {
+      mmc_.setSLMImage(slm_, image);
+      mmc_.displaySLMImage(slm_);
+      } catch (Exception e) {
+         app_.logs().showError("SLM error");
+      }
+   }
+   
 
    // Fills a circular spot in an ImageJ ImageProcessor with diatemer dia.
    private static void fillSpot(ImageProcessor proc, int x, int y, double dia) {

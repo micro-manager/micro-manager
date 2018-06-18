@@ -199,6 +199,36 @@ public abstract class ProjectorActions {
       return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
    }
    
+   public static void transformAndSetMask(Map<Polygon, AffineTransform> mapping, 
+           ProjectionDevice dev, byte[] inputImage, int width, int height) {
+      if (! (dev instanceof SLM) ) {
+         // how do we ler rge caller know
+         return;
+      }
+      if (inputImage.length != width * height) {
+         // how do we let the caller know?
+         return;
+      }
+      SLM slm = (SLM) dev;
+      int slmWidth = (int) slm.getXRange();
+      int slmHeight = (int) slm.getYRange();
+      byte[] outputImage = new byte[slmWidth * slmHeight];
+      for (int x = 0; x < width; x++) {
+         for (int y = 0; y < height; y++) {
+            if (inputImage[x + y * width] > 0) {
+               Point2D.Double rp = transformPoint(mapping, new Point2D.Double(x, y));
+               int xt = (int) rp.x;
+               int yt = (int) rp.y;
+               if (0 <= xt && xt < slmWidth && 0 <= yt && yt < slmHeight) {
+                  // TODO: is this the correct value??
+                  outputImage[xt + yt * slmHeight] = 127;
+               }
+            }
+         }
+      }
+      slm.displaySLMImage(outputImage);
+   }
+   
    /************* Private methods **************/
       
    // Converts an ROI to a Polygon.
