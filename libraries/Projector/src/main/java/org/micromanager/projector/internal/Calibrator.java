@@ -259,7 +259,7 @@ public class Calibrator {
             slmPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
             Point spot = measureSpotOnCamera(slmPoint[i][j]);
             if (spot != null) {
-               camPoint[i][j] = Utils.toDoublePoint(spot);
+                camPoint[i][j] = new Point2D.Double(spot.x, spot.y);
             }
          }
       }
@@ -306,7 +306,7 @@ public class Calibrator {
     * generates a linear mapping (a first approximation) and then generates
     * a second piece-wise "non-linear" mapping of affine transforms. Saves
     * the mapping to Java Preferences.
-    * @return 
+    * @return true if successful, false if interrupted or otherwise fails
     */
    public Future<Boolean> runCalibration() {
       return executor_.submit(() -> {
@@ -344,13 +344,15 @@ public class Calibrator {
                ReportingUtils.showError(e);
             } catch (RuntimeException e) {
                ReportingUtils.showError(e);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
             } finally {
                app_.live().setSuspended(false);
                isRunning_.set(false);
             }
          }
 
-         return stopRequested_.get();
+         return !stopRequested_.get();
       });
    }
 

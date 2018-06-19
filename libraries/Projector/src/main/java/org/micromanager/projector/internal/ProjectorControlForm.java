@@ -295,17 +295,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       new Thread() {
          @Override
          public void run() {
-            Boolean result;
+            Boolean success;
             try {
-                result = runCalibration.get();
+                success = runCalibration.get();
             } catch (InterruptedException | ExecutionException ex) {
-               result = false;
+               success = false;
             }
-            if (result) {
+            if (success) {
                mapping_ = Mapping.loadMapping(core_, dev_, settings_);
             }
             JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
-                       + (!result ? "finished." : "canceled."));
+                       + (success ? "finished." : "canceled."));
             calibrateButton_.setText("Calibrate");
             calibrator_ = null;
          }
