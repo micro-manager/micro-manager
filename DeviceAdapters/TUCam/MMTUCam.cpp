@@ -238,7 +238,7 @@ CMMTUCam::~CMMTUCam()
 		m_hThdTempEvt = NULL;
 	}
 
-    StopCapture();
+    StopSequenceAcquisition();
     UninitTUCamApi();
 
     delete thd_;   
@@ -1031,7 +1031,7 @@ int CMMTUCam::Shutdown()
         m_hThdTempEvt = NULL;
     }
 
-    StopCapture();
+    StopSequenceAcquisition();
 
     UninitTUCamApi();
     initialized_ = false;
@@ -1075,10 +1075,7 @@ int CMMTUCam::SnapImage()
     MM::MMTime s0(0,0);
     if( s0 < startTime )
     {
-        while (exp > (GetCurrentMMTime() - startTime).getMsec())
-        {
-            CDeviceUtils::SleepMs(1);
-        }		
+       CDeviceUtils::SleepMs((long) exp);
     }
     else
     {
@@ -1089,10 +1086,12 @@ int CMMTUCam::SnapImage()
     }
     readoutStartTime_ = GetCurrentMMTime();
 
+    
 	if (!bLive)
 	{
 		StopCapture();
 	}
+   
 
     return DEVICE_OK;
 }
@@ -1620,7 +1619,22 @@ int CMMTUCam::StopSequenceAcquisition()
 {
     OutputDebugString("[StopSequenceAcquisition]:Enter\n");
 
-    return StopCapture();
+     if (thd_->IsStopped())
+        return DEVICE_OK;
+
+    m_bLiving = false;
+
+    thd_->Stop(); 
+
+    TUCAM_Buf_AbortWait(m_opCam.hIdxTUCam);                 // If you called TUCAM_Buf_WaitForFrames()
+
+    thd_->wait();
+
+    TUCAM_Cap_Stop(m_opCam.hIdxTUCam);                      // Stop capture   
+    ReleaseBuffer();
+
+    return DEVICE_OK;
+
 /*
     if (!thd_->IsStopped()) 
     {
@@ -4738,16 +4752,9 @@ int CMMTUCam::ReleaseBuffer()
 
 int CMMTUCam::StopCapture()
 {
-    if (thd_->IsStopped())
-        return DEVICE_OK;
-
     m_bLiving = false;
 
-    thd_->Stop(); 
-
     TUCAM_Buf_AbortWait(m_opCam.hIdxTUCam);                 // If you called TUCAM_Buf_WaitForFrames()
-
-    thd_->wait();
 
     TUCAM_Cap_Stop(m_opCam.hIdxTUCam);                      // Stop capture   
     ReleaseBuffer();
