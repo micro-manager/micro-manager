@@ -608,12 +608,18 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * phototargeter.
     */
    public void runRois() {
-      Configuration originalConfig = prepareChannel();
-      boolean originalShutterState = prepareShutter();
-      dev_.runPolygons();
-      returnShutter(originalShutterState);
-      returnChannel(originalConfig);
-      recordPolygons();
+      boolean isGalvo = dev_ instanceof Galvo;
+      if (isGalvo) {
+         Configuration originalConfig = prepareChannel();
+         boolean originalShutterState = prepareShutter();
+         dev_.runPolygons();
+         returnShutter(originalShutterState);
+         returnChannel(originalConfig);
+         recordPolygons();
+      } else {
+         dev_.runPolygons();
+         recordPolygons();
+      }
    }
 
    // ## Attach/detach MDA
