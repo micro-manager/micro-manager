@@ -202,7 +202,7 @@ public abstract class ProjectorActions {
    public static void transformAndSetMask(Map<Polygon, AffineTransform> mapping, 
            ProjectionDevice dev, byte[] inputImage, int width, int height) {
       if (! (dev instanceof SLM) ) {
-         // how do we ler rge caller know
+         ReportingUtils.logError("ProjectorActions: ProjectionsDevice is not an SLM");
          return;
       }
       if (inputImage.length != width * height) {
@@ -215,13 +215,12 @@ public abstract class ProjectorActions {
       byte[] outputImage = new byte[slmWidth * slmHeight];
       for (int x = 0; x < width; x++) {
          for (int y = 0; y < height; y++) {
-            if (inputImage[x + y * width] > 0) {
+            if (inputImage[x + y * width] != 0) {
                Point2D.Double rp = transformPoint(mapping, new Point2D.Double(x, y));
                int xt = (int) rp.x;
                int yt = (int) rp.y;
                if (0 <= xt && xt < slmWidth && 0 <= yt && yt < slmHeight) {
-                  // TODO: is this the correct value??
-                  outputImage[xt + yt * slmHeight] = 127;
+                  outputImage[xt + yt * slmWidth] = -1;
                }
             }
          }
