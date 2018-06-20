@@ -30,6 +30,8 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.DatastoreFrozenException;
 import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Image;
+import org.micromanager.data.Pipeline;
+import org.micromanager.data.PipelineErrorException;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -42,6 +44,8 @@ public final class DefaultAlbum implements Album {
 
    private Datastore store_;
    private Integer curTime_ = null;
+   private Pipeline pipeline_;
+   private final Object pipelineLock_ = new Object();
 
    @Override
    public Datastore getDatastore() {
@@ -68,7 +72,9 @@ public final class DefaultAlbum implements Album {
       }
       if (mustCreateNew) {
          // Need to create a new album.
+         
          store_ = studio.data().createRAMDatastore();
+
          try {
             SummaryMetadata.Builder smb = studio.acquisitions().
                     generateSummaryMetadata().copyBuilder();
@@ -94,7 +100,28 @@ public final class DefaultAlbum implements Album {
       Coords newCoords = createAlbumCoords(image);
 
       try {
-         store_.putImage(image.copyAtCoords(newCoords));
+         synchronized (pipelineLock_) {
+            if (pipeline_ != null) {
+               pipeline_.halt();
+            }
+            // Renew the pipeline with every image to reflect changes made to 
+            // the pipeline in the mean time.
+            pipeline_ = studio.data().copyLivePipeline(store_, true);
+            try {
+               pipeline_.insertImage(image.copyAtCoords(newCoords));
+            } catch (DatastoreRewriteException e) {
+               // This should never happen, because we use an erasable
+               // Datastore.
+               studio.logs().showError(e,
+                       "Unable to insert image into pipeline; this should never happen.");
+            } catch (PipelineErrorException e) {
+               // Notify the user, and halt live.
+               studio.logs().showError(e,
+                       "An error occurred while processing images.");
+               pipeline_.clearExceptions();
+            }
+         }
+         // store_.putImage(image.copyAtCoords(newCoords));
       }
       catch (DatastoreFrozenException e) {
          ReportingUtils.showError(e, "Album datastore is locked.");
