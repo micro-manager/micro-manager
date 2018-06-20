@@ -27,6 +27,7 @@ package org.micromanager.projector.internal;
 
 // TODO: finish converting to Javadoc
 
+
 import com.google.common.eventbus.Subscribe;
 
 import ij.IJ;
@@ -39,13 +40,10 @@ import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.io.RoiEncoder;
-import ij.plugin.filter.GaussianBlur;
 import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
-import ij.process.ImageProcessor;
 
 import java.awt.AWTEvent;
-import java.awt.HeadlessException;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -66,38 +64,36 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
 import javax.swing.JOptionPane;
+
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultFormatter;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
-import mmcorej.TaggedImage;
 
 import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.Studio;
-import org.micromanager.PropertyMap;
-import org.micromanager.PropertyMaps;
+
+import org.micromanager.projector.internal.devices.SLM;
+import org.micromanager.projector.internal.devices.Galvo;
+import org.micromanager.projector.ProjectionDevice;
 
 // TODO should not depend on internal code.
-import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MMFrame;
-import org.micromanager.internal.utils.MathFunctions;
 import org.micromanager.internal.utils.ReportingUtils;
+import org.micromanager.projector.ProjectorActions;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -116,67 +112,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private Roi[] individualRois_ = {};
    private Map<Polygon, AffineTransform> mapping_ = null;
    private String targetingChannel_;
-   AtomicBoolean stopRequested_ = new AtomicBoolean(false);
-   AtomicBoolean isRunning_ = new AtomicBoolean(false);
    private MosaicSequencingFrame mosaicSequencingFrame_;
    private String targetingShutter_;
    private Boolean disposing_ = false;
+   private Calibrator calibrator_;
    
-   public final static String DELAY = "Delay";
-   
-   private final static String MAP_NR_ENTRIES = "NrEntries";
-   private final static String MAP_POLYGON_MAP = "polygonMap-";
-   private final static String MAP_AFFINE_TRANSFORM = "affineTransform-";
 
-   /**
-    * Simple utility methods for points
-    *
-    * Adds a point to an existing polygon.
-    */
-   private static void addVertex(Polygon polygon, Point p) {
-      polygon.addPoint(p.x, p.y);
-   }
-   
-   /**
-    * Returns the vertices of the given polygon as a series of points.
-    */
-   private static Point[] getVertices(Polygon polygon) {
-      Point vertices[] = new Point[polygon.npoints];
-      for (int i = 0; i < polygon.npoints; ++i) {
-         vertices[i] = new Point(polygon.xpoints[i], polygon.ypoints[i]);
-      }   
-      return vertices;
-   }
-   
-   /**
-    * Gets the vectorial mean of an array of Points.
-    */
-   private static Point2D.Double meanPosition2D(Point[] points) {
-      double xsum = 0;
-      double ysum = 0;
-      int n = points.length;
-      for (int i = 0; i < n; ++i) {
-         xsum += points[i].x;
-         ysum += points[i].y;
-      }
-      return new Point2D.Double(xsum/n, ysum/n);
-   }
 
-   /**
-    * Converts a Point with double values for x,y to a point
-    * with x and y rounded to the nearest integer.
-    */
-   private static Point toIntPoint(Point2D.Double pt) {
-      return new Point((int) (0.5 + pt.x), (int) (0.5 + pt.y));
-   }
-
-   /**
-    * Converts a Point with integer values to a Point with x and y doubles.
-    */
-   private static Point2D.Double toDoublePoint(Point pt) {
-      return new Point2D.Double(pt.x, pt.y);
-   }
-
+  
    // ## Methods for handling targeting channel and shutter
    
    /**
@@ -322,17 +265,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // ## Simple methods for device control.
      
-   /**
-    * Sets the exposure time for the phototargeting device.
-    * @param intervalUs  new exposure time in micros
-    */
-   public void setExposure(double intervalUs) {
-      long previousExposure = dev_.getExposure();
-      long newExposure = (long) intervalUs;
-      if (previousExposure != newExposure) {
-         dev_.setExposure(newExposure);
-      }
-   }
+   
    
    /** 
     * Turns the projection device on or off.
@@ -345,348 +278,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          dev_.turnOff();
       }
    }
-   
-   /**
-    * Illuminate a spot at position x,y.
-    */
-   private void displaySpot(double x, double y) {
-      if (x >= dev_.getXMinimum() && x < (dev_.getXRange() + dev_.getXMinimum())
-            && y >= dev_.getYMinimum() && y < (dev_.getYRange() + dev_.getYMinimum())) {
-         dev_.displaySpot(x, y);
-      }
-   }
-   
-   /**
-    * Illuminate a spot at the center of the Galvo/SLM range, for
-    * the exposure time.
-    */
-   void displayCenterSpot() {
-      double x = dev_.getXRange() / 2 + dev_.getXMinimum();
-      double y = dev_.getYRange() / 2 + dev_.getYMinimum();
-      dev_.displaySpot(x, y);
-   }
-   
-   // ## Generating, loading and saving calibration mappings
-   
-   /**
-    * Returns the key where we store the Calibration mapping.
-    * Each channel/camera combination is assigned a different node.
-    */
-   private String getCalibrationNode() {
-      if (dev_ != null && core_ != null) {
-         return "calibration" + dev_.getChannel() + core_.getCameraDevice();
-      }
-      return "";
-   }
-   
-   private String getCalibrationKey() {
-      if (dev_ != null) {
-         return getCalibrationNode() + "-" + dev_.getName();
-      }
-      return "";
-   }
-   
-   /**
-    * Load the mapping for the current calibration node. The mapping
-    * maps each polygon cell to an AffineTransform.
-    */
-   private Map<Polygon, AffineTransform> loadMapping() {
-      PropertyMap pMap = app_.profile().getSettings(this.getClass()).
-              getPropertyMap(getCalibrationKey(), null);
-      if (pMap != null) {
-         return mapFromPropertyMap(pMap);
-      }
       
-      return null;
-   }
-   
-   /**
-    * Restores mapping from a PropertyMap created by the function mapToPropertyMap
-    * @param pMap
-    * @return 
-    */
-   private Map<Polygon, AffineTransform> mapFromPropertyMap (PropertyMap pMap) {
-      int nrEntries = pMap.getInteger(MAP_NR_ENTRIES, 0);
-      Map<Polygon, AffineTransform> mapping = new HashMap<Polygon, AffineTransform>(nrEntries);
-      for (int i = 0; i < nrEntries; i++) {
-         if (pMap.containsPropertyMap(MAP_POLYGON_MAP + i)) {
-            PropertyMap polygonMap = pMap.getPropertyMap(MAP_POLYGON_MAP + i, null);
-            Polygon p = new Polygon();
-            int nrPolygonCorners = polygonMap.getInteger(MAP_NR_ENTRIES, 0);
-            for (int j=0; j < nrPolygonCorners; j++) {
-               p.addPoint(polygonMap.getInteger("x-" + j, 0), 
-                       polygonMap.getInteger("y-" + j, 0));
-            }
-            mapping.put(p, pMap.getAffineTransform(MAP_AFFINE_TRANSFORM + i, null));
-         }
-      }
-         
-      return mapping;
-   }
-
-   /**
-    * Save the mapping for the current calibration node. The mapping
-    * maps each polygon cell to an AffineTransform.
-    */
-   // TODO: debug and test this code!
-   private void saveMapping(HashMap<Polygon, AffineTransform> mapping) {
-      app_.profile().getSettings(this.getClass()).putPropertyMap(getCalibrationKey(),
-               mapToPropertyMap(mapping));
-   }
-   
-   /**
-    * Builds a Property Map representing the input 
-    * @param mapping Map<Polygon, AffineTransform>
-    * @return Propertymap, structured as:
-    *   - Integer - nrEntries
-    *   - entries with keys:
-    *       polygonMap-i  - Contains a PropertyMap encoding Polygon
-    *       affineTransform-i - Contained affineTransform belonging to this Polygon
-    * 
-    *    Polygon PropertyMaps are structured as:
-    *       - Integer - nrEntries
-    *       - x-i - x position of point #i
-    *       - y-i - y position of point #i
-    */
-   private PropertyMap mapToPropertyMap(Map<Polygon, AffineTransform> mapping) {
-      PropertyMap.Builder pMapBuilder = PropertyMaps.builder();
-      pMapBuilder.putInteger(MAP_NR_ENTRIES, mapping.size());
-      
-      int counter = 0;
-      for (Polygon key : mapping.keySet()) {
-         PropertyMap.Builder polygonMapBuilder = PropertyMaps.builder();
-         polygonMapBuilder.putInteger(MAP_NR_ENTRIES, key.npoints);
-         for (int i = 0; i < key.npoints; i++) {
-            polygonMapBuilder.putInteger("x-" + i, key.xpoints[i]);
-            polygonMapBuilder.putInteger("y-" + i, key.ypoints[i]);
-         }
-         pMapBuilder.putPropertyMap(MAP_POLYGON_MAP + counter, polygonMapBuilder.build());
-         pMapBuilder.putAffineTransform(MAP_AFFINE_TRANSFORM + counter, mapping.get(key));
-         counter++;
-      }
-      
-      return pMapBuilder.build();
-   }
-   
-   // ## Methods for generating a calibration mapping.
-   
-   // Find the brightest spot in an ImageProcessor. The image is first blurred
-   // and then the pixel with maximum intensity is returned.
-   private static Point findPeak(ImageProcessor proc) {
-      ImageProcessor blurImage = proc.duplicate();
-      blurImage.setRoi((Roi) null);
-      GaussianBlur blur = new GaussianBlur();
-      blur.blurGaussian(blurImage, 10, 10, 0.01);
-      //showProcessor("findPeak",proc);
-      Point x = ImageUtils.findMaxPixel(blurImage);
-      x.translate(1, 1);
-      return x;
-   }
-   
-   /**
-    * Display a spot using the projection device, and return its current
-    * location on the camera.  Does not do sub-pixel localization, but could
-    * (just would change its return type, most other code would be OK with this)
-   */
-   private Point measureSpotOnCamera(Point2D.Double projectionPoint) {
-      if (stopRequested_.get()) {
-         return null;
-      }
-      try {
-         dev_.turnOff();
-         // This sleep was likely inserted by Arthur to make the code work with 
-         // the Andor Mosaic.  It is not needed for the GenericSLM, and 
-         // also not for several other devices. We could have user-input for
-         // this and two other sleeps in this function, however, that will make
-         // things quite confusing for the user.  For now, have a single delay 
-         // field and use it in multiple locations where a sleep is warranted
-         // for one reason or another.
-         int delayMs = Integer.parseInt(delayField_.getText());
-         Thread.sleep(delayMs);
-         core_.snapImage();
-         TaggedImage image = core_.getTaggedImage();
-         ImageProcessor proc1 = ImageUtils.makeMonochromeProcessor(image);
-         // JonD: should use the exposure that the user has set to avoid hardcoding a value;
-         // if the user wants a different exposure time for calibration than for use it's easy to specify
-         // => commenting out next two lines
-         // long originalExposure = dev_.getExposure();
-         // dev_.setExposure(500000);
-         displaySpot(projectionPoint.x, projectionPoint.y);
-         // NS: Timing between displaySpot and snapImage is critical
-         // we have no idea how fast the device will respond
-         // if we add "dev_.waitForDevice(), then the RAPP UGA-40 will already have ended
-         // its exposure before returning control
-         // For now, wait for a user specified delay
-         Thread.sleep(delayMs);
-         core_.snapImage();
-         // JonD: added line below to short-circuit exposure time
-         dev_.turnOff();
-         // NS: just make sure to wait until the spot is no longer displayed
-         // JonD: time to wait is simply the exposure time
-         // JonD: no longer needed now that we turn the device off after taking our image
-         // Thread.sleep((int) (dev_.getExposure()/1000) - delayMs);
-         // JonD: see earlier comment => commenting out next line
-         // dev_.setExposure(originalExposure);
-         TaggedImage taggedImage2 = core_.getTaggedImage();
-         ImageProcessor proc2 = ImageUtils.makeMonochromeProcessor(taggedImage2);
-         app_.live().displayImage(app_.data().convertTaggedImage(taggedImage2));
-         ImageProcessor diffImage = ImageUtils.subtractImageProcessors(proc2.convertToFloatProcessor(), proc1.convertToFloatProcessor());
-         Point maxPt = findPeak(diffImage);
-         IJ.getImage().setRoi(new PointRoi(maxPt.x, maxPt.y));
-         // NS: what is this second sleep good for????
-         Thread.sleep(delayMs);
-         return maxPt;
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-         return null;
-      }
-   }
-
-   /**
-    * Illuminate a spot at ptSLM, measure its location on the camera, and
-    * add the resulting point pair to the spotMap.
-    */
-   private void measureAndAddToSpotMap(Map<Point2D.Double, Point2D.Double> spotMap,
-         Point2D.Double ptSLM) {
-      Point ptCam = measureSpotOnCamera(ptSLM);
-      Point2D.Double ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
-      spotMap.put(ptCamDouble, ptSLM);
-   }
-
-   /**
-    * Illuminates and images five control points near the center,
-    * and return an affine transform mapping from image coordinates
-    * to phototargeter coordinates.
-    */
-   private AffineTransform generateLinearMapping() {
-      double centerX = dev_.getXRange() / 2 + dev_.getXMinimum();
-      double centerY = dev_.getYRange() / 2 + dev_.getYMinimum();
-      double spacing = Math.min(dev_.getXRange(), dev_.getYRange()) / 30;  // user 3% of galvo/SLM range
-      Map<Point2D.Double, Point2D.Double> spotMap
-            = new HashMap<Point2D.Double, Point2D.Double>();
-
-      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY));
-      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY + spacing));
-      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX + spacing, centerY));
-      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX, centerY - spacing));
-      measureAndAddToSpotMap(spotMap, new Point2D.Double(centerX - spacing, centerY));
-      if (stopRequested_.get()) {
-         return null;
-      }
-      try {
-         // require that the RMS value between the mapped points and the measured points be less than 5% of image size
-         final long imageSize = Math.min(core_.getImageWidth(), core_.getImageHeight()); 
-         return MathFunctions.generateAffineTransformFromPointPairs(spotMap, imageSize*0.05, Double.MAX_VALUE);
-      } catch (Exception e) {
-         throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
-      }
-   }
-
-   /**
-    * Generate a nonlinear calibration mapping for the current device settings.
-    * A rectangular lattice of points is illuminated one-by-one on the
-    * projection device, and locations in camera pixels of corresponding
-    * spots on the camera image are recorded. For each rectangular
-    * cell in the grid, we take the four point mappings (camera to projector)
-    * and generate a local AffineTransform using linear least squares.
-    * Cells with suspect measured corner positions are discarded.
-    * A mapping of cell polygon to AffineTransform is generated. 
-    */
-   private Map<Polygon, AffineTransform> generateNonlinearMapping() {
-      
-      // get the affine transform near the center spot
-      final AffineTransform firstApproxAffine = generateLinearMapping();
-      
-      // then use this single transform to estimate what SLM coordinates 
-      // correspond to the image's corner positions 
-      final Point2D.Double camCorner1 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double(0, 0), null);
-      final Point2D.Double camCorner2 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double((int) core_.getImageWidth(), (int) core_.getImageHeight()), null);
-      final Point2D.Double camCorner3 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double(0, (int) core_.getImageHeight()), null);
-      final Point2D.Double camCorner4 = (Point2D.Double) firstApproxAffine.transform(new Point2D.Double((int) core_.getImageWidth(), 0), null);
-
-      // figure out camera's bounds in SLM coordinates
-      // min/max because we don't know the relative orientation of the camera and SLM
-      // do some extra checking in case camera/SLM aren't at exactly 90 degrees from each other, 
-      // but still better that they are at 0, 90, 180, or 270 degrees from each other
-      // TODO can create grid along camera location instead of SLM's if camera is the limiting factor; this will make arbitrary rotation possible
-      final double camLeft = Math.min(Math.min(Math.min(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
-      final double camRight = Math.max(Math.max(Math.max(camCorner1.x, camCorner2.x), camCorner3.x), camCorner4.x);
-      final double camTop = Math.min(Math.min(Math.min(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
-      final double camBottom = Math.max(Math.max(Math.max(camCorner1.y, camCorner2.y), camCorner3.y), camCorner4.y);
-      
-      // these are the SLM's bounds
-      final double slmLeft = dev_.getXMinimum();
-      final double slmRight = dev_.getXRange() + dev_.getXMinimum();
-      final double slmTop = dev_.getYMinimum();
-      final double slmBottom = dev_.getYRange() + dev_.getYMinimum();
-      
-      // figure out the "overlap region" where both the camera and SLM
-      // can "see", expressed in SLM coordinates
-      final double left = Math.max(camLeft, slmLeft);
-      final double right = Math.min(camRight, slmRight);
-      final double top = Math.max(camTop, slmTop);
-      final double bottom = Math.min(camBottom, slmBottom);
-      final double width = right - left;
-      final double height = bottom - top;
-
-      // compute a grid of SLM points inside the "overlap region"
-      // nGrid is how many polygons in both X and Y
-      // require (nGrid + 1)^2 spot measurements to get nGrid^2 squares
-      // TODO allow user to change nGrid
-      final int nGrid = 7;
-      Point2D.Double slmPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
-      Point2D.Double camPoint[][] = new Point2D.Double[1 + nGrid][1 + nGrid];
-
-      // tabulate the camera spot at each of SLM grid points
-      for (int i = 0; i <= nGrid; ++i) {
-         for (int j = 0; j <= nGrid; ++j) {
-            double xoffset = ((i + 0.5) * width / (nGrid + 1.0));
-            double yoffset = ((j + 0.5) * height / (nGrid + 1.0));
-            slmPoint[i][j] = new Point2D.Double(left + xoffset, top + yoffset);
-            Point spot = measureSpotOnCamera(slmPoint[i][j]);
-            if (spot != null) {
-               camPoint[i][j] = toDoublePoint(spot);
-            }
-         }
-      }
-
-      if (stopRequested_.get()) {
-         return null;
-      }
-
-      // now make a grid of (square) polygons (in camera's coordinate system)
-      // and generate an affine transform for each of these square regions
-      Map<Polygon, AffineTransform> bigMap
-            = new HashMap<Polygon, AffineTransform>();
-      for (int i = 0; i <= nGrid - 1; ++i) {
-         for (int j = 0; j <= nGrid - 1; ++j) {
-            Polygon poly = new Polygon();
-            addVertex(poly, toIntPoint(camPoint[i][j]));
-            addVertex(poly, toIntPoint(camPoint[i][j + 1]));
-            addVertex(poly, toIntPoint(camPoint[i + 1][j + 1]));
-            addVertex(poly, toIntPoint(camPoint[i + 1][j]));
-
-            Map<Point2D.Double, Point2D.Double> map
-                  = new HashMap<Point2D.Double, Point2D.Double>();
-            map.put(camPoint[i][j], slmPoint[i][j]);
-            map.put(camPoint[i][j + 1], slmPoint[i][j + 1]);
-            map.put(camPoint[i + 1][j], slmPoint[i + 1][j]);
-            map.put(camPoint[i + 1][j + 1], slmPoint[i + 1][j + 1]);
-            double srcDX = Math.abs((camPoint[i+1][j].x - camPoint[i][j].x))/4; 
-            double srcDY = Math.abs((camPoint[i][j+1].y - camPoint[i][j].y))/4;
-            double srcTol = Math.max(srcDX, srcDY);
-
-            try {
-               AffineTransform transform = MathFunctions.generateAffineTransformFromPointPairs(map, srcTol, Double.MAX_VALUE);
-               bigMap.put(poly, transform);
-            } catch (Exception e) {
-               ReportingUtils.logError("Bad cell in mapping.");
-            }
-         }
-      }
-      return bigMap;
-   }
-
    /**
     * Runs the full calibration. First
     * generates a linear mapping (a first approximation) and then generates
@@ -694,54 +286,31 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * the mapping to Java Preferences.
     */
    public void runCalibration() {
-      app_.live().setSuspended(true);
-      settings_.putString(DELAY, delayField_.getText());
-      if (!isRunning_.get()) {
-         stopRequested_.set(false);
-         Thread th = new Thread("Projector calibration thread") {
-            @Override
-            public void run() {
-               try {
-                  isRunning_.set(true);
-                  Roi originalROI = IJ.getImage().getRoi();
-                  
-                  // JonD: don't understand why we do this
-                  // app_.live().snap(true);
-
-                  // do the heavy lifting of generating the local affine transform map
-                  HashMap<Polygon, AffineTransform> mapping = 
-                        (HashMap<Polygon, AffineTransform>) generateNonlinearMapping();
-                  
-                  dev_.turnOff();
-                  try {
-                     Thread.sleep(500);
-                  } catch (InterruptedException ex) {
-                     ReportingUtils.logError(ex);
-                  }
-                  
-                  // save local affine transform map to preferences
-                  // TODO allow different mappings to be stored for different channels (e.g. objective magnification)
-                  if (!stopRequested_.get()) {
-                     saveMapping(mapping);
-                  }
-                  JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
-                        + (!stopRequested_.get() ? "finished." : "canceled."));
-                  mapping_ = loadMapping();
-                  IJ.getImage().setRoi(originalROI);
-               } catch (HeadlessException e) {
-                  ReportingUtils.showError(e);
-               } catch (RuntimeException e) {
-                  ReportingUtils.showError(e);
-               } finally {
-                  app_.live().setSuspended(false);
-                  isRunning_.set(false);
-                  stopRequested_.set(false);
-                  calibrateButton_.setText("Calibrate");
-               }
-            }
-         };
-         th.start();
+      settings_.putString(Terms.DELAY, delayField_.getText());
+      if (calibrator_ != null && calibrator_.isCalibrating()) {
+         return;
       }
+      calibrator_ = new Calibrator(app_, dev_, settings_);
+      Future<Boolean> runCalibration = calibrator_.runCalibration();
+      new Thread() {
+         @Override
+         public void run() {
+            Boolean success;
+            try {
+                success = runCalibration.get();
+            } catch (InterruptedException | ExecutionException ex) {
+               success = false;
+            }
+            if (success) {
+               mapping_ = Mapping.loadMapping(core_, dev_, settings_);
+            }
+            JOptionPane.showMessageDialog(IJ.getImage().getWindow(), "Calibration "
+                       + (success ? "finished." : "canceled."));
+            calibrateButton_.setText("Calibrate");
+            calibrator_ = null;
+         }
+      }.start();
+
    }
    
    /**
@@ -749,46 +318,21 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * @return true if calibration is running
     */
    public boolean isCalibrating() {
-      return isRunning_.get();
+      if (calibrator_ == null) {
+         return false;
+      }
+      return calibrator_.isCalibrating();
    }
    
    /**
     * Requests an interruption to calibration while it is running.
     */
    public void stopCalibration() {
-      stopRequested_.set(true);
+      if (calibrator_ != null) {
+         calibrator_.requestStop();
+      }
    }
-   
-   // ## Transforming points according to a nonlinear calibration mapping.
      
-   // Transform a point, pt, given the mapping, which is a Map of polygon cells
-   // to AffineTransforms.
-   private static Point2D.Double transformPoint(Map<Polygon, AffineTransform> mapping, Point2D.Double pt) {
-      Set<Polygon> set = mapping.keySet();
-      // First find out if the given point is inside a cell, and if so,
-      // transform it with that cell's AffineTransform.
-      for (Polygon poly : set) {
-         if (poly.contains(pt)) {
-            return (Point2D.Double) mapping.get(poly).transform(pt, null);
-         }
-      }
-      // The point isn't inside any cell, so search for the closest cell
-      // and use the AffineTransform from that.
-      double minDistance = Double.MAX_VALUE;
-      Polygon bestPoly = null;
-      for (Polygon poly : set) {
-         double distance = meanPosition2D(getVertices(poly)).distance(pt.x, pt.y);
-         if (minDistance > distance) {
-            bestPoly = poly;
-            minDistance = distance;
-         }
-      }
-      if (bestPoly == null) {
-         throw new RuntimeException("Unable to map point to device.");
-      }
-      return (Point2D.Double) mapping.get(bestPoly).transform(pt, null);
-   }
-   
       
    // Returns true if a particular image is mirrored.
    private static boolean isImageMirrored(/*ImagePlus imgp */) {
@@ -818,13 +362,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
-   // Transform and mirror (if necessary) a point on an image to 
-   // a point on phototargeter coordinates.
-   private static Point2D.Double transformAndMirrorPoint(Map<Polygon, AffineTransform> mapping, 
-           Point2D.Double pt) {
-      //Point2D.Double pOffscreen = mirrorIfNecessary(pt, imgp);
-      return transformPoint(mapping, pt);
-   }
+
 
    // ## Point and shoot
    
@@ -839,25 +377,26 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                Point p = e.getPoint();
                ImageCanvas canvas = (ImageCanvas) e.getSource();
                Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               final Point2D.Double devP = transformAndMirrorPoint(loadMapping(), 
+               final Point2D.Double devP = ProjectorActions.transformPoint(
+                       Mapping.loadMapping(core_, dev_, settings_),
                        new Point2D.Double(pOffscreen.x, pOffscreen.y));
                final Configuration originalConfig = prepareChannel();
                final boolean originalShutterState = prepareShutter();
-               makeRunnableAsync(
+               new Thread(
                        new Runnable() {
-                          @Override
-                          public void run() {
-                             try {
-                                if (devP != null) {
-                                   displaySpot(devP.x, devP.y);
-                                }
-                                returnShutter(originalShutterState);
-                                returnChannel(originalConfig);
-                             } catch (Exception e) {
-                                ReportingUtils.showError(e);
-                             }
-                          }
-                       }).run();
+                  @Override
+                  public void run() {
+                     try {
+                        if (devP != null) {
+                           ProjectorActions.displaySpot(dev_, devP.x, devP.y);
+                        }
+                        returnShutter(originalShutterState);
+                        returnChannel(originalConfig);
+                     } catch (Exception e) {
+                        ReportingUtils.showError(e);
+                     }
+                  }
+               }).start();
 
             }
          }
@@ -898,71 +437,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // ## Manipulating ROIs
    
-   // Convert an OvalRoi to an EllipseRoi.
-   private static Roi asEllipseRoi(OvalRoi roi) {
-      Rectangle bounds = roi.getBounds();
-      double aspectRatio = bounds.width / (double) bounds.height;
-      if (aspectRatio < 1) {
-         return new EllipseRoi(bounds.x + bounds.width / 2,
-               bounds.y,
-               bounds.x + bounds.width / 2,
-               bounds.y + bounds.height,
-               aspectRatio);
-      } else {
-         return new EllipseRoi(bounds.x,
-               bounds.y + bounds.height / 2,
-               bounds.x + bounds.width,
-               bounds.y + bounds.height / 2,
-               1 / aspectRatio);
-      }
-   }
-   
-   // Converts an ROI to a Polygon.
-   private static Polygon asPolygon(Roi roi) {
-      if ((roi.getType() == Roi.POINT)
-               || (roi.getType() == Roi.FREEROI)
-               || (roi.getType() == Roi.POLYGON)
-            || (roi.getType() == Roi.RECTANGLE)) {
-         return roi.getPolygon();
-      } else {
-         throw new RuntimeException("Can't use this type of ROI.");
-      }
-   }
-   
-   // We can't handle Ellipse Rois and compounds PointRois directly.
-   private static Roi[] homogenizeROIs(Roi[] rois) {
-      List<Roi> roiList = new ArrayList<Roi>();
-      for (Roi roi : rois) {
-         switch (roi.getType()) {
-            case Roi.POINT:
-               Polygon poly = ((PointRoi) roi).getPolygon();
-               for (int i = 0; i < poly.npoints; ++i) {
-                  roiList.add(new PointRoi(
-                          poly.xpoints[i],
-                          poly.ypoints[i]));
-               }  break;
-            case Roi.OVAL:
-               roiList.add(asEllipseRoi((OvalRoi) roi));
-               break;
-            default:
-               roiList.add(roi);
-               break;
-         }
-      }
-      return roiList.toArray(new Roi[roiList.size()]);
-   }
-   
-   // Coverts an array of ImageJ Rois to an array of Polygons.
-   // Handles EllipseRois and compound Point ROIs.
-   public static Polygon[] roisAsPolygons(Roi[] rois) {
-      Roi[] cleanROIs = homogenizeROIs(rois);
-      List<Polygon> roiPolygons = new ArrayList<Polygon>();
-      for (Roi roi : cleanROIs) {
-         roiPolygons.add(asPolygon(roi));
-      }
-      return roiPolygons.toArray(new Polygon[0]);
-   }
-   
+  
+  
    /**
     * Gets the label of an ROI with the given index n. Borrowed from ImageJ.
     */
@@ -1057,46 +533,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return rois;
    }
    
-   /**
-    * Transform the Roi polygons with the given nonlinear mapping.
-    */
-   private static List<FloatPolygon> transformRoiPolygons( 
-           Polygon[] roiPolygons, Map<Polygon, AffineTransform> mapping) {
-      ArrayList<FloatPolygon> transformedROIs = new ArrayList<FloatPolygon>();
-      for (Polygon roiPolygon : roiPolygons) {
-         FloatPolygon targeterPolygon = new FloatPolygon();
-         try {
-            Point2D targeterPoint;
-            for (int i = 0; i < roiPolygon.npoints; ++i) {
-               Point2D.Double imagePoint = new Point2D.Double(
-                       roiPolygon.xpoints[i], roiPolygon.ypoints[i]);
-               targeterPoint = transformAndMirrorPoint(mapping, imagePoint);
-               if (targeterPoint == null) {
-                  throw new Exception();
-               }
-               targeterPolygon.addPoint( (float) targeterPoint.getX(), 
-                       (float) targeterPoint.getY() );
-            }
-            transformedROIs.add(targeterPolygon);
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex);
-            break;
-         }
-      }
-      return transformedROIs;
-   }
+  
        
    // ## Saving, sending, and running ROIs.
      
-   /**
-    * Returns ROIs, transformed by the current mapping.
-    * @param rois Array of ImageJ Rois to be converted
-    * @return list of Rois converted into Polygons
-    * 
-    */
-   public List<FloatPolygon> transformROIs(Roi[] rois) {
-      return transformRoiPolygons(roisAsPolygons(rois), mapping_);
-   }
+
    
    // Save ROIs in the acquisition path, if it exists.
    private void recordPolygons() {
@@ -1135,7 +576,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (rois.length == 0) {
          throw new RuntimeException("Please first draw the desired phototargeting ROIs.");
       }
-      List<FloatPolygon> transformedRois = transformROIs(rois);
+      List<FloatPolygon> transformedRois = ProjectorActions.transformROIs(
+              rois, mapping_);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
@@ -1155,7 +597,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
       ImagePlus imgp = window.getImagePlus();
       */
-      List<FloatPolygon> transformedRois = transformROIs(rois);
+      List<FloatPolygon> transformedRois = ProjectorActions.transformROIs(
+              rois, mapping_);
       dev_.loadRois(transformedRois);
       individualRois_ = rois;
    }
@@ -1165,12 +608,18 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * phototargeter.
     */
    public void runRois() {
-      Configuration originalConfig = prepareChannel();
-      boolean originalShutterState = prepareShutter();
-      dev_.runPolygons();
-      returnShutter(originalShutterState);
-      returnChannel(originalConfig);
-      recordPolygons();
+      boolean isGalvo = dev_ instanceof Galvo;
+      if (isGalvo) {
+         Configuration originalConfig = prepareChannel();
+         boolean originalShutterState = prepareShutter();
+         dev_.runPolygons();
+         returnShutter(originalShutterState);
+         returnChannel(originalConfig);
+         recordPolygons();
+      } else {
+         dev_.runPolygons();
+         recordPolygons();
+      }
    }
 
    // ## Attach/detach MDA
@@ -1246,36 +695,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       };
    }
    
-   /**
-    * Converts a Runnable to one that runs asynchronously.
-    * @param runnable synchronous Runnable
-    * @return asynchronously running Runnable
-    */
-   public static Runnable makeRunnableAsync(final Runnable runnable) { 
-      return new Runnable() {
-         @Override
-         public void run() {
-            new Thread() {
-               @Override
-               public void run() {
-                  runnable.run();            
-               }
-            }.start();
-         }
-      };
-   }  
-   
-   // Sleep until the designated clock time.
-   private static void sleepUntil(long clockTimeMillis) {
-      long delta = clockTimeMillis - System.currentTimeMillis();
-      if (delta > 0) {
-         try {
-            Thread.sleep(delta);
-         } catch (InterruptedException ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
-   }
+
    
    /**
     * Runs runnable starting at firstTimeMs after this function is called, and
@@ -1296,7 +716,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                final long startTime = System.currentTimeMillis() + firstTimeMs;
                int reps = 0;
                while (shouldContinue.call()) {
-                  sleepUntil(startTime + reps * intervalTimeMs);
+                  Utils.sleepUntil(startTime + reps * intervalTimeMs);
                   runnable.run();
                   ++reps;
                   if (!rep) {
@@ -1384,7 +804,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                }
             };
             attachRoisToMDA(1, false, 0,
-                  makeRunnableAsync(
+                  new Thread(
                         runAtIntervals((long) (1000. * getSpinnerDoubleValue(startTimeSpinner)),
                         repeatCheckBoxTime.isSelected(),
                         (long) (1000 * getSpinnerDoubleValue(repeatEveryIntervalSpinner)),
@@ -1398,7 +818,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     
    // Set the exposure to whatever value is currently in the Exposure field.
    private void updateExposure() {
-       setExposure(1000 * Double.parseDouble(pointAndShootIntervalSpinner.getValue().toString()));
+       ProjectorActions.setExposure(dev_,
+               1000 * Double.parseDouble(
+                       pointAndShootIntervalSpinner.getValue().toString()));
    }
    
    // Method called if the phototargeting device has turned on or off.
@@ -1434,18 +856,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       app_ = app;
       core_ = app.getCMMCore();
       settings_ = app_.profile().getSettings(this.getClass());
-      String slm = core_.getSLMDevice();
-      String galvo = core_.getGalvoDevice();
-
-      if (slm.length() > 0) {
-         dev_ = new SLM(app_, core_, 20);
-      } else if (galvo.length() > 0) {
-         dev_ = new Galvo(app_, core_);
-      } else {
-         dev_ = null;
-      }
-     
-      mapping_ = loadMapping();
+      dev_ = ProjectorActions.getProjectionDevice(app_);     
+      mapping_ = Mapping.loadMapping(core, dev_, settings_);
       pointAndShootMouseListener = createPointAndShootMouseListenerInstance();
 
       Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
@@ -1495,7 +907,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          }
       });
       
-      delayField_.setText(settings_.getString( DELAY, "0"));
+      delayField_.setText(settings_.getString( Terms.DELAY, "0"));
 
       super.loadAndRestorePosition(500, 300);
       updateROISettings();
@@ -1529,6 +941,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    public ProjectionDevice getDevice() {
       return dev_;
+   }
+   
+   public Map<Polygon, AffineTransform> getMapping() {
+      return mapping_;
    }
    
    // ## Generated code
@@ -2133,14 +1549,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }//GEN-LAST:event_roiLoopSpinnerStateChanged
 
    private void runROIsNowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runROIsNowButtonActionPerformed
-      makeRunnableAsync(
+      new Thread(
               new Runnable() {
-                 @Override
-                 public void run() {
-                    phototargetROIsRunnable("Asynchronous phototargeting of ROIs").run();
-                 }
-              }
-      ).run();
+         @Override
+         public void run() {
+            phototargetROIsRunnable("Asynchronous phototargeting of ROIs").run();
+         }
+      }
+      ).start();
    }//GEN-LAST:event_runROIsNowButtonActionPerformed
 
    private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
@@ -2155,7 +1571,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    private void centerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerButtonActionPerformed
       offButtonActionPerformed(null);
-      displayCenterSpot();
+      ProjectorActions.displayCenterSpot(dev_);
    }//GEN-LAST:event_centerButtonActionPerformed
 
    private void pointAndShootOffButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOffButtonActionPerformed

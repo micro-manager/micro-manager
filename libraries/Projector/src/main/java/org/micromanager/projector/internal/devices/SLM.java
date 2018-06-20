@@ -14,8 +14,9 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.projector.internal;
+package org.micromanager.projector.internal.devices;
 
+import org.micromanager.projector.ProjectionDevice;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.process.ByteProcessor;
@@ -27,6 +28,8 @@ import java.util.HashSet;
 import java.util.List;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
+import org.micromanager.projector.internal.OnStateListener;
+import org.micromanager.projector.internal.Utils;
 
 public class SLM implements ProjectionDevice {
    private final String slm_;
@@ -137,8 +140,8 @@ public class SLM implements ProjectionDevice {
       }
    }
    
-       @Override
-    public void showCheckerBoard(int x, int y) {
+   @Override
+   public void showCheckerBoard(int x, int y) {
       ImageProcessor proc = new ByteProcessor(slmWidth_, slmHeight_);
       proc.setColor(Color.black);
       proc.fill();
@@ -155,10 +158,20 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
          mmc_.displaySLMImage(slm_);
-      } catch (Throwable e) {
+      } catch (Exception e) {
          app_.logs().showError("SLM not connecting properly.");
       }
-    }
+   }
+   
+   public void displaySLMImage (byte[] image) {
+      try {
+      mmc_.setSLMImage(slm_, image);
+      mmc_.displaySLMImage(slm_);
+      } catch (Exception e) {
+         app_.logs().showError("SLM error");
+      }
+   }
+   
 
    // Fills a circular spot in an ImageJ ImageProcessor with diatemer dia.
    private static void fillSpot(ImageProcessor proc, int x, int y, double dia) {
@@ -175,7 +188,7 @@ public class SLM implements ProjectionDevice {
       try {
          mmc_.setSLMImage(slm_, (byte[]) proc.getPixels());
          mmc_.displaySLMImage(slm_);
-      } catch (Throwable e) {
+      } catch (Exception e) {
          app_.logs().showError("SLM not connecting properly.");
       }
    }

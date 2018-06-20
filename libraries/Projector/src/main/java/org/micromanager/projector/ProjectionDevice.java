@@ -14,10 +14,11 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
-package org.micromanager.projector.internal;
+package org.micromanager.projector;
 
 import ij.process.FloatPolygon;
 import java.util.List;
+import org.micromanager.projector.internal.OnStateListener;
 
 public interface ProjectionDevice {
    // Properties of device.
