@@ -301,7 +301,15 @@ public class P2DFitter {
       
       return first * second * third;
    }
-   
+   /**
+    * Used when r > sigma
+    * 
+    * Sqrt( r / (2Pi * sigma * mu)) * e pow(- (r - mu)^2 / (2 * sigma^2) )
+    * @param r
+    * @param mu
+    * @param sigma
+    * @return 
+    */
    public static double p2dApproximation(double r, double mu, double sigma) {
       
       double result = Math.sqrt(r / (2 * Math.PI * sigma * mu)) * 
