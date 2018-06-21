@@ -106,6 +106,10 @@ public final class DefaultAlbum implements Album {
             }
             // Renew the pipeline with every image to reflect changes made to 
             // the pipeline in the mean time.
+            // This approach runs the risk that the new pipeline changes the image
+            // size, which is bad and results in uncaught, unreported exceptions
+            // TODO: at the very least report problems with image size to the user
+            // even better: 
             pipeline_ = studio.data().copyLivePipeline(store_, true);
             try {
                pipeline_.insertImage(image.copyAtCoords(newCoords));
