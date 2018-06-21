@@ -14,10 +14,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import org.micromanager.data.Coords;
 import org.micromanager.display.DisplayPositionChangedEvent;
+import org.micromanager.display.internal.event.DataViewerWillCloseEvent;
 import org.micromanager.display.internal.link.AbstractLinkAnchor;
 import org.micromanager.display.internal.link.LinkAnchor;
 import org.micromanager.display.internal.link.LinkManager;
-import org.micromanager.display.internal.link.internal.DefaultLinkManager;
 
 /**
  *
@@ -27,6 +27,7 @@ class AxisLinker {
    private final DisplayController viewer_;
    private final String axis_;
    private final AxisLinkAnchor anchor_;
+   private final LinkManager linkManager_;
 
    // TODO This anchor can be generalized to DataViewer
    private class AxisLinkAnchor extends AbstractLinkAnchor<Integer> {
@@ -79,6 +80,7 @@ class AxisLinker {
    private AxisLinker(LinkManager linkManager, DisplayController viewer,
          String axis)
    {
+      linkManager_ = linkManager;
       viewer_ = viewer;
       axis_ = axis;
       anchor_ = new AxisLinkAnchor();
@@ -125,6 +127,14 @@ class AxisLinker {
       Coords newPos = e.getDisplayPosition();
       if (oldPos.getIndex(axis_) != newPos.getIndex(axis_)) {
          anchor_.propagate(newPos.getIndex(axis_));
+      }
+   }
+   
+   @Subscribe
+   public void onEvent(DataViewerWillCloseEvent e) {
+      // this should always be the case, but better safe than sorry
+      if (e.getDataViewer().equals(viewer_)) {
+         linkManager_.unregisterAnchor(anchor_);
       }
    }
 }
