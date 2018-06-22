@@ -134,6 +134,7 @@ class AxisLinker {
    public void onEvent(DataViewerWillCloseEvent e) {
       // this should always be the case, but better safe than sorry
       if (e.getDataViewer().equals(viewer_)) {
+         anchor_.unlink();
          linkManager_.unregisterAnchor(anchor_);
       }
    }
