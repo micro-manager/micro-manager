@@ -1788,6 +1788,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
       // position based on user input. Also consider disabling scroll bars that
       // are being animated.
       Coords.CoordsBuilder builder = new DefaultCoords.Builder();
+      // work around general bug needing all 4 basic stages
+      // TODO: remove this dependence!!!
+      builder.channel(0).time(0).stagePosition(0).z(0); 
       for (String axis : panel.getAxes()) {
          builder.index(axis, panel.getAxisPosition(axis));
       }
