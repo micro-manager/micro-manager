@@ -104,7 +104,10 @@ final class DefaultLinkEndpoint implements LinkEndpoint {
 
    @Override
    public synchronized void unlink() {
-      linkage_.removeEndpoint(this);
+      if (isLinked()) {
+         linkage_.removeEndpoint(this);
+         linkage_ = null;
+      }
    }
 
    @Override
