@@ -47,10 +47,17 @@ RefreshWaiter::~RefreshWaiter()
 }
 
 
-void RefreshWaiter::WaitForVerticalBlank()
+int RefreshWaiter::WaitForVerticalBlank()
 {
    if (!directDraw_)
-      return;
+      return 1;
 
-   directDraw_->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, 0);
+   HRESULT result =  directDraw_->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, 0); 
+
+   if (result == DD_OK)
+   {
+      return 0;
+   }
+   return (int) result;
+
 }

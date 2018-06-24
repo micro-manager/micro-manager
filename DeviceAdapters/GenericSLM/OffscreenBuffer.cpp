@@ -129,9 +129,13 @@ void OffscreenBuffer::DrawImage(unsigned char* pixels, SLMColor color, bool inve
 }
 
 
-void OffscreenBuffer::BlitTo(HDC onscreenDC, DWORD op)
+DWORD OffscreenBuffer::BlitTo(HDC onscreenDC, DWORD op)
 {
-   ::BitBlt(onscreenDC, 0, 0, width_, height_, hDC_, 0, 0, op);
+   if (! ::BitBlt(onscreenDC, 0, 0, width_, height_, hDC_, 0, 0, op) ) 
+   {
+      return ::GetLastError();
+   }
+   return 0;
 }
 
 

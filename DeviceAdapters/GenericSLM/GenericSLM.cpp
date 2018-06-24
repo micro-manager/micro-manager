@@ -384,9 +384,14 @@ int GenericSLM::DisplayImage()
    HDC onscreenDC = windowThread_->GetDC();
    DWORD op = shouldBlitInverted_ ? NOTSRCCOPY : SRCCOPY;
 
-   refreshWaiter_.WaitForVerticalBlank();
-   offscreen->BlitTo(onscreenDC, op);
-   return DEVICE_OK;
+   int ret = refreshWaiter_.WaitForVerticalBlank();
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+   DWORD result = offscreen->BlitTo(onscreenDC, op);
+   // TODO use FormatMessage function to generate error string
+   return (int) result;
 }
 
 

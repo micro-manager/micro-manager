@@ -41,7 +41,7 @@ public:
    void FillWithColor(COLORREF color);
    void DrawImage(unsigned int* pixels); // RGBA
    void DrawImage(unsigned char* pixels, SLMColor color, bool invert); // Gray8
-   void BlitTo(HDC onscreenDC, DWORD op);
+   DWORD BlitTo(HDC onscreenDC, DWORD op);
 
 private:
    DWORD GetWidthBytes();

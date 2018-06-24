@@ -31,5 +31,5 @@ public:
    RefreshWaiter();
    ~RefreshWaiter();
 
-   void WaitForVerticalBlank();
+   int WaitForVerticalBlank();
 };
