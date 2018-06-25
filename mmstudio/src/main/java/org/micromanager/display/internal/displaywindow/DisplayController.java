@@ -804,21 +804,24 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       resetDisplayIntervalEstimate();
    }
 
-   public void setAxisAnimationLock(String state) {
+   public void setAxisAnimationLock(String axis, String state) {
       // TODO This is a string-based prototype
       AnimationController.NewPositionHandlingMode newMode;
-      if (state.equals("U")) {
-         newMode = AnimationController.NewPositionHandlingMode.JUMP_TO_AND_STAY;
+      switch (state) {
+         case "U":
+            newMode = AnimationController.NewPositionHandlingMode.JUMP_TO_AND_STAY;
+            break;
+         case "F":
+            newMode = AnimationController.NewPositionHandlingMode.FLASH_AND_SNAP_BACK;
+            break;
+         default:
+            newMode = AnimationController.NewPositionHandlingMode.IGNORE;
+            break;
       }
-      else if (state.equals("F")) {
-         newMode = AnimationController.NewPositionHandlingMode.FLASH_AND_SNAP_BACK;
-      }
-      else {
-         newMode = AnimationController.NewPositionHandlingMode.IGNORE;
-      }
-      animationController_.setNewPositionHandlingMode(newMode);
+      animationController_.setNewPositionHandlingMode(axis, newMode);
    }
 
+   
    //
    // Event handlers
    //
@@ -839,7 +842,17 @@ public final class DisplayController extends DisplayWindowAPIAdapter
       // any ongoing playback animation. Actual display of new images happens
       // upon receiving callbacks via the AnimationController.Listener
       // interface.
-      animationController_.newDataPosition(event.getImage().getCoords());
+      Coords currentlyDisplayedCoords = null;
+      if (displayedImages_ != null) {
+         int nrImages = displayedImages_.getRequest().getNumberOfImages();
+         if (nrImages > 0) {
+            // TODO: handle case where number of Images is > 
+            currentlyDisplayedCoords
+                    = displayedImages_.getRequest().getImage(0).getCoords();
+         }
+      }
+      animationController_.newDataPosition(currentlyDisplayedCoords, 
+              event.getImage().getCoords());
    }
 
 

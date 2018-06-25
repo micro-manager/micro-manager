@@ -13,6 +13,8 @@
 
 package org.micromanager.display.internal.animate;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -20,6 +22,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.event.EventListenerSupport;
+import org.micromanager.data.Coords;
 import org.micromanager.internal.utils.ThreadFactoryFactory;
 import org.micromanager.internal.utils.performance.PerformanceMonitor;
 
@@ -47,13 +50,24 @@ public final class AnimationController<P> {
       FLASH_AND_SNAP_BACK,
    }
 
-   // Listeners are notified on an otherwise nonblocking thread owned by the
-   // animation controller (never the EDT).
+   /**
+    * Listeners are notified on an otherwise nonblocking thread owned by the
+    * animation controller (never the EDT).
+    * @param <P> For now only Coords, but parameterized to support future 
+    *            extensions
+   */
    public interface Listener<P> {
-      void animationShouldDisplayDataPosition(P position);
-      void animationAcknowledgeDataPosition(P position); // Update range but don't display
+      void animationShouldDisplayDataPosition(P position);     
+      /**
+       * Update range but don't display
+       * @param position Coord 
+       */
+      void animationAcknowledgeDataPosition(P position); 
       void animationWillJumpToNewDataPosition(P position);
       void animationDidJumpToNewDataPosition(P position);
+      /**
+       * What could this signify? Docs can be useful!
+       */
       void animationNewDataPositionExpired();
       // TODO Need to also notify of animation start/stop
    }
@@ -67,6 +81,8 @@ public final class AnimationController<P> {
    private double animationRateFPS_ = 10.0;
    private NewPositionHandlingMode newPositionMode_ =
          NewPositionHandlingMode.JUMP_TO_AND_STAY;
+   private final Map<String, NewPositionHandlingMode> newPositionModes_ = 
+           new HashMap<String, NewPositionHandlingMode>();
    private int newPositionFlashDurationMs_ = 500;
 
    private boolean animationEnabled_ = false;
@@ -156,11 +172,24 @@ public final class AnimationController<P> {
       return animationRateFPS_;
    }
 
+   public synchronized void setNewPositionHandlingMode(String axis, 
+           NewPositionHandlingMode mode) {
+      if (mode == null) {
+         throw new NullPointerException("mode must not be null");
+      }
+      newPositionModes_.put(axis, mode);
+   }
+   
    public synchronized void setNewPositionHandlingMode(NewPositionHandlingMode mode) {
       if (mode == null) {
          throw new NullPointerException("mode must not be null");
       }
       newPositionMode_ = mode;
+   }
+   
+   public synchronized NewPositionHandlingMode getNewPositionHandlingMode(
+              String axis) {
+      return newPositionModes_.get(axis);
    }
 
    public synchronized NewPositionHandlingMode getNewPositionHandlingMode() {
@@ -217,12 +246,13 @@ public final class AnimationController<P> {
       }, 0, TimeUnit.MILLISECONDS);
    }
 
-   public synchronized void newDataPosition(final P position) {
-      // Mode may have switched since schedluing a snap-back, so cancel it here
-      if (snapBackFuture_ != null) {
-         snapBackFuture_.cancel(false);
-         snapBackFuture_ = null;
-      }
+   public synchronized void newDataPosition(final Coords oldPosition, 
+           final Coords newPosition) {
+      // Mode may have switched since scheduling a snap-back, so cancel it here
+      //if (snapBackFuture_ != null) {
+      //   snapBackFuture_.cancel(false);
+      //   snapBackFuture_ = null;
+      //}
       ScheduledFuture<?> newDataPositionExpiredFuture = null;
       if (didJumpToNewPosition_) {
          didJumpToNewPosition_ = false;
@@ -238,14 +268,124 @@ public final class AnimationController<P> {
             }
          }, 0, TimeUnit.MILLISECONDS);
       }
+            
+      // can not rely on sequencer for oldPosition:
+      // final Coords oldPosition = (Coords) sequencer_.getAnimationPosition();
+           
+      Coords.CoordsBuilder newDisplayPositionBuilder = newPosition.copyBuilder();
+      Coords.CoordsBuilder snapBackPositionBuilder = newPosition.copyBuilder();
+      Boolean foundAxisToBeIgnored = false;
+      Boolean foundFlashBackAxis = false;
+      if (oldPosition != null) {
+         for (String axis : newPosition.getAxes()) {
+            if (!oldPosition.hasAxis(axis)
+                    || oldPosition.getIndex(axis) != newPosition.getIndex(axis)) {
+               if (newPositionModes_.containsKey(axis)) {
+                  if (newPositionModes_.get(axis).equals(
+                               NewPositionHandlingMode.IGNORE)) {
+                     newDisplayPositionBuilder.index(axis, oldPosition.getIndex(axis));
+                     snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
+                     foundAxisToBeIgnored = true;
+                  } else if (newPositionModes_.get(axis).equals(
+                              NewPositionHandlingMode.FLASH_AND_SNAP_BACK)) {
+                     snapBackPositionBuilder.index(axis, oldPosition.getIndex(axis));
+                     foundFlashBackAxis = true; 
+                  }
+               }
+            }
+         }
+      }
+      final Coords newDisplayPosition = newDisplayPositionBuilder.build();
+      final Coords snapBackPosition = snapBackPositionBuilder.build();
+      
+      if (foundFlashBackAxis) {
+         stopTicks();
+         if (newDataPositionExpiredFuture != null) {
+            newDataPositionExpiredFuture.cancel(true);
+         }
+         if (snapBackFuture_ != null) {
+            snapBackFuture_.cancel(false);
+            snapBackFuture_ = null;
+         }
+         snapBackPosition_ = (P) snapBackPosition;
+         scheduler_.schedule(new Runnable() {
+            @Override
+            public void run() {
+               synchronized (AnimationController.this) {
+                  listeners_.fire().animationAcknowledgeDataPosition(newPosition);
+                 
+                  listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
+                  listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
+                  didJumpToNewPosition_ = true;
+                  listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
+               }
+            }
+         }, 0, TimeUnit.MILLISECONDS);
+         snapBackFuture_ = scheduler_.schedule(new Runnable() {
+            @Override
+            public void run() {
+               synchronized (AnimationController.this) {
+                  if (snapBackPosition_ != null) { // Be safe
+                     if (didJumpToNewPosition_) {
+                        didJumpToNewPosition_ = false;
+                        listeners_.fire().animationNewDataPositionExpired();
+                     }
+                     // Even if we have already moved away from the new data
+                     // position by other means (e.g. user click), we still
+                     // snap back if we are still in snap-back mode.
+                     //if (newPositionMode_ == NewPositionHandlingMode.FLASH_AND_SNAP_BACK) {
+                     listeners_.fire().animationShouldDisplayDataPosition(snapBackPosition_);
+                     //}
+                     snapBackPosition_ = null;
+                  }
+                  if (animationEnabled_) {
+                     startTicks(tickIntervalMs_, tickIntervalMs_);
+                  }
+                  snapBackFuture_ = null;
+               }
+            }
+         }, newPositionFlashDurationMs_, TimeUnit.MILLISECONDS);
 
+      } else if (foundAxisToBeIgnored) {
+         scheduler_.schedule(new Runnable() {
+            @Override
+            public void run() {
+               synchronized (AnimationController.this) {
+                  listeners_.fire().animationAcknowledgeDataPosition(newPosition);
+                  if (newDisplayPosition != oldPosition) {
+                     listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
+                     sequencer_.setAnimationPosition((P) newPosition);
+                     listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
+                     didJumpToNewPosition_ = true;
+                     listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
+                  }
+               }
+            }
+         }, 0, TimeUnit.MILLISECONDS);
+      } else { // no axis locked
+         scheduler_.schedule(new Runnable() {
+            @Override
+            public void run() {
+               synchronized (AnimationController.this) {
+                  listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
+                  sequencer_.setAnimationPosition((P) newPosition);
+                  listeners_.fire().animationShouldDisplayDataPosition(newPosition);
+                  didJumpToNewPosition_ = true;
+                  listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
+               }
+            }
+         }, 0, TimeUnit.MILLISECONDS);
+      }
+
+      /*
+      
       switch (newPositionMode_) {
          case IGNORE: // aka red locked
             scheduler_.schedule(new Runnable() {
                @Override
                public void run() {
                   synchronized (AnimationController.this) {
-                     listeners_.fire().animationAcknowledgeDataPosition(position);
+                     listeners_.fire().animationAcknowledgeDataPosition(newPosition);
                   }
                }
             }, 0, TimeUnit.MILLISECONDS);
@@ -262,11 +402,11 @@ public final class AnimationController<P> {
                   @Override
                   public void run() {
                      synchronized (AnimationController.this) {
-                        listeners_.fire().animationWillJumpToNewDataPosition(position);
-                        sequencer_.setAnimationPosition(position);
-                        listeners_.fire().animationShouldDisplayDataPosition(position);
+                        listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
+                        sequencer_.setAnimationPosition( (P) newPosition);
+                        listeners_.fire().animationShouldDisplayDataPosition(newPosition);
                         didJumpToNewPosition_ = true;
-                        listeners_.fire().animationDidJumpToNewDataPosition(position);
+                        listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
                      }
                   }
                }, 0, TimeUnit.MILLISECONDS);
@@ -281,7 +421,7 @@ public final class AnimationController<P> {
                }, newPositionFlashDurationMs_, TimeUnit.MILLISECONDS);
                break;
             }
-            // Conditional fallthrough
+            // Conditional fallthrough            // Conditional fallthrough            // Conditional fallthrough            // Conditional fallthrough
 
          case FLASH_AND_SNAP_BACK: // aka black locked
             stopTicks();
@@ -293,10 +433,10 @@ public final class AnimationController<P> {
                public void run() {
                   synchronized (AnimationController.this) {
                      snapBackPosition_ = sequencer_.getAnimationPosition();
-                     listeners_.fire().animationWillJumpToNewDataPosition(position);
-                     listeners_.fire().animationShouldDisplayDataPosition(position);
+                     listeners_.fire().animationWillJumpToNewDataPosition(newPosition);
+                     listeners_.fire().animationShouldDisplayDataPosition(newPosition);
                      didJumpToNewPosition_ = true;
-                     listeners_.fire().animationDidJumpToNewDataPosition(position);
+                     listeners_.fire().animationDidJumpToNewDataPosition(newPosition);
                   }
                }
             }, 0, TimeUnit.MILLISECONDS);
@@ -329,6 +469,7 @@ public final class AnimationController<P> {
          default: // Should be impossible
             throw new AssertionError(newPositionMode_);
       }
+      */
    }
 
    private synchronized void startTicks(long delayMs, long intervalMs) {
@@ -351,9 +492,7 @@ public final class AnimationController<P> {
       try {
          scheduledTickFuture_.get();
       }
-      catch (ExecutionException e) {
-      }
-      catch (CancellationException e) {
+      catch (ExecutionException | CancellationException e) {
       }
       catch (InterruptedException notUsedByUs) {
          Thread.currentThread().interrupt();

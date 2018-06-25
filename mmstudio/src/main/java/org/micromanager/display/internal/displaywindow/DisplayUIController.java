@@ -154,7 +154,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
    private PopupButton playbackFpsButton_;
    private JSpinner playbackFpsSpinner_;
    private MDScrollBarPanel scrollBarPanel_;
-   private JButton axisLockButton_;
 
    // Subcomponents of the N-dimensional scroll bar panel
    // We need to look up in both directions, and don't need the efficiency of
@@ -165,6 +164,8 @@ public final class DisplayUIController implements Closeable, WindowListener,
          new ArrayList<Map.Entry<String, PopupButton>>();
    private final List<Map.Entry<String, PopupButton>> axisLinkButtons_ =
          new ArrayList<Map.Entry<String, PopupButton>>();
+   private final List<Map.Entry<String, JButton>> axisLockButtons_ = 
+           new ArrayList<Map.Entry<String, JButton>>();
 
    private static final Icon PLAY_ICON = IconLoader.getIcon(
          "/org/micromanager/icons/play.png");
@@ -521,24 +522,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
             };
       scrollBarPanel_ = MDScrollBarPanel.create(leftFactory, rightFactory);
       scrollBarPanel_.addListener(this);
-      panel.add(scrollBarPanel_, new CC().growX().pushX().split(2));
+      panel.add(scrollBarPanel_, new CC().growX().pushX().split(2).wrap());
 
-      axisLockButton_ = new JButton();
-      Dimension size = new Dimension(UNLOCKED_ICON.getIconWidth() + 6, MDScrollBarPanel.ROW_HEIGHT);
-      axisLockButton_.setMinimumSize(size);
-      axisLockButton_.setPreferredSize(size);
-      axisLockButton_.setIcon(UNLOCKED_ICON);
-      axisLockButton_.addActionListener(new ActionListener() {
-         @Override
-         public void actionPerformed(ActionEvent e) {
-            handleLockButton(e);
-         }
-      });
-      // TODO: Right-click menu
-      axisLockButton_.setComponentPopupMenu(new JPopupMenu());
-      axisLockButton_.setVisible(false);
-      panel.add(axisLockButton_, new CC().gapBefore("0").growY().hideMode(2).wrap());
-
+      
       JPanel customControlsPanel =
             new JPanel(new MigLayout(new LC().insets("0").gridGap("1", "0")));
       if (controlsFactory_ != null) {
@@ -690,7 +676,35 @@ public final class DisplayUIController implements Closeable, WindowListener,
                axis, linkButton));
       }
       ret.add(linkButton, new CC());
+      
+      JButton lockButton = null;
+      for (Map.Entry<String, JButton> e : axisLockButtons_) {
+         if (axis.equals(e.getKey())) {
+            lockButton = e.getValue();
+            break;
+         }
+      }
+      if (lockButton == null) {
 
+         lockButton = new JButton();
+         Dimension size = new Dimension(UNLOCKED_ICON.getIconWidth() + 6, MDScrollBarPanel.ROW_HEIGHT);
+         lockButton.setMinimumSize(size);
+         lockButton.setPreferredSize(size);
+         lockButton.setIcon(UNLOCKED_ICON);
+         lockButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+               handleLockButton(axis, e);
+            }
+         });
+         // TODO: Right-click menu
+         // lockButton.setComponentPopupMenu(new JPopupMenu());
+         axisLockButtons_.add(new AbstractMap.SimpleEntry<String, JButton>(
+               axis, lockButton));
+      }
+      
+      ret.add(lockButton, new CC());
+      
       return ret;
    }
 
@@ -758,7 +772,6 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
 
       playbackFpsButton_.setVisible(!scrollableAxes.isEmpty());
-      axisLockButton_.setVisible(!scrollableAxes.isEmpty());
 
       if (ijBridge_ != null) {
          ijBridge_.mm2ijEnsureDisplayAxisExtents();
@@ -1688,25 +1701,24 @@ public final class DisplayUIController implements Closeable, WindowListener,
               getDisplaySettings().copyBuilder().playbackFPS(fps).build());
    }
 
-   private void handleLockButton(ActionEvent event) {
-      JButton button = (JButton) event.getSource();
+   private void handleLockButton (String axis, ActionEvent event) {
+            JButton button = (JButton) event.getSource();
       // TODO This is a string-based prototype; also we need to correctly init
       // the button icon
       if (button.getIcon() == UNLOCKED_ICON) {
-         displayController_.setAxisAnimationLock("F");
+         displayController_.setAxisAnimationLock(axis, "F");
          button.setIcon(BLACK_LOCKED_ICON);
       }
       else if (button.getIcon() == BLACK_LOCKED_ICON) {
-         displayController_.setAxisAnimationLock("S");
+         displayController_.setAxisAnimationLock(axis, "S");
          button.setIcon(RED_LOCKED_ICON);
       }
       else {
-         displayController_.setAxisAnimationLock("U");
+         displayController_.setAxisAnimationLock(axis, "U");
          button.setIcon(UNLOCKED_ICON);
       }
    }
-
-
+   
    //
    // WindowListener for the standard and full-screen frames
    //
@@ -1789,7 +1801,7 @@ public final class DisplayUIController implements Closeable, WindowListener,
       // are being animated.
       Coords.CoordsBuilder builder = new DefaultCoords.Builder();
       // work around general bug needing all 4 basic stages
-      // TODO: remove this dependence!!!
+      // TODO: remove this dependency!!!
       builder.channel(0).time(0).stagePosition(0).z(0); 
       for (String axis : panel.getAxes()) {
          builder.index(axis, panel.getAxisPosition(axis));
