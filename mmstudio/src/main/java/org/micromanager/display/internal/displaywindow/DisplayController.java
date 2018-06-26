@@ -851,8 +851,7 @@ public final class DisplayController extends DisplayWindowAPIAdapter
                     = displayedImages_.getRequest().getImage(0).getCoords();
          }
       }
-      animationController_.newDataPosition(currentlyDisplayedCoords, 
-              event.getImage().getCoords());
+      animationController_.newDataPosition(event.getImage().getCoords());
    }
 
 

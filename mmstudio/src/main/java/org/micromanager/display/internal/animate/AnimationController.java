@@ -246,13 +246,12 @@ public final class AnimationController<P> {
       }, 0, TimeUnit.MILLISECONDS);
    }
 
-   public synchronized void newDataPosition(final Coords oldPosition, 
-           final Coords newPosition) {
+   public synchronized void newDataPosition(final Coords newPosition) {
       // Mode may have switched since scheduling a snap-back, so cancel it here
-      //if (snapBackFuture_ != null) {
-      //   snapBackFuture_.cancel(false);
-      //   snapBackFuture_ = null;
-      //}
+      if (snapBackFuture_ != null) {
+         snapBackFuture_.cancel(false);
+         snapBackFuture_ = null;
+      }
       ScheduledFuture<?> newDataPositionExpiredFuture = null;
       if (didJumpToNewPosition_) {
          didJumpToNewPosition_ = false;
@@ -268,9 +267,8 @@ public final class AnimationController<P> {
             }
          }, 0, TimeUnit.MILLISECONDS);
       }
-            
-      // can not rely on sequencer for oldPosition:
-      // final Coords oldPosition = (Coords) sequencer_.getAnimationPosition();
+
+      final Coords oldPosition = (Coords) sequencer_.getAnimationPosition();
            
       Coords.CoordsBuilder newDisplayPositionBuilder = newPosition.copyBuilder();
       Coords.CoordsBuilder snapBackPositionBuilder = newPosition.copyBuilder();
@@ -354,7 +352,7 @@ public final class AnimationController<P> {
                   listeners_.fire().animationAcknowledgeDataPosition(newPosition);
                   if (newDisplayPosition != oldPosition) {
                      listeners_.fire().animationWillJumpToNewDataPosition(newDisplayPosition);
-                     sequencer_.setAnimationPosition((P) newPosition);
+                     sequencer_.setAnimationPosition((P) newDisplayPosition);
                      listeners_.fire().animationShouldDisplayDataPosition(newDisplayPosition);
                      didJumpToNewPosition_ = true;
                      listeners_.fire().animationDidJumpToNewDataPosition(newDisplayPosition);
