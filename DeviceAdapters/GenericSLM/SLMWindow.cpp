@@ -74,3 +74,9 @@ HDC SLMWindow::GetDC()
       return 0;
    return ::GetDC(hWindow_);
 }
+
+void SLMWindow::ReleaseDC(HDC dc) {
+   if (!hWindow_)
+      return;
+   ::ReleaseDC(hWindow_, dc);
+}

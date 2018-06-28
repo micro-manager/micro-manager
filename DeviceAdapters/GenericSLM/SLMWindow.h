@@ -39,4 +39,5 @@ public:
    void Hide();
 
    HDC GetDC();
+   void ReleaseDC(HDC dc);
 };

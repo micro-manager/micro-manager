@@ -67,6 +67,12 @@ HDC SLMWindowThread::GetDC()
    return window_->GetDC();
 }
 
+void SLMWindowThread::ReleaseDC(HDC dc)
+{
+   MMThreadGuard g(lock_);
+   return window_->ReleaseDC(dc);
+}
+
 
 OffscreenBuffer* SLMWindowThread::GetOffscreenBuffer()
 {
