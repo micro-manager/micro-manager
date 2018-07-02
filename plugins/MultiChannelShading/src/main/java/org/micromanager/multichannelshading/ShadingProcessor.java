@@ -21,13 +21,21 @@
 
 package org.micromanager.multichannelshading;
 
+import clearcl.ClearCL;
+import clearcl.ClearCLContext;
+import clearcl.ClearCLDevice;
+import clearcl.ClearCLProgram;
+import clearcl.backend.ClearCLBackends;
+import clearcl.enums.BuildStatus;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
+import java.io.IOException;
 import java.util.List;
 
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
+import static org.junit.Assert.assertEquals;
 
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -35,6 +43,7 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -42,16 +51,39 @@ import org.micromanager.Studio;
  */
 public class ShadingProcessor extends Processor {
 
-   private Studio studio_;
-   private ImageCollection imageCollection_;
-   private String channelGroup_;
-   private List<String> presets_;
+   private final Studio studio_;
+   private final String channelGroup_;
+   private Boolean useOpenCL_;
+   private final List<String> presets_;
+   private final ImageCollection imageCollection_;
+   private ClearCL ccl_;
 
    public ShadingProcessor(Studio studio, String channelGroup,
-           String backgroundFile, List<String> presets,
+           Boolean useOpenCL, String backgroundFile, List<String> presets,
            List<String> files) {
       studio_ = studio;
       channelGroup_ = channelGroup;
+      useOpenCL_ = useOpenCL;
+      if (useOpenCL_) {
+         ccl_ = new ClearCL(ClearCLBackends.getBestBackend()); 
+         ClearCLDevice bestGPUDevice = ccl_.getBestGPUDevice();
+         if (bestGPUDevice == null) { // assume that is what is returned if there is no GPU
+            useOpenCL_ = false;
+         } else {
+            try {
+            ClearCLContext cclContext = bestGPUDevice.createContext();
+            ClearCLProgram cclProgram =
+                              cclContext.createProgram(ShadingProcessor.class,
+                                                     "test.cl");
+            BuildStatus lBuildStatus = cclProgram.buildAndLog();
+
+            assertEquals(lBuildStatus, BuildStatus.Success);
+            } catch (IOException ioe) {
+               ReportingUtils.logError("Failed to initialize OpenCL, falling back");
+               useOpenCL_ = false;
+            }
+         }
+      }
       presets_ = presets;
       imageCollection_ = new ImageCollection(studio_);
       if (backgroundFile != null && !backgroundFile.equals("")) {
@@ -68,6 +100,8 @@ public class ShadingProcessor extends Processor {
       } catch (ShadingException e) {
          studio_.logs().logError(e, "Error recreating ImageCollection");
       }
+      
+     
    }
 
 
@@ -149,6 +183,12 @@ public class ShadingProcessor extends Processor {
       if (userData != null) {
          userData = userData.copy().putBoolean("Flatfield-corrected", true).build();
          metadata = metadata.copy().userData(userData).build();
+      }
+      
+      if (useOpenCL_) {
+         if (image.getBytesPerPixel() == 2) {
+            
+         }
       }
       
       if (image.getBytesPerPixel() == 1) {
