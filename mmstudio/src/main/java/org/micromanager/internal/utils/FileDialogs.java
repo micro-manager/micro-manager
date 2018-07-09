@@ -51,7 +51,7 @@ public final class FileDialogs {
       false, (String[]) null);
    
    public static final FileType SCIFIO_DATA = new FileType("SciFIO_Data_Set",
-           "Image Location", System.getProperty("user.home") + "/Unitled.tif",
+           "Image Location", System.getProperty("user.home") + "/Untitled.tif",
             false, "tif", "jpg", "avi", "png", "jpg" );
 
    private static class GeneralFileFilter
