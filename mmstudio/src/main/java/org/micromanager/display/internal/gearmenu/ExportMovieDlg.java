@@ -53,6 +53,7 @@ import org.micromanager.data.DataProvider;
 import org.micromanager.data.Datastore;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
+import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.UserProfileStaticInterface;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -348,51 +349,38 @@ public final class ExportMovieDlg extends MMDialog {
       // Set output format.
       String mode = (String) outputFormatSelector_.getSelectedItem();
       ImageExporter.OutputFormat format = ImageExporter.OutputFormat.OUTPUT_PNG;
+      String suffix = "png";
       if (mode.contentEquals(FORMAT_JPEG)) {
          format = ImageExporter.OutputFormat.OUTPUT_JPG;
+         suffix = "jpg";
       }
       else if (mode.contentEquals(FORMAT_IMAGEJ)) {
          format = ImageExporter.OutputFormat.OUTPUT_IMAGEJ;
       }
+      String[] fss = {suffix};
       exporter.setOutputFormat(format);
 
       // Get save path if relevant.
-      File outputDir;
+      String base = System.getProperty("user.home");
+      if (provider_ instanceof Datastore) {
+         Datastore store = (Datastore) provider_;
+         if (store.getSavePath() != null) {
+            // Default them to where their data was originally saved.
+            base = store.getSavePath();
+         }
+      }
+      File path = new File(base);
       if (!mode.equals(FORMAT_IMAGEJ)) {
-         // Prompt the user for a directory to save to.
-         JFileChooser chooser = new JFileChooser();
-         chooser.setDialogTitle("Please choose a directory to export to.");
-         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-         chooser.setAcceptAllFileFilterUsed(false);
-         if (provider_ instanceof Datastore) {
-            Datastore store = (Datastore) provider_;
-            if (store.getSavePath() != null) {
-               // Default them to where their data was originally saved.
-               File path = new File(store.getSavePath());
-               chooser.setCurrentDirectory(path);
-               chooser.setSelectedFile(path);
-               // HACK: on OSX if we don't do this, the "Choose" button will be
-               // disabled until the user interacts with the dialog.
-               // This may be related to a bug in the OSX JRE; see
-               // http://stackoverflow.com/questions/31148021/jfilechooser-cant-set-default-selection/31148287
-               // and in particular Madhan's reply.
-               chooser.updateUI();
-            }
-         }
-         if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
-            // User cancelled.
+         File outputDir = FileDialogs.promptForFile(this,
+                    "Export as",
+                    path,
+                    true,     // select directories
+                    true,
+                    "",
+                    fss,
+                    false);
+         if (outputDir == null) {
             return;
-         }
-         outputDir = chooser.getSelectedFile();
-         // HACK: for unknown reasons, on OSX at least we can get a
-         // repetition of the final directory if the user clicks the "Choose"
-         // button when inside the directory they want to use, resulting in
-         // e.g. /foo/bar/baz/baz when only /foo/bar/baz exists.
-         if (!outputDir.exists()) {
-            outputDir = new File(outputDir.getParent());
-            if (!outputDir.exists()) {
-               ReportingUtils.showError("Unable to find directory at " + outputDir);
-            }
          }
          try {
             exporter.setSaveInfo(outputDir.getAbsolutePath(),
@@ -407,14 +395,15 @@ public final class ExportMovieDlg extends MMDialog {
       }
 
       exporter.setOutputQuality((Integer) jpegQualitySpinner_.getValue());
-      setJPEGQuality((Integer) jpegQualitySpinner_.getValue());
       exporter.setDisplay(display_);
       if (axisPanels_.size() > 0) {
          axisPanels_.get(0).configureExporter(exporter);
       } else {
          exporter.loop(provider_.getAxes().get(0), 0, 0);
       }
-
+      
+      // save defaults to preferences:
+      setJPEGQuality((Integer) jpegQualitySpinner_.getValue());
       setDefaultExportFormat(mode);
       setDefaultPrefix(prefixText_.getText());
 
