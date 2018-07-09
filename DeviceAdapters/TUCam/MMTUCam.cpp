@@ -667,6 +667,7 @@ int CMMTUCam::Initialize()
 
 	// Get camera type
 	valInfo.nID = TUIDI_PRODUCT;
+	m_tgrAttr.nTgrMode = TUCCM_SEQUENCE;
 	if (TUCAMRET_SUCCESS == TUCAM_Dev_GetInfo(m_opCam.hIdxTUCam, &valInfo))
 	{
 		if (0x6404 != valInfo.nValue && 0x6405 != valInfo.nValue && 0x6804 != valInfo.nValue && 0xEC03 != valInfo.nValue)
@@ -683,7 +684,7 @@ int CMMTUCam::Initialize()
 				ModTgrValues.push_back(g_TRIGGER_STD);
 				ModTgrValues.push_back(g_TRIGGER_SYN);
 				ModTgrValues.push_back(g_TRIGGER_GLB);
-//				ModTgrValues.push_back(g_TRIGGER_SWF);
+				ModTgrValues.push_back(g_TRIGGER_SWF);
 
 				nRet = SetAllowedValues(g_PropNameMdTgr, ModTgrValues);
 				if (nRet != DEVICE_OK)
@@ -864,6 +865,7 @@ int CMMTUCam::Initialize()
     AddAllowedValue(propName.c_str(), "Yes");
     AddAllowedValue(propName.c_str(), "No");
 */
+
     // initialize image buffer
     nRet = StartCapture();
     if (nRet != DEVICE_OK)
@@ -997,6 +999,11 @@ int CMMTUCam::Initialize()
     // initialize image buffer
     GenerateEmptyImage(img_);
 
+
+	nRet = StopCapture();
+	if (nRet != DEVICE_OK)
+		return nRet;
+
 //     char sz[256] = {0};
 //     sprintf(sz, "%d\n", m_pfSave->pFrame);
 //     OutputDebugString(sz);
@@ -1064,11 +1071,26 @@ int CMMTUCam::SnapImage()
 		StartCapture();
 	}
 
-    if (!fastImage_)
-    {
-    //  GenerateSyntheticImage(img_, exp);  // ȡͼ
-        WaitForFrame(img_);
-    }
+	if (TUCCM_TRIGGER_SOFTWARE == m_tgrAttr.nTgrMode)
+	{
+		int nCnt = 0;
+		int nRet = DEVICE_ERR;
+
+		do 
+		{
+			TUCAM_Cap_DoSoftwareTrigger(m_opCam.hIdxTUCam);
+			nRet = WaitForFrame(img_);
+			nCnt++;
+		} while (DEVICE_OK != nRet && nCnt < 2);
+	}
+	else
+	{
+		if (!fastImage_)
+		{
+		//  GenerateSyntheticImage(img_, exp);  // ȡͼ
+			WaitForFrame(img_);
+		}
+	}
 
     MM::MMTime s0(0,0);
     if( s0 < startTime )
@@ -4723,7 +4745,7 @@ int CMMTUCam::ReleaseBuffer()
 
 int CMMTUCam::StopCapture()
 {
-    if (thd_->IsStopped())
+    if (thd_->IsStopped() && !m_bLiving)
         return DEVICE_OK;
 
     m_bLiving = false;
