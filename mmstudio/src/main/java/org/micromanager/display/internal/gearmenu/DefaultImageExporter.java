@@ -43,7 +43,6 @@ import org.micromanager.display.DisplayDidShowImageEvent;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.ImageExporter;
 import org.micromanager.display.ImageExporter.OutputFormat;
-import org.micromanager.display.internal.displaywindow.imagej.ImageJBridge;
 import org.micromanager.internal.utils.ReportingUtils;
 
 
@@ -135,7 +134,7 @@ public final class DefaultImageExporter implements ImageExporter {
    private final AtomicBoolean drawFlag_;
    private final AtomicBoolean doneFlag_;
    private boolean isSingleShot_;
-   private int jpegQuality_ = 10;
+   private int jpegQuality_ = 90;
 
    private BufferedImage currentImage_ = null;
    private Graphics currentGraphics_ = null;
@@ -259,7 +258,7 @@ public final class DefaultImageExporter implements ImageExporter {
             }  break;
          case OUTPUT_JPG:
             // Set the compression quality.
-            float quality = jpegQuality_ / ((float) 10.0);
+            float quality = jpegQuality_ / ((float) 100.0);
             ImageWriter writer = ImageIO.getImageWritersByFormatName(
                     "jpeg").next();
             ImageWriteParam param = writer.getDefaultWriteParam();
@@ -392,8 +391,8 @@ public final class DefaultImageExporter implements ImageExporter {
          loopThread = new Thread(new Runnable() {
             @Override
             public void run() {
-               // TODO
-              display_.setDisplayPosition(coords.get(0));
+               // force update, of the onDrawComplete callback will not be invoked
+              display_.setDisplayPosition(coords.get(0), true);
             }
          }, "Image export thread");
       }
@@ -407,7 +406,7 @@ public final class DefaultImageExporter implements ImageExporter {
                   // Setting the displayed image will result in our
                   // CanvasDrawCompleteEvent handler being invoked, which
                   // causes images to be exported.
-                  display_.setDisplayPosition(imageCoords);
+                  display_.setDisplayPosition(imageCoords, true);
                   // Wait until drawing is done.
                   while (drawFlag_.get()) {
                      try {

@@ -63,8 +63,8 @@ public interface ImageExporter {
    /**
     * Set the image quality. This is currently only relevant if the output
     * format is OUTPUT_JPG.
-    * @param quality An integer quality ranging from 1 through 10. The default
-    *        value is 10.
+    * @param quality An integer quality ranging from 1 through 100. The default
+    *        value is 90.
     */
    public void setOutputQuality(int quality);
 

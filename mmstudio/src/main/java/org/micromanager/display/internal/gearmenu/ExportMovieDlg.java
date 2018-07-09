@@ -69,7 +69,7 @@ public final class ExportMovieDlg extends MMDialog {
                IconLoader.getIcon("/org/micromanager/icons/minus.png");
    private static final String DEFAULT_EXPORT_FORMAT = "default format to use for exporting image sequences";
    private static final String DEFAULT_FILENAME_PREFIX = "default prefix to use for files when exporting image sequences";
-
+   private static final String JPEG_QUALITY = "JPEG quality";
    private static final String FORMAT_PNG = "PNG";
    private static final String FORMAT_JPEG = "JPEG";
    private static final String FORMAT_IMAGEJ = "ImageJ stack window";
@@ -261,6 +261,11 @@ public final class ExportMovieDlg extends MMDialog {
          contentsPanel_.add(new JLabel("<html><body>The \"channel\" axis is unavailable as the display is in composite mode.</body></html>"),
                "align center");
       }
+      
+      
+      jpegQualitySpinner_ = new JSpinner();
+      jpegQualitySpinner_.setModel(new SpinnerNumberModel(getJPEGQuality(), 1, 100, 1));
+
 
       contentsPanel_.add(new JLabel("Output format: "),
             "split 4, flowx");
@@ -271,7 +276,7 @@ public final class ExportMovieDlg extends MMDialog {
             // Show/hide the JPEG quality controls.
             String selection = (String) outputFormatSelector_.getSelectedItem();
             if (selection.equals(FORMAT_JPEG)) {
-               jpegPanel_.add(new JLabel("JPEG quality: "));
+               jpegPanel_.add(new JLabel("JPEG quality(%): "));
                jpegPanel_.add(jpegQualitySpinner_);
             }
             else {
@@ -293,9 +298,6 @@ public final class ExportMovieDlg extends MMDialog {
       // We want this panel to take up minimal space when it is not needed.
       jpegPanel_ = new JPanel(new MigLayout("flowx, gap 0", "0[]0[]0",
                "0[]0[]0"));
-      jpegQualitySpinner_ = new JSpinner();
-      jpegQualitySpinner_.setModel(new SpinnerNumberModel(10, 0, 10, 1));
-
       contentsPanel_.add(jpegPanel_);
 
       if (getNonZeroAxes().isEmpty()) {
@@ -405,12 +407,13 @@ public final class ExportMovieDlg extends MMDialog {
       }
 
       exporter.setOutputQuality((Integer) jpegQualitySpinner_.getValue());
+      setJPEGQuality((Integer) jpegQualitySpinner_.getValue());
+      exporter.setDisplay(display_);
       if (axisPanels_.size() > 0) {
          axisPanels_.get(0).configureExporter(exporter);
       } else {
          exporter.loop(provider_.getAxes().get(0), 0, 0);
       }
-      exporter.setDisplay(display_);
 
       setDefaultExportFormat(mode);
       setDefaultPrefix(prefixText_.getText());
@@ -556,6 +559,18 @@ public final class ExportMovieDlg extends MMDialog {
       UserProfileStaticInterface.getInstance().
               getSettings(ExportMovieDlg.class).
               putString(DEFAULT_FILENAME_PREFIX, prefix);
+   }
+   
+   private static int getJPEGQuality() {
+      return UserProfileStaticInterface.getInstance().
+              getSettings(ExportMovieDlg.class).
+              getInteger(JPEG_QUALITY, 90);
+   }
+   
+   private static void setJPEGQuality(int quality) {
+      UserProfileStaticInterface.getInstance().
+              getSettings(ExportMovieDlg.class).
+              putInteger(JPEG_QUALITY, quality);
    }
 }
 
