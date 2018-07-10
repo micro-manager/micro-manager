@@ -166,7 +166,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 */
 CMMTUCam::CMMTUCam() :
     CCameraBase<CMMTUCam> (),
-    exposureMaximum_(10000.0),     
+    exposureMaximum_(10000.0), 
+    exposureMinimum_(0.0),
     dPhase_(0),
     initialized_(false),
     readoutUs_(0.0),
@@ -237,7 +238,7 @@ CMMTUCam::~CMMTUCam()
 		m_hThdTempEvt = NULL;
 	}
 
-    StopCapture();
+    StopSequenceAcquisition();
     UninitTUCamApi();
 
     delete thd_;   
@@ -381,8 +382,9 @@ int CMMTUCam::Initialize()
         nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false, pAct);
         assert(nRet == DEVICE_OK);
 
-        double dblMax = (int)propAttr.dbValMax > 1000 ? (propAttr.dbValMax * 100 / 967) : (int)propAttr.dbValMax;
-        SetPropertyLimits(MM::g_Keyword_Exposure, propAttr.dbValMin, dblMax);
+        exposureMaximum_ = (int)propAttr.dbValMax > 1000 ? (propAttr.dbValMax * 100 / 967) : (int)propAttr.dbValMax;
+        exposureMinimum_ = propAttr.dbValMin;
+        SetPropertyLimits(MM::g_Keyword_Exposure, exposureMinimum_, exposureMaximum_);
         
 //      SetPropertyLimits(MM::g_Keyword_Exposure, propAttr.dbValMin, 10/*propAttr.dbValMax*/);
 //      SetPropertyLimits(MM::g_Keyword_Exposure, propAttr.dbValMin, (propAttr.dbValMax * 100 / 967)); // rainfan
@@ -1029,7 +1031,7 @@ int CMMTUCam::Shutdown()
         m_hThdTempEvt = NULL;
     }
 
-    StopCapture();
+    StopSequenceAcquisition();
 
     UninitTUCamApi();
     initialized_ = false;
@@ -1073,10 +1075,7 @@ int CMMTUCam::SnapImage()
     MM::MMTime s0(0,0);
     if( s0 < startTime )
     {
-        while (exp > (GetCurrentMMTime() - startTime).getMsec())
-        {
-            CDeviceUtils::SleepMs(1);
-        }		
+       CDeviceUtils::SleepMs((long) exp);
     }
     else
     {
@@ -1087,10 +1086,12 @@ int CMMTUCam::SnapImage()
     }
     readoutStartTime_ = GetCurrentMMTime();
 
+    
 	if (!bLive)
 	{
 		StopCapture();
 	}
+   
 
     return DEVICE_OK;
 }
@@ -1352,6 +1353,12 @@ double CMMTUCam::GetSequenceExposure()
 */
 void CMMTUCam::SetExposure(double exp)
 {
+    if (exp < exposureMinimum_)
+    {
+       exp = exposureMinimum_;
+    } else if (exp > exposureMaximum_) {
+       exp = exposureMaximum_;
+    }
     SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
     GetCoreCallback()->OnExposureChanged(this, exp);
 }
@@ -1612,7 +1619,22 @@ int CMMTUCam::StopSequenceAcquisition()
 {
     OutputDebugString("[StopSequenceAcquisition]:Enter\n");
 
-    return StopCapture();
+     if (thd_->IsStopped())
+        return DEVICE_OK;
+
+    m_bLiving = false;
+
+    thd_->Stop(); 
+
+    TUCAM_Buf_AbortWait(m_opCam.hIdxTUCam);                 // If you called TUCAM_Buf_WaitForFrames()
+
+    thd_->wait();
+
+    TUCAM_Cap_Stop(m_opCam.hIdxTUCam);                      // Stop capture   
+    ReleaseBuffer();
+
+    return DEVICE_OK;
+
 /*
     if (!thd_->IsStopped()) 
     {
@@ -2059,6 +2081,13 @@ int CMMTUCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
             double dblExp;
             pProp->Get(dblExp);          
 
+            if (dblExp < exposureMinimum_)
+            {
+               dblExp = exposureMinimum_;
+            }
+            else if (dblExp > exposureMaximum_) {
+               dblExp = exposureMaximum_;
+            }
             TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_EXPOSURETM, dblExp);
 
             ret = DEVICE_OK;
@@ -4723,16 +4752,9 @@ int CMMTUCam::ReleaseBuffer()
 
 int CMMTUCam::StopCapture()
 {
-    if (thd_->IsStopped())
-        return DEVICE_OK;
-
     m_bLiving = false;
 
-    thd_->Stop(); 
-
     TUCAM_Buf_AbortWait(m_opCam.hIdxTUCam);                 // If you called TUCAM_Buf_WaitForFrames()
-
-    thd_->wait();
 
     TUCAM_Cap_Stop(m_opCam.hIdxTUCam);                      // Stop capture   
     ReleaseBuffer();

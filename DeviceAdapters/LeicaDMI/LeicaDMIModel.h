@@ -316,8 +316,6 @@ public:
 
    bool IsDeviceAvailable(int deviceID);
    void SetDeviceAvailable(int devId);
-   bool IsDeviceCoded(int deviceID);
-   void SetDeviceCoded(int devId);
    bool IsMethodAvailable(int methodId);
    std::string GetMethod(int methodId);
    int GetMethodID(std::string method);
@@ -360,8 +358,7 @@ public:
 
 private:
    bool usesMethods_;
-   std::vector<bool> availableDevices_; // Motorized + coded
-   std::vector<bool> codedDevices_;
+   std::vector<bool> availableDevices_;
    std::vector<bool> availableMethods_;
    std::vector<std::string> methodNames_;
 

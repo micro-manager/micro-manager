@@ -225,6 +225,7 @@ private:
     static const double nominalPixelSizeUm_;
 
     double exposureMaximum_;
+    double exposureMinimum_;
     double dPhase_;
     ImgBuffer img_;
     bool busy_;

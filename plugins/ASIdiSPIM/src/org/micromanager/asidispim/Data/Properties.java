@@ -266,6 +266,7 @@ public class Properties {
       PLUGIN_DESKEW_INTERPOLATE("DeskewInterpolate"),
       PLUGIN_DESKEW_AUTO_TEST("DeskewAutoTest"),
       PLUGIN_STAGESCAN_ACCEL_FACTOR("StageScanAccelerationFactor"),
+      PLUGIN_STAGESCAN_ANGLE_PATHA("StageScanAnglePathA"),
       PLUGIN_LS_SCAN_RESET("LightSheetScanReset"),
       PLUGIN_LS_SCAN_SETTLE("LightSheetScanSettle"),
       PLUGIN_LS_SHUTTER_WIDTH("LightSheetShutterWidth"),
