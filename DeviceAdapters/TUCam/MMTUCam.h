@@ -264,6 +264,7 @@ private:
     double testProperty_[10];
     MMThreadLock imgPixelsLock_;
     int nComponents_;
+    bool returnToSoftwareTriggers_;
 
     friend class CTUCamThread;
     CTUCamThread * thd_;

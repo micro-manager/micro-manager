@@ -193,7 +193,8 @@ CMMTUCam::CMMTUCam() :
     shouldRotateImages_(false),
     shouldDisplayImageNumber_(false),
     stripeWidth_(1.0),
-    nComponents_(1)
+    nComponents_(1),
+    returnToSoftwareTriggers_(false)
 {
     memset(testProperty_,0,sizeof(testProperty_));
 
@@ -669,6 +670,7 @@ int CMMTUCam::Initialize()
 
 	// Get camera type
 	valInfo.nID = TUIDI_PRODUCT;
+   m_tgrAttr.nTgrMode = TUCCM_SEQUENCE;
 	if (TUCAMRET_SUCCESS == TUCAM_Dev_GetInfo(m_opCam.hIdxTUCam, &valInfo))
 	{
 		if (0x6404 != valInfo.nValue && 0x6405 != valInfo.nValue && 0x6804 != valInfo.nValue && 0xEC03 != valInfo.nValue)
@@ -676,8 +678,11 @@ int CMMTUCam::Initialize()
 			if (TUCAMRET_SUCCESS == TUCAM_Cap_GetTrigger(m_opCam.hIdxTUCam, &m_tgrAttr))
 			{
 				// Trigger mode
+            // initialize to software trigger mode
+            m_tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
+				TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
 				pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerMode);
-				nRet = CreateProperty(g_PropNameMdTgr, g_TRIGGER_OFF, MM::String, false, pAct);
+				nRet = CreateProperty(g_PropNameMdTgr,g_TRIGGER_SWF, MM::String, false, pAct);
 				assert(nRet == DEVICE_OK);
 
 				vector<string>ModTgrValues;
@@ -685,7 +690,7 @@ int CMMTUCam::Initialize()
 				ModTgrValues.push_back(g_TRIGGER_STD);
 				ModTgrValues.push_back(g_TRIGGER_SYN);
 				ModTgrValues.push_back(g_TRIGGER_GLB);
-//				ModTgrValues.push_back(g_TRIGGER_SWF);
+				ModTgrValues.push_back(g_TRIGGER_SWF);
 
 				nRet = SetAllowedValues(g_PropNameMdTgr, ModTgrValues);
 				if (nRet != DEVICE_OK)
@@ -723,14 +728,7 @@ int CMMTUCam::Initialize()
 				assert(nRet == DEVICE_OK);
 
 				SetPropertyLimits(g_PropNameMdDly, 0, 10000000);
-/*
-				// Software trigger
-				pAct = new CPropertyAction (this, &CMMTUCam::OnTriggerDoSoftware);
-				nRet = CreateStringProperty(g_PropNameDoSFW, g_TRIGGER_DO_SOFTWARE, false, pAct);
-				assert(nRet == DEVICE_OK);
 
-				AddAllowedValue(g_PropNameDoSFW, g_TRIGGER_DO_SOFTWARE);
-*/
 			}
 		}
 	}
@@ -999,6 +997,8 @@ int CMMTUCam::Initialize()
     // initialize image buffer
     GenerateEmptyImage(img_);
 
+    // Continue running Capture so that we are ready in the SnapImage function
+
 //     char sz[256] = {0};
 //     sprintf(sz, "%d\n", m_pfSave->pFrame);
 //     OutputDebugString(sz);
@@ -1046,54 +1046,52 @@ int CMMTUCam::Shutdown()
 */
 int CMMTUCam::SnapImage()
 {
-    static int callCounter = 0;
-    ++callCounter;
+   static int callCounter = 0;
+   ++callCounter;
 
-    MM::MMTime startTime = GetCurrentMMTime();
+   MM::MMTime startTime = GetCurrentMMTime();
     
 	double exp = GetExposure();
-    if (sequenceRunning_) 
+   if (sequenceRunning_) 
     {
 		// Change the exposure time
-        exp = GetSequenceExposure();
-		TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_EXPOSURETM, exp);	
+       exp = GetSequenceExposure();
+		 TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, TUIDP_EXPOSURETM, exp);	
     }
 
-	bool bLive = IsCapturing();
-
-	if (!bLive)
+	if (!m_bLiving)  // should never happen, but just in case...
 	{
 		StartCapture();
 	}
 
-    if (!fastImage_)
-    {
-    //  GenerateSyntheticImage(img_, exp);  // ȡͼ
-        WaitForFrame(img_);
-    }
-
-    MM::MMTime s0(0,0);
-    if( s0 < startTime )
-    {
-       CDeviceUtils::SleepMs((long) exp);
-    }
-    else
-    {
-        std::cerr << "You are operating this device adapter without setting the core callback, timing functions aren't yet available" << std::endl;
-        // called without the core callback probably in off line test program
-        // need way to build the core in the test program
-
-    }
-    readoutStartTime_ = GetCurrentMMTime();
-
-    
-	if (!bLive)
+   if (TUCCM_TRIGGER_SOFTWARE == m_tgrAttr.nTgrMode)
 	{
-		StopCapture();
-	}
-   
+		int nCnt = 0;
+		int nRet = DEVICE_ERR;
 
-    return DEVICE_OK;
+		do 
+		{
+			TUCAM_Cap_DoSoftwareTrigger(m_opCam.hIdxTUCam);
+			nRet = WaitForFrame(img_);
+			nCnt++;
+		} while (DEVICE_OK != nRet && nCnt < 2);
+	}
+	else
+	{
+		if (!fastImage_)
+		{
+		   MM::MMTime s0(0,0);
+         if( s0 < startTime )
+         {
+            CDeviceUtils::SleepMs((long) exp);
+         }
+			WaitForFrame(img_);
+		}
+	}
+
+   readoutStartTime_ = GetCurrentMMTime();
+
+   return DEVICE_OK;
 }
 
 
@@ -1613,7 +1611,7 @@ int CMMTUCam::StartSequenceAcquisition(double interval)
 }
 
 /**                                                                       
-* Stop and wait for the Sequence thread finished                                   
+* Stop Capture and wait for the Sequence thread finished                                   
 */                                                                        
 int CMMTUCam::StopSequenceAcquisition()                                     
 {
@@ -1624,33 +1622,29 @@ int CMMTUCam::StopSequenceAcquisition()
 
     m_bLiving = false;
 
+    if (NULL == m_opCam.hIdxTUCam)
+    {
+            return DEVICE_NOT_CONNECTED;
+    }
     thd_->Stop(); 
-
-    TUCAM_Buf_AbortWait(m_opCam.hIdxTUCam);                 // If you called TUCAM_Buf_WaitForFrames()
-
+    TUCAM_Buf_AbortWait(m_opCam.hIdxTUCam); 
     thd_->wait();
 
     TUCAM_Cap_Stop(m_opCam.hIdxTUCam);                      // Stop capture   
     ReleaseBuffer();
 
-    return DEVICE_OK;
-
-/*
-    if (!thd_->IsStopped()) 
+    // Switch back to software trigger mode if that is what the user used
+    if (returnToSoftwareTriggers_)
     {
-        if (NULL == m_opCam.hIdxTUCam)
-            return DEVICE_NOT_CONNECTED;
+       TUCAM_Cap_GetTrigger(m_opCam.hIdxTUCam, &m_tgrAttr);
+       m_tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
+		 TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
+       returnToSoftwareTriggers_ = false;
+    }
 
-        thd_->Stop();  
-        TUCAM_Buf_AbortWait(m_opCam.hIdxTUCam);                 // If you called TUCAM_Buf_WaitForFrames()
-        thd_->wait();      
+    StartCapture();  // avoid wasting time in the SnapImage function 
 
-//        StopCapture();
-
-    }                                                                      
-                                                                          
-    return DEVICE_OK; 
-*/
+    return DEVICE_OK;
 } 
 
 /**
@@ -1664,6 +1658,20 @@ int CMMTUCam::StartSequenceAcquisition(long numImages, double interval_ms, bool 
 
     if (IsCapturing())
         return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+    if (m_bLiving)
+    {
+       StopCapture();
+    }
+
+    // Switch to standard trigger mode if we are currently in software trigger mode
+    TUCAM_Cap_GetTrigger(m_opCam.hIdxTUCam, &m_tgrAttr);
+    if (TUCCM_TRIGGER_SOFTWARE == m_tgrAttr.nTgrMode) 
+    {
+       returnToSoftwareTriggers_ = true;
+       m_tgrAttr.nTgrMode = TUCCM_SEQUENCE;
+		 TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
+    }
 
     // initialize image buffer
     int nRet = StartCapture();
@@ -3375,7 +3383,9 @@ int CMMTUCam::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 	case MM::AfterSet:
 		{
 			if(IsCapturing())
+         {
 				return DEVICE_CAMERA_BUSY_ACQUIRING;
+         }
 
 			// the user just set the new value for the property, so we have to
 			// apply this value to the 'hardware'.
@@ -3408,7 +3418,15 @@ int CMMTUCam::OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 					m_tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
 				}
 
-				TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
+            if (m_bLiving)
+            {
+               StopCapture();
+				   TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
+               StartCapture();
+            } else
+            {
+				   TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, m_tgrAttr);
+            }
 
 				OnPropertyChanged(g_PropNameMdTgr, val.c_str());
 
@@ -4761,26 +4779,6 @@ int CMMTUCam::StopCapture()
 
     return DEVICE_OK;
 
-/*
-    if (!m_bLiving)
-        return DEVICE_OK;
-
-    m_bLiving = false;
-
-    if (NULL != m_hThdWait)
-    {
-        TUCAM_Buf_AbortWait(m_opCam.hIdxTUCam);             // If you called TUCAM_Buf_WaitForFrames()
-
-        WaitForSingleObject(m_hThdWait, INFINITE);
-        CloseHandle(m_hThdWait);	
-        m_hThdWait = NULL;
-
-        TUCAM_Cap_Stop(m_opCam.hIdxTUCam);                  // Stop capture   
-        ReleaseBuffer();
-    }
-
-    return DEVICE_OK;
-*/
 }
 
 int CMMTUCam::StartCapture()
@@ -4804,30 +4802,7 @@ int CMMTUCam::StartCapture()
 
     return DEVICE_ERR;
 
-/*
-    if (m_bLiving)
-        return DEVICE_OK;
 
-    m_bLiving = true;
-
-    int nRet = DEVICE_OK;
-
-    if (NULL == m_hThdWait)
-    {
-        nRet = AllocBuffer();
-        if (nRet != DEVICE_OK)
-        {
-            return nRet;
-        }
-
-        TUCAM_Cap_Start(m_opCam.hIdxTUCam, TUCCM_SEQUENCE); // Start capture
-
-        m_hThdWait = CreateEvent(NULL, TRUE, FALSE, NULL);
-        _beginthread(WaitForFrameThread, 0, this);          // Start wait for frame thread
-    }
-
-    return nRet;
-*/
 }
 
 int CMMTUCam::WaitForFrame(ImgBuffer& img)
