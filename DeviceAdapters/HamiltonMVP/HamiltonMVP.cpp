@@ -37,7 +37,6 @@
 #include "DeviceBase.h"
 #include "ModuleInterface.h"
 
-#include <cstdint>
 #include <string>
 #include <vector>
 
