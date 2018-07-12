@@ -3,9 +3,11 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   ASIStage adapter
-// COPYRIGHT:     University of California, San Francisco, 2007
-//                All rights reserved
+// DESCRIPTION:   ASI MS-2000 adapter
+// COPYRIGHT:     (C) 2007-2016 Regents of the University of California
+//                (C) 2007 Andor Technology PLC
+//                (C) 2014-2018 Applied Scientific Imaging, Inc.
+//                (C) 2018 Applied Materials, Inc.
 //
 // LICENSE:       This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public

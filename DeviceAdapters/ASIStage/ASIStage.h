@@ -3,10 +3,12 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   ASI ProScan controller adapter
+// DESCRIPTION:   ASI MS-2000 adapter
 //
-// COPYRIGHT:     Andor Technology PLC,
-//                University of California, San Francisco
+// COPYRIGHT:     (C) 2007-2016 Regents of the University of California
+//                (C) 2007 Andor Technology PLC
+//                (C) 2014-2018 Applied Scientific Imaging, Inc.
+//                (C) 2018 Applied Materials, Inc.
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
