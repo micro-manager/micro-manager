@@ -114,6 +114,7 @@ SUBDIRS = \
 	HamiltonMVP \
 	HydraLMT200 \
 	ImageProcessorChain \
+	IsmatecMCP \
 	K8055 \
 	K8061 \
 	LeicaDMI \

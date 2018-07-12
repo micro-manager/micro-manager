@@ -453,6 +453,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    IIDC
    ITC18
    ImageProcessorChain
+   IsmatecMCP
    K8055
    K8061
    LeicaDMI
