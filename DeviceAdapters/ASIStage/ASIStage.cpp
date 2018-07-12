@@ -2790,15 +2790,20 @@ int ZStage::GetControllerInfo()
 
    // Determine if our axis is the "active Z-focus axis" (which allows
    // linear sequence)
-   ret = QueryCommand("UNLOCK F", answer);
+   ret = QueryCommand("UNLOCK F?", answer);
    if (ret != DEVICE_OK)
       return ret;
-   if (answer.length() > 2 && answer.substr(0, 2) == ":A")
+   if (answer.length() > 5 && answer.substr(0, 5) == ":A F=")
    {
-      int focusIndex = atoi(answer.substr(2).c_str());
-      if (axisNr_ == focusIndex)
+      int focusIndex = atoi(answer.substr(5).c_str());
+
+      std::ostringstream cmd;
+      cmd << "Z2B " << axis_ << "?";
+      ret = QueryCommand(cmd.str().c_str(), answer);
+      if (answer.length() > 5 && answer.substr(0, 3) == ":A ")
       {
-         supportsLinearSequence_ = true;
+         int axisIndex = atoi(answer.substr(5).c_str());
+         supportsLinearSequence_ = (focusIndex == axisIndex);
       }
    }
 
