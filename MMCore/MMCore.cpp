@@ -106,7 +106,7 @@ using namespace std;
  * (Keep the 3 numbers on one line to make it easier to look at diffs when
  * merging/rebasing.)
  */
-const int MMCore_versionMajor = 8, MMCore_versionMinor = 7, MMCore_versionPatch = 0;
+const int MMCore_versionMajor = 8, MMCore_versionMinor = 7, MMCore_versionPatch = 1;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -4584,7 +4584,15 @@ void CMMCore::defineStateLabel(const char* deviceLabel, long state, const char* 
 
    mm::DeviceModuleLockGuard guard(pStateDev);
    // Remember old label so that we can update configurations that use it
-   std::string oldLabel = pStateDev->GetPositionLabel(state);
+   std::string oldLabel;
+   try
+   {
+      oldLabel = pStateDev->GetPositionLabel(state);
+   }
+   catch (const CMMError&)
+   {
+      // Ok if not defined
+   }
 
    // Set new label
    int nRet = pStateDev->SetPositionLabel(state, label);
@@ -4603,7 +4611,7 @@ void CMMCore::defineStateLabel(const char* deviceLabel, long state, const char* 
          while (itcf != configs.end())
          {
             Configuration conf = getConfigData((*itcfg).c_str(), (*itcf).c_str());
-            if (conf.isPropertyIncluded(deviceLabel, MM::g_Keyword_Label) )
+            if (!oldLabel.empty() && conf.isPropertyIncluded(deviceLabel, MM::g_Keyword_Label))
             {
                PropertySetting setting(deviceLabel, MM::g_Keyword_Label, oldLabel.c_str());
                if (conf.isSettingIncluded(setting))
