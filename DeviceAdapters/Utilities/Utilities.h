@@ -301,6 +301,57 @@ private:
 };
 
 
+class SingleAxisStage : public CStageBase<SingleAxisStage>
+{
+public:
+   SingleAxisStage();
+   virtual ~SingleAxisStage();
+
+public:
+   virtual void GetName(char* name) const;
+
+   virtual int Initialize();
+   virtual int Shutdown();
+
+   virtual bool Busy();
+
+   virtual int Move(double) { return DEVICE_UNSUPPORTED_COMMAND; }
+   virtual int Stop();
+   virtual int Home() { return DEVICE_UNSUPPORTED_COMMAND; }
+
+   virtual int SetPositionUm(double pos);
+   virtual int GetPositionUm(double& pos);
+   virtual int SetRelativePositionUm(double pos);
+   virtual int SetPositionSteps(long steps);
+   virtual int GetPositionSteps(long& steps);
+
+   virtual int SetOrigin() { return DEVICE_UNSUPPORTED_COMMAND; }
+
+   virtual int GetLimits(double& lower, double& upper);
+   virtual bool IsContinuousFocusDrive() const;
+
+   virtual int IsStageSequenceable(bool& isSequenceable) const;
+   virtual int GetStageSequenceMaxLength(long& nrEvents) const;
+   virtual int StartStageSequence();
+   virtual int StopStageSequence();
+   virtual int ClearStageSequence();
+   virtual int AddToStageSequence(double position);
+   virtual int SendStageSequence();
+
+private:
+   int OnAxisUsed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPhysicalStage(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool useXaxis_;
+   double simulatedStepSizeUm_;
+   bool initialized_;
+   std::string usedStage_;
+   MM::XYStage* physicalStage_;
+};
+
+
 /**
  * DAMonochromator: Use DA device as monochromator
  * Also acts as a shutter (using a particular wavelength as "closed")

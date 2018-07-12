@@ -58,6 +58,7 @@ StageInstance::SetFocusDirection(MM::FocusDirection direction)
 }
 
 int StageInstance::IsStageSequenceable(bool& isSequenceable) const { return GetImpl()->IsStageSequenceable(isSequenceable); }
+int StageInstance::IsStageLinearSequenceable(bool& isSequenceable) const { return GetImpl()->IsStageLinearSequenceable(isSequenceable); }
 bool StageInstance::IsContinuousFocusDrive() const { return GetImpl()->IsContinuousFocusDrive(); }
 int StageInstance::GetStageSequenceMaxLength(long& nrEvents) const { return GetImpl()->GetStageSequenceMaxLength(nrEvents); }
 int StageInstance::StartStageSequence() { return GetImpl()->StartStageSequence(); }
@@ -65,3 +66,5 @@ int StageInstance::StopStageSequence() { return GetImpl()->StopStageSequence(); 
 int StageInstance::ClearStageSequence() { return GetImpl()->ClearStageSequence(); }
 int StageInstance::AddToStageSequence(double position) { return GetImpl()->AddToStageSequence(position); }
 int StageInstance::SendStageSequence() { return GetImpl()->SendStageSequence(); }
+int StageInstance::SetStageLinearSequence(double dZ_um, long nSlices)
+{ return GetImpl()->SetStageLinearSequence(dZ_um, nSlices); }

@@ -3,9 +3,9 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   serial port device adapter 
-//                
-// AUTHOR:        
+// DESCRIPTION:   serial port device adapter
+//
+// AUTHOR:
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 // LICENSE:       This file is distributed under the BSD license.
@@ -70,17 +70,17 @@ class AsioClient;
 // Implementation of the MMDevice and MMStateDevice interfaces
 //
 
-class SerialPort : public CSerialBase<SerialPort>  
+class SerialPort : public CSerialBase<SerialPort>
 {
 public:
    SerialPort(const char* portName);
    ~SerialPort();
-  
+
    // MMDevice API
    // ------------
    int Initialize();
    int Shutdown();
-  
+
    void GetName(char* pszName) const;
    bool Busy() {return busy_;}
 
@@ -88,10 +88,10 @@ public:
    int GetAnswer(char* answer, unsigned bufLength, const char* term);
    int Write(const unsigned char* buf, unsigned long bufLen);
    int Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead);
-   MM::PortType GetPortType() const {return MM::SerialPort;}    
+   MM::PortType GetPortType() const {return MM::SerialPort;}
    int Purge();
 
-   std::string Name(void) const;
+   std::string Name() const;
 
    // This overrides a protected nonvirtual function and makes it public.
    void LogMessage(const char *const p, bool debugOnly = false)
@@ -110,6 +110,7 @@ public:
    int OnHandshaking(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDTR(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaud(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDataBits(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -120,7 +121,7 @@ public:
    bool OKToDelete() {return refCount_ < 1;}
 
 
-   bool Initialized(void) { return initialized_; }
+   bool Initialized() { return initialized_; }
 
 
 private:
@@ -129,7 +130,7 @@ private:
    bool initialized_;
    bool busy_;
 
-   // thread locking for the port 
+   // thread locking for the port
    MMThreadLock portLock_;
 
    double answerTimeoutMs_;
@@ -137,6 +138,7 @@ private:
    double transmitCharWaitMs_;
    std::map<std::string, int> baudList_;
 
+   unsigned dataBits_;
    std::string stopBits_;
    std::string parity_;
 
@@ -170,8 +172,8 @@ private:
 
 class SerialPortLister
 {
-   public:                                                                   
-      // returns list of serial ports that can be opened
-      static void ListPorts(std::vector<std::string> &availablePorts);
-      static bool portAccessible(const char*  portName);                     
+public:
+   // returns list of serial ports that can be opened
+   static void ListPorts(std::vector<std::string> &availablePorts);
+   static bool portAccessible(const char*  portName);
 };

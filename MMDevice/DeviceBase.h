@@ -113,7 +113,7 @@ public:
    {
       CDeviceUtils::CopyLimitedString(name, moduleName_.c_str());
    }
-   
+
    /**
    * Assigns description string for a device (for use only by the calling code).
    */
@@ -129,7 +129,7 @@ public:
    {
       CDeviceUtils::CopyLimitedString(name, description_.c_str());
    }
-   
+
    /**
    * Sets the library handle (for use only by the calling code).
    */
@@ -378,7 +378,7 @@ public:
 
       return DEVICE_OK;
    }
-   
+
    /**
     * Starts a (TTL-triggered) sequence for the given property
     * Should be overridden by the device adapter (when a sequence is implemented)
@@ -460,7 +460,7 @@ public:
 
    /**
     * This function is used by the Core to communicate a sequence to the device
-    * Sends the sequence to the device by calling the properties functor 
+    * Sends the sequence to the device by calling the properties functor
     * @param name - name of the sequenceable property
     */
    virtual int SendPropertySequence(const char* name)
@@ -562,7 +562,7 @@ public:
       if (values.size() < index)
          return false;
 
-      CDeviceUtils::CopyLimitedString(value, values[index].c_str()); 
+      CDeviceUtils::CopyLimitedString(value, values[index].c_str());
       return true;
    }
 
@@ -652,7 +652,7 @@ public:
          std::ostringstream os;
          os << "Device adapter requests invalid values ( " << low << ", ";
          os << high << ") for property: " << name;
-         LogMessage(os.str().c_str(), false); 
+         LogMessage(os.str().c_str(), false);
          return DEVICE_INVALID_PROPERTY_LIMTS;
       }
    }
@@ -785,7 +785,7 @@ public:
    virtual bool SupportsDeviceDetection(void) {
        return false;
    }
-   virtual MM::DeviceDetectionStatus DetectDevice(void){ 
+   virtual MM::DeviceDetectionStatus DetectDevice(void){
       return  MM::Unimplemented;
    };
 
@@ -803,14 +803,14 @@ public:
          this->SetProperty(MM::g_Keyword_HubID, parentID_.c_str());
       }
    }
-   
+
    virtual void GetParentID(char* parentID) const
    {
       CDeviceUtils::CopyLimitedString(parentID, parentID_.c_str());
    }
-   
+
    ////////////////////////////////////////////////////////////////////////////
-   // Protected methods, for internal use by the device adapters 
+   // Protected methods, for internal use by the device adapters
    ////////////////////////////////////////////////////////////////////////////
 
 protected:
@@ -883,8 +883,8 @@ protected:
    /**
    * Outputs time difference between two time stamps.
    * Handy for hardware profiling
-   * @param start - Time stamp for start of Process 
-   * @param end - Time stamp for end of Process 
+   * @param start - Time stamp for start of Process
+   * @param end - Time stamp for end of Process
    * @param message - message that will be displayed in output
    * @param debugOnly - if true the message will be sent only in the log-debug mode
    */
@@ -901,8 +901,8 @@ protected:
    /**
    * Outputs time difference between two time stamps.
    * Handy for hardware profiling
-   * @param start - Time stamp for start of Process 
-   * @param end - Time stamp for end of Process 
+   * @param start - Time stamp for start of Process
+   * @param end - Time stamp for end of Process
    * @param debugOnly - if true the message will be sent only in the log-debug mode
    */
    int LogTimeDiff(MM::MMTime start, MM::MMTime end, bool debugOnly = false) const
@@ -970,7 +970,7 @@ protected:
          callback_->GetLoadedDeviceOfType( this, devType, deviceName, deviceIterator);
       }
    }
-   
+
 
    /**
    * Sends an array of bytes to the com port.
@@ -978,7 +978,7 @@ protected:
    int WriteToComPort(const char* portLabel, const unsigned char* buf, unsigned bufLength)
    {
       if (callback_)
-         return callback_->WriteToSerial(this, portLabel, buf, bufLength); 
+         return callback_->WriteToSerial(this, portLabel, buf, bufLength);
 
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
@@ -992,7 +992,7 @@ protected:
    int SendSerialCommand(const char* portName, const char* command, const char* term)
    {
       if (callback_)
-         return callback_->SetSerialCommand(this, portName, command, term); 
+         return callback_->SetSerialCommand(this, portName, command, term);
 
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
@@ -1010,7 +1010,7 @@ protected:
       char buf[MAX_BUFLEN];
       if (callback_)
       {
-         int ret = callback_->GetSerialAnswer(this, portName, MAX_BUFLEN, buf, term); 
+         int ret = callback_->GetSerialAnswer(this, portName, MAX_BUFLEN, buf, term);
          if (ret != DEVICE_OK)
             return ret;
          ans = buf;
@@ -1054,7 +1054,7 @@ protected:
    * Something changed in the property structure.
    * Signals the need for GUI update.
    * This function should be called only after the initialize function finished.
-   * Calling it in the constructor or in the Initialize function will cause other 
+   * Calling it in the constructor or in the Initialize function will cause other
    * device adapters to be called before they are initialized.
    */
    int OnPropertiesChanged()
@@ -1074,7 +1074,7 @@ protected:
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 
-   /* 
+   /*
     * Signals that the stage has arrived at a new position
    */
    int OnStagePositionChanged(double pos)
@@ -1084,7 +1084,7 @@ protected:
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 
-   /* 
+   /*
    */
    int OnXYStagePositionChanged(double xPos, double yPos)
    {
@@ -1190,7 +1190,7 @@ protected:
    {
       if (IsCallbackRegistered())
          return GetCoreCallback()->GetParentHub(this);
-      
+
       return 0;
    }
 
@@ -1221,7 +1221,7 @@ private:
     * Finds a property by name and determines whether it is a sequenceable property
     * @param pProp - pointer to pointer used to return the property if found
     * @param name - name of the property we are looking for
-    * @return - DEVICE_OK, DEVICE_INVALID_PROPERTY (if not found), 
+    * @return - DEVICE_OK, DEVICE_INVALID_PROPERTY (if not found),
     *             or DEVICE_PROPERTY_NOT_SEQUENCEABLE
     */
    int GetSequenceableProperty(MM::Property** pProp, const char* name) const
@@ -1323,7 +1323,7 @@ public:
    virtual bool Busy() {return busy_;}
 
    /**
-   * Continuous sequence acquisition.  
+   * Continuous sequence acquisition.
    * Default to sequence acquisition with a high number of images
    */
    virtual int StartSequenceAcquisition(double interval)
@@ -1349,7 +1349,7 @@ public:
    */
    virtual double GetPixelSizeUm() const {return GetBinning();}
 
-   virtual unsigned GetNumberOfComponents() const 
+   virtual unsigned GetNumberOfComponents() const
    {
       return 1;
    }
@@ -1364,10 +1364,10 @@ public:
    }
 
    /**
-    * Multi-Channel cameras use this function to indicate how many channels they 
+    * Multi-Channel cameras use this function to indicate how many channels they
     * provide.  Single channel cameras do not need to override this
     */
-   virtual unsigned GetNumberOfChannels() const 
+   virtual unsigned GetNumberOfChannels() const
    {
       return 1;
    }
@@ -1426,38 +1426,38 @@ public:
       return DEVICE_OK;
    }
 
-   virtual int GetExposureSequenceMaxLength(long& /*nrEvents*/) const 
+   virtual int GetExposureSequenceMaxLength(long& /*nrEvents*/) const
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StartExposureSequence()  
+   virtual int StartExposureSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StopExposureSequence() 
+   virtual int StopExposureSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int ClearExposureSequence() 
+   virtual int ClearExposureSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int AddToExposureSequence(double /*exposureTime_ms*/) 
+   virtual int AddToExposureSequence(double /*exposureTime_ms*/)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int SendExposureSequence() const 
+   virtual int SendExposureSequence() const
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
    virtual bool IsCapturing(){return !thd_->IsStopped();}
-   
+
    virtual void AddTag(const char* key, const char* deviceLabel, const char* value)
    {
       metadata_.PutTag(key, deviceLabel, value);
@@ -1554,7 +1554,7 @@ protected:
    virtual long GetImageCounter() {return thd_->GetImageCounter();}
    virtual long GetNumberOfImages() {return thd_->GetNumberOfImages();}
 
-   // called from the thread function before exit 
+   // called from the thread function before exit
    virtual void OnThreadExiting() throw()
    {
       try
@@ -1664,10 +1664,10 @@ protected:
       virtual int svc(void) throw()
       {
          int ret=DEVICE_ERR;
-         try 
+         try
          {
             do
-            {  
+            {
                ret=camera_->ThreadRun();
             } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
             if (IsStopped())
@@ -1761,12 +1761,18 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return DEVICE_OK;
    }
 
-   virtual int GetStageSequenceMaxLength(long& /*nrEvents*/) const 
+   virtual int IsStageLinearSequenceable(bool& isSequenceable) const
+   {
+      isSequenceable = false;
+      return DEVICE_OK;
+   }
+
+   virtual int GetStageSequenceMaxLength(long& /*nrEvents*/) const
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StartStageSequence() 
+   virtual int StartStageSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -1776,12 +1782,12 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int ClearStageSequence()  
+   virtual int ClearStageSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int AddToStageSequence(double /*position*/) 
+   virtual int AddToStageSequence(double /*position*/)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -1791,6 +1797,10 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
+   virtual int SetStageLinearSequence(double, long)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
 };
 
 /**
@@ -1908,12 +1918,12 @@ public:
 
       if (mirrorX)
          x = (originXSteps_ - xSteps) * this->GetStepSizeXUm();
-      else 
+      else
          x =  - ((originXSteps_ - xSteps) * this->GetStepSizeXUm());
 
       if (mirrorY)
          y = (originYSteps_ - ySteps) * this->GetStepSizeYUm();
-      else 
+      else
          y = - ((originYSteps_ - ySteps) * this->GetStepSizeYUm());
 
       xPos_ = x;
@@ -1926,7 +1936,7 @@ public:
    * Default implementation.
    * The actual stage adapter should override it with the more
    * efficient implementation
-   */ 
+   */
    virtual int SetRelativePositionSteps(long x, long y)
    {
       long xSteps, ySteps;
@@ -1952,12 +1962,12 @@ public:
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int GetXYStageSequenceMaxLength(long& /*nrEvents*/) const 
+   virtual int GetXYStageSequenceMaxLength(long& /*nrEvents*/) const
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StartXYStageSequence() 
+   virtual int StartXYStageSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -1972,7 +1982,7 @@ public:
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int AddToXYStageSequence(double /*positionX*/, double /*positionY*/) 
+   virtual int AddToXYStageSequence(double /*positionX*/, double /*positionY*/)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -1996,7 +2006,7 @@ protected:
 
 private:
 
-   void GetOrientation(bool& mirrorX, bool& mirrorY) 
+   void GetOrientation(bool& mirrorX, bool& mirrorY)
    {
       char val[MM::MaxStrLength];
       int ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
@@ -2055,12 +2065,12 @@ class CImageProcessorBase : public CDeviceBase<MM::ImageProcessor, U>
 template <class U>
 class CSignalIOBase : public CDeviceBase<MM::SignalIO, U>
 {
-   virtual int GetDASequenceMaxLength(long& /*nrEvents*/) const 
+   virtual int GetDASequenceMaxLength(long& /*nrEvents*/) const
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StartDASequence() 
+   virtual int StartDASequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -2073,7 +2083,7 @@ class CSignalIOBase : public CDeviceBase<MM::SignalIO, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int AddToDASequence(double /*voltage*/) 
+   virtual int AddToDASequence(double /*voltage*/)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -2097,12 +2107,12 @@ class CMagnifierBase : public CDeviceBase<MM::Magnifier, U>
 template <class U>
 class CSLMBase : public CDeviceBase<MM::SLM, U>
 {
-   virtual int GetSLMSequenceMaxLength(long& /*nrEvents*/) const 
+   virtual int GetSLMSequenceMaxLength(long& /*nrEvents*/) const
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int StartSLMSequence() 
+   virtual int StartSLMSequence()
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -2115,12 +2125,12 @@ class CSLMBase : public CDeviceBase<MM::SLM, U>
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int AddToSLMSequence(const unsigned char * const /*image*/) 
+   virtual int AddToSLMSequence(const unsigned char * const /*image*/)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
 
-   virtual int AddToSLMSequence(const unsigned int * const /*image*/) 
+   virtual int AddToSLMSequence(const unsigned int * const /*image*/)
    {
       return DEVICE_UNSUPPORTED_COMMAND;
    }
@@ -2238,7 +2248,7 @@ public:
    * (which is called through SetPosition)
    */
    virtual int SetGateOpen(bool open)
-   {  
+   {
       if (gateOpen_ != open) {
          gateOpen_ = open;
          long position;
@@ -2252,7 +2262,7 @@ public:
 
    virtual int GetGateOpen(bool& open)
    {
-      open = gateOpen_; 
+      open = gateOpen_;
       return DEVICE_OK;
    }
 
@@ -2348,7 +2358,7 @@ public:
    /**
    * Obtains the position associated with a label.
    */
-   virtual int GetLabelPosition(const char* label, long& pos) const 
+   virtual int GetLabelPosition(const char* label, long& pos) const
    {
       std::map<std::string, long>::const_iterator it;
       it = labels_.find(label);
@@ -2379,7 +2389,7 @@ public:
          int ret = SetPosition(label.c_str());
          if (ret != DEVICE_OK)
             return ret;
-      } 
+      }
       else if (eAct == MM::IsSequenceable)
       {
          assert(this->HasProperty(MM::g_Keyword_State));
@@ -2417,14 +2427,14 @@ public:
          for ( it=sequence.begin() ; it < sequence.end(); it++ )
          {
             ret = this->AddToPropertySequence(MM::g_Keyword_State, (*it).c_str());
-            if (ret != DEVICE_OK)                                               
+            if (ret != DEVICE_OK)
                return ret;
          }
-                                                                             
+
          ret = this->SendPropertySequence(MM::g_Keyword_State);
-         if (ret != DEVICE_OK)                                                  
+         if (ret != DEVICE_OK)
             return ret;
-          
+
          //this->LoadPropertySequence(MM::g_Keyword_State, sequence);
       }
       else if (eAct == MM::StartSequence) {
@@ -2444,7 +2454,7 @@ public:
     * both "State" and "Label" properties should be updated.
     */
    int OnStateChanged(long position) {
-      int ret;   
+      int ret;
       ret = this->OnPropertyChanged(MM::g_Keyword_State,CDeviceUtils::ConvertToString(position));
       if (ret != DEVICE_OK) {
          return ret;

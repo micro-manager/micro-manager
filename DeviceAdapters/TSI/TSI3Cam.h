@@ -141,10 +141,10 @@ private:
    ImgBuffer img;
    bool initialized;
    bool stopOnOverflow;
-   int imageCount;
    void* camHandle;
    long acquiringSequence;
    long acquiringFrame;
+   double maxExposureMs;
 
    Tsi3RoiBin fullFrame;
 

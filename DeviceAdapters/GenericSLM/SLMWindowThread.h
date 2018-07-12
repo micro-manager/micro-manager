@@ -46,6 +46,7 @@ public:
 
    void Show();
    HDC GetDC();
+   void ReleaseDC(HDC dc);
    OffscreenBuffer* GetOffscreenBuffer();
 
 private:
