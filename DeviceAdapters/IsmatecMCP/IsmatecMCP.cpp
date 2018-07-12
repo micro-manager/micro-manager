@@ -606,6 +606,20 @@ MCP::OnManualControl(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (err != DEVICE_OK)
          return err;
       manualControl_ = enabled;
+
+      if (!manualControl_)
+      {
+         // Invalidate all cached data on disabling manual control
+         cachedTubingInnerDiameterMm_ = -1.0;
+         cachedSpeedRpm_ = -1.0;
+         cachedDefaultFlowRateMlPerMin_ = -1.0;
+         cachedCalibratedFlowRateMlPerMin_ = -1.0;
+         cachedDispensingTimeSeconds_ = -1.0;
+         cachedDispensingRollerSteps_ = -1;
+         cachedRollerBackSteps_ = -1;
+         cachedPauseTimeSeconds_ = -1.0;
+         cachedNumberOfCycles_ = -1;
+      }
    }
    return DEVICE_OK;
 }
