@@ -2141,7 +2141,8 @@ ZStage::ZStage() :
    compileDay_(0),
    supportsLinearSequence_(false),
    linearSequenceIntervalUm_(0.0),
-   linearSequenceLength_(0)
+   linearSequenceLength_(0),
+   linearSequenceTimeoutMs_(10000)
 {
    InitializeDefaultErrorMessages();
 
@@ -2253,6 +2254,10 @@ int ZStage::Initialize()
       AddAllowedValue(spn, "No");
       AddAllowedValue(spn, "Armed");
    }
+
+   // The timeout for linear Z stacks (ZS F=)
+   pAct = new CPropertyAction(this, &ZStage::OnLinearSequenceTimeout);
+   CreateFloatProperty("LinearSequenceResetTimeout(ms)", linearSequenceTimeoutMs_, false, pAct);
 
    // Speed (sets both x and y)
    if (hasCommand("S " + axis_ + "?")) {
@@ -2584,7 +2589,7 @@ int ZStage::StartStageSequence()
       os.precision(0);
       os << fixed << "ZS X=" << 10 * linearSequenceIntervalUm_ <<
          " Y=" << linearSequenceLength_ <<
-         " Z=0"; // TODO F=timeout_ms
+         " Z=0" << " F=" << linearSequenceTimeoutMs_;
       int ret = QueryCommand(os.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
@@ -2941,6 +2946,23 @@ int ZStage::OnRingBufferSize(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(nrEvents_);
    }
 
+   return DEVICE_OK;
+}
+
+int ZStage::OnLinearSequenceTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(linearSequenceTimeoutMs_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double v;
+      pProp->Get(v);
+      if (v < 0)
+         v = 0.0;
+      linearSequenceTimeoutMs_ = long(ceil(v));
+   }
    return DEVICE_OK;
 }
 

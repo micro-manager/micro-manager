@@ -210,6 +210,7 @@ public:
    int OnSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFastSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRingBufferSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLinearSequenceTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
    int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = sequenceable_; return DEVICE_OK;}
@@ -259,6 +260,7 @@ private:
    bool supportsLinearSequence_;
    double linearSequenceIntervalUm_;
    long linearSequenceLength_;
+   long linearSequenceTimeoutMs_;
 };
 
 
