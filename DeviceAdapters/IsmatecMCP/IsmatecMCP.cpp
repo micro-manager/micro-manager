@@ -83,6 +83,12 @@ class MCP : public CGenericBase<MCP>
 
    int nRollers_;
 
+   // The number of digits after decimal point as reported by the '[' command.
+   // Read only after tubing ID change, because '[' sometimes gives an
+   // incorrect response when the calibrated flow rate is set to a value with
+   // one fewer digit than the default flow rate.
+   int nFractionalDigits_;
+
    // Those few states that cannot be queried:
    bool ccw_;
    bool manualControl_;
@@ -297,6 +303,7 @@ MCPChain::SendRecv(MCPCommand& cmd)
 MCP::MCP(int address) :
    address_(address),
    nRollers_(3),
+   nFractionalDigits_(0),
    ccw_(false),
    manualControl_(false),
    mode_(ModeCommand::ModePumpRPM)
@@ -361,6 +368,12 @@ MCP::Initialize()
    err = SendRecv(modeCmd);
    if (err != DEVICE_OK)
       return err;
+
+   FractionalDigitsQuery fdQ(address_);
+   err = SendRecv(fdQ);
+   if (err != DEVICE_OK)
+      return err;
+   nFractionalDigits_ = fdQ.GetFractionalDigits();
 
    PumpTypeFirmwareVersionHeadIdQuery typeQ(address_);
    err = SendRecv(typeQ);
@@ -621,6 +634,12 @@ MCP::OnTubingInnerDiameter(MM::PropertyBase* pProp, MM::ActionType eAct)
       int err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
+
+      FractionalDigitsQuery fdq(address_);
+      err = SendRecv(fdq);
+      if (err != DEVICE_OK)
+         return err;
+      nFractionalDigits_ = fdq.GetFractionalDigits();
    }
    return DEVICE_OK;
 }
@@ -680,18 +699,14 @@ MCP::OnCalibratedFlowRate(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      FractionalDigitsQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      double maxValue = 9999.0 / pow(10.0, q.GetFractionalDigits());
+      double maxValue = 9999.0 / pow(10.0, nFractionalDigits_);
 
       double v;
       pProp->Get(v);
       if (v <= 0.0 || v > maxValue)
          return ERR_VALUE_OUT_OF_RANGE;
-      CalibratedFlowRateCommand c(address_, v, q.GetFractionalDigits());
-      err = SendRecv(c);
+      CalibratedFlowRateCommand c(address_, v, nFractionalDigits_);
+      int err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
    }
@@ -775,6 +790,9 @@ MCP::OnDispensingVolume(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      // Unlike calibrated flow rate, the number of fractional digits for
+      // dispensing volume actually does follow what the '[' command
+      // currently reports.
       FractionalDigitsQuery q(address_);
       int err = SendRecv(q);
       if (err != DEVICE_OK)
