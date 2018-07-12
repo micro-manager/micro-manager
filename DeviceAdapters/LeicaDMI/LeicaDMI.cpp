@@ -893,6 +893,7 @@ int ILTurret::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_IL_Turret))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_IL_Turret);
 
    // set property list
    // ----------------
@@ -900,14 +901,14 @@ int ILTurret::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &ILTurret::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1073,18 +1074,19 @@ int ObjectiveTurret::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_Revolver))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_Revolver);
 
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &ObjectiveTurret::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2125,6 +2127,7 @@ int MagChanger::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_Mag_Changer_Mot))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_Mag_Changer_Mot);
 
    // set property list
    // ----------------
@@ -2132,7 +2135,7 @@ int MagChanger::Initialize()
    // Position 
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &MagChanger::OnPosition);
-   ret = CreateProperty("Position", "1", MM::String, false, pAct);
+   ret = CreateProperty("Position", "1", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2277,6 +2280,7 @@ int TLPolarizer::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_TL_Polarizer))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_TL_Polarizer);
 
    // set property list
    // ----------------
@@ -2284,14 +2288,14 @@ int TLPolarizer::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &TLPolarizer::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2414,6 +2418,7 @@ int DICTurret::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_DIC_Turret))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_DIC_Turret);
 
    // set property list
    // ----------------
@@ -2421,17 +2426,14 @@ int DICTurret::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &DICTurret::OnState);
-   if (g_ScopeModel.dicTurret_.isMotorized())
-      ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
-   else
-      ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, true, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2588,6 +2590,7 @@ int CondensorTurret::Initialize()
    // check if this turret exists:
    if (! g_ScopeModel.IsDeviceAvailable(g_Condensor))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_Condensor);
 
    // set property list
    // ----------------
@@ -2595,14 +2598,14 @@ int CondensorTurret::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &CondensorTurret::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, readOnly, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -3363,6 +3366,7 @@ int SidePort::Initialize()
    // check if this turret exists:
 	if (! g_ScopeModel.IsDeviceAvailable(::g_Side_Port))
       return ERR_MODULE_NOT_FOUND;
+   bool readOnly = g_ScopeModel.IsDeviceCoded(g_Side_Port);
 
    // set property list
    // ----------------
@@ -3380,13 +3384,13 @@ int SidePort::Initialize()
 
 
    CPropertyAction* pAct = new CPropertyAction (this, &SidePort::OnState);
-	(void)CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+	(void)CreateProperty(MM::g_Keyword_State, "0", MM::Integer, readOnly, pAct);
 
 
    // Label
    // -----
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   (void)CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, false, pAct);
+   (void)CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, readOnly, pAct);
    
 
 	std::ostringstream dmess;
