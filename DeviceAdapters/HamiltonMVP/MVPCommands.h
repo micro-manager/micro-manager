@@ -40,6 +40,10 @@
 #include <string>
 #include <vector>
 
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#define snprintf _snprintf
+#endif
+
 
 const char* const MVP_TERM = "\r";
 const char MVP_ACK = 6;

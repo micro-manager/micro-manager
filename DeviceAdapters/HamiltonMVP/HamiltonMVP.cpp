@@ -110,6 +110,9 @@ private:
    bool ShouldRotateCCW(int curPos, int newPos);
    static std::string RotationDirectionToString(RotationDirection rd);
    static RotationDirection RotationDirectionFromString(const std::string& s);
+
+private:
+   MVP& operator=(const MVP&); // = delete
 };
 
 
