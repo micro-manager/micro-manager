@@ -445,6 +445,8 @@ m4_define([device_adapter_dirs], [m4_strip([
    FakeCamera
    FocalPoint
    FreeSerialPort
+   HamiltonMVP
+   HamiltonMVP/unittest
    HIDManager
    HydraLMT200
    IDS_uEye

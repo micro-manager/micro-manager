@@ -111,6 +111,7 @@ SUBDIRS = \
 	Diskovery \
 	FocalPoint \
 	FreeSerialPort \
+	HamiltonMVP \
 	HydraLMT200 \
 	ImageProcessorChain \
 	K8055 \
