@@ -272,7 +272,7 @@ public:
    }
 
 
-   void Purge(void)
+   void Purge()
    {
       // clear read buffer;
       {
@@ -313,7 +313,7 @@ private:
    { pSerialPortAdapter_->LogMessage(msg, debug); }
 
    static const int max_read_length = 512; // maximum amount of data to read in one operation
-   void ReadStart(void)
+   void ReadStart()
    { // Start an asynchronous read and call ReadComplete when it completes or fails
       try
       {
@@ -374,7 +374,7 @@ private:
    }
 
    // Must be called with writeBufferLock_ acquired!
-   void WriteStart(void)
+   void WriteStart()
    { // Start an asynchronous write and call WriteComplete when it completes or fails
       boost::asio::async_write(serialPortImplementation_,
          boost::asio::buffer(&write_msgs_.front()[0], write_msgs_.front().size()),

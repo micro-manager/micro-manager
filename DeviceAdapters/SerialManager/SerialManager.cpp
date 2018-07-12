@@ -680,7 +680,7 @@ void SerialPort::GetName(char* pszName) const
    CDeviceUtils::CopyLimitedString(pszName, portName_.c_str());
 }
 
-std::string SerialPort::Name(void) const
+std::string SerialPort::Name() const
 {
    char value[MM::MaxStrLength];
    value[0] = 0;

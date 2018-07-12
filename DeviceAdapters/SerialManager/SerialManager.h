@@ -91,7 +91,7 @@ public:
    MM::PortType GetPortType() const {return MM::SerialPort;}
    int Purge();
 
-   std::string Name(void) const;
+   std::string Name() const;
 
    // This overrides a protected nonvirtual function and makes it public.
    void LogMessage(const char *const p, bool debugOnly = false)
@@ -120,7 +120,7 @@ public:
    bool OKToDelete() {return refCount_ < 1;}
 
 
-   bool Initialized(void) { return initialized_; }
+   bool Initialized() { return initialized_; }
 
 
 private:
