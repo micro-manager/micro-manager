@@ -10,7 +10,7 @@
 // LICENSE:       This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
 //                License as published by the Free Software Foundation.
-//                
+//
 //                You should have received a copy of the GNU Lesser General Public
 //                License along with the source distribution; if not, write to
 //                the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
@@ -21,7 +21,7 @@
 //                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //
 // AUTHOR:        Jizhen Zhao (j.zhao@andor.com) based on code by Nenad Amodaj, April 2007, modified by Nico Stuurman, 12/2007
 // MAINTAINER     Maintained by Nico Stuurman (nico@cmp.ucsf.edu) and Jon Daniels (jon@asiimaging.com)
@@ -256,8 +256,8 @@ int ASIBase::ClearPort(void)
       if (ret != DEVICE_OK)
          return ret;
    }
-   return DEVICE_OK;                                                           
-} 
+   return DEVICE_OK;
+}
 
 // Communication "send" utility function:
 int ASIBase::SendCommand(const char *command) const
@@ -377,8 +377,8 @@ unsigned int ASIBase::ExtractCompileDay(const char* compile_date)
 //
 XYStage::XYStage() :
    ASIBase(this, "2H"),
-   stepSizeXUm_(0.0), 
-   stepSizeYUm_(0.0), 
+   stepSizeXUm_(0.0),
+   stepSizeYUm_(0.0),
    maxSpeed_ (7.5),
    ASISerialUnit_(10.0),
    motorOn_(true),
@@ -437,7 +437,7 @@ int XYStage::Initialize()
    core_ = GetCoreCallback();
 
    // empty the Rx serial buffer before sending command
-   ClearPort(); 
+   ClearPort();
 
    CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnVersion);
    CreateProperty("Version", "", MM::String, true, pAct);
@@ -538,7 +538,7 @@ int XYStage::Initialize()
    AddAllowedValue("MotorOnOff", "On");
    AddAllowedValue("MotorOnOff", "Off");
 
-   // JoyStick MirrorsX 
+   // JoyStick MirrorsX
    // TODO: the following properties should only appear in controllers version 8 and higher
    pAct = new CPropertyAction (this, &XYStage::OnJSMirror);
    CreateProperty("JoyStick Reverse", "Off", MM::String, false, pAct);
@@ -584,7 +584,7 @@ int XYStage::Initialize()
    */
 
    /*
-   ret = UpdateStatus();  
+   ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
    */
@@ -605,7 +605,7 @@ int XYStage::Shutdown()
 bool XYStage::Busy()
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(); 
+   ClearPort();
 
    const char* command = "/";
    string answer;
@@ -650,7 +650,7 @@ int XYStage::SetPositionSteps(long x, long y)
       return ERR_OFFSET + errNo;
    }
 
-   return ERR_UNRECOGNIZED_ANSWER;  
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 int XYStage::SetRelativePositionSteps(long x, long y)
@@ -689,7 +689,7 @@ int XYStage::SetRelativePositionSteps(long x, long y)
       return ERR_OFFSET + errNo;
    }
 
-   return ERR_UNRECOGNIZED_ANSWER;  
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 int XYStage::GetPositionSteps(long& x, long& y)
@@ -719,14 +719,14 @@ int XYStage::GetPositionSteps(long& x, long& y)
 	  strcpy(iBuf,answer.c_str());
 	  sscanf(iBuf, "%s %f %f\r\n", head, &xx, &yy);
 	  x = (long) (xx * ASISerialUnit_);
-	  y = (long) (yy * ASISerialUnit_); 
+	  y = (long) (yy * ASISerialUnit_);
 
       return DEVICE_OK;
    }
 
    return ERR_UNRECOGNIZED_ANSWER;
 }
-  
+
 int XYStage::SetOrigin()
 {
    string answer;
@@ -745,7 +745,7 @@ int XYStage::SetOrigin()
       return ERR_OFFSET + errNo;
    }
 
-   return ERR_UNRECOGNIZED_ANSWER;   
+   return ERR_UNRECOGNIZED_ANSWER;
 };
 
 
@@ -764,7 +764,7 @@ void XYStage::Wait()
    //   return ret;
 
    // block/wait for acknowledge, or until we time out;
-   
+
    if (answer.substr(0,1) == "B") busy = true;
    else if (answer.substr(0,1) == "N") busy = false;
    else busy = true;
@@ -821,7 +821,7 @@ int XYStage::Home()
 };
 
 int XYStage::Calibrate(){
-	
+
 	if (stopSignal_) return DEVICE_OK;
 
 	double x1, y1;
@@ -902,7 +902,7 @@ int XYStage::Calibrate1() {
 	return ret;
 }
 
-int XYStage::Stop() 
+int XYStage::Stop()
 {
    // empty the Rx serial buffer before sending command
    ClearPort();
@@ -927,7 +927,7 @@ int XYStage::Stop()
 
    return DEVICE_OK;
 }
- 
+
 int XYStage::GetLimitsUm(double& /*xMin*/, double& /*xMax*/, double& /*yMin*/, double& /*yMax*/)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
@@ -1022,7 +1022,7 @@ int XYStage::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
          int errNo = atoi(answer.substr(3).c_str());
          return ERR_OFFSET + errNo;
       }
-      return ERR_UNRECOGNIZED_ANSWER;  
+      return ERR_UNRECOGNIZED_ANSWER;
    }
 
    return DEVICE_OK;
@@ -1139,7 +1139,7 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
          int errNo = atoi(answer.substr(3).c_str());
          return ERR_OFFSET + errNo;
       }
-      return ERR_UNRECOGNIZED_ANSWER;  
+      return ERR_UNRECOGNIZED_ANSWER;
    }
    else if (eAct == MM::AfterSet) {
       long waitCycles;
@@ -1208,7 +1208,7 @@ int XYStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
          int errNo = atoi(answer.substr(3).c_str());
          return ERR_OFFSET + errNo;
       }
-      return ERR_UNRECOGNIZED_ANSWER;  
+      return ERR_UNRECOGNIZED_ANSWER;
    }
    else if (eAct == MM::AfterSet) {
       double backlash;
@@ -1267,7 +1267,7 @@ int XYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
          int errNo = atoi(answer.substr(3).c_str());
          return ERR_OFFSET + errNo;
       }
-      return ERR_UNRECOGNIZED_ANSWER;  
+      return ERR_UNRECOGNIZED_ANSWER;
    }
    else if (eAct == MM::AfterSet) {
       double error;
@@ -1372,7 +1372,7 @@ int XYStage::OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct)
          int errNo = atoi(answer.substr(3).c_str());
          return ERR_OFFSET + errNo;
       }
-      return ERR_UNRECOGNIZED_ANSWER;  
+      return ERR_UNRECOGNIZED_ANSWER;
    }
    else if (eAct == MM::AfterSet) {
       double overShoot;
@@ -1425,7 +1425,7 @@ int XYStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
          int errNo = atoi(answer.substr(3).c_str());
          return ERR_OFFSET + errNo;
       }
-      return ERR_UNRECOGNIZED_ANSWER;  
+      return ERR_UNRECOGNIZED_ANSWER;
    }
    else if (eAct == MM::AfterSet) {
       double error;
@@ -1499,7 +1499,7 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
          int errNo = atoi(answer.substr(3).c_str());
          return ERR_OFFSET + errNo;
       }
-      return ERR_UNRECOGNIZED_ANSWER;  
+      return ERR_UNRECOGNIZED_ANSWER;
    }
    else if (eAct == MM::AfterSet) {
       double speed;
@@ -1665,7 +1665,7 @@ int XYStage::OnJSFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       else
          return ERR_UNRECOGNIZED_ANSWER;
    }
-   
+
    return DEVICE_OK;
 }
 
@@ -2138,7 +2138,10 @@ ZStage::ZStage() :
    nrEvents_(0),
    maxSpeed_(7.5),
    motorOn_(true),
-   compileDay_(0)
+   compileDay_(0),
+   supportsLinearSequence_(false),
+   linearSequenceIntervalUm_(0.0),
+   linearSequenceLength_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -2154,7 +2157,7 @@ ZStage::ZStage() :
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &ZStage::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
- 
+
    // Axis
    pAct = new CPropertyAction (this, &ZStage::OnAxis);
    CreateProperty("Axis", "Z", MM::String, false, pAct, true);
@@ -2370,7 +2373,7 @@ int ZStage::SetPositionUm(double pos)
       return ERR_OFFSET + errNo;
    }
 
-   return ERR_UNRECOGNIZED_ANSWER; 
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 int ZStage::GetPositionUm(double& pos)
@@ -2399,7 +2402,7 @@ int ZStage::GetPositionUm(double& pos)
 	  char iBuf[256];
 	  strcpy(iBuf,answer.c_str());
 	  sscanf(iBuf, "%s %f\r\n", head, &zz);
-	  
+
 	  pos = zz * stepSizeUm_;
 	  curSteps_ = (long)zz;
 
@@ -2438,7 +2441,7 @@ int ZStage::SetRelativePositionUm(double d)
 
    return ERR_UNRECOGNIZED_ANSWER;
 }
-  
+
 int ZStage::SetPositionSteps(long pos)
 {
    ostringstream command;
@@ -2461,10 +2464,10 @@ int ZStage::SetPositionSteps(long pos)
       return ERR_OFFSET + errNo;
    }
 
-   return ERR_UNRECOGNIZED_ANSWER; 
- 
+   return ERR_UNRECOGNIZED_ANSWER;
+
 }
-  
+
 int ZStage::GetPositionSteps(long& steps)
 {
    // empty the Rx serial buffer before sending command
@@ -2491,7 +2494,7 @@ int ZStage::GetPositionSteps(long& steps)
 	  char iBuf[256];
 	  strcpy(iBuf,answer.c_str());
 	  sscanf(iBuf, "%s %f\r\n", head, &zz);
-	  
+
 	  steps = (long) zz;
 	  curSteps_ = (long)steps;
 
@@ -2548,7 +2551,7 @@ int ZStage::SetOrigin()
       return ERR_OFFSET + errNo;
    }
 
-   return ERR_UNRECOGNIZED_ANSWER;  
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 int ZStage::Calibrate(){
@@ -2574,18 +2577,40 @@ int ZStage::StartStageSequence()
    }
 
    string answer;
-   
-   // ensure that ringbuffer pointer points to first entry and 
+
+   if (sequence_.empty() && supportsLinearSequence_)
+   {
+      ostringstream os;
+      os.precision(0);
+      os << fixed << "ZS X=" << 10 * linearSequenceIntervalUm_ <<
+         " Y=" << linearSequenceLength_ <<
+         " Z=0"; // TODO F=timeout_ms
+      int ret = QueryCommand(os.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0, 2) != ":A" && answer.substr(1, 2) != ":A")
+         return ERR_UNRECOGNIZED_ANSWER;
+
+      ret = QueryCommand("TTL X=4", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (answer.substr(0, 2) != ":A" && answer.substr(1, 2) != ":A")
+         return ERR_UNRECOGNIZED_ANSWER;
+
+      return DEVICE_OK;
+   }
+
+   // ensure that ringbuffer pointer points to first entry and
    // that we only trigger the desired axis
    ostringstream os;
    os << "RM Y=" << axisNr_ << " Z=0";
- 
-   int ret = QueryCommand(os.str().c_str(), answer); 
+
+   int ret = QueryCommand(os.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
    if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
-   {  
+   {
       ret = QueryCommand("TTL X=1", answer); // switches on TTL triggering
       if (ret != DEVICE_OK)
          return ret;
@@ -2597,7 +2622,7 @@ int ZStage::StartStageSequence()
    return ERR_UNRECOGNIZED_ANSWER;
 }
 
-int ZStage::StopStageSequence() 
+int ZStage::StopStageSequence()
 {
    if (runningFastSequence_)
    {
@@ -2679,7 +2704,7 @@ int ZStage::ClearStageSequence()
 
    if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
       return DEVICE_OK;
-   
+
    return ERR_UNRECOGNIZED_ANSWER;
 }
 
@@ -2691,6 +2716,23 @@ int ZStage::AddToStageSequence(double position)
    }
 
    sequence_.push_back(position);
+
+   return DEVICE_OK;
+}
+
+int ZStage::SetStageLinearSequence(double dZ_um, long nSlices)
+{
+   if (runningFastSequence_)
+   {
+      return DEVICE_OK;
+   }
+
+   int ret = ClearStageSequence();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   linearSequenceIntervalUm_ = dZ_um;
+   linearSequenceLength_ = nSlices;
 
    return DEVICE_OK;
 }
@@ -2714,7 +2756,7 @@ int ZStage::GetControllerInfo()
       if (0 == token.compare(0, ringBuffer.size(), ringBuffer))
       {
          hasRingBuffer_ = true;
-         if (token.size() > ringBuffer.size()) 
+         if (token.size() > ringBuffer.size())
          {
             // tries to read ring buffer size, this works since 2013-09-03
             //   change to firmware which prints max size
@@ -2740,11 +2782,25 @@ int ZStage::GetControllerInfo()
             }
             i = i << 1;
          }
-      }	 
+      }
       // TODO: add in tests for other capabilities/devices
    }
- 
+
    LogMessage(answer.c_str(), false);
+
+   // Determine if our axis is the "active Z-focus axis" (which allows
+   // linear sequence)
+   ret = QueryCommand("UNLOCK F", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   if (answer.length() > 2 && answer.substr(0, 2) == ":A")
+   {
+      int focusIndex = atoi(answer.substr(2).c_str());
+      if (axisNr_ == focusIndex)
+      {
+         supportsLinearSequence_ = true;
+      }
+   }
 
    return DEVICE_OK;
 }
@@ -3480,33 +3536,33 @@ int CRIF::GetFocusState(std::string& focusState)
    // translate response to one of our globals (see page 6 of CRIF manual)
    char test = answer.c_str()[3];
    switch (test) {
-      case 'I': 
+      case 'I':
          focusState = g_CRIF_I;
          break;
-      case 'L': 
+      case 'L':
          focusState = g_CRIF_L;
          break;
-      case '1': 
-      case '2': 
-      case '3': 
+      case '1':
+      case '2':
+      case '3':
          focusState = g_CRIF_Cal;
          break;
-      case 'G': 
+      case 'G':
          focusState = g_CRIF_G;
          break;
-      case 'B': 
+      case 'B':
          focusState = g_CRIF_B;
          break;
-      case 'k': 
+      case 'k':
          focusState = g_CRIF_k;
          break;
-      case 'K': 
+      case 'K':
          focusState = g_CRIF_K;
          break;
-      case 'E': 
+      case 'E':
          focusState = g_CRIF_E;
          break;
-      case 'O': 
+      case 'O':
          focusState = g_CRIF_O;
          break;
       default:
@@ -3572,7 +3628,7 @@ int CRIF::SetFocusState(std::string focusState)
       }
    }
 
-   else if (focusState == g_CRIF_Cal) 
+   else if (focusState == g_CRIF_Cal)
    {
       const char* command = "LK Z";
       if (currentState == g_CRIF_B || currentState == g_CRIF_O)
@@ -3584,7 +3640,7 @@ int CRIF::SetFocusState(std::string focusState)
          ret = GetFocusState(currentState);
          if (ret != DEVICE_OK)
             return ret;
-      }  
+      }
       if (currentState == g_CRIF_I) // Idle, first switch on laser
       {
          // query command and wait for acknowledgement
@@ -3620,13 +3676,13 @@ int CRIF::SetFocusState(std::string focusState)
    else if ( (focusState == g_CRIF_K) || (focusState == g_CRIF_k) )
    {
       // only try a lock when we are good
-      if ( (currentState == g_CRIF_G) || (currentState == g_CRIF_O) ) 
+      if ( (currentState == g_CRIF_G) || (currentState == g_CRIF_O) )
       {
          ret = SetContinuousFocusing(true);
          if (ret != DEVICE_OK)
             return ret;
       }
-      else if (! ( (currentState == g_CRIF_k) || currentState == g_CRIF_K) ) 
+      else if (! ( (currentState == g_CRIF_k) || currentState == g_CRIF_K) )
       {
          // tell the user that we first need to calibrate before starting a lock
          return ERR_NOT_CALIBRATED;
@@ -3695,7 +3751,7 @@ int CRIF::GetContinuousFocusing(bool& state)
       state = true;
    else
       state =false;
-   
+
    return DEVICE_OK;
 }
 
@@ -3776,7 +3832,7 @@ int CRIF::SetPositionUm(double pos)
       return ERR_OFFSET + errNo;
    }
 
-   return ERR_UNRECOGNIZED_ANSWER; 
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 int CRIF::GetPositionUm(double& pos)
@@ -3805,7 +3861,7 @@ int CRIF::GetPositionUm(double& pos)
       char iBuf[256];
       strcpy(iBuf,answer.c_str());
       sscanf(iBuf, "%s %f\r\n", head, &zz);
-	  
+
 	   pos = zz * stepSizeUm_;
 
       return DEVICE_OK;
@@ -4113,11 +4169,11 @@ int CRISP::GetFocusState(std::string& focusState)
    switch (test) {
       case 'I': focusState = g_CRISP_I; break;
       case 'R': focusState = g_CRISP_R; break;
-      case '1': 
-      case '2': 
-      case '3': 
-      case '4': 
-      case '5': 
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
       case 'g':
       case 'h':
       case 'i':
@@ -4184,17 +4240,17 @@ int CRISP::ForceSetFocusState(std::string focusState)
       return SetCommand(command);
    }
 
-   else if (focusState == g_CRISP_G) 
+   else if (focusState == g_CRISP_G)
    {
       // Log-Amp Calibration
-      const char* command = "LK F=72"; 
+      const char* command = "LK F=72";
       return SetCommand(command);
    }
 
-   else if (focusState == g_CRISP_SG) 
+   else if (focusState == g_CRISP_SG)
    {
       // gain_Cal Calibration
-      const char* command = "LK F=67"; 
+      const char* command = "LK F=67";
       return SetCommand(command);
    }
 
@@ -4218,7 +4274,7 @@ int CRISP::ForceSetFocusState(std::string focusState)
       const char* command = "SS Z";
       return SetCommand(command);
    }
-   
+
    return DEVICE_OK;
 }
 
@@ -4265,7 +4321,7 @@ int CRISP::GetContinuousFocusing(bool& state)
       return ret;
 
    state = ((focusState == g_CRISP_K) || (focusState == g_CRISP_F));
-   
+
    return DEVICE_OK;
 }
 
@@ -4370,7 +4426,7 @@ int CRISP::SetCommand(std::string cmd)
    if (answer.substr(0,2) == ":A") {
       return DEVICE_OK;
    }
- 
+
    return ERR_UNRECOGNIZED_ANSWER;
 }
 
@@ -4587,7 +4643,7 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(" ");
-   } 
+   }
    else if (eAct == MM::AfterSet)
    {
       std::string val;
@@ -4625,11 +4681,11 @@ int CRISP::OnFocusCurve(MM::PropertyBase* pProp, MM::ActionType eAct)
                      focusCurveData_[index] = "";
                }
             }
-            
+
             cont = (GetCurrentMMTime() - startTime) < wait;
          }
       }
-     
+
    }
    return DEVICE_OK;
 }
@@ -4693,10 +4749,10 @@ int CRISP::OnDitherError(MM::PropertyBase* pProp, MM::ActionType eAct)
       std::istringstream is(answer);
       std::string tok,tok2;
       for (int i=0; i <3; i++)
-      {   
+      {
 		  if(i==1)
 		  {
-		  is>>tok2; //2nd "is" is sum 
+		  is>>tok2; //2nd "is" is sum
 		  }
 		  is >> tok; //3rd "is" is error
 
@@ -4779,7 +4835,7 @@ int CRISP::OnInFocusRange(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-   
+
 int CRISP::OnSum(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   if (eAct == MM::BeforeGet)
@@ -4811,11 +4867,11 @@ int CRISP::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       double numSkips;
       //int ret = GetValue("LK Z?", numSkips);
-      
+
 	  int ret= GetOffset(numSkips);
 	  if (ret != DEVICE_OK)
-         return ret; 
-   
+         return ret;
+
 	  if (!pProp->Set(numSkips))
          return DEVICE_INVALID_PROPERTY_VALUE;
    }
@@ -4827,7 +4883,7 @@ int CRISP::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 /***************************************************************************
- *  AZ100 adapter 
+ *  AZ100 adapter
  */
 AZ100Turret::AZ100Turret() :
    ASIBase(this, "" /* LX-4000 Prefix Unknown */),
@@ -4848,7 +4904,7 @@ AZ100Turret::AZ100Turret() :
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &AZ100Turret::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
- 
+
 }
 
 AZ100Turret::~AZ100Turret()
@@ -5304,7 +5360,7 @@ int LED::Initialize()
    return DEVICE_OK;
 }
 
-int LED::Shutdown() 
+int LED::Shutdown()
 {
    initialized_ = false;
    return DEVICE_OK;
@@ -5315,9 +5371,9 @@ bool LED::Busy()
    // The LED should be a whole lot faster than our serial communication
    // so always respond false
    return false;
-} 
+}
 
-   // Shutter API                                                                     
+   // Shutter API
 // All communication with the LED takes place in this function
 int LED::SetOpen (bool open)
 {

@@ -85,12 +85,12 @@ class XYStage : public CXYStageBase<XYStage>, public ASIBase
 public:
    XYStage();
    ~XYStage();
-  
+
    // Device API
    // ----------
    int Initialize();
    int Shutdown();
-  
+
    void GetName(char* pszName) const;
    bool Busy();
 
@@ -155,7 +155,7 @@ private:
    void Wait();
    static std::string EscapeControlCharacters(const std::string v);
    static std::string UnescapeControlCharacters(const std::string v0 );
-  
+
    double stepSizeXUm_;
    double stepSizeYUm_;
    double maxSpeed_;
@@ -179,12 +179,12 @@ class ZStage : public CStageBase<ZStage>, public ASIBase
 public:
    ZStage();
    ~ZStage();
-  
+
    // Device API
    // ----------
    int Initialize();
    int Shutdown();
-  
+
    void GetName(char* pszName) const;
    bool Busy();
    bool SupportsDeviceDetection(void);
@@ -220,6 +220,11 @@ public:
    int AddToStageSequence(double position);
    int SendStageSequence();
 
+   // Linear sequence
+   int IsStageLinearSequenceable(bool& isSequenceable) const
+   { isSequenceable = sequenceable_ && supportsLinearSequence_; return DEVICE_OK; }
+   int SetStageLinearSequence(double dZ_um, long nSlices);
+
 private:
    int OnCompileDate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -251,6 +256,9 @@ private:
    double maxSpeed_;
    bool motorOn_;
    unsigned int compileDay_;  // "days" since Jan 1 2000 since the firmware was compiled according to (compile day + 31*(compile month-1) + 12*31*(compile year-2000))
+   bool supportsLinearSequence_;
+   double linearSequenceIntervalUm_;
+   long linearSequenceLength_;
 };
 
 
@@ -381,13 +389,13 @@ public:
    int Initialize();
    int Shutdown();
 
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   long numPos_;                                                             
-   MM::MMTime changedTime_;                                                  
-   long position_; 
+   long numPos_;
+   MM::MMTime changedTime_;
+   long position_;
 };
 
 class StateDevice : public CStateDeviceBase<StateDevice>, public ASIBase
@@ -435,14 +443,14 @@ public:
    void GetName (char* pszName) const;
    bool Busy();
 
-   // Shutter API                                             
-   int SetOpen (bool open = true);                            
-   int GetOpen(bool& open);                                   
-   int Fire(double deltaT);                                   
-                                                              
-   // action interface                                        
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct); 
-   int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   // Shutter API
+   int SetOpen (bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
@@ -452,9 +460,9 @@ private:
    long intensity_;
    std::string name_;
    int answerTimeoutMs_;
-   
+
 };
-   
+
 
 
 #endif //_ASIStage_H_
