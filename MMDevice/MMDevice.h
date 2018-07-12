@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMDevice - Device adapter kit
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   The interface to the Micro-Manager devices. Defines the 
+// DESCRIPTION:   The interface to the Micro-Manager devices. Defines the
 //                plugin API for all devices.
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
@@ -27,7 +27,7 @@
 // Header version
 // If any of the class definitions changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 68
+#define DEVICE_INTERFACE_VERSION 69
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -72,7 +72,7 @@
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
-   #define snprintf _snprintf 
+   #define snprintf _snprintf
 
    typedef HMODULE HDEVMODULE;
 #else
@@ -99,7 +99,7 @@ namespace MM {
          MMTime(double uSecTotal = 0.0)
          {
             sec_ = (long) (uSecTotal / 1.0e6);
-            uSec_ = (long) (uSecTotal - sec_ * 1.0e6); 
+            uSec_ = (long) (uSecTotal - sec_ * 1.0e6);
          }
 
          MMTime(long sec, long uSec) : sec_(sec), uSec_(uSec)
@@ -188,7 +188,7 @@ namespace MM {
             if (uSec_ < 0)
             {
                sec_--;
-               uSec_ = 1000000L + uSec_; 
+               uSec_ = 1000000L + uSec_;
             }
 
             long overflow = uSec_ / 1000000L;
@@ -208,13 +208,13 @@ namespace MM {
    {
    public:
       // arguments:  MMTime start time, millisecond interval time
-      TimeoutMs(const MMTime startTime, const unsigned long intervalMs) : 
-         startTime_(startTime), 
+      TimeoutMs(const MMTime startTime, const unsigned long intervalMs) :
+         startTime_(startTime),
          interval_(0, 1000*intervalMs)
       {
       }
-      TimeoutMs(const MMTime startTime, const MMTime interval) : 
-         startTime_(startTime), 
+      TimeoutMs(const MMTime startTime, const MMTime interval) :
+         startTime_(startTime),
          interval_(interval)
       {
       }
@@ -241,9 +241,9 @@ namespace MM {
    public:
       Device() {}
       virtual ~Device() {}
- 
+
       virtual unsigned GetNumberOfProperties() const = 0;
-      virtual int GetProperty(const char* name, char* value) const = 0;  
+      virtual int GetProperty(const char* name, char* value) const = 0;
       virtual int SetProperty(const char* name, const char* value) = 0;
       virtual bool HasProperty(const char* name) const = 0;
       virtual bool GetPropertyName(unsigned idx, char* name) const = 0;
@@ -257,9 +257,9 @@ namespace MM {
       virtual bool GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const = 0;
       /**
        * Sequences can be used for fast acquisitions, synchronized by TTLs rather than
-       * computer commands. 
+       * computer commands.
        * Sequences of states can be uploaded to the device.  The device will cycle through
-       * the uploaded list of states (triggered by an external trigger - most often coming 
+       * the uploaded list of states (triggered by an external trigger - most often coming
        * from the camera).  If the device is capable (and ready) to do so isSequenceable will
        * be true
        */
@@ -268,7 +268,7 @@ namespace MM {
        * The largest sequence that can be stored in the device
        */
       virtual int GetPropertySequenceMaxLength(const char* propertyName, long& nrEvents) const = 0;
-      /** 
+      /**
        * Starts execution of the sequence
        */
       virtual int StartPropertySequence(const char* propertyName) = 0;
@@ -287,7 +287,7 @@ namespace MM {
       /**
        * Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
        */
-      virtual int SendPropertySequence(const char* propertyName) = 0; 
+      virtual int SendPropertySequence(const char* propertyName) = 0;
 
       virtual bool GetErrorText(int errorCode, char* errMessage) const = 0;
       virtual bool Busy() = 0;
@@ -319,7 +319,7 @@ namespace MM {
        * without causing problems.
        */
       virtual int Shutdown() = 0;
-   
+
       virtual DeviceType GetType() const = 0;
       virtual void GetName(char* name) const = 0;
       virtual void SetCallback(Core* callback) = 0;
@@ -353,7 +353,7 @@ namespace MM {
       static const DeviceType Type;
    };
 
-   /** 
+   /**
     * Camera API
     */
    class Camera : public Device {
@@ -377,7 +377,7 @@ namespace MM {
       /**
        * Returns pixel data.
        * Required by the MM::Camera API.
-       * GetImageBuffer will be called shortly after SnapImage returns.  
+       * GetImageBuffer will be called shortly after SnapImage returns.
        * Use it to wait for camera read-out and transfer of data into memory
        * Return a pointer to a buffer containing the image data
        * The calling program will assume the size of the buffer based on the values
@@ -397,7 +397,7 @@ namespace MM {
        * When calling this function for a single channel camera, this function
        * should return the content of the imagebuffer as returned by the function
        * GetImageBuffer().  This behavior is implemented in the DeviceBase.
-       * When GetImageBuffer() is called for a multi-channel camera, the 
+       * When GetImageBuffer() is called for a multi-channel camera, the
        * camera adapter should return the ImageBuffer for the first channel
        * @param channelNr Number of the channel for which the image data are requested.
        */
@@ -412,7 +412,7 @@ namespace MM {
        */
       virtual unsigned GetNumberOfComponents() const = 0;
       /**
-       * Returns the name for each component 
+       * Returns the name for each component
        */
       virtual int GetComponentName(unsigned component, char* name) = 0;
       /**
@@ -488,7 +488,7 @@ namespace MM {
        * @param xSize - width
        * @param ySize - height
        */
-      virtual int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize) = 0; 
+      virtual int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize) = 0;
       /**
        * Returns the actual dimensions of the current ROI.
        */
@@ -510,7 +510,7 @@ namespace MM {
        */
       virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow) = 0;
       /**
-       * Starts Sequence Acquisition with given interval.  
+       * Starts Sequence Acquisition with given interval.
        * Most camera adapters will ignore this number
        * */
       virtual int StartSequenceAcquisition(double interval_ms) = 0;
@@ -530,24 +530,24 @@ namespace MM {
 
       /**
        * Get the metadata tags stored in this device.
-       * These tags will automatically be add to the metadata of an image inserted 
+       * These tags will automatically be add to the metadata of an image inserted
        * into the circular buffer
        *
        */
       virtual void GetTags(char* serializedMetadata) = 0;
 
       /**
-       * Adds new tag or modifies the value of an existing one 
+       * Adds new tag or modifies the value of an existing one
        * These will automatically be added to images inserted into the circular buffer.
        * Use this mechanism for tags that do not change often.  For metadata that
-       * change often, create an instance of metadata yourself and add to one of 
+       * change often, create an instance of metadata yourself and add to one of
        * the versions of the InsertImage function
        */
       virtual void AddTag(const char* key, const char* deviceLabel, const char* value) = 0;
 
       /**
        * Removes an existing tag from the metadata associated with this device
-       * These tags will automatically be add to the metadata of an image inserted 
+       * These tags will automatically be add to the metadata of an image inserted
        * into the circular buffer
        */
       virtual void RemoveTag(const char* key) = 0;
@@ -561,9 +561,9 @@ namespace MM {
 
       // Sequence functions
       // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
-      // computer commands. 
+      // computer commands.
       // Sequences of exposures can be uploaded to the camera.  The camera will cycle through
-      // the uploaded list of exposures (triggered by either an internal or 
+      // the uploaded list of exposures (triggered by either an internal or
       // external trigger).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most cameras)
       // simply set IsExposureSequenceable to false
@@ -578,7 +578,7 @@ namespace MM {
       virtual int SendExposureSequence() const = 0;
    };
 
-   /** 
+   /**
     * Shutter API
     */
    class Shutter : public Device
@@ -586,11 +586,11 @@ namespace MM {
    public:
       Shutter() {}
       virtual ~Shutter() {}
-   
+
       // Device API
       virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type;
-   
+
       // Shutter API
       virtual int SetOpen(bool open = true) = 0;
       virtual int GetOpen(bool& open) = 0;
@@ -601,7 +601,7 @@ namespace MM {
       virtual int Fire(double deltaT) = 0;
    };
 
-   /** 
+   /**
     * Single axis stage API
     */
    class Stage : public Device
@@ -609,11 +609,11 @@ namespace MM {
    public:
       Stage() {}
       virtual ~Stage() {}
-   
+
       // Device API
       virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type;
-   
+
       // Stage API
       virtual int SetPositionUm(double pos) = 0;
       virtual int SetRelativePositionUm(double d) = 0;
@@ -643,20 +643,33 @@ namespace MM {
       virtual int GetFocusDirection(FocusDirection& direction) = 0;
 
       /**
-       * Returns whether a stage can be sequenced (synchronized by TTLs)
-       * If returning true, then a Stage class should also inherit
-       * the SequenceableStage class and implement its methods.
+       * Indicates whether a stage can be sequenced (synchronized by TTLs).
+       *
+       * If true, the following methods must be implemented:
+       * GetStageSequenceMaxLength(), StartStageSequence(), StopStageSequence(),
+       * ClearStageSequence(), AddToStageSequence(), and SendStageSequence().
        */
       virtual int IsStageSequenceable(bool& isSequenceable) const = 0;
+
+      /**
+       * Indicates whether the stage can perform linear TTL sequencing.
+       *
+       * Linear sequencing uses a delta and count instead of an arbitrary list
+       * of positions.
+       *
+       * If true, the following methods must be implemented:
+       * SetStageLinearSequence(), StartStageSequence(), StopStageSequence().
+       */
+      virtual int IsStageLinearSequenceable(bool& isSequenceable) const = 0;
 
       // Check if a stage has continuous focusing capability (positions can be set while continuous focus runs).
       virtual bool IsContinuousFocusDrive() const = 0;
 
       // Sequence functions
       // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
-      // computer commands. 
+      // computer commands.
       // Sequences of positions can be uploaded to the stage.  The device will cycle through
-      // the uploaded list of states (triggered by an external trigger - most often coming 
+      // the uploaded list of states (triggered by an external trigger - most often coming
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most stages)
       // simply set isSequenceable to false
@@ -667,18 +680,28 @@ namespace MM {
        * Remove all values in the sequence
        */
       virtual int ClearStageSequence() = 0;
-      /** 
+      /**
        * Add one value to the sequence
        */
       virtual int AddToStageSequence(double position) = 0;
       /**
-       * Signal that we are done sending sequence values so that the adapter 
+       * Signal that we are done sending sequence values so that the adapter
        * can send the whole sequence to the device
        */
       virtual int SendStageSequence() = 0;
+
+      /**
+       * Set up to perform an equally-spaced triggered Z stack.
+       *
+       * After calling this function, StartStageSequence() must cause the stage
+       * to step by dZ_um on each trigger. On the Nth trigger, the stage must
+       * return to the position where it was when StartStageSequence() was
+       * called.
+       */
+      virtual int SetStageLinearSequence(double dZ_um, long nSlices) = 0;
    };
 
-   /** 
+   /**
     * Dual axis stage API
     */
    class XYStage : public Device
@@ -736,12 +759,12 @@ namespace MM {
        * If returning true, then an XYStage class should also inherit
        * the SequenceableXYStage class and implement its methods.
        */
-      virtual int IsXYStageSequenceable(bool& isSequenceable) const = 0;     
+      virtual int IsXYStageSequenceable(bool& isSequenceable) const = 0;
       // Sequence functions
       // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
-      // computer commands. 
+      // computer commands.
       // Sequences of positions can be uploaded to the XY stage.  The device will cycle through
-      // the uploaded list of states (triggered by an external trigger - most often coming 
+      // the uploaded list of states (triggered by an external trigger - most often coming
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this (true for most XY stages
       // simply set isSequenceable to false
@@ -757,7 +780,7 @@ namespace MM {
        */
       virtual int AddToXYStageSequence(double positionX, double positionY) = 0;
       /**
-       * Signal that we are done sending sequence values so that the adapter 
+       * Signal that we are done sending sequence values so that the adapter
        * can send the whole sequence to the device
        */
       virtual int SendXYStageSequence() = 0;
@@ -772,11 +795,11 @@ namespace MM {
    public:
       State() {}
       virtual ~State() {}
-      
+
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type;
-      
+
       // MMStateDevice API
       virtual int SetPosition(long pos) = 0;
       virtual int SetPosition(const char* label) = 0;
@@ -798,18 +821,18 @@ namespace MM {
    public:
       Serial() {}
       virtual ~Serial() {}
-      
+
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type;
-      
+
       // Serial API
       virtual PortType GetPortType() const = 0;
       virtual int SetCommand(const char* command, const char* term) = 0;
       virtual int GetAnswer(char* txt, unsigned maxChars, const char* term) = 0;
       virtual int Write(const unsigned char* buf, unsigned long bufLen) = 0;
       virtual int Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead) = 0;
-      virtual int Purge() = 0; 
+      virtual int Purge() = 0;
    };
 
    /**
@@ -820,7 +843,7 @@ namespace MM {
    public:
       AutoFocus() {}
       virtual ~AutoFocus() {}
-      
+
       // MMDevice API
       virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type;
@@ -854,7 +877,7 @@ namespace MM {
       // image processor API
       virtual int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth) = 0;
 
-      
+
    };
 
    /**
@@ -879,7 +902,7 @@ namespace MM {
 
       /**
        * Lets the UI know whether or not this DA device accepts sequences
-       * If the device is sequenceable, it is usually best to add a property through which 
+       * If the device is sequenceable, it is usually best to add a property through which
        * the user can set "isSequenceable", since only the user knows whether the device
        * is actually connected to a trigger source.
        * If isDASequenceable returns true, the device adapter must
@@ -892,9 +915,9 @@ namespace MM {
 
       // Sequence functions
       // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
-      // computer commands. 
+      // computer commands.
       // Sequences of voltages can be uploaded to the DA.  The device will cycle through
-      // the uploaded list of voltages (triggered by an external trigger - most often coming 
+      // the uploaded list of voltages (triggered by an external trigger - most often coming
       // from the camera).  If the device is capable (and ready) to do so isSequenceable will
       // be true. If your device can not execute this simply set isSequenceable to false
       /**
@@ -902,7 +925,7 @@ namespace MM {
        * @param nrEvents max length of sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int GetDASequenceMaxLength(long& nrEvents) const = 0; 
+      virtual int GetDASequenceMaxLength(long& nrEvents) const = 0;
       /**
        * Tells the device to start running a sequence (i.e. start switching between voltages
        * send previously, triggered by a TTL
@@ -916,7 +939,7 @@ namespace MM {
       virtual int StopDASequence() = 0;
       /**
        * Clears the DA sequence from the device and the adapter.
-       * If this functions is not called in between running 
+       * If this functions is not called in between running
        * two sequences, it is expected that the same sequence will run twice.
        * To upload a new sequence, first call this functions, then call AddToDASequence(double
        * voltage) as often as needed.
@@ -933,7 +956,7 @@ namespace MM {
       virtual int AddToDASequence(double voltage) = 0;
       /**
        * Sends the complete sequence to the device
-       * If the individual data points were already send to the device, there is 
+       * If the individual data points were already send to the device, there is
        * nothing to be done.
        * @return errorcode (DEVICE_OK if no error)
        */
@@ -958,7 +981,7 @@ namespace MM {
    };
 
 
-   /** 
+   /**
     * SLM API
     */
    class SLM : public Device
@@ -1028,7 +1051,7 @@ namespace MM {
 
       // SLM Sequence functions
       // Sequences can be used for fast acquisitions, synchronized by TTLs rather than
-      // computer commands. 
+      // computer commands.
       // Sequences of images can be uploaded to the SLM.  The SLM will cycle through
       // the uploaded list of images (perhaps triggered by an external trigger or by
       // an internal clock.
@@ -1037,7 +1060,7 @@ namespace MM {
 
       /**
        * Lets the core know whether or not this SLM device accepts sequences
-       * If the device is sequenceable, it is usually best to add a property through which 
+       * If the device is sequenceable, it is usually best to add a property through which
        * the user can set "isSequenceable", since only the user knows whether the device
        * is actually connected to a trigger source.
        * If IsSLMSequenceable returns true, the device adapter must also implement the
@@ -1052,7 +1075,7 @@ namespace MM {
        * @param nrEvents max length of sequence
        * @return errorcode (DEVICE_OK if no error)
        */
-      virtual int GetSLMSequenceMaxLength(long& nrEvents) const = 0; 
+      virtual int GetSLMSequenceMaxLength(long& nrEvents) const = 0;
 
       /**
        * Tells the device to start running a sequence (i.e. start switching between images
@@ -1069,7 +1092,7 @@ namespace MM {
 
       /**
        * Clears the SLM sequence from the device and the adapter.
-       * If this function is not called in between running 
+       * If this function is not called in between running
        * two sequences, it is expected that the same sequence will run twice.
        * To upload a new sequence, first call this function, then call
        * AddToSLMSequence(image)
@@ -1080,7 +1103,7 @@ namespace MM {
 
       /**
        * Adds a new 8-bit projection image to the sequence.
-       * The image can either be added to a representation of the sequence in the 
+       * The image can either be added to a representation of the sequence in the
        * adapter, or it can be directly written to the device
        * @param pixels An array of 8-bit pixels whose length matches that expected by the SLM.
        * @return errorcode (DEVICE_OK if no error)
@@ -1089,7 +1112,7 @@ namespace MM {
 
       /**
        * Adds a new 32-bit (RGB) projection image to the sequence.
-       * The image can either be added to a representation of the sequence in the 
+       * The image can either be added to a representation of the sequence in the
        * adapter, or it can be directly written to the device
        * @param pixels An array of 32-bit RGB pixels whose length matches that expected by the SLM.
        * @return errorcode (DEVICE_OK if no error)
@@ -1098,7 +1121,7 @@ namespace MM {
 
       /**
        * Sends the complete sequence to the device.
-       * If the individual images were already send to the device, there is 
+       * If the individual images were already send to the device, there is
        * nothing to be done.
        * @return errorcode (DEVICE_OK if no error)
        */
@@ -1117,9 +1140,9 @@ namespace MM {
 
       virtual DeviceType GetType() const { return Type; }
       static const DeviceType Type;
-      
+
    //Galvo API:
-  
+
       /**
        * Moves the galvo devices to the requested position, activates the light
        * source, waits for the specified amount of time (in microseconds), and
@@ -1203,7 +1226,7 @@ namespace MM {
        * Must not be called from device adapters.
        */
       virtual unsigned GetNumberOfInstalledDevices() = 0;
-      
+
       /**
        * Returns a pointer to the Device with index devIdx. 0 <= devIdx <
        * GetNumberOfInstalledDevices().
@@ -1256,7 +1279,7 @@ namespace MM {
       virtual int OnPropertiesChanged(const Device* caller) = 0;
       /**
        * Callback to signal the UI that a property changed
-       * The Core will check if groups or pixel size changed as a consequence of 
+       * The Core will check if groups or pixel size changed as a consequence of
        * the change of this property and inform the UI
        */
       virtual int OnPropertyChanged(const Device* caller, const char* propName, const char* propValue) = 0;
