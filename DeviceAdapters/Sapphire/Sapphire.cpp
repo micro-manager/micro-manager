@@ -43,7 +43,9 @@ const char* g_ControllerName = "Sapphire";
 const char* g_Keyword_PowerSetpoint = "PowerSetpoint";
 const char* g_Keyword_PowerReadback = "PowerReadback";
 
-const char * COMMAND_TERM = "\r\n";
+// Commands can be terminated with CR or LF, but not both
+const char * COMMAND_TERM = "\r";
+// Responses are always terminated with CRLF
 const char * RESPONSE_TERM = "\r\n";
 
 

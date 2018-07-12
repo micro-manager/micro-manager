@@ -232,6 +232,7 @@ int CTigerCommHub::DetectInstalledDevices()
             break;
          case 'z':  // ZMotor like LS50, Z scope focus, etc.
          case 'l':  // generic linear motorized stage
+         case 't': // rotational stage, for now treat as linear stage but may make own device adapter later (not discrete but partially a "clocked device" per firmware notation)
             name = g_ZStageDeviceName;
             break;
          case 'w':  // filter wheel, uses different command set
@@ -239,13 +240,13 @@ int CTigerCommHub::DetectInstalledDevices()
             break;
          case 's':  // shutter not yet implemented
             break;
-         case 'o':  // turret, a clocked device
+         case 'o':  // turret, a clocked (discrete position) device
             name = g_TurretDeviceName;
             break;
-         case 'f': // filter slider, a clocked device
+         case 'f': // filter slider, a clocked (discrete position) device
             name = g_FSliderDeviceName;
             break;
-         case 'h': // port switcher, a clocked device
+         case 'h': // port switcher, a clocked (discrete position) device
             name = g_PortSwitchDeviceName;
             break;
          case 'g': // programmable logic
