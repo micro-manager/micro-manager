@@ -400,6 +400,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hydra", "DeviceAdapters\Hyd
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PIEZOCONCEPT", "DeviceAdapters\PIEZOCONCEPT\PIEZOCONCEPT.vcxproj", "{F6797E85-2A45-41E0-A066-85C78D7E3CD2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterLambdaParallelArduino", "DeviceAdapters\SutterLambdaParallelArduino\SutterLambdaParallelArduino.vcxproj", "{CE9218C0-5508-413D-8D9F-A022D61C4C10}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1973,6 +1975,14 @@ Global
 		{F6797E85-2A45-41E0-A066-85C78D7E3CD2}.Release|Win32.Build.0 = Release|Win32
 		{F6797E85-2A45-41E0-A066-85C78D7E3CD2}.Release|x64.ActiveCfg = Release|x64
 		{F6797E85-2A45-41E0-A066-85C78D7E3CD2}.Release|x64.Build.0 = Release|x64
+		{CE9218C0-5508-413D-8D9F-A022D61C4C10}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CE9218C0-5508-413D-8D9F-A022D61C4C10}.Debug|Win32.Build.0 = Debug|Win32
+		{CE9218C0-5508-413D-8D9F-A022D61C4C10}.Debug|x64.ActiveCfg = Debug|x64
+		{CE9218C0-5508-413D-8D9F-A022D61C4C10}.Debug|x64.Build.0 = Debug|x64
+		{CE9218C0-5508-413D-8D9F-A022D61C4C10}.Release|Win32.ActiveCfg = Release|Win32
+		{CE9218C0-5508-413D-8D9F-A022D61C4C10}.Release|Win32.Build.0 = Release|Win32
+		{CE9218C0-5508-413D-8D9F-A022D61C4C10}.Release|x64.ActiveCfg = Release|x64
+		{CE9218C0-5508-413D-8D9F-A022D61C4C10}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
