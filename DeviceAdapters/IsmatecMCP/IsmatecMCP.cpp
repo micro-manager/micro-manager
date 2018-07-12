@@ -94,6 +94,17 @@ class MCP : public CGenericBase<MCP>
    bool manualControl_;
    ModeCommand::Mode mode_;
 
+   // Cached values (invalid iff < 0)
+   double cachedTubingInnerDiameterMm_;
+   double cachedSpeedRpm_;
+   double cachedDefaultFlowRateMlPerMin_;
+   double cachedCalibratedFlowRateMlPerMin_;
+   double cachedDispensingTimeSeconds_;
+   int cachedDispensingRollerSteps_;
+   int cachedRollerBackSteps_;
+   double cachedPauseTimeSeconds_;
+   int cachedNumberOfCycles_;
+
 public:
    MCP(int address);
    virtual ~MCP();
@@ -306,7 +317,16 @@ MCP::MCP(int address) :
    nFractionalDigits_(0),
    ccw_(false),
    manualControl_(false),
-   mode_(ModeCommand::ModePumpRPM)
+   mode_(ModeCommand::ModePumpRPM),
+   cachedTubingInnerDiameterMm_(-1.0),
+   cachedSpeedRpm_(-1.0),
+   cachedDefaultFlowRateMlPerMin_(-1.0),
+   cachedCalibratedFlowRateMlPerMin_(-1.0),
+   cachedDispensingTimeSeconds_(-1.0),
+   cachedDispensingRollerSteps_(-1),
+   cachedRollerBackSteps_(-1),
+   cachedPauseTimeSeconds_(-1.0),
+   cachedNumberOfCycles_(-1)
 {
    // In theory, we could build in knowledge of number of rollers (from head
    // ID). But this is more straightforward.
@@ -618,11 +638,15 @@ MCP::OnTubingInnerDiameter(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      TubingInnerDiameterQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      pProp->Set(q.GetInnerDiameterMm());
+      if (manualControl_ || cachedTubingInnerDiameterMm_ < 0.0)
+      {
+         TubingInnerDiameterQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedTubingInnerDiameterMm_ = q.GetInnerDiameterMm();
+      }
+      pProp->Set(cachedTubingInnerDiameterMm_);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -640,6 +664,10 @@ MCP::OnTubingInnerDiameter(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (err != DEVICE_OK)
          return err;
       nFractionalDigits_ = fdq.GetFractionalDigits();
+
+      cachedTubingInnerDiameterMm_ = -1.0; // Invalidate
+      cachedDefaultFlowRateMlPerMin_ = -1.0;
+      cachedCalibratedFlowRateMlPerMin_ = -1.0;
    }
    return DEVICE_OK;
 }
@@ -650,11 +678,15 @@ MCP::OnSpeedRPM(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      SpeedQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      pProp->Set(q.GetSpeedRpm());
+      if (manualControl_ || cachedSpeedRpm_ < 0.0)
+      {
+         SpeedQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedSpeedRpm_ = q.GetSpeedRpm();
+      }
+      pProp->Set(cachedSpeedRpm_);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -666,6 +698,8 @@ MCP::OnSpeedRPM(MM::PropertyBase* pProp, MM::ActionType eAct)
       int err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
+
+      cachedSpeedRpm_ = -1.0; // Invalidate
    }
    return DEVICE_OK;
 }
@@ -676,11 +710,15 @@ MCP::OnDefaultFlowRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      DefaultFlowRateQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      pProp->Set(q.GetFlowRateMlPerMin());
+      if (manualControl_ || cachedDefaultFlowRateMlPerMin_ < 0.0)
+      {
+         DefaultFlowRateQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedDefaultFlowRateMlPerMin_ = q.GetFlowRateMlPerMin();
+      }
+      pProp->Set(cachedDefaultFlowRateMlPerMin_);
    }
    return DEVICE_OK;
 }
@@ -691,11 +729,15 @@ MCP::OnCalibratedFlowRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      CalibratedFlowRateQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      pProp->Set(q.GetFlowRateMlPerMin());
+      if (manualControl_ || cachedCalibratedFlowRateMlPerMin_ < 0.0)
+      {
+         CalibratedFlowRateQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedCalibratedFlowRateMlPerMin_ = q.GetFlowRateMlPerMin();
+      }
+      pProp->Set(cachedCalibratedFlowRateMlPerMin_);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -709,6 +751,8 @@ MCP::OnCalibratedFlowRate(MM::PropertyBase* pProp, MM::ActionType eAct)
       int err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
+
+      cachedCalibratedFlowRateMlPerMin_ = -1.0; // Invalidate
    }
    return DEVICE_OK;
 }
@@ -719,11 +763,15 @@ MCP::OnDispensingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      DispensingTimeQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      pProp->Set(q.GetTimeSeconds());
+      if (manualControl_ || cachedDispensingTimeSeconds_ < 0.0)
+      {
+         DispensingTimeQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedDispensingTimeSeconds_ = q.GetTimeSeconds();
+      }
+      pProp->Set(cachedDispensingTimeSeconds_);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -735,6 +783,8 @@ MCP::OnDispensingTime(MM::PropertyBase* pProp, MM::ActionType eAct)
       int err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
+
+      cachedDispensingTimeSeconds_ = -1.0; // Invalidate
    }
    return DEVICE_OK;
 }
@@ -745,11 +795,15 @@ MCP::OnDispensingRollerSteps(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      DispensingRollerStepsQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      pProp->Set(long(q.GetRollerSteps()));
+      if (manualControl_ || cachedDispensingRollerSteps_ < 0)
+      {
+         DispensingRollerStepsQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedDispensingRollerSteps_ = q.GetRollerSteps();
+      }
+      pProp->Set(long(cachedDispensingRollerSteps_));
    }
    else if (eAct == MM::AfterSet)
    {
@@ -761,6 +815,8 @@ MCP::OnDispensingRollerSteps(MM::PropertyBase* pProp, MM::ActionType eAct)
       int err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
+
+      cachedDispensingRollerSteps_ = -1; // Invalidate
    }
    return DEVICE_OK;
 }
@@ -771,22 +827,30 @@ MCP::OnDispensingVolume(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      int err;
-      CalibratedFlowRateQuery frq(address_);
-      err = SendRecv(frq);
-      if (err != DEVICE_OK)
-         return err;
-      DispensingRollerStepsQuery drsq(address_);
-      err = SendRecv(drsq);
-      if (err != DEVICE_OK)
-         return err;
+      if (manualControl_ || cachedCalibratedFlowRateMlPerMin_ < 0.0)
+      {
+         CalibratedFlowRateQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedCalibratedFlowRateMlPerMin_ = q.GetFlowRateMlPerMin();
+      }
+      if (manualControl_ || cachedDispensingRollerSteps_ < 0)
+      {
+         DispensingRollerStepsQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedDispensingRollerSteps_ = q.GetRollerSteps();
+      }
 
       // rpm = roller_steps / n_rollers
       // volume = flow@240rpm * (rpm / 240)
-      double volumeMl = frq.GetFlowRateMlPerMin() * drsq.GetRollerSteps() /
+      double dispensingVolumeMl =
+         cachedCalibratedFlowRateMlPerMin_ * cachedDispensingRollerSteps_ /
          (240.0 * nRollers_);
 
-      pProp->Set(volumeMl);
+      pProp->Set(dispensingVolumeMl);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -807,6 +871,8 @@ MCP::OnDispensingVolume(MM::PropertyBase* pProp, MM::ActionType eAct)
       err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
+
+      cachedDispensingRollerSteps_ = -1; // Invalidate
    }
    return DEVICE_OK;
 }
@@ -817,11 +883,15 @@ MCP::OnRollerBackSteps(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      RollerBackStepsQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      pProp->Set(long(q.GetRollerSteps()));
+      if (manualControl_ || cachedRollerBackSteps_ < 0)
+      {
+         RollerBackStepsQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedRollerBackSteps_ = q.GetRollerSteps();
+      }
+      pProp->Set(long(cachedRollerBackSteps_));
    }
    else if (eAct == MM::AfterSet)
    {
@@ -833,6 +903,8 @@ MCP::OnRollerBackSteps(MM::PropertyBase* pProp, MM::ActionType eAct)
       int err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
+
+      cachedRollerBackSteps_ = -1; // Invalidate
    }
    return DEVICE_OK;
 }
@@ -843,11 +915,15 @@ MCP::OnPauseTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      PauseTimeQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      pProp->Set(q.GetTimeSeconds());
+      if (manualControl_ || cachedPauseTimeSeconds_ < 0.0)
+      {
+         PauseTimeQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedPauseTimeSeconds_ = q.GetTimeSeconds();
+      }
+      pProp->Set(cachedPauseTimeSeconds_);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -859,6 +935,8 @@ MCP::OnPauseTime(MM::PropertyBase* pProp, MM::ActionType eAct)
       int err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
+
+      cachedPauseTimeSeconds_ = -1; // Invalidate
    }
    return DEVICE_OK;
 }
@@ -869,11 +947,15 @@ MCP::OnNumberOfCycles(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      NumberOfCyclesQuery q(address_);
-      int err = SendRecv(q);
-      if (err != DEVICE_OK)
-         return err;
-      pProp->Set(long(q.GetNumberOfCycles()));
+      if (manualControl_ || cachedNumberOfCycles_ < 0)
+      {
+         NumberOfCyclesQuery q(address_);
+         int err = SendRecv(q);
+         if (err != DEVICE_OK)
+            return err;
+         cachedNumberOfCycles_ = q.GetNumberOfCycles();
+      }
+      pProp->Set(long(cachedNumberOfCycles_));
    }
    else if (eAct == MM::AfterSet)
    {
@@ -885,6 +967,8 @@ MCP::OnNumberOfCycles(MM::PropertyBase* pProp, MM::ActionType eAct)
       int err = SendRecv(c);
       if (err != DEVICE_OK)
          return err;
+
+      cachedNumberOfCycles_ = -1; // Invalidate
    }
    return DEVICE_OK;
 }
