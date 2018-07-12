@@ -105,7 +105,6 @@ bool SerialPortLister::portAccessible(const char* portName)
    }
    catch( std::exception& )
    {
-
       return false;
    }
 
@@ -116,8 +115,8 @@ bool SerialPortLister::portAccessible(const char* portName)
 #ifdef WIN32
 const int MaxBuf = 100000;
 typedef struct
-	{
-		char buffer[MaxBuf];
+{
+   char buffer[MaxBuf];
 } B100000;
 #endif
 
@@ -181,15 +180,19 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
 
    // Serial devices are instances of class IOSerialBSDClient
    classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue);
-   if (classesToMatch == NULL) {
+   if (classesToMatch == NULL)
+   {
       std::cerr << "IOServiceMatching returned a NULL dictionary.\n";
-   } else {
+   }
+   else
+   {
        CFDictionarySetValue(classesToMatch,
                            CFSTR(kIOSerialBSDTypeKey),
                            CFSTR(kIOSerialBSDAllTypes));
    }
    kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, classesToMatch, &serialPortIterator);
-   if (KERN_SUCCESS != kernResult) {
+   if (KERN_SUCCESS != kernResult)
+   {
       std::cerr << "IOServiceGetMatchingServices returned " << kernResult << "\n";
    }
 
@@ -200,14 +203,16 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
    // Initialize the returned path
    *bsdPath = '\0';
    // Iterate across all modems found.
-   while ( (modemService = IOIteratorNext(serialPortIterator)) ) {
-       CFTypeRef bsdPathAsCFString;
-       // Get the device's path (/dev/tty.xxxxx).
-       bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,
-                               CFSTR(kIODialinDeviceKey),
-                               kCFAllocatorDefault,
-                               0);
-      if (bsdPathAsCFString) {
+   while ( (modemService = IOIteratorNext(serialPortIterator)) )
+   {
+      CFTypeRef bsdPathAsCFString;
+      // Get the device's path (/dev/tty.xxxxx).
+      bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,
+            CFSTR(kIODialinDeviceKey),
+            kCFAllocatorDefault,
+            0);
+      if (bsdPathAsCFString)
+      {
          Boolean result;
          // Convert the path from a CFString to a C (NUL-terminated) string for use
          // with the POSIX open() call.
@@ -221,23 +226,28 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
          // add the name to our vector<string> only when this is not a dialup port
          std::string rresult (bsdPath);
          std::string::size_type loc = rresult.find("DialupNetwork", 0);
-         if (result && (loc == std::string::npos)) {
+         if (result && (loc == std::string::npos))
+         {
              bool blackListed = false;
              std::vector<std::string>::iterator it = g_BlackListedPorts.begin();
-             while (it < g_BlackListedPorts.end()) {
-                if( bsdPath == (*it))
+             while (it < g_BlackListedPorts.end())
+             {
+                if (bsdPath == (*it))
+                {
                    blackListed = true;
+                }
             }
-            if (portAccessible(bsdPath) && ! blackListed)  {
-                 availablePorts.push_back(bsdPath);
+            if (portAccessible(bsdPath) && ! blackListed)
+            {
+               availablePorts.push_back(bsdPath);
             }
             kernResult = KERN_SUCCESS;
          }
       }
    }
 
-    // Release the io_service_t now that we are done with it.
-    (void) IOObjectRelease(modemService);
+   // Release the io_service_t now that we are done with it.
+   (void) IOObjectRelease(modemService);
 
 #endif // __APPLE
 }
@@ -265,7 +275,8 @@ MODULE_API void InitializeModuleData()
    }
 
    std::vector<std::string>::iterator it = g_PortList.begin();
-   while (it < g_PortList.end()) {
+   while (it < g_PortList.end())
+   {
       RegisterDevice((*it).c_str(), MM::SerialDevice, "Serial communication port");
       it++;
    }
@@ -292,7 +303,9 @@ SerialManager::~SerialManager()
 {
    std::vector<SerialPort*>::iterator i;
    for (i=ports_.begin(); i!=ports_.end(); i++)
+   {
       delete *i;
+   }
 }
 
 MM::Device* SerialManager::CreatePort(const char* portName)
@@ -316,7 +329,6 @@ MM::Device* SerialManager::CreatePort(const char* portName)
    ports_.push_back(pPort);
    pPort->AddReference();
    return pPort;
-
 }
 
 void SerialManager::DestroyPort(MM::Device* port)
@@ -447,7 +459,6 @@ SerialPort::SerialPort(const char* portName) :
    (void)CreateProperty("Verbose", (verbose_?"1":"0"), MM::Integer, false, pActTD, true);
    AddAllowedValue("Verbose", "0");
    AddAllowedValue("Verbose", "1");
-
 }
 
 SerialPort::~SerialPort()
@@ -467,9 +478,12 @@ int SerialPort::Initialize()
 
    // do not initialize if this port has been blacklisted
    std::vector<std::string>::iterator it = g_BlackListedPorts.begin();
-   while (it < g_BlackListedPorts.end()) {
-      if( portName_ == (*it))
+   while (it < g_BlackListedPorts.end())
+   {
+      if (portName_ == (*it))
+      {
          return ERR_PORT_BLACKLISTED;
+      }
       it++;
    }
 
@@ -536,7 +550,7 @@ int SerialPort::Initialize()
       pThread_ = new boost::thread(boost::bind(
                &boost::asio::io_service::run, pService_));
    }
-   catch(std::exception& what)
+   catch (std::exception& what)
    {
       SetErrorText(ERR_OPEN_FAILED, what.what());
       LogMessage(what.what(), false);
@@ -681,9 +695,12 @@ int SerialPort::SetCommand(const char* command, const char* term)
 
    std::string sendText(command);
    if (term != 0)
+   {
       sendText += term;
+   }
 
-   if (sendText.size() == 0) {
+   if (sendText.size() == 0)
+   {
       return DEVICE_OK;
    }
 
@@ -726,7 +743,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    while ((GetCurrentMMTime() - startTime)  < answerTimeout)
    {
       bool anyRead =  pPort_->ReadOneCharacter(theData);
-      if( anyRead )
+      if (anyRead)
       {
          if (bufLen <= answerOffset)
          {
@@ -786,7 +803,8 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
    if (!initialized_)
       return ERR_PORT_NOTINITIALIZED;
 
-   if (bufLen == 0) {
+   if (bufLen == 0)
+   {
       return DEVICE_OK;
    }
 
@@ -804,7 +822,9 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
    }
 
    if (verbose_)
+   {
       LogBinaryCommunication("Write", false, buf, bufLen);
+   }
 
    return DEVICE_OK;
 }
@@ -815,7 +835,7 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
       return ERR_PORT_NOTINITIALIZED;
 
    int r = DEVICE_OK;
-   if( 0 < bufLen)
+   if (0 < bufLen)
    {
       // zero the buffer
       memset(buf, 0, bufLen);
@@ -823,13 +843,13 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
 
       bool anyRead = false;
       char theData = 0;
-      for( ;; )
+      for (;;)
       {
          anyRead = pPort_->ReadOneCharacter(theData);
-         if( anyRead)
+         if (anyRead)
          {
             buf[charsRead] = (unsigned char)theData;
-            if( bufLen <= ++charsRead)
+            if (bufLen <= ++charsRead)
             {
                // buffer is full
                break;
@@ -841,14 +861,18 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
             break;
          }
       }
-      if( 0 < charsRead)
+      if (0 < charsRead)
       {
-         if(verbose_)
+         if (verbose_)
+         {
             LogBinaryCommunication("Read", true, buf, charsRead);
+         }
       }
    }
    else
+   {
       r = ERR_BUFFER_OVERRUN;
+   }
 
    return r;
 }
@@ -1004,7 +1028,7 @@ int SerialPort::OnVerbose(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(verbose_?1L:0L);
+      pProp->Set(verbose_ ? 1L : 0L);
    }
    else if (eAct == MM::AfterSet)
    {
@@ -1014,7 +1038,6 @@ int SerialPort::OnVerbose(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
 
    return DEVICE_OK;
-
 }
 
 
@@ -1043,8 +1066,12 @@ int SerialPort::OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eA
 static bool ShouldEscape(char ch)
 {
    if (ch >= 0 && std::isgraph(ch))
+   {
       if (std::string("\'\"\\").find(ch) == std::string::npos)
+      {
          return false;
+      }
+   }
    return true;
 }
 
@@ -1126,7 +1153,9 @@ static void FormatBinaryContent(std::ostream& strm, const unsigned char* begin, 
    for (const unsigned char* p = begin; p != end; ++p)
    {
       if (p != begin)
+      {
          strm << ' ';
+      }
       strm << boost::format("%02x") % static_cast<unsigned int>(*p);
    }
 }

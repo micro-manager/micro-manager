@@ -107,8 +107,10 @@ private:
          ChangeStopBits(stopBits);
 
          serialPortImplementation_.set_option( boost::asio::serial_port_base::character_size( 8 ), anError );
-         if( !!anError)
+         if (!!anError)
+         {
             LogMessage(("error setting character_size in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+         }
       }
 
       ReadStart();
@@ -121,7 +123,7 @@ public:
 
       // lexical_cast is useless here
       std::string sflow;
-      switch( flow)
+      switch (flow)
       {
       case boost::asio::serial_port_base::flow_control::none:
          sflow = "none";
@@ -132,11 +134,13 @@ public:
       case boost::asio::serial_port_base::flow_control::hardware:
          sflow = "hardware";
          break;
-      };
+      }
       LogMessage(("Attempting to set flow of " + device_ + " to " + sflow).c_str(), true);
       serialPortImplementation_.set_option(  boost::asio::serial_port_base::flow_control(flow) , anError );
-      if( !!anError)
+      if (!!anError)
+      {
          LogMessage(("error setting flow_control in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+      }
    }
 
    void ChangeParity(const boost::asio::serial_port_base::parity::type& parity)
@@ -145,7 +149,7 @@ public:
       boost::system::error_code anError;
 
       std::string sparity;
-      switch( parity)
+      switch (parity)
       {
       case boost::asio::serial_port_base::parity::none:
          sparity = "none";
@@ -156,10 +160,10 @@ public:
       case boost::asio::serial_port_base::parity::even:
          sparity = "even";
          break;
-      };
+      }
       LogMessage(("Attempting to set parity of " + device_ + " to " + sparity).c_str(), true);
       serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity), anError);
-      if( !!anError)
+      if (!!anError)
          LogMessage(("error setting parity in AsioClient(): " + boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
    }
 
@@ -168,7 +172,7 @@ public:
       boost::system::error_code anError;
 
       std::string sstopbits;
-      switch( stopBits)
+      switch (stopBits)
       {
       case boost::asio::serial_port_base::stop_bits::one:
          sstopbits = "1";
@@ -179,11 +183,13 @@ public:
       case boost::asio::serial_port_base::stop_bits::two:
          sstopbits = "2";
          break;
-      };
+      }
       LogMessage(("Attempting to set stopBits of " + device_ + " to " + sstopbits).c_str(), true);
       serialPortImplementation_.set_option( boost::asio::serial_port_base::stop_bits(stopBits), anError );
-      if( !!anError)
+      if (!!anError)
+      {
          LogMessage(("error setting stop_bits in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+      }
    }
 
    void ChangeBaudRate(unsigned int baud)
@@ -192,25 +198,25 @@ public:
       boost::asio::serial_port_base::baud_rate baud_option(baud);
 
 #ifdef __APPLE__
-         // Use ioctl() instead of Boost's implementation (which uses termios),
-         // so that nonstandard baudrates can be set.
-         speed_t speed = static_cast<speed_t>(baud);
-         boost::asio::serial_port::native_handle_type portFd =
-            serialPortImplementation_.native_handle();
-         if (ioctl(portFd, IOSSIOSPEED, &speed))
-         {
-            const char* msg = strerror(errno);
-            LogMessage((std::string("Error setting baud: ") + msg).c_str(),
-                  false);
-         }
+      // Use ioctl() instead of Boost's implementation (which uses termios),
+      // so that nonstandard baudrates can be set.
+      speed_t speed = static_cast<speed_t>(baud);
+      boost::asio::serial_port::native_handle_type portFd =
+         serialPortImplementation_.native_handle();
+      if (ioctl(portFd, IOSSIOSPEED, &speed))
+      {
+         const char* msg = strerror(errno);
+         LogMessage((std::string("Error setting baud: ") + msg).c_str(),
+               false);
+      }
 #else
-         serialPortImplementation_.set_option(baud_option, anError);
-         if (!!anError)
-         {
-            LogMessage(("error setting baud: " +
-                     boost::lexical_cast<std::string>(anError.value()) + " " +
-                     anError.message()).c_str(), false);
-         }
+      serialPortImplementation_.set_option(baud_option, anError);
+      if (!!anError)
+      {
+         LogMessage(("error setting baud: " +
+                  boost::lexical_cast<std::string>(anError.value()) + " " +
+                  anError.message()).c_str(), false);
+      }
 #endif
 
    }
@@ -235,7 +241,7 @@ public:
          MMThreadGuard g(implementationLock_);
          retv = (len == boost::asio::write(  serialPortImplementation_, boost::asio::buffer(msg,len)));
       }
-      catch( std::exception e)
+      catch (std::exception e)
       {
          LogMessage(e.what(), false);
       }
@@ -250,7 +256,7 @@ public:
          MMThreadGuard g(implementationLock_);
          retv = (1 == boost::asio::write(  serialPortImplementation_, boost::asio::buffer(&msg,1)));
       }
-      catch( std::exception e)
+      catch (std::exception e)
       {
          LogMessage(e.what(), false);
       }
@@ -259,7 +265,7 @@ public:
 
    void Close() // call the DoClose function via the io service
    {
-      if(active_)
+      if (active_)
       {
          io_service_.post(boost::bind(&AsioClient::DoClose, this, boost::system::error_code()));
       }
@@ -270,14 +276,14 @@ public:
    {
       // clear read buffer;
       {
-      MMThreadGuard g(readBufferLock_);
-      data_read_.clear();
+         MMThreadGuard g(readBufferLock_);
+         data_read_.clear();
       }
 
       // clear write buffer
       {
-      MMThreadGuard g(writeBufferLock_);
-      write_msgs_.clear(); // buffered write data
+         MMThreadGuard g(writeBufferLock_);
+         write_msgs_.clear(); // buffered write data
       }
    }
 
@@ -287,7 +293,7 @@ public:
    {
       bool retval = false;
       MMThreadGuard g(readBufferLock_);
-      if( 0 < data_read_.size())
+      if (0 < data_read_.size())
       {
          retval = true;
          msg = data_read_.front();
@@ -318,7 +324,7 @@ private:
             boost::asio::placeholders::error,
             boost::asio::placeholders::bytes_transferred));
       }
-      catch(std::exception e)
+      catch (std::exception e)
       {
          LogMessage(e.what(), false);
       }
@@ -341,8 +347,10 @@ private:
       else
       {
          // this is a normal situtation when closing the port
-         if( ! shutDownInProgress_)
+         if (!shutDownInProgress_)
+         {
             LogMessage(("error in ReadComplete: "+boost::lexical_cast<std::string,int>(error.value()) + " " + error.message()).c_str(), false);
+         }
          DoClose(error);
       }
    }
@@ -397,7 +405,9 @@ private:
    void DoClose(const boost::system::error_code& error)
    { // something has gone wrong, so close the socket & make this object inactive
       if (error == boost::asio::error::operation_aborted) // if this call is the result of a timer cancel()
+      {
          return; // ignore it because the connection cancelled the timer
+      }
       if (error)
       {
          LogMessage(error.message().c_str(), false);
@@ -405,11 +415,11 @@ private:
       else
       {
          // this is a normal condition when shutting down port
-         if( ! shutDownInProgress_)
+         if (! shutDownInProgress_)
             LogMessage("Error: Connection did not succeed", false);
       }
 
-      if(active_)
+      if (active_)
       {
          MMThreadGuard g(implementationLock_);
          serialPortImplementation_.close();

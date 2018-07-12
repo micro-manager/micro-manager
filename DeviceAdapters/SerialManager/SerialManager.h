@@ -170,8 +170,8 @@ private:
 
 class SerialPortLister
 {
-   public:
-      // returns list of serial ports that can be opened
-      static void ListPorts(std::vector<std::string> &availablePorts);
-      static bool portAccessible(const char*  portName);
+public:
+   // returns list of serial ports that can be opened
+   static void ListPorts(std::vector<std::string> &availablePorts);
+   static bool portAccessible(const char*  portName);
 };
