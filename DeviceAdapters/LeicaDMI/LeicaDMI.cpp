@@ -3079,15 +3079,15 @@ int AFC::FullFocus() {
    int ret = SetContinuousFocusing(true);
    if (ret != DEVICE_OK)
       return ret;
-   int time = 0;
+   int time;
    int delta = 10;
-   for (int time = 0;
+   for (time = 0;
         !IsContinuousFocusLocked() && (time < timeOut_);
         time += delta) {
         CDeviceUtils::SleepMs(delta);
    }
 
-   if (time > timeOut_) {
+   if (time >= timeOut_) {
       SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "Autofocus Lock Timeout");
       return DEVICE_LOCALLY_DEFINED_ERROR;
    }
