@@ -105,17 +105,17 @@ bool SerialPortLister::portAccessible(const char* portName)
    }
    catch( std::exception& )
    {
-      
+
       return false;
    }
 
-   return false;                                                             
+   return false;
 }
 
 
 #ifdef WIN32
 const int MaxBuf = 100000;
-typedef struct 
+typedef struct
 	{
 		char buffer[MaxBuf];
 } B100000;
@@ -148,19 +148,19 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
          if( 0 == jj->substr(0,3).compare("COM"))
             availablePorts.push_back(*jj);
       }
-      
+
    }
 #endif // WIN32
 
-#ifdef linux 
-   // Look for /dev files with correct signature 
+#ifdef linux
+   // Look for /dev files with correct signature
    DIR* pdir = opendir("/dev");
    struct dirent *pent;
    if (pdir) {
       while (pent = readdir(pdir)) {
-         if ( (strstr(pent->d_name, "ttyS") != 0) || 
-               (strstr(pent->d_name, "ttyUSB") != 0)  || 
-               (strstr(pent->d_name, "ttyACM") != 0))  
+         if ( (strstr(pent->d_name, "ttyS") != 0) ||
+               (strstr(pent->d_name, "ttyUSB") != 0)  ||
+               (strstr(pent->d_name, "ttyACM") != 0))
          {
             std::string p = ("/dev/");
             p.append(pent->d_name);
@@ -169,7 +169,7 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
          }
       }
    }
-#endif // linux 
+#endif // linux
 
 #ifdef __APPLE__
    // port discovery code for Darwin/Mac OS X
@@ -177,44 +177,44 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
    io_iterator_t   serialPortIterator;
    char            bsdPath[256];
    kern_return_t       kernResult;
-   CFMutableDictionaryRef classesToMatch; 
-                                                                                 
-   // Serial devices are instances of class IOSerialBSDClient          
-   classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue); 
-   if (classesToMatch == NULL) {                                 
+   CFMutableDictionaryRef classesToMatch;
+
+   // Serial devices are instances of class IOSerialBSDClient
+   classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue);
+   if (classesToMatch == NULL) {
       std::cerr << "IOServiceMatching returned a NULL dictionary.\n";
    } else {
-       CFDictionarySetValue(classesToMatch,                         
-                           CFSTR(kIOSerialBSDTypeKey),        
-                           CFSTR(kIOSerialBSDAllTypes));   
+       CFDictionarySetValue(classesToMatch,
+                           CFSTR(kIOSerialBSDTypeKey),
+                           CFSTR(kIOSerialBSDAllTypes));
    }
    kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, classesToMatch, &serialPortIterator);
    if (KERN_SUCCESS != kernResult) {
       std::cerr << "IOServiceGetMatchingServices returned " << kernResult << "\n";
    }
-                                                                        
+
    // Given an iterator across a set of modems, return the BSD path to the first one.
-   // If no modems are found the path name is set to an empty string.            
+   // If no modems are found the path name is set to an empty string.
    io_object_t      modemService;
-   
-   // Initialize the returned path                                              
-   *bsdPath = '\0';           
-   // Iterate across all modems found.                                          
+
+   // Initialize the returned path
+   *bsdPath = '\0';
+   // Iterate across all modems found.
    while ( (modemService = IOIteratorNext(serialPortIterator)) ) {
        CFTypeRef bsdPathAsCFString;
        // Get the device's path (/dev/tty.xxxxx).
        bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,
-                               CFSTR(kIODialinDeviceKey),          
-                               kCFAllocatorDefault,  
-                               0);                   
+                               CFSTR(kIODialinDeviceKey),
+                               kCFAllocatorDefault,
+                               0);
       if (bsdPathAsCFString) {
-         Boolean result;                                                        
-         // Convert the path from a CFString to a C (NUL-terminated) string for use           
-         // with the POSIX open() call. 
-         result = CFStringGetCString( (const __CFString*) bsdPathAsCFString, 
-                                         bsdPath,   
-                                         sizeof(bsdPath), 
-                                         kCFStringEncodingUTF8); 
+         Boolean result;
+         // Convert the path from a CFString to a C (NUL-terminated) string for use
+         // with the POSIX open() call.
+         result = CFStringGetCString( (const __CFString*) bsdPathAsCFString,
+                                         bsdPath,
+                                         sizeof(bsdPath),
+                                         kCFStringEncodingUTF8);
 
          CFRelease(bsdPathAsCFString);
 
@@ -230,11 +230,11 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
             }
             if (portAccessible(bsdPath) && ! blackListed)  {
                  availablePorts.push_back(bsdPath);
-            }                 
+            }
             kernResult = KERN_SUCCESS;
          }
       }
-   } 
+   }
 
     // Release the io_service_t now that we are done with it.
     (void) IOObjectRelease(modemService);
@@ -252,7 +252,7 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
  * Caches this list in g_PortList and only queries hardware when this cache is absent or stale
  */
 MODULE_API void InitializeModuleData()
-{  
+{
    // Determine whether portList is fresh enough (i.e. younger than 15 seconds):
    time_t seconds = time(NULL);
    time_t timeout = 15;
@@ -260,7 +260,7 @@ MODULE_API void InitializeModuleData()
 
    if (g_PortList.size() == 0 || stale)
    {
-      SerialPortLister::ListPorts(g_PortList); 
+      SerialPortLister::ListPorts(g_PortList);
       g_PortListLastUpdated = time(NULL);
    }
 
@@ -336,7 +336,7 @@ void SerialManager::DestroyPort(MM::Device* port)
             delete *i;
             ports_.erase(i);
          }
-         return;       
+         return;
       }
    }
 }
@@ -437,10 +437,10 @@ SerialPort::SerialPort(const char* portName) :
    ret = CreateProperty("AnswerTimeout", "500", MM::Float, false, pActTimeout, true);
    assert(ret == DEVICE_OK);
 
-   // transmission Delay                                                     
+   // transmission Delay
    CPropertyAction* pActTD = new CPropertyAction (this, &SerialPort::OnDelayBetweenCharsMs);
    ret = CreateProperty("DelayBetweenCharsMs", "0", MM::Float, false, pActTD, true);
-   assert(ret == DEVICE_OK);   
+   assert(ret == DEVICE_OK);
 
    // verbose debug messages
    pActTD = new CPropertyAction (this, &SerialPort::OnVerbose);
@@ -657,10 +657,10 @@ int SerialPort::Shutdown()
       }
    }
    initialized_ = false;
- 
+
    return DEVICE_OK;
 }
-  
+
 void SerialPort::GetName(char* pszName) const
 {
    CDeviceUtils::CopyLimitedString(pszName, portName_.c_str());
@@ -725,7 +725,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    MM::MMTime nonTerminatedAnswerTimeout(5.0 * 1000.0); // For bug-compatibility
    while ((GetCurrentMMTime() - startTime)  < answerTimeout)
    {
-      bool anyRead =  pPort_->ReadOneCharacter(theData);        
+      bool anyRead =  pPort_->ReadOneCharacter(theData);
       if( anyRead )
       {
          if (bufLen <= answerOffset)
@@ -808,7 +808,7 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
 
    return DEVICE_OK;
 }
- 
+
 int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
    if (!initialized_)
@@ -820,12 +820,12 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
       // zero the buffer
       memset(buf, 0, bufLen);
       charsRead = 0;
-      
+
       bool anyRead = false;
       char theData = 0;
       for( ;; )
       {
-         anyRead = pPort_->ReadOneCharacter(theData); 
+         anyRead = pPort_->ReadOneCharacter(theData);
          if( anyRead)
          {
             buf[charsRead] = (unsigned char)theData;
@@ -1003,15 +1003,15 @@ int SerialPort::OnVerbose(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 
    if (eAct == MM::BeforeGet)
-   {  
+   {
       pProp->Set(verbose_?1L:0L);
    }
    else if (eAct == MM::AfterSet)
-   {  
+   {
       long value;
       pProp->Get(value);
       verbose_ = !!value;
-   }     
+   }
 
    return DEVICE_OK;
 
@@ -1019,18 +1019,18 @@ int SerialPort::OnVerbose(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 int SerialPort::OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct)
-{  
+{
    if (eAct == MM::BeforeGet)
-   {  
+   {
       pProp->Set(transmitCharWaitMs_);
    }
    else if (eAct == MM::AfterSet)
-   {  
+   {
       double transmitCharWaitMs;
       pProp->Get(transmitCharWaitMs);
       if (transmitCharWaitMs >= 0.0 && transmitCharWaitMs < 250.0)
          transmitCharWaitMs_ = transmitCharWaitMs;
-   }     
+   }
 
    return DEVICE_OK;
 }

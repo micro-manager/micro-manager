@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   boost::asio client 
+// DESCRIPTION:   boost::asio client
 //
 // COPYRIGHT:     University of California, San Francisco, 2010
 // LICENSE:       This file is distributed under the BSD license.
@@ -44,9 +44,9 @@ typedef boost::asio::serial_port::native_type SerialNativeHandle;
 #endif
 
 
-class AsioClient 
-{ 
-public: 
+class AsioClient
+{
+public:
    // Construct from an already open native handle.
    AsioClient(boost::asio::io_service& ioService,
          const std::string& deviceName,
@@ -93,12 +93,12 @@ private:
    {
       {
          MMThreadGuard g(implementationLock_);
-         if (! serialPortImplementation_.is_open()) 
-         { 
+         if (! serialPortImplementation_.is_open())
+         {
             LogMessage( "Failed to open serial port" , false);
-            return; 
-         } 
-         boost::asio::serial_port_base::baud_rate baud_option(baud); 
+            return;
+         }
+         boost::asio::serial_port_base::baud_rate baud_option(baud);
          boost::system::error_code anError;
 
          ChangeBaudRate(baud);
@@ -106,13 +106,13 @@ private:
          ChangeParity(parity);
          ChangeStopBits(stopBits);
 
-         serialPortImplementation_.set_option( boost::asio::serial_port_base::character_size( 8 ), anError ); 
+         serialPortImplementation_.set_option( boost::asio::serial_port_base::character_size( 8 ), anError );
          if( !!anError)
             LogMessage(("error setting character_size in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
       }
 
-      ReadStart(); 
-   } 
+      ReadStart();
+   }
 
 public:
    void ChangeFlowControl(const boost::asio::serial_port_base::flow_control::type& flow)
@@ -134,14 +134,14 @@ public:
          break;
       };
       LogMessage(("Attempting to set flow of " + device_ + " to " + sflow).c_str(), true);
-      serialPortImplementation_.set_option(  boost::asio::serial_port_base::flow_control(flow) , anError ); 
+      serialPortImplementation_.set_option(  boost::asio::serial_port_base::flow_control(flow) , anError );
       if( !!anError)
          LogMessage(("error setting flow_control in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
    }
 
    void ChangeParity(const boost::asio::serial_port_base::parity::type& parity)
    {
-         
+
       boost::system::error_code anError;
 
       std::string sparity;
@@ -158,7 +158,7 @@ public:
          break;
       };
       LogMessage(("Attempting to set parity of " + device_ + " to " + sparity).c_str(), true);
-      serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity), anError); 
+      serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity), anError);
       if( !!anError)
          LogMessage(("error setting parity in AsioClient(): " + boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
    }
@@ -179,9 +179,9 @@ public:
       case boost::asio::serial_port_base::stop_bits::two:
          sstopbits = "2";
          break;
-      };      
+      };
       LogMessage(("Attempting to set stopBits of " + device_ + " to " + sstopbits).c_str(), true);
-      serialPortImplementation_.set_option( boost::asio::serial_port_base::stop_bits(stopBits), anError ); 
+      serialPortImplementation_.set_option( boost::asio::serial_port_base::stop_bits(stopBits), anError );
       if( !!anError)
          LogMessage(("error setting stop_bits in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
    }
@@ -189,7 +189,7 @@ public:
    void ChangeBaudRate(unsigned int baud)
    {
       boost::system::error_code anError;
-      boost::asio::serial_port_base::baud_rate baud_option(baud); 
+      boost::asio::serial_port_base::baud_rate baud_option(baud);
 
 #ifdef __APPLE__
          // Use ioctl() instead of Boost's implementation (which uses termios),
@@ -228,7 +228,7 @@ public:
 
 
    bool WriteCharactersSynchronously(const char* msg, size_t len)
-   { 
+   {
       bool retv = false;
       try
       {
@@ -240,10 +240,10 @@ public:
          LogMessage(e.what(), false);
       }
       return retv;
-   } 
+   }
 
    bool WriteOneCharacterSynchronously(const char msg)
-   { 
+   {
       bool retv = false;
       try
       {
@@ -255,15 +255,15 @@ public:
          LogMessage(e.what(), false);
       }
       return retv;
-   } 
+   }
 
    void Close() // call the DoClose function via the io service
-   { 
+   {
       if(active_)
       {
-         io_service_.post(boost::bind(&AsioClient::DoClose, this, boost::system::error_code())); 
+         io_service_.post(boost::bind(&AsioClient::DoClose, this, boost::system::error_code()));
       }
-   } 
+   }
 
 
    void Purge(void)
@@ -277,7 +277,7 @@ public:
       // clear write buffer
       {
       MMThreadGuard g(writeBufferLock_);
-      write_msgs_.clear(); // buffered write data 
+      write_msgs_.clear(); // buffered write data
       }
    }
 
@@ -299,35 +299,35 @@ public:
    void ShutDownInProgress(const bool v){ shutDownInProgress_ = v;};
 
 
-private: 
+private:
    // Call the owning device's LogMessage(). This is the only reason to keep a
    // pointer to the device object, and should be replaced by a functor for
    // logging only.
    void LogMessage(const char* msg, bool debug) const
    { pSerialPortAdapter_->LogMessage(msg, debug); }
 
-   static const int max_read_length = 512; // maximum amount of data to read in one operation 
-   void ReadStart(void) 
-   { // Start an asynchronous read and call ReadComplete when it completes or fails 
+   static const int max_read_length = 512; // maximum amount of data to read in one operation
+   void ReadStart(void)
+   { // Start an asynchronous read and call ReadComplete when it completes or fails
       try
       {
          MMThreadGuard g(implementationLock_);
-         serialPortImplementation_.async_read_some(boost::asio::buffer(read_msg_, max_read_length), 
-            boost::bind(&AsioClient::ReadComplete, 
-            this, 
-            boost::asio::placeholders::error, 
-            boost::asio::placeholders::bytes_transferred)); 
+         serialPortImplementation_.async_read_some(boost::asio::buffer(read_msg_, max_read_length),
+            boost::bind(&AsioClient::ReadComplete,
+            this,
+            boost::asio::placeholders::error,
+            boost::asio::placeholders::bytes_transferred));
       }
       catch(std::exception e)
       {
          LogMessage(e.what(), false);
       }
-   } 
+   }
 
-   void ReadComplete(const boost::system::error_code& error, size_t bytes_transferred) 
-   { // the asynchronous read operation has now completed or failed and returned an error 
-      if (!error) 
-      { // read completed, so process the data 
+   void ReadComplete(const boost::system::error_code& error, size_t bytes_transferred)
+   { // the asynchronous read operation has now completed or failed and returned an error
+      if (!error)
+      { // read completed, so process the data
          {
             MMThreadGuard g(readBufferLock_);
             for(unsigned int ib = 0; ib < bytes_transferred; ++ib)
@@ -336,28 +336,28 @@ private:
             }
          }
          CDeviceUtils::SleepMs(1);
-         ReadStart(); // start waiting for another asynchronous read again 
-      } 
-      else 
+         ReadStart(); // start waiting for another asynchronous read again
+      }
+      else
       {
-         // this is a normal situtation when closing the port 
+         // this is a normal situtation when closing the port
          if( ! shutDownInProgress_)
             LogMessage(("error in ReadComplete: "+boost::lexical_cast<std::string,int>(error.value()) + " " + error.message()).c_str(), false);
-         DoClose(error); 
+         DoClose(error);
       }
-   } 
+   }
 
 
    // for asynchronous write operations:
    void DoWriteMsg(const std::vector<char>& msg)
-   { // callback to handle write call from outside this class 
+   { // callback to handle write call from outside this class
       MMThreadGuard writeBufferGuard(writeBufferLock_);
       bool write_in_progress = !write_msgs_.empty(); // is there anything currently being written?
       write_msgs_.push_back(msg); // store in write buffer
 
-      if (!write_in_progress) // if nothing is currently being written, then start 
-         WriteStart(); 
-   } 
+      if (!write_in_progress) // if nothing is currently being written, then start
+         WriteStart();
+   }
 
    void DoWriteCh(const char ch)
    {
@@ -366,45 +366,45 @@ private:
    }
 
    // Must be called with writeBufferLock_ acquired!
-   void WriteStart(void) 
-   { // Start an asynchronous write and call WriteComplete when it completes or fails 
-      boost::asio::async_write(serialPortImplementation_, 
+   void WriteStart(void)
+   { // Start an asynchronous write and call WriteComplete when it completes or fails
+      boost::asio::async_write(serialPortImplementation_,
          boost::asio::buffer(&write_msgs_.front()[0], write_msgs_.front().size()),
-         boost::bind(&AsioClient::WriteComplete, 
-         this, 
-         boost::asio::placeholders::error)); 
-   } 
+         boost::bind(&AsioClient::WriteComplete,
+         this,
+         boost::asio::placeholders::error));
+   }
 
-   void WriteComplete(const boost::system::error_code& error) 
-   { // the asynchronous read operation has now completed or failed and returned an error 
-      if (!error) 
-      { // write completed, so send next write data 
+   void WriteComplete(const boost::system::error_code& error)
+   { // the asynchronous read operation has now completed or failed and returned an error
+      if (!error)
+      { // write completed, so send next write data
          MMThreadGuard writeBufferGuard(writeBufferLock_);
          if (0 < write_msgs_.size()) // Should always be true, unless purged
             write_msgs_.pop_front(); // remove the completed data
          if (!write_msgs_.empty()) // if there is anthing left to be written
-            WriteStart(); // then start sending the next item in the buffer 
-      } 
-      else 
+            WriteStart(); // then start sending the next item in the buffer
+      }
+      else
       {
          LogMessage("error in WriteComplete: ", true);
-         DoClose(error); 
+         DoClose(error);
       }
-   } 
+   }
 
 
 
-   void DoClose(const boost::system::error_code& error) 
-   { // something has gone wrong, so close the socket & make this object inactive 
-      if (error == boost::asio::error::operation_aborted) // if this call is the result of a timer cancel() 
-         return; // ignore it because the connection cancelled the timer 
-      if (error) 
+   void DoClose(const boost::system::error_code& error)
+   { // something has gone wrong, so close the socket & make this object inactive
+      if (error == boost::asio::error::operation_aborted) // if this call is the result of a timer cancel()
+         return; // ignore it because the connection cancelled the timer
+      if (error)
       {
          LogMessage(error.message().c_str(), false);
       }
-      else 
+      else
       {
-         // this is a normal condition when shutting down port 
+         // this is a normal condition when shutting down port
          if( ! shutDownInProgress_)
             LogMessage("Error: Connection did not succeed", false);
       }
@@ -412,17 +412,17 @@ private:
       if(active_)
       {
          MMThreadGuard g(implementationLock_);
-         serialPortImplementation_.close(); 
+         serialPortImplementation_.close();
       }
-      active_ = false; 
-   } 
+      active_ = false;
+   }
 
 
-private: 
-   bool active_; // remains true while this object is still operating 
-   boost::asio::io_service& io_service_; // the main IO service that runs this connection 
-   boost::asio::serial_port serialPortImplementation_; // the serial port this instance is connected to 
-   char read_msg_[max_read_length]; // data read from the socket 
+private:
+   bool active_; // remains true while this object is still operating
+   boost::asio::io_service& io_service_; // the main IO service that runs this connection
+   boost::asio::serial_port serialPortImplementation_; // the serial port this instance is connected to
+   char read_msg_[max_read_length]; // data read from the socket
    std::deque< std::vector<char> > write_msgs_; // buffered write data
    std::deque<char> data_read_;
    SerialPort* pSerialPortAdapter_;

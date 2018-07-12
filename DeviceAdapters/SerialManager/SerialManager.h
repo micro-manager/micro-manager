@@ -3,9 +3,9 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   serial port device adapter 
-//                
-// AUTHOR:        
+// DESCRIPTION:   serial port device adapter
+//
+// AUTHOR:
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 // LICENSE:       This file is distributed under the BSD license.
@@ -70,17 +70,17 @@ class AsioClient;
 // Implementation of the MMDevice and MMStateDevice interfaces
 //
 
-class SerialPort : public CSerialBase<SerialPort>  
+class SerialPort : public CSerialBase<SerialPort>
 {
 public:
    SerialPort(const char* portName);
    ~SerialPort();
-  
+
    // MMDevice API
    // ------------
    int Initialize();
    int Shutdown();
-  
+
    void GetName(char* pszName) const;
    bool Busy() {return busy_;}
 
@@ -88,7 +88,7 @@ public:
    int GetAnswer(char* answer, unsigned bufLength, const char* term);
    int Write(const unsigned char* buf, unsigned long bufLen);
    int Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead);
-   MM::PortType GetPortType() const {return MM::SerialPort;}    
+   MM::PortType GetPortType() const {return MM::SerialPort;}
    int Purge();
 
    std::string Name(void) const;
@@ -129,7 +129,7 @@ private:
    bool initialized_;
    bool busy_;
 
-   // thread locking for the port 
+   // thread locking for the port
    MMThreadLock portLock_;
 
    double answerTimeoutMs_;
@@ -170,8 +170,8 @@ private:
 
 class SerialPortLister
 {
-   public:                                                                   
+   public:
       // returns list of serial ports that can be opened
       static void ListPorts(std::vector<std::string> &availablePorts);
-      static bool portAccessible(const char*  portName);                     
+      static bool portAccessible(const char*  portName);
 };
