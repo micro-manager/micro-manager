@@ -404,6 +404,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SutterLambdaParallelArduino
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HamiltonMVP", "DeviceAdapters\HamiltonMVP\HamiltonMVP.vcxproj", "{A0676B13-4850-4BF4-88BC-F099BEE5B762}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IsmatecMCP", "DeviceAdapters\IsmatecMCP\IsmatecMCP.vcxproj", "{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -1993,6 +1995,14 @@ Global
 		{A0676B13-4850-4BF4-88BC-F099BEE5B762}.Release|Win32.Build.0 = Release|Win32
 		{A0676B13-4850-4BF4-88BC-F099BEE5B762}.Release|x64.ActiveCfg = Release|x64
 		{A0676B13-4850-4BF4-88BC-F099BEE5B762}.Release|x64.Build.0 = Release|x64
+		{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}.Debug|Win32.Build.0 = Debug|Win32
+		{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}.Debug|x64.ActiveCfg = Debug|x64
+		{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}.Debug|x64.Build.0 = Debug|x64
+		{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}.Release|Win32.ActiveCfg = Release|Win32
+		{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}.Release|Win32.Build.0 = Release|Win32
+		{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}.Release|x64.ActiveCfg = Release|x64
+		{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
