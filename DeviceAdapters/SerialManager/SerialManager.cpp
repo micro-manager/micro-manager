@@ -359,6 +359,7 @@ SerialPort::SerialPort(const char* portName) :
    answerTimeoutMs_(500),
    refCount_(0),
    transmitCharWaitMs_(0.0),
+   dataBits_(8),
    stopBits_(g_StopBits_1),
    parity_(g_Parity_None),
    pService_(0),
@@ -405,8 +406,12 @@ SerialPort::SerialPort(const char* portName) :
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_921600, (long)921600);
 
    // data bits
-   ret = CreateProperty(MM::g_Keyword_DataBits, "8", MM::String, true);
+   CPropertyAction* pActDataBits = new CPropertyAction(this, &SerialPort::OnDataBits);
+   ret = CreateIntegerProperty(MM::g_Keyword_DataBits, 8, false, pActDataBits, true);
    assert(ret == DEVICE_OK);
+
+   AddAllowedValue(MM::g_Keyword_DataBits, "7", 7);
+   AddAllowedValue(MM::g_Keyword_DataBits, "8", 8);
 
    // stop bits
    CPropertyAction* pActStopBits = new CPropertyAction (this, &SerialPort::OnStopBits);
@@ -527,6 +532,7 @@ int SerialPort::Initialize()
             boost::asio::serial_port::flow_control::type(handshake),
             boost::asio::serial_port::parity::type(parity),
             boost::asio::serial_port::stop_bits::type(sb),
+            dataBits_,
             this);
 #else
       pPort_ = new AsioClient(*pService_,
@@ -535,6 +541,7 @@ int SerialPort::Initialize()
             boost::asio::serial_port::flow_control::type(handshake),
             boost::asio::serial_port::parity::type(parity),
             boost::asio::serial_port::stop_bits::type(sb),
+            dataBits_,
             this);
 #endif
    }
@@ -889,6 +896,29 @@ int SerialPort::Purge()
 //////////////////////////////////////////////////////////////////////////////
 // Action interface
 //
+int SerialPort::OnDataBits(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(long(dataBits_));
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long dataBits;
+      int ret = GetCurrentPropertyData(MM::g_Keyword_DataBits, dataBits);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (initialized_)
+      {
+         pPort_->ChangeDataBits(unsigned(dataBits));
+      }
+      dataBits_ = dataBits;
+   }
+
+   return DEVICE_OK;
+}
+
+
 int SerialPort::OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)

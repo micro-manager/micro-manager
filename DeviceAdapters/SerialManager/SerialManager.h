@@ -110,6 +110,7 @@ public:
    int OnHandshaking(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDTR(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaud(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDataBits(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -137,6 +138,7 @@ private:
    double transmitCharWaitMs_;
    std::map<std::string, int> baudList_;
 
+   unsigned dataBits_;
    std::string stopBits_;
    std::string parity_;
 

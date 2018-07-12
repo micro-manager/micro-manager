@@ -55,6 +55,7 @@ public:
          boost::asio::serial_port::flow_control::type flow,
          boost::asio::serial_port::parity::type parity,
          boost::asio::serial_port::stop_bits::type stopBits,
+         unsigned dataBits,
          SerialPort* pPort) :
       active_(true),
       io_service_(ioService),
@@ -63,7 +64,7 @@ public:
       device_(deviceName),
       shutDownInProgress_(false)
    {
-      Construct(deviceName, baud, flow, parity, stopBits);
+      Construct(deviceName, baud, flow, parity, stopBits, dataBits);
    }
 
    // Construct and open the given device name.
@@ -73,6 +74,7 @@ public:
          boost::asio::serial_port::flow_control::type flow,
          boost::asio::serial_port::parity::type parity,
          boost::asio::serial_port::stop_bits::type stopBits,
+         unsigned dataBits,
          SerialPort* pPort) :
       active_(true),
       io_service_(ioService),
@@ -81,7 +83,7 @@ public:
       device_(deviceName),
       shutDownInProgress_(false)
    {
-      Construct(deviceName, baud, flow, parity, stopBits);
+      Construct(deviceName, baud, flow, parity, stopBits, dataBits);
    }
 
 private:
@@ -89,7 +91,8 @@ private:
          unsigned int baud,
          boost::asio::serial_port::flow_control::type flow,
          boost::asio::serial_port::parity::type parity,
-         boost::asio::serial_port::stop_bits::type stopBits)
+         boost::asio::serial_port::stop_bits::type stopBits,
+         unsigned dataBits)
    {
       {
          MMThreadGuard g(implementationLock_);
@@ -105,12 +108,7 @@ private:
          ChangeFlowControl(flow);
          ChangeParity(parity);
          ChangeStopBits(stopBits);
-
-         serialPortImplementation_.set_option( boost::asio::serial_port_base::character_size( 8 ), anError );
-         if (!!anError)
-         {
-            LogMessage(("error setting character_size in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
-         }
+         ChangeDataBits(dataBits);
       }
 
       ReadStart();
@@ -165,6 +163,18 @@ public:
       serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity), anError);
       if (!!anError)
          LogMessage(("error setting parity in AsioClient(): " + boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+   }
+
+   void ChangeDataBits(unsigned dataBits)
+   {
+      boost::system::error_code anError;
+
+      LogMessage(("Attempting to set dataBits of " + device_ + " to " + boost::lexical_cast<std::string>(dataBits)).c_str(), true);
+      serialPortImplementation_.set_option(boost::asio::serial_port_base::character_size(dataBits), anError);
+      if (!!anError)
+      {
+         LogMessage(("error setting character_size in AsioClient(): " + boost::lexical_cast<std::string, int>(anError.value()) + " " + anError.message()).c_str(), false);
+      }
    }
 
    void ChangeStopBits(const boost::asio::serial_port::stop_bits::type& stopBits)
