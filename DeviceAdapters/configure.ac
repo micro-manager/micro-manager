@@ -505,6 +505,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    SpectralLMM5
    Spot
    SutterLambda
+   SutterLambdaParallelArduino
    SutterStage
    Thorlabs
    ThorlabsDCxxxx
