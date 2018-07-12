@@ -3,7 +3,7 @@
  *
  * Author: Mark A. Tsuchida <mark@open-imaging.com>
  *
- * Copyright (C) 2018 Open Imaging, Inc.
+ * Copyright (C) 2018 Applied Materials, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
