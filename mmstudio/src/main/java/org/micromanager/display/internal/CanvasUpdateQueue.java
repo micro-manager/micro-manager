@@ -24,6 +24,8 @@ import com.google.common.eventbus.Subscribe;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.process.ColorProcessor;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -281,8 +283,16 @@ public final class CanvasUpdateQueue {
       // int array for ImageJ's consumption.
       if (plus.getProcessor() instanceof ColorProcessor
             && pixels instanceof byte[]) {
-         pixels = ImageUtils.convertRGB32BytesToInt(
-               (byte[]) pixels);
+         // Micro-Manager RGB images are currently RGB_ byte buffers.
+         // ImageJ RGB images are _RGB int buffers.
+         byte[] original = (byte[]) pixels;
+         byte[] reordered = new byte[original.length];
+         reordered[0] = 0;
+         System.arraycopy(original, 0, reordered, 1, original.length - 1);
+         int[] ijPixels = new int[original.length / 4];
+         IntBuffer ijBuffer = IntBuffer.wrap(ijPixels);
+         ijBuffer.put(ByteBuffer.wrap(reordered).asIntBuffer());
+         pixels = ijPixels;
       }
       plus.getProcessor().setPixels(pixels);
 

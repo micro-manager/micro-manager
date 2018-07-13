@@ -354,13 +354,11 @@ public final class DefaultImage implements Image {
       }
       else {
          String result = "[";
-         // HACK: assume that the pixel packing order is BGR and that the
-         // user expects an RGB order.
-         for (int i = numComponents_ - 1; i >= 0; --i) {
-            result += String.format("%d", getComponentIntensityAt(x, y, i));
-            if (i != 0) {
+         for (int i = 0; i < numComponents_; ++i) {
+            if (i > 0) {
                result += "/";
             }
+            result += String.format("%d", getComponentIntensityAt(x, y, i));
          }
          return result + "]";
       }

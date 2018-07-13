@@ -25,6 +25,8 @@ import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import org.micromanager.data.Coords;
 import org.micromanager.data.Image;
 import org.micromanager.data.ImageJConverter;
@@ -55,10 +57,17 @@ public final class DefaultImageJConverter implements ImageJConverter {
          pixels = image.getRawPixelsCopy();
       }
       if (bytesPerPixel == 4 && numComponents == 3) {
-         // Micro-Manager RGB32 images are generally composed of byte
-         // arrays, but ImageJ only takes int arrays.
          if (pixels instanceof byte[]) {
-            pixels = ImageUtils.convertRGB32BytesToInt((byte[]) pixels);
+            // Micro-Manager RGB images are currently RGB_ byte buffers.
+            // ImageJ RGB images are _RGB int buffers.
+            byte[] original = (byte[]) pixels;
+            byte[] reordered = new byte[original.length];
+            reordered[0] = 0;
+            System.arraycopy(original, 0, reordered, 1, original.length - 1);
+            int[] ijPixels = new int[original.length / 4];
+            IntBuffer ijBuffer = IntBuffer.wrap(ijPixels);
+            ijBuffer.put(ByteBuffer.wrap(reordered).asIntBuffer());
+            pixels = ijPixels;
          }
          return new ColorProcessor(width, height, (int[]) pixels);
       }
