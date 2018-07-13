@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Controls LaserQuantum gem laser through serial port
+// DESCRIPTION:   Controls gem/ventus/opus/axiom series from LaserQuantum 
 // COPYRIGHT:     EMBL
 // LICENSE:       LGPL
 // AUTHOR:        Joran Deschamps, 2018
