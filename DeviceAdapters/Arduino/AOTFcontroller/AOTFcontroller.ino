@@ -123,8 +123,8 @@
    unsigned int triggerDelay_[SEQUENCELENGTH] = {0,0,0,0,0,0,0,0,0,0,0,0};
    int patternLength_ = 0;
    byte repeatPattern_ = 0;
-   volatile int triggerNr_; // total # of triggers in this run (0-based)
-   volatile int sequenceNr_; // # of trigger in sequence (0-based)
+   volatile long triggerNr_; // total # of triggers in this run (0-based)
+   volatile long sequenceNr_; // # of trigger in sequence (0-based)
    int skipTriggers_ = 0;  // # of triggers to skip before starting to generate patterns
    byte currentPattern_ = 0;
    const unsigned long timeOut_ = 1000;
