@@ -1,12 +1,13 @@
 //-----------------------------------------------------------------------------
-// FILE:          LaserQuantumGem.h
+// FILE:          LaserQuantumLaser.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Controls gem series from LaserQuantum through serial port
+// DESCRIPTION:   Controls gem/ventus/opus/axiom series from LaserQuantum 
+//				  through serial port
 // COPYRIGHT:     EMBL
 // LICENSE:       LGPL
-// AUTHOR:        Joran Deschamps
+// AUTHOR:        Joran Deschamps, 2018
 //-----------------------------------------------------------------------------
 
 
@@ -32,11 +33,11 @@
 #define ERR_ERROR_67    4006
 //-----------------------------------------------------------------------------
 
-class LaserQuantumGem: public CGenericBase<LaserQuantumGem>
+class LaserQuantumLaser: public CGenericBase<LaserQuantumLaser>
 {
 public:
-    LaserQuantumGem();
-    ~LaserQuantumGem();
+    LaserQuantumLaser();
+    ~LaserQuantumLaser();
 
     // MMDevice API
     int Initialize();
