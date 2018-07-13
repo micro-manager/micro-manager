@@ -46,6 +46,7 @@ enum {
    ERR_CANNOT_DETACH,
    ERR_CANNOT_ATTACH,
    ERR_OFFSCREEN_BUFFER_UNAVAILABLE,
+   ERR_NO_DISPLAY_CONTEXT
 };
 
 
@@ -381,12 +382,25 @@ int GenericSLM::DisplayImage()
    if (!offscreen)
       return ERR_OFFSCREEN_BUFFER_UNAVAILABLE;
 
-   HDC onscreenDC = windowThread_->GetDC();
    DWORD op = shouldBlitInverted_ ? NOTSRCCOPY : SRCCOPY;
 
-   refreshWaiter_.WaitForVerticalBlank();
-   offscreen->BlitTo(onscreenDC, op);
-   return DEVICE_OK;
+   int ret = refreshWaiter_.WaitForVerticalBlank();
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+   HDC onscreenDC = windowThread_->GetDC();
+   if (onscreenDC == NULL) 
+   {
+      return ERR_NO_DISPLAY_CONTEXT;
+   }
+   DWORD result = offscreen->BlitTo(onscreenDC, op);
+   // TODO use FormatMessage function to generate error string
+
+   // If we do not release the HDC< we'll run out of available contexts
+   // Alternatively, we could possibly store one and re-use...
+   windowThread_->ReleaseDC(onscreenDC);
+   return (int) result;
 }
 
 
