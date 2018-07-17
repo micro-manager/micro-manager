@@ -62,6 +62,8 @@ enum TriggerPolarity {
    Negative
 };
 
+static const double TSI_MAX_EXPOSURE_MS = 20000; // 20 sec max exposure
+
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
 // for all TSI api compatible cameras

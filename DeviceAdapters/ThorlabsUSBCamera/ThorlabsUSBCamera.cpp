@@ -112,6 +112,7 @@ ThorlabsUSBCam::ThorlabsUSBCam() :
 
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
+   SetErrorText(IS_TRANSFER_ERROR, "Image Transfer failed.  Try lowering the pixelClock speed.");
    readoutStartTime_ = GetCurrentMMTime();
    thd_ = new MySequenceThread(this);
 
@@ -237,6 +238,11 @@ int ThorlabsUSBCam::Initialize()
    }
 
    pAct = new CPropertyAction (this, &ThorlabsUSBCam::OnExposure);
+   nRet = is_Exposure(camHandle_, IS_EXPOSURE_CMD_GET_EXPOSURE, &Exposure_, sizeof(double));
+   if (nRet != IS_SUCCESS && nRet != IS_NOT_SUPPORTED)
+   {
+      return nRet;
+   }
    CreateProperty(MM::g_Keyword_Exposure, "15.0", MM::Float, false, pAct);
    SetPropertyLimits(MM::g_Keyword_Exposure, expRange[0], expRange[1]);
 
@@ -263,6 +269,11 @@ int ThorlabsUSBCam::Initialize()
    pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnPixelClock);
    CreateProperty(g_propPixelClock, osClock.str().c_str(), MM::Integer, false, pAct);
    SetPropertyLimits(g_propPixelClock, minClock, maxClock);
+   // some cameras give errors because the pixelclock is too high
+   // avoid this by always starting with the lowest pixelclock
+   ostringstream minClockstr;
+   minClockstr << minClock;
+   SetProperty(g_propPixelClock, minClockstr.str().c_str());
 
    pAct = new CPropertyAction(this, &ThorlabsUSBCam::OnFPS);
    CreateProperty(g_propFPS, "0.0", MM::Float, true, pAct);

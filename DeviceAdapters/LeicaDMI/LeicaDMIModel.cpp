@@ -397,6 +397,7 @@ int LeicaAFCModel::SetLEDIntensity(int LEDintensity)
 LeicaDMIModel::LeicaDMIModel() :
    usesMethods_(false),
    availableDevices_(maxNrDevices_, false),
+   codedDevices_(maxNrDevices_, false),
    availableMethods_(maxNrMethods_, false),
    methodNames_(maxNrMethods_ + 1)
 {
