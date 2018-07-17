@@ -64,14 +64,18 @@ public class FlipperProcessor extends Processor {
     */
    @Override
    public void processImage(Image image, ProcessorContext context) {
-      String imageCam = image.getMetadata().getCamera();
-      if (imageCam == null || !imageCam.equals(camera_)) {
-         // Image is for the wrong camera; just pass it along unmodified.
-         context.outputImage(image);
-         return;
+      // to allow processing old data, we do not check for the camera when no 
+      // camera was selected
+      if (!camera_.isEmpty()) {
+         String imageCam = image.getMetadata().getCamera();
+         if (imageCam == null || !imageCam.equals(camera_)) {
+            // Image is for the wrong camera; just pass it along unmodified.
+            context.outputImage(image);
+            return;
+         }
       }
       context.outputImage(
-            transformImage(studio_, image, isMirrored_, rotation_));
+              transformImage(studio_, image, isMirrored_, rotation_));
    }
 
    /**
