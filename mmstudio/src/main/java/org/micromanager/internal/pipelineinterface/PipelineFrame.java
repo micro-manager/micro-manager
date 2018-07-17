@@ -163,7 +163,7 @@ final public class PipelineFrame extends MMFrame
                studio_.logs().showError("Please set up a pipeline first.");
                return;
             }
-            ReplayDialog.makeDialog(studio_);
+            ProcessExistingDataDialog.makeDialog(studio_);
          }
       });
       add(replayButton_);
@@ -187,7 +187,7 @@ final public class PipelineFrame extends MMFrame
       setPreferredSize(frameSize);
       setMinimumSize(minFrameSize);
       
-      this.loadAndRestorePosition(200, 200);
+      super.loadAndRestorePosition(200, 200);
 
       studio_.events().registerForEvents(this);
       reloadProcessors();

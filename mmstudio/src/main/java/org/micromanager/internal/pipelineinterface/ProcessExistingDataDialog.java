@@ -38,19 +38,26 @@ import org.micromanager.data.DatastoreRewriteException;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.PipelineErrorException;
 import org.micromanager.display.DisplayWindow;
-// import org.micromanager.events.DisplayAboutToShowEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.JavaUtils;
 import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * This class allows users to process files that already exist on disk.
  */
-public final class ReplayDialog extends MMDialog {
+public final class ProcessExistingDataDialog extends MMDialog {
    private static final String LOAD_FROM_DISK = "Load From Disk...";
+   private static final String OUTPUT_OPTION = "Output Option";
+   private static final String OPTION_SINGLE_TIFF = "Option Single";
+   private static final String OPTION_MULTI_TIFF = "Option Multi";
+   private static final String OPTION_RAM = "Option RAM"; 
+   private static final String OUTPUT_PATH = "Output path";
+   private static final String SAVE_NAME = "Save name";
+   private static final String SHOW = "Show";
 
    public static void makeDialog(Studio studio) {
-      ReplayDialog dialog = new ReplayDialog(studio);
+      ProcessExistingDataDialog dialog = new ProcessExistingDataDialog(studio);
       studio.events().registerForEvents(dialog);
    }
 
@@ -63,11 +70,13 @@ public final class ReplayDialog extends MMDialog {
    private JTextField outputName_;
    private JButton browseButton_;
    final private JCheckBox showDisplay_;
+   final private MutablePropertyMapView settings_;
 
-   private ReplayDialog(Studio studio) {
+   private ProcessExistingDataDialog(Studio studio) {
       super("Process Existing Data");
       super.setTitle("Process Existing Data");
       studio_ = studio;
+      settings_ = studio_.getUserProfile().getSettings(this.getClass());
 
       JPanel contents = new JPanel(new MigLayout("insets dialog"));
       contents.add(new JLabel("<html>This dialog allows you to process an existing dataset, either<br>one that is currently loaded or one that is saved to disk.</html>"),
@@ -84,37 +93,61 @@ public final class ReplayDialog extends MMDialog {
       outputSingleplane_ = new JRadioButton("Separate Image Files");
       outputMultipage_ = new JRadioButton("Image Stack File");
       outputRam_ = new JRadioButton("Hold in RAM");
+      showDisplay_ = new JCheckBox("Show In New Window");
       ButtonGroup group = new ButtonGroup();
       group.add(outputSingleplane_);
       group.add(outputMultipage_);
       group.add(outputRam_);
+      group.clearSelection();
+      String selectedItem = settings_.getString(OUTPUT_OPTION, OPTION_RAM);
+      switch (selectedItem) {
+         case OPTION_SINGLE_TIFF:
+            outputSingleplane_.setSelected(true);
+            break;
+         case OPTION_MULTI_TIFF:
+            outputMultipage_.setSelected(true);
+            break;
+         case OPTION_RAM:
+            outputRam_.setSelected(true);
+            break;
+         default:
+            break;
+      }
       ActionListener listener = new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            boolean amUsingFile = !outputRam_.isSelected();
-            outputPath_.setEnabled(amUsingFile);
-            browseButton_.setEnabled(amUsingFile);
-            outputName_.setEnabled(amUsingFile);
+            if (outputRam_.isSelected()) {
+              showDisplay_.setSelected(true);
+              settings_.putBoolean(SHOW, true);
+              settings_.putString(OUTPUT_OPTION, OPTION_RAM);
+            } else if (outputSingleplane_.isSelected()) {              
+              settings_.putString(OUTPUT_OPTION, OPTION_SINGLE_TIFF);
+            } else if (outputMultipage_.isSelected()) {
+              settings_.putString(OUTPUT_OPTION, OPTION_MULTI_TIFF);
+            }
+            outputPath_.setEnabled(!outputRam_.isSelected());
+            browseButton_.setEnabled(!outputRam_.isSelected());
+            outputName_.setEnabled(!outputRam_.isSelected());
          }
       };
       outputSingleplane_.addActionListener(listener);
       outputMultipage_.addActionListener(listener);
       outputRam_.addActionListener(listener);
-      outputMultipage_.setSelected(true);
       contents.add(outputSingleplane_, "split, spanx");
       contents.add(outputMultipage_);
       contents.add(outputRam_, "wrap");
 
       contents.add(new JLabel("Save Directory: "));
-      outputPath_ = new JTextField(20);
+      outputPath_ = new JTextField(25);
       outputPath_.setToolTipText("Directory that will contain the new saved data");
+      outputPath_.setText(settings_.getString(OUTPUT_PATH, ""));
       contents.add(outputPath_, "split, spanx");
       browseButton_ = new JButton("...");
       browseButton_.setToolTipText("Browse for a directory to save to");
       browseButton_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
-            File result = FileDialogs.openDir(ReplayDialog.this,
+            File result = FileDialogs.openDir(ProcessExistingDataDialog.this,
                     "Please choose a directory to save to",
                     FileDialogs.MM_DATA_SET);
             if (result != null) {
@@ -125,12 +158,14 @@ public final class ReplayDialog extends MMDialog {
       contents.add(browseButton_, "wrap");
 
       contents.add(new JLabel("Save Name: "));
-      outputName_ = new JTextField(10);
+      outputName_ = new JTextField(15);
       outputName_.setToolTipText("Name to give to the processed data");
+      outputName_.setText(settings_.getString(SAVE_NAME, ""));
       contents.add(outputName_, "wrap");
 
-      showDisplay_ = new JCheckBox("Show In New Window");
+      
       showDisplay_.setToolTipText("Display the processed data in a new image window");
+      showDisplay_.setSelected(settings_.getBoolean(SHOW, true));
       contents.add(showDisplay_, "spanx, alignx right, wrap");
 
       JButton okButton = new JButton("OK");
@@ -165,11 +200,15 @@ public final class ReplayDialog extends MMDialog {
 
       super.add(contents);
       super.pack();
+      super.loadAndRestorePosition(200, 200);
       super.setVisible(true);
    }
 
    @Override
    public void dispose() {
+      settings_.putString(OUTPUT_PATH, outputPath_.getText());
+      settings_.putString(SAVE_NAME, outputName_.getText());
+      settings_.putBoolean(SHOW, showDisplay_.isSelected());
       studio_.events().unregisterForEvents(this);
       super.dispose();
    }
@@ -223,6 +262,9 @@ public final class ReplayDialog extends MMDialog {
          }
       }
       input_.addItem(LOAD_FROM_DISK);
+      if (studio_.displays().getActiveDataViewer() != null) {
+         input_.setSelectedItem(studio_.displays().getActiveDataViewer().getName());
+      }
       if (curSelection != null) {
          input_.setSelectedItem(curSelection);
       }
@@ -289,6 +331,7 @@ public final class ReplayDialog extends MMDialog {
       }
 
       if (showDisplay_.isSelected()) {
+         destination.setName(source.getName() + "-Processed");
          studio_.displays().manage(destination);
          studio_.displays().createDisplay(destination);
       }
