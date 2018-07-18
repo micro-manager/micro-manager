@@ -392,7 +392,9 @@ XYStage::XYStage() :
    serialOnlySendChanged_(true),
    manualSerialAnswer_(""),
    compileDay_(0),
-   advancedPropsEnabled_(false)
+   advancedPropsEnabled_(false),
+   axisletterX_("X"), //paving the way for future 
+   axisletterY_("Y")
 {
    InitializeDefaultErrorMessages();
 
@@ -409,6 +411,10 @@ XYStage::XYStage() :
    CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
    stopSignal_ = false;
+
+   CreateProperty("AxisLetterX", axisletterX_.c_str(), MM::String, true);
+   CreateProperty("AxisLetterY", axisletterY_.c_str(), MM::String, true);
+
 
 }
 
@@ -495,7 +501,7 @@ int XYStage::Initialize()
    }
 
    // Speed (sets both x and y)
-   if (hasCommand("S X?")) {
+   if (hasCommand("S "+axisletterX_+"?")) {
       pAct = new CPropertyAction (this, &XYStage::OnSpeed);
       CreateProperty("Speed-S", "1", MM::Float, false, pAct);
       // Maximum Speed that can be set in Speed-S property
@@ -505,31 +511,31 @@ int XYStage::Initialize()
    }
 
    // Backlash (sets both x and y)
-   if (hasCommand("B X?")) {
+   if (hasCommand("B "+axisletterX_+"?")) {
       pAct = new CPropertyAction (this, &XYStage::OnBacklash);
       CreateProperty("Backlash-B", "0", MM::Float, false, pAct);
    }
 
    // Error (sets both x and y)
-   if (hasCommand("E X?")) {
+   if (hasCommand("E "+axisletterX_+"?")) {
       pAct = new CPropertyAction (this, &XYStage::OnError);
       CreateProperty("Error-E(nm)", "0", MM::Float, false, pAct);
    }
 
    // acceleration (sets both x and y)
-   if (hasCommand("AC X?")) {
+   if (hasCommand("AC "+axisletterX_+"?")) {
       pAct = new CPropertyAction (this, &XYStage::OnAcceleration);
       CreateProperty("Acceleration-AC(ms)", "0", MM::Integer, false, pAct);
    }
 
    // Finish Error (sets both x and y)
-   if (hasCommand("PC X?")) {
+   if (hasCommand("PC "+axisletterX_+"?")) {
       pAct = new CPropertyAction (this, &XYStage::OnFinishError);
       CreateProperty("FinishError-PCROS(nm)", "0", MM::Float, false, pAct);
    }
 
    // OverShoot (sets both x and y)
-   if (hasCommand("OS X?")) {
+   if (hasCommand("OS "+axisletterX_+"?")) {
       pAct = new CPropertyAction (this, &XYStage::OnOverShoot);
       CreateProperty("OverShoot(um)", "0", MM::Float, false, pAct);
    }
@@ -591,6 +597,28 @@ int XYStage::Initialize()
       return ret;
    */
 
+   	if (hasCommand("VE " + axisletterX_ + "=0")) {
+	   char orig_speed[MM::MaxStrLength];
+	   ret = GetProperty("Speed-S", orig_speed);
+	   double mspeed;
+	   if ( ret != DEVICE_OK){
+	   mspeed=8;
+	   }else{
+	   mspeed=atof(orig_speed);
+	   }
+		
+	   pAct = new CPropertyAction (this, &XYStage::OnVectorX);
+	   CreateProperty("VectorMoveX-VE(mm/s)", "0", MM::Float, false, pAct);
+  	   SetPropertyLimits("VectorMoveX-VE(mm/s)", mspeed*-1, mspeed);
+	   UpdateProperty("VectorMoveX-VE(mm/s)");
+
+	   pAct = new CPropertyAction (this, &XYStage::OnVectorY);
+	   CreateProperty("VectorMoveY-VE(mm/s)", "0", MM::Float, false, pAct);
+  	   SetPropertyLimits("VectorMoveY-VE(mm/s)", mspeed*-1, mspeed);
+	   UpdateProperty("VectorMoveY-VE(mm/s)");
+   }
+
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -633,7 +661,7 @@ int XYStage::SetPositionSteps(long x, long y)
    ClearPort();
 
    ostringstream command;
-   command << fixed << "M X=" << x/ASISerialUnit_ << " Y=" << y/ASISerialUnit_; // steps are 10th of micros
+   command << fixed << "M "<<axisletterX_<<"=" << x/ASISerialUnit_ << " "<<axisletterY_<<"=" << y/ASISerialUnit_; // steps are 10th of micros
 
    string answer;
    // query the device
@@ -663,15 +691,15 @@ int XYStage::SetRelativePositionSteps(long x, long y)
    ostringstream command;
    if ( (x == 0) && (y != 0) )
    {
-      command << fixed << "R Y=" << y/ASISerialUnit_;
+      command << fixed << "R "<<axisletterY_<<"=" << y/ASISerialUnit_;
    }
    else if ( (x != 0) && (y == 0) )
    {
-      command << fixed << "R X=" << x/ASISerialUnit_;
+      command << fixed << "R "<<axisletterX_<<"=" << x/ASISerialUnit_;
    }
    else
    {
-      command << fixed << "R X=" << x/ASISerialUnit_  << " Y=" << y/ASISerialUnit_; // in 10th of microns
+      command << fixed << "R "<<axisletterX_<<"=" << x/ASISerialUnit_  << " "<<axisletterY_<<"=" << y/ASISerialUnit_; // in 10th of microns
    }
 
    string answer;
@@ -700,7 +728,7 @@ int XYStage::GetPositionSteps(long& x, long& y)
    ClearPort();
 
    ostringstream command;
-   command << "W X Y";
+   command << "W "<<axisletterX_<<" "<<axisletterY_;
 
    string answer;
    // query the device
@@ -732,8 +760,10 @@ int XYStage::GetPositionSteps(long& x, long& y)
 int XYStage::SetOrigin()
 {
    string answer;
+   string cmd;
    // query the device
-   int ret = QueryCommand("H X=0 Y=0", answer); // use command HERE, zero (z) zero all x,y,z
+   cmd="H "+axisletterX_+"=0 "+axisletterY_+"=0";
+   int ret = QueryCommand(cmd.c_str(), answer); // use command HERE, zero (z) zero all x,y,z
    if (ret != DEVICE_OK)
       return ret;
 
@@ -803,8 +833,9 @@ int XYStage::Home()
    ClearPort();
 
    string answer;
+   string cmd="! "+axisletterX_+" "+axisletterY_;
    // query the device
-   int ret = QueryCommand("! X Y", answer); // use command HOME
+   int ret = QueryCommand(cmd.c_str(), answer); // use command HOME
    if (ret != DEVICE_OK)
       return ret;
 
@@ -841,8 +872,9 @@ int XYStage::Calibrate(){
 
    // do home command
    string answer;
+   string cmd="! "+axisletterX_+" "+axisletterY_;
    // query the device
-   ret = QueryCommand("! X Y", answer); // use command HOME
+   ret = QueryCommand(cmd.c_str(), answer); // use command HOME
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1122,7 +1154,7 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
-      command << "WT X?";
+      command << "WT "+axisletterX_+"?";
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1165,7 +1197,7 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
 
       ostringstream command;
-      command << "WT X=" << waitCycles << " Y=" << waitCycles;
+      command << "WT "<<axisletterX_<<"=" << waitCycles << " "<<axisletterY_<<"=" << waitCycles;
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1191,7 +1223,7 @@ int XYStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
-      command << "B X?";
+      command << "B "<<axisletterX_<<"?";
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1218,7 +1250,7 @@ int XYStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (backlash < 0.0)
          backlash = 0.0;
       ostringstream command;
-      command << "B X=" << backlash << " Y=" << backlash;
+      command << "B "<<axisletterX_<<"=" << backlash << " "<<axisletterY_<<"=" << backlash;
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1243,7 +1275,7 @@ int XYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
-      command << "PC X?";
+      command << "PC "<<axisletterX_<<"?";
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1278,7 +1310,7 @@ int XYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
          error = 0.0;
       error = error/1000000;
       ostringstream command;
-      command << "PC X=" << error << " Y=" << error;
+      command << "PC "<<axisletterX_<<"=" << error << " "<<axisletterY_<<"=" << error;
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1303,7 +1335,7 @@ int XYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // To simplify our life we only read out acceleration for the X axis, but set for both
       ostringstream command;
-      command << "AC X?";
+      command << "AC "<<axisletterX_<<"?";
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1330,7 +1362,7 @@ int XYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (accel < 0.0)
          accel = 0.0;
       ostringstream command;
-      command << "AC X=" << accel << " Y=" << accel;
+      command << "AC "<<axisletterX_<<"=" << accel << " "<<axisletterY_<<"=" << accel;
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1355,7 +1387,7 @@ int XYStage::OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
-      command << "OS X?";
+      command << "OS "<<axisletterX_<<"?";
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1383,7 +1415,7 @@ int XYStage::OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct)
          overShoot = 0.0;
       overShoot = overShoot / 1000.0;
       ostringstream command;
-      command << fixed << "OS X=" << overShoot << " Y=" << overShoot;
+      command << fixed << "OS "<<axisletterX_<<"=" << overShoot << " "<<axisletterY_<<"=" << overShoot;
       string answer;
       // query the device
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1408,7 +1440,7 @@ int XYStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
-      command << "E X?";
+      command << "E "<<axisletterX_<<"?";
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1436,7 +1468,7 @@ int XYStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
          error = 0.0;
       error = error / 1000000.0;
       ostringstream command;
-      command << fixed << "E X=" << error << " Y=" << error;
+      command << fixed << "E "<<axisletterX_<<"=" << error << " "<<axisletterY_<<"=" << error;
       string answer;
       // query the device
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1482,7 +1514,7 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
-      command << "S X?";
+      command << "S "<<axisletterX_<<"?";
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1512,7 +1544,7 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       else if (speed > maxSpeed_)
          speed = maxSpeed_;
       ostringstream command;
-      command << fixed << "S X=" << speed << " Y=" << speed;
+      command << fixed << "S "<<axisletterX_<<"=" << speed << " "<<axisletterY_<<"=" << speed;
       string answer;
       // query the device
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1555,7 +1587,7 @@ int XYStage::OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct)
          value = "-";
       }
       ostringstream command;
-      command << "MC X" << value << " Y" << value;
+      command << "MC "<<axisletterX_<< value << " "<<axisletterY_ << value;
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1602,7 +1634,7 @@ int XYStage::OnJSMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
          value = "";
       }
       ostringstream command;
-      command << "JS X=" << value << joyStickSpeedFast_ << " Y=" << value << joyStickSpeedSlow_;
+      command << "JS X=" << value << joyStickSpeedFast_ << " Y=" << value << joyStickSpeedSlow_; //X and Y psuedo axis not real axis names
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -1778,25 +1810,25 @@ int XYStage::OnAdvancedProperties(MM::PropertyBase* pProp, MM::ActionType eAct)
          // overshoot (OS)  // in Nico's original
 
          // servo integral term (KI)
-         if (hasCommand("KI X?")) {
+         if (hasCommand("KI "+axisletterX_+"?")) {
             pAct = new CPropertyAction (this, &XYStage::OnKIntegral);
             CreateProperty("ServoIntegral-KI", "0", MM::Integer, false, pAct);
          }
 
          // servo proportional term (KP)
-         if (hasCommand("KP X?")) {
+         if (hasCommand("KP "+axisletterX_+"?")) {
             pAct = new CPropertyAction (this, &XYStage::OnKProportional);
             CreateProperty("ServoProportional-KP", "0", MM::Integer, false, pAct);
          }
 
          // servo derivative term (KD)
-         if (hasCommand("KD X?")) {
+         if (hasCommand("KD "+axisletterX_+"?")) {
             pAct = new CPropertyAction (this, &XYStage::OnKDerivative);
             CreateProperty("ServoIntegral-KD", "0", MM::Integer, false, pAct);
          }
 
          // Align calibration/setting for pot in drive electronics (AA)
-         if (hasCommand("AA X?")) {
+         if (hasCommand("AA "+axisletterX_+"?")) {
             pAct = new CPropertyAction (this, &XYStage::OnAAlign);
             CreateProperty("MotorAlign-AA", "0", MM::Integer, false, pAct);
          }
@@ -1816,7 +1848,7 @@ int XYStage::OnKIntegral(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      command << "KI X?";
+      command << "KI "<<axisletterX_<<"?";
       string answer;
       int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
@@ -1839,7 +1871,7 @@ int XYStage::OnKIntegral(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "KI X =" << tmp << " Y=" << tmp;
+      command << "KI "<<axisletterX_<<"=" << tmp << " "<<axisletterY_<<"=" << tmp;
       string answer;
       int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
@@ -1863,7 +1895,7 @@ int XYStage::OnKProportional(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      command << "KP X?";
+      command << "KP "<<axisletterX_<<"?";
       string answer;
       int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
@@ -1886,7 +1918,7 @@ int XYStage::OnKProportional(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "KP X =" << tmp << " Y=" << tmp;
+      command << "KP "<<axisletterX_<<"=" << tmp << " "<<axisletterY_<<"=" << tmp;
       string answer;
       int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
@@ -1910,7 +1942,7 @@ int XYStage::OnKDerivative(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      command << "KD X?";
+      command << "KD "<<axisletterX_<<"?";
       string answer;
       int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
@@ -1933,7 +1965,7 @@ int XYStage::OnKDerivative(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "KD X =" << tmp << " Y=" << tmp;
+      command << "KD "<<axisletterX_<<"=" << tmp << " "<<axisletterY_<<"=" << tmp;
       string answer;
       int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
@@ -1957,7 +1989,7 @@ int XYStage::OnAAlign(MM::PropertyBase* pProp, MM::ActionType eAct)
    long tmp = 0;
    if (eAct == MM::BeforeGet)
    {
-      command << "AA X?";
+      command << "AA "<<axisletterX_<<"?";
       string answer;
       int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
@@ -1980,7 +2012,7 @@ int XYStage::OnAAlign(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet) {
       pProp->Get(tmp);
-      command << "AA X =" << tmp << " Y=" << tmp;
+      command << "AA "<<axisletterX_<<"=" << tmp << " "<<axisletterY_<<"=" << tmp;
       string answer;
       int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
@@ -2005,8 +2037,9 @@ int XYStage::GetPositionStepsSingle(char /*axis*/, long& /*steps*/)
 
 int XYStage::SetAxisDirection()
 {
+   
    ostringstream command;
-   command << "UM X=-10000 Y=10000";
+   command << "UM "<<axisletterX_<<"=-10000 "<<axisletterY_<<"=10000";
    string answer = "";
    // query command
    int ret = QueryCommand(command.str().c_str(), answer);
@@ -2022,6 +2055,15 @@ int XYStage::SetAxisDirection()
    }
 
    return ERR_UNRECOGNIZED_ANSWER;
+   
+	/*
+	//ASI XY Stage positive limit is top-right, however micromanager convention is top-left
+	//so we reverse X axis direction 
+
+	XYStage::SetProperty(MM::g_Keyword_Transpose_MirrorX,"1" );
+	XYStage::SetProperty(MM::g_Keyword_Transpose_MirrorY,"0" );
+	return DEVICE_OK;
+	*/
 }
 
 string XYStage::EscapeControlCharacters(const string v)
@@ -2123,7 +2165,58 @@ string XYStage::UnescapeControlCharacters(const string v0)
    return detokenized;
 }
 
+int XYStage::OnVectorGeneric(MM::PropertyBase* pProp, MM::ActionType eAct, std::string axisLetter){
+	if (eAct == MM::BeforeGet)
+   {
+     
+     
+	   ostringstream command;
+      command << "VE " + axisLetter + "?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
 
+     // if (answer.substr(0,2).compare(":" + axisLetter) == 0)
+       if (answer.substr(0,5).compare(":A " + axisLetter+"=") == 0)
+	  {
+         double speed = atof(answer.substr(6, 13).c_str());
+         pProp->Set(speed);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+	 
+   }
+   else if (eAct == MM::AfterSet) {
+      double vector;
+      pProp->Get(vector);
+      
+      ostringstream command;
+      command << "VE " << axisLetter << "=" << vector;
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // ZStage
@@ -2314,6 +2407,21 @@ int ZStage::Initialize()
       //      SetPropertyLimits("Wait_Cycles", 0, 255);  // don't artificially restrict range
    }
 
+   if (hasCommand("VE " + axis_ + "=0")) {
+   pAct = new CPropertyAction (this, &ZStage::OnVector);
+   CreateProperty("VectorMove-VE(mm/s)", "0", MM::Float, false, pAct);
+   char orig_speed[MM::MaxStrLength];
+   ret = GetProperty("Speed-S", orig_speed);
+   double mspeed;
+   if ( ret != DEVICE_OK){
+   mspeed=8;
+   }else{
+   mspeed=atof(orig_speed);
+   }
+     
+   SetPropertyLimits("VectorMove-VE(mm/s)", mspeed*-1, mspeed);
+   UpdateProperty("VectorMove-VE(mm/s)");
+   }
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -3429,7 +3537,7 @@ int ZStage::OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct)
          value = "-";
       }
       ostringstream command;
-      command << "MC " << axis_ << "X" << value;
+      command << "MC " << axis_ << value;
       string answer;
       // query command
       int ret = QueryCommand(command.str().c_str(), answer);
@@ -3447,6 +3555,60 @@ int ZStage::OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+int ZStage::OnVector(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // To simplify our life we only read out acceleration for the X axis, but set for both
+     
+	   ostringstream command;
+      command << "VE " + axis_ + "?";
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      //if (answer.substr(0,2).compare(":" + axis_) == 0)
+      if (answer.substr(0,5).compare(":A " + axis_+"=") == 0)
+	  {
+         double speed = atof(answer.substr(6,13).c_str());
+         pProp->Set(speed);
+         return DEVICE_OK;
+      }
+      // deal with error later
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else if (eAct == MM::AfterSet) {
+      double vector;
+      pProp->Get(vector);
+      
+      ostringstream command;
+      command << "VE " << axis_ << "=" << vector;
+      string answer;
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // CRIF reflection-based autofocussing unit (Nico, May 2007)
@@ -5315,11 +5477,16 @@ int StateDevice::UpdateCurrentPosition()
 LED::LED() :
    ASIBase(this, "" /* LX-4000 Prefix Unknown */),
    open_(false),
-   intensity_(1),
+   intensity_(20),
    name_("LED"),
-   answerTimeoutMs_(1000)
-{
+   answerTimeoutMs_(1000),
+   channel_(0),
+   channelAxisChar_('X'),
+   hasDLED_(false)
+   {
    InitializeDefaultErrorMessages();
+
+   
 
    // create pre-initialization properties
    // ------------------------------------
@@ -5333,6 +5500,17 @@ LED::LED() :
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &LED::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+   
+   // MS2000 supports multiple channels now
+   pAct = new CPropertyAction(this, &LED::OnChannel);
+   CreateProperty("Channel", "0", MM::Integer, false, pAct, true);
+   AddAllowedValue("Channel", "0");
+   AddAllowedValue("Channel", "1");
+   AddAllowedValue("Channel", "2");
+   AddAllowedValue("Channel", "3");
+
+   
+
 }
 
 void LED::GetName(char* Name) const
@@ -5374,8 +5552,8 @@ int LED::Initialize()
    AddAllowedValue(MM::g_Keyword_State, g_Open);
 
    pAct = new CPropertyAction(this, &LED::OnIntensity);
-   CreateProperty("Intensity", "1", MM::Integer, false, pAct);
-   SetPropertyLimits("Intensity", 1, 100);
+   CreateProperty("Intensity", "20", MM::Integer, false, pAct);
+   SetPropertyLimits("Intensity", 0, 100);
 
    ret = IsOpen(&open_);
    if (ret != DEVICE_OK)
@@ -5385,6 +5563,23 @@ int LED::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   //Check if LED is DLED
+   std::string answer;
+   ret = QueryCommand("BU X", answer);
+   if (ret != DEVICE_OK)
+	   return ret;
+
+   std::istringstream iss(answer);
+   std::string token;
+   while (getline(iss, token, '\r'))
+   {
+	   std::string dled = "DLED";
+	   if (0 == token.compare(0, dled.size(), dled))
+	   {
+		   hasDLED_ = true;
+	   }
+   }
+   //
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -5410,17 +5605,35 @@ int LED::SetOpen (bool open)
    ClearPort();
 
    ostringstream command;
-   if (open)
-   {
-      if (intensity_ == 100)
-         command << "TTL Y=1";
-      else
-         command << fixed << "TTL Y=9 " << intensity_;
-   } else
-   {
-      command << "TTL Y=0";
-   }
+   
+   if ((!hasDLED_) & (channel_ == 0)) {
+	   //On Old Regulator LED , we turn the TTL mode itself on and off to reduce flicker
+	   if (open)
+	   {
+		   if (intensity_ == 100)
+			   command << "TTL Y=1";
+		   else
+			   command << fixed << "TTL Y=9 " << intensity_;
+	   }
+	   else
+	   {
+		   command << "TTL Y=0";
+	   }
 
+   }
+   else {
+	//If DLED or other full on and off LEDs , use LED command 
+
+
+	   if (open) {
+		   command << "LED " << channelAxisChar_ << "=" << intensity_;
+
+	   }
+	   else {
+		   command << "LED " << channelAxisChar_ << "=0";
+
+	   }
+   }
    string answer;
    // query the device
    int ret = QueryCommand(command.str().c_str(), answer);
@@ -5463,30 +5676,65 @@ int LED::IsOpen(bool *open)
 
    // empty the Rx serial buffer before sending command
    ClearPort();
-
    ostringstream command;
-   command << "TTL Y?";
+   if ((!hasDLED_) & (channel_ == 0)) {
 
-   string answer;
-   // query the device
-   int ret = QueryCommand(command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
+	   command << "TTL Y?";
+	   
 
-   std::istringstream is(answer);
-   std::string tok;
-   is >> tok;
-   if ( (tok.substr(0,2).compare(":A") == 0) || (tok.substr(1,2).compare(":A") == 0) ) {
-      is >> tok;
-      if (tok.substr(2,1) == "0")
-         *open = false;
+	   string answer;
+	   // query the device
+	   int ret = QueryCommand(command.str().c_str(), answer);
+	   if (ret != DEVICE_OK)
+		   return ret;
+
+	   std::istringstream is(answer);
+	   std::string tok;
+	   is >> tok;
+	   if ((tok.substr(0, 2).compare(":A") == 0) || (tok.substr(1, 2).compare(":A") == 0)) {
+		   is >> tok;
+		   if (tok.substr(2, 1) == "0")
+			   *open = false;
+	   }
+	   else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
+	   {
+		   int errNo = atoi(tok.substr(4).c_str());
+		   return ERR_OFFSET + errNo;
+	   }
+	   return DEVICE_OK;
+
    }
-   else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
-   {
-      int errNo = atoi(tok.substr(4).c_str());
-      return ERR_OFFSET + errNo;
+   else {
+	   //Query the LED command 
+	   command << "LED " << channelAxisChar_ << "?";
+	   
+
+	   string answer;
+	   // query the device
+	   int ret = QueryCommand(command.str().c_str(), answer);
+	   if (ret != DEVICE_OK)
+		   return ret;
+
+	   std::istringstream is(answer);
+	   std::string tok;
+	   is >> tok;
+	   // Command "LED X?" return "X=0 :A"
+
+	   if (tok.substr(0, 2).compare(channelAxisChar_+"=") == 0) {
+		   is >> tok;
+		   if (tok.substr(2, 1) == "0")
+			   *open = false;
+	   }
+	   else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
+	   {
+		   int errNo = atoi(tok.substr(4).c_str());
+		   return ERR_OFFSET + errNo;
+	   }
+	   return DEVICE_OK;
+
+
+
    }
-   return DEVICE_OK;
 }
 
 /**
@@ -5500,7 +5748,7 @@ int LED::CurrentIntensity(long* intensity)
    ClearPort();
 
    ostringstream command;
-   command << "LED X?";
+   command << "LED "<<channelAxisChar_<<"?";
 
    string answer;
    // query the device
@@ -5568,7 +5816,7 @@ int LED::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
          ClearPort();
 
          ostringstream command;
-         command << "LED X=";
+         command << "LED " << channelAxisChar_ <<"=";
          command << intensity_;
 
          string answer;
@@ -5613,4 +5861,44 @@ int LED::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
 
    return DEVICE_OK;
+}
+
+int LED::OnChannel(MM::PropertyBase * pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		pProp->Set(channel_);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		pProp->Get(channel_);
+
+		//Pick AxisChar to use.
+		switch (channel_)
+		{
+		case 1:
+			channelAxisChar_ = 'Y';
+			break;
+		case 2:
+			channelAxisChar_ = 'Z';
+			break;
+		case 3:
+			channelAxisChar_ = 'F';
+			break;
+		case 4:
+			channelAxisChar_ = 'T';
+			break;
+		case 5:
+			channelAxisChar_ = 'R';
+			break;
+		case 0:
+		default:
+			channelAxisChar_ = 'X';
+			break;
+		}
+	
+
+	}
+
+	return DEVICE_OK;
 }
