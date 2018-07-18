@@ -84,7 +84,7 @@ public:
    int      StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int      StopSequenceAcquisition();
    bool     IsCapturing();
-   int      InsertImage(Image* pImg) const;
+   int      InsertImage(Image* pImg);
    int      GetBinning() const;
    int      SetBinning(int binSize);
    int      IsExposureSequenceable(bool& seq) const {seq = false; return DEVICE_OK;}
@@ -125,7 +125,7 @@ private:
    int PowerCameraOn(const unsigned int timeoutMs);
    int TriggerModeFromString(std::string mode, unsigned short& tMode);
    std::string TriggerModeAsString(const unsigned short mode) const;
-   const unsigned char* RGBToRGBA(const unsigned char* img) const;
+   const unsigned char* RGBToRGBA(const unsigned char* img);
 
 
    FlyCapture2::PGRGuid guid_;
@@ -153,8 +153,8 @@ private:
    unsigned long externalTriggerGrabTimeout_;
    unsigned short bytesPerPixel_;
    MMThreadLock imgBuffLock_;
-   const unsigned char* imgBuf_;
-   const unsigned long bufSize_;
+   unsigned char* imgBuf_;
+   unsigned long bufSize_;
    FlyCapture2::PixelFormat pixelFormat8Bit_;
    FlyCapture2::PixelFormat pixelFormat16Bit_;
 };
