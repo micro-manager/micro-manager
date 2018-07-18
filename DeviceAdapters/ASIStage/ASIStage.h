@@ -157,6 +157,10 @@ private:
    void Wait();
    static std::string EscapeControlCharacters(const std::string v);
    static std::string UnescapeControlCharacters(const std::string v0 );
+   int OnVectorGeneric (MM::PropertyBase* pProp, MM::ActionType eAct, std::string axisLetter);
+   int OnVectorX (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisletterX_); }
+   int OnVectorY (MM::PropertyBase* pProp, MM::ActionType eAct) { return OnVectorGeneric(pProp, eAct, axisletterY_); }
+	
 
    double stepSizeXUm_;
    double stepSizeYUm_;
@@ -174,6 +178,8 @@ private:
    std::string manualSerialAnswer_; // last answer received when the SerialCommand property was used
    unsigned int compileDay_;  // "days" since Jan 1 2000 since the firmware was compiled according to (compile day + 31*(compile month-1) + 12*31*(compile year-2000))
    bool advancedPropsEnabled_;
+   std::string axisletterX_;
+   std::string axisletterY_;	
 };
 
 class ZStage : public CStageBase<ZStage>, public ASIBase
@@ -245,6 +251,7 @@ private:
    int Autofocus(long param);
    //int GetResolution(double& res);
    bool hasCommand(std::string commnand);
+   int OnVector(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    std::vector<double> sequence_;
    std::string axis_;
@@ -456,6 +463,7 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int IsOpen(bool* open); // queries the device rather than using a cached value
@@ -464,7 +472,9 @@ private:
    long intensity_;
    std::string name_;
    int answerTimeoutMs_;
-
+   long channel_;
+   char channelAxisChar_;
+   bool hasDLED_;
 };
 
 
