@@ -611,7 +611,7 @@ public final class SnapLiveManager implements org.micromanager.SnapLiveManager {
     */
    @Override
    public List<Image> snap(boolean shouldDisplay) {
-      if (isLiveOn_) {
+      if (isLiveOn_ && suspendCount_ == 0) {
          // Just return the most recent images.
          ArrayList<Image> result = new ArrayList<Image>();
          ArrayList<Integer> keys = new ArrayList<Integer>(channelToLastImage_.keySet());
