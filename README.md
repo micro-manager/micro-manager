@@ -1,5 +1,4 @@
-# Micro-Manager source code
-# =========================
+## Micro-Manager source code
 
 For licensing information, please see doc/copyright.txt.
 
