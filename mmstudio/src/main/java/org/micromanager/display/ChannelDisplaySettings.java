@@ -1,15 +1,14 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.micromanager.display;
 
 import java.awt.Color;
 import java.util.List;
 
 /**
- *
+ * Stores the display settings for individual channels
+ * Maintains the state of things like channel color, visibility,
+ * min, max, gamma, and histogram range
+ * 
  * @author mark
  */
 public interface ChannelDisplaySettings {
@@ -25,6 +24,7 @@ public interface ChannelDisplaySettings {
       Builder colorYellow();
 
       Builder uniformComponentScaling(boolean enable);
+      Builder histoRangeBits(int bits);
 
       Builder visible(boolean visible);
       Builder show();
@@ -40,6 +40,7 @@ public interface ChannelDisplaySettings {
 
    Color getColor();
    boolean isUniformComponentScalingEnabled();
+   int getHistoRangeBits();
    boolean isVisible();
 
    int getNumberOfComponents();

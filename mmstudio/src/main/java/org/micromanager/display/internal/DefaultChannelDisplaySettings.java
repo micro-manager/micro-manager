@@ -22,6 +22,7 @@ public final class DefaultChannelDisplaySettings
    private final Color color_;
    private final boolean useUniformComponentScaling_;
    private final boolean visible_;
+   private final int histoRangeBits_;
    private final List<ComponentDisplaySettings> componentSettings_;
 
    private static final class Builder
@@ -30,6 +31,7 @@ public final class DefaultChannelDisplaySettings
       private Color color_ = Color.WHITE;
       private boolean useUniformComponentScaling_ = false;
       private boolean visible_ = true;
+      private int histoRangeBits_ = 8;
       private final List<ComponentDisplaySettings> componentSettings_ =
             new ArrayList<ComponentDisplaySettings>();
 
@@ -87,6 +89,12 @@ public final class DefaultChannelDisplaySettings
       @Override
       public Builder uniformComponentScaling(boolean enable) {
          useUniformComponentScaling_ = enable;
+         return this;
+      }
+      
+      @Override
+      public Builder histoRangeBits(int bits) {
+         histoRangeBits_ = bits;
          return this;
       }
 
@@ -149,6 +157,7 @@ public final class DefaultChannelDisplaySettings
       color_ = builder.color_;
       useUniformComponentScaling_ = builder.useUniformComponentScaling_;
       visible_ = builder.visible_;
+      histoRangeBits_ = builder.histoRangeBits_;
       componentSettings_ = new ArrayList<ComponentDisplaySettings>(
             builder.componentSettings_);
    }
@@ -161,6 +170,11 @@ public final class DefaultChannelDisplaySettings
    @Override
    public boolean isUniformComponentScalingEnabled() {
       return useUniformComponentScaling_;
+   }
+   
+   @Override
+   public int getHistoRangeBits() {
+      return histoRangeBits_;
    }
 
    @Override

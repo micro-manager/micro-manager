@@ -82,6 +82,12 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          }
          return index + 4;
       }
+      
+      public void setBits(int bits) {
+         if (bits > 3 && (bits - 4) < this.getSize()) {
+            this.setSelectedItem(this.getElementAt(bits - 4));
+         }
+      }
    }
 
    // Panel showing min/max/avg/std.
@@ -331,6 +337,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             "/org/micromanager/icons/triangle_left.png"));
       histoRangeDownButton_.addActionListener(new ActionListener() {
          @Override
+         
          public void actionPerformed(ActionEvent e) {
             int index = histoRangeComboBox_.getSelectedIndex();
             if (index > 0) {
@@ -374,9 +381,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
 
       updateHistoRangeButtonStates();
       // Needed to pick up the current DisplaySettings, 
-      if (viewer != null) {
-         newDisplaySettings(viewer.getDisplaySettings());
-      }
+      newDisplaySettings(viewer.getDisplaySettings());
    }
 
    void detach() {
@@ -462,6 +467,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       histoRangeDownButton_.setEnabled(index > 0);
       histoRangeUpButton_.setEnabled(index <
             histoRangeComboBoxModel_.getSize() - 1);
+      DisplaySettings oldDisplaySettings, newDisplaySettings;
+      do {
+         oldDisplaySettings = viewer_.getDisplaySettings();
+         ChannelDisplaySettings channelSettings =
+               oldDisplaySettings.getChannelSettings(channelIndex_);
+         newDisplaySettings = oldDisplaySettings.
+               copyBuilderWithChannelSettings(channelIndex_,
+                     channelSettings.copyBuilder().histoRangeBits(
+                           histoRangeComboBoxModel_.getBits(index - 4)).build()).
+               build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
    @MustCallOnEDT
@@ -664,6 +680,15 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                channelSettings.getColor());
          histogram_.setGamma(channelSettings.getComponentSettings(0).
                getScalingGamma());
+         // Need to remove actionListeners before setting the histoRangeBox
+         ActionListener[] actionListeners = histoRangeComboBox_.getActionListeners();
+         for (ActionListener al : actionListeners) {
+            histoRangeComboBox_.removeActionListener(al);
+         }
+         histoRangeComboBoxModel_.setBits(channelSettings.getHistoRangeBits());
+         for (ActionListener al : actionListeners) {
+            histoRangeComboBox_.addActionListener(al);
+         }
       }
       for (int comp = 0; comp < numComponents; ++comp) {
          if (stats_ != null) {

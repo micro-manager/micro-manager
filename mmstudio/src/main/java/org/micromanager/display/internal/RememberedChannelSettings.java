@@ -181,7 +181,8 @@ public final class RememberedChannelSettings {
    public static DisplaySettings updateSettings(SummaryMetadata summary,
          DisplaySettings settings, int numChannels) {
       Color[] newColors = new Color[numChannels];
-      DisplaySettings.ContrastSettings[] newSettings = new DisplaySettings.ContrastSettings[numChannels];
+      DisplaySettings.ContrastSettings[] newSettings = 
+              new DisplaySettings.ContrastSettings[numChannels];
       String group = summary.getChannelGroup();
       for (int i = 0; i < numChannels; ++i) {
          // Load this channel's settings
