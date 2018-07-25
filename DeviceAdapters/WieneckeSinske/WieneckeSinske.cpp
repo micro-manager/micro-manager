@@ -5,14 +5,14 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Wienecke & Sinske Stage Controller Driver
 //                XY Stage
-//             
+//
 //
 // AUTHOR:        S3L GmbH, info@s3l.de, www.s3l.de,  11/21/2017
 // COPYRIGHT:     S3L GmbH, Rosdorf, 2017
 // LICENSE:       This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
 //                License as published by the Free Software Foundation.
-//                
+//
 //                You should have received a copy of the GNU Lesser General Public
 //                License along with the source distribution; if not, write to
 //                the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
@@ -24,12 +24,14 @@
 //
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
 #ifdef WIN32
 #include <windows.h>
-#define snprintf _snprintf 
+#define snprintf _snprintf
+#elif __linux__
+#include <arpa/inet.h>
 #endif
 
 #include "WieneckeSinske.h"
@@ -44,7 +46,7 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Devices in this adapter.  
+// Devices in this adapter.
 // The device name needs to be a class name in this file
 
 const char* g_XYStageDeviceDeviceName = "XYStage Piezo Controller";
@@ -62,9 +64,9 @@ MODULE_API void InitializeModuleData()
 	RegisterDevice(g_XYStageDeviceDeviceName, MM::XYStageDevice,  "Wienecke & Sinske WSB PiezoDrive CAN");
 }
 
-MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
-{                                                                            
-	if (deviceName == 0)                                                      
+MODULE_API MM::Device* CreateDevice(const char* deviceName)
+{
+	if (deviceName == 0)
 		return 0;
 
 	if (strcmp(deviceName, g_XYStageDeviceDeviceName) == 0)
@@ -76,9 +78,9 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	return 0;
 }
 
-MODULE_API void DeleteDevice(MM::Device* pDevice)                            
-{                                                                            
-	delete pDevice;                                                           
+MODULE_API void DeleteDevice(MM::Device* pDevice)
+{
+	delete pDevice;
 }
 
 
@@ -167,10 +169,10 @@ int CAN29Axis::ReceiveMessageHandler(Message& msg)
 * Gets the application name
 */
 int CAN29Axis::GetApplicationName(std::string& applName)
-{	
-	unsigned char dta[] = {0};   
+{
+	unsigned char dta[] = {0};
 	Message answer;
-	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_SYSTEM, PROCID, 0x09, dta, 0), answer);  
+	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_SYSTEM, PROCID, 0x09, dta, 0), answer);
 	if(ret == DEVICE_OK)
 		ret = MessageTools::GetString(answer.Data, 0, applName);
 	return ret;
@@ -180,10 +182,10 @@ int CAN29Axis::GetApplicationName(std::string& applName)
 * Gets the status
 */
 int CAN29Axis::GetStatusCmd(CAN29ULong& status)
-{	
-	unsigned char dta[] = {devID_};   
+{
+	unsigned char dta[] = {devID_};
 	Message answer;
-	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x01, dta, 0), answer);  
+	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x01, dta, 0), answer);
 	if(ret == DEVICE_OK)
 	{
 		ret =  MessageTools::GetULong(answer.Data, 1, status);
@@ -210,7 +212,7 @@ int CAN29Axis::GetPresent(bool& present)
 	if(ret != DEVICE_OK)
 		return ret;
 
-	// correct device and  status = "Device motorized" ? 
+	// correct device and  status = "Device motorized" ?
 	present = (name == "WSB PiezoDrive CAN") &&  ((status & 0x4000) > 0);
 
 	return ret;
@@ -222,9 +224,9 @@ int CAN29Axis::GetPresent(bool& present)
 */
 int CAN29Axis::GetPositionCmd(CAN29Long& position)
 {
-	unsigned char dta[] = {devID_};   
+	unsigned char dta[] = {devID_};
 	Message answer;
-	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x02, dta, sizeof(dta)), answer);  
+	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x02, dta, sizeof(dta)), answer);
 	if(ret == DEVICE_OK)
 		ret = MessageTools::GetLong(answer.Data, 1, position);
 
@@ -236,12 +238,12 @@ int CAN29Axis::GetPositionCmd(CAN29Long& position)
 * SetPosition in nm (steps)
 */
 int CAN29Axis::SetPosition(CAN29Long position, CAN29Byte movemode)
-{	
-	unsigned char dta[2+CAN29LongSize] = {devID_, movemode};   
+{
+	unsigned char dta[2+CAN29LongSize] = {devID_, movemode};
 	long tmp = htonl(position);
-	memcpy(dta+2, &tmp, CAN29LongSize); 
+	memcpy(dta+2, &tmp, CAN29LongSize);
 
-	int ret = can29_->Send(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x02, dta, sizeof(dta)));  
+	int ret = can29_->Send(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x02, dta, sizeof(dta)));
 	if(ret != DEVICE_OK)
 		return ret;
 
@@ -253,12 +255,12 @@ int CAN29Axis::SetPosition(CAN29Long position, CAN29Byte movemode)
 * SetRelativePosition in nm (steps)
 */
 int CAN29Axis::SetRelativePosition(CAN29Long position, CAN29Byte movemode)
-{	
-	unsigned char dta[2+CAN29LongSize] = {devID_, movemode};   
+{
+	unsigned char dta[2+CAN29LongSize] = {devID_, movemode};
 	long tmp = htonl(position);
-	memcpy(dta+2, &tmp, CAN29LongSize); 
+	memcpy(dta+2, &tmp, CAN29LongSize);
 
-	int ret = can29_->Send(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x03, dta, sizeof(dta)));  
+	int ret = can29_->Send(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x03, dta, sizeof(dta)));
 	if(ret != DEVICE_OK)
 		return ret;
 
@@ -271,30 +273,30 @@ int CAN29Axis::SetRelativePosition(CAN29Long position, CAN29Byte movemode)
 * Stops all movements
 */
 int CAN29Axis::Stop()
-{	
-	unsigned char dta[] = {devID_, moveMode_};   
+{
+	unsigned char dta[] = {devID_, moveMode_};
 
-	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x05, dta, sizeof(dta)));  
+	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x05, dta, sizeof(dta)));
 }
 
 /*
 * Locks the component
 */
 int CAN29Axis::Lock()
-{	
-	unsigned char dta[] = {devID_, 1};   
+{
+	unsigned char dta[] = {devID_, 1};
 
-	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x61, dta, sizeof(dta)));  
+	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x61, dta, sizeof(dta)));
 }
 
 /*
 * Unlocks the component
 */
 int CAN29Axis::Unlock()
-{	
-	unsigned char dta[] = {devID_, 0};   
+{
+	unsigned char dta[] = {devID_, 0};
 
-	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x61, dta, sizeof(dta)));  
+	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x61, dta, sizeof(dta)));
 }
 
 
@@ -305,9 +307,9 @@ int CAN29Axis::Unlock()
 */
 int CAN29Axis::GetLowerHardwareStop(CAN29Long& position)
 {
-	unsigned char dta[] = {devID_};   
+	unsigned char dta[] = {devID_};
 	Message answer;
-	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x19, dta, sizeof(dta)), answer);  
+	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x19, dta, sizeof(dta)), answer);
 	if(ret == DEVICE_OK)
 		ret = MessageTools::GetLong(answer.Data, 1, position);
 
@@ -319,9 +321,9 @@ int CAN29Axis::GetLowerHardwareStop(CAN29Long& position)
 */
 int CAN29Axis::GetUpperHardwareStop(CAN29Long& position)
 {
-	unsigned char dta[] = {devID_};   
+	unsigned char dta[] = {devID_};
 	Message answer;
-	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x18, dta, sizeof(dta)), answer);  
+	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x18, dta, sizeof(dta)), answer);
 	if(ret == DEVICE_OK)
 		ret = MessageTools::GetLong(answer.Data, 1, position);
 
@@ -339,8 +341,8 @@ int CAN29Axis::FindLowerHardwareStop()
 		return ret;
 
 	// find hardware stop
-	unsigned char dta[] = {devID_};   
-	ret = can29_->Send(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x19, dta, sizeof(dta)));  
+	unsigned char dta[] = {devID_};
+	ret = can29_->Send(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x19, dta, sizeof(dta)));
 	if(ret != DEVICE_OK)
 		return ret;
 
@@ -360,8 +362,8 @@ int CAN29Axis::FindUpperHardwareStop()
 		return ret;
 
 	// find hardware stop
-	unsigned char dta[] = {devID_};   
-	ret = can29_->Send(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x18, dta, sizeof(dta)));  
+	unsigned char dta[] = {devID_};
+	ret = can29_->Send(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x18, dta, sizeof(dta)));
 	if(ret != DEVICE_OK)
 		return ret;
 
@@ -376,9 +378,9 @@ int CAN29Axis::FindUpperHardwareStop()
 */
 int CAN29Axis::StartMonitoring()
 {
-	unsigned char dta[] = {devID_, 0x12, 0x00, 100, CAN_PC, 0xBB};   
+	unsigned char dta[] = {devID_, 0x12, 0x00, 100, CAN_PC, 0xBB};
 
-	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x1F, dta, sizeof(dta)));  
+	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x1F, dta, sizeof(dta)));
 
 }
 
@@ -387,47 +389,47 @@ int CAN29Axis::StartMonitoring()
 */
 int CAN29Axis::StopMonitoring()
 {
-	unsigned char dta[] = {devID_, 0x00, 0x00, 100, CAN_PC, 0xBB};   
+	unsigned char dta[] = {devID_, 0x00, 0x00, 100, CAN_PC, 0xBB};
 
-	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x1F, dta, sizeof(dta)));  
+	return can29_->Send(Message(canAddress_, CAN_PC,  0x1B, CMDNR_AXIS, PROCID, 0x1F, dta, sizeof(dta)));
 }
 
 /*
-* Sets velocity for position moves in nm/s 
+* Sets velocity for position moves in nm/s
 */
 int CAN29Axis::SetTrajectoryVelocity(CAN29Long velocity)
 {
-	unsigned char dta[1+CAN29LongSize] = {devID_,};   
+	unsigned char dta[1+CAN29LongSize] = {devID_,};
 	long tmp = htonl(velocity);
-	memcpy(dta+1, &tmp, CAN29LongSize); 
+	memcpy(dta+1, &tmp, CAN29LongSize);
 
 	Message answer;
-	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x21, dta, sizeof(dta)), answer);  
+	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x21, dta, sizeof(dta)), answer);
 	return ret;
 }
 
 /*
-* Sets acceleration for position moves in nm/s² 
+* Sets acceleration for position moves in nm/s²
 */
 int CAN29Axis::SetTrajectoryAcceleration(CAN29Long acceleration)
 {
-	unsigned char dta[1+CAN29LongSize] = {devID_,};   
+	unsigned char dta[1+CAN29LongSize] = {devID_,};
 	long tmp = htonl(acceleration);
-	memcpy(dta+1, &tmp, CAN29LongSize); 
+	memcpy(dta+1, &tmp, CAN29LongSize);
 
 	Message answer;
-	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x22, dta, sizeof(dta)), answer);  
+	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x19, CMDNR_AXIS, PROCID, 0x22, dta, sizeof(dta)), answer);
 	return ret;
 }
 
 /*
-* Gets velocity for position moves in nm/s 
+* Gets velocity for position moves in nm/s
 */
 int CAN29Axis::GetTrajectoryVelocity(CAN29Long& velocity)
 {
-	unsigned char dta[] = {devID_};   
+	unsigned char dta[] = {devID_};
 	Message answer;
-	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x21, dta, sizeof(dta)), answer);  
+	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x21, dta, sizeof(dta)), answer);
 	if(ret == DEVICE_OK)
 		ret = MessageTools::GetLong(answer.Data, 1, velocity);
 
@@ -435,13 +437,13 @@ int CAN29Axis::GetTrajectoryVelocity(CAN29Long& velocity)
 }
 
 /*
-* Gets acceleration for position moves in nm/s² 
+* Gets acceleration for position moves in nm/s²
 */
 int CAN29Axis::GetTrajectoryAcceleration(CAN29Long& acceleration)
 {
-	unsigned char dta[] = {devID_};   
+	unsigned char dta[] = {devID_};
 	Message answer;
-	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x22, dta, sizeof(dta)), answer);  
+	int ret = can29_->SendRead(Message(canAddress_, CAN_PC,  0x18, CMDNR_AXIS, PROCID, 0x22, dta, sizeof(dta)), answer);
 	if(ret == DEVICE_OK)
 		ret = MessageTools::GetLong(answer.Data, 1, acceleration);
 
@@ -459,7 +461,7 @@ int CAN29Axis::GetTrajectoryAcceleration(CAN29Long& acceleration)
 ///////////////////////////////////////////////////////////////////////////////
 // XYStageDeviceDevice
 //
-XYStageDevice::XYStageDevice (): 
+XYStageDevice::XYStageDevice ():
 CXYStageBase<XYStageDevice>(),
 	initialized_ (false),
 	stepSize_um_(0.001),
@@ -467,7 +469,7 @@ CXYStageBase<XYStageDevice>(),
 	xAxis_(CAN_XAXIS, 0, &can29_),
 	yAxis_(CAN_YAXIS, 0, &can29_),
 	velocity_(0)
-{ 
+{
 
 	InitializeDefaultErrorMessages();
 
@@ -477,16 +479,16 @@ CXYStageBase<XYStageDevice>(),
 	// Name
 	CreateProperty(MM::g_Keyword_Name, g_XYStageDeviceDeviceName, MM::String, true);
 
-	// Description                                                            
+	// Description
 	CreateProperty(MM::g_Keyword_Description, "Controller for piezo stages", MM::String, true);
 
-	// Port                                                                   
+	// Port
 	CPropertyAction* pAct = new CPropertyAction (this, &XYStageDevice::OnPort);
 	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
 }
 
-XYStageDevice::~XYStageDevice() 
+XYStageDevice::~XYStageDevice()
 {
 	xAxis_.UnInitialize();
 	yAxis_.UnInitialize();
@@ -497,7 +499,7 @@ XYStageDevice::~XYStageDevice()
 
 
 bool XYStageDevice::Busy()
-{	
+{
 	return xAxis_.IsBusy() || yAxis_.IsBusy();
 }
 
@@ -541,7 +543,7 @@ int XYStageDevice::Initialize()
 	ret = SetPropertyLimits("Velocity (micron/s)", 0, 100000);
 	if (ret != DEVICE_OK)
 		return ret;
-	
+
 
 	pAct = new CPropertyAction(this, &XYStageDevice::OnTrajectoryAcceleration);
 	ret = CreateProperty("Acceleration (micron/s^2)", "0", MM::Float, false, pAct);
@@ -550,7 +552,7 @@ int XYStageDevice::Initialize()
 	ret = SetPropertyLimits("Acceleration (micron/s^2)", 0, 500000);
 	if (ret != DEVICE_OK)
 		return ret;
-	
+
 	initialized_ = true;
 
 	return DEVICE_OK;
@@ -563,7 +565,7 @@ int XYStageDevice::Shutdown()
 }
 
 
-int XYStageDevice::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax) 
+int XYStageDevice::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
 {
 	long xMi, xMa, yMi, yMa;
 	GetStepLimits(xMi, xMa, yMi, yMa);
@@ -575,8 +577,8 @@ int XYStageDevice::GetLimitsUm(double& xMin, double& xMax, double& yMin, double&
 	return DEVICE_OK;
 }
 
-int XYStageDevice::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) 
-{	
+int XYStageDevice::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
+{
 	xAxis_.GetLowerHardwareStop((CAN29Long&)xMin);
 	xAxis_.GetUpperHardwareStop((CAN29Long&)xMax);
 	yAxis_.GetLowerHardwareStop((CAN29Long&)yMin);
@@ -587,7 +589,7 @@ int XYStageDevice::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
 
 
 int XYStageDevice::SetPositionSteps(long xSteps, long ySteps)
-{	
+{
 	int ret = xAxis_.SetPosition((CAN29Long)xSteps, velocity_);
 	if (ret != DEVICE_OK)
 		return ret;
@@ -600,7 +602,7 @@ int XYStageDevice::SetPositionSteps(long xSteps, long ySteps)
 }
 
 int XYStageDevice::SetRelativePositionSteps(long xSteps, long ySteps)
-{	
+{
 	int ret = xAxis_.SetRelativePosition((CAN29Long)xSteps, velocity_);
 	if (ret != DEVICE_OK)
 		return ret;
@@ -690,7 +692,7 @@ int XYStageDevice::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int XYStageDevice::OnTrajectoryVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet) 
+	if (eAct == MM::BeforeGet)
 	{
 		// we are lazy and only check the x axis
 		CAN29Long velocity;
@@ -698,8 +700,8 @@ int XYStageDevice::OnTrajectoryVelocity(MM::PropertyBase* pProp, MM::ActionType 
 		if (ret != DEVICE_OK)
 			return ret;
 		pProp->Set( (float) (velocity/1000.0) );
-	} 
-	else if (eAct == MM::AfterSet) 
+	}
+	else if (eAct == MM::AfterSet)
 	{
 		double tmp;
 		pProp->Get(tmp);
@@ -717,7 +719,7 @@ int XYStageDevice::OnTrajectoryVelocity(MM::PropertyBase* pProp, MM::ActionType 
 
 int XYStageDevice::OnTrajectoryAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-	if (eAct == MM::BeforeGet) 
+	if (eAct == MM::BeforeGet)
 	{
 		// we are lazy and only check the x axis
 		CAN29Long accel;
@@ -725,8 +727,8 @@ int XYStageDevice::OnTrajectoryAcceleration(MM::PropertyBase* pProp, MM::ActionT
 		if (ret != DEVICE_OK)
 			return ret;
 		pProp->Set( (float) (accel / 1000.0) );
-	} 
-	else if (eAct == MM::AfterSet) 
+	}
+	else if (eAct == MM::AfterSet)
 	{
 		double tmp;
 		pProp->Get(tmp);
