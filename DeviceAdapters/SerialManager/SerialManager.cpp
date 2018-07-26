@@ -641,7 +641,10 @@ int SerialPort::OpenWin32SerialPort(const std::string& portName,
 
    COMMTIMEOUTS timeouts;
    memset(&timeouts, 0, sizeof(timeouts));
-   timeouts.ReadIntervalTimeout = 1;
+   timeouts.ReadIntervalTimeout = MAXDWORD;
+   timeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
+   timeouts.ReadTotalTimeoutConstant = 1;
+
    if (!SetCommTimeouts(portHandle, &timeouts))
    {
       DWORD err = GetLastError();
