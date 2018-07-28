@@ -523,6 +523,8 @@ public enum PropertyKey {
          return new JsonPrimitive(pmap.getInteger(key(), 0));
       }
    },
+   
+   HISTOGRAM_BIT_DEPTH("HistogramBitDepth", ChannelDisplaySettings.class),
 
    IJ_TYPE("IJType", Image.class) {
       @Override

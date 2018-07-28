@@ -31,7 +31,9 @@ public final class DefaultChannelDisplaySettings
       private Color color_ = Color.WHITE;
       private boolean useUniformComponentScaling_ = false;
       private boolean visible_ = true;
-      private int histoRangeBits_ = 8;
+      private int histoRangeBits_ = 0; // TODO: 0 is now interpreted as 
+      // a special case: "Camera Depth".  It may be better to replace the type
+      // with a {boolean, int} or something along those lines
       private final List<ComponentDisplaySettings> componentSettings_ =
             new ArrayList<ComponentDisplaySettings>();
 
@@ -232,6 +234,7 @@ public final class DefaultChannelDisplaySettings
             putColor(PropertyKey.COLOR.key(), color_).
             putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_).
             putBoolean(PropertyKey.VISIBLE.key(), visible_).
+            putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_).
             putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings).
             build();
    }
@@ -263,6 +266,10 @@ public final class DefaultChannelDisplaySettings
                     componentMapList.get(i));
             b.component(i, cds);
          }
+      }
+      if (pMap.containsInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key())) {
+         b.histoRangeBits(pMap.getInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), 
+                 b.histoRangeBits_));
       }
             
       return b.build();
