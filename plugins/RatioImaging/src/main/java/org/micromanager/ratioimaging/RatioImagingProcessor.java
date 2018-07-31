@@ -123,10 +123,13 @@ public class RatioImagingProcessor extends Processor {
       for (int i = 0; i < chNames.size(); i++) {
          newNames[i] = (String) chNames.get(i);
       }
-      newNames[chNames.size() ] = "ratio " + ch1Name + " / " + ch2Name;
+      newNames[chNames.size() ] = "ratio " + ch1Name + "-" + ch2Name;
       ratioIndex_ = chNames.size();
+      Coords newDimensions = summary.getIntendedDimensions().copyBuilder().
+              c(newNames.length).build();
       
-      return summary.copyBuilder().channelNames(newNames).build();
+      return summary.copyBuilder().channelNames(newNames).
+              intendedDimensions(newDimensions).build();
    }
    
    
