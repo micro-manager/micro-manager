@@ -870,6 +870,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       isSLM_ = dev_ instanceof SLM;
       // Only an SLM (not a galvo) has pixels.
       allPixelsButton.setVisible(isSLM_);
+      checkerBoardButton_.setVisible(isSLM_);
       // No point in looping ROIs on an SLM.
       roiLoopSpinner.setVisible(!isSLM_);
       roiLoopLabel.setVisible(!isSLM_);
