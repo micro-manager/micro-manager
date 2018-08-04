@@ -603,36 +603,6 @@ int CScanner::Initialize()
 
 bool CScanner::Busy()
 {
-//   ostringstream command; command.str("");
-//   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
-//   {
-//      command << "RS " << axisLetterX_ << "?";
-//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-//         return false;
-//      if (hub_->LastSerialAnswer().at(3) == 'B')
-//         return true;
-//      command.str("");
-//      command << "RS " << axisLetterY_ << "?";
-//      return (hub_->LastSerialAnswer().at(3) == 'B');
-//   }
-//   else  // use LSB of the status byte as approximate status, not quite equivalent
-//   {
-//      command << "RS " << axisLetterX_;
-//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-//         return false;
-//      int i = (int) (hub_->ParseAnswerAfterPosition(2));
-//      if (i & (int)BIT0)  // mask everything but LSB
-//         return true; // don't bother checking other axis
-//      command.str("");
-//      command << "RS " << axisLetterY_;
-//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-//         return false;
-//      i = (int) (hub_->ParseAnswerAfterPosition(2));
-//      return (i & (int)BIT0);  // mask everything but LSB
-//   }
    return false;
 }
 
@@ -712,10 +682,14 @@ void CScanner::UpdateIlluminationState()
       // here we make the assumption that if both axes are at upper limits we are at home
       if (FirmwareVersionAtLeast(2.8))  // require version 2.8 to do this
       {
+         char c;
+         int ret;
          command << "RS " << axisLetterX_ << "-";
          if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // don't choke on comm error
             return;
-         if (hub_->LastSerialAnswer().at(3) != 'U')
+         // anything besides 'U', including no character at all, means we are illuminating
+         ret = hub_->GetAnswerCharAtPosition3(c);
+         if( (ret != DEVICE_OK) || (c != 'U'))
          {
             illuminationState_ = true;
             return;
@@ -723,7 +697,9 @@ void CScanner::UpdateIlluminationState()
          command.str(""); command << "RS " << axisLetterY_ << "-";
          if (hub_->QueryCommandVerify(command.str(),":A") != DEVICE_OK)  // don't choke on comm error
             return;
-         if (hub_->LastSerialAnswer().at(3) != 'U')
+         // anything besides 'U', including no character at all, means we are illuminating
+         ret = hub_->GetAnswerCharAtPosition3(c);
+         if( (ret != DEVICE_OK) || (c != 'U'))
          {
             illuminationState_ = true;
             return;
