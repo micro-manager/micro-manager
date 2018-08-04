@@ -1033,7 +1033,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     		  if (height > 4100 || height < 4 || pixelSize < 1e-6) {
     			  return;
     		  }
-    		  gridYDeltaField_.setValue(Math.round(delta));
+    		  gridYDeltaField_.setValue((double)Math.round(delta));
     		  updateGridYCount();
     	  }
       });
@@ -1137,7 +1137,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
     		  double delta = width*pixelSize/Math.sqrt(2);
     		  double overlap = props_.getPropValueFloat(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_GRID_OVERLAP_PERCENT); 
     		  delta *= (1-overlap/100);
-    		  gridZDeltaField_.setValue(Math.round(delta));
+    		  gridZDeltaField_.setValue((double)Math.round(delta));
     		  updateGridZCount();
     	  }
       });
