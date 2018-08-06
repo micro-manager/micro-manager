@@ -2951,7 +2951,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          
          if (acqSettings.separateTimepoints) {
             // call to getUniqueAcquisitionName is extra safety net, we have checked that directory is empty before starting
-            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + acqNum);
+            acqName = gui_.getUniqueAcquisitionName(prefixField_.getText() + "_" + String.format("%04d", acqNum));
          } else {
             acqName = gui_.getUniqueAcquisitionName(prefixField_.getText());
          }
