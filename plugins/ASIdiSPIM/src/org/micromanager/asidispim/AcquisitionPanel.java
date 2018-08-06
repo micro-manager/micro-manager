@@ -174,6 +174,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    private final JFormattedTextField prefixField_;
    private final JLabel acquisitionStatusLabel_;
    private int numTimePointsDone_;
+   private int numPositionsDone_;
    private final AtomicBoolean cancelAcquisition_ = new AtomicBoolean(false);  // true if we should stop acquisition
    private final AtomicBoolean acquisitionRequested_ = new AtomicBoolean(false);  // true if acquisition has been requested to start or is underway
    private final AtomicBoolean acquisitionRunning_ = new AtomicBoolean(false);   // true if the acquisition is actually underway
@@ -269,6 +270,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       autofocus_ = autofocus;
       core_ = gui_.getMMCore();
       numTimePointsDone_ = 0;
+      numPositionsDone_ = 0;
       sliceTiming_ = new SliceTiming();
       lastAcquisitionPath_ = "";
       lastAcquisitionName_ = "";
@@ -1517,6 +1519,21 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
    /**
     * convenience method to avoid having to regenerate acquisition settings
     */
+   private int getNumPositions() {
+      if (usePositionsCB_.isSelected()) {
+         try {
+            return gui_.getPositionList().getNumberOfPositions();
+         } catch (MMScriptException e) {
+            return 1;
+         }
+      } else {
+         return 1;
+      }
+   }
+   
+   /**
+    * convenience method to avoid having to regenerate acquisition settings
+    */
    private int getNumTimepoints() {
       if (useTimepointsCB_.isSelected()) {
          return (Integer) numTimepoints_.getValue();
@@ -2159,10 +2176,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          text = "No acquisition in progress.";
          break;
       case ACQUIRING:
-         text = "Acquiring time point "
+         text = "Acquiring";
+         if (numTimePointsDone_ > 1) {
+            text += " time point "
                + NumberUtils.intToDisplayString(numTimePointsDone_)
                + " of "
-               + NumberUtils.intToDisplayString(getNumTimepoints());
+               + NumberUtils.intToDisplayString(getNumTimepoints())
+               + "; ";
+         }
+         if (numPositionsDone_ > 0) {
+            text += " position "
+                  + NumberUtils.intToDisplayString(numPositionsDone_)
+                  + " of "
+                  + NumberUtils.intToDisplayString(getNumPositions());
+         }
          // TODO make sure the number of timepoints can't change during an acquisition
          // (or maybe we make a hidden feature where the acquisition can be terminated by changing)
          break;
@@ -2176,9 +2203,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                + " s.";
          break;
       case DONE:
-         text = "Acquisition finished with "
+         text = "Finished with "
                + NumberUtils.intToDisplayString(numTimePointsDone_)
-               + " time points.";
+               + " time points and "
+               + NumberUtils.intToDisplayString(numPositionsDone_)
+               + " positions";
          break;
       default:
          break;   
@@ -2862,6 +2891,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       numTimePointsDone_ = 0;
+      numPositionsDone_ = 0;
       
       // force saving as image stacks, not individual files
       // implementation assumes just two options, either 
@@ -3211,10 +3241,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                }
 
                numTimePointsDone_++;
-               updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
 
                // loop over all positions
                for (int positionNum = 0; positionNum < nrPositions; positionNum++) {
+                  numPositionsDone_ = positionNum + 1;
+                  updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
                   if (acqSettings.useMultiPositions) {
                      
                      // make sure user didn't stop things
@@ -3500,7 +3531,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                                           "   nrSlicesSoftware: " + nrSlicesSoftware +
                                           "   total images: " + totalImages);
                                     ReportingUtils.logError("Camera did not send all expected images within" +
-                                          " a reasonable period for timepoint " + numTimePointsDone_ + ".  Continuing anyway.");
+                                          " a reasonable period for timepoint " + numTimePointsDone_ + "and "
+                                          + "position " + numPositionsDone_ + " .  Continuing anyway.");
                                     nonfatalError = true;
                                     done = true;
                                  }
@@ -3510,6 +3542,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            // update count if we stopped in the middle
                            if (cancelAcquisition_.get()) {
                               numTimePointsDone_--;
+                              numPositionsDone_--;
                            }
                            
                            // if we are using demo camera then add some extra time to let controller finish
