@@ -94,8 +94,14 @@ class RGBColorModeStrategy implements ColorModeStrategy {
    public void applyScaling(int component, int min, int max) {
       Preconditions.checkArgument(min >= 0);
       Preconditions.checkArgument(max >= min);
-      minima_.set(component, min);
-      maxima_.set(component, max);
+      if (min != minima_.get(component)) {
+         minima_.set(component, min);
+         rgbLUTs_ = null;
+      }
+      if (max != maxima_.get(component)) {
+         maxima_.set(component, max);
+         rgbLUTs_ = null;
+      }
       apply();
    }
 

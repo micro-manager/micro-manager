@@ -978,8 +978,9 @@ public final class DisplayUIController implements Closeable, WindowListener,
                        = settings.getChannelSettings(0).getComponentSettings(i);
                int max = Math.min(Integer.MAX_VALUE,
                        (int) componentSettings.getScalingMaximum());
-               int min = Math.max(max - 1,
-                       (int) componentSettings.getScalingMinimum());
+               int min = Math.max(1, (Math.min (max - 1,
+                       (int) componentSettings.getScalingMinimum())));
+               max = Math.max(min + 1, max);
                ijBridge_.mm2ijSetIntensityScaling(i, min, max);
             }
          }
