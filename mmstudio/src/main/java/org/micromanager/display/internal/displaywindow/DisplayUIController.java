@@ -972,17 +972,25 @@ public final class DisplayUIController implements Closeable, WindowListener,
       }
       else {
          for (int chNr = 0; chNr < nChannels; chNr++) {
-            int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
-            for (int i = 0; i < nComponents; ++i) {
-               ComponentDisplaySettings componentSettings
-                       = settings.getChannelSettings(0).getComponentSettings(i);
-               int max = Math.min(Integer.MAX_VALUE,
-                       (int) componentSettings.getScalingMaximum());
-               int min = Math.max(1, (Math.min (max - 1,
-                       (int) componentSettings.getScalingMinimum())));
-               max = Math.max(min + 1, max);
-               ijBridge_.mm2ijSetIntensityScaling(i, min, max);
-            }
+            /**
+             * Note: Since the UI currently manipulates all components
+             * identically, and setting a component results in many calculations
+             * and redrawing the image, for performance reasons we only set one
+             * component. Setting components differently in a performant way
+             * will need a bit of re-architecting
+             */
+            // int nComponents = settings.getChannelSettings(0).getNumberOfComponents();
+            // for (int i = 0; i < nComponents; ++i) {
+            int i = 0;
+            ComponentDisplaySettings componentSettings
+                    = settings.getChannelSettings(0).getComponentSettings(i);
+            int max = Math.min(Integer.MAX_VALUE,
+                    (int) componentSettings.getScalingMaximum());
+            int min = Math.max(1, (Math.min(max - 1,
+                    (int) componentSettings.getScalingMinimum())));
+            max = Math.max(min + 1, max);
+            ijBridge_.mm2ijSetIntensityScaling(i, min, max);
+            //}
          }
       }
       
