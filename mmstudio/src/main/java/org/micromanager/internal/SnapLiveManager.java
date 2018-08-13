@@ -778,7 +778,7 @@ public final class SnapLiveManager extends DataViewerListener
     */
    @Override
    public List<Image> snap(boolean shouldDisplay) {
-      if (isLiveOn_) {
+      if (isLiveOn_ && suspendCount_ == 0) {
          // Just return the most recent images.
          // BUG: In theory this could transiently contain nulls
          synchronized (lastImageForEachChannel_) {
