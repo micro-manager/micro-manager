@@ -45,8 +45,8 @@ class RGBColorModeStrategy implements ColorModeStrategy {
             float min = minima_.get(i);
             float max = Math.min(255, maxima_.get(i));
             for (int k = 0; k < 256; ++k) {
-               rgbLUTs_[i][k] = (int) Math.round(
-                     255.0f * (k - min) / (max - min));
+               float f = (float) Math.max(Math.min(1.0, (k - min) / (max - min) ), 0.0);
+               rgbLUTs_[i][k] = (int) Math.round( 255.0f * f );
             }
          }
       }
