@@ -27,9 +27,8 @@
 
 package edu.ucsf.valelab.gaussianfit.fitting;
 
-import edu.ucsf.valelab.gaussianfit.utils.Besseli;
 import org.apache.commons.math3.analysis.MultivariateFunction;
-import org.apache.commons.math3.analysis.function.Exp;
+import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.apache.commons.math3.optim.InitialGuess;
 import org.apache.commons.math3.optim.MaxEval;
@@ -78,7 +77,7 @@ class P2DFunc implements MultivariateFunction {
          sigma = doubles[1];
       }
       for (double point : points_) {
-         double predictedValue = P2DFitter.p2d(point, doubles[0], sigma);
+         double predictedValue = P2DFunctions.p2d(point, doubles[0], sigma);
          sum += Math.log(predictedValue);
       }
       return sum;
@@ -91,7 +90,7 @@ class P2DFunc implements MultivariateFunction {
          sigma = doubles[1];
       }
       for (double point : points_) {
-         double predictedValue = P2DFitter.p2d(point, doubles[0], sigma);
+         double predictedValue = P2DFunctions.p2d(point, doubles[0], sigma);
          sum *= predictedValue;
       }
       return sum;
@@ -134,7 +133,7 @@ class P2DFuncFixedMu implements MultivariateFunction {
       double sum = 0.0;
       double mu = mu_;
       for (double point : points_) {
-         double predictedValue = P2DFitter.p2d(point, mu, doubles[0]);
+         double predictedValue = P2DFunctions.p2d(point, mu, doubles[0]);
          sum += Math.log(predictedValue);
       }
       return sum;
@@ -144,7 +143,7 @@ class P2DFuncFixedMu implements MultivariateFunction {
       double sum = 0;
       double mu = mu_;
       for (double point : points_) {
-         double predictedValue = P2DFitter.p2d(point, mu, doubles[0]);
+         double predictedValue = P2DFunctions.p2d(point, mu, doubles[0]);
          sum *= predictedValue;
       }
       return sum;
@@ -153,9 +152,12 @@ class P2DFuncFixedMu implements MultivariateFunction {
 }
 
 
-
-
+/**
+ * Calculates the difference of the likelihood with the target
+ *
+ */
 class P2D50 implements MultivariateFunction {
+
    private final double target_;
    private final double mu_;
    private final double sigma_;
@@ -178,10 +180,9 @@ class P2D50 implements MultivariateFunction {
     */
    @Override
    public double value(double[] doubles) {
-      double result = target_ - P2DFitter.p2d(doubles[0], mu_, sigma_);
+      double result = target_ - P2DFunctions.p2d(doubles[0], mu_, sigma_);
       return result * result;
    }
-    
 
    
 }
@@ -226,12 +227,12 @@ class P2DIndividualSigmasFunc implements MultivariateFunction {
       double sum = 0.0;
       if (useApproximation_) {
          for (int i = 0; i < points_.length; i++) {
-            double predictedValue = P2DFitter.p2dApproximation(points_[i], doubles[0], sigmas_[i]);
+            double predictedValue = P2DFunctions.p2dApproximation(points_[i], doubles[0], sigmas_[i]);
             sum += Math.log(predictedValue);
          }
       } else {
          for (int i = 0; i < points_.length; i++) {
-            double predictedValue = P2DFitter.p2d(points_[i], doubles[0], sigmas_[i]);
+            double predictedValue = P2DFunctions.p2d(points_[i], doubles[0], sigmas_[i]);
             sum += Math.log(predictedValue);
          }
       }
@@ -242,12 +243,12 @@ class P2DIndividualSigmasFunc implements MultivariateFunction {
       double sum = 0;
       if (useApproximation_) {
          for (int i = 0; i < points_.length; i++) {
-            double predictedValue = P2DFitter.p2dApproximation(points_[i], doubles[0], sigmas_[i]);
+            double predictedValue = P2DFunctions.p2dApproximation(points_[i], doubles[0], sigmas_[i]);
             sum *= predictedValue;
          }
       } else {
          for (int i = 0; i < points_.length; i++) {
-            double predictedValue = P2DFitter.p2d(points_[i], doubles[0], sigmas_[i]);
+            double predictedValue = P2DFunctions.p2d(points_[i], doubles[0], sigmas_[i]);
             sum *= predictedValue;
          }
       }
@@ -256,6 +257,34 @@ class P2DIndividualSigmasFunc implements MultivariateFunction {
      
 }
 
+/**
+ * Univariate function wrapping the p2d Set mu and sigma in advance, and use d
+ * to calculate the current p2d
+ *
+ */
+class p2dUniVariate implements UnivariateFunction {
+
+   private double mu_;
+   private double sigma_;
+
+   public p2dUniVariate(double mu, double sigma) {
+      mu_ = mu;
+      sigma_ = sigma;
+   }
+
+   public void setParameters(double mu, double sigma) {
+      mu_ = mu;
+      sigma_ = sigma;
+   }
+
+   @Override
+   public double value(double d) {
+      if (d > sigma_) { // check if this is the correct condition
+         return P2DFunctions.p2dApproximation(d, mu_, sigma_);
+      }
+      return P2DFunctions.p2d(d, mu_, sigma_);
+   }
+}
 
 
 /**
@@ -267,7 +296,6 @@ class P2DIndividualSigmasFunc implements MultivariateFunction {
 
 public class P2DFitter {
    
-   private final static Exp EXP = new Exp();
    private final double[] points_;
    private final double[] sigmas_;
    private final double upperBound_;
@@ -278,47 +306,6 @@ public class P2DFitter {
    private double sigmaGuess_ = 10.0;
    
    
-    /**
-    * Calculates the probability density function:
-    * p2D(r) = (r / sigma2) exp(-(mu2 + r2)/2sigma2) I0(rmu/sigma2)
-    * where I0 is the modified Bessel function of integer order zero
-    * @param r
-    * @param mu
-    * @param sigma
-    * @return 
-    */
-   public static double p2d (double r, double mu, double sigma) {
-      double first = r / (sigma * sigma);
-      double second = EXP.value(- (mu * mu + r * r)/ (2 * sigma * sigma));
-      double third = Besseli.bessi(0, (r * mu) / (sigma * sigma) );
-      
-      if (second < 1e-300) {
-         second = 1e-300;
-      }
-      if (Double.isInfinite(third)) {
-         third = Double.MAX_VALUE;
-      }
-      
-      return first * second * third;
-   }
-   /**
-    * Used when r > sigma
-    * 
-    * Sqrt( r / (2Pi * sigma * mu)) * e pow(- (r - mu)^2 / (2 * sigma^2) )
-    * @param r
-    * @param mu
-    * @param sigma
-    * @return 
-    */
-   public static double p2dApproximation(double r, double mu, double sigma) {
-      
-      double result = Math.sqrt(r / (2 * Math.PI * sigma * mu)) * 
-              EXP.value(- (r - mu) * (r - mu) / (2 * sigma * sigma) );
-      if (result < Double.MIN_NORMAL) {
-         result = Double.MIN_NORMAL;
-      }
-      return result; 
-   }
    
    
    /**
@@ -483,3 +470,5 @@ public class P2DFitter {
 
             
 }
+
+

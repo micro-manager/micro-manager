@@ -26,7 +26,7 @@
  */
 package edu.ucsf.valelab.gaussianfit.utils;
 
-import edu.ucsf.valelab.gaussianfit.fitting.P2DFitter;
+import edu.ucsf.valelab.gaussianfit.fitting.P2DFunctions;
 import org.jfree.data.function.Function2D;
 
 /**
@@ -57,9 +57,9 @@ public class P2D implements Function2D {
    @Override
    public double getValue(double d) {
       if (useApproximation_) {
-         return P2DFitter.p2dApproximation(d, mu_, sigma_);
+         return P2DFunctions.p2dApproximation(d, mu_, sigma_);
       }
-      return P2DFitter.p2d(d, mu_, sigma_);
+      return P2DFunctions.p2d(d, mu_, sigma_);
    }
    
 }
