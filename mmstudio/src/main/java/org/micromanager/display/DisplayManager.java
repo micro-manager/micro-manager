@@ -299,9 +299,10 @@ public interface DisplayManager extends EventPublisher {
     * non-DisplayWindow windows on top of it. Returns null if there is no open
     * {@code DisplayWindow}.
     *
+    * @deprecated Use {@code getActiveDataViewer()} instead
     * @return The front-most {@code DisplayWindow}, or null.
     */
-   @Deprecated
+   @Deprecated 
    DisplayWindow getCurrentWindow();
 
    /**

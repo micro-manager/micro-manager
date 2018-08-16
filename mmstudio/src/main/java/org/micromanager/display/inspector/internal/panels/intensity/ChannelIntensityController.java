@@ -44,6 +44,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
    private final int channelIndex_;
 
    private ImageStats stats_;
+   private int cameraBits_;
 
    private final JPanel channelPanel_ = new JPanel();
    private final JPanel histoPanel_ = new JPanel();
@@ -75,13 +76,29 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          });
       }
 
-      public int getBits(int cameraBits) {
+      public ChannelDisplaySettings getBits(ChannelDisplaySettings settings, 
+              int cameraBits) {
          int index = getIndexOf(getSelectedItem());
          if (index == 13) {
-            return cameraBits;
+            return settings.copyBuilder().useCameraHistoRange(true).
+                    histoRangeBits(cameraBits).build();
          }
-         return index + 4;
+         return settings.copyBuilder().useCameraHistoRange(false).
+                    histoRangeBits(index + 4).build();
       }
+      
+      public void setBits(ChannelDisplaySettings settings) {
+         // TODO: evaluate handling of special case "Camera Bits"
+         if (settings.useCameraRange()) {
+            this.setSelectedItem("Camera Depth");
+         } else {
+            int bits = settings.getHistoRangeBits();
+            if (bits > 3 && (bits - 4) < this.getSize()) {
+               this.setSelectedItem(this.getElementAt(bits - 4));
+            }
+         }
+      }
+      
    }
 
    // Panel showing min/max/avg/std.
@@ -331,6 +348,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             "/org/micromanager/icons/triangle_left.png"));
       histoRangeDownButton_.addActionListener(new ActionListener() {
          @Override
+         
          public void actionPerformed(ActionEvent e) {
             int index = histoRangeComboBox_.getSelectedIndex();
             if (index > 0) {
@@ -355,6 +373,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       histoRangeComboBox_.setFocusable(false);
       histoRangeComboBox_.setFont(histoRangeComboBox_.getFont().deriveFont(10.0f));
       histoRangeComboBox_.setMaximumRowCount(16);
+      histoRangeComboBox_.setSelectedItem("Camera Depth");
       histoRangeComboBox_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
@@ -362,7 +381,6 @@ public final class ChannelIntensityController implements HistogramView.Listener 
             updateHistoRangeButtonStates();
          }
       });
-      histoRangeComboBox_.setSelectedItem("Camera Depth");
 
       // TODO This will actually be a popup button!
       intensityLinkButton_.setMaximumSize(new Dimension(30, 20));
@@ -372,11 +390,11 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       intensityLinkButton_.setSelectedIcon(IconLoader.getIcon(
             "/org/micromanager/icons/linkflat_active.png"));
 
-      updateHistoRangeButtonStates();
+      //updateHistoRangeButtonStates();
       // Needed to pick up the current DisplaySettings, 
-      if (viewer != null) {
-         newDisplaySettings(viewer.getDisplaySettings());
-      }
+      newDisplaySettings(viewer.getDisplaySettings());
+      
+      updateHistoRangeButtonStates();
    }
 
    void detach() {
@@ -420,14 +438,19 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          if (anyImage == null) {
             return;
          }
-         int cameraBits = anyImage.getMetadata().getBitDepth(); // can throw IOException
-         int rangeBits = histoRangeComboBoxModel_.getBits(cameraBits);
+         DisplaySettings settings = viewer_.getDisplaySettings();
+         cameraBits_ = anyImage.getMetadata().getBitDepth(); // can throw IOException
+         ChannelDisplaySettings cSettings = histoRangeComboBoxModel_.getBits(
+                 viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);
+         int rangeBits = cameraBits_;
+         if (!cSettings.useCameraRange()) {
+            rangeBits = cSettings.getHistoRangeBits();
+         }
          long[] data = componentStats.getInRangeHistogram();
          int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
          histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
          histogram_.setROIIndicator(componentStats.isROIStats());
       
-         DisplaySettings settings = viewer_.getDisplaySettings();
          updateScalingIndicators(settings, componentStats, component);
       } catch (IOException ioEx) {
          // TODO: log this exception
@@ -461,7 +484,17 @@ public final class ChannelIntensityController implements HistogramView.Listener 
       int index = histoRangeComboBox_.getSelectedIndex();
       histoRangeDownButton_.setEnabled(index > 0);
       histoRangeUpButton_.setEnabled(index <
-            histoRangeComboBoxModel_.getSize() - 1);
+            histoRangeComboBoxModel_.getSize() - 2);
+      DisplaySettings oldDisplaySettings, newDisplaySettings;
+      do {
+         oldDisplaySettings = viewer_.getDisplaySettings();
+         ChannelDisplaySettings channelSettings =
+               oldDisplaySettings.getChannelSettings(channelIndex_);
+         newDisplaySettings = oldDisplaySettings.
+               copyBuilderWithChannelSettings(channelIndex_,
+                           histoRangeComboBoxModel_.getBits(channelSettings, 
+                                   cameraBits_)).build();
+      } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
    @MustCallOnEDT
@@ -664,6 +697,15 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                channelSettings.getColor());
          histogram_.setGamma(channelSettings.getComponentSettings(0).
                getScalingGamma());
+         // Need to remove actionListeners before setting the histoRangeBox
+         ActionListener[] actionListeners = histoRangeComboBox_.getActionListeners();
+         for (ActionListener al : actionListeners) {
+            histoRangeComboBox_.removeActionListener(al);
+         }
+         histoRangeComboBoxModel_.setBits(channelSettings);
+         for (ActionListener al : actionListeners) {
+            histoRangeComboBox_.addActionListener(al);
+         }
       }
       for (int comp = 0; comp < numComponents; ++comp) {
          if (stats_ != null) {

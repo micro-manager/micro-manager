@@ -22,14 +22,19 @@ public final class DefaultChannelDisplaySettings
    private final Color color_;
    private final boolean useUniformComponentScaling_;
    private final boolean visible_;
+   private final int histoRangeBits_;
+   private final boolean useCameraRange_;
    private final List<ComponentDisplaySettings> componentSettings_;
 
+  
    private static final class Builder
          implements ChannelDisplaySettings.Builder
    {
       private Color color_ = Color.WHITE;
       private boolean useUniformComponentScaling_ = false;
       private boolean visible_ = true;
+      private int histoRangeBits_ = 8; 
+      private boolean useCameraRange_;
       private final List<ComponentDisplaySettings> componentSettings_ =
             new ArrayList<ComponentDisplaySettings>();
 
@@ -89,6 +94,18 @@ public final class DefaultChannelDisplaySettings
          useUniformComponentScaling_ = enable;
          return this;
       }
+      
+      @Override
+      public Builder histoRangeBits(int bits) {
+         histoRangeBits_ = bits;
+         return this;
+      }
+      
+      @Override
+      public Builder useCameraHistoRange(boolean use) {
+         useCameraRange_ = use;
+         return this;
+      }
 
       @Override
       public Builder visible(boolean visible) {
@@ -139,6 +156,7 @@ public final class DefaultChannelDisplaySettings
       public ChannelDisplaySettings build() {
          return new DefaultChannelDisplaySettings(this);
       }
+
    }
 
    public static ChannelDisplaySettings.Builder builder() {
@@ -149,6 +167,8 @@ public final class DefaultChannelDisplaySettings
       color_ = builder.color_;
       useUniformComponentScaling_ = builder.useUniformComponentScaling_;
       visible_ = builder.visible_;
+      histoRangeBits_ = builder.histoRangeBits_;
+      useCameraRange_ = builder.useCameraRange_;
       componentSettings_ = new ArrayList<ComponentDisplaySettings>(
             builder.componentSettings_);
    }
@@ -161,6 +181,16 @@ public final class DefaultChannelDisplaySettings
    @Override
    public boolean isUniformComponentScalingEnabled() {
       return useUniformComponentScaling_;
+   }
+   
+   @Override
+   public int getHistoRangeBits() {
+      return histoRangeBits_;
+   }
+   
+   @Override
+   public boolean useCameraRange() {
+      return useCameraRange_;
    }
 
    @Override
@@ -218,6 +248,7 @@ public final class DefaultChannelDisplaySettings
             putColor(PropertyKey.COLOR.key(), color_).
             putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_).
             putBoolean(PropertyKey.VISIBLE.key(), visible_).
+            putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_).
             putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings).
             build();
    }
@@ -249,6 +280,10 @@ public final class DefaultChannelDisplaySettings
                     componentMapList.get(i));
             b.component(i, cds);
          }
+      }
+      if (pMap.containsInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key())) {
+         b.histoRangeBits(pMap.getInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), 
+                 b.histoRangeBits_));
       }
             
       return b.build();
