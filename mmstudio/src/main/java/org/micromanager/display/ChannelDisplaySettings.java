@@ -25,6 +25,7 @@ public interface ChannelDisplaySettings {
 
       Builder uniformComponentScaling(boolean enable);
       Builder histoRangeBits(int bits);
+      Builder useCameraHistoRange(boolean use);
 
       Builder visible(boolean visible);
       Builder show();
@@ -41,6 +42,7 @@ public interface ChannelDisplaySettings {
    Color getColor();
    boolean isUniformComponentScalingEnabled();
    int getHistoRangeBits();
+   boolean useCameraRange();
    boolean isVisible();
 
    int getNumberOfComponents();

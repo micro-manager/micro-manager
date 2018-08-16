@@ -23,17 +23,18 @@ public final class DefaultChannelDisplaySettings
    private final boolean useUniformComponentScaling_;
    private final boolean visible_;
    private final int histoRangeBits_;
+   private final boolean useCameraRange_;
    private final List<ComponentDisplaySettings> componentSettings_;
 
+  
    private static final class Builder
          implements ChannelDisplaySettings.Builder
    {
       private Color color_ = Color.WHITE;
       private boolean useUniformComponentScaling_ = false;
       private boolean visible_ = true;
-      private int histoRangeBits_ = 0; // TODO: 0 is now interpreted as 
-      // a special case: "Camera Depth".  It may be better to replace the type
-      // with a {boolean, int} or something along those lines
+      private int histoRangeBits_ = 8; 
+      private boolean useCameraRange_;
       private final List<ComponentDisplaySettings> componentSettings_ =
             new ArrayList<ComponentDisplaySettings>();
 
@@ -99,6 +100,12 @@ public final class DefaultChannelDisplaySettings
          histoRangeBits_ = bits;
          return this;
       }
+      
+      @Override
+      public Builder useCameraHistoRange(boolean use) {
+         useCameraRange_ = use;
+         return this;
+      }
 
       @Override
       public Builder visible(boolean visible) {
@@ -149,6 +156,7 @@ public final class DefaultChannelDisplaySettings
       public ChannelDisplaySettings build() {
          return new DefaultChannelDisplaySettings(this);
       }
+
    }
 
    public static ChannelDisplaySettings.Builder builder() {
@@ -160,6 +168,7 @@ public final class DefaultChannelDisplaySettings
       useUniformComponentScaling_ = builder.useUniformComponentScaling_;
       visible_ = builder.visible_;
       histoRangeBits_ = builder.histoRangeBits_;
+      useCameraRange_ = builder.useCameraRange_;
       componentSettings_ = new ArrayList<ComponentDisplaySettings>(
             builder.componentSettings_);
    }
@@ -177,6 +186,11 @@ public final class DefaultChannelDisplaySettings
    @Override
    public int getHistoRangeBits() {
       return histoRangeBits_;
+   }
+   
+   @Override
+   public boolean useCameraRange() {
+      return useCameraRange_;
    }
 
    @Override

@@ -76,19 +76,23 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          });
       }
 
-      public int getBits(int cameraBits) {
+      public ChannelDisplaySettings getBits(ChannelDisplaySettings settings, 
+              int cameraBits) {
          int index = getIndexOf(getSelectedItem());
          if (index == 13) {
-            return cameraBits;
+            return settings.copyBuilder().useCameraHistoRange(true).
+                    histoRangeBits(cameraBits).build();
          }
-         return index + 4;
+         return settings.copyBuilder().useCameraHistoRange(false).
+                    histoRangeBits(index + 4).build();
       }
       
-      public void setBits(int bits) {
+      public void setBits(ChannelDisplaySettings settings) {
          // TODO: evaluate handling of special case "Camera Bits"
-         if (bits == 0 ) {
+         if (settings.useCameraRange()) {
             this.setSelectedItem("Camera Depth");
          } else {
+            int bits = settings.getHistoRangeBits();
             if (bits > 3 && (bits - 4) < this.getSize()) {
                this.setSelectedItem(this.getElementAt(bits - 4));
             }
@@ -434,14 +438,19 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          if (anyImage == null) {
             return;
          }
+         DisplaySettings settings = viewer_.getDisplaySettings();
          cameraBits_ = anyImage.getMetadata().getBitDepth(); // can throw IOException
-         int rangeBits = histoRangeComboBoxModel_.getBits(cameraBits_);
+         ChannelDisplaySettings cSettings = histoRangeComboBoxModel_.getBits(
+                 viewer_.getDisplaySettings().getChannelSettings(0), cameraBits_);
+         int rangeBits = cameraBits_;
+         if (!cSettings.useCameraRange()) {
+            rangeBits = cSettings.getHistoRangeBits();
+         }
          long[] data = componentStats.getInRangeHistogram();
          int lengthToUse = Math.min(data.length, (1 << rangeBits) - 1);
          histogram_.setComponentGraph(component, data, lengthToUse, lengthToUse);
          histogram_.setROIIndicator(componentStats.isROIStats());
       
-         DisplaySettings settings = viewer_.getDisplaySettings();
          updateScalingIndicators(settings, componentStats, component);
       } catch (IOException ioEx) {
          // TODO: log this exception
@@ -483,9 +492,8 @@ public final class ChannelIntensityController implements HistogramView.Listener 
                oldDisplaySettings.getChannelSettings(channelIndex_);
          newDisplaySettings = oldDisplaySettings.
                copyBuilderWithChannelSettings(channelIndex_,
-                     channelSettings.copyBuilder().histoRangeBits(
-                           histoRangeComboBoxModel_.getBits(cameraBits_)).build()).
-               build();
+                           histoRangeComboBoxModel_.getBits(channelSettings, 
+                                   cameraBits_)).build();
       } while (!viewer_.compareAndSetDisplaySettings(oldDisplaySettings, newDisplaySettings));
    }
 
@@ -694,7 +702,7 @@ public final class ChannelIntensityController implements HistogramView.Listener 
          for (ActionListener al : actionListeners) {
             histoRangeComboBox_.removeActionListener(al);
          }
-         histoRangeComboBoxModel_.setBits(channelSettings.getHistoRangeBits());
+         histoRangeComboBoxModel_.setBits(channelSettings);
          for (ActionListener al : actionListeners) {
             histoRangeComboBox_.addActionListener(al);
          }
