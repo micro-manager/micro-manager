@@ -28,7 +28,6 @@
 package edu.ucsf.valelab.gaussianfit.fitting;
 
 import org.apache.commons.math3.analysis.MultivariateFunction;
-import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.apache.commons.math3.optim.InitialGuess;
 import org.apache.commons.math3.optim.MaxEval;
@@ -255,35 +254,6 @@ class P2DIndividualSigmasFunc implements MultivariateFunction {
       return sum;
    }
      
-}
-
-/**
- * Univariate function wrapping the p2d Set mu and sigma in advance, and use d
- * to calculate the current p2d
- *
- */
-class p2dUniVariate implements UnivariateFunction {
-
-   private double mu_;
-   private double sigma_;
-
-   public p2dUniVariate(double mu, double sigma) {
-      mu_ = mu;
-      sigma_ = sigma;
-   }
-
-   public void setParameters(double mu, double sigma) {
-      mu_ = mu;
-      sigma_ = sigma;
-   }
-
-   @Override
-   public double value(double d) {
-      if (d > sigma_) { // check if this is the correct condition
-         return P2DFunctions.p2dApproximation(d, mu_, sigma_);
-      }
-      return P2DFunctions.p2d(d, mu_, sigma_);
-   }
 }
 
 
