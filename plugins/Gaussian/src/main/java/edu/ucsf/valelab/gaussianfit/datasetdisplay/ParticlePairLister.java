@@ -36,6 +36,7 @@ import edu.ucsf.valelab.gaussianfit.fitting.Gaussian1DFitter;
 import edu.ucsf.valelab.gaussianfit.fitting.P2DFitter;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPointByData;
+import edu.ucsf.valelab.gaussianfit.utils.EmpiricalCumulativeDistribution;
 import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 import edu.ucsf.valelab.gaussianfit.utils.ListUtils;
 import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
@@ -745,6 +746,7 @@ public class ParticlePairLister {
                if (p2dDistanceCalc_ && !p2dSingleFrames_ && allDistances.size() > 0) {
                   
                   double[] d = ListUtils.toArray(vectorDistances);
+                  
                   P2DFitter p2df = new P2DFitter(d, null, true, true, maxDistanceNm_);
 
                   double vectMean = ListUtils.listAvg(vectorDistances);
