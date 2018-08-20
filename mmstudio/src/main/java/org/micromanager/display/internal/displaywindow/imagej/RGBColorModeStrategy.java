@@ -25,7 +25,7 @@ class RGBColorModeStrategy implements ColorModeStrategy {
    private final List<Integer> minima_;
    private final List<Integer> maxima_;
 
-   private int[][] rgbLUTs_;
+   private int[] rgbLUTs_; // RGB LUTS are ARGB ints
    private ImageProcessor unscaledRGBImage_;
 
    static ColorModeStrategy create() {
@@ -37,17 +37,18 @@ class RGBColorModeStrategy implements ColorModeStrategy {
       maxima_ = new ArrayList<Integer>(Collections.nCopies(3, 255));
    }
 
-   private int[][] getRGBLUTs() {
+   /**
+     For now, we use one LUT for Red, Green, and Blue.
+     This behavior can (and should) be changed in the future
+   */
+   private int[] getRGBLUTs() {
       if (rgbLUTs_ == null) {
-         rgbLUTs_ = new int[3][];
-         for (int i = 0; i < 3; ++i) {
-            rgbLUTs_[i] = new int[256];
-            float min = minima_.get(i);
-            float max = Math.min(255, maxima_.get(i));
-            for (int k = 0; k < 256; ++k) {
-               rgbLUTs_[i][k] = (int) Math.round(
-                     255.0f * (k - min) / (max - min));
-            }
+         rgbLUTs_ = new int[256];
+         float min = minima_.get(0);
+         float max = Math.min(255, maxima_.get(0));
+         for (int k = 0; k < 256; ++k) {
+            float f = (float) Math.max(Math.min(1.0, (k - min) / (max - min) ), 0.0);
+            rgbLUTs_[k] = (int) Math.round( 255.0f * f );
          }
       }
       return rgbLUTs_;
@@ -63,11 +64,9 @@ class RGBColorModeStrategy implements ColorModeStrategy {
          unscaledRGBImage_ = imagePlus_.getProcessor();
       }
       imagePlus_.setProcessor(unscaledRGBImage_.duplicate());
-      int[][] luts = getRGBLUTs();
-      for (int i = 0; i < 3; ++i) {
-         ((ColorProcessor) imagePlus_.getProcessor()).
-               applyTable(luts[i], 1 << i);
-      }
+      int[] luts = getRGBLUTs();
+      ((ColorProcessor) imagePlus_.getProcessor()).
+               applyTable(luts);
    }
 
    @Override
@@ -94,8 +93,14 @@ class RGBColorModeStrategy implements ColorModeStrategy {
    public void applyScaling(int component, int min, int max) {
       Preconditions.checkArgument(min >= 0);
       Preconditions.checkArgument(max >= min);
-      minima_.set(component, min);
-      maxima_.set(component, max);
+      if (min != minima_.get(component)) {
+         minima_.set(component, min);
+         rgbLUTs_ = null;
+      }
+      if (max != maxima_.get(component)) {
+         maxima_.set(component, max);
+         rgbLUTs_ = null;
+      }
       apply();
    }
 

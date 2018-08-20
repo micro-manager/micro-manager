@@ -53,6 +53,7 @@ import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.data.internal.DefaultRewritableDatastore;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.data.internal.StorageRAM;
+import org.micromanager.display.ChannelDisplaySettings;
 import org.micromanager.display.DataViewer;
 import org.micromanager.display.DataViewerListener;
 import org.micromanager.display.DisplaySettings;
@@ -70,6 +71,7 @@ import org.micromanager.internal.utils.performance.PerformanceMonitor;
 import org.micromanager.internal.utils.performance.gui.PerformanceMonitorUI;
 import org.micromanager.quickaccess.internal.QuickAccessFactory;
 import org.micromanager.display.DisplayWindowControlsFactory;
+import org.micromanager.display.internal.DefaultChannelDisplaySettings;
 import org.micromanager.events.internal.MouseMovesStageStateChangeEvent;
 import org.micromanager.internal.menus.MMMenuBar;
 import org.micromanager.internal.navigation.UiMovesStageManager;
@@ -670,6 +672,15 @@ public final class SnapLiveManager extends DataViewerListener
          } // Check for display having been closed on us by the user.
          else if (display_ == null || display_.isClosed()) {
             createDisplay();
+            int numComponents = image.getNumComponents();
+            if (numComponents > 1) {
+               DisplaySettings ds = display_.getDisplaySettings();
+               ChannelDisplaySettings.Builder cb = ds.getChannelSettings(0).copyBuilder();
+               for (int i=0; i < numComponents; i++) {
+                  cb.component(i);
+               }
+               display_.setDisplaySettings(ds.copyBuilder().channel(0, cb.build()).build());
+            }
          }
 
          synchronized (displayInfoLock_) {
