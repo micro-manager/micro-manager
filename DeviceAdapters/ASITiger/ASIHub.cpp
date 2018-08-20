@@ -98,7 +98,7 @@ int ASIHub::ClearComPort(void)
 /**
    * Sends a command and gets the serial buffer (doesn't try to verify end of transmission)
    */
-int ASIHub::QueryCommandUnterminatedResponse(const char *command, const long timeoutMs)
+int ASIHub::QueryCommandUnterminatedResponse(const char *command, const long timeoutMs, unsigned long reply_length)
 {
    RETURN_ON_MM_ERROR ( ClearComPort() );
    RETURN_ON_MM_ERROR ( SendSerialCommand(port_.c_str(), command, "\r") );
@@ -109,7 +109,7 @@ int ASIHub::QueryCommandUnterminatedResponse(const char *command, const long tim
    int ret = DEVICE_OK;
    MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
    serialAnswer_ = "";
-   while (ret == DEVICE_OK && read == 0 && !timerOut.expired(GetCurrentMMTime()))
+   while (ret == DEVICE_OK && read < reply_length && !timerOut.expired(GetCurrentMMTime()))
    {
       ret = ReadFromComPort(port_.c_str(), (unsigned char*)rcvBuf, MM::MaxStrLength, read);
    }

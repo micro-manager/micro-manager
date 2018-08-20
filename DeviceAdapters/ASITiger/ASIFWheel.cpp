@@ -381,8 +381,8 @@ int CFWheel::OnSpin(MM::PropertyBase* pProp, MM::ActionType eAct)
          spinning_ = false;
          command.str("");
          command << "HO";  // make it stop at home
-         // HO command echoed but without termination
-         RETURN_ON_MM_ERROR ( hub_->QueryCommandUnterminatedResponse(command.str(), 400) );
+         // HO command echoed but without termination, replies with "HO<space>" 3 characters
+         RETURN_ON_MM_ERROR ( hub_->QueryCommandUnterminatedResponse(command.str(), 400,3) );
          if (hub_->LastSerialAnswer().substr(0, 2).compare(command.str().substr(0,2)) != 0)
          {
             return ERR_UNRECOGNIZED_ANSWER;
