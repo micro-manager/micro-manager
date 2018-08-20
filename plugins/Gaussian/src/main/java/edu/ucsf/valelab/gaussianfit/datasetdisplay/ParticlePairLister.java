@@ -33,6 +33,7 @@ import edu.ucsf.valelab.gaussianfit.data.GsSpotPair;
 import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import edu.ucsf.valelab.gaussianfit.fitting.FittingException;
 import edu.ucsf.valelab.gaussianfit.fitting.Gaussian1DFitter;
+import edu.ucsf.valelab.gaussianfit.fitting.P2DEcdfFitter;
 import edu.ucsf.valelab.gaussianfit.fitting.P2DFitter;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPointByData;
@@ -746,17 +747,21 @@ public class ParticlePairLister {
                if (p2dDistanceCalc_ && !p2dSingleFrames_ && allDistances.size() > 0) {
                   
                   double[] d = ListUtils.toArray(vectorDistances);
-                  
-                  P2DFitter p2df = new P2DFitter(d, null, true, true, maxDistanceNm_);
+                                    
+                  // P2DFitter p2df = new P2DFitter(d, null, true, true, maxDistanceNm_);
 
                   double vectMean = ListUtils.listAvg(vectorDistances);
                   double stdDev = ListUtils.listStdDev(vectorDistances, 
                           vectMean);
-                  p2df.setStartParams(vectMean, stdDev);
+                  
+                  P2DEcdfFitter p2decdf = new P2DEcdfFitter(d, vectMean, stdDev, 
+                          maxDistanceNm_);
+                  
+                  //p2df.setStartParams(vectMean, stdDev);
 
-                  double[] p2dfResult = { 0.0, 0.0};
+                  double[] p2dfResult = { 0.0, 0.0 };
                   try {
-                     p2dfResult = p2df.solve();
+                     p2dfResult = p2decdf.solve();
                   } catch (FittingException fe) {
                      String msg = "ID: " + dc.getSpotData(row).ID_
                              + ", Failed to fit p2d function";
@@ -785,18 +790,18 @@ public class ParticlePairLister {
                   // where dmu of 0.001nm should be small enough
                   double dMu = 0.001;
                   double[] llTest = {mu - dMu, mu, mu + dMu};
-                  double[] llResult = p2df.logLikelihood(p2dfResult, llTest);
-                  double info = Math.abs(
-                          llResult[2] + llResult[0] - 2 * llResult[1])
-                          / (dMu * dMu);
-                  double fisherStdDev = 1 / Math.sqrt(info);
+                  //double[] llResult = p2df.logLikelihood(p2dfResult, llTest);
+                  //double info = Math.abs(
+                  //       llResult[2] + llResult[0] - 2 * llResult[1])
+                  //       / (dMu * dMu);
+                  //double fisherStdDev = 1 / Math.sqrt(info);
 
                   String msg1 = "P2D fit for " + dc.getSpotData(row).getName();
                   String msg2 = "n = " + allDistances.size() + ", mu = "
                           + NumberUtils.doubleToDisplayString(mu, 2)
-                          + "\u00b1"
-                          + NumberUtils.doubleToDisplayString(fisherStdDev, 2)
-                          + " nm , sigma = "
+                         // + "\u00b1"
+                          //+ NumberUtils.doubleToDisplayString(fisherStdDev, 2)
+                          + " nm, sigma = "
                           + NumberUtils.doubleToDisplayString(sigma, 2)
                           + " nm";
                   MMStudio.getInstance().alerts().postAlert(msg1, null, msg2);
@@ -819,7 +824,7 @@ public class ParticlePairLister {
                   rt3.addValue("Frames", dc.getSpotData(row).nrFrames_);
                   rt3.addValue("Positions", dc.getSpotData(row).nrPositions_);
                   rt3.addValue("mu", mu);
-                  rt3.addValue("stdDev", fisherStdDev);
+                  //rt3.addValue("stdDev", fisherStdDev);
                   rt3.addValue("sigma", sigma);
                   
                   rt3.show("P2D Summary");
