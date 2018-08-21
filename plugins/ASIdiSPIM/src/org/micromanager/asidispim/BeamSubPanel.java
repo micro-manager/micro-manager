@@ -94,7 +94,6 @@ public final class BeamSubPanel extends ListeningJPanel {
       
       side_ = side;
       otherSide_ = Devices.getOppositeSide(side);
-         
       // NB: "A" and "B" in names doesn't necessarily mean path A and path B anymore
       // beamABox_ and scanBBox associated with the side passed as a parameter
       beamABox_ = pu.makeCheckBox("Beam",
@@ -115,7 +114,7 @@ public final class BeamSubPanel extends ListeningJPanel {
             Devices.getSideSpecificKey(Devices.Keys.GALVOA, otherSide_),
             Properties.Keys.SA_MODE_X, instanceLabel_, Prefs.Keys.EPI_SCAN_ENABLED);
       
-      if (noSide) {
+      if (noSide) {  // Navigation panel
             add(new JLabel("Path A:"));
             add(beamABox_);
             add(sheetABox_, "wrap");
@@ -124,14 +123,24 @@ public final class BeamSubPanel extends ListeningJPanel {
                add(beamBBox_);
                add(sheetBBox_, "wrap");         
             }
-      } else {
-         add(new JLabel("Excitation side:"));
+      } else {  // Setup panel
+         add(new JLabel("Excitation:"));
          add(beamABox_);
          add(sheetABox_, "wrap");
-         if (!ASIdiSPIM.oSPIM) {
-            add(new JLabel("Epi side:"));
-            add(beamBBox_);
-            add(sheetBBox_, "wrap");   
+         if (prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+               Properties.Keys.PLUGIN_SHOW_EPI_CB, false)) {
+            if (!ASIdiSPIM.oSPIM) {
+               add(new JLabel("Epi side:"));
+               add(beamBBox_);
+               add(sheetBBox_, "wrap");   
+            }
+         } else {
+            // if epi checkbox is hidden then make sure to turn off epi beam
+            if (beamBBox_.isSelected()) {
+               beamBBox_.setSelected(false);
+               beamBBox_.doClick();
+               beamBBox_.doClick();
+            }
          }
       }
       
