@@ -358,6 +358,7 @@ public class Positions {
    public final void refreshStagePositions() {
       refreshOneAxisStagePositions();
       refreshTwoAxisStagePositions();
+      // TODO implement using "W *" for faster speed
    }
    
    private void refreshTwoAxisStagePositions() {
