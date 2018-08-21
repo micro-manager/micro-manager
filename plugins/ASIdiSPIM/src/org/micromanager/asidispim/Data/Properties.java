@@ -278,6 +278,11 @@ public class Properties {
       PLUGIN_LIGHTSHEET_SLOPE("LightSheetSlope"),
       PLUGIN_LIGHTSHEET_OFFSET("LightSheetOffset"),
       PLUGIN_GRID_OVERLAP_PERCENT("GridOverlapPercent"),
+      PLUGIN_PATH_GROUP("PathGroup"),
+      PLUGIN_PATH_CONFIG_A("PathConfigA"),
+      PLUGIN_PATH_CONFIG_B("PathConfigB"),
+      PLUGIN_USE_PATH_GROUP_ACQ("UsePathGroupAcquisition"),
+      PLUGIN_SHOW_EPI_CB("ShowEpiBeamSheetCB"),
       ;
       private final String text;
       private final boolean forceSet;

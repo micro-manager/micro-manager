@@ -1609,6 +1609,8 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       acqSettings.cameraMode = getSPIMCameraMode();
       acqSettings.hardwareTimepoints = false; //  when running acquisition we check this and set to true if needed
       acqSettings.separateTimepoints = getSavingSeparateFile();
+      acqSettings.usePathPresets = prefs_.getBoolean(MyStrings.PanelNames.SETTINGS.toString(),
+            Properties.Keys.PLUGIN_USE_PATH_GROUP_ACQ, true);
       return acqSettings;
    }
    
@@ -2414,17 +2416,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          }
       }
       
-      // now acqSettings should be read-only
-      final AcquisitionSettings acqSettings = acqSettingsOrig;
-      
-      // generate string for log file
-      Gson gson = new GsonBuilder().setPrettyPrinting().create();
-      final String acqSettingsJSON = gson.toJson(acqSettings);
-      
       // get MM device names for first/second cameras to acquire
       String firstCamera, secondCamera;
       Devices.Keys firstCameraKey, secondCameraKey;
-      boolean firstSideA = acqSettings.firstSideIsA; 
+      boolean firstSideA = acqSettingsOrig.firstSideIsA; 
       if (firstSideA) {
          firstCamera = devices_.getMMDevice(Devices.Keys.CAMERAA);
          firstCameraKey = Devices.Keys.CAMERAA;
@@ -2438,7 +2433,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       boolean sideActiveA, sideActiveB;
-      final boolean twoSided = acqSettings.numSides > 1;
+      final boolean twoSided = acqSettingsOrig.numSides > 1;
       if (twoSided) {
          sideActiveA = true;
          sideActiveB = true;
@@ -2452,6 +2447,22 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             sideActiveB = true;
          }
       }
+      
+      // if we are told to use path presets but nothing is actually used then set to false
+      if (acqSettingsOrig.usePathPresets) {
+         boolean needA = sideActiveA && !props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_CONFIG_A).equals("");
+         boolean needB = sideActiveB && !props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_CONFIG_B).equals("");
+         if (!(needA || needB)) {
+            acqSettingsOrig.usePathPresets = false;
+         }
+      }
+      
+      // now acqSettings should be read-only
+      final AcquisitionSettings acqSettings = acqSettingsOrig;
+      
+      // generate string for log file
+      Gson gson = new GsonBuilder().setPrettyPrinting().create();
+      final String acqSettingsJSON = gson.toJson(acqSettings);
       
       final boolean acqBothCameras = acqSettings.acquireBothCamerasSimultaneously;
       boolean camActiveA = sideActiveA || acqBothCameras;
@@ -2510,7 +2521,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             return false;
          }
       }
-
+      
       boolean usingDemoCam = (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAA).equals(Devices.Libraries.DEMOCAM) && camActiveA)
             || (devices_.getMMDeviceLibrary(Devices.Keys.CAMERAB).equals(Devices.Libraries.DEMOCAM) && camActiveB);
       
@@ -2658,10 +2669,15 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             MyDialogUtils.showError("Must have stage with scan-enabled firmware for stage scanning.");
             return false;
          }
-         if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED
-               && acqSettings.numSides < 2) {
-            MyDialogUtils.showError("Interleaved mode requires two sides.");
-            return false;
+         if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_INTERLEAVED) {
+            if (acqSettings.numSides < 2) {
+               MyDialogUtils.showError("Interleaved stage scan requires two sides.");
+               return false;
+            }
+            if (acqSettings.usePathPresets) {
+               MyDialogUtils.showError("Cannot use path presets with interleaved stage scan");
+               return false;
+            }
          }
       }
       
@@ -3087,8 +3103,10 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
             gui_.setAcquisitionProperty(acqName, "PixelType", "GRAY16");
             gui_.setAcquisitionProperty(acqName, "UseAutofocus", 
                   acqSettings.useAutofocus ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+            gui_.setAcquisitionProperty(acqName, "UsePathPresets", 
+                    acqSettings.usePathPresets ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName, "UseMotionCorrection", 
-                    acqSettings.useMovementCorrection ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
+                  acqSettings.useMovementCorrection ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName, "HardwareTimepoints", 
                   acqSettings.hardwareTimepoints ? Boolean.TRUE.toString() : Boolean.FALSE.toString());
             gui_.setAcquisitionProperty(acqName, "SeparateTimepoints", 
@@ -3219,12 +3237,20 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         multiChannelPanel_.selectChannel(autofocusChannel);
                      }
                      if (sideActiveA) {
+                        if (acqSettings.usePathPresets) {
+                           controller_.setPathPreset(Devices.Sides.A);
+                           // blocks until all devices done
+                        }
                         AutofocusUtils.FocusResult score = autofocus_.runFocus(
                                 this, Devices.Sides.A, false,
                                 sliceTiming_, false);
                         updateCalibrationOffset(Devices.Sides.A, score);
                      }
                      if (sideActiveB) {
+                        if (acqSettings.usePathPresets) {
+                           controller_.setPathPreset(Devices.Sides.B);
+                           // blocks until all devices done
+                        }
                         AutofocusUtils.FocusResult score = autofocus_.runFocus(
                               this, Devices.Sides.B, false,
                               sliceTiming_, false);
@@ -3290,311 +3316,339 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                      Thread.sleep(Math.round(PanelUtils.getSpinnerFloatValue(positionDelay_)));
                   }
                   
+                  int nrOuterLoop = 1;
+                  if (acqSettings.usePathPresets && acqSettings.numSides > 1) {
+                     // with path presets we have to trigger controller once for each side so double the number of triggers for double-sided
+                     nrOuterLoop = 2;
+                  }
+                  
                   // loop over all the times we trigger the controller
                   // usually just once, but will be the number of channels if we have
                   //  multiple channels and aren't using PLogic to change between them
-                  for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
-                     try {
-                        // flag that we are using the cameras/controller
-                        ASIdiSPIM.getFrame().setHardwareInUse(true);
-                        
-                        // deal with shutter before starting acquisition
-                        shutterOpen = core_.getShutterOpen();
-                        if (autoShutter) {
-                           core_.setAutoShutter(false);
-                           if (!shutterOpen) {
-                              core_.setShutterOpen(true);
-                           }
-                        }
-
-                        // start the cameras
-                        core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, 0, true);
-                        if (twoSided || acqBothCameras) {
-                           core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
-                        }
-
-                        // deal with channel if needed (hardware channel switching doesn't happen here)
-                        if (changeChannelPerVolumeSoftware) {
-                           multiChannelPanel_.selectNextChannel();
-                        }
-                        
-                        // special case: single-sided piezo acquisition risks illumination piezo sleeping
-                        // prevent this from happening by sending relative move of 0 like we do in live mode before each trigger
-                        // NB: this won't help for hardware-timed timepoints
-                        final Devices.Keys piezoIllumKey = firstSideA ? Devices.Keys.PIEZOB : Devices.Keys.PIEZOA;
-                        if (!twoSided && props_.getPropValueInteger(piezoIllumKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
-                           core_.setRelativePosition(devices_.getMMDevice(piezoIllumKey), 0);
-                        }
-
-                        // trigger the state machine on the controller
-                        // do this even with demo cameras to test everything else
-                        boolean success = controller_.triggerControllerStartAcquisition(spimMode, firstSideA);
-                        if (!success) {
-                           throw new Exception("Controller triggering not successful");
-                        }
-
-                        ReportingUtils.logDebugMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
-                              + " with (software) channel number " + channelNum);
-
-                        // Wait for first image to create ImageWindow, so that we can be sure about image size
-                        // Do not actually grab first image here, just make sure it is there
-                        long start = System.currentTimeMillis();
-                        long now = start;
-                        final long timeout = Math.max(3000, Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide))
-                              + extraStageScanTimeout + extraMultiXYTimeout;
-                        while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
-                              && !cancelAcquisition_.get()) {
-                           now = System.currentTimeMillis();
-                           Thread.sleep(5);
-                        }
-                        if (now - start >= timeout) {
-                           String msg = "Camera did not send first image within a reasonable time.\n";
-                           if (acqSettings.isStageScanning) {
-                              msg += "Make sure jumpers are correct on XY card and also micro-micromirror card.";
-                           } else {
-                              msg += "Make sure camera trigger cables are connected properly.";
-                           }
-                           throw new Exception(msg);
-                        }
-
-                        // grab all the images from the cameras, put them into the acquisition
-                        int[] channelImageNr = new int[4*acqSettings.numChannels];  // keep track of how many frames we have received for each MM "channel"
-                        int[] cameraImageNr = new int[2];       // keep track of how many images we have received from the camera
-                        int[] tpNumber = new int[2*acqSettings.numChannels];  // keep track of which timepoint we are on for hardware timepoints
-                        int imagesToSkip = 0;  // hardware timepoints have to drop spurious images with overlap mode
-                        final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
-                        boolean done = false;
-                        long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
-                        int totalImages = 0;
-                        if (acqSettings.isStageScanning) {  // for stage scanning have to allow extra time for turn-around
-                           timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
-                           timeout2 += 5000;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
-                           if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
-                              timeout2 += (long)Math.ceil(getStageRetraceDuration(acqSettings));  // in unidirectional case also need to rewind
-                           }
-                        }
-                        start = System.currentTimeMillis();
-                        long last = start;
+                  // if we are using path presets then trigger controller for each side and do that in "outer loop"
+                  for (int outerLoop = 0; outerLoop < nrOuterLoop; ++outerLoop) {
+                     for (int channelNum = 0; channelNum < nrChannelsSoftware; channelNum++) {
                         try {
-                           while ((core_.getRemainingImageCount() > 0
-                                 || core_.isSequenceRunning(firstCamera)
-                                 || ((twoSided || acqBothCameras) && core_.isSequenceRunning(secondCamera)))
-                                 && !done) {
+                           // flag that we are using the cameras/controller
+                           ASIdiSPIM.getFrame().setHardwareInUse(true);
+
+                           // deal with shutter before starting acquisition
+                           shutterOpen = core_.getShutterOpen();
+                           if (autoShutter) {
+                              core_.setAutoShutter(false);
+                              if (!shutterOpen) {
+                                 core_.setShutterOpen(true);
+                              }
+                           }
+
+                           // start the cameras
+                           core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, 0, true);
+                           if (twoSided || acqBothCameras) {
+                              core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
+                           }
+
+                           // deal with channel if needed (hardware channel switching doesn't happen here)
+                           if (changeChannelPerVolumeSoftware) {
+                              multiChannelPanel_.selectNextChannel();
+                           }
+
+                           // deal with side-specific preset if needed
+                           // have to trigger the controller once for each side in this special case
+                           // "outer loop" is sides, inner loop is channels
+                           if (acqSettings.usePathPresets) {
+                              boolean currentSideA = firstSideA;
+                              if ((acqSettings.numSides > 1) && (channelNum+1)/nrChannelsSoftware > 0.5000001) {
+                                 currentSideA = !currentSideA;
+                              }
+                              // for 2-sided acquisition with path presets we run 2 single-sided acquisitions
+                              //   so set controller accordingly
+                              // prepareControllerForAquisition() takes care of actually setting preset
+                              if (acqSettings.numSides > 1) {
+                                 AcquisitionSettings acqSettingsOneSide = acqSettings;
+                                 acqSettingsOneSide.numSides = 1;
+                                 acqSettingsOneSide.firstSideIsA = currentSideA;
+                                 controller_.prepareControllerForAquisition(acqSettingsOneSide);
+                              }
+                           }
+
+                           // special case: single-sided piezo acquisition risks illumination piezo sleeping
+                           // prevent this from happening by sending relative move of 0 like we do in live mode before each trigger
+                           // NB: this won't help for hardware-timed timepoints
+                           final Devices.Keys piezoIllumKey = firstSideA ? Devices.Keys.PIEZOB : Devices.Keys.PIEZOA;
+                           if (!twoSided && props_.getPropValueInteger(piezoIllumKey, Properties.Keys.AUTO_SLEEP_DELAY) > 0) {
+                              core_.setRelativePosition(devices_.getMMDevice(piezoIllumKey), 0);
+                           }
+
+                           // trigger the state machine on the controller
+                           // do this even with demo cameras to test everything else
+                           boolean success = controller_.triggerControllerStartAcquisition(spimMode, firstSideA);
+                           if (!success) {
+                              throw new Exception("Controller triggering not successful");
+                           }
+
+                           ReportingUtils.logDebugMessage("Starting time point " + (timePoint+1) + " of " + nrFrames
+                                 + " with (software) channel number " + channelNum);
+
+                           // Wait for first image to create ImageWindow, so that we can be sure about image size
+                           // Do not actually grab first image here, just make sure it is there
+                           long start = System.currentTimeMillis();
+                           long now = start;
+                           final long timeout = Math.max(3000, Math.round(10*sliceDuration + 2*acqSettings.delayBeforeSide))
+                                 + extraStageScanTimeout + extraMultiXYTimeout;
+                           while (core_.getRemainingImageCount() == 0 && (now - start < timeout)
+                                 && !cancelAcquisition_.get()) {
                               now = System.currentTimeMillis();
-                              if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
-                                 TaggedImage timg = core_.popNextTaggedImage();
-                                 
-                                 if (checkForSkips && imagesToSkip != 0) {
-                                    imagesToSkip--;
-                                    continue;  // goes to next iteration of this loop without doing anything else
-                                 }
-                                 totalImages++;
-                                 // figure out which channel index this frame belongs to
-                                 // "channel index" is channel of MM acquisition
-                                 // channel indexes will go from 0 to (numSides * numChannels - 1) for standard (non-reflective) imaging
-                                 // if double-sided then second camera gets odd channel indexes (1, 3, etc.)
-                                 //    and adjacent pairs will be same color (e.g. 0 and 1 will be from first color, 2 and 3 from second, etc.)
-                                 // if acquisition from both cameras (reflective imaging) then
-                                 //    second half of channel indices are from opposite (epi) view
-                                 // e.g. for 3-color 1-sided (A first) standard (non-reflective) then
-                                 //    0 will be A-illum A-cam 1st color
-                                 //    2 will be A-illum A-cam 2nd color
-                                 //    4 will be A-illum A-cam 3rd color
-                                 // e.g. for 3-color 2-sided (A first) standard (non-reflective) then
-                                 //    0 will be A-illum A-cam 1st color
-                                 //    1 will be B-illum B-cam 1st color
-                                 //    2 will be A-illum A-cam 2nd color
-                                 //    3 will be B-illum B-cam 2nd color
-                                 //    4 will be A-illum A-cam 3rd color
-                                 //    5 will be B-illum B-cam 3rd color
-                                 // e.g. for 3-color 1-sided (A first) both camera (reflective) then
-                                 //    0 will be A-illum A-cam 1st color
-                                 //    1 will be A-illum A-cam 2nd color
-                                 //    2 will be A-illum A-cam 3rd color
-                                 //    3 will be A-illum B-cam 1st color
-                                 //    4 will be A-illum B-cam 2nd color
-                                 //    5 will be A-illum B-cam 3rd color
-                                 // e.g. for 3-color 2-sided (A first) both camera (reflective) then
-                                 //    0 will be A-illum A-cam 1st color
-                                 //    1 will be B-illum B-cam 1st color
-                                 //    2 will be A-illum A-cam 2nd color
-                                 //    3 will be B-illum B-cam 2nd color
-                                 //    4 will be A-illum A-cam 3rd color
-                                 //    5 will be B-illum B-cam 3rd color
-                                 //    6 will be A-illum B-cam 1st color
-                                 //    7 will be B-illum A-cam 1st color
-                                 //    8 will be A-illum B-cam 2nd color
-                                 //    9 will be B-illum A-cam 2nd color
-                                 //   10 will be A-illum B-cam 3rd color
-                                 //   11 will be B-illum A-cam 3rd color
-                                 String camera = (String) timg.tags.get("Camera");
-                                 int cameraIndex = camera.equals(firstCamera) ? 0: 1;
-                                 int channelIndex_tmp;
-                                 switch (acqSettings.channelMode) {
-                                 case NONE:
-                                 case VOLUME:
-                                    channelIndex_tmp = channelNum;
-                                    break;
-                                 case VOLUME_HW:
-                                    channelIndex_tmp = cameraImageNr[cameraIndex] / acqSettings.numSlices;  // want quotient only
-                                    break;
-                                 case SLICE_HW:
-                                    channelIndex_tmp = cameraImageNr[cameraIndex] % acqSettings.numChannels;  // want modulo arithmetic
-                                    break;
-                                 default:
-                                    // should never get here
-                                    throw new Exception("Undefined channel mode");
-                                 }
-                                 if (acqBothCameras) {
-                                    if (twoSided) {  // 2-sided, both cameras
-                                       channelIndex_tmp = channelIndex_tmp * 2 + cameraIndex;
-                                       // determine whether first or second side by whether we've seen half the images yet
-                                       if (cameraImageNr[cameraIndex] > nrSlicesSoftware/2) {
-                                          // second illumination side => second half of channels
-                                          channelIndex_tmp += 2*acqSettings.numChannels;
-                                       }
-                                    } else {  // 1-sided, both cameras
-                                       channelIndex_tmp += cameraIndex*acqSettings.numChannels;
-                                    }
-                                 } else {  // normal situation, non-reflective imaging
-                                    if (twoSided) {
-                                       channelIndex_tmp *= 2;
-                                    }
-                                    channelIndex_tmp += cameraIndex;
-                                 }
-                                 final int channelIndex = channelIndex_tmp;
-                                 
-                                 int actualTimePoint = timePoint;
-                                 if (acqSettings.hardwareTimepoints) {
-                                    actualTimePoint = tpNumber[channelIndex];
-                                 }
-                                 if (acqSettings.separateTimepoints) {
-                                    // if we are doing separate timepoints then frame is always 0
-                                    actualTimePoint = 0;
-                                 }
-                                 // note that hardwareTimepoints and separateTimepoints can never both be true
-                                 
-                                 // add image to acquisition
-                                 if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
-                                    // create time series for no scan
-                                    addImageToAcquisition(acq_,
-                                          channelImageNr[channelIndex], channelIndex, actualTimePoint, 
-                                          positionNum, now - acqStart, timg, bq);
-                                 } else { // standard, create Z-stacks
-                                    addImageToAcquisition(acq_, actualTimePoint, channelIndex,
-                                          channelImageNr[channelIndex], positionNum,
-                                          now - acqStart, timg, bq);
-                                 }
-
-                                 // update our counters to be ready for next image
-                                 channelImageNr[channelIndex]++;
-                                 cameraImageNr[cameraIndex]++;
-
-                                 // if hardware timepoints then we only send one trigger and
-                                 //   manually keep track of which channel/timepoint comes next
-                                 if (acqSettings.hardwareTimepoints
-                                       && channelImageNr[channelIndex] >= acqSettings.numSlices) {  // only do this if we are done with the slices in this MM channel
-
-                                    // we just finished filling one MM channel with all its slices so go to next timepoint for this channel
-                                    channelImageNr[channelIndex] = 0;
-                                    tpNumber[channelIndex]++;
-
-                                    // see if we are supposed to skip next image
-                                    if (checkForSkips) {
-                                       // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected)
-                                       // if we are interleaving by slice then next nrChannel images will be from extra slice position
-                                       // any other configuration we will just drop the next image
-                                       if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
-                                          imagesToSkip = acqSettings.numChannels;
-                                       } else {
-                                          imagesToSkip = 1;
-                                       }
-                                    }
-                                    
-                                    // update acquisition status message for hardware acquisition
-                                    //   (for non-hardware acquisition message is updated elsewhere)
-                                    //   Arbitrarily choose one possible channel to do this on.
-                                    if (channelIndex == 0 && (numTimePointsDone_ < acqSettings.numTimepoints)) {
-                                       numTimePointsDone_++;
-                                       updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
-                                    }
-                                 }
-                                 
-                                 last = now;  // keep track of last image timestamp
-
-                              } else {  // no image ready yet
-                                 done = cancelAcquisition_.get();
-                                 Thread.sleep(1);
-                                 if (now - last >= timeout2) {
-                                    ReportingUtils.logError("First cam seq: " + core_.isSequenceRunning(firstCamera) +
-                                          ((twoSided || acqBothCameras) ? ("   Second cam seq: " + core_.isSequenceRunning(secondCamera)) : "") +
-                                          "   nrSlicesSoftware: " + nrSlicesSoftware +
-                                          "   total images: " + totalImages);
-                                    ReportingUtils.logError("Camera did not send all expected images within" +
-                                          " a reasonable period for timepoint " + numTimePointsDone_ + "and "
-                                          + "position " + numPositionsDone_ + " .  Continuing anyway.");
-                                    nonfatalError = true;
-                                    done = true;
-                                 }
-                              }
+                              Thread.sleep(5);
                            }
-
-                           // update count if we stopped in the middle
-                           if (cancelAcquisition_.get()) {
-                              numTimePointsDone_--;
-                              numPositionsDone_--;
-                           }
-                           
-                           // if we are using demo camera then add some extra time to let controller finish
-                           // since we got images without waiting for controller to actually send triggers
-                           if (usingDemoCam) {
-                              Thread.sleep(200);  // for serial communication overhead
-                              Thread.sleep((long)volumeDuration/nrChannelsSoftware);  // estimate the time per channel, not ideal in case of software channel switching
+                           if (now - start >= timeout) {
+                              String msg = "Camera did not send first image within a reasonable time.\n";
                               if (acqSettings.isStageScanning) {
-                                 Thread.sleep(1000 + extraStageScanTimeout);  // extra 1 second plus ramp time for stage scanning 
+                                 msg += "Make sure jumpers are correct on XY card and also micro-micromirror card.";
+                              } else {
+                                 msg += "Make sure camera trigger cables are connected properly.";
+                              }
+                              throw new Exception(msg);
+                           }
+
+                           // grab all the images from the cameras, put them into the acquisition
+                           int[] channelImageNr = new int[4*acqSettings.numChannels];  // keep track of how many frames we have received for each MM "channel"
+                           int[] cameraImageNr = new int[2];       // keep track of how many images we have received from the camera
+                           int[] tpNumber = new int[2*acqSettings.numChannels];  // keep track of which timepoint we are on for hardware timepoints
+                           int imagesToSkip = 0;  // hardware timepoints have to drop spurious images with overlap mode
+                           final boolean checkForSkips = acqSettings.hardwareTimepoints && (acqSettings.cameraMode == CameraModes.Keys.OVERLAP);
+                           boolean done = false;
+                           long timeout2 = Math.max(1000, Math.round(5*sliceDuration));
+                           int totalImages = 0;
+                           if (acqSettings.isStageScanning) {  // for stage scanning have to allow extra time for turn-around
+                              timeout2 += (2*(long)Math.ceil(getStageRampDuration(acqSettings)));  // ramp up and then down
+                              timeout2 += 5000;   // ample extra time for turn-around (e.g. antibacklash move in Y), interestingly 500ms extra seems insufficient for reasons I don't understand yet so just pad this for now  // TODO figure out why turn-aronud is taking so long
+                              if (acqSettings.spimMode == AcquisitionModes.Keys.STAGE_SCAN_UNIDIRECTIONAL) {
+                                 timeout2 += (long)Math.ceil(getStageRetraceDuration(acqSettings));  // in unidirectional case also need to rewind
                               }
                            }
-                           
+                           start = System.currentTimeMillis();
+                           long last = start;
+                           try {
+                              while ((core_.getRemainingImageCount() > 0
+                                    || core_.isSequenceRunning(firstCamera)
+                                    || ((twoSided || acqBothCameras) && core_.isSequenceRunning(secondCamera)))
+                                    && !done) {
+                                 now = System.currentTimeMillis();
+                                 if (core_.getRemainingImageCount() > 0) {  // we have an image to grab
+                                    TaggedImage timg = core_.popNextTaggedImage();
 
-                        } catch (InterruptedException iex) {
-                           MyDialogUtils.showError(iex);
-                        }
-                        
-                        if (acqSettings.hardwareTimepoints) {
-                           break;  // only trigger controller once
-                        }
-                        
-                     } catch (Exception ex) {
-                        MyDialogUtils.showError(ex);
-                     } finally {
-                        // cleanup at the end of each time we trigger the controller
-                        
-                        ASIdiSPIM.getFrame().setHardwareInUse(false);
+                                    if (checkForSkips && imagesToSkip != 0) {
+                                       imagesToSkip--;
+                                       continue;  // goes to next iteration of this loop without doing anything else
+                                    }
+                                    totalImages++;
+                                    // figure out which channel index this frame belongs to
+                                    // "channel index" is channel of MM acquisition
+                                    // channel indexes will go from 0 to (numSides * numChannels - 1) for standard (non-reflective) imaging
+                                    // if double-sided then second camera gets odd channel indexes (1, 3, etc.)
+                                    //    and adjacent pairs will be same color (e.g. 0 and 1 will be from first color, 2 and 3 from second, etc.)
+                                    // if acquisition from both cameras (reflective imaging) then
+                                    //    second half of channel indices are from opposite (epi) view
+                                    // e.g. for 3-color 1-sided (A first) standard (non-reflective) then
+                                    //    0 will be A-illum A-cam 1st color
+                                    //    2 will be A-illum A-cam 2nd color
+                                    //    4 will be A-illum A-cam 3rd color
+                                    // e.g. for 3-color 2-sided (A first) standard (non-reflective) then
+                                    //    0 will be A-illum A-cam 1st color
+                                    //    1 will be B-illum B-cam 1st color
+                                    //    2 will be A-illum A-cam 2nd color
+                                    //    3 will be B-illum B-cam 2nd color
+                                    //    4 will be A-illum A-cam 3rd color
+                                    //    5 will be B-illum B-cam 3rd color
+                                    // e.g. for 3-color 1-sided (A first) both camera (reflective) then
+                                    //    0 will be A-illum A-cam 1st color
+                                    //    1 will be A-illum A-cam 2nd color
+                                    //    2 will be A-illum A-cam 3rd color
+                                    //    3 will be A-illum B-cam 1st color
+                                    //    4 will be A-illum B-cam 2nd color
+                                    //    5 will be A-illum B-cam 3rd color
+                                    // e.g. for 3-color 2-sided (A first) both camera (reflective) then
+                                    //    0 will be A-illum A-cam 1st color
+                                    //    1 will be B-illum B-cam 1st color
+                                    //    2 will be A-illum A-cam 2nd color
+                                    //    3 will be B-illum B-cam 2nd color
+                                    //    4 will be A-illum A-cam 3rd color
+                                    //    5 will be B-illum B-cam 3rd color
+                                    //    6 will be A-illum B-cam 1st color
+                                    //    7 will be B-illum A-cam 1st color
+                                    //    8 will be A-illum B-cam 2nd color
+                                    //    9 will be B-illum A-cam 2nd color
+                                    //   10 will be A-illum B-cam 3rd color
+                                    //   11 will be B-illum A-cam 3rd color
+                                    String camera = (String) timg.tags.get("Camera");
+                                    int cameraIndex = camera.equals(firstCamera) ? 0: 1;
+                                    int channelIndex_tmp;
+                                    switch (acqSettings.channelMode) {
+                                    case NONE:
+                                    case VOLUME:
+                                       channelIndex_tmp = channelNum;
+                                       break;
+                                    case VOLUME_HW:
+                                       channelIndex_tmp = cameraImageNr[cameraIndex] / acqSettings.numSlices;  // want quotient only
+                                       break;
+                                    case SLICE_HW:
+                                       channelIndex_tmp = cameraImageNr[cameraIndex] % acqSettings.numChannels;  // want modulo arithmetic
+                                       break;
+                                    default:
+                                       // should never get here
+                                       throw new Exception("Undefined channel mode");
+                                    }
+                                    if (acqBothCameras) {
+                                       if (twoSided) {  // 2-sided, both cameras
+                                          channelIndex_tmp = channelIndex_tmp * 2 + cameraIndex;
+                                          // determine whether first or second side by whether we've seen half the images yet
+                                          if (cameraImageNr[cameraIndex] > nrSlicesSoftware/2) {
+                                             // second illumination side => second half of channels
+                                             channelIndex_tmp += 2*acqSettings.numChannels;
+                                          }
+                                       } else {  // 1-sided, both cameras
+                                          channelIndex_tmp += cameraIndex*acqSettings.numChannels;
+                                       }
+                                    } else {  // normal situation, non-reflective imaging
+                                       if (twoSided) {
+                                          channelIndex_tmp *= 2;
+                                       }
+                                       channelIndex_tmp += cameraIndex;
+                                    }
+                                    final int channelIndex = channelIndex_tmp;
 
-                        // put shutter back to original state
-                        core_.setShutterOpen(shutterOpen);
-                        core_.setAutoShutter(autoShutter);
+                                    int actualTimePoint = timePoint;
+                                    if (acqSettings.hardwareTimepoints) {
+                                       actualTimePoint = tpNumber[channelIndex];
+                                    }
+                                    if (acqSettings.separateTimepoints) {
+                                       // if we are doing separate timepoints then frame is always 0
+                                       actualTimePoint = 0;
+                                    }
+                                    // note that hardwareTimepoints and separateTimepoints can never both be true
 
-                        // make sure cameras aren't running anymore
-                        if (core_.isSequenceRunning(firstCamera)) {
-                           core_.stopSequenceAcquisition(firstCamera);
-                        }
-                        if ((twoSided || acqBothCameras) && core_.isSequenceRunning(secondCamera)) {
-                           core_.stopSequenceAcquisition(secondCamera);
-                        }
+                                    // add image to acquisition
+                                    if (spimMode == AcquisitionModes.Keys.NO_SCAN && !acqSettings.separateTimepoints) {
+                                       // create time series for no scan
+                                       addImageToAcquisition(acq_,
+                                             channelImageNr[channelIndex], channelIndex, actualTimePoint, 
+                                             positionNum, now - acqStart, timg, bq);
+                                    } else { // standard, create Z-stacks
+                                       addImageToAcquisition(acq_, actualTimePoint, channelIndex,
+                                             channelImageNr[channelIndex], positionNum,
+                                             now - acqStart, timg, bq);
+                                    }
 
-                        // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
-                        if ((acqSettings.numSides > 1) || acqSettings.firstSideIsA) {
-                           props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
-                                 Properties.Values.SPIM_IDLE, true);
-                        }
-                        if ((acqSettings.numSides > 1) || !acqSettings.firstSideIsA) {
-                           props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
-                                 Properties.Values.SPIM_IDLE, true);
-                        }
-                        if (acqSettings.isStageScanning) {
-                           props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
-                                 Properties.Values.SPIM_IDLE);
+                                    // update our counters to be ready for next image
+                                    channelImageNr[channelIndex]++;
+                                    cameraImageNr[cameraIndex]++;
+
+                                    // if hardware timepoints then we only send one trigger and
+                                    //   manually keep track of which channel/timepoint comes next
+                                    if (acqSettings.hardwareTimepoints
+                                          && channelImageNr[channelIndex] >= acqSettings.numSlices) {  // only do this if we are done with the slices in this MM channel
+
+                                       // we just finished filling one MM channel with all its slices so go to next timepoint for this channel
+                                       channelImageNr[channelIndex] = 0;
+                                       tpNumber[channelIndex]++;
+
+                                       // see if we are supposed to skip next image
+                                       if (checkForSkips) {
+                                          // one extra image per MM channel, this includes case of only 1 color (either multi-channel disabled or else only 1 channel selected)
+                                          // if we are interleaving by slice then next nrChannel images will be from extra slice position
+                                          // any other configuration we will just drop the next image
+                                          if (acqSettings.useChannels && acqSettings.channelMode == MultichannelModes.Keys.SLICE_HW) {
+                                             imagesToSkip = acqSettings.numChannels;
+                                          } else {
+                                             imagesToSkip = 1;
+                                          }
+                                       }
+
+                                       // update acquisition status message for hardware acquisition
+                                       //   (for non-hardware acquisition message is updated elsewhere)
+                                       //   Arbitrarily choose one possible channel to do this on.
+                                       if (channelIndex == 0 && (numTimePointsDone_ < acqSettings.numTimepoints)) {
+                                          numTimePointsDone_++;
+                                          updateAcquisitionStatus(AcquisitionStatus.ACQUIRING);
+                                       }
+                                    }
+
+                                    last = now;  // keep track of last image timestamp
+
+                                 } else {  // no image ready yet
+                                    done = cancelAcquisition_.get();
+                                    Thread.sleep(1);
+                                    if (now - last >= timeout2) {
+                                       ReportingUtils.logError("First cam seq: " + core_.isSequenceRunning(firstCamera) +
+                                             ((twoSided || acqBothCameras) ? ("   Second cam seq: " + core_.isSequenceRunning(secondCamera)) : "") +
+                                             "   nrSlicesSoftware: " + nrSlicesSoftware +
+                                             "   total images: " + totalImages);
+                                       ReportingUtils.logError("Camera did not send all expected images within" +
+                                             " a reasonable period for timepoint " + numTimePointsDone_ + "and "
+                                             + "position " + numPositionsDone_ + " .  Continuing anyway.");
+                                       nonfatalError = true;
+                                       done = true;
+                                    }
+                                 }
+                              }
+
+                              // update count if we stopped in the middle
+                              if (cancelAcquisition_.get()) {
+                                 numTimePointsDone_--;
+                                 numPositionsDone_--;
+                              }
+
+                              // if we are using demo camera then add some extra time to let controller finish
+                              // since we got images without waiting for controller to actually send triggers
+                              if (usingDemoCam) {
+                                 Thread.sleep(200);  // for serial communication overhead
+                                 Thread.sleep((long)volumeDuration/nrChannelsSoftware);  // estimate the time per channel, not ideal in case of software channel switching
+                                 if (acqSettings.isStageScanning) {
+                                    Thread.sleep(1000 + extraStageScanTimeout);  // extra 1 second plus ramp time for stage scanning 
+                                 }
+                              }
+
+
+                           } catch (InterruptedException iex) {
+                              MyDialogUtils.showError(iex);
+                           }
+
+                           if (acqSettings.hardwareTimepoints) {
+                              break;  // only trigger controller once
+                           }
+
+                        } catch (Exception ex) {
+                           MyDialogUtils.showError(ex);
+                        } finally {
+                           // cleanup at the end of each time we trigger the controller
+
+                           ASIdiSPIM.getFrame().setHardwareInUse(false);
+
+                           // put shutter back to original state
+                           core_.setShutterOpen(shutterOpen);
+                           core_.setAutoShutter(autoShutter);
+
+                           // make sure cameras aren't running anymore
+                           if (core_.isSequenceRunning(firstCamera)) {
+                              core_.stopSequenceAcquisition(firstCamera);
+                           }
+                           if ((twoSided || acqBothCameras) && core_.isSequenceRunning(secondCamera)) {
+                              core_.stopSequenceAcquisition(secondCamera);
+                           }
+
+                           // make sure SPIM state machine on micromirror and SCAN of XY card are stopped (should normally be but sanity check)
+                           if ((acqSettings.numSides > 1) || acqSettings.firstSideIsA) {
+                              props_.setPropValue(Devices.Keys.GALVOA, Properties.Keys.SPIM_STATE,
+                                    Properties.Values.SPIM_IDLE, true);
+                           }
+                           if ((acqSettings.numSides > 1) || !acqSettings.firstSideIsA) {
+                              props_.setPropValue(Devices.Keys.GALVOB, Properties.Keys.SPIM_STATE,
+                                    Properties.Values.SPIM_IDLE, true);
+                           }
+                           if (acqSettings.isStageScanning) {
+                              props_.setPropValue(Devices.Keys.XYSTAGE, Properties.Keys.STAGESCAN_STATE,
+                                    Properties.Values.SPIM_IDLE);
+                           }
                         }
                      }
                   }

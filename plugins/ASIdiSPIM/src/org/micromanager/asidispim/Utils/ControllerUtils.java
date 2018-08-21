@@ -556,6 +556,11 @@ public class ControllerUtils {
       props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
       props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
       
+      // make sure appropriate path preset is applied if needed
+      if (settings.usePathPresets) {
+         setPathPreset(side);
+      }
+      
       return true;
    }
    
@@ -907,6 +912,38 @@ public class ControllerUtils {
     */
    public double getActualStepSizeUm() {
       return actualStepSizeUm_;
+   }
+   
+   /**
+    * Sets the side-specific preset from the selected group.  Blocks until all involved devices are not busy.
+    * Put in this class for convenience though it isn't necessarily about the controller.
+    * @param side
+    */
+   public void setPathPreset(Devices.Sides side) {
+      // set preset requested on Settings tab
+      Properties.Keys sideKey = Properties.Keys.PLUGIN_PATH_CONFIG_A;
+      switch (side) {
+      case A:
+         sideKey = Properties.Keys.PLUGIN_PATH_CONFIG_A;
+         break;
+      case B:
+         sideKey = Properties.Keys.PLUGIN_PATH_CONFIG_B;
+         break;
+      case NONE:
+      default:
+         ReportingUtils.showError("unknown side when setting up path presets");
+         break;
+      }
+      final String preset = props_.getPropValueString(Devices.Keys.PLUGIN, sideKey);
+      final String group = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_GROUP);
+      try {
+         if (!preset.equals("")) {
+            core_.setConfig(group, preset);
+            core_.waitForConfig(group, preset);
+         }
+      } catch (Exception e) {
+         ReportingUtils.showError("Couldn't set the path config " + preset + " of group " + group);
+      }
    }
 
 }

@@ -117,4 +117,7 @@ public class AcquisitionSettings {
    // true if we are doing separate acquisition (viewer and file) for every timepoint
    public boolean separateTimepoints;
    
+   // true if we have side-specific presets that we set during acquisition
+   public boolean usePathPresets;
+   
 }

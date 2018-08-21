@@ -21,6 +21,7 @@
 
 package org.micromanager.asidispim;
 
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -29,6 +30,7 @@ import java.text.ParseException;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -53,6 +55,7 @@ import org.micromanager.asidispim.Utils.PanelUtils;
 import org.micromanager.asidispim.Utils.StagePositionUpdater;
 import org.micromanager.utils.FileDialogs;
 
+import mmcorej.StrVector;
 import net.miginfocom.swing.MigLayout;
 
 /**
@@ -62,6 +65,7 @@ import net.miginfocom.swing.MigLayout;
 @SuppressWarnings("serial")
 public class SettingsPanel extends ListeningJPanel {
    
+   private final ScriptInterface gui_;
    private final Devices devices_;
    private final Properties props_;
    private final Prefs prefs_;
@@ -69,6 +73,9 @@ public class SettingsPanel extends ListeningJPanel {
    
    private final JFormattedTextField rawPath_;
    private final JSpinner liveScanMs_;
+   private final JComboBox pathGroup_;
+   private final JComboBox presetA_;
+   private final JComboBox presetB_;
    
    /**
     * 
@@ -83,9 +90,10 @@ public class SettingsPanel extends ListeningJPanel {
       super (MyStrings.PanelNames.SETTINGS.toString(), 
             new MigLayout(
               "", 
-              "[right]16[center]16[center]",
+              "[right]10[center]10[center]",
               "[]16[]"));
      
+      gui_ = gui;
       devices_ = devices;
       props_ = props;
       prefs_ = prefs;
@@ -286,12 +294,62 @@ public class SettingsPanel extends ListeningJPanel {
       // end stage scan panel
       
       
+      // start Setup Panel settings panel
+      
+      final JPanel setupPanel = new JPanel(new MigLayout(
+            "",
+            "[right]16[left]",
+            "[]8[]"));
+      setupPanel.setBorder(PanelUtils.makeTitledBorder("Setup Panels"));
+      
+      final JCheckBox showEpiBeamSheetCB = pu.makeCheckBox("Show epi beam/sheet controls after relaunch",
+            Properties.Keys.PLUGIN_SHOW_EPI_CB, panelName_, false);
+      setupPanel.add(showEpiBeamSheetCB, "span 2, wrap, alignx left");
+      
+      setupPanel.add(new JLabel("Path group:"));
+      MultiChannelSubPanel multiChannelPanel = new MultiChannelSubPanel(gui, devices_, props_, prefs_);  // never shown, object used for method call only; this is a bit of a hack
+      String groups[] = multiChannelPanel.getAvailableGroups();
+      
+      pathGroup_ = pu.makeDropDownBox(groups, Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_GROUP, "");
+      multiChannelPanel.updateGroupsCombo(pathGroup_);
+      setupPanel.add(pathGroup_, "wrap");
+
+      setupPanel.add(new JLabel("Path A Preset:"));
+      presetA_ = pu.makeDropDownBox(getAvailablePresetsForPathGroup().toArray(), 
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_CONFIG_A, "");
+      presetA_.setMaximumSize(new Dimension(150, 30));
+      setupPanel.add(presetA_, "wrap");
+      presetB_ =  pu.makeDropDownBox(getAvailablePresetsForPathGroup().toArray(), 
+            Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_CONFIG_B, "");
+      presetB_.setMaximumSize(new Dimension(150, 30));
+      if (!ASIdiSPIM.oSPIM) {
+         setupPanel.add(new JLabel("Path B Preset:"));
+         setupPanel.add(presetB_, "wrap");
+      } else {
+         presetB_.setSelectedIndex(0);  // clear setting
+         setupPanel.add(new JLabel(""), "wrap");
+      }
+      
+      pathGroup_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent arg0) {
+            refreshPathPresetComboBoxes();
+         }
+      });
+      
+      final JCheckBox usePathGroupAcquisition = pu.makeCheckBox("Use path group during acquisition",
+            Properties.Keys.PLUGIN_USE_PATH_GROUP_ACQ, panelName_, true);
+      setupPanel.add(usePathGroupAcquisition, "span 2, wrap, alignx left");
+      
+      // end Setup Panel settings panel
+      
+      
       // start ImageJ settings panel
       
       final JPanel imageJPanel = new JPanel(new MigLayout(
             "",
             "[right]16[center]",
-            "[]8[]"));
+            "[]0[]"));
       imageJPanel.setBorder(PanelUtils.makeTitledBorder("ImageJ"));
       
       final JCheckBox useToolset = pu.makeCheckBox("Load diSPIM toolset on launch",
@@ -305,17 +363,71 @@ public class SettingsPanel extends ListeningJPanel {
       // end ImageJ settings panel
       
       
+      // construct main panel in 3 columns
+      JPanel leftColumnPanel = new JPanel(new MigLayout(
+            "flowy",
+            "0[]0",
+            "0[]10[]10[]0"));
+      JPanel middleColumnPanel = new JPanel(new MigLayout(
+            "flowy",
+            "0[]0",
+            "0[]10[]0"));
+      JPanel rightColumnPanel = new JPanel(new MigLayout(
+            "flowy",
+            "0[]0",
+            "0[]10[]0"));
+    
+      leftColumnPanel.add(guiPanel, "growx");
+      leftColumnPanel.add(testAcqPanel, "growx");
+      leftColumnPanel.add(imageJPanel, "growx");
       
-      // construct main panel
-      super.add(guiPanel);
-      super.add(scannerPanel);
-      super.add(acqusitionPanel, "wrap");
-      super.add(testAcqPanel);
-      super.add(stageScanPanel, "growx");
-      super.add(imageJPanel, "growx");
+      middleColumnPanel.add(scannerPanel, "growx");
+      middleColumnPanel.add(stageScanPanel, "growx");
       
+      rightColumnPanel.add(acqusitionPanel, "growx");
+      rightColumnPanel.add(setupPanel, "growx");
 
+      super.add(leftColumnPanel, "aligny top");
+      super.add(middleColumnPanel, "aligny top");
+      super.add(rightColumnPanel, "aligny top");
       
+   }
+   
+
+   private StrVector getAvailablePresetsForPathGroup() {
+      final String groupName = (String) pathGroup_.getSelectedItem();
+      JComboBox presetBox = new JComboBox();
+      presetBox.addItem("");  // first item is blank
+      StrVector strvConfigs = gui_.getMMCore().getAvailableConfigs(groupName);
+      strvConfigs.add("");  // adds to end, then we will reshuffle
+      // add blank entry at the start of the list, this is a hack since there doesn't seem to be a way to push on the front
+      for (int i = (int)strvConfigs.size()-1; i > 0; --i) {
+         strvConfigs.set(i, strvConfigs.get(i-1));
+      }
+      strvConfigs.set(0, "");
+      return strvConfigs;
+   }
+   
+   private void refreshPathPresetComboBoxes() {
+      String oldA = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_CONFIG_A);
+      String oldB = props_.getPropValueString(Devices.Keys.PLUGIN, Properties.Keys.PLUGIN_PATH_CONFIG_B);
+      StrVector presets = getAvailablePresetsForPathGroup();
+      presetA_.removeAllItems();
+      presetB_.removeAllItems();
+      for (int i=0; i < presets.size(); ++i) {
+         presetA_.addItem(presets.get(i));
+         presetB_.addItem(presets.get(i));
+      }
+      presetA_.setSelectedIndex(0);  // set to first (blank)
+      presetB_.setSelectedIndex(0);  // set to first (blank)
+      for (int i=0; i < presets.size(); ++i) {
+         if (presets.get(i).equals(oldA)) {
+            presetA_.setSelectedIndex(i);
+         }
+         if (presets.get(i).equals(oldB)) {
+            presetB_.setSelectedIndex(i);
+         }
+      }
    }
    
    @Override

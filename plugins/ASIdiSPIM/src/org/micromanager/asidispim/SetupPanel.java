@@ -1063,6 +1063,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       
       // move piezo and scanner to "center" position
       centerPiezoAndGalvo();
+
+      // set the side-specific preset if any
+      controller_.setPathPreset(side_);
       
       posUpdater_.pauseUpdates(false);
    }

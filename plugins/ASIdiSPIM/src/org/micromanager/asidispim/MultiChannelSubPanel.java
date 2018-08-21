@@ -192,7 +192,7 @@ public class MultiChannelSubPanel extends ListeningJPanel {
       channelGroup_  = pu.makeDropDownBox(groups, Devices.Keys.PLUGIN,
             Properties.Keys.PLUGIN_MULTICHANNEL_GROUP, "");
             
-      updateGroupsCombo(); 
+      updateGroupsCombo(channelGroup_); 
             
       channelTableModel_ = new ChannelTableModel(prefs_, panelName_,
               (String) channelGroup_.getSelectedItem(), this);
@@ -324,21 +324,23 @@ public class MultiChannelSubPanel extends ListeningJPanel {
    }
 
    /**
-    * Sets up the combo box for channel group.
+    * Sets up the combo box for channel group.  Public so it can be used as "utility method" elsewhere
+    * (used from SettingsPanel)
     */
    // TODO add listener to update whenever group is added or other triggering event
-   private void updateGroupsCombo() {
-      Object selection = channelGroup_.getSelectedItem();
+   public void updateGroupsCombo(JComboBox cb) {
+      Object selection = cb.getSelectedItem();
       String groups[] = getAvailableGroups();
       if (groups.length != 0) {
-         channelGroup_.setModel(new DefaultComboBoxModel(groups));
+         cb.setModel(new DefaultComboBoxModel(groups));
       }
-      channelGroup_.setSelectedItem(selection);
+      cb.setSelectedItem(selection);
    }
 
    /**
     * gets all valid groups from Core-ChannelGroup that have more than 1 preset 
     * ("config").  Different from the MDA method of getting valid groups.
+    * Public so it can be used as "utility method" elsewhere (used from SettingsPanel).
     */
    public String[] getAvailableGroups() {
       StrVector groups;
