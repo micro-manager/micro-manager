@@ -64,7 +64,7 @@ public class DevicesPanel extends ListeningJPanel {
               "",
               "[right]15[center, " + maxSelectorWidth + "!]16[center, "
               + maxSelectorWidth + "!]8[]8[]",
-              "[]12[]"));
+              "8[]12[]0"));
       devices_ = devices;
       core_ = gui.getMMCore();
       
@@ -160,7 +160,7 @@ public class DevicesPanel extends ListeningJPanel {
       add(new JSeparator(JSeparator.VERTICAL), "growy, cell 3 0 1 11");
       
       JLabel imgLabel = new JLabel(new ImageIcon(getClass().getResource("/org/micromanager/asidispim/icons/diSPIM.png")));
-      add(imgLabel, "cell 4 0 1 11, growy");
+      add(imgLabel, "cell 4 0 1 11");
       
       // look for devices that we don't have selectors for
       // in this case we also don't try to read device names from preferences
