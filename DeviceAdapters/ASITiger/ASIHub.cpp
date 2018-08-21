@@ -116,7 +116,7 @@ int ASIHub::QueryCommandUnterminatedResponse(const char *command, const long tim
       ret = ReadFromComPort(port_.c_str(), (unsigned char*)rcvBuf, MM::MaxStrLength, read);
 	  total_read += read;
    }
-   if (read > 0)
+   if (total_read > 0)
    {
       serialAnswer_ = rcvBuf;
    }
