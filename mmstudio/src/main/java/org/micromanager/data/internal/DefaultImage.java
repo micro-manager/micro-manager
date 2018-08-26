@@ -200,7 +200,10 @@ public final class DefaultImage implements Image {
       int bpc;
       if (pixels instanceof byte[]) bpc = 1;
       else if (pixels instanceof short[]) bpc = 2;
-      else throw new UnsupportedOperationException("Unsupported pixel data type");
+      else if (pixels instanceof int[] &&  bytesPerPixel == 4 &&
+            numComponents == 3) {
+         bpc = 1;            
+      } else throw new UnsupportedOperationException("Unsupported pixel data type");
       pixelType_ = PixelType.valueFor(bytesPerPixel, bpc,
             numComponents);
    }
