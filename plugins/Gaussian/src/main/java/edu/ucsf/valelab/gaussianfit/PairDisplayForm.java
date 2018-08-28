@@ -69,6 +69,7 @@ public class PairDisplayForm extends GUFrame{
    private static final String P2DSINGLE = "p2dsingle";
    private static final String P2DMULTIPLE = "p2dmultiple";
    private static final String SIGMAPREF = "sigma";
+   private static final String USEBOOTSTRAPPING = "useBootsTrapping";
    
    public static FileDialogs.FileType PAIR_DATA 
            = new FileDialogs.FileType("PAIR_DATA",
@@ -121,6 +122,11 @@ public class PairDisplayForm extends GUFrame{
       // final JCheckBox gaussianEstimate = 
       //        makeCheckBox("Use Gaussian fit of Vector distances", USEGAUSSIAN);
       
+            // 2 histograms, one with X and other with Y distance of pair members
+      final JCheckBox bootstrap = 
+              makeCheckBox("Error using bootstrapping (slow)", USEBOOTSTRAPPING);
+      bootstrap.setEnabled(false);
+      
       // Distance estimate
       final JCheckBox p2dDistanceEstimate =
               makeCheckBox("Calculate distance (P2D)", P2DPREF);
@@ -155,6 +161,7 @@ public class PairDisplayForm extends GUFrame{
                settings_.putString(P2DFRAMES, P2DSINGLE);
                registrationErrorTextField.setEnabled(p2dSingle.isSelected());
                registrationLabel.setEnabled(p2dSingle.isSelected());
+               bootstrap.setEnabled(false);
             }
          }
       });
@@ -165,6 +172,7 @@ public class PairDisplayForm extends GUFrame{
                settings_.putString(P2DFRAMES, P2DMULTIPLE);
                registrationErrorTextField.setEnabled(!p2dMultiple.isSelected());
                registrationLabel.setEnabled(!p2dMultiple.isSelected());
+               bootstrap.setEnabled(true);
             }
          }
       });
@@ -178,6 +186,8 @@ public class PairDisplayForm extends GUFrame{
             p2dMultiple.setEnabled(p2dDistanceEstimate.isSelected());
             registrationErrorTextField.setEnabled(
                     p2dDistanceEstimate.isSelected() && p2dSingle.isSelected());
+            bootstrap.setEnabled(
+                    p2dDistanceEstimate.isSelected() && p2dMultiple.isSelected());
             showHistogram.setEnabled(p2dDistanceEstimate.isSelected());
          }
       });
@@ -187,9 +197,10 @@ public class PairDisplayForm extends GUFrame{
      
       panel.add(p2dDistanceEstimate, "wrap");
       panel.add(p2dSingle, "gapleft 30, wrap");
-      panel.add(p2dMultiple, "gapleft 30, wrap");
-      panel.add(registrationLabel, "split 2, gapleft 35");
+      panel.add(registrationLabel, "split 2, gapleft 55");
       panel.add(registrationErrorTextField, "wrap");
+      panel.add(p2dMultiple, "gapleft 30, wrap");
+      panel.add(bootstrap, "gapleft 50, wrap");
       panel.add(showHistogram, "gapleft 30, wrap");
       
       
