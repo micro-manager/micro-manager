@@ -151,6 +151,7 @@ public class PairDisplayForm extends GUFrame{
       String buttonSelection = settings_.getString(P2DFRAMES, P2DSINGLE);
       p2dSingle.setSelected(buttonSelection.equals(P2DSINGLE));
       p2dMultiple.setSelected(buttonSelection.equals(P2DMULTIPLE));
+      bootstrap.setEnabled(p2dMultiple.isSelected());
       registrationErrorTextField.setEnabled(p2dSingle.isSelected());
       registrationLabel.setEnabled(p2dSingle.isSelected());
 
@@ -238,7 +239,8 @@ public class PairDisplayForm extends GUFrame{
                     showXYHistogram(showXYHistogram.isSelected()).
                     p2dSingleFrames(p2dSingle.isSelected()).
                     registrationError(registrationError).
-                    showHistogram(showHistogram.isSelected() );
+                    showHistogram(showHistogram.isSelected()).
+                    bootstrap(bootstrap.isSelected());
             DataCollectionForm.getInstance().listPairTracks(ppb);
 
             myFrame.dispose();

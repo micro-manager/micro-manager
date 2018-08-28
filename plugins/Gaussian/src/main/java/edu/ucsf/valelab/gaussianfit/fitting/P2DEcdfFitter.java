@@ -84,12 +84,18 @@ public class P2DEcdfFitter {
          double lsqErrorSum = 0.0d;
          Vector2D previousIntegral = new Vector2D(0.0, 0.0);
          for (Vector2D d : data_) {
-            double incrementalIntegral = in.integrate(100000000, function, 
-                    previousIntegral.getX(), d.getX());
-            double currentIntegral = previousIntegral.getY() + incrementalIntegral;
-            previousIntegral = new Vector2D(d.getX(), currentIntegral);
-            double fractionalIntegral = currentIntegral / maxIntegral;
-            lsqErrorSum += (fractionalIntegral - d.getY()) * (fractionalIntegral - d.getY());
+            if (d.getX() <= previousIntegral.getX()) {
+               // will happen when same value occurs twice as in bootstrapping
+               lsqErrorSum += (previousIntegral.getY() - d.getY()) * 
+               (previousIntegral.getY() - d.getY());
+            } else {
+               double incrementalIntegral = in.integrate(100000000, function,
+                       previousIntegral.getX(), d.getX());
+               double currentIntegral = previousIntegral.getY() + incrementalIntegral;
+               previousIntegral = new Vector2D(d.getX(), currentIntegral);
+               double fractionalIntegral = currentIntegral / maxIntegral;
+               lsqErrorSum += (fractionalIntegral - d.getY()) * (fractionalIntegral - d.getY());
+            }
          }
          return lsqErrorSum;
       }

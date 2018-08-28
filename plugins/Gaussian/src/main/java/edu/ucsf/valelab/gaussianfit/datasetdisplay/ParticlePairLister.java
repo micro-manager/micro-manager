@@ -37,7 +37,6 @@ import edu.ucsf.valelab.gaussianfit.fitting.P2DEcdfFitter;
 import edu.ucsf.valelab.gaussianfit.fitting.P2DFitter;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPoint2D;
 import edu.ucsf.valelab.gaussianfit.spotoperations.NearestPointByData;
-import edu.ucsf.valelab.gaussianfit.utils.EmpiricalCumulativeDistribution;
 import edu.ucsf.valelab.gaussianfit.utils.GaussianUtils;
 import edu.ucsf.valelab.gaussianfit.utils.ListUtils;
 import edu.ucsf.valelab.gaussianfit.utils.NumberUtils;
@@ -58,6 +57,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.math3.exception.NumberIsTooLargeException;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.ReportingUtils;
@@ -79,6 +79,7 @@ public class ParticlePairLister {
    final private Boolean p2dSingleFrames_;
    final private Double registrationError_; 
    final private Boolean showHistogram_;
+   final private Boolean bootstrap_;
    
 
    public static class Builder {
@@ -93,6 +94,7 @@ public class ParticlePairLister {
       private Boolean p2dSingleFrames_ = false;
       private Double registrationError_ = 0.0;
       private Boolean showHistogram_ = false;
+      private Boolean bootstrap_ = false;
        
       
       public ParticlePairLister build() {
@@ -149,6 +151,11 @@ public class ParticlePairLister {
          registrationError_ = registrationError;
          return this;
       }
+      
+      public Builder bootstrap(Boolean bootstrap) {
+         bootstrap_ = bootstrap;
+         return this;
+      }
 
    }
 
@@ -163,6 +170,7 @@ public class ParticlePairLister {
       p2dSingleFrames_ = builder.p2dSingleFrames_;
       registrationError_ = builder.registrationError_;
       showHistogram_ = builder.showHistogram_;
+      bootstrap_ = builder.bootstrap_;
    }
 
    public Builder copy() {
@@ -176,7 +184,8 @@ public class ParticlePairLister {
               showHistogram(showHistogram_).
               p2dSingleFrames(p2dSingleFrames_).
               registrationError(registrationError_).
-              showXYHistogram(showXYHistogram_);
+              showXYHistogram(showXYHistogram_).
+              bootstrap(bootstrap_);
    }
 
       
@@ -744,23 +753,9 @@ public class ParticlePairLister {
                /****************** P2D - Multi-Frame ***********************/
                
                if (p2dDistanceCalc_ && !p2dSingleFrames_ && allDistances.size() > 0) {
-                  
-                  double[] d = ListUtils.toArray(vectorDistances);
-                                    
-                  // P2DFitter p2df = new P2DFitter(d, null, true, true, maxDistanceNm_);
-
-                  double vectMean = ListUtils.listAvg(vectorDistances);
-                  double stdDev = ListUtils.listStdDev(vectorDistances, 
-                          vectMean);
-                  
-                  P2DEcdfFitter p2decdf = new P2DEcdfFitter(d, vectMean, stdDev, 
-                          maxDistanceNm_);
-                  
-                  //p2df.setStartParams(vectMean, stdDev);
-
-                  double[] p2dfResult = { 0.0, 0.0 };
+                  double[] p2dfResult = {0.0, 0.0};
                   try {
-                     p2dfResult = p2decdf.solve();
+                     p2dfResult = p2dLeastSquareFit(vectorDistances, maxDistanceNm_);
                   } catch (FittingException fe) {
                      String msg = "ID: " + dc.getSpotData(row).ID_
                              + ", Failed to fit p2d function";
@@ -782,18 +777,82 @@ public class ParticlePairLister {
                   double mu = p2dfResult[0];
                   double sigma = p2dfResult[1];
 
-                  // calculate standard devication accoring to Fisher information theory
+                  // calculate standard devication of MLE fit 
+                  // accoring to Fisher information theory
                   // algorithm by Jongmin Sung
                   // stdDev (of mu) = 1 / sqrt(info), where info:
                   // info = abs (LL(mu + dmu) + LL (mu-dmu) - 2 * LL(mu) / dmu^2)
                   // where dmu of 0.001nm should be small enough
-                  double dMu = 0.001;
-                  double[] llTest = {mu - dMu, mu, mu + dMu};
+                  // double dMu = 0.001;
+                  // double[] llTest = {mu - dMu, mu, mu + dMu};
+                  
                   //double[] llResult = p2df.logLikelihood(p2dfResult, llTest);
                   //double info = Math.abs(
                   //       llResult[2] + llResult[0] - 2 * llResult[1])
                   //       / (dMu * dMu);
                   //double fisherStdDev = 1 / Math.sqrt(info);
+                  
+                  double muEstimate = 0.0;
+                  double stdDevEstimate = 0.0;
+                  boolean bootstrapSucceeded = false;
+                  if (bootstrap_) {
+                     ij.IJ.showStatus("Bootstrap analysis running");
+                     int counter = 0;
+                     int errorCounter = 0;
+                     final int nrRuns = 1000;
+                     final int maxNrErrors = 10;
+                     List<Double> mus = new ArrayList<Double>();
+                     double[] bootsTrapResult;
+                     while (counter < nrRuns && errorCounter < maxNrErrors) {
+                        List bootstrapList = ListUtils.listToListForBootstrap(vectorDistances);
+                        try {
+                           bootsTrapResult = p2dLeastSquareFit(bootstrapList, maxDistanceNm_);
+                           mus.add(bootsTrapResult[0]);
+                           counter++;
+                           if (counter % 25 == 0) {
+                              ij.IJ.showProgress(counter, nrRuns);
+                           }
+                        } catch (FittingException fe) {
+                           String msg = "ID: " + dc.getSpotData(row).ID_
+                                   + ", Failed to fit p2d function";
+                           MMStudio.getInstance().alerts().postAlert("P2D fit error",
+                                   null, msg);
+                           if (row == rows_[rows_.length - 1]) {
+                              ReportingUtils.showError(msg);
+                           }
+                           errorCounter++;
+                        } catch (TooManyEvaluationsException tmee) {
+                           String msg = "ID: " + dc.getSpotData(row).ID_
+                                   + ", Too many evaluations while fitting";
+                           MMStudio.getInstance().alerts().postAlert("P2D fit error",
+                                   null, msg);
+                           if (row == rows_[rows_.length - 1]) {
+                              ReportingUtils.showError(msg);
+                           }
+                           errorCounter++;
+                        } catch (NumberIsTooLargeException nitle) {
+                           String msg = "ID: " + dc.getSpotData(row).ID_
+                                   + ", Internal error during bootystrapping";
+                           MMStudio.getInstance().alerts().postAlert("P2D fit error",
+                                   null, msg);
+                           if (row == rows_[rows_.length - 1]) {
+                              ReportingUtils.showError(msg);
+                           }
+                           errorCounter++;
+                        }
+                     }
+                     if (errorCounter >= 100) {
+                         MMStudio.getInstance().alerts().postAlert("Boostrapping error",
+                                   null, "Bootstrap analysis failed due to too many errors");
+                     } else {
+                        muEstimate = ListUtils.listAvg(mus);
+                        stdDevEstimate = ListUtils.listStdDev(mus, muEstimate);
+                        bootstrapSucceeded = true;
+                     }
+                  }
+                  
+                  
+                  ij.IJ.showStatus("");
 
                   String msg1 = "P2D fit for " + dc.getSpotData(row).getName();
                   String msg2 = "n = " + allDistances.size() + ", mu = "
@@ -809,7 +868,8 @@ public class ParticlePairLister {
                   if (showHistogram_) {
                      GaussianUtils.plotP2D("P2D fit of: "
                              + dc.getSpotData(row).getName() + " distances",
-                             d, maxDistanceNm_, p2dfResult);
+                             ListUtils.toArray(vectorDistances), maxDistanceNm_, 
+                             p2dfResult);
                   }
 
                   rt3.incrementCounter();
@@ -825,6 +885,10 @@ public class ParticlePairLister {
                   rt3.addValue("mu", mu);
                   //rt3.addValue("stdDev", fisherStdDev);
                   rt3.addValue("sigma", sigma);
+                  if (bootstrapSucceeded) {
+                     rt3.addValue("bootstrap Mu", muEstimate);
+                     rt3.addValue("bootstrap StdDev", stdDevEstimate);
+                  }
                   
                   rt3.show("P2D Summary");
 
@@ -863,6 +927,21 @@ public class ParticlePairLister {
       double avg = ListUtils.avg(input);
       gf.setStartParams(avg, ListUtils.stdDev(input, avg));
       return gf.solve();
+   }
+   
+   public static double[] p2dLeastSquareFit(List distances, double maxDistance) 
+           throws FittingException, TooManyEvaluationsException {
+      double[] d = ListUtils.toArray(distances);
+
+      double vectMean = ListUtils.listAvg(distances);
+      double stdDev = ListUtils.listStdDev(distances,
+              vectMean);
+
+      P2DEcdfFitter p2decdf = new P2DEcdfFitter(d, vectMean, stdDev,
+              maxDistance);
+
+      return p2decdf.solve();
+
    }
 
 }
