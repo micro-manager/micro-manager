@@ -2175,8 +2175,8 @@ public class DataCollectionForm extends JFrame {
                rt.addValue(Terms.XFITPIX, gd.getXCenter());
                rt.addValue(Terms.YFITPIX, gd.getYCenter());
             }
-            rt.addValue(Terms.INT, gd.getIntensity());
-            rt.addValue(Terms.BACKGROUND, gd.getBackground());
+            //rt.addValue(Terms.INT, gd.getIntensity());
+            //rt.addValue(Terms.BACKGROUND, gd.getBackground());
             if (shape >= 1) {
                rt.addValue(Terms.WIDTH, gd.getWidth());
             }
@@ -2186,16 +2186,17 @@ public class DataCollectionForm extends JFrame {
             if (shape == 3) {
                rt.addValue(Terms.THETA, gd.getTheta());
             }
-            rt.addValue(Terms.SIGMA, ResultsTable.d2s(gd.getSigma(), 2));
-
-            for (String key : gd.getKeys()) {
-               if (key.equals(SpotData.Keys.INTENSITYRATIO) || 
-                       key.equals(SpotData.Keys.MSIGMA) || 
-                       key.equals(SpotData.Keys.INTEGRALSIGMA) ) {
-                  rt.addValue(key, ResultsTable.d2s(gd.getValue(key), 2));
-               } else {
+            //rt.addValue(Terms.SIGMA, ResultsTable.d2s(gd.getSigma(), 2));
+            String[] gdKeys = {SpotData.Keys.APERTUREINTENSITY,
+               SpotData.Keys.APERTUREBACKGROUND};
+            for (String key : gdKeys) {
+               if (gd.hasKey(key)) {
                   rt.addValue(key, gd.getValue(key));
                }
+            }
+            if (gd.hasKey(SpotData.Keys.INTEGRALAPERTURESIGMA)) {
+               String key = SpotData.Keys.INTEGRALAPERTURESIGMA;
+               rt.addValue(key, ResultsTable.d2s(gd.getValue(key), 2));
             }
          }
       }

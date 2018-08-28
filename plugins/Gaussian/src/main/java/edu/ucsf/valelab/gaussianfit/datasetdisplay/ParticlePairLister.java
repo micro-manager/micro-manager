@@ -324,10 +324,10 @@ public class ParticlePairLister {
                            pairTable.addValue(Terms.YPIX, pair.getFirstSpot().getY());
                            pairTable.addValue("X1", pair.getFirstSpot().getXCenter());
                            pairTable.addValue("Y1", pair.getFirstSpot().getYCenter());
-                           pairTable.addValue("Sigma1", pair.getFirstSpot().getSigma());
+                           pairTable.addValue("Sigma1", pair.getFirstSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
                            pairTable.addValue("X2", pair.getSecondSpot().getXCenter());
                            pairTable.addValue("Y2", pair.getSecondSpot().getYCenter());
-                           pairTable.addValue("Sigma2", pair.getSecondSpot().getSigma());
+                           pairTable.addValue("Sigma2", pair.getSecondSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
                            double d2 = NearestPoint2D.distance2(pair.getFirstPoint(), pair.getSecondPoint());
                            double d = Math.sqrt(d2);
                            pairTable.addValue("Distance", d);
@@ -448,16 +448,15 @@ public class ParticlePairLister {
                      allDistances.add(distance);
                      xDiff.add(pair.getFirstPoint().getX() - pair.getSecondPoint().getX());
                      yDiff.add(pair.getFirstPoint().getY() - pair.getSecondPoint().getY());
-                     double sigma = Math.sqrt(
-                             pair.getFirstSpot().getSigma()
-                             * pair.getFirstSpot().getSigma()
-                             + pair.getSecondSpot().getSigma()
-                             * pair.getSecondSpot().getSigma()
-                             + registrationError_ * registrationError_ );
+                     double sigma1 = pair.getFirstSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA);
+                     double sigma2 = pair.getSecondSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA);
+                     double sigma = Math.sqrt(sigma1 * sigma1 +
+                                       sigma2 * sigma2 +
+                                       registrationError_ * registrationError_ );
                      sigmas.add(sigma);
                      allSigmas.add(sigma);
-                     sigmasFirstSpot.add(pair.getFirstSpot().getSigma());
-                     sigmasSecondSpot.add(pair.getSecondSpot().getSigma());
+                     sigmasFirstSpot.add(sigma1);
+                     sigmasSecondSpot.add(sigma2);
                   }
                   GsSpotPair pair = track.get(0);
                   rt2.incrementCounter();

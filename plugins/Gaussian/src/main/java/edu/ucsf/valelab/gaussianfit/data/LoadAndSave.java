@@ -289,6 +289,10 @@ public class LoadAndSave {
                        Double.parseDouble(k.get("intensity_ratio")));
                gsd.addKeyValue(SpotData.Keys.MSIGMA, 
                        Double.parseDouble(k.get("m_sigma")));
+               if (k.containsKey("integral_aperture_sigma")) {
+                  gsd.addKeyValue(SpotData.Keys.INTEGRALAPERTURESIGMA,
+                          Double.parseDouble(k.get("integral_aperture_sigma")));
+               }
             }
             if (hasZ) {
                double zc = Double.parseDouble(k.get("z"));
@@ -382,6 +386,7 @@ public class LoadAndSave {
             registry.add(MMLocM.intensityBackground);
             registry.add(MMLocM.intensityRatio);
             registry.add(MMLocM.mSigma);
+            registry.add(MMLocM.integralApertureSigma);
          }
          String name = psl.getName();
          String title = psl.getName();
@@ -429,6 +434,10 @@ public class LoadAndSave {
                           pSpot.getExtension(MMLocM.intensityRatio));
                   gSpot.addKeyValue(SpotData.Keys.MSIGMA,
                           pSpot.getExtension(MMLocM.mSigma));
+                  if (pSpot.hasExtension(MMLocM.integralApertureSigma)) {
+                     gSpot.addKeyValue(SpotData.Keys.INTEGRALAPERTURESIGMA, 
+                             pSpot.getExtension(MMLocM.integralApertureSigma));
+                  }
                }
                if (pSpot.hasZ()) {
                   double zc = pSpot.getZ();
@@ -598,7 +607,11 @@ public class LoadAndSave {
                              setExtension(MMLocM.intensityRatio, 
                                   gd.getValue(SpotData.Keys.INTENSITYRATIO).floatValue()).
                              setExtension(MMLocM.mSigma, 
-                                  gd.getValue(SpotData.Keys.MSIGMA).floatValue());
+                                  gd.getValue(SpotData.Keys.MSIGMA).floatValue()).
+                             setExtension(MMLocM.integralApertureSigma,
+                                  gd.getValue(SpotData.Keys.INTEGRALAPERTURESIGMA).floatValue()
+                     );
+                     
                      if (rowData[rowNr].hasZ_) {
                         spotBuilder.setZ((float) gd.getZCenter());
                      }
@@ -707,7 +720,7 @@ public class LoadAndSave {
                              + "y_position\tx\ty\tintensity\t"
                              + "background\twidth\ta\ttheta\t"
                              + "sigma\tintensity_aperture\tbackground_aperture\t"
-                             + "intensity_ratio\tm_sigma");
+                             + "intensity_ratio\tm_sigma\tintegral_aperture_sigma");
                      if (rows[rowNr].hasZ_) {
                         fw.write("\tz");
                      }
@@ -753,6 +766,10 @@ public class LoadAndSave {
                            remainder += tab;
                            if (gd.hasKey(SpotData.Keys.MSIGMA)) {
                               remainder += String.format("%.3f", gd.getValue(SpotData.Keys.MSIGMA).floatValue());
+                           }
+                           remainder += tab;
+                           if (gd.hasKey(SpotData.Keys.INTEGRALAPERTURESIGMA)) {
+                              remainder += String.format("%.3f", gd.getValue(SpotData.Keys.INTEGRALAPERTURESIGMA).floatValue());
                            }
                            fw.write(remainder);
                            if (rows[rowNr].hasZ_) {
