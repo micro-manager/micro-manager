@@ -333,10 +333,16 @@ public class ParticlePairLister {
                            pairTable.addValue(Terms.YPIX, pair.getFirstSpot().getY());
                            pairTable.addValue("X1", pair.getFirstSpot().getXCenter());
                            pairTable.addValue("Y1", pair.getFirstSpot().getYCenter());
-                           pairTable.addValue("Sigma1", pair.getFirstSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
+                           if (pair.getFirstSpot().hasKey(SpotData.Keys.INTEGRALAPERTURESIGMA)) {
+                              pairTable.addValue("Sigma1", pair.getFirstSpot().
+                                      getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
+                           }
                            pairTable.addValue("X2", pair.getSecondSpot().getXCenter());
                            pairTable.addValue("Y2", pair.getSecondSpot().getYCenter());
-                           pairTable.addValue("Sigma2", pair.getSecondSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
+                           if (pair.getSecondSpot().hasKey(SpotData.Keys.INTEGRALAPERTURESIGMA)) {
+                              pairTable.addValue("Sigma2", pair.getSecondSpot().
+                                      getValue(SpotData.Keys.INTEGRALAPERTURESIGMA));
+                           }
                            double d2 = NearestPoint2D.distance2(pair.getFirstPoint(), pair.getSecondPoint());
                            double d = Math.sqrt(d2);
                            pairTable.addValue("Distance", d);
@@ -457,15 +463,18 @@ public class ParticlePairLister {
                      allDistances.add(distance);
                      xDiff.add(pair.getFirstPoint().getX() - pair.getSecondPoint().getX());
                      yDiff.add(pair.getFirstPoint().getY() - pair.getSecondPoint().getY());
-                     double sigma1 = pair.getFirstSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA);
-                     double sigma2 = pair.getSecondSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA);
-                     double sigma = Math.sqrt(sigma1 * sigma1 +
-                                       sigma2 * sigma2 +
-                                       registrationError_ * registrationError_ );
-                     sigmas.add(sigma);
-                     allSigmas.add(sigma);
-                     sigmasFirstSpot.add(sigma1);
-                     sigmasSecondSpot.add(sigma2);
+                     if (pair.getFirstSpot().hasKey(SpotData.Keys.INTEGRALAPERTURESIGMA)
+                             && pair.getSecondSpot().hasKey(SpotData.Keys.INTEGRALAPERTURESIGMA)) {
+                        double sigma1 = pair.getFirstSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA);
+                        double sigma2 = pair.getSecondSpot().getValue(SpotData.Keys.INTEGRALAPERTURESIGMA);
+                        double sigma = Math.sqrt(sigma1 * sigma1
+                                + sigma2 * sigma2
+                                + registrationError_ * registrationError_);
+                        sigmas.add(sigma);
+                        allSigmas.add(sigma);
+                        sigmasFirstSpot.add(sigma1);
+                        sigmasSecondSpot.add(sigma2);
+                     }
                   }
                   GsSpotPair pair = track.get(0);
                   rt2.incrementCounter();
@@ -487,9 +496,10 @@ public class ParticlePairLister {
                   rt2.addValue("Distance-StdDev", std);
                  
                   // Average of weighted sigmas: Sqrt(sigma1(^2) + sigma2(^2) in this track
-                  double avgSigma = ListUtils.listAvg(sigmas);
-                  rt2.addValue("Distance Uncertainty", avgSigma);
-                  
+                  if (sigmas.size() > 0) {
+                     double avgSigma = ListUtils.listAvg(sigmas);
+                     rt2.addValue("Distance Uncertainty", avgSigma);
+                  }
                   // only needed when using p2d - multiframe
                   if (p2dDistanceCalc_ && !p2dSingleFrames_) {
                      double xDiffAvg = ListUtils.listAvg(xDiff);
@@ -606,7 +616,8 @@ public class ParticlePairLister {
                   double[] d = ListUtils.toArray(allDistances);
                   double[] sigmas = ListUtils.toArray(allSigmas);
                   if (d.length != sigmas.length) {
-                     ReportingUtils.showError("Internal Error: number of distances and sigmas not identical");
+                     ReportingUtils.showError("Internal Error: number of distances and sigmas not identical\n"
+                             + "Data may not contain Mortenson Integral Sigma from Aperture intensity");
                      return;
                   }
                          
