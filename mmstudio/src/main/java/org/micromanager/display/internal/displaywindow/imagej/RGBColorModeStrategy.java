@@ -64,9 +64,8 @@ class RGBColorModeStrategy implements ColorModeStrategy {
          unscaledRGBImage_ = imagePlus_.getProcessor();
       }
       imagePlus_.setProcessor(unscaledRGBImage_.duplicate());
-      int[] luts = getRGBLUTs();
       ((ColorProcessor) imagePlus_.getProcessor()).
-               applyTable(luts);
+               applyTable(getRGBLUTs());
    }
 
    @Override

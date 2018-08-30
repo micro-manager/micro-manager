@@ -406,9 +406,9 @@ public final class ImageUtils {
    public static int[] convertRGB32BytesToInt(byte[] pixels) {
       int[] ints = new int[pixels.length/4];
       for (int i=0; i<ints.length; ++i) {
-         ints[i] =  pixels[4*i]
-                 + (pixels[4*i + 1] << 8)
-                 + (pixels[4*i + 2] << 16);
+         ints[i] =  (pixels[4*i] & 0xff)
+                 + ( (pixels[4*i + 1] & 0xff) << 8) 
+                 + ( (pixels[4*i + 2] & 0xff) << 16);
       }
       return ints;
    }
