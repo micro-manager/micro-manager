@@ -34,7 +34,7 @@ public final class DefaultChannelDisplaySettings
       private boolean useUniformComponentScaling_ = false;
       private boolean visible_ = true;
       private int histoRangeBits_ = 8; 
-      private boolean useCameraRange_;
+      private boolean useCameraRange_ = true;
       private final List<ComponentDisplaySettings> componentSettings_ =
             new ArrayList<ComponentDisplaySettings>();
 
@@ -222,6 +222,8 @@ public final class DefaultChannelDisplaySettings
       builder.color_ = color_;
       builder.useUniformComponentScaling_ = useUniformComponentScaling_;
       builder.visible_ = visible_;
+      builder.histoRangeBits_= histoRangeBits_;
+      builder.useCameraRange_ = useCameraRange_;
       builder.componentSettings_.clear();
       builder.componentSettings_.addAll(componentSettings_);
       return builder;
@@ -249,6 +251,7 @@ public final class DefaultChannelDisplaySettings
             putBoolean(PropertyKey.UNIFORM_COMPONENT_SCALING.key(), useUniformComponentScaling_).
             putBoolean(PropertyKey.VISIBLE.key(), visible_).
             putInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), histoRangeBits_).
+            putBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), useCameraRange_).
             putPropertyMapList(PropertyKey.COMPONENT_SETTINGS.key(), componentSettings).
             build();
    }
@@ -284,6 +287,10 @@ public final class DefaultChannelDisplaySettings
       if (pMap.containsInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key())) {
          b.histoRangeBits(pMap.getInteger(PropertyKey.HISTOGRAM_BIT_DEPTH.key(), 
                  b.histoRangeBits_));
+      }
+      if (pMap.containsBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key())) {
+         b.useCameraHistoRange(pMap.getBoolean(PropertyKey.USE_CAMERA_BIT_DEPTH.key(), 
+                 b.useCameraRange_));
       }
             
       return b.build();

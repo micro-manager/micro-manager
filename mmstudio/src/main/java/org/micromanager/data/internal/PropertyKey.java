@@ -1278,6 +1278,8 @@ public enum PropertyKey {
 
    UNIFORM_CHANNEL_SCALING("UniformChannelScaling", DisplaySettings.class),
    
+   USE_CAMERA_BIT_DEPTH("UseCameraBitDepth", ChannelDisplaySettings.class),
+   
    USER_DATA("UserData", "userData", Metadata.class, SummaryMetadata.class) {
       @Override
       public String getDescription() {
