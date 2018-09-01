@@ -58,7 +58,7 @@ public final class DefaultImageJConverter implements ImageJConverter {
          // Micro-Manager RGB32 images are generally composed of byte
          // arrays, but ImageJ only takes int arrays.
          if (pixels instanceof byte[]) {
-            pixels = ImageUtils.convertRGB32BytesToInt((byte[]) pixels);
+            pixels = ImageUtils.convertRGB32UBytesToInt((byte[]) pixels);
          }
          return new ColorProcessor(width, height, (int[]) pixels);
       }

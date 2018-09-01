@@ -125,7 +125,10 @@ public final class ImageUtils {
         try {
             ImageProcessor processor;
             if (MDUtils.isRGB32(taggedImage)) {
-                ColorProcessor colorProcessor = new ColorProcessor(MDUtils.getWidth(taggedImage.tags), MDUtils.getHeight(taggedImage.tags), convertRGB32BytesToInt((byte []) taggedImage.pix));
+                ColorProcessor colorProcessor = new ColorProcessor(
+                        MDUtils.getWidth(taggedImage.tags), 
+                        MDUtils.getHeight(taggedImage.tags), 
+                        convertRGB32UBytesToInt((byte []) taggedImage.pix));
                 processor = colorProcessor.convertToByteProcessor();
             } else {
                 processor = makeProcessor(taggedImage);
@@ -402,8 +405,32 @@ public final class ImageUtils {
       }
       return bytes;
    }
-
+   
+   /**
+    * Converts a sequence of 4 bytes into an int.
+    * Note that this function assumes bytes to be signed.  Most data
+    * coming from MMCore will have unsigned bytes, so used the appropriate 
+    * function for that conversion.
+    * @param pixels
+    * @return 
+    */
    public static int[] convertRGB32BytesToInt(byte[] pixels) {
+      int[] ints = new int[pixels.length/4];
+      for (int i=0; i<ints.length; ++i) {
+         ints[i] =  (pixels[4*i])
+                 + ( (pixels[4*i + 1]) << 8) 
+                 + ( (pixels[4*i + 2]) << 16);
+      }
+      return ints;
+   }
+
+   /**
+    * Used to convert unsigned bytes coming from the C++ later into
+    * ints that can be used by ImageJ. 
+    * @param pixels
+    * @return 
+    */
+   public static int[] convertRGB32UBytesToInt(byte[] pixels) {
       int[] ints = new int[pixels.length/4];
       for (int i=0; i<ints.length; ++i) {
          ints[i] =  (pixels[4*i] & 0xff)
