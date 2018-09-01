@@ -121,7 +121,7 @@ public final class CenterAndDragListener {
                affineTransform_ = null;
             }
          } catch (Exception ex) {
-            ReportingUtils.logError(ex, "Failed to find affine transform");
+            ReportingUtils.logError("Failed to find affine transform");
          }
       } catch (Exception exc) {
          ReportingUtils.showError(exc);
