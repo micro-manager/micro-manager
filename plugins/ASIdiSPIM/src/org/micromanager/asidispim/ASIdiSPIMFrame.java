@@ -280,6 +280,21 @@ public class ASIdiSPIMFrame extends MMFrame
       tabbedPane_.setSelectedIndex(helpTabIndex);  // setSelectedIndex(0) just after initialization doesn't fire ChangeListener, so switch to help panel first
       tabbedPane_.setSelectedIndex(prefs_.getInt(MAIN_PREF_NODE, Prefs.Keys.TAB_INDEX, deviceTabIndex));  // default to devicesPanel_ on first run
 
+      // if devices panel unpopulated then show that
+      if ( devices_.getMMDevice(Devices.Keys.XYSTAGE) == null
+            && devices_.getMMDevice(Devices.Keys.UPPERZDRIVE) == null 
+            && devices_.getMMDevice(Devices.Keys.LOWERZDRIVE) == null 
+            && devices_.getMMDevice(Devices.Keys.CAMERAA) == null 
+            && devices_.getMMDevice(Devices.Keys.CAMERAB) == null 
+            && devices_.getMMDevice(Devices.Keys.PIEZOA) == null 
+            && devices_.getMMDevice(Devices.Keys.PIEZOB) == null 
+            && devices_.getMMDevice(Devices.Keys.GALVOA) == null 
+            && devices_.getMMDevice(Devices.Keys.GALVOB) == null 
+            && devices_.getMMDevice(Devices.Keys.PLOGIC) == null ) {
+         tabbedPane_.setSelectedIndex(deviceTabIndex);
+      }
+      
+      
       // set up the window
       add(tabbedPane_);  // add the pane to the GUI window
       setTitle(ASIdiSPIM.menuName + " Control"); 
