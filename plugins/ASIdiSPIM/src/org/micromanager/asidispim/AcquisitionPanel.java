@@ -2438,7 +2438,9 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
          sideActiveA = true;
          sideActiveB = true;
       } else {
-         secondCamera = null;
+         if (!acqSettingsOrig.acquireBothCamerasSimultaneously) {
+            secondCamera = null;
+         }
          if (firstSideA) {
             sideActiveA = true;
             sideActiveB = false;
