@@ -138,7 +138,7 @@ public class DevicesPanel extends ListeningJPanel {
       final JComboBox boxPiezoB_ = du.makeDeviceSelectionBox(mmcorej.DeviceType.StageDevice,
             Devices.Keys.PIEZOB, maxSelectorWidth);
       if (!ASIdiSPIM.oSPIM) {
-      add(boxPiezoB_, "wrap");
+         add(boxPiezoB_, "wrap");
       } else {
          boxPiezoB_.setSelectedIndex(0);  // clear setting
          add(new JLabel(""), "wrap");
@@ -148,12 +148,14 @@ public class DevicesPanel extends ListeningJPanel {
       final JComboBox boxCameraA_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAA, maxSelectorWidth);
       add(boxCameraA_);
       final JComboBox boxCameraB_ = du.makeSingleCameraDeviceBox(Devices.Keys.CAMERAB, maxSelectorWidth);
-      if (!ASIdiSPIM.oSPIM) {
       add(boxCameraB_, "wrap");
-      } else {
-         boxCameraB_.setSelectedIndex(0);  // clear setting
-         add(new JLabel(""), "wrap");
-      }
+      // this change a hack to allow two-color in oSPIM by using the option for triggering both cameras simultaneously
+//      if (!ASIdiSPIM.oSPIM) {
+//         add(boxCameraB_, "wrap");
+//      } else {
+//         boxCameraB_.setSelectedIndex(0);  // clear setting
+//         add(new JLabel(""), "wrap");
+//      }
       
       add(new JLabel("Note: plugin must be restarted for some changes to take full effect."), "span 3");
 

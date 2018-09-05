@@ -96,6 +96,7 @@ import org.micromanager.utils.MMFrame;
 //TODO use new J *=0 to more efficiently clear joystick settings (require comm card version 3.1)
 //TODO use new W * to more efficiently get positions (will return in same order as comm card parses)
 //TODO be more efficient in serial commands, including not resending same commands (largely obviated once shared properties on same card are implemented)
+//TODO change architecting of camera code to make it possible to use Multi-camera devices for simultaneous multiple color (currently can simulate for single side and 2 cameras using simultaneous acquisition from both sides)
 
 /**
  *
