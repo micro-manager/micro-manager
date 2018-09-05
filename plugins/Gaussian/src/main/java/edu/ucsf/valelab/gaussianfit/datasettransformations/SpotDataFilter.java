@@ -92,12 +92,18 @@ public class SpotDataFilter {
     * @return true if spot is acceptable
     */
    public boolean filter (SpotData spot) {
+      final String INTEGRALSIGMA = SpotData.Keys.INTEGRALSIGMA;
       if (useSigma_) {
-         if (spot.getSigma() < sigmaMin_ || spot.getSigma() > sigmaMax_)
+         if (spot.hasKey(INTEGRALSIGMA) && (  // return false if no IntegralSigma found?
+                 spot.getValue(INTEGRALSIGMA)) < sigmaMin_ || 
+                 spot.getValue(INTEGRALSIGMA) > sigmaMax_)
             return false;
       }
       if (useIntensity_) {
-         if (spot.getIntensity() < intensityMin_ || spot.getIntensity() > intensityMax_)
+         final String INTENSITY = SpotData.Keys.APERTUREINTENSITY;
+         if ( spot.hasKey(INTENSITY) && (
+                 spot.getValue(INTENSITY) < intensityMin_ || 
+                 spot.getValue(INTENSITY) > intensityMax_) )
             return false;
       }
       Set<String> itemFilterKeySet = itemFilter_.keySet();
