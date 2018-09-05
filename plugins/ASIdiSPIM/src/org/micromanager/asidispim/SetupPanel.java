@@ -911,7 +911,7 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       boolean success = positions_.setPosition(piezoImagingDeviceKey_, imagingCenterPos_, true);
       if (success || !devices_.isValidMMDevice(piezoImagingDeviceKey_)) {
          positions_.setPosition(micromirrorDeviceKey_, Directions.Y,
-            computeGalvoFromPiezo(imagingCenterPos_));
+            computeGalvoFromPiezo(imagingCenterPos_), true);
       }
    }
    
