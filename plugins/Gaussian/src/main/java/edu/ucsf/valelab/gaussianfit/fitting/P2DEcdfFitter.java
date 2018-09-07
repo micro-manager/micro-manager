@@ -37,7 +37,6 @@ import org.apache.commons.math3.optim.InitialGuess;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.PointValuePair;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
-import org.apache.commons.math3.optim.nonlinear.scalar.MultivariateFunctionMappingAdapter;
 import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.NelderMeadSimplex;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.SimplexOptimizer;
@@ -94,7 +93,7 @@ public class P2DEcdfFitter {
                double currentIntegral = previousIntegral.getY() + incrementalIntegral;
                previousIntegral = new Vector2D(d.getX(), currentIntegral);
                double fractionalIntegral = currentIntegral / maxIntegral;
-               lsqErrorSum += (fractionalIntegral - d.getY()) * (fractionalIntegral - d.getY());
+               lsqErrorSum += ( (fractionalIntegral - d.getY()) * (fractionalIntegral - d.getY()) );
             }
          }
          return lsqErrorSum;
@@ -122,7 +121,7 @@ public class P2DEcdfFitter {
    public double[] solve() throws FittingException {
       SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
       P2DIntegralFunc integralFunction = new P2DIntegralFunc(ecd_);
-      
+          
       // approach: calculate cdf.  Use a Simplexoptimizer to optimize the 
       // least square error function of the numerical calculation of the PDF
       // against the experimental cdf
