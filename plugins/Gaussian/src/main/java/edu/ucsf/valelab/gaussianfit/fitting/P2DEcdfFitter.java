@@ -50,6 +50,7 @@ public class P2DEcdfFitter {
    private final double muGuess_;
    private final double sigmaGuess_;
    private final double maxMu_;
+   private final boolean useApproximation_;
    
    /**
     * Helper class to calculate the least square error between the numerically
@@ -58,9 +59,11 @@ public class P2DEcdfFitter {
    */
    private class P2DIntegralFunc implements MultivariateFunction {
       private final Vector2D[] data_;
+      private final boolean useApproximation_;
       
-      public P2DIntegralFunc(Vector2D[] data) {
+      public P2DIntegralFunc(Vector2D[] data, boolean useApproximation) {
          data_ = data;
+         useApproximation_ = useApproximation;
       }
        
       /**
@@ -70,34 +73,80 @@ public class P2DEcdfFitter {
        */
       @Override
       public double value(double[] input) {
-         // use real P2d unless mu > 5 * sigma
-         UnivariateFunction function = v ->  P2DFunctions.p2d(v, input[0], 
-                 input[1]);
-         if (input[0] > 5 * input[1]) {
-            function = v ->  P2DFunctions.p2dApproximation(v, input[0], 
-                 input[1]);
-         }
-         UnivariateIntegrator in = new SimpsonIntegrator();
-         double maxIntegral = in.integrate(100000000, function, 0.0, 
-                 data_[data_.length - 1].getX());
-         double lsqErrorSum = 0.0d;
-         Vector2D previousIntegral = new Vector2D(0.0, 0.0);
-         for (Vector2D d : data_) {
-            if (d.getX() <= previousIntegral.getX()) {
-               // will happen when same value occurs twice as in bootstrapping
-               lsqErrorSum += (previousIntegral.getY() - d.getY()) * 
-               (previousIntegral.getY() - d.getY());
-            } else {
-               double incrementalIntegral = in.integrate(100000000, function,
-                       previousIntegral.getX(), d.getX());
-               double currentIntegral = previousIntegral.getY() + incrementalIntegral;
-               previousIntegral = new Vector2D(d.getX(), currentIntegral);
-               double fractionalIntegral = currentIntegral / maxIntegral;
-               lsqErrorSum += ( (fractionalIntegral - d.getY()) * (fractionalIntegral - d.getY()) );
+         if (useApproximation_) {
+            // use real P2d unless mu > 5 * sigma
+            UnivariateFunction function = v -> P2DFunctions.p2d(v, input[0],
+                    input[1]);
+            if (input[0] > 5 * input[1]) {
+               function = v -> P2DFunctions.p2dApproximation(v, input[0],
+                       input[1]);
             }
+            UnivariateFunction simpleFunction = v ->P2DFunctions.p2dNoBessel(v, input[0],
+                    input[1]);
+            
+            UnivariateIntegrator in = new SimpsonIntegrator();
+            
+            int cutoffIndex = 0; 
+            while (cutoffIndex < data_.length && 
+                    data_[cutoffIndex].getX() < input[1]) {
+               cutoffIndex++;
+            }
+            double maxIntegral = in.integrate(100000000, function, 0.0,
+                    data_[cutoffIndex].getX()) + 
+                    in.integrate(100000000, function, data_[cutoffIndex].getX(),
+                    data_[data_.length - 1].getX());
+            double lsqErrorSum = 0.0d;
+            Vector2D previousIntegral = new Vector2D(0.0, 0.0);
+            for (Vector2D d : data_) {
+               if (d.getX() <= previousIntegral.getX()) {
+                  // will happen when same value occurs twice as in bootstrapping
+                  lsqErrorSum += (previousIntegral.getY() - d.getY())
+                          * (previousIntegral.getY() - d.getY());
+               } else {
+                  UnivariateFunction tmpF = function;
+                  if (d.getX() < input[1]) {
+                     tmpF = simpleFunction;
+                  }
+                  double incrementalIntegral = in.integrate(100000000, tmpF,
+                          previousIntegral.getX(), d.getX());
+                  double currentIntegral = previousIntegral.getY() + incrementalIntegral;
+                  previousIntegral = new Vector2D(d.getX(), currentIntegral);
+                  double fractionalIntegral = currentIntegral / maxIntegral;
+                  lsqErrorSum += ((fractionalIntegral - d.getY()) * (fractionalIntegral - d.getY()));
+               }
+            }
+            return lsqErrorSum;
+         } else {
+            // use real P2d unless mu > 5 * sigma
+            UnivariateFunction function = v -> P2DFunctions.p2d(v, input[0],
+                    input[1]);
+            if (input[0] > 5 * input[1]) {
+               function = v -> P2DFunctions.p2dApproximation(v, input[0],
+                       input[1]);
+            }
+            UnivariateIntegrator in = new SimpsonIntegrator();
+            double maxIntegral = in.integrate(100000000, function, 0.0,
+                    data_[data_.length - 1].getX());
+            double lsqErrorSum = 0.0d;
+            Vector2D previousIntegral = new Vector2D(0.0, 0.0);
+            for (Vector2D d : data_) {
+               if (d.getX() <= previousIntegral.getX()) {
+                  // will happen when same value occurs twice as in bootstrapping
+                  lsqErrorSum += (previousIntegral.getY() - d.getY())
+                          * (previousIntegral.getY() - d.getY());
+               } else {
+                  double incrementalIntegral = in.integrate(100000000, function,
+                          previousIntegral.getX(), d.getX());
+                  double currentIntegral = previousIntegral.getY() + incrementalIntegral;
+                  previousIntegral = new Vector2D(d.getX(), currentIntegral);
+                  double fractionalIntegral = currentIntegral / maxIntegral;
+                  lsqErrorSum += ((fractionalIntegral - d.getY()) * (fractionalIntegral - d.getY()));
+               }
+            }
+            return lsqErrorSum;
          }
-         return lsqErrorSum;
       }
+      
    }
 
 
@@ -110,17 +159,20 @@ public class P2DEcdfFitter {
     * @param muGuess Initial estimate of mu
     * @param sigmaGuess Initial estimate for sigma
     * @param maxMu Maximum bound for mu.  Currently not used. Need to figure out bounding
+    * @param useApproximation - whether or not to use the simplified P2d without Bessel function
     */
-   public P2DEcdfFitter(double[] d, double muGuess, double sigmaGuess, double maxMu) {
+   public P2DEcdfFitter(double[] d, double muGuess, double sigmaGuess, 
+           double maxMu, boolean useApproximation) {
       ecd_ = EmpiricalCumulativeDistribution.calculate(d);
       muGuess_ = muGuess;
       sigmaGuess_ = sigmaGuess;
       maxMu_ = maxMu;  // TODO: figure out how to properly use bounds
+      useApproximation_ = useApproximation;
    }
 
    public double[] solve() throws FittingException {
       SimplexOptimizer optimizer = new SimplexOptimizer(1e-9, 1e-12);
-      P2DIntegralFunc integralFunction = new P2DIntegralFunc(ecd_);
+      P2DIntegralFunc integralFunction = new P2DIntegralFunc(ecd_, useApproximation_);
           
       // approach: calculate cdf.  Use a Simplexoptimizer to optimize the 
       // least square error function of the numerical calculation of the PDF
