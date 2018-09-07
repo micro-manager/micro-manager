@@ -32,6 +32,7 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
    private final Class cp_ = MMStudio.class;
 
    double safeTravelRadiusUm_ = 1000;
+   boolean displayCC_ = false;  //Whether or not the cross correlation used to track image position should be displayed.
 
    public void dispose() {
       stopCalibration();

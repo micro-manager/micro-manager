@@ -176,7 +176,7 @@ public class CalibrationThread extends Thread {
          d.y = d.y * 2;
          Point2D.Double p = new Point2D.Double(initPos.x+dx, initPos.y+dy);
          try{
-             d = measureDisplacement(p, d, false); //get the measured pixel displacement.
+             d = measureDisplacement(p, d, plugin_.displayCC_); //get the measured pixel displacement.
          }
          catch (CalibrationFailedException err){
              app_.logs().showMessage("Reached end of safe distance");
@@ -250,7 +250,7 @@ public class CalibrationThread extends Thread {
       throws InterruptedException, CalibrationFailedException
    {
       Point2D.Double s1 = (Point2D.Double) firstApprox.transform(c1, null); //Transform from C1 (pixel space) to s1 (real space)
-      Point2D.Double c2 = measureDisplacement(s1, c1, false);
+      Point2D.Double c2 = measureDisplacement(s1, c1, plugin_.displayCC_);
       Point2D.Double s2;
       try {
          s2 = app_.getCMMCore().getXYStagePosition();
