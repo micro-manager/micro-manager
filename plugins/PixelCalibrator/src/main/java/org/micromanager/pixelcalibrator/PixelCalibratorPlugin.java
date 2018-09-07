@@ -86,10 +86,6 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
       }
    }
 
-   private double getPixelSize(AffineTransform cameraToStage) {
-      return Math.sqrt(Math.abs(cameraToStage.getDeterminant()));
-   }
-
    public synchronized boolean isCalibrationRunning() {
       if (calibrationThread_ != null) {
          return calibrationThread_.isAlive();
@@ -135,21 +131,14 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
          return;
       }
 
-      double pixelSize = MathUtils.round(getPixelSize(result), 4);
+      double pixelSize = MathUtils.round(Math.sqrt(Math.abs(result.getDeterminant())), 4);
 
       CalibrationListDlg calDialog = app_.getCalibrationListDlg();
       calDialog.updateCalibrations();
       calDialog.setVisible(true);
 
-      try {
-         app_.compat().setCameraTransform(result, core_.getCurrentPixelSizeConfig());
-      }
-      catch (Exception e) {
-         ReportingUtils.logError(e, "Error saving camera transform");
-      }
-
       int response = JOptionPane.showConfirmDialog(null,
-            String.format("Affine transform parameters: XScale=%.2f YScale=%.2f XShear=%.4f YShear=%.4f\n", result.getScaleX(), result.getScaleY(), result.getShearX(), result.getShearY()) + 
+            String.format("Affine transform parameters: XScale=%.4f YScale=%.4f XShear=%.4f YShear=%.4f\n", result.getScaleX(), result.getScaleY(), result.getShearX(), result.getShearY()) + 
             "<html>The Pixel Calibrator plugin has measured a pixel size of " + pixelSize + " &#956;m.<br>" + "Do you wish to store this value in your pixel calibration settings?</html>",
             "Pixel calibration succeeded!",
             JOptionPane.YES_NO_OPTION);
@@ -158,17 +147,22 @@ public class PixelCalibratorPlugin implements MenuPlugin, SciJavaPlugin {
          String pixelConfig;
          try {
             pixelConfig = core_.getCurrentPixelSizeConfig();
-            if (pixelConfig.length() > 0) {
+            if (pixelConfig.length() > 0) { //If the name of the current pixel config has more than 0 characters it already exists and should be updated.
                core_.setPixelSizeUm(pixelConfig, pixelSize);
-
             }
-            else {
+            else {  //The config doesn't exist yet so create a new one.
                CalibrationEditor editor = new CalibrationEditor("Res", NumberUtils.doubleToDisplayString(pixelSize));
                editor.setCore(core_);
                editor.editNameOnly();
                editor.setVisible(true);
             }
-
+            try {
+                app_.compat().setCameraTransform(result, core_.getCurrentPixelSizeConfig());
+                ReportingUtils.logMessage("Saved camera transform");
+            }
+            catch (Exception e) {
+                ReportingUtils.logError(e, "Error saving camera transform");
+            }
             calDialog.updateCalibrations();
             calDialog.setVisible(true);
          }
