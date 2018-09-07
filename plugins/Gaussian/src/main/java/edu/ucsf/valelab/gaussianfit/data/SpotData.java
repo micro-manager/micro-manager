@@ -173,6 +173,13 @@ public class SpotData implements PointData {
       return keyValue_.get(key);
    }
    
+   public Double getValue(String key, double fallbackValue) {
+      if (keyValue_.containsKey(key)) {
+         return keyValue_.get(key);
+      }
+      return fallbackValue;
+   }
+   
    public String[] getKeys() {
       Set<String> keys = keyValue_.keySet();
       return  keys.toArray(new String[keys.size()]);

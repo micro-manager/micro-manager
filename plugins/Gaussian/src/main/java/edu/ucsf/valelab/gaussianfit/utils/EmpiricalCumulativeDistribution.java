@@ -48,8 +48,11 @@ public class EmpiricalCumulativeDistribution {
       Arrays.sort(values);
       Vector2D[] result = new Vector2D[values.length];
       final double valuesd = (double) values.length;
+      final double increment = 1d / valuesd;
+      final double halfIncrement = 0.5 * increment;
       for (int i = 0; i < values.length; i++) {
-         result[i] = new Vector2D(values[i], ((double)i + 1d) / valuesd);
+         result[i] = new Vector2D(values[i], i * increment + halfIncrement);
+         // result[i] = new Vector2D(values[i], ((double)i + 1d) / valuesd);
       }
       
       return result;

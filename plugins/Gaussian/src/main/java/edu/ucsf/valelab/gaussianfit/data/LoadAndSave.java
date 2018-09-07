@@ -601,15 +601,15 @@ public class LoadAndSave {
                              setTheta((float) gd.getTheta()).
                              setXPrecision((float) gd.getSigma()).
                              setExtension(MMLocM.intensityAperture, 
-                                  gd.getValue(SpotData.Keys.APERTUREINTENSITY).floatValue()).
+                                  gd.getValue(SpotData.Keys.APERTUREINTENSITY, -1.0).floatValue()).
                              setExtension(MMLocM.intensityBackground, 
-                                  gd.getValue(SpotData.Keys.APERTUREBACKGROUND).floatValue()).
+                                  gd.getValue(SpotData.Keys.APERTUREBACKGROUND, -1.0).floatValue()).
                              setExtension(MMLocM.intensityRatio, 
-                                  gd.getValue(SpotData.Keys.INTENSITYRATIO).floatValue()).
+                                  gd.getValue(SpotData.Keys.INTENSITYRATIO, -1.0).floatValue()).
                              setExtension(MMLocM.mSigma, 
-                                  gd.getValue(SpotData.Keys.MSIGMA).floatValue()).
+                                  gd.getValue(SpotData.Keys.MSIGMA, -1.0).floatValue()).
                              setExtension(MMLocM.integralApertureSigma,
-                                  gd.getValue(SpotData.Keys.INTEGRALAPERTURESIGMA).floatValue()
+                                  gd.getValue(SpotData.Keys.INTEGRALAPERTURESIGMA, -1.0).floatValue()
                      );
                      
                      if (rowData[rowNr].hasZ_) {
@@ -753,24 +753,38 @@ public class LoadAndSave {
                            String remainder = "";
                            if (gd.hasKey(SpotData.Keys.APERTUREINTENSITY)) {
                               remainder += String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREINTENSITY).floatValue());
+                           } else {
+                              remainder += "-1.000";
                            }
                            remainder += tab;
+                           
                            if (gd.hasKey(SpotData.Keys.APERTUREBACKGROUND)) {
                               remainder += String.format("%.2f", gd.getValue(SpotData.Keys.APERTUREBACKGROUND).floatValue());
+                           } else {
+                              remainder += "-1.000";
                            }
 
                            remainder += tab;
                            if (gd.hasKey(SpotData.Keys.INTENSITYRATIO)) {
                               remainder += String.format("%.3f", gd.getValue(SpotData.Keys.INTENSITYRATIO).floatValue());
+                           } else {
+                              remainder += "-1.000";
                            }
+                           
                            remainder += tab;
                            if (gd.hasKey(SpotData.Keys.MSIGMA)) {
                               remainder += String.format("%.3f", gd.getValue(SpotData.Keys.MSIGMA).floatValue());
+                           } else {
+                              remainder += "-1.000";
                            }
+                           
                            remainder += tab;
                            if (gd.hasKey(SpotData.Keys.INTEGRALAPERTURESIGMA)) {
                               remainder += String.format("%.3f", gd.getValue(SpotData.Keys.INTEGRALAPERTURESIGMA).floatValue());
+                           } else {
+                              remainder += "-1.000";
                            }
+                           
                            fw.write(remainder);
                            if (rows[rowNr].hasZ_) {
                               fw.write(tab + String.format("%.2f", gd.getZCenter()));
