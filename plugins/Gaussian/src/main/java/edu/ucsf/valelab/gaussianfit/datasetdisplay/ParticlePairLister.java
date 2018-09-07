@@ -504,8 +504,10 @@ public class ParticlePairLister {
                   if (p2dDistanceCalc_ && !p2dSingleFrames_) {
                      double xDiffAvg = ListUtils.listAvg(xDiff);
                      double yDiffAvg = ListUtils.listAvg(yDiff);
-                     vectorDistances.add (Math.sqrt( xDiffAvg * xDiffAvg + 
+                     double vectorDistanceAvg = (Math.sqrt( xDiffAvg * xDiffAvg + 
                              yDiffAvg * yDiffAvg));
+                     vectorDistances.add(vectorDistanceAvg);
+                     rt2.addValue("Distance-VectorAvg", vectorDistanceAvg);
                   }
 
                   if (showOverlay_) {
