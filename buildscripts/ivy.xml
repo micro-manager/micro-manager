@@ -39,7 +39,6 @@
 		<dependency org="org.jfree" name="jfreechart" rev="1.0.19"/>
 		<dependency org="org.scijava" name="scijava-common" rev="2.66.0"/>
 		<dependency org="io.scif" name="scifio" rev="0.33.0"/>
-      <dependency org="edu.ucsf.valelab.tsf" name="tsfproto" rev="1.0.0"/>
 
       <dependency org="net.clearvolume" name="cleargl" rev="2.1.0"/>
       <dependency org="net.clearvolume" name="clearcuda" rev="0.9.4"/>
