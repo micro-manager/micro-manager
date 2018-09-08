@@ -279,6 +279,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       builder.putString(CHANNELGROUP, shadingTableModel_.getChannelGroup());
       builder.putStringList("Presets", shadingTableModel_.getUsedPresets());
       builder.putString(DARKFIELDFILENAME, imageCollection_.getBackgroundFile());
+      builder.putBoolean(USEOPENCL, profileSettings_.getBoolean(USEOPENCL, false));
       ArrayList<String> files = new ArrayList<String>();
       for (String preset : shadingTableModel_.getUsedPresets()) {
          files.add(imageCollection_.getFileForPreset(preset));

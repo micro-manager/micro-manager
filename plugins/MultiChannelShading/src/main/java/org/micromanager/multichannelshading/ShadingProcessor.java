@@ -22,11 +22,17 @@
 package org.micromanager.multichannelshading;
 
 import clearcl.ClearCL;
+import clearcl.ClearCLBuffer;
 import clearcl.ClearCLContext;
 import clearcl.ClearCLDevice;
+import clearcl.ClearCLImage;
 import clearcl.ClearCLProgram;
 import clearcl.backend.ClearCLBackends;
 import clearcl.enums.BuildStatus;
+import clearcl.enums.HostAccessType;
+import clearcl.enums.ImageChannelDataType;
+import clearcl.enums.KernelAccessType;
+import coremem.enums.NativeTypeEnum;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
@@ -57,6 +63,8 @@ public class ShadingProcessor extends Processor {
    private final List<String> presets_;
    private final ImageCollection imageCollection_;
    private ClearCL ccl_;
+   private ClearCLContext cclContext_;
+   private ClearCLProgram cclProgram_;
 
    public ShadingProcessor(Studio studio, String channelGroup,
            Boolean useOpenCL, String backgroundFile, List<String> presets,
@@ -71,11 +79,10 @@ public class ShadingProcessor extends Processor {
             useOpenCL_ = false;
          } else {
             try {
-            ClearCLContext cclContext = bestGPUDevice.createContext();
-            ClearCLProgram cclProgram =
-                              cclContext.createProgram(ShadingProcessor.class,
+            cclContext_ = bestGPUDevice.createContext();
+            cclProgram_ = cclContext_.createProgram(ShadingProcessor.class,
                                                      "test.cl");
-            BuildStatus lBuildStatus = cclProgram.buildAndLog();
+            BuildStatus lBuildStatus = cclProgram_.buildAndLog();
 
             assertEquals(lBuildStatus, BuildStatus.Success);
             } catch (IOException ioe) {
@@ -187,7 +194,34 @@ public class ShadingProcessor extends Processor {
       
       if (useOpenCL_) {
          if (image.getBytesPerPixel() == 2) {
-            
+            if (background != null) {
+               ClearCLBuffer clBgr = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort, 
+                       background.getWidth() *  background.getHeight());
+               clBgr.readFrom((short[]) background.getProcessor().getPixels(), false);
+               
+               ClearCLImage clBackground = cclContext_.createSingleChannelImage(
+                    HostAccessType.WriteOnly,
+                    KernelAccessType.ReadWrite, 
+                    ImageChannelDataType.UnsignedInt16,
+                    background.getWidth(),
+                    background.getHeight(),
+                    1);
+               clBackground.readFrom( (short[]) background.getProcessor().getPixels(), false);
+               
+               ClearCLBuffer clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort, 
+                       image.getWidth() * image.getHeight() );
+               clImg.readFrom(image.getRawPixels(), false);
+               
+               ClearCLImage clImage = cclContext_.createSingleChannelImage(
+                    HostAccessType.WriteOnly,
+                    KernelAccessType.ReadWrite, 
+                    ImageChannelDataType.UnsignedInt16,
+                    image.getWidth(),
+                    image.getHeight(),
+                    1);
+               clImage.readFrom( (short[]) image.getRawPixels(), false);
+               
+            }
          }
       }
       
