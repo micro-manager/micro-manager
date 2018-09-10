@@ -283,11 +283,16 @@ int VariLC::Initialize()
 		return ret;
 
 	// Wavelength
+	std:string ans;
+	ret = sendCmd("V?", ans);	//The serial number response also contains the tuning range of the device
+	std::vector<double> nums = getNumbersFromMessage(ans, briefModeQ_);
+	if (ret != DEVICE_OK)
+		return ret;
 	pAct = new CPropertyAction(this, &VariLC::OnWavelength);
 	ret = CreateProperty("Wavelength", DoubleToString(wavelength_).c_str(), MM::Float, false, pAct);
 	if (ret != DEVICE_OK)
 		return ret;
-	SetPropertyLimits("Wavelength", 400., 800.);
+	SetPropertyLimits("Wavelength", nums.at(1), nums.at(2));
 
 	// Delay
 	pAct = new CPropertyAction(this, &VariLC::OnDelay);
@@ -338,8 +343,6 @@ int VariLC::Initialize()
 	if (ret != DEVICE_OK) {
 		return ret;
 	}
-	// Needed for Busy flag
-	// changedTime_ = GetCurrentMMTime();
 	SetErrorText(99, "Device set busy for ");
 	return DEVICE_OK;
 }
