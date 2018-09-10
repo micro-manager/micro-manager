@@ -363,23 +363,25 @@ int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
     if(dhelp != m_dExposure)
     {
       m_dExposure = dhelp;
-      /*if(m_pCamera->m_iCamClass == 2)
-        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "%f", m_dExposure / 1000.0);
-      else
-        sprintf_s(m_pszTimes, sizeof(m_pszTimes), "0,%d,-1,-1", (int) m_dExposure);
-      if(m_pCamera->m_iCamClass == 3)*/
+
+      if(m_pCamera->m_strCamera.strTiming.wTimingControlMode == 0)// pco.camera
       {
-        if(m_pCamera->m_strCamera.strTiming.wTimingControlMode == 0)// pco.camera
+        if(m_dExposure < 1.0)
         {
-          m_pCamera->m_strCamera.strTiming.wTimeBaseExposure = 2;
-          m_pCamera->m_strCamera.strTiming.dwExposureTable[0] = (DWORD) m_dExposure;
-          m_pCamera->m_strCamera.strTiming.dwDelayTable[0] = 0;
+          m_pCamera->m_strCamera.strTiming.wTimeBaseExposure = 1;
+          m_pCamera->m_strCamera.strTiming.dwExposureTable[0] = (DWORD) (m_dExposure * 1000.0);
         }
         else
         {
-          m_pCamera->m_strCamera.strTiming.dwFrameRateExposure = (DWORD) (m_dExposure * tb[0]);
-          m_pCamera->m_strCamera.strTiming.dwFrameRate = (DWORD) (m_dFps * 1000.0);
+          m_pCamera->m_strCamera.strTiming.wTimeBaseExposure = 2;
+          m_pCamera->m_strCamera.strTiming.dwExposureTable[0] = (DWORD) m_dExposure;
         }
+        m_pCamera->m_strCamera.strTiming.dwDelayTable[0] = 0;
+      }
+      else
+      {
+        m_pCamera->m_strCamera.strTiming.dwFrameRateExposure = (DWORD) (m_dExposure * tb[0]);
+        m_pCamera->m_strCamera.strTiming.dwFrameRate = (DWORD) (m_dFps * 1000.0);
       }
       nErr = SetupCamera(false, false);
     }
