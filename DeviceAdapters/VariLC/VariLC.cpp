@@ -324,8 +324,6 @@ int VariLC::Initialize()
 		if (i < 10) {
 			number = "0" + number;
 		}
-
-
 		s << "Pal. elem. " << number << "; enter 0 to define; 1 to activate";
 		pActX = new CPropertyActionEx(this, &VariLC::OnPalEl, i);
 		CreateProperty(s.str().c_str(), "", MM::String, false, pActX);
@@ -343,18 +341,13 @@ int VariLC::Initialize()
 	// Needed for Busy flag
 	// changedTime_ = GetCurrentMMTime();
 	SetErrorText(99, "Device set busy for ");
-
 	return DEVICE_OK;
 }
 
-
-int VariLC::Shutdown()
-{
+int VariLC::Shutdown() {
 	initialized_ = false;
 	return DEVICE_OK;
 }
-
-
 
 //////////////// Action Handlers (VariLC) /////////////////
 
@@ -482,6 +475,10 @@ int VariLC::OnBriefMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 		 int ret = sendCmd("W?", ans);
 		 if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		 vector<double> numbers = getNumbersFromMessage(ans, briefModeQ_);
+		 if (numbers.size() == 0) { //The device must have returned "W*" meaning that an invalid wavelength was sent
+			 SetErrorText(99, "The Varispec device was commanded to tune to an out of range wavelength.");
+			 return 99;
+		 }
 		 pProp->Set(numbers[0]);
 	 }
 	 else if (eAct == MM::AfterSet)
