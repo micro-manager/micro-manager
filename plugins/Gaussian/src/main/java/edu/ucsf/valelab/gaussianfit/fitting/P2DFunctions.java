@@ -61,26 +61,6 @@ public class P2DFunctions {
       return first * second * third;
    }
    
-    /**
-    * Calculates the probability density function without Bessel:
-    * p2D(r) = (r / sigma2) exp(-(mu2 + r2)/2sigma2) 
-    * @param r
-    * @param mu
-    * @param sigma
-    * @return 
-    */
-   public static double p2dNoBessel(double r, double mu, double sigma) {
-      double first = r / (sigma * sigma);
-      double second =  EXP.value(- (mu * mu + r * r)/ (2 * sigma * sigma));
-      
-      if (second < 1e-300) {
-         second = 1e-300;
-      }
-      
-      return first * second;
-   }
-      
-   
    /**
     * Used when r > sigma
     * 

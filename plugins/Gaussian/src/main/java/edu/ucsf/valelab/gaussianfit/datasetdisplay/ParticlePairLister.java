@@ -766,15 +766,9 @@ public class ParticlePairLister {
                /****************** P2D - Multi-Frame ***********************/
                
                if (p2dDistanceCalc_ && !p2dSingleFrames_ && allDistances.size() > 0) {
-                  boolean useApproximation = false;
                   double[] p2dfResult = {0.0, 0.0};
                   try {
-                     p2dfResult = p2dLeastSquareFit(vectorDistances, maxDistanceNm_, useApproximation);
-                     if (p2dfResult[0] < 0.5 * p2dfResult[1]) {
-
-                        useApproximation = true;
-                        p2dfResult = p2dLeastSquareFit(vectorDistances, maxDistanceNm_, useApproximation);
-                     }
+                     p2dfResult = p2dLeastSquareFit(vectorDistances, maxDistanceNm_);
                   } catch (FittingException fe) {
                      String msg = "ID: " + dc.getSpotData(row).ID_
                              + ", Failed to fit p2d function";
@@ -795,7 +789,6 @@ public class ParticlePairLister {
 
                   double mu = p2dfResult[0];
                   double sigma = p2dfResult[1];
-                  
 
                   // calculate standard devication of MLE fit 
                   // accoring to Fisher information theory
@@ -826,7 +819,7 @@ public class ParticlePairLister {
                      while (counter < nrRuns && errorCounter < maxNrErrors) {
                         List bootstrapList = ListUtils.listToListForBootstrap(vectorDistances);
                         try {
-                           bootsTrapResult = p2dLeastSquareFit(bootstrapList, maxDistanceNm_, useApproximation);
+                           bootsTrapResult = p2dLeastSquareFit(bootstrapList, maxDistanceNm_);
                            mus.add(bootsTrapResult[0]);
                            counter++;
                            if (counter % 25 == 0) {
@@ -949,8 +942,7 @@ public class ParticlePairLister {
       return gf.solve();
    }
    
-   public static double[] p2dLeastSquareFit(List distances, double maxDistance, 
-           boolean useApproximiation) 
+   public static double[] p2dLeastSquareFit(List distances, double maxDistance) 
            throws FittingException, TooManyEvaluationsException {
       double[] d = ListUtils.toArray(distances);
 
@@ -959,7 +951,7 @@ public class ParticlePairLister {
               vectMean);
 
       P2DEcdfFitter p2decdf = new P2DEcdfFitter(d, vectMean, stdDev,
-              maxDistance, useApproximiation);
+              maxDistance);
 
       return p2decdf.solve();
 
