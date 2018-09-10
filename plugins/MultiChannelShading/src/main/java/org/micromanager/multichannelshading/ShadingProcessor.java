@@ -25,13 +25,10 @@ import clearcl.ClearCL;
 import clearcl.ClearCLBuffer;
 import clearcl.ClearCLContext;
 import clearcl.ClearCLDevice;
-import clearcl.ClearCLImage;
+import clearcl.ClearCLKernel;
 import clearcl.ClearCLProgram;
 import clearcl.backend.ClearCLBackends;
 import clearcl.enums.BuildStatus;
-import clearcl.enums.HostAccessType;
-import clearcl.enums.ImageChannelDataType;
-import clearcl.enums.KernelAccessType;
 import coremem.enums.NativeTypeEnum;
 import ij.process.ImageProcessor;
 
@@ -49,6 +46,8 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.Coordinates;
+import org.micromanager.data.internal.DefaultImage;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -197,30 +196,22 @@ public class ShadingProcessor extends Processor {
             if (background != null) {
                ClearCLBuffer clBgr = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort, 
                        background.getWidth() *  background.getHeight());
-               clBgr.readFrom((short[]) background.getProcessor().getPixels(), false);
-               
-               ClearCLImage clBackground = cclContext_.createSingleChannelImage(
-                    HostAccessType.WriteOnly,
-                    KernelAccessType.ReadWrite, 
-                    ImageChannelDataType.UnsignedInt16,
-                    background.getWidth(),
-                    background.getHeight(),
-                    1);
-               clBackground.readFrom( (short[]) background.getProcessor().getPixels(), false);
-               
+               Image bgI = studio_.data().ij().createImage(background.getProcessor(), 
+                       Coordinates.builder().c(0).t(0).p(0).z(0).build(), null);
+               clBgr.readFrom( ( (DefaultImage) bgI).getPixelBuffer(), false);
+
                ClearCLBuffer clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort, 
                        image.getWidth() * image.getHeight() );
-               clImg.readFrom(image.getRawPixels(), false);
+               clImg.readFrom( ((DefaultImage)image).getPixelBuffer(), false);
+
+               ClearCLKernel lKernel = cclProgram_.createKernel("subtract");
+               lKernel.setArguments(clBgr, clImg);
+               lKernel.setGlobalSizes(clImg);
+               lKernel.run();
                
-               ClearCLImage clImage = cclContext_.createSingleChannelImage(
-                    HostAccessType.WriteOnly,
-                    KernelAccessType.ReadWrite, 
-                    ImageChannelDataType.UnsignedInt16,
-                    image.getWidth(),
-                    image.getHeight(),
-                    1);
-               clImage.readFrom( (short[]) image.getRawPixels(), false);
+               clImg.writeTo(((DefaultImage)image).getPixelBuffer(), true);
                
+               context.outputImage(image);
             }
          }
       }
