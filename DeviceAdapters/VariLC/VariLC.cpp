@@ -36,11 +36,6 @@
 // 4. wavelength default 546
 
 
-#ifdef WIN32
-//   #include <windows.h>
-   #define snprintf _snprintf 
-#endif
-
 #include "VariLC.h"
 #include <cstdio>
 #include <cctype>
@@ -747,7 +742,6 @@ int VariLC::OnSendToVariLC(MM::PropertyBase* pProp, MM::ActionType eAct)
 			 if (ret!=DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		 GetSerialAnswer (port_.c_str(), "\r", getFromVariLC_);
 		 GetSerialAnswer (port_.c_str(), "\r", getFromVariLC_);
-		 removeSpaces(getFromVariLC_);
 		 return DEVICE_OK;
 	  }
 	  else if (sendToVariLC_=="B ?" || sendToVariLC_=="B?") {
@@ -845,14 +839,4 @@ std::vector<double> VariLC::getNumbersFromMessage(std::string variLCmessage, boo
 	 }
 
 	return values;
-}
-
-static inline bool IsSpace(char ch)
-{
-   return std::isspace(ch);
-}
-
-void VariLC::removeSpaces(std::string input)
-{
-   input.erase(std::remove_if(input.begin(), input.end(), IsSpace), input.end());
 }
