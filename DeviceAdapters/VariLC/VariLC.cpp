@@ -196,9 +196,7 @@ MM::DeviceDetectionStatus VariLC::DetectDevice(void)
 			pS->Initialize();
 
 			ClearPort(*this, *GetCoreCallback(), port_);
-			ret = SendSerialCommand(port_.c_str(), "V?", "\r");
-			GetSerialAnswer(port_.c_str(), "\r", serialnum_);
-			GetSerialAnswer(port_.c_str(), "\r", serialnum_);
+			ret = sendCmd("V?", serialnum_);
 			if (ret != DEVICE_OK || serialnum_.length() < 5)
 			{
 				LogMessageCode(ret, true);
@@ -223,8 +221,7 @@ MM::DeviceDetectionStatus VariLC::DetectDevice(void)
 					"1");
 				serialnum_ = "0";
 				pS->Initialize();
-				ret = SendSerialCommand(port_.c_str(), "R 1", "\r");
-				ret = SendSerialCommand(port_.c_str(), "C 0", "\r");
+				ret = sendCmd("R1");
 				pS->Shutdown();
 			}
 		}
@@ -281,14 +278,9 @@ int VariLC::Initialize()
 
 	//Set VariLC to Standard mode
 	briefModeQ_ = false;
-	ret = SendSerialCommand(port_.c_str(), "B 0", "\r");
+	ret = sendCmd("B0",getFromVariLC_);
 	if (ret != DEVICE_OK)
-		return DEVICE_SERIAL_COMMAND_FAILED;
-	ret = GetSerialAnswer(port_.c_str(), "\r", getFromVariLC_);  //add the following error check each time GetSerialAnswer is called
-	if (ret != DEVICE_OK) {
-		SetErrorText(99, "The VariLC did not respond.");
-		return 99;
-	}
+		return ret;
 	if (getFromVariLC_.length() == 0)
 		return DEVICE_NOT_CONNECTED;
 
@@ -324,14 +316,6 @@ int VariLC::Initialize()
 		pActX = new CPropertyActionEx(this, &VariLC::OnAbsRetardance, i);
 		CreateProperty(s.str().c_str(), "100", MM::Float, true, pActX);
 	}
-
-	//   for (long i=0;i<numPalEls_;++i) {
-	//	   ostringstream s;
-	//	   s << "Pal. elem. " << char(48+i) << ", enter 0 to define, 1 to activate";
-	//	   pActX = new CPropertyActionEx(this, &VariLC::OnPalEl, i);
-	//	   CreateProperty(s.str().c_str(), "", MM::String, false, pActX);
-	//   }
-
 	for (long i = 0; i < numPalEls_; ++i) {
 		ostringstream s;
 		std::string number;
@@ -348,17 +332,16 @@ int VariLC::Initialize()
 		pActX = new CPropertyActionEx(this, &VariLC::OnPalEl, i);
 		CreateProperty(s.str().c_str(), "", MM::String, false, pActX);
 	}
-
 	pAct = new CPropertyAction(this, &VariLC::OnSendToVariLC);
 	ret = CreateProperty("String send to VariLC", "", MM::String, false, pAct);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK) {
 		return ret;
-
+	}
 	pAct = new CPropertyAction(this, &VariLC::OnGetFromVariLC);
 	ret = CreateProperty("String from VariLC", "", MM::String, true, pAct);
-	if (ret != DEVICE_OK)
+	if (ret != DEVICE_OK) {
 		return ret;
-
+	}
 	// Needed for Busy flag
 	// changedTime_ = GetCurrentMMTime();
 	SetErrorText(99, "Device set busy for ");
@@ -419,12 +402,9 @@ int VariLC::OnBaud(MM::PropertyBase* pProp, MM::ActionType eAct)
 int VariLC::OnBriefMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::BeforeGet) {
-		int ret = SendSerialCommand(port_.c_str(), "B?", "\r");
-		if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		std::string ans;
-		GetSerialAnswer(port_.c_str(), "\r", ans);
-		GetSerialAnswer(port_.c_str(), "\r", ans);
-
+		int ret = sendCmd("B?", ans);
+		if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		if (ans == "1") {
 			briefModeQ_ = true;
 		}
@@ -489,11 +469,8 @@ int VariLC::OnBriefMode(MM::PropertyBase* pProp, MM::ActionType eAct)
  {
 	 if (eAct == MM::BeforeGet)
 	 {
-		 int ret = SendSerialCommand(port_.c_str(), "V?", "\r");
+		 int ret = sendCmd("V?", serialnum_);
 		 if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
-		 GetSerialAnswer(port_.c_str(), "\r", serialnum_);
-		 GetSerialAnswer(port_.c_str(), "\r", serialnum_);
-
 		 pProp->Set(serialnum_.c_str());
 	 }
 	 return DEVICE_OK;
@@ -503,12 +480,9 @@ int VariLC::OnBriefMode(MM::PropertyBase* pProp, MM::ActionType eAct)
  {
 	 if (eAct == MM::BeforeGet)
 	 {
-		 int ret = SendSerialCommand(port_.c_str(), "W?", "\r");
-		 if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		 std::string ans;
-		 GetSerialAnswer(port_.c_str(), "\r", ans);
-		 GetSerialAnswer(port_.c_str(), "\r", ans);
-
+		 int ret = sendCmd("W?", ans);
+		 if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		 vector<double> numbers = getNumbersFromMessage(ans, briefModeQ_);
 		 pProp->Set(numbers[0]);
 	 }
@@ -521,14 +495,10 @@ int VariLC::OnBriefMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 		 ostringstream cmd;
 		 cmd.precision(5);
 		 cmd << "W " << wavelength;
-		 int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+		 int ret = sendCmd(cmd.str().c_str());
 		 if (ret != DEVICE_OK)
 			 return DEVICE_SERIAL_COMMAND_FAILED;
-		 std::string ans;
-		 GetSerialAnswer(port_.c_str(), "\r", ans);
-
 		 wavelength_ = wavelength;
-		 // Clear palette elements after change of wavelength
 	 }
 	 return DEVICE_OK;
  }
@@ -537,12 +507,9 @@ int VariLC::OnRetardance(MM::PropertyBase* pProp, MM::ActionType eAct, long inde
 {
 	if (eAct == MM::BeforeGet)
 	{
-		int ret = SendSerialCommand(port_.c_str(), "L?", "\r");
-		if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		std::string ans;
-		GetSerialAnswer(port_.c_str(), "\r", ans);
-		GetSerialAnswer(port_.c_str(), "\r", ans);
-
+		int ret = sendCmd("L?", ans);
+		if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		vector<double> numbers = getNumbersFromMessage(ans, briefModeQ_);
 		if (index < (int)numbers.size()) {
 			retardance_[index] = numbers[index];
@@ -576,13 +543,9 @@ int VariLC::OnRetardance(MM::PropertyBase* pProp, MM::ActionType eAct, long inde
 				cmd << " " << retardance_[i];
 			}
 		}
-		int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+		int ret = sendCmd(cmd.str());
 		if (ret != DEVICE_OK)
 			return DEVICE_SERIAL_COMMAND_FAILED;
-
-		std::string ans;
-		GetSerialAnswer(port_.c_str(), "\r", ans);
-
 		retardance_[index] = retardance;
 
 		changedTime_ = GetCurrentMMTime();
@@ -611,15 +574,9 @@ int VariLC::OnAbsRetardance(MM::PropertyBase* pProp, MM::ActionType eAct, long i
 {
 	 if (eAct == MM::BeforeGet)
 	 {
-		 //PurgeComPort(port_.c_str());
-		 int ret = SendSerialCommand(port_.c_str(), "D?", "\r");
-		 if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		 std::string ans;
-		 //	 GetSerialAnswer (port_.c_str(), "\r", ans);
-		 while (ans != "D?") GetSerialAnswer(port_.c_str(), "\r", ans);
-		 //the while statement was needed to overcome an empty string that appears in ans while reading the 5th pallette element 
-		 //however, we should avoid infinite loop; bow out with report of comm error?
-		 GetSerialAnswer(port_.c_str(), "\r", ans);
+		 int ret = sendCmd("D?", ans);
+		 if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
 		 vector<double> numbers = getNumbersFromMessage(ans, briefModeQ_);
 		 int elemNr = (int)numbers[0];
 		 if (elemNr == 0) {
@@ -649,23 +606,21 @@ int VariLC::OnAbsRetardance(MM::PropertyBase* pProp, MM::ActionType eAct, long i
    {
 	   long setPalEl = 0;
 	   changedTime_ = GetCurrentMMTime();  //enter in each function that sets the LCs
-	   std::string ans;
 	   ostringstream cmd;
 	   cmd.precision(0);
-	    pProp->Get(setPalEl);
-		if (setPalEl == 0) {
+	   pProp->Get(setPalEl);
+	   if (setPalEl == 0) {
 		   cmd << "D " << index;
-			int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
-				if (ret!=DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
-				GetSerialAnswer (port_.c_str(), "\r", ans);				
-		}
-		if (setPalEl == 1) {
+		   int ret = sendCmd(cmd.str());
+		   if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
+
+	   }
+	   if (setPalEl == 1) {
 		   cmd << "P " << index;
-			int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
-				if (ret!=DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;				
-				GetSerialAnswer (port_.c_str(), "\r", ans);				 
-		}
-   }
+		   int ret = sendCmd(cmd.str());
+		   if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
+	   }
+	 }
    return DEVICE_OK;
 }
 
@@ -675,90 +630,7 @@ int VariLC::OnAbsRetardance(MM::PropertyBase* pProp, MM::ActionType eAct, long i
 	 if (eAct == MM::AfterSet) {
 		 // read value from property
 		 pProp->Get(sendToVariLC_);
-		 // write retardance out to device....
-
-		 size_t len = strlen(sendToVariLC_.c_str());
-		 char state[6];
-		 if (len > 5) {
-			 strncpy(state, sendToVariLC_.c_str(), 5);
-			 state[5] = '\0';
-		 }
-		 if (sendToVariLC_ == "Escape") {
-			 char command[2];
-			 command[0] = 27;
-			 command[1] = 0;
-			 int ret = SendSerialCommand(port_.c_str(), command, "\r");
-			 if (ret != DEVICE_OK)
-				 return DEVICE_SERIAL_COMMAND_FAILED;
-		 }
-		 else if (sendToVariLC_ == "@") {
-			 int ret = SendSerialCommand(port_.c_str(), sendToVariLC_.c_str(), "\r");
-			 if (ret != DEVICE_OK)
-				 return DEVICE_SERIAL_COMMAND_FAILED;
-		 }
-		 else if (sendToVariLC_ == "!") {
-			 int ret = SendSerialCommand(port_.c_str(), sendToVariLC_.c_str(), "\r");
-			 if (ret != DEVICE_OK)
-				 return DEVICE_SERIAL_COMMAND_FAILED;
-		 }
-		 else if ((std::string)state == "State") {
-			 std::vector<char> val(len - 5);
-			 for (size_t i = 5; i < len; i++) {
-				 val[5 - i] = sendToVariLC_[i];
-			 }
-			 val[len] = '\0';
-
-			 std::stringstream ss;
-			 for (size_t i = 0; i < val.size(); ++i)
-			 {
-				 if (i != 0)
-					 ss << ",";
-				 ss << val[i];
-			 }
-			 std::string s = ss.str();
-
-			 sendToVariLC_ = "P" + s;
-
-			 changedTime_ = GetCurrentMMTime();
-			 int ret = SendSerialCommand(port_.c_str(), sendToVariLC_.c_str(), "\r");
-			 if (ret != DEVICE_OK) {
-				 return DEVICE_SERIAL_COMMAND_FAILED;
-			 }
-		 }
-		 else if (sendToVariLC_ == "W ?" || sendToVariLC_ == "W?") {
-			 int ret = SendSerialCommand(port_.c_str(), "W?", "\r");
-			 if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
-			 GetSerialAnswer(port_.c_str(), "\r", getFromVariLC_);
-		 }
-		 else if (sendToVariLC_ == "V ?" || sendToVariLC_ == "V?") {
-			 int ret = SendSerialCommand(port_.c_str(), "V?", "\r");
-			 if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
-			 GetSerialAnswer(port_.c_str(), "\r", getFromVariLC_);
-		 }
-		 else if (sendToVariLC_ == "R ?" || sendToVariLC_ == "R?") {
-			 int ret = SendSerialCommand(port_.c_str(), "R?", "\r");
-			 if (ret != DEVICE_OK)return DEVICE_SERIAL_COMMAND_FAILED;
-			 GetSerialAnswer(port_.c_str(), "\r", getFromVariLC_);
-			 GetSerialAnswer(port_.c_str(), "\r", getFromVariLC_);
-			 return DEVICE_OK;
-		 }
-		 else if (sendToVariLC_ == "B ?" || sendToVariLC_ == "B?") {
-			 int ret = SendSerialCommand(port_.c_str(), "B?", "\r");
-			 if (ret != DEVICE_OK) { return DEVICE_SERIAL_COMMAND_FAILED; }
-			 GetSerialAnswer(port_.c_str(), "\r", getFromVariLC_);
-		 }
-		 else if (sendToVariLC_ == "L ?" || sendToVariLC_ == "L?") {
-			 int ret = SendSerialCommand(port_.c_str(), "L?", "\r");
-			 if (ret != DEVICE_OK) { return DEVICE_SERIAL_COMMAND_FAILED; }
-			 GetSerialAnswer(port_.c_str(), "\r", getFromVariLC_);
-		 }
-		 else {
-			 int ret = SendSerialCommand(port_.c_str(), sendToVariLC_.c_str(), "\r");
-			 if (ret != DEVICE_OK) {
-				 return DEVICE_SERIAL_COMMAND_FAILED;
-			 }
-		 }
-		 GetSerialAnswer(port_.c_str(), "\r", getFromVariLC_);
+		 return sendCmd(sendToVariLC_, getFromVariLC_);
 	 }
 	 return DEVICE_OK;
  }
@@ -832,6 +704,17 @@ std::vector<double> VariLC::getNumbersFromMessage(std::string variLCmessage, boo
 	return values;
 }
 
-std::string VariLC::sendCmd(std::string cmd) {
-
+int VariLC::sendCmd(std::string cmd, std::string out) {
+	int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r");
+	if (ret != DEVICE_OK) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+	std::string response;
+	GetSerialAnswer(port_.c_str(), "\r", response);	//Read back the response and make sure it matches what we sent. If not there is an issue with communication.
+	if (response != cmd) {
+		SetErrorText(99, "The VariLC did not respond.");
+		return 99;
+	}
+	GetSerialAnswer(port_.c_str(), "\r", out); //Try returning any extra response from the device.
+	return DEVICE_OK;
 }
