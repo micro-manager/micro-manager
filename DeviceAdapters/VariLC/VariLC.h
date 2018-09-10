@@ -95,7 +95,8 @@ class VariLC : public CGenericBase<VariLC>
 	  MM::MMTime delay;
       std::vector<double> getNumbersFromMessage(std::string variLCmessage, bool prefixQ);
 	  std::string DoubleToString(double N);
-	  int sendCmd(std::string cmd, std::string out = "");
+	  int sendCmd(std::string cmd, std::string& out);
+	  int sendCmd(std::string cmd);
 };
 
 

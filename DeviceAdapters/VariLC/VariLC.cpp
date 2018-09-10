@@ -281,8 +281,6 @@ int VariLC::Initialize()
 	ret = sendCmd("B0",getFromVariLC_);
 	if (ret != DEVICE_OK)
 		return ret;
-	if (getFromVariLC_.length() == 0)
-		return DEVICE_NOT_CONNECTED;
 
 	// Wavelength
 	pAct = new CPropertyAction(this, &VariLC::OnWavelength);
@@ -704,7 +702,13 @@ std::vector<double> VariLC::getNumbersFromMessage(std::string variLCmessage, boo
 	return values;
 }
 
-int VariLC::sendCmd(std::string cmd, std::string out) {
+int VariLC::sendCmd(std::string cmd, std::string& out) {
+	int ret = sendCmd(cmd);
+	GetSerialAnswer(port_.c_str(), "\r", out); //Try returning any extra response from the device.
+	return DEVICE_OK;
+}
+
+int VariLC::sendCmd(std::string cmd) {
 	int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r");
 	if (ret != DEVICE_OK) {
 		return DEVICE_SERIAL_COMMAND_FAILED;
@@ -715,6 +719,5 @@ int VariLC::sendCmd(std::string cmd, std::string out) {
 		SetErrorText(99, "The VariLC did not respond.");
 		return 99;
 	}
-	GetSerialAnswer(port_.c_str(), "\r", out); //Try returning any extra response from the device.
 	return DEVICE_OK;
 }
