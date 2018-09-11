@@ -7,7 +7,11 @@
 //
 // AUTHOR:        Rudolf Oldenbourg, MBL, w/ Arthur Edelstein and Karl Hoover, UCSF, Sept, Oct 2010
 // COPYRIGHT:     
-// LICENSE:       
+// LICENSE:  
+
+// Change Log - Nick Anthony - Sept 11, 2018
+// 1. Wavelength upper and lower limits are now queried from the device rather than being assumed to be 400-800 nm.
+// 2. In the event that an out of range wavelength is set the adapter will now log an error and continue running. Previously this would result in a sudden crash without any log.
 
 // Change Log - Amitabh Verma - Jan. 26, 2015
 // 1. Error response retrieval using 'R?' fixed
