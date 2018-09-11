@@ -141,6 +141,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
          @Override
          public void actionPerformed(ActionEvent e) {
             profileSettings_.putBoolean(USEOPENCL,useOpenCLCheckBox.isSelected());
+            studio_.data().notifyPipelineChanged();
          }
       });
       super.add(useOpenCLCheckBox, "skip 2");

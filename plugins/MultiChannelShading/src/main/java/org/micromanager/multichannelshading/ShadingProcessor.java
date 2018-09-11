@@ -158,6 +158,30 @@ public class ShadingProcessor extends Processor {
          studio_.alerts().postAlert(MultiChannelShading.MENUNAME, 
                  NoBackgroundForThisBinModeClass.class, msg);
       }
+      
+      if (useOpenCL_) {
+         if (image.getBytesPerPixel() == 2) {
+            if (background != null) {
+               ClearCLBuffer clBgr = background.getCLBuffer(cclContext_);
+
+               ClearCLBuffer clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort, 
+                       image.getWidth() * image.getHeight() );
+               clImg.readFrom( ((DefaultImage)image).getPixelBuffer(), false);
+
+               ClearCLKernel lKernel = cclProgram_.createKernel("subtract");
+               lKernel.setArguments(clImg, clBgr);
+               lKernel.setGlobalSizes(clImg);
+               lKernel.run();
+               
+               clImg.writeTo(((DefaultImage)image).getPixelBuffer(), true);
+               
+               context.outputImage(image);
+               return;
+            }
+         }
+      }
+      
+      
       if (background != null) {
          ImageProcessor ip = studio_.data().ij().createProcessor(image);
          ImageProcessor ipBackground = background.getProcessor();
@@ -191,30 +215,7 @@ public class ShadingProcessor extends Processor {
          metadata = metadata.copy().userData(userData).build();
       }
       
-      if (useOpenCL_) {
-         if (image.getBytesPerPixel() == 2) {
-            if (background != null) {
-               ClearCLBuffer clBgr = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort, 
-                       background.getWidth() *  background.getHeight());
-               Image bgI = studio_.data().ij().createImage(background.getProcessor(), 
-                       Coordinates.builder().c(0).t(0).p(0).z(0).build(), null);
-               clBgr.readFrom( ( (DefaultImage) bgI).getPixelBuffer(), false);
-
-               ClearCLBuffer clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort, 
-                       image.getWidth() * image.getHeight() );
-               clImg.readFrom( ((DefaultImage)image).getPixelBuffer(), false);
-
-               ClearCLKernel lKernel = cclProgram_.createKernel("subtract");
-               lKernel.setArguments(clBgr, clImg);
-               lKernel.setGlobalSizes(clImg);
-               lKernel.run();
-               
-               clImg.writeTo(((DefaultImage)image).getPixelBuffer(), true);
-               
-               context.outputImage(image);
-            }
-         }
-      }
+      
       
       if (image.getBytesPerPixel() == 1) {
          byte[] newPixels = new byte[width * height];
