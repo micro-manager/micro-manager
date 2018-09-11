@@ -46,9 +46,7 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
-import org.micromanager.data.Coordinates;
 import org.micromanager.data.internal.DefaultImage;
-import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -80,12 +78,13 @@ public class ShadingProcessor extends Processor {
             try {
             cclContext_ = bestGPUDevice.createContext();
             cclProgram_ = cclContext_.createProgram(ShadingProcessor.class,
-                                                     "test.cl");
+                                                     "bufferMath.cl");
             BuildStatus lBuildStatus = cclProgram_.buildAndLog();
 
             assertEquals(lBuildStatus, BuildStatus.Success);
             } catch (IOException ioe) {
-               ReportingUtils.logError("Failed to initialize OpenCL, falling back");
+               studio_.alerts().postAlert(MultiChannelShading.MENUNAME, this.getClass(), 
+                       "Failed to initialize OpenCL, falling back");
                useOpenCL_ = false;
             }
          }
@@ -106,17 +105,24 @@ public class ShadingProcessor extends Processor {
       } catch (ShadingException e) {
          studio_.logs().logError(e, "Error recreating ImageCollection");
       }
-      
-     
+
    }
 
-
    // Classes used to classify alerts in the processImage function below
-   private class Not8or16BitClass {}
-   private class NoBinningInfoClass {}
-   private class NoRoiClass {}
-   private class NoBackgroundForThisBinModeClass {}
-   private class ErrorSubtractingClass {}
+   private class Not8or16BitClass {
+   }
+
+   private class NoBinningInfoClass {
+   }
+
+   private class NoRoiClass {
+   }
+
+   private class NoBackgroundForThisBinModeClass {
+   }
+
+   private class ErrorSubtractingClass {
+   }
 
    @Override
    public void processImage(Image image, ProcessorContext context) {
@@ -136,7 +142,7 @@ public class ShadingProcessor extends Processor {
 
       Image bgSubtracted = image;
       Image result;
-      
+
       // subtract background
       Integer binning = metadata.getBinning();
       if (binning == null) {
@@ -155,33 +161,60 @@ public class ShadingProcessor extends Processor {
          background = imageCollection_.getBackground(binning, rect);
       } catch (ShadingException e) {
          String msg = "Error getting background for bin mode " + binning + " and rect " + rect;
-         studio_.alerts().postAlert(MultiChannelShading.MENUNAME, 
+         studio_.alerts().postAlert(MultiChannelShading.MENUNAME,
                  NoBackgroundForThisBinModeClass.class, msg);
       }
-      
+
+      ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
+              metadata, binning, rect);
+
       if (useOpenCL_) {
+         ClearCLBuffer clImg, clBackground, clFlatField;
          if (image.getBytesPerPixel() == 2) {
-            if (background != null) {
-               ClearCLBuffer clBgr = background.getCLBuffer(cclContext_);
-
-               ClearCLBuffer clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort, 
-                       image.getWidth() * image.getHeight() );
-               clImg.readFrom( ((DefaultImage)image).getPixelBuffer(), false);
-
-               ClearCLKernel lKernel = cclProgram_.createKernel("subtract");
-               lKernel.setArguments(clImg, clBgr);
-               lKernel.setGlobalSizes(clImg);
-               lKernel.run();
-               
-               clImg.writeTo(((DefaultImage)image).getPixelBuffer(), true);
-               
-               context.outputImage(image);
-               return;
-            }
+            clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort,
+                    image.getWidth() * image.getHeight());
+         } else if (image.getBytesPerPixel() == 1) {
+            clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedByte,
+                    image.getWidth() * image.getHeight());
+         } else {
+            // we already checked for this earlier in this function.  Check again
+            String msg = 
+                    "Cannot flatfield correct images other than 8 or 16 bit grayscale";
+            studio_.alerts().postAlert(MultiChannelShading.MENUNAME, 
+                    Not8or16BitClass.class, msg);
+            return;
          }
+         // copy image to the GPU
+         clImg.readFrom(((DefaultImage) image).getPixelBuffer(), false);
+         // process with different kernels depending on availability of flatfield
+         // and background:
+         if (background != null && flatFieldImage == null) {
+            clBackground = background.getCLBuffer(cclContext_);
+            ClearCLKernel lKernel = cclProgram_.createKernel("subtract");
+            lKernel.setArguments(clImg, clBackground);
+            lKernel.setGlobalSizes(clImg);
+            lKernel.run();
+         } else if (background == null && flatFieldImage != null) {
+            clFlatField = flatFieldImage.getCLBuffer(cclContext_);
+            ClearCLKernel lKernel = cclProgram_.createKernel("divide");
+            lKernel.setArguments(clImg, clFlatField);
+            lKernel.setGlobalSizes(clImg);
+            lKernel.run();
+         } else if (background != null && flatFieldImage != null) {
+            clBackground = background.getCLBuffer(cclContext_);
+            clFlatField = flatFieldImage.getCLBuffer(cclContext_);
+            ClearCLKernel lKernel = cclProgram_.createKernel("subtractAndDivide");
+            lKernel.setArguments(clImg, clBackground, clFlatField);
+            lKernel.setGlobalSizes(clImg);
+            lKernel.run();
+         }
+         // copy processed image back from the GPU
+         clImg.writeTo(((DefaultImage) image).getPixelBuffer(), true);
+         context.outputImage(image);
+         return;
       }
-      
-      
+
+
       if (background != null) {
          ImageProcessor ip = studio_.data().ij().createProcessor(image);
          ImageProcessor ipBackground = background.getProcessor();
@@ -199,8 +232,6 @@ public class ShadingProcessor extends Processor {
                  metadata.copy().userData(userData).build());
       }
 
-      ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
-              metadata, binning, rect);
 
       // do not calculate flat field if we don't have a matching channel;
       // just return the background-subtracted image (which is the unmodified

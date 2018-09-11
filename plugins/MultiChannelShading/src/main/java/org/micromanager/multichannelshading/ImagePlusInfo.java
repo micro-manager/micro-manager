@@ -25,9 +25,13 @@ import clearcl.ClearCLBuffer;
 import clearcl.ClearCLContext;
 import coremem.enums.NativeTypeEnum;
 import ij.ImagePlus;
+import ij.process.ByteProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 import java.awt.Rectangle;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,17 +86,28 @@ public class ImagePlusInfo extends ImagePlus{
     */
    public ClearCLBuffer getCLBuffer(ClearCLContext cclContext) {
       if (!clBuffers_.containsKey(cclContext)) {
-         ClearCLBuffer clBuffer = cclContext.createBuffer(NativeTypeEnum.UnsignedShort, 
+         ClearCLBuffer clBuffer = null;
+         if (super.getProcessor() instanceof ByteProcessor) {
+            clBuffer = cclContext.createBuffer(NativeTypeEnum.UnsignedByte, 
                        super.getWidth() *  super.getHeight());
-         if (super.getBytesPerPixel() == 1) {
             clBuffer.readFrom( ByteBuffer.wrap(
                  (byte[]) super.getProcessor().getPixels()), 
                  false); 
-         } else if (super.getBytesPerPixel() == 2) {
+         } else if (super.getProcessor() instanceof ShortProcessor) {
+            clBuffer = cclContext.createBuffer(NativeTypeEnum.UnsignedShort, 
+                       super.getWidth() *  super.getHeight());
             clBuffer.readFrom( ShortBuffer.wrap(
                  (short[]) super.getProcessor().getPixels()), 
                  false); 
-         } // TODO: other pixel types...
+         } else if (super.getProcessor() instanceof FloatProcessor) {
+            clBuffer = cclContext.createBuffer(NativeTypeEnum.Float, 
+                       super.getWidth() *  super.getHeight());
+            clBuffer.readFrom( FloatBuffer.wrap(
+                    (float[]) super.getProcessor().getPixels()), 
+                    false);
+         }
+
+         // TODO: other pixel types...
          clBuffers_.put(cclContext, clBuffer);
       }
       return clBuffers_.get(cclContext);
