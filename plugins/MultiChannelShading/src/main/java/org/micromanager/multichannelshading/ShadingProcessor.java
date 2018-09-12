@@ -170,20 +170,17 @@ public class ShadingProcessor extends Processor {
 
       if (useOpenCL_) {
          ClearCLBuffer clImg, clBackground, clFlatField;
+         String suffix;
          if (image.getBytesPerPixel() == 2) {
             clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort,
                     image.getWidth() * image.getHeight());
-         } else if (image.getBytesPerPixel() == 1) {
+            suffix = "US";
+         } else { //(image.getBytesPerPixel() == 1) 
             clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedByte,
                     image.getWidth() * image.getHeight());
-         } else {
-            // we already checked for this earlier in this function.  Check again
-            String msg = 
-                    "Cannot flatfield correct images other than 8 or 16 bit grayscale";
-            studio_.alerts().postAlert(MultiChannelShading.MENUNAME, 
-                    Not8or16BitClass.class, msg);
-            return;
-         }
+            suffix = "UB";
+         } 
+         
          // copy image to the GPU
          clImg.readFrom(((DefaultImage) image).getPixelBuffer(), false);
          // process with different kernels depending on availability of flatfield
@@ -191,26 +188,28 @@ public class ShadingProcessor extends Processor {
          if (background != null && flatFieldImage == null) {
             clBackground = background.getCLBuffer(cclContext_);
             // need to use different kernels for differe types
-            ClearCLKernel lKernel = cclProgram_.createKernel("subtractUS");
+            ClearCLKernel lKernel = cclProgram_.createKernel("subtract" + suffix);
             lKernel.setArguments(clImg, clBackground);
             lKernel.setGlobalSizes(clImg);
             lKernel.run();
          } else if (background == null && flatFieldImage != null) {
             clFlatField = flatFieldImage.getCLBuffer(cclContext_);
-            ClearCLKernel lKernel = cclProgram_.createKernel("divideUSF");
+            ClearCLKernel lKernel = cclProgram_.createKernel("divide" + suffix + "F");
             lKernel.setArguments(clImg, clFlatField);
             lKernel.setGlobalSizes(clImg);
             lKernel.run();
          } else if (background != null && flatFieldImage != null) {
             clBackground = background.getCLBuffer(cclContext_);
             clFlatField = flatFieldImage.getCLBuffer(cclContext_);
-            ClearCLKernel lKernel = cclProgram_.createKernel("subtractAndDivideUSF");
+            ClearCLKernel lKernel = cclProgram_.createKernel("subtractAndDivide" + suffix + "F");
             lKernel.setArguments(clImg, clBackground, clFlatField);
             lKernel.setGlobalSizes(clImg);
             lKernel.run();
          }
          // copy processed image back from the GPU
          clImg.writeTo(((DefaultImage) image).getPixelBuffer(), true);
+         // release resources.  If more GPU processing is desired, this should change
+         clImg.close();
          context.outputImage(image);
          return;
       }

@@ -5,7 +5,15 @@
 
 
 __kernel void subtractUS( __global ushort* a,
-                        __global ushort* b) 
+                          __global ushort* b) 
+{  
+   int i = get_global_id(0);
+  
+   a[i] = a[i] - b[i];
+}
+
+__kernel void subtractUB( __global uchar* a,
+                          __global uchar* b) 
 {
    int i = get_global_id(0);
   
@@ -20,6 +28,15 @@ __kernel void divideUSF(__global ushort* a,
     a[i] = (ushort) ( (a[i] / b[i]) + 0.5f);
 }
 
+__kernel void divideUBF(__global uchar* a,
+                     __global float* b)
+{
+    int i = get_global_id(0);
+
+    a[i] = (uchar) ( (a[i] / b[i]) + 0.5f);
+}
+
+
 __kernel void subtractAndDivideUSF(__global ushort* a,
                                 __global ushort* background,
                                 __global float* flatField)
@@ -27,4 +44,13 @@ __kernel void subtractAndDivideUSF(__global ushort* a,
     int i = get_global_id(0);
 
     a[i] = (ushort) ( ((a[i] - background[i]) * (flatField[i]) + 0.5f));
+}
+
+__kernel void subtractAndDivideUBF(__global uchar* a,
+                                __global uchar* background,
+                                __global float* flatField)
+{
+    int i = get_global_id(0);
+
+    a[i] = (uchar) ( ((a[i] - background[i]) * (flatField[i]) + 0.5f));
 }
