@@ -190,20 +190,21 @@ public class ShadingProcessor extends Processor {
          // and background:
          if (background != null && flatFieldImage == null) {
             clBackground = background.getCLBuffer(cclContext_);
-            ClearCLKernel lKernel = cclProgram_.createKernel("subtract");
+            // need to use different kernels for differe types
+            ClearCLKernel lKernel = cclProgram_.createKernel("subtractUS");
             lKernel.setArguments(clImg, clBackground);
             lKernel.setGlobalSizes(clImg);
             lKernel.run();
          } else if (background == null && flatFieldImage != null) {
             clFlatField = flatFieldImage.getCLBuffer(cclContext_);
-            ClearCLKernel lKernel = cclProgram_.createKernel("divide");
+            ClearCLKernel lKernel = cclProgram_.createKernel("divideUSF");
             lKernel.setArguments(clImg, clFlatField);
             lKernel.setGlobalSizes(clImg);
             lKernel.run();
          } else if (background != null && flatFieldImage != null) {
             clBackground = background.getCLBuffer(cclContext_);
             clFlatField = flatFieldImage.getCLBuffer(cclContext_);
-            ClearCLKernel lKernel = cclProgram_.createKernel("subtractAndDivide");
+            ClearCLKernel lKernel = cclProgram_.createKernel("subtractAndDivideUSF");
             lKernel.setArguments(clImg, clBackground, clFlatField);
             lKernel.setGlobalSizes(clImg);
             lKernel.run();
