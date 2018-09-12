@@ -43,6 +43,9 @@ Additionally for the National Cameralink interface:
 Additionally for the Silicon Software Cameralink interface:
   sc2_cl_me3.dll or
   sc2_cl_me4.dll
+  
+Additionaly for Cameralink HS interface:
+  sc2_clhs.dll  
 
 All files mentioned above can be found either in the CamWare folder, or the sdk.
 

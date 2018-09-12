@@ -366,10 +366,18 @@ int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       if(m_pCamera->m_strCamera.strTiming.wTimingControlMode == 0)// pco.camera
       {
-        if(m_dExposure < 1.0)
+        if(m_dExposure < 10000.0)
         {
-          m_pCamera->m_strCamera.strTiming.wTimeBaseExposure = 1;
-          m_pCamera->m_strCamera.strTiming.dwExposureTable[0] = (DWORD) (m_dExposure * 1000.0);
+          if(m_dExposure < 0.1)
+          {
+            m_pCamera->m_strCamera.strTiming.wTimeBaseExposure = 0;
+            m_pCamera->m_strCamera.strTiming.dwExposureTable[0] = (DWORD) (m_dExposure * 1000000.0);
+          }
+          else
+          {
+            m_pCamera->m_strCamera.strTiming.wTimeBaseExposure = 1;
+            m_pCamera->m_strCamera.strTiming.dwExposureTable[0] = (DWORD) (m_dExposure * 1000.0);
+          }
         }
         else
         {
