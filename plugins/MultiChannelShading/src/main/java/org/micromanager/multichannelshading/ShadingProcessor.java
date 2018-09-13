@@ -29,6 +29,7 @@ import clearcl.ClearCLKernel;
 import clearcl.ClearCLProgram;
 import clearcl.backend.ClearCLBackends;
 import clearcl.enums.BuildStatus;
+import clearcl.exceptions.OpenCLException;
 import coremem.enums.NativeTypeEnum;
 import ij.process.ImageProcessor;
 
@@ -109,20 +110,17 @@ public class ShadingProcessor extends Processor {
    }
 
    // Classes used to classify alerts in the processImage function below
-   private class Not8or16BitClass {
-   }
+   private class Not8or16BitClass {   }
 
-   private class NoBinningInfoClass {
-   }
+   private class NoBinningInfoClass {   }
 
-   private class NoRoiClass {
-   }
+   private class NoRoiClass {   }
 
-   private class NoBackgroundForThisBinModeClass {
-   }
+   private class NoBackgroundForThisBinModeClass {   }
 
-   private class ErrorSubtractingClass {
-   }
+   private class ErrorSubtractingClass {   }
+   
+   private class ErrorInOpenCLClass {}
 
    @Override
    public void processImage(Image image, ProcessorContext context) {
@@ -169,49 +167,56 @@ public class ShadingProcessor extends Processor {
               metadata, binning, rect);
 
       if (useOpenCL_) {
-         ClearCLBuffer clImg, clBackground, clFlatField;
-         String suffix;
-         if (image.getBytesPerPixel() == 2) {
-            clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort,
-                    image.getWidth() * image.getHeight());
-            suffix = "US";
-         } else { //(image.getBytesPerPixel() == 1) 
-            clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedByte,
-                    image.getWidth() * image.getHeight());
-            suffix = "UB";
-         } 
-         
-         // copy image to the GPU
-         clImg.readFrom(((DefaultImage) image).getPixelBuffer(), false);
-         // process with different kernels depending on availability of flatfield
-         // and background:
-         if (background != null && flatFieldImage == null) {
-            clBackground = background.getCLBuffer(cclContext_);
-            // need to use different kernels for differe types
-            ClearCLKernel lKernel = cclProgram_.createKernel("subtract" + suffix);
-            lKernel.setArguments(clImg, clBackground);
-            lKernel.setGlobalSizes(clImg);
-            lKernel.run();
-         } else if (background == null && flatFieldImage != null) {
-            clFlatField = flatFieldImage.getCLBuffer(cclContext_);
-            ClearCLKernel lKernel = cclProgram_.createKernel("divide" + suffix + "F");
-            lKernel.setArguments(clImg, clFlatField);
-            lKernel.setGlobalSizes(clImg);
-            lKernel.run();
-         } else if (background != null && flatFieldImage != null) {
-            clBackground = background.getCLBuffer(cclContext_);
-            clFlatField = flatFieldImage.getCLBuffer(cclContext_);
-            ClearCLKernel lKernel = cclProgram_.createKernel("subtractAndDivide" + suffix + "F");
-            lKernel.setArguments(clImg, clBackground, clFlatField);
-            lKernel.setGlobalSizes(clImg);
-            lKernel.run();
+         try {
+            ClearCLBuffer clImg, clBackground, clFlatField;
+            String suffix;
+            if (image.getBytesPerPixel() == 2) {
+               clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort,
+                       image.getWidth() * image.getHeight());
+               suffix = "US";
+            } else { //(image.getBytesPerPixel() == 1) 
+               clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedByte,
+                       image.getWidth() * image.getHeight());
+               suffix = "UB";
+            }
+
+            // copy image to the GPU
+            clImg.readFrom(((DefaultImage) image).getPixelBuffer(), false);
+            // process with different kernels depending on availability of flatfield
+            // and background:
+            if (background != null && flatFieldImage == null) {
+               clBackground = background.getCLBuffer(cclContext_);
+               // need to use different kernels for differe types
+               ClearCLKernel lKernel = cclProgram_.createKernel("subtract" + suffix);
+               lKernel.setArguments(clImg, clBackground);
+               lKernel.setGlobalSizes(clImg);
+               lKernel.run();
+            } else if (background == null && flatFieldImage != null) {
+               clFlatField = flatFieldImage.getCLBuffer(cclContext_);
+               ClearCLKernel lKernel = cclProgram_.createKernel("multiply" + suffix + "F");
+               lKernel.setArguments(clImg, clFlatField);
+               lKernel.setGlobalSizes(clImg);
+               lKernel.run();
+            } else if (background != null && flatFieldImage != null) {
+               clBackground = background.getCLBuffer(cclContext_);
+               clFlatField = flatFieldImage.getCLBuffer(cclContext_);
+               ClearCLKernel lKernel = cclProgram_.createKernel("subtractAndMultiply" + suffix + "F");
+               lKernel.setArguments(clImg, clBackground, clFlatField);
+               lKernel.setGlobalSizes(clImg);
+               lKernel.run();
+            }
+            // copy processed image back from the GPU
+            clImg.writeTo(((DefaultImage) image).getPixelBuffer(), true);
+            // release resources.  If more GPU processing is desired, this should change
+            clImg.close();
+            context.outputImage(image);
+            return;
+         } catch (OpenCLException ocle) {
+            studio_.alerts().postAlert(MultiChannelShading.MENUNAME,
+                    ErrorInOpenCLClass.class,
+                    "Error using GPU: " + ocle.getMessage());
+            useOpenCL_ = false;
          }
-         // copy processed image back from the GPU
-         clImg.writeTo(((DefaultImage) image).getPixelBuffer(), true);
-         // release resources.  If more GPU processing is desired, this should change
-         clImg.close();
-         context.outputImage(image);
-         return;
       }
 
 

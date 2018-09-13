@@ -5,7 +5,7 @@
 
 
 __kernel void subtractUS( __global ushort* a,
-                          __global ushort* b) 
+                          const __global ushort* b) 
 {  
    int i = get_global_id(0);
   
@@ -13,44 +13,44 @@ __kernel void subtractUS( __global ushort* a,
 }
 
 __kernel void subtractUB( __global uchar* a,
-                          __global uchar* b) 
+                          const __global uchar* b) 
 {
    int i = get_global_id(0);
   
    a[i] = a[i] - b[i];
 }
 
-__kernel void divideUSF(__global ushort* a,
-                     __global float* b)
+__kernel void multiplyUSF(__global ushort* a,
+                     const __global float* b)
 {
     int i = get_global_id(0);
 
-    a[i] = (ushort) ( (a[i] / b[i]) + 0.5f);
+    a[i] = (ushort) ( (a[i] * b[i]) + 0.5f);
 }
 
-__kernel void divideUBF(__global uchar* a,
-                     __global float* b)
+__kernel void multiplyUBF(__global uchar* a,
+                     const __global float* b)
 {
     int i = get_global_id(0);
 
-    a[i] = (uchar) ( (a[i] / b[i]) + 0.5f);
+    a[i] = (uchar) ( (a[i] * b[i]) + 0.5f);
 }
 
 
-__kernel void subtractAndDivideUSF(__global ushort* a,
-                                __global ushort* background,
-                                __global float* flatField)
+__kernel void subtractAndMultiplyUSF(__global ushort* a,
+                                const __global ushort* background,
+                                const __global float* flatField)
 {
     int i = get_global_id(0);
 
-    a[i] = (ushort) ( ((a[i] - background[i]) * (flatField[i]) + 0.5f));
+    a[i] = convert_ushort ( ((a[i] - background[i]) * (flatField[i]) + 0.5f));
 }
 
-__kernel void subtractAndDivideUBF(__global uchar* a,
-                                __global uchar* background,
-                                __global float* flatField)
+__kernel void subtractAndMultiplyUBF(__global uchar* a,
+                                const __global uchar* background,
+                                const __global float* flatField)
 {
     int i = get_global_id(0);
 
-    a[i] = (uchar) ( ((a[i] - background[i]) * (flatField[i]) + 0.5f));
+    a[i] = convert_uchar ( ((a[i] - background[i]) * (flatField[i]) + 0.5f));
 }
