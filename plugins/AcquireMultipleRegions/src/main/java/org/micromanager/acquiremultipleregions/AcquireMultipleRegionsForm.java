@@ -238,7 +238,9 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 gui_.positions().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));               
                 gui_.app().refreshGUI();
                 Datastore store = gui_.acquisitions().runAcquisition(currRegion.filename, currRegion.directory);
+                store.freeze();
                 gui_.displays().closeDisplaysFor(store);
+                store.close();
             } catch (IllegalThreadStateException ex) {
                 handleError(ex);
             }
