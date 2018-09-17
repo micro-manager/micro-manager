@@ -33,11 +33,25 @@ int JAICamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long bin = 1;
       pProp->Get(bin);
+      PvResult pvr = genParams->SetIntegerValue(g_pv_BinH, (int64_t)bin);
+      if (pvr.IsFailure())
+         return processPvError(pvr);
+      pvr = genParams->SetIntegerValue(g_pv_BinV, (int64_t)bin);
+      if (pvr.IsFailure())
+         return processPvError(pvr);
       return ResizeImageBuffer();
    }
    else if (eAct == MM::BeforeGet)
    {
-      //pProp->Set((long)roiBinData.XBin);
+      int64_t hbin, vbin;
+      PvResult pvr = genParams->GetIntegerValue(g_pv_BinH, hbin);
+      if (pvr.IsFailure())
+         return processPvError(pvr);
+      pvr = genParams->GetIntegerValue(g_pv_BinV, vbin);
+      assert(hbin == vbin);
+      if (pvr.IsFailure())
+         return processPvError(pvr);
+      pProp->Set((long)hbin);
    }
    return DEVICE_OK;
 }

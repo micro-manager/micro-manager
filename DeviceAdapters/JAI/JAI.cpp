@@ -208,7 +208,6 @@ int JAICamera::Initialize()
 	// get handle to camera parameters
 	genParams = camera->GetParameters();
 
-
 	// collect information about the camera
 	PvString modelName;
 	PvResult pvr = genParams->GetStringValue("DeviceModelName", modelName);
@@ -270,8 +269,15 @@ int JAICamera::Initialize()
 	pAct = new CPropertyAction(this, &JAICamera::OnBinning);
 	ret = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
 	assert(ret == DEVICE_OK);
+   
+   int64_t binMin, binMax;
+   pvr = genParams->GetIntegerRange(g_pv_BinH, binMin, binMax);
+   if (!pvr.IsOK())
+      return processPvError(pvr);
+
 	vector<string> binValues;
-	binValues.push_back("1");
+   for (int64_t i=binMin; i<=binMax; i++)
+      binValues.push_back(CDeviceUtils::ConvertToString((int)i));
 	SetAllowedValues(MM::g_Keyword_Binning, binValues);
 
 	// TEMPERATURE
@@ -499,8 +505,11 @@ unsigned JAICamera::GetBitDepth() const
 
 int JAICamera::GetBinning() const
 {
-	// TODO:
-	return 1;
+   char bin[MM::MaxStrLength];
+	int ret = GetProperty(MM::g_Keyword_Binning, bin);
+   if (ret != DEVICE_OK)
+      return ret;
+	return atoi(bin);
 }
 
 int JAICamera::SetBinning(int binSize)
