@@ -67,7 +67,10 @@ static const char* g_Negative = "Negative";
 
 static const char* g_pv_BinH = "BinningHorizontal";
 static const char* g_pv_BinV = "BinningVertical";
-
+static const char* g_pv_Width = "Width";
+static const char* g_pv_Height = "Height";
+static const char* g_pv_OffsetX = "OffsetX";
+static const char* g_pv_OffsetY = "OffsetY";
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
