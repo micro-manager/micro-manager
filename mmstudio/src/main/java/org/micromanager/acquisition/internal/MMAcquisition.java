@@ -397,6 +397,7 @@ public final class MMAcquisition extends DataViewerListener {
          ((DefaultDisplaySettings) display_.getDisplaySettings()).saveToProfile(
                studio_.profile(), PropertyKey.ACQUISITION_DISPLAY_SETTINGS.key());
       }
+      display_.removeListener(this);
       DefaultEventManager.getInstance().unregisterForEvents(this);
       new Thread(new Runnable() {
          @Override
