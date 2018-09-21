@@ -1178,10 +1178,17 @@ void CMMCore::waitForDevice(boost::shared_ptr<DeviceInstance> pDev) throw (CMMEr
    LOG_DEBUG(coreLogger_) << "Waiting for device " << pDev->GetLabel() << "...";
 
    MM::TimeoutMs timeout(GetMMTimeNow(),timeoutMs_);
-   mm::DeviceModuleLockGuard guard(pDev);
 
-   while (pDev->Busy())
+   while (true)
    {
+      {
+         mm::DeviceModuleLockGuard guard(pDev);
+         if (!pDev->Busy())
+         {
+            break;
+         }
+      }
+
       if (timeout.expired(GetMMTimeNow()))
       {
          string label = pDev->GetLabel();
@@ -1197,6 +1204,7 @@ void CMMCore::waitForDevice(boost::shared_ptr<DeviceInstance> pDev) throw (CMMEr
    }
    LOG_DEBUG(coreLogger_) << "Finished waiting for device " << pDev->GetLabel();
 }
+
 /**
  * Checks the busy status of the entire system. The system will report busy if any
  * of the devices is busy.
