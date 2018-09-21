@@ -178,11 +178,11 @@ void loop() {
             break;
 
          case 32:  // Return Nr Rows
-            Serial.print(NUMROWS);
+            Serial.write(NUMROWS);
             break;
 
          case 33: // Return Nr Columns
-            Serial.print(NUMCOLUMNS);
+            Serial.write(NUMCOLUMNS);
             break;
 
 

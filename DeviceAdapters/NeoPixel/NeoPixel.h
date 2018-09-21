@@ -48,10 +48,13 @@ public:
    int OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct); 
    int OnColor(MM::PropertyBase* pProp, MM::ActionType eAct); 
    int OnAllActive(MM::PropertyBase* pProp, MM::ActionType eAct); 
-   int OnSelectPixel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSelectPixelRow(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSelectPixelColumn(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSwitchPixel(MM::PropertyBase* pProp, MM::ActionType eAct);
  
 private:                                                      
    int GetFirmwareVersion(int& version);
+   int GetDimensions();
    MM::MMTime changedTime_;                                   
    bool open_;
    bool portAvailable_;
@@ -62,6 +65,11 @@ private:
    std::string activeState_;
    static MMThreadLock lock_;
    int version_;
+   unsigned int numRows_;
+   unsigned int numColumns_;
+   std::vector <std::vector<bool> > pixels_;
+   std::string selectedPixelRow_;
+   unsigned int selectedPixelColumn_;
 };   
 
 

@@ -60,7 +60,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)             
 { 
-      delete pDevice;
+   delete pDevice;
 }
 
 
@@ -69,7 +69,11 @@ NeoPixelShutter::NeoPixelShutter() :
    portAvailable_(false),                                  
    initialized_ (false),
    color_(g_Blue),
-   activeState_(g_None)
+   activeState_(g_None),
+   numRows_(1),
+   numColumns_(1),
+   selectedPixelRow_("A"),
+   selectedPixelColumn_(1)
 {
    InitializeDefaultErrorMessages();   
 
@@ -77,6 +81,7 @@ NeoPixelShutter::NeoPixelShutter() :
 
    CPropertyAction* pAct = new CPropertyAction(this, &NeoPixelShutter::OnPort);  
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
 }
 
 
@@ -127,6 +132,47 @@ int NeoPixelShutter::GetFirmwareVersion(int& version) {
    return ret;
 }
 
+/**
+ * Reads the number of rows and coumns as defined in the firmware
+ */
+int NeoPixelShutter::GetDimensions() {
+   unsigned char command[1];
+   unsigned char answer[1];
+   unsigned long bytesRead = 0;
+
+   command[0] = 32;
+   int ret = WriteToComPort(port_.c_str(), (const unsigned char*) command, 1);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   MM::MMTime startTime = GetCurrentMMTime();
+   while ((bytesRead < 1) && ( (GetCurrentMMTime() - startTime).getMsec() < 250)) {
+      ret = ReadFromComPort(port_.c_str(), answer, 1, bytesRead);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   numRows_ = (unsigned int) answer[0];
+
+   command[0] = 33;
+   ret = WriteToComPort(port_.c_str(), (const unsigned char*) command, 1);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   startTime = GetCurrentMMTime();
+   bytesRead = 0;
+   while ((bytesRead < 1) && ( (GetCurrentMMTime() - startTime).getMsec() < 250)) {
+      ret = ReadFromComPort(port_.c_str(), answer, 1, bytesRead);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   numColumns_ = (unsigned int) answer[0];
+
+   return DEVICE_OK;
+}
+
+/**
+ * Make sure the device is present and read its capabilities/settinsg
+ */
 int NeoPixelShutter::Initialize()
 {
    // Name
@@ -170,8 +216,31 @@ int NeoPixelShutter::Initialize()
    sversion << version_;                                      
    CreateProperty(g_versionProp, sversion.str().c_str(), MM::Integer, true, pAct);
 
-   if (ret != DEVICE_OK)
+   ret = GetDimensions();
+   if( DEVICE_OK != ret)
       return ret;
+
+   std::ostringstream dMesg;                               
+   dMesg << "NeopPixel firmware version " << version_ << " with " <<
+      numRows_ << " rows  and " << numColumns_ << " columns";
+   LogMessage(dMesg.str().c_str(), true);
+
+   pixels_.resize(numRows_, std::vector<bool> (numColumns_, false));
+
+   pAct = new CPropertyAction(this, &NeoPixelShutter::OnOnOff);
+   CreateProperty("OnOff", g_Off, MM::String, false, pAct);
+   AddAllowedValue("OnOff", g_On);
+   AddAllowedValue("OnOff", g_Off);
+
+   pAct = new CPropertyAction(this, &NeoPixelShutter::OnSelectPixelRow);
+   CreateProperty("SelectedPixelRow", selectedPixelRow_.c_str(), MM::String, false, pAct);
+   for (int i = 0; i < numRows_; i++) 
+   {
+      std::stringstream ss;
+      ss << static_cast<char> ('A' + i);
+      AddAllowedValue("SelectedPixelRow", ss.str().c_str() );
+   }
+
 
    initialized_ = true;
    return DEVICE_OK;
@@ -324,7 +393,6 @@ int NeoPixelShutter::OnAllActive(MM::PropertyBase* pProp, MM::ActionType eAct)
          return DEVICE_OK;
       }
 
-
       unsigned char command[] = {3};
       if (state == g_None)
          command[0] = 4;
@@ -344,15 +412,50 @@ int NeoPixelShutter::OnAllActive(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       if (answer[0] != command[0])                                        
          return ERR_COMMUNICATION;                               
+
+      // update our understanding of the pixel state
+      bool onOff = state == g_All;
+      for (int row = 0; row < numRows_; row++)
+         for (int col = 0; col < numColumns_; col++) 
+            pixels_[row][col] = onOff;
    }
+
    return DEVICE_OK;
-   
 } 
 
-int NeoPixelShutter::OnSelectPixel(MM::PropertyBase* pProp, MM::ActionType eAct){
+int NeoPixelShutter::OnSelectPixelRow(MM::PropertyBase* pProp, MM::ActionType eAct){
+   if (eAct == MM::BeforeGet)
+   {
+      std::ostringstream os;
+      os << selectedPixelRow_ << selectedPixelColumn_;
+      pProp->Set(os.str().c_str());
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      std::string result;
+      pProp->Get(result);
+      // parse a string of the form "A11", assume row is only one letter
+      selectedPixelRow_ = result[0];
+      std::stringstream parser(result.substr(1));
+      parser >> selectedPixelColumn_ ;
+   }
    return DEVICE_OK;
-};
-                                                              
+}
+
+ 
+int NeoPixelShutter::OnSelectPixelColumn(MM::PropertyBase* pProp, MM::ActionType eAct){
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long)selectedPixelColumn_);
+   } 
+   return DEVICE_OK;
+}
+
+
+int NeoPixelShutter::OnSwitchPixel(MM::PropertyBase* pProp, MM::ActionType eAct){
+   return DEVICE_OK;
+}
+
 
 
 
