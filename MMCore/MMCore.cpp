@@ -957,7 +957,6 @@ MM::DeviceType CMMCore::getDeviceType(const char* label) throw (CMMError)
       return MM::CoreDevice;
 
    boost::shared_ptr<DeviceInstance> pDevice = deviceManager_->GetDevice(label);
-   mm::DeviceModuleLockGuard guard(pDevice);
    return pDevice->GetType();
 }
 
