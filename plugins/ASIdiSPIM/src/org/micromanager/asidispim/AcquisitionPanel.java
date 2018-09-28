@@ -2920,9 +2920,11 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       
       // Set up controller SPIM parameters (including from Setup panel settings)
       // want to do this, even with demo cameras, so we can test everything else
-      if (!controller_.prepareControllerForAquisition(acqSettings)) {
-         posUpdater_.pauseUpdates(false);
-         return false;
+      if (!acqSettings.usePathPresets) {  // special case with path presets handled later
+         if (!controller_.prepareControllerForAquisition(acqSettings)) {
+            posUpdater_.pauseUpdates(false);
+            return false;
+         }
       }
       
       boolean nonfatalError = false;
@@ -3333,6 +3335,29 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                         try {
                            // flag that we are using the cameras/controller
                            ASIdiSPIM.getFrame().setHardwareInUse(true);
+                           
+                           // deal with side-specific preset if needed
+                           // have to trigger the controller once for each side in this special case
+                           // "outer loop" is sides, inner loop is channels
+                           boolean pathPresetsFirst = true;
+                           if (acqSettings.usePathPresets) {
+                              boolean currentSideA = firstSideA;
+                              if (outerLoop > 0) {
+                                 currentSideA = !currentSideA;
+                                 pathPresetsFirst = false;
+                              }
+                              // for 2-sided acquisition with path presets we run 2 single-sided acquisitions
+                              //   so set controller accordingly
+                              if (acqSettings.numSides > 1) {
+                                 AcquisitionSettings acqSettingsOneSide = acqSettings;
+                                 acqSettingsOneSide.numSides = 1;
+                                 acqSettingsOneSide.firstSideIsA = currentSideA;
+                                 controller_.prepareControllerForAquisition(acqSettingsOneSide);
+                              }
+                              
+                              // make sure appropriate path preset is applied
+                              controller_.setPathPreset(currentSideA ? Devices.Sides.A : Devices.Sides.B);
+                           }
 
                            // deal with shutter before starting acquisition
                            shutterOpen = core_.getShutterOpen();
@@ -3344,33 +3369,18 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                            }
 
                            // start the cameras
-                           core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, 0, true);
-                           if (twoSided || acqBothCameras) {
-                              core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
+                           if (acqSettings.usePathPresets) {
+                              core_.startSequenceAcquisition(pathPresetsFirst ? firstCamera : secondCamera, nrSlicesSoftware, 0, true);
+                           } else {  // usual case
+                              core_.startSequenceAcquisition(firstCamera, nrSlicesSoftware, 0, true);
+                              if (twoSided || acqBothCameras) {
+                                 core_.startSequenceAcquisition(secondCamera, nrSlicesSoftware, 0, true);
+                              }
                            }
 
                            // deal with channel if needed (hardware channel switching doesn't happen here)
                            if (changeChannelPerVolumeSoftware) {
                               multiChannelPanel_.selectNextChannel();
-                           }
-
-                           // deal with side-specific preset if needed
-                           // have to trigger the controller once for each side in this special case
-                           // "outer loop" is sides, inner loop is channels
-                           if (acqSettings.usePathPresets) {
-                              boolean currentSideA = firstSideA;
-                              if ((acqSettings.numSides > 1) && (channelNum+1)/nrChannelsSoftware > 0.5000001) {
-                                 currentSideA = !currentSideA;
-                              }
-                              // for 2-sided acquisition with path presets we run 2 single-sided acquisitions
-                              //   so set controller accordingly
-                              // prepareControllerForAquisition() takes care of actually setting preset
-                              if (acqSettings.numSides > 1) {
-                                 AcquisitionSettings acqSettingsOneSide = acqSettings;
-                                 acqSettingsOneSide.numSides = 1;
-                                 acqSettingsOneSide.firstSideIsA = currentSideA;
-                                 controller_.prepareControllerForAquisition(acqSettingsOneSide);
-                              }
                            }
 
                            // special case: single-sided piezo acquisition risks illumination piezo sleeping
@@ -3434,6 +3444,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               while ((core_.getRemainingImageCount() > 0
                                     || core_.isSequenceRunning(firstCamera)
                                     || ((twoSided || acqBothCameras) && core_.isSequenceRunning(secondCamera)))
+                                    || (acqSettings.usePathPresets && !pathPresetsFirst && core_.isSequenceRunning(secondCamera))
                                     && !done) {
                                  now = System.currentTimeMillis();
                                  if (core_.getRemainingImageCount() > 0) {  // we have an image to grab

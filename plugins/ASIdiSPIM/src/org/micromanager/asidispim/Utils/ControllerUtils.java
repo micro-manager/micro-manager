@@ -556,11 +556,6 @@ public class ControllerUtils {
       props_.setPropValue(galvoDevice, Properties.Keys.SA_AMPLITUDE_X_DEG, sheetWidth);
       props_.setPropValue(galvoDevice, Properties.Keys.SA_OFFSET_X_DEG, sheetOffset);
       
-      // make sure appropriate path preset is applied if needed
-      if (settings.usePathPresets) {
-         setPathPreset(side);
-      }
-      
       return true;
    }
    
