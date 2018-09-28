@@ -264,6 +264,23 @@ public class DataAnalysisPanel extends ListeningJPanel {
       
       this.add(deskewPanel_);
       
+//      JButton testButton = new JButton("test");
+//      testButton.addActionListener(new ActionListener() {
+//         @Override
+//         public void actionPerformed(ActionEvent arg0) {
+//            ImagePlus ip = IJ.createImage("Testing", "16-bit", 1024, 1024, 1);
+//            ImageProcessor proc = ip.getProcessor();
+//            int v = proc.getPixel(500, 500);
+//            proc.putPixel(240, 240, 4400);
+//            proc.putPixel(241, 241, 4400);
+//            proc.putPixel(242, 242, 4400);
+//            proc.putPixel(244, 244, 4400);
+//            ip.setRoi(200, 200, 80, 80);
+//            ip.show();
+//         }
+//      });
+//      this.add(testButton);
+      
 //      // start "other" sub-panel
 //      otherPanel_ = new JPanel(new MigLayout(
 //              "",
@@ -433,7 +450,7 @@ public void runDeskew(final ListeningJPanel caller) {
             if (zStepPx < 1e-6) {
                double pixelSize = ip.getCalibration().pixelWidth;
                if (pixelSize < 1e-6) {
-                  throw new Exception("Cannot have pixel size of 0");
+                  throw new Exception("Cannot have pixel size of 0; you need to set the pixel size (in Micro-Manager or in the ImageJ properties)");
                }
                zStepPx = ip.getCalibration().pixelDepth / pixelSize;
             }
