@@ -192,6 +192,7 @@ private:
 	int processPvError(const PvResult& pvr);
 	static void convertBGR2RGBA(const uint8_t* src, uint8_t* dest, unsigned pixSize);
 	bool verifyPvFormat(const PvImage* pvimg);
+	void ClearPvBuffers();
 
    ImgBuffer img;
    bool initialized;

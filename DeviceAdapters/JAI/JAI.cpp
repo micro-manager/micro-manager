@@ -425,10 +425,12 @@ int JAICamera::SnapImage()
 
 	// setup camera buffers
 	const int numBufs = 1;
+	ClearPvBuffers();
 	for (int i = 0; i < numBufs; i++)
 	{
 		// Create new buffer object
 		PvBuffer *lBuffer = new PvBuffer;
+		pvBuffers.push_back(lBuffer);
 
 		// Have the new buffer object allocate payload memory
 		lBuffer->Alloc(payloadSize);
@@ -495,6 +497,7 @@ int JAICamera::SnapImage()
 		return processPvError(pvr);
 	}
 
+	ClearPvBuffers();
 	return DEVICE_OK;
 }
 
@@ -737,6 +740,7 @@ int JAICamera::PushImage(unsigned char* imgBuf)
 
 int JAICamera::processPvError(const PvResult& pvr)
 {
+	ClearPvBuffers();
 	SetErrorText(pvr.GetCode(), pvr.GetDescription().GetAscii());
 	return pvr.GetCode();
 }
@@ -814,6 +818,21 @@ bool JAICamera::verifyPvFormat(const PvImage * pvImg)
 	return true;
 }
 
+void JAICamera::ClearPvBuffers()
+{
+	for (int i=0; i<pvBuffers.size(); i++)
+	{
+		if (pvBuffers[i]->IsAttached())
+			pvBuffers[i]->Detach();
+
+		if (pvBuffers[i]->IsAllocated())
+			pvBuffers[i]->Free();
+
+		delete pvBuffers[i];
+	}
+	pvBuffers.clear();
+}
+
 int JAICamera::InsertImage()
 {
    int retCode = GetCoreCallback()->InsertImage(this,
@@ -874,10 +893,12 @@ int AcqSequenceThread::svc (void)
 
 	// setup camera buffers
 	const int numBufs = 8;
+	moduleInstance->ClearPvBuffers();
 	for (int i = 0; i < numBufs; i++)
 	{
 		// Create new buffer object
 		PvBuffer *lBuffer = new PvBuffer;
+		moduleInstance->pvBuffers.push_back(lBuffer);
 
 		// Have the new buffer object allocate payload memory
 		lBuffer->Alloc(payloadSize);
@@ -976,7 +997,8 @@ int AcqSequenceThread::svc (void)
 		return processPvError(pvr);
 	}
 
-   InterlockedExchange(&moduleInstance->acquiring, 0);
+	moduleInstance->ClearPvBuffers();
+	InterlockedExchange(&moduleInstance->acquiring, 0);
    return 0;
 }
 
