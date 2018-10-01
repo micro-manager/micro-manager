@@ -742,11 +742,11 @@ int iBeamSmartCW::getClipStatus(std::string* status){
 				}
 			} else if(answer.find("PASS") != std::string::npos || answer.find("GOOD") != std::string::npos){ // if PASS or GOOD
 				*status = answer;
-			} else {
+			} /*else {
 				LogMessage("Unexpected answer from the laser:", false);
 				LogMessage(answer, false);
 				return ADAPTER_UNEXPECTED_ANSWER;
-			}
+			}*/ // Temporary bug fix
 		}
 
 		// if the laser has an error
