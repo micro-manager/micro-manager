@@ -732,8 +732,8 @@ int iBeamSmartCW::getClipStatus(std::string* status){
 			return ret;
 		}
 
-		// The answer is not just space or [OK].
-		if(answer.compare("\n") != 0 && !isOk(answer)){ 
+		// The answer is not just space or [OK]. In theory the only possible answers are FAIL, PASS and GOOD.
+		if(answer.compare("\n") != 0 && answer.compare(" ") != 0 && !isOk(answer)){ 
 			if(answer.find("FAIL") != std::string::npos){ // if FAIL
 				if(clip_.compare("FAIL") == 0){ // if the FAIL status has already been observed
 					*status = answer;
@@ -742,11 +742,7 @@ int iBeamSmartCW::getClipStatus(std::string* status){
 				}
 			} else if(answer.find("PASS") != std::string::npos || answer.find("GOOD") != std::string::npos){ // if PASS or GOOD
 				*status = answer;
-			} /*else {
-				LogMessage("Unexpected answer from the laser:", false);
-				LogMessage(answer, false);
-				return ADAPTER_UNEXPECTED_ANSWER;
-			}*/ // Temporary bug fix
+			}
 		}
 
 		// if the laser has an error
@@ -1512,7 +1508,7 @@ int iBeamSmartNormal::Initialize()
 	if (DEVICE_OK != ret)
 		return ret;
 	
-	// There should be  not communication after that, so turn prompt on again
+	// There should be no communication after that, so turn prompt on again
 	// otherwise the Topas software might give a time out error after quitting
 	// micro-manager
 	setPrompt(true);
