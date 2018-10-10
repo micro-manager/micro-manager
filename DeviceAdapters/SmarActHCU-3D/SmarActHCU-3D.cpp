@@ -965,6 +965,8 @@ int ZStage::GetController(std::string* controller)
 		*controller = "SmarAct HCU-3D";
 	} else if(answer.find("SmarAct CU-3D") != std::string::npos){
 		*controller = "SmarAct CU-3D";
+	} else if(answer.find("SmarAct SCU-3D") != std::string::npos){
+		*controller = "SmarAct CU-3D";
 	} else {
 		return ERR_IDENTIFICATION_FAIL; 
 	}
