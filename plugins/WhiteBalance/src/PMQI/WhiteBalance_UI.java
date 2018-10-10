@@ -1070,7 +1070,6 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
 
     @Override
     public void propertiesChangedAlert() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     //if user changes the CFA pattern in the MM UI select the same pattern also in the 
@@ -1086,36 +1085,29 @@ public class WhiteBalance_UI extends javax.swing.JFrame implements MMListenerInt
 
     @Override
     public void configGroupChangedAlert(String string, String string1) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void systemConfigurationLoaded() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void pixelSizeChangedAlert(double d) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void stagePositionChangedAlert(String string, double d) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void xyStagePositionChanged(String string, double d, double d1) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void exposureChanged(String string, double d) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void slmExposureChanged(String string, double d) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
