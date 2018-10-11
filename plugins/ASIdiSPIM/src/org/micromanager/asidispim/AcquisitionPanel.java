@@ -2460,7 +2460,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
       }
       
       // now acqSettings should be read-only
-      final AcquisitionSettings acqSettings = acqSettingsOrig;
+      final AcquisitionSettings acqSettings = new AcquisitionSettings(acqSettingsOrig);
       
       // generate string for log file
       Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -3349,7 +3349,7 @@ public class AcquisitionPanel extends ListeningJPanel implements DevicesListener
                               // for 2-sided acquisition with path presets we run 2 single-sided acquisitions
                               //   so set controller accordingly
                               if (acqSettings.numSides > 1) {
-                                 AcquisitionSettings acqSettingsOneSide = acqSettings;
+                                 AcquisitionSettings acqSettingsOneSide = new AcquisitionSettings(acqSettings);
                                  acqSettingsOneSide.numSides = 1;
                                  acqSettingsOneSide.firstSideIsA = currentSideA;
                                  controller_.prepareControllerForAquisition(acqSettingsOneSide);

@@ -58,7 +58,7 @@ public class SliceTiming {
    }
    
    /**
-    * copy constructor (unused?)
+    * copy constructor
     */
    public SliceTiming(SliceTiming orig) {
       scanDelay = orig.scanDelay;

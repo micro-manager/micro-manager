@@ -27,10 +27,47 @@ import org.micromanager.asidispim.Utils.SliceTiming;
  * Associative container or "plain old data structure" for acquisition settings.
  * Public elements so they can be get/set directly, like C/C++ struct
  * Note that this container doesn't work with collections (https://www.artima.com/lejava/articles/equality.html)
+ * In future would be good to implement this as immutable.
  * @author Nico & Jon
  */
 
 public class AcquisitionSettings {
+   
+   // default contructor, doesn't initialize anything
+   public AcquisitionSettings() {};
+   
+   // copy constructor, use to make deep copy
+   public AcquisitionSettings(AcquisitionSettings orig) {
+      this.spimMode = orig.spimMode;
+      this.isStageScanning = orig.isStageScanning;
+      this.useTimepoints = orig.useTimepoints;
+      this.numTimepoints = orig.numTimepoints;
+      this.timepointInterval = orig.timepointInterval;
+      this.useMultiPositions = orig.useMultiPositions;
+      this.useChannels = orig.useChannels;
+      this.channelMode = orig.channelMode;
+      this.numChannels = orig.numChannels;
+      this.channels = orig.channels;  // should probably make deeper copy
+      this.channelGroup = orig.channelGroup;
+      this.useAutofocus = orig.useAutofocus;
+      this.useMovementCorrection = orig.useMovementCorrection;
+      this.acquireBothCamerasSimultaneously = orig.acquireBothCamerasSimultaneously;
+      this.numSides = orig.numSides;
+      this.firstSideIsA = orig.firstSideIsA;
+      this.delayBeforeSide = orig.delayBeforeSide;
+      this.numSlices = orig.numSlices;
+      this.stepSizeUm = orig.stepSizeUm;
+      this.minimizeSlicePeriod = orig.minimizeSlicePeriod;
+      this.desiredSlicePeriod = orig.desiredSlicePeriod;
+      this.desiredLightExposure = orig.desiredLightExposure;
+      this.centerAtCurrentZ = orig.centerAtCurrentZ;
+      this.sliceTiming = new SliceTiming(orig.sliceTiming);
+      this.cameraMode = orig.cameraMode;
+      this.hardwareTimepoints = orig.hardwareTimepoints;
+      this.separateTimepoints = orig.separateTimepoints;
+      this.usePathPresets = orig.usePathPresets;
+   }
+
    // piezo scanning, vibration, stage scanning, i.e. what is 
    //                 moved between slices
    public AcquisitionModes.Keys spimMode;

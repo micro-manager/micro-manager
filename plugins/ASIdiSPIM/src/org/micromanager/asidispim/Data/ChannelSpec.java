@@ -41,12 +41,16 @@ public class ChannelSpec {
    //   public Color color = Color.gray;
 
    
-   public ChannelSpec(boolean useChannel, String group, String config){
+   public ChannelSpec(boolean useChannel, String group, String config) {
       this.useChannel_ = useChannel;
       this.group_ = group;
       this.config_ = config;
    }
    
-         
+   public ChannelSpec(ChannelSpec orig) {
+      this.useChannel_ = orig.useChannel_;
+      this.group_ = orig.group_;
+      this.config_ = orig.config_;
+   }
    
 }
