@@ -470,7 +470,6 @@ m4_define([device_adapter_dirs], [m4_strip([
    MicroPoint
    Modbus
    Motic_mac
-   NeoPixel
    Neos
    NewportCONEX
    NewportSMC
@@ -480,7 +479,6 @@ m4_define([device_adapter_dirs], [m4_strip([
    Omicron
    OpenCVgrabber
    Oxxius
-   OxxiusCombiner
    PI
    PI_GCS
    PI_GCS_2

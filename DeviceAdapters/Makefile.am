@@ -131,7 +131,6 @@ SUBDIRS = \
 	MicroPoint \
 	Motic_mac \
 	Neos \
-	NeoPixel \
 	NewportCONEX \
 	NewportSMC \
 	Nikon \
@@ -139,7 +138,6 @@ SUBDIRS = \
 	OVP_ECS2 \
 	Omicron \
 	Oxxius \
-	OxxiusCombiner \
 	PI \
 	PI_GCS \
 	PI_GCS_2 \
