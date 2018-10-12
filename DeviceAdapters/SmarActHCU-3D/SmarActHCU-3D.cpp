@@ -70,7 +70,7 @@ bool isError(std::string answer, int* error){
 
 	if(answer.substr(0,2).compare(":E") == 0){
 		std::string s = answer.substr(2); // should check if it is integer (for robustness)
-		*error = std::stoi(s);
+		*error = atoi(s.c_str());
 		return true;
 	} else {
 		*error = 0;
@@ -112,8 +112,9 @@ int GetErrorStatus(int error){
 ///////////////////////////////////////////////////////////////////////////////
 
 XYStage::XYStage() :
-port_("Undefined"),
+   port_("Undefined"),
 	initialized_(false),
+	answerTimeoutMs_(1000),
 	reverseX_(1),
 	reverseY_(1),
 	freqXY_(5000),
@@ -121,8 +122,7 @@ port_("Undefined"),
 	channelY_(1),
 	holdtime_(10),
 	id_(""),
-	controller_(""),
-	answerTimeoutMs_(1000)
+	controller_("")
 {
 	InitializeDefaultErrorMessages();
 
@@ -686,15 +686,15 @@ int XYStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 
 ZStage::ZStage() :
-port_("Undefined"),
+   port_("Undefined"),
 	initialized_(false),
+	channelZ_(2),
+	answerTimeoutMs_(1000),
 	reverseZ_(1),
 	freqZ_(5000),
-	channelZ_(2),
 	holdtime_(10),
 	id_(""),
-	controller_(""),
-	answerTimeoutMs_(1000)
+	controller_("")
 {
 	InitializeDefaultErrorMessages();
 
