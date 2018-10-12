@@ -284,7 +284,7 @@ bool XYStage::Busy()
 //////////////////////////////////////////////////
 /// setters
 
-int XYStage::SetErrorReporting(boolean reporting){
+int XYStage::SetErrorReporting(bool reporting){
 	string answer;
 	std::stringstream command;
 	if(reporting){
@@ -819,7 +819,7 @@ bool ZStage::Busy()
 }
 
 //////// Setters
-int ZStage::SetErrorReporting(boolean reporting){
+int ZStage::SetErrorReporting(bool reporting){
 	string answer;
 	std::stringstream command;
 	if(reporting){
