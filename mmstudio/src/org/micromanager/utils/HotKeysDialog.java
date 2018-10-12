@@ -248,7 +248,7 @@ public final class HotKeysDialog extends MMDialog {
     }
 
     public class HotKeyCol1Renderer extends DefaultTableCellRenderer {
-       public void SetValue(Object value) {
+       public void setValue(Object value) {
           setText(KeyEvent.getKeyText((Integer) value));
        }
        @Override

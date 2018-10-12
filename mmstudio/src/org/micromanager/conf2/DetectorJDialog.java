@@ -14,31 +14,29 @@ import org.micromanager.MMStudio;
  */
 public class DetectorJDialog extends javax.swing.JDialog {
 
-    public boolean CancelRequest(){
-        return cancelRequest_;
-    }
+   
+   private boolean cancelRequest_;
 
-    public void ProgressText(final String t){
+   /** Creates new form DetectorJDialog */
+   public DetectorJDialog(java.awt.Dialog parent, boolean modal) {
+      super(parent, modal);
+      initComponents();
+      cancelRequest_ = false;
+      setBackground(MMStudio.getInstance().getBackgroundColor());
+   }
+    
+    public boolean cancelRequest(){
+      return cancelRequest_;
+   }
 
-        detectionTextPane_.setText(t);
+   public void progressText(final String t){
+      detectionTextPane_.setText(t);       
+   }
 
-        
-    }
+   public String progressText(){
+      return detectionTextPane_.getText();
+   }
 
-    public String ProgressText(){
-        return detectionTextPane_.getText();
-    }
-
-    private boolean cancelRequest_;
-
-
-    /** Creates new form DetectorJDialog */
-    public DetectorJDialog(java.awt.Dialog parent, boolean modal) {
-        super(parent, modal);
-        initComponents();
-        cancelRequest_ = false;
-        setBackground(MMStudio.getInstance().getBackgroundColor());
-    }
 
     /** This method is called from within the constructor to
      * initialize the form.

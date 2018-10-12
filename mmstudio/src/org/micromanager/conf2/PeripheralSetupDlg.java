@@ -258,7 +258,7 @@ public class PeripheralSetupDlg extends MMDialog {
 //            hubs.add(new String(hub_));
 //         }
 //         Vector<Boolean> sel = tmd.getSelected();
-//         model_.AddSelectedPeripherals(core_, peripherals_, hubs, sel);
+//         model_.addSelectedPeripherals(core_, peripherals_, hubs, sel);
 //         model_.loadDeviceDataFromHardware(core_);
 //      } catch (Exception e) {
 //         handleError(e.getMessage());

@@ -102,7 +102,7 @@ public class GraphFrame extends MMFrame {
    }
    // This is a temporary hack to allow the setting of xlimits manually as the
    // auto identification is buggy. --Prashanth (14th May 2009)
-   public void SetXLimits(double xmin, double xmax)
+   public void setXLimits(double xmin, double xmax)
    {
 	      GraphData.Bounds bounds = panel_.getGraphBounds();
 	      if (fldXMin.getText().length() > 0 && fldYMin.getText().length() > 0 && 

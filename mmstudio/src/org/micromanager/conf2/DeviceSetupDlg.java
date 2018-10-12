@@ -522,7 +522,7 @@ public class DeviceSetupDlg extends MMDialog {
                   ReportingUtils.logError(e);
                }
                
-               progressDialog.ProgressText("Looking for:\n" + looking);
+               progressDialog.progressText("Looking for:\n" + looking);
                DeviceDetectionStatus st = core.detectDevice(dev.getName());
                
                if (st == DeviceDetectionStatus.Unimplemented) {
@@ -532,7 +532,7 @@ public class DeviceSetupDlg extends MMDialog {
                   return;
                }
 
-               if (progressDialog.CancelRequest()) {
+               if (progressDialog.cancelRequest()) {
                   System.out.print("cancel request");
                   return;
                }
@@ -578,7 +578,7 @@ public class DeviceSetupDlg extends MMDialog {
                   selectedPort = p.value;
                }
             }
-            progressDialog.ProgressText("Found:\n " + foundem);
+            progressDialog.progressText("Found:\n " + foundem);
             try {
                Thread.sleep(900);
             } catch (InterruptedException ex) {

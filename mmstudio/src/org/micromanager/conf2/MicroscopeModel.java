@@ -1447,7 +1447,7 @@ public class MicroscopeModel {
       sendConfiguration_ = value;
    }
 
-   public void AddSelectedPeripherals(CMMCore c, Vector<Device> pd,
+   public void addSelectedPeripherals(CMMCore c, Vector<Device> pd,
          Vector<String> hubs, Vector<Boolean> sel) {
       for (int idit = 0; idit < pd.size(); ++idit) {
          if (sel.get(idit)) {

@@ -88,7 +88,7 @@ public class PropertyEditor extends MMFrame {
    private final JScrollPane scrollPane_;
    private ScriptInterface gui_;
    
-   public class myMMListener extends MMListenerAdapter {
+   public class MyMMListener extends MMListenerAdapter {
 
       @Override
       public void propertiesChangedAlert() {
@@ -104,7 +104,7 @@ public class PropertyEditor extends MMFrame {
       }
    }
 
-   private final myMMListener myMMListener_ = new myMMListener();
+   private final MyMMListener myMMListener_ = new MyMMListener();
 
    public void setGui(ScriptInterface gui) {
       gui_ = gui;
