@@ -456,6 +456,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    IsmatecMCP
    K8055
    K8061
+   LaserQuantumLaser
    LeicaDMI
    LeicaDMR
    LeicaDMSTC
