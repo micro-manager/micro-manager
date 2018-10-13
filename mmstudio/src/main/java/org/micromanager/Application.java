@@ -124,6 +124,7 @@ public interface Application {
     * Provide access to the main window of the program. This is largely
     * intended to allow client code to position their windows with respect
     * to the main window.
+    * @return the main Window
     */
    public JFrame getMainWindow();
 

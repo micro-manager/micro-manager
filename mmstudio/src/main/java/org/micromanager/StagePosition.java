@@ -26,10 +26,14 @@
 //
 package org.micromanager;
 
+import java.util.Objects;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.utils.NumberUtils;
 
-
+/**
+ * Description of the position of a 1 or 2 axis stage
+ * @author nico
+ */
 public class StagePosition {
    /**
     * For two-axis stages, the X position; for one-axis stages, the only stage
@@ -74,12 +78,25 @@ public class StagePosition {
    @Deprecated
    public int numAxes;
 
+   /**
+    * Creates a new StapePosition for a 1 axis drive
+    * @param stageDeviceLabel name of the stage/drive
+    * @param z position
+    * @return StagePosition object based on the input
+    */
    public static StagePosition create1D(String stageDeviceLabel, double z) {
       StagePosition ret = new StagePosition();
       ret.set1DPosition(stageDeviceLabel, z);
       return ret;
    }
 
+      /**
+    * Creates a new StapePosition for a 2 axis drive
+    * @param stageDeviceLabel name of the stage/drive
+    * @param x position-x
+    * @param y position-y
+    * @return StagePosition object based on the input
+    */
    public static StagePosition create2D(String stageDeviceLabel,
          double x, double y)
    {
@@ -101,6 +118,11 @@ public class StagePosition {
       numAxes=1;
    }
 
+   /**
+    * 
+    * @param aPos
+    * @return 
+    */
    public static StagePosition newInstance(StagePosition aPos) {
       StagePosition sp = new StagePosition();
       sp.x = aPos.x;
@@ -179,8 +201,18 @@ public class StagePosition {
          return false;
       }
       StagePosition spAlt = (StagePosition) alt;
-      return (x == spAlt.x && y == spAlt.y && z == spAlt.z &&
-            numAxes == spAlt.numAxes && stageName.equals(spAlt.stageName));
+      return spAlt.hashCode() == this.hashCode();
+   }
+
+   @Override
+   public int hashCode() {
+      int hash = 7;
+      hash = 37 * hash + (int) (Double.doubleToLongBits(this.x) ^ (Double.doubleToLongBits(this.x) >>> 32));
+      hash = 37 * hash + (int) (Double.doubleToLongBits(this.y) ^ (Double.doubleToLongBits(this.y) >>> 32));
+      hash = 37 * hash + (int) (Double.doubleToLongBits(this.z) ^ (Double.doubleToLongBits(this.z) >>> 32));
+      hash = 37 * hash + Objects.hashCode(this.stageName);
+      hash = 37 * hash + this.numAxes;
+      return hash;
    }
 
    @Override

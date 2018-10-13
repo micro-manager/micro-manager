@@ -84,6 +84,7 @@ public interface Studio {
    /**
     * Provide access to the AcquisitionManager, for running data acquisition
     * using the Micro-Manager acquisition engine.
+    * @return AcquisitionManager
     */
    public AcquisitionManager acquisitions();
 
@@ -91,12 +92,14 @@ public interface Studio {
     * Provide access to the AcquisitionManager, for running data acquisition
     * using the Micro-Manager acquisition engine. Identical to acquisitions()
     * except in name.
+    * @return AcquisitionManager
     */
    public AcquisitionManager getAcquisitionManager();
 
    /**
     * Provide access to the AlertManager, for creating low-profile, non-
     * interrupting alerts in the user interface.
+    * @return AlertManager
     */
    public AlertManager alerts();
 
@@ -104,12 +107,14 @@ public interface Studio {
     * Provide access to the AlertManager, for creating low-profile, non-
     * interrupting alerts in the user interface. Identical to alerts() except
     * in name.
+    * @return AlertManager
     */
    public AlertManager getAlertManager();
 
    /**
     * Provide access to the AutofocusManager, for performing autofocus
     * operations.
+    * @return AutofocusManager
     */
    public AutofocusManager getAutofocusManager();
 

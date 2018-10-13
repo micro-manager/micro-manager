@@ -32,81 +32,114 @@ import org.micromanager.internal.utils.PropertyItem;
  */
 public interface AutofocusPlugin extends MMPlugin {
 
+   /**
+    * Pushes setting to the hardware or software autofocus
+    */
    public void applySettings();
+   
+   /**
+    * Stores settings
+    */
    public void saveSettings();
 
-   /*
-    * Run a full, one-shot autofocus protocol. Blocks until focusing is
+   /**
+    * Runs a full, one-shot autofocus protocol. Blocks until focusing is
     * finished.
+    * @return focus score
+    * @throws java.lang.Exception
     */
    public double fullFocus() throws Exception;
 
-   /*
-    * Run a single, incremental focusing step.
+   /**
+    * Runs a single, incremental focusing step.
+    * @return focus score
+    * @throws java.lang.Exception
     */
    public double incrementalFocus() throws Exception;
    
-   /*
+   /**
     * Returns the number of images acquired
+    * @return number of images for autofocussing
     */
    public int getNumberOfImages();
 
-   /*
+   /**
     * Returns a detailed status of the autofocus plugin/device.
+    * @return description of the autofocus Status
     */
    public String getVerboseStatus();
 
-   /*
+   /**
     * Returns an array of the properties for this autofocus plugin.
+    * @return array with Property descriptors, representing MMCore data
     */
    public PropertyItem[] getProperties();
 
-   /*
+   /**
     * Returns an array of the names of properties for this autofocus plugin.
+    * @return array with the names of properties for this autofocus plugin
     */
    public String[] getPropertyNames();
 
-   /*
+   /**
     * Returns the name and value of properties for the autofocus plugin.
+    * @param key PropertyName for which we want the value
+    * @return value for given property
+    * @throws java.lang.Exception thrown by MMCore when key is not found.  
     */
    public PropertyItem getProperty(String key) throws Exception;
 
-   /*
+   /**
     * Sets the value of a particular property.
+    * @param p 
+    * @throws java.lang.Exception
     */
    public void setProperty(PropertyItem p) throws Exception;
 
-   /*
+   /**
     * Gets the value of a named property.
+    * @param name named property
+    * @return value for the given property
+    * @throws java.lang.Exception
     */
    public String getPropertyValue(String name) throws Exception;
 
-   /*
+   /**
     * Sets the value of a named property.
+    * @param name PropertyName
+    * @param value PropertyValue
+    * @throws java.lang.Exception by MMCore
     */
    public void setPropertyValue(String name, String value) throws Exception;
 
-   /*
+   /**
     * Returns the current focus "score" (goodness of focus).
+    * @return focus score (goodness of focus)
     */
    public double getCurrentFocusScore();
 
-   /*
+   /**
     * Turns on continuous autofocus. Typically used by hardware autofocus
     * devices such as the Nikon Perfect Focus (PFS).
+    * @param enable
+    * @throws java.lang.Exception
     */
    public void enableContinuousFocus(boolean enable) throws Exception;
 
-   /*
+   /**
     * Returns true if continuous autofocus has been enabled. Typically used
     * by hardware autofocus devices such as the Nikon Perfect Focus (PFS).
+    * @return true if enabled
+    * @throws java.lang.Exception
     */
    public boolean isContinuousFocusEnabled() throws Exception;
 
-   /*
+   /**
     * Returns true if continuous autofocus is currently locked (successfully
     * following the specimen). Typically used by hardware autofocus devices
     * such as the Nikon Perfect Focus (PFS).
+    * @return true if locked
+    * @throws java.lang.Exception thrown by MMCore
     */
    public boolean isContinuousFocusLocked() throws Exception;
    

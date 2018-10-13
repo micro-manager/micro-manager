@@ -25,23 +25,21 @@
 package org.micromanager;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.micromanager.data.internal.PropertyKey;
 import org.micromanager.internal.propertymap.NonPropertyMapJSONFormats;
 
 /**
- * Navigation list of positions for the XYStage.
+ * Navigation list of positions for the Stages.
  * Used for multi site acquisition support.
  */
 public class PositionList implements Iterable<MultiStagePosition> {
@@ -49,10 +47,18 @@ public class PositionList implements Iterable<MultiStagePosition> {
 
    private final HashSet<ChangeListener> listeners_ = new HashSet<ChangeListener>();
 
+   /**
+    * Constructor of navigation list of positions for the Stages.
+    */
    public PositionList() {
       positions_ = new ArrayList<MultiStagePosition>();
    }
 
+   /**
+    * This looks like a static copy constructor
+    * @param aPl input positionlist
+    * @return new instance of a PositionList with identical positions to the input
+    */
    public static PositionList newInstance(PositionList aPl) {
       PositionList pl = new PositionList();
       Iterator<MultiStagePosition> it = aPl.positions_.iterator();
@@ -61,14 +67,26 @@ public class PositionList implements Iterable<MultiStagePosition> {
       return pl;
    }
 
+   /**
+    * Adds a changeListener to this PositionList
+    * @param listener Will fire when the list changes
+    */
    public void addChangeListener(ChangeListener listener) {
        listeners_.add(listener);
    }
 
+   /**
+    * Removes the given listener  
+    * Nothing will happen if listener was not added first
+    * @param listener 
+    */
    public void removeChangeListener(ChangeListener listener) {
        listeners_.remove(listener);
    }
 
+   /**
+    * Notifies all changeListeners to the list that something changed
+    */
    public void notifyChangeListeners() {
        for (ChangeListener listener:listeners_) {
            listener.stateChanged(new ChangeEvent(this));
@@ -214,6 +232,10 @@ public class PositionList implements Iterable<MultiStagePosition> {
       notifyChangeListeners();
    }
 
+   /**
+    * Creates a PropertyMap from this PositionList
+    * @return PropertyMap representing this PositionList
+    */
    public PropertyMap toPropertyMap() {
       List<PropertyMap> msps = new ArrayList<PropertyMap>();
       for (MultiStagePosition msp : positions_) {
@@ -225,6 +247,11 @@ public class PositionList implements Iterable<MultiStagePosition> {
    }
 
 
+   /**
+    * replaces the content of this PositionList with the content of the given PropertyMap
+    * @param map PropertyMap whose content will replace this PositionList
+    * @throws IOException 
+    */
    public void replaceWithPropertyMap(PropertyMap map) throws IOException {
       positions_.clear();
       if (!map.containsPropertyMapList(PropertyKey.STAGE_POSITIONS.key())) {
@@ -246,6 +273,11 @@ public class PositionList implements Iterable<MultiStagePosition> {
       return generateLabel("Pos");
    }
    
+   /**
+    * Generates a label for a new Position
+    * @param proposal user-supplied suggestion
+    * @return new, unique label that will be accepted by this list 
+    */
    public String generateLabel(String proposal) {
       String label = proposal + positions_.size();
       
@@ -331,8 +363,9 @@ public class PositionList implements Iterable<MultiStagePosition> {
     * method of PositionList, or by trying to iterator over it.
     */
    public static class PosListIterator implements Iterator<MultiStagePosition> {
-      private PositionList list_;
+      private final PositionList list_;
       private int index_ = 0;
+      
       public PosListIterator(PositionList list) {
          list_ = list;
       }
@@ -343,8 +376,11 @@ public class PositionList implements Iterable<MultiStagePosition> {
       }
 
       @Override
-      public MultiStagePosition next() {
+      public MultiStagePosition next() throws NoSuchElementException {
          MultiStagePosition result = list_.getPosition(index_);
+         if (result == null) {
+            throw new NoSuchElementException();
+         }
          index_++;
          return result;
       }

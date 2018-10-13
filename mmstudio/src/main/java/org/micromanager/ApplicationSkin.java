@@ -42,17 +42,28 @@ public interface ApplicationSkin {
     * Available skins used by the application.
     */
    public enum SkinMode {
-      DAY("Day"), NIGHT("Night");
+      DAY("Day"), 
+      NIGHT("Night");
       private final String desc_;
 
       SkinMode(String desc) {
          desc_ = desc;
       }
 
+      /**
+       * 
+       * @return string describing this skin
+       */
       public String getDesc() {
          return desc_;
       }
 
+      /**
+       * 
+       * @param desc string describing this skin
+       * @return the skinmode associated with the given string (if any)
+       * throws IllegalArgumentException when no matching mode is found
+       */
       public static SkinMode fromString(String desc) {
          for (SkinMode mode : SkinMode.values()) {
             if (mode.getDesc().contentEquals(desc)) {

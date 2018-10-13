@@ -34,6 +34,10 @@ public interface ScriptController {
     * request pending, which prevents most interactions with the system.
     */
    public class ScriptStoppedException extends RuntimeException {
+      /**
+       * 
+       * @param message 
+       */
       public ScriptStoppedException(String message) {
          super(message);
       }

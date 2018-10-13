@@ -53,12 +53,15 @@ public interface PluginManager {
     * MenuPlugins are normally available under the "Plugins" menu; this method
     * allows plugins to talk to each other without explicitly depending on
     * each other.
+    * @return HashMap that maps plugin class names to MenuPlugin instances
     */
    public HashMap<String, MenuPlugin> getMenuPlugins();
 
    /**
     * Return a HashMap that maps plugin class names to AutofocusPlugin
     * instances. AutofocusPlugins are used to perform autofocus operations.
+    * @return HashMap that maps plugin class names to AutofocusPlugin
+    * instances
     */
    public HashMap<String, AutofocusPlugin> getAutofocusPlugins();
 
@@ -67,6 +70,7 @@ public interface PluginManager {
     * IntroPlugins are used to customize the intro dialog at the start of the
     * program. Ordinarily there should only be at most one of this kind of
     * plugin installed at a time.
+    * @return HashMap that maps plugin class names to IntroPlugin instances
     */
    public HashMap<String, IntroPlugin> getIntroPlugins();
 
@@ -74,12 +78,16 @@ public interface PluginManager {
     * Return a HashMap that maps plugin class names to QuickAccessPlugin
     * instances. QuickAccessPlugins are for controls that can be included in
     * the Quick-Access Window.
+    * @return HashMap that maps plugin class names to QuickAccessPlugin
+    * instances
     */
    public HashMap<String, QuickAccessPlugin> getQuickAccessPlugins();
 
    /**
     * Return a HashMap that maps plugin class names to InspectorPlugin
     * instances. InspectorPlugins create the panels in the Inspector windows.
+    * @return HashMap that maps plugin class names to InspectorPlugin
+    * instances
     */
    public HashMap<String, InspectorPanelPlugin> getInspectorPlugins();
 
@@ -87,6 +95,8 @@ public interface PluginManager {
     * Return a HashMap that maps plugin class names to DisplayGearMenuPlugin
     * instances. DisplayGearMenuPlugins add entries to the gear menus in
     * DisplayWindows.
+    * @return HashMap that maps plugin class names to DisplayGearMenuPlugin
+    * instances
     */
    public HashMap<String, DisplayGearMenuPlugin> getDisplayGearMenuPlugins();
 }

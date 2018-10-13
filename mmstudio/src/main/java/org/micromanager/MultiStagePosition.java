@@ -29,9 +29,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import mmcorej.CMMCore;
 import org.micromanager.data.internal.PropertyKey;
 
+/**
+ * Definition of a position in space in terms of available stages/drives
+ * 
+ */
 public final class MultiStagePosition {
    private ArrayList<StagePosition> stagePosList_;
    private String label_;
@@ -64,19 +69,12 @@ public final class MultiStagePosition {
       this();
       
       // create and add xy position
-      StagePosition xyPos = new StagePosition();
-      xyPos.numAxes = 2;
-      xyPos.stageName = xyStage;
-      xyPos.x = x;
-      xyPos.y = y;
+      StagePosition xyPos = StagePosition.create2D(xyStage, x, y);
       defaultXYStage_ = xyStage; 
       add(xyPos);
       
       // create and add z position
-      StagePosition zPos = new StagePosition();
-      zPos.numAxes = 1;
-      zPos.stageName = zStage;
-      zPos.x = z;
+      StagePosition zPos = StagePosition.create1D(zStage, z);
       defaultZStage_ = zStage;
       add(zPos);
    }
@@ -106,6 +104,10 @@ public final class MultiStagePosition {
       stagePosList_.add(sp);
    }
    
+   /**
+    * Removed one stage position point
+    * @param sp stage position point to be removed
+    */
    public void remove(StagePosition sp) {
       stagePosList_.remove(sp);
    }
@@ -173,7 +175,7 @@ public final class MultiStagePosition {
     */
    public StagePosition get(String stageName) {
       for (StagePosition sp : stagePosList_) {
-         if (sp.stageName.compareTo(stageName) == 0)
+         if (sp.getStageDeviceLabel().compareTo(stageName) == 0)
             return sp;
       }
       return null;
@@ -203,10 +205,17 @@ public final class MultiStagePosition {
       defaultZStage_ = stage;
    }
    
+   /**
+    * @return Default Z stage (defined by the user in MMCore)
+    */
    public String getDefaultZStage() {
       return defaultZStage_;
    }
    
+   /**
+    * 
+    * @return Default CY stage (defined by the user in MMCore)
+    */
    public String getDefaultXYStage() {
       return defaultXYStage_;
    }
@@ -228,15 +237,16 @@ public final class MultiStagePosition {
    public static void goToPosition(MultiStagePosition msp, CMMCore core_) throws Exception {
       for (int i=0; i<msp.size(); i++) {
          StagePosition sp = msp.get(i);
-         if (sp.numAxes == 1) {
-            core_.setPosition(sp.stageName, sp.x);
-         } else if (sp.numAxes == 2) {
-            core_.setXYPosition(sp.stageName, sp.x, sp.y);
+         if (sp.getNumberOfStageAxes() == 1) {
+            core_.setPosition(sp.getStageDeviceLabel(), sp.get2DPositionX());
+         } else if (sp.getNumberOfStageAxes() == 2) {
+            core_.setXYPosition(sp.getStageDeviceLabel(), 
+                    sp.get2DPositionX(), sp.get2DPositionY());
          }
          
          // wait for one device at the time
          // TODO: this should not be here
-         core_.waitForDevice(sp.stageName);
+         core_.waitForDevice(sp.getStageDeviceLabel());
       }
       
    }
@@ -248,8 +258,9 @@ public final class MultiStagePosition {
    public double getX() {
       // TODO: implement more efficient position calculation
       for (StagePosition sp : stagePosList_) {
-         if (sp.numAxes == 2 && sp.stageName.compareTo(defaultXYStage_) == 0) {
-            return sp.x;
+         if (sp.getNumberOfStageAxes() == 2 && 
+                 sp.getStageDeviceLabel().compareTo(defaultXYStage_) == 0) {
+            return sp.get2DPositionX();
          }
       }
       return 0.0;
@@ -261,8 +272,9 @@ public final class MultiStagePosition {
     */
   public double getY() {
       for (StagePosition sp : stagePosList_) {
-         if (sp.numAxes == 2 && sp.stageName.compareTo(defaultXYStage_) == 0) {
-            return sp.y;
+         if (sp.getNumberOfStageAxes() == 2 && 
+                 sp.getStageDeviceLabel().compareTo(defaultXYStage_) == 0) {
+            return sp.get2DPositionY();
          }
       }
       return 0.0;
@@ -274,8 +286,9 @@ public final class MultiStagePosition {
    */
    public double getZ() {
       for (StagePosition sp : stagePosList_) {
-         if (sp.numAxes == 1 && sp.stageName.compareTo(defaultZStage_) == 0) {
-            return sp.x;
+         if (sp.getNumberOfStageAxes() == 1 && 
+                 sp.getStageDeviceLabel().compareTo(defaultZStage_) == 0) {
+            return sp.get1DPosition();
          }
       }
       return 0.0;
@@ -348,12 +361,28 @@ public final class MultiStagePosition {
    }
 
    @Override
+   public int hashCode() {
+      int hash = 3;
+      hash = 79 * hash + Objects.hashCode(this.stagePosList_);
+      hash = 79 * hash + Objects.hashCode(this.label_);
+      hash = 79 * hash + Objects.hashCode(this.defaultZStage_);
+      hash = 79 * hash + Objects.hashCode(this.defaultXYStage_);
+      hash = 79 * hash + this.gridRow_;
+      hash = 79 * hash + this.gridCol_;
+      hash = 79 * hash + Objects.hashCode(this.properties_);
+      return hash;
+   }
+
+   @Override
    public String toString() {
       return String.format("<MultiStagePosition %s with defaults XY %s, Z %s; grid %d/%d, properties %s>",
             label_, defaultXYStage_, defaultZStage_, gridCol_, gridRow_,
             properties_);
    }
 
+   /**
+    * @return PropertyMap describing this MultiStagePosition
+    */
    public PropertyMap toPropertyMap() {
       PropertyMap.Builder properties = PropertyMaps.builder();
       for (Map.Entry<String, String> e : properties_.entrySet()) {
@@ -380,6 +409,11 @@ public final class MultiStagePosition {
                   positions).build();
    }
 
+   /**
+    * Generates a multistagePosition from the given PorpertyMap
+    * @param pmap PropertyMap 
+    * @return MultiStagePosition
+    */
    public static MultiStagePosition fromPropertyMap(PropertyMap pmap) {
       MultiStagePosition ret = new MultiStagePosition();
       ret.label_ = pmap.getString(PropertyKey.MULTI_STAGE_POSITION__LABEL.

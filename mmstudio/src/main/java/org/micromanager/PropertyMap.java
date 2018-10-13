@@ -84,6 +84,10 @@ public interface PropertyMap {
     * bulk operations on property maps.
     */
    public interface OpaqueValue {
+      /**
+       * 
+       * @return 
+       */
       Class<?> getValueType();
    }
 
@@ -105,6 +109,7 @@ public interface PropertyMap {
       // strict pattern.
 
       // Primitive
+      @Override
       Builder putBoolean(String key, Boolean value);
       Builder putBooleanList(String key, boolean... values);
       Builder putBooleanList(String key, Iterable<Boolean> values);
@@ -117,17 +122,20 @@ public interface PropertyMap {
       Builder putInteger(String key, Integer value);
       Builder putIntegerList(String key, int... values);
       Builder putIntegerList(String key, Iterable<Integer> values);
+      @Override
       Builder putLong(String key, Long value);
       Builder putLongList(String key, long ... values);
       Builder putLongList(String key, Iterable<Long> values);
       Builder putFloat(String key, Float value);
       Builder putFloatList(String key, float... values);
       Builder putFloatList(String key, Iterable<Float> values);
+      @Override
       Builder putDouble(String key, Double value);
       Builder putDoubleList(String key, double... values);
       Builder putDoubleList(String key, Iterable<Double> values);
 
       // Immutable
+      @Override
       Builder putString(String key, String value);
       Builder putStringList(String key, String... values);
       Builder putStringList(String key, Iterable<String> values);
@@ -140,6 +148,7 @@ public interface PropertyMap {
       Builder putAffineTransform(String key, AffineTransform value);
       Builder putAffineTransformList(String key, AffineTransform... values);
       Builder putAffineTransformList(String key, Iterable<AffineTransform> values);
+      @Override
       Builder putPropertyMap(String key, PropertyMap value);
       Builder putPropertyMapList(String key, PropertyMap... values);
       Builder putPropertyMapList(String key, Iterable<PropertyMap> values);

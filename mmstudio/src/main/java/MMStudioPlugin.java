@@ -30,6 +30,7 @@ import ij.plugin.PlugIn;
 import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import org.micromanager.display.internal.displaywindow.imagej.MMVirtualStack;
 import org.micromanager.internal.MMStudio;
 import org.micromanager.internal.utils.GUIUtils;
@@ -41,7 +42,7 @@ import org.micromanager.internal.utils.ReportingUtils;
  * ImageJ plugin wrapper for Micro-Manager.
  */
 public class MMStudioPlugin implements PlugIn, CommandListener {
-   static MMStudio studio_;
+   volatile static MMStudio studio_;
 
    /**
     * Run Micro-Manager as an ImageJ plugin
@@ -62,7 +63,8 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
                   try {
                      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                   }
-                  catch (Exception e) {
+                  catch (ClassNotFoundException | IllegalAccessException | 
+                          InstantiationException | UnsupportedLookAndFeelException e) {
                      ReportingUtils.logError(e, "Failed to set look-and-feel");
                   }
 
@@ -76,6 +78,8 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
 
                   studio_ = new MMStudio(true);
                }
+            } catch (RuntimeException e) {
+               ReportingUtils.logError(e);
             } catch (Exception e) {
                ReportingUtils.logError(e);
             }
