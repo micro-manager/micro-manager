@@ -212,7 +212,6 @@ bool RAMPSHub::Busy() {
   }
 
   std::string answer;
-  std::string debug_string = "debug string 1";
   int ret = ReadResponse(answer, 30000);
   if (ret != DEVICE_OK) {
     status_ = "Busy";
@@ -221,7 +220,6 @@ bool RAMPSHub::Busy() {
   if (!answer.compare("ok")) {
     LogMessage(std::string("busy expected OK, didn't get it."));
     LogMessage(answer);
-	LogMessage(debug_string);
     return true;
   }
 
