@@ -146,17 +146,6 @@ int RAMPSHub::Initialize()
 
   CDeviceUtils::SleepMs(2000);
 
-  while (true) {
-    int ret = ReadResponse(answer);
-    if (ret != DEVICE_OK)
-    {
-      LogMessage("Got timeout:");
-      LogMessageCode(ret,true);
-      break;
-    }
-  }
-  PurgeComPortH();
-
   // Get controller version
   ret = GetControllerVersion(version_);
   if( DEVICE_OK != ret)
@@ -228,7 +217,7 @@ bool RAMPSHub::Busy() {
     status_ = "Busy";
     return true;
   }
-  if (answer != "ok") {
+  if (!answer.compare("ok")) {
     LogMessage(std::string("busy expected OK, didn't get it."));
     LogMessage(answer);
     return true;
@@ -440,15 +429,6 @@ MM::DeviceDetectionStatus RAMPSHub::DetectDevice(void)
       MMThreadGuard myLock(executeLock_);
       string an;
 
-      while (true) {
-        int ret = ReadResponse(an);
-        if (ret != DEVICE_OK)
-        {
-          LogMessage("Got timeout:");
-          LogMessageCode(ret,true);
-          break;
-        }
-      }
       PurgeComPort(port_.c_str());
       int ret = GetStatus();
       // later, Initialize will explicitly check the version #
@@ -528,7 +508,7 @@ int RAMPSHub::GetStatus()
   ret = ReadResponse(an);
   if (ret != DEVICE_OK)
   {
-    LogMessage(std::string("answer get error!_"));
+    LogMessage(std::string("Get Current Position (M114) answer get error!_"));
     return ret;
   }
   if (an.length() <1) {
@@ -559,7 +539,7 @@ int RAMPSHub::GetStatus()
     LogMessage(std::string("answer get error!_"));
     return ret;
   }
-  if (an != "ok")
+  if (!an.compare("ok"))
   {
     LogMessage(std::string("answer get error!_"));
     return ret;
@@ -627,7 +607,7 @@ int RAMPSHub::SetVelocity(double x, double y, double z) {
   if (ret != DEVICE_OK) return ret;
   ret = pHub->ReadResponse(result);
   if (ret != DEVICE_OK) return ret;
-  if (result != "ok") {
+  if (!result.compare("ok")) {
     LogMessage("Expected OK");
   }
 
@@ -646,7 +626,7 @@ int RAMPSHub::SetAcceleration(double x, double y, double z) {
   if (ret != DEVICE_OK) return ret;
   ret = pHub->ReadResponse(result);
   if (ret != DEVICE_OK) return ret;
-  if (result != "ok") {
+  if (!result.compare("ok") ) {
     LogMessage("Expected OK");
   }
 

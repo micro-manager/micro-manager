@@ -143,7 +143,7 @@ int RAMPSXYStage::SetPositionSteps(long x, long y)
 	  LogMessage("Error sending XY move.");
 	  return ret;
   }
-  if (answer != "ok") {
+  if (!answer.compare("ok")) {
 	  LogMessage("Failed to get ok response to XY move.");
   }
   ret = OnXYStagePositionChanged(posX_um_, posY_um_);
@@ -184,7 +184,7 @@ int RAMPSXYStage::Home() {
     LogMessage("error getting response to homing command.");
     return ret;
   }
-  if (answer != "ok") {
+  if (!answer.compare("ok")) {
     LogMessage("Homing command: expected ok.");
     return DEVICE_ERR;
   }
@@ -212,7 +212,7 @@ int RAMPSXYStage::SetAdapterOriginUm(double x, double y) {
     LogMessage("error getting response to origin command.");
     return ret;
   }
-  if (answer != "ok") {
+  if (!answer.compare("ok")) {
     LogMessage("Origin command: expected ok.");
     return DEVICE_ERR;
   }
