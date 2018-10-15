@@ -438,7 +438,7 @@ int LaserQuantumLaser::getCurrent(double* current){
 
 	if (string_contains(answer,"%")){
 		double curr = 0;
-		std::string s = answer.substr(0,s.length()-1);
+		std::string s = answer.substr(0,answer.length()-1);
 		std::stringstream streamval(s);
 		streamval >> curr;	
 
