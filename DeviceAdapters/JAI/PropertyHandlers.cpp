@@ -127,9 +127,40 @@ int JAICamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	if (eAct == MM::AfterSet)
 	{
+		double val(1.0);
+		pProp->Get(val);
+		PvResult pvr = genParams->SetFloatValue("Gain", val);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
 	}
 	else if (eAct == MM::BeforeGet)
 	{
+		double gain;
+		PvResult pvr = genParams->GetFloatValue("Gain", gain);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+		pProp->Set(gain);
+	}
+	return DEVICE_OK;
+}
+
+int JAICamera::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::AfterSet)
+	{
+		double val(1.0);
+		pProp->Get(val);
+		PvResult pvr = genParams->SetFloatValue("Gamma", val);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		double gamma;
+		PvResult pvr = genParams->GetFloatValue("Gamma", gamma);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+		pProp->Set(gamma);
 	}
 	return DEVICE_OK;
 }
@@ -157,6 +188,31 @@ int JAICamera::OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	return DEVICE_OK;
 }
+
+int JAICamera::OnTestPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	const char* pvCmd = "TestPattern";
+	if (eAct == MM::AfterSet)
+	{
+		string val;
+		long data;
+		pProp->Get(val);
+		GetPropertyData(g_TestPattern, val.c_str(), data);
+		PvResult pvr = genParams->SetEnumValue(pvCmd, data);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		PvString val;
+		PvResult pvr = genParams->GetEnumValue(pvCmd, val);
+		if (!pvr.IsOK())
+			return processPvError(pvr);
+		pProp->Set(val.GetAscii());
+	}
+	return DEVICE_OK;
+}
+
 
 int JAICamera::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
 {

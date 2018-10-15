@@ -282,7 +282,7 @@ int JAICamera::Initialize()
 
 	// TEMPERATURE
 	pAct = new CPropertyAction(this, &JAICamera::OnTemperature);
-	CreateProperty("Temperature", "0", MM::Float, true, pAct);
+	CreateProperty(g_Temperature, "0", MM::Float, true, pAct);
 
 	// AUTO WHITE BALANCE
 	pAct = new CPropertyAction(this, &JAICamera::OnWhiteBalance);
@@ -307,6 +307,61 @@ int JAICamera::Initialize()
 			int64_t val;
 			entry->GetValue(val);
 			AddAllowedValue(g_WhiteBalance, name.GetAscii(), (long)val);
+		}
+	}
+
+	// GAIN
+	double gain, gainMin, gainMax;
+	pvr = genParams->GetFloatValue("Gain", gain);
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
+	pvr = genParams->GetFloatRange("Gain", gainMin, gainMax);
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
+	pAct = new CPropertyAction(this, &JAICamera::OnGain);
+	ret = CreateProperty(g_Gain, CDeviceUtils::ConvertToString(gain), MM::Float, false, pAct);
+	SetPropertyLimits(g_Gain, gainMin, gainMax);
+	assert(ret == DEVICE_OK);
+
+	// GAMMA
+	double gamma, gammaMin, gammaMax;
+	pvr = genParams->GetFloatValue("Gamma", gamma);
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
+	pvr = genParams->GetFloatRange("Gamma", gammaMin, gammaMax);
+	if (!pvr.IsOK())
+		return processPvError(pvr);
+
+	pAct = new CPropertyAction(this, &JAICamera::OnGamma);
+	ret = CreateProperty(g_Gamma, CDeviceUtils::ConvertToString(gamma), MM::Float, false, pAct);
+	SetPropertyLimits(g_Gamma, gammaMin, gammaMax);
+	assert(ret == DEVICE_OK);
+
+	// TEST PATTERN
+	// list test pattern optiopns
+	pAct = new CPropertyAction(this, &JAICamera::OnTestPattern);
+	ret = CreateProperty(g_TestPattern, g_Off, MM::String, false, pAct);
+
+	PvGenEnum *testPattern = genParams->GetEnum("TestPattern");
+	int64_t numPatterns = 0;
+	testPattern->GetEntriesCount(numPatterns);
+
+	for (uint32_t i = 0; i < numPatterns; i++)
+	{
+		const PvGenEnumEntry *entry = NULL;
+		testPattern->GetEntryByIndex(i, &entry);
+
+		if (entry->IsAvailable())
+		{
+			PvString name;
+			entry->GetName(name);
+
+			int64_t val;
+			entry->GetValue(val);
+			AddAllowedValue(g_TestPattern, name.GetAscii(), (long)val);
 		}
 	}
 
