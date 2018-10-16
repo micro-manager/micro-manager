@@ -1,9 +1,11 @@
 package org.micromanager.acquiremultipleregions;
 
 import java.io.File;
+import java.nio.file.Path;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.internal.utils.TileCreator;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -95,4 +97,26 @@ class Region {
       bBox.addPosition(maxCoords);
       return bBox;
    }
+   }
+   
+   public void save(Path path) {
+       try{
+           positions.save(path.resolve(filename + ".pos").toFile());
+       }
+       catch (Exception ex){
+           ReportingUtils.showError(ex);
+       }
+   }
+   
+   static public Region loadFromFile(File f, File newDir) {
+       PositionList positions = new PositionList();
+       try{
+           positions.load(f);
+       }
+       catch (Exception ex){
+           ReportingUtils.showError(ex);
+       }
+       String fname = f.getName();
+       fname = fname.substring(0,fname.length()-4);
+       return new Region(positions, newDir.toString() , fname);
 }

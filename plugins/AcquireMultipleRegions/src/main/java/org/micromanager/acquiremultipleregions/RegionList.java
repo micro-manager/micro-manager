@@ -3,6 +3,8 @@
 package org.micromanager.acquiremultipleregions;
 
 import java.util.ArrayList;
+import java.nio.file.Path;
+import java.io.File;
 
 
 /**
@@ -48,5 +50,21 @@ class RegionList {
        }
        return true;
    }
-   
+    public void saveRegions(Path path) {
+        for (int i = 0; i < regions_.size(); i++) {
+            regions_.get(i).save(path);
+        }
+    }
+    
+    public int loadRegions(File f, File newDir) {
+        File[] fs = f.listFiles();
+        int count = 0;
+        for (int i=0; i<fs.length; i++){
+            if (fs[i].toString().endsWith(".pos")) {
+                addRegion(Region.loadFromFile(fs[i], newDir));
+                count++;
+            }
+        }
+        return count;
+    }
 }
