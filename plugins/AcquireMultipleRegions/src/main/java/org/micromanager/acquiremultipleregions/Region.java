@@ -166,6 +166,7 @@ class Region {
                   MSP.add(newSP);
                }
             }
+                MSP.setLabel("Pos_" + String.format("%03d", xidx) + "_" + String.format("%03d", yidx));
             PL.addPosition(MSP);
          }
          //Update Y coordinate
