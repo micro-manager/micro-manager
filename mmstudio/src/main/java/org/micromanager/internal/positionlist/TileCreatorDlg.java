@@ -395,10 +395,7 @@ public final class TileCreatorDlg extends MMDialog {
          final String zStage = positionListDlg_.get1DAxis();
          if (zStage != null) {
             msp.setDefaultZStage(zStage);
-            StagePosition sp = new StagePosition();
-            sp.stageName = zStage;
-            sp.numAxes = 1;
-            sp.x = core_.getPosition(zStage);
+            StagePosition sp = StagePosition.create1D(zStage, core_.getPosition(zStage));
             msp.add(sp);
          }
 
@@ -406,11 +403,7 @@ public final class TileCreatorDlg extends MMDialog {
          final String xyStage = positionListDlg_.get2DAxis();
          if (xyStage != null) {
             msp.setDefaultXYStage(xyStage);
-            StagePosition sp = new StagePosition();
-            sp.stageName = xyStage;
-            sp.numAxes = 2;
-            sp.x = core_.getXPosition(xyStage);
-            sp.y = core_.getYPosition(xyStage);
+            StagePosition sp = StagePosition.create2D(xyStage, core_.getXPosition(xyStage), core_.getYPosition(xyStage));
             msp.add(sp);
          }
       } catch (Exception e) {
@@ -485,12 +478,6 @@ public final class TileCreatorDlg extends MMDialog {
       double imageSizeXUm = getImageSize()[0];
       double imageSizeYUm = getImageSize()[1];
 
-      double tileSizeXUm = getTileSize()[0];
-      double tileSizeYUm = getTileSize()[1];
-
-      double overlapXUm = imageSizeXUm - tileSizeXUm;
-      double overlapYUm = imageSizeYUm - tileSizeYUm;
-
       double [] centeredSize = getCenteredSize();
       if(centeredSize[0] == 0.0)
           return;
@@ -508,10 +495,7 @@ public final class TileCreatorDlg extends MMDialog {
             final String zStage = positionListDlg_.get1DAxis();
             if (zStage != null) {
                msp.setDefaultZStage(zStage);
-               StagePosition sp = new StagePosition();
-               sp.stageName = zStage;
-               sp.numAxes = 1;
-               sp.x = core_.getPosition(zStage);
+               StagePosition sp = StagePosition.create1D(zStage, core_.getPosition(zStage));
                msp.add(sp);
                sb.append(sp.getVerbose()).append("\n");
             }
@@ -520,11 +504,7 @@ public final class TileCreatorDlg extends MMDialog {
             final String xyStage = positionListDlg_.get2DAxis();
             if (xyStage != null) {
                msp.setDefaultXYStage(xyStage);
-               StagePosition sp = new StagePosition();
-               sp.stageName = xyStage;
-               sp.numAxes = 2;
-               sp.x = core_.getXPosition(xyStage);
-               sp.y = core_.getYPosition(xyStage);
+               StagePosition sp = StagePosition.create2D(xyStage, core_.getXPosition(xyStage), core_.getYPosition(xyStage));
 
                switch (location) {
                   case 0: // top
@@ -846,28 +826,22 @@ public final class TileCreatorDlg extends MMDialog {
                final String xyStage = positionListDlg_.get2DAxis();
                // xyStage is not null; we've checked above.
                msp.setDefaultXYStage(xyStage);
-               StagePosition spXY = new StagePosition();
-               spXY.stageName = xyStage;
-               spXY.numAxes = 2;
-               spXY.x = minX - offsetXUm + (tmpX * tileSizeXUm);
-               spXY.y = minY - offsetYUm + (y * tileSizeYUm);
+               StagePosition spXY = StagePosition.create2D(xyStage, 
+                       minX - offsetXUm + (tmpX * tileSizeXUm), //X
+                       minY - offsetYUm + (y * tileSizeYUm));   //Y
                msp.add(spXY);
 
                // Add Z position
                final String zStage = positionListDlg_.get1DAxis();
                if (zStage != null) {
                   msp.setDefaultZStage(zStage);
-                  StagePosition spZ = new StagePosition();
-                  spZ.stageName = zStage;
-                  spZ.numAxes = 1;
-
+                  double z;
                   if (hasZPlane) {
-                     double z = zPlaneA * spXY.x + zPlaneB * spXY.y + zPlaneC;
-                     spZ.x = z;
+                     z = zPlaneA * spXY.x + zPlaneB * spXY.y + zPlaneC;
                   } else {
-                     spZ.x = meanZ;
+                     z = meanZ;
                   }
-
+                  StagePosition spZ = StagePosition.create1D(zStage, z);
                   msp.add(spZ);
                }
 
