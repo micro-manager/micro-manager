@@ -194,6 +194,9 @@ int JAICamera::OnTestPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
 	const char* pvCmd = "TestPattern";
 	if (eAct == MM::AfterSet)
 	{
+		if (IsCapturing())
+			return ERR_NOT_ALLOWED_DURING_CAPTURE;
+
 		string val;
 		long data;
 		pProp->Get(val);
