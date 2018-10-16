@@ -20,6 +20,7 @@ import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
 import org.micromanager.data.internal.IncomingImageEvent;
+import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
@@ -1059,6 +1060,12 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       if (curStore_ != null) {
          curStore_.publishEvent(new IncomingImageEvent(event.getWakeTime()));
       }
+   }
+
+   @Subscribe
+   public void onAcquisitionEnded(AcquisitionEndedEvent event) {
+      curStore_ = null;
+      curPipeline_ = null;
    }
 
    @Subscribe

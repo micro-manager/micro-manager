@@ -399,6 +399,7 @@ public final class MetadataPanel extends InspectorPanel {
          // Don't show stale metadata info.
          imageMetadataModel_.setMetadata(new JSONObject(), false);
          summaryMetadataModel_.setMetadata(new JSONObject(), false);
+         store_ = null; // Don't leak!
          return;
       }
       else {

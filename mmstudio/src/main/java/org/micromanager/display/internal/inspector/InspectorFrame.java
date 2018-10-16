@@ -666,7 +666,7 @@ public final class InspectorFrame extends MMFrame implements Inspector {
       populateChooser();
       for (WrapperPanel wrapper : wrapperPanels_) {
          try {
-            if (wrapper.getPanel().getIsValid(display_)) {
+            if (display_ == null || wrapper.getPanel().getIsValid(display_)) {
                wrapper.getPanel().setDataViewer(display_);
             }
          }

@@ -583,6 +583,7 @@ public final class HistogramsPanel extends InspectorPanel {
       if (viewer_ == null) {
          removeAll();
          invalidate();
+         store_ = null; // Do not leak!
          return;
       }
       store_ = viewer_.getDatastore();

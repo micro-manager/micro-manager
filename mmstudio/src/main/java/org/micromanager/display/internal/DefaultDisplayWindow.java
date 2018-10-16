@@ -910,12 +910,18 @@ public final class DefaultDisplayWindow extends MMFrame implements DisplayWindow
          if (!haveCreatedGUI_) {
             // This window is closed before it is even created.
             dispose();
+            if (dummyWindow_ != null) {
+               dummyWindow_.dispose();
+            }
             haveClosed_ = true;
             return;
          }
       }
       canvasQueue_.halt(); // Ensures any ongoing draw completes
       dispose();
+      if (dummyWindow_ != null) {
+         dummyWindow_.dispose();
+      }
       if (fullScreenFrame_ != null) {
          fullScreenFrame_.dispose();
          fullScreenFrame_ = null;

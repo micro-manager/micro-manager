@@ -238,6 +238,7 @@ public final class CommentsPanel extends InspectorPanel {
       // them set properly before imageChangedUpdate() can be called.
       display_ = display;
       if (display_ == null) {
+         store_ = null; // Don't leak!
          return;
       }
       store_ = display_.getDatastore();
