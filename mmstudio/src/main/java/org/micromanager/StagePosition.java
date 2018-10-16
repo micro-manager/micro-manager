@@ -233,7 +233,7 @@ public class StagePosition {
    }
 
    public static StagePosition fromPropertyMap(PropertyMap pmap) {
-      int n = pmap.getInteger(PropertyKey.STAGE_POSITION__POSITION_UM.key(), 0);
+      int n = pmap.getDoubleList(PropertyKey.STAGE_POSITION__POSITION_UM.key()).length;
       switch (n) {
          case 1:
             return StagePosition.create1D(pmap.getString(
