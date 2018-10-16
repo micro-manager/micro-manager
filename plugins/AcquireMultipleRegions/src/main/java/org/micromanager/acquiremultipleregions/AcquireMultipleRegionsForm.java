@@ -241,7 +241,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 store.freeze();
                 gui_.displays().closeDisplaysFor(store);
                 store.close();
-            } catch (IllegalThreadStateException ex) {
+            } catch (Exception ex) {
                 handleError(ex);
             }
         }
