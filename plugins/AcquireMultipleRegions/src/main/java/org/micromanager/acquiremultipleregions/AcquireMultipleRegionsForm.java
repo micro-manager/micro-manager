@@ -4,6 +4,7 @@ package org.micromanager.acquiremultipleregions;
 
 import java.awt.Font;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -241,6 +242,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 store.freeze();
                 gui_.displays().closeDisplaysFor(store);
                 store.close();
+                gui_.positions().getPositionList().save(Paths.get(store.getSavePath()).resolve("AMRposlist.pos").toFile());
             } catch (Exception ex) {
                 handleError(ex);
             }
