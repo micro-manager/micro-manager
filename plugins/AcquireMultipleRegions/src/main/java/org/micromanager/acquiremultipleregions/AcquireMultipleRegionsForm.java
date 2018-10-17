@@ -542,34 +542,45 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addGap(10, 10, 10)
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel4)
-                                    .addComponent(FilenameText, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel2)))
+                                    .addGroup(mainPanelLayout.createSequentialGroup()
+                                        .addGap(10, 10, 10)
+                                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel4)
+                                            .addComponent(FilenameText, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(jLabel2)))
+                                    .addGroup(mainPanelLayout.createSequentialGroup()
+                                        .addContainerGap()
+                                        .addComponent(DirectoryText, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(DirectoryButton)))
+                                .addGap(0, 0, 0))
                             .addGroup(mainPanelLayout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(DirectoryText, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(DirectoryButton)))
-                        .addGap(0, 26, Short.MAX_VALUE))
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(regionText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addGroup(mainPanelLayout.createSequentialGroup()
+                                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(statusText)
+                                            .addComponent(AddPositionList)
+                                            .addComponent(StartAcquisition, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(addPointToRegion))
+                                        .addGap(0, 0, 0)))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(AddPositionList, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(DeleteRegion, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(deleteAllButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(StartAcquisition, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(addPointToRegion, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addComponent(statusText)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(regionText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(DeleteRegion, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(deleteAllButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 232, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1)
-                    .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(0, 141, Short.MAX_VALUE))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addContainerGap())
         );
         mainPanelLayout.setVerticalGroup(
@@ -603,7 +614,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addComponent(deleteAllButton, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(StartAcquisition, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(statusText))
@@ -647,7 +658,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                     .addComponent(jLabel7)
                     .addComponent(zTypeDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(loadRegionsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(186, Short.MAX_VALUE))
+                .addContainerGap(171, Short.MAX_VALUE))
         );
         configPanelLayout.setVerticalGroup(
             configPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -666,7 +677,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 .addComponent(zTypeDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(28, 28, 28)
                 .addComponent(loadRegionsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 47, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(155, Short.MAX_VALUE))
+                .addContainerGap(172, Short.MAX_VALUE))
         );
 
         jTabbedPane2.addTab("Config", configPanel);
@@ -675,29 +686,23 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jTabbedPane2)
-                .addGap(1, 1, 1))
+            .addComponent(jTabbedPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 487, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 477, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 494, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void AddPositionListActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddPositionListActionPerformed
-        currentRegion_.directory = DirectoryText.getText();
-        currentRegion_.filename = FilenameText.getText();
-        //make sure region name is unique      
-        currentRegion_ = makeUniqueRegionName(currentRegion_);
-        FilenameText.setText(currentRegion_.filename); //in case filename has changed
-        rlm_.addRegion(currentRegion_);
-        currentRegion_ = new Region(new PositionList(), DirectoryText.getText(), FilenameText.getText()); //clear        
-        regionText.setText("Current Region: 0 images");
-        logMessage("Starting new Region");
-    }//GEN-LAST:event_AddPositionListActionPerformed
+    private void loadRegionsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadRegionsButtonActionPerformed
+        File f = FileDialogs.openDir(this, "Directory of .POS files",
+            new FileDialogs.FileType("LoadDir", "Load Directory",
+                "D:\\Data", true, ""));
+        File newDir = new File(DirectoryText.getText());
+        rlm_.loadRegions(f, newDir);
+    }//GEN-LAST:event_loadRegionsButtonActionPerformed
 
     private void GotoLeftActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GotoLeftActionPerformed
         //Go to min X and center Y coordinate
@@ -708,32 +713,15 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         bBox = r.boundingBox();
         center = r.center();
         minPos = bBox.getPosition(0);
-       try {
-           gui_.core().setXYPosition(minPos.getX(), center.getY());
-       } catch (Exception ex) {
-           handleError(ex);
-       }
+        try {
+            gui_.core().setXYPosition(minPos.getX(), center.getY());
+        } catch (Exception ex) {
+            handleError(ex);
+        }
     }//GEN-LAST:event_GotoLeftActionPerformed
 
-    private void DeleteRegionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DeleteRegionActionPerformed
-        rlm_.deleteRegion(AcquireList.getSelectedIndex());
-    }//GEN-LAST:event_DeleteRegionActionPerformed
-
-    private void GotoCenterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GotoCenterActionPerformed
-        //Go to center X and Y coordinate
-        Region r;
-        MultiStagePosition center;
-        r = rlm_.getRegion(AcquireList.getSelectedIndex());
-        center = r.center();
-       try {
-           gui_.core().setXYPosition(center.getX(), center.getY());
-       } catch (Exception ex) {
-           handleError(ex);
-       }
-    }//GEN-LAST:event_GotoCenterActionPerformed
-
-    private void GotoTopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GotoTopActionPerformed
-        //Go to center X and max Y coordinate
+    private void GotoRightActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GotoRightActionPerformed
+        //Go to max X and center Y coordinate
         Region r;
         PositionList bBox;
         MultiStagePosition center, maxPos;
@@ -741,12 +729,12 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         bBox = r.boundingBox();
         center = r.center();
         maxPos = bBox.getPosition(1);
-       try {
-           gui_.core().setXYPosition(center.getX(), maxPos.getY());
-       } catch (Exception ex) {
-           handleError(ex);
-       }
-    }//GEN-LAST:event_GotoTopActionPerformed
+        try {
+            gui_.core().setXYPosition(maxPos.getX(), center.getY());
+        } catch (Exception ex) {
+            handleError(ex);
+        }
+    }//GEN-LAST:event_GotoRightActionPerformed
 
     private void GotoBottomActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GotoBottomActionPerformed
         //Go to center X and min Y coordinate
@@ -759,15 +747,28 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         bBox = r.boundingBox();
         center = r.center();
         minPos = bBox.getPosition(0);
-       try {
-           gui_.core().setXYPosition(center.getX(), minPos.getY());
-       } catch (Exception ex) {
-           handleError(ex);
-       }
+        try {
+            gui_.core().setXYPosition(center.getX(), minPos.getY());
+        } catch (Exception ex) {
+            handleError(ex);
+        }
     }//GEN-LAST:event_GotoBottomActionPerformed
 
-    private void GotoRightActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GotoRightActionPerformed
-        //Go to max X and center Y coordinate
+    private void GotoCenterActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GotoCenterActionPerformed
+        //Go to center X and Y coordinate
+        Region r;
+        MultiStagePosition center;
+        r = rlm_.getRegion(AcquireList.getSelectedIndex());
+        center = r.center();
+        try {
+            gui_.core().setXYPosition(center.getX(), center.getY());
+        } catch (Exception ex) {
+            handleError(ex);
+        }
+    }//GEN-LAST:event_GotoCenterActionPerformed
+
+    private void GotoTopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GotoTopActionPerformed
+        //Go to center X and max Y coordinate
         Region r;
         PositionList bBox;
         MultiStagePosition center, maxPos;
@@ -775,25 +776,18 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         bBox = r.boundingBox();
         center = r.center();
         maxPos = bBox.getPosition(1);
-       try {
-           gui_.core().setXYPosition(maxPos.getX(), center.getY());
-       } catch (Exception ex) {
+        try {
+            gui_.core().setXYPosition(center.getX(), maxPos.getY());
+        } catch (Exception ex) {
             handleError(ex);
-       }
-    }//GEN-LAST:event_GotoRightActionPerformed
-
-    private void DirectoryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DirectoryButtonActionPerformed
-      File f = FileDialogs.openDir(this, "Directory to save to",
-      new FileDialogs.FileType("SaveDir", "Save Directory",
-          "D:\\Data", true, ""));
-      DirectoryText.setText(f.getAbsolutePath());
-    }//GEN-LAST:event_DirectoryButtonActionPerformed
+        }
+    }//GEN-LAST:event_GotoTopActionPerformed
 
     private void StartAcquisitionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_StartAcquisitionActionPerformed
         //Loop over saved regions, updating Acquisition position list and filename and acquiring
         //start separate thread for acquisition
         Path savePath;
-        savePath = Paths.get(DirectoryText.getText()).resolve("AMRpositionLists"); 
+        savePath = Paths.get(DirectoryText.getText()).resolve("AMRpositionLists");
         if (savePath.toFile().exists()){
             try{
                 Files.walk(savePath)
@@ -820,65 +814,79 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         rlm_.clearRegions();
     }//GEN-LAST:event_deleteAllButtonActionPerformed
 
+    private void DeleteRegionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DeleteRegionActionPerformed
+        rlm_.deleteRegion(AcquireList.getSelectedIndex());
+    }//GEN-LAST:event_DeleteRegionActionPerformed
+
+    private void AddPositionListActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AddPositionListActionPerformed
+        currentRegion_.directory = DirectoryText.getText();
+        currentRegion_.filename = FilenameText.getText();
+        //make sure region name is unique
+        currentRegion_ = makeUniqueRegionName(currentRegion_);
+        FilenameText.setText(currentRegion_.filename); //in case filename has changed
+        rlm_.addRegion(currentRegion_);
+        currentRegion_ = new Region(new PositionList(), DirectoryText.getText(), FilenameText.getText()); //clear
+        regionText.setText("Current Region: 0 images");
+        logMessage("Starting new Region");
+    }//GEN-LAST:event_AddPositionListActionPerformed
+
     private void addPointToRegionActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addPointToRegionActionPerformed
         // Record coordinates of core XY stage and all single axis (Z) stages
         // Build grid in XY and fit a plane to each Z axis
         // could consider adding checkboxes for which axes to track
-        
-      MultiStagePosition msp = new MultiStagePosition();
-      msp.setDefaultXYStage(mmc_.getXYStageDevice());
-      msp.setDefaultZStage(mmc_.getFocusDevice());
-      String message ="";
 
-      // read 1-axis stages
-      try {
-         StrVector stages = mmc_.getLoadedDevicesOfType(DeviceType.StageDevice);
-         for (int i=0; i<stages.size(); i++) {
-               StagePosition sp = new StagePosition();
-               sp.stageName = stages.get(i);
-               sp.numAxes = 1;
-               sp.x = mmc_.getPosition(stages.get(i));
-               msp.add(sp);
-               message = message + sp.stageName + ": " + Double.toString(sp.x) + " ";
-         }
+        MultiStagePosition msp = new MultiStagePosition();
+        msp.setDefaultXYStage(mmc_.getXYStageDevice());
+        msp.setDefaultZStage(mmc_.getFocusDevice());
+        String message ="";
 
-         StagePosition sp = new StagePosition();
-         sp.stageName = mmc_.getXYStageDevice();
-         sp.numAxes = 2;
-         sp.x = mmc_.getXPosition(mmc_.getXYStageDevice());
-         sp.y = mmc_.getYPosition(mmc_.getXYStageDevice());
-         msp.add(sp);
-         message = "Added point X: " + Double.toString(sp.x) + " Y: " 
-                 + Double.toString(sp.y) + " " + message;
-         
-         currentRegion_.positions.addPosition(msp);         
-         //update text
-         int nX = currentRegion_.getNumXTiles(getXFieldSize());
-         int nY = currentRegion_.getNumYTiles(getYFieldSize());
-         String fieldSize = "Current Region: " + String.valueOf(nX*nY) 
-                 + " images (" + String.valueOf(nX) + " x " +String.valueOf(nY) +")";
-         regionText.setText(fieldSize);
-         //log position added and new grid coordinates
-         logMessage(message);
-         logMessage("Grid now " + Integer.toString(nX) + " x " +
-                 Integer.toString(nY)); 
-      } catch (Exception e) {
-         handleError(e);
-      }
+        // read 1-axis stages
+        try {
+            StrVector stages = mmc_.getLoadedDevicesOfType(DeviceType.StageDevice);
+            for (int i=0; i<stages.size(); i++) {
+                StagePosition sp = new StagePosition();
+                sp.stageName = stages.get(i);
+                sp.numAxes = 1;
+                sp.x = mmc_.getPosition(stages.get(i));
+                msp.add(sp);
+                message = message + sp.stageName + ": " + Double.toString(sp.x) + " ";
+            }
 
+            StagePosition sp = new StagePosition();
+            sp.stageName = mmc_.getXYStageDevice();
+            sp.numAxes = 2;
+            sp.x = mmc_.getXPosition(mmc_.getXYStageDevice());
+            sp.y = mmc_.getYPosition(mmc_.getXYStageDevice());
+            msp.add(sp);
+            message = "Added point X: " + Double.toString(sp.x) + " Y: "
+            + Double.toString(sp.y) + " " + message;
+
+            currentRegion_.positions.addPosition(msp);
+            //update text
+            int nX = currentRegion_.getNumXTiles(getXFieldSize());
+            int nY = currentRegion_.getNumYTiles(getYFieldSize());
+            String fieldSize = "Current Region: " + String.valueOf(nX*nY)
+            + " images (" + String.valueOf(nX) + " x " +String.valueOf(nY) +")";
+            regionText.setText(fieldSize);
+            //log position added and new grid coordinates
+            logMessage(message);
+            logMessage("Grid now " + Integer.toString(nX) + " x " +
+                Integer.toString(nY));
+        } catch (Exception e) {
+            handleError(e);
+        }
     }//GEN-LAST:event_addPointToRegionActionPerformed
+
+    private void DirectoryButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DirectoryButtonActionPerformed
+        File f = FileDialogs.openDir(this, "Directory to save to",
+            new FileDialogs.FileType("SaveDir", "Save Directory",
+                "D:\\Data", true, ""));
+        DirectoryText.setText(f.getAbsolutePath());
+    }//GEN-LAST:event_DirectoryButtonActionPerformed
 
     private void DirectoryTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DirectoryTextActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_DirectoryTextActionPerformed
-
-    private void loadRegionsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadRegionsButtonActionPerformed
-        File f = FileDialogs.openDir(this, "Directory of .POS files",
-            new FileDialogs.FileType("LoadDir", "Load Directory",
-                "D:\\Data", true, ""));
-        File newDir = new File(DirectoryText.getText());
-        rlm_.loadRegions(f, newDir);
-    }//GEN-LAST:event_loadRegionsButtonActionPerformed
 
     /**
      * @param args the command line arguments
