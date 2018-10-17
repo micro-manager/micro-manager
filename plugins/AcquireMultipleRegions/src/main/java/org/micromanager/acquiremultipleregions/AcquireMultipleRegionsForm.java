@@ -254,6 +254,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 store.freeze();
                 gui_.displays().closeDisplaysFor(store);
                 store.close();
+                gui_.positions().getPositionList().save(Paths.get(store.getSavePath()).resolve("AMRposlist.pos").toFile());
             } catch (Exception ex) {
                 handleError(ex);
             }
