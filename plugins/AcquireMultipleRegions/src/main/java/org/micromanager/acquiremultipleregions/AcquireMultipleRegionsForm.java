@@ -21,6 +21,7 @@ import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.StagePosition;
+import org.micromanager.internal.utils.TileCreator;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -31,6 +32,7 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
    private final Studio gui_;
    private final mmcorej.CMMCore mmc_;
+   private final TileCreator tileCreator_;
    private final RegionListModel rlm_;
    private Region currentRegion_;
    private static final String MSG_PREFIX = "AcquireMultipleRegions: ";
@@ -48,6 +50,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         rlm_ = new RegionListModel();
         gui_ = gui;
         mmc_ = gui_.core();
+        tileCreator_ = new TileCreator(mmc_);
         initComponents();        
         currentRegion_ = new Region(new PositionList(), DirectoryText.getText(), FilenameText.getText());
       
@@ -236,7 +239,23 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 // became lost in the MM2.0 refactoring.
 //                gui_.compat().setImageSavingFormat(org.micromanager.acquisition.internal.TaggedImageStorageMultipageTiff.class);
                 //update positionlist with grid
-                gui_.positions().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));               
+                //gui_.positions().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));   
+                
+                double overlap = Double.parseDouble(overlapText.getText());
+                double pixelSizeUm = mmc_.getPixelSizeUm();
+                gui_.positions().setPositionList(
+                    tileCreator_.createTiles(
+                        mmc_,
+                        mmc_.getXYStageDevice(),
+                        mmc_.getFocusDevice(),
+                        overlap,
+                        TileCreator.OverlapUnitEnum.PERCENT,
+                        currRegion.positions.getPositions(),
+                        pixelSizeUm,
+                        "1"
+                    )
+                );
+                
                 gui_.app().refreshGUI();
                 Datastore store = gui_.acquisitions().runAcquisition(currRegion.filename, currRegion.directory);
                 store.freeze();
