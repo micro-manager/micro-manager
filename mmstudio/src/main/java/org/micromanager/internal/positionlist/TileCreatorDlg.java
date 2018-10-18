@@ -600,8 +600,10 @@ public final class TileCreatorDlg extends MMDialog {
         PositionList posList = tileCreator_.createTiles(overlap, overlapUnit_, endPosition_, pixelSizeUm, Integer.toString(prefix_));
         // Add to position list
         // Increment prefix for these positions
-
-        positionListDlg_.setPositionList(posList); 
+        MultiStagePosition[] msps = posList.getPositions();
+        for (int i=0; i<msps.length; i++) {
+            positionListDlg_.addPosition(msps[i], msps[i].getLabel());
+        }
         positionListDlg_.activateAxisTable(true);
         dispose();
     }
