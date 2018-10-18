@@ -33,6 +33,7 @@ import org.micromanager.Studio;
 public class MultiChannelShadingFactory implements ProcessorFactory {
    private final Studio studio_;
    private final String channelGroup_;
+   private final Boolean useOpenCL_;
    private final List presets_;
    private final String backgroundFile_;
    private final List files_;
@@ -41,6 +42,8 @@ public class MultiChannelShadingFactory implements ProcessorFactory {
       studio_ = studio;
       channelGroup_ = settings.getString(
             MultiChannelShadingMigForm.CHANNELGROUP, "Channels");
+      useOpenCL_ = settings.getBoolean(MultiChannelShadingMigForm.USEOPENCL, 
+              false);
       presets_ = settings.getStringList("Presets", "");
       backgroundFile_ = settings.getString(
             MultiChannelShadingMigForm.DARKFIELDFILENAME, "");
@@ -49,7 +52,7 @@ public class MultiChannelShadingFactory implements ProcessorFactory {
 
    @Override
    public Processor createProcessor() {
-      return new ShadingProcessor(studio_, channelGroup_, backgroundFile_,
-            presets_, files_);
+      return new ShadingProcessor(studio_, channelGroup_, useOpenCL_, 
+              backgroundFile_, presets_, files_);
    }
 }

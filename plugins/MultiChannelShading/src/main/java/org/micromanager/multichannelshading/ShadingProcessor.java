@@ -21,13 +21,25 @@
 
 package org.micromanager.multichannelshading;
 
+import clearcl.ClearCL;
+import clearcl.ClearCLBuffer;
+import clearcl.ClearCLContext;
+import clearcl.ClearCLDevice;
+import clearcl.ClearCLKernel;
+import clearcl.ClearCLProgram;
+import clearcl.backend.ClearCLBackends;
+import clearcl.enums.BuildStatus;
+import clearcl.exceptions.OpenCLException;
+import coremem.enums.NativeTypeEnum;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
+import java.io.IOException;
 import java.util.List;
 
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
+import static org.junit.Assert.assertEquals;
 
 import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
@@ -35,6 +47,7 @@ import org.micromanager.data.Processor;
 import org.micromanager.data.ProcessorContext;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
+import org.micromanager.data.internal.DefaultImage;
 
 /**
  *
@@ -42,16 +55,41 @@ import org.micromanager.Studio;
  */
 public class ShadingProcessor extends Processor {
 
-   private Studio studio_;
-   private ImageCollection imageCollection_;
-   private String channelGroup_;
-   private List<String> presets_;
+   private final Studio studio_;
+   private final String channelGroup_;
+   private Boolean useOpenCL_;
+   private final List<String> presets_;
+   private final ImageCollection imageCollection_;
+   private ClearCL ccl_;
+   private ClearCLContext cclContext_;
+   private ClearCLProgram cclProgram_;
 
    public ShadingProcessor(Studio studio, String channelGroup,
-           String backgroundFile, List<String> presets,
+           Boolean useOpenCL, String backgroundFile, List<String> presets,
            List<String> files) {
       studio_ = studio;
       channelGroup_ = channelGroup;
+      useOpenCL_ = useOpenCL;
+      if (useOpenCL_) {
+         ccl_ = new ClearCL(ClearCLBackends.getBestBackend()); 
+         ClearCLDevice bestGPUDevice = ccl_.getBestGPUDevice();
+         if (bestGPUDevice == null) { // assume that is what is returned if there is no GPU
+            useOpenCL_ = false;
+         } else {
+            try {
+            cclContext_ = bestGPUDevice.createContext();
+            cclProgram_ = cclContext_.createProgram(ShadingProcessor.class,
+                                                     "bufferMath.cl");
+            BuildStatus lBuildStatus = cclProgram_.buildAndLog();
+
+            assertEquals(lBuildStatus, BuildStatus.Success);
+            } catch (IOException ioe) {
+               studio_.alerts().postAlert(MultiChannelShading.MENUNAME, this.getClass(), 
+                       "Failed to initialize OpenCL, falling back");
+               useOpenCL_ = false;
+            }
+         }
+      }
       presets_ = presets;
       imageCollection_ = new ImageCollection(studio_);
       if (backgroundFile != null && !backgroundFile.equals("")) {
@@ -68,15 +106,21 @@ public class ShadingProcessor extends Processor {
       } catch (ShadingException e) {
          studio_.logs().logError(e, "Error recreating ImageCollection");
       }
+
    }
 
-
    // Classes used to classify alerts in the processImage function below
-   private class Not8or16BitClass {}
-   private class NoBinningInfoClass {}
-   private class NoRoiClass {}
-   private class NoBackgroundForThisBinModeClass {}
-   private class ErrorSubtractingClass {}
+   private class Not8or16BitClass {   }
+
+   private class NoBinningInfoClass {   }
+
+   private class NoRoiClass {   }
+
+   private class NoBackgroundForThisBinModeClass {   }
+
+   private class ErrorSubtractingClass {   }
+   
+   private class ErrorInOpenCLClass {}
 
    @Override
    public void processImage(Image image, ProcessorContext context) {
@@ -96,7 +140,7 @@ public class ShadingProcessor extends Processor {
 
       Image bgSubtracted = image;
       Image result;
-      
+
       // subtract background
       Integer binning = metadata.getBinning();
       if (binning == null) {
@@ -115,9 +159,67 @@ public class ShadingProcessor extends Processor {
          background = imageCollection_.getBackground(binning, rect);
       } catch (ShadingException e) {
          String msg = "Error getting background for bin mode " + binning + " and rect " + rect;
-         studio_.alerts().postAlert(MultiChannelShading.MENUNAME, 
+         studio_.alerts().postAlert(MultiChannelShading.MENUNAME,
                  NoBackgroundForThisBinModeClass.class, msg);
       }
+
+      ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
+              metadata, binning, rect);
+
+      if (useOpenCL_) {
+         try {
+            ClearCLBuffer clImg, clBackground, clFlatField;
+            String suffix;
+            if (image.getBytesPerPixel() == 2) {
+               clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedShort,
+                       image.getWidth() * image.getHeight());
+               suffix = "US";
+            } else { //(image.getBytesPerPixel() == 1) 
+               clImg = cclContext_.createBuffer(NativeTypeEnum.UnsignedByte,
+                       image.getWidth() * image.getHeight());
+               suffix = "UB";
+            }
+
+            // copy image to the GPU
+            clImg.readFrom(((DefaultImage) image).getPixelBuffer(), false);
+            // process with different kernels depending on availability of flatfield
+            // and background:
+            if (background != null && flatFieldImage == null) {
+               clBackground = background.getCLBuffer(cclContext_);
+               // need to use different kernels for differe types
+               ClearCLKernel lKernel = cclProgram_.createKernel("subtract" + suffix);
+               lKernel.setArguments(clImg, clBackground);
+               lKernel.setGlobalSizes(clImg);
+               lKernel.run();
+            } else if (background == null && flatFieldImage != null) {
+               clFlatField = flatFieldImage.getCLBuffer(cclContext_);
+               ClearCLKernel lKernel = cclProgram_.createKernel("multiply" + suffix + "F");
+               lKernel.setArguments(clImg, clFlatField);
+               lKernel.setGlobalSizes(clImg);
+               lKernel.run();
+            } else if (background != null && flatFieldImage != null) {
+               clBackground = background.getCLBuffer(cclContext_);
+               clFlatField = flatFieldImage.getCLBuffer(cclContext_);
+               ClearCLKernel lKernel = cclProgram_.createKernel("subtractAndMultiply" + suffix + "F");
+               lKernel.setArguments(clImg, clBackground, clFlatField);
+               lKernel.setGlobalSizes(clImg);
+               lKernel.run();
+            }
+            // copy processed image back from the GPU
+            clImg.writeTo(((DefaultImage) image).getPixelBuffer(), true);
+            // release resources.  If more GPU processing is desired, this should change
+            clImg.close();
+            context.outputImage(image);
+            return;
+         } catch (OpenCLException ocle) {
+            studio_.alerts().postAlert(MultiChannelShading.MENUNAME,
+                    ErrorInOpenCLClass.class,
+                    "Error using GPU: " + ocle.getMessage());
+            useOpenCL_ = false;
+         }
+      }
+
+
       if (background != null) {
          ImageProcessor ip = studio_.data().ij().createProcessor(image);
          ImageProcessor ipBackground = background.getProcessor();
@@ -135,8 +237,6 @@ public class ShadingProcessor extends Processor {
                  metadata.copy().userData(userData).build());
       }
 
-      ImagePlusInfo flatFieldImage = getMatchingFlatFieldImage(
-              metadata, binning, rect);
 
       // do not calculate flat field if we don't have a matching channel;
       // just return the background-subtracted image (which is the unmodified
@@ -150,6 +250,8 @@ public class ShadingProcessor extends Processor {
          userData = userData.copy().putBoolean("Flatfield-corrected", true).build();
          metadata = metadata.copy().userData(userData).build();
       }
+      
+      
       
       if (image.getBytesPerPixel() == 1) {
          byte[] newPixels = new byte[width * height];

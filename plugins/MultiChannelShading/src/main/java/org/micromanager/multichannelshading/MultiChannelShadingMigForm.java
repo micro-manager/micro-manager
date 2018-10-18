@@ -36,6 +36,7 @@ import java.util.ArrayList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -51,6 +52,7 @@ import org.micromanager.Studio;
 import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
@@ -59,10 +61,12 @@ import org.micromanager.internal.utils.MMDialog;
 public class MultiChannelShadingMigForm extends MMDialog implements ProcessorConfigurator {
    private  MMDialog mcsPluginWindow;
    private final Studio studio_;
+   private final MutablePropertyMapView profileSettings_;
    private final mmcorej.CMMCore mmc_;
    
    public static final String DARKFIELDFILENAME = "BackgroundFileName";
    public static final String CHANNELGROUP = "ChannelGroup";
+   public static final String USEOPENCL = "UseOpenCL";
    private static final String EMPTY_FILENAME_INDICATOR = "None";
    private final String[] IMAGESUFFIXES = {"tif", "tiff", "jpg", "png"};
    private String backgroundFileName_;
@@ -83,6 +87,8 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
    @SuppressWarnings("LeakingThisInConstructor")
    public MultiChannelShadingMigForm(PropertyMap settings, Studio studio) {
       studio_ = studio;
+      profileSettings_ = 
+              studio_.profile().getSettings(MultiChannelShadingMigForm.class);
       imageCollection_ = new ImageCollection(studio_);
       mmc_ = studio_.getCMMCore();
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -115,8 +121,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       groupComboBox.setModel(new javax.swing.DefaultComboBoxModel(
               channelGroups));
       groupName_ = settings.getString(CHANNELGROUP,
-            studio_.profile().getString(MultiChannelShadingMigForm.class, 
-            CHANNELGROUP, ""));
+            profileSettings_.getString(CHANNELGROUP, ""));
       groupComboBox.setSelectedItem(groupName_);
       groupComboBox.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -124,23 +129,32 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
             groupName_ = (String) groupComboBox.getSelectedItem();
             shadingTableModel_.setChannelGroup(groupName_);
             updateAddAndRemoveButtons(addButton, removeButton);
-            studio_.profile().setString(MultiChannelShadingMigForm.class, 
-                    CHANNELGROUP, groupName_);
+            profileSettings_.putString(CHANNELGROUP, groupName_);
             studio_.data().notifyPipelineChanged();
          }
       });
       super.add(groupComboBox);
       
+      JCheckBox useOpenCLCheckBox = new JCheckBox("Use GPU");
+      useOpenCLCheckBox.setSelected(profileSettings_.getBoolean(USEOPENCL, false));
+      useOpenCLCheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            profileSettings_.putBoolean(USEOPENCL,useOpenCLCheckBox.isSelected());
+            studio_.data().notifyPipelineChanged();
+         }
+      });
+      super.add(useOpenCLCheckBox, "skip 2");
+      
       JButton helpButton = new JButton("Help");
       helpButton.addActionListener(new ActionListener() {
-
          @Override
          public void actionPerformed(ActionEvent e) {
             new Thread(org.micromanager.internal.utils.GUIUtils.makeURLRunnable(
                     "https://micro-manager.org/wiki/Flat-Field_Correction")).start();
         }
       });
-      super.add (helpButton, "skip 3,  wrap");
+      super.add (helpButton, "wrap");
              
       JLabel darkImageLabel = new JLabel("Dark Image (common):");
       darkImageLabel.setFont(arialSmallFont_);
@@ -150,8 +164,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       darkFieldTextField.setFont(arialSmallFont_);
       //populate darkFieldName from profile and process it.
       darkFieldTextField.setText(settings.getString(DARKFIELDFILENAME,
-               studio_.profile().getString(
-               MultiChannelShadingMigForm.class, DARKFIELDFILENAME, "")));
+               profileSettings_.getString(DARKFIELDFILENAME, "")));
       darkFieldTextField.setHorizontalAlignment(JTextField.RIGHT);
       darkFieldTextField.addActionListener(new java.awt.event.ActionListener() {
          @Override
@@ -267,6 +280,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       builder.putString(CHANNELGROUP, shadingTableModel_.getChannelGroup());
       builder.putStringList("Presets", shadingTableModel_.getUsedPresets());
       builder.putString(DARKFIELDFILENAME, imageCollection_.getBackgroundFile());
+      builder.putBoolean(USEOPENCL, profileSettings_.getBoolean(USEOPENCL, false));
       ArrayList<String> files = new ArrayList<String>();
       for (String preset : shadingTableModel_.getUsedPresets()) {
          files.add(imageCollection_.getFileForPreset(preset));
@@ -333,8 +347,7 @@ public class MultiChannelShadingMigForm extends MMDialog implements ProcessorCon
       try {
          imageCollection_.setBackground(fileName);
          backgroundFileName_ = fileName;
-         studio_.profile().setString(MultiChannelShadingMigForm.class,
-                 DARKFIELDFILENAME, backgroundFileName_);
+         profileSettings_.putString(DARKFIELDFILENAME, backgroundFileName_);
          studio_.data().notifyPipelineChanged();
       } catch (ShadingException ex) {
          studio_.logs().showError(ex, "Failed to set background image");
