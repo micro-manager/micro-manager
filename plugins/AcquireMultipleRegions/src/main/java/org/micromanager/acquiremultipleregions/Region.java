@@ -1,11 +1,13 @@
 package org.micromanager.acquiremultipleregions;
 
 import java.io.File;
+import java.nio.file.Path;
 import org.micromanager.acquiremultipleregions.AcquireMultipleRegionsForm.AxisList;
 import org.micromanager.acquiremultipleregions.ZGenerator.ZGeneratorType;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -181,5 +183,27 @@ class Region {
          }
       }
       return PL;
+   }
+   
+   public void save(Path path) {
+       try{
+           positions.save(path.resolve(filename + ".pos").toFile());
+       }
+       catch (Exception ex){
+           ReportingUtils.showError(ex);
+       }
+   }
+   
+   static public Region loadFromFile(File f, File newDir) {
+       PositionList positions = new PositionList();
+       try{
+           positions.load(f);
+       }
+       catch (Exception ex){
+           ReportingUtils.showError(ex);
+       }
+       String fname = f.getName();
+       fname = fname.substring(0,fname.length()-4);
+       return new Region(positions, newDir.toString() , fname);
    }
 }
