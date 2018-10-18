@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.internal.utils;
+package org.micromanager.internal.positionlist.utils;
 
 import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
@@ -12,6 +12,8 @@ import mmcorej.MMCoreJ;
 import org.micromanager.StagePosition;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
+import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 /**
  *
@@ -28,15 +30,13 @@ public final class TileCreator {
     /*
     * Create the tile list based on user input, pixelsize, and imagesize
     */
-    public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit, MultiStagePosition[] endPoints, double pixelSizeUm, String labelPrefix, String zStage) {
+    public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit, MultiStagePosition[] endPoints, double pixelSizeUm, String labelPrefix, String zStage, ZGenerator zGen) {
          // Make sure at least two corners were set
          if (endPoints.length < 2) {
             ReportingUtils.showError("At least two corners should be set");
             return null;
          }
          
-
-
          //Make sure all Points have the same stage
          String xyStage = endPoints[0].getDefaultXYStage();
          for (int i=1; i<endPoints.length; i++){

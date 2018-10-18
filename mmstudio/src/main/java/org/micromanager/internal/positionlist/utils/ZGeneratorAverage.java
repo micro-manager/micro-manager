@@ -1,6 +1,7 @@
 
 
-package org.micromanager.acquiremultipleregions;
+package org.micromanager.internal.positionlist.utils;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,16 +15,13 @@ import org.micromanager.StagePosition;
  */
 class ZGeneratorAverage implements ZGenerator {
      Map <String, Double> averageZPositions_;
-     ZGeneratorType type_;
      /**
      * Constructor
      * 
      * @param positionList initial position list
      * @param type 
      */  
-    public ZGeneratorAverage (PositionList positionList, ZGeneratorType type) {
-       type_ = type; //remember type of ZGenerator
-
+    public ZGeneratorAverage (PositionList positionList) {
        MultiStagePosition msp0;
        StagePosition sp;
        double c;
@@ -51,4 +49,8 @@ class ZGeneratorAverage implements ZGenerator {
         return averageZPositions_.get(axis);
     }
 
+    @Override
+    public String getDescription(){
+        return "Average";   
+    }
 }

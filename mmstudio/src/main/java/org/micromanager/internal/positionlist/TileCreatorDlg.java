@@ -43,7 +43,7 @@ import org.micromanager.events.ShutdownCommencingEvent;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.internal.utils.TileCreator;
+import org.micromanager.internal.positionlist.utils.TileCreator;
 
 public final class TileCreatorDlg extends MMDialog {
    private static final long serialVersionUID = 1L;

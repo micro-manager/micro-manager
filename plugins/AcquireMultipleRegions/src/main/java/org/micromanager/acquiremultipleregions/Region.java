@@ -4,7 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
-import org.micromanager.internal.utils.TileCreator;
+import org.micromanager.internal.positionlist.utils.TileCreator;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -97,7 +97,6 @@ class Region {
       bBox.addPosition(maxCoords);
       return bBox;
    }
-   }
    
    public void save(Path path) {
        try{
@@ -119,4 +118,5 @@ class Region {
        String fname = f.getName();
        fname = fname.substring(0,fname.length()-4);
        return new Region(positions, newDir.toString() , fname);
+    }
 }
