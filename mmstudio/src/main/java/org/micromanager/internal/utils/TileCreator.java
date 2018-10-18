@@ -28,7 +28,7 @@ public final class TileCreator {
     /*
     * Create the tile list based on user input, pixelsize, and imagesize
     */
-    public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit, MultiStagePosition[] endPoints, double pixelSizeUm, String labelPrefix) {
+    public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit, MultiStagePosition[] endPoints, double pixelSizeUm, String labelPrefix, String zStage) {
          // Make sure at least two corners were set
          if (endPoints.length < 2) {
             ReportingUtils.showError("At least two corners should be set");
@@ -39,14 +39,9 @@ public final class TileCreator {
 
          //Make sure all Points have the same stage
          String xyStage = endPoints[0].getDefaultXYStage();
-         String zStage = endPoints[0].getDefaultZStage();
          for (int i=1; i<endPoints.length; i++){
              if (!xyStage.equals(endPoints[i].getDefaultXYStage())){
                  ReportingUtils.showError("All positions given to TileCreator must use the same xy stage");
-                 return null;
-             }
-            if (!zStage.equals(endPoints[i].getDefaultZStage())){
-                 ReportingUtils.showError("All positions given to TileCreator must use the same z stage");
                  return null;
              }
          }

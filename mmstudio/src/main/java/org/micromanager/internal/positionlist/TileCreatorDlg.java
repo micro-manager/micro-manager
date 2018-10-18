@@ -597,7 +597,11 @@ public final class TileCreatorDlg extends MMDialog {
             ReportingUtils.showError(ex);
             return;
         }
-        PositionList posList = tileCreator_.createTiles(overlap, overlapUnit_, endPosition_, pixelSizeUm, Integer.toString(prefix_));
+        String zStage = positionListDlg_.get1DAxis();
+        if (zStage == null){
+            zStage = "";
+        }
+        PositionList posList = tileCreator_.createTiles(overlap, overlapUnit_, endPosition_, pixelSizeUm, Integer.toString(prefix_), zStage);
         // Add to position list
         // Increment prefix for these positions
         MultiStagePosition[] msps = posList.getPositions();

@@ -243,13 +243,15 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 
                 double overlap = Double.parseDouble(overlapText.getText());
                 double pixelSizeUm = mmc_.getPixelSizeUm();
+                String zStage = "";                   
                 gui_.positions().setPositionList(
                     tileCreator_.createTiles(
                         overlap,
                         TileCreator.OverlapUnitEnum.PERCENT,
                         currRegion.positions.getPositions(),
                         pixelSizeUm,
-                        "1"
+                        "1",
+                        zStage
                     )
                 );
                 
