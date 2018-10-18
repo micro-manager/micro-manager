@@ -589,8 +589,6 @@ public final class TileCreatorDlg extends MMDialog {
            return;
         }
         prefix_ += 1;
-        final String xyStage = positionListDlg_.get2DAxis();
-        final String zStage = positionListDlg_.get1DAxis();
         double overlap = getOverlap();
         double pixelSizeUm;
         try{

@@ -34,9 +34,25 @@ public final class TileCreator {
             ReportingUtils.showError("At least two corners should be set");
             return null;
          }
+         
 
-         boolean hasZPlane = (endPoints.length >= 3) && (zStage != null);
 
+         //Make sure all Points have the same stage
+         String xyStage = endPoints[0].getDefaultXYStage();
+         String zStage = endPoints[0].getDefaultZStage();
+         for (int i=1; i<endPoints.length; i++){
+             if (xyStage != endPoints[i].getDefaultXYStage()){
+                 ReportingUtils.showError("All positions given to TileCreator must use the same xy stage");
+                 return null;
+             }
+            if (zStage != endPoints[i].getDefaultZStage()){
+                 ReportingUtils.showError("All positions given to TileCreator must use the same z stage");
+                 return null;
+             }
+         }
+         
+        boolean hasZPlane = (endPoints.length >= 3) && (zStage != "");
+                  
          // Calculate a bounding rectangle around the defaultXYStage positions
          // TODO: develop method to deal with multiple axis
          double minX = Double.POSITIVE_INFINITY;
@@ -46,7 +62,7 @@ public final class TileCreator {
          double meanZ = 0.0;
          StagePosition sp;
          for (int i = 0; i < endPoints.length; i++) {
-            sp = endPoints[i].get(endPoints[i].getDefaultXYStage());
+            sp = endPoints[i].get(xyStage);
             if (sp.x < minX) {
                minX = sp.x;
             }
@@ -60,7 +76,7 @@ public final class TileCreator {
                maxY = sp.y;
             }
             if (hasZPlane) {
-               sp = endPoints[i].get(endPoints[i].getDefaultZStage());
+               sp = endPoints[i].get(zStage);
                meanZ += sp.x;
             }
          }
@@ -89,19 +105,19 @@ public final class TileCreator {
 
             for (int i = 0; i < endPoints.length; i++) {
                if (!sp1Set) {
-                  x1 = endPoints[i].get(endPoints[i].getDefaultXYStage()).x;
-                  y1 = endPoints[i].get(endPoints[i].getDefaultXYStage()).y;
-                  z1 = endPoints[i].get(endPoints[i].getDefaultZStage()).x;
+                  x1 = endPoints[i].get(xyStage).x;
+                  y1 = endPoints[i].get(xyStage).y;
+                  z1 = endPoints[i].get(zStage).x;
                   sp1Set = true;
                } else if (!sp2Set) {
-                  x2 = endPoints[i].get(endPoints[i].getDefaultXYStage()).x;
-                  y2 = endPoints[i].get(endPoints[i].getDefaultXYStage()).y;
-                  z2 = endPoints[i].get(endPoints[i].getDefaultZStage()).x;
+                  x2 = endPoints[i].get(xyStage).x;
+                  y2 = endPoints[i].get(xyStage).y;
+                  z2 = endPoints[i].get(zStage).x;
                   sp2Set = true;
                } else if (!sp3Set) {
-                  x3 = endPoints[i].get(endPoints[i].getDefaultXYStage()).x;
-                  y3 = endPoints[i].get(endPoints[i].getDefaultXYStage()).y;
-                  z3 = endPoints[i].get(endPoints[i].getDefaultZStage()).x;
+                  x3 = endPoints[i].get(xyStage).x;
+                  y3 = endPoints[i].get(xyStage).y;
+                  z3 = endPoints[i].get(zStage).x;
                   sp3Set = true;
                }
             }
@@ -202,7 +218,7 @@ public final class TileCreator {
                msp.add(spXY);
 
                // Add Z position
-               if (zStage != null) {
+               if (zStage != "") {
                   msp.setDefaultZStage(zStage);
                   double z;
                   if (hasZPlane) {
