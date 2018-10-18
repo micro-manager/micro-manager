@@ -245,9 +245,6 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 double pixelSizeUm = mmc_.getPixelSizeUm();
                 gui_.positions().setPositionList(
                     tileCreator_.createTiles(
-                        mmc_,
-                        mmc_.getXYStageDevice(),
-                        mmc_.getFocusDevice(),
                         overlap,
                         TileCreator.OverlapUnitEnum.PERCENT,
                         currRegion.positions.getPositions(),

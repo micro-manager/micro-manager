@@ -41,17 +41,17 @@ public final class TileCreator {
          String xyStage = endPoints[0].getDefaultXYStage();
          String zStage = endPoints[0].getDefaultZStage();
          for (int i=1; i<endPoints.length; i++){
-             if (xyStage != endPoints[i].getDefaultXYStage()){
+             if (!xyStage.equals(endPoints[i].getDefaultXYStage())){
                  ReportingUtils.showError("All positions given to TileCreator must use the same xy stage");
                  return null;
              }
-            if (zStage != endPoints[i].getDefaultZStage()){
+            if (!zStage.equals(endPoints[i].getDefaultZStage())){
                  ReportingUtils.showError("All positions given to TileCreator must use the same z stage");
                  return null;
              }
          }
          
-        boolean hasZPlane = (endPoints.length >= 3) && (zStage != "");
+        boolean hasZPlane = (endPoints.length >= 3) && (!zStage.equals(""));
                   
          // Calculate a bounding rectangle around the defaultXYStage positions
          // TODO: develop method to deal with multiple axis
@@ -218,7 +218,7 @@ public final class TileCreator {
                msp.add(spXY);
 
                // Add Z position
-               if (zStage != "") {
+               if (!zStage.equals("")) {
                   msp.setDefaultZStage(zStage);
                   double z;
                   if (hasZPlane) {
