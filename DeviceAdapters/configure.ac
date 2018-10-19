@@ -445,12 +445,15 @@ m4_define([device_adapter_dirs], [m4_strip([
    FakeCamera
    FocalPoint
    FreeSerialPort
+   HamiltonMVP
+   HamiltonMVP/unittest
    HIDManager
    HydraLMT200
    IDS_uEye
    IIDC
    ITC18
    ImageProcessorChain
+   IsmatecMCP
    K8055
    K8061
    LeicaDMI
@@ -505,6 +508,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    SpectralLMM5
    Spot
    SutterLambda
+   SutterLambdaParallelArduino
    SutterStage
    Thorlabs
    ThorlabsDCxxxx

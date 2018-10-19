@@ -111,8 +111,10 @@ SUBDIRS = \
 	Diskovery \
 	FocalPoint \
 	FreeSerialPort \
+	HamiltonMVP \
 	HydraLMT200 \
 	ImageProcessorChain \
+	IsmatecMCP \
 	K8055 \
 	K8061 \
 	LeicaDMI \
@@ -157,6 +159,7 @@ SUBDIRS = \
 	SmarActHCU-3D \
 	SpectralLMM5 \
 	SutterLambda \
+	SutterLambdaParallelArduino \
 	SutterStage \
 	Thorlabs \
 	ThorlabsDCxxxx \

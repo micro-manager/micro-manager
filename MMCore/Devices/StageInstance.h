@@ -53,6 +53,7 @@ public:
    MM::FocusDirection GetFocusDirection();
    void SetFocusDirection(MM::FocusDirection direction);
    int IsStageSequenceable(bool& isSequenceable) const;
+   int IsStageLinearSequenceable(bool& isSequenceable) const;
    bool IsContinuousFocusDrive() const;
    int GetStageSequenceMaxLength(long& nrEvents) const;
    int StartStageSequence();
@@ -60,4 +61,5 @@ public:
    int ClearStageSequence();
    int AddToStageSequence(double position);
    int SendStageSequence();
+   int SetStageLinearSequence(double dZ_um, long nSlices);
 };

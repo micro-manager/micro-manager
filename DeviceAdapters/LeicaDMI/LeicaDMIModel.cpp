@@ -397,6 +397,7 @@ int LeicaAFCModel::SetLEDIntensity(int LEDintensity)
 LeicaDMIModel::LeicaDMIModel() :
    usesMethods_(false),
    availableDevices_(maxNrDevices_, false),
+   codedDevices_(maxNrDevices_, false),
    availableMethods_(maxNrMethods_, false),
    methodNames_(maxNrMethods_ + 1)
 {
@@ -425,7 +426,7 @@ LeicaDMIModel::~LeicaDMIModel()
 void LeicaDMIModel::SetDeviceAvailable(int devId)
 {
    if (devId > 0 && devId < maxNrDevices_)
-      availableDevices_[devId] = true;;
+      availableDevices_[devId] = true;
 }
 
 
@@ -433,6 +434,21 @@ bool LeicaDMIModel::IsDeviceAvailable(int devId)
 {
    if (devId > 0 && devId < maxNrDevices_)
       return availableDevices_[devId];
+   return false;
+}
+
+
+void LeicaDMIModel::SetDeviceCoded(int devId)
+{
+   if (devId > 0 && devId < maxNrDevices_)
+      codedDevices_[devId] = true;
+}
+
+
+bool LeicaDMIModel::IsDeviceCoded(int devId)
+{
+   if (devId > 0 && devId < maxNrDevices_)
+      return codedDevices_[devId];
    return false;
 }
 
