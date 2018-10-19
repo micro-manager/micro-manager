@@ -33,11 +33,8 @@ import com.google.common.eventbus.Subscribe;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.EllipseRoi;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
-import ij.gui.OvalRoi;
-import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.io.RoiEncoder;
 import ij.plugin.frame.RoiManager;
@@ -63,7 +60,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -82,19 +78,24 @@ import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
+import org.micromanager.PropertyMap;
 
-import org.micromanager.events.SLMExposureChangedEvent;
 import org.micromanager.Studio;
+import org.micromanager.data.DataProvider;
+import org.micromanager.data.Image;
+import org.micromanager.display.DisplayWindow;
+import org.micromanager.display.internal.displaywindow.DisplayController;
+import org.micromanager.events.SLMExposureChangedEvent;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 import org.micromanager.projector.internal.devices.SLM;
 import org.micromanager.projector.internal.devices.Galvo;
 import org.micromanager.projector.ProjectionDevice;
+import org.micromanager.projector.ProjectorActions;
 
 // TODO should not depend on internal code.
 import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.ReportingUtils;
-import org.micromanager.projector.ProjectorActions;
-import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  * The main window for the Projector plugin. Contains logic for calibration,
@@ -333,30 +334,33 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
      
-      
-   // Returns true if a particular image is mirrored.
-   private static boolean isImageMirrored(/*ImagePlus imgp */) {
-      // TODO: it is - rightfully - no longer possible to traverse back
-      // from an ImagePlus to a MM datastructure.  Hence, this library will 
-      // need to be structure very differently.  Until then, ignore mirroring
-      /*
-      if (!(imgp.getStack() instanceof MMVirtualStack)) {
-         return false;
-      }
-      Datastore store = ((MMVirtualStack) imgp.getStack())..getDatastore();
-      if (store.getSummaryMetadata().getUserData() == null) {
-         return false;
-      }
-      String mirrorString = store.getSummaryMetadata().getUserData().getString("ImageFlipper-Mirror");
-      return (mirrorString != null && mirrorString.contentEquals("On"));
-      */
-      return false;
-   }
 
-   // Flips a point if it has been mirrored.
-   private static Point2D.Double mirrorIfNecessary(Point2D.Double pOffscreen, int imageWidth) {
-      if (isImageMirrored()) {
-         return new Point2D.Double(imageWidth - pOffscreen.x, pOffscreen.y);
+   // Flips a point if the image was mirrored.
+   // TODO: also correct for rotation..
+   private Point mirrorIfNecessary(ImageCanvas canvas, 
+           Point pOffscreen) {
+      boolean isImageMirrored = false;
+      int imageWidth = 0;
+      DataProvider dp = getDataProvider(canvas);
+      if (dp != null) {
+         try {
+            Image lastImage = dp.getImage(dp.getMaxIndices());
+            if (lastImage != null) {
+               PropertyMap userData = lastImage.getMetadata().getUserData();
+               if (userData.containsString("ImageFlipper-Mirror")) {
+                  String value = userData.getString("ImageFlipper-Mirror", "");
+                  if (value.equals("On")) {
+                     isImageMirrored = true;
+                     imageWidth = lastImage.getWidth();
+                  }
+               }
+            }
+         } catch (IOException ioe) {
+            app_.logs().logError(ioe);
+         }
+      }
+      if (isImageMirrored) {
+         return new Point(imageWidth - pOffscreen.x, pOffscreen.y);
       } else {
          return pOffscreen;
       }
@@ -374,12 +378,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          @Override
          public void mouseClicked(MouseEvent e) {
             if (e.isShiftDown()) {
-               Point p = e.getPoint();
-               ImageCanvas canvas = (ImageCanvas) e.getSource();
-               Point pOffscreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
+               final Point p = e.getPoint();
+               final ImageCanvas canvas = (ImageCanvas) e.getSource();
+               Point pOffScreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
+               pOffScreen = mirrorIfNecessary(canvas, pOffScreen);
                final Point2D.Double devP = ProjectorActions.transformPoint(
                        Mapping.loadMapping(core_, dev_, settings_),
-                       new Point2D.Double(pOffscreen.x, pOffscreen.y));
+                       new Point2D.Double(pOffScreen.x, pOffScreen.y));
                final Configuration originalConfig = prepareChannel();
                final boolean originalShutterState = prepareShutter();
                new Thread(
@@ -392,6 +397,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                         }
                         returnShutter(originalShutterState);
                         returnChannel(originalConfig);
+                        // TODO: log the position
                      } catch (Exception e) {
                         ReportingUtils.showError(e);
                      }
@@ -406,33 +412,56 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    // Turn on/off point and shoot mode.
    public void enablePointAndShootMode(boolean on) {
       if (on && (mapping_ == null)) {
-         ReportingUtils.showError("Please calibrate the phototargeting device first, using the Setup tab.");
-         throw new RuntimeException("Please calibrate the phototargeting device first, using the Setup tab.");
+         final String errorS = 
+                 "Please calibrate the phototargeting device first, using the Setup tab.";
+         ReportingUtils.showError(errorS);
+         throw new RuntimeException(errorS);
       }
       pointAndShooteModeOn_.set(on);
       ImageWindow window = WindowManager.getCurrentWindow();
       if (window != null) {
          ImageCanvas canvas = window.getCanvas();
-         if (on) {
-            if (canvas != null) {
+         if (canvas != null) {
+            if (on) {
                boolean found = false;
                for (MouseListener listener : canvas.getMouseListeners()) {
                   if (listener == pointAndShootMouseListener) {
                      found = true;
                   }
+                  if (!found) {
+                     canvas.addMouseListener(pointAndShootMouseListener);
+                  }
                }
-               if (!found) {
-                  canvas.addMouseListener(pointAndShootMouseListener);
-               }
-            }
-         } else {
-            for (MouseListener listener : canvas.getMouseListeners()) {
-               if (listener == pointAndShootMouseListener) {
-                  canvas.removeMouseListener(listener);
+            } else {
+               for (MouseListener listener : canvas.getMouseListeners()) {
+                  if (listener == pointAndShootMouseListener) {
+                     canvas.removeMouseListener(listener);
+                  }
                }
             }
          }
       }
+   }
+   
+   /**
+    * Ugly internal stuff to see if this IJ IMageCanvas is the MM active window
+    * @param canvas
+    * @return 
+    */   
+   private DataProvider getDataProvider(ImageCanvas canvas) {
+      if (canvas == null) return null;
+      List<DisplayWindow> dws = app_.displays().getAllImageWindows();
+      if (dws != null) {
+         for (DisplayWindow dw : dws) {
+            if (dw instanceof DisplayController) {
+               if ( ((DisplayController) dw).getUIController().
+                       getIJImageCanvas().equals(canvas)) {
+                  return dw.getDataProvider();
+               }
+            }
+         }
+      }
+      return null;
    }
    
    // ## Manipulating ROIs
@@ -490,18 +519,18 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       try {
          ImagePlus imgp = IJ.getImage();
          ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(path));
-         DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos));
-         RoiEncoder re = new RoiEncoder(out);
-         for (Roi roi : rois) {
-            String label = getROILabel(imgp, roi, 0);
-            if (!label.endsWith(".roi")) {
-               label += ".roi";
+         try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(zos))) {
+            RoiEncoder re = new RoiEncoder(out);
+            for (Roi roi : rois) {
+               String label = getROILabel(imgp, roi, 0);
+               if (!label.endsWith(".roi")) {
+                  label += ".roi";
+               }
+               zos.putNextEntry(new ZipEntry(label));
+               re.write(roi);
+               out.flush();
             }
-            zos.putNextEntry(new ZipEntry(label));
-            re.write(roi);
-            out.flush();
          }
-         out.close();
       } catch (IOException e) {
          ReportingUtils.logError(e);
       }
@@ -850,11 +879,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Constructor. Creates the main window for the Projector plugin.
     */
    private ProjectorControlForm(CMMCore core, Studio app) {
+      app_ = app;
+      core_ = app.getCMMCore();
+      
       // Let the Netbeans code make the GUI
       initComponents();
       
-      app_ = app;
-      core_ = app.getCMMCore();
       settings_ = app_.profile().getSettings(this.getClass());
       dev_ = ProjectorActions.getProjectionDevice(app_);     
       mapping_ = Mapping.loadMapping(core, dev_, settings_);

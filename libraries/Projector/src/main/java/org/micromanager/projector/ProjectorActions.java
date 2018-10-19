@@ -16,13 +16,13 @@ import java.util.Map;
 import java.util.Set;
 import mmcorej.CMMCore;
 import org.micromanager.Studio;
+import org.micromanager.propertymap.MutablePropertyMapView;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.projector.internal.Mapping;
 import org.micromanager.projector.internal.ProjectorControlForm;
 import org.micromanager.projector.internal.Utils;
 import org.micromanager.projector.internal.devices.Galvo;
 import org.micromanager.projector.internal.devices.SLM;
-import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
  *
