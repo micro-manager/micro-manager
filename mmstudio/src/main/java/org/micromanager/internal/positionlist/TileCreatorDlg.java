@@ -357,13 +357,11 @@ public final class TileCreatorDlg extends MMDialog {
       cancelButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent arg0) {
-            studio.profile().setString(TileCreatorDlg.class, 
-               OVERLAP_PREF,overlapField_.getText() );
-            positionListDlg_.activateAxisTable(true);
             dispose();
          }
       });
       cancelButton.setText("Cancel");
+      super.setDefaultCloseOperation(MMDialog.DISPOSE_ON_CLOSE);
       super.getContentPane().add(cancelButton);
 
       final JButton resetButton = new JButton();
@@ -381,6 +379,14 @@ public final class TileCreatorDlg extends MMDialog {
       studio.events().registerForEvents(this);
    }
 
+   @Override
+   public void dispose(){
+        studio_.profile().setString(TileCreatorDlg.class, 
+        OVERLAP_PREF,overlapField_.getText() );
+        positionListDlg_.activateAxisTable(true);
+        super.dispose();
+   }
+   
    @Subscribe
    public void shuttingDown(ShutdownCommencingEvent se) {
       studio_.profile().setString(TileCreatorDlg.class,
