@@ -43,113 +43,15 @@ public final class TileCreator {
                  ReportingUtils.showError("All positions given to TileCreator must use the same xy stage");
                  return null;
              }
-         }
-         
-        boolean hasZPlane = (endPoints.length >= 3) && (!zStage.equals(""));
+         }       
                   
          // Calculate a bounding rectangle around the defaultXYStage positions
          // TODO: develop method to deal with multiple axis
-         double meanZ = 0.0;
-         StagePosition sp;
-         for (int i = 0; i < endPoints.length; i++) {
-            if (hasZPlane) {
-               sp = endPoints[i].get(zStage);
-               meanZ += sp.x;
-            }
-         }
-
-         meanZ = meanZ / endPoints.length;
-
-         StagePosition[] coords = boundingBox(endPoints);
+         StagePosition[] coords = boundingBox(endPoints, xyStage);
          double maxX = coords[1].x;
          double minX = coords[0].x;
          double maxY = coords[1].y;
          double minY = coords[0].y;
-         
-         // if there are at least three set points, use them to define a 
-         // focus plane: a, b, c such that z = f(x, y) = a*x + b*y + c.
-
-         double zPlaneA = 0.0, zPlaneB = 0.0, zPlaneC = 0.0;
-
-         if (hasZPlane) {
-            double x1 = 0.0, y1 = 0.0, z1 = 0.0;
-            double x2 = 0.0, y2 = 0.0, z2 = 0.0;
-            double x3 = 0.0, y3 = 0.0, z3 = 0.0;
-
-            boolean sp1Set = false;
-            boolean sp2Set = false;
-            boolean sp3Set = false;
-
-            // if there are four points set, we should either (a) choose the
-            // three that are least co-linear, or (b) use a linear regression to
-            // fit a focus plane that minimizes the errors at the four selected
-            // positions.  this code does neither - it just uses the first three
-            // positions it finds.
-
-            for (int i = 0; i < endPoints.length; i++) {
-               if (!sp1Set) {
-                  x1 = endPoints[i].get(xyStage).x;
-                  y1 = endPoints[i].get(xyStage).y;
-                  z1 = endPoints[i].get(zStage).x;
-                  sp1Set = true;
-               } else if (!sp2Set) {
-                  x2 = endPoints[i].get(xyStage).x;
-                  y2 = endPoints[i].get(xyStage).y;
-                  z2 = endPoints[i].get(zStage).x;
-                  sp2Set = true;
-               } else if (!sp3Set) {
-                  x3 = endPoints[i].get(xyStage).x;
-                  y3 = endPoints[i].get(xyStage).y;
-                  z3 = endPoints[i].get(zStage).x;
-                  sp3Set = true;
-               }
-            }
-
-            // define vectors 1-->2, 1-->3
-
-            double x12 = x2 - x1;
-            double y12 = y2 - y1;
-            double z12 = z2 - z1;
-
-            double x13 = x3 - x1;
-            double y13 = y3 - y1;
-            double z13 = z3 - z1;
-
-            // first, make sure the points aren't co-linear: the angle between
-            // vectors 1-->2 and 1-->3 must be "sufficiently" large
-
-            double dot_prod = x12 * x13 + y12 * y13 + z12 * z13;
-            double magnitude12 = x12 * x12 + y12 * y12 + z12 * z12;
-            magnitude12 = Math.sqrt(magnitude12);
-            double magnitude13 = x13 * x13 + y13 * y13 + z13 * z13;
-            magnitude13 = Math.sqrt(magnitude13);
-
-            double cosTheta = dot_prod / (magnitude12 * magnitude13);
-            double theta = Math.acos(cosTheta);  // in RADIANS
-
-            // "sufficiently" large here is 0.5 radians, or about 30 degrees
-            if (theta < 0.5
-                    || theta > (2 * Math.PI - 0.5)
-                    || (theta > (Math.PI - 0.5) && theta < (Math.PI + 0.5))) {
-               hasZPlane = false;
-            }
-            if (Double.isNaN(theta)) {
-               hasZPlane = false;
-            }
-
-            // intermediates: ax + by + cz + d = 0
-
-            double a = y12 * z13 - y13 * z12;
-            double b = z12 * x13 - z13 * x12;
-            double c = x12 * y13 - x13 * y12;
-            double d = -1 * (a * x1 + b * y1 + c * z1);
-
-            // shuffle to z = f(x, y) = zPlaneA * x + zPlaneB * y + zPlaneC
-
-            zPlaneA = a / (-1 * c);
-            zPlaneB = b / (-1 * c);
-            zPlaneC = d / (-1 * c);
-         }
 
          double[] ans = getImageSize(pixelSizeUm);
          double imageSizeXUm = ans[0];
@@ -204,11 +106,8 @@ public final class TileCreator {
                if (!zStage.equals("")) {
                   msp.setDefaultZStage(zStage);
                   double z;
-                  if (hasZPlane) {
-                     z = zPlaneA * spXY.x + zPlaneB * spXY.y + zPlaneC;
-                  } else {
-                     z = meanZ;
-                  }
+                  z = zGen.getZ(
+                  
                   StagePosition spZ = StagePosition.create1D(zStage, z);
                   msp.add(spZ);
                }
@@ -239,27 +138,21 @@ public final class TileCreator {
     }
    
     private boolean isSwappedXY() {
-        boolean correction, transposeXY, mirrorX, mirrorY;
+        boolean correction, transposeXY;
         String camera = core_.getCameraDevice();
         if (camera == null) {
            JOptionPane.showMessageDialog(null, "This function does not work without a camera");
            return false;
         }
-
         try {
            String tmp = core_.getProperty(camera, "TransposeCorrection");
            correction = !tmp.equals("0");
-           tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
-           mirrorX = !tmp.equals("0");
-           tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
-           mirrorY = !tmp.equals("0");
            tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
            transposeXY = !tmp.equals("0");
         } catch (Exception exc) {
            ReportingUtils.showError(exc);
            return false;
         }
-
         return !correction && transposeXY;
     }
 
