@@ -82,7 +82,7 @@ class ZGeneratorShepard implements ZGenerator {
     
     @Override
     public String getDescription(){
-        return "Weighted Interpolation";
+        return ZGenerator.Type.SHEPINTERPOLATE.toString();
     }
 }
 

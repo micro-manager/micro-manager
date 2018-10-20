@@ -44,6 +44,7 @@ import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 import org.micromanager.internal.positionlist.utils.TileCreator;
+import org.micromanager.internal.positionlist.utils.ZGenerator;
 
 public final class TileCreatorDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
@@ -585,7 +586,8 @@ public final class TileCreatorDlg extends MMDialog {
     private void addToPositionList() {
         // Sanity check: don't create any positions if there is no XY stage to
         // use.
-        if (positionListDlg_.get2DAxis() == null) {
+        String xyStage = positionListDlg_.get2DAxis();
+        if (xyStage == null) {
            return;
         }
         prefix_ += 1;
@@ -601,7 +603,7 @@ public final class TileCreatorDlg extends MMDialog {
         if (zStage == null){
             zStage = "";
         }
-        PositionList posList = tileCreator_.createTiles(overlap, overlapUnit_, endPosition_, pixelSizeUm, Integer.toString(prefix_), zStage);
+        PositionList posList = tileCreator_.createTiles(overlap, overlapUnit_, endPosition_, pixelSizeUm, Integer.toString(prefix_), xyStage, zStage, ZGenerator.Type.SHEPINTERPOLATE);
         // Add to position list
         // Increment prefix for these positions
         MultiStagePosition[] msps = posList.getPositions();

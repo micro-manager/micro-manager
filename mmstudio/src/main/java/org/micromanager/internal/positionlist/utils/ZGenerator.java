@@ -8,11 +8,21 @@ package org.micromanager.internal.positionlist.utils;
  * 
  * @author kthorn
  */
-interface ZGenerator {
+public interface ZGenerator {
     public enum Type{
-        SHEPINTERPOLATE,
-        AVERAGE
-    };
+        SHEPINTERPOLATE ("Weighted Interpolation"),
+        AVERAGE ("Average");
+        public final String description_;
+        
+        Type(String description) {
+            description_ = description;
+        }
+  
+        @Override
+        public String toString() {
+            return description_;
+        }
+    }
     public abstract double getZ (double X, double Y, String zDevice); 
     public abstract String getDescription();
 }

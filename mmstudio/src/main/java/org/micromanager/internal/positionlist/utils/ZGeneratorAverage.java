@@ -51,6 +51,6 @@ class ZGeneratorAverage implements ZGenerator {
 
     @Override
     public String getDescription(){
-        return "Average";   
+        return ZGenerator.Type.AVERAGE.toString();   
     }
 }

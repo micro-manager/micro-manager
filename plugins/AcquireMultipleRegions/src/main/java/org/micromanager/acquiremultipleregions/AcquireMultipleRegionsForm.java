@@ -24,6 +24,7 @@ import org.micromanager.Studio;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.StagePosition;
 import org.micromanager.internal.positionlist.utils.TileCreator;
+import org.micromanager.internal.positionlist.utils.ZGenerator;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -247,8 +248,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 //gui_.positions().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));   
                 
                 double overlap = Double.parseDouble(overlapText.getText());
-                double pixelSizeUm = mmc_.getPixelSizeUm();
-                String zStage = "";                   
+                double pixelSizeUm = mmc_.getPixelSizeUm();                   
                 gui_.positions().setPositionList(
                     tileCreator_.createTiles(
                         overlap,
@@ -256,7 +256,9 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                         currRegion.positions.getPositions(),
                         pixelSizeUm,
                         "1",
-                        zStage
+                        xyStage,
+                        zStage,
+                        zGenType
                     )
                 );
                 
