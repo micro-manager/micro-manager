@@ -239,6 +239,13 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
             Region currRegion = rlm_.getRegion(i);
             ZGenerator.Type zGenType = (ZGenerator.Type) zTypeDropdown.getSelectedItem();
             String xyStage = mmc_.getXYStageDevice();
+            StrVector zStages = new StrVector();
+            for (int axNum=0; axNum<axisList_.getNumberOfPositions(); axNum++){
+                AxisData ad = axisList_.get(axNum);
+                if (ad.getUse()){
+                    zStages.add(ad.getAxisName());
+                }
+            }
             try {
                 statusText.setText("Acquiring region " + String.valueOf(i));
                 //turn on position list, turn off time lapse
@@ -262,7 +269,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                         pixelSizeUm,
                         "1",
                         xyStage,
-                        zStage,
+                        zStages,
                         zGenType
                     )
                 );

@@ -34,6 +34,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
+import mmcorej.StrVector;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
@@ -396,11 +397,13 @@ public final class TileCreatorDlg extends MMDialog {
       
       try {
          // read 1-axis stages
-         final String zStage = positionListDlg_.get1DAxis();
-         if (zStage != null) {
-            msp.setDefaultZStage(zStage);
-            StagePosition sp = StagePosition.create1D(zStage, core_.getPosition(zStage));
-            msp.add(sp);
+         final StrVector zStages = positionListDlg_.get1DAxes();
+         if (zStages.size()>0) {
+            msp.setDefaultZStage(zStages.get(0));
+            for (int i=0; i<zStages.size(); i++){
+                StagePosition sp = StagePosition.create1D(zStages.get(i), core_.getPosition(zStages.get(i)));
+                msp.add(sp);
+            }
          }
 
          // and 2 axis default stage
@@ -499,12 +502,14 @@ public final class TileCreatorDlg extends MMDialog {
 
          // read 1-axis stages
          try {
-            final String zStage = positionListDlg_.get1DAxis();
-            if (zStage != null) {
-               msp.setDefaultZStage(zStage);
-               StagePosition sp = StagePosition.create1D(zStage, core_.getPosition(zStage));
-               msp.add(sp);
-               sb.append(sp.getVerbose()).append("\n");
+            final StrVector zStages = positionListDlg_.get1DAxes();
+            if (zStages.size()>0){
+                msp.setDefaultZStage(zStages.get(0));
+                for (int i=0; i<zStages.size(); i++){
+                    StagePosition sp = StagePosition.create1D(zStages.get(i), core_.getPosition(zStages.get(i)));
+                    msp.add(sp);
+                    sb.append(sp.getVerbose()).append("\n");
+                }
             }
 
             // read 2-axis stages
@@ -599,11 +604,8 @@ public final class TileCreatorDlg extends MMDialog {
             ReportingUtils.showError(ex);
             return;
         }
-        String zStage = positionListDlg_.get1DAxis();
-        if (zStage == null){
-            zStage = "";
-        }
-        PositionList posList = tileCreator_.createTiles(overlap, overlapUnit_, endPosition_, pixelSizeUm, Integer.toString(prefix_), xyStage, zStage, ZGenerator.Type.SHEPINTERPOLATE);
+        StrVector zStages = positionListDlg_.get1DAxes();
+        PositionList posList = tileCreator_.createTiles(overlap, overlapUnit_, endPosition_, pixelSizeUm, Integer.toString(prefix_), xyStage, zStages, ZGenerator.Type.SHEPINTERPOLATE);
         // Add to position list
         // Increment prefix for these positions
         MultiStagePosition[] msps = posList.getPositions();

@@ -847,8 +847,16 @@ public final class PositionListDlg extends MMDialog implements MouseListener, Ch
     * Returns the first selected Drive or null when none is selected
     * @return 
     */
-   public String get1DAxis() {
-      return getAxis(AxisData.AxisType.oneD);
+   public StrVector get1DAxes() {
+        AxisData.AxisType axType = AxisData.AxisType.oneD;
+        StrVector result = new StrVector();
+        for (int i = 0; i < axisList_.getNumberOfPositions(); i++) {
+            AxisData axis = axisList_.get(i);
+            if (axis.getUse() && axis.getType() == axType) {
+                result.add(axis.getAxisName());
+            }
+        }
+        return result;
    }
 
    protected void showCreateTileDlg() {

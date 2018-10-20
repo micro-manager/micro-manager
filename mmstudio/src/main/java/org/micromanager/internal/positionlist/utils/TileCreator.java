@@ -9,6 +9,7 @@ import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
+import mmcorej.StrVector;
 import org.micromanager.StagePosition;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
@@ -30,7 +31,7 @@ public final class TileCreator {
     /*
     * Create the tile list based on user input, pixelsize, and imagesize
     */
-    public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit, MultiStagePosition[] endPoints, double pixelSizeUm, String labelPrefix, String xyStage, String zStage, ZGenerator.Type zType) {
+    public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit, MultiStagePosition[] endPoints, double pixelSizeUm, String labelPrefix, String xyStage, StrVector zStages, ZGenerator.Type zType) {
          // Make sure at least two corners were set
          if (endPoints.length < 2) {
             ReportingUtils.showError("At least two corners should be set");
@@ -43,11 +44,12 @@ public final class TileCreator {
                 return null;
             }
         }  
-        if (zStage.equals("")){
-            zStage = null;
-        }
+
         ZGenerator zGen = null;
-        if (zStage!=null){
+        if (zStages==null){
+            zStages = new StrVector();
+        }
+        if (zStages.size()>0){
             PositionList posList = new PositionList();
             posList.setPositions(endPoints);
             switch (zType) {
@@ -119,14 +121,16 @@ public final class TileCreator {
                StagePosition spXY = StagePosition.create2D(xyStage, X, Y);
                msp.add(spXY);
 
-               // Add Z position
-               if (zGen!=null) {
-                  msp.setDefaultZStage(zStage);
-                  double z;
-                  z = zGen.getZ(X, Y, zStage);
-                  StagePosition spZ = StagePosition.create1D(zStage, z);
-                  msp.add(spZ);
-               }
+                // Add Z position
+                if (zGen!=null) {
+                    msp.setDefaultZStage(zStages.get(0));
+                    //loop over Z coordinates and add the correct positions for any we are using
+                    for (int a = 0; a < zStages.size(); a++) {
+                        StagePosition newSP = StagePosition.create1D(zStages.get(a), 
+                            zGen.getZ(X, Y, zStages.get(a)));
+                        msp.add(newSP);
+                    }
+                 }
 
                // Add 'metadata'
                msp.setLabel(labelPrefix + "-Pos" + FMT_POS.format(tmpX) + "_" + FMT_POS.format(y));
