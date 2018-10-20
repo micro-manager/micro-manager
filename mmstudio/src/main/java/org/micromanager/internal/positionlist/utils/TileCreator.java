@@ -20,17 +20,17 @@ import org.micromanager.internal.utils.ReportingUtils;
  * @author N2-LiveCell
  */
 public final class TileCreator {
-    private static CMMCore core_;
+    private final CMMCore core_;
     static public enum OverlapUnitEnum {UM, PX, PERCENT};
     private static final DecimalFormat FMT_POS = new DecimalFormat("000");
    
-    public TileCreator(CMMCore core){
+    public TileCreator(CMMCore core, String xyStage){
         core_ = core;
     }
     /*
     * Create the tile list based on user input, pixelsize, and imagesize
     */
-    public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit, MultiStagePosition[] endPoints, double pixelSizeUm, String labelPrefix, String zStage, ZGenerator zGen) {
+    public PositionList createTiles(double overlap, OverlapUnitEnum overlapUnit, MultiStagePosition[] endPoints, double pixelSizeUm, String labelPrefix, String zStage, ZGenerator zGen, String xyStage) {
          // Make sure at least two corners were set
          if (endPoints.length < 2) {
             ReportingUtils.showError("At least two corners should be set");
@@ -38,7 +38,6 @@ public final class TileCreator {
          }
          
          //Make sure all Points have the same stage
-         String xyStage = endPoints[0].getDefaultXYStage();
          for (int i=1; i<endPoints.length; i++){
              if (!xyStage.equals(endPoints[i].getDefaultXYStage())){
                  ReportingUtils.showError("All positions given to TileCreator must use the same xy stage");
@@ -50,26 +49,9 @@ public final class TileCreator {
                   
          // Calculate a bounding rectangle around the defaultXYStage positions
          // TODO: develop method to deal with multiple axis
-         double minX = Double.POSITIVE_INFINITY;
-         double minY = Double.POSITIVE_INFINITY;
-         double maxX = Double.NEGATIVE_INFINITY;
-         double maxY = Double.NEGATIVE_INFINITY;
          double meanZ = 0.0;
          StagePosition sp;
          for (int i = 0; i < endPoints.length; i++) {
-            sp = endPoints[i].get(xyStage);
-            if (sp.x < minX) {
-               minX = sp.x;
-            }
-            if (sp.x > maxX) {
-               maxX = sp.x;
-            }
-            if (sp.y < minY) {
-               minY = sp.y;
-            }
-            if (sp.y > maxY) {
-               maxY = sp.y;
-            }
             if (hasZPlane) {
                sp = endPoints[i].get(zStage);
                meanZ += sp.x;
@@ -78,6 +60,12 @@ public final class TileCreator {
 
          meanZ = meanZ / endPoints.length;
 
+         StagePosition[] coords = boundingBox(endPoints);
+         double maxX = coords[1].x;
+         double minX = coords[0].x;
+         double maxY = coords[1].y;
+         double minY = coords[0].y;
+         
          // if there are at least three set points, use them to define a 
          // focus plane: a, b, c such that z = f(x, y) = a*x + b*y + c.
 
@@ -312,4 +300,33 @@ public final class TileCreator {
 
         return new double[] {imageSizeXUm, imageSizeYUm};
    }
+    
+    public StagePosition[] boundingBox(MultiStagePosition[] endPoints, String xyStage){
+        double minX = Double.POSITIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double maxY = Double.NEGATIVE_INFINITY;
+        StagePosition sp;
+        for (int i = 0; i < endPoints.length; i++) {
+           sp = endPoints[i].get(xyStage);
+           if (sp.x < minX) {
+              minX = sp.x;
+           }
+           if (sp.x > maxX) {
+              maxX = sp.x;
+           }
+           if (sp.y < minY) {
+              minY = sp.y;
+           }
+           if (sp.y > maxY) {
+              maxY = sp.y;
+           }
+        }
+        StagePosition minCoords = StagePosition.create2D(xyStage, minX, minY);
+        StagePosition maxCoords = StagePosition.create2D(xyStage, maxX, maxY);
+        StagePosition[] arr = new StagePosition[2];
+        arr[0] = minCoords;
+        arr[1] = maxCoords;
+        return arr;
+    }
 }
