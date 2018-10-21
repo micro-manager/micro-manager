@@ -380,6 +380,8 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         axisPane = new javax.swing.JScrollPane();
         jLabel6 = new javax.swing.JLabel();
+        mjLabel7 = new javax.swing.JLabel();
+        zTypeDropdown = new javax.swing.JComboBox();
         loadRegionsButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -558,7 +560,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(regionText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(regionText, javax.swing.GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE)
                             .addComponent(statusText)
                             .addComponent(AddPositionList)
                             .addComponent(StartAcquisition, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -575,7 +577,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 11, Short.MAX_VALUE)))
+                        .addGap(0, 10, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         mainPanelLayout.setVerticalGroup(
@@ -626,7 +628,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
 
         jLabel6.setText("Which axes should be set at each position?");
 
-        jLabel7.setText("How to handle movement along those axes?");
+        mjLabel7.setText("How to handle movement along those axes?");
 
         zTypeDropdown.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
@@ -650,7 +652,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel5))
                     .addComponent(jLabel6)
-                    .addComponent(jLabel7)
+                    .addComponent(mjLabel7)
                     .addComponent(zTypeDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(loadRegionsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(171, Short.MAX_VALUE))
@@ -667,7 +669,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(axisPane, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel7)
+                .addComponent(mjLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(zTypeDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(28, 28, 28)
@@ -685,7 +687,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 494, Short.MAX_VALUE)
+            .addComponent(jTabbedPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 494, Short.MAX_VALUE)
         );
 
         pack();
@@ -941,12 +943,12 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane2;
     private javax.swing.JButton loadRegionsButton;
     private javax.swing.JPanel mainPanel;
+    private javax.swing.JLabel mjLabel7;
     private javax.swing.JTextField overlapText;
     private javax.swing.JLabel regionText;
     private javax.swing.JLabel statusText;
