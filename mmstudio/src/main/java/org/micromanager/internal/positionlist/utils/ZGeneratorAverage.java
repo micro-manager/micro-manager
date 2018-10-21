@@ -33,9 +33,7 @@ class ZGeneratorAverage implements ZGenerator {
      Map <String, Double> averageZPositions_;
      /**
      * Constructor
-     * 
      * @param positionList initial position list
-     * @param type 
      */  
     public ZGeneratorAverage (PositionList positionList) {
        MultiStagePosition msp0;

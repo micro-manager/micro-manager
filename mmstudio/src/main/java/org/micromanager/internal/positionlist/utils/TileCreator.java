@@ -20,7 +20,7 @@
 //INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 
-package org.micromanager.internal.utils;
+package org.micromanager.internal.positionlist.utils;
 
 import java.text.DecimalFormat;
 import javax.swing.JOptionPane;
@@ -100,7 +100,7 @@ public final class TileCreator {
          double overlapXUm = imageSizeXUm - tileSizeXUm;
          double overlapYUm = imageSizeYUm - tileSizeYUm;
 
-         // bounding box size
+         // bounding box size accounting for the fact that the edges of the image extend past the max/min values set.
          double boundingXUm = maxX - minX + imageSizeXUm;
          double boundingYUm = maxY - minY + imageSizeYUm;
 
@@ -116,7 +116,13 @@ public final class TileCreator {
          double totalSizeXUm = nrImagesX * tileSizeXUm + overlapXUm;
          double totalSizeYUm = nrImagesY * tileSizeYUm + overlapYUm;
 
-         double offsetXUm = (totalSizeXUm - boundingXUm) / 2;
+         //Since an evenly spaced grid will likely not perfectly fit the bounding box
+         //that was specified we use this offset so that our grid is still centered properly.
+         //This slightly widens the field that is scanned. Sometime this can result in setting
+         //a position that is outside of the stage's range of motion. This causes issues when it comes time to stitch.
+         //This approach could also result in damage if the user specified a region that is near something delicate and then
+         //this code expands that range. It may be good to try a different approach.
+         double offsetXUm = (totalSizeXUm - boundingXUm) / 2;   
          double offsetYUm = (totalSizeYUm - boundingYUm) / 2;
 
          PositionList posList = new PositionList();
@@ -125,7 +131,7 @@ public final class TileCreator {
             for (int x = 0; x < nrImagesX; x++) {
                // on even rows go left to right, on odd rows right to left
                int tmpX = x;
-               if ((y & 1) == 1) {
+               if ((y & 1) == 1) { //If y is odd then we will go backwards in x
                   tmpX = nrImagesX - x - 1;
                }
                MultiStagePosition msp = new MultiStagePosition();
@@ -175,6 +181,7 @@ public final class TileCreator {
     }
    
     private boolean isSwappedXY() {
+        //Returns true if the the camera device adapter indicates that it's x and y axis should be swapped.
         boolean correction, transposeXY;
         String camera = core_.getCameraDevice();
         if (camera == null) {
@@ -194,6 +201,7 @@ public final class TileCreator {
     }
 
     public double[] getTileSize(double overlap, OverlapUnitEnum overlapUnit, double pixSizeUm) {
+        //Returns the x and y sizes of the image after subtracting the overlap.
         double overlapUmX;
         double overlapUmY;
 
@@ -221,7 +229,8 @@ public final class TileCreator {
         return new double[] {tileSizeXUm, tileSizeYUm};
     }
 
-    public double[] getImageSize(double pixSizeUm) {     
+    public double[] getImageSize(double pixSizeUm) { 
+         //Returns the x and y sizes of the image not accounting for the overlap.
         boolean swapXY = isSwappedXY();
         double imageSizeXUm = swapXY ? pixSizeUm * core_.getImageHeight() : 
                                        pixSizeUm * core_.getImageWidth();
@@ -232,6 +241,7 @@ public final class TileCreator {
    }
     
     public StagePosition[] boundingBox(MultiStagePosition[] endPoints, String xyStage){
+        //Returns the minimum and maximum coordinates found in the set of input coordinates.
         double minX = Double.POSITIVE_INFINITY;
         double minY = Double.POSITIVE_INFINITY;
         double maxX = Double.NEGATIVE_INFINITY;

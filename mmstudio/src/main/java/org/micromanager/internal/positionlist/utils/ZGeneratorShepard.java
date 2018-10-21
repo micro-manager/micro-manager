@@ -38,7 +38,6 @@ class ZGeneratorShepard implements ZGenerator {
     /**
      *
      * @param positionList
-     * @param type
      */
     public ZGeneratorShepard (PositionList positionList) {  
         //use default exponent of 2
