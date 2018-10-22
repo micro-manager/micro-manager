@@ -98,7 +98,8 @@ public final class DefaultImage implements Image {
 
       if (metadata == null) {
          try {
-            metadata = DefaultMetadata.fromPropertyMap(NonPropertyMapJSONFormats.metadata().fromGson(je));
+            metadata = DefaultMetadata.fromPropertyMap(
+                    NonPropertyMapJSONFormats.metadata().fromGson(je));
          }
          catch (Exception e) {
             throw new IllegalArgumentException("Failed to convert TaggedImage tags to metadata", e);

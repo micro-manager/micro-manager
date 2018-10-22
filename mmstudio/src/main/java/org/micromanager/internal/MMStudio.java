@@ -1490,28 +1490,18 @@ public final class MMStudio implements Studio, CompatibilityInterface, PositionL
       try {
          acquisitionEngine2010LoadingThread_.join();
          if (acquisitionEngine2010_ == null) {
-            acquisitionEngine2010_ = (IAcquisitionEngine2010) acquisitionEngine2010Class_.getConstructor(Studio.class).newInstance(studio_);
+            acquisitionEngine2010_ = 
+                    (IAcquisitionEngine2010) 
+                    acquisitionEngine2010Class_.getConstructor(Studio.class).newInstance(studio_);
          }
          return acquisitionEngine2010_;
-      } catch (IllegalAccessException e) {
-         ReportingUtils.logError(e);
-         return null;
-      } catch (IllegalArgumentException e) {
-         ReportingUtils.logError(e);
-         return null;
-      } catch (InstantiationException e) {
-         ReportingUtils.logError(e);
-         return null;
-      } catch (InterruptedException e) {
-         ReportingUtils.logError(e);
-         return null;
-      } catch (NoSuchMethodException e) {
-         ReportingUtils.logError(e);
-         return null;
-      } catch (SecurityException e) {
-         ReportingUtils.logError(e);
-         return null;
-      } catch (InvocationTargetException e) {
+      } catch (IllegalAccessException | 
+              IllegalArgumentException | 
+              InstantiationException | 
+              InterruptedException | 
+              NoSuchMethodException | 
+              SecurityException | 
+              InvocationTargetException e) {
          ReportingUtils.logError(e);
          return null;
       }
