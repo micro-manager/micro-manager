@@ -34,11 +34,13 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
+import mmcorej.MMCoreJ;
 import mmcorej.TaggedImage;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.Studio;
 import org.micromanager.internal.utils.ImageUtils;
 import org.micromanager.internal.utils.MathFunctions;
+import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 /**
@@ -117,15 +119,18 @@ public class AutomaticCalibrationThread extends CalibrationThread {
       return result;
    }
 
-   // Measures the displacement between two images by cross-correlating, and then finding the maximum value.
+   // Measures the displacement between two images by cross-correlating, 
+   // and then finding the maximum value.
    // Accurate to one pixel only.
 
    private Point2D.Double measureDisplacement(ImageProcessor proc1, 
            ImageProcessor proc2, boolean display) {
       ImageProcessor result = crossCorrelate(proc1, proc2);
-      ImageProcessor resultCenter = getSubImage(result, result.getWidth() / 2 - 8, result.getHeight() / 2 - 8, 16, 16);
+      ImageProcessor resultCenter = getSubImage(result, 
+              result.getWidth() / 2 - 8, result.getHeight() / 2 - 8, 16, 16);
       resultCenter.setInterpolationMethod(ImageProcessor.BICUBIC);
-      ImageProcessor resultCenterScaled = resultCenter.resize(resultCenter.getWidth() * 10);
+      ImageProcessor resultCenterScaled = resultCenter.resize(
+              resultCenter.getWidth() * 10);
       ImagePlus img = new ImagePlus("", resultCenterScaled);
       Point p = ImageUtils.findMaxPixel(img);
       Point d = new Point(p.x - img.getWidth() / 2, p.y - img.getHeight() / 2);
@@ -151,7 +156,8 @@ public class AutomaticCalibrationThread extends CalibrationThread {
    private ImageProcessor snapImageAt(double x, double y, boolean simulate) 
            throws CalibrationFailedException {
       if (simulate) {
-         return simulateAcquire(theSlide,(int) (x+(3*Math.random()-1.5)),(int) (y+(3*Math.random()-1.5)));
+         return simulateAcquire(theSlide,(int) (x+(3*Math.random()-1.5)),
+                 (int) (y+(3*Math.random()-1.5)));
       } else {
          try {
             Point2D.Double p0 = core_.getXYStagePosition();
@@ -389,6 +395,16 @@ public class AutomaticCalibrationThread extends CalibrationThread {
 
       try {
          result_ = runCalibration();
+         try {
+            String binning = core_.getProperty(core_.getCameraDevice(), 
+                    MMCoreJ.getG_Keyword_Binning());
+            int binNr = NumberUtils.coreStringToInt(binning);
+            if (binNr != 1) {
+               result_.scale(1/binNr, 1/binNr);
+            }
+         } catch (Exception ex) {
+            studio_.logs().logError("Error while determining binning");
+         }
       }
       catch (InterruptedException e) {
          // User canceled
