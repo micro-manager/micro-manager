@@ -56,11 +56,7 @@ public final class DefaultTaggedImageSink  {
                   TaggedImage tagged = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
                   if (tagged != null) {
                      if (TaggedImageQueue.isPoison(tagged)) {
-                        // Acquisition has ended.
-                        pipeline_.halt();
-                        DefaultEventManager.getInstance().post(
-                              new DefaultAcquisitionEndedEvent(
-                                 store_, engine_));
+                        // Acquisition has ended. Clean up under "finally"                        
                         break;
                      }
                      try {
@@ -86,6 +82,10 @@ public final class DefaultTaggedImageSink  {
                }
             } catch (Exception ex2) {
                ReportingUtils.logError(ex2);
+            } finally {
+               pipeline_.halt();
+               DefaultEventManager.getInstance().post(
+                     new DefaultAcquisitionEndedEvent(store_, engine_));
             }
             long t2 = System.currentTimeMillis();
             ReportingUtils.logMessage(imageCount + " images stored in " + (t2 - t1) + " ms.");

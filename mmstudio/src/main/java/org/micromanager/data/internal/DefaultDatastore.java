@@ -336,6 +336,7 @@ public class DefaultDatastore implements Datastore {
 
    @Override
    public void close() throws IOException {
+      freeze();
       DefaultEventManager.getInstance().post(
             new DefaultDatastoreClosingEvent(this));
       if (storage_ != null) {

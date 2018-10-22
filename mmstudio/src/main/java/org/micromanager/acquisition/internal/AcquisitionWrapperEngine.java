@@ -19,6 +19,7 @@ import org.micromanager.acquisition.ChannelSpec;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Pipeline;
+import org.micromanager.events.AcquisitionEndedEvent;
 import org.micromanager.events.internal.ChannelGroupEvent;
 import org.micromanager.events.internal.DefaultAcquisitionEndedEvent;
 import org.micromanager.events.internal.DefaultAcquisitionStartedEvent;
@@ -423,6 +424,7 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
       cameraTimeout_ = ss.cameraTimeout;
       shouldDisplayImages_ = ss.shouldDisplayImages;
    }
+   
 
 //////////////////// Actions ///////////////////////////////////////////
    @Override
@@ -1047,6 +1049,12 @@ public final class AcquisitionWrapperEngine implements AcquisitionEngine {
    @Override
    public String getComment() {
        return this.comment_;
+   }
+   
+   @Subscribe
+   public void onAcquisitionEnded(AcquisitionEndedEvent event) {
+      curStore_ = null;
+      curPipeline_ = null;
    }
 
    @Subscribe
