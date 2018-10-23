@@ -37,10 +37,10 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import org.micromanager.PropertyMap;
 import org.micromanager.PropertyMaps;
@@ -215,70 +215,117 @@ public final class MultipageTiffWriter {
             build();
    }
 
-   private ByteBuffer allocateByteBuffer(int capacity) {
-      return ByteBuffer.allocateDirect(capacity).order(BYTE_ORDER);
+   //
+   // Buffer allocation and recycling
+   //
+
+   // The idea here is to recycle the direct buffers for image pixels, because
+   // allocation is slow. It is expected that we do not need a large pool,
+   // because the only aim is to avoid situations where allocation is limiting
+   // at steady state. If writing is, on average, faster than incoming images,
+   // the pool should always have a buffer ready for a new request.
+   // Ideally we would also evict unused buffers after a timeout, so as not to
+   // leak memory after writing has concluded.
+
+   private static final int BUFFER_DIRECT_THRESHOLD = 1024;
+   private static ByteBuffer allocateByteBuffer(int capacity) {
+      ByteBuffer b = capacity >= BUFFER_DIRECT_THRESHOLD ?
+            ByteBuffer.allocateDirect(capacity) :
+            ByteBuffer.allocate(capacity);
+      return b.order(BYTE_ORDER);
    }
-   
-   private BlockingQueue<ByteBuffer> currentImageByteBuffers_ = new LinkedBlockingQueue<ByteBuffer>(10);
-   private int currentImageByteBufferCapacity_ = 0;
-           
-   private ByteBuffer allocateByteBufferMemo(int capacity) {
-       // HACK: if we are running on 32-bit mode, then we don't want to cache
-       // our direct buffers, due to increased memory constraints on 32-bit
-       // systems.
-       if (System.getProperty("sun.arch.data.model").equals("32")) {
-           return allocateByteBuffer(capacity);
-       }
-       if (capacity != currentImageByteBufferCapacity_) {
-           currentImageByteBuffers_.clear();
-           currentImageByteBufferCapacity_ = capacity;
-       }
-       
-       ByteBuffer cachedBuf = currentImageByteBuffers_.poll();
-       return (cachedBuf != null) ? cachedBuf : allocateByteBuffer(capacity);
+
+   private static final int BUFFER_POOL_SIZE =
+         System.getProperty("sun.arch.data.model").equals("32") ? 0 : 3;
+   private static final Deque<ByteBuffer> pooledBuffers_;
+   static {
+      if (BUFFER_POOL_SIZE > 0) {
+         pooledBuffers_ = new ArrayDeque<ByteBuffer>(BUFFER_POOL_SIZE);
+      }
+      else {
+         pooledBuffers_ = null;
+      }
    }
-   
+   private static int pooledBufferCapacity_ = 0;
+
+   private static ByteBuffer getLargeBuffer(int capacity) {
+      if (BUFFER_POOL_SIZE == 0) {
+         return allocateByteBuffer(capacity);
+      }
+
+      synchronized (MultipageTiffWriter.class) {
+         if (capacity != pooledBufferCapacity_) {
+            pooledBuffers_.clear();
+            pooledBufferCapacity_ = capacity;
+         }
+
+         // Recycle in LIFO order (smaller images may still be in L3 cache)
+         ByteBuffer b = pooledBuffers_.pollFirst();
+         if (b != null) {
+            // Ensure correct byte order in case recycled from other source
+            b.order(BYTE_ORDER).clear();
+            return b;
+         }
+      }
+      return allocateByteBuffer(capacity);
+   }
+
+   private static void tryRecycleLargeBuffer(ByteBuffer b) {
+      // Keep up to BUFFER_POOL_SIZE direct buffers of the current size
+      if (BUFFER_POOL_SIZE == 0 || !b.isDirect()) {
+         return;
+      }
+      synchronized (MultipageTiffWriter.class) {
+         if (b.capacity() == pooledBufferCapacity_) {
+            if (pooledBuffers_.size() == BUFFER_POOL_SIZE) {
+               pooledBuffers_.removeLast(); // Discard oldest
+            }
+            pooledBuffers_.addFirst(b);
+         }
+      }
+   }
+
+   //
+   //
+   //
+
    private void executeWritingTask(Runnable writingTask) {
       writingExecutor_.execute(writingTask);
    }
-   
+
    private void fileChannelWrite(final ByteBuffer buffer, final long position) {
-      executeWritingTask(
-        new Runnable() {
-           @Override
-           public void run() {
-             try {
-                buffer.rewind();
-                fileChannel_.write(buffer, position);
-                if (buffer.limit() == currentImageByteBufferCapacity_) {
-                    currentImageByteBuffers_.offer(buffer);
-                }
-              } catch (IOException e) {
-                ReportingUtils.logError(e);
-              }
-           }
-        });
+      executeWritingTask(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               buffer.rewind();
+               fileChannel_.write(buffer, position);
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e);
+            }
+            tryRecycleLargeBuffer(buffer);
+         }
+      });
    }
-   
+
    private void fileChannelWrite(final ByteBuffer[] buffers) {
-      executeWritingTask(
-        new Runnable() {
-           @Override
-           public void run() {
-             try {
-                fileChannel_.write(buffers);
-                for (ByteBuffer buffer:buffers) {
-                    if (buffer.limit() == currentImageByteBufferCapacity_) {
-                        currentImageByteBuffers_.offer(buffer);
-                    }
-                }
-              } catch (IOException e) {
-                ReportingUtils.logError(e);
-              } 
-           }
-        });
+      executeWritingTask(new Runnable() {
+         @Override
+         public void run() {
+            try {
+               fileChannel_.write(buffers);
+            }
+            catch (IOException e) {
+               ReportingUtils.logError(e);
+            }
+            for (ByteBuffer buffer : buffers) {
+               tryRecycleLargeBuffer(buffer);
+            }
+         }
+      });
    }
-   
+
    public MultipageTiffReader getReader() {
       return reader_;
    }
@@ -641,8 +688,7 @@ public final class MultipageTiffWriter {
                   count++;
                }
             }
-            ByteBuffer buffer = allocateByteBufferMemo(rgbaPix.length * 2);
-            buffer.rewind();
+            ByteBuffer buffer = getLargeBuffer(rgbaPix.length * 2);
             buffer.asShortBuffer().put(rgbaPix);
             return buffer;
          }
@@ -651,8 +697,7 @@ public final class MultipageTiffWriter {
             return ByteBuffer.wrap((byte[]) pixels);
          } else {
             short[] pix = (short[]) pixels;
-            ByteBuffer buffer = allocateByteBufferMemo(pix.length * 2);
-            buffer.rewind();
+            ByteBuffer buffer = getLargeBuffer(pix.length * 2);
             buffer.asShortBuffer().put(pix);
             return buffer;
          }
