@@ -407,6 +407,7 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IsmatecMCP", "DeviceAdapters\IsmatecMCP\IsmatecMCP.vcxproj", "{EAF38044-90A7-4062-B4B6-C0F6357E9EB9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JAI", "DeviceAdapters\JAI\JAI.vcxproj", "{43564119-6C0F-4589-9BF5-0C6C653FF9F1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iBeamSmartCW", "DeviceAdapters\Toptica_iBeamSmartCW\Toptica_iBeamSmartCW.vcxproj", "{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -2831,6 +2832,18 @@ Global
 		{43564119-6C0F-4589-9BF5-0C6C653FF9F1}.Release|Win32.Build.0 = Release|Win32
 		{43564119-6C0F-4589-9BF5-0C6C653FF9F1}.Release|x64.ActiveCfg = Release|x64
 		{43564119-6C0F-4589-9BF5-0C6C653FF9F1}.Release|x64.Build.0 = Release|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|Mixed Platforms.ActiveCfg = Debug|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|Mixed Platforms.Build.0 = Debug|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|Win32.Build.0 = Debug|Win32
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|x64.ActiveCfg = Debug|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Debug|x64.Build.0 = Debug|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|Mixed Platforms.ActiveCfg = Release|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|Mixed Platforms.Build.0 = Release|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|Win32.ActiveCfg = Release|Win32
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|Win32.Build.0 = Release|Win32
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|x64.ActiveCfg = Release|x64
+		{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
