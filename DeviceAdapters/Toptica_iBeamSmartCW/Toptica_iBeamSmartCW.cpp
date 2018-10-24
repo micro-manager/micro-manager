@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-// FILE:          iBeam-smart.cpp
+// FILE:          Toptica_iBeamSmartCW.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
@@ -10,7 +10,7 @@
 // AUTHOR:        Joran Deschamps, 2018
 //-----------------------------------------------------------------------------
 
-#include "iBeam-smartCW.h"
+#include "Toptica_iBeamSmartCW.h"
 
 #ifdef WIN32
 #include "winuser.h"
