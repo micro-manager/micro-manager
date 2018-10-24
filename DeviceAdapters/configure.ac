@@ -516,6 +516,7 @@ m4_define([device_adapter_dirs], [m4_strip([
    ThorlabsFilterWheel
    ThorlabsSC10
    Tofra
+   Toptica_iBeamSmartCW
    TriggerScope
    USBManager
    UserDefinedSerial
