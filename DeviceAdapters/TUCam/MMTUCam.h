@@ -159,6 +159,8 @@ public:
     int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnGlobalGain(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnCMSMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnLEDMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnGAINMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnImageMode(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -184,6 +186,12 @@ public:
 	int OnTriggerDoSoftware(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnSharpness(MM::PropertyBase* pProp, MM::ActionType eAct);
 	int OnDPCLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+	int OnTrgOutPortMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTrgOutKindMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTrgOutEdgeMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTrgOutDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnTrgOutWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
 /*
    int OnMaxExposure(MM::PropertyBase* pProp, MM::ActionType eAct);             // 设置曝光最大值上限
  
@@ -308,6 +316,7 @@ private:
     TUCAM_OPEN       m_opCam;               // The camera open parameters
     TUCAM_FRAME      m_frame;               // The frame object
 	TUCAM_TRIGGER_ATTR m_tgrAttr;			// The trigger parameters
+	TUCAM_TRGOUT_ATTR  m_tgrOutAttr;        // The output trigger parameters
 };
 
 class CTUCamThread : public MMDeviceThreadBase
