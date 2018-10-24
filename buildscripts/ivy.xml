@@ -59,6 +59,9 @@
 		<dependency conf="optional" org="" name="ima3d_" rev=""/>
 		<dependency conf="optional" org="" name="DT1.2" rev=""/>
 
+		<!-- Gamepad plugin dependency; only works on Windows; not in Maven -->
+		<dependency conf="optional"  name="jxinput" rev="0.8"/>
+
 		<!-- Run-time-only dependencies -->
 		<dependency conf="runtime" org="org.swinglabs" name="swingx" rev="0.9.5"/>
 	</dependencies>
