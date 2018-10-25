@@ -8,4 +8,5 @@ package org.micromanager.projector.internal;
 public class Terms {
    
    final static String DELAY = "Delay";
+   final static String LOGDIRECTORY = "LogDirectory";
 }

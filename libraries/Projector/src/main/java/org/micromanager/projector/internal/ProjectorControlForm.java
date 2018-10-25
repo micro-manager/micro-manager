@@ -4,7 +4,8 @@
 //SUBSYSTEM:     Projector plugin
 //-----------------------------------------------------------------------------
 //AUTHOR:        Arthur Edelstein
-//COPYRIGHT:     University of California, San Francisco, 2010-2014
+//                Contributions by Jon Daniels and Nico Stuurman
+//COPYRIGHT:     University of California, San Francisco, 2010-2018
 //LICENSE:       This file is distributed under the BSD license.
 //               License text is included with the source distribution.
 //               This file is distributed in the hope that it will be useful,
@@ -15,17 +16,6 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.projector.internal;
-
-// This file is written in call stack order: methods declared later in the
-// file call methods earlier in the file, with the exception of generated
-// code (found at the end of file).
-
-// This source file is partially formatted to be processed
-// with [docco](http://jashkenas.github.io/docco/),
-// which generates nice HTML documentation side-by-side with the
-// source code.
-
-// TODO: finish converting to Javadoc
 
 
 import com.google.common.eventbus.Subscribe;
@@ -86,6 +76,8 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.SLMExposureChangedEvent;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 import org.micromanager.projector.internal.devices.SLM;
@@ -119,7 +111,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private Calibrator calibrator_;
    
 
-
+   public static final FileType PROJECTOR_LOG_FILE = new FileType("PROJECTOR_LOG_FILE",
+      "Projector Log File", "./MyProjector.log", true, "log");
   
    // ## Methods for handling targeting channel and shutter
    
@@ -187,7 +180,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    /**
     * Sets the Channel Group to the targeting channel, if it exists.
-    * @return 
+    * @return the channel group in effect before calling this function
     */
    public Configuration prepareChannel() {
       Configuration originalConfig = null;
@@ -211,7 +204,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    /**
     * Should be called with the value returned by prepareChannel.
     * Returns Channel Group to its original settings, if needed.
-    * @param originalConfig value returned by prepareChannel
+    * @param originalConfig Configuration to return to
     */
    public void returnChannel(Configuration originalConfig) {
       if (originalConfig != null) {
@@ -335,8 +328,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
      
 
-   // Flips a point if the image was mirrored.
-   // TODO: also correct for rotation..
+   /** Flips a point if the image was mirrored.
+    *   TODO: also correct for rotation..
+   */
    private Point mirrorIfNecessary(ImageCanvas canvas, 
            Point pOffscreen) {
       boolean isImageMirrored = false;
@@ -368,11 +362,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
 
 
-   // ## Point and shoot
-   
-   // Creates a MouseListener instance for future use with Point and Shoot
-   // mode. When the MouseListener is attached to an ImageJ window, any
-   // clicks will result in a spot being illuminated.
+   /**
+    * ## Point and shoot
+    * Creates a MouseListener instance for future use with Point and Shoot
+    * mode. When the MouseListener is attached to an ImageJ window, any
+    * clicks will result in a spot being illuminated.
+   */
    private MouseListener createPointAndShootMouseListenerInstance() {
       return new MouseAdapter() {
          @Override
@@ -380,8 +375,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             if (e.isShiftDown()) {
                final Point p = e.getPoint();
                final ImageCanvas canvas = (ImageCanvas) e.getSource();
-               Point pOffScreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               pOffScreen = mirrorIfNecessary(canvas, pOffScreen);
+               Point pOff = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
+               final Point pOffScreen = mirrorIfNecessary(canvas, pOff);
                final Point2D.Double devP = ProjectorActions.transformPoint(
                        Mapping.loadMapping(core_, dev_, settings_),
                        new Point2D.Double(pOffScreen.x, pOffScreen.y));
@@ -397,7 +392,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                         }
                         returnShutter(originalShutterState);
                         returnChannel(originalConfig);
-                        // TODO: log the position
+                        logPoint(pOffScreen);
                      } catch (Exception e) {
                         ReportingUtils.showError(e);
                      }
@@ -409,7 +404,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       };
    }
 
-   // Turn on/off point and shoot mode.
+   /**
+    * Turn on/off point and shoot mode.
+    * @param on on/off flag
+    */
    public void enablePointAndShootMode(boolean on) {
       if (on && (mapping_ == null)) {
          final String errorS = 
@@ -441,6 +439,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             }
          }
       }
+   }
+   
+   private void logPoint(Point p) {
+      
    }
    
    /**
@@ -939,6 +941,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       });
       
       delayField_.setText(settings_.getString( Terms.DELAY, "0"));
+      logDirectoryTextField.setText(settings_.getString( Terms.LOGDIRECTORY, ""));
 
       super.loadAndRestorePosition(500, 300);
       updateROISettings();
@@ -998,6 +1001,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootOnButton = new javax.swing.JToggleButton();
       pointAndShootOffButton = new javax.swing.JToggleButton();
       phototargetInstructionsLabel = new javax.swing.JLabel();
+      jLabel3 = new javax.swing.JLabel();
+      logDirectoryTextField = new javax.swing.JTextField();
+      logDirectoryChooserButton = new javax.swing.JButton();
+      clearLogDirButton = new javax.swing.JButton();
       roisTab = new javax.swing.JPanel();
       roiLoopLabel = new javax.swing.JLabel();
       roiLoopTimesLabel = new javax.swing.JLabel();
@@ -1079,21 +1086,48 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       phototargetInstructionsLabel.setText("(To phototarget, Shift + click on the image, use ImageJ hand-tool)");
 
+      jLabel3.setText("Log Directory:");
+
+      logDirectoryChooserButton.setText("...");
+      logDirectoryChooserButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            logDirectoryChooserButtonActionPerformed(evt);
+         }
+      });
+
+      clearLogDirButton.setText("Clear Log Directory");
+      clearLogDirButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            clearLogDirButtonActionPerformed(evt);
+         }
+      });
+
       javax.swing.GroupLayout pointAndShootTabLayout = new javax.swing.GroupLayout(pointAndShootTab);
       pointAndShootTab.setLayout(pointAndShootTabLayout);
       pointAndShootTabLayout.setHorizontalGroup(
          pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
          .addGroup(pointAndShootTabLayout.createSequentialGroup()
-            .addGap(25, 25, 25)
             .addGroup(pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                .addGroup(pointAndShootTabLayout.createSequentialGroup()
-                  .addComponent(pointAndShootModeLabel)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(pointAndShootOnButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(pointAndShootOffButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addComponent(phototargetInstructionsLabel))
-            .addContainerGap(68, Short.MAX_VALUE))
+                  .addGap(25, 25, 25)
+                  .addGroup(pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                     .addGroup(pointAndShootTabLayout.createSequentialGroup()
+                        .addComponent(pointAndShootModeLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(pointAndShootOnButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(pointAndShootOffButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                     .addComponent(phototargetInstructionsLabel)
+                     .addGroup(pointAndShootTabLayout.createSequentialGroup()
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(logDirectoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 311, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(logDirectoryChooserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))))
+               .addGroup(pointAndShootTabLayout.createSequentialGroup()
+                  .addGap(17, 17, 17)
+                  .addComponent(clearLogDirButton)))
+            .addContainerGap(28, Short.MAX_VALUE))
       );
       pointAndShootTabLayout.setVerticalGroup(
          pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1105,7 +1139,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                .addComponent(pointAndShootOffButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGap(18, 18, 18)
             .addComponent(phototargetInstructionsLabel)
-            .addContainerGap(211, Short.MAX_VALUE))
+            .addGap(40, 40, 40)
+            .addGroup(pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+               .addComponent(jLabel3)
+               .addComponent(logDirectoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+               .addComponent(logDirectoryChooserButton))
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+            .addComponent(clearLogDirButton)
+            .addContainerGap(81, Short.MAX_VALUE))
       );
 
       mainTabbedPane.addTab("Point and Shoot", pointAndShootTab);
@@ -1304,7 +1345,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                      .addComponent(useInMDAcheckBox)
                      .addComponent(attachToMdaTabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE))))
-            .addGap(0, 13, Short.MAX_VALUE))
+            .addGap(0, 26, Short.MAX_VALUE))
          .addGroup(roisTabLayout.createSequentialGroup()
             .addGap(25, 25, 25)
             .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1436,7 +1477,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                   .addComponent(jLabel1)
                   .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                   .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addContainerGap(100, Short.MAX_VALUE))
+            .addContainerGap(124, Short.MAX_VALUE))
       );
       setupTabLayout.setVerticalGroup(
          setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1664,6 +1705,26 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
      dev_.showCheckerBoard(16, 16);
    }//GEN-LAST:event_checkerBoardButton_ActionPerformed
 
+   private void logDirectoryChooserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logDirectoryChooserButtonActionPerformed
+      File openDir = FileDialogs.openDir(this, 
+              "Select location for Files logging Point and Shoot locations", 
+              PROJECTOR_LOG_FILE);
+      if (openDir != null) {
+         logDirectoryTextField.setText(openDir.getAbsolutePath());
+         settings_.putString( Terms.LOGDIRECTORY, openDir.getAbsolutePath());
+      }
+   }//GEN-LAST:event_logDirectoryChooserButtonActionPerformed
+
+   private void clearLogDirButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearLogDirButtonActionPerformed
+      String logDirectory = logDirectoryTextField.getText();
+      File logDir = new File(logDirectory);
+      if (logDir.isDirectory()) {
+         for (File logFile : logDir.listFiles()) {
+            logFile.delete();
+         }
+      }
+   }//GEN-LAST:event_clearLogDirButtonActionPerformed
+
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JLabel ExposureTimeLabel;
@@ -1674,11 +1735,15 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private javax.swing.JButton centerButton;
    private javax.swing.JComboBox channelComboBox;
    private javax.swing.JButton checkerBoardButton_;
+   private javax.swing.JButton clearLogDirButton;
    private javax.swing.JTextField delayField_;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
+   private javax.swing.JLabel jLabel3;
    private javax.swing.JSeparator jSeparator1;
    private javax.swing.JSeparator jSeparator3;
+   private javax.swing.JButton logDirectoryChooserButton;
+   private javax.swing.JTextField logDirectoryTextField;
    private javax.swing.JTabbedPane mainTabbedPane;
    private javax.swing.JButton offButton;
    private javax.swing.JButton onButton;
