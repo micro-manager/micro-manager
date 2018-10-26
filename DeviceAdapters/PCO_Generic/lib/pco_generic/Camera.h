@@ -38,7 +38,7 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#define KAMLIBVERSION           250
+#define KAMLIBVERSION           251
 #pragma once
 
 #define WM_CHANGE_CAMERAVALUES WM_APP + 200
@@ -182,7 +182,6 @@ public:
   bool         bDemoMode;
   bool         bCameraLost;
   int          iCamTypeCurrentNumber;
-  int          iCameraCnt;
   int          m_iCameraType, m_iCCDType, m_iCameraID;
 
   bool         bNumber;
@@ -258,11 +257,15 @@ public:
   int testcoc(int* mode, int* trig, int* roix1, int* roix2, int* roiy1, int* roiy2, int* hbin, int* vbin, TCHAR* table, int* size, int *gain, int *offset, unsigned int* flags);
   int ForceTrigger();
 
+  int GetExposureDelayNs(__int64* i64Del, __int64* i64Exp);
+  double GetCurrentFPS();
+
   PCO_Camera m_strCamera;
   int m_iNumActiveSet;
   int LoadSettingsFromRegistryMM(int iSetNum, std::string &csSetName, PCO_Camera &strCamera);
   int WriteSettingsToRegistryMM(int iSetNum, std::string &csSetName, PCO_Camera &strCamera);
 
+public:
   int DeleteSettingsFromRegistry(int iSetNum);
   int IsSettingsValidInRegsitry(int iSetNum);
   int GetSetsFoundInRegistry(int *iSetNums, int *ilen);
