@@ -48,6 +48,7 @@ import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
 import org.micromanager.internal.utils.NumberUtils;
+import org.micromanager.internal.utils.ReportingUtils;
 
 public class PtcToolsExecutor extends Thread  {
    private final Studio studio_;
@@ -175,9 +176,16 @@ public class PtcToolsExecutor extends Thread  {
          try {
             calculateAndAddToStack(stack, store);
             ExpMeanStdDev cemsd = calcExpMeanStdDev(store);
+            double realExposure;
+            try{
+                realExposure = core.getExposure();
+            } catch (Exception e){
+                ReportingUtils.showError(e);
+                return;
+            }
             expMeanStdDev_.add(cemsd);
             rt.incrementCounter();
-            rt.addValue("Exposure", exposures[i]);
+            rt.addValue("Exposure", realExposure);
             rt.addValue("Mean", cemsd.mean_);
             rt.addValue("Std.Dev", cemsd.stdDev_);  
             store.close();
