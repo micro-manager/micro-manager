@@ -154,13 +154,12 @@ int OxxiusCombinerHub::Initialize()
 
 		if (!IsCallbackRegistered())
 			return DEVICE_NO_CALLBACK_REGISTERED;
-
 		
-		// RETURN_ON_MM_ERROR( QueryCommand(this, GetCoreCallback(), NO_SLOT, "hz 9876") );
-
 		RETURN_ON_MM_ERROR( UpdateStatus() );
 
 		initialized_ = true;
+
+		// RETURN_ON_MM_ERROR( DetectInstalledDevices() );
 	}
 	return DEVICE_OK;
 }
@@ -376,7 +375,7 @@ int OxxiusCombinerHub::QueryCommand(MM::Device* device, MM::Core* core, const un
 	strCommand.assign(g_slotPrefix[destinationSlot]);
 	strCommand.append(command);
 
-	/*
+	/*	
 	std::ostringstream InfoMessage;
 	InfoMessage << "Now sending command :";
 	InfoMessage << string(strCommand.c_str());
@@ -602,7 +601,7 @@ int OxxiusLaserBoxx::Initialize()
 				break;
 		}
 		descriPt1 << " source on slot " << slot_;
-		descriPt1 << ", s/n:" << sourceSerialNumber;
+		descriPt1 << ", " << sourceSerialNumber;
 
 		RETURN_ON_MM_ERROR( CreateProperty(MM::g_Keyword_Description, descriPt1.str().c_str(), MM::String, true) );
 

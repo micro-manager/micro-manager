@@ -11,7 +11,7 @@
 //
 
 #include "OnBoardHW.h"
-#include <string.h>
+#include <cstdlib>
 
 using namespace std;
 
@@ -27,9 +27,9 @@ OnBoardHW::OnBoardHW(unsigned int numberOfSlots) {
 
 	for(unsigned int i = 0; i<MAX_NUMBER_OF_SLOTS ; i++) {
 		sourceType_[i] = 0;
-		sourceSerialNumber_[i] = "";
 		sourceWavelength_[i] = 0;
 		sourceNominalPower_[i] = 0;
+		sourceSerialNumber_.push_back("No serial");
 	}
 }
 
