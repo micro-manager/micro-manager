@@ -1015,61 +1015,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    @SuppressWarnings("unchecked")
    private void initComponents() {
-<<<<<<< HEAD
-
-      onButton = new javax.swing.JButton();
-      mainTabbedPane = new javax.swing.JTabbedPane();
-      pointAndShootTab = new javax.swing.JPanel();
-      pointAndShootModeLabel = new javax.swing.JLabel();
-      pointAndShootOnButton = new javax.swing.JToggleButton();
-      pointAndShootOffButton = new javax.swing.JToggleButton();
-      phototargetInstructionsLabel = new javax.swing.JLabel();
-      jLabel3 = new javax.swing.JLabel();
-      logDirectoryTextField = new javax.swing.JTextField();
-      logDirectoryChooserButton = new javax.swing.JButton();
-      clearLogDirButton = new javax.swing.JButton();
-      roisTab = new javax.swing.JPanel();
-      roiLoopLabel = new javax.swing.JLabel();
-      roiLoopTimesLabel = new javax.swing.JLabel();
-      setRoiButton = new javax.swing.JButton();
-      runROIsNowButton = new javax.swing.JButton();
-      roiLoopSpinner = new javax.swing.JSpinner();
-      jSeparator1 = new javax.swing.JSeparator();
-      useInMDAcheckBox = new javax.swing.JCheckBox();
-      roiStatusLabel = new javax.swing.JLabel();
-      roiManagerButton = new javax.swing.JButton();
-      jSeparator3 = new javax.swing.JSeparator();
-      sequencingButton = new javax.swing.JButton();
-      attachToMdaTabbedPane = new javax.swing.JTabbedPane();
-      asyncRoiPanel = new javax.swing.JPanel();
-      startTimeLabel = new javax.swing.JLabel();
-      startTimeSpinner = new javax.swing.JSpinner();
-      repeatCheckBoxTime = new javax.swing.JCheckBox();
-      repeatEveryIntervalSpinner = new javax.swing.JSpinner();
-      repeatEveryIntervalUnitLabel = new javax.swing.JLabel();
-      startTimeUnitLabel = new javax.swing.JLabel();
-      syncRoiPanel = new javax.swing.JPanel();
-      startFrameLabel = new javax.swing.JLabel();
-      repeatCheckBox = new javax.swing.JCheckBox();
-      startFrameSpinner = new javax.swing.JSpinner();
-      repeatEveryFrameSpinner = new javax.swing.JSpinner();
-      repeatEveryFrameUnitLabel = new javax.swing.JLabel();
-      setupTab = new javax.swing.JPanel();
-      calibrateButton_ = new javax.swing.JButton();
-      allPixelsButton = new javax.swing.JButton();
-      centerButton = new javax.swing.JButton();
-      channelComboBox = new javax.swing.JComboBox();
-      phototargetingChannelDropdownLabel = new javax.swing.JLabel();
-      shutterComboBox = new javax.swing.JComboBox();
-      phototargetingShutterDropdownLabel = new javax.swing.JLabel();
-      jLabel1 = new javax.swing.JLabel();
-      delayField_ = new javax.swing.JTextField();
-      checkerBoardButton_ = new javax.swing.JButton();
-      offButton = new javax.swing.JButton();
-      ExposureTimeLabel = new javax.swing.JLabel();
-      pointAndShootIntervalSpinner = new javax.swing.JSpinner();
-      jLabel2 = new javax.swing.JLabel();
-=======
       onButton = new JButton();
       mainTabbedPane = new JTabbedPane();
       pointAndShootTab = new JPanel();
@@ -1118,7 +1063,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       ExposureTimeLabel = new JLabel();
       pointAndShootIntervalSpinner = new JSpinner();
       jLabel2 = new JLabel();
->>>>>>> Projector: Start conversion to MigLayout.
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Projector Controls");
@@ -1173,6 +1117,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       logDirectoryChooserButton.setText("...");
       logDirectoryChooserButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             logDirectoryChooserButtonActionPerformed(evt);
          }
@@ -1180,6 +1125,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
 
       clearLogDirButton.setText("Clear Log Directory");
       clearLogDirButton.addActionListener(new java.awt.event.ActionListener() {
+         @Override
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             clearLogDirButtonActionPerformed(evt);
          }
@@ -1705,72 +1651,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pack();
    }
    
-<<<<<<< HEAD
-   private void centerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerButtonActionPerformed
-      offButtonActionPerformed(null);
-      ProjectorActions.displayCenterSpot(dev_);
-   }//GEN-LAST:event_centerButtonActionPerformed
-
-   private void pointAndShootOffButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOffButtonActionPerformed
-      updatePointAndShoot(false);
-   }//GEN-LAST:event_pointAndShootOffButtonActionPerformed
-
-   private void pointAndShootOnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOnButtonActionPerformed
-      offButtonActionPerformed(null);
-      try {
-         updatePointAndShoot(true);
-      } catch (RuntimeException e) {
-         ReportingUtils.showError(e);
-      }
-   }//GEN-LAST:event_pointAndShootOnButtonActionPerformed
-
-   private void pointAndShootIntervalSpinnerVetoableChange(java.beans.PropertyChangeEvent evt)throws java.beans.PropertyVetoException {//GEN-FIRST:event_pointAndShootIntervalSpinnerVetoableChange
-      updateExposure();
-   }//GEN-LAST:event_pointAndShootIntervalSpinnerVetoableChange
-
-   private void pointAndShootIntervalSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_pointAndShootIntervalSpinnerStateChanged
-      updateExposure();
-   }//GEN-LAST:event_pointAndShootIntervalSpinnerStateChanged
-
-   private void repeatEveryFrameSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_repeatEveryFrameSpinnerStateChanged
-      updateROISettings();
-   }//GEN-LAST:event_repeatEveryFrameSpinnerStateChanged
-
-   private void startFrameSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startFrameSpinnerStateChanged
-      updateROISettings();
-   }//GEN-LAST:event_startFrameSpinnerStateChanged
-
-    private void channelComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelComboBoxActionPerformed
-       final String channel = (String) channelComboBox.getSelectedItem();
-       setTargetingChannel(channel);
-    }//GEN-LAST:event_channelComboBoxActionPerformed
-
-   private void sequencingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sequencingButtonActionPerformed
-      showMosaicSequencingWindow();
-   }//GEN-LAST:event_sequencingButtonActionPerformed
-
-   private void shutterComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shutterComboBoxActionPerformed
-      final String shutter = (String) shutterComboBox.getSelectedItem();
-      setTargetingShutter(shutter);
-   }//GEN-LAST:event_shutterComboBoxActionPerformed
-
-   private void startTimeSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startTimeSpinnerStateChanged
-      updateROISettings();
-   }//GEN-LAST:event_startTimeSpinnerStateChanged
-
-   private void repeatCheckBoxTimeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatCheckBoxTimeActionPerformed
-      updateROISettings();
-   }//GEN-LAST:event_repeatCheckBoxTimeActionPerformed
-
-   private void repeatEveryIntervalSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_repeatEveryIntervalSpinnerStateChanged
-      updateROISettings();
-   }//GEN-LAST:event_repeatEveryIntervalSpinnerStateChanged
-
-   private void checkerBoardButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkerBoardButton_ActionPerformed
-     dev_.showCheckerBoard(16, 16);
-   }//GEN-LAST:event_checkerBoardButton_ActionPerformed
-
-   private void logDirectoryChooserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logDirectoryChooserButtonActionPerformed
+   private void logDirectoryChooserButtonActionPerformed(java.awt.event.ActionEvent evt) {
       File openDir = FileDialogs.openDir(this, 
               "Select location for Files logging Point and Shoot locations", 
               PROJECTOR_LOG_FILE);
@@ -1778,7 +1659,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          logDirectoryTextField.setText(openDir.getAbsolutePath());
          settings_.putString( Terms.LOGDIRECTORY, openDir.getAbsolutePath());
       }
-   }//GEN-LAST:event_logDirectoryChooserButtonActionPerformed
+   }
+   
 
    private void clearLogDirButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearLogDirButtonActionPerformed
       String logDirectory = logDirectoryTextField.getText();
@@ -1788,13 +1670,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             logFile.delete();
          }
       }
-   }//GEN-LAST:event_clearLogDirButtonActionPerformed
+   }
 
 
-   // Variables declaration - do not modify//GEN-BEGIN:variables
-=======
    // Variables declaration 
->>>>>>> Projector: Start conversion to MigLayout.
    private javax.swing.JLabel ExposureTimeLabel;
    private javax.swing.JButton allPixelsButton;
    private javax.swing.JPanel asyncRoiPanel;
