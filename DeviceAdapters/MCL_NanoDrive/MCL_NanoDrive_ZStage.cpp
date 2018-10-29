@@ -19,6 +19,7 @@ MCL_NanoDrive_ZStage::MCL_NanoDrive_ZStage() :
    supportsSeq_(false),
    seqMaxSize_(0),
    shiftSequence_(false),
+   axisUsedForTirfControl_(false),
    MCLhandle_(0)
 {
 	// Basically only construct error messages in the constructor
@@ -33,6 +34,7 @@ MCL_NanoDrive_ZStage::MCL_NanoDrive_ZStage() :
 	SetErrorText(MCL_ARGUMENT_ERROR, "MCL Error: Argument out of range");
 	SetErrorText(MCL_INVALID_AXIS, "MCL Error: Device trying to use unsupported axis");
 	SetErrorText(MCL_INVALID_HANDLE, "MCL Error: Handle not valid");
+	SetErrorText(MCL_BLOCKED_BY_TIRFLOCK, "Axis unable to move because it is maintaining Tirf-Lock");
 }
 
 MCL_NanoDrive_ZStage::~MCL_NanoDrive_ZStage()
@@ -155,10 +157,12 @@ int MCL_NanoDrive_ZStage::Initialize()
    { 
 		// 20 bit system
 		stepSize_um_ = calibration_ / NUM_STEPS_20;
+		dacBits_ = NUM_STEPS_20;
    }
    else 
    { 
 		stepSize_um_ = calibration_ / NUM_STEPS_16;
+		dacBits_ = NUM_STEPS_16;
    }
 
    upperLimit_ = MCL_GetCalibration(axis_, MCLhandle_);
@@ -269,6 +273,12 @@ int MCL_NanoDrive_ZStage::CreateZStageProperties()
 	if (err != DEVICE_OK)
 		return err;
 
+	// Minimum step size
+	sprintf(iToChar, "%d", dacBits_);
+	err = CreateProperty("DacBits", iToChar, MM::Integer, true);
+	if (err != DEVICE_OK)
+		return err;
+
 	// Lowest measurement (in um) the device can be set to (read-only)
 	sprintf(iToChar, "%f",lowerLimit_);
 	err = CreateProperty("Lower Limit", iToChar, MM::Float, true);
@@ -360,11 +370,17 @@ int MCL_NanoDrive_ZStage::CreateZStageProperties()
 		SetAllowedValues(g_Keyword_ShiftSequence, yesNoList);
     }
 
+	// Properties to support TirfLock
+	pAct = new CPropertyAction(this, &MCL_NanoDrive_ZStage::OnSetTirfLock);
+	err = CreateProperty(g_Keyword_AxisUsedForTirf, "No", MM::String, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
+	SetAllowedValues(g_Keyword_AxisUsedForTirf, yesNoList);
 
 	//Current Commanded Position
 	sprintf(iToChar, "%f", commandedZ_);
 	pAct = new CPropertyAction(this, &MCL_NanoDrive_ZStage::OnCommandChanged);
-	err = CreateProperty("CommandedZ",iToChar, MM::Float, true, pAct);
+	err = CreateProperty("CommandedZ",iToChar, MM::Float, false, pAct);
 
 	return DEVICE_OK;
 }
@@ -372,6 +388,9 @@ int MCL_NanoDrive_ZStage::CreateZStageProperties()
 int MCL_NanoDrive_ZStage::SetPositionUm(double pos)
 {
 	int err;
+
+	if (axisUsedForTirfControl_ == true)
+		return MCL_BLOCKED_BY_TIRFLOCK;
 		
 	if (pos == curZpos_ && !firstWrite_)
 		return DEVICE_OK;
@@ -652,6 +671,18 @@ int MCL_NanoDrive_ZStage::OnCommandChanged(MM::PropertyBase* pProp, MM::ActionTy
 	   MCL_GetCommandedPosition(&ignoreX, &ignoreY, &commandedZ_, MCLhandle_);
 	   pProp->Set(commandedZ_);
    }
+   else if (eAct == MM::AfterSet)
+   {
+	   double newVal = 0.0;
+	   pProp->Get(newVal);
+	   err = MCL_SingleWriteN(newVal, 3, MCLhandle_);
+	   if (err == DEVICE_OK)
+	   {
+		   commandedZ_ = newVal;
+		   curZpos_ = commandedZ_ + lowerLimit_;
+	   }
+	   pProp->Set(commandedZ_);
+   }
 
    return err;
 }
@@ -699,5 +730,27 @@ int MCL_NanoDrive_ZStage::OnSetShiftSequence(MM::PropertyBase* pProp, MM::Action
 			shiftSequence_ = false;
 	}
 
+	return DEVICE_OK;
+}
+
+int MCL_NanoDrive_ZStage::OnSetTirfLock(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		if (axisUsedForTirfControl_)
+			pProp->Set("Yes");
+		else
+			pProp->Set("No");
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		std::string message;
+		pProp->Get(message);
+
+		if (message.compare("Yes") == 0)
+			axisUsedForTirfControl_ = true;
+		else
+			axisUsedForTirfControl_ = false;
+	}
 	return DEVICE_OK;
 }
