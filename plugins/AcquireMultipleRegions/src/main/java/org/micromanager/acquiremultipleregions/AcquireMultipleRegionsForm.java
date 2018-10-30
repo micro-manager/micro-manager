@@ -17,13 +17,14 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
-import org.micromanager.acquiremultipleregions.ZGenerator.ZGeneratorType;
 import org.micromanager.data.Datastore;
 import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
 import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.StagePosition;
+import org.micromanager.internal.positionlist.utils.TileCreator;
+import org.micromanager.internal.positionlist.utils.ZGenerator;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.ReportingUtils;
 
@@ -34,13 +35,13 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
    private final Studio gui_;
    private final mmcorej.CMMCore mmc_;
+   private final TileCreator tileCreator_;
    private final RegionListModel rlm_;
    private Region currentRegion_;
    private static final String MSG_PREFIX = "AcquireMultipleRegions: ";
    private final JTable axisTable_;
    private final AxisTableModel axisModel_;
    private final AxisList axisList_;
-   private ZGeneratorType zGenType_;
    public  int userParameter1;
    
     /**
@@ -51,6 +52,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         rlm_ = new RegionListModel();
         gui_ = gui;
         mmc_ = gui_.core();
+        tileCreator_ = new TileCreator(mmc_);
         initComponents();        
         currentRegion_ = new Region(new PositionList(), DirectoryText.getText(), FilenameText.getText());
       
@@ -63,7 +65,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         axisPane.setViewportView(axisTable_);
         
         //populate zDropdown
-        zTypeDropdown.setModel(new DefaultComboBoxModel(ZGeneratorType.values()));
+        zTypeDropdown.setModel(new DefaultComboBoxModel(ZGenerator.Type.values()));
         
         userParameter1 = 1;
     }
@@ -235,8 +237,15 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
 	public void run() {
         for (int i=0; i<rlm_.getSize(); i++){
             Region currRegion = rlm_.getRegion(i);
-            zGenType_ = (ZGeneratorType) zTypeDropdown.getSelectedItem();
-           
+            ZGenerator.Type zGenType = (ZGenerator.Type) zTypeDropdown.getSelectedItem();
+            String xyStage = mmc_.getXYStageDevice();
+            StrVector zStages = new StrVector();
+            for (int axNum=0; axNum<axisList_.getNumberOfPositions(); axNum++){
+                AxisData ad = axisList_.get(axNum);
+                if (ad.getUse()){
+                    zStages.add(ad.getAxisName());
+                }
+            }
             try {
                 statusText.setText("Acquiring region " + String.valueOf(i));
                 //turn on position list, turn off time lapse
@@ -248,7 +257,23 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 // became lost in the MM2.0 refactoring.
 //                gui_.compat().setImageSavingFormat(org.micromanager.acquisition.internal.TaggedImageStorageMultipageTiff.class);
                 //update positionlist with grid
-                gui_.positions().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));               
+                //gui_.positions().setPositionList(currRegion.tileGrid(getXFieldSize(), getYFieldSize(), axisList_, zGenType_));   
+                
+                double overlap = Double.parseDouble(overlapText.getText());
+                double pixelSizeUm = mmc_.getPixelSizeUm();                   
+                gui_.positions().setPositionList(
+                    tileCreator_.createTiles(
+                        overlap,
+                        TileCreator.OverlapUnitEnum.PERCENT,
+                        currRegion.positions.getPositions(),
+                        pixelSizeUm,
+                        "1",
+                        xyStage,
+                        zStages,
+                        zGenType
+                    )
+                );
+                
                 gui_.app().refreshGUI();
                 Datastore store = gui_.acquisitions().runAcquisition(currRegion.filename, currRegion.directory);
                 store.freeze();
@@ -355,7 +380,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         jLabel5 = new javax.swing.JLabel();
         axisPane = new javax.swing.JScrollPane();
         jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
+        mjLabel7 = new javax.swing.JLabel();
         zTypeDropdown = new javax.swing.JComboBox();
         loadRegionsButton = new javax.swing.JButton();
 
@@ -522,47 +547,37 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addGap(10, 10, 10)
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(mainPanelLayout.createSequentialGroup()
-                                        .addGap(10, 10, 10)
-                                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(jLabel4)
-                                            .addComponent(FilenameText, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(jLabel2)))
-                                    .addGroup(mainPanelLayout.createSequentialGroup()
-                                        .addContainerGap()
-                                        .addComponent(DirectoryText, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(DirectoryButton)))
-                                .addGap(0, 0, 0))
-                            .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(regionText, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addGroup(mainPanelLayout.createSequentialGroup()
-                                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addComponent(statusText)
-                                            .addComponent(AddPositionList)
-                                            .addComponent(StartAcquisition, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                            .addComponent(addPointToRegion))
-                                        .addGap(0, 0, 0)))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                            .addComponent(jLabel4)
+                            .addComponent(FilenameText, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel2)))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(DirectoryText, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(DirectoryButton))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(regionText, javax.swing.GroupLayout.DEFAULT_SIZE, 214, Short.MAX_VALUE)
+                            .addComponent(statusText)
+                            .addComponent(AddPositionList)
+                            .addComponent(StartAcquisition, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(addPointToRegion)))
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(DeleteRegion, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(deleteAllButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                            .addComponent(deleteAllButton, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 189, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel1)
-                        .addGap(0, 141, Short.MAX_VALUE))
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel1)
+                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 10, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         mainPanelLayout.setVerticalGroup(
@@ -613,7 +628,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
 
         jLabel6.setText("Which axes should be set at each position?");
 
-        jLabel7.setText("How to handle movement along those axes?");
+        mjLabel7.setText("How to handle movement along those axes?");
 
         zTypeDropdown.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
@@ -637,7 +652,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jLabel5))
                     .addComponent(jLabel6)
-                    .addComponent(jLabel7)
+                    .addComponent(mjLabel7)
                     .addComponent(zTypeDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(loadRegionsButton, javax.swing.GroupLayout.PREFERRED_SIZE, 191, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(171, Short.MAX_VALUE))
@@ -654,7 +669,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(axisPane, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel7)
+                .addComponent(mjLabel7)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(zTypeDropdown, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(28, 28, 28)
@@ -672,7 +687,7 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 494, Short.MAX_VALUE)
+            .addComponent(jTabbedPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 494, Short.MAX_VALUE)
         );
 
         pack();
@@ -928,12 +943,12 @@ public class AcquireMultipleRegionsForm extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTabbedPane jTabbedPane2;
     private javax.swing.JButton loadRegionsButton;
     private javax.swing.JPanel mainPanel;
+    private javax.swing.JLabel mjLabel7;
     private javax.swing.JTextField overlapText;
     private javax.swing.JLabel regionText;
     private javax.swing.JLabel statusText;

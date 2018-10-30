@@ -1,6 +1,27 @@
+///////////////////////////////////////////////////////////////////////////////
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Kurt Thorn
+//              Nick Anthony, 2018  Moved from AcquireMultipleRegions plugin.
+//
+// COPYRIGHT:    University of California, San Francisco, 2014
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
 
+package org.micromanager.internal.positionlist.utils;
 
-package org.micromanager.acquiremultipleregions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,22 +29,13 @@ import org.micromanager.MultiStagePosition;
 import org.micromanager.PositionList;
 import org.micromanager.StagePosition;
 
-/**
- *
- * @author kthorn
- */
 class ZGeneratorAverage implements ZGenerator {
      Map <String, Double> averageZPositions_;
-     ZGeneratorType type_;
      /**
      * Constructor
-     * 
      * @param positionList initial position list
-     * @param type 
      */  
-    public ZGeneratorAverage (PositionList positionList, ZGeneratorType type) {
-       type_ = type; //remember type of ZGenerator
-
+    public ZGeneratorAverage (PositionList positionList) {
        MultiStagePosition msp0;
        StagePosition sp;
        double c;
@@ -51,4 +63,8 @@ class ZGeneratorAverage implements ZGenerator {
         return averageZPositions_.get(axis);
     }
 
+    @Override
+    public String getDescription(){
+        return ZGenerator.Type.AVERAGE.toString();   
+    }
 }
