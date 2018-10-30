@@ -94,6 +94,7 @@ import javax.swing.text.DefaultFormatter;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 
 import org.micromanager.Studio;
@@ -503,6 +504,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
+   
+   /**
+    * Creates the log file - names with the current date - if it 
+    * did not yet exist.
+    * @return 
+    */
    private BufferedWriter checkLogFile() {
       if (logFileWriter_ == null) {
          if (logDirectoryTextField.getText().isEmpty()) {
@@ -529,6 +536,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return logFileWriter_;
    }
 
+   /**
+    * Writes a point (screen coordinates) to the logfile, preceded
+    * by the current date and time in ms.
+    * @param p 
+    */
    private void logPoint(Point p) {
       BufferedWriter logFileWriter = checkLogFile();
       if (logFileWriter == null) {
@@ -1004,6 +1016,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       // Create GUI
       initComponents();
 
+      // Make sure that the POint and Shoot code listens to the correct window
       Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
          @Override
          public void eventDispatched(AWTEvent e) {
@@ -1165,7 +1178,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       ExposureTimeLabel = new JLabel();
       pointAndShootIntervalSpinner = new JSpinner();
       jLabel2 = new JLabel();
-      JLabel jLabel3 = new JLabel();
       logDirectoryChooserButton = new JButton();
       logDirectoryTextField = new JTextField();
       clearLogDirButton = new JButton();
@@ -1218,9 +1230,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          }
       });
 
-      phototargetInstructionsLabel.setText("(To phototarget, Shift + click on the image, use ImageJ hand-tool)");
-
-      jLabel3.setText("Log Directory:");
+      phototargetInstructionsLabel.setText(
+              "(To phototarget, Shift + click on the image, use ImageJ hand-tool)");
 
       logDirectoryChooserButton.setText("...");
       logDirectoryChooserButton.addActionListener(new java.awt.event.ActionListener() {
@@ -1238,53 +1249,20 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          }
       });
 
-      javax.swing.GroupLayout pointAndShootTabLayout = new javax.swing.GroupLayout(pointAndShootTab);
-      pointAndShootTab.setLayout(pointAndShootTabLayout);
-      pointAndShootTabLayout.setHorizontalGroup(
-         pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(pointAndShootTabLayout.createSequentialGroup()
-            .addGroup(pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(pointAndShootTabLayout.createSequentialGroup()
-                  .addGap(25, 25, 25)
-                  .addGroup(pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(pointAndShootTabLayout.createSequentialGroup()
-                        .addComponent(pointAndShootModeLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(pointAndShootOnButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(pointAndShootOffButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                     .addComponent(phototargetInstructionsLabel)
-                     .addGroup(pointAndShootTabLayout.createSequentialGroup()
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(logDirectoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, 311, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(logDirectoryChooserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))))
-               .addGroup(pointAndShootTabLayout.createSequentialGroup()
-                  .addGap(17, 17, 17)
-                  .addComponent(clearLogDirButton)))
-            .addContainerGap(28, Short.MAX_VALUE))
-      );
-      pointAndShootTabLayout.setVerticalGroup(
-         pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(pointAndShootTabLayout.createSequentialGroup()
-            .addGap(43, 43, 43)
-            .addGroup(pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(pointAndShootModeLabel)
-               .addComponent(pointAndShootOnButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(pointAndShootOffButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGap(18, 18, 18)
-            .addComponent(phototargetInstructionsLabel)
-            .addGap(40, 40, 40)
-            .addGroup(pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(jLabel3)
-               .addComponent(logDirectoryTextField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(logDirectoryChooserButton))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(clearLogDirButton)
-            .addContainerGap(81, Short.MAX_VALUE))
-      );
-
+      pointAndShootTab.setLayout(new MigLayout("", "", "[40]"));
+      
+      pointAndShootTab.add(pointAndShootModeLabel);
+      pointAndShootTab.add(pointAndShootOnButton);
+      pointAndShootTab.add(pointAndShootOffButton, "wrap");
+      
+      pointAndShootTab.add(phototargetInstructionsLabel, "span 3, wrap");
+      
+      pointAndShootTab.add(new JLabel("Log Directory"), "span3, split 3");
+      pointAndShootTab.add(logDirectoryTextField, "grow");
+      pointAndShootTab.add(logDirectoryChooserButton, "wrap");
+      
+      pointAndShootTab.add(clearLogDirButton, "span 3, wrap");
+      
       mainTabbedPane.addTab("Point and Shoot", pointAndShootTab);
 
       roiLoopLabel.setText("Loop:");
@@ -1385,49 +1363,22 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       repeatEveryIntervalUnitLabel.setText("seconds");
 
       startTimeUnitLabel.setText("seconds");
-
-      javax.swing.GroupLayout asyncRoiPanelLayout = 
-              new javax.swing.GroupLayout(asyncRoiPanel);
-      asyncRoiPanel.setLayout(asyncRoiPanelLayout);
-      asyncRoiPanelLayout.setHorizontalGroup(
-         asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(asyncRoiPanelLayout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-               .addGroup(asyncRoiPanelLayout.createSequentialGroup()
-                  .addComponent(startTimeLabel)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(startTimeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(startTimeUnitLabel))
-               .addGroup(asyncRoiPanelLayout.createSequentialGroup()
-                  .addComponent(repeatCheckBoxTime)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(repeatEveryIntervalSpinner)))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(repeatEveryIntervalUnitLabel)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      );
-      asyncRoiPanelLayout.setVerticalGroup(
-         asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(asyncRoiPanelLayout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(startTimeLabel)
-               .addComponent(startTimeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(startTimeUnitLabel))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(repeatCheckBoxTime)
-               .addComponent(repeatEveryIntervalSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(repeatEveryIntervalUnitLabel))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      );
+      
+      
+      asyncRoiPanel.setLayout(new MigLayout());
+      
+      asyncRoiPanel.add(startTimeLabel);
+      asyncRoiPanel.add(startTimeSpinner, "wmin 60, wmax 60");
+      asyncRoiPanel.add(new JLabel("seconds"), "wrap");
+      
+      asyncRoiPanel.add(repeatCheckBoxTime);
+      asyncRoiPanel.add(repeatEveryIntervalSpinner, "wmin 60, wmax 60");
+      asyncRoiPanel.add(repeatEveryIntervalUnitLabel, "wrap");
 
       attachToMdaTabbedPane.addTab("During imaging", asyncRoiPanel);
 
       startFrameLabel.setText("Start Frame");
-
+      repeatEveryFrameUnitLabel.setText("frames");
       repeatCheckBox.setText("Repeat every");
       repeatCheckBox.addActionListener(new ActionListener() {
          @Override
@@ -1452,7 +1403,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          }
       });
 
-      repeatEveryFrameUnitLabel.setText("frames");
+      syncRoiPanel.setLayout(new MigLayout());
+      
+      syncRoiPanel.add(startFrameLabel);
+      syncRoiPanel.add(startFrameSpinner, "wmin 60, wmax 60,  wrap");
+      
+      syncRoiPanel.add(repeatCheckBox);
+      syncRoiPanel.add(repeatEveryFrameSpinner, "wmin 60, wmax 60");
+      syncRoiPanel.add(repeatEveryFrameUnitLabel, "wrap");
+      
+      /*
 
       javax.swing.GroupLayout syncRoiPanelLayout = new javax.swing.GroupLayout(syncRoiPanel);
       syncRoiPanel.setLayout(syncRoiPanelLayout);
@@ -1487,9 +1447,28 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                .addComponent(repeatEveryFrameUnitLabel))
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
-
+*/
       attachToMdaTabbedPane.addTab("Between images", syncRoiPanel);
 
+      roisTab.setLayout(new MigLayout());
+      
+      roisTab.add(setRoiButton, "align center");
+      roisTab.add(roiManagerButton, "align center, wrap");
+      
+      roisTab.add(roiStatusLabel);
+      roisTab.add(sequencingButton, "wrap");
+      
+      roisTab.add(roiLoopLabel, "split 3");
+      roisTab.add(roiLoopSpinner, "wmin 60, wmax 60");
+      roisTab.add(roiLoopTimesLabel, "wrap");
+      
+      roisTab.add(runROIsNowButton, "align center");
+      roisTab.add(useInMDAcheckBox, "wrap");
+      
+      roisTab.add(attachToMdaTabbedPane, "skip 1, wrap");
+      
+      
+      /*
       javax.swing.GroupLayout roisTabLayout = new javax.swing.GroupLayout(roisTab);
       roisTab.setLayout(roisTabLayout);
       roisTabLayout.setHorizontalGroup(
@@ -1558,6 +1537,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
+
+*/
 
       mainTabbedPane.addTab("ROIs", roisTab);
 
