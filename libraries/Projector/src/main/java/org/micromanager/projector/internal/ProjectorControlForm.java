@@ -51,16 +51,24 @@ import java.beans.PropertyVetoException;
 import java.beans.VetoableChangeListener;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -114,10 +122,12 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static ProjectorControlForm formSingleton_;
    private final ProjectionDevice dev_;
-   private final MouseListener pointAndShootMouseListener;
+   private final MouseListener pointAndShootMouseListener_;
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
+   private final BlockingQueue<PointAndShootInfo> pointAndShootQueue_;
+   private Thread pointAndShootThread_;
    private final CMMCore core_;
-   private final Studio app_;
+   private final Studio studio_;
    private final MutablePropertyMapView settings_;
    private final boolean isSLM_;
    private Roi[] individualRois_ = {};
@@ -127,6 +137,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private String targetingShutter_;
    private Boolean disposing_ = false;
    private Calibrator calibrator_;
+   private BufferedWriter logFileWriter_;
+   
+   
+   private static final SimpleDateFormat LOGFILEDATE_FORMATTER = 
+           new SimpleDateFormat("yyyyMMdd");
+   private static final SimpleDateFormat LOGTIME_FORMATTER = 
+           new SimpleDateFormat("yyyyMMdd-H-m-s.SSS");
    
 
    public static final FileType PROJECTOR_LOG_FILE = new FileType("PROJECTOR_LOG_FILE",
@@ -181,7 +198,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingChannel(String channelName) {
       targetingChannel_ = channelName;
        if (channelName != null) {
-          app_.profile().getSettings(this.getClass()).putString(
+          studio_.profile().getSettings(this.getClass()).putString(
                   "channel", channelName);
        }
    }
@@ -193,7 +210,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingShutter(String shutterName) {
       targetingShutter_ = shutterName;
       if (shutterName != null) {
-         app_.profile().getSettings(this.getClass()).putString(
+         studio_.profile().getSettings(this.getClass()).putString(
                  "shutter", shutterName);
       }
    }
@@ -209,8 +226,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          if (targetingChannel_ != null && targetingChannel_.length() > 0) {
             originalConfig = core_.getConfigGroupState(channelGroup);
             if (!originalConfig.isConfigurationIncluded(core_.getConfigData(channelGroup, targetingChannel_))) {
-               if (app_.acquisitions().isAcquisitionRunning()) {
-                  app_.acquisitions().setPause(true);
+               if (studio_.acquisitions().isAcquisitionRunning()) {
+                  studio_.acquisitions().setPause(true);
                }
                core_.setConfig(channelGroup, targetingChannel_);
             }
@@ -230,8 +247,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (originalConfig != null) {
          try {
             core_.setSystemState(originalConfig);
-            if (app_.acquisitions().isAcquisitionRunning() && app_.acquisitions().isPaused()) {
-               app_.acquisitions().setPause(false);
+            if (studio_.acquisitions().isAcquisitionRunning() && studio_.acquisitions().isPaused()) {
+               studio_.acquisitions().setPause(false);
             }
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
@@ -304,7 +321,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (calibrator_ != null && calibrator_.isCalibrating()) {
          return;
       }
-      calibrator_ = new Calibrator(app_, dev_, settings_);
+      calibrator_ = new Calibrator(studio_, dev_, settings_);
       Future<Boolean> runCalibration = calibrator_.runCalibration();
       new Thread() {
          @Override
@@ -370,7 +387,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                }
             }
          } catch (IOException ioe) {
-            app_.logs().logError(ioe);
+            studio_.logs().logError(ioe);
          }
       }
       if (isImageMirrored) {
@@ -402,23 +419,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                        new Point2D.Double(pOffScreen.x, pOffScreen.y));
                final Configuration originalConfig = prepareChannel();
                final boolean originalShutterState = prepareShutter();
-               new Thread(
-                       new Runnable() {
-                  @Override
-                  public void run() {
-                     try {
-                        if (devP != null) {
-                           ProjectorActions.displaySpot(dev_, devP.x, devP.y);
-                        }
-                        returnShutter(originalShutterState);
-                        returnChannel(originalConfig);
-                        logPoint(pOffScreen);
-                     } catch (Exception e) {
-                        ReportingUtils.showError(e);
-                     }
-                  }
-               }).start();
-
+               PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
+               PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
+                       devPoint(devP).
+                       originalShutterState(originalShutterState).
+                       originalConfig(originalConfig).
+                       canvasPoint(pOffScreen).
+                       build();
+               pointAndShootQueue_.add(psi);
             }
          }
       };
@@ -436,6 +444,40 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          throw new RuntimeException(errorS);
       }
       pointAndShooteModeOn_.set(on);
+      // restart this thread if it is not running?
+      if (pointAndShootThread_ == null) {
+         pointAndShootThread_ = new Thread(
+                 new Runnable() {
+            @Override
+            public void run() {
+               while (true) {
+                  PointAndShootInfo psi;
+                  try {
+                     psi = pointAndShootQueue_.take();
+                     if (psi.isStopped()) {
+                        return;
+                     }
+                     try {
+                        if (psi.getDevice() != null) {
+                           ProjectorActions.displaySpot(
+                                   psi.getDevice(),
+                                   psi.getDevPoint().x,
+                                   psi.getDevPoint().y);
+                        }
+                        returnShutter(psi.getOriginalShutterState());
+                        returnChannel(psi.getOriginalConfig());
+                        logPoint(psi.getCanvasPoint());
+                     } catch (Exception e) {
+                        ReportingUtils.showError(e);
+                     }
+                  } catch (InterruptedException ex) {
+                     ReportingUtils.showError(ex);
+                  }
+               }
+            }
+         });
+         pointAndShootThread_.start();
+      }
       ImageWindow window = WindowManager.getCurrentWindow();
       if (window != null) {
          ImageCanvas canvas = window.getCanvas();
@@ -443,16 +485,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             if (on) {
                boolean found = false;
                for (MouseListener listener : canvas.getMouseListeners()) {
-                  if (listener == pointAndShootMouseListener) {
+                  if (listener == pointAndShootMouseListener_) {
                      found = true;
                   }
-                  if (!found) {
-                     canvas.addMouseListener(pointAndShootMouseListener);
-                  }
+               }
+               if (!found) {
+                  canvas.addMouseListener(pointAndShootMouseListener_);
                }
             } else {
                for (MouseListener listener : canvas.getMouseListeners()) {
-                  if (listener == pointAndShootMouseListener) {
+                  if (listener == pointAndShootMouseListener_) {
                      canvas.removeMouseListener(listener);
                   }
                }
@@ -461,8 +503,45 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       }
    }
    
+   private BufferedWriter checkLogFile() {
+      if (logFileWriter_ == null) {
+         if (logDirectoryTextField.getText().isEmpty()) {
+            studio_.alerts().postAlert("Logging disabled", this.getClass(),
+                    "To enable logging, set the Log Directory");
+            return null;
+         }
+         String currentDate = LOGFILEDATE_FORMATTER.format(new Date());
+         String newLogFile = new StringBuilder().append(
+                 logDirectoryTextField.getText()).append(
+                 File.separator).append(
+                         currentDate).append(
+                         ".log").toString();
+         try {
+            OutputStreamWriter writer = new OutputStreamWriter(
+                    new FileOutputStream(newLogFile), "UTF-8");
+            // not sure if buffering is useful
+            logFileWriter_ = new BufferedWriter(writer, 1024);
+         } catch (UnsupportedEncodingException | FileNotFoundException ex) {
+            studio_.alerts().postAlert("Error opening logfile", this.getClass(),
+                    "Failed to open log file");
+         }
+      }
+      return logFileWriter_;
+   }
+
    private void logPoint(Point p) {
-      
+      BufferedWriter logFileWriter = checkLogFile();
+      if (logFileWriter == null) {
+         return;
+      }
+      String currentTime = LOGTIME_FORMATTER.format(new Date());  // could use nanoseconds instead...
+      try {
+         logFileWriter.write(currentTime + "\t" + p.x + "\t" + p.y);
+         logFileWriter.newLine();
+      } catch (IOException ioe) {
+         studio_.alerts().postAlert("Projector logfile error", this.getClass(),
+                 "Failed to open write to Projector log file");
+      }
    }
    
    /**
@@ -474,7 +553,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (canvas == null) {
          return null;
       }
-      List<DisplayWindow> dws = app_.displays().getAllImageWindows();
+      List<DisplayWindow> dws = studio_.displays().getAllImageWindows();
       if (dws != null) {
          for (DisplayWindow dw : dws) {
             if (dw instanceof DisplayController) {
@@ -594,10 +673,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // Save ROIs in the acquisition path, if it exists.
    private void recordPolygons() {
-      if (app_.acquisitions().isAcquisitionRunning()) {
+      if (studio_.acquisitions().isAcquisitionRunning()) {
          // TODO: The MM2.0 refactor broke this code by removing the below
          // method.
-//         String location = app_.compat().getAcquisitionPath();
+//         String location = studio_.compat().getAcquisitionPath();
 //         if (location != null) {
 //            try {
 //               File f = new File(location, "ProjectorROIs.zip");
@@ -688,13 +767,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    */
    public void attachRoisToMDA(int firstFrame, boolean repeat, 
            int frameRepeatInveral, Runnable runPolygons) {
-      app_.acquisitions().clearRunnables();
+      studio_.acquisitions().clearRunnables();
       if (repeat) {
-         for (int i = firstFrame; i < app_.acquisitions().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
-            app_.acquisitions().attachRunnable(i, -1, 0, 0, runPolygons);
+         for (int i = firstFrame; i < studio_.acquisitions().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
+            studio_.acquisitions().attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
-         app_.acquisitions().attachRunnable(firstFrame, -1, 0, 0, runPolygons);
+         studio_.acquisitions().attachRunnable(firstFrame, -1, 0, 0, runPolygons);
       }
    }
 
@@ -702,7 +781,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Remove the attached ROIs from the multi-dimensional acquisition.
     */
    public void removeFromMDA() {
-      app_.acquisitions().clearRunnables();
+      studio_.acquisitions().clearRunnables();
    }
   
    // ## GUI
@@ -729,6 +808,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * @param turnedOn true = Point and Shoot is ON
     */
    public void updatePointAndShoot(boolean turnedOn) {
+      if (!turnedOn && logFileWriter_ != null) {
+         try {
+            logFileWriter_.flush();
+         } catch (IOException ioe) {
+            studio_.logs().logError(ioe);
+         }
+      }
       pointAndShootOnButton.setSelected(turnedOn);
       pointAndShootOffButton.setSelected(!turnedOn);
       enablePointAndShootMode(turnedOn);
@@ -857,7 +943,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             final Callable<Boolean> mdaRunning = new Callable<Boolean>() {
                @Override
                public Boolean call() throws Exception {
-                  return app_.acquisitions().isAcquisitionRunning();
+                  return studio_.acquisitions().isAcquisitionRunning();
                }
             };
             attachRoisToMDA(1, false, 0,
@@ -898,7 +984,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    void showMosaicSequencingWindow() {
       if (mosaicSequencingFrame_ == null) {
-         mosaicSequencingFrame_ = new MosaicSequencingFrame(app_, core_, this, (SLM) dev_);
+         mosaicSequencingFrame_ = new MosaicSequencingFrame(studio_, core_, this, (SLM) dev_);
       }
       mosaicSequencingFrame_.setVisible(true);
    }
@@ -907,16 +993,16 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Constructor. Creates the main window for the Projector plugin.
     */
    private ProjectorControlForm(CMMCore core, Studio app) {
-      app_ = app;
+      studio_ = app;
       core_ = app.getCMMCore();
+      settings_ = studio_.profile().getSettings(this.getClass());
+      dev_ = ProjectorActions.getProjectionDevice(studio_);
+      mapping_ = Mapping.loadMapping(core_, dev_, settings_);
+      pointAndShootQueue_ = new LinkedBlockingQueue<PointAndShootInfo>();
+      pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
       
-      // Let the Netbeans code make the GUI
+      // Create GUI
       initComponents();
-      
-      settings_ = app_.profile().getSettings(this.getClass());
-      dev_ = ProjectorActions.getProjectionDevice(app_);     
-      mapping_ = Mapping.loadMapping(core, dev_, settings_);
-      pointAndShootMouseListener = createPointAndShootMouseListenerInstance();
 
       Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
          @Override
@@ -955,7 +1041,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       pointAndShootIntervalSpinner.setValue(dev_.getExposure() / 1000);
       sequencingButton.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
      
-      app_.events().registerForEvents(new Object() {
+      studio_.events().registerForEvents(new Object() {
          @Subscribe
          public void onSlmExposureChanged(SLMExposureChangedEvent event) {
             String deviceName = event.getDeviceName();
@@ -996,6 +1082,22 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    {
       formSingleton_ = null;
       disposing_ = true;
+      if (pointAndShootThread_ != null && pointAndShootThread_.isAlive()) {
+         pointAndShootQueue_.add(
+                 new PointAndShootInfo.Builder().stop().build());
+         try {
+            pointAndShootThread_.join(1000);
+         } catch (InterruptedException ex) {
+            // It may be dangerous to report stuff while exiting
+         }
+      }
+      if (logFileWriter_ != null) {
+         try {
+            logFileWriter_.close();
+         } catch (IOException ioe) {
+            // we are trying to close this file.  silently ignoring should be OK....
+         }
+      }
       super.dispose();
    }
    
@@ -1063,6 +1165,11 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       ExposureTimeLabel = new JLabel();
       pointAndShootIntervalSpinner = new JSpinner();
       jLabel2 = new JLabel();
+      JLabel jLabel3 = new JLabel();
+      logDirectoryChooserButton = new JButton();
+      logDirectoryTextField = new JTextField();
+      clearLogDirButton = new JButton();
+      
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Projector Controls");
@@ -1686,7 +1793,6 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private javax.swing.JTextField delayField_;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel2;
-   private javax.swing.JLabel jLabel3;
    private javax.swing.JSeparator jSeparator1;
    private javax.swing.JSeparator jSeparator3;
    private javax.swing.JButton logDirectoryChooserButton;
