@@ -409,7 +409,7 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "JAI", "DeviceAdapters\JAI\JAI.vcxproj", "{43564119-6C0F-4589-9BF5-0C6C653FF9F1}"
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Toptica_iBeamSmartCW", "DeviceAdapters\Toptica_iBeamSmartCW\Toptica_iBeamSmartCW.vcxproj", "{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Oxxius", "DeviceAdapters\OxxiusCombiner\OxxiusCombiner.vcxproj", "{71ADDFBC-1246-482E-A326-51A156C3B8A7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OxxiusCombiner", "DeviceAdapters\OxxiusCombiner\OxxiusCombiner.vcxproj", "{71ADDFBC-1246-482E-A326-51A156C3B8A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
