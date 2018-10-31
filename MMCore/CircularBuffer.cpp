@@ -43,6 +43,8 @@ CircularBuffer::CircularBuffer(unsigned int memorySizeMB) :
    memorySizeMB_(memorySizeMB), 
    overflow_(false)
 {
+   facet = new boost::posix_time::time_facet("%Y-%m-%d %H:%M:%s");
+   tStream.imbue(std::locale(tStream.getloc(), facet));
 }
 
 CircularBuffer::~CircularBuffer() {}
@@ -207,12 +209,17 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          ++imageNumbers_[cameraName];
       }
 
+      boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
       if (!md.HasTag(MM::g_Keyword_Elapsed_Time_ms))
       {
          // if time tag was not supplied by the camera insert current timestamp
-         MM::MMTime timestamp = GetMMTimeNow();
+         MM::MMTime timestamp = GetMMTimeNow(t);
          md.PutImageTag(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString(timestamp.getMsec()));
       }
+      tStream << t;
+      md.PutImageTag(MM::g_Keyword_Metadata_TimeInCore, tStream.str().c_str());
+      tStream.str(std::string());
+      tStream.clear();
 
       md.PutImageTag("Width",width);
       md.PutImageTag("Height",height);
