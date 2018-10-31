@@ -142,7 +142,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static final SimpleDateFormat LOGFILEDATE_FORMATTER = 
            new SimpleDateFormat("yyyyMMdd");
    private static final SimpleDateFormat LOGTIME_FORMATTER = 
-           new SimpleDateFormat("yyyyMMdd-H-m-s.SSS");
+           new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
    
 
    public static final FileType PROJECTOR_LOG_FILE = new FileType("PROJECTOR_LOG_FILE",
