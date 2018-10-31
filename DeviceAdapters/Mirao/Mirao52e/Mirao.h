@@ -20,11 +20,11 @@
 // Error codes are defined in <mirao52e.h>
 //
 
-class DefMirrorDevice : public CGenericBase<DefMirrorDevice>
+class DefMirror : public CGenericBase<DefMirror>
 {
    public:
-	   DefMirrorDevice();
-      ~DefMirrorDevice();
+	   DefMirror();
+      ~DefMirror();
 
       // Device API
       // ---------
@@ -35,12 +35,12 @@ class DefMirrorDevice : public CGenericBase<DefMirrorDevice>
       
       // action interface                                                       
       // ----------------                                                       
-      //int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    private:
       bool initialized_;
       double answerTimeoutMs_;
-      std::string port_;
+	  std::string version_;
 };
 
 #endif // 

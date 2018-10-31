@@ -26,8 +26,8 @@
 // Devices in this adapter.  
 // The device name needs to be a class name in this file
 
-// device
-const char* g_DefMirrorDeviceName = "DefMirrorDevice";
+// device properties
+const char* g_DefMirrorName = "DefMirror";
 ///////////////////////////////////////////////////////////////////////////////
 
 using namespace std;
@@ -38,7 +38,7 @@ using namespace std;
 
 MODULE_API void InitializeModuleData()
 {
-   RegisterDevice(g_DefMirrorDeviceName, MM::GenericDevice, "DefMirror");
+   RegisterDevice(g_DefMirrorName, MM::GenericDevice, "DefMirror");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
@@ -46,10 +46,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (deviceName == 0)                                                      
        return 0;
 
-   if (strcmp(deviceName, g_DefMirrorDeviceName) == 0)
+   if (strcmp(deviceName, g_DefMirrorName) == 0)
    {
-	   DefMirrorDevice* pDefMirrorDevice = new DefMirrorDevice();
-        return pDefMirrorDevice;
+	   DefMirror* pDefMirror = new DefMirror();
+        return pDefMirror;
    }
 
    return 0;
@@ -62,11 +62,12 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// DefMirrorDevice
+// DefMirror
 //
-DefMirrorDevice::DefMirrorDevice() :
+DefMirror::DefMirror() :
    initialized_(false),                                                    
-   answerTimeoutMs_(1000)
+   answerTimeoutMs_(1000),
+	version_("undefined")
 {
    InitializeDefaultErrorMessages();
 
@@ -74,14 +75,14 @@ DefMirrorDevice::DefMirrorDevice() :
    // ------------------------------------
 
    // Name
-   CreateProperty(MM::g_Keyword_Name, g_DefMirrorDeviceName, MM::String, true);
+   CreateProperty(MM::g_Keyword_Name, g_DefMirrorName, MM::String, true);
    
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "Deformable mirror Mirao52e", MM::String, true);
  
 }
 
-DefMirrorDevice::~DefMirrorDevice()
+DefMirror::~DefMirror()
 {
    Shutdown();
 }
@@ -91,30 +92,59 @@ DefMirrorDevice::~DefMirrorDevice()
 ///////////////////////////////////////////////////////////////////////////////
 
 
-int DefMirrorDevice::Initialize()
+int DefMirror::Initialize()
 {
+	int nRet = 0;
 	int status;
 	MroBoolean ret;
 	ret = mro_open(&status);
+	if (status != MRO_OK) {
+		return status;
+	}
 	assert(ret == MRO_TRUE);
+
+	CPropertyAction* pAct = new CPropertyAction(this, &DefMirror::OnVersion);
+	nRet = CreateProperty("Firmware version", "undefined", MM::String, false, pAct);
+	if (nRet != DEVICE_OK)
+		return nRet;
+
+	initialized_ = true;
 	return DEVICE_OK;
 }
 
-int DefMirrorDevice::Shutdown()
+int DefMirror::Shutdown()
 {
 	int status;
 	MroBoolean ret;
 	ret = mro_close(&status);
-	assert(ret == MRO_TRUE);
+	if (status != MRO_OK) {
+		return status;
+	}
+	//assert(ret == MRO_TRUE);
 	return DEVICE_OK;
 }
 
-void DefMirrorDevice::GetName (char* Name) const
+void DefMirror::GetName (char* Name) const
 {
-   CDeviceUtils::CopyLimitedString(Name, g_DefMirrorDeviceName);
+   CDeviceUtils::CopyLimitedString(Name, g_DefMirrorName);
 }
 
-bool DefMirrorDevice::Busy()
+bool DefMirror::Busy()
 {
    return false;
+}
+
+//Firmware Version
+int DefMirror::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct) {
+	int status;
+	MroBoolean ret;
+	char dllVersion[32];
+	ret = mro_getVersion(dllVersion, &status);
+	assert(ret == MRO_TRUE);
+	if (status != MRO_OK) {
+		return status;
+	}
+	pProp->Set(dllVersion);
+	version_ = dllVersion;
+	return DEVICE_OK;
 }
