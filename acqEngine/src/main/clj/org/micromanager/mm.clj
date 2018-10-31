@@ -326,7 +326,7 @@
 
 (def ^{:doc "the ISO8601 standard date format modified to make it
              slightly more human-readable."}
-       imageDateFormat (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z"))
+       imageDateFormat (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss.SSS Z"))
 
 (defn get-current-time-str 
   "Get the current time and date in the format for image metadata."
