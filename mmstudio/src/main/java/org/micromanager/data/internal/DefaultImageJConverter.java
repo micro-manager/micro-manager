@@ -112,6 +112,7 @@ public final class DefaultImageJConverter implements ImageJConverter {
          Metadata metadata) {
       int bytesPerPixel = -1;
       int numComponents = -1;
+      Object pixels = processor.getPixels();
       if (processor instanceof ByteProcessor) {
          bytesPerPixel = 1;
          numComponents = 1;
@@ -125,15 +126,26 @@ public final class DefaultImageJConverter implements ImageJConverter {
          numComponents = 1;
       }
       else if (processor instanceof ColorProcessor) {
-         bytesPerPixel = 1;
+         bytesPerPixel = 4;
          numComponents = 3;
+         pixels = convertRGBPixels((int[]) pixels);
       }
       else {
          ReportingUtils.logError("Unrecognized processor type " + processor.getClass().getName());
       }
       return DefaultDataManager.getInstance().createImage(
-            processor.getPixels(), processor.getWidth(), processor.getHeight(),
+            pixels, processor.getWidth(), processor.getHeight(),
             bytesPerPixel, numComponents, coords, metadata);
+   }
+   
+   private static byte[] convertRGBPixels(int[] ijPixels) {
+      ByteBuffer buffer = ByteBuffer.allocate(ijPixels.length * 4);
+      buffer.asIntBuffer().put(ijPixels);
+      byte[] ijOrdered = buffer.array();
+      byte[] mmOrdered = new byte[ijOrdered.length];
+      System.arraycopy(ijOrdered, 1, mmOrdered, 0, ijOrdered.length - 1);
+      mmOrdered[mmOrdered.length - 1] = 0;
+      return mmOrdered;
    }
 
    public static DefaultImageJConverter getInstance() {
