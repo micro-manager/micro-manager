@@ -24,9 +24,11 @@ package org.micromanager.data.internal.multipagetiff;
 // Note: java.awt.Color and ome.xml.model.primitives.Color used with
 // fully-qualified class names
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.TreeMap;
+import java.util.Map;
 import loci.common.DateTools;
 import loci.common.services.ServiceFactory;
 import loci.formats.MetadataTools;
@@ -56,23 +58,22 @@ public final class OMEMetadata {
 
    private IMetadata metadata_;
    private StorageMultipageTiff mptStorage_;
-   private TreeMap<Integer, Indices> seriesIndices_ = new TreeMap<Integer, Indices>();
-   private int numSlices_, numChannels_;
-   private TreeMap<String, Integer> tiffDataIndexMap_;
-   
+   private Map<Integer, Indices> seriesIndices_ = new HashMap<Integer, Indices>();
+   private int numSlices_, numChannels_, numComponents_;
+   private Map<String, Integer> tiffDataIndexMap_ = new HashMap<String, Integer>();
+
    private class Indices {
       //specific to each series independent of file
       int tiffDataIndex_ = -1;
       //specific to each series indpeendent of file
       int planeIndex_ = 0;
    }
-   
+
    public OMEMetadata(StorageMultipageTiff mpt) {
       mptStorage_ = mpt;
-      tiffDataIndexMap_ = new TreeMap<String,Integer>();
       metadata_ = MetadataTools.createOMEXMLMetadata();
    }
-   
+
    public static String getOMEStringPointerToMasterFile(String filename, String uuid)  {
       try {
          IMetadata md = MetadataTools.createOMEXMLMetadata();
@@ -125,14 +126,36 @@ public final class OMEMetadata {
          // Make something up to have a valid string.
          axisOrder += "CZT";
       }
-      //Last one is samples per pixel
-      MetadataTools.populateMetadata(metadata_, seriesIndex, baseFileName,
-            MultipageTiffWriter.BYTE_ORDER.equals(ByteOrder.LITTLE_ENDIAN),
+
+      boolean isLittleEndian = MultipageTiffWriter.BYTE_ORDER.equals(
+            ByteOrder.LITTLE_ENDIAN);
+      String pixelType = "uint" +
+            repImage.getBytesPerPixel() / repImage.getNumComponents() * 8;
+      numComponents_ = repImage.getNumComponents();
+
+      MetadataTools.populateMetadata(metadata_,
+            seriesIndex,
+            baseFileName,
+            isLittleEndian,
             axisOrder,
-            "uint" + repImage.getBytesPerPixel() * 8,
-            repImage.getWidth(), repImage.getHeight(),
-            numSlices_, numChannels_,
-            mptStorage_.getIntendedSize(Coords.TIME), 1);
+            pixelType,
+            repImage.getWidth(),
+            repImage.getHeight(),
+            numSlices_,
+            numChannels_ * numComponents_, // See *Note* below
+            mptStorage_.getIntendedSize(Coords.TIME),
+            numComponents_
+      );
+      // *Note* We set the 'SizeC' attribute of the 'Pixels' element to the
+      // total number of components, NOT the number of logical channels. See
+      // the OME schema documentation for element 'Channel'.
+      // This is despite that fact that we only have one 'Channel' element and
+      // one 'Plane' element (per IFD) per logical channel, and the 'Plane'
+      // element's 'TheC' attribute contains the logical channel index (not
+      // the index that 'SizeC' would appear to suggest).
+      // (Presumably this interpretation of 'SizeC' is due to legacy reasons.)
+
+      metadata_.setPixelsInterleaved(true, seriesIndex);
 
       Metadata repMetadata = repImage.getMetadata();
       if (repMetadata.getPixelSizeUm() != null) {
@@ -167,13 +190,15 @@ public final class OMEMetadata {
       }
       metadata_.setStageLabelName(positionName, seriesIndex);
 
-      String instrumentID = MetadataTools.createLSID("Microscope");
+      String instrumentID = "Instrument:0";
       metadata_.setInstrumentID(instrumentID, 0);
       // link Instrument and Image
       metadata_.setImageInstrumentRef(instrumentID, seriesIndex);
 
-      metadata_.setImageDescription(CommentsHelper.getSummaryComment(
-               mptStorage_.getDatastore()), seriesIndex);
+      String comment = CommentsHelper.getSummaryComment(mptStorage_.getDatastore());
+      if (comment != null && !comment.isEmpty()) {
+         metadata_.setImageDescription(comment, seriesIndex);
+      }
 
       // TODO these don't necessarily have anything to do with how the user is
       // viewing data in Micro-Manager.
@@ -183,6 +208,7 @@ public final class OMEMetadata {
       java.awt.Color[] colors = displaySettings.getChannelColors();
       for (int channel = 0; channel < mptStorage_.getIntendedSize(Coords.CHANNEL);
             channel++) {
+         metadata_.setChannelID("Channel:" + seriesIndex + ":" + channel, seriesIndex, channel);
          if (colors != null && colors.length > channel) {
             java.awt.Color color = colors[channel];
             metadata_.setChannelColor(new ome.xml.model.primitives.Color(
@@ -192,9 +218,11 @@ public final class OMEMetadata {
          if (names != null && names.length > channel) {
             metadata_.setChannelName(names[channel], seriesIndex, channel);
          }
+         metadata_.setChannelSamplesPerPixel(
+               new PositiveInteger(numComponents_), seriesIndex, channel);
       }
    }
-   
+
    /*
     * Method called when numC*numZ*numT != total number of planes
     */
@@ -365,10 +393,11 @@ public final class OMEMetadata {
          }
          if (MDUtils.hasPositionName(tags)) {
             metadata_.setStageLabelName(
-                    MDUtils.getPositionName(tags), position);
+                  MDUtils.getPositionName(tags), position);
          }
 
-      } catch (JSONException e) {
+      }
+      catch (JSONException e) {
          ReportingUtils.logError("Problem adding tags to OME Metadata");
       }
 
@@ -381,28 +410,39 @@ public final class OMEMetadata {
          return;
       }
       String coreCam = MDUtils.getCoreCamera(tags);
-      String[] cameras;
-      if (tags.has(coreCam + "-Physical Camera 1")) {       //Multicam mode
-         int numCams = 1;
-         if (!tags.getString(coreCam + "-Physical Camera 3").equals("Undefined")) {
-            numCams = 3;
-         } else if (!tags.getString(coreCam + "-Physical Camera 2").equals("Undefined")) {
-            numCams = 2;
+
+      // Hack to get physical camera name in case of Multi Camera
+      // TODO We really should be recording the camera-to-channel
+      // correspondence by setting each Channel's DetectorRef. But that will
+      // need a better way to propagate information from the acquisition.
+      List<String> cameras = new ArrayList<String>();
+      String physCamFormat = coreCam.replace("%", "%%") + "-Physical Camera %d";
+      // Multi Camera has up to 4 physical cameras at the moment, but prepare
+      // for expansion up to 8.
+      for (int physCamIndex = 1; physCamIndex < 9; ++physCamIndex) {
+         String physCamProp = String.format(physCamFormat, physCamIndex);
+         if (!tags.has(physCamProp)) {
+            break;
          }
-         cameras = new String[numCams];
-         for (int i = 0; i < numCams; i++) {
-            cameras[i] = tags.getString(coreCam + "-Physical Camera " + (1 + i));
+         String physCamLabel = tags.getString(physCamProp);
+         if (physCamLabel.isEmpty() || physCamLabel.equals("Undefined")) {
+            break;
          }
-      } else { //Single camera mode
-         cameras = new String[1];
-         cameras[0] = coreCam;
+         cameras.add(physCamLabel);
+      }
+      // If we didn't find any Multi Camera "Physical Camera" properties, we
+      // assume we have a single camera.
+      if (cameras.isEmpty()) {
+         cameras.add(coreCam);
       }
 
-      for (int detectorIndex = 0; detectorIndex < cameras.length; detectorIndex++) {
-         String camera = cameras[detectorIndex];
-         String detectorID = MetadataTools.createLSID(camera);
+      for (int detectorIndex = 0; detectorIndex < cameras.size(); detectorIndex++) {
+         String camera = cameras.get(detectorIndex);
+         String detectorID = "Detector:" + camera;
          //Instrument index, detector index
          metadata_.setDetectorID(detectorID, 0, detectorIndex);
+
+         // TODO The following assignments are highly questionable.
          if (tags.has(camera + "-Name") && !tags.isNull(camera + "-Name")) {
             metadata_.setDetectorManufacturer(tags.getString(camera + "-Name"), 0, detectorIndex);
          }
@@ -419,4 +459,3 @@ public final class OMEMetadata {
       }
    }
 }
-

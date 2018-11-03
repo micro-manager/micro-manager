@@ -402,6 +402,7 @@ public final class DefaultMetadata implements Metadata {
             // to maintain backwards compatibility with MM1.4.
             result.put("scopeDataKeys", keys);
             JSONObject scopeJSON = scopeData_.toJSON();
+            scopeData_.flattenJSONSerialization(scopeJSON);
             for (String key : MDUtils.getKeys(scopeJSON)) {
                result.put(key, scopeJSON.get(key));
             }
