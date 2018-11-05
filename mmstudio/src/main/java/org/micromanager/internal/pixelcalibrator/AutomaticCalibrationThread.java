@@ -400,7 +400,7 @@ public class AutomaticCalibrationThread extends CalibrationThread {
                     MMCoreJ.getG_Keyword_Binning());
             int binNr = NumberUtils.coreStringToInt(binning);
             if (binNr != 1) {
-               result_.scale(1/binNr, 1/binNr);
+               result_.scale(1.0/(double) binNr, 1.0/(double) binNr);
             }
          } catch (Exception ex) {
             studio_.logs().logError("Error while determining binning");
