@@ -69,6 +69,7 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    private PlatePanel platePanel_;
    private Studio app_;
    private final Point2D.Double xyStagePos_;
+   private Point2D.Double origin_;
    private double zStagePos_;
    private final Point2D.Double cursorPos_;
    private String stageWell_;
@@ -531,8 +532,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
             for (int k = 0; k < mpl.size(); k++) {
                StagePosition sp = mpl.get(k);
                if (sp.is2DStagePosition()) {
-                  sp.set2DPosition(mpl.getDefaultXYStage(), sp.get2DPositionX(), 
-                          sp.get2DPositionY());
+                  sp.set2DPosition(mpl.getDefaultXYStage(), sp.get2DPositionX() - origin_.getX(), 
+                          sp.get2DPositionY() - origin_.getY());
                }
             }
             // add Z position if 3-point focus is enabled
@@ -694,7 +695,8 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       }
    }
 
-   public void finishCalibration() {
+   public void finishCalibration(Point2D.Double origin) {
+       origin_ = origin;
       regenerate();
       moveStage_.setEnabled(true);
    }

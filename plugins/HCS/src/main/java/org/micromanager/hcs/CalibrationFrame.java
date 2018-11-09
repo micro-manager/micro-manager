@@ -206,13 +206,14 @@ public class CalibrationFrame extends JFrame {
                }
             }     
             try {
-               studio.getCMMCore().setAdapterOriginXY(
-                       plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(), 
-                       plate.getFirstWellY() + (rowNr  - 1) * plate.getWellSpacingY() );
-               siteGenerator.finishCalibration();
-               Point2D.Double pt = studio.getCMMCore().getXYStagePosition();
+                Point2D.Double pt = new Point2D.Double(plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(),
+                        plate.getFirstWellY() + (rowNr  - 1) * plate.getWellSpacingY());
+                double x = studio.core().getXPosition();
+                double y = studio.core().getYPosition();
+                pt.setLocation(pt.getX() - x, pt.getY() - y);
+               siteGenerator.finishCalibration(pt);
                JOptionPane.showMessageDialog(ourFrame, 
-                       "XY Stage set at position: " + pt.x + "," + pt.y);
+                       "Plugin origin set at position: " + pt.x + "," + pt.y);
             } catch (Exception ex) {
                studio.logs().showError(ex, "Failed to reset the stage's coordinates");
             }
