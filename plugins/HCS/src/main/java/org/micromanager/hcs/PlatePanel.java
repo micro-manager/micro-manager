@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 import javax.swing.JPanel;
+import mmcorej.DeviceType;
 
 import org.micromanager.PositionList;
 import org.micromanager.Studio;
@@ -238,7 +239,7 @@ public class PlatePanel extends JPanel {
             if (gui_.useThreePtAF() && gui_.getThreePointZPos(pt.x, pt.y) != null)
                app_.getCMMCore().setPosition(
                      gui_.getThreePointZPos(pt.x, pt.y));
-            
+            app_.getCMMCore().waitForDeviceType(DeviceType.XYStageDevice); //wait for the stage to stop moving before updating the gui.
             xyStagePos_ = app_.getCMMCore().getXYStagePosition();
             zStagePos_ = app_.getCMMCore().getPosition(app_.getCMMCore().getFocusDevice());
             gui_.updateStagePositions(xyStagePos_.x, xyStagePos_.y, zStagePos_, well, "undefined");
