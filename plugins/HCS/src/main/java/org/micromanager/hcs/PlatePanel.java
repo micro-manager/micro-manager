@@ -325,12 +325,15 @@ public class PlatePanel extends JPanel {
    private Point2D.Double scalePixelToDevice(int x, int y) {
       int pixelPosY = y - activeRect_.y;
       int pixelPosX = x - activeRect_.x;
-      return new Point2D.Double(pixelPosX/drawingParams_.xFactor, pixelPosY/drawingParams_.yFactor);
+      Point2D.Double offset = gui_.getOffset();
+
+      return new Point2D.Double(pixelPosX/drawingParams_.xFactor - offset.getX(), pixelPosY/drawingParams_.yFactor - offset.getY());
    }
    
    private Point scaleDeviceToPixel(double x, double y) {
-      int pixX = (int)(x * drawingParams_.xFactor + activeRect_.x + 0.5);
-      int pixY = (int)(y * drawingParams_.yFactor + activeRect_.y + 0.5);
+       Point2D.Double offset = gui_.getOffset();
+      int pixX = (int)((x + offset.getX()) * drawingParams_.xFactor + activeRect_.x + 0.5);
+      int pixY = (int)((y + offset.getY()) * drawingParams_.yFactor + activeRect_.y + 0.5);
       
       return new Point(pixX, pixY);
    }

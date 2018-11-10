@@ -1,7 +1,7 @@
 package org.micromanager.hcs;
 
 import org.micromanager.PositionList;
-
+import java.awt.geom.Point2D;
 
 public interface ParentPlateGUI {
    public void updatePointerXYPosition(double x, double y, String wellLabel, String siteLabel);
@@ -11,4 +11,5 @@ public interface ParentPlateGUI {
    public PositionList getThreePointList();
    public Double getThreePointZPos(double x, double y);
    public void displayError(String errTxt);
+   public Point2D.Double getOffset();
 }

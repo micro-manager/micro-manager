@@ -142,6 +142,27 @@ public class CalibrationFrame extends JFrame {
         
       contents.add(new JSeparator(), "span4, grow, wrap");
       
+      JLabel methodLabel = new JLabel();
+      JPanel methodPanel = new JPanel(new MigLayout("align, center, fillx"));
+      JComboBox methodCombo = new JComboBox();
+      methodPanel.add(methodLabel, "span 2, wrap");
+      methodPanel.add(methodCombo, "span 2");
+      methodLabel.setText("Calibration Method");
+      methodCombo.setModel(new DefaultComboBoxModel(new String[] {"Legacy","Recommended"}));
+      methodCombo.setToolTipText(
+              "<html>"
+                      + "Legacy: The XY stage adapter's coordinates will be reset. <br>"
+                      + "Positions saved during this session of MicroManager will not <br>"
+                      + "be valid in a new session unless the same calibration is run again. <br>"
+                      + "Calibration will need to be performed every time this plugin is used.<br><br>"
+                      + "Recommended: Positions will be saved in terms of the default XY <br>"
+                      + "coordinate system. Calibration will be saved and will only need to be <br>"
+                      + "repeated if there is a change in XY stage hardware. Users of stages with <br>"
+                      + "no homing functionality will need to ensure that their coordinate system <br>"
+                      + "is consistent between sessions."
+                      + "</html>");
+      contents.add(methodPanel, "span 2");
+      
       JButton cancelButton = new JButton ("Cancel");
       cancelButton.addActionListener(new ActionListener() {
          @Override
@@ -151,11 +172,6 @@ public class CalibrationFrame extends JFrame {
          }
       });
       contents.add(cancelButton, "span 4, split 2, tag cancel");
-      
-             
-      JComboBox methodCombo = new JComboBox();
-      methodCombo.setModel(new DefaultComboBoxModel(new String[] {"Legacy","new"}));
-      contents.add(methodCombo);
       
       // OK Button, this is where all the action happens
       JButton OKButton = new JButton ("OK");
@@ -216,19 +232,22 @@ public class CalibrationFrame extends JFrame {
                 Point2D.Double pt = new Point2D.Double(plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(),
                         plate.getFirstWellY() + (rowNr  - 1) * plate.getWellSpacingY());
                 Point2D.Double offset;
-                if ("new".equals(methodCombo.getSelectedItem())) { 
+                Boolean saveCalibration;
+                if ("Recommended".equals(methodCombo.getSelectedItem())) { 
                     double x = studio.core().getXPosition();
                     double y = studio.core().getYPosition();
                     offset = new Point2D.Double(pt.getX() + x, pt.getY() + y);
+                    saveCalibration = true;
                    JOptionPane.showMessageDialog(ourFrame, 
                            "Plugin offset set at position: " + offset.x + "," + offset.y);
                 } else { //Legacy. Adjust the coordinate system with no offset.
                     studio.getCMMCore().setAdapterOriginXY(pt.getX(), pt.getY());
                     offset = new Point2D.Double(0,0);
+                    saveCalibration = false;
                     JOptionPane.showMessageDialog(ourFrame, 
                        "XY Stage set at position: " + pt.x + "," + pt.y);
                 }
-                siteGenerator.finishCalibration(offset);
+                siteGenerator.finishCalibration(offset, saveCalibration);
             } catch (Exception ex) {
                studio.logs().showError(ex, "Failed to reset the stage's coordinates");
             }
