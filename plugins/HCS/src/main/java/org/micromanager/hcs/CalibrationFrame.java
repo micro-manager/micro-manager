@@ -42,6 +42,8 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerListModel;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.JComboBox;
+import javax.swing.DefaultComboBoxModel;
 import mmcorej.DeviceType;
 
 import net.miginfocom.swing.MigLayout;
@@ -150,6 +152,11 @@ public class CalibrationFrame extends JFrame {
       });
       contents.add(cancelButton, "span 4, split 2, tag cancel");
       
+             
+      JComboBox methodCombo = new JComboBox();
+      methodCombo.setModel(new DefaultComboBoxModel(new String[] {"Legacy","new"}));
+      contents.add(methodCombo);
+      
       // OK Button, this is where all the action happens
       JButton OKButton = new JButton ("OK");
       OKButton.addActionListener(new ActionListener() {
@@ -208,12 +215,20 @@ public class CalibrationFrame extends JFrame {
             try {
                 Point2D.Double pt = new Point2D.Double(plate.getFirstWellX() + (colNr - 1) * plate.getWellSpacingX(),
                         plate.getFirstWellY() + (rowNr  - 1) * plate.getWellSpacingY());
-                double x = studio.core().getXPosition();
-                double y = studio.core().getYPosition();
-                pt.setLocation(pt.getX() - x, pt.getY() - y);
-               siteGenerator.finishCalibration(pt);
-               JOptionPane.showMessageDialog(ourFrame, 
-                       "Plugin origin set at position: " + pt.x + "," + pt.y);
+                Point2D.Double offset;
+                if ("new".equals(methodCombo.getSelectedItem())) { 
+                    double x = studio.core().getXPosition();
+                    double y = studio.core().getYPosition();
+                    offset = new Point2D.Double(pt.getX() + x, pt.getY() + y);
+                   JOptionPane.showMessageDialog(ourFrame, 
+                           "Plugin offset set at position: " + offset.x + "," + offset.y);
+                } else { //Legacy. Adjust the coordinate system with no offset.
+                    studio.getCMMCore().setAdapterOriginXY(pt.getX(), pt.getY());
+                    offset = new Point2D.Double(0,0);
+                    JOptionPane.showMessageDialog(ourFrame, 
+                       "XY Stage set at position: " + pt.x + "," + pt.y);
+                }
+                siteGenerator.finishCalibration(offset);
             } catch (Exception ex) {
                studio.logs().showError(ex, "Failed to reset the stage's coordinates");
             }
@@ -223,7 +238,7 @@ public class CalibrationFrame extends JFrame {
       });
       
       contents.add(OKButton, "tag ok, wrap");
-            
+      
       super.add(contents);
       super.pack();
       super.setLocationRelativeTo(siteGenerator);
