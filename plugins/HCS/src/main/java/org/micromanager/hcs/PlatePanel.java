@@ -225,7 +225,7 @@ public class PlatePanel extends JPanel {
    }
 
    protected void onMouseClicked(MouseEvent e) throws HCSException {
-      Point2D.Double pt = scalePixelToPlate(e.getX(), e.getY());
+      Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
       if (mode_ == Tool.MOVE) {
          if (app_ == null)
@@ -318,12 +318,13 @@ public class PlatePanel extends JPanel {
       if (gui_ == null)
          return;
 
-      Point2D.Double pt = scalePixelToPlate(e.getX(), e.getY());
+      Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
       gui_.updatePointerXYPosition(pt.x, pt.y, well, "");
    }
    
-   private Point2D.Double scalePixelToPlate(int x, int y){
+   private Point2D.Double scalePixelToDevice(int x, int y){
+        //Thge point returned from this method will still need to have the offset applied to it in order to map to the device coordinate system.
         int pixelPosY = y - activeRect_.y;
         int pixelPosX = x - activeRect_.x;
         return new Point2D.Double(pixelPosX/drawingParams_.xFactor, pixelPosY/drawingParams_.yFactor);
