@@ -773,6 +773,17 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
    
    @Override
     public Point2D.Double getOffset(){
-       return offset_;
+        if (offset_ == null){
+            return new Point2D.Double(0,0);
+        } else{
+            return offset_;
+        }
     } 
+    
+    @Override
+    public Point2D.Double applyOffset(Point2D.Double pt) {
+      Point2D.Double offset = getOffset();
+      pt.setLocation(pt.getX() + offset.getX(), pt.getY() + offset.getY());
+      return pt;
+   }
 }

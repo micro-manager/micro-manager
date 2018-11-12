@@ -12,4 +12,5 @@ public interface ParentPlateGUI {
    public Double getThreePointZPos(double x, double y);
    public void displayError(String errTxt);
    public Point2D.Double getOffset();
+   public Point2D.Double applyOffset(Point2D.Double pt);
 }
