@@ -236,7 +236,7 @@ public class CalibrationFrame extends JFrame {
                 if ("Recommended".equals(methodCombo.getSelectedItem())) { 
                     double x = studio.core().getXPosition();
                     double y = studio.core().getYPosition();
-                    offset = new Point2D.Double(pt.getX() + x, pt.getY() + y);
+                    offset = new Point2D.Double(x - pt.getX(), y - pt.getY());
                     saveCalibration = true;
                    JOptionPane.showMessageDialog(ourFrame, 
                            "Plugin offset set at position: " + offset.x + "," + offset.y);

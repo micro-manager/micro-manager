@@ -225,7 +225,7 @@ public class PlatePanel extends JPanel {
    }
 
    protected void onMouseClicked(MouseEvent e) throws HCSException {
-      Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
+      Point2D.Double pt = scalePixelToPlate(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
       if (mode_ == Tool.MOVE) {
          if (app_ == null)
@@ -235,6 +235,7 @@ public class PlatePanel extends JPanel {
             return;
 
          try {
+             pt = gui_.applyOffset(pt);
             app_.getCMMCore().setXYPosition(pt.x, pt.y);
             if (gui_.useThreePtAF() && gui_.getThreePointZPos(pt.x, pt.y) != null)
                app_.getCMMCore().setPosition(
@@ -317,23 +318,22 @@ public class PlatePanel extends JPanel {
       if (gui_ == null)
          return;
 
-      Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
+      Point2D.Double pt = scalePixelToPlate(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
       gui_.updatePointerXYPosition(pt.x, pt.y, well, "");
    }
+   
+   private Point2D.Double scalePixelToPlate(int x, int y){
+        int pixelPosY = y - activeRect_.y;
+        int pixelPosX = x - activeRect_.x;
+        return new Point2D.Double(pixelPosX/drawingParams_.xFactor, pixelPosY/drawingParams_.yFactor);
 
-   private Point2D.Double scalePixelToDevice(int x, int y) {
-      int pixelPosY = y - activeRect_.y;
-      int pixelPosX = x - activeRect_.x;
-      Point2D.Double offset = gui_.getOffset();
-
-      return new Point2D.Double(pixelPosX/drawingParams_.xFactor - offset.getX(), pixelPosY/drawingParams_.yFactor - offset.getY());
    }
    
    private Point scaleDeviceToPixel(double x, double y) {
        Point2D.Double offset = gui_.getOffset();
-      int pixX = (int)((x + offset.getX()) * drawingParams_.xFactor + activeRect_.x + 0.5);
-      int pixY = (int)((y + offset.getY()) * drawingParams_.yFactor + activeRect_.y + 0.5);
+      int pixX = (int)((x - offset.getX()) * drawingParams_.xFactor + activeRect_.x + 0.5);
+      int pixY = (int)((y - offset.getY()) * drawingParams_.yFactor + activeRect_.y + 0.5);
       
       return new Point(pixX, pixY);
    }

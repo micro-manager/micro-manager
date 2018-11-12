@@ -664,9 +664,9 @@ public class SiteGenerator extends MMFrame implements ParentPlateGUI {
       if (statusLabel_ == null) {
          return;
       }
-
-      String statusTxt = "Cursor: X=" + TextUtils.FMT2.format(cursorPos_.x) + "um, Y=" + TextUtils.FMT2.format(cursorPos_.y) + "um, " + cursorWell_
-              + ((useThreePtAF() && focusPlane_ != null) ? ", Z->" + TextUtils.FMT2.format(focusPlane_.getZPos(cursorPos_.x, cursorPos_.y)) + "um" : "")
+      Point2D.Double cursorOffsetPos = applyOffset(cursorPos_);
+      String statusTxt = "Cursor: X=" + TextUtils.FMT2.format(cursorOffsetPos.x) + "um, Y=" + TextUtils.FMT2.format(cursorOffsetPos.y) + "um, " + cursorWell_
+              + ((useThreePtAF() && focusPlane_ != null) ? ", Z->" + TextUtils.FMT2.format(focusPlane_.getZPos(cursorOffsetPos.x, cursorOffsetPos.y)) + "um" : "")
               + " -- Stage: X=" + TextUtils.FMT2.format(xyStagePos_.x) + "um, Y=" + TextUtils.FMT2.format(xyStagePos_.y) + "um, Z=" + TextUtils.FMT2.format(zStagePos_) + "um, "
               + stageWell_;
       statusLabel_.setText(statusTxt);
