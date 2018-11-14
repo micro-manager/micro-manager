@@ -562,6 +562,26 @@ public class ASIdiSPIMImplementation implements ASIdiSPIMInterface {
    }
    
    @Override
+   public double getSideLightSheetSlope(Sides side) throws ASIdiSPIMException, RemoteException {
+      return getSetupPanel(side).getSideLightSheetSlope();
+   }
+   
+   @Override
+   public void setSideLightSheetSlope(Sides side, double slope) throws ASIdiSPIMException, RemoteException {
+      getSetupPanel(side).setSideLightSheetSlope(slope);
+   }
+   
+   @Override
+   public double getSideLightSheetOffset(Sides side) throws ASIdiSPIMException, RemoteException {
+      return getSetupPanel(side).getSideLightSheetOffset();
+   }
+   
+   @Override
+   public void setSideLightSheetOffset(Sides side, double offset) throws ASIdiSPIMException, RemoteException {
+      getSetupPanel(side).setSideLightSheetOffset(offset);
+   }
+      
+   @Override
    public void runAutofocusSide(Sides side) throws ASIdiSPIMException, RemoteException {
       getSetupPanel(side).runAutofocus();
    }

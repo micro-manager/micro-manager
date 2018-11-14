@@ -582,6 +582,30 @@ public interface ASIdiSPIMInterface extends Remote {
    public void setSideCalibrationOffset(Devices.Sides side, double offset) throws ASIdiSPIMException, RemoteException;
    
    /**
+    * @param side Devices.Sides.A or Devices.Sides.B
+    * @return lightsheet slope in units of microdegrees per pixel (only applies in lightsheet camera mode)
+    */
+   public double getSideLightSheetSlope(Devices.Sides side) throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * @param side Devices.Sides.A or Devices.Sides.B
+    * @param lightsheet slope in units of microdegrees per pixel (only applies in lightsheet camera mode)
+    */
+   public void setSideLightSheetSlope(Devices.Sides side, double slope) throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * @param side Devices.Sides.A or Devices.Sides.B
+    * @return lightsheet offset in units of millidegrees (only applies in lightsheet camera mode)
+    */
+   public double getSideLightSheetOffset(Devices.Sides side) throws ASIdiSPIMException, RemoteException;
+   
+   /**
+    * @param side Devices.Sides.A or Devices.Sides.B
+    * @param lightsheet offset in units of millidegrees (only applies in lightsheet camera mode)
+    */
+   public void setSideLightSheetOffset(Devices.Sides side, double offset) throws ASIdiSPIMException, RemoteException;
+   
+   /**
     * Updates the offset with the current positions of the slice and imaging piezo,
     *   just like clicking the GUI button does
     * @param side Devices.Sides.A or Devices.Sides.B

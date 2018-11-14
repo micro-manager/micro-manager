@@ -117,6 +117,8 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
    private final JLabel illuminationPiezoPositionLabel_;
    private final JLabel illuminationPiezoPositionLabel2_;
    private final JFormattedTextField sheetWidthSlope_;
+   private final JFormattedTextField lightSheetSlope_;
+   private final JFormattedTextField lightSheetOffset_;
    private final JLabel sheetWidthSlopeUnits_;
    private final JButton sheetIncButton_;
    private final JButton sheetDecButton_;
@@ -747,9 +749,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       // now the unique tidbits for the light sheet
       
       sheetPanelLightSheet_.add(new JLabel("<html><u>Light Sheet Synchronization</u></html>"), "span 3, center, wrap");
-      JFormattedTextField lightSheetSlope = pu.makeFloatEntryField(panelName_, 
+      lightSheetSlope_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_LIGHTSHEET_SLOPE.toString(), 2000, 5);
-      lightSheetSlope.addActionListener(new ActionListener() {
+      lightSheetSlope_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             CameraModes.Keys key = getSPIMCameraMode();
@@ -759,9 +761,9 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
             }
          }
       });
-      JFormattedTextField lightSheetOffset = pu.makeFloatEntryField(panelName_, 
+      lightSheetOffset_ = pu.makeFloatEntryField(panelName_, 
             Properties.Keys.PLUGIN_LIGHTSHEET_OFFSET.toString(), 0, 5);
-      lightSheetOffset.addActionListener(new ActionListener() {
+      lightSheetOffset_.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent e) {
             CameraModes.Keys key = getSPIMCameraMode();
@@ -773,10 +775,10 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
       });
       
       sheetPanelLightSheet_.add(new JLabel("Speed / slope:"));
-      sheetPanelLightSheet_.add(lightSheetSlope);
+      sheetPanelLightSheet_.add(lightSheetSlope_);
       sheetPanelLightSheet_.add(new JLabel("\u00B5\u00B0/px"), "left, wrap");
       sheetPanelLightSheet_.add(new JLabel("Start / offset:"));
-      sheetPanelLightSheet_.add(lightSheetOffset);
+      sheetPanelLightSheet_.add(lightSheetOffset_);
       sheetPanelLightSheet_.add(new JLabel("m\u00B0"), "left");
       
       JButton profileButton = new JButton("Plot Profile");
@@ -1156,6 +1158,22 @@ public final class SetupPanel extends ListeningJPanel implements LiveModeListene
 
    public void setSideCalibrationOffset(double offset) {
       offsetField_.setValue((Double) offset);
+   }
+   
+   public double getSideLightSheetSlope() {
+	      return (Double) lightSheetSlope_.getValue();
+	   }
+
+   public void setSideLightSheetSlope(double slope) {
+	   lightSheetSlope_.setValue((Double) slope);
+   }
+   
+   public double getSideLightSheetOffset() {
+	   return (Double) lightSheetOffset_.getValue();
+   }
+   
+   public void setSideLightSheetOffset(double offset) {
+	   lightSheetOffset_.setValue((Double) offset);
    }
 
 }
