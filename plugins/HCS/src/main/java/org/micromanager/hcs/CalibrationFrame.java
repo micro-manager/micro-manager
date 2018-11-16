@@ -49,6 +49,7 @@ import mmcorej.DeviceType;
 import net.miginfocom.swing.MigLayout;
 
 import org.micromanager.Studio;
+import org.micromanager.propertymap.MutablePropertyMapView;
 
 
 /**
@@ -61,11 +62,15 @@ import org.micromanager.Studio;
  */
 public class CalibrationFrame extends JFrame {
    private final String NOTSET = "Not Set Yet";
+   private final String CALIBRATIONMETHOD = "CalibrationMethod";
+   private final String CALIBRATIONLEGACY = "Legacy";
+   private final String CALIBRATIONRECOMMENDED = "Recommended";
    
    public CalibrationFrame(final Studio studio, final SBSPlate plate, 
            final SiteGenerator siteGenerator) {
       
       final JFrame ourFrame = this;
+      MutablePropertyMapView settings = studio.profile().getSettings(this.getClass());
       super.setTitle("Calibrate XY Stage");
       
       JPanel contents = new JPanel(
@@ -148,20 +153,22 @@ public class CalibrationFrame extends JFrame {
       methodPanel.add(methodLabel, "span 2, wrap");
       methodPanel.add(methodCombo, "span 2");
       methodLabel.setText("Calibration Method");
-      methodCombo.setModel(new DefaultComboBoxModel(new String[] {"Legacy","Recommended"}));
+      methodCombo.setModel(new DefaultComboBoxModel(new String[] 
+               {CALIBRATIONLEGACY,CALIBRATIONRECOMMENDED}));
       methodCombo.setToolTipText(
               "<html>"
-                      + "Legacy: The XY stage adapter's coordinates will be reset. <br>"
+                      + CALIBRATIONLEGACY + ": The XY stage adapter's coordinates will be reset. <br>"
                       + "Positions saved during this session of MicroManager will not <br>"
                       + "be valid in a new session unless the same calibration is run again. <br>"
                       + "Calibration will need to be performed every time this plugin is used.<br><br>"
-                      + "Recommended: Positions will be saved in terms of the default XY <br>"
+                      + CALIBRATIONRECOMMENDED + ": Positions will be saved in terms of the default XY <br>"
                       + "coordinate system. Calibration will be saved and will only need to be <br>"
                       + "repeated if there is a change in XY stage hardware. Users of stages with <br>"
                       + "no homing functionality will need to ensure that their coordinate system <br>"
                       + "is consistent between sessions."
                       + "</html>");
       contents.add(methodPanel, "span 2");
+      methodCombo.setSelectedItem(settings.getString(CALIBRATIONMETHOD, CALIBRATIONLEGACY));
       
       JButton cancelButton = new JButton ("Cancel");
       cancelButton.addActionListener(new ActionListener() {
@@ -233,7 +240,7 @@ public class CalibrationFrame extends JFrame {
                         plate.getFirstWellY() + (rowNr  - 1) * plate.getWellSpacingY());
                 Point2D.Double offset;
                 Boolean saveCalibration;
-                if ("Recommended".equals(methodCombo.getSelectedItem())) { 
+                if (CALIBRATIONRECOMMENDED.equals(methodCombo.getSelectedItem())) { 
                     double x = studio.core().getXPosition();
                     double y = studio.core().getYPosition();
                     offset = new Point2D.Double(x - pt.getX(), y - pt.getY());
@@ -247,6 +254,7 @@ public class CalibrationFrame extends JFrame {
                     JOptionPane.showMessageDialog(ourFrame, 
                        "XY Stage set at position: " + pt.x + "," + pt.y);
                 }
+                settings.putString(CALIBRATIONMETHOD, (String) methodCombo.getSelectedItem());
                 siteGenerator.finishCalibration(offset, saveCalibration);
             } catch (Exception ex) {
                studio.logs().showError(ex, "Failed to reset the stage's coordinates");
