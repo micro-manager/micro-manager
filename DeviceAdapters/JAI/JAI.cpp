@@ -534,18 +534,47 @@ void JAICamera::SetExposure(double expMs)
 	PvResult pvr = genParams->SetFloatValue("ExposureTime", expMs * 1000);
 }
 
-int JAICamera::SetROI(unsigned /*x*/, unsigned /*y*/, unsigned /*xSize*/, unsigned /*ySize*/)
+int JAICamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-	// TODO:
-   return DEVICE_OK;
+   PvResult pvr = genParams->SetIntegerValue(g_pv_OffsetX, (int64_t)x);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+   pvr = genParams->SetIntegerValue(g_pv_OffsetY, (int64_t)y);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+   pvr = genParams->SetIntegerValue(g_pv_Width, (int64_t)xSize);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+   pvr = genParams->SetIntegerValue(g_pv_Height, (int64_t)ySize);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+
+   return ResizeImageBuffer();
 }
 
 int JAICamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-	x = 0;
-	y = 0;
+   int64_t offsetX, offsetY, w, h;
+   PvResult pvr = genParams->GetIntegerValue(g_pv_OffsetX, offsetX);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+   pvr = genParams->GetIntegerValue(g_pv_OffsetY, offsetY);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+   pvr = genParams->GetIntegerValue(g_pv_Width, w);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+   pvr = genParams->GetIntegerValue(g_pv_Height, h);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+
+	x = (unsigned)offsetX;
+	y = (unsigned)offsetY;
 	xSize = img.Width();
 	ySize = img.Height();
+   assert(xSize == w);
+   assert(ySize == h);
+
 	return DEVICE_OK;
 }
 
