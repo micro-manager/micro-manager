@@ -511,7 +511,7 @@ int Universal::Initialize()
    piint numDemos = 0;
    PicamCameraID *demoID = NULL;
    //Only 4 cameras in demolist... more can be added.  Also add more sn's too
-   piint demoList[] = { PicamModel_Pixis1024B, PicamModel_Nirvana640, PicamModel_ProEM1024B, PicamModel_Pylonir102417  };
+   piint demoList[] = { PicamModel_Pixis1024B, PicamModel_Nirvana640, PicamModel_ProEM1024B, PicamModel_NirvanaLN640  };
    const pichar *sn[] = { "1000000001", "1000000002", "1000000003" , "1000000004" };
 
    Picam_GetVersion(&major, &minor, &distribution, &released );
@@ -1942,8 +1942,10 @@ int Universal::buildSpdTable()
    piint         nPortNum=0;
    pibln         settable;
 
+
    for (int portIndex = 0; portIndex < nPortMax; portIndex++){
       const pichar* adc_string;
+
 
       if (port_capable){
          nPortNum=(piint)(port_capable->values_array[portIndex]);
@@ -1964,6 +1966,7 @@ int Universal::buildSpdTable()
                &dDefaultAdcSpeed);
       }
 
+
       /* Get Speed table */
       Picam_GetParameterCollectionConstraint(
             hPICAM_, PicamParameter_AdcSpeed,
@@ -1978,20 +1981,29 @@ int Universal::buildSpdTable()
          spdEntry.spdIndex = spdIndex;
 
 
+
          /* This speed is default */
          if (nPortNum==nDefaultPort){
             if ((spdEntry.adcRate>dDefaultAdcSpeed*0.9) && (spdEntry.adcRate<dDefaultAdcSpeed*1.1))
                nDefaultADC=spdIndex;
          }
 
-         Picam_GetParameterCollectionConstraint(
+         if (PicamError_None==Picam_GetParameterCollectionConstraint(
                hPICAM_, PicamParameter_AdcAnalogGain,
                PicamConstraintCategory_Capable,
-               &gain_capable);
-
-         spdEntry.adcRate= speed_capable->values_array[spdIndex];
-         spdEntry.gainMin = (piint)(gain_capable->values_array[0]);
-         spdEntry.gainMax = (piint)(gain_capable->values_array[gain_capable->values_count-1]);
+               &gain_capable))
+		{
+	         spdEntry.adcRate= speed_capable->values_array[spdIndex];
+	         spdEntry.gainMin = (piint)(gain_capable->values_array[0]);
+	         spdEntry.gainMax = (piint)(gain_capable->values_array[gain_capable->values_count-1]);
+	    }
+	    else
+	    {
+			//	There are no gain changeable camera (cf. NirVanaLN640)
+	         spdEntry.adcRate= speed_capable->values_array[spdIndex];
+	         spdEntry.gainMin = 1;
+	         spdEntry.gainMax = 1;
+		}
 
          Picam_DestroyCollectionConstraints(gain_capable);
 
@@ -2058,6 +2070,7 @@ int Universal::buildSpdTable()
          Picam_DestroyString( adc_string );
       Picam_DestroyCollectionConstraints(speed_capable);
    }
+
    if (port_capable)
       Picam_DestroyCollectionConstraints(port_capable);
 
