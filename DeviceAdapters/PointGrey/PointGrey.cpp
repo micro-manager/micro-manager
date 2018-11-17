@@ -104,9 +104,9 @@ const std::string g_VideoModes [g_NumVideoModes] = { "160x120 YUV444", "320x240 
  */
 void PGCallback(Image* pImage,  const void* pCallbackData)
 {
-  const PointGrey* pg = static_cast<const PointGrey*> (pCallbackData);
-  pg->InsertImage(pImage);
-  
+  const PointGrey* pg = static_cast<const PointGrey*>(pCallbackData);
+  // No idea why pCallbackData is declared const
+  const_cast<PointGrey*>(pg)->InsertImage(pImage);
 }
 
 
@@ -1289,7 +1289,7 @@ int PointGrey::StartSequenceAcquisition(long numImages, double /* interval_ms */
 /***********************************************************************
  * Inserts Image and MetaData into MMCore circular Buffer
  */
-int PointGrey::InsertImage(Image* pImg) const
+int PointGrey::InsertImage(Image* pImg)
 {
 	int ret = DEVICE_OK;
 
@@ -2332,31 +2332,22 @@ int PointGrey::PowerCameraOn(const unsigned int timeoutMs)
    return DEVICE_OK;
 }
 
-const unsigned char* PointGrey::RGBToRGBA(const unsigned char* img) const
+const unsigned char* PointGrey::RGBToRGBA(const unsigned char* img)
 {
-  
-   const unsigned long newImageSize = GetImageWidth() * 
-                                      GetImageHeight() * 
+   const unsigned long newImageSize = GetImageWidth() *
+                                      GetImageHeight() *
                                       GetImageBytesPerPixel();
    if (newImageSize > bufSize_)
    {
-      if (imgBuf_ != 0) 
-      {
-         delete[](imgBuf_);
-      }
-      unsigned long* b;
-      b = (unsigned long*) &bufSize_;
-      *b = GetImageWidth() * GetImageHeight() * GetImageBytesPerPixel();
-      unsigned char** c;
-      c = (unsigned char**) &imgBuf_;
-      *c = new unsigned char[bufSize_];
+      delete[](imgBuf_);
+	  bufSize_ = newImageSize;
+	  imgBuf_ = new unsigned char[bufSize_];
    }
-   // go from RGB to ABGR, there may be a more efficient way
-   for (unsigned long i = 0; i < GetImageWidth() * GetImageHeight(); i++) 
+   for (unsigned long i = 0; i < GetImageWidth() * GetImageHeight(); i++)
    {
-      memcpy ( (void*) (imgBuf_ +  (4 * i) ), img + (i * 3) + 2, 1) ;
-      memcpy ( (void*) (imgBuf_ +  (4 * i) + 1), img + (i * 3) + 1, 1) ;
-      memcpy ( (void*) (imgBuf_ +  (4 * i) + 2), img + (i * 3), 1) ;
+      imgBuf_[4 * i + 0] = img[3 * i + 2];
+      imgBuf_[4 * i + 1] = img[3 * i + 1];
+      imgBuf_[4 * i + 2] = img[3 * i + 0];
    }
    return imgBuf_;
 }
