@@ -114,7 +114,7 @@ public:
    void RestartLiveAcquisition();
 
 private:
-   enum CameraId { CIDNeo = 0, CIDZyla = 1, CIDiStar=2 };
+   enum CameraId { CIDNeo = 0, CIDZyla = 1, CIDiStar=2, CIDCham = 3 };
    std::wstring currentSoftwareVersion_;
    std::wstring PerformReleaseVersionCheck();
    double CalculateDefaultExposure(std::wstring & interfaceType);

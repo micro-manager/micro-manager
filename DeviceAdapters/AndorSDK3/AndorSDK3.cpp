@@ -260,10 +260,14 @@ CAndorSDK3Camera::CameraId CAndorSDK3Camera::DetermineCameraId(wstring & cameraS
       {
          id = CIDZyla;
       }
-	  else if (0 == cameraSerialCheck.compare(L"ISC-"))
-	  {
-		  id = CIDiStar;
-	  }
+      else if (0 == cameraSerialCheck.compare(L"ISC-"))
+      {
+        id = CIDiStar;
+      }
+      else if (0 == cameraSerialCheck.compare(L"CSC-"))
+      {
+        id = CIDCham;
+      }
    }
    catch (const std::out_of_range&)
    {
@@ -294,7 +298,14 @@ std::string CAndorSDK3Camera::GenerateCameraName(unsigned cameraID, wstring & ca
    {
 	   s_cameraName = "iStar-sCMOS ";
    }
-   
+   else if (CIDCham == cameraID)
+   {
+     auto cameraName = cameraDevice->GetString(L"CameraName");
+     std::wstring temp_ws = cameraName->Get();
+     cameraDevice->Release(cameraName);
+     s_cameraName = string(temp_ws.begin(), temp_ws.end());
+   }
+
    return s_cameraName;
 }
 
@@ -315,8 +326,20 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
       e_feature->Set(L"Rolling");
       cameraDevice->Release(e_feature);
       e_feature = NULL;
+      e_feature = cameraDevice->GetEnum(L"PixelEncoding");
+      if (e_feature->IsWritable()) {
+        e_feature->Set(L"Mono16");
+      }
+      cameraDevice->Release(e_feature);
+      e_feature = NULL;
       e_feature = cameraDevice->GetEnum(L"SimplePreAmpGainControl");
-      e_feature->Set(L"11-bit (low noise)");
+      if (e_feature->IsImplemented() && e_feature->IsWritable()) {
+        for (int i = 0; i < e_feature->Count(); ++i) {
+          if (wstring::npos != e_feature->GetStringByIndex(i).find(L"16-bit")) {
+            e_feature->Set(i);
+          }
+        }
+      }
       cameraDevice->Release(e_feature);
       e_feature = NULL;
       //Image Size
@@ -338,7 +361,12 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
       i_feature = NULL;
       //more enums - readout rate and trigger mode
       e_feature = cameraDevice->GetEnum(L"PixelReadoutRate");
-      e_feature->Set(L"280 MHz");
+      //Last Index is normally the slowest
+      auto lastIndex = e_feature->Count() - 1;
+      if (e_feature->IsWritable() && e_feature->IsIndexImplemented(lastIndex) && e_feature->IsIndexAvailable(lastIndex)) {
+        auto ws_readoutRate = e_feature->GetStringByIndex(lastIndex);
+        e_feature->Set(ws_readoutRate.c_str());
+      }
       cameraDevice->Release(e_feature);
       e_feature = NULL;
       e_feature = cameraDevice->GetEnum(L"TriggerMode");
@@ -422,7 +450,7 @@ int CAndorSDK3Camera::Initialize()
             IString * cameraFamilyString = cameraDevice->GetString(L"CameraFamily");
             std::wstring temp_ws = cameraFamilyString->Get();
             cameraDevice->Release(cameraFamilyString);
-            if (temp_ws.compare(L"Andor sCMOS") == 0)
+            if (temp_ws == L"Andor sCMOS")
             {
                b_cameraPresent_ = true;
                DEVICE_IN_USE[i] = true;
@@ -433,7 +461,7 @@ int CAndorSDK3Camera::Initialize()
             {
                deviceManager->CloseDevice(cameraDevice);
                cameraDevice = NULL;
-               if (temp_ws.compare(L"Andor Apogee") == 0) {
+               if (temp_ws == L"Andor Apogee") {
                   return DEVICE_NOT_SUPPORTED;
                }
             }
@@ -508,7 +536,8 @@ int CAndorSDK3Camera::Initialize()
    
    SetDefaultExpsoure(CalculateDefaultExposure(temp_ws));
 
-   string s_cameraName = GenerateCameraName(DetermineCameraId(cameraSerialCheck), cameraModelCheck) + p_cameraInfoString;
+   auto currentCameraId = DetermineCameraId(cameraSerialCheck);
+   string s_cameraName = GenerateCameraName(currentCameraId, cameraModelCheck) + p_cameraInfoString;
    ret = CreateProperty(MM::g_Keyword_CameraName, s_cameraName.c_str(), MM::String, true);
    assert(DEVICE_OK == ret);
 
@@ -553,11 +582,11 @@ int CAndorSDK3Camera::Initialize()
 
    pixelReadoutRate_property = new TEnumProperty(TAndorSDK3Strings::PIXEL_READOUT_RATE,
                                                  cameraDevice->GetEnum(L"PixelReadoutRateMapper"),
-                                                 this, thd_, snapShotController_, false, false);
+                                                 this, thd_, snapShotController_, CIDCham==currentCameraId, false);
 
    temperatureControl_property = new TEnumProperty(TAndorSDK3Strings::TEMPERATURE_CONTROL,
                                                    cameraDevice->GetEnum(L"TemperatureControl"), this, thd_, 
-                                                   snapShotController_, CIDZyla==DetermineCameraId(cameraSerialCheck), false);
+                                                   snapShotController_, CIDZyla==currentCameraId, false);
 
    accumulationLength_property = new TIntegerProperty(TAndorSDK3Strings::ACCUMULATE_COUNT,
                                                       cameraDevice->GetInteger(L"AccumulateCount"), this, thd_, 
