@@ -505,24 +505,6 @@ int CPiezo::Home()
 
 bool CPiezo::Busy()
 {
-//   ostringstream command; command.str("");
-//   if (firmwareVersion_ > 2.7) // can use more accurate RS <axis>?
-//   {
-//      command << "RS " << axisLetter_ << "?";
-//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-//         return false;
-//      return (hub_->LastSerialAnswer().at(3) == 'B');
-//   }
-//   else  // use LSB of the status byte as approximate status, not quite equivalent
-//   {
-//      command << "RS " << axisLetter_;
-//      ret_ = hub_->QueryCommandVerify(command.str(),":A");
-//      if (ret_ != DEVICE_OK)  // say we aren't busy if we can't communicate
-//         return false;
-//      int i = (int) (hub_->ParseAnswerAfterPosition(2));
-//      return (i & (int)BIT0);  // mask everything but LSB
-//   }
    return false;
 }
 
