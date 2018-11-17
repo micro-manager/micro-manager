@@ -105,13 +105,16 @@ int ASIHub::QueryCommandUnterminatedResponse(const char *command, const long tim
    serialCommand_ = command;
    char rcvBuf[MM::MaxStrLength];
    memset(rcvBuf, 0, MM::MaxStrLength);
+   unsigned long total_read = 0;
    unsigned long read = 0;
    int ret = DEVICE_OK;
    MM::TimeoutMs timerOut(GetCurrentMMTime(), timeoutMs);
    serialAnswer_ = "";
-   while (ret == DEVICE_OK && read < reply_length && !timerOut.expired(GetCurrentMMTime()))
+
+   while (ret == DEVICE_OK && total_read < reply_length && !timerOut.expired(GetCurrentMMTime()))
    {
       ret = ReadFromComPort(port_.c_str(), (unsigned char*)rcvBuf, MM::MaxStrLength, read);
+	  total_read += read;
    }
    if (read > 0)
    {
