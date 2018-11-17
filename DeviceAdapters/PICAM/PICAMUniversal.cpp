@@ -511,7 +511,7 @@ int Universal::Initialize()
    piint numDemos = 0;
    PicamCameraID *demoID = NULL;
    //Only 4 cameras in demolist... more can be added.  Also add more sn's too
-   piint demoList[] = { PicamModel_Pixis1024B, PicamModel_Nirvana640, PicamModel_ProEM1024B, PicamModel_NirvanaLN640  };
+   piint demoList[] = { PicamModel_Pixis1024B, PicamModel_Nirvana640, PicamModel_ProEM1024B, PicamModel_Pylonir102417  };
    const pichar *sn[] = { "1000000001", "1000000002", "1000000003" , "1000000004" };
 
    Picam_GetVersion(&major, &minor, &distribution, &released );
