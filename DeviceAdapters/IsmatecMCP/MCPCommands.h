@@ -36,6 +36,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 
 
@@ -67,7 +68,7 @@ protected:
          if (c < '0' || c > '9')
             return ERR_UNEXPECTED_RESPONSE;
       }
-      result = atoi(s.c_str());
+      result = std::atoi(s.c_str());
       return DEVICE_OK;
    }
 
