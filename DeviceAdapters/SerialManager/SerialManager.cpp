@@ -369,7 +369,7 @@ SerialPort::SerialPort(const char* portName) :
 #ifdef WIN32
    ,
    dtrEnable_(false),
-   fastUSB2Serial_(true)
+   fastUSB2Serial_(false)
 #endif
 {
 
