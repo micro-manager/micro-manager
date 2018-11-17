@@ -112,9 +112,9 @@ void loop() {
             // order:  row, column, 0 or 1
             if (waitForSerial(timeOut_)) {
                byte row = Serial.read();
-               if (waitForSerial(timeOut_)) {
+               if (row >= 0 && row < NUMROWS && waitForSerial(timeOut_)) {
                   byte column = Serial.read();
-                  if (waitForSerial(timeOut_)) {
+                  if (column >= 0 && column < NUMCOLUMNS && waitForSerial(timeOut_)) {
                      byte state = Serial.read();
                      pixelState_[row][column] = (state == 0);
                   }
@@ -197,11 +197,27 @@ void loop() {
             Serial.println("Pixels Off");
             break;
 
+         // sets all pixels on or off
+         // second key needs to be typed within 3 seconds
+         case 97:  // ascii 'a'
+            if (waitForSerial(3000)) {
+               bool state = Serial.read() == 49;
+               for (int row = 0; row < NUMROWS; row++) {
+                  for (int column = 0; column < NUMCOLUMNS; column++) {
+                     pixelState_[row][column] = state;
+                  }
+               }
+               Serial.print("Switched all pixels ");
+               if (state) Serial.println("on");
+               else Serial.println("off");
+            }
+            break;
+
+
          // sets the desired color for all pixels:  'cr" sets all red, 'cg' green, 'cb' blue
          // second key needs to be types in 3 seconds
          case 99:  // ascii 'c'
-            if (waitForSerial(3000)) {
-               int color = Serial.read();
+            if (waitForSerial(3000)) { int color = Serial.read();
                byte red = 0; byte green = 0; byte blue = 0;
                if (color == 114) red = 255;  // ascii 'r'
                if (color == 103) green = 255; // ascii 'g'
@@ -217,6 +233,8 @@ void loop() {
             }
             break;
 
+
+
             // sets a given pixel on or off
             // p - row - columns - 0/1
             // example:  pb21  switches pixel B2 on
@@ -224,9 +242,9 @@ void loop() {
             case 112:  // ascii 'p'
             if (waitForSerial(3000)) {
                int row = Serial.read() - 97;
-               if (waitForSerial(3000)) {
+               if (row >= 0 && row < NUMROWS && waitForSerial(3000)) {
                   int column = Serial.read() - 49;  // TODO: allow more than 9 columns...
-                  if (waitForSerial(3000)) {
+                  if (column >= 0 && column < NUMCOLUMNS && waitForSerial(3000)) {
                      bool state = Serial.read() == 49;
                      pixelState_[row][column] = state;
                      on();
