@@ -65,6 +65,9 @@ static const char* g_HardwareDuration = "HardwareBulb";
 static const char* g_Positive = "Positive";
 static const char* g_Negative = "Negative";
 
+static const char* g_pv_BinH = "BinningHorizontal";
+static const char* g_pv_BinV = "BinningVertical";
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
