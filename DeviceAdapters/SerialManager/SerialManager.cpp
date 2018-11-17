@@ -365,8 +365,12 @@ SerialPort::SerialPort(const char* portName) :
    pService_(0),
    pPort_(0),
    pThread_(0),
-   verbose_(true),
-   dtrEnable_(true)
+   verbose_(true)
+#ifdef WIN32
+   ,
+   dtrEnable_(false),
+   fastUSB2Serial_(true)
+#endif
 {
 
    portName_ = portName;
@@ -448,6 +452,14 @@ SerialPort::SerialPort(const char* portName) :
 //   AddAllowedValue("DTR Control", "Enable");
 //   AddAllowedValue("DTR Control", "Disable");
 //#endif
+
+#ifdef WIN32
+   CPropertyAction* pActFastUSB2Serial = new CPropertyAction(this, &SerialPort::OnFastUSB2Serial);
+   ret = CreateProperty("Fast USB to Serial", "Enable", MM::String, false, pActFastUSB2Serial, true);
+   assert (ret == DEVICE_OK);
+   AddAllowedValue("Fast USB to Serial", "Enable");
+   AddAllowedValue("Fast USB to Serial", "Disable");
+#endif
 
    // answer timeout
    CPropertyAction* pActTimeout = new CPropertyAction (this, &SerialPort::OnTimeout);
@@ -641,9 +653,18 @@ int SerialPort::OpenWin32SerialPort(const std::string& portName,
 
    COMMTIMEOUTS timeouts;
    memset(&timeouts, 0, sizeof(timeouts));
-   timeouts.ReadIntervalTimeout = MAXDWORD;
-   timeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
-   timeouts.WriteTotalTimeoutConstant = 1;
+   if (fastUSB2Serial_) 
+   {
+      timeouts.ReadIntervalTimeout = MAXDWORD;
+      timeouts.ReadTotalTimeoutMultiplier = MAXDWORD;
+      timeouts.WriteTotalTimeoutConstant = 1;
+      LogMessage("Setting fast USB to Serial settings");
+   } 
+   else
+   {
+      timeouts.ReadIntervalTimeout = 1;
+      LogMessage("Setting standard USB to Serial settings");
+   }
    if (!SetCommTimeouts(portHandle, &timeouts))
    {
       DWORD err = GetLastError();
@@ -1018,28 +1039,6 @@ int SerialPort::OnHandshaking(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int SerialPort::OnDTR(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
-   {
-      if (dtrEnable_)
-         pProp->Set("Enable");
-      else
-         pProp->Set("Disable");
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      std::string answer;
-      pProp->Get(answer);
-      if (answer == "Enable")
-         dtrEnable_ = true;
-      else
-         dtrEnable_ = false;
-   }
-
-   return DEVICE_OK;
-}
-
 
 int SerialPort::OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -1089,6 +1088,56 @@ int SerialPort::OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eA
 
    return DEVICE_OK;
 }
+
+
+#ifdef WIN32
+
+int SerialPort::OnDTR(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (dtrEnable_)
+         pProp->Set("Enable");
+      else
+         pProp->Set("Disable");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string answer;
+      pProp->Get(answer);
+      if (answer == "Enable")
+         dtrEnable_ = true;
+      else
+         dtrEnable_ = false;
+   }
+
+   return DEVICE_OK;
+}
+
+
+int SerialPort::OnFastUSB2Serial(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (fastUSB2Serial_)
+         pProp->Set("Enable");
+      else
+         pProp->Set("Disable");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string answer;
+      pProp->Get(answer);
+      if (answer == "Enable")
+         fastUSB2Serial_ = true;
+      else
+         fastUSB2Serial_ = false;
+   }
+
+   return DEVICE_OK;
+}
+
+#endif
 
 
 // Helper functions for message logging
