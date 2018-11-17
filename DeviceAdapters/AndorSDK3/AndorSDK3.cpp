@@ -300,7 +300,7 @@ std::string CAndorSDK3Camera::GenerateCameraName(unsigned cameraID, wstring & ca
    }
    else if (CIDCham == cameraID)
    {
-     auto cameraName = cameraDevice->GetString(L"CameraName");
+     IString * cameraName = cameraDevice->GetString(L"CameraName");
      std::wstring temp_ws = cameraName->Get();
      cameraDevice->Release(cameraName);
      s_cameraName = string(temp_ws.begin(), temp_ws.end());
@@ -362,9 +362,9 @@ void CAndorSDK3Camera::InitialiseSDK3Defaults()
       //more enums - readout rate and trigger mode
       e_feature = cameraDevice->GetEnum(L"PixelReadoutRate");
       //Last Index is normally the slowest
-      auto lastIndex = e_feature->Count() - 1;
+      int lastIndex = e_feature->Count() - 1;
       if (e_feature->IsWritable() && e_feature->IsIndexImplemented(lastIndex) && e_feature->IsIndexAvailable(lastIndex)) {
-        auto ws_readoutRate = e_feature->GetStringByIndex(lastIndex);
+        wstring ws_readoutRate = e_feature->GetStringByIndex(lastIndex);
         e_feature->Set(ws_readoutRate.c_str());
       }
       cameraDevice->Release(e_feature);
@@ -536,7 +536,7 @@ int CAndorSDK3Camera::Initialize()
    
    SetDefaultExpsoure(CalculateDefaultExposure(temp_ws));
 
-   auto currentCameraId = DetermineCameraId(cameraSerialCheck);
+   CameraId currentCameraId = DetermineCameraId(cameraSerialCheck);
    string s_cameraName = GenerateCameraName(currentCameraId, cameraModelCheck) + p_cameraInfoString;
    ret = CreateProperty(MM::g_Keyword_CameraName, s_cameraName.c_str(), MM::String, true);
    assert(DEVICE_OK == ret);
