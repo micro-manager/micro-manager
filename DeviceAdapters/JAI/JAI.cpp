@@ -536,16 +536,41 @@ void JAICamera::SetExposure(double expMs)
 
 int JAICamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   PvResult pvr = genParams->SetIntegerValue(g_pv_OffsetX, (int64_t)x);
+	// obtain constraints on ROI parameters
+	PvGenInteger* pvX = genParams->GetInteger(g_pv_OffsetX);
+	int64_t xIncr;
+	pvX->GetIncrement(xIncr);
+
+	PvGenInteger* pvY = genParams->GetInteger(g_pv_OffsetY);
+	int64_t yIncr;
+	pvY->GetIncrement(yIncr);
+
+	PvGenInteger* pvW = genParams->GetInteger(g_pv_Width);
+	int64_t wIncr;
+	pvW->GetIncrement(wIncr);
+
+	PvGenInteger* pvH = genParams->GetInteger(g_pv_Height);
+	int64_t hIncr;
+	pvH->GetIncrement(hIncr);
+
+	// apply Roi with modifications based on the constraints
+	int64_t newXSize = xSize / wIncr * wIncr;
+   PvResult pvr = genParams->SetIntegerValue(g_pv_Width, newXSize);
    if (pvr.IsFailure())
       return processPvError(pvr);
-   pvr = genParams->SetIntegerValue(g_pv_OffsetY, (int64_t)y);
+
+	int64_t newYSize = ySize / hIncr * hIncr;
+   pvr = genParams->SetIntegerValue(g_pv_Height, newYSize);
    if (pvr.IsFailure())
       return processPvError(pvr);
-   pvr = genParams->SetIntegerValue(g_pv_Width, (int64_t)xSize);
+
+	int64_t newX =  x / xIncr * xIncr;
+   pvr = genParams->SetIntegerValue(g_pv_OffsetX, newX);
    if (pvr.IsFailure())
       return processPvError(pvr);
-   pvr = genParams->SetIntegerValue(g_pv_Height, (int64_t)ySize);
+
+	int64_t newY = y / yIncr * yIncr;
+   pvr = genParams->SetIntegerValue(g_pv_OffsetY, newY);
    if (pvr.IsFailure())
       return processPvError(pvr);
 
@@ -580,9 +605,33 @@ int JAICamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize
 
 int JAICamera::ClearROI()
 {
-   // reset roi
-	// TODO:
-	return DEVICE_OK;
+	int64_t wmax, hmax;
+   PvResult pvr = genParams->GetIntegerValue("WidthMax", wmax);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+
+   pvr = genParams->GetIntegerValue("HeightMax", hmax);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+
+	// apply max roi
+   pvr = genParams->SetIntegerValue(g_pv_OffsetX, 0);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+
+   pvr = genParams->SetIntegerValue(g_pv_OffsetY, 0);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+
+   pvr = genParams->SetIntegerValue(g_pv_Width, wmax);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+
+   pvr = genParams->SetIntegerValue(g_pv_Height, hmax);
+   if (pvr.IsFailure())
+      return processPvError(pvr);
+
+	return ResizeImageBuffer();
 }
 
 int JAICamera::PrepareSequenceAcqusition()
