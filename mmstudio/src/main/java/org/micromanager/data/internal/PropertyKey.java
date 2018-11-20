@@ -233,8 +233,13 @@ public enum PropertyKey {
          // TODO: investigate why the acquisition engine inserts an empty string 
          // fix it, then revert the two ifs below
          if (jo.has("Core-Camera")) {
-            dest.putString(key(), jo.get("Core-Camera").getAsString());
-            return true;
+            JsonElement je = jo.get("Core-Camera");
+            try {
+               dest.putString(key(), je.getAsString());
+               return true;
+            } catch (UnsupportedOperationException uoe) {
+                // we get this with data saved in 2.0-beta
+            }
          }
          if (super.extractFromGsonObject(jo, dest)) {
             return true;
