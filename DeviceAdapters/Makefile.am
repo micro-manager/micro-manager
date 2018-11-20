@@ -167,6 +167,7 @@ SUBDIRS = \
 	ThorlabsFilterWheel \
 	ThorlabsSC10 \
 	Tofra \
+	Toptica_iBeamSmartCW \
 	TriggerScope \
 	UserDefinedSerial \
 	Utilities \
