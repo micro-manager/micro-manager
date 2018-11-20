@@ -2348,7 +2348,7 @@ int CPCOCam::GetSignalNum(std::string szSigName)
 }
 
 char szSelectSignalTiming[4][40] = {"Show time of 'First Line'", "Show common time of 'All Lines'", "Show time of 'Last Line'", "Show overall time of 'All Lines'"};
-
+#define HWIOBUFLEN 150
 int CPCOCam::OnSelectSignal(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   if(m_pCamera->m_iCamClass != 3)// pco.camera
@@ -2419,14 +2419,26 @@ int CPCOCam::OnSelectSignalTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
   if(m_pCamera->m_iCamClass != 3)// pco.camera
     return DEVICE_OK;
 
+  long isc = 0;//GetSignalNum(pProp->GetName());
+  string szval;
+  pProp->Get(szval);
+  MM::Property *pprophelper = (MM::Property *)pProp;
+  if(!pprophelper->GetData(szval.c_str(), isc))
+    return DEVICE_OK;
+
+  isc /= 0x100;
+  isc--;
+  
+  int iselectedsignal = m_pCamera->m_strCamera.strTiming.strSignal[isc].wSelected;
+  int iselectedpar = m_pCamera->m_strCamera.strTiming.strSignal[isc].dwParameter[iselectedsignal];
   if(eAct == MM::BeforeGet)
   {
-    int iselectedpar = m_pCamera->m_strCamera.strTiming.strSignal[3].dwParameter[0];
-    int iselectedsignal = m_pCamera->m_strCamera.strTiming.strSignal[3].wSelected;
-    if(iselectedsignal != 0)
-      pProp->Set("Not available");
-    else
+
+
+    if(m_pCamera->m_strCamera.strTiming.strSignal[isc].dwSignalFunctionality[iselectedsignal] == 0x07)
       pProp->Set(szSelectSignalTiming[iselectedpar - 1]);
+    else
+      pProp->Set("Not available");
   }
   else if(eAct == MM::AfterSet)
   {
@@ -2440,9 +2452,9 @@ int CPCOCam::OnSelectSignalTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
       szsignal = szSelectSignalTiming[i - 1];
       if(szsignal == szselectedsignal)
       {
-        if(m_pCamera->m_strCamera.strTiming.strSignal[3].dwParameter[0] != (DWORD) i)
+        if(m_pCamera->m_strCamera.strTiming.strSignal[isc].dwParameter[iselectedsignal] != (DWORD) i)
         {
-          m_pCamera->m_strCamera.strTiming.strSignal[3].dwParameter[0] = (DWORD) i;
+          m_pCamera->m_strCamera.strTiming.strSignal[isc].dwParameter[iselectedsignal] = (DWORD) i;
           SetupCamera(true, false);
         }
         break;
@@ -2632,7 +2644,7 @@ int CPCOCam::OnSelectSignalPolarity(MM::PropertyBase* pProp, MM::ActionType eAct
   return DEVICE_OK;
 }
 
-#define HWIOBUFLEN 150
+
 int CPCOCam::InitHWIO()
 {
   CPropertyAction* pAct;
@@ -2701,29 +2713,45 @@ int CPCOCam::InitHWIO()
       int iflag = 1 << isignal;
       if(iflag & m_pCamera->m_strCamera.strSensor.strSignalDesc.strSingeSignalDesc[isc].wSignalDefinitions)
       {
-        if(m_pCamera->m_strCamera.strTiming.strSignal[isc].dwSignalFunctionality[isignal] == 0x07)
+        if((m_pCamera->m_strCamera.strTiming.strSignal[isc].dwSignalFunctionality[0] == 0x07) ||
+          (m_pCamera->m_strCamera.strTiming.strSignal[isc].dwSignalFunctionality[1] == 0x07) ||
+          (m_pCamera->m_strCamera.strTiming.strSignal[isc].dwSignalFunctionality[2] == 0x07) ||
+          (m_pCamera->m_strCamera.strTiming.strSignal[isc].dwSignalFunctionality[3] == 0x07))
         {
-          // We have got timing output settings
-
+          int isignaltextindex = m_pCamera->m_strCamera.strTiming.strSignal[isc].dwParameter[isignal] - 1;
           sprintf_s(csh, HWIOBUFLEN, "%s Timing", szSignalName.c_str());
 
           pAct = new CPropertyAction(this, &CPCOCam::OnSelectSignalTiming);
-          nRet = CreateProperty(csh, szSelectSignalTiming[m_pCamera->m_strCamera.strTiming.strSignal[3].dwParameter[0] - 1], MM::String, false, pAct);
+          if((isignaltextindex >= 0) && (isignaltextindex <= 3))
+            nRet = CreateProperty(csh, szSelectSignalTiming[isignaltextindex], MM::String, false, pAct);
+          else
+            nRet = CreateProperty(csh, "Not available", MM::String, false, pAct);
           if(nRet != DEVICE_OK)
             return nRet;
 
-          nRet = AddAllowedValue(csh, szSelectSignalTiming[0], 0 + ivalue_helper);
-          if(nRet != DEVICE_OK)
-            return nRet;
-          nRet = AddAllowedValue(csh, szSelectSignalTiming[1], 1 + ivalue_helper);
-          if(nRet != DEVICE_OK)
-            return nRet;
-          nRet = AddAllowedValue(csh, szSelectSignalTiming[2], 2 + ivalue_helper);
-          if(nRet != DEVICE_OK)
-            return nRet;
-          nRet = AddAllowedValue(csh, szSelectSignalTiming[3], 3 + ivalue_helper);
-          if(nRet != DEVICE_OK)
-            return nRet;
+          if(m_pCamera->m_strCamera.strTiming.strSignal[isc].dwSignalFunctionality[isignal] == 0x07)
+          {
+            // We have got timing output settings
+
+            nRet = AddAllowedValue(csh, szSelectSignalTiming[0], 0 + ivalue_helper);
+            if(nRet != DEVICE_OK)
+              return nRet;
+            nRet = AddAllowedValue(csh, szSelectSignalTiming[1], 1 + ivalue_helper);
+            if(nRet != DEVICE_OK)
+              return nRet;
+            nRet = AddAllowedValue(csh, szSelectSignalTiming[2], 2 + ivalue_helper);
+            if(nRet != DEVICE_OK)
+              return nRet;
+            nRet = AddAllowedValue(csh, szSelectSignalTiming[3], 3 + ivalue_helper);
+            if(nRet != DEVICE_OK)
+              return nRet;
+          }
+          else
+          {
+            nRet = AddAllowedValue(csh, "Not available", ivalue_helper);
+            if(nRet != DEVICE_OK)
+              return nRet;
+          }
         }
       }
 
@@ -3904,7 +3932,7 @@ int CPCOCam::SnapImage()
     //m_iNextBufferToUse[0] = 0;
     m_iNextBuffer = 0;
 
-    unsigned int uiMode = 0x10000 + 0x0040 + 0x0010;//Avoid adding buffers, Preview, Single
+    unsigned int uiMode = 0x80000 + 0x10000 + 0x0040 + 0x0010;//Avoid adding buffers, Preview, Single
     if(m_bSoftwareTriggered)
       uiMode = 0x10000 + 0x0010;
       
