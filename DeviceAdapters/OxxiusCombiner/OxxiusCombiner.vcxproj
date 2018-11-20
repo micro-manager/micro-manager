@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{70ADDFBB-1216-412E-B326-51A146C3B8A4}</ProjectGuid>
+    <ProjectGuid>{71ADDFBC-1246-482E-A326-51A156C3B8A7}</ProjectGuid>
     <RootNamespace>OxxiusCombiner</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
