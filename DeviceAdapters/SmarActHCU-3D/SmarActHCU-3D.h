@@ -65,7 +65,7 @@ public:
 	int SetPositionSteps(long x, long y);
 	int SetFrequency(int x);
 	int SetRelativePositionUm(double x, double y);
-	int SetErrorReporting(boolean reporting);
+	int SetErrorReporting(bool reporting);
 
 	// getters
 	int GetPositionSteps(long& x, long& y);
@@ -127,7 +127,7 @@ public:
 	int SetPositionSteps(long steps);
 	int SetOrigin();
 	int SetFrequency(int x);
-	int SetErrorReporting(boolean reporting);
+	int SetErrorReporting(bool reporting);
 
 	// getters
 	int GetPositionUm(double& pos);
