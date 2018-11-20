@@ -17,6 +17,7 @@ License:	Distributed under the BSD license.
 #define		MCL_INVALID_HANDLE		-8
 #define		MCL_INVALID_DRIVER      -9
 #define		MCL_SEQ_NOT_VALID		-10
+#define		MCL_BLOCKED_BY_TIRFLOCK -11
 
 #pragma pack(push, 1)
 struct ProductInformation {

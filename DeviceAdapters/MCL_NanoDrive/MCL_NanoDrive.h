@@ -26,5 +26,6 @@ static const char* g_Keyword_SetPosYUm = "Set position Y (um)";
 static const char* g_Keyword_SetOrigin = "Set origin here";
 static const char* g_Keyword_SetSequence = "Use Sequence";
 static const char* g_Keyword_ShiftSequence = "Shift sequence by 1";
+static const char* g_Keyword_AxisUsedForTirf = "Axis used to maintain Tirf-Lock";
 
 #endif //_MCL_NANODRIVE_H_

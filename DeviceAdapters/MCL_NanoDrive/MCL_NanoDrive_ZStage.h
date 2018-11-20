@@ -63,6 +63,7 @@ public:
   int OnCommandChanged(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSetSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
   int OnSetShiftSequence(MM::PropertyBase* pProp, MM::ActionType eAct);
+  int OnSetTirfLock(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int CreateZStageProperties();
@@ -77,6 +78,7 @@ private:
    int serialNumber_;
    int settlingTimeZ_ms_;
    double commandedZ_;
+   int dacBits_;
 
    double curZpos_;
    bool firstWrite_;
@@ -86,6 +88,8 @@ private:
    int seqMaxSize_;
    bool shiftSequence_;
    std::vector<double> sequence_;
+
+   bool axisUsedForTirfControl_;
 
    int axis_;
 };
