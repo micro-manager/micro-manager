@@ -31,6 +31,9 @@ int JAICamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+		if (IsCapturing())
+			return ERR_NOT_ALLOWED_DURING_CAPTURE;
+
       long bin = 1;
       pProp->Get(bin);
       PvResult pvr = genParams->SetIntegerValue(g_pv_BinH, (int64_t)bin);
