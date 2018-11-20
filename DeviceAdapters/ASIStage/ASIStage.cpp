@@ -5688,17 +5688,15 @@ int LED::IsOpen(bool *open)
 	   if (ret != DEVICE_OK)
 		   return ret;
 
-	   std::istringstream is(answer);
-	   std::string tok;
-	   is >> tok;
-	   if ((tok.substr(0, 2).compare(":A") == 0) || (tok.substr(1, 2).compare(":A") == 0)) {
-		   is >> tok;
-		   if (tok.substr(2, 1) == "0")
+	   
+	   if ((answer.substr(0, 2).compare(":A") == 0) || (answer.substr(1, 2).compare(":A") == 0)) {
+		   
+		   if (answer.substr(2, 1) == "0")
 			   *open = false;
 	   }
-	   else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
+	   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
 	   {
-		   int errNo = atoi(tok.substr(4).c_str());
+		   int errNo = atoi(answer.substr(4).c_str());
 		   return ERR_OFFSET + errNo;
 	   }
 	   return DEVICE_OK;
@@ -5715,19 +5713,17 @@ int LED::IsOpen(bool *open)
 	   if (ret != DEVICE_OK)
 		   return ret;
 
-	   std::istringstream is(answer);
-	   std::string tok;
-	   is >> tok;
+	   
 	   // Command "LED X?" return "X=0 :A"
-
-	   if (tok.substr(0, 2).compare(channelAxisChar_+"=") == 0) {
-		   is >> tok;
-		   if (tok.substr(2, 1) == "0")
+	   
+	   if (answer.substr(0, 1)[0]==channelAxisChar_) {
+		  
+		   if (answer.substr(2, 1) == "0")
 			   *open = false;
 	   }
-	   else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
+	   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
 	   {
-		   int errNo = atoi(tok.substr(4).c_str());
+		   int errNo = atoi(answer.substr(4).c_str());
 		   return ERR_OFFSET + errNo;
 	   }
 	   return DEVICE_OK;
