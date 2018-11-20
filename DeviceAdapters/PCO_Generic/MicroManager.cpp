@@ -987,9 +987,9 @@ int CPCOCam::OnCmosParameter(MM::PropertyBase* pProp, MM::ActionType eAct)
     if(lparameter != m_wCMOSParameter)
     {
       if(m_iPixelRate == 0)
-        m_wCMOSParameter = lparameter;
+        m_wCMOSParameter = (WORD) lparameter;
       if((m_iPixelRate == 1) && (m_pCamera->m_strCamera.strTiming.dwCMOSFlags & 0x02))
-        m_wCMOSParameter = lparameter;
+        m_wCMOSParameter = (WORD) lparameter;
       m_pCamera->m_strCamera.strTiming.wCMOSParameter = m_wCMOSParameter;
       nErr = SetupCamera(true, false);
     }
@@ -1043,7 +1043,7 @@ int CPCOCam::OnCmosTimeBase(MM::PropertyBase* pProp, MM::ActionType eAct)
         if(m_wCMOSTimeBase == 0)
           m_dwCMOSLineTime /= 1000;
       }
-      m_wCMOSTimeBase = lparameter;
+      m_wCMOSTimeBase = (WORD) lparameter;
       m_pCamera->m_strCamera.strTiming.wCMOSTimeBase = m_wCMOSTimeBase;
 
       CheckLineTime(&m_dwCMOSLineTime);
@@ -1107,7 +1107,7 @@ int CPCOCam::OnCmosLineTime(MM::PropertyBase* pProp, MM::ActionType eAct)
     long lhelp;
 
     ((MM::IntegerProperty*) pProp)->Get(lhelp);
-    if(lhelp != m_dwCMOSLineTime)
+    if(lhelp != (long) m_dwCMOSLineTime)
     {
       m_dwCMOSLineTime = (DWORD) lhelp;
       CheckLineTime(&m_dwCMOSLineTime);
@@ -1133,12 +1133,12 @@ int CPCOCam::OnCmosExposureLines(MM::PropertyBase* pProp, MM::ActionType eAct)
     long lhelp;
 
     ((MM::IntegerProperty*) pProp)->Get(lhelp);
-    if(lhelp != m_dwCMOSExposureLines)
+    if(lhelp != (long) m_dwCMOSExposureLines)
     {
       if(lhelp < 1)
         lhelp = 1;
       if(lhelp > 0x7FFFFFFF)
-        lhelp = 0x7FFFFFFFF;
+        lhelp = (long) 0x7FFFFFFF;
       m_dwCMOSExposureLines = lhelp;
       m_pCamera->m_strCamera.strTiming.dwCMOSExposureLines = m_dwCMOSExposureLines;
       nErr = SetupCamera(false, false);
@@ -1162,12 +1162,12 @@ int CPCOCam::OnCmosDelayLines(MM::PropertyBase* pProp, MM::ActionType eAct)
     long lhelp;
 
     ((MM::IntegerProperty*) pProp)->Get(lhelp);
-    if(lhelp != m_dwCMOSDelayLines)
+    if(lhelp != (long) m_dwCMOSDelayLines)
     {
       if(lhelp < 0)
         lhelp = 0;
       if(lhelp > 0x7FFFFFFF)
-        lhelp = 0x7FFFFFFFF;
+        lhelp = (long) 0x7FFFFFFF;
       m_dwCMOSDelayLines = lhelp;
       m_pCamera->m_strCamera.strTiming.dwCMOSDelayLines = m_dwCMOSDelayLines;
       nErr = SetupCamera(false, false);
@@ -1198,7 +1198,7 @@ int CPCOCam::OnFlimModulationSource(MM::PropertyBase* pProp, MM::ActionType eAct
 
     if(lparameter != m_wFlimSourceSelect)
     {
-      m_wFlimSourceSelect = lparameter;
+      m_wFlimSourceSelect = (WORD) lparameter;
 
       nErr = SetupFlim();
       if(nErr != 0) // A return error refuses to set to extern, so reset value and update settings
@@ -1259,7 +1259,7 @@ int CPCOCam::OnFlimFrequency(MM::PropertyBase* pProp, MM::ActionType eAct)
     int nErr = 0;
 
     ((MM::IntegerProperty*) pProp)->Get(lhelp);
-    if(lhelp != m_dwFlimFrequency)
+    if(lhelp != (long) m_dwFlimFrequency)
     {
       if(m_wFlimSourceSelect == 0) // Changes are transferred only when source is set to intern
       {
@@ -1295,7 +1295,7 @@ int CPCOCam::OnFlimRelativePhase(MM::PropertyBase* pProp, MM::ActionType eAct)
     long lhelp;
 
     ((MM::IntegerProperty*) pProp)->Get(lhelp);
-    if(lhelp != m_dwFlimPhaseMilliDeg)
+    if(lhelp != (long) m_dwFlimPhaseMilliDeg)
     {
       if(m_wFlimPhaseNumber == 0)// Must be 0 and not 2,4,8 or 16 (!=0)
       {
@@ -1343,7 +1343,7 @@ int CPCOCam::OnFlimOutputWaveForm(MM::PropertyBase* pProp, MM::ActionType eAct)
         waveTmp = 0;
       if(waveTmp > 2)
         waveTmp = 2;
-      m_wFlimOutputWaveform = waveTmp;
+      m_wFlimOutputWaveform = (WORD) waveTmp;
       nErr = SetupFlim();
     }
 
@@ -1391,7 +1391,7 @@ int CPCOCam::OnFlimNumberOfPhaseSamples(MM::PropertyBase* pProp, MM::ActionType 
       if(waveTmp > 4)
         waveTmp = 4;
 
-      m_wFlimPhaseNumber = waveTmp;
+      m_wFlimPhaseNumber = (WORD) waveTmp;
       nErr = SetupFlim();
     }
 
@@ -1427,7 +1427,7 @@ int CPCOCam::OnFlimPhaseSymmetry(MM::PropertyBase* pProp, MM::ActionType eAct)
         if(waveTmp > 1)
           waveTmp = 1;
 
-        m_wFlimPhaseSymmetry = waveTmp;
+        m_wFlimPhaseSymmetry = (WORD) waveTmp;
         nErr = SetupFlim();
       }
       else
@@ -1466,7 +1466,7 @@ int CPCOCam::OnFlimPhaseOrder(MM::PropertyBase* pProp, MM::ActionType eAct)
         if(waveTmp > 1)
           waveTmp = 1;
 
-        m_wFlimPhaseOrder = waveTmp;
+        m_wFlimPhaseOrder = (WORD) waveTmp;
         nErr = SetupFlim();
       }
       else
@@ -1514,7 +1514,7 @@ int CPCOCam::OnFlimTapSelection(MM::PropertyBase* pProp, MM::ActionType eAct)
       if(waveTmp > 2)
         waveTmp = 2;
 
-      m_wFlimTapSelect = waveTmp;
+      m_wFlimTapSelect = (WORD) waveTmp;
       nErr = SetupFlim();
     }
 
@@ -1548,7 +1548,7 @@ int CPCOCam::OnFlimAsymCorrection(MM::PropertyBase* pProp, MM::ActionType eAct)
       if(waveTmp > 1)
         waveTmp = 1;
 
-      m_wFlimAsymmetryCorrection = waveTmp;
+      m_wFlimAsymmetryCorrection = (WORD) waveTmp;
       nErr = SetupFlim();
     }
 
@@ -1585,8 +1585,8 @@ int CPCOCam::SetupCamera(bool bStopRecording, bool bSizeChanged)
     m_bRecording = false;
     if(nErr != 0)
     {
-      return nErr;
       ReleaseMutex(mxMutex);
+      return nErr;
     }
   }
 
@@ -1621,16 +1621,16 @@ int CPCOCam::SetupCamera(bool bStopRecording, bool bSizeChanged)
       nErr = ResizeImageBuffer();
       if(nErr != 0)
       {
-        return nErr;
         ReleaseMutex(mxMutex);
+        return nErr;
       }
     }
     uiMode = 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
     nErr = m_pCamera->PreStartCam(uiMode, 0, 0, 0);            // schaltet automatisch auf internen Trigger
     if(nErr != 0)
     {
-      return nErr;
       ReleaseMutex(mxMutex);
+      return nErr;
     }
     if(bwasrecording)
     {
@@ -2964,8 +2964,8 @@ int CPCOCam::InitLineTiming()
 
 int CPCOCam::InitFlim()
 {
-  bool bshutterchanged = false;
-  bool breadoutchanged = false;
+  //bool bshutterchanged = false;
+  //bool breadoutchanged = false;
   WORD wType = 0, wLen = 20;
   DWORD dwSetup[20] = {0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,
@@ -3178,8 +3178,8 @@ int CPCOCam::InitFlim()
 
 int CPCOCam::SetupFlim()
 {
-  bool bshutterchanged = false;
-  bool breadoutchanged = false;
+  //bool bshutterchanged = false;
+  //bool breadoutchanged = false;
   WORD wType = 0, wLen = 20;
   DWORD dwSetup[20] = {0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,
@@ -3820,7 +3820,7 @@ int CPCOCam::StartSequenceAcquisition(long numImages, double interval_ms, bool s
   {
     m_pCamera->m_strCamera.strTiming.wTriggerMode = (WORD) 0;
 
-    int nErr = SetupCamera(true, false);
+    nErr = SetupCamera(true, false);
   }
 
   unsigned int uiMode = 0x10000 + 0x0010;//Avoid adding buffers, Preview, Single
@@ -3879,7 +3879,7 @@ int CPCOCam::StopSequenceAcquisition()
   {
     m_pCamera->m_strCamera.strTiming.wTriggerMode = (WORD) 1;
 
-    int nErr = SetupCamera(true, false);
+    nErr = SetupCamera(true, false);
   }
   if(nErr != 0)
     return nErr;
