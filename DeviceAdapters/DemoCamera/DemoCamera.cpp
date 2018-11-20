@@ -33,6 +33,7 @@
 #include <iostream>
 
 
+
 using namespace std;
 const double CDemoCamera::nominalPixelSizeUm_ = 1.0;
 double g_IntensityFactor_ = 1.0;
