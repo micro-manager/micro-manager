@@ -85,6 +85,7 @@ JAICamera::JAICamera() :
 	SetErrorText(ERR_CAMERA_UNKNOWN_PIXEL_FORMAT, "Camera returned pixel format that this driver can't process.");
 	SetErrorText(ERR_STREAM_OPEN_FAILED, "eBUS stream open failed.");
 	SetErrorText(ERR_UNSUPPORTED_IMAGE_FORMAT, "Unsupported image format received from the camera. See log file for more info.");
+	SetErrorText(ERR_NOT_ALLOWED_DURING_CAPTURE, "This operation is not allowed during live streaming");
 
    // this identifies which camera we want to access
    CreateProperty(MM::g_Keyword_CameraID, "0", MM::Integer, false, 0, true);
@@ -551,6 +552,7 @@ int JAICamera::SnapImage()
 	{
 		return processPvError(pvr);
 	}
+	camStream->Close();
 
 	ClearPvBuffers();
 	return DEVICE_OK;
@@ -942,7 +944,7 @@ int AcqSequenceThread::svc (void)
 	}
 
 	// create smart pointer to clean up stream when function exits
-	std::shared_ptr<PvStream> camStream(pvStream, [](PvStream *s) { PvStream::Free(s); }); // deleter 
+	std::shared_ptr<PvStream> camStream(pvStream, [](PvStream *s) { s->Close(); PvStream::Free(s); }); // deleter 
 
 	uint32_t payloadSize = moduleInstance->camera->GetPayloadSize();
 
@@ -965,19 +967,19 @@ int AcqSequenceThread::svc (void)
 	pvr = camStream->GetParameters()->ExecuteCommand("Reset");
 	if (pvr.IsFailure())
 	{
-		return processPvError(pvr);
+		return processPvError(pvr, camStream);
 	}
 
 	pvr = moduleInstance->camera->StreamEnable();
 	if (pvr.IsFailure())
 	{
-		return processPvError(pvr);
+		return processPvError(pvr, camStream);
 	}
 
 	pvr = moduleInstance->camera->GetParameters()->ExecuteCommand("AcquisitionStart");
 	if (pvr.IsFailure())
 	{
-		return processPvError(pvr);
+		return processPvError(pvr, camStream);
 	}
 
    unsigned count = 0;
@@ -990,7 +992,7 @@ int AcqSequenceThread::svc (void)
 		{
 			if (pvrOp.IsFailure())
 			{
-				return processPvError(pvr);
+				return processPvError(pvr, camStream);
 			}
 
 			PvImage* pvImg = pvBuf->GetImage();
@@ -1014,7 +1016,7 @@ int AcqSequenceThread::svc (void)
 		}
 		else
 		{
-			return processPvError(pvr);
+			return processPvError(pvr, camStream);
 		}
 
 		count++;
@@ -1032,7 +1034,7 @@ int AcqSequenceThread::svc (void)
 		pvr = camStream->QueueBuffer(pvBuf);
 		if (pvrOp.IsFailure())
 		{
-			return processPvError(pvr);
+			return processPvError(pvr, camStream);
 		}
 	} // while
 
@@ -1043,15 +1045,27 @@ int AcqSequenceThread::svc (void)
 	pvr = moduleInstance->camera->GetParameters()->ExecuteCommand("AcquisitionStop");
 	if (pvr.IsFailure())
 	{
-		return processPvError(pvr);
+		return processPvError(pvr, camStream);
+	}
+
+	pvr = camStream->AbortQueuedBuffers();
+	if (pvr.IsFailure())
+	{
+		return processPvError(pvr, camStream);
 	}
 
 	pvr = moduleInstance->camera->StreamDisable();
 	if (pvr.IsFailure())
 	{
-		return processPvError(pvr);
+		return processPvError(pvr, camStream);
 	}
 
+	if (pvr.IsFailure())
+	{
+		return processPvError(pvr, camStream);
+	}
+
+	camStream->Close();
 	moduleInstance->ClearPvBuffers();
 	InterlockedExchange(&moduleInstance->acquiring, 0);
    return 0;
@@ -1062,8 +1076,13 @@ void AcqSequenceThread::Stop()
 	InterlockedExchange(&stopFlag, 1);
 }
 
-int AcqSequenceThread::processPvError(PvResult pvr)
+int AcqSequenceThread::processPvError(PvResult pvr, std::shared_ptr<PvStream>& stream)
 {
+	if (stream)
+		stream->Close();
+
+	moduleInstance->ClearPvBuffers();
+
 	ostringstream os;
 	os << "PvError=" << pvr.GetCode() << ", Description: " << pvr.GetDescription().GetAscii();
 	moduleInstance->LogMessage(os.str());

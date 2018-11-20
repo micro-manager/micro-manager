@@ -85,6 +85,7 @@ static const char* g_pv_OffsetY = "OffsetY";
 #define ERR_CAMERA_UNKNOWN_PIXEL_FORMAT 11015
 #define ERR_STREAM_OPEN_FAILED          11016
 #define ERR_UNSUPPORTED_IMAGE_FORMAT	11017
+#define ERR_NOT_ALLOWED_DURING_CAPTURE 11018
 
 //////////////////////////////////////////////////////////////////////////////
 // Region of Interest
@@ -229,7 +230,7 @@ class AcqSequenceThread : public MMDeviceThreadBase
       void SetNumFrames(unsigned numf) {numFrames = numf;}
     
    private:
-		int processPvError(PvResult pvr);
+		int processPvError(PvResult pvr, std::shared_ptr<PvStream>& stream);
       long stopFlag;
       JAICamera* moduleInstance;
       unsigned numFrames;
