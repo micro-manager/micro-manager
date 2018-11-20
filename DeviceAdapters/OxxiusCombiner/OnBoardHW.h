@@ -27,9 +27,10 @@
 #define _OXXIUS_ONBOARDHW_H_
 
 #define	MAX_NUMBER_OF_SLOTS	6
-#define	MAX_CHARACTERS	256
+#define	MAX_CHARACTERS 256
 
-#include <array>
+#include <string>
+#include <vector>
 
 class OnBoardHW
 {
@@ -51,10 +52,11 @@ public:
 
 private:
 	unsigned int sourceType_[MAX_NUMBER_OF_SLOTS];
-	std::array<std::string, MAX_NUMBER_OF_SLOTS> sourceSerialNumber_;
-//	std::array<std::string, MAX_NUMBER_OF_SLOTS> sourceDescription_;
 	unsigned int sourceWavelength_[MAX_NUMBER_OF_SLOTS];
 	unsigned int sourceNominalPower_[MAX_NUMBER_OF_SLOTS];
+	std::vector<std::string> sourceSerialNumber_;
+//	std::array<std::string, MAX_NUMBER_OF_SLOTS> sourceSerialNumber_;
+//	std::array<std::string, MAX_NUMBER_OF_SLOTS> sourceDescription_;
 
 	unsigned int slotMax_;
 	unsigned int wavelength_;
