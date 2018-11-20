@@ -52,7 +52,9 @@ static const char* g_ColorFilterArray = "SensorArray";
 static const char* g_WhiteBalance = "WhiteBalance";
 static const char* g_TriggerMode = "TriggerMode";
 static const char* g_TriggerPolarity = "TriggerPolarity";
-static const char* g_ColorEnable = "Color";
+static const char* g_Temperature = "Temperature";
+static const char* g_TestPattern = "TestPattern";
+static const char* g_Gamma = "Gamma";
 
 static const char* g_Set = "SetNow";
 static const char* g_Off = "Off";
@@ -178,7 +180,9 @@ public:
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWhiteBalance(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTestPattern(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnColorEnable(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
