@@ -138,6 +138,10 @@ const char* g_FastExternal = "Fast External";
 const char* g_Internal = "Internal";
 const char* g_Software = "Software";
 
+const char* g_ReadTempWhileSeq = "Update Temp. during sequence mode";
+const char* g_ReadTempWhileSeqOn = "On";
+const char* g_ReadTempWhileSeqOff = "Off";
+
 const char* const g_Keyword_Metadata_SRRF_Frame_Time = "SRRFFrameTime-ms";
 
 const int NUMULTRA897CROPROIS = 9;
@@ -277,6 +281,7 @@ iSnapImageDelay_(0),
 bSnapImageWaitForReadout_(false),
 stateBeforePause_(PREPAREDFORSINGLESNAP),
 metaDataAvailable_(false),
+updateTemperatureWhileSequencing_(false),
 spuriousNoiseFilterControl_(nullptr),
 readModeControl_(nullptr),
 SRRFControl_(nullptr)
@@ -1287,6 +1292,17 @@ int AndorCamera::GetListOfAvailableCameras()
 
       pAct = new CPropertyAction (this, &AndorCamera::OnTimeOut);
       nRet = CreateProperty(g_TimeOut, CDeviceUtils::ConvertToString(imageTimeOut_ms_), MM::Integer, false, pAct);
+
+
+      // Some users like to have up to date temperature readings, but that does not work with all 
+      // cameras.  Leave this capability out unless activated by the user
+      pAct = new CPropertyAction(this, &AndorCamera::OnTemperatureWhileSequencing);
+      nRet = CreateProperty(g_ReadTempWhileSeq, g_ReadTempWhileSeqOn, MM::String, false, pAct);
+      if (nRet != DEVICE_OK) 
+         return nRet;
+      AddAllowedValue(g_ReadTempWhileSeq, g_ReadTempWhileSeqOff);
+      AddAllowedValue(g_ReadTempWhileSeq, g_ReadTempWhileSeqOn);
+
 
 	  //SRRF
 	  SRRFControl_ = new SRRFControl(this);
@@ -2608,6 +2624,33 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
    // eof jizhen
+
+
+   int AndorCamera::OnTemperatureWhileSequencing(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      if (eAct == MM::AfterSet)
+      {
+         std::string newState;
+         pProp->Get(newState);
+         if (newState == g_ReadTempWhileSeqOn) 
+         {
+            updateTemperatureWhileSequencing_ = true;
+         } else
+         {
+            updateTemperatureWhileSequencing_ = false;
+         }
+      } else if (eAct == MM::BeforeGet)
+      {
+         std::string state = g_ReadTempWhileSeqOff;
+         if (updateTemperatureWhileSequencing_)
+         {
+            state = g_ReadTempWhileSeqOn;
+         }
+         pProp->Set(state.c_str());
+      }
+      return DEVICE_OK;
+   }
+
 
    //jizhen 05.16.2007
    /**
@@ -4961,28 +5004,31 @@ unsigned int AndorCamera::PopulateROIDropdownFVB()
       mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));
       md.SetTag(mstB);
 
-      float temp = 0.;
-      unsigned int ret = GetTemperatureF(&temp);
-
-      if(ret == DRV_NOT_INITIALIZED || ret == DRV_ACQUIRING || ret == DRV_ERROR_ACK)
+      if (updateTemperatureWhileSequencing_) 
       {
-        MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
-        ostringstream os;
+         float temp = 0.;
+         unsigned int ret = GetTemperatureF(&temp);
 
-        os << "Get Temperature failed with error: " << ret << endl;
+         if(ret == DRV_NOT_INITIALIZED || ret == DRV_ACQUIRING || ret == DRV_ERROR_ACK)
+         {
+            MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
+            ostringstream os;
 
-        mstTemperature.SetValue(os.str().c_str());
-        md.SetTag(mstTemperature);
-      }
-      else
-      {
-        char * buffer = new char[MAX_CHARS_PER_DESCRIPTION];
-        sprintf(buffer, "%.2f", temp);
+            os << "Get Temperature failed with error: " << ret << endl;
 
-        MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
-        mstTemperature.SetValue(buffer);
-        md.SetTag(mstTemperature);
-        delete buffer;
+            mstTemperature.SetValue(os.str().c_str());
+            md.SetTag(mstTemperature);
+         }
+         else
+         {
+            char * buffer = new char[MAX_CHARS_PER_DESCRIPTION];
+            sprintf(buffer, "%.2f", temp);
+
+            MetadataSingleTag mstTemperature("CurrentTemperature", label, true);
+            mstTemperature.SetValue(buffer);
+            md.SetTag(mstTemperature);
+            delete buffer;
+         }
       }
 
    }
