@@ -6,12 +6,12 @@
 // DESCRIPTION:   ITK Hydra Controller Driver
 //                XY Stage
 //
-// AUTHOR:        Steven Fletcher, derived from Corvus adapter written by Johan Henriksson, mahogny@areta.org, derived from Märzhauser adapter
+// AUTHOR:        Steven Fletcher, derived from Corvus adapter written by Johan Henriksson, mahogny@areta.org, derived from Mï¿½rzhauser adapter
 // COPYRIGHT:     Steven Fletcher, 2017
 // LICENSE:       This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
 //                License as published by the Free Software Foundation.
-//                
+//
 //                You should have received a copy of the GNU Lesser General Public
 //                License along with the source distribution; if not, write to
 //                the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
@@ -23,7 +23,7 @@
 //
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
 // Precision: 15.26 nm in programming mode, 23.7 fm in joystick mode
@@ -37,7 +37,7 @@
 
 #ifdef WIN32
 //   #include <windows.h>
-   #define snprintf _snprintf 
+   #define snprintf _snprintf
 #endif
 
 #include <stdio.h>
@@ -71,7 +71,8 @@ using namespace std;
 
 bool g_DeviceHydraAvailable = false;
 int  g_NumberOfAxes = 0;
-
+bool mirrorX = 0;
+bool mirrorY = 0;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -81,12 +82,12 @@ MODULE_API void InitializeModuleData()
 	//change to only one?
    RegisterDevice(g_ControllerName, MM::GenericDevice, "ITK Hydra Controller");
    RegisterDevice(g_XYStageDeviceName, MM::XYStageDevice, "XY Stage");
-}                                                                            
+}
 
-MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
+MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
    if (deviceName == 0) return 0;
-   if (strcmp(deviceName, g_ControllerName)    == 0) return new Hub();                           
+   if (strcmp(deviceName, g_ControllerName)    == 0) return new Hub();
    if (strcmp(deviceName, g_XYStageDeviceName) == 0) return new XYStage();
    return 0;
 }
@@ -100,18 +101,18 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // General utility function:
 int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 {
-   // Clear contents of serial port 
+   // Clear contents of serial port
    const int bufSize = 255;
-   unsigned char clear[bufSize];                                                        
-   unsigned long read = bufSize;                                               
-   int ret;                                                                    
-   while ((int) read == bufSize)     // SG   cast -> static_cast<int>()                                                
-   {                                                                           
-      ret = core.ReadFromSerial(&device, port.c_str(), clear, bufSize, read); 
-      if (ret != DEVICE_OK)                                                    
-         return ret;                                                           
-   }                                                                           
-   return DEVICE_OK;                                                           
+   unsigned char clear[bufSize];
+   unsigned long read = bufSize;
+   int ret;
+   while ((int) read == bufSize)     // SG   cast -> static_cast<int>()
+   {
+      ret = core.ReadFromSerial(&device, port.c_str(), clear, bufSize, read);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   return DEVICE_OK;
 }
 
 
@@ -128,7 +129,7 @@ Hub::Hub() :
    InitializeDefaultErrorMessages();
 
    // custom error messages:
-   
+
    // pre-initialization properties
 
    // Port:
@@ -175,18 +176,18 @@ int Hub::Initialize()
    // Version of the controller:
    const char* cm = "version";
    ret = SendSerialCommand(port_.c_str(), cm, g_TxTerm);
-   if (ret != DEVICE_OK) 
+   if (ret != DEVICE_OK)
       return ret;
 
    // Read out result
    string response;
    ret = GetSerialAnswer(port_.c_str(), g_RxTerm, response);
-   if (ret != DEVICE_OK) 
+   if (ret != DEVICE_OK)
       return ret;
 
    // Create read-only property with version info
    ret = CreateProperty(g_Hydra_Version, response.c_str(), MM::String, true);
-   if (ret != DEVICE_OK) 
+   if (ret != DEVICE_OK)
       return ret;
 
    // Clear out any errors
@@ -230,13 +231,13 @@ int Hub::checkStatus()
 {
    int ret = SendSerialCommand(port_.c_str(), "st", g_TxTerm);  // SG Why assigning to ret? and ret value is NEVER used
 
-   if (ret != DEVICE_OK) 
+   if (ret != DEVICE_OK)
        return ret;
 
    string response;
    ret = GetSerialAnswer(port_.c_str(), g_RxTerm, response);
 
-   if (ret != DEVICE_OK) 
+   if (ret != DEVICE_OK)
       return ret;
 
    int errCode;
@@ -246,7 +247,7 @@ int Hub::checkStatus()
 
 
 int Hub::Shutdown()
-{ 
+{
   initialized_ = false;
   g_DeviceHydraAvailable = false;
   return DEVICE_OK;
@@ -345,7 +346,7 @@ int XYStage::Initialize()
       return ret;
    SetPropertyLimits("Speed [mm/s]", 0.001, 500.0); // mm/s
 
-   // Accel (Acceleration (in m/s²)
+   // Accel (Acceleration (in m/sï¿½)
    // -----
    pAct = new CPropertyAction (this, &XYStage::OnAccel);
    // TODO: get current Acceleration from the controller
@@ -396,18 +397,18 @@ bool XYStage::Busy()
 
 
 /**
- * Returns current position in µm.
+ * Returns current position in ï¿½m.
  */
 int XYStage::GetPositionUm(double& x, double& y)
 {
 int ret;
    PurgeComPort(port_.c_str());
-   
+
    // format the command
    ret = SendSerialCommand(port_.c_str(), "p", g_TxTerm);
    if (ret != DEVICE_OK)
       return ret;
-  
+
    // block/wait for acknowledge, or until we time out;
    string resp;
    ret = GetSerialAnswer(port_.c_str(), g_RxTerm, resp);
@@ -418,14 +419,14 @@ int ret;
    char iBuf[256]; //?? what is this for
    strcpy(iBuf,resp.c_str());
    sscanf(iBuf, "%f %f\r\n", &xx, &yy);
-   x = xx;
-   y = yy;
+   x = xx*1000;
+   y = yy*1000;
    return DEVICE_OK;
 }
 
 
 /**
- * Sets position in µm
+ * Sets position in coordinate
  */
 int XYStage::SetPositionUm(double x, double y)
 {
@@ -435,7 +436,7 @@ int XYStage::SetPositionUm(double x, double y)
 
    // format the command
    ostringstream cmd;
-   cmd << x << " " << y << " m";
+   cmd << x/1000 << " " << y/1000 << " m";
 
    int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
    if (ret != DEVICE_OK)
@@ -443,7 +444,7 @@ int XYStage::SetPositionUm(double x, double y)
 
    return DEVICE_OK;
 }
-  
+
 
 /**
  * Sets position in steps.
@@ -452,20 +453,25 @@ int XYStage::SetPositionSteps(long x, long y)
 {
    return SetPositionUm(x/stepSizeUm_,y/stepSizeUm_);
 }
-  
+
 
 /**
  * Sets relative position in um.
  */
 int XYStage::SetRelativePositionUm(double dx, double dy)
 {
+   GetOrientation(mirrorX, mirrorY);
+   if (mirrorX == 1)
+      dx = -dx;
+   if (mirrorY == 1)
+      dy = -dy;
    ostringstream os;
    os << "XYStage::SetRelativePositionUm() " << dx << " " << dy;
    this->LogMessage(os.str().c_str());
 
    // format the command
    ostringstream cmd;
-   cmd << dx << " " << dy << " " << "r";
+   cmd << dx/1000 << " " << dy/1000 << " " << "r";
 
    int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
    if (ret != DEVICE_OK)
@@ -504,7 +510,7 @@ int XYStage::SetOrigin()
 
    int ret = SendSerialCommand(port_.c_str(), "0 1 setnpos 0 2 setnpos", g_TxTerm);
    if (ret != DEVICE_OK) return ret;
- 
+
    // raises problems when none should (i think)
    /*
    string resp;
@@ -513,11 +519,11 @@ int XYStage::SetOrigin()
 
    if (resp.compare("OK...") != 0)
    {
-      return DEVICE_SERIAL_INVALID_RESPONSE; 
+      return DEVICE_SERIAL_INVALID_RESPONSE;
    }
 	*/
    return SetAdapterOrigin();
-   
+
 }
 //not sure i understand
 /**
@@ -552,7 +558,7 @@ int XYStage::Home()
    PurgeComPort(port_.c_str()); // SG no error code ?
 
    // format the command
-   // not sure what ncal does : supposed to do : homing (search limit reverse) 
+   // not sure what ncal does : supposed to do : homing (search limit reverse)
    cmd = "ncal"; //was 'cal' is ncla good replacement?
    ret = SendSerialCommand(port_.c_str(), cmd, g_TxTerm);
    if (ret != DEVICE_OK) return ret;
@@ -577,10 +583,10 @@ int XYStage::Home()
 
    // additional range measure to provide GetLimitsUm()
 
-   cmd = "1 nrm"; //was 'rm' is nrm the correct replacement? 
+   cmd = "1 nrm"; //was 'rm' is nrm the correct replacement?
    ret = SendSerialCommand(port_.c_str(), cmd, g_TxTerm);
    if (ret != DEVICE_OK) return ret;
-  
+
    this->LogMessage("Starting read in XY-Stage HOME\n", true);
 
    do
@@ -628,7 +634,7 @@ int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
   const char* cmd = "1 getnlimit";
   ret = SendSerialCommand(port_.c_str(), cmd, g_TxTerm);
   if (ret != DEVICE_OK) return ret;
-  
+
   // block/wait for acknowledge, or until we time out;
   string resp;
   ret = GetSerialAnswer(port_.c_str(), g_RxTerm, resp);
@@ -695,7 +701,7 @@ int XYStage::GetCommand(const string& cmd, string& response)
    if (DEVICE_OK != SendSerialCommand(port_.c_str(), cmd.c_str(), g_TxTerm))
       return DEVICE_SERIAL_COMMAND_FAILED;
 
-   // block/wait for acknowledge, or until we time out; 
+   // block/wait for acknowledge, or until we time out;
    const unsigned bufLen = 256;
    char answer[bufLen];
    unsigned curIdx = 0;
@@ -803,4 +809,19 @@ int XYStage::OnAccel(MM::PropertyBase* pProp, MM::ActionType eAct)
       accel_ = accel;
    }
    return DEVICE_OK;
+}
+
+void XYStage::GetOrientation(bool& mirrorX, bool& mirrorY)
+{
+	// copied from DeviceBase.h
+	this->LogMessage("XYStage::GetOrientation\n", true);
+
+	char val[MM::MaxStrLength];
+	int ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
+	assert(ret == DEVICE_OK);
+	mirrorX = strcmp(val, "1") == 0 ? true : false;
+
+	ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorY, val);
+	assert(ret == DEVICE_OK);
+	mirrorY = strcmp(val, "1") == 0 ? true : false;
 }
