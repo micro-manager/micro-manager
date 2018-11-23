@@ -104,9 +104,9 @@ RAMPSHub::RAMPSHub():
     initialized_(false),
     timeOutTimer_(0),
     settle_time_(250),
-    velocity_x_(300),
-	velocity_y_(300),
-	velocity_z_(5),
+	velocity_x_(240), // max velocity, typically in [mm/min], but Marlin firmware uses [mm/sec]. Thorlabs DRV001 max speed 240 mm/min (4 mm/s)
+	velocity_y_(240),
+	velocity_z_(240),
     acceleration_x_(10),
 	acceleration_y_(10),
 	acceleration_z_(10),
@@ -212,7 +212,6 @@ bool RAMPSHub::Busy() {
   }
 
   std::string answer;
-  std::string debug_string = "debug string 1";
   int ret = ReadResponse(answer, 30000);
   if (ret != DEVICE_OK) {
     status_ = "Busy";
@@ -221,7 +220,6 @@ bool RAMPSHub::Busy() {
   if (!answer.compare("ok")) {
     LogMessage(std::string("busy expected OK, didn't get it."));
     LogMessage(answer);
-	LogMessage(debug_string);
     return true;
   }
 
