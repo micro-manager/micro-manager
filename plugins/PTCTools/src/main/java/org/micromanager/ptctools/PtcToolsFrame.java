@@ -125,6 +125,8 @@ public class PtcToolsFrame extends MMFrame {
       settings_.putString(PtcToolsTerms.MAXIMUMEXPOSURE, maxExpTF_.getText());
       settings_.putInteger(PtcToolsTerms.NREXPOSURES, (int) nrExpSp_.getValue());
       settings_.putInteger(PtcToolsTerms.NRFRAMES, (int) nrFramesSp_.getValue());
+      settings_.putInteger(PtcToolsTerms.WINDOWX, this.getX());
+      settings_.putInteger(PtcToolsTerms.WINDOWY, this.getY());
    }
 
    

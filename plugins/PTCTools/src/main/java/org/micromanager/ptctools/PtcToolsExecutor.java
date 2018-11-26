@@ -32,14 +32,23 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Coordinates;
@@ -47,13 +56,15 @@ import org.micromanager.data.Coords;
 import org.micromanager.data.Datastore;
 import org.micromanager.data.Image;
 import org.micromanager.data.SummaryMetadata;
+import org.micromanager.internal.utils.MMFrame;
 import org.micromanager.internal.utils.NumberUtils;
 import org.micromanager.internal.utils.ReportingUtils;
 
 public class PtcToolsExecutor extends Thread  {
    private final Studio studio_;
    private final PropertyMap settings_;
-   private final List<ExpMeanStdDev> expMeanStdDev_;;
+   private final List<ExpMeanStdDev> expMeanStdDev_;
+   private ImageStack stack_;
    
    /**
     * Simple class to hold Avg. Intensity and StdDev of Avg. intensities
@@ -73,100 +84,59 @@ public class PtcToolsExecutor extends Thread  {
 
    @Override
    public void run() {
-      
-      CMMCore core = studio_.getCMMCore(); // to reduce typing
-      final int nrFrames = settings_.getInteger(PtcToolsTerms.NRFRAMES, 100);
-      final ResultsTable rt = ResultsTable.getResultsTable();
-      rt.setPrecision(4);
-     
-      boolean dr = ij.IJ.showMessageWithCancel("PTC Tools", "Prevent all light going to the"
-              + " camera.  Press OK when ready");
-      if (!dr) {
-         return;
-      }
-      
-      // Stack that holds the resulting images
-      ImageStack stack = new ImageStack((int) core.getImageWidth(), 
-              (int) core.getImageHeight());
-      
-      // temporary store to hold images while calculating mean and stdDev
-      Datastore store = studio_.data().createRAMDatastore();
-      final SummaryMetadata.Builder smb = studio_.data().getSummaryMetadataBuilder();
-      final Coords.Builder cb = Coordinates.builder();
-      Coords coords = cb.c(1).p(1).
-              t(nrFrames).z(1).build();
-      try {
-         store.setSummaryMetadata(smb.intendedDimensions(coords).startDate(
-                 new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date())).build());
-      } catch (IOException ex) {
-         // should never happen with a RAMDatastore...
-      }
-      
-      double exposure;
-      try {
-         exposure = NumberUtils.displayStringToDouble(
-                 settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
-      } catch (ParseException ex) {
-         studio_.logs().showError("Minimum exposure should be a number");
-         return;
-      }
-      
-      try {
-         runSequence(core, store, nrFrames, exposure);
-      } catch (Exception ex) {
-         studio_.logs().showError(ex, "Error while acquiring images");
-         return;
-      }
-           
-      // TODO: make sure that we have 16-bit (short) images
-      try {
-         calculateAndAddToStack(stack, store);
-         ExpMeanStdDev cemsd = calcExpMeanStdDev(store);
-         expMeanStdDev_.add(cemsd);
-         rt.incrementCounter();
-         rt.addValue("Exposure", 0.0);
-         rt.addValue("Mean", cemsd.mean_);
-         rt.addValue("Std.Dev", cemsd.stdDev_);  
-      
-         store.freeze();
-         store.close();
-      } catch (IOException ex) {
-         studio_.logs().showError(ex, "Error while calculating mean and stdDev");
-         return;
-      }
-
-      
-      dr = ij.IJ.showMessageWithCancel("PTC Tools", "Now switch on the light, and make sure it can reach the"
-              + " camera.  Press OK when ready");
-      if (!dr) {
-         return;
-      }
-      
-      // establish the exposure times we will use as a logarthimically spaced series
-      int nrExposures = settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30);
-      double minExposure, maxExposure;
-      try {
-         minExposure = NumberUtils.displayStringToDouble(
-                 settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
-         maxExposure = NumberUtils.displayStringToDouble(
-                 settings_.getString(PtcToolsTerms.MAXIMUMEXPOSURE, "100.0"));
-      } catch (ParseException ex) {
-         studio_.logs().showError("Minimum exposure should be a number");
-         return;
-      }
-      double[] exposures = new double[nrExposures];
-      double minExpLog = Math.log(minExposure);
-      double maxExpLog = Math.log(maxExposure);
-      double expLogStep = (maxExpLog - minExpLog) / (nrExposures -1);
-      
-      for (int i = 0; i < nrExposures; i++) {
-         ij.IJ.showStatus("PTCTools, working on exposure: " + i);
-         ij.IJ.showProgress(i, nrExposures);
-         exposures[i] = Math.exp(minExpLog + i * expLogStep);
+      PtcSequenceRunner sr = new DarkSequence();
+      showDialog("Prevent all ligt going to the camera.", sr);
          
-         store = studio_.data().createRAMDatastore();
+   }
+     
+   private class DarkSequence implements PtcSequenceRunner {
+
+      @Override
+      public void doSequence(JLabel resultLabel) {
+
          try {
-            runSequence(core, store, nrFrames, exposures[i]);
+            SwingUtilities.invokeAndWait(new Runnable() {
+               @Override
+               public void run() {
+                  resultLabel.setText("Collecting dark images...");
+               }
+            });
+         } catch (InterruptedException | InvocationTargetException ex) {
+         }
+
+         CMMCore core = studio_.getCMMCore(); // to reduce typing
+         final int nrFrames = settings_.getInteger(PtcToolsTerms.NRFRAMES, 100);
+         final ResultsTable rt = ResultsTable.getResultsTable();
+         rt.setPrecision(4);
+
+         // Stack that holds the resulting images
+         stack_ = new ImageStack((int) core.getImageWidth(),
+                 (int) core.getImageHeight());
+
+         // temporary store to hold images while calculating mean and stdDev
+         Datastore store = studio_.data().createRAMDatastore();
+         final SummaryMetadata.Builder smb = studio_.data().getSummaryMetadataBuilder();
+         final Coords.Builder cb = Coordinates.builder();
+         Coords coords = cb.c(1).p(1).
+                 t(nrFrames).z(1).build();
+         try {
+            store.setSummaryMetadata(smb.intendedDimensions(coords).startDate(
+                    new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(new Date())).build());
+         } catch (IOException ex) {
+            // should never happen with a RAMDatastore...
+         }
+
+         double exposure;
+         try {
+            exposure = NumberUtils.displayStringToDouble(
+                    settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
+         } catch (ParseException ex) {
+            studio_.logs().showError("Minimum exposure should be a number");
+            return;
+         }
+
+         try {
+            runSequence(core, store, nrFrames, exposure);
          } catch (Exception ex) {
             studio_.logs().showError(ex, "Error while acquiring images");
             return;
@@ -174,38 +144,162 @@ public class PtcToolsExecutor extends Thread  {
 
          // TODO: make sure that we have 16-bit (short) images
          try {
-            calculateAndAddToStack(stack, store);
+            calculateAndAddToStack(stack_, store);
             ExpMeanStdDev cemsd = calcExpMeanStdDev(store);
-            double realExposure;
-            try{
-                realExposure = core.getExposure();
-            } catch (Exception e){
-                ReportingUtils.showError(e);
-                return;
-            }
             expMeanStdDev_.add(cemsd);
             rt.incrementCounter();
-            rt.addValue("Exposure", realExposure);
+            rt.addValue("Exposure", 0.0);
             rt.addValue("Mean", cemsd.mean_);
-            rt.addValue("Std.Dev", cemsd.stdDev_);  
+            rt.addValue("Std.Dev", cemsd.stdDev_);
+
+            store.freeze();
             store.close();
          } catch (IOException ex) {
             studio_.logs().showError(ex, "Error while calculating mean and stdDev");
             return;
          }
-         System.gc();
 
+         PtcSequenceRunner sr = new LightSequence();
+         showDialog("Now switch on the light, and make sure it can reach the"
+                 + " camera.", sr);
       }
-      
-      rt.show("Results");
-      ij.IJ.showProgress(1.0);
-      ImagePlus imp = new ImagePlus("PTCTools stack", stack);
-      imp.setDimensions(2, 1, stack.getSize() / 2);
-      CompositeImage comp = new CompositeImage(imp, CompositeImage.COLOR);
-      comp.show();
+   }
 
+   private class LightSequence implements PtcSequenceRunner {
+
+      @Override
+      public void doSequence(JLabel resultLabel) {
+
+         CMMCore core = studio_.getCMMCore(); // to reduce typing
+         final int nrFrames = settings_.getInteger(PtcToolsTerms.NRFRAMES, 100);
+         final ResultsTable rt = ResultsTable.getResultsTable();
+         rt.setPrecision(4);
+
+         // establish the exposure times we will use as a logarithmically spaced series
+         int nrExposures = settings_.getInteger(PtcToolsTerms.NREXPOSURES, 30);
+         double minExposure, maxExposure;
+         try {
+            minExposure = NumberUtils.displayStringToDouble(
+                    settings_.getString(PtcToolsTerms.MINIMUMEXPOSURE, "0.1"));
+            maxExposure = NumberUtils.displayStringToDouble(
+                    settings_.getString(PtcToolsTerms.MAXIMUMEXPOSURE, "100.0"));
+         } catch (ParseException ex) {
+            studio_.logs().showError("Minimum exposure should be a number");
+            return;
+         }
+         double[] exposures = new double[nrExposures];
+         double minExpLog = Math.log(minExposure);
+         double maxExpLog = Math.log(maxExposure);
+         double expLogStep = (maxExpLog - minExpLog) / (nrExposures - 1);
+
+         for (int i = 0; i < nrExposures; i++) {
+            final int nr = i;
+            try {
+               SwingUtilities.invokeAndWait(new Runnable() {
+                  @Override
+                  public void run() {
+                     resultLabel.setText("working on exposure: " + nr + "(of " + nrExposures + ")");
+                  }
+               });
+            } catch (InterruptedException | InvocationTargetException ex) {
+            }
+            
+            exposures[i] = Math.exp(minExpLog + i * expLogStep);
+
+            Datastore store = studio_.data().createRAMDatastore();
+            try {
+               runSequence(core, store, nrFrames, exposures[i]);
+            } catch (Exception ex) {
+               studio_.logs().showError(ex, "Error while acquiring images");
+               return;
+            }
+
+            // TODO: make sure that we have 16-bit (short) images
+            try {
+               calculateAndAddToStack(stack_, store);
+               ExpMeanStdDev cemsd = calcExpMeanStdDev(store);
+               double realExposure;
+               try {
+                  realExposure = core.getExposure();
+               } catch (Exception e) {
+                  ReportingUtils.showError(e);
+                  return;
+               }
+               expMeanStdDev_.add(cemsd);
+               rt.incrementCounter();
+               rt.addValue("Exposure", realExposure);
+               rt.addValue("Mean", cemsd.mean_);
+               rt.addValue("Std.Dev", cemsd.stdDev_);
+               store.close();
+            } catch (IOException ex) {
+               studio_.logs().showError(ex, "Error while calculating mean and stdDev");
+               return;
+            }
+            System.gc();
+
+         }
+
+         rt.show("Results");
+         ij.IJ.showProgress(1.0);
+         ImagePlus imp = new ImagePlus("PTCTools stack", stack_);
+         imp.setDimensions(2, 1, stack_.getSize() / 2);
+         CompositeImage comp = new CompositeImage(imp, CompositeImage.COLOR);
+         comp.show();
+      }
    }
    
+   
+   private void showDialog(final String label, final PtcSequenceRunner sr) {
+      final MMFrame dialog = new MMFrame();
+      dialog.setBounds(settings_.getInteger(PtcToolsTerms.WINDOWX, 100), 
+              settings_.getInteger(PtcToolsTerms.WINDOWY, 100), 400, 100);
+      dialog.addComponentListener(new ComponentAdapter() {
+         @Override
+         public void componentMoved(ComponentEvent e) {
+            dialog.savePosition();
+         }
+      });
+      dialog.setLayout(new MigLayout());
+      dialog.setTitle("PTC Tools");
+      dialog.add(new JLabel(label), "wrap");
+      dialog.add(new JLabel("Press OK when ready"), "wrap");
+      JButton cancelButton = new JButton("Cancel");
+      final JLabel resultLabel = new JLabel("Not started yet...");
+      cancelButton.addActionListener(new ActionListener(){
+         @Override
+         public void actionPerformed(ActionEvent e) {
+               dialog.dispose();
+            }
+         });
+      JButton okButton = new JButton("OK");
+      okButton.addActionListener(new ActionListener(){
+         @Override
+         public void actionPerformed(ActionEvent e) {
+            Thread t = new Thread(new Runnable() {
+               @Override
+               public void run() {
+                  sr.doSequence(resultLabel);
+                  try {
+                     SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                           dialog.dispose();
+                        }
+                     });
+                  } catch (InterruptedException | InvocationTargetException ex) {
+                    // Logger.getLogger(PtcToolsExecutor.class.getName()).log(Level.SEVERE, null, ex);
+                  }
+               }
+            });
+            t.start();
+         }
+      });
+      dialog.add(cancelButton, "split 2, tag cancel");
+      dialog.add(okButton, "tag ok, wrap");
+      dialog.add(resultLabel);
+      dialog.pack();
+      dialog.setVisible(true);
+   }
 
    private void runSequence(CMMCore core, Datastore store, int nrFrames,
            double exposure) throws Exception {
@@ -289,7 +383,7 @@ public class PtcToolsExecutor extends Thread  {
       if (numbers.length < 2) {
          return 0.0;
       }
-      result = result / (numbers.length -1);
+      result /= (numbers.length -1);
       
       return Math.sqrt(result);
    }
