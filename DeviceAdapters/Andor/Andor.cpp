@@ -138,7 +138,7 @@ const char* g_FastExternal = "Fast External";
 const char* g_Internal = "Internal";
 const char* g_Software = "Software";
 
-const char* g_ReadTempWhileSeq = "Update Temp. during Sequence Mode";
+const char* g_ReadTempWhileSeq = "CCDTemperature continuous update";
 const char* g_ReadTempWhileSeqOn = "On";
 const char* g_ReadTempWhileSeqOff = "Off";
 
