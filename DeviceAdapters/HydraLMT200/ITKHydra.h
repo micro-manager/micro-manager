@@ -135,6 +135,7 @@ private:
    double accel_;
    double originX_;
    double originY_;
+   void GetOrientation(bool& mirrorX, bool& mirrorY);
 };
 
 #endif //_HYDRA_H_
