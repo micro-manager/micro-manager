@@ -166,6 +166,7 @@ public:
    int OniCamFeatures(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperatureRangeMin(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperatureRangeMax(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTemperatureWhileSequencing(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVCVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaselineClamp(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCropModeSwitch(MM::PropertyBase* /*pProp*/, MM::ActionType eAct);
@@ -414,6 +415,7 @@ private:
    bool bEMGainSupported;
 
    bool sequencePaused_;
+   bool updateTemperatureWhileSequencing_;
 
    SpuriousNoiseFilterControl* spuriousNoiseFilterControl_;
    ReadModeControl* readModeControl_;
