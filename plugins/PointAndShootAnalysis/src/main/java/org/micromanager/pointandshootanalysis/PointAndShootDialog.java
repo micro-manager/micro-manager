@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          PointAndShootDialog.java
 //PROJECT:       Micro-Manager  
-//SUBSYSTEM:     PointAndShootDialog plugin
+//SUBSYSTEM:     PointAndShoot plugin
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nico Stuurman
@@ -25,12 +25,14 @@ package org.micromanager.pointandshootanalysis;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
@@ -60,7 +62,7 @@ public class PointAndShootDialog extends MMDialog {
       wasDisposed_ = false;
       final MMDialog ourDialog = this;
       
-      
+      super.setTitle("Point and Shoot Analysis");
       super.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       super.addWindowListener(new WindowAdapter() {
          @Override
@@ -75,11 +77,16 @@ public class PointAndShootDialog extends MMDialog {
       super.setLayout(new MigLayout());
       super.loadAndRestorePosition(100, 100);
       
+      JLabel explanationLabel = new JLabel("Provide location of text file " +
+             "containing timestamps and locations of Point and Shoot of the " +
+              "open data set");
+      super.add(explanationLabel, "span 2, wrap");
+      
       final JTextField locationsField = new JTextField(50);
       locationsField.setFont(arialSmallFont);
       locationsField.setText(profileSettings_.getString(LOCATIONSFILENAME,
                profileSettings_.getString(LOCATIONSFILENAME, "")));
-      locationsField.setHorizontalAlignment(JTextField.RIGHT);
+      locationsField.setHorizontalAlignment(JTextField.LEFT);
       super.add(locationsField);
 
       final JButton locationsFieldButton =  mcsButton(buttonSize, arialSmallFont);
@@ -130,6 +137,10 @@ public class PointAndShootDialog extends MMDialog {
          }
       });
       super.add(okButton, "tag ok, wrap");
+      
+      DragDropListener dragDropListener = new DragDropListener(locationsField);
+      new DropTarget(this, dragDropListener);
+      new DropTarget(locationsField, dragDropListener);
       
       super.pack();
       super.setVisible(true);
