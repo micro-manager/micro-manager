@@ -21,6 +21,9 @@
 
 package org.micromanager.pointandshootanalysis;
 
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.ImageProcessor;
 import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
@@ -39,6 +42,7 @@ import org.micromanager.PropertyMap;
 import org.micromanager.Studio;
 import org.micromanager.data.Coords;
 import org.micromanager.data.DataProvider;
+import org.micromanager.data.Image;
 import org.micromanager.data.Metadata;
 import org.micromanager.display.DataViewer;
 
@@ -52,6 +56,12 @@ public class PointAndShootAnalyzer implements Runnable {
    final private Map<String, Point> coordinates_;
    final private Map<Instant, Point> datedCoordinates_;
    final private Map<Integer, Instant> frameTimeStamps_;
+   final private Map<Integer, Point> bleachCoords_;
+   final private int roiWidth_ = 100;  // may need to changed by user
+   final private int roiHeight_ = 100;  // may need to changed by user
+   final private int nrFramesBefore_ = 2; // may need to changed by user
+   final private int nrFramesAfter_ = 10; // may need to changed by user
+   
 
    public PointAndShootAnalyzer(Studio studio, String fileName)
    {
@@ -60,6 +70,7 @@ public class PointAndShootAnalyzer implements Runnable {
       coordinates_ = new HashMap<String, Point>();
       datedCoordinates_ = new TreeMap<Instant, Point>();
       frameTimeStamps_ = new TreeMap<Integer, Instant>();
+      bleachCoords_ = new TreeMap<Integer, Point>();
    }
 
    @Override
@@ -89,12 +100,13 @@ public class PointAndShootAnalyzer implements Runnable {
                  entry.getValue());
       }
      
-      DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
+      final DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
       if (activeDataViewer == null) {
          studio_.logs().showError("Please open image data first");
          return;
       }
-      DataProvider dataProvider = activeDataViewer.getDataProvider();
+      
+      final DataProvider dataProvider = activeDataViewer.getDataProvider();
       Iterable<Coords> unorderedImageCoords = dataProvider.getUnorderedImageCoords();
       for (Coords c : unorderedImageCoords) {
          int frame = c.getT();
@@ -132,11 +144,48 @@ public class PointAndShootAnalyzer implements Runnable {
             }
          }
          if (found) {
-            int frameNr = frameNrAndTime.getKey();
-            Point pasPoint = entry.getValue();
-            
-            
+            bleachCoords_.put(frameNrAndTime.getKey(), entry.getValue());
          }
+      }
+      
+      try {
+         int imgWidth = dataProvider.getAnyImage().getWidth();
+         int imgHeight = dataProvider.getAnyImage().getHeight();
+         if (roiWidth_ > imgWidth) {
+            studio_.logs().showError("ROI width is greater than image width.  Aborting");
+         }
+         if (roiHeight_ > imgHeight) {
+            studio_.logs().showError("ROI height is greater than image height.  Aborting");
+         }
+         for (Map.Entry<Integer, Point> bleachCoord : bleachCoords_.entrySet()) {
+            int roiX = bleachCoord.getValue().x - (int) (roiWidth_ / 2);
+            roiX = (roiX < 0) ? 0 : roiX;
+            roiX = (roiX + roiWidth_ > imgWidth) ? imgWidth - roiWidth_ : roiX;
+            int roiY = bleachCoord.getValue().y - (int) (roiWidth_ / 2);
+            roiY = roiY < 0 ? 0 : roiY;
+            roiY = (roiY + roiHeight_ > imgHeight) ? imgHeight - roiHeight_ : roiY;
+            
+            int centralFrame = bleachCoord.getKey();
+            int startFrame = centralFrame - nrFramesBefore_;
+            startFrame = startFrame < 0 ? 0 : startFrame;
+            int endFrame = centralFrame + nrFramesAfter_;
+            endFrame = endFrame > dataProvider.getAxisLength(Coords.T)
+                    ? dataProvider.getAxisLength(Coords.T) : endFrame;
+            Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
+            ImageStack stack = new ImageStack (roiWidth_, roiHeight_);
+            for (int frame = startFrame; frame <= endFrame; frame++) {
+               Coords coord = cb.t(frame).build();
+               Image img = dataProvider.getImage(coord);
+               ImageProcessor iProc = studio_.data().getImageJConverter().createProcessor(img);
+               iProc.setRoi(roiX, roiY, roiWidth_, roiHeight_);
+               ImageProcessor crop = iProc.crop();
+               stack.addSlice(crop);
+            }
+            ImagePlus ip = new ImagePlus("f: " + bleachCoord.getKey(), stack);
+            ip.show();
+         }
+      } catch (IOException ioe) {
+         studio_.logs().showError("Error while reading image data");
       }
                 
       
@@ -158,7 +207,6 @@ public class PointAndShootAnalyzer implements Runnable {
    }
    
    private class pointAndShootParser implements Consumer<String> {
-
       @Override
       public void accept(String t) {
          String[] parts = t.split("\t");
