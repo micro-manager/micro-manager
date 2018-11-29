@@ -37,6 +37,7 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
+import org.micromanager.display.DataViewer;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMDialog;
 import org.micromanager.propertymap.MutablePropertyMapView;
@@ -78,8 +79,7 @@ public class PointAndShootDialog extends MMDialog {
       super.loadAndRestorePosition(100, 100);
       
       JLabel explanationLabel = new JLabel("Provide location of text file " +
-             "containing timestamps and locations of Point and Shoot of the " +
-              "open data set");
+             "containing Point and Shoot  timestamps and locations");
       super.add(explanationLabel, "span 2, wrap");
       
       final JTextField locationsField = new JTextField(50);
@@ -119,7 +119,11 @@ public class PointAndShootDialog extends MMDialog {
       okButton.addActionListener(new ActionListener() {
          @Override
          public void actionPerformed(ActionEvent evt) {
-            // TODO: start analysis
+            DataViewer activeDataViewer = studio_.displays().getActiveDataViewer();
+            if (activeDataViewer == null) {
+               studio_.logs().showError("Please open image data first");
+               return;
+            }
             String fileName = locationsField.getText();
             File f = new File(fileName);
             if (!f.exists()) {
