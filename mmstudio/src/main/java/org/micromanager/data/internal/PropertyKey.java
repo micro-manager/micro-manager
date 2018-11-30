@@ -1335,7 +1335,7 @@ public enum PropertyKey {
 
       @Override
       public JsonElement convertToGson(PropertyMap pmap) {
-         return PropertyMapJSONSerializer.toGson(pmap);
+         return PropertyMapJSONSerializer.toGson(pmap.getPropertyMap(key(), PropertyMaps.emptyPropertyMap()));
       }
    },
 
