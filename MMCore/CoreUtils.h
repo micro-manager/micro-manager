@@ -98,13 +98,16 @@ inline std::string ToQuotedString<const char*>(char const* const& d)
 
 
 //NB we are starting the 'epoch' on 2000 01 01
+inline MM::MMTime GetMMTimeNow(boost::posix_time::ptime t0)
+{
+   boost::posix_time::ptime timet_start(boost::gregorian::date(2000,1,1)); 
+   boost::posix_time::time_duration diff = t0 - timet_start; 
+   return MM::MMTime( (double) diff.total_microseconds());
+}
+
+//NB we are starting the 'epoch' on 2000 01 01
 inline MM::MMTime GetMMTimeNow()
 {
-   using namespace boost::posix_time;
-   using namespace boost::gregorian;
-   boost::posix_time::ptime t0 = boost::posix_time::microsec_clock::local_time();
-   ptime timet_start(date(2000,1,1)); 
-   time_duration diff = t0 - timet_start; 
-   return MM::MMTime( (double) diff.total_microseconds());
+   return GetMMTimeNow(boost::posix_time::microsec_clock::local_time());
 }
 

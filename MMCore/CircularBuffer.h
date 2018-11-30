@@ -32,6 +32,7 @@
 #include "../MMDevice/MMDevice.h"
 
 #include <vector>
+#include "boost/date_time/posix_time/posix_time.hpp"
 
 #ifdef _MSC_VER
 #pragma warning( disable : 4290 ) // exception declaration warning
@@ -89,4 +90,7 @@ private:
    unsigned int numChannels_;
    bool overflow_;
    std::vector<mm::FrameBuffer> frameArray_;
+
+   boost::posix_time::time_facet * facet;
+   std::ostringstream tStream;
 };
