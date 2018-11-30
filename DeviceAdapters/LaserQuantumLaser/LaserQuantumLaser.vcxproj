@@ -19,8 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{FFF4637C-DD40-4E3F-BDAF-6D0C102CBC7D}</ProjectGuid>
-    <RootNamespace>PrecisExcite</RootNamespace>
+    <ProjectGuid>{C1769CC1-A247-432C-9575-3A5A3C7402C7}</ProjectGuid>
+    <RootNamespace>LaserQuantumLaser</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <ProjectName>LaserQuantumLaser</ProjectName>
   </PropertyGroup>
