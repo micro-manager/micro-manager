@@ -21,8 +21,11 @@
 
 package org.micromanager.pointandshootanalysis;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.plugin.ImageCalculator;
+import ij.plugin.ZProjector;
 import ij.process.ImageProcessor;
 import java.awt.Point;
 import java.io.File;
@@ -172,7 +175,7 @@ public class PointAndShootAnalyzer implements Runnable {
             endFrame = endFrame > dataProvider.getAxisLength(Coords.T)
                     ? dataProvider.getAxisLength(Coords.T) : endFrame;
             Coords.Builder cb = dataProvider.getAnyImage().getCoords().copyBuilder();
-            ImageStack stack = new ImageStack (roiWidth_, roiHeight_);
+            ImageStack stack = new ImageStack(roiWidth_, roiHeight_);
             for (int frame = startFrame; frame <= endFrame; frame++) {
                Coords coord = cb.t(frame).build();
                Image img = dataProvider.getImage(coord);
@@ -181,8 +184,40 @@ public class PointAndShootAnalyzer implements Runnable {
                ImageProcessor crop = iProc.crop();
                stack.addSlice(crop);
             }
-            ImagePlus ip = new ImagePlus("f: " + bleachCoord.getKey(), stack);
-            ip.show();
+            ImagePlus imp = new ImagePlus("f: " + bleachCoord.getKey(), stack);
+            ZProjector zp = new ZProjector(imp);
+            zp.setMethod(ZProjector.AVG_METHOD);
+            zp.setStartSlice(1);
+            zp.setStopSlice(3);  // TODO: make sure this is always correct
+            zp.doProjection();
+            ImagePlus before = zp.getProjection();
+                        
+            zp.setMethod(ZProjector.MIN_METHOD);
+            zp.setStartSlice(1);
+            zp.setStopSlice(imp.getNSlices());
+            zp.doProjection();
+            ImagePlus min = zp.getProjection();
+            
+            ImageCalculator ic = new ImageCalculator();
+            ImagePlus result = ic.run("Divide 32-bit", min, before);
+            IJ.run(result, "Gaussian Blur...", "sigma=3");
+            result.show();
+            
+            Point minPoint = findMinPixel(result.getProcessor());
+            System.out.println("Lowest Pixel position: " + minPoint.x + ", " + minPoint.y);
+            // TODO: check this is within expected range
+            
+            
+            
+            
+            
+            /*
+            // attempt to use imglib2, given up after trying hard and not finding documentation
+            ShortImagePlus<UnsignedShortType> imgl2Img = ImagePlusAdapter.wrapShort(imp);
+            int nr2Slices = imgl2Img.numSlices();
+            System.out.println("This one has " + nr2Slices);
+             */
+            //imp.show();
          }
       } catch (IOException ioe) {
          studio_.logs().showError("Error while reading image data");
@@ -204,6 +239,21 @@ public class PointAndShootAnalyzer implements Runnable {
          instant = instant.plusNanos(1000 * Integer.parseInt(subSeconds));
       }
       return instant;
+   }
+   
+   public static Point findMinPixel(ImageProcessor ip) {
+      Point p = new Point(0, 0);
+      Float val = ip.getPixelValue(0, 0);
+      for (int x = 0; x < ip.getWidth(); x++) {
+         for (int y= 0; y < ip.getHeight(); y++) {
+           if (ip.getPixelValue(x, y) < val) {
+              p.x = x;
+              p.y = y;
+              val = ip.getPixelValue(x, y);
+           }
+         }
+      }
+      return p;        
    }
    
    private class pointAndShootParser implements Consumer<String> {
