@@ -184,7 +184,8 @@ public class Calibrator {
          final long imageSize = Math.min(core_.getImageWidth(), core_.getImageHeight()); 
          return MathFunctions.generateAffineTransformFromPointPairs(spotMap, imageSize*0.05, Double.MAX_VALUE);
       } catch (Exception e) {
-         throw new RuntimeException("Spots aren't detected as expected. Is DMD in focus and roughly centered in camera's field of view?");
+         throw new RuntimeException("Spots aren't detected as expected. " + 
+                 "Is the Projector in focus and roughly centered in camera's field of view?");
       }
    }
    

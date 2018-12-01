@@ -4,7 +4,8 @@
 //SUBSYSTEM:     Projector plugin
 //-----------------------------------------------------------------------------
 //AUTHOR:        Arthur Edelstein
-//COPYRIGHT:     University of California, San Francisco, 2010-2014
+//                Contributions by Jon Daniels and Nico Stuurman
+//COPYRIGHT:     University of California, San Francisco, 2010-2018
 //LICENSE:       This file is distributed under the BSD license.
 //               License text is included with the source distribution.
 //               This file is distributed in the hope that it will be useful,
@@ -15,17 +16,6 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 package org.micromanager.projector.internal;
-
-// This file is written in call stack order: methods declared later in the
-// file call methods earlier in the file, with the exception of generated
-// code (found at the end of file).
-
-// This source file is partially formatted to be processed
-// with [docco](http://jashkenas.github.io/docco/),
-// which generates nice HTML documentation side-by-side with the
-// source code.
-
-// TODO: finish converting to Javadoc
 
 
 import com.google.common.eventbus.Subscribe;
@@ -41,11 +31,14 @@ import ij.plugin.frame.RoiManager;
 import ij.process.FloatPolygon;
 
 import java.awt.AWTEvent;
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.AWTEventListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -53,31 +46,53 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyVetoException;
+import java.beans.VetoableChangeListener;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-
+import javax.swing.JPanel;
 import javax.swing.JSpinner;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.text.DefaultFormatter;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
+import net.miginfocom.swing.MigLayout;
 import org.micromanager.PropertyMap;
 
 import org.micromanager.Studio;
@@ -86,6 +101,8 @@ import org.micromanager.data.Image;
 import org.micromanager.display.DisplayWindow;
 import org.micromanager.display.internal.displaywindow.DisplayController;
 import org.micromanager.events.SLMExposureChangedEvent;
+import org.micromanager.internal.utils.FileDialogs;
+import org.micromanager.internal.utils.FileDialogs.FileType;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 import org.micromanager.projector.internal.devices.SLM;
@@ -104,10 +121,12 @@ import org.micromanager.internal.utils.ReportingUtils;
 public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private static ProjectorControlForm formSingleton_;
    private final ProjectionDevice dev_;
-   private final MouseListener pointAndShootMouseListener;
+   private final MouseListener pointAndShootMouseListener_;
    private final AtomicBoolean pointAndShooteModeOn_ = new AtomicBoolean(false);
+   private final BlockingQueue<PointAndShootInfo> pointAndShootQueue_;
+   private Thread pointAndShootThread_;
    private final CMMCore core_;
-   private final Studio app_;
+   private final Studio studio_;
    private final MutablePropertyMapView settings_;
    private final boolean isSLM_;
    private Roi[] individualRois_ = {};
@@ -117,9 +136,17 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    private String targetingShutter_;
    private Boolean disposing_ = false;
    private Calibrator calibrator_;
+   private BufferedWriter logFileWriter_;
+   
+   
+   private static final SimpleDateFormat LOGFILEDATE_FORMATTER = 
+           new SimpleDateFormat("yyyyMMdd");
+   private static final SimpleDateFormat LOGTIME_FORMATTER = 
+           new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
    
 
-
+   public static final FileType PROJECTOR_LOG_FILE = new FileType("PROJECTOR_LOG_FILE",
+      "Projector Log File", "./MyProjector.log", true, "log");
   
    // ## Methods for handling targeting channel and shutter
    
@@ -127,18 +154,19 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Reads the available channels from Micro-Manager Channel Group
     * and populates the targeting channel drop-down menu.
     */
-   final void populateChannelComboBox(String initialChannel) {
+   final void populateChannelComboBox(String initialCh) {
+      String initialChannel = initialCh;
       if (initialChannel == null) {
-         initialChannel = (String) channelComboBox.getSelectedItem();
+         initialChannel = (String) channelComboBox_.getSelectedItem();
       }
-      channelComboBox.removeAllItems();
-      channelComboBox.addItem("");
+      channelComboBox_.removeAllItems();
+      channelComboBox_.addItem("");
       // try to avoid crash on shutdown
       if (core_ != null) {
          for (String preset : core_.getAvailableConfigs(core_.getChannelGroup())) {
-            channelComboBox.addItem(preset);
+            channelComboBox_.addItem(preset);
          }
-         channelComboBox.setSelectedItem(initialChannel);
+         channelComboBox_.setSelectedItem(initialChannel);
       }
    }
 
@@ -146,18 +174,19 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Reads the available shutters from Micro-Manager and
     * lists them in the targeting shutter drop-down menu.
     */
+   @SuppressWarnings("AssignmentToMethodParameter")
    final void populateShutterComboBox(String initialShutter) {
       if (initialShutter == null) {
-         initialShutter = (String) shutterComboBox.getSelectedItem();
+         initialShutter = (String) shutterComboBox_.getSelectedItem();
       }
-      shutterComboBox.removeAllItems();
-      shutterComboBox.addItem("");
+      shutterComboBox_.removeAllItems();
+      shutterComboBox_.addItem("");
       // trying to avoid crashes on shutdown
       if (core_ != null) {
          for (String shutter : core_.getLoadedDevicesOfType(DeviceType.ShutterDevice)) {
-            shutterComboBox.addItem(shutter);
+            shutterComboBox_.addItem(shutter);
          }
-         shutterComboBox.setSelectedItem(initialShutter);
+         shutterComboBox_.setSelectedItem(initialShutter);
       }
    }
    
@@ -168,7 +197,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingChannel(String channelName) {
       targetingChannel_ = channelName;
        if (channelName != null) {
-          app_.profile().getSettings(this.getClass()).putString(
+          studio_.profile().getSettings(this.getClass()).putString(
                   "channel", channelName);
        }
    }
@@ -180,14 +209,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    void setTargetingShutter(String shutterName) {
       targetingShutter_ = shutterName;
       if (shutterName != null) {
-         app_.profile().getSettings(this.getClass()).putString(
+         studio_.profile().getSettings(this.getClass()).putString(
                  "shutter", shutterName);
       }
    }
    
    /**
     * Sets the Channel Group to the targeting channel, if it exists.
-    * @return 
+    * @return the channel group in effect before calling this function
     */
    public Configuration prepareChannel() {
       Configuration originalConfig = null;
@@ -196,8 +225,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          if (targetingChannel_ != null && targetingChannel_.length() > 0) {
             originalConfig = core_.getConfigGroupState(channelGroup);
             if (!originalConfig.isConfigurationIncluded(core_.getConfigData(channelGroup, targetingChannel_))) {
-               if (app_.acquisitions().isAcquisitionRunning()) {
-                  app_.acquisitions().setPause(true);
+               if (studio_.acquisitions().isAcquisitionRunning()) {
+                  studio_.acquisitions().setPause(true);
                }
                core_.setConfig(channelGroup, targetingChannel_);
             }
@@ -211,14 +240,14 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    /**
     * Should be called with the value returned by prepareChannel.
     * Returns Channel Group to its original settings, if needed.
-    * @param originalConfig value returned by prepareChannel
+    * @param originalConfig Configuration to return to
     */
    public void returnChannel(Configuration originalConfig) {
       if (originalConfig != null) {
          try {
             core_.setSystemState(originalConfig);
-            if (app_.acquisitions().isAcquisitionRunning() && app_.acquisitions().isPaused()) {
-               app_.acquisitions().setPause(false);
+            if (studio_.acquisitions().isAcquisitionRunning() && studio_.acquisitions().isPaused()) {
+               studio_.acquisitions().setPause(false);
             }
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
@@ -291,7 +320,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       if (calibrator_ != null && calibrator_.isCalibrating()) {
          return;
       }
-      calibrator_ = new Calibrator(app_, dev_, settings_);
+      calibrator_ = new Calibrator(studio_, dev_, settings_);
       Future<Boolean> runCalibration = calibrator_.runCalibration();
       new Thread() {
          @Override
@@ -335,8 +364,9 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
      
 
-   // Flips a point if the image was mirrored.
-   // TODO: also correct for rotation..
+   /** Flips a point if the image was mirrored.
+    *   TODO: also correct for rotation..
+   */
    private Point mirrorIfNecessary(ImageCanvas canvas, 
            Point pOffscreen) {
       boolean isImageMirrored = false;
@@ -356,7 +386,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
                }
             }
          } catch (IOException ioe) {
-            app_.logs().logError(ioe);
+            studio_.logs().logError(ioe);
          }
       }
       if (isImageMirrored) {
@@ -368,11 +398,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
 
 
-   // ## Point and shoot
-   
-   // Creates a MouseListener instance for future use with Point and Shoot
-   // mode. When the MouseListener is attached to an ImageJ window, any
-   // clicks will result in a spot being illuminated.
+   /**
+    * ## Point and shoot
+    * Creates a MouseListener instance for future use with Point and Shoot
+    * mode. When the MouseListener is attached to an ImageJ window, any
+    * clicks will result in a spot being illuminated.
+   */
    private MouseListener createPointAndShootMouseListenerInstance() {
       return new MouseAdapter() {
          @Override
@@ -380,36 +411,30 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             if (e.isShiftDown()) {
                final Point p = e.getPoint();
                final ImageCanvas canvas = (ImageCanvas) e.getSource();
-               Point pOffScreen = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
-               pOffScreen = mirrorIfNecessary(canvas, pOffScreen);
+               Point pOff = new Point(canvas.offScreenX(p.x), canvas.offScreenY(p.y));
+               final Point pOffScreen = mirrorIfNecessary(canvas, pOff);
                final Point2D.Double devP = ProjectorActions.transformPoint(
                        Mapping.loadMapping(core_, dev_, settings_),
                        new Point2D.Double(pOffScreen.x, pOffScreen.y));
                final Configuration originalConfig = prepareChannel();
                final boolean originalShutterState = prepareShutter();
-               new Thread(
-                       new Runnable() {
-                  @Override
-                  public void run() {
-                     try {
-                        if (devP != null) {
-                           ProjectorActions.displaySpot(dev_, devP.x, devP.y);
-                        }
-                        returnShutter(originalShutterState);
-                        returnChannel(originalConfig);
-                        // TODO: log the position
-                     } catch (Exception e) {
-                        ReportingUtils.showError(e);
-                     }
-                  }
-               }).start();
-
+               PointAndShootInfo.Builder psiBuilder = new PointAndShootInfo.Builder();
+               PointAndShootInfo psi = psiBuilder.projectionDevice(dev_).
+                       devPoint(devP).
+                       originalShutterState(originalShutterState).
+                       originalConfig(originalConfig).
+                       canvasPoint(pOffScreen).
+                       build();
+               pointAndShootQueue_.add(psi);
             }
          }
       };
    }
 
-   // Turn on/off point and shoot mode.
+   /**
+    * Turn on/off point and shoot mode.
+    * @param on on/off flag
+    */
    public void enablePointAndShootMode(boolean on) {
       if (on && (mapping_ == null)) {
          final String errorS = 
@@ -418,6 +443,40 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
          throw new RuntimeException(errorS);
       }
       pointAndShooteModeOn_.set(on);
+      // restart this thread if it is not running?
+      if (pointAndShootThread_ == null) {
+         pointAndShootThread_ = new Thread(
+                 new Runnable() {
+            @Override
+            public void run() {
+               while (true) {
+                  PointAndShootInfo psi;
+                  try {
+                     psi = pointAndShootQueue_.take();
+                     if (psi.isStopped()) {
+                        return;
+                     }
+                     try {
+                        if (psi.getDevice() != null) {
+                           ProjectorActions.displaySpot(
+                                   psi.getDevice(),
+                                   psi.getDevPoint().x,
+                                   psi.getDevPoint().y);
+                        }
+                        returnShutter(psi.getOriginalShutterState());
+                        returnChannel(psi.getOriginalConfig());
+                        logPoint(psi.getCanvasPoint());
+                     } catch (Exception e) {
+                        ReportingUtils.showError(e);
+                     }
+                  } catch (InterruptedException ex) {
+                     ReportingUtils.showError(ex);
+                  }
+               }
+            }
+         });
+         pointAndShootThread_.start();
+      }
       ImageWindow window = WindowManager.getCurrentWindow();
       if (window != null) {
          ImageCanvas canvas = window.getCanvas();
@@ -425,21 +484,73 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
             if (on) {
                boolean found = false;
                for (MouseListener listener : canvas.getMouseListeners()) {
-                  if (listener == pointAndShootMouseListener) {
+                  if (listener == pointAndShootMouseListener_) {
                      found = true;
                   }
-                  if (!found) {
-                     canvas.addMouseListener(pointAndShootMouseListener);
-                  }
+               }
+               if (!found) {
+                  canvas.addMouseListener(pointAndShootMouseListener_);
                }
             } else {
                for (MouseListener listener : canvas.getMouseListeners()) {
-                  if (listener == pointAndShootMouseListener) {
+                  if (listener == pointAndShootMouseListener_) {
                      canvas.removeMouseListener(listener);
                   }
                }
             }
          }
+      }
+   }
+   
+   
+   /**
+    * Creates the log file - names with the current date - if it 
+    * did not yet exist.
+    * @return 
+    */
+   private BufferedWriter checkLogFile() {
+      if (logFileWriter_ == null) {
+         if (logDirectoryTextField_.getText().isEmpty()) {
+            studio_.alerts().postAlert("Logging disabled", this.getClass(),
+                    "To enable logging, set the Log Directory");
+            return null;
+         }
+         String currentDate = LOGFILEDATE_FORMATTER.format(new Date());
+         String newLogFile = new StringBuilder().append(
+                 logDirectoryTextField_.getText()).append(
+                 File.separator).append(
+                         currentDate).append(
+                         ".log").toString();
+         try {
+            OutputStreamWriter writer = new OutputStreamWriter(
+                    new FileOutputStream(newLogFile), "UTF-8");
+            // not sure if buffering is useful
+            logFileWriter_ = new BufferedWriter(writer, 1024);
+         } catch (UnsupportedEncodingException | FileNotFoundException ex) {
+            studio_.alerts().postAlert("Error opening logfile", this.getClass(),
+                    "Failed to open log file");
+         }
+      }
+      return logFileWriter_;
+   }
+
+   /**
+    * Writes a point (screen coordinates) to the logfile, preceded
+    * by the current date and time in ms.
+    * @param p 
+    */
+   private void logPoint(Point p) {
+      BufferedWriter logFileWriter = checkLogFile();
+      if (logFileWriter == null) {
+         return;
+      }
+      String currentTime = LOGTIME_FORMATTER.format(new Date());  // could use nanoseconds instead...
+      try {
+         logFileWriter.write(currentTime + "\t" + p.x + "\t" + p.y);
+         logFileWriter.newLine();
+      } catch (IOException ioe) {
+         studio_.alerts().postAlert("Projector logfile error", this.getClass(),
+                 "Failed to open write to Projector log file");
       }
    }
    
@@ -449,8 +560,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * @return 
     */   
    private DataProvider getDataProvider(ImageCanvas canvas) {
-      if (canvas == null) return null;
-      List<DisplayWindow> dws = app_.displays().getAllImageWindows();
+      if (canvas == null) {
+         return null;
+      }
+      List<DisplayWindow> dws = studio_.displays().getAllImageWindows();
       if (dws != null) {
          for (DisplayWindow dw : dws) {
             if (dw instanceof DisplayController) {
@@ -570,10 +683,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    
    // Save ROIs in the acquisition path, if it exists.
    private void recordPolygons() {
-      if (app_.acquisitions().isAcquisitionRunning()) {
+      if (studio_.acquisitions().isAcquisitionRunning()) {
          // TODO: The MM2.0 refactor broke this code by removing the below
          // method.
-//         String location = app_.compat().getAcquisitionPath();
+//         String location = studio_.compat().getAcquisitionPath();
 //         if (location != null) {
 //            try {
 //               File f = new File(location, "ProjectorROIs.zip");
@@ -664,13 +777,13 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    */
    public void attachRoisToMDA(int firstFrame, boolean repeat, 
            int frameRepeatInveral, Runnable runPolygons) {
-      app_.acquisitions().clearRunnables();
+      studio_.acquisitions().clearRunnables();
       if (repeat) {
-         for (int i = firstFrame; i < app_.acquisitions().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
-            app_.acquisitions().attachRunnable(i, -1, 0, 0, runPolygons);
+         for (int i = firstFrame; i < studio_.acquisitions().getAcquisitionSettings().numFrames * 10; i += frameRepeatInveral) {
+            studio_.acquisitions().attachRunnable(i, -1, 0, 0, runPolygons);
          }
       } else {
-         app_.acquisitions().attachRunnable(firstFrame, -1, 0, 0, runPolygons);
+         studio_.acquisitions().attachRunnable(firstFrame, -1, 0, 0, runPolygons);
       }
    }
 
@@ -678,7 +791,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Remove the attached ROIs from the multi-dimensional acquisition.
     */
    public void removeFromMDA() {
-      app_.acquisitions().clearRunnables();
+      studio_.acquisitions().clearRunnables();
    }
   
    // ## GUI
@@ -705,8 +818,15 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * @param turnedOn true = Point and Shoot is ON
     */
    public void updatePointAndShoot(boolean turnedOn) {
+      if (!turnedOn && logFileWriter_ != null) {
+         try {
+            logFileWriter_.flush();
+         } catch (IOException ioe) {
+            studio_.logs().logError(ioe);
+         }
+      }
       pointAndShootOnButton.setSelected(turnedOn);
-      pointAndShootOffButton.setSelected(!turnedOn);
+      pointAndShootOffButton_.setSelected(!turnedOn);
       enablePointAndShootMode(turnedOn);
    }
    
@@ -731,8 +851,12 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * then, if repeat is true, every intervalTimeMs thereafter until
     * shouldContinue.call() returns false.
     */
-   private Runnable runAtIntervals(final long firstTimeMs, boolean repeat,
-      final long intervalTimeMs, final Runnable runnable, final Callable<Boolean> shouldContinue) {
+   @SuppressWarnings("AssignmentToMethodParameter")
+   private Runnable runAtIntervals(final long firstTimeMs, 
+           boolean repeat,
+           final long intervalTimeMs, 
+           final Runnable runnable, 
+           final Callable<Boolean> shouldContinue) {
       // protect from actions that have bad consequences
       if (intervalTimeMs == 0) {
          repeat = false;
@@ -760,7 +884,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    }
    
    public void setNrRepetitions(int nr) {
-      roiLoopSpinner.setValue(nr);
+      roiLoopSpinner_.setValue(nr);
       updateROISettings();
    }
    
@@ -772,71 +896,72 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       int numROIs = individualRois_.length;
       switch (numROIs) {
          case 0:
-            roiStatusLabel.setText("No ROIs submitted");
+            roiStatusLabel_.setText("No ROIs submitted");
             roisSubmitted = false;
             break;
          case 1:
-            roiStatusLabel.setText("One ROI submitted");
+            roiStatusLabel_.setText("One ROI submitted");
             roisSubmitted = true;
             break;
          default:
             // numROIs > 1
-            roiStatusLabel.setText("" + numROIs + " ROIs submitted");
+            roiStatusLabel_.setText("" + numROIs + " ROIs submitted");
             roisSubmitted = true;
             break;
       }
 
-      roiLoopLabel.setEnabled(roisSubmitted);
-      roiLoopSpinner.setEnabled(!isSLM_ && roisSubmitted);
-      roiLoopTimesLabel.setEnabled(!isSLM_ && roisSubmitted);
-      runROIsNowButton.setEnabled(roisSubmitted);
+      roiLoopLabel_.setEnabled(roisSubmitted);
+      roiLoopSpinner_.setEnabled(!isSLM_ && roisSubmitted);
+      roiLoopTimesLabel_.setEnabled(!isSLM_ && roisSubmitted);
+      runROIsNowButton_.setEnabled(roisSubmitted);
       useInMDAcheckBox.setEnabled(roisSubmitted);
       
       int nrRepetitions = 0;
-      if (roiLoopSpinner.isEnabled()) {
-         nrRepetitions = getSpinnerIntegerValue(roiLoopSpinner);
+      if (roiLoopSpinner_.isEnabled()) {
+         nrRepetitions = getSpinnerIntegerValue(roiLoopSpinner_);
+         settings_.putInteger(Terms.NRROIREPETITIONS, nrRepetitions);
       }
       dev_.setPolygonRepetitions(nrRepetitions);
 
       boolean useInMDA = roisSubmitted && useInMDAcheckBox.isSelected();
-      attachToMdaTabbedPane.setEnabled(useInMDA);
-      startFrameLabel.setEnabled(useInMDA);
-      startFrameSpinner.setEnabled(useInMDA);
-      repeatCheckBox.setEnabled(useInMDA);
-      startTimeLabel.setEnabled(useInMDA);
-      startTimeUnitLabel.setEnabled(useInMDA);
-      startTimeSpinner.setEnabled(useInMDA);
-      repeatCheckBoxTime.setEnabled(useInMDA);
+      attachToMdaTabbedPane_.setEnabled(useInMDA);
+      startFrameLabel_.setEnabled(useInMDA);
+      startFrameSpinner_.setEnabled(useInMDA);
+      repeatCheckBox_.setEnabled(useInMDA);
+      startTimeLabel_.setEnabled(useInMDA);
+      startTimeUnitLabel_.setEnabled(useInMDA);
+      startTimeSpinner_.setEnabled(useInMDA);
+      repeatCheckBoxTime_.setEnabled(useInMDA);
       
-      boolean repeatInMDA = useInMDA && repeatCheckBox.isSelected();
-      repeatEveryFrameSpinner.setEnabled(repeatInMDA);
-      repeatEveryFrameUnitLabel.setEnabled(repeatInMDA);
+      boolean repeatInMDA = useInMDA && repeatCheckBox_.isSelected();
+      repeatEveryFrameSpinner_.setEnabled(repeatInMDA);
+      repeatEveryFrameUnitLabel_.setEnabled(repeatInMDA);
       
-      boolean repeatInMDATime = useInMDA && repeatCheckBoxTime.isSelected();
-      repeatEveryIntervalSpinner.setEnabled(repeatInMDATime);
-      repeatEveryIntervalUnitLabel.setEnabled(repeatInMDATime);
+      boolean repeatInMDATime = useInMDA && repeatCheckBoxTime_.isSelected();
+      repeatEveryIntervalSpinner_.setEnabled(repeatInMDATime);
+      repeatEveryIntervalUnitLabel_.setEnabled(repeatInMDATime);
       
-      boolean synchronous = attachToMdaTabbedPane.getSelectedComponent() == syncRoiPanel;
+      boolean synchronous = attachToMdaTabbedPane_.getSelectedComponent() == syncRoiPanel_;
 
       if (useInMDAcheckBox.isSelected()) {
          removeFromMDA();
          if (synchronous) {
-            attachRoisToMDA(getSpinnerIntegerValue(startFrameSpinner) - 1,
-                  repeatCheckBox.isSelected(),
-                  getSpinnerIntegerValue(repeatEveryFrameSpinner),
+            attachRoisToMDA(getSpinnerIntegerValue(startFrameSpinner_) - 1,
+                  repeatCheckBox_.isSelected(),
+                  getSpinnerIntegerValue(repeatEveryFrameSpinner_),
                   phototargetROIsRunnable("Synchronous phototargeting of ROIs"));
          } else {
             final Callable<Boolean> mdaRunning = new Callable<Boolean>() {
                @Override
                public Boolean call() throws Exception {
-                  return app_.acquisitions().isAcquisitionRunning();
+                  return studio_.acquisitions().isAcquisitionRunning();
                }
             };
             attachRoisToMDA(1, false, 0,
                   new Thread(
-                        runAtIntervals((long) (1000. * getSpinnerDoubleValue(startTimeSpinner)),
-                        repeatCheckBoxTime.isSelected(),
-                        (long) (1000 * getSpinnerDoubleValue(repeatEveryIntervalSpinner)),
+                        runAtIntervals((long) (1000. * getSpinnerDoubleValue(startTimeSpinner_)),
+                        repeatCheckBoxTime_.isSelected(),
+                        (long) (1000 * getSpinnerDoubleValue(repeatEveryIntervalSpinner_)),
                         phototargetROIsRunnable("Asynchronous phototargeting of ROIs"),
                         mdaRunning)));
          }
@@ -847,9 +972,10 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     
    // Set the exposure to whatever value is currently in the Exposure field.
    private void updateExposure() {
-       ProjectorActions.setExposure(dev_,
-               1000 * Double.parseDouble(
-                       pointAndShootIntervalSpinner.getValue().toString()));
+      double exposureMs = Double.parseDouble(
+                       pointAndShootIntervalSpinner_.getValue().toString()) ;
+       ProjectorActions.setExposure(dev_, 1000 * exposureMs);
+       settings_.putDouble(Terms.EXPOSURE, exposureMs);
    }
    
    // Method called if the phototargeting device has turned on or off.
@@ -858,8 +984,8 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       SwingUtilities.invokeLater(new Runnable() {
          @Override
          public void run() {
-            onButton.setSelected(onState);
-            offButton.setSelected(!onState);
+            onButton_.setSelected(onState);
+            offButton_.setSelected(!onState);
          }
       });
    }
@@ -870,7 +996,7 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     */
    void showMosaicSequencingWindow() {
       if (mosaicSequencingFrame_ == null) {
-         mosaicSequencingFrame_ = new MosaicSequencingFrame(app_, core_, this, (SLM) dev_);
+         mosaicSequencingFrame_ = new MosaicSequencingFrame(studio_, core_, this, (SLM) dev_);
       }
       mosaicSequencingFrame_.setVisible(true);
    }
@@ -879,17 +1005,18 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
     * Constructor. Creates the main window for the Projector plugin.
     */
    private ProjectorControlForm(CMMCore core, Studio app) {
-      app_ = app;
+      studio_ = app;
       core_ = app.getCMMCore();
+      settings_ = studio_.profile().getSettings(this.getClass());
+      dev_ = ProjectorActions.getProjectionDevice(studio_);
+      mapping_ = Mapping.loadMapping(core_, dev_, settings_);
+      pointAndShootQueue_ = new LinkedBlockingQueue<PointAndShootInfo>();
+      pointAndShootMouseListener_ = createPointAndShootMouseListenerInstance();
       
-      // Let the Netbeans code make the GUI
+      // Create GUI
       initComponents();
-      
-      settings_ = app_.profile().getSettings(this.getClass());
-      dev_ = ProjectorActions.getProjectionDevice(app_);     
-      mapping_ = Mapping.loadMapping(core, dev_, settings_);
-      pointAndShootMouseListener = createPointAndShootMouseListenerInstance();
 
+      // Make sure that the POint and Shoot code listens to the correct window
       Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
          @Override
          public void eventDispatched(AWTEvent e) {
@@ -899,46 +1026,47 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       
       isSLM_ = dev_ instanceof SLM;
       // Only an SLM (not a galvo) has pixels.
-      allPixelsButton.setVisible(isSLM_);
+      allPixelsButton_.setVisible(isSLM_);
       checkerBoardButton_.setVisible(isSLM_);
       // No point in looping ROIs on an SLM.
-      roiLoopSpinner.setVisible(!isSLM_);
-      roiLoopLabel.setVisible(!isSLM_);
-      roiLoopTimesLabel.setVisible(!isSLM_);
-      pointAndShootOffButton.setSelected(true);
-      populateChannelComboBox(settings_.getString("channel", ""));
-      populateShutterComboBox(settings_.getString("shutter", ""));
+      roiLoopSpinner_.setVisible(!isSLM_);
+      roiLoopLabel_.setVisible(!isSLM_);
+      roiLoopTimesLabel_.setVisible(!isSLM_);
+      pointAndShootOffButton_.setSelected(true);
+      populateChannelComboBox(settings_.getString(Terms.PTCHANNEL, ""));
+      populateShutterComboBox(settings_.getString(Terms.PTSHUTTER, ""));
       super.addWindowFocusListener(new WindowAdapter() {
          @Override
          public void windowGainedFocus(WindowEvent e) {
             if (!disposing_)
             {
-               populateChannelComboBox(null);
-               populateShutterComboBox(null);
+               populateChannelComboBox(settings_.getString(Terms.PTCHANNEL, ""));
+               populateShutterComboBox(settings_.getString(Terms.PTSHUTTER, ""));
             }
          }
       });
       
-      commitSpinnerOnValidEdit(pointAndShootIntervalSpinner);
-      commitSpinnerOnValidEdit(startFrameSpinner);
-      commitSpinnerOnValidEdit(repeatEveryFrameSpinner);
-      commitSpinnerOnValidEdit(repeatEveryIntervalSpinner);
-      commitSpinnerOnValidEdit(roiLoopSpinner);
-      pointAndShootIntervalSpinner.setValue(dev_.getExposure() / 1000);
-      sequencingButton.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
+      commitSpinnerOnValidEdit(pointAndShootIntervalSpinner_);
+      commitSpinnerOnValidEdit(startFrameSpinner_);
+      commitSpinnerOnValidEdit(repeatEveryFrameSpinner_);
+      commitSpinnerOnValidEdit(repeatEveryIntervalSpinner_);
+      commitSpinnerOnValidEdit(roiLoopSpinner_);
+      pointAndShootIntervalSpinner_.setValue(dev_.getExposure() / 1000);
+      sequencingButton_.setVisible(MosaicSequencingFrame.getMosaicDevices(core).size() > 0);
      
-      app_.events().registerForEvents(new Object() {
+      studio_.events().registerForEvents(new Object() {
          @Subscribe
          public void onSlmExposureChanged(SLMExposureChangedEvent event) {
             String deviceName = event.getDeviceName();
             double exposure = event.getNewExposureTime();
             if (deviceName.equals(dev_.getName())) {
-               pointAndShootIntervalSpinner.setValue(exposure);
+               pointAndShootIntervalSpinner_.setValue(exposure);
             }
          }
       });
       
       delayField_.setText(settings_.getString( Terms.DELAY, "0"));
+      logDirectoryTextField_.setText(settings_.getString( Terms.LOGDIRECTORY, ""));
 
       super.loadAndRestorePosition(500, 300);
       updateROISettings();
@@ -967,6 +1095,22 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
    {
       formSingleton_ = null;
       disposing_ = true;
+      if (pointAndShootThread_ != null && pointAndShootThread_.isAlive()) {
+         pointAndShootQueue_.add(
+                 new PointAndShootInfo.Builder().stop().build());
+         try {
+            pointAndShootThread_.join(1000);
+         } catch (InterruptedException ex) {
+            // It may be dangerous to report stuff while exiting
+         }
+      }
+      if (logFileWriter_ != null) {
+         try {
+            logFileWriter_.close();
+         } catch (IOException ioe) {
+            // we are trying to close this file.  silently ignoring should be OK....
+         }
+      }
       super.dispose();
    }
    
@@ -978,742 +1122,482 @@ public class ProjectorControlForm extends MMFrame implements OnStateListener {
       return mapping_;
    }
    
-   // ## Generated code
-   // Warning: the computer-generated code below this line should not be edited
-   // by hand. Instead, use the Netbeans Form Editor to make changes.
+
    
    /**
     * This method is called from within the constructor to initialize the form.
-    * WARNING: Do NOT modify this code. The content of this method is always
-    * regenerated by the Form Editor.
+    * 
     */
    @SuppressWarnings("unchecked")
-   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
-
-      onButton = new javax.swing.JButton();
-      mainTabbedPane = new javax.swing.JTabbedPane();
-      pointAndShootTab = new javax.swing.JPanel();
-      pointAndShootModeLabel = new javax.swing.JLabel();
-      pointAndShootOnButton = new javax.swing.JToggleButton();
-      pointAndShootOffButton = new javax.swing.JToggleButton();
-      phototargetInstructionsLabel = new javax.swing.JLabel();
-      roisTab = new javax.swing.JPanel();
-      roiLoopLabel = new javax.swing.JLabel();
-      roiLoopTimesLabel = new javax.swing.JLabel();
-      setRoiButton = new javax.swing.JButton();
-      runROIsNowButton = new javax.swing.JButton();
-      roiLoopSpinner = new javax.swing.JSpinner();
-      jSeparator1 = new javax.swing.JSeparator();
-      useInMDAcheckBox = new javax.swing.JCheckBox();
-      roiStatusLabel = new javax.swing.JLabel();
-      roiManagerButton = new javax.swing.JButton();
-      jSeparator3 = new javax.swing.JSeparator();
-      sequencingButton = new javax.swing.JButton();
-      attachToMdaTabbedPane = new javax.swing.JTabbedPane();
-      asyncRoiPanel = new javax.swing.JPanel();
-      startTimeLabel = new javax.swing.JLabel();
-      startTimeSpinner = new javax.swing.JSpinner();
-      repeatCheckBoxTime = new javax.swing.JCheckBox();
-      repeatEveryIntervalSpinner = new javax.swing.JSpinner();
-      repeatEveryIntervalUnitLabel = new javax.swing.JLabel();
-      startTimeUnitLabel = new javax.swing.JLabel();
-      syncRoiPanel = new javax.swing.JPanel();
-      startFrameLabel = new javax.swing.JLabel();
-      repeatCheckBox = new javax.swing.JCheckBox();
-      startFrameSpinner = new javax.swing.JSpinner();
-      repeatEveryFrameSpinner = new javax.swing.JSpinner();
-      repeatEveryFrameUnitLabel = new javax.swing.JLabel();
-      setupTab = new javax.swing.JPanel();
-      calibrateButton_ = new javax.swing.JButton();
-      allPixelsButton = new javax.swing.JButton();
-      centerButton = new javax.swing.JButton();
-      channelComboBox = new javax.swing.JComboBox();
-      phototargetingChannelDropdownLabel = new javax.swing.JLabel();
-      shutterComboBox = new javax.swing.JComboBox();
-      phototargetingShutterDropdownLabel = new javax.swing.JLabel();
-      jLabel1 = new javax.swing.JLabel();
-      delayField_ = new javax.swing.JTextField();
-      checkerBoardButton_ = new javax.swing.JButton();
-      offButton = new javax.swing.JButton();
-      ExposureTimeLabel = new javax.swing.JLabel();
-      pointAndShootIntervalSpinner = new javax.swing.JSpinner();
-      jLabel2 = new javax.swing.JLabel();
+      onButton_ = new JButton();
+      offButton_ = new JButton();
+      pointAndShootOnButton = new JToggleButton();
+      pointAndShootOffButton_ = new JToggleButton();
+      phototargetInstructionsLabel = new JLabel();
+      roiLoopLabel_ = new JLabel();
+      roiLoopTimesLabel_ = new JLabel();
+      setRoiButton = new JButton();
+      runROIsNowButton_ = new JButton();
+      roiLoopSpinner_ = new JSpinner();
+      useInMDAcheckBox = new JCheckBox();
+      roiStatusLabel_ = new JLabel();
+      sequencingButton_ = new JButton();
+      attachToMdaTabbedPane_ = new JTabbedPane();
+      startTimeLabel_ = new JLabel();
+      startTimeSpinner_ = new JSpinner();
+      repeatCheckBoxTime_ = new JCheckBox();
+      repeatEveryIntervalSpinner_ = new JSpinner();
+      repeatEveryIntervalUnitLabel_ = new JLabel();
+      startTimeUnitLabel_ = new JLabel();
+      syncRoiPanel_ = new JPanel();
+      startFrameLabel_ = new JLabel();
+      repeatCheckBox_ = new JCheckBox();
+      startFrameSpinner_ = new JSpinner();
+      repeatEveryFrameSpinner_ = new JSpinner();
+      repeatEveryFrameUnitLabel_ = new JLabel();
+      calibrateButton_ = new JButton();
+      allPixelsButton_ = new JButton();
+      channelComboBox_ = new JComboBox();
+      shutterComboBox_ = new JComboBox();
+      delayField_ = new JTextField();
+      checkerBoardButton_ = new JButton();
+      pointAndShootIntervalSpinner_ = new JSpinner();
+      logDirectoryTextField_ = new JTextField();
+      
+      JPanel asyncRoiPanel = new JPanel();
+      JButton centerButton = new JButton();
+      JButton clearLogDirButton = new JButton();
+      JButton logDirectoryChooserButton = new JButton();
+      JTabbedPane mainTabbedPane = new JTabbedPane();
+      JPanel pointAndShootTab = new JPanel();
+      JButton roiManagerButton = new JButton();
+      JPanel roisTab = new JPanel();
+      JPanel setupTab = new JPanel();
+      
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Projector Controls");
       setResizable(false);
 
-      onButton.setText("On");
-      onButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            onButtonActionPerformed(evt);
+      onButton_.setText("On");
+      onButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            setOnState(true);
+            updatePointAndShoot(false);
          }
       });
 
-      mainTabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            mainTabbedPaneStateChanged(evt);
+      mainTabbedPane.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent evt) {
+            updatePointAndShoot(false);
          }
       });
-
-      pointAndShootModeLabel.setText("Point and shoot mode:");
 
       pointAndShootOnButton.setText("On");
-      pointAndShootOnButton.setMaximumSize(new java.awt.Dimension(75, 23));
-      pointAndShootOnButton.setMinimumSize(new java.awt.Dimension(75, 23));
-      pointAndShootOnButton.setPreferredSize(new java.awt.Dimension(75, 23));
-      pointAndShootOnButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            pointAndShootOnButtonActionPerformed(evt);
+      pointAndShootOnButton.setMaximumSize(new Dimension(75, 23));
+      pointAndShootOnButton.setMinimumSize(new Dimension(75, 23));
+      pointAndShootOnButton.setPreferredSize(new Dimension(75, 23));
+      pointAndShootOnButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            setOnState(false);
+            try {
+               updatePointAndShoot(true);
+            } catch (RuntimeException e) {
+               ReportingUtils.showError(e);
+            }
          }
       });
 
-      pointAndShootOffButton.setText("Off");
-      pointAndShootOffButton.setPreferredSize(new java.awt.Dimension(75, 23));
-      pointAndShootOffButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            pointAndShootOffButtonActionPerformed(evt);
+      pointAndShootOffButton_.setText("Off");
+      pointAndShootOffButton_.setPreferredSize(new Dimension(75, 23));
+      pointAndShootOffButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            updatePointAndShoot(false);
          }
       });
 
-      phototargetInstructionsLabel.setText("(To phototarget, Shift + click on the image, use ImageJ hand-tool)");
+      phototargetInstructionsLabel.setText(
+              "(To phototarget, Shift + click on the image, use ImageJ hand-tool)");
 
-      javax.swing.GroupLayout pointAndShootTabLayout = new javax.swing.GroupLayout(pointAndShootTab);
-      pointAndShootTab.setLayout(pointAndShootTabLayout);
-      pointAndShootTabLayout.setHorizontalGroup(
-         pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(pointAndShootTabLayout.createSequentialGroup()
-            .addGap(25, 25, 25)
-            .addGroup(pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(pointAndShootTabLayout.createSequentialGroup()
-                  .addComponent(pointAndShootModeLabel)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(pointAndShootOnButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(pointAndShootOffButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addComponent(phototargetInstructionsLabel))
-            .addContainerGap(68, Short.MAX_VALUE))
-      );
-      pointAndShootTabLayout.setVerticalGroup(
-         pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(pointAndShootTabLayout.createSequentialGroup()
-            .addGap(43, 43, 43)
-            .addGroup(pointAndShootTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(pointAndShootModeLabel)
-               .addComponent(pointAndShootOnButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(pointAndShootOffButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addGap(18, 18, 18)
-            .addComponent(phototargetInstructionsLabel)
-            .addContainerGap(211, Short.MAX_VALUE))
-      );
+      logDirectoryChooserButton.setText("...");
+      logDirectoryChooserButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            File openDir = FileDialogs.openDir(ProjectorControlForm.getSingleton(),
+                    "Select location for Files logging Point and Shoot locations",
+                    PROJECTOR_LOG_FILE);
+            if (openDir != null) {
+               logDirectoryTextField_.setText(openDir.getAbsolutePath());
+               settings_.putString(Terms.LOGDIRECTORY, openDir.getAbsolutePath());
+            }
+         }
+      });
 
+      clearLogDirButton.setText("Clear Log Directory");
+      clearLogDirButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            String logDirectory = logDirectoryTextField_.getText();
+            File logDir = new File(logDirectory);
+            if (logDir.isDirectory()) {
+               for (File logFile : logDir.listFiles()) {
+                  logFile.delete();
+               }
+            }
+         }
+      });
+
+      pointAndShootTab.setLayout(new MigLayout("", "", "[40]"));
+      
+      pointAndShootTab.add(new JLabel("Point and shoot mode:"));
+      pointAndShootTab.add(pointAndShootOnButton);
+      pointAndShootTab.add(pointAndShootOffButton_, "wrap");
+      
+      pointAndShootTab.add(phototargetInstructionsLabel, "span 3, wrap");
+      
+      pointAndShootTab.add(new JLabel("Log Directory"), "span3, split 3");
+      pointAndShootTab.add(logDirectoryTextField_, "grow");
+      pointAndShootTab.add(logDirectoryChooserButton, "wrap");
+      
+      pointAndShootTab.add(clearLogDirButton, "span 3, wrap");
+      
       mainTabbedPane.addTab("Point and Shoot", pointAndShootTab);
 
-      roiLoopLabel.setText("Loop:");
+      roiLoopLabel_.setText("Loop:");
 
-      roiLoopTimesLabel.setText("times");
+      roiLoopTimesLabel_.setText("times");
 
       setRoiButton.setText("Set ROI(s)");
-      setRoiButton.setToolTipText("Specify an ROI you wish to be phototargeted by using the ImageJ ROI tools (point, rectangle, oval, polygon). Then press Set ROI(s) to send the ROIs to the phototargeting device. To initiate phototargeting, press Go!");
-      setRoiButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            setRoiButtonActionPerformed(evt);
+      setRoiButton.setToolTipText(
+              "Specify an ROI you wish to be phototargeted by using the ImageJ ROI tools (point, rectangle, oval, polygon). Then press Set ROI(s) to send the ROIs to the phototargeting device. To initiate phototargeting, press Go!");
+      setRoiButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            try {
+               sendCurrentImageWindowRois();
+               updateROISettings();
+            } catch (RuntimeException e) {
+               ReportingUtils.showError(e);
+            }
          }
       });
 
-      runROIsNowButton.setText("Run ROIs now!");
-      runROIsNowButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            runROIsNowButtonActionPerformed(evt);
+      runROIsNowButton_.setText("Run ROIs now!");
+      runROIsNowButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            new Thread(
+                    new Runnable() {
+               @Override
+               public void run() {
+                  phototargetROIsRunnable("Asynchronous phototargeting of ROIs").run();
+               }
+            }
+            ).start();
          }
       });
 
-      roiLoopSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      roiLoopSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            roiLoopSpinnerStateChanged(evt);
+      roiLoopSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      roiLoopSpinner_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent evt) {
+            updateROISettings();
          }
       });
+      roiLoopSpinner_.setValue(settings_.getInteger(Terms.NRROIREPETITIONS, 1));
 
       useInMDAcheckBox.setText("Run ROIs in Multi-Dimensional Acquisition");
-      useInMDAcheckBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            useInMDAcheckBoxActionPerformed(evt);
+      useInMDAcheckBox.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            updateROISettings();
          }
       });
 
-      roiStatusLabel.setText("No ROIs submitted yet");
+      roiStatusLabel_.setText("No ROIs submitted yet");
 
       roiManagerButton.setText("ROI Manager >>");
-      roiManagerButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            roiManagerButtonActionPerformed(evt);
+      roiManagerButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            Utils.showRoiManager();
          }
       });
 
-      jSeparator3.setOrientation(javax.swing.SwingConstants.VERTICAL);
-
-      sequencingButton.setText("Sequencing...");
-      sequencingButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            sequencingButtonActionPerformed(evt);
+      sequencingButton_.setText("Sequencing...");
+      sequencingButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            showMosaicSequencingWindow();
          }
       });
 
-      startTimeLabel.setText("Start Time");
+      startTimeLabel_.setText("Start Time");
 
-      startFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      startTimeSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            startTimeSpinnerStateChanged(evt);
+      startFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      startTimeSpinner_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent evt) {
+            updateROISettings();
          }
       });
 
-      repeatCheckBoxTime.setText("Repeat every");
-      repeatCheckBoxTime.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            repeatCheckBoxTimeActionPerformed(evt);
+      repeatCheckBoxTime_.setText("Repeat every");
+      repeatCheckBoxTime_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            updateROISettings();
          }
       });
 
-      repeatEveryFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      repeatEveryIntervalSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            repeatEveryIntervalSpinnerStateChanged(evt);
+      repeatEveryFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      repeatEveryIntervalSpinner_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent evt) {
+            updateROISettings();
          }
       });
 
-      repeatEveryIntervalUnitLabel.setText("seconds");
+      repeatEveryIntervalUnitLabel_.setText("seconds");
 
-      startTimeUnitLabel.setText("seconds");
+      startTimeUnitLabel_.setText("seconds");
+      
+      
+      asyncRoiPanel.setLayout(new MigLayout());
+      
+      asyncRoiPanel.add(startTimeLabel_);
+      asyncRoiPanel.add(startTimeSpinner_, "wmin 60, wmax 60");
+      asyncRoiPanel.add(new JLabel("seconds"), "wrap");
+      
+      asyncRoiPanel.add(repeatCheckBoxTime_);
+      asyncRoiPanel.add(repeatEveryIntervalSpinner_, "wmin 60, wmax 60");
+      asyncRoiPanel.add(repeatEveryIntervalUnitLabel_, "wrap");
 
-      javax.swing.GroupLayout asyncRoiPanelLayout = new javax.swing.GroupLayout(asyncRoiPanel);
-      asyncRoiPanel.setLayout(asyncRoiPanelLayout);
-      asyncRoiPanelLayout.setHorizontalGroup(
-         asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(asyncRoiPanelLayout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-               .addGroup(asyncRoiPanelLayout.createSequentialGroup()
-                  .addComponent(startTimeLabel)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(startTimeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(startTimeUnitLabel))
-               .addGroup(asyncRoiPanelLayout.createSequentialGroup()
-                  .addComponent(repeatCheckBoxTime)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(repeatEveryIntervalSpinner)))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(repeatEveryIntervalUnitLabel)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      );
-      asyncRoiPanelLayout.setVerticalGroup(
-         asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(asyncRoiPanelLayout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(startTimeLabel)
-               .addComponent(startTimeSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(startTimeUnitLabel))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(asyncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(repeatCheckBoxTime)
-               .addComponent(repeatEveryIntervalSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(repeatEveryIntervalUnitLabel))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      );
+      attachToMdaTabbedPane_.addTab("During imaging", asyncRoiPanel);
 
-      attachToMdaTabbedPane.addTab("During imaging", asyncRoiPanel);
-
-      startFrameLabel.setText("Start Frame");
-
-      repeatCheckBox.setText("Repeat every");
-      repeatCheckBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            repeatCheckBoxActionPerformed(evt);
+      startFrameLabel_.setText("Start Frame");
+      repeatEveryFrameUnitLabel_.setText("frames");
+      repeatCheckBox_.setText("Repeat every");
+      repeatCheckBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            updateROISettings();
          }
       });
 
-      startFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      startFrameSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            startFrameSpinnerStateChanged(evt);
+      startFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      startFrameSpinner_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent evt) {
+            updateROISettings();
          }
       });
 
-      repeatEveryFrameSpinner.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
-      repeatEveryFrameSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            repeatEveryFrameSpinnerStateChanged(evt);
+      repeatEveryFrameSpinner_.setModel(new SpinnerNumberModel(1, 1, 1000000000, 1));
+      repeatEveryFrameSpinner_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent evt) {
+            updateROISettings();
          }
       });
 
-      repeatEveryFrameUnitLabel.setText("frames");
+      syncRoiPanel_.setLayout(new MigLayout());
+      
+      syncRoiPanel_.add(startFrameLabel_);
+      syncRoiPanel_.add(startFrameSpinner_, "wmin 60, wmax 60,  wrap");
+      
+      syncRoiPanel_.add(repeatCheckBox_);
+      syncRoiPanel_.add(repeatEveryFrameSpinner_, "wmin 60, wmax 60");
+      syncRoiPanel_.add(repeatEveryFrameUnitLabel_, "wrap");
+      
+      attachToMdaTabbedPane_.addTab("Between images", syncRoiPanel_);
 
-      javax.swing.GroupLayout syncRoiPanelLayout = new javax.swing.GroupLayout(syncRoiPanel);
-      syncRoiPanel.setLayout(syncRoiPanelLayout);
-      syncRoiPanelLayout.setHorizontalGroup(
-         syncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(syncRoiPanelLayout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(syncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(syncRoiPanelLayout.createSequentialGroup()
-                  .addComponent(startFrameLabel)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(startFrameSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addGroup(syncRoiPanelLayout.createSequentialGroup()
-                  .addComponent(repeatCheckBox)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(repeatEveryFrameSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(repeatEveryFrameUnitLabel)))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      );
-      syncRoiPanelLayout.setVerticalGroup(
-         syncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(syncRoiPanelLayout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(syncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(startFrameLabel)
-               .addComponent(startFrameSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(syncRoiPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(repeatCheckBox)
-               .addComponent(repeatEveryFrameSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(repeatEveryFrameUnitLabel))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      );
-
-      attachToMdaTabbedPane.addTab("Between images", syncRoiPanel);
-
-      javax.swing.GroupLayout roisTabLayout = new javax.swing.GroupLayout(roisTab);
-      roisTab.setLayout(roisTabLayout);
-      roisTabLayout.setHorizontalGroup(
-         roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(roisTabLayout.createSequentialGroup()
-            .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-               .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 389, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addGroup(javax.swing.GroupLayout.Alignment.LEADING, roisTabLayout.createSequentialGroup()
-                  .addGap(20, 20, 20)
-                  .addComponent(runROIsNowButton)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(15, 15, 15)
-                  .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(useInMDAcheckBox)
-                     .addComponent(attachToMdaTabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 247, javax.swing.GroupLayout.PREFERRED_SIZE))))
-            .addGap(0, 13, Short.MAX_VALUE))
-         .addGroup(roisTabLayout.createSequentialGroup()
-            .addGap(25, 25, 25)
-            .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(roisTabLayout.createSequentialGroup()
-                  .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addGroup(roisTabLayout.createSequentialGroup()
-                        .addComponent(roiStatusLabel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(sequencingButton))
-                     .addGroup(roisTabLayout.createSequentialGroup()
-                        .addComponent(setRoiButton, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(roiManagerButton)))
-                  .addGap(93, 93, 93))
-               .addGroup(roisTabLayout.createSequentialGroup()
-                  .addComponent(roiLoopLabel)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(roiLoopSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(roiLoopTimesLabel)
-                  .addGap(115, 115, 115))))
-      );
-      roisTabLayout.setVerticalGroup(
-         roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(roisTabLayout.createSequentialGroup()
-            .addGap(21, 21, 21)
-            .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(setRoiButton)
-               .addComponent(roiManagerButton))
-            .addGap(18, 18, 18)
-            .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(roiStatusLabel)
-               .addComponent(sequencingButton))
-            .addGap(18, 18, 18)
-            .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(roiLoopLabel)
-               .addComponent(roiLoopTimesLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(roiLoopSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-               .addGroup(roisTabLayout.createSequentialGroup()
-                  .addGroup(roisTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(runROIsNowButton)
-                     .addComponent(useInMDAcheckBox))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(attachToMdaTabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE))
-               .addComponent(jSeparator3, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      );
-
+      roisTab.setLayout(new MigLayout());
+      
+      roisTab.add(setRoiButton, "align center");
+      roisTab.add(roiManagerButton, "align center, wrap");
+      
+      roisTab.add(roiStatusLabel_);
+      roisTab.add(sequencingButton_, "wrap");
+      
+      roisTab.add(roiLoopLabel_, "split 3");
+      roisTab.add(roiLoopSpinner_, "wmin 60, wmax 60");
+      roisTab.add(roiLoopTimesLabel_, "wrap");
+      
+      roisTab.add(runROIsNowButton_, "align center");
+      roisTab.add(useInMDAcheckBox, "wrap");
+      
+      roisTab.add(attachToMdaTabbedPane_, "skip 1, wrap");
+      
       mainTabbedPane.addTab("ROIs", roisTab);
 
       calibrateButton_.setText("Calibrate!");
-      calibrateButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            calibrateButton_ActionPerformed(evt);
+      calibrateButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            try {
+               boolean running = isCalibrating();
+               if (running) {
+                  stopCalibration();
+                  calibrateButton_.setText("Calibrate");
+               } else {
+                  runCalibration();
+                  calibrateButton_.setText("Stop calibration");
+               }
+            } catch (Exception e) {
+               ReportingUtils.showError(e);
+            }
          }
       });
 
-      allPixelsButton.setText("All Pixels");
-      allPixelsButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            allPixelsButtonActionPerformed(evt);
+      allPixelsButton_.setText("All Pixels");
+      allPixelsButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            dev_.activateAllPixels();
          }
       });
 
       centerButton.setText("Center spot");
-      centerButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            centerButtonActionPerformed(evt);
+      centerButton.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            setOnState(false);
+            ProjectorActions.displayCenterSpot(dev_);
          }
       });
 
-      channelComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-      channelComboBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            channelComboBoxActionPerformed(evt);
+      channelComboBox_.setModel(new DefaultComboBoxModel(
+              new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+      channelComboBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            final String channel = (String) channelComboBox_.getSelectedItem();
+            setTargetingChannel(channel);
+            settings_.putString(Terms.PTCHANNEL, channel);
          }
       });
 
-      phototargetingChannelDropdownLabel.setText("Phototargeting channel:");
-
-      shutterComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-      shutterComboBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            shutterComboBoxActionPerformed(evt);
+      shutterComboBox_.setModel(new DefaultComboBoxModel(
+              new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+      shutterComboBox_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            final String shutter = (String) shutterComboBox_.getSelectedItem();
+            setTargetingShutter(shutter);
+            settings_.putString(Terms.PTSHUTTER, shutter);
          }
       });
-
-      phototargetingShutterDropdownLabel.setText("Phototargeting shutter:");
-
-      jLabel1.setText("Delay(ms):");
 
       delayField_.setText("0");
 
       checkerBoardButton_.setText("CheckerBoard");
-      checkerBoardButton_.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            checkerBoardButton_ActionPerformed(evt);
+      checkerBoardButton_.addActionListener(new ActionListener() {
+         @Override
+         public void actionPerformed(ActionEvent evt) {
+            dev_.showCheckerBoard(16, 16);
          }
       });
-
-      javax.swing.GroupLayout setupTabLayout = new javax.swing.GroupLayout(setupTab);
-      setupTab.setLayout(setupTabLayout);
-      setupTabLayout.setHorizontalGroup(
-         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(setupTabLayout.createSequentialGroup()
-            .addGap(39, 39, 39)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(setupTabLayout.createSequentialGroup()
-                  .addComponent(centerButton)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(allPixelsButton)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(checkerBoardButton_))
-               .addGroup(setupTabLayout.createSequentialGroup()
-                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(phototargetingChannelDropdownLabel)
-                     .addComponent(phototargetingShutterDropdownLabel))
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                     .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)
-                     .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
-               .addGroup(setupTabLayout.createSequentialGroup()
-                  .addComponent(calibrateButton_)
-                  .addGap(18, 18, 18)
-                  .addComponent(jLabel1)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)))
-            .addContainerGap(100, Short.MAX_VALUE))
-      );
-      setupTabLayout.setVerticalGroup(
-         setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(setupTabLayout.createSequentialGroup()
-            .addGap(27, 27, 27)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(centerButton)
-               .addComponent(allPixelsButton)
-               .addComponent(checkerBoardButton_))
-            .addGap(18, 18, 18)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(calibrateButton_)
-               .addComponent(jLabel1)
-               .addComponent(delayField_, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 89, Short.MAX_VALUE)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(phototargetingChannelDropdownLabel)
-               .addComponent(channelComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addGroup(setupTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(shutterComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(phototargetingShutterDropdownLabel))
-            .addGap(83, 83, 83))
-      );
+      
+      setupTab.setLayout(new MigLayout("", "", "[40]"));
+      
+      setupTab.add(centerButton);
+      setupTab.add(allPixelsButton_);
+      setupTab.add(checkerBoardButton_, "wrap");
+      
+      setupTab.add(calibrateButton_);
+      setupTab.add(new JLabel("Delay(ms):"), "span 2, split 2");
+      setupTab.add(delayField_, "wmin 30, w 50!, wrap");
+      
+      setupTab.add(new JLabel("Phototargeting channel:"), "span 3, split 2, w 180!");
+      setupTab.add(shutterComboBox_, "wmin 130, wrap");
+      
+      setupTab.add(new JLabel("Phototargeting shutter:"), "span 3, split 2, w 180!");
+      setupTab.add(channelComboBox_, "wmin 130, wrap");   
 
       mainTabbedPane.addTab("Setup", setupTab);
 
-      offButton.setText("Off");
-      offButton.setSelected(true);
-      offButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            offButtonActionPerformed(evt);
-         }
-      });
-
-      ExposureTimeLabel.setText("Exposure time:");
-
-      pointAndShootIntervalSpinner.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
-      pointAndShootIntervalSpinner.setMaximumSize(new java.awt.Dimension(75, 20));
-      pointAndShootIntervalSpinner.setMinimumSize(new java.awt.Dimension(75, 20));
-      pointAndShootIntervalSpinner.setPreferredSize(new java.awt.Dimension(75, 20));
-      pointAndShootIntervalSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
-         public void stateChanged(javax.swing.event.ChangeEvent evt) {
-            pointAndShootIntervalSpinnerStateChanged(evt);
-         }
-      });
-      pointAndShootIntervalSpinner.addVetoableChangeListener(new java.beans.VetoableChangeListener() {
-         public void vetoableChange(java.beans.PropertyChangeEvent evt)throws java.beans.PropertyVetoException {
-            pointAndShootIntervalSpinnerVetoableChange(evt);
-         }
-      });
-
-      jLabel2.setText("ms");
-
-      javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-      getContentPane().setLayout(layout);
-      layout.setHorizontalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-               .addGroup(layout.createSequentialGroup()
-                  .addComponent(mainTabbedPane)
-                  .addContainerGap())
-               .addGroup(layout.createSequentialGroup()
-                  .addComponent(ExposureTimeLabel)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                  .addComponent(pointAndShootIntervalSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
-                  .addGap(18, 18, 18)
-                  .addComponent(jLabel2)
-                  .addGap(65, 65, 65)
-                  .addComponent(onButton)
-                  .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                  .addComponent(offButton)
-                  .addGap(0, 0, Short.MAX_VALUE))))
-      );
-      layout.setVerticalGroup(
-         layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-         .addGroup(layout.createSequentialGroup()
-            .addContainerGap()
-            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-               .addComponent(onButton)
-               .addComponent(offButton)
-               .addComponent(pointAndShootIntervalSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-               .addComponent(ExposureTimeLabel)
-               .addComponent(jLabel2))
-            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-            .addComponent(mainTabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 337, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-      );
-
-      pack();
-   }// </editor-fold>//GEN-END:initComponents
-
-    private void calibrateButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calibrateButton_ActionPerformed
-       try {
-          boolean running = isCalibrating();
-          if (running) {
-             stopCalibration();
-             calibrateButton_.setText("Calibrate");
-          } else {
-             runCalibration();
-             calibrateButton_.setText("Stop calibration");
-          }
-       } catch (Exception e) {
-          ReportingUtils.showError(e);
-       }
-    }//GEN-LAST:event_calibrateButton_ActionPerformed
-
-    private void onButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_onButtonActionPerformed
-       setOnState(true);
-       pointAndShootOffButtonActionPerformed(null);
-    }//GEN-LAST:event_onButtonActionPerformed
-
-    private void offButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_offButtonActionPerformed
-       setOnState(false);
-    }//GEN-LAST:event_offButtonActionPerformed
-
-    private void allPixelsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_allPixelsButtonActionPerformed
-       dev_.activateAllPixels();
-    }//GEN-LAST:event_allPixelsButtonActionPerformed
-
-   private void mainTabbedPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_mainTabbedPaneStateChanged
-      updatePointAndShoot(false);
-   }//GEN-LAST:event_mainTabbedPaneStateChanged
-
-   private void roiManagerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_roiManagerButtonActionPerformed
-      Utils.showRoiManager();
-   }//GEN-LAST:event_roiManagerButtonActionPerformed
-
-   private void useInMDAcheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_useInMDAcheckBoxActionPerformed
-      updateROISettings();
-   }//GEN-LAST:event_useInMDAcheckBoxActionPerformed
-
-   private void repeatCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatCheckBoxActionPerformed
-      updateROISettings();
-   }//GEN-LAST:event_repeatCheckBoxActionPerformed
-
-   private void roiLoopSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_roiLoopSpinnerStateChanged
-      updateROISettings();
-   }//GEN-LAST:event_roiLoopSpinnerStateChanged
-
-   private void runROIsNowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_runROIsNowButtonActionPerformed
-      new Thread(
-              new Runnable() {
+      offButton_.setText("Off");
+      offButton_.setSelected(true);
+      offButton_.addActionListener(new ActionListener() {
          @Override
-         public void run() {
-            phototargetROIsRunnable("Asynchronous phototargeting of ROIs").run();
+         public void actionPerformed(ActionEvent evt) {
+            setOnState(false);
          }
-      }
-      ).start();
-   }//GEN-LAST:event_runROIsNowButtonActionPerformed
+      });
 
-   private void setRoiButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_setRoiButtonActionPerformed
-      try {
-         sendCurrentImageWindowRois();
-         updateROISettings();
-      } catch (RuntimeException e) {
-         ReportingUtils.showError(e);
-      }
-   }//GEN-LAST:event_setRoiButtonActionPerformed
-
-   
-   private void centerButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_centerButtonActionPerformed
-      offButtonActionPerformed(null);
-      ProjectorActions.displayCenterSpot(dev_);
-   }//GEN-LAST:event_centerButtonActionPerformed
-
-   private void pointAndShootOffButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOffButtonActionPerformed
-      updatePointAndShoot(false);
-   }//GEN-LAST:event_pointAndShootOffButtonActionPerformed
-
-   private void pointAndShootOnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pointAndShootOnButtonActionPerformed
-      offButtonActionPerformed(null);
-      try {
-         updatePointAndShoot(true);
-      } catch (RuntimeException e) {
-         ReportingUtils.showError(e);
-      }
-   }//GEN-LAST:event_pointAndShootOnButtonActionPerformed
-
-   private void pointAndShootIntervalSpinnerVetoableChange(java.beans.PropertyChangeEvent evt)throws java.beans.PropertyVetoException {//GEN-FIRST:event_pointAndShootIntervalSpinnerVetoableChange
-      updateExposure();
-   }//GEN-LAST:event_pointAndShootIntervalSpinnerVetoableChange
-
-   private void pointAndShootIntervalSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_pointAndShootIntervalSpinnerStateChanged
-      updateExposure();
-   }//GEN-LAST:event_pointAndShootIntervalSpinnerStateChanged
-
-   private void repeatEveryFrameSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_repeatEveryFrameSpinnerStateChanged
-      updateROISettings();
-   }//GEN-LAST:event_repeatEveryFrameSpinnerStateChanged
-
-   private void startFrameSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startFrameSpinnerStateChanged
-      updateROISettings();
-   }//GEN-LAST:event_startFrameSpinnerStateChanged
-
-    private void channelComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelComboBoxActionPerformed
-       final String channel = (String) channelComboBox.getSelectedItem();
-       setTargetingChannel(channel);
-    }//GEN-LAST:event_channelComboBoxActionPerformed
-
-   private void sequencingButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sequencingButtonActionPerformed
-      showMosaicSequencingWindow();
-   }//GEN-LAST:event_sequencingButtonActionPerformed
-
-   private void shutterComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_shutterComboBoxActionPerformed
-      final String shutter = (String) shutterComboBox.getSelectedItem();
-      setTargetingShutter(shutter);
-   }//GEN-LAST:event_shutterComboBoxActionPerformed
-
-   private void startTimeSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_startTimeSpinnerStateChanged
-      updateROISettings();
-   }//GEN-LAST:event_startTimeSpinnerStateChanged
-
-   private void repeatCheckBoxTimeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_repeatCheckBoxTimeActionPerformed
-      updateROISettings();
-   }//GEN-LAST:event_repeatCheckBoxTimeActionPerformed
-
-   private void repeatEveryIntervalSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_repeatEveryIntervalSpinnerStateChanged
-      updateROISettings();
-   }//GEN-LAST:event_repeatEveryIntervalSpinnerStateChanged
-
-   private void checkerBoardButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_checkerBoardButton_ActionPerformed
-     dev_.showCheckerBoard(16, 16);
-   }//GEN-LAST:event_checkerBoardButton_ActionPerformed
+      pointAndShootIntervalSpinner_.setModel(new SpinnerNumberModel(500, 1, 1000000000, 1));
+      pointAndShootIntervalSpinner_.setMaximumSize(new Dimension(75, 20));
+      pointAndShootIntervalSpinner_.setMinimumSize(new Dimension(75, 20));
+      pointAndShootIntervalSpinner_.setPreferredSize(new Dimension(75, 20));
+      pointAndShootIntervalSpinner_.addChangeListener(new ChangeListener() {
+         @Override
+         public void stateChanged(ChangeEvent evt) {
+            updateExposure();
+         }
+      });
+      pointAndShootIntervalSpinner_.addVetoableChangeListener(new VetoableChangeListener() {
+         @Override
+         public void vetoableChange(PropertyChangeEvent evt)throws PropertyVetoException {
+             updateExposure();
+         }
+      });
+      pointAndShootIntervalSpinner_.setValue(settings_.getDouble(Terms.EXPOSURE, 0.0));
+      
+      this.getContentPane().setLayout(new MigLayout());
+      
+      this.getContentPane().add(new JLabel("Exposure time:"));
+      this.getContentPane().add(pointAndShootIntervalSpinner_, "w 75");
+      this.getContentPane().add(new JLabel("ms"), "gapx 18px 18px");
+      this.getContentPane().add(onButton_, "gapx 80px 6px");
+      this.getContentPane().add(offButton_, "gapx 6px 6px, wrap");
+      
+      this.getContentPane().add(mainTabbedPane, "span 5, wrap");
+      
+    
+      pack();
+   }
 
 
-   // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JLabel ExposureTimeLabel;
-   private javax.swing.JButton allPixelsButton;
-   private javax.swing.JPanel asyncRoiPanel;
-   private javax.swing.JTabbedPane attachToMdaTabbedPane;
+   // Variables declaration 
+   private javax.swing.JButton allPixelsButton_;
+   private javax.swing.JTabbedPane attachToMdaTabbedPane_;
    private javax.swing.JButton calibrateButton_;
-   private javax.swing.JButton centerButton;
-   private javax.swing.JComboBox channelComboBox;
+   private javax.swing.JComboBox channelComboBox_;
    private javax.swing.JButton checkerBoardButton_;
    private javax.swing.JTextField delayField_;
-   private javax.swing.JLabel jLabel1;
-   private javax.swing.JLabel jLabel2;
-   private javax.swing.JSeparator jSeparator1;
-   private javax.swing.JSeparator jSeparator3;
-   private javax.swing.JTabbedPane mainTabbedPane;
-   private javax.swing.JButton offButton;
-   private javax.swing.JButton onButton;
+   private javax.swing.JTextField logDirectoryTextField_;
+   private javax.swing.JButton offButton_;
+   private javax.swing.JButton onButton_;
    private javax.swing.JLabel phototargetInstructionsLabel;
-   private javax.swing.JLabel phototargetingChannelDropdownLabel;
-   private javax.swing.JLabel phototargetingShutterDropdownLabel;
-   private javax.swing.JSpinner pointAndShootIntervalSpinner;
-   private javax.swing.JLabel pointAndShootModeLabel;
-   private javax.swing.JToggleButton pointAndShootOffButton;
+   private javax.swing.JSpinner pointAndShootIntervalSpinner_;
+   private javax.swing.JToggleButton pointAndShootOffButton_;
    private javax.swing.JToggleButton pointAndShootOnButton;
-   private javax.swing.JPanel pointAndShootTab;
-   private javax.swing.JCheckBox repeatCheckBox;
-   private javax.swing.JCheckBox repeatCheckBoxTime;
-   private javax.swing.JSpinner repeatEveryFrameSpinner;
-   private javax.swing.JLabel repeatEveryFrameUnitLabel;
-   private javax.swing.JSpinner repeatEveryIntervalSpinner;
-   private javax.swing.JLabel repeatEveryIntervalUnitLabel;
-   private javax.swing.JLabel roiLoopLabel;
-   private javax.swing.JSpinner roiLoopSpinner;
-   private javax.swing.JLabel roiLoopTimesLabel;
-   private javax.swing.JButton roiManagerButton;
-   private javax.swing.JLabel roiStatusLabel;
-   private javax.swing.JPanel roisTab;
-   private javax.swing.JButton runROIsNowButton;
-   private javax.swing.JButton sequencingButton;
+   private javax.swing.JCheckBox repeatCheckBox_;
+   private javax.swing.JCheckBox repeatCheckBoxTime_;
+   private javax.swing.JSpinner repeatEveryFrameSpinner_;
+   private javax.swing.JLabel repeatEveryFrameUnitLabel_;
+   private javax.swing.JSpinner repeatEveryIntervalSpinner_;
+   private javax.swing.JLabel repeatEveryIntervalUnitLabel_;
+   private javax.swing.JLabel roiLoopLabel_;
+   private javax.swing.JSpinner roiLoopSpinner_;
+   private javax.swing.JLabel roiLoopTimesLabel_;
+   private javax.swing.JLabel roiStatusLabel_;
+   private javax.swing.JButton runROIsNowButton_;
+   private javax.swing.JButton sequencingButton_;
    private javax.swing.JButton setRoiButton;
-   private javax.swing.JPanel setupTab;
-   private javax.swing.JComboBox shutterComboBox;
-   private javax.swing.JLabel startFrameLabel;
-   private javax.swing.JSpinner startFrameSpinner;
-   private javax.swing.JLabel startTimeLabel;
-   private javax.swing.JSpinner startTimeSpinner;
-   private javax.swing.JLabel startTimeUnitLabel;
-   private javax.swing.JPanel syncRoiPanel;
+   private javax.swing.JComboBox shutterComboBox_;
+   private javax.swing.JLabel startFrameLabel_;
+   private javax.swing.JSpinner startFrameSpinner_;
+   private javax.swing.JLabel startTimeLabel_;
+   private javax.swing.JSpinner startTimeSpinner_;
+   private javax.swing.JLabel startTimeUnitLabel_;
+   private javax.swing.JPanel syncRoiPanel_;
    private javax.swing.JCheckBox useInMDAcheckBox;
-   // End of variables declaration//GEN-END:variables
 
 }

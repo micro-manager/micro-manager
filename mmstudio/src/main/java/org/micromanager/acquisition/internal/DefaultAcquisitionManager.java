@@ -55,7 +55,7 @@ import org.micromanager.internal.utils.MMException;
  */
 public final class DefaultAcquisitionManager implements AcquisitionManager {
    // NOTE: should match the format used by the acquisition engine.
-   private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+   private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z");
 
    private final Studio studio_;
    private final AcquisitionWrapperEngine engine_;
