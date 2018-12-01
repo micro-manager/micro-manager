@@ -33,13 +33,18 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import net.miginfocom.swing.MigLayout;
 import org.micromanager.Studio;
 import org.micromanager.display.DataViewer;
 import org.micromanager.internal.utils.FileDialogs;
 import org.micromanager.internal.utils.MMDialog;
+import org.micromanager.pointandshootanalysis.data.Terms;
 import org.micromanager.propertymap.MutablePropertyMapView;
 
 /**
@@ -48,9 +53,7 @@ import org.micromanager.propertymap.MutablePropertyMapView;
  */
 public class PointAndShootDialog extends MMDialog {
    
-   private final static String LOCATIONSFILENAME = "LocationFileName";
-   private final String[] FILESUFFIXES = {"txt", "tproj", ""};
-   
+
    private final Studio studio_;
    private final MutablePropertyMapView profileSettings_;
    private boolean wasDisposed_;
@@ -84,10 +87,10 @@ public class PointAndShootDialog extends MMDialog {
       
       final JTextField locationsField = new JTextField(50);
       locationsField.setFont(arialSmallFont);
-      locationsField.setText(profileSettings_.getString(LOCATIONSFILENAME,
-               profileSettings_.getString(LOCATIONSFILENAME, "")));
+      locationsField.setText(profileSettings_.getString(Terms.LOCATIONSFILENAME,
+               profileSettings_.getString(Terms.LOCATIONSFILENAME, "")));
       locationsField.setHorizontalAlignment(JTextField.LEFT);
-      super.add(locationsField);
+      super.add(locationsField, "span 2, split 2");
 
       final JButton locationsFieldButton =  mcsButton(buttonSize, arialSmallFont);
       locationsFieldButton.setText("...");
@@ -96,13 +99,27 @@ public class PointAndShootDialog extends MMDialog {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             File f = FileDialogs.openFile(ourDialog, "Locations File",
                     new FileDialogs.FileType("MMProjector", "Locations File",
-                            locationsField.getText(), true, FILESUFFIXES));
+                            locationsField.getText(), true, Terms.FILESUFFIXES));
             if (f != null) {
                locationsField.setText(f.getAbsolutePath());
             }
          }
       });
       super.add(locationsFieldButton, "wrap");
+      
+      JLabel radiusText = new JLabel("Radius of bleach spot (pixels)");
+      super.add(radiusText);
+      
+      int radius = profileSettings_.getInteger(Terms.RADIUS, 3);
+      final SpinnerNumberModel sModel = new SpinnerNumberModel(radius, 1, 20, 1);
+      final JSpinner radiusSpinner = new JSpinner (sModel);
+      radiusSpinner.addChangeListener(new ChangeListener(){
+         @Override
+         public void stateChanged(ChangeEvent e) {
+            profileSettings_.putInteger(Terms.RADIUS, (Integer) radiusSpinner.getValue());
+         }
+      });
+      super.add(radiusSpinner, "wrap");
       
       JButton cancelButton = mcsButton(buttonSize, arialSmallFont);
       cancelButton.setText("Cancel");
@@ -112,7 +129,7 @@ public class PointAndShootDialog extends MMDialog {
             ourDialog.dispose();
          }
       });
-      super.add(cancelButton, "span2, split2, tag cancel");
+      super.add(cancelButton, "span 2, split 2, tag cancel");
       
       JButton okButton = mcsButton(buttonSize, arialSmallFont);
       okButton.setText("OK");
@@ -134,8 +151,9 @@ public class PointAndShootDialog extends MMDialog {
                studio_.logs().showError("File " + f.getName() + " is not readable");
                return;
             }
-            profileSettings_.putString(LOCATIONSFILENAME, fileName);
-            Thread analysisThread = new Thread(new PointAndShootAnalyzer(studio, fileName));
+            profileSettings_.putString(Terms.LOCATIONSFILENAME, fileName);
+            Thread analysisThread = new Thread(new PointAndShootAnalyzer(studio, 
+                    profileSettings_.toPropertyMap()));
             analysisThread.start();
             ourDialog.dispose();
          }
