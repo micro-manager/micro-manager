@@ -26,7 +26,7 @@ nobase_mmplugin_DATA = \
 	MultiChannelShading.jar \
 	PipelineSaver.jar \
 	ProjectorPlugin.jar \
-	PointAndShootInfo.jar \
+	PointAndShootAnalysis.jar \
 	Recall.jar \
 	SequenceBufferMonitor.jar \
 	SlideExplorer.jar \
