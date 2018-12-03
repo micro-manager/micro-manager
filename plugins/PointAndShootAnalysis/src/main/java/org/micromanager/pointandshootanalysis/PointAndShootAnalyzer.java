@@ -125,26 +125,27 @@ public class PointAndShootAnalyzer implements Runnable {
       
       final DataProvider dataProvider = activeDataViewer.getDataProvider();
       Iterable<Coords> unorderedImageCoords = dataProvider.getUnorderedImageCoords();
-      for (Coords c : unorderedImageCoords) {
-         int frame = c.getT();
-         try {
-            Metadata metadata = dataProvider.getImage(c).getMetadata();
-            PropertyMap userData = metadata.getUserData();    
+       for (Coords c : unorderedImageCoords) {
+           int frame = c.getT();
+           try {
+               Metadata metadata = dataProvider.getImage(c).getMetadata();
+               PropertyMap userData = metadata.getUserData();
 
-            if (userData.containsPropertyMap("UserData")) {
-               PropertyMap userPropertyMap = userData.getPropertyMap("UserData", null);
-               if (userPropertyMap.containsString("TimeInCore")) {
-                  String timeStampString = userPropertyMap.getString("TimeInCore", null);
-                  if (timeStampString != null) {
-                     frameTimeStamps.put(frame, dateStringToInstant(timeStampString));
-                  }
+               // for backward coimpatabilityh with erronous file type
+               if (userData.containsPropertyMap("UserData")) {
+                   userData = userData.getPropertyMap("UserData", null);
                }
-               
-            }
-         } catch (IOException ex) {
-            studio_.logs().logError(ex);
-         }
-      }
+               if (userData.containsString(Terms.CORERECEIVEDTIMEKEY)) {
+                   String timeStampString = userData.getString(Terms.CORERECEIVEDTIMEKEY, null);
+                   if (timeStampString != null) {
+                       frameTimeStamps.put(frame, dateStringToInstant(timeStampString));
+                   }
+               }
+
+           } catch (IOException ex) {
+               studio_.logs().logError(ex);
+           }
+       }
       
       // for each Point and Shoot timeStamp, find the frame where it happened
       for (Map.Entry<Instant, Point> entry : datedCoordinates.entrySet()) {
@@ -301,6 +302,11 @@ public class PointAndShootAnalyzer implements Runnable {
          }
       } catch (IOException ioe) {
          studio_.logs().showError("Error while reading image data");
+      }
+      
+      if (plotData.size() < 1) {
+          studio_.logs().showMessage("No Point and Shoot events found");
+          return;
       }
       
       XYSeries[] plots = plotData.toArray(new XYSeries[plotData.size()]);
