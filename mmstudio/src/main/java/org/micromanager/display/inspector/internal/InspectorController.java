@@ -198,10 +198,12 @@ public final class InspectorController
 
    @Override
    public void close() {
-      frame_.setVisible(false);
-      detachFromDataViewer();
-      frame_.dispose();
-      frame_ = null;
+      if (frame_ != null) {
+         frame_.setVisible(false);
+         detachFromDataViewer();
+         frame_.dispose();
+         frame_ = null;
+      }
       viewerCollection_.unregisterForEvents(this);
       eventBus_.post(InspectorDidCloseEvent.create(this));
    }
