@@ -36,7 +36,6 @@ either expressed or implied, of the FreeBSD Project.
 
 package org.micromanager.pointandshootanalysis.utils;
 
-import edu.ucsf.valelab.gaussianfit.data.SpotData;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,16 +45,7 @@ import java.util.List;
  * @author nico
  */
 public class ListUtils {
-   
-   public static ArrayList<Point2D.Double> spotListToPointList(List<SpotData> spotList){
-      ArrayList<Point2D.Double> xyPoints = new ArrayList<Point2D.Double>();
-      for (SpotData gs : spotList) {
-         Point2D.Double point = new Point2D.Double(gs.getXCenter(), gs.getYCenter());
-         xyPoints.add(point);
-      }
-      return xyPoints;
-   }
-   
+     
    public static Point2D.Double avgXYList(ArrayList<Point2D.Double> xyPoints) {
       Point2D.Double myAvg = new Point2D.Double(0.0, 0.0);
       for (Point2D.Double point : xyPoints) {
@@ -101,7 +91,7 @@ public class ListUtils {
    }
    
     /**
-    * Calculates the average of a list of doubles
+    * Calculates the average of a list of numbers
     * 
     * @param <T>
     * @param vals
