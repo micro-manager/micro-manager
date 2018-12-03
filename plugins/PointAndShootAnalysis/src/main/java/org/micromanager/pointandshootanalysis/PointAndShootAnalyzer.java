@@ -21,7 +21,6 @@
 
 package org.micromanager.pointandshootanalysis;
 
-import edu.ucsf.valelab.gaussianfit.utils.ListUtils;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -57,6 +56,7 @@ import org.micromanager.pointandshootanalysis.algorithm.Utils;
 import org.micromanager.pointandshootanalysis.data.PASData;
 import org.micromanager.pointandshootanalysis.data.Terms;
 import org.micromanager.pointandshootanalysis.plot.PlotUtils;
+import org.micromanager.pointandshootanalysis.utils.ListUtils;
 
 /**
  *
