@@ -419,6 +419,13 @@ int ret;
    char iBuf[256]; //?? what is this for
    strcpy(iBuf,resp.c_str());
    sscanf(iBuf, "%f %f\r\n", &xx, &yy);
+
+   GetOrientation(mirrorX, mirrorY);
+   if (mirrorX == 1)
+      xx = 120-xx;
+   if (mirrorY == 1)
+      yy = 80-yy;
+   
    x = xx*1000;
    y = yy*1000;
    return DEVICE_OK;
@@ -430,13 +437,20 @@ int ret;
  */
 int XYStage::SetPositionUm(double x, double y)
 {
+   GetOrientation(mirrorX, mirrorY);
+   x = x/1000;
+   y = y/1000;
+   if (mirrorX == 1)
+      x = 120-x;
+   if (mirrorY == 1)
+      y = 80-y;
    ostringstream os;
    os << "XYStage::SetPositionUm() " << x << " " << y;
    this->LogMessage(os.str().c_str());
 
    // format the command
    ostringstream cmd;
-   cmd << x/1000 << " " << y/1000 << " m";
+   cmd << x << " " << y << " m";
 
    int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), g_TxTerm);
    if (ret != DEVICE_OK)
